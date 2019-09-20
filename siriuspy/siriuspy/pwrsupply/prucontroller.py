@@ -114,10 +114,8 @@ class PRUController:
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
     _delay_read_curve = 100  # [us]
-    # increasing _delay_sleep from 10 ms to 90 ms decreases CPU usage from
-    # 20% to 19.2% at BBB1.
+    _delay_write_curve = 100  # [us]
     _delay_sleep = 0.020  # [s]
-
 
     # --- default delays for sync modes
     # This this is delay PRU observes right after finishing writting to UART
@@ -347,30 +345,52 @@ class PRUController:
 
         # lock and make copy of value
         # TODO: test if locking is really necessary.
-        self._lock.acquire()
-        values = _dcopy(values)
-        self._lock.release()
+        with self._lock:
+            values = _dcopy(values)
 
         return values
+
+    def update_ps_curves(self, device_ids, curve_id):
+        """Queue update PS curves."""
+        if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
+            # in PRU sync off mode, append BSM function exec operation to queue
+            if isinstance(device_ids, int):
+                device_ids = (device_ids, )
+            operation = (self._bsmp_update_ps_curves, (device_ids, curve_id))
+            self._queue.append(operation)
+            return True
+        else:
+            # does nothing if PRU sync is on, regardless of sync mode.
+            return False
 
     def read_ps_curves(self, device_ids, curve_id):
         """Return PS curves."""
         # NOTE: Part of BSMP curves implementation to be used in the future.
         # process device_ids
         if isinstance(device_ids, int):
-            dev_ids = (device_ids, )
-        else:
-            dev_ids = device_ids
+            device_ids = (device_ids, )
 
         # gather selected data
         with self._lock:
             curves = _dcopy(self._ps_curves[curve_id])
 
         dev_curves = dict()
-        for id in dev_ids:
+        for id in device_ids:
             dev_curves[id] = curves[id]
-
         return dev_curves
+
+    def write_ps_curve(self, device_ids, curve_id, data):
+        """Write PS curves."""
+        if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
+            # in PRU sync off mode, append BSM function exec operation to queue
+            if isinstance(device_ids, int):
+                device_ids = (device_ids, )
+            operation = (self._bsmp_write_ps_curves,
+                         (device_ids, curve_id, data))
+            self._queue.append(operation)
+            return True
+        else:
+            return False
 
     def exec_functions(self, device_ids, function_id, args=None):
         """
@@ -407,18 +427,7 @@ class PRUController:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
 
-    def update_ps_curves(self, device_ids, curve_id):
-        """Read PS curve."""
-        if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
-            # in PRU sync off mode, append BSM function exec operation to queue
-            if isinstance(device_ids, int):
-                device_ids = (device_ids, )
-            operation = (self._bsmp_update_ps_curves, (device_ids, curve_id))
-            self._queue.append(operation)
-            return True
-        else:
-            # does nothing if PRU sync is on, regardless of sync mode.
-            return False
+
 
     # --- public methods: access to PRU properties ---
 
@@ -805,25 +814,51 @@ class PRUController:
 
     # --- private methods: BSMP UART communications ---
 
+    def _bsmp_get_ps_curve_sizes(self, device_ids):
+        time0 = _time.time()
+        sizes = dict()
+        try:
+            for id in device_ids:
+                udc = self._udc[id]
+                _, start = udc.read_variable(
+                    self.params.ConstBSMP.V_WFMREF_START)
+                _, end = udc.read_variable(
+                    self.params.ConstBSMP.V_WFMREF_END)
+                size = 1 + (end - start) // 2
+                sizes[id] = size
+            return sizes
+        except (_SerialError, IndexError):
+            tstamp = _time.time()
+            dtime = tstamp - time0
+            operation = ('CS', tstamp, dtime, device_ids, True)
+            self._last_operation = operation
+            self._serial_error(device_ids)
+
+
     def _bsmp_update_ps_curves(self, device_ids, curve_id):
         """Read curve from devices."""
         time0 = _time.time()
         curves = dict()
         try:
+            sizes = self._bsmp_get_ps_curve_sizes(device_ids)
+            if len(sizes) != len(device_ids):
+                raise _SerialError
             for id in device_ids:
-                curves[id] = []
                 udc = self._udc[id]
                 curve_entity = udc.entities.curves[curve_id]
-                for block in range(curve_entity.nblocks):
+                indices = curve_entity.get_indices(sizes[id])
+                curves[id] = _np.zeros(sizes[id])
+                print(indices)
+                for block, idx in enumerate(indices):
                     _, data = udc.read_curve_block(
                         curve_id=curve_id,
                         block=block,
                         timeout=self._delay_read_curve)
-                    curves[id] = _np.hstack((curves[id], data))
+                    curves[id][idx] = data
         except (_SerialError, IndexError):
             tstamp = _time.time()
             dtime = tstamp - time0
-            operation = ('C', tstamp, dtime, device_ids, True)
+            operation = ('CR', tstamp, dtime, device_ids, True)
             self._last_operation = operation
             self._serial_error(device_ids)
 
@@ -831,6 +866,33 @@ class PRUController:
         with self._lock:
             for id in device_ids:
                 self._ps_curves[curve_id][id] = curves[id]
+
+    def _bsmp_write_ps_curves(self, device_ids, curve_id, data):
+        """Write curve to devices."""
+        time0 = _time.time()
+        try:
+            for id in device_ids:
+                # process how data is going to be sent
+                udc = self._udc[id]
+                curve_entity = udc.entities.curves[curve_id]
+                indices = curve_entity.get_indices(len(data))
+                # send curve data to bsmp devices
+                for block, idx in enumerate(indices):
+                    datum = data[idx[0]:idx[1]]
+                    udc.write_curve_block(
+                        curve_id=curve_id, block=block, value=datum,
+                        timeout=self._delay_write_curve)
+                    # _time.sleep(0.005)  # NOTE: necessary?
+        except (_SerialError, IndexError):
+            tstamp = _time.time()
+            dtime = tstamp - time0
+            operation = ('CW', tstamp, dtime, device_ids, True)
+            self._last_operation = operation
+            self._serial_error(device_ids)
+
+        # reset wfmref in bsmp devs
+        function_id = self._params.ConstBSMP.F_RESET_WFMREF
+        self._bsmp_exec_function(device_ids, function_id)
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).
@@ -889,10 +951,10 @@ class PRUController:
         # print('time1: ', _time.time() - t0)
 
         # --- make copy of state for updating
-        self._lock.acquire()
-        copy_var_vals = _dcopy(self._variables_values)
-        # copy_var_vals = self._variables_values
-        self._lock.release()
+        with self._lock:
+            copy_var_vals = _dcopy(self._variables_values)
+            # copy_var_vals = self._variables_values
+
         # processing time up to this point: 18.3 ms @ BBB1
         # processing time up to this point (w/o locks): 17.1 ms @ BBB1
         # processing time up to this point (w/o locks,dcopy): 9.0 ms @ BBB1
@@ -1128,8 +1190,9 @@ class PRUController:
         # TODO: try max_id =max([max(self._params.groups[gid]) for gid in gids)
         max_id = max([max(self._params.groups[gid]) for gid in gids[3:]])
         dev_variables = [None, ] * (1 + max_id)
-        self._variables_values = \
-            {id: dev_variables[:] for id in self._device_ids}
+        with self._lock:
+            self._variables_values = \
+                {id: dev_variables[:] for id in self._device_ids}
 
         # read all variable from BSMP devices
         self._bsmp_update_variables(device_ids=self._device_ids,
