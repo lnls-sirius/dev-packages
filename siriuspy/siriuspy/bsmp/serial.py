@@ -84,13 +84,8 @@ class Package:
     Checksum: package checksum
     """
 
-    # TODO: think about the name "address"...
-
-    # Constructors
     def __init__(self, stream):
         """Build a BSMP package."""
-        # if address < 0 or address > 31:
-        #     raise ValueError("Address {} out of range.".format(address))
         if len(stream) < 5:
             raise _SerialErrPckgLen("BSMP Package too short.")
         if not Package.verify_checksum(stream):
@@ -126,22 +121,19 @@ class Package:
 
     @property
     def message(self):
-        """Package message."""
+        """Return package message."""
         return self._message
 
     @property
     def checksum(self):
-        """Package checksum."""
+        """Return package checksum."""
         return self._checksum
 
     @staticmethod
     def calc_checksum(stream):
         """Return stream checksum."""
-        counter = 0
-        i = 0
-        while (i < len(stream)):
-            counter += ord(stream[i])
-            i += 1
+        streambytes = [ord(s) for s in stream]
+        counter = sum(streambytes)
         counter = (counter & 0xFF)
         counter = (256 - counter) & 0xFF
         return counter
@@ -149,20 +141,14 @@ class Package:
     @staticmethod
     def verify_checksum(stream):
         """Verify stream checksum."""
-        counter = 0
-        i = 0
-        while (i < len(stream) - 1):
-            counter += ord(stream[i])
-            i += 1
+        streambytes = [ord(s) for s in stream[:-1]]
+        counter = sum(streambytes)
         counter = (counter & 0xFF)
         counter = (256 - counter) & 0xFF
-        if (stream[len(stream) - 1] == chr(counter)):
-            return(True)
+        if stream[len(stream) - 1] == chr(counter):
+            return True
         else:
-            return(False)
-
-
-# import traceback as _traceback
+            return False
 
 
 class Channel:
@@ -184,8 +170,8 @@ class Channel:
     def read(self):
         """Read from serial."""
         resp = self.serial.UART_read()
-        # print('read: ', resp)
-        # print()
+        # print('read resp ({}): '.format(
+        #     len(resp)), [hex(ord(c)) for c in resp])
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
@@ -194,27 +180,32 @@ class Channel:
     def write(self, message, timeout=100):
         """Write to serial."""
         stream = Package.package(self.address, message).stream
-        # print('write query: ', [hex(ord(c)) for c in stream])
+        # print('write query : ', [hex(ord(c)) for c in stream])
         response = self.serial.UART_write(stream, timeout=timeout)
         return response
 
-    def request(self, message, timeout=100):
+    def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
         # This lock is important in order to avoid threads in the same process
-        # space to read each other's responses. Still it does not prevent
-        # different instances of channel objects running in separate processes
-        # to read ech other's responses. For the PRUController case, for
-        # example, a global lock should be implemented as to allow only one
-        # instance of the class object to exist.
-        Channel._lock.acquire(blocking=True)
-        try:
+        # space to read each other's responses.
+        #
+        # Channel._lock.acquire(blocking=True)
+        # try:
+        #     self.write(message, timeout)
+        #     if read_flag:
+        #         response = self.read()
+        #     else:
+        #         package = Package([])
+        #         response = package.message
+        # except _SerialError:
+        #     Channel._lock.release()
+        #     raise
+        # Channel._lock.release()
+        # return response
+        with Channel._lock:
             self.write(message, timeout)
-            ret = self.read()
-        except _SerialError:
-            # print('---')
-            # _traceback.print_exc()
-            # print('---')
-            Channel._lock.release()
-            raise
-        Channel._lock.release()
-        return ret
+            if read_flag:
+                response = self.read()
+            else:
+                response = Message([chr(0xE0), chr(0), chr(0)])  # arbitrary 0xE0 (OK) response
+            return response

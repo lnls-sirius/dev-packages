@@ -165,51 +165,86 @@ class BSMP:
         """Read curve block. Command 0x40."""
         curve = self.entities.curves[curve_id]
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8
-        m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
-        # print([hex(ord(c)) for c in m.stream])
-        response = self.channel.request(m, timeout)
-        # print(response.cmd)
-        load = response.payload
-        data = load[3:]
-        # print('load len: ', len(load))
-        if response.cmd == 0x41:
-            # print('here1', len(data), curve.size)
-            if len(data) == curve.size:
-                # print('here2')
-                cid = ord(load[0])
-                cblock = ord(load[1]) << 8 + ord(load[0])
-                if cid != curve_id or cblock != block:
-                    print('Invalid curve id or block number in response!')
-                    print('expected: ', curve_id, block)
-                    print('received: ', cid, cblock)
-                    return None, None
-                else:
-                    # print('here4')
-                    return Response.ok, curve.load_to_value(data)
-        else:
-            # print('here5')
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+        payload = [chr(curve_id), chr(hsb), chr(lsb)]
+        message = _Message.message(0x40, payload=payload)
+        response = self.channel.request(message, timeout)
+        payload, cmd = response.payload, response.cmd
 
-        return None, None
+        if cmd != 0x41:
+            print('Incorrect response: ', hex(cmd))
+            if cmd > 0xE0 and cmd <= 0xE8:
+                return cmd, None
+            else:
+                print('Unknown response!')
+                return None, None
 
-    def write_curve_block(self, curve_id, block, value):
+        # OK response 0x41
+        cid = ord(payload[0])
+        cblock = (ord(payload[1]) << 8) + ord(payload[2])
+        data = payload[3:]
+        if len(data) % curve.type.size:
+            print('Curve size is not multiple of curve.type.size!')
+            print(' received curve size:{}'.format(len(data)))
+            print(' curve.type.size:{}'.format(curve.type.size))
+            return None, None
+
+        # OK curve size
+        if cid != curve_id or cblock != block:
+            print('Invalid curve id or block offset in response!')
+            print(' expected - curve_id:{}, block_offset:{}'.format(
+                curve_id, block))
+            print(' received - curve_id:{}, block_offset:{}'.format(
+                cid, cblock))
+            return None, None
+
+        # OK curve id and block off
+        data_float = curve.load_to_value(data)
+        return Response.ok, data_float
+
+    def write_curve_block(self, curve_id, block, value, timeout):
         """Write to curve block. Command 0x41."""
-        raise NotImplementedError()
+        curve = self.entities.curves[curve_id]
+        lsb, hsb = block & 0xff, (block & 0xff00) >> 8
+        payload = [chr(curve_id), chr(hsb), chr(lsb)] + \
+            curve.value_to_load(value)
 
-    def calc_curve_checksum(self, curve_id):
+        message = _Message.message(0x41, payload=payload)
+
+        # dev_id = 1
+        # package = _Package.package(dev_id, message)
+        # print('write query : ', [hex(ord(c)) for c in package.stream])
+        # return
+
+        response = self.channel.request(message, timeout)
+
+        if response.cmd > 0xE0 and response.cmd <= 0xE8:
+            return response.cmd, None
+        else:
+            return response.cmd, response.payload
+
+    def calc_curve_checksum(self, curve_id, timeout):
         """Recalculate curve checksum. Command 0x42."""
-        raise NotImplementedError()
+        payload = [chr(curve_id), ]
+        message = _Message.message(0x42, payload=payload)
+        response = self.channel.request(message, timeout)
+        if response.cmd > 0xE0 and response.cmd <= 0xE8:
+            return response.cmd, None
+        else:
+            return response.cmd, response.payload
 
     # 0x5_
-    def execute_function(self, func_id, input_val=None, timeout=100):
-        """Execute a function. Command 0x50."""
+    def execute_function(self,
+                         func_id, input_val=None, timeout=100, read_flag=True):
+        """Execute a function. Command 0x50.
+
+        parameter:
+            read_flag: whether to execute a read after a write.
+        """
         function = self.entities.functions[func_id]
         # Load = function id + input data
         load = [chr(func_id)] + function.value_to_load(input_val)
-        m = _Message.message(0x50, payload=load)
-        response = self.channel.request(m, timeout)
-        # TODO: slave can also return and error message (0xE3 or 0xE5)
+        message = _Message.message(0x50, payload=load)
+        response = self.channel.request(message, timeout, read_flag=read_flag)
         if response.cmd == 0x51:
             # result of the execution
             if len(response.payload) == function.o_size:
@@ -219,7 +254,7 @@ class BSMP:
             if len(response.payload) == 1:
                 # TODO: the tuple order of return seems to be inverted!
                 return response.payload, None
-        return None, None  # reached in case of serial comm error?
+        return None, None  # reached in case of functions with no return
 
 
 class BSMPSim:
@@ -248,7 +283,6 @@ class BSMPSim:
     def read_group_variables(self, group_id, timeout):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
-        # print('here')
         values = [self.read_variable(id)[1] for id in ids]
         return Response.ok, values
 
@@ -297,6 +331,7 @@ class BSMPSim:
         return None, None
 
     # 0x5_
-    def execute_function(self, func_id, input_val=None, timeout=100):
+    def execute_function(self,
+                         func_id, input_val=None, timeout=100, read_flag=True):
         """Execute a function."""
         raise NotImplementedError()
