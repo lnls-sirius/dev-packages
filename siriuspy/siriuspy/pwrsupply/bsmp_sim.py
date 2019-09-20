@@ -623,7 +623,7 @@ class _BaseBSMPSim(_BSMPSim):
             _t.sleep(1e-1)
         return _Response.ok, self._state.read_variable(self._variables, var_id)
 
-    def execute_function(self, func_id, input_val=None):
+    def execute_function(self, func_id, input_val=None, read_flag=True):
         """Execute a function."""
         # Switch FBP func ids
         if func_id == self._c.F_TURN_ON:

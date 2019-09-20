@@ -49,7 +49,8 @@ class PSCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.read_ps_curves(self.device_id, self.curve_id)
+        data = self.pru_controller.read_ps_curves(
+            self.device_id, self.curve_id)
         data = data[self.device_id]
         return data
 
