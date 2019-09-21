@@ -8,7 +8,7 @@ from threading import Thread as _Thread
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
-from siriuspy.bsmp import Response as _Response
+from siriuspy.bsmp import Const as _BSMPConst
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
@@ -621,7 +621,7 @@ class _BaseBSMPSim(_BSMPSim):
         """Read variable."""
         while self._pru.sync_block:
             _t.sleep(1e-1)
-        return _Response.ok, self._state.read_variable(self._variables, var_id)
+        return _BSMPConst.ACK_OK, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None, read_flag=True):
         """Execute a function."""
@@ -656,13 +656,13 @@ class _BaseBSMPSim(_BSMPSim):
         elif func_id == self._c.F_DISABLE_SIGGEN:
             self._state.disable_siggen(self._variables)
 
-        return _Response.ok, None
+        return _BSMPConst.ACK_OK, None
 
     def read_curve_block(self, curve_id, block, timeout):
         """Read curve block."""
         self._curves = self._get_init_curves()
         curveblock = self._curves[curve_id]
-        return _Response.ok, curveblock
+        return _BSMPConst.ACK_OK, curveblock
 
     def _is_on(self):
         ps_status = self._variables[self._c.V_PS_STATUS]

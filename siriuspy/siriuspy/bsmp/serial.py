@@ -1,13 +1,11 @@
 """BSMP serial communications classes."""
+
 import struct as _struct
-from .exceptions import SerialError as _SerialError
+from threading import Lock as _Lock
 from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
 from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
 from .exceptions import SerialErrMsgShort as _SerialErrMsgShort
-from threading import Lock as _Lock
-
-# TODO: rename module to 'channel.py' ?
 
 
 class Message:
@@ -77,7 +75,7 @@ class Message:
 
 
 class Package:
-    """BSMP package.
+    """BSMP Package.
 
     Address: 1 byte, 0..31
     Message: no limit
@@ -152,9 +150,9 @@ class Package:
 
 
 class Channel:
-    """Serial communication channel.
+    """BSMP Channel.
 
-    The channel is defined by a sender serial controller and recipient
+    The channel is defined by a sender pru controller and recipient
     address.
     """
 
@@ -162,14 +160,24 @@ class Channel:
 
     _lock = _Lock()
 
-    def __init__(self, serial, address):
+    def __init__(self, pru, address):
         """Set channel."""
-        self.serial = serial  # serial controller of the device
-        self.address = address  # address of recipient device.
+        self._pru = pru  # PRU object to communicate with bsmp device
+        self._address = address  # address of recipient device.
+
+    @property
+    def pru(self):
+        """Reurn PRU serial communication object."""
+        return self._pru
+
+    @property
+    def address(self):
+        """Return attached bsmp device id."""
+        return self._address
 
     def read(self):
         """Read from serial."""
-        resp = self.serial.UART_read()
+        resp = self.pru.UART_read()
         # print('read resp ({}): '.format(
         #     len(resp)), [hex(ord(c)) for c in resp])
         if not resp:
@@ -179,9 +187,9 @@ class Channel:
 
     def write(self, message, timeout=100):
         """Write to serial."""
-        stream = Package.package(self.address, message).stream
+        stream = Package.package(self._address, message).stream
         # print('write query : ', [hex(ord(c)) for c in stream])
-        response = self.serial.UART_write(stream, timeout=timeout)
+        response = self.pru.UART_write(stream, timeout=timeout)
         return response
 
     def request(self, message, timeout=100, read_flag=True):

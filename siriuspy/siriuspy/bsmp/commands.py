@@ -3,39 +3,76 @@ from .serial import Channel as _Channel
 from .serial import Message as _Message
 
 
-class Response:
-    """BSMP constants."""
+class Const:
+    """BSMP Commands."""
 
-    ok = 0xE0
-    invalid_message = 0xE1
-    operation_not_supported = 0xE2
-    invalid_id = 0xE3
-    invalid_value = 0xE4
-    invalid_data_length = 0xE5
-    read_only = 0xE6
-    insufficient_memory = 0xE7
-    busy_resource = 0xE8
+    # --- Query Commands ---
+    QUERY_PROTOCOL_VERSION = 0x00
+    PROTOCOL_VERSION = 0x01
+    QUERY_LIST_OF_VARIABLES = 0x02
+    LIST_OF_VARIABLE = 0x03
+    QUERY_LIST_OF_GROUP_OF_VARIABLES = 0x04
+    LIST_OF_GROUP_OF_VARIABLES = 0x05
+    QUERY_GROUP_OF_VARIABLES = 0x06
+    GROUP_OF_VARIABLES = 0x07
+    QUERY_LIST_OF_CURVES = 0x08
+    LIST_OF_CURVES = 0x09
+    QUERY_CURVE_CHECKSUM = 0x0A
+    CURVE_CHECKSUM = 0x0B
+    QUERY_LIST_OF_FUNCTIONS = 0x0C
+    LIST_OF_FUNCTIONS = 0x0D
+    # --- Reading Commands ---
+    READ_VARIABLE = 0x10
+    VARIABLE_VALUE = 0x11
+    READ_GROUP_OF_VARIABLES = 0x12
+    GROUP_OF_VARIABLES_VALUE = 0x13
+    # --- Writing Commands ---
+    WRITE_VARIABLE = 0x20
+    WRITE_GROUP_OF_VARIABLES = 0x22
+    BINARY_OPERATION_IN_A_VARIABLE = 0x24
+    BINARY_OPERATION_IN_A_GROUP = 0x26
+    WRITE_AND_READ_VARIABLES = 0x28
+    # --- Group of Variables Manipulation Commnads ---
+    CREATE_GROUP_OF_VARIABLES = 0x30
+    REMOVE_ALL_GROUPS_OF_VARIABLES = 0x32
+    # --- Curve Transfer Commands ---
+    REQUEST_CURVE_BLOCK = 0x40
+    CURVE_BLOCK = 0x41
+    RECALCULATE_CURVE_CHECKSUM = 0x42
+    # --- Function Execution Commands ---
+    EXECUTE_FUNCTION = 0x50
+    FUNCTION_RETURN = 0x51
+    FUNCTION_ERROR = 0x53
+    # --- Error Commands ---
+    ACK_OK = 0xE0
+    ACK_MALFORMED_MESSAGE = 0xE1
+    ACK_OPERATION_NOT_SUPPORTED = 0xE2
+    ACK_INVALID_ID = 0xE3
+    ACK_INVALID_VALUE = 0xE4
+    ACK_INVALID_PAYLOAD_SIZE = 0xE5
+    ACK_READ_ONLY = 0xE6
+    ACK_INSUFFICIENT_MEMORY = 0xE7
+    ACK_RESOURCE_BUSY = 0xE8
 
 
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
-    def __init__(self, serial, slave_address, entities):
+    const = Const
+
+    def __init__(self, pru, slave_address, entities):
         """Constructor."""
-        self._channel = _Channel(serial, slave_address)
-        # self._variables = self.read_variables_list()
         self._entities = entities
-        # Variables group cache
-        self._group_cache = dict()
+        self._channel = _Channel(pru, slave_address)
 
     @property
     def entities(self):
-        """BSMP entities."""
+        """Return BSMP entities."""
         return self._entities
 
     @property
     def channel(self):
-        """Serial channel to an address."""
+        """Return serial channel to an address."""
         return self._channel
 
     # 0x0_
@@ -55,17 +92,23 @@ class BSMP:
         raise NotImplementedError()
 
     def consult_group_variables(self, group_id, timeout):
-        """Return id of the variables in the given group. Command 0x06."""
-        # Send requestG package
-        m = _Message.message(0x06, payload=[chr(group_id)])
-        response = self.channel.request(m, timeout)
-        # Check for errors
-        if response.cmd == 0x07:
-            return Response.ok, list(map(ord, response.payload))
-        else:  # Error
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+        """Return id of the variables in the given group."""
+        # Send request package
+        msg = _Message.message(Const.QUERY_GROUP_OF_VARIABLES,
+                               payload=[chr(group_id)])
+        response = self.channel.request(msg, timeout)
 
+        # expected response
+        if response.cmd == Const.GROUP_OF_VARIABLES:
+            return Const.ACK_OK, list(map(ord, response.payload))
+
+        # response with error
+        if Const.ACK_OK < response.cmd <= Const.ACK_RESOURCE_BUSY:
+            return response.cmd, None
+
+        # unexpected response
+        fmts = 'Unexpected BSMP response for {} command: {}!'
+        print(fmts.format(Const.GROUP_OF_VARIABLES, response.cmd))
         return None, None
 
     def consult_curves_list(self):
@@ -82,16 +125,25 @@ class BSMP:
 
     # 0x1_
     def read_variable(self, var_id, timeout=100):
-        """Read variable. (0x10)."""
+        """Read variable."""
         variable = self.entities.variables[var_id]
-        m = _Message.message(0x10, payload=[chr(var_id)])
-        response = self.channel.request(m, timeout=timeout)  # Returns a msg
-        if response.cmd == 0x11:  # Ok
+
+        # Send request package
+        msg = _Message.message(Const.READ_VARIABLE, payload=[chr(var_id)])
+        response = self.channel.request(msg, timeout=timeout)
+
+        if response.cmd == Const.VARIABLE_VALUE:
             if len(response.payload) == variable.size:
-                return Response.ok, variable.load_to_value(response.payload)
-        else:  # Error
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+                # expected response
+                return Const.ACK_OK, variable.load_to_value(response.payload)
+            # unexpected variable size
+            fmts = 'Unexpected BSMP variable size for {} command: {}!'
+            print(fmts.format(Const.READ_VARIABLE, response.cmd))
+            return None, None
+
+        # unexpected response
+        fmts = 'Unexpected BSMP variable size for {} command: {}!'
+        print(fmts.format(Const.READ_VARIABLE, response.cmd))
         return None, None
 
     def read_group_variables(self, group_id, timeout):
@@ -102,7 +154,7 @@ class BSMP:
         # read_group_variables takes typically 3 ms to run up to this at BBB1!
         if response.cmd == 0x13:
             if len(response.payload) == group.variables_size():
-                return Response.ok, group.load_to_value(response.payload)
+                return Const.ACK_OK, group.load_to_value(response.payload)
         else:
             if response.cmd > 0xE0 and response.cmd <= 0xE8:
                 return response.cmd, None
@@ -118,11 +170,11 @@ class BSMP:
         """Write to the variables of a group. Command 0x22."""
         raise NotImplementedError()
 
-    def binop_variable(self, var_id, op, mask):
+    def binop_variable(self, var_id, operation, mask):
         """Perform a binary operation to variable. Command 0x24."""
         raise NotImplementedError()
 
-    def binop_group_variables(self, group_id, op, mask):
+    def binop_group_variables(self, group_id, operation, mask):
         """Perform a binary oeration to the vars of a group. Command 0x26."""
         raise NotImplementedError()
 
@@ -139,7 +191,7 @@ class BSMP:
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
                 self.entities.add_group(var_ids)
-                return Response.ok, None
+                return Const.ACK_OK, None
         else:
             if response.cmd > 0xE0 and response.cmd <= 0xE8:
                 return response.cmd, None
@@ -153,7 +205,7 @@ class BSMP:
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
                 self.entities.remove_all_groups()
-                return Response.ok, None
+                return Const.ACK_OK, None
         else:
             if response.cmd > 0xE0 and response.cmd <= 0xE8:
                 return response.cmd, None
@@ -199,7 +251,7 @@ class BSMP:
 
         # OK curve id and block off
         data_float = curve.load_to_value(data)
-        return Response.ok, data_float
+        return Const.ACK_OK, data_float
 
     def write_curve_block(self, curve_id, block, value, timeout):
         """Write to curve block. Command 0x41."""
@@ -248,7 +300,7 @@ class BSMP:
         if response.cmd == 0x51:
             # result of the execution
             if len(response.payload) == function.o_size:
-                return Response.ok, function.load_to_value(response.payload)
+                return Const.ACK_OK, function.load_to_value(response.payload)
         elif response.cmd == 0x53:
             # function error
             if len(response.payload) == 1:
@@ -278,24 +330,24 @@ class BSMPSim:
     def read_variable(self, var_id, timeout=100):
         """Read a variable."""
         # print(var_id)
-        return Response.ok, self._variables[var_id]
+        return Const.ACK_OK, self._variables[var_id]
 
     def read_group_variables(self, group_id, timeout):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
         values = [self.read_variable(id)[1] for id in ids]
-        return Response.ok, values
+        return Const.ACK_OK, values
 
     # 0x3_
     def create_group(self, var_ids, timeout):
         """Create new group."""
         self.entities.add_group(var_ids)
-        return Response.ok, None
+        return Const.ACK_OK, None
 
     def remove_all_groups(self, timeout):
         """Remove all groups."""
         self.entities.remove_all_groups()
-        return Response.ok, None
+        return Const.ACK_OK, None
 
     # 0x4_
     def read_curve_block(self, curve_id, block, timeout):
@@ -322,7 +374,7 @@ class BSMPSim:
                     return None, None
                 else:
                     # print('here4')
-                    return Response.ok, curve.load_to_value(data)
+                    return Const.ACK_OK, curve.load_to_value(data)
         else:
             # print('here5')
             if response.cmd > 0xE0 and response.cmd <= 0xE8:

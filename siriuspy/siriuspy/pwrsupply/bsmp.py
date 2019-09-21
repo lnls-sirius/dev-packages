@@ -935,43 +935,12 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
-
 
 class EntitiesFAC_DCDC(EntitiesPS):
     """FAC-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FAC-specific variables
+    Variables = EntitiesPS.Variables + (
+        # --- FAC_DCDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -991,57 +960,14 @@ class EntitiesFAC_DCDC(EntitiesPS):
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-    )
-
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 
 class EntitiesFAC_2P4S_DCDC(EntitiesPS):
-    """FAC-2P4S-type power supply entities."""
+    """FAC_2P4S-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FAC-2P4S-specific variables
+    Variables = EntitiesPS.Variables + (
+        # --- FAC_2P4S-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -1073,57 +999,14 @@ class EntitiesFAC_2P4S_DCDC(EntitiesPS):
         {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-    )
-
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
 
 
 class EntitiesFAC_2S_DCDC(EntitiesPS):
-    """FAC-2S-type power supply entities."""
+    """FAC_2S-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FAC-2S-specific variables
+    Variables = EntitiesPS.Variables + (
+        # --- FAC_2S_DCDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -1152,57 +1035,14 @@ class EntitiesFAC_2S_DCDC(EntitiesPS):
         {'eid': 50, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 51, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-    )
-
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
+        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 
 class EntitiesFAP(EntitiesPS):
     """FAP-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FBP-specific variables
+    Variables = EntitiesPS.Variables + (
+        # --- FAP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -1225,21 +1065,7 @@ class EntitiesFAP(EntitiesPS):
         {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32}, )
-
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 
 class EntitiesFAP_4P(EntitiesFAP):
@@ -1247,36 +1073,9 @@ class EntitiesFAP_4P(EntitiesFAP):
 
 
 class EntitiesFAP_2P2S(EntitiesPS):
-    """FAP-type power supply entities."""
+    """FAP_2P2S-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+    Variables = EntitiesPS.Variables + (
         # --- FAP_2P2S-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1360,55 +1159,15 @@ class EntitiesFAP_2P2S(EntitiesPS):
         {'eid': 104, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
 
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
-
 
 # --- ACDC ---
 
 
 class EntitiesFBP_DCLink(EntitiesPS):
-    """FBP DCLink-type power supplies entities."""
+    """FBP_DCLink-type power supplies entities."""
 
-    Variables = (
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FBP DCLINK-specific variables
+    Variables = EntitiesPS.Variables + (
+        # --- FBP_DCLINK-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1419,46 +1178,11 @@ class EntitiesFBP_DCLink(EntitiesPS):
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
     )
 
-    Curves = tuple()
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
-
 
 class EntitiesFAC_2S_ACDC(EntitiesPS):
     """FAC_2S_ACDC-type power supply entities."""
 
-    Variables = (
-        # --- common variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+    Variables = EntitiesPS.Variables + (
         # --- FAC_2S_ACDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1478,22 +1202,10 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
         {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-    )
-
-    Curves = tuple()
-
-    # Functions = _PSBSMP_Functions
-
-    # def __init__(self):
-    #     """Call super."""
-    #     super().__init__(self.Variables, self.Curves, self.Functions)
-
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     """FAC_2P4S_ACDC-type power supply entities."""
-
-    pass
 
 
 class PSBSMP(_BSMP):
@@ -1507,8 +1219,6 @@ class PSBSMP(_BSMP):
             self.pru = _PRU()
         else:
             self.pru = pru
-        # turn sync mode off
-        # self.pru.sync_stop()
         super().__init__(self.pru, slave_address, entities)
 
     @property
@@ -1539,12 +1249,11 @@ class PSBSMP(_BSMP):
         curve_id = 0 if curve_id == 1 else 0
         self._bsmp_curve_write(curve_id, curve)
 
-
-
     def bufsamplesctom_read(self):
         """."""
         curve = self._bsmp_curve_read(curve_id=2)
         return curve
+
 
     def _bsmp_curve_read(self, curve_id):
         curve_entity = self.entities.curves[curve_id]

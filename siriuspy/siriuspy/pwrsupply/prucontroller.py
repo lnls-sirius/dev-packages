@@ -12,7 +12,7 @@ from threading import Thread as _Thread
 from threading import Lock as _Lock
 import numpy as _np
 
-from siriuspy.bsmp import Response as _Response, SerialError as _SerialError
+from siriuspy.bsmp import Const as _BSMPConst, SerialError as _SerialError
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
@@ -951,7 +951,7 @@ class PRUController:
         nr_devs = len(self.device_ids)
         var_ids = self._params.groups[group_id]
         for id in device_ids:
-            if ack[id] == _Response.ok:
+            if ack[id] == _BSMPConst.ACK_OK:
                 self._connected[id] = True
                 values = data[id]
                 for i in range(len(values)):
@@ -991,7 +991,7 @@ class PRUController:
                 #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
 
-            elif ack[id] == _Response.invalid_id:
+            elif ack[id] == _BSMPConst.ACK_INVALID_ID:
                 self._connected[id] = False
                 self._create_groups(id)
             else:
@@ -1073,7 +1073,7 @@ class PRUController:
         # --- check if all function executions succeeded.
         success = True
         for id in device_ids:
-            connected = (ack[id] == _Response.ok)
+            connected = (ack[id] == _BSMPConst.ACK_OK)
             self._connected[id] == connected
             success &= connected
 

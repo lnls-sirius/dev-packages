@@ -147,7 +147,7 @@ class PRUInterface:
     def _UART_write(self, stream, timeout):
         raise NotImplementedError
 
-    def _UART_read(self, stream):
+    def _UART_read(self):
         raise NotImplementedError
 
     def _curve(self, curve1, curve2, curve3, curve4, block):
