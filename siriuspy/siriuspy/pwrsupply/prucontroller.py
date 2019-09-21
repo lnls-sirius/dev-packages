@@ -8,9 +8,9 @@ at the other end of the serial line.
 import time as _time
 # import random as _random
 from copy import deepcopy as _dcopy
-import numpy as _np
 from threading import Thread as _Thread
 from threading import Lock as _Lock
+import numpy as _np
 
 from siriuspy.bsmp import Response as _Response, SerialError as _SerialError
 
@@ -818,14 +818,9 @@ class PRUController:
         time0 = _time.time()
         sizes = dict()
         try:
-            for id in device_ids:
-                udc = self._udc[id]
-                _, start = udc.read_variable(
-                    self.params.ConstBSMP.V_WFMREF_START)
-                _, end = udc.read_variable(
-                    self.params.ConstBSMP.V_WFMREF_END)
-                size = 1 + (end - start) // 2
-                sizes[id] = size
+            for dev_id in device_ids:
+                psbsmp = self._udc[dev_id]
+                sizes[dev_id] = psbsmp.wfmref_size
             return sizes
         except (_SerialError, IndexError):
             tstamp = _time.time()
@@ -833,7 +828,6 @@ class PRUController:
             operation = ('CS', tstamp, dtime, device_ids, True)
             self._last_operation = operation
             self._serial_error(device_ids)
-
 
     def _bsmp_update_ps_curves(self, device_ids, curve_id):
         """Read curve from devices."""
@@ -843,18 +837,10 @@ class PRUController:
             sizes = self._bsmp_get_ps_curve_sizes(device_ids)
             if len(sizes) != len(device_ids):
                 raise _SerialError
-            for id in device_ids:
-                udc = self._udc[id]
-                curve_entity = udc.entities.curves[curve_id]
-                indices = curve_entity.get_indices(sizes[id])
-                curves[id] = _np.zeros(sizes[id])
-                print(indices)
-                for block, idx in enumerate(indices):
-                    _, data = udc.read_curve_block(
-                        curve_id=curve_id,
-                        block=block,
-                        timeout=self._delay_read_curve)
-                    curves[id][idx] = data
+            for dev_id in device_ids:
+                psbsmp = self._udc[dev_id]
+                curve = psbsmp.wfmref_get(curve_id=0)
+                curves[dev_id] = curve
         except (_SerialError, IndexError):
             tstamp = _time.time()
             dtime = tstamp - time0
@@ -864,22 +850,22 @@ class PRUController:
 
         # update
         with self._lock:
-            for id in device_ids:
-                self._ps_curves[curve_id][id] = curves[id]
+            for dev_id in device_ids:
+                self._ps_curves[curve_id][dev_id] = curves[dev_id]
 
     def _bsmp_write_ps_curves(self, device_ids, curve_id, data):
         """Write curve to devices."""
         time0 = _time.time()
         try:
-            for id in device_ids:
+            for dev_id in device_ids:
                 # process how data is going to be sent
-                udc = self._udc[id]
-                curve_entity = udc.entities.curves[curve_id]
+                psbsmp = self._udc[dev_id]
+                curve_entity = psbsmp.entities.curves[curve_id]
                 indices = curve_entity.get_indices(len(data))
                 # send curve data to bsmp devices
                 for block, idx in enumerate(indices):
                     datum = data[idx[0]:idx[1]]
-                    udc.write_curve_block(
+                    psbsmp.write_curve_block(
                         curve_id=curve_id, block=block, value=datum,
                         timeout=self._delay_write_curve)
                     # _time.sleep(0.005)  # NOTE: necessary?
