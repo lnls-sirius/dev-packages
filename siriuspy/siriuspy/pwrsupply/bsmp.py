@@ -101,7 +101,7 @@ class ConstBSMP:
     F_RESET_COUNTERS = 18
     F_SCALE_WFMREF = 19
     F_SELECT_WFMREF = 20
-    F_SAVE_WFMREF = 21
+    F_GET_WFMREF_SIZE = 21
     F_RESET_WFMREF = 22
     F_CFG_SIGGEN = 23
     F_SET_SIGGEN = 24
@@ -727,118 +727,8 @@ class Parameters:
         return list(Parameters._parameters.keys())
 
 
-_BSMP_Functions = (
-    {'eid': ConstBSMP.F_TURN_ON,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_TURN_OFF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_OPEN_LOOP,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_CLOSE_LOOP,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_SELECT_OP_MODE,
-     'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SELECT_PS_MODEL,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_RESET_INTERLOCKS,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_REMOTE_INTERFACE,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_SET_SERIAL_ADDRESS,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SET_SERIAL_TERMINATION,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_UNLOCK_UDC,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_LOCK_UDC,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_CFG_BUF_SAMPLES,
-     'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_ENABLE_BUF_SAMPLES,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_DISABLE_BUF_SAMPLES,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_SYNC_PULSE,
-     'i_type': (), 'o_type': ()},
-    {'eid': ConstBSMP.F_SET_SLOWREF,
-     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SET_SLOWREF_FBP,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_RESET_COUNTERS,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SCALE_WFMREF,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SELECT_WFMREF,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SAVE_WFMREF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_RESET_WFMREF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_CFG_SIGGEN,
-     'i_type': (_Types.T_ENUM, _Types.T_UINT16,
-                _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SET_SIGGEN,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_ENABLE_SIGGEN,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_DISABLE_SIGGEN,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': ConstBSMP.F_SET_SLOWREF_READBACK,
-     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
-    {'eid': ConstBSMP.F_SET_SLOWREF_FBP_READBACK,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,),
-     'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,)},
-    {'eid': ConstBSMP.F_SET_PARAM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_GET_PARAM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
-     'o_type': (_Types.T_FLOAT,)},
-    {'eid': ConstBSMP.F_SAVE_PARAM_EEPROM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_LOAD_PARAM_EEPROM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SAVE_PARAM_BANK,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_LOAD_PARAM_BANK,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SET_DSP_COEFFS,
-     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_FLOAT,),  # NOTE: fix last argument!
-     'o_type': (_Types.T_FLOAT,)},
-    {'eid': ConstBSMP.F_GET_DSP_COEFF,
-     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_UINT16,),
-     'o_type': (_Types.T_FLOAT,)},
-    {'eid': ConstBSMP.F_SAVE_DSP_COEFFS_EEPROM,
-     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_LOAD_DSP_COEFFS_EEPROM,
-     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SAVE_DSP_MODULES_EEPROM,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_LOAD_DSP_MODULES_EEPROM,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_RESET_UDC,
-     'i_type': (), 'o_type': ()},
-)
-
-
-# --- DCDC ---
-
-
-class EntitiesFBP(_Entities):
-    """FBP-type power supply entities."""
+class EntitiesPS(_Entities):
+    """PS Entities."""
 
     Variables = (
         # --- common variables
@@ -867,7 +757,134 @@ class EntitiesFBP(_Entities):
         {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},)
+
+    Functions = (
+        {'eid': ConstBSMP.F_TURN_ON,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_TURN_OFF,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_OPEN_LOOP,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_CLOSE_LOOP,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_SELECT_OP_MODE,
+         'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SELECT_PS_MODEL,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_RESET_INTERLOCKS,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_REMOTE_INTERFACE,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_SET_SERIAL_ADDRESS,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SET_SERIAL_TERMINATION,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_UNLOCK_UDC,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_LOCK_UDC,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_CFG_BUF_SAMPLES,
+         'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_ENABLE_BUF_SAMPLES,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_DISABLE_BUF_SAMPLES,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_SYNC_PULSE,
+         'i_type': (), 'o_type': ()},
+        {'eid': ConstBSMP.F_SET_SLOWREF,
+         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SET_SLOWREF_FBP,
+         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_RESET_COUNTERS,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SCALE_WFMREF,
+         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SELECT_WFMREF,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_GET_WFMREF_SIZE,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_RESET_WFMREF,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_CFG_SIGGEN,
+         'i_type': (_Types.T_ENUM, _Types.T_UINT16,
+                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SET_SIGGEN,
+         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_ENABLE_SIGGEN,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_DISABLE_SIGGEN,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': ConstBSMP.F_SET_SLOWREF_READBACK,
+         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
+        {'eid': ConstBSMP.F_SET_SLOWREF_FBP_READBACK,
+         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT,),
+         'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT,)},
+        {'eid': ConstBSMP.F_SET_PARAM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_GET_PARAM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+         'o_type': (_Types.T_FLOAT,)},
+        {'eid': ConstBSMP.F_SAVE_PARAM_EEPROM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_LOAD_PARAM_EEPROM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SAVE_PARAM_BANK,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_LOAD_PARAM_BANK,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SET_DSP_COEFFS,
+         # NOTE: fix last argument!
+         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_FLOAT,),
+         'o_type': (_Types.T_FLOAT,)},
+        {'eid': ConstBSMP.F_GET_DSP_COEFF,
+         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_UINT16,),
+         'o_type': (_Types.T_FLOAT,)},
+        {'eid': ConstBSMP.F_SAVE_DSP_COEFFS_EEPROM,
+         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_LOAD_DSP_COEFFS_EEPROM,
+         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_SAVE_DSP_MODULES_EEPROM,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_LOAD_DSP_MODULES_EEPROM,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': ConstBSMP.F_RESET_UDC,
+         'i_type': (), 'o_type': ()},)
+
+    Curves = (
+        {'eid': 0, 'waccess': True, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': True, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},)
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
+
+# --- DCDC ---
+
+
+class EntitiesFBP(EntitiesPS):
+    """FBP-type power supply entities."""
+
+    Variables = EntitiesPS.Variables + (
         # --- FBP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -918,23 +935,12 @@ class EntitiesFBP(_Entities):
         {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
-
-    Functions = _BSMP_Functions
-
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC_DCDC(_Entities):
+class EntitiesFAC_DCDC(EntitiesPS):
     """FAC-type power supply entities."""
 
     Variables = (
@@ -991,20 +997,20 @@ class EntitiesFAC_DCDC(_Entities):
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
+        {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC_2P4S_DCDC(_Entities):
+class EntitiesFAC_2P4S_DCDC(EntitiesPS):
     """FAC-2P4S-type power supply entities."""
 
     Variables = (
@@ -1073,20 +1079,20 @@ class EntitiesFAC_2P4S_DCDC(_Entities):
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
+        {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC_2S_DCDC(_Entities):
+class EntitiesFAC_2S_DCDC(EntitiesPS):
     """FAC-2S-type power supply entities."""
 
     Variables = (
@@ -1152,20 +1158,20 @@ class EntitiesFAC_2S_DCDC(_Entities):
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
+        {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAP(_Entities):
+class EntitiesFAP(EntitiesPS):
     """FAP-type power supply entities."""
 
     Variables = (
@@ -1224,23 +1230,23 @@ class EntitiesFAP(_Entities):
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
+        {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
 class EntitiesFAP_4P(EntitiesFAP):
     """FAP_4P-type power supply entities."""
 
 
-class EntitiesFAP_2P2S(_Entities):
+class EntitiesFAP_2P2S(EntitiesPS):
     """FAP-type power supply entities."""
 
     Variables = (
@@ -1357,22 +1363,22 @@ class EntitiesFAP_2P2S(_Entities):
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
+        {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
 # --- ACDC ---
 
 
-class EntitiesFBP_DCLink(_Entities):
+class EntitiesFBP_DCLink(EntitiesPS):
     """FBP DCLink-type power supplies entities."""
 
     Variables = (
@@ -1415,14 +1421,14 @@ class EntitiesFBP_DCLink(_Entities):
 
     Curves = tuple()
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC_2S_ACDC(_Entities):
+class EntitiesFAC_2S_ACDC(EntitiesPS):
     """FAC_2S_ACDC-type power supply entities."""
 
     Variables = (
@@ -1477,11 +1483,11 @@ class EntitiesFAC_2S_ACDC(_Entities):
 
     Curves = tuple()
 
-    Functions = _BSMP_Functions
+    # Functions = _PSBSMP_Functions
 
-    def __init__(self):
-        """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+    # def __init__(self):
+    #     """Call super."""
+    #     super().__init__(self.Variables, self.Curves, self.Functions)
 
 
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
@@ -1490,7 +1496,7 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     pass
 
 
-class _PSBSMP(_BSMP):
+class PSBSMP(_BSMP):
     """Power supply BSMP."""
 
     _timeout_read_curve = 100
@@ -1511,11 +1517,36 @@ class _PSBSMP(_BSMP):
         _, v_beg = self.read_variable(var_id=ConstBSMP.V_WFMREF_START)
         _, v_end = self.read_variable(var_id=ConstBSMP.V_WFMREF_END)
         wfmrefsize = 1 + (v_end - v_beg) // 2
+        wfmrefsize = self.read_variable()
         return wfmrefsize
 
-    def wfmref_read(self, curve_id):
+    @property
+    def wfmref_selected(self):
         """."""
-        curve_id = 0
+        curve_id = self.read_variable(var_id=ConstBSMP.V_WFMREF_SELECTED)
+        return curve_id
+
+    def wfmref_read(self):
+        """."""
+        curve_id = self.wfmref_selected
+        curve = self._read_bsmp_curve_read(curve_id=curve_id)
+        return curve
+
+    def wfmref_write(self, curve):
+        """."""
+        # select the other curve_id
+        curve_id = self.wfmref_selected
+        curve_id = 0 if curve_id == 1 else 0
+        self._bsmp_curve_write(curve_id, curve)
+
+
+
+    def bufsamplesctom_read(self):
+        """."""
+        curve = self._bsmp_curve_read(curve_id=2)
+        return curve
+
+    def _bsmp_curve_read(self, curve_id):
         curve_entity = self.entities.curves[curve_id]
         wfmref_size = self.wfmref_size
         curve = _np.zeros(wfmref_size)
@@ -1524,7 +1555,7 @@ class _PSBSMP(_BSMP):
             _, data = self.read_curve_block(
                 curve_id=curve_id,
                 block=block,
-                timeout=_PSBSMP._timeout_read_curve)
+                timeout=PSBSMP._timeout_read_curve)
             curve[idx] = data
         return curve
 
@@ -1532,98 +1563,98 @@ class _PSBSMP(_BSMP):
 # --- DCDC ---
 
 
-class FBP(_PSBSMP):
+class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFBP
-        _PSBSMP.__init__(self, slave_address, EntitiesFBP(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFBP(), pru=pru)
 
 
-class FAC_DCDC(_PSBSMP):
+class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_DCDC
-        _PSBSMP.__init__(self, slave_address, EntitiesFAC_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAC_DCDC(), pru=pru)
 
 
-class FAC_2P4S_DCDC(_PSBSMP):
+class FAC_2P4S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_DCDC."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_2P4S_DCDC
-        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_DCDC(), pru=pru)
 
 
-class FAC_2S_DCDC(_PSBSMP):
+class FAC_2S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_DCDC."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_2S_DCDC
-        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_DCDC(), pru=pru)
 
 
-class FAP(_PSBSMP):
+class FAP(PSBSMP):
     """BSMP with EntitiesFAP."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAP
-        _PSBSMP.__init__(self, slave_address, EntitiesFAP(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAP(), pru=pru)
 
 
-class FAP_4P(_PSBSMP):
+class FAP_4P(PSBSMP):
     """BSMP with EntitiesFAP_4P."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAP_4P
-        _PSBSMP.__init__(self, slave_address, EntitiesFAP_4P(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAP_4P(), pru=pru)
 
 
-class FAP_2P2S(_PSBSMP):
+class FAP_2P2S(PSBSMP):
     """BSMP with EntitiesFAP_2P2S."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAP_2P2S
-        _PSBSMP.__init__(self, slave_address, EntitiesFAP_2P2S(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAP_2P2S(), pru=pru)
 
 
 
 # --- ACDC ---
 
 
-class FBP_DCLink(_PSBSMP):
+class FBP_DCLink(PSBSMP):
     """BSMP with EntitiesFBP_DCLink."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFBP_DCLink
-        _PSBSMP.__init__(self, slave_address, EntitiesFBP_DCLink(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFBP_DCLink(), pru=pru)
 
 
-class FAC_2P4S_ACDC(_PSBSMP):
+class FAC_2P4S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_ACDC."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_2P4S_ACDC
-        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_ACDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_ACDC(), pru=pru)
 
 
-class FAC_2S_ACDC(_PSBSMP):
+class FAC_2S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_ACDC."""
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_2S_ACDC
-        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_ACDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_ACDC(), pru=pru)
 
 
 class FactoryPSBSMP:
