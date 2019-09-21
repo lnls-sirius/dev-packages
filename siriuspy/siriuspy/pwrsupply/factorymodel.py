@@ -116,9 +116,9 @@ class FactoryModel:
         raise NotImplementedError
 
     @staticmethod
-    def create(model):
+    def create(psmodel):
         """Return FactoryModel object."""
-        name_2_factory = {
+        psname_2_factory = {
             'FBP': FactoryFBP,
             'FBP_DCLink': FactoryFBP_DCLink,
             'FBP_FOFB': FactoryFBP,
@@ -132,11 +132,11 @@ class FactoryModel:
             'FAP_4P': FactoryFAP_4P,
             'Commercial': FactoryCommercial,
         }
-        if model in name_2_factory:
-            factory = name_2_factory[model]
+        if psmodel in psname_2_factory:
+            factory = psname_2_factory[psmodel]
             return factory()
         else:
-            raise ValueError('Model "{}" not defined'.format(model))
+            raise ValueError('PS Model "{}" not defined'.format(psmodel))
 
     def field(self, device_id, epics_field, pru_controller):
         """Return field."""
