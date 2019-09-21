@@ -1,6 +1,6 @@
 """Model abstract factory."""
 
-from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.pwrsupply.bsmp import FactoryPSBSMP as _FactoryPSBSMP
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 from siriuspy.pwrsupply.factorymodel import FactoryModel as _FactoryModel
 
@@ -1023,19 +1023,52 @@ class UDC:
         self._bsmp = self._create_bsmp_connectors()
 
     @property
+    def pru(self):
+        """Return PRU used for communication with UDC."""
+        return self._pru
+
+    @property
+    def psmodel(self):
+        """Return power supply model associated with UDC."""
+        return self._psmodel
+
+    @property
+    def device_ids(self):
+        """."""
+        return self._device_ids
+
+    @property
     def parameters(self):
         """PRU Controller parameters."""
         return UDC._prucparms[self._psmodel]
 
+    @property
+    def ConstBSMP(self):
+        """Return BSMP constants."""
+        return self.parameters.ConstBSMP
+
+    def reset(self, timeout):
+        """Reset UDC."""
+        # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
+        for bsmp in self._bsmp.values():
+            bsmp.execute_function(
+                func_id=self.ConstBSMP.F_TURN_OFF, timeout=timeout)
+        # reset UDC
+        bsmp = self._bsmp[next(iter(self._bsmp))]  # uses first BSMP device
+        bsmp.execute_function(
+            func_id=self.ConstBSMP.F_RESET_UDC, timeout=timeout,
+            read_flag=False)
+
     def _create_bsmp_connectors(self):
         bsmp = dict()
         model = _FactoryModel.create(self._psmodel)
-        entities, bsmpsim_class = model.entities, model.simulation_class
+        bsmpsim_class = model.simulation_class
         for dev_id in self._device_ids:
             if self._pru.simulated:
                 bsmp[dev_id] = bsmpsim_class(self._pru)
             else:
-                bsmp[dev_id] = _BSMP(self._pru, dev_id, entities)
+                bsmp[dev_id] = _FactoryPSBSMP.create(
+                    self._psmodel, dev_id, self._pru)
         return bsmp
 
     def __getitem__(self, index):
