@@ -7,6 +7,7 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
+import numpy as _np
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
@@ -1492,6 +1493,8 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
 class _PSBSMP(_BSMP):
     """Power supply BSMP."""
 
+    _timeout_read_curve = 100
+
     def __init__(self, slave_address, entities, pru=None):
         """Init BSMP."""
         if pru is None:
@@ -1501,6 +1504,29 @@ class _PSBSMP(_BSMP):
         # turn sync mode off
         # self.pru.sync_stop()
         super().__init__(self.pru, slave_address, entities)
+
+    @property
+    def wfmref_size(self):
+        """."""
+        _, v_beg = self.read_variable(var_id=ConstBSMP.V_WFMREF_START)
+        _, v_end = self.read_variable(var_id=ConstBSMP.V_WFMREF_END)
+        wfmrefsize = 1 + (v_end - v_beg) // 2
+        return wfmrefsize
+
+    def wfmref_read(self, curve_id):
+        """."""
+        curve_id = 0
+        curve_entity = self.entities.curves[curve_id]
+        wfmref_size = self.wfmref_size
+        curve = _np.zeros(wfmref_size)
+        indices = curve_entity.get_indices(wfmref_size)
+        for block, idx in enumerate(indices):
+            _, data = self.read_curve_block(
+                curve_id=curve_id,
+                block=block,
+                timeout=_PSBSMP._timeout_read_curve)
+            curve[idx] = data
+        return curve
 
 
 # --- DCDC ---
@@ -1582,7 +1608,6 @@ class FBP_DCLink(_PSBSMP):
         _PSBSMP.__init__(self, slave_address, EntitiesFBP_DCLink(), pru=pru)
 
 
-
 class FAC_2P4S_ACDC(_PSBSMP):
     """BSMP with EntitiesFAC_2P4S_ACDC."""
 
@@ -1599,3 +1624,31 @@ class FAC_2S_ACDC(_PSBSMP):
         """Init BSMP."""
         self.ConstBSMP = ConstFAC_2S_ACDC
         _PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_ACDC(), pru=pru)
+
+
+class FactoryPSBSMP:
+    """."""
+
+    psname_2_psbsmp = {
+        'FBP': FBP,
+        'FBP_DCLink': FBP_DCLink,
+        'FBP_FOFB': FBP,
+        'FAC_DCDC': FAC_DCDC,
+        'FAC_2S_DCDC': FAC_2S_DCDC,
+        'FAC_2S_ACDC': FAC_2S_ACDC,
+        'FAC_2P4S_DCDC': FAC_2P4S_DCDC,
+        'FAC_2P4S_ACDC': FAC_2P4S_ACDC,
+        'FAP': FAP,
+        'FAP_2P2S': FAP_2P2S,
+        'FAP_4P': FAP_4P,
+    }
+
+    @staticmethod
+    def create(psmodel, *args, **kwargs):
+        """Return FactoryModel object."""
+
+        if psmodel in FactoryPSBSMP.psname_2_psbsmp:
+            factory = FactoryPSBSMP.psname_2_psbsmp[psmodel]
+            return factory(*args, **kwargs)
+        else:
+            raise ValueError('PS Model "{}" not defined'.format(psmodel))
