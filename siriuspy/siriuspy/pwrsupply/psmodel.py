@@ -1,67 +1,16 @@
 """Model abstract factory."""
 
-from siriuspy.pwrsupply import fields as _fields
-from siriuspy.pwrsupply import functions as _functions
-from siriuspy.pwrsupply import bsmp as _bsmp
-from siriuspy.pwrsupply import controller as _controller
+from . import bsmp as _psbsmp
+from . import bsmpsim as _psbsmpsim
+from . import fields as _fields
+from . import functions as _functions
+from . import controller as _controller
 
 
-# --- Entities DCDC ---
-from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
-from siriuspy.pwrsupply.bsmp import \
-    EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
-from siriuspy.pwrsupply.bsmp import \
-    EntitiesFAC_2S_DCDC as _EntitiesFAC_2S_DCDC
-from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
-from siriuspy.pwrsupply.bsmp import EntitiesFAP_4P as _EntitiesFAP_4P
-from siriuspy.pwrsupply.bsmp import EntitiesFAP_2P2S as _EntitiesFAP_2P2S
-# --- Entities ACDC ---
-from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
-
-from siriuspy.pwrsupply.bsmp import \
-    EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
-from siriuspy.pwrsupply.bsmp import \
-    EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
-
-# --- Const DCDC ---
-from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
-from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
-from siriuspy.pwrsupply.bsmp import ConstFAP_4P as _cFAP_4P
-from siriuspy.pwrsupply.bsmp import ConstFAP_2P2S as _cFAP_2P2S
-
-# --- Const ACDC ---
-from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
-from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_2S_ACDC as _cFAC_2S_ACDC
-
-# --- BSMP DCDC ---
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP as _BSMPSim_FBP
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_DCDC as _BSMPSim_FAC_DCDC
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FAC_2P4S_DCDC as _BSMPSim_FAC_2P4S_DCDC
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FAC_2S_DCDC as _BSMPSim_FAC_2S_DCDC
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP_4P as _BSMPSim_FAP_4P
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP_2P2S as _BSMPSim_FAP_2P2S
-
-# --- BSMP ACDC ---
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FAC_2S_ACDC as _BSMPSim_FAC_2S_ACDC
-
-
-class FactoryModel:
+class _PSModel:
     """Abstract factory for power supply models."""
 
-    _c = _bsmp.ConstBSMP
+    _c = _psbsmp.ConstBSMP
     _e2v = {
         'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
         'CycleType-Sts': _c.V_SIGGEN_TYPE,
@@ -115,29 +64,6 @@ class FactoryModel:
         """Return database."""
         raise NotImplementedError
 
-    @staticmethod
-    def create(psmodel):
-        """Return FactoryModel object."""
-        psname_2_factory = {
-            'FBP': FactoryFBP,
-            'FBP_DCLink': FactoryFBP_DCLink,
-            'FBP_FOFB': FactoryFBP,
-            'FAC_DCDC': FactoryFAC_DCDC,
-            'FAC_2S_DCDC': FactoryFAC_2S_DCDC,
-            'FAC_2S_ACDC': FactoryFAC_2S_ACDC,
-            'FAC_2P4S_DCDC': FactoryFAC_2P4S_DCDC,
-            'FAC_2P4S_ACDC': FactoryFAC_2P4S_ACDC,
-            'FAP': FactoryFAP,
-            'FAP_2P2S': FactoryFAP_2P2S,
-            'FAP_4P': FactoryFAP_4P,
-            'Commercial': FactoryCommercial,
-        }
-        if psmodel in psname_2_factory:
-            factory = psname_2_factory[psmodel]
-            return factory()
-        else:
-            raise ValueError('PS Model "{}" not defined'.format(psmodel))
-
     def field(self, device_id, epics_field, pru_controller):
         """Return field."""
         field = self._common_fields(device_id, epics_field, pru_controller)
@@ -184,17 +110,17 @@ class FactoryModel:
 
 
 # Standard PS that supply magnets
-class FactoryFBP(FactoryModel):
+class PSModelFBP(_PSModel):
     """FBP model factory."""
 
     _variables = {
-        'IntlkSoft-Mon':  _bsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon':  _bsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
-        'Current-RB':  _bsmp.ConstFBP.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _bsmp.ConstFBP.V_PS_REFERENCE,
-        'Current-Mon':  _bsmp.ConstFBP.V_I_LOAD,
-        'SwitchesTemperature-Mon': _bsmp.ConstFBP.V_TEMP_SWITCHES,
-        'PWMDutyCycle-Mon': _bsmp.ConstFBP.V_DUTY_CYCLE,
+        'IntlkSoft-Mon':  _psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
+        'Current-RB':  _psbsmp.ConstFBP.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _psbsmp.ConstFBP.V_PS_REFERENCE,
+        'Current-Mon':  _psbsmp.ConstFBP.V_I_LOAD,
+        'SwitchesTemperature-Mon': _psbsmp.ConstFBP.V_TEMP_SWITCHES,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFBP.V_DUTY_CYCLE,
     }
 
     @property
@@ -205,21 +131,21 @@ class FactoryFBP(FactoryModel):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFBP
+        return _psbsmp.ConstFBP
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFBP()
+        return _psbsmp.EntitiesFBP()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FBP
+        return _psbsmpsim.BSMPSim_FBP
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
-        _c = _bsmp.ConstFBP
+        _c = _psbsmp.ConstFBP
         if epics_field == 'PwrState-Sel':
             return _functions.PSPwrState(device_ids, pru_controller, setpoints)
         elif epics_field == 'OpMode-Sel':
@@ -278,7 +204,7 @@ class FactoryFBP(FactoryModel):
             readers, writers, connections, pru_controller, devices)
 
 
-class FactoryFBP_FOFB(FactoryFBP):
+class PSModelFBP_FOFB(PSModelFBP):
     """FBP_FOFB model factory."""
 
     @property
@@ -289,34 +215,34 @@ class FactoryFBP_FOFB(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFBP
+        return _psbsmp.ConstFBP
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFBP()
+        return _psbsmp.EntitiesFBP()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FBP
+        return _psbsmpsim.BSMPSim_FBP
 
 
-class FactoryFAC_DCDC(FactoryFBP):
+class PSModelFAC_DCDC(PSModelFBP):
     """FAC model factory."""
 
     _variables = {
-        'IntlkSoft-Mon': _bsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
-        'Current-RB': _bsmp.ConstFAC_DCDC.V_PS_SETPOINT,
-        'CurrentRef-Mon': _bsmp.ConstFAC_DCDC.V_PS_REFERENCE,
-        'Current-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
-        'Current1-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD2,
-        'LoadVoltage-Mon': _bsmp.ConstFAC_DCDC.V_V_LOAD,
-        'InductorsTemperature-Mon': _bsmp.ConstFAC_DCDC.V_TEMP_INDUCTORS,
-        'IGBTSTemperature-Mon': _bsmp.ConstFAC_DCDC.V_TEMP_IGBTS,
-        'PWMDutyCycle-Mon': _bsmp.ConstFAC_DCDC.V_DUTY_CYCLE,
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
+        'Current-RB': _psbsmp.ConstFAC_DCDC.V_PS_SETPOINT,
+        'CurrentRef-Mon': _psbsmp.ConstFAC_DCDC.V_PS_REFERENCE,
+        'Current-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD2,
+        'LoadVoltage-Mon': _psbsmp.ConstFAC_DCDC.V_V_LOAD,
+        'InductorsTemperature-Mon': _psbsmp.ConstFAC_DCDC.V_TEMP_INDUCTORS,
+        'IGBTSTemperature-Mon': _psbsmp.ConstFAC_DCDC.V_TEMP_IGBTS,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFAC_DCDC.V_DUTY_CYCLE,
     }
 
     @property
@@ -327,50 +253,50 @@ class FactoryFAC_DCDC(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_DCDC
+        return _psbsmp.ConstFAC_DCDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_DCDC()
+        return _psbsmp.EntitiesFAC_DCDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_DCDC
+        return _psbsmpsim.BSMPSim_FAC_DCDC
 
 
-class FactoryFAC_2S_DCDC(FactoryFBP):
+class PSModelFAC_2S_DCDC(PSModelFBP):
     """FAC_2S_DCDC model factory."""
 
     _variables = {
-        'Current-RB': _bsmp.ConstFAC_2S_DCDC.V_PS_SETPOINT,
-        'CurrentRef-Mon': _bsmp.ConstFAC_2S_DCDC.V_PS_REFERENCE,
-        'IntlkSoft-Mon': _bsmp.ConstFAC_2S_DCDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_2S_DCDC.V_PS_HARD_INTERLOCKS,
-        'Current-Mon': _bsmp.ConstFAC_2S_DCDC.V_I_LOAD_MEAN,
-        'Current1-Mon': _bsmp.ConstFAC_2S_DCDC.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAC_2S_DCDC.V_I_LOAD2,
-        'LoadVoltage-Mon': _bsmp.ConstFAC_2S_DCDC.V_V_LOAD,
-        'Module1Voltage-Mon': _bsmp.ConstFAC_2S_DCDC.V_V_OUT_1,
-        'Module2Voltage-Mon': _bsmp.ConstFAC_2S_DCDC.V_V_OUT_2,
+        'Current-RB': _psbsmp.ConstFAC_2S_DCDC.V_PS_SETPOINT,
+        'CurrentRef-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_REFERENCE,
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_HARD_INTERLOCKS,
+        'Current-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD2,
+        'LoadVoltage-Mon': _psbsmp.ConstFAC_2S_DCDC.V_V_LOAD,
+        'Module1Voltage-Mon': _psbsmp.ConstFAC_2S_DCDC.V_V_OUT_1,
+        'Module2Voltage-Mon': _psbsmp.ConstFAC_2S_DCDC.V_V_OUT_2,
         'CapacitorBank1Voltage-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_V_CAPBANK_1,
+            _psbsmp.ConstFAC_2S_DCDC.V_V_CAPBANK_1,
         'CapacitorBank2Voltage-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_V_CAPBANK_2,
-        'PWMDutyCycle1-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_1,
-        'PWMDutyCycle2-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_2,
-        'PWMDutyDiff-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_DIFF,
+            _psbsmp.ConstFAC_2S_DCDC.V_V_CAPBANK_2,
+        'PWMDutyCycle1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_1,
+        'PWMDutyCycle2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_2,
+        'PWMDutyDiff-Mon': _psbsmp.ConstFAC_2S_DCDC.V_DUTY_DIFF,
         'IIB1InductorsTemperature-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_1,
+            _psbsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_1,
         'IIB1HeatSinkTemperature-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_1,
+            _psbsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_1,
         'IIB2InductorsTemperature-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_2,
+            _psbsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_2,
         'IIB2HeatSinkTemperature-Mon':
-            _bsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_2,
-        'IntlkIIB1-Mon': _bsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_1,
-        'IntlkIIB2-Mon': _bsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_2,
+            _psbsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_2,
+        'IntlkIIB1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_1,
+        'IntlkIIB2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_2,
     }
 
     @property
@@ -381,65 +307,65 @@ class FactoryFAC_2S_DCDC(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_2S_DCDC
+        return _psbsmp.ConstFAC_2S_DCDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_2S_DCDC()
+        return _psbsmp.EntitiesFAC_2S_DCDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_2S_DCDC
+        return _psbsmpsim.BSMPSim_FAC_2S_DCDC
 
 
-class FactoryFAC_2P4S_DCDC(FactoryFAC_DCDC):
+class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
     """FAC_2P4S_DCDC model factory."""
 
     _variables = {
-        'Current-RB': _bsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
-        'CurrentRef-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
-        'IntlkSoft-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
-        'Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
-        'Current1-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
-        'LoadVoltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_LOAD,
+        'Current-RB': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
+        'CurrentRef-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
+        'Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
+        'LoadVoltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_LOAD,
         'CapacitorBank1Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_1,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_1,
         'CapacitorBank2Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_2,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_2,
         'CapacitorBank3Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_3,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_3,
         'CapacitorBank4Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_4,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_4,
         'CapacitorBank5Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_5,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_5,
         'CapacitorBank6Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_6,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_6,
         'CapacitorBank7Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_7,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_7,
         'CapacitorBank8Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_8,
-        'Module1Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_1,
-        'Module2Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_2,
-        'Module3Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_3,
-        'Module4Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_4,
-        'Module5Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_5,
-        'Module6Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_6,
-        'Module7Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_7,
-        'Module8Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_8,
-        'PWMDutyCycle1-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_1,
-        'PWMDutyCycle2-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_2,
-        'PWMDutyCycle3-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_3,
-        'PWMDutyCycle4-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_4,
-        'PWMDutyCycle5-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_5,
-        'PWMDutyCycle6-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_6,
-        'PWMDutyCycle7-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_7,
-        'PWMDutyCycle8-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_8,
-        'Arm1Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM_1,
-        'Arm2Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM_2,
+            _psbsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_8,
+        'Module1Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_1,
+        'Module2Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_2,
+        'Module3Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_3,
+        'Module4Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_4,
+        'Module5Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_5,
+        'Module6Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_6,
+        'Module7Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_7,
+        'Module8Voltage-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_V_OUT_8,
+        'PWMDutyCycle1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_1,
+        'PWMDutyCycle2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_2,
+        'PWMDutyCycle3-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_3,
+        'PWMDutyCycle4-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_4,
+        'PWMDutyCycle5-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_5,
+        'PWMDutyCycle6-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_6,
+        'PWMDutyCycle7-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_7,
+        'PWMDutyCycle8-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_8,
+        'Arm1Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_1,
+        'Arm2Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_2,
     }
 
     @property
@@ -450,31 +376,31 @@ class FactoryFAC_2P4S_DCDC(FactoryFAC_DCDC):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_2P4S_DCDC
+        return _psbsmp.ConstFAC_2P4S_DCDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_2P4S_DCDC()
+        return _psbsmp.EntitiesFAC_2P4S_DCDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_2P4S_DCDC
+        return _psbsmpsim.BSMPSim_FAC_2P4S_DCDC
 
 
-class FactoryFAP(FactoryFBP):
+class PSModelFAP(PSModelFBP):
     """FAP model factory."""
 
     _variables = {
-        'IntlkSoft-Mon': _bsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
-        'IntlkIIB-Mon': _bsmp.ConstFAP.V_IIB_INTERLOCKS,
-        'Current-RB': _bsmp.ConstFAP.V_PS_SETPOINT,
-        'CurrentRef-Mon': _bsmp.ConstFAP.V_PS_REFERENCE,
-        'Current-Mon': _bsmp.ConstFAP.V_I_LOAD_MEAN,
-        'Current1-Mon': _bsmp.ConstFAP.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAP.V_I_LOAD2,
+        'IntlkSoft-Mon': _psbsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
+        'IntlkIIB-Mon': _psbsmp.ConstFAP.V_IIB_INTERLOCKS,
+        'Current-RB': _psbsmp.ConstFAP.V_PS_SETPOINT,
+        'CurrentRef-Mon': _psbsmp.ConstFAP.V_PS_REFERENCE,
+        'Current-Mon': _psbsmp.ConstFAP.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAP.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAP.V_I_LOAD2,
     }
 
     @property
@@ -485,20 +411,20 @@ class FactoryFAP(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAP
+        return _psbsmp.ConstFAP
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAP()
+        return _psbsmp.EntitiesFAP()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAP
+        return _psbsmpsim.BSMPSim_FAP
 
 
-class FactoryFAP_4P(FactoryFBP):
+class PSModelFAP_4P(PSModelFBP):
     """FAP_4P model factory."""
 
     @property
@@ -509,46 +435,46 @@ class FactoryFAP_4P(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAP_4P
+        return _psbsmp.ConstFAP_4P
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAP_4P()
+        return _psbsmp.EntitiesFAP_4P()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAP_4P
+        return _psbsmpsim.BSMPSim_FAP_4P
 
 
-class FactoryFAP_2P2S(FactoryFBP):
+class PSModelFAP_2P2S(PSModelFBP):
     """FAP_2P2S model factory."""
 
     _variables = {
-        'IntlkSoft-Mon':  _bsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon':  _bsmp.ConstFAP_2P2S.V_PS_HARD_INTERLOCKS,
-        'Current-RB':  _bsmp.ConstFAP_2P2S.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _bsmp.ConstFAP_2P2S.V_PS_REFERENCE,
-        'Current-Mon':  _bsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
-        'Current1-Mon': _bsmp.ConstFAP_2P2S.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAP_2P2S.V_I_LOAD2,
-        'IIB1InductorTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_1,
-        'IIB1HeatSinkTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_1,
-        'IIB2InductorTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_2,
-        'IIB2HeatSinkTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_2,
-        'IIB3InductorTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_3,
-        'IIB3HeatSinkTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_3,
-        'IIB4InductorTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_4,
-        'IIB4HeatSinkTemperature-Mon': _bsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_4,
-        'Intlk1IIB-Mon': _bsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_1,
-        'Intlk2IIB-Mon': _bsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_2,
-        'Intlk3IIB-Mon': _bsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_3,
-        'Intlk4IIB-Mon': _bsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_4,
-        'Mod1Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_1,
-        'Mod2Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_2,
-        'Mod3Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_3,
-        'Mod4Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_4,
+        'IntlkSoft-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_HARD_INTERLOCKS,
+        'Current-RB':  _psbsmp.ConstFAP_2P2S.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_REFERENCE,
+        'Current-Mon':  _psbsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAP_2P2S.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAP_2P2S.V_I_LOAD2,
+        'IIB1InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_1,
+        'IIB2InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_2,
+        'IIB3InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_3,
+        'IIB3HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_3,
+        'IIB4InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_4,
+        'IIB4HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_4,
+        'Intlk1IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_1,
+        'Intlk2IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_2,
+        'Intlk3IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_3,
+        'Intlk4IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_4,
+        'Mod1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_MOD_1,
+        'Mod2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_MOD_2,
+        'Mod3Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_MOD_3,
+        'Mod4Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_MOD_4,
     }
 
     @property
@@ -559,20 +485,20 @@ class FactoryFAP_2P2S(FactoryFBP):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAP_2P2S
+        return _psbsmp.ConstFAP_2P2S
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAP_2P2S()
+        return _psbsmp.EntitiesFAP_2P2S()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAP_2P2S
+        return _psbsmpsim.BSMPSim_FAP_2P2S
 
 
-class FactoryCommercial(FactoryFAC_DCDC):
+class PSModelCommercial(PSModelFAC_DCDC):
     """Commercial model factory."""
 
     @property
@@ -583,36 +509,36 @@ class FactoryCommercial(FactoryFAC_DCDC):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_DCDC
+        return _psbsmp.ConstFAC_DCDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_DCDC()
+        return _psbsmp.EntitiesFAC_DCDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_DCDC
+        return _psbsmpsim.BSMPSim_FAC_DCDC
 
 
 # --- ACDC ---
 
 
-class FactoryFBP_DCLink(FactoryModel):
+class PSModelFBP_DCLink(_PSModel):
     """FBP_DCLink factory."""
 
     _variables = {
-        'IntlkSoft-Mon': _bsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFBP_DCLink.V_PS_HARD_INTERLOCKS,
-        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLink.V_MODULES_STATUS,
-        'Voltage-RB': _bsmp.ConstFBP_DCLink.V_PS_SETPOINT,
-        'VoltageRef-Mon': _bsmp.ConstFBP_DCLink.V_PS_REFERENCE,
-        'Voltage-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT,
-        'Voltage1-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_1,
-        'Voltage2-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_2,
-        'Voltage3-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_3,
-        'VoltageDig-Mon': _bsmp.ConstFBP_DCLink.V_DIG_POT_TAP,
+        'IntlkSoft-Mon': _psbsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFBP_DCLink.V_PS_HARD_INTERLOCKS,
+        'ModulesStatus-Mon': _psbsmp.ConstFBP_DCLink.V_MODULES_STATUS,
+        'Voltage-RB': _psbsmp.ConstFBP_DCLink.V_PS_SETPOINT,
+        'VoltageRef-Mon': _psbsmp.ConstFBP_DCLink.V_PS_REFERENCE,
+        'Voltage-Mon': _psbsmp.ConstFBP_DCLink.V_V_OUT,
+        'Voltage1-Mon': _psbsmp.ConstFBP_DCLink.V_V_OUT_1,
+        'Voltage2-Mon': _psbsmp.ConstFBP_DCLink.V_V_OUT_2,
+        'Voltage3-Mon': _psbsmp.ConstFBP_DCLink.V_V_OUT_3,
+        'VoltageDig-Mon': _psbsmp.ConstFBP_DCLink.V_DIG_POT_TAP,
     }
 
     @property
@@ -623,21 +549,21 @@ class FactoryFBP_DCLink(FactoryModel):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFBP_DCLink
+        return _psbsmp.ConstFBP_DCLink
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFBP_DCLink()
+        return _psbsmp.EntitiesFBP_DCLink()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FBP_DCLink
+        return _psbsmpsim.BSMPSim_FBP_DCLink
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
-        _c = _bsmp.ConstFBP_DCLink
+        _c = _psbsmp.ConstFBP_DCLink
         if epics_field == 'PwrState-Sel':
             return _functions.PSPwrStateFBP_DCLink(
                 device_ids, pru_controller, setpoints)
@@ -667,20 +593,20 @@ class FactoryFBP_DCLink(FactoryModel):
             readers, writers, connections, pru_controller)
 
 
-class FactoryFAC_2S_ACDC(FactoryModel):
+class PSModelFAC_2S_ACDC(_PSModel):
     """FAC_2S_ACDC factory."""
 
     _variables = {
-        'IntlkSoft-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_HARD_INTERLOCKS,
-        'CapacitorBankVoltage-RB': _bsmp.ConstFAC_2S_ACDC.V_PS_SETPOINT,
-        'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_REFERENCE,
-        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_2S_ACDC.V_V_CAPBANK,
-        'RectifierVoltage-Mon': _bsmp.ConstFAC_2S_ACDC.V_V_OUT_RECTIFIER,
-        'RectifierCurrent-Mon': _bsmp.ConstFAC_2S_ACDC.V_I_OUT_RECTIFIER,
-        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_2S_ACDC.V_TEMP_HEATSINK,
-        'InductorsTemperature-Mon': _bsmp.ConstFAC_2S_ACDC.V_TEMP_INDUCTORS,
-        'PWMDutyCycle-Mon': _bsmp.ConstFAC_2S_ACDC.V_DUTY_CYCLE,
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_ACDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_2S_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-RB': _psbsmp.ConstFAC_2S_ACDC.V_PS_SETPOINT,
+        'CapacitorBankVoltageRef-Mon': _psbsmp.ConstFAC_2S_ACDC.V_PS_REFERENCE,
+        'CapacitorBankVoltage-Mon': _psbsmp.ConstFAC_2S_ACDC.V_V_CAPBANK,
+        'RectifierVoltage-Mon': _psbsmp.ConstFAC_2S_ACDC.V_V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _psbsmp.ConstFAC_2S_ACDC.V_I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2S_ACDC.V_TEMP_HEATSINK,
+        'InductorsTemperature-Mon': _psbsmp.ConstFAC_2S_ACDC.V_TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFAC_2S_ACDC.V_DUTY_CYCLE,
     }
 
     @property
@@ -691,21 +617,21 @@ class FactoryFAC_2S_ACDC(FactoryModel):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_2S_ACDC
+        return _psbsmp.ConstFAC_2S_ACDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_2S_ACDC()
+        return _psbsmp.EntitiesFAC_2S_ACDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_2S_ACDC
+        return _psbsmpsim.BSMPSim_FAC_2S_ACDC
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
-        _c = _bsmp.ConstFAC_2S_ACDC
+        _c = _psbsmp.ConstFAC_2S_ACDC
         if epics_field == 'PwrState-Sel':
             return _functions.PSPwrState(device_ids, pru_controller, setpoints)
         elif epics_field == 'OpMode-Sel':
@@ -736,7 +662,7 @@ class FactoryFAC_2S_ACDC(FactoryModel):
             readers, writers, connections, pru_controller)
 
 
-class FactoryFAC_2P4S_ACDC(FactoryFAC_2S_ACDC):
+class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     """FAC_2P4S_ACDC factoy."""
 
     @property
@@ -747,14 +673,41 @@ class FactoryFAC_2P4S_ACDC(FactoryFAC_2S_ACDC):
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_2P4S_ACDC
+        return _psbsmp.ConstFAC_2P4S_ACDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_2P4S_ACDC()
+        return _psbsmp.EntitiesFAC_2P4S_ACDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_2P4S_ACDC
+        return _psbsmpsim.BSMPSim_FAC_2P4S_ACDC
+
+
+class PSModelFactory:
+    """PSModel Factory."""
+
+    _psname_2_factory = {
+        'FBP': PSModelFBP,
+        'FBP_DCLink': PSModelFBP_DCLink,
+        'FBP_FOFB': PSModelFBP,
+        'FAC_DCDC': PSModelFAC_DCDC,
+        'FAC_2S_DCDC': PSModelFAC_2S_DCDC,
+        'FAC_2S_ACDC': PSModelFAC_2S_ACDC,
+        'FAC_2P4S_DCDC': PSModelFAC_2P4S_DCDC,
+        'FAC_2P4S_ACDC': PSModelFAC_2P4S_ACDC,
+        'FAP': PSModelFAP,
+        'FAP_2P2S': PSModelFAP_2P2S,
+        'FAP_4P': PSModelFAP_4P,
+        'Commercial': PSModelCommercial,
+    }
+
+    @staticmethod
+    def create(psmodel):
+        """Return PSModel object."""
+        if psmodel in PSModelFactory._psname_2_factory:
+            factory = PSModelFactory._psname_2_factory[psmodel]
+            return factory()
+        raise ValueError('PS Model "{}" not defined'.format(psmodel))

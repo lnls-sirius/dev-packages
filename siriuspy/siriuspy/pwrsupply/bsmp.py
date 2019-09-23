@@ -1366,7 +1366,7 @@ class FAC_2S_ACDC(PSBSMP):
         PSBSMP.__init__(self, slave_address, EntitiesFAC_2S_ACDC(), pru=pru)
 
 
-class FactoryPSBSMP:
+class PSBSMPFactory:
     """."""
 
     psname_2_psbsmp = {
@@ -1385,10 +1385,10 @@ class FactoryPSBSMP:
 
     @staticmethod
     def create(psmodel, *args, **kwargs):
-        """Return FactoryModel object."""
+        """Return PSModel object."""
 
-        if psmodel in FactoryPSBSMP.psname_2_psbsmp:
-            factory = FactoryPSBSMP.psname_2_psbsmp[psmodel]
+        if psmodel in PSBSMPFactory.psname_2_psbsmp:
+            factory = PSBSMPFactory.psname_2_psbsmp[psmodel]
             return factory(*args, **kwargs)
         else:
             raise ValueError('PS Model "{}" not defined'.format(psmodel))

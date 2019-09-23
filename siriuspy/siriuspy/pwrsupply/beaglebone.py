@@ -29,7 +29,7 @@ from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.fields import Constant as _Constant
 from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
 from siriuspy.pwrsupply.fields import Setpoints as _Setpoints
-from siriuspy.pwrsupply.factorymodel import FactoryModel as _FactoryModel
+from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
 
 
 class BeagleBone:
@@ -177,7 +177,7 @@ class BBBFactory:
                 continue
 
             # Get out model object
-            model = _FactoryModel.create(psmodel)
+            model = _PSModelFactory.create(psmodel)
 
             # Create pru controller for devices
             ids = [device[1] for device in devices]
@@ -275,7 +275,6 @@ class BBBFactory:
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        # if isinstance(model, (FBPFactory, FACFactory, FAPFactory)):
         if field in ('OpMode-Sel', 'CycleType-Sel', 'CycleNrCycles-SP',
                      'CycleFreq-SP', 'CycleAmpl-SP',
                      'CycleOffset-SP', 'CycleAuxParam-SP'):

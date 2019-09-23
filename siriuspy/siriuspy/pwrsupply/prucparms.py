@@ -1,8 +1,8 @@
 """Model abstract factory."""
 
-from siriuspy.pwrsupply.bsmp import FactoryPSBSMP as _FactoryPSBSMP
+from siriuspy.pwrsupply.bsmp import PSBSMPFactory as _PSBSMPFactory
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-from siriuspy.pwrsupply.factorymodel import FactoryModel as _FactoryModel
+from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
 
 
 class _PRUCParms:
@@ -33,8 +33,8 @@ class PRUCParmsFBP(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FBP')
+    # PS model parms
+    model = _PSModelFactory.create('FBP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -124,8 +124,8 @@ class PRUCParmsFBP_DCLink(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FBP_DCLink')
+    # PS model parms
+    model = _PSModelFactory.create('FBP_DCLink')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -196,8 +196,8 @@ class PRUCParmsFAC_2S_DCDC(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAC_2S_DCDC')
+    # PS model parms
+    model = _PSModelFactory.create('FAC_2S_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -311,8 +311,8 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAC_2P4S_DCDC')
+    # PS model parms
+    model = _PSModelFactory.create('FAC_2P4S_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -431,8 +431,8 @@ class PRUCParmsFAC_DCDC(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAC_DCDC')
+    # PS model parms
+    model = _PSModelFactory.create('FAC_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -504,8 +504,8 @@ class PRUCParmsFAC_2S_ACDC(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAC_2S_ACDC')
+    # PS model parms
+    model = _PSModelFactory.create('FAC_2S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -570,8 +570,8 @@ class PRUCParmsFAC_2S_ACDC(_PRUCParms):
 class PRUCParmsFAC_2P4S_ACDC(PRUCParmsFAC_2S_ACDC):
     """FAC_2P4S_ACDC-specific PRUC parameters."""
 
-    # UDC model
-    model = _FactoryModel.create('FAC_2P4S_ACDC')
+    # PS model parms
+    model = _PSModelFactory.create('FAC_2P4S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -585,8 +585,8 @@ class PRUCParmsFAP(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAP')
+    # PS model parms
+    model = _PSModelFactory.create('FAP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -687,8 +687,8 @@ class PRUCParmsFAP_4P(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAP_4P')
+    # PS model parms
+    model = _PSModelFactory.create('FAP_4P')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -789,8 +789,8 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
-    # UDC model
-    model = _FactoryModel.create('FAP_2P2S')
+    # PS model parms
+    model = _PSModelFactory.create('FAP_2P2S')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -997,80 +997,3 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
         ConstBSMP.V_I_MOD_3,
         ConstBSMP.V_I_MOD_4)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
-
-
-class UDC:
-    """UDC."""
-
-    _prucparms = {
-        'FBP': PRUCParmsFBP,
-        'FBP_DCLink': PRUCParmsFBP_DCLink,
-        'FAC_2S_DCDC': PRUCParmsFAC_2S_DCDC,
-        'FAC_2P4S_DCDC': PRUCParmsFAC_2P4S_DCDC,
-        'FAC_DCDC': PRUCParmsFAC_DCDC,
-        'FAC_2S_ACDC': PRUCParmsFAC_2S_ACDC,
-        'FAC_2P4S_ACDC': PRUCParmsFAC_2P4S_ACDC,
-        'FAP': PRUCParmsFAP,
-        'FAP_4P': PRUCParmsFAP_4P,
-        'FAP_2P2S': PRUCParmsFAP_2P2S,
-    }
-
-    def __init__(self, pru, psmodel, device_ids):
-        """Init."""
-        self._pru = pru
-        self._device_ids = device_ids
-        self._psmodel = psmodel
-        self._bsmp = self._create_bsmp_connectors()
-
-    @property
-    def pru(self):
-        """Return PRU used for communication with UDC."""
-        return self._pru
-
-    @property
-    def psmodel(self):
-        """Return power supply model associated with UDC."""
-        return self._psmodel
-
-    @property
-    def device_ids(self):
-        """."""
-        return self._device_ids
-
-    @property
-    def parameters(self):
-        """PRU Controller parameters."""
-        return UDC._prucparms[self._psmodel]
-
-    @property
-    def ConstBSMP(self):
-        """Return BSMP constants."""
-        return self.parameters.ConstBSMP
-
-    def reset(self, timeout):
-        """Reset UDC."""
-        # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
-        for bsmp in self._bsmp.values():
-            bsmp.execute_function(
-                func_id=self.ConstBSMP.F_TURN_OFF, timeout=timeout)
-        # reset UDC
-        bsmp = self._bsmp[next(iter(self._bsmp))]  # uses first BSMP device
-        bsmp.execute_function(
-            func_id=self.ConstBSMP.F_RESET_UDC, timeout=timeout,
-            read_flag=False)
-
-    def _create_bsmp_connectors(self):
-        bsmp = dict()
-        model = _FactoryModel.create(self._psmodel)
-        bsmpsim_class = model.simulation_class
-        for dev_id in self._device_ids:
-            if self._pru.simulated:
-                bsmp[dev_id] = bsmpsim_class(self._pru)
-            else:
-                bsmp[dev_id] = _FactoryPSBSMP.create(
-                    self._psmodel, dev_id, self._pru)
-        return bsmp
-
-    def __getitem__(self, index):
-        """Return BSMP."""
-        return self._bsmp[index]

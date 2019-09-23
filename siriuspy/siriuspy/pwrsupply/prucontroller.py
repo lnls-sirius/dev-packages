@@ -13,14 +13,13 @@ from threading import Lock as _Lock
 import numpy as _np
 
 from siriuspy.bsmp import Const as _BSMPConst, SerialError as _SerialError
-
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-from siriuspy.pwrsupply.bsmp import __version__ as _devpckg_firmware_version
-from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
-from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.factoryprucparms import UDC as _UDC
+from .bsmp import __version__ as _devpckg_firmware_version
+from .bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
+from .status import PSCStatus as _PSCStatus
+from .udc import UDC as _UDC
 
 
 # NOTE: On current behaviour of PRUC and Power Supplies:
