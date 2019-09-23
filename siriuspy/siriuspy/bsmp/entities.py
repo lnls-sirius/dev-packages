@@ -276,7 +276,7 @@ class Entities:
             variables.append(self.variables[var_id])
         self.groups.append(VariablesGroup(len(self.groups), False, variables))
 
-    def remove_all_groups(self):
+    def remove_all_groups_of_variables(self):
         """Remove all groups bigger than eid 2."""
         self._groups = self.groups[:3]
 

@@ -137,7 +137,7 @@
 #
 #     api = (
 #         'query',
-#         'create_group',
+#         'create_group_of_variables',
 #         'remove_groups',
 #         'cmd_0x01',
 #         'cmd_0x11',
@@ -156,6 +156,6 @@
 #         self.assertEqual(BSMPResponse._query2resp[0x00], 'cmd_0x01')
 #         self.assertEqual(BSMPResponse._query2resp[0x10], 'cmd_0x11')
 #         self.assertEqual(BSMPResponse._query2resp[0x12], 'cmd_0x13')
-#         self.assertEqual(BSMPResponse._query2resp[0x30], 'create_group')
+#         self.assertEqual(BSMPResponse._query2resp[0x30], 'create_group_of_variables')
 #         self.assertEqual(BSMPResponse._query2resp[0x32], 'remove_groups')
 #         self.assertEqual(BSMPResponse._query2resp[0x50], 'cmd_0x51')

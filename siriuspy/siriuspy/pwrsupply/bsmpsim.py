@@ -633,7 +633,7 @@ class _BaseBSMPSim(_BSMPSim):
 
         return _BSMPConst.ACK_OK, None
 
-    def read_curve_block(self, curve_id, block, timeout):
+    def request_curve_block(self, curve_id, block, timeout):
         """Read curve block."""
         self._curves = self._get_init_curves()
         curveblock = self._curves[curve_id]

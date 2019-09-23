@@ -1227,7 +1227,6 @@ class PSBSMP(_BSMP):
         _, v_beg = self.read_variable(var_id=ConstBSMP.V_WFMREF_START)
         _, v_end = self.read_variable(var_id=ConstBSMP.V_WFMREF_END)
         wfmrefsize = 1 + (v_end - v_beg) // 2
-        wfmrefsize = self.read_variable()
         return wfmrefsize
 
     @property
@@ -1239,7 +1238,7 @@ class PSBSMP(_BSMP):
     def wfmref_read(self):
         """."""
         curve_id = self.wfmref_selected
-        curve = self._read_bsmp_curve_read(curve_id=curve_id)
+        curve = self._bsmp_curve_read(curve_id=curve_id)
         return curve
 
     def wfmref_write(self, curve):
@@ -1261,7 +1260,7 @@ class PSBSMP(_BSMP):
         curve = _np.zeros(wfmref_size)
         indices = curve_entity.get_indices(wfmref_size)
         for block, idx in enumerate(indices):
-            _, data = self.read_curve_block(
+            _, data = self.request_curve_block(
                 curve_id=curve_id,
                 block=block,
                 timeout=PSBSMP._timeout_read_curve)

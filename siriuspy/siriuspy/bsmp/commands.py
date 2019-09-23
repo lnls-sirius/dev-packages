@@ -76,237 +76,305 @@ class BSMP:
         return self._channel
 
     # 0x0_
-    def consult_protocol_version(self):
+    def query_protocol_version(self):
         """Consult protocol version. Command 0x00."""
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def consult_variables_list(self):
+    def query_list_of_variables(self):
         """Consult list of variables. Command 0x02."""
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def consult_groups_list(self):
+    def query_list_of_group_of_variables(self):
         """Consult groups list. Command 0x04."""
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def consult_group_variables(self, group_id, timeout):
+    def query_group_of_variables(self, group_id, timeout):
         """Return id of the variables in the given group."""
-        # Send request package
-        msg = _Message.message(Const.QUERY_GROUP_OF_VARIABLES,
-                               payload=[chr(group_id)])
-        response = self.channel.request(msg, timeout)
+        # command and expected response
+        cmd, ack = Const.QUERY_GROUP_OF_VARIABLES, Const.GROUP_OF_VARIABLES
+
+        # build payload
+        payload = [chr(group_id)]
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
 
         # expected response
-        if response.cmd == Const.GROUP_OF_VARIABLES:
-            return Const.ACK_OK, list(map(ord, response.payload))
+        if res.cmd == ack:
+            return Const.ACK_OK, list(map(ord, res.payload))
 
-        # response with error
-        if Const.ACK_OK < response.cmd <= Const.ACK_RESOURCE_BUSY:
-            return response.cmd, None
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
-        # unexpected response
-        fmts = 'Unexpected BSMP response for {} command: {}!'
-        print(fmts.format(Const.GROUP_OF_VARIABLES, response.cmd))
-        return None, None
-
-    def consult_curves_list(self):
+    def query_list_of_curves(self):
         """Consult curves_list. Command 0x08."""
         raise NotImplementedError()
 
-    def consult_curve_checksum(self, curve_id):
+    def query_curve_checksum(self, curve_id):
         """Consult curve checksum given curve id. Command 0x0A."""
         raise NotImplementedError()
 
-    def consult_functions_list(self):
+    def query_list_of_functions(self):
         """Consult functions list. Command 0x0C."""
         raise NotImplementedError()
 
     # 0x1_
     def read_variable(self, var_id, timeout=100):
         """Read variable."""
-        variable = self.entities.variables[var_id]
+        # command and expected response
+        cmd, ack = Const.READ_VARIABLE, Const.VARIABLE_VALUE
 
-        # Send request package
-        msg = _Message.message(Const.READ_VARIABLE, payload=[chr(var_id)])
-        response = self.channel.request(msg, timeout=timeout)
+        # build payload
+        payload = [chr(var_id)]
 
-        if response.cmd == Const.VARIABLE_VALUE:
-            if len(response.payload) == variable.size:
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            variable = self.entities.variables[var_id]
+            if len(res.payload) == variable.size:
                 # expected response
-                return Const.ACK_OK, variable.load_to_value(response.payload)
+                return Const.ACK_OK, variable.load_to_value(res.payload)
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for {} command: {}!'
-            print(fmts.format(Const.READ_VARIABLE, response.cmd))
+            print(fmts.format(cmd, res.cmd))
             return None, None
 
-        # unexpected response
-        fmts = 'Unexpected BSMP variable size for {} command: {}!'
-        print(fmts.format(Const.READ_VARIABLE, response.cmd))
-        return None, None
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
-    def read_group_variables(self, group_id, timeout):
-        """Read variable group. (0x12)."""
-        group = self.entities.groups[group_id]
-        m = _Message.message(0x12, payload=[chr(group_id)])
-        response = self.channel.request(m, timeout)
-        # read_group_variables takes typically 3 ms to run up to this at BBB1!
-        if response.cmd == 0x13:
-            if len(response.payload) == group.variables_size():
-                return Const.ACK_OK, group.load_to_value(response.payload)
-        else:
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+    def read_group_of_variables(self, group_id, timeout):
+        """Read variable group."""
+        # command and expected response
+        cmd, ack = \
+            Const.READ_GROUP_OF_VARIABLES, Const.GROUP_OF_VARIABLES_VALUE
 
-        return None, None
+        # build payload
+        payload = [chr(group_id)]
 
-    # 0x2
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            # expected response
+            group = self.entities.groups[group_id]
+            if len(res.payload) == group.variables_size():
+                return Const.ACK_OK, group.load_to_value(res.payload)
+            # unexpected group variables size
+            fmts = 'Unexpected BSMP group variables size for {} command: {}!'
+            print(fmts.format(cmd, res.cmd))
+            return None, None
+
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
+
+    # 0x2_
     def write_variable(self, var_id, value):
         """Write to variable. Command 0x20."""
         raise NotImplementedError()
 
-    def write_group_variables(self, group_id, value):
+    def write_group_of_variables(self, group_id, value):
         """Write to the variables of a group. Command 0x22."""
         raise NotImplementedError()
 
-    def binop_variable(self, var_id, operation, mask):
+    def binoperation_variable(self, var_id, operation, mask):
         """Perform a binary operation to variable. Command 0x24."""
         raise NotImplementedError()
 
-    def binop_group_variables(self, group_id, operation, mask):
+    def binoperation_group(self, group_id, operation, mask):
         """Perform a binary oeration to the vars of a group. Command 0x26."""
         raise NotImplementedError()
 
-    def write_read_variable(self, w_var_id, r_var_id, value):
+    def write_and_read_variable(self, w_var_id, r_var_id, value):
         """Write value to a var and read another var value. Command 0x28."""
         raise NotImplementedError()
 
     # 0x3_
-    def create_group(self, var_ids, timeout):
-        """Create new group with given variable ids. Command 0x30."""
+    def create_group_of_variables(self, var_ids, timeout):
+        """Create new group with given variable ids."""
+        cmd, ack = \
+            Const.CREATE_GROUP_OF_VARIABLES, Const.ACK_OK
+
+        # build payload
         var_ids = sorted(var_ids)
-        m = _Message.message(0x30, payload=[chr(var_id) for var_id in var_ids])
-        response = self.channel.request(m, timeout)
-        if response.cmd == 0xE0:
-            if len(response.payload) == 0:
+        payload = [chr(var_id) for var_id in var_ids]
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            if not res.payload:
+                # expected response
+                # TODO: revise this. do we need to change entities?!
+                # if so, should we make a local copy instead?
                 self.entities.add_group(var_ids)
                 return Const.ACK_OK, None
-        else:
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+            # unexpected non-empty response payload
+            fmts = 'Unexpected BSMP non-empty resp payload for {} command: {}!'
+            print(fmts.format(cmd, res.cmd))
+            return None, None
 
-        return None, None
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
-    def remove_all_groups(self, timeout):
-        """Remove all groups. Command 0x32."""
-        m = _Message.message(0x32)
-        response = self.channel.request(m, timeout)
-        if response.cmd == 0xE0:
-            if len(response.payload) == 0:
-                self.entities.remove_all_groups()
+    def remove_all_groups_of_variables(self, timeout):
+        """Remove all groups."""
+        cmd, ack = \
+            Const.REMOVE_ALL_GROUPS_OF_VARIABLES, Const.ACK_OK
+
+        # build payload
+        payload = []
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            if not res.payload:
+                # expected response
+                # TODO: revise this. do we need to change entities?!
+                # if so, should we make a local copy instead?
+                self.entities.remove_all_groups_of_variables()
                 return Const.ACK_OK, None
-        else:
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
+            # unexpected non-empty response payload
+            fmts = 'Unexpected BSMP non-empty resp payload for {} command: {}!'
+            print(fmts.format(cmd, res.cmd))
+            return None, None
 
-        return None, None
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
     # 0x4_
-    def read_curve_block(self, curve_id, block, timeout):
-        """Read curve block. Command 0x40."""
-        curve = self.entities.curves[curve_id]
+    def request_curve_block(self, curve_id, block, timeout):
+        """Read curve block."""
+        # command and expected response
+        cmd, ack = Const.REQUEST_CURVE_BLOCK, Const.CURVE_BLOCK
+
+        # build payload
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8
         payload = [chr(curve_id), chr(hsb), chr(lsb)]
-        message = _Message.message(0x40, payload=payload)
-        response = self.channel.request(message, timeout)
-        payload, cmd = response.payload, response.cmd
 
-        if cmd != 0x41:
-            print('Incorrect response: ', hex(cmd))
-            if cmd > 0xE0 and cmd <= 0xE8:
-                return cmd, None
-            else:
-                print('Unknown response!')
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            data = res.payload[3:]
+            curve = self.entities.curves[curve_id]
+            if len(data) % curve.type.size:
+                # unexpected curve size
+                fmts = ('Curve size is not multiple of curve.type.size!\n'
+                        ' received curce size: {}\n'
+                        ' curve.type.size: {}')
+                print(fmts.format(len(data), curve.type.size))
+                return None, None
+            cid = ord(res.payload[0])
+            cblock = (ord(res.payload[1]) << 8) + ord(res.payload[2])
+            if cid != curve_id or cblock != block:
+                # unexpected curve id or block number
+                fmts = ('Invalid curve id or block offset in response!\n'
+                        ' expected - curve_id:{}, block_offset:{}\n'
+                        ' received - curve_id:{}, block_offset:{}')
+                print(fmts.format(curve_id, block, cid, cblock))
                 return None, None
 
-        # OK response 0x41
-        cid = ord(payload[0])
-        cblock = (ord(payload[1]) << 8) + ord(payload[2])
-        data = payload[3:]
-        if len(data) % curve.type.size:
-            print('Curve size is not multiple of curve.type.size!')
-            print(' received curve size:{}'.format(len(data)))
-            print(' curve.type.size:{}'.format(curve.type.size))
-            return None, None
+            # expected result
+            data_float = curve.load_to_value(data)
+            return Const.ACK_OK, data_float
 
-        # OK curve size
-        if cid != curve_id or cblock != block:
-            print('Invalid curve id or block offset in response!')
-            print(' expected - curve_id:{}, block_offset:{}'.format(
-                curve_id, block))
-            print(' received - curve_id:{}, block_offset:{}'.format(
-                cid, cblock))
-            return None, None
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
-        # OK curve id and block off
-        data_float = curve.load_to_value(data)
-        return Const.ACK_OK, data_float
+    def curve_block(self, curve_id, block, value, timeout):
+        """Write to curve block."""
+        # command and expected response
+        cmd, ack = Const.CURVE_BLOCK, Const.ACK_OK
 
-    def write_curve_block(self, curve_id, block, value, timeout):
-        """Write to curve block. Command 0x41."""
+        # build payload
         curve = self.entities.curves[curve_id]
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8
         payload = [chr(curve_id), chr(hsb), chr(lsb)] + \
             curve.value_to_load(value)
 
-        message = _Message.message(0x41, payload=payload)
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
 
-        # dev_id = 1
-        # package = _Package.package(dev_id, message)
-        # print('write query : ', [hex(ord(c)) for c in package.stream])
-        # return
+        if res.cmd == ack:
+            # expected response
+            return res.cmd, res.payload
 
-        response = self.channel.request(message, timeout)
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
-        if response.cmd > 0xE0 and response.cmd <= 0xE8:
-            return response.cmd, None
-        else:
-            return response.cmd, response.payload
+    def recalculate_curve_checksum(self, curve_id, timeout):
+        """Recalculate curve checksum."""
+        # command and expected response
+        cmd, ack = Const.RECALCULATE_CURVE_CHECKSUM, Const.CURVE_CHECKSUM
 
-    def calc_curve_checksum(self, curve_id, timeout):
-        """Recalculate curve checksum. Command 0x42."""
-        payload = [chr(curve_id), ]
-        message = _Message.message(0x42, payload=payload)
-        response = self.channel.request(message, timeout)
-        if response.cmd > 0xE0 and response.cmd <= 0xE8:
-            return response.cmd, None
-        else:
-            return response.cmd, response.payload
+        # build payload
+        payload = [chr(curve_id)]
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        if res.cmd == ack:
+            # expected response
+            return res.cmd, res.payload
+
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
 
     # 0x5_
-    def execute_function(self,
-                         func_id, input_val=None, timeout=100, read_flag=True):
-        """Execute a function. Command 0x50.
+    def execute_function(self, func_id, input_val=None, timeout=100,
+                         read_flag=True):
+        """Execute a function.
 
         parameter:
             read_flag: whether to execute a read after a write.
         """
+        # command and expected response
+        cmd, ack = Const.EXECUTE_FUNCTION, Const.FUNCTION_RETURN
+
+        # build payload
         function = self.entities.functions[func_id]
-        # Load = function id + input data
-        load = [chr(func_id)] + function.value_to_load(input_val)
-        message = _Message.message(0x50, payload=load)
-        response = self.channel.request(message, timeout, read_flag=read_flag)
-        if response.cmd == 0x51:
-            # result of the execution
-            if len(response.payload) == function.o_size:
-                return Const.ACK_OK, function.load_to_value(response.payload)
-        elif response.cmd == 0x53:
+        payload = [chr(func_id)] + function.value_to_load(input_val)
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout, read_flag=read_flag)
+
+        if res.cmd == ack:
+            if len(res.payload) == function.o_size:
+                # expected response
+                return Const.ACK_OK, function.load_to_value(res.payload)
+        if res.cmd == Const.FUNCTION_ERROR:
             # function error
-            if len(response.payload) == 1:
-                # TODO: the tuple order of return seems to be inverted!
-                return response.payload, None
-        return None, None  # reached in case of functions with no return
+            if len(res.payload) == 1:
+                # return error code
+                return res.cmd, res.payload[0]
+
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res)
+
+    @staticmethod
+    def _anomalous_response(cmd, res):
+        # response with error
+        if Const.ACK_OK < res.cmd <= Const.ACK_RESOURCE_BUSY:
+            return res.cmd, None
+
+        # unexpected response
+        fmts = 'Unexpected BSMP response for {} command: {}!'
+        print(fmts.format(cmd, res.cmd))
+        return None, None
 
 
 class BSMPSim:
@@ -332,25 +400,25 @@ class BSMPSim:
         # print(var_id)
         return Const.ACK_OK, self._variables[var_id]
 
-    def read_group_variables(self, group_id, timeout):
+    def read_group_of_variables(self, group_id, timeout):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
         values = [self.read_variable(id)[1] for id in ids]
         return Const.ACK_OK, values
 
     # 0x3_
-    def create_group(self, var_ids, timeout):
+    def create_group_of_variables(self, var_ids, timeout):
         """Create new group."""
         self.entities.add_group(var_ids)
         return Const.ACK_OK, None
 
-    def remove_all_groups(self, timeout):
+    def remove_all_groups_of_variables(self, timeout):
         """Remove all groups."""
-        self.entities.remove_all_groups()
+        self.entities.remove_all_groups_of_variables()
         return Const.ACK_OK, None
 
     # 0x4_
-    def read_curve_block(self, curve_id, block, timeout):
+    def request_curve_block(self, curve_id, block, timeout):
         """Read curve block. Command 0x40."""
         curve = self.entities.curves[curve_id]
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8

@@ -110,8 +110,8 @@ class PRUController:
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
     _delay_remove_groups = 100  # [us]
-    _delay_create_group = 100  # [us]
-    _delay_read_group_variables = 100  # [us]
+    _delay_create_group_of_variables = 100  # [us]
+    _delay_read_group_of_variables = 100  # [us]
     _delay_read_curve = 100  # [us]
     _delay_write_curve = 100  # [us]
     _delay_sleep = 0.020  # [s]
@@ -864,7 +864,7 @@ class PRUController:
                 # send curve data to bsmp devices
                 for block, idx in enumerate(indices):
                     datum = data[idx[0]:idx[1]]
-                    psbsmp.write_curve_block(
+                    psbsmp.curve_block(
                         curve_id=curve_id, block=block, value=datum,
                         timeout=self._delay_write_curve)
                     # _time.sleep(0.005)  # NOTE: necessary?
@@ -908,9 +908,9 @@ class PRUController:
             #     print('reading mirror variable group for ids:{}...'.format(
             #         device_ids))
             for id in device_ids:
-                ack[id], data[id] = self._udc[id].read_group_variables(
+                ack[id], data[id] = self._udc[id].read_group_of_variables(
                     group_id=group_id,
-                    timeout=self._delay_read_group_variables)
+                    timeout=self._delay_read_group_of_variables)
             # if group_id == self._model.RMPWFM:
             #     print('finished reading.')
             tstamp = _time.time()
@@ -992,7 +992,7 @@ class PRUController:
 
             elif ack[id] == _BSMPConst.ACK_INVALID_ID:
                 self._connected[id] = False
-                self._create_groups(id)
+                self._create_group_of_variables(id)
             else:
                 self._connected[id] = False
         # processing time up to this point: 19.4 ms @ BBB1
@@ -1126,7 +1126,7 @@ class PRUController:
         self._check_groups()
         # loop over bsmp devices
         for id in self._device_ids:
-            self._create_groups(id)
+            self._create_group_of_variables(id)
 
     def _check_groups(self):
         if len(self._group_ids) < 3:
@@ -1137,16 +1137,16 @@ class PRUController:
                 self._init_disconnect()
                 raise ValueError('Invalid variable group definition!')
 
-    def _create_groups(self, id):
+    def _create_group_of_variables(self, id):
         # remove previous variables groups and fresh ones
         try:
-            self._udc[id].remove_all_groups(
+            self._udc[id].remove_all_groups_of_variables(
                 timeout=self._delay_remove_groups)
             self._connected[id] = True
             for group_id in self._group_ids[3:]:
                 var_ids = self._params.groups[group_id]
-                self._udc[id].create_group(
-                    var_ids, timeout=self._delay_create_group)
+                self._udc[id].create_group_of_variables(
+                    var_ids, timeout=self._delay_create_group_of_variables)
         except _SerialError:
             print('_bsmp_init_groups: serial error!')
             self._connected[id] = False
