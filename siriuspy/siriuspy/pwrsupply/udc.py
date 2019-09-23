@@ -1,4 +1,4 @@
-"""Model abstract factory."""
+"""UDC class."""
 
 from .bsmp import PSBSMPFactory as _PSBSMPFactory
 from .psmodel import PSModelFactory as _PSModelFactory

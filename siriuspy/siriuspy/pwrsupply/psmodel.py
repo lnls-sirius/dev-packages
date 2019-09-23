@@ -1,4 +1,4 @@
-"""Model abstract factory."""
+"""Power Supply Model classes."""
 
 from . import bsmp as _psbsmp
 from . import bsmpsim as _psbsmpsim
@@ -8,7 +8,7 @@ from . import controller as _controller
 
 
 class _PSModel:
-    """Abstract factory for power supply models."""
+    """Abstract power supply model."""
 
     _c = _psbsmp.ConstBSMP
     _e2v = {
@@ -111,7 +111,7 @@ class _PSModel:
 
 # Standard PS that supply magnets
 class PSModelFBP(_PSModel):
-    """FBP model factory."""
+    """FBP model."""
 
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
@@ -205,7 +205,7 @@ class PSModelFBP(_PSModel):
 
 
 class PSModelFBP_FOFB(PSModelFBP):
-    """FBP_FOFB model factory."""
+    """FBP_FOFB power supply model."""
 
     @property
     def name(self):
@@ -229,7 +229,7 @@ class PSModelFBP_FOFB(PSModelFBP):
 
 
 class PSModelFAC_DCDC(PSModelFBP):
-    """FAC model factory."""
+    """FAC power supply model."""
 
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
@@ -267,7 +267,7 @@ class PSModelFAC_DCDC(PSModelFBP):
 
 
 class PSModelFAC_2S_DCDC(PSModelFBP):
-    """FAC_2S_DCDC model factory."""
+    """FAC_2S_DCDC power supply model."""
 
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2S_DCDC.V_PS_SETPOINT,
@@ -321,7 +321,7 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
 
 
 class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
-    """FAC_2P4S_DCDC model factory."""
+    """FAC_2P4S_DCDC power supply model."""
 
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
@@ -390,7 +390,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
 
 
 class PSModelFAP(PSModelFBP):
-    """FAP model factory."""
+    """FAP power supply model."""
 
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
@@ -425,7 +425,7 @@ class PSModelFAP(PSModelFBP):
 
 
 class PSModelFAP_4P(PSModelFBP):
-    """FAP_4P model factory."""
+    """FAP_4P power supply model."""
 
     @property
     def name(self):
@@ -449,7 +449,7 @@ class PSModelFAP_4P(PSModelFBP):
 
 
 class PSModelFAP_2P2S(PSModelFBP):
-    """FAP_2P2S model factory."""
+    """FAP_2P2S power supply model."""
 
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
@@ -499,7 +499,7 @@ class PSModelFAP_2P2S(PSModelFBP):
 
 
 class PSModelCommercial(PSModelFAC_DCDC):
-    """Commercial model factory."""
+    """Commercial power supply model."""
 
     @property
     def name(self):
@@ -526,7 +526,7 @@ class PSModelCommercial(PSModelFAC_DCDC):
 
 
 class PSModelFBP_DCLink(_PSModel):
-    """FBP_DCLink factory."""
+    """FBP_DCLink model."""
 
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
@@ -594,7 +594,7 @@ class PSModelFBP_DCLink(_PSModel):
 
 
 class PSModelFAC_2S_ACDC(_PSModel):
-    """FAC_2S_ACDC factory."""
+    """FAC_2S_ACDC model."""
 
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_ACDC.V_PS_SOFT_INTERLOCKS,
@@ -663,7 +663,7 @@ class PSModelFAC_2S_ACDC(_PSModel):
 
 
 class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
-    """FAC_2P4S_ACDC factoy."""
+    """FAC_2P4S_ACDC model."""
 
     @property
     def name(self):
@@ -684,6 +684,9 @@ class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     def simulation_class(self):
         """Model simulation."""
         return _psbsmpsim.BSMPSim_FAC_2P4S_ACDC
+
+
+# --- Factory ---
 
 
 class PSModelFactory:
