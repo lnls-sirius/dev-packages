@@ -141,7 +141,7 @@ class BSMP:
                 # expected response
                 return Const.ACK_OK, variable.load_to_value(res.payload)
             # unexpected variable size
-            fmts = 'Unexpected BSMP variable size for {} command: {}!'
+            fmts = 'Unexpected BSMP variable size for command {}: {}!'
             print(fmts.format(cmd, res.cmd))
             return None, None
 
@@ -167,7 +167,7 @@ class BSMP:
             if len(res.payload) == group.variables_size():
                 return Const.ACK_OK, group.load_to_value(res.payload)
             # unexpected group variables size
-            fmts = 'Unexpected BSMP group variables size for {} command: {}!'
+            fmts = 'Unexpected BSMP group variables size for command {}: {}!'
             print(fmts.format(cmd, res.cmd))
             return None, None
 
@@ -217,7 +217,7 @@ class BSMP:
                 self.entities.add_group(var_ids)
                 return Const.ACK_OK, None
             # unexpected non-empty response payload
-            fmts = 'Unexpected BSMP non-empty resp payload for {} command: {}!'
+            fmts = 'Unexpected BSMP non-empty resp payload for command {}: {}!'
             print(fmts.format(cmd, res.cmd))
             return None, None
 
@@ -244,7 +244,7 @@ class BSMP:
                 self.entities.remove_all_groups_of_variables()
                 return Const.ACK_OK, None
             # unexpected non-empty response payload
-            fmts = 'Unexpected BSMP non-empty resp payload for {} command: {}!'
+            fmts = 'Unexpected BSMP non-empty resp payload for command {}: {}!'
             print(fmts.format(cmd, res.cmd))
             return None, None
 
@@ -372,7 +372,7 @@ class BSMP:
             return res.cmd, None
 
         # unexpected response
-        fmts = 'Unexpected BSMP response for {} command: {}!'
+        fmts = 'Unexpected BSMP response for command {}: {}!'
         print(fmts.format(cmd, res.cmd))
         return None, None
 
