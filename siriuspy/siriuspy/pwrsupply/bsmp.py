@@ -887,6 +887,14 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
+    Curves = (
+        {'eid': 0, 'waccess': True, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': True, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},)
+
 
 class EntitiesFAC_DCDC(EntitiesPS):
     """FAC-type power supply entities."""
@@ -1130,6 +1138,8 @@ class EntitiesFBP_DCLink(EntitiesPS):
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
     )
 
+    Curves = ()
+
 
 class EntitiesFAC_2S_ACDC(EntitiesPS):
     """FAC_2S_ACDC-type power supply entities."""
@@ -1156,10 +1166,11 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
+    Curves = ()
+
 
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     """FAC_2P4S_ACDC-type power supply entities."""
-
 
 # --- Power Supply BSMP ---
 
