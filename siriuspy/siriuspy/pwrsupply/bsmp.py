@@ -198,9 +198,6 @@ class ConstBSMP:
 class ConstFBP(ConstBSMP):
     """Namespace for organizing power supply FBP BSMP constants."""
 
-    # --- implemented protocol version ---
-    # version = __bsmp_version__
-
     # --- FSB variables ---
     V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
     V_PS_HARD_INTERLOCKS = 26
@@ -276,19 +273,6 @@ class ConstFAC_DCDC(ConstBSMP):
 class ConstFAC_2P4S_DCDC(ConstBSMP):
     """Namespace for organizing power supply FAC_2P4S_DCDC BSMP constants."""
 
-    # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
-
     # --- FAC_2P4S_DCDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
@@ -361,22 +345,6 @@ class ConstFAC_2S_DCDC(ConstBSMP):
 
 class ConstFAP(ConstBSMP):
     """Namespace for organizing power supply FAP BSMP constants."""
-
-    # --- implemented protocol version ---
-    # version = __bsmp_version__
-
-    # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
 
     # --- FAP variables ---
     V_PS_SOFT_INTERLOCKS = 25
@@ -538,8 +506,6 @@ class ConstFAC_2S_ACDC(ConstBSMP):
 
 class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
     """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
-
-    pass
 
 
 # Mirror power supply variables (FBP)
@@ -1193,6 +1159,10 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     """FAC_2P4S_ACDC-type power supply entities."""
 
 
+
+# --- Power Supply BSMP ---
+
+
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
 
@@ -1205,6 +1175,7 @@ class PSBSMP(_BSMP):
         else:
             self.pru = pru
         super().__init__(self.pru, slave_address, entities)
+        self._check_entities_consistency()
 
     @property
     def wfmref_size(self):
@@ -1219,7 +1190,7 @@ class PSBSMP(_BSMP):
     @property
     def wfmref_selected(self):
         """."""
-        curve_id = self.read_variable(
+        _, curve_id = self.read_variable(
             var_id=ConstBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout)
         return curve_id
 
@@ -1231,29 +1202,74 @@ class PSBSMP(_BSMP):
 
     def wfmref_write(self, curve):
         """."""
-        # select the other curve_id
+        # check curve size
+        curve_size = len(curve)
+        curve_entity = self.entities.curves[0]  # curve ids 0 and 1 should have same sizes
+        if curve_size > curve_entity.max_size_t_float:
+            raise IndexError('Curve exceed maximum size!')
+        # get curve id of current buffer
         curve_id = self.wfmref_selected
+        # select the other buffer and send curve blocks
         curve_id = 0 if curve_id == 1 else 0
-        self._bsmp_curve_write(curve_id, curve)
+        self._bsmp_curve_write(curve_id, curve, curve_entity)
+        # execute reset WfmRef
+        self.execute_function(
+            func_id=ConstBSMP.F_RESET_WFMREF,
+            input_val=None,
+            timeout=PSBSMP._timeout)
+        # execute selection of WfmRef to be used
+        self.execute_function(
+            func_id=ConstBSMP.F_SELECT_WFMREF,
+            input_val=curve_id,
+            timeout=PSBSMP._timeout)
 
     def bufsamplesctom_read(self):
         """."""
         curve = self._bsmp_curve_read(curve_id=2)
         return curve
 
-
     def _bsmp_curve_read(self, curve_id):
         curve_entity = self.entities.curves[curve_id]
         wfmref_size = self.wfmref_size
         curve = _np.zeros(wfmref_size)
         indices = curve_entity.get_indices(wfmref_size)
+        # read curve blocks
         for block, idx in enumerate(indices):
-            _, data = self.request_curve_block(
+            ack, data = self.request_curve_block(
                 curve_id=curve_id,
                 block=block,
-                timeout=PSBSMP._timeout_read_curve)
-            curve[idx] = data
+                timeout=PSBSMP._timeout)
+            if ack != self.CONST.ACK_OK:
+                pass
+            curve[idx[0]:idx[1]] = data
         return curve
+
+    def _bsmp_curve_write(self, curve_id, curve, curve_entity):
+        curve_size = len(curve)
+        indices = curve_entity.get_indices(curve_size)
+        # send curve blocks
+        for block, idx in enumerate(indices):
+            print(block, idx)
+            ack, _ = self.curve_block(
+                curve_id=curve_id,
+                block=block,
+                value=curve[idx[0]:idx[1]],
+                timeout=PSBSMP._timeout,
+            )
+            if ack != self.CONST.ACK_OK:
+                pass
+
+    def _check_entities_consistency(self):
+        # check consistency of curves with ids 0 and 1
+        curves = self.entities.curves
+        if 0 in curves and 1 in curves:
+            curve0, curve1 = curves[0], curves[1]
+            if False in (curve0.waccess, curve1.waccess) or \
+               curve0.size != curve1.size or \
+               curve0.nblocks != curve1.nblocks:
+                raise ValueError('Inconsistent curves!')
+
+
 
 
 # --- DCDC ---

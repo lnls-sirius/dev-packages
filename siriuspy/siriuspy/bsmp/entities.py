@@ -135,6 +135,7 @@ class Curve(_Entity):
         self.size = (var_type.size * count)  # 1..128 bytes
         self.type = var_type
         self.nblocks = nblocks  # Number of blocks
+        self.max_size_t_float = self.nblocks * (self.size // self.type.size)
         self._var_types = [var_type for _ in range(count)]
 
     def load_to_value(self, load):
