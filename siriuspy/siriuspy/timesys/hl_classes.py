@@ -13,8 +13,6 @@ from siriuspy.csdevice import timesys as _cstime
 from .util import Base as _Base
 from .ll_classes import get_ll_trigger as _get_ll_trigger
 
-_INTERVAL = 0.01
-
 
 # HL == High Level
 class _BaseHL(_Base):
@@ -128,7 +126,7 @@ class _BaseHL(_Base):
             self._timer.start()
 
     def _update_pvs_thread(self):
-        _time.sleep(_INTERVAL)  # limit update in 100Hz
+        _time.sleep(1/20)  # limit update in 20Hz
         for prop, suf in self._all_props_suffix.items():
             if self._iscmdpv(suf):
                 continue
