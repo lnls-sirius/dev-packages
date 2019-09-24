@@ -1220,10 +1220,16 @@ class PSBSMP(_BSMP):
         wfmref_idx = 1 + (v_idx - v_beg) // 2
         return wfmref_idx
 
+    @property
+    def wfmref_maxsize(self):
+        """."""
+        curve_entity = self.entities.curves[0]  # curve ids 0 and 1 should have same sizes
+        maxsize = curve_entity.max_size_t_float
+        return maxsize
+
     def wfmref_read(self):
         """."""
         curve_id = self.wfmref_selected
-
         curve = self._bsmp_curve_read(curve_id=curve_id)
         return curve
 
@@ -1231,14 +1237,13 @@ class PSBSMP(_BSMP):
         """."""
         # check curve size
         curve_size = len(curve)
-        curve_entity = self.entities.curves[0]  # curve ids 0 and 1 should have same sizes
-        if curve_size > curve_entity.max_size_t_float:
+        if curve_size > self.wfmref_maxsize:
             raise IndexError('Curve exceed maximum size!')
         # get curve id of current buffer
         curve_id = self.wfmref_selected
         # select the other buffer and send curve blocks
         curve_id = 0 if curve_id == 1 else 0
-        self._bsmp_curve_write(curve_id, curve, curve_entity)
+        self._bsmp_curve_write(curve_id, curve)
         # execute selection of WfmRef to be used
         self.execute_function(
             func_id=ConstBSMP.F_SELECT_WFMREF,
@@ -1266,8 +1271,9 @@ class PSBSMP(_BSMP):
             curve[idx[0]:idx[1]] = data
         return curve
 
-    def _bsmp_curve_write(self, curve_id, curve, curve_entity):
+    def _bsmp_curve_write(self, curve_id, curve):
         curve_size = len(curve)
+        curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(curve_size)
         # send curve blocks
         for block, idx in enumerate(indices):
