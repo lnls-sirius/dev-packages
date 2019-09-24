@@ -369,12 +369,12 @@ class PRUController:
             device_ids = (device_ids, )
 
         # gather selected data
-        dev_curves = dict()
+        curves = dict()
         with self._lock:
             for dev_id in device_ids:
-                dev_curves[dev_id] = _dcopy(self._wfmref_curves[dev_id])
+                curves[dev_id] = _dcopy(self._wfmref_curves[dev_id])
 
-        return dev_curves
+        return curves
 
     def wfmref_write(self, device_ids, data):
         """Write wfmref curves."""
