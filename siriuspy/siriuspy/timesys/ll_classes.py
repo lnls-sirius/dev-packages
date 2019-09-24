@@ -46,19 +46,14 @@ class _BaseLL(_Base):
         self._dict_convert_pv2prop = {
                 val: key for key, val in self._dict_convert_prop2pv.items()}
         self._config_ok_values = dict()
-        self._rf_freq = _RFFREQ
-        self._rf_div = _RFDIV
+        self._base_freq = _RFFREQ / _RFDIV
 
         evg_name = _LLTimeSearch.get_evg_name()
-        self._rf_freq_pv = _PV(
-            LL_PREFIX + 'AS-Glob:RF-Gen:Frequency-SP',
-            connection_timeout=_conn_timeout)
-        self._rf_div_pv = _PV(
-            LL_PREFIX + evg_name + ':RFDiv-SP',
+        self._base_freq_pv = _PV(
+            LL_PREFIX + evg_name + ':FPGAClk-Cte',
             connection_timeout=_conn_timeout)
         self._update_base_freq()
-        self._rf_freq_pv.add_callback(self._update_base_freq)
-        self._rf_div_pv.add_callback(self._update_base_freq)
+        self._base_freq_pv.add_callback(self._update_base_freq)
 
         self._writepvs = dict()
         self._readpvs = dict()
@@ -162,13 +157,10 @@ class _BaseLL(_Base):
         return dic_[prop]
 
     def _update_base_freq(self, **kwargs):
-        self._rf_freq = self._rf_freq_pv.get(
-                                timeout=_conn_timeout) or self._rf_freq
-        self._rf_div = self._rf_div_pv.get(
-                                timeout=_conn_timeout) or self._rf_div
-        self._base_freq = self._rf_freq / self._rf_div
-        self._base_del = 1/self._base_freq / _US2SEC
-        self._rf_del = self._base_del / self._rf_div / 5
+        self._base_freq = self._base_freq_pv.get(
+                                timeout=_conn_timeout) or self._base_freq
+        self._base_del = 1 / self._base_freq / _US2SEC
+        self._rf_del = self._base_del / 5
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
