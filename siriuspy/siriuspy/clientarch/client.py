@@ -59,6 +59,11 @@ class ClientArchiver:
                 method='deletePV', pv=pvname, deleteData='true')
             self.session.get(url)
 
+    def getPausedPVsReport(self):
+        """."""
+        url = self._create_url(method='getPausedPVsReport')
+        return self.session.get(url).json()
+
     def pausePVs(self, pvnames):
         """."""
         if not isinstance(pvnames, (list, tuple)):
