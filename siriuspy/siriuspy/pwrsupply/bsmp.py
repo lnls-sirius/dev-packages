@@ -127,13 +127,14 @@ class ConstBSMP:
     V_WFMREF_SYNC_MODE = 15
     V_WFMREF_GAIN = 16
     V_WFMREF_OFFSET = 17
-    V_WFMREF_START = 18
-    V_WFMREF_END = 19
-    V_WFMREF_IDX = 20
+    V_WFMREF0_START = 18
+    V_WFMREF0_END = 19
+    V_WFMREF0_IDX = 20
+    V_WFMREF1_START = 21
+    V_WFMREF1_END = 22
+    V_WFMREF1_IDX = 23
+
     # --- undefined variables
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
     V_UNDEF24 = 24
 
     # --- power supply parameters ---
@@ -1155,9 +1156,9 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
+
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     """FAC_2P4S_ACDC-type power supply entities."""
-
 
 
 # --- Power Supply BSMP ---
@@ -1165,8 +1166,16 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
 
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
-
     _timeout = 100
+
+    _wfmref_pointers_var_ids = {
+        0: (ConstBSMP.V_WFMREF0_START,
+            ConstBSMP.V_WFMREF0_END,
+            ConstBSMP.V_WFMREF0_IDX),
+        1: (ConstBSMP.V_WFMREF1_START,
+            ConstBSMP.V_WFMREF1_END,
+            ConstBSMP.V_WFMREF1_IDX),
+    }
 
     def __init__(self, slave_address, entities, pru=None):
         """Init BSMP."""
@@ -1178,25 +1187,32 @@ class PSBSMP(_BSMP):
         self._check_entities_consistency()
 
     @property
-    def wfmref_size(self):
-        """."""
-        _, v_beg = self.read_variable(
-            var_id=ConstBSMP.V_WFMREF_START, timeout=PSBSMP._timeout)
-        _, v_end = self.read_variable(
-            var_id=ConstBSMP.V_WFMREF_END, timeout=PSBSMP._timeout)
-        wfmrefsize = 1 + (v_end - v_beg) // 2
-        return wfmrefsize
-
-    @property
     def wfmref_selected(self):
         """."""
         _, curve_id = self.read_variable(
             var_id=ConstBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout)
         return curve_id
 
+    @property
+    def wfmref_size(self):
+        """."""
+        i_beg, i_end, _ = self._bsmp_get_curve_pointers_ids()
+        v_beg, v_end = self._bsmp_get_pair_variables(i_beg, i_end)
+        wfmrefsize = 1 + (v_end - v_beg) // 2
+        return wfmrefsize
+
+    @property
+    def wfmref_idx(self):
+        """."""
+        i_beg, _, i_idx = self._bsmp_get_curve_pointers_ids()
+        v_beg, v_idx = self._bsmp_get_pair_variables(i_beg, i_idx)
+        wfmref_idx = 1 + (v_idx - v_beg) // 2
+        return wfmref_idx
+
     def wfmref_read(self):
         """."""
         curve_id = self.wfmref_selected
+
         curve = self._bsmp_curve_read(curve_id=curve_id)
         return curve
 
@@ -1212,11 +1228,6 @@ class PSBSMP(_BSMP):
         # select the other buffer and send curve blocks
         curve_id = 0 if curve_id == 1 else 0
         self._bsmp_curve_write(curve_id, curve, curve_entity)
-        # execute reset WfmRef
-        self.execute_function(
-            func_id=ConstBSMP.F_RESET_WFMREF,
-            input_val=None,
-            timeout=PSBSMP._timeout)
         # execute selection of WfmRef to be used
         self.execute_function(
             func_id=ConstBSMP.F_SELECT_WFMREF,
@@ -1259,6 +1270,13 @@ class PSBSMP(_BSMP):
             if ack != self.CONST.ACK_OK:
                 pass
 
+    def _bsmp_get_pair_variables(self, var_id1, var_id2):
+        _, value1 = self.read_variable(
+            var_id=var_id1, timeout=PSBSMP._timeout)
+        _, value2 = self.read_variable(
+            var_id=var_id2, timeout=PSBSMP._timeout)
+        return value1, value2
+
     def _check_entities_consistency(self):
         # check consistency of curves with ids 0 and 1
         curves = self.entities.curves
@@ -1269,6 +1287,9 @@ class PSBSMP(_BSMP):
                curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
+    def _bsmp_get_curve_pointers_ids(self):
+        curve_id = self.wfmref_selected
+        return PSBSMP._wfmref_pointers_var_ids[curve_id]
 
 
 
