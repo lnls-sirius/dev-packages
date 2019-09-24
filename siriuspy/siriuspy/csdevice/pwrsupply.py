@@ -439,12 +439,13 @@ def get_basic_propty_database():
                        'value': list(DEFAULT_WFMDATA),
                        'prec': DEFLT_PS_CURR_PREC},
         # PS BSMP Curves
-        # 'CurvesAcq-Sel': {'type': 'enum', 'enums': _et.DSBLD_ENBLD,
-        #                   'value': Const.DsblEnbl.Dsbl},
-        # 'CurvesAcq-Cmd': {'type': 'int', 'value': 0},
-        # 'CurveWfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
-        #                     'Value': DEFAULT_CURVESIZE,
-        #                     'prec': DEFLT_PS_CURR_PREC},
+        # 'CurvesUpdate-Cmd': {'type': 'int', 'value': 0},
+        # 'WfmRef-SP': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
+        #               'Value': DEFAULT_CURVESIZE,
+        #               'prec': DEFLT_PS_CURR_PREC},
+        # 'WfmRef-RB': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
+        #               'Value': DEFAULT_CURVESIZE,
+        #               'prec': DEFLT_PS_CURR_PREC},
     })
     return db
 

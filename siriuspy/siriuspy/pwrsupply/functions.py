@@ -3,23 +3,10 @@
 These classes implement a command interface, that is, they have
 an `execute` method.
 """
-import time as _time
 
-# BSMP and PS constants
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-
-# _delay_turn_on_off = 0.3  # [s]
-# _delay_loop_open_close = 0.3  # [s]
-# These updated values are based on what Gabriel indicated.
-
-# NOTE: delete these delays
-# the way the communication threads work in PRUController make these
-# parameters immaterial for the case of a single beaglebone with multiple
-# UDCs.
-_delay_turn_on_off = 0.010  # [s]
-_delay_loop_open_close = 0.150  # [s]
 
 
 class Function:
@@ -91,6 +78,23 @@ class PRUCurve(Function):
                 self.pru_controller.pru_curve_write(dev_id, value)
 
 
+class WfmRefCurve(Function):
+    """Executes a ps wfmref curve write command."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=()):
+        """Get pru controller."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            for dev_id in self._device_ids:
+                self.pru_controller.wfmref_write(dev_id, value)
+
+
 class PSCurvesAcqCmd(Function):
     """Executes a ps curve update."""
 
@@ -145,12 +149,9 @@ class PSPwrState(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.turn_on.execute()
-                # _time.sleep(_delay_turn_on_off)
                 self.close_loop.execute()
-                # _time.sleep(_delay_loop_open_close)
             elif value == 0:
                 self.turn_off.execute()
-                # _time.sleep(_delay_turn_on_off)
 
 
 class PSCurvesAcq(Function):
@@ -234,10 +235,8 @@ class CtrlLoop(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.open_loop.execute(None)
-                # _time.sleep(_delay_loop_open_close)
             elif value == 0:
                 self.close_loop.execute(None)
-                # _time.sleep(_delay_loop_open_close)
 
 
 class PSOpMode(Function):
