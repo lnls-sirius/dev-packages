@@ -165,9 +165,11 @@ class BBBFactory:
             # print info on scan frequency
             fstr = ('scan freqs - udc:{:<25s}  ps:{:<16s}  bsmp_id:{:2d}  '
                     'sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
+            print()
             for dev in devices:
                 freqs = (10, 2) if freqs is None else freqs
                 print(fstr.format(udc, *dev, *freqs))
+            print()
 
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)

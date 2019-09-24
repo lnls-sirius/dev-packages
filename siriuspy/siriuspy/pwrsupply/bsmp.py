@@ -17,22 +17,7 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-# firmware: modified for group FAC
-# __version__ = 'V0.11b2018-05-08V0.11b2018-05-08'
-
-# firmware: original, before V0.11b2018-05-08 (FBP works!)
-# __version__ = 'V0.11 2018-04-26V0.11 2018-04-25'
-
-# firmware: latest, created when module DCLink was installed in bench test.
-# __version__ = 'V0.13 2018-06-07V0.13 2018-06-07'
-
-# firmware: FBP DCLink variable id 32 changed from float to uint8
-# __version__ = 'V0.15 2018-07-11V0.15 2018-07-11'
-
-__version__ = 'V0.32 2019-04-10V0.32 2019-04-10'
-
-# FAP dipole version
-# __version__ = 'V0.18 2018-10-22V0.18 2018-10-22'
+__version__ = 'V0.36w2019-08-30V0.36w2019-08-30'
 
 
 # --- DCDC ---
@@ -613,7 +598,7 @@ MAP_MIRROR_2_ORIG_FBP = {
 
 
 class Parameters:
-    """power supply parameters."""
+    """Power supply parameters."""
 
     _parameters = (
         {'eid': 0, 'count': 1, 'type': str, 'unit': '',
