@@ -15,6 +15,7 @@ class TestBSMPAPI(TestCase):
     """Test BSMP."""
 
     api = (
+        'CONST',
         'entities', 'channel',
         'query_protocol_version',
         'query_list_of_variables',
@@ -129,7 +130,7 @@ class TestBSMP0x1(TestCase):
         load = list(map(chr, struct.pack('<h', 1020)))
         p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(0)
+        response = self.bsmp.read_variable(0, 100)
         self.assertEqual(response, (0xE0, 1020))
 
     def test_read_float_variable(self):
@@ -137,7 +138,7 @@ class TestBSMP0x1(TestCase):
         load = list(map(chr, struct.pack('<f', 50.52)))
         p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(1)
+        response = self.bsmp.read_variable(1, 100)
         self.assertEqual(response[0], 0xE0)
         self.assertAlmostEqual(response[1], 50.52, places=2)
 
@@ -148,7 +149,7 @@ class TestBSMP0x1(TestCase):
         load.extend(list(map(chr, struct.pack('<f', 2.7654321))))
         p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(2)
+        response = self.bsmp.read_variable(2, 100)
         self.assertEqual(response[0], 0xE0)
         for i, value in enumerate(response[1]):
             self.assertAlmostEqual(value, values[i], places=7)
@@ -161,21 +162,21 @@ class TestBSMP0x1(TestCase):
         expected_value = [c.encode() for c in load]
         p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(3)
+        response = self.bsmp.read_variable(3, 100)
         self.assertEqual(response, (0xE0, expected_value))
 
     def test_read_variable_error(self):
         """Test read variable returns error code."""
         p = Package.package(0, Message.message(0xE3))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(1)
+        response = self.bsmp.read_variable(1, 100)
         self.assertEqual(response, (0xE3, None))
 
     def test_read_variable_failure(self):
         """Test read variable returns error code."""
         p = Package.package(0, Message.message(0xFF))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_variable(1)
+        response = self.bsmp.read_variable(1, 100)
         self.assertEqual(response, (None, None))
 
     def test_read_group_of_variables(self):
@@ -337,15 +338,15 @@ class TestBSMP0x4(TestCase):
     #     with self.assertRaises(NotImplementedError):
     #         self.bsmp.request_curve_block(1, 1, 100)
 
-    def test_curve_block(self):
-        """Test curve_block."""
-        with self.assertRaises(NotImplementedError):
-            self.bsmp.curve_block(1, 2, [])
+    # def test_curve_block(self):
+    #     """Test curve_block."""
+    #     with self.assertRaises(NotImplementedError):
+    #         self.bsmp.curve_block(1, 2, [], timeout=100)
 
-    def test_recalculate_curve_checksum(self):
-        """Test recalculate_curve_checksum."""
-        with self.assertRaises(NotImplementedError):
-            self.bsmp.recalculate_curve_checksum(1)
+    # def test_recalculate_curve_checksum(self):
+    #     """Test recalculate_curve_checksum."""
+    #     with self.assertRaises(NotImplementedError):
+    #         self.bsmp.recalculate_curve_checksum(1)
 
 
 class TestBSMP0x5(TestCase):

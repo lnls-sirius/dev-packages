@@ -58,7 +58,7 @@ class Const:
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
-    const = Const
+    CONST = Const
 
     def __init__(self, pru, slave_address, entities):
         """Constructor."""
@@ -123,7 +123,7 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x1_
-    def read_variable(self, var_id, timeout=100):
+    def read_variable(self, var_id, timeout):
         """Read variable."""
         # command and expected response
         cmd, ack = Const.READ_VARIABLE, Const.VARIABLE_VALUE
@@ -395,9 +395,8 @@ class BSMPSim:
         return self._entities
 
     # 0x1_
-    def read_variable(self, var_id, timeout=100):
+    def read_variable(self, var_id, timeout):
         """Read a variable."""
-        # print(var_id)
         return Const.ACK_OK, self._variables[var_id]
 
     def read_group_of_variables(self, group_id, timeout):

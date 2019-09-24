@@ -166,7 +166,7 @@ class TestBSMPPackage(TestCase):
 class TestBSMPChannel(TestCase):
     """Test Channel class of BSMP package."""
 
-    api = ('read', 'write', 'request')
+    api = ('pru', 'address', 'read', 'write', 'request')
 
     def setUp(self):
         """Common setup for all tests."""

@@ -55,7 +55,7 @@ def bsmp_create(device_id, simulate=False):
 
 def bsmp_read_variable(bsmp, variable_id):
     """Read BSMP variable."""
-    ret = bsmp.read_variable(variable_id, 1000)
+    ret = bsmp.read_variable(variable_id, timeout=1000)
     return ret
 
 

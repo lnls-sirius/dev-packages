@@ -1211,7 +1211,7 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
 
-    _timeout_read_curve = 100
+    _timeout = 100
 
     def __init__(self, slave_address, entities, pru=None):
         """Init BSMP."""
@@ -1224,15 +1224,18 @@ class PSBSMP(_BSMP):
     @property
     def wfmref_size(self):
         """."""
-        _, v_beg = self.read_variable(var_id=ConstBSMP.V_WFMREF_START)
-        _, v_end = self.read_variable(var_id=ConstBSMP.V_WFMREF_END)
+        _, v_beg = self.read_variable(
+            var_id=ConstBSMP.V_WFMREF_START, timeout=PSBSMP._timeout)
+        _, v_end = self.read_variable(
+            var_id=ConstBSMP.V_WFMREF_END, timeout=PSBSMP._timeout)
         wfmrefsize = 1 + (v_end - v_beg) // 2
         return wfmrefsize
 
     @property
     def wfmref_selected(self):
         """."""
-        curve_id = self.read_variable(var_id=ConstBSMP.V_WFMREF_SELECTED)
+        curve_id = self.read_variable(
+            var_id=ConstBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout)
         return curve_id
 
     def wfmref_read(self):

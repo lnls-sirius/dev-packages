@@ -592,7 +592,7 @@ class _BaseBSMPSim(_BSMPSim):
         # Current state
         self._state = self._states[self.SlowRefState]
 
-    def read_variable(self, var_id):
+    def read_variable(self, var_id, timeout):
         """Read variable."""
         while self._pru.sync_block:
             _time.sleep(1e-1)
