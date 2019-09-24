@@ -702,8 +702,6 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _define_convertion_prop2pv(self):
         map_ = super()._define_convertion_prop2pv()
-        map_['Delay'] = map_['Delay'].replace('Raw-RB', '-RB')
-        map_['Width'] = map_['Width'].replace('Raw-RB', '-RB')
         map_['Network'] = map_['Network'].replace('Network', 'RefClkLocked')
         return map_
 
