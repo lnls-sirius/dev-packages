@@ -440,12 +440,13 @@ def get_basic_propty_database():
                        'prec': DEFLT_PS_CURR_PREC},
         # PS BSMP Curves
         # 'CurvesUpdate-Cmd': {'type': 'int', 'value': 0},
-        # 'WfmRef-SP': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
-        #               'Value': DEFAULT_CURVESIZE,
-        #               'prec': DEFLT_PS_CURR_PREC},
-        # 'WfmRef-RB': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
-        #               'Value': DEFAULT_CURVESIZE,
-        #               'prec': DEFLT_PS_CURR_PREC},
+        # 'WfmRefData-SP': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
+        #                   'value': DEFAULT_CURVESIZE,
+        #                   'prec': DEFLT_PS_CURR_PREC},
+        # 'WfmRefData-RB': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
+        #                   'value': DEFAULT_CURVESIZE,
+        #                   'prec': DEFLT_PS_CURR_PREC},
+        # 'WfmRefIdx-Mon: {'type': 'int', 'value': 0 },
     })
     return db
 
