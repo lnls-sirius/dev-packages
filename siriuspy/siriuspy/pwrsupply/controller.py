@@ -1,6 +1,6 @@
 """E2SController."""
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
+from siriuspy.pwrsupply.bsmp import ConstPSBSMP as _c
 from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
 from siriuspy.pwrsupply.functions import BSMPFunction as _Function
 from siriuspy.pwrsupply.watcher import Watcher as _Watcher

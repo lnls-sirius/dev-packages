@@ -10,7 +10,7 @@ from . import controller as _controller
 class _PSModel:
     """Abstract power supply model."""
 
-    _c = _psbsmp.ConstBSMP
+    _c = _psbsmp.ConstPSBSMP
     _e2v = {
         'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
         'CycleType-Sts': _c.V_SIGGEN_TYPE,

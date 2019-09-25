@@ -4,7 +4,7 @@ These classes implement a command interface, that is, they have
 an `execute` method.
 """
 
-from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
+from siriuspy.pwrsupply.bsmp import ConstPSBSMP as _c
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 

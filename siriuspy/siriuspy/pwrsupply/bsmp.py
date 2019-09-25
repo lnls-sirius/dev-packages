@@ -22,7 +22,7 @@ __version__ = 'V0.36w2019-08-30V0.36w2019-08-30'
 
 # --- DCDC ---
 
-class ConstBSMP:
+class ConstPSBSMP:
     """Namespace for organizing power supply BSMP constants."""
 
     # --- implemented protocol version ---
@@ -196,7 +196,7 @@ class ConstBSMP:
     P_ANALOG_MIN = 47
 
 
-class ConstFBP(ConstBSMP):
+class ConstFBP(ConstPSBSMP):
     """Namespace for organizing power supply FBP BSMP constants."""
 
     # --- FSB variables ---
@@ -245,7 +245,7 @@ class ConstFBP(ConstBSMP):
     V_I_LOAD_4 = 63  # corresponds to IOC Current-Mon
 
 
-class ConstFAC_DCDC(ConstBSMP):
+class ConstFAC_DCDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_DCDC BSMP constants."""
 
     # --- FAC_DCDC variables ---
@@ -271,7 +271,7 @@ class ConstFAC_DCDC(ConstBSMP):
     V_IIB_INTERLOCKS = 44
 
 
-class ConstFAC_2P4S_DCDC(ConstBSMP):
+class ConstFAC_2P4S_DCDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2P4S_DCDC BSMP constants."""
 
     # --- FAC_2P4S_DCDC variables ---
@@ -309,7 +309,7 @@ class ConstFAC_2P4S_DCDC(ConstBSMP):
     V_DUTY_CYCLE_8 = 56
 
 
-class ConstFAC_2S_DCDC(ConstBSMP):
+class ConstFAC_2S_DCDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2S_DCDC BSMP constants."""
 
     # --- FAC_2S_DCDC variables ---
@@ -344,7 +344,7 @@ class ConstFAC_2S_DCDC(ConstBSMP):
     V_IIB_INTERLOCKS_2 = 53
 
 
-class ConstFAP(ConstBSMP):
+class ConstFAP(ConstPSBSMP):
     """Namespace for organizing power supply FAP BSMP constants."""
 
     # --- FAP variables ---
@@ -377,7 +377,7 @@ class ConstFAP_4P(ConstFAP):
     """Namespace for organizing power supply FAP_4P BSMP constants."""
 
 
-class ConstFAP_2P2S(ConstBSMP):
+class ConstFAP_2P2S(ConstPSBSMP):
     """Namespace for organizing power supply FAP_2P2S BSMP constants."""
 
     # --- FAP_2P2S variables ---
@@ -466,7 +466,7 @@ class ConstFAP_2P2S(ConstBSMP):
 
 # --- ACDC ---
 
-class ConstFBP_DCLink(ConstBSMP):
+class ConstFBP_DCLink(ConstPSBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
     # --- FBP_DCLink variables ---
@@ -480,7 +480,7 @@ class ConstFBP_DCLink(ConstBSMP):
     V_DIG_POT_TAP = 32
 
 
-class ConstFAC_2S_ACDC(ConstBSMP):
+class ConstFAC_2S_ACDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2S_ACDC BSMP constants."""
 
     # --- FAC_2S_ACDC variables ---
@@ -712,109 +712,109 @@ class EntitiesPS(_Entities):
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},)
 
     Functions = (
-        {'eid': ConstBSMP.F_TURN_ON,
+        {'eid': ConstPSBSMP.F_TURN_ON,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_TURN_OFF,
+        {'eid': ConstPSBSMP.F_TURN_OFF,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_OPEN_LOOP,
+        {'eid': ConstPSBSMP.F_OPEN_LOOP,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_CLOSE_LOOP,
+        {'eid': ConstPSBSMP.F_CLOSE_LOOP,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_SELECT_OP_MODE,
+        {'eid': ConstPSBSMP.F_SELECT_OP_MODE,
          'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SELECT_PS_MODEL,
+        {'eid': ConstPSBSMP.F_SELECT_PS_MODEL,
          'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_RESET_INTERLOCKS,
+        {'eid': ConstPSBSMP.F_RESET_INTERLOCKS,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_REMOTE_INTERFACE,
+        {'eid': ConstPSBSMP.F_REMOTE_INTERFACE,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_SET_SERIAL_ADDRESS,
+        {'eid': ConstPSBSMP.F_SET_SERIAL_ADDRESS,
          'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SET_SERIAL_TERMINATION,
+        {'eid': ConstPSBSMP.F_SET_SERIAL_TERMINATION,
          'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_UNLOCK_UDC,
+        {'eid': ConstPSBSMP.F_UNLOCK_UDC,
          'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_LOCK_UDC,
+        {'eid': ConstPSBSMP.F_LOCK_UDC,
          'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_CFG_BUF_SAMPLES,
+        {'eid': ConstPSBSMP.F_CFG_BUF_SAMPLES,
          'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_ENABLE_BUF_SAMPLES,
+        {'eid': ConstPSBSMP.F_ENABLE_BUF_SAMPLES,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_DISABLE_BUF_SAMPLES,
+        {'eid': ConstPSBSMP.F_DISABLE_BUF_SAMPLES,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_SYNC_PULSE,
+        {'eid': ConstPSBSMP.F_SYNC_PULSE,
          'i_type': (), 'o_type': ()},
-        {'eid': ConstBSMP.F_SET_SLOWREF,
+        {'eid': ConstPSBSMP.F_SET_SLOWREF,
          'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SET_SLOWREF_FBP,
+        {'eid': ConstPSBSMP.F_SET_SLOWREF_FBP,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_RESET_COUNTERS,
+        {'eid': ConstPSBSMP.F_RESET_COUNTERS,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SCALE_WFMREF,
+        {'eid': ConstPSBSMP.F_SCALE_WFMREF,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SELECT_WFMREF,
+        {'eid': ConstPSBSMP.F_SELECT_WFMREF,
          'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_GET_WFMREF_SIZE,
+        {'eid': ConstPSBSMP.F_GET_WFMREF_SIZE,
          'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_RESET_WFMREF,
+        {'eid': ConstPSBSMP.F_RESET_WFMREF,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_CFG_SIGGEN,
+        {'eid': ConstPSBSMP.F_CFG_SIGGEN,
          'i_type': (_Types.T_ENUM, _Types.T_UINT16,
                     _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SET_SIGGEN,
+        {'eid': ConstPSBSMP.F_SET_SIGGEN,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_ENABLE_SIGGEN,
+        {'eid': ConstPSBSMP.F_ENABLE_SIGGEN,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_DISABLE_SIGGEN,
+        {'eid': ConstPSBSMP.F_DISABLE_SIGGEN,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': ConstBSMP.F_SET_SLOWREF_READBACK,
+        {'eid': ConstPSBSMP.F_SET_SLOWREF_READBACK,
          'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
-        {'eid': ConstBSMP.F_SET_SLOWREF_FBP_READBACK,
+        {'eid': ConstPSBSMP.F_SET_SLOWREF_FBP_READBACK,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT,),
          'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT,)},
-        {'eid': ConstBSMP.F_SET_PARAM,
+        {'eid': ConstPSBSMP.F_SET_PARAM,
          'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_GET_PARAM,
+        {'eid': ConstPSBSMP.F_GET_PARAM,
          'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
          'o_type': (_Types.T_FLOAT,)},
-        {'eid': ConstBSMP.F_SAVE_PARAM_EEPROM,
+        {'eid': ConstPSBSMP.F_SAVE_PARAM_EEPROM,
          'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_LOAD_PARAM_EEPROM,
+        {'eid': ConstPSBSMP.F_LOAD_PARAM_EEPROM,
          'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SAVE_PARAM_BANK,
+        {'eid': ConstPSBSMP.F_SAVE_PARAM_BANK,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_LOAD_PARAM_BANK,
+        {'eid': ConstPSBSMP.F_LOAD_PARAM_BANK,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SET_DSP_COEFFS,
+        {'eid': ConstPSBSMP.F_SET_DSP_COEFFS,
          # NOTE: fix last argument!
          'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_FLOAT,),
          'o_type': (_Types.T_FLOAT,)},
-        {'eid': ConstBSMP.F_GET_DSP_COEFF,
+        {'eid': ConstPSBSMP.F_GET_DSP_COEFF,
          'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_UINT16,),
          'o_type': (_Types.T_FLOAT,)},
-        {'eid': ConstBSMP.F_SAVE_DSP_COEFFS_EEPROM,
+        {'eid': ConstPSBSMP.F_SAVE_DSP_COEFFS_EEPROM,
          'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_LOAD_DSP_COEFFS_EEPROM,
+        {'eid': ConstPSBSMP.F_LOAD_DSP_COEFFS_EEPROM,
          'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_SAVE_DSP_MODULES_EEPROM,
+        {'eid': ConstPSBSMP.F_SAVE_DSP_MODULES_EEPROM,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_LOAD_DSP_MODULES_EEPROM,
+        {'eid': ConstPSBSMP.F_LOAD_DSP_MODULES_EEPROM,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': ConstBSMP.F_RESET_UDC,
+        {'eid': ConstPSBSMP.F_RESET_UDC,
          'i_type': (), 'o_type': ()},)
 
     Curves = (
@@ -889,9 +889,9 @@ class EntitiesFBP(EntitiesPS):
 
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},)
 
@@ -1172,20 +1172,25 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
     """FAC_2P4S_ACDC-type power supply entities."""
 
+
 # --- Power Supply BSMP ---
 
 
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
-    _timeout = 100
+
+    CONST_PS = ConstPSBSMP
+    CONST_BSMP = _BSMP.CONST
+
+    _timeout_curves = 100
 
     _wfmref_pointers_var_ids = {
-        0: (ConstBSMP.V_WFMREF0_START,
-            ConstBSMP.V_WFMREF0_END,
-            ConstBSMP.V_WFMREF0_IDX),
-        1: (ConstBSMP.V_WFMREF1_START,
-            ConstBSMP.V_WFMREF1_END,
-            ConstBSMP.V_WFMREF1_IDX),
+        0: (CONST_PS.V_WFMREF0_START,
+            CONST_PS.V_WFMREF0_END,
+            CONST_PS.V_WFMREF0_IDX),
+        1: (CONST_PS.V_WFMREF1_START,
+            CONST_PS.V_WFMREF1_END,
+            CONST_PS.V_WFMREF1_IDX),
     }
 
     def __init__(self, slave_address, entities, pru=None):
@@ -1195,118 +1200,159 @@ class PSBSMP(_BSMP):
         else:
             self.pru = pru
         super().__init__(self.pru, slave_address, entities)
-        self._check_entities_consistency()
+        self._wfmref_check_entities_consistency()
+
+    # --- wfmref methods ---
 
     @property
     def wfmref_selected(self):
         """."""
         _, curve_id = self.read_variable(
-            var_id=ConstBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout)
+            var_id=PSBSMP.CONST_PS.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_curves)
         return curve_id
 
     @property
     def wfmref_size(self):
-        """."""
-        i_beg, i_end, _ = self._bsmp_get_curve_pointers_ids()
-        v_beg, v_end = self._bsmp_get_pair_variables(i_beg, i_end)
-        wfmrefsize = 1 + (v_end - v_beg) // 2
-        return wfmrefsize
+        """Return WfmRef size in t_float units.
+
+            This is the waveform size as last registered by the
+        ARM controller.
+        """
+        # calculate wfmref size from buffer pointer values used by ARM controller
+        i_beg, i_end, _ = self._wfmref_bsmp_get_pointers_ids_of_selected()
+        v_beg, v_end = self._curve_bsmp_get_variable_values(i_beg, i_end)
+        wfmref_size = 1 + (v_end - v_beg) // 2
+        return wfmref_size
 
     @property
     def wfmref_idx(self):
-        """."""
-        i_beg, _, i_idx = self._bsmp_get_curve_pointers_ids()
-        v_beg, v_idx = self._bsmp_get_pair_variables(i_beg, i_idx)
+        """Return WfmRef Index
+
+            This index refers to the current waveform in use by the
+        DSP controller.
+        """
+        # calculate wfmref index from buffer pointer values used by ARM controller
+        i_beg, _, i_idx = self._wfmref_bsmp_get_pointers_ids_of_selected()
+        v_beg, v_idx = self._curve_bsmp_get_variable_values(i_beg, i_idx)
         wfmref_idx = 1 + (v_idx - v_beg) // 2
         return wfmref_idx
 
     @property
     def wfmref_maxsize(self):
         """."""
-        curve_entity = self.entities.curves[0]  # curve ids 0 and 1 should have same sizes
-        maxsize = curve_entity.max_size_t_float
+        # curve with ids 0 and 1 should have same sizes.
+        maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
 
     def wfmref_read(self):
         """."""
         curve_id = self.wfmref_selected
-        curve = self._bsmp_curve_read(curve_id=curve_id)
+        curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
     def wfmref_write(self, curve):
         """."""
         # check curve size
-        curve_size = len(curve)
-        if curve_size > self.wfmref_maxsize:
-            raise IndexError('Curve exceed maximum size!')
+        self._curve_check_size(curve_id=0, curve_size=len(curve))
+
         # get curve id of current buffer
         curve_id = self.wfmref_selected
+
         # select the other buffer and send curve blocks
         curve_id = 0 if curve_id == 1 else 0
-        self._bsmp_curve_write(curve_id, curve)
+        self._curve_bsmp_write(curve_id, curve)
+
         # execute selection of WfmRef to be used
         self.execute_function(
-            func_id=ConstBSMP.F_SELECT_WFMREF,
+            func_id=PSBSMP.CONST_PS.F_SELECT_WFMREF,
             input_val=curve_id,
-            timeout=PSBSMP._timeout)
+            timeout=PSBSMP._timeout_curves)
+
+    # --- curve methods ---
+
+    def curve_maxsize(self, curve_id):
+        """Return max size if t_float units according to BSMP spec."""
+        curve_entity = self.entities.curves[curve_id]
+        maxsize = curve_entity.max_size_t_float
+        return maxsize
 
     def bufsamplesctom_read(self):
         """."""
-        curve = self._bsmp_curve_read(curve_id=2)
+        curve = self._curve_bsmp_read(curve_id=2)
         return curve
 
-    def _bsmp_curve_read(self, curve_id):
-        curve_entity = self.entities.curves[curve_id]
+    # --- private methods ---
+
+    def _wfmref_bsmp_get_pointers_ids_of_selected(self):
+        curve_id = self.wfmref_selected
+        return PSBSMP._wfmref_pointers_var_ids[curve_id]
+
+    def _wfmref_check_entities_consistency(self):
+        # check consistency of curves with ids 0 and 1
+        curves = self.entities.curves
+        if 0 in curves and 1 in curves:
+            curve0, curve1 = curves[0], curves[1]
+            if False in (curve0.waccess, curve1.waccess) or \
+                curve0.size != curve1.size or \
+                curve0.nblocks != curve1.nblocks:
+                raise ValueError('Inconsistent curves!')
+
+    def _curve_bsmp_read(self, curve_id):
+        # select minimum curve size between spec and firmware.
         wfmref_size = self.wfmref_size
-        curve = _np.zeros(wfmref_size)
-        indices = curve_entity.get_indices(wfmref_size)
+        wfmref_size_min = self._curve_get_minimum_size(curve_id, wfmref_size)
+
+        # create initial output data
+        curve = _np.zeros(wfmref_size_min)
+
         # read curve blocks
+        curve_entity = self.entities.curves[curve_id]
+        indices = curve_entity.get_indices(wfmref_size_min)
         for block, idx in enumerate(indices):
             ack, data = self.request_curve_block(
                 curve_id=curve_id,
                 block=block,
-                timeout=PSBSMP._timeout)
+                timeout=PSBSMP._timeout_curves)
             if ack != self.CONST.ACK_OK:
                 pass
             curve[idx[0]:idx[1]] = data
         return curve
 
-    def _bsmp_curve_write(self, curve_id, curve):
-        curve_size = len(curve)
-        curve_entity = self.entities.curves[curve_id]
-        indices = curve_entity.get_indices(curve_size)
+    def _curve_bsmp_write(self, curve_id, curve):
+        # select minimum curve size between spec and firmware.
+        wfmref_size = len(curve)
+        wfmref_size_min = self._curve_get_minimum_size(curve_id, wfmref_size)
+
         # send curve blocks
+        curve_entity = self.entities.curves[curve_id]
+        indices = curve_entity.get_indices(wfmref_size_min)
         for block, idx in enumerate(indices):
             print(block, idx)
             ack, _ = self.curve_block(
                 curve_id=curve_id,
                 block=block,
                 value=curve[idx[0]:idx[1]],
-                timeout=PSBSMP._timeout,
+                timeout=PSBSMP._timeout_curves,
             )
             if ack != self.CONST.ACK_OK:
                 pass
 
-    def _bsmp_get_pair_variables(self, var_id1, var_id2):
+    def _curve_bsmp_get_variable_values(self, var_id1, var_id2):
         _, value1 = self.read_variable(
-            var_id=var_id1, timeout=PSBSMP._timeout)
+            var_id=var_id1, timeout=PSBSMP._timeout_curves)
         _, value2 = self.read_variable(
-            var_id=var_id2, timeout=PSBSMP._timeout)
+            var_id=var_id2, timeout=PSBSMP._timeout_curves)
         return value1, value2
 
-    def _check_entities_consistency(self):
-        # check consistency of curves with ids 0 and 1
-        curves = self.entities.curves
-        if 0 in curves and 1 in curves:
-            curve0, curve1 = curves[0], curves[1]
-            if False in (curve0.waccess, curve1.waccess) or \
-               curve0.size != curve1.size or \
-               curve0.nblocks != curve1.nblocks:
-                raise ValueError('Inconsistent curves!')
+    def _curve_get_minimum_size(self, curve_id, curve_size):
+        curve_entity = self.entities.curves[curve_id]
+        curve_size_entity = curve_entity.max_size_t_float
+        curve_size_min = min(curve_size_entity, curve_size)
+        return curve_size_min
 
-    def _bsmp_get_curve_pointers_ids(self):
-        curve_id = self.wfmref_selected
-        return PSBSMP._wfmref_pointers_var_ids[curve_id]
+    def _curve_check_size(self, curve_id, curve_size):
+        if curve_size > self.curve_maxsize(curve_id=curve_id):
+            raise IndexError('Curve exceed maximum size according to spec!')
 
 
 
