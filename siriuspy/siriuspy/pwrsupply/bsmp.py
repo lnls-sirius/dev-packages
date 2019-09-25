@@ -682,7 +682,7 @@ class Parameters:
 class EntitiesPS(_Entities):
     """PS Entities."""
 
-    Variables = (
+    _ps_variables = (
         # --- common variables
         {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -711,7 +711,7 @@ class EntitiesPS(_Entities):
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},)
 
-    Functions = (
+    _ps_functions = (
         {'eid': ConstPSBSMP.F_TURN_ON,
          'i_type': (), 'o_type': (_Types.T_UINT8, )},
         {'eid': ConstPSBSMP.F_TURN_OFF,
@@ -817,7 +817,7 @@ class EntitiesPS(_Entities):
         {'eid': ConstPSBSMP.F_RESET_UDC,
          'i_type': (), 'o_type': ()},)
 
-    Curves = (
+    _ps_curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': True, 'count': 256,
@@ -827,7 +827,8 @@ class EntitiesPS(_Entities):
 
     def __init__(self):
         """Call super."""
-        super().__init__(self.Variables, self.Curves, self.Functions)
+        super().__init__(
+            self._ps_variables, self._ps_curves, self._ps_functions)
 
 
 # --- DCDC ---
@@ -836,7 +837,7 @@ class EntitiesPS(_Entities):
 class EntitiesFBP(EntitiesPS):
     """FBP-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FBP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -887,7 +888,7 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = (
+    _ps_curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
          'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': True, 'count': 256,
@@ -899,7 +900,7 @@ class EntitiesFBP(EntitiesPS):
 class EntitiesFAC_DCDC(EntitiesPS):
     """FAC-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_DCDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -926,7 +927,7 @@ class EntitiesFAC_DCDC(EntitiesPS):
 class EntitiesFAC_2P4S_DCDC(EntitiesPS):
     """FAC_2P4S-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_2P4S-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -965,7 +966,7 @@ class EntitiesFAC_2P4S_DCDC(EntitiesPS):
 class EntitiesFAC_2S_DCDC(EntitiesPS):
     """FAC_2S-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_2S_DCDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1001,7 +1002,7 @@ class EntitiesFAC_2S_DCDC(EntitiesPS):
 class EntitiesFAP(EntitiesPS):
     """FAP-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1035,7 +1036,7 @@ class EntitiesFAP_4P(EntitiesFAP):
 class EntitiesFAP_2P2S(EntitiesPS):
     """FAP_2P2S-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAP_2P2S-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1126,7 +1127,7 @@ class EntitiesFAP_2P2S(EntitiesPS):
 class EntitiesFBP_DCLink(EntitiesPS):
     """FBP_DCLink-type power supplies entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FBP_DCLINK-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1138,13 +1139,13 @@ class EntitiesFBP_DCLink(EntitiesPS):
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
     )
 
-    Curves = ()
+    _ps_curves = ()
 
 
 class EntitiesFAC_2S_ACDC(EntitiesPS):
     """FAC_2S_ACDC-type power supply entities."""
 
-    Variables = EntitiesPS.Variables + (
+    _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_2S_ACDC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -1166,7 +1167,7 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
-    Curves = ()
+    _ps_curves = ()
 
 
 class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):

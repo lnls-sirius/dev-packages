@@ -172,6 +172,7 @@ class Curve(_Entity):
         indices.append((block_len*(nblocks-1), data_length))
         return indices
 
+
 class Function(_Entity):
     """BSMP function."""
 
@@ -207,10 +208,6 @@ class Function(_Entity):
 
 class Entities:
     """BSMP entities."""
-
-    # TODO: use 'variables_def' instead of 'variables'?
-    # TODO: use 'curves_def' instead of 'curves'?
-    # TODO: use 'functions_def' instead of 'functions'?
 
     def __init__(self, variables, curves, functions):
         """Constructor."""
