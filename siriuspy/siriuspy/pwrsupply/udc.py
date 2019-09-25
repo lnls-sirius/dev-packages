@@ -44,7 +44,7 @@ class UDC:
         return self._device_ids
 
     @property
-    def parameters(self):
+    def prucparms(self):
         """PRU Controller parameters."""
         return UDC._prucparms[self._psmodel]
 
@@ -64,6 +64,13 @@ class UDC:
         bsmp.execute_function(
             func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
+
+    @staticmethod
+    def parse_firmware_version(version):
+        """Process firmware version from BSMP device."""
+        version = version[:version.index(b'\x00')]
+        version = ''.join([chr(ord(v)) for v in version])
+        return version
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
