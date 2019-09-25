@@ -7,7 +7,7 @@ import sys
 from siriuspy.bsmp import BSMP
 from siriuspy.thread import DequeThread
 from .pru import PRU, PRUSim
-from .bsmp import ConstBSMP, EntitiesFBP
+from .bsmp import ConstPSBSMP, EntitiesFBP
 from .bsmpsim import BSMPSim_FBP
 from .prucontroller import PRUController
 from .psmodel import PSModelFactory
@@ -61,7 +61,7 @@ def bsmp_read_variable(bsmp, variable_id):
 
 def bsmp_reset_interlock(bsmp):
     """Reset interlocks."""
-    resp, value = bsmp.execute_function(ConstBSMP.F_RESET_INTERLOCKS)
+    resp, value = bsmp.execute_function(ConstPSBSMP.F_RESET_INTERLOCKS)
     # print('response: ', resp)
     # print('value   : ', value)
 
@@ -133,11 +133,11 @@ def bbbs_mix_print_state(pruc1, pruc2):
     """Print."""
     # dclink
     for id in pruc1.device_ids:
-        v = pruc1.read_variables(id, pruc1.params.ConstBSMP.V_V_OUT)
+        v = pruc1.read_variables(id, pruc1.params.CONST_PSBSMP.V_V_OUT)
         print('dclink v_out dev_id={} [V]: {}'.format(id, v))
     # power supplies
     for id in pruc2.device_ids:
-        v = pruc2.read_variables(id, pruc2.params.ConstBSMP.V_I_LOAD)
+        v = pruc2.read_variables(id, pruc2.params.CONST_PSBSMP.V_I_LOAD)
         print('pwrsupply i_load dev_id={} [A]: {}'.format(id, v))
 
 

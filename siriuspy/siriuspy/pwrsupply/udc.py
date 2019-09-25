@@ -49,20 +49,20 @@ class UDC:
         return UDC._prucparms[self._psmodel]
 
     @property
-    def ConstBSMP(self):
+    def CONST_PSBSMP(self):
         """Return BSMP constants."""
-        return self.parameters.ConstBSMP
+        return self.parameters.CONST_PSBSMP
 
     def reset(self, timeout):
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
         for bsmp in self._bsmp.values():
             bsmp.execute_function(
-                func_id=self.ConstBSMP.F_TURN_OFF, timeout=timeout)
+                func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
         # reset UDC
         bsmp = self._bsmp[next(iter(self._bsmp))]  # uses first BSMP device
         bsmp.execute_function(
-            func_id=self.ConstBSMP.F_RESET_UDC, timeout=timeout,
+            func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
 
     def _create_bsmp_connectors(self):

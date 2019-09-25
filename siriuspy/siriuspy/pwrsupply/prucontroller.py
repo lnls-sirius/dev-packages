@@ -653,7 +653,7 @@ class PRUController:
         for dev_id in self.device_ids:
             # V_FIRMWARE_VERSION should be defined for all BSMP devices
             _udc_firmware_version = self._variables_values[dev_id][
-                self._params.ConstBSMP.V_FIRMWARE_VERSION]
+                self._params.CONST_PSBSMP.V_FIRMWARE_VERSION]
             _udc_firmware_version = \
                 parse_firmware_version(_udc_firmware_version)
             if 'Simulation' not in _udc_firmware_version and \
@@ -988,15 +988,15 @@ class PRUController:
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
                 # if self._psmodel.name == 'FBP':
-                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
+                #     copy_var_vals[id][self._params.CONST_PSBSMP.V_I_LOAD] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
                 # elif self._psmodel.name == 'FBP_DCLink':
-                #     copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
+                #     copy_var_vals[id][self._params.CONST_PSBSMP.V_V_OUT] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
                 # elif self._psmodel.name == 'FAC':
-                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
+                #     copy_var_vals[id][self._params.CONST_PSBSMP.V_I_LOAD1] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
-                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
+                #     copy_var_vals[id][self._params.CONST_PSBSMP.V_I_LOAD2] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
 
             elif ack[id] == _BSMPConst.ACK_INVALID_ID:
@@ -1011,7 +1011,7 @@ class PRUController:
         for id in self.device_ids:
             if self._connected[id]:
                 self._psc_state[id].ps_status = \
-                    copy_var_vals[id][self._params.ConstBSMP.V_PS_STATUS]
+                    copy_var_vals[id][self._params.CONST_PSBSMP.V_PS_STATUS]
 
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
@@ -1144,7 +1144,7 @@ class PRUController:
     #             indices = [0]
     #             for idx in indices:
     #                 data = self._bsmp_exec_function(
-    #                     (id,), self._params.ConstBSMP.F_GET_PARAM,
+    #                     (id,), self._params.CONST_PSBSMP.F_GET_PARAM,
     #                     args=(pid, idx))
     #                 if data[id] is None:
     #                     return None
