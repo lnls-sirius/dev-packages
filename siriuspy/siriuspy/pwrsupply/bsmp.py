@@ -1212,10 +1212,11 @@ class PSBSMP(_BSMP):
         # process timeout
         timeout = PSBSMP._timeout_default if timeout is None else timeout
         # execute function
-        print('func_id: ', func_id)
-        print('input_val: ', input_val)
-        print('timeout: ', timeout)
-        print('read_flag: ', read_flag)
+        # print('--- execute_function ---')
+        # print('func_id: ', func_id)
+        # print('input_val: ', input_val)
+        # print('timeout: ', timeout)
+        # print('read_flag: ', read_flag)
         ack, data = super().execute_function(func_id=func_id, input_val=input_val, timeout=timeout, read_flag=read_flag)
         if func_id in (ConstPSBSMP.F_TURN_ON,
                        ConstPSBSMP.F_TURN_OFF,
@@ -1333,7 +1334,7 @@ class PSBSMP(_BSMP):
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
         wfmref_size = self.wfmref_size
-        wfmref_size_min = self._curve_get_minimum_size(curve_id, wfmref_size)
+        wfmref_size_min = self._curve_get_implementable_size(curve_id, wfmref_size)
 
         # create initial output data
         curve = _np.zeros(wfmref_size_min)
@@ -1353,12 +1354,15 @@ class PSBSMP(_BSMP):
 
     def _curve_bsmp_write(self, curve_id, curve):
         # select minimum curve size between spec and firmware.
-        wfmref_size = len(curve)
-        wfmref_size_min = self._curve_get_minimum_size(curve_id, wfmref_size)
+        wfmref_size_min = self._curve_get_implementable_size(
+            curve_id, len(curve))
+        # print('wfmref_size_min: ', wfmref_size_min)
 
         # send curve blocks
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
+        # print('indices: ', indices)
+
         for block, idx in enumerate(indices):
             ack, _ = self.curve_block(
                 curve_id=curve_id,
@@ -1367,7 +1371,12 @@ class PSBSMP(_BSMP):
                 timeout=PSBSMP._timeout_curves,
             )
             if ack != self.CONST_BSMP.ACK_OK:
-                pass
+                print('PSBSMP._curve_bsmp_write: returned value not Ok for:')
+                print('  curve_len: {}'.format(len(curve)))
+                print('  curve_id : {}'.format(curve_id))
+                print('  block    : {}'.format(block))
+                print('  index    : {}'.format(idx))
+
 
     def _bsmp_get_variable_values(self, *var_ids):
         values = [None] * len(var_ids)
@@ -1376,7 +1385,7 @@ class PSBSMP(_BSMP):
                 var_id=var_id, timeout=PSBSMP._timeout_curves)
         return values
 
-    def _curve_get_minimum_size(self, curve_id, curve_size):
+    def _curve_get_implementable_size(self, curve_id, curve_size):
         curve_entity = self.entities.curves[curve_id]
         curve_size_entity = curve_entity.max_size_t_float
         curve_size_min = min(curve_size_entity, curve_size)
@@ -1384,7 +1393,7 @@ class PSBSMP(_BSMP):
 
     def _curve_check_size(self, curve_id, curve_size):
         if curve_size > self.curve_maxsize(curve_id=curve_id):
-            raise IndexError('Curve exceed maximum size according to spec!')
+            raise IndexError('Curve exceeds maximum size according to spec!')
 
 
 
