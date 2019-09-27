@@ -4,6 +4,7 @@
 
 # import time
 import matplotlib.pyplot as plt
+import numpy as np
 
 from siriuspy.search import PSSearch
 from siriuspy.pwrsupply.udc import UDC
@@ -41,7 +42,7 @@ def print_status(ps):
 def print_wfmref(ps):
     """Print wfmref data."""
     print('{:<25}: {}'.format('wfmref_maxsize', ps.wfmref_maxsize))
-    print('{:<25}: {}'.format('wfmref_selected', ps.wfmref_selected))
+    print('{:<25}: {}'.format('wfmref_select', ps.wfmref_select))
     print('{:<25}: {}'.format('wfmref_size', ps.wfmref_size))
     print('{:<25}: {}'.format('wfmref_idx', ps.wfmref_idx))
     wfmref_ptr_values = ps.wfmref_pointer_values
@@ -69,6 +70,38 @@ def print_basic_info(ps):
     print()
     plot_wfmref(ps)
 
+
+def test_write_wfmref(ps):
+    """."""
+    # reset UDC
+    udc.reset()
+
+    # turn power supply on
+    ps.execute_function(
+        func_id=ps.CONST_PSBSMP.F_TURN_ON,
+        input_val=None,
+        timeout=100)
+    # change mode to RmpWfm
+    ps.execute_function(
+        func_id=ps.CONST_PSBSMP.F_SELECT_OP_MODE,
+        input_val=ps.CONST_PSBSMP.E_STATE_RMPWFM,
+        timeout=100)
+    # read original wfmref curve
+    curve1 = np.array(ps.wfmref_read())
+    # change it
+    # new_curve = [2.0*i/len(curve1) for i in range(len(curve1))]
+    new_curve = curve1[::-1]
+    # write new wfmref curve and get it back
+    ps.wfmref_write(new_curve)
+    curve2 = np.array(ps.wfmref_read())
+    # compare previous and next wfmref curves
+    plt.plot(curve1, label='Prev WfmRef ({} points)'.format(len(curve1)))
+    plt.plot(new_curve, label='New curve ({} points)'.format(len(new_curve)))
+    plt.plot(curve2, label='Next WfmRef ({} points)'.format(len(curve2)))
+    plt.xlabel('Index')
+    plt.ylabel('Current [A]')
+    plt.legend()
+    plt.show()
 
 # --- create global objects ---
 

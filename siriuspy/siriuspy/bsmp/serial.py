@@ -203,5 +203,6 @@ class Channel:
             else:
                 # NOTE: for functions with no return (F_RESET_UDC, for example)
                 # artificially return 0xE0 (OK)
-                response = Message([chr(0xE0), chr(0), chr(0)])
+                # response = Message([chr(0xE0), chr(0), chr(0)])
+                response = None
             return response

@@ -1,4 +1,4 @@
-"""Beagle Bone implementation module."""
+"""BeagleBone Implementation Module."""
 # NOTE on current behaviour of BeagleBone:
 #
 # 01. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
@@ -8,14 +8,6 @@
 #     block serial comm. before it. This is evident in SlowRefSync mode, where
 #     reference values may change considerably between two setpoints.
 #     (see identical note in PRUController)
-
-# TODO: improve code
-#
-# 01. try to optimize it. At this point it is taking up 80% of BBB1 CPU time.
-#     from which ~20% comes from PRController. I think we could keep some kind
-#     of device state mirror in E2SController such that it does not have to
-#     invoke PRUController read at every device field update. This mirror state
-#     could be updated in one go.
 
 import time as _time
 from copy import deepcopy as _deepcopy
@@ -62,18 +54,10 @@ class BeagleBone:
         """Update interval, as defined in PRUcontrollers."""
         if device_name is not None:
             return self._dev2interval[device_name]
-            # pruc = self._controllers[device_name].pru_controller
-            # f_max = max(pruc.params.FREQ_SCAN, pruc.params.FREQ_RAMP)
-        else:
-            # f_ramp = tuple(c.pru_controller.params.FREQ_RAMP for c in
-            #                self._controllers.values())
-            # f_scan = tuple(c.pru_controller.params.FREQ_SCAN for c in
-            #                self._controllers.values())
-            # f_max = max(f_ramp + f_scan)
-            m = self._dev2interval
-            intervals = [m[dev] for dev in m]
-            return max(intervals)
-        # return 1.0 / f_max
+
+        m = self._dev2interval
+        intervals = [m[dev] for dev in m]
+        return max(intervals)
 
     def read(self, device_name, field=None, force_update=False):
         """Read from device."""
@@ -81,9 +65,7 @@ class BeagleBone:
         last = self._dev2timestamp[device_name]
 
         # NOTE: update frequency with which class updates state mirror of
-        # power supply. Still testing...
-        # interval = self.update_interval(device_name)
-        # interval = 0.05  # [s]
+        # power supply.
         interval = self._dev2interval[device_name]
 
         # reads, if updating is needed
@@ -98,7 +80,8 @@ class BeagleBone:
         if field is None:
             return self._dev2mirror[device_name], updated
         else:
-            return self._dev2mirror[device_name][device_name+':'+field], updated
+            return \
+                self._dev2mirror[device_name][device_name+':'+field], updated
 
     def write(self, device_name, field, value):
         """Write to device."""
@@ -126,6 +109,7 @@ class BeagleBone:
             f = max(pruc.params.FREQ_RAMP, pruc.params.FREQ_SCAN)
             self._dev2interval[devname] = 1.0/f
 
+
 class BBBFactory:
     """Build BeagleBones."""
 
@@ -152,6 +136,11 @@ class BBBFactory:
             freqs = None
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
+
+        # TODO: Test!!! remember to delete!!!
+        # if bbbname == 'IA-08RaCtrl:CO-PSCtrl-SI5':
+        #     udc_list = udc_list[:1]
+
         for udc in udc_list:
 
             # UDC-specific frequencies

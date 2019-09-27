@@ -8,6 +8,8 @@ from . import prucparms as _prucparms
 class UDC:
     """UDC."""
 
+    _timeout_default = 100  # [us]
+
     _prucparms = {
         'FBP': _prucparms.PRUCParmsFBP,
         'FBP_DCLink': _prucparms.PRUCParmsFBP_DCLink,
@@ -53,7 +55,7 @@ class UDC:
         """Return PSBSMP constants."""
         return self.prucparms.CONST_PSBSMP
 
-    def reset(self, timeout):
+    def reset(self, timeout=_timeout_default):
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
         for bsmp in self._bsmp.values():

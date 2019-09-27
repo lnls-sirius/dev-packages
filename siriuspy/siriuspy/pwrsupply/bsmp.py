@@ -707,10 +707,10 @@ class EntitiesPS(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},)
 
     _ps_functions = (
@@ -1184,8 +1184,9 @@ class PSBSMP(_BSMP):
 
     CONST_BSMP = _BSMPConst
 
-    _timeout_curves = 100  # [us]
+    _timeout_default = 100  # [us]
     _sleep_turn_onoff = 0.020  # [s]
+    _sleep_reset_udc = 0.050  # [s]
 
     _wfmref_pointers_var_ids = {
         0: (ConstPSBSMP.V_WFMREF0_START,
@@ -1217,25 +1218,39 @@ class PSBSMP(_BSMP):
         # print('input_val: ', input_val)
         # print('timeout: ', timeout)
         # print('read_flag: ', read_flag)
-        ack, data = super().execute_function(func_id=func_id, input_val=input_val, timeout=timeout, read_flag=read_flag)
-        if func_id in (ConstPSBSMP.F_TURN_ON,
-                       ConstPSBSMP.F_TURN_OFF,
-                       ConstPSBSMP.F_OPEN_LOOP,
-                       ConstPSBSMP.F_CLOSE_LOOP):
-            # for these functions a sleep is necessary for the UDC to respond
-            # properly for the next BSMP command.
-            # TODO: check if the sleep value is appropriate!
+        response = super().execute_function(
+            func_id=func_id, input_val=input_val, timeout=timeout, read_flag=read_flag)
+
+        # introduces necessary sleeps
+        # TODO: check with ELP if these numbers can be optimized further!
+        if func_id == ConstPSBSMP.F_RESET_UDC:
+            _time.sleep(PSBSMP._sleep_reset_udc)
+        elif func_id in (ConstPSBSMP.F_TURN_ON,
+                         ConstPSBSMP.F_TURN_OFF,
+                         ConstPSBSMP.F_OPEN_LOOP,
+                         ConstPSBSMP.F_CLOSE_LOOP):
             _time.sleep(PSBSMP._sleep_turn_onoff)
-        return ack, data
+
+        return response
 
     # --- wfmref methods ---
 
+
     @property
-    def wfmref_selected(self):
+    def wfmref_select(self):
         """."""
         _, curve_id = self.read_variable(
-            var_id=ConstPSBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_curves)
+            var_id=ConstPSBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_default)
         return curve_id
+
+    @wfmref_select.setter
+    def wfmref_select(self, curve_id):
+        """Select ID of wfmref curve."""
+        ack, data = self.execute_function(
+            func_id=ConstPSBSMP.F_SELECT_WFMREF,
+            input_val=curve_id,
+            timeout=PSBSMP._timeout_default)
+        return ack, data
 
     @property
     def wfmref_size(self):
@@ -1278,31 +1293,46 @@ class PSBSMP(_BSMP):
         return pointer_values
 
     def wfmref_read(self):
-        """."""
-        curve_id = self.wfmref_selected
+        """Return curve of currently selected WfmRef."""
+        curve_id = self.wfmref_select
+
+        # TODO: delete following test line!!!
+        curve_id = 0
+
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
     def wfmref_write(self, curve):
-        """."""
-        # check curve size
-        self._curve_check_size(curve_id=0, curve_size=len(curve))
+        """Write WfmRef."""
+        # get currently used wfmref curve id
+        curve_id = self.wfmref_select
 
-        # get curve id of current buffer
-        curve_id = self.wfmref_selected
+        # get curve id of writable wfmref
+        curve_id = self._wfmref_bsmp_select_writable_curve_id()
 
-        # select the other buffer and send curve blocks
-        curve_id = 0 if curve_id == 1 else 0
-        self._curve_bsmp_write(curve_id, curve)
+        # TODO: delete following test line!!!
+        curve_id = 0
+
+        # write curve
+        self.curve_write(curve_id, curve)
 
         # execute selection of WfmRef to be used
-        self.execute_function(
-            func_id=ConstPSBSMP.F_SELECT_WFMREF,
-            input_val=curve_id,
-            timeout=PSBSMP._timeout_curves)
-
+        # self.wfmref_select = curve_id
 
     # --- curve methods ---
+
+    def curve_read(self, curve_id):
+        """Return curve."""
+        curve = self._curve_bsmp_read(curve_id=curve_id)
+        return curve
+
+    def curve_write(self, curve_id, curve):
+        """Write curve."""
+        # check curve size
+        self._curve_check_size(curve_id=curve_id, curve_size=len(curve))
+
+        # send curve blocks
+        self._curve_bsmp_write(curve_id, curve)
 
     def curve_maxsize(self, curve_id):
         """Return max size if t_float units according to BSMP spec."""
@@ -1310,15 +1340,10 @@ class PSBSMP(_BSMP):
         maxsize = curve_entity.max_size_t_float
         return maxsize
 
-    def bufsamplesctom_read(self):
-        """."""
-        curve = self._curve_bsmp_read(curve_id=2)
-        return curve
-
     # --- private methods ---
 
     def _wfmref_bsmp_get_pointers_ids_of_selected(self):
-        curve_id = self.wfmref_selected
+        curve_id = self.wfmref_select
         return PSBSMP._wfmref_pointers_var_ids[curve_id]
 
     def _wfmref_check_entities_consistency(self):
@@ -1331,6 +1356,15 @@ class PSBSMP(_BSMP):
                 curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
+    def _wfmref_bsmp_select_writable_curve_id(self):
+        # get curve id of current buffer
+        curve_id = self.wfmref_select
+
+        # select the other buffer and send curve blocks
+        curve_id = 0 if curve_id == 1 else 0
+
+        return curve_id
+
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
         wfmref_size = self.wfmref_size
@@ -1342,13 +1376,22 @@ class PSBSMP(_BSMP):
         # read curve blocks
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
+        # print('reading - curve id: ', curve_id)
+        # print('reading - indices: ', indices)
         for block, idx in enumerate(indices):
             ack, data = self.request_curve_block(
                 curve_id=curve_id,
                 block=block,
-                timeout=PSBSMP._timeout_curves)
+                timeout=PSBSMP._timeout_default)
+            # print(sum(data))
+            # print((hex(ack), sum(data)))
             if ack != self.CONST_BSMP.ACK_OK:
-                pass
+                self._anomalous_response(
+                    self.CONST_BSMP.REQUEST_CURVE_BLOCK, ack,
+                    curve_len=len(curve),
+                    curve_id=curve_id,
+                    block=block,
+                    index=idx)
             curve[idx[0]:idx[1]] = data
         return curve
 
@@ -1356,33 +1399,36 @@ class PSBSMP(_BSMP):
         # select minimum curve size between spec and firmware.
         wfmref_size_min = self._curve_get_implementable_size(
             curve_id, len(curve))
-        # print('wfmref_size_min: ', wfmref_size_min)
 
         # send curve blocks
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
-        # print('indices: ', indices)
+        # print('writing - curve id: ', curve_id)
+        # print('writing - indices: ', indices)
 
         for block, idx in enumerate(indices):
-            ack, _ = self.curve_block(
+            data = curve[idx[0]:idx[1]]
+            # print(sum(data))
+            ack, data = self.curve_block(
                 curve_id=curve_id,
                 block=block,
-                value=curve[idx[0]:idx[1]],
-                timeout=PSBSMP._timeout_curves,
+                value=data,
+                timeout=PSBSMP._timeout_default,
             )
+            # print((hex(ack), data))
             if ack != self.CONST_BSMP.ACK_OK:
-                print('PSBSMP._curve_bsmp_write: returned value not Ok for:')
-                print('  curve_len: {}'.format(len(curve)))
-                print('  curve_id : {}'.format(curve_id))
-                print('  block    : {}'.format(block))
-                print('  index    : {}'.format(idx))
-
+                self._anomalous_response(
+                    self.CONST_BSMP.CURVE_BLOCK, ack,
+                    curve_len=len(curve),
+                    curve_id=curve_id,
+                    block=block,
+                    index=idx)
 
     def _bsmp_get_variable_values(self, *var_ids):
         values = [None] * len(var_ids)
         for i, var_id in enumerate(var_ids):
             _, values[i] = self.read_variable(
-                var_id=var_id, timeout=PSBSMP._timeout_curves)
+                var_id=var_id, timeout=PSBSMP._timeout_default)
         return values
 
     def _curve_get_implementable_size(self, curve_id, curve_size):
