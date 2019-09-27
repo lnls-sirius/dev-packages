@@ -58,8 +58,6 @@ class Const:
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
-    CONST = Const
-
     def __init__(self, pru, slave_address, entities):
         """Constructor."""
         self._entities = entities
@@ -353,6 +351,9 @@ class BSMP:
         res = self.channel.request(msg, timeout=timeout, read_flag=read_flag)
 
         if res.cmd == ack:
+            # print(len(res.payload))
+            # print(function.o_size)
+            # print(res.payload)
             if len(res.payload) == function.o_size:
                 # expected response
                 return Const.ACK_OK, function.load_to_value(res.payload)
@@ -363,17 +364,19 @@ class BSMP:
                 return res.cmd, res.payload[0]
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res)
+        return BSMP._anomalous_response(cmd, res, func_id=func_id)
 
     @staticmethod
-    def _anomalous_response(cmd, res):
+    def _anomalous_response(cmd, res, **kwargs):
         # response with error
         if Const.ACK_OK < res.cmd <= Const.ACK_RESOURCE_BUSY:
             return res.cmd, None
 
         # unexpected response
-        fmts = 'Unexpected BSMP response for command {}: {}!'
+        fmts = 'Unexpected BSMP response for command 0x{:02X}: 0x{:02X}!'
         print(fmts.format(cmd, res.cmd))
+        for key, value in kwargs.items():
+            print('{}: {}'.format(key, value))
         return None, None
 
 

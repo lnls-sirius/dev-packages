@@ -37,8 +37,6 @@ class Const:
 class PRUInterface:
     """Interface class for programmable real-time units."""
 
-    # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
-
     def __init__(self):
         """Init method."""
         self._sync_mode = None
@@ -276,7 +274,7 @@ class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
     # TODO: improve simulation
-    TIMING_PV = 'guilherme-AS-Glob:PS-Timing:Trigger-Cmd'
+    TIMING_PV = 'FAKE-AS-Glob:PS-Timing:Trigger-Cmd'
 
 
     def __init__(self):

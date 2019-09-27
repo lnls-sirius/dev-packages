@@ -7,7 +7,9 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
+import time as _time
 import numpy as _np
+from siriuspy.bsmp import Const as _BSMPConst
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
@@ -1180,18 +1182,18 @@ class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
 
-    CONST_PS = ConstPSBSMP
-    CONST_BSMP = _BSMP.CONST
+    CONST_BSMP = _BSMPConst
 
-    _timeout_curves = 100
+    _timeout_curves = 100  # [us]
+    _sleep_turn_onoff = 0.020  # [s]
 
     _wfmref_pointers_var_ids = {
-        0: (CONST_PS.V_WFMREF0_START,
-            CONST_PS.V_WFMREF0_END,
-            CONST_PS.V_WFMREF0_IDX),
-        1: (CONST_PS.V_WFMREF1_START,
-            CONST_PS.V_WFMREF1_END,
-            CONST_PS.V_WFMREF1_IDX),
+        0: (ConstPSBSMP.V_WFMREF0_START,
+            ConstPSBSMP.V_WFMREF0_END,
+            ConstPSBSMP.V_WFMREF0_IDX),
+        1: (ConstPSBSMP.V_WFMREF1_START,
+            ConstPSBSMP.V_WFMREF1_END,
+            ConstPSBSMP.V_WFMREF1_IDX),
     }
 
     def __init__(self, slave_address, entities, pru=None):
@@ -1203,13 +1205,35 @@ class PSBSMP(_BSMP):
         super().__init__(self.pru, slave_address, entities)
         self._wfmref_check_entities_consistency()
 
+    # --- bsmp overriden methods ---
+
+    def execute_function(self, func_id, input_val=None, timeout=None,
+                         read_flag=True):
+        # process timeout
+        timeout = PSBSMP._timeout_default if timeout is None else timeout
+        # execute function
+        print('func_id: ', func_id)
+        print('input_val: ', input_val)
+        print('timeout: ', timeout)
+        print('read_flag: ', read_flag)
+        ack, data = super().execute_function(func_id=func_id, input_val=input_val, timeout=timeout, read_flag=read_flag)
+        if func_id in (ConstPSBSMP.F_TURN_ON,
+                       ConstPSBSMP.F_TURN_OFF,
+                       ConstPSBSMP.F_OPEN_LOOP,
+                       ConstPSBSMP.F_CLOSE_LOOP):
+            # for these functions a sleep is necessary for the UDC to respond
+            # properly for the next BSMP command.
+            # TODO: check if the sleep value is appropriate!
+            _time.sleep(PSBSMP._sleep_turn_onoff)
+        return ack, data
+
     # --- wfmref methods ---
 
     @property
     def wfmref_selected(self):
         """."""
         _, curve_id = self.read_variable(
-            var_id=PSBSMP.CONST_PS.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_curves)
+            var_id=ConstPSBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_curves)
         return curve_id
 
     @property
@@ -1221,8 +1245,8 @@ class PSBSMP(_BSMP):
         """
         # calculate wfmref size from buffer pointer values used by ARM controller
         i_beg, i_end, _ = self._wfmref_bsmp_get_pointers_ids_of_selected()
-        v_beg, v_end = self._curve_bsmp_get_variable_values(i_beg, i_end)
-        wfmref_size = 1 + (v_end - v_beg) // 2
+        values = self._bsmp_get_variable_values(i_beg, i_end)
+        wfmref_size = 1 + (values[1] - values[0]) // 2
         return wfmref_size
 
     @property
@@ -1234,8 +1258,8 @@ class PSBSMP(_BSMP):
         """
         # calculate wfmref index from buffer pointer values used by ARM controller
         i_beg, _, i_idx = self._wfmref_bsmp_get_pointers_ids_of_selected()
-        v_beg, v_idx = self._curve_bsmp_get_variable_values(i_beg, i_idx)
-        wfmref_idx = 1 + (v_idx - v_beg) // 2
+        values = self._bsmp_get_variable_values(i_beg, i_idx)
+        wfmref_idx = 1 + (values[1] - values[0]) // 2
         return wfmref_idx
 
     @property
@@ -1244,6 +1268,13 @@ class PSBSMP(_BSMP):
         # curve with ids 0 and 1 should have same sizes.
         maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
+
+    @ property
+    def wfmref_pointer_values(self):
+        """Return pointer values of currently selected wfmref curve."""
+        pointer_ids = self._wfmref_bsmp_get_pointers_ids_of_selected()
+        pointer_values = self._bsmp_get_variable_values(*pointer_ids)
+        return pointer_values
 
     def wfmref_read(self):
         """."""
@@ -1265,9 +1296,10 @@ class PSBSMP(_BSMP):
 
         # execute selection of WfmRef to be used
         self.execute_function(
-            func_id=PSBSMP.CONST_PS.F_SELECT_WFMREF,
+            func_id=ConstPSBSMP.F_SELECT_WFMREF,
             input_val=curve_id,
             timeout=PSBSMP._timeout_curves)
+
 
     # --- curve methods ---
 
@@ -1314,7 +1346,7 @@ class PSBSMP(_BSMP):
                 curve_id=curve_id,
                 block=block,
                 timeout=PSBSMP._timeout_curves)
-            if ack != self.CONST.ACK_OK:
+            if ack != self.CONST_BSMP.ACK_OK:
                 pass
             curve[idx[0]:idx[1]] = data
         return curve
@@ -1328,22 +1360,21 @@ class PSBSMP(_BSMP):
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
         for block, idx in enumerate(indices):
-            print(block, idx)
             ack, _ = self.curve_block(
                 curve_id=curve_id,
                 block=block,
                 value=curve[idx[0]:idx[1]],
                 timeout=PSBSMP._timeout_curves,
             )
-            if ack != self.CONST.ACK_OK:
+            if ack != self.CONST_BSMP.ACK_OK:
                 pass
 
-    def _curve_bsmp_get_variable_values(self, var_id1, var_id2):
-        _, value1 = self.read_variable(
-            var_id=var_id1, timeout=PSBSMP._timeout_curves)
-        _, value2 = self.read_variable(
-            var_id=var_id2, timeout=PSBSMP._timeout_curves)
-        return value1, value2
+    def _bsmp_get_variable_values(self, *var_ids):
+        values = [None] * len(var_ids)
+        for i, var_id in enumerate(var_ids):
+            _, values[i] = self.read_variable(
+                var_id=var_id, timeout=PSBSMP._timeout_curves)
+        return values
 
     def _curve_get_minimum_size(self, curve_id, curve_size):
         curve_entity = self.entities.curves[curve_id]

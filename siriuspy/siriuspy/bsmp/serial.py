@@ -196,24 +196,12 @@ class Channel:
         """Write and wait for response."""
         # This lock is important in order to avoid threads in the same process
         # space to read each other's responses.
-        #
-        # Channel._lock.acquire(blocking=True)
-        # try:
-        #     self.write(message, timeout)
-        #     if read_flag:
-        #         response = self.read()
-        #     else:
-        #         package = Package([])
-        #         response = package.message
-        # except _SerialError:
-        #     Channel._lock.release()
-        #     raise
-        # Channel._lock.release()
-        # return response
         with Channel._lock:
             self.write(message, timeout)
             if read_flag:
                 response = self.read()
             else:
-                response = Message([chr(0xE0), chr(0), chr(0)])  # arbitrary 0xE0 (OK) response
+                # NOTE: for functions with no return (F_RESET_UDC, for example)
+                # artificially return 0xE0 (OK)
+                response = Message([chr(0xE0), chr(0), chr(0)])
             return response

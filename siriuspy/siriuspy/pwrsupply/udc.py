@@ -50,8 +50,8 @@ class UDC:
 
     @property
     def CONST_PSBSMP(self):
-        """Return BSMP constants."""
-        return self.parameters.CONST_PSBSMP
+        """Return PSBSMP constants."""
+        return self.prucparms.CONST_PSBSMP
 
     def reset(self, timeout):
         """Reset UDC."""
