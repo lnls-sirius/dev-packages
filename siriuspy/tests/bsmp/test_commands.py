@@ -15,7 +15,6 @@ class TestBSMPAPI(TestCase):
     """Test BSMP."""
 
     api = (
-        'CONST',
         'entities', 'channel',
         'query_protocol_version',
         'query_list_of_variables',
