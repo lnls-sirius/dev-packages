@@ -861,8 +861,6 @@ class PRUController:
                 psbsmp.wfmref_write(curve)
             # update curves
             self._bsmp_wfmref_update(device_ids)
-            # for dev_id in device_ids:
-            #     print(dev_id, self._wfmref_curves[dev_id][0])
         except (_SerialError, IndexError):
             print('bsmp_wfmref_write error!')
             tstamp = _time.time()

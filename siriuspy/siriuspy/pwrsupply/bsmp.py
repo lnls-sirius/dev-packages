@@ -1297,7 +1297,7 @@ class PSBSMP(_BSMP):
         curve_id = self.wfmref_select
 
         # TODO: delete following test line!!!
-        curve_id = 0
+        curve_id = 0 if curve_id == 1 else 1
 
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
@@ -1307,18 +1307,17 @@ class PSBSMP(_BSMP):
         # get currently used wfmref curve id
         curve_id = self.wfmref_select
 
-        # get curve id of writable wfmref
-        curve_id = self._wfmref_bsmp_select_writable_curve_id()
-
+        # # get curve id of writable wfmref
+        # curve_id = self._wfmref_bsmp_select_writable_curve_id()
         # TODO: delete following test line!!!
-        curve_id = 0
+        curve_id = 0 if curve_id == 1 else 1
 
         # write curve
         self.curve_write(curve_id, curve)
 
         # _time.sleep(0.1) necessary??
 
-        # execute selection of WfmRef to be used
+        # # execute selection of WfmRef to be used
         # self.wfmref_select = curve_id
 
     # --- curve methods ---

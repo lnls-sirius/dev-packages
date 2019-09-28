@@ -152,7 +152,7 @@ class BBBFactory:
             devices = _PSSearch.conv_udc_2_bsmps(udc)
 
             # print info on scan frequency
-            fstr = ('scan freqs - udc:{:<25s}  ps:{:<16s}  bsmp_id:{:2d}  '
+            fstr = ('udc:{:<25s} ps:{:<16s} (id:{:2d}), FREQS  '
                     'sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
             print()
             for dev in devices:
