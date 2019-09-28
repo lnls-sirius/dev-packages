@@ -633,7 +633,7 @@ class PRUController:
             _udc_firmware_version = self._variables_values[dev_id][
                 self._parms.CONST_PSBSMP.V_FIRMWARE_VERSION]
             _udc_firmware_version = \
-                _UDC.parse_firmware_version(_udc_firmware_version)
+                self._udc.parse_firmware_version(_udc_firmware_version)
             if 'Simulation' not in _udc_firmware_version and \
                _udc_firmware_version != _devpckg_firmware_version:
                 self._init_disconnect()

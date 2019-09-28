@@ -1206,6 +1206,13 @@ class PSBSMP(_BSMP):
         super().__init__(self.pru, slave_address, entities)
         self._wfmref_check_entities_consistency()
 
+    @staticmethod
+    def parse_firmware_version(version):
+        """Process firmware version from BSMP device."""
+        version = version[:version.index(b'\x00')]
+        version = ''.join([chr(ord(v)) for v in version])
+        return version
+
     # --- bsmp overriden methods ---
 
     def execute_function(self, func_id, input_val=None, timeout=None,
@@ -1234,7 +1241,6 @@ class PSBSMP(_BSMP):
         return response
 
     # --- wfmref methods ---
-
 
     @property
     def wfmref_select(self):

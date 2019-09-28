@@ -67,12 +67,10 @@ class UDC:
             func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
 
-    @staticmethod
-    def parse_firmware_version(version):
+    def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
-        version = version[:version.index(b'\x00')]
-        version = ''.join([chr(ord(v)) for v in version])
-        return version
+        bsmp = self._bsmp[next(iter(self._bsmp))]  # uses first BSMP device
+        return bsmp.parse_firmware_version(version)
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
