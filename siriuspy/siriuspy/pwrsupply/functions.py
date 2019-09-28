@@ -263,8 +263,8 @@ class PSOpMode(Function):
             elif value == _PSConst.OpMode.Cycle:
                 op_mode = _PSConst.States.Cycle
             elif value == _PSConst.OpMode.RmpWfm:
-                op_mode = _PSConst.States.SlowRef  # RmpWfm -> SlowRef
-                # op_mode = _PSConst.States.FastRef  # RmpWfm -> FastRef
+                # op_mode = _PSConst.States.SlowRef  # RmpWfm -> SlowRef
+                op_mode = _PSConst.States.RmpWfm
             elif value == _PSConst.OpMode.MigWfm:
                 op_mode = _PSConst.States.SlowRef  # MigWfm -> SlowRef
                 # op_mode = _PSConst.States.FastRef  # MigWfm -> FastRef

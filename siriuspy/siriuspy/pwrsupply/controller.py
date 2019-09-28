@@ -155,8 +155,8 @@ class StandardPSController(PSController):
                 _Function(dev_ids, self._pru_controller, _c.F_SELECT_OP_MODE),
                 self._readers[dev_name + ':OpMode-Sel'])
 
-            t = _Watcher(functions, self, dev_name, op_mode)
-            self._watchers[dev_name] = t
+            threadw = _Watcher(functions, self, dev_name, op_mode)
+            self._watchers[dev_name] = threadw
             self._watchers[dev_name].start()
 
     def _stop_watchers(self):
@@ -183,8 +183,7 @@ class StandardPSController(PSController):
 
     def _pos_opmode(self, setpoint):
         # Further actions that depend on op mode
-        if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
-                        _PSConst.OpMode.RmpWfm):
+        if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm):
             self._set_watchers(setpoint)
 
     def _set_opmode(self, writer, op_mode):
@@ -196,8 +195,9 @@ class StandardPSController(PSController):
             sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
-            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
-            return self._pru_controller.pru_sync_start(sync_mode)
+            # sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
+            # return self._pru_controller.pru_sync_start(sync_mode)
+            pass
         elif op_mode == _PSConst.OpMode.MigWfm:
             sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
