@@ -11,7 +11,10 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
-from siriuspy.bsmp import Const as _BSMPConst, SerialError as _SerialError
+from siriuspy.bsmp import Const as _BSMPConst
+from siriuspy.bsmp import SerialError as _SerialError
+from siriuspy.bsmp import SerialAnomResp as _SerialAnomResp
+
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
@@ -821,7 +824,7 @@ class PRUController:
                 psbsmp = self._udc[dev_id]
                 sizes[dev_id] = psbsmp.wfmref_size
             return sizes
-        except (_SerialError, IndexError):
+        except (_SerialError, _SerialAnomResp, IndexError):
             tstamp = _time.time()
             dtime = tstamp - time_init
             operation = ('CS', tstamp, dtime, device_ids, True)
@@ -837,7 +840,7 @@ class PRUController:
                 psbsmp = self._udc[dev_id]
                 curve = psbsmp.wfmref_read()
                 curves[dev_id] = curve
-        except (_SerialError, IndexError):
+        except (_SerialError, _SerialAnomResp, IndexError):
             print('bsmp_wfmref_update error!')
             tstamp = _time.time()
             dtime = tstamp - time_init
@@ -897,16 +900,17 @@ class PRUController:
             #     print('reading mirror variable group for ids:{}...'.format(
             #         device_ids))
             for dev_id in device_ids:
-                ack[dev_id], data[dev_id] = self._udc[dev_id].read_group_of_variables(
-                    group_id=group_id,
-                    timeout=self._delay_read_group_of_variables)
+                ack[dev_id], data[dev_id] = \
+                    self._udc[dev_id].read_group_of_variables(
+                        group_id=group_id,
+                        timeout=self._delay_read_group_of_variables)
             # if group_id == self._model.RMPWFM:
             #     print('finished reading.')
             tstamp = _time.time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, False)
             self._last_operation = operation
-        except (_SerialError, IndexError):
+        except (_SerialError, _SerialAnomResp, IndexError):
             tstamp = _time.time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, True)
@@ -965,7 +969,7 @@ class PRUController:
 
             elif ack[dev_id] == _BSMPConst.ACK_INVALID_ID:
                 self._connected[dev_id] = False
-                self._bsmp_init_group_of_variables(dev_id)
+                self._bsmp_reset_group_of_variables(dev_id)
             else:
                 self._connected[dev_id] = False
 
@@ -1010,7 +1014,7 @@ class PRUController:
                     # NOTE: sleep really necessary?
                     _time.sleep(0.020)
 
-        except (_SerialError, IndexError):
+        except (_SerialError, _SerialAnomResp, IndexError):
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id, args)))
             return None
@@ -1050,20 +1054,16 @@ class PRUController:
         self._check_groups()
         # loop over bsmp devices
         for dev_id in self._device_ids:
-            self._bsmp_init_group_of_variables(dev_id)
+            self._bsmp_reset_group_of_variables(dev_id)
 
-    def _bsmp_init_group_of_variables(self, dev_id):
+    def _bsmp_reset_group_of_variables(self, dev_id):
         # remove previous variables groups and fresh ones
+        groups = []
+        for group_id in self._group_ids[3:]:
+            groups.append(self._parms.groups[group_id])
         try:
-            self._udc[dev_id].remove_all_groups_of_variables(
-                timeout=self._delay_remove_groups)
-            self._connected[dev_id] = True
-            for group_id in self._group_ids[3:]:
-                var_ids = self._parms.groups[group_id]
-                self._udc[dev_id].create_group_of_variables(
-                    var_ids, timeout=self._delay_create_group_of_variables)
-        except _SerialError:
-            print('_bsmp_init_groups: serial error!')
+            self._udc.reset_groups_of_variables(groups)
+        except (_SerialError, _SerialAnomResp):
             self._connected[dev_id] = False
 
     def _bsmp_init_wfmref(self):

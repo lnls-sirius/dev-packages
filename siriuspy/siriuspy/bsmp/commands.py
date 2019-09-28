@@ -1,6 +1,7 @@
 """BSMP protocol implementation."""
 from .serial import Channel as _Channel
 from .serial import Message as _Message
+from .exceptions import SerialAnomResp as _SerialAnomResp
 
 
 class Const:
@@ -239,21 +240,15 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
-        if res.cmd == ack:
-            if not res.payload:
-                # expected response
-                # TODO: revise this. do we need to change entities?!
-                # if so, should we make a local copy instead?
-                self.entities.remove_all_groups_of_variables()
-                return Const.ACK_OK, None
-            # unexpected non-empty response payload
-            fmts = ('Unexpected BSMP non-empty resp payload '
-                    'for command 0x{:02X}: {}!')
-            print(fmts.format(cmd, res.cmd))
-            return None, None
+        if res.cmd == ack and not res.payload:
+            # expected response
+            # TODO: revise this. do we need to change entities?!
+            # if so, should we make a local copy instead?
+            self.entities.remove_all_groups_of_variables()
+            return Const.ACK_OK, None
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP._anomalous_response(cmd, res.cmd, payload=res.payload)
 
     # 0x4_
     def request_curve_block(self, curve_id, block, timeout):
@@ -387,7 +382,8 @@ class BSMP:
         print(fmts.format(cmd, ack))
         for key, value in kwargs.items():
             print('{}: {}'.format(key, value))
-        return None, None
+        raise _SerialAnomResp
+        # return None, None
 
 
 class BSMPSim:

@@ -13,6 +13,7 @@ from siriuspy.bsmp import Const as _BSMPConst
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
+from siriuspy.bsmp import SerialAnomResp as _SerialAnomResp
 from siriuspy.pwrsupply.pru import PRU as _PRU
 
 
@@ -1185,6 +1186,8 @@ class PSBSMP(_BSMP):
     CONST_BSMP = _BSMPConst
 
     _timeout_default = 100  # [us]
+    _timeout_remove_var_groups = 100  # [us]
+    _timeout_create_var_groups = 100  # [us]
     _sleep_turn_onoff = 0.020  # [s]
     _sleep_reset_udc = 0.050  # [s]
 
@@ -1212,6 +1215,17 @@ class PSBSMP(_BSMP):
         version = version[:version.index(b'\x00')]
         version = ''.join([chr(ord(v)) for v in version])
         return version
+
+    def reset_groups_of_variables(self, groups):
+        """Reset groups of variables."""
+        # remove previous variables groups and fresh ones
+        self.remove_all_groups_of_variables(
+            timeout=PSBSMP._timeout_remove_var_groups)
+
+        # create groups
+        for var_ids in groups:
+            self.create_group_of_variables(
+                var_ids, timeout=PSBSMP._timeout_create_var_groups)
 
     # --- bsmp overriden methods ---
 
