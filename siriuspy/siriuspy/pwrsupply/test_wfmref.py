@@ -75,7 +75,6 @@ def test_write_wfmref(ps):
     """."""
     # reset UDC
     udc.reset()
-
     # turn power supply on
     ps.execute_function(
         func_id=ps.CONST_PSBSMP.F_TURN_ON,
@@ -86,6 +85,7 @@ def test_write_wfmref(ps):
         func_id=ps.CONST_PSBSMP.F_SELECT_OP_MODE,
         input_val=ps.CONST_PSBSMP.E_STATE_RMPWFM,
         timeout=100)
+
     # read original wfmref curve
     curve1 = np.array(ps.wfmref_read())
     # change it

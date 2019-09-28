@@ -18,7 +18,7 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
 # _SIZE = 4096
-DEFAULT_CURVESIZE = _np.zeros(DEF_WFMSIZE)
+DEFAULT_WFMREF = _np.zeros(DEF_WFMSIZE)
 
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
@@ -440,12 +440,12 @@ def get_basic_propty_database():
                        'prec': DEFLT_PS_CURR_PREC},
         # PS BSMP Curves
         # 'CurvesUpdate-Cmd': {'type': 'int', 'value': 0},
-        # 'WfmRefData-SP': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
-        #                   'value': DEFAULT_CURVESIZE,
-        #                   'prec': DEFLT_PS_CURR_PREC},
-        # 'WfmRefData-RB': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
-        #                   'value': DEFAULT_CURVESIZE,
-        #                   'prec': DEFLT_PS_CURR_PREC},
+        'WfmRefData-SP': {'type': 'float', 'count': len(DEFAULT_WFMREF),
+                          'value': list(DEFAULT_WFMREF),
+                          'prec': DEFLT_PS_CURR_PREC},
+        'WfmRefData-RB': {'type': 'float', 'count': len(DEFAULT_WFMREF),
+                          'value': list(DEFAULT_WFMREF),
+                          'prec': DEFLT_PS_CURR_PREC},
         # 'WfmRefIdx-Mon: {'type': 'int', 'value': 0 },
     })
     return db

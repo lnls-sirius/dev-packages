@@ -15,7 +15,7 @@ public_interface = (
     'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
     'DEFAULT_WFMDATA',
-    'DEFAULT_CURVESIZE',
+    'DEFAULT_WFMREF',
     'DEFLT_PS_CURR_PREC',
     'DEFLT_PU_CURR_PREC',
     'ETypes',

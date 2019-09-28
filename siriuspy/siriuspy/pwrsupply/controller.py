@@ -22,13 +22,10 @@ class PSController:
         self._pru_controller = pru_controller
 
         self._fields = set()
-        # self._devices = set()
         for name in self._readers:
             split = name.split(':')
             self._fields.add(split[-1])
-            # self._devices.add(':'.join(split[:2]))
         self._init_setpoints()
-        # self._operation_mode = 0
 
     @property
     def pru_controller(self):

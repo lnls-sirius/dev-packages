@@ -1316,6 +1316,8 @@ class PSBSMP(_BSMP):
         # write curve
         self.curve_write(curve_id, curve)
 
+        # _time.sleep(0.1) necessary??
+
         # execute selection of WfmRef to be used
         # self.wfmref_select = curve_id
 

@@ -185,9 +185,11 @@ class PSModelFBP(_PSModel):
             return _functions.CfgSiggen(
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
-            return _functions.PRUCurve(device_ids, pru_controller, setpoints)
+            return _functions.PRUCurve(
+                device_ids, pru_controller, setpoints)
         elif epics_field == 'WfmRefData-SP':
-            return _functions.WfmRefCurve(device_ids, pru_controller, setpoints)
+            return _functions.WfmRefCurve(
+                device_ids, pru_controller, setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
         elif epics_field == 'CurvesAcq-Sel':

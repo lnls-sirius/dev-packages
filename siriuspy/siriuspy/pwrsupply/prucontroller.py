@@ -349,18 +349,10 @@ class PRUController:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
 
-    def wfmref_read(self, device_ids):
-        """Return wfmref curves."""
-        if isinstance(device_ids, int):
-            device_ids = (device_ids, )
-
-        # gather selected data
-        curves = dict()
+    def wfmref_read(self, device_id):
+        """Return wfmref curve."""
         with self._lock:
-            for dev_id in device_ids:
-                curves[dev_id] = _dcopy(self._wfmref_curves[dev_id])
-
-        return curves
+            return _dcopy(self._wfmref_curves[device_id])
 
     def wfmref_write(self, device_ids, data):
         """Write wfmref curves."""
@@ -846,6 +838,7 @@ class PRUController:
                 curve = psbsmp.wfmref_read()
                 curves[dev_id] = curve
         except (_SerialError, IndexError):
+            print('bsmp_wfmref_update error!')
             tstamp = _time.time()
             dtime = tstamp - time_init
             operation = ('CR', tstamp, dtime, device_ids, True)
@@ -857,17 +850,21 @@ class PRUController:
             for dev_id in device_ids:
                 self._wfmref_curves[dev_id] = curves[dev_id]
 
-    def _bsmp_wfmref_write(self, device_ids, data):
+    def _bsmp_wfmref_write(self, device_ids, curve):
         """Write curve to devices."""
         time_init = _time.time()
         try:
             # write curves
             for dev_id in device_ids:
+                # print(dev_id, curve[0])
                 psbsmp = self._udc[dev_id]
-                psbsmp.wfmref_write(data)
+                psbsmp.wfmref_write(curve)
             # update curves
             self._bsmp_wfmref_update(device_ids)
+            # for dev_id in device_ids:
+            #     print(dev_id, self._wfmref_curves[dev_id][0])
         except (_SerialError, IndexError):
+            print('bsmp_wfmref_write error!')
             tstamp = _time.time()
             dtime = tstamp - time_init
             operation = ('CW', tstamp, dtime, device_ids, True)
