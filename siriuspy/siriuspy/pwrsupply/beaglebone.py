@@ -138,8 +138,9 @@ class BBBFactory:
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
         # TODO: Test!!! remember to delete!!!
-        # if bbbname == 'IA-08RaCtrl:CO-PSCtrl-SI5':
-        #     udc_list = udc_list[:1]
+        print('Delete test conditional in beaglebone.py!')
+        if bbbname == 'IA-08RaCtrl:CO-PSCtrl-SI5':
+            udc_list = udc_list[:1]
 
         for udc in udc_list:
 
