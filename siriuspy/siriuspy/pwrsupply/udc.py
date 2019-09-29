@@ -1,6 +1,6 @@
 """UDC class."""
 
-from .bsmp import PSBSMPFactory as _PSBSMPFactory
+from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from .psmodel import PSModelFactory as _PSModelFactory
 from . import prucparms as _prucparms
 
@@ -28,7 +28,7 @@ class UDC:
         self._pru = pru
         self._device_ids = device_ids
         self._psmodel = psmodel
-        self._bsmp = self._create_bsmp_connectors()
+        self._bsmp_devs = self._create_bsmp_connectors()
 
     @property
     def pru(self):
@@ -58,21 +58,25 @@ class UDC:
     def reset(self, timeout=_timeout_default):
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
-        for bsmp in self._bsmp.values():
+        for bsmp in self._bsmp_devs.values():
             bsmp.execute_function(
                 func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
-        # reset UDC
-        bsmp = self._bsmp[next(iter(self._bsmp))]  # uses first BSMP device
-        bsmp.execute_function(
+
+        # reset UDC proper.
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
+        bsmp_dev.execute_function(
             func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
 
-    @staticmethod
-    def parse_firmware_version(version):
+    def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
-        version = version[:version.index(b'\x00')]
-        version = ''.join([chr(ord(v)) for v in version])
-        return version
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
+        return bsmp_dev.parse_firmware_version(version)
+
+    def reset_groups_of_variables(self, groups):
+        """Reset groups of variables."""
+        for bsmp_dev in self._bsmp_devs.values():
+            bsmp_dev.reset_groups_of_variables(groups=groups)
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
@@ -88,4 +92,4 @@ class UDC:
 
     def __getitem__(self, index):
         """Return BSMP."""
-        return self._bsmp[index]
+        return self._bsmp_devs[index]

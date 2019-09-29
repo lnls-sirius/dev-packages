@@ -62,6 +62,7 @@ class ComputedPV:
         """Return wether all pvs are connected."""
         for pv in self.pvs:
             if not pv.connected:
+                # print(pv.pvname)
                 return False
         return True
 
