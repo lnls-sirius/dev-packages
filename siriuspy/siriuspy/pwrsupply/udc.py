@@ -1,6 +1,6 @@
 """UDC class."""
 
-from .bsmp import PSBSMPFactory as _PSBSMPFactory
+from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from .psmodel import PSModelFactory as _PSModelFactory
 from . import prucparms as _prucparms
 

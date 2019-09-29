@@ -21,5 +21,5 @@ class SerialErrMsgShort(SerialError):
     """Exception raised when message is too short."""
 
 
-class SerialAnomResp(Exception):
+class SerialAnomResp(SerialError):
     """Exception raised when response is not the expected one."""

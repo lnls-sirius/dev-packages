@@ -1,6 +1,5 @@
 """Model abstract factory."""
 
-from siriuspy.pwrsupply.bsmp import PSBSMPFactory as _PSBSMPFactory
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
 
