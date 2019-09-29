@@ -154,11 +154,6 @@ class PRUController:
         self._pru_delays[self._parms.PRU.SYNC_MODE.BRDCST] = \
             PRUController._delay_func_sync_pulse
 
-        # # conversion of ps status to high level properties
-        # self._psc_state = {}
-        # for bsmp_id in self._device_ids:
-        #     self._psc_state[bsmp_id] = _PSCStatus()
-
         # create PRU (sync mode off).
         self._init_pru(pru)
 
@@ -268,7 +263,8 @@ class PRUController:
     def check_connected(self, device_id):
         """Return connection state of a device."""
         # TODO: may not be the true current connection state
-        return self._connected[device_id]
+        psupply = self._psupplies[device_id]
+        return psupply.connected
 
     # --- public methods: bbb controller ---
 
@@ -285,13 +281,6 @@ class PRUController:
 
         # signal threads to finish
         self._running = False
-
-    # def get_state(self, device_id):
-    #     """Return updated PSCState for a device."""
-    #     self._lock.acquire()
-    #     state = _dcopy(self._psc_state[device_id])
-    #     self._lock.release()
-    #     return state
 
     # --- public methods: bsmp variable read and func exec ---
 
@@ -370,7 +359,8 @@ class PRUController:
     def wfmref_read(self, device_id):
         """Return wfmref curve."""
         with self._lock:
-            return _dcopy(self._psupplies[device_id].wfmref)
+            psupply = self._psupplies[device_id]
+            return _dcopy(psupply.wfmref)
 
     def wfmref_write(self, device_ids, data):
         """Write wfmref curves."""
@@ -615,13 +605,12 @@ class PRUController:
         # create PSupply objects
         self._psupplies = dict()
         for dev_id in self._udc.device_ids:
-            self._psupplies[dev_id] = _PSupply(psbsmp=self._udc[dev_id])
+            psupply = _PSupply(psbsmp=self._udc[dev_id])
+            psupply._connected = False
+            self._psupplies[dev_id] = psupply
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
-
-        # create attribute with state of connections
-        self._connected = {dev_id: False for dev_id in device_ids}
 
         # create sorted variables group ids
         self._group_ids = sorted(self._parms.groups.keys())
@@ -750,8 +739,6 @@ class PRUController:
             return dev_ids, self._parms.MIGWFM
         elif self._pru.sync_mode == self._parms.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
-            # print(len(self._parms.groups[self._parms.MIRROR]))
-            # print(self._parms.RMPWFM)
             return dev_ids, self._parms.RMPWFM
         elif self._pru.sync_mode == self._parms.PRU.SYNC_MODE.BRDCST:
             return self._device_ids, self._parms.CYCLE
@@ -786,10 +773,11 @@ class PRUController:
             else:
                 return 1.0/self._parms.FREQ_RAMP  # [s]
 
-    def _serial_error(self, ids):
+    def _serial_error(self, device_ids):
         # signal disconnected for device ids.
-        for bsmp_id in ids:
-            self._connected[bsmp_id] = False
+        for dev_id in device_ids:
+            psupply = self._psupplies[dev_id]
+            psupply._connected = False
 
     def _update_copy_var_vals(self, dev_id, copy_var_vals, nr_devs,
                               value, group_id, var_id):
@@ -914,7 +902,6 @@ class PRUController:
         #         for dev_id in device_ids:
         #             psupply = self._psupplies[dev_id]
         #             psupply.update_variables_in_group(group_id=group_id)
-        #             self._connected[dev_id] = psupply.connected
         #             print('HERE2')
         #     except (_SerialError, IndexError):
         #         tstamp = _time.time()
@@ -954,8 +941,9 @@ class PRUController:
         nr_devs = len(self.device_ids)
         var_ids = self._parms.groups[group_id]
         for dev_id in device_ids:
+            psupply = self._psupplies[dev_id]
             if ack[dev_id] == _const_bsmp.ACK_OK:
-                self._connected[dev_id] = True
+                psupply._connected = True
                 values = data[dev_id]
                 for i, value in enumerate(values):
                     # ===
@@ -995,16 +983,10 @@ class PRUController:
                 #         += 0.00001*_random.uniform(-1.0, +1.0)
 
             elif ack[dev_id] == _const_bsmp.ACK_INVALID_ID:
-                self._connected[dev_id] = False
+                psupply._connected = False
                 self._bsmp_reset_group_of_variables(dev_id)
             else:
-                self._connected[dev_id] = False
-
-        # # update psc_state
-        # for dev_id in self.device_ids:
-        #     if self._connected[dev_id]:
-        #         self._psc_state[dev_id].ps_status = \
-        #             copy_var_vals[dev_id][self._parms.CONST_PSBSMP.V_PS_STATUS]
+                psupply._connected = False
 
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
@@ -1053,7 +1035,6 @@ class PRUController:
         success = True
         for dev_id in device_ids:
             connected = (ack[dev_id] == _const_bsmp.ACK_OK)
-            self._connected[dev_id] == connected
             success &= connected
 
         if success:
@@ -1097,7 +1078,8 @@ class PRUController:
         try:
             self._udc.reset_groups_of_variables(groups)
         except _SerialError:
-            self._connected[dev_id] = False
+            psupply = self._psupplies[dev_id]
+            psupply._connected = False
 
     def _bsmp_init_wfmref(self):
         self._bsmp_wfmref_update(self._device_ids)
