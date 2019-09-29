@@ -65,6 +65,7 @@ class PSupply:
     def update_variables(self):
         """Update all variables."""
         return self.update_variables_in_group(group_id=0)
+
     @_psupply_update_connected
     def update_groups(self, groups=None):
         """."""
@@ -76,7 +77,7 @@ class PSupply:
     @_psupply_update_connected
     def update_wfmref(self):
         """Update wfmref."""
-        self._wfmref = self._psbsmp.wfmref_read
+        self._wfmref = self._psbsmp.wfmref_read()
 
     @_psupply_update_connected
     def update_variables_in_group(self, group_id):
