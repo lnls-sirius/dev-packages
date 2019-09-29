@@ -6,10 +6,9 @@ import random as _random
 import numpy as _np
 
 from siriuspy import util as _util
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-
-from siriuspy.bsmp import Const as _BSMPConst
+from siriuspy.bsmp import constants as _const_bsmp
 from siriuspy.bsmp import BSMPSim as _BSMPSim
+from siriuspy.csdevice.pwrsupply import Const as _const_ps
 
 from . import bsmp as _psbsmp
 from .status import PSCStatus as _PSCStatus
@@ -200,11 +199,11 @@ class _OpModeSimState:
         """Turn ps on."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        if psc_status.ioc_pwrstate == _PSConst.PwrStateSel.Off:
+        if psc_status.ioc_pwrstate == _const_ps.PwrStateSel.Off:
             # Set PSController status
             value_init = self._get_init_value()
-            psc_status.ioc_pwrstate = _PSConst.PwrStateSel.On
-            psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+            psc_status.ioc_pwrstate = _const_ps.PwrStateSel.On
+            psc_status.ioc_opmode = _const_ps.OpMode.SlowRef
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
             variables[self._c.V_PS_SETPOINT] = value_init
@@ -216,10 +215,10 @@ class _OpModeSimState:
         """Turn ps off."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        if psc_status.ioc_pwrstate == _PSConst.PwrStateSel.On:
+        if psc_status.ioc_pwrstate == _const_ps.PwrStateSel.On:
             value_init = self._get_init_value()
             # Set PSController status
-            psc_status.ioc_pwrstate = _PSConst.PwrStateSel.Off
+            psc_status.ioc_pwrstate = _const_ps.PwrStateSel.Off
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
             variables[self._c.V_PS_SETPOINT] = value_init
@@ -252,7 +251,7 @@ class _OpModeSimState:
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
         # Set PSController status
-        psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+        psc_status.ioc_opmode = _const_ps.OpMode.SlowRef
         value_init = self._get_init_value()
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         # Set Current to 0
@@ -302,7 +301,7 @@ class _OpModeSimSlowRefState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.States.SlowRef
+        psc_status.ioc_opmode = _const_ps.States.SlowRef
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         self.set_slowref(variables, variables[self._c.V_PS_SETPOINT])
 
@@ -347,7 +346,7 @@ class _OpModeSimSlowRefSyncState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.OpMode.SlowRefSync
+        psc_status.ioc_opmode = _const_ps.OpMode.SlowRefSync
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
 
     def set_slowref(self, variables, input_val):
@@ -392,7 +391,7 @@ class _OpModeSimCycleState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.OpMode.Cycle
+        psc_status.ioc_opmode = _const_ps.OpMode.Cycle
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         variables[self._c.V_SIGGEN_ENABLE] = 0
         variables[self._c.V_PS_REFERENCE] = 0.0
@@ -596,7 +595,7 @@ class _BaseBSMPSim(_BSMPSim):
         """Read variable."""
         while self._pru.sync_block:
             _time.sleep(1e-1)
-        return _BSMPConst.ACK_OK, self._state.read_variable(self._variables, var_id)
+        return _const_bsmp.ACK_OK, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None, read_flag=True):
         """Execute a function."""
@@ -631,13 +630,13 @@ class _BaseBSMPSim(_BSMPSim):
         elif func_id == self._c.F_DISABLE_SIGGEN:
             self._state.disable_siggen(self._variables)
 
-        return _BSMPConst.ACK_OK, None
+        return _const_bsmp.ACK_OK, None
 
     def request_curve_block(self, curve_id, block, timeout):
         """Read curve block."""
         self._curves = self._get_init_curves()
         curveblock = self._curves[curve_id]
-        return _BSMPConst.ACK_OK, curveblock
+        return _const_bsmp.ACK_OK, curveblock
 
     def _is_on(self):
         ps_status = self._variables[self._c.V_PS_STATUS]

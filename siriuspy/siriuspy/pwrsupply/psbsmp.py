@@ -2,7 +2,7 @@
 
 import time as _time
 import numpy as _np
-from siriuspy.bsmp import Const as _BSMPConst
+from siriuspy.bsmp import constants as _const_bsmp
 from siriuspy.bsmp import BSMP as _BSMP
 from . import bsmp as _bsmp
 from siriuspy.pwrsupply.pru import PRU as _PRU
@@ -17,7 +17,7 @@ __version__ = 'V0.36w2019-08-30V0.36w2019-08-30'
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
 
-    CONST_BSMP = _BSMPConst
+    CONST_BSMP = _const_bsmp
 
     _timeout_read_variable = 100  # [us]
     _timeout_execute_function = 100  # [us]
@@ -257,7 +257,7 @@ class PSBSMP(_BSMP):
             # print((hex(ack), sum(data)))
             if ack != self.CONST_BSMP.ACK_OK:
                 self._anomalous_response(
-                    self.CONST_BSMP.REQUEST_CURVE_BLOCK, ack,
+                    self.CONST_BSMP.CMD_REQUEST_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
                     block=block,
@@ -287,7 +287,7 @@ class PSBSMP(_BSMP):
             # print((hex(ack), data))
             if ack != self.CONST_BSMP.ACK_OK:
                 self._anomalous_response(
-                    self.CONST_BSMP.CURVE_BLOCK, ack,
+                    self.CONST_BSMP.CMD_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
                     block=block,
