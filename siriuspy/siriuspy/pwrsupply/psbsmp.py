@@ -21,8 +21,8 @@ class PSBSMP(_BSMP):
 
     _timeout_read_variable = 100  # [us]
     _timeout_execute_function = 100  # [us]
-    _timeout_remove_var_groups = 100  # [us]
-    _timeout_create_var_groups = 100  # [us]
+    _timeout_remove_vars_groups = 100  # [us]
+    _timeout_create_vars_groups = 100  # [us]
     _timeout_read_group_of_variables = 100  # [us]
     _timeout_request_curve_block = 100  # [us]
     _timeout_curve_block = 100  # [us]
@@ -55,16 +55,16 @@ class PSBSMP(_BSMP):
         version = ''.join([chr(ord(v)) for v in version])
         return version
 
-    def reset_groups_of_variables(self, groups):
+    def reset_groups_of_variables(self, var_ids_list):
         """Reset groups of variables."""
-        # remove previous variables groups and fresh ones
+        # remove previous variables groups
         self.remove_all_groups_of_variables(
-            timeout=PSBSMP._timeout_remove_var_groups)
+            timeout=PSBSMP._timeout_remove_vars_groups)
 
-        # create groups
-        for var_ids in groups:
+        # create variables groups
+        for var_ids in var_ids_list:
             self.create_group_of_variables(
-                var_ids, timeout=PSBSMP._timeout_create_var_groups)
+                var_ids, timeout=PSBSMP._timeout_create_vars_groups)
 
     # --- bsmp overriden methods ---
 
@@ -102,14 +102,14 @@ class PSBSMP(_BSMP):
 
         return response
 
-
     # --- wfmref methods ---
 
     @property
     def wfmref_select(self):
         """."""
         _, curve_id = self.read_variable(
-            var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED, timeout=PSBSMP._timeout_read_variable)
+            var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+            timeout=PSBSMP._timeout_read_variable)
         return curve_id
 
     @wfmref_select.setter
@@ -128,7 +128,8 @@ class PSBSMP(_BSMP):
             This is the waveform size as last registered by the
         ARM controller.
         """
-        # calculate wfmref size from buffer pointer values used by ARM controller
+        # calculate wfmref size from buffer pointer values used by
+        # ARM controller
         i_beg, i_end, _ = self._wfmref_bsmp_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_end)
         wfmref_size = 1 + (values[1] - values[0]) // 2
@@ -141,7 +142,8 @@ class PSBSMP(_BSMP):
             This index refers to the current waveform in use by the
         DSP controller.
         """
-        # calculate wfmref index from buffer pointer values used by ARM controller
+        # calculate wfmref index from buffer pointer values used by
+        # ARM controller
         i_beg, _, i_idx = self._wfmref_bsmp_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_idx)
         wfmref_idx = 1 + (values[1] - values[0]) // 2
