@@ -37,7 +37,7 @@ if (sys.argv[1] == "B1"):
     power_supplies = {"BO-01U:PS-CH" : 1, "BO-01U:PS-CV" : 2 }
     curves = { 1 : [0.0] * 4000, 2 : [0.0] * 4000 }
     new_op_modes = {"BO-01U:PS-CH" : None, "BO-01U:PS-CV" : None }
-    CRATE = 1 
+    CRATE = 1
 elif (sys.argv[1] == "B2"):
     power_supplies = { "BO-03U:PS-CH" : 5, "BO-03U:PS-CV" : 6}
     curves = { 5 : [0.0] * 4000, 6 : [0.0] * 4000 }
@@ -138,7 +138,7 @@ class PSDriver(Driver):
             self.serial_write(PSDriver.includeChecksum([chr(ps_address), "\x50", "\x00", "\x01", "\x03"]), 100.0)
             answer = self.serial_read()
 
-            # Zera a corrente de saída da fonte
+            # Zera a corrente de saida da fonte
 
             self.serial_write(PSDriver.includeChecksum([chr(ps_address), "\x50", "\x00", "\x05", "\x10"] + PSDriver._list(struct.pack("<f", 0.0))), 100.0)
             answer = self.serial_read()
@@ -329,7 +329,7 @@ class PSDriver(Driver):
 
             elif (operation == "PS_SET_OUTPUT_CURRENT"):
 
-                # Seta uma nova corrente de saída na fonte
+                # Seta uma nova corrente de saida na fonte
 
                 self.serial_write(PSDriver.includeChecksum([chr(ps_address), "\x50", "\x00", "\x05", "\x10"] + PSDriver._list(struct.pack("<f", item[1][2]))), 100.0)
                 answer = self.serial_read()
