@@ -4,7 +4,8 @@ from siriuspy.bsmp import SerialError as _SerialError
 
 
 def _psupply_update_connected(func):
-    # This gunctions decorates PSupply methods to keep track of connected status
+    # This functions decorates PSupply methods to keep track of
+    # connected status.
     def new_update_func(obj, *args, **kwargs):
         try:
             response = func(obj, *args, **kwargs)
@@ -67,11 +68,14 @@ class PSupply:
         return self.update_variables_in_group(group_id=0)
 
     @_psupply_update_connected
-    def update_groups(self, groups=None):
+    def update_groups(self, var_ids_list=None):
         """."""
         # NOTE: implement!!!
-        # self._psbsmp.query_list_of_group_of_variables()
-        for group_id, var_ids in groups.items():
+        # read variable groups from power supply
+        # var_ids_list = self._psbsmp.query_list_of_group_of_variables()
+
+        # stores groups definition
+        for group_id, var_ids in enumerate(var_ids_list):
             self._groups[group_id] = var_ids
 
     @_psupply_update_connected
