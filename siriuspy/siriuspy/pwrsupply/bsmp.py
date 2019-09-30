@@ -14,8 +14,7 @@ from siriuspy.bsmp import Types as _Types
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V0.36w2019-08-30V0.36w2019-08-30'
-
+__version__ = 'V0.36w2019-09-30V0.36w2019-09-30'
 
 # --- DCDC ---
 
