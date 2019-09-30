@@ -166,7 +166,7 @@ class PSBSMP(_BSMP):
         curve_id = self.wfmref_select
 
         # TODO: delete following test line!!!
-        curve_id = 0 if curve_id == 1 else 1
+        # curve_id = 0 if curve_id == 1 else 1
 
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
@@ -174,20 +174,20 @@ class PSBSMP(_BSMP):
     def wfmref_write(self, curve):
         """Write WfmRef."""
         # get currently used wfmref curve id
-        curve_id = self.wfmref_select
+        # curve_id = self.wfmref_select
 
         # # get curve id of writable wfmref
-        # curve_id = self._wfmref_bsmp_select_writable_curve_id()
+        curve_id = self._wfmref_bsmp_select_writable_curve_id()
         # TODO: delete following test line!!!
-        curve_id = 0 if curve_id == 1 else 1
+        # curve_id = 0 if curve_id == 1 else 1
 
         # write curve
         self.curve_write(curve_id, curve)
 
-        # _time.sleep(0.1) necessary??
+        _time.sleep(0.020)  # TODO: necessary??
 
-        # # execute selection of WfmRef to be used
-        # self.wfmref_select = curve_id
+        # execute selection of WfmRef to be used
+        self.wfmref_select = curve_id
 
     # --- curve methods ---
 
@@ -229,10 +229,12 @@ class PSBSMP(_BSMP):
     def _wfmref_bsmp_select_writable_curve_id(self):
         # get curve id of current buffer
         curve_id = self.wfmref_select
+        print('curve_id ini: ', curve_id)
 
         # select the other buffer and send curve blocks
-        curve_id = 0 if curve_id == 1 else 0
+        curve_id = 0 if curve_id == 1 else 1
 
+        print('curve_id fin: ', curve_id)
         return curve_id
 
     def _curve_bsmp_read(self, curve_id):
