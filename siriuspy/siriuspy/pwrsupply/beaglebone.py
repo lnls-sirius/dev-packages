@@ -140,7 +140,8 @@ class BBBFactory:
         # TODO: Test!!! remember to delete!!!
         print('Delete test conditional in beaglebone.py!')
         if bbbname == 'IA-08RaCtrl:CO-PSCtrl-SI5':
-            udc_list = udc_list[:1]
+            udc_list = [udc_list[0], ]
+            # udc_list = [udc_list[1], ]
 
         for udc in udc_list:
 

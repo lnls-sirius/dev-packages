@@ -11,8 +11,6 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V0.36w2019-08-30V0.36w2019-08-30'
-
 
 class PSBSMP(_BSMP):
     """Power supply BSMP."""
