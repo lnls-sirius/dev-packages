@@ -120,7 +120,10 @@ class BBBFactory:
         # TODO: Test!!! remember to delete!!!
         print('Test BeagleBone!')
         if bbbname in ('test1', 'test2'):
+            testname = bbbname
             bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI5'
+        else:
+            testname = None
 
         # Create PRU
         if eth:
@@ -143,9 +146,9 @@ class BBBFactory:
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
         print('Delete test conditional in beaglebone.py!')
-        if bbbname == 'test1':
+        if testname == 'test1':
             udc_list = [udc_list[0], ]
-        elif bbbname == 'test2':
+        elif testname == 'test2':
             udc_list = [udc_list[1], ]
 
         for udc in udc_list:
