@@ -116,6 +116,12 @@ class BBBFactory:
     @staticmethod
     def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
+
+        # TODO: Test!!! remember to delete!!!
+        print('Test BeagleBone!')
+        if bbbname in ('test1', 'test2'):
+            bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI5'
+
         # Create PRU
         if eth:
             pru = _PRU(bbbname=bbbname)
@@ -136,12 +142,11 @@ class BBBFactory:
             freqs = None
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
-
-        # TODO: Test!!! remember to delete!!!
         print('Delete test conditional in beaglebone.py!')
-        if bbbname == 'IA-08RaCtrl:CO-PSCtrl-SI5':
+        if bbbname == 'test1':
             udc_list = [udc_list[0], ]
-            # udc_list = [udc_list[1], ]
+        elif bbbname == 'test2':
+            udc_list = [udc_list[1], ]
 
         for udc in udc_list:
 
