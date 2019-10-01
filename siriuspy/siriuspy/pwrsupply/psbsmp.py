@@ -222,8 +222,8 @@ class PSBSMP(_BSMP):
         if 0 in curves and 1 in curves:
             curve0, curve1 = curves[0], curves[1]
             if False in (curve0.waccess, curve1.waccess) or \
-                curve0.size != curve1.size or \
-                curve0.nblocks != curve1.nblocks:
+               curve0.size != curve1.size or \
+               curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
     def _wfmref_bsmp_select_writable_curve_id(self):
@@ -262,7 +262,9 @@ class PSBSMP(_BSMP):
                     curve_id=curve_id,
                     block=block,
                     index=idx)
-            curve[idx[0]:idx[1]] = data
+            idx_w = slice(idx[0], idx[1])
+            idx_r = slice(0, idx[1] - idx[0])
+            curve[idx_w] = data[idx_r]
         return curve
 
     def _curve_bsmp_write(self, curve_id, curve):
