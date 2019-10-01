@@ -175,7 +175,7 @@ class TestBSMPVariablesGroup(TestCase):
         self.assertEqual(load, expected_load)
 
 
-class TestWfmRefCurve(TestCase):
+class TestWfmCurve(TestCase):
     """Test WfmRef Curve class."""
 
 

@@ -93,8 +93,10 @@ class _PSModel:
             return _fields.PRUProperty(pru_controller, attr)
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
-        elif epics_field == 'WfmRef-RB':
-            return _fields.WfmRefCurve(pru_controller, device_id)
+        elif epics_field == 'Wfm-RB':
+            return _fields.WfmRBCurve(pru_controller, device_id)
+        elif epics_field == 'WfmRef-Mon':
+            return _fields.WfmRefMonCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
             return _fields.Constant(0)
         elif epics_field == 'PRUSyncMode-Mon':
@@ -187,8 +189,8 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(
                 device_ids, pru_controller, setpoints)
-        elif epics_field == 'WfmRef-SP':
-            return _functions.WfmRefCurve(
+        elif epics_field == 'Wfm-SP':
+            return _functions.WfmSPCurve(
                 device_ids, pru_controller, setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)

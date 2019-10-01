@@ -38,8 +38,22 @@ class PRUCurve:
         return data
 
 
-class WfmRefCurve:
-    """BSMP PS WfmRef Curve read."""
+class WfmRBCurve:
+    """BSMP PS WfmRB Curve read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        data = self.pru_controller.wfm_read(self.device_id)
+        return data
+
+
+class WfmRefMonCurve:
+    """BSMP PS WfmRef-Mon Curve read."""
 
     def __init__(self, pru_controller, device_id):
         """Init properties."""
@@ -50,7 +64,6 @@ class WfmRefCurve:
         """Read curve."""
         data = self.pru_controller.wfmref_read(self.device_id)
         return data
-
 
 class PRUProperty:
     """Read a PRU property."""

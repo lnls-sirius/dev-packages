@@ -82,7 +82,7 @@ class PRUCurve(Function):
                     print(str(err))
 
 
-class WfmRefCurve(Function):
+class WfmSPCurve(Function):
     """Executes a ps wfmref curve write command."""
 
     def __init__(self, device_ids, pru_controller, setpoints=()):
@@ -96,7 +96,7 @@ class WfmRefCurve(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             for dev_id in self._device_ids:
-                self.pru_controller.wfmref_write(dev_id, value)
+                self.pru_controller.wfm_write(dev_id, value)
 
 
 class PSCurvesAcqCmd(Function):
