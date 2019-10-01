@@ -16,14 +16,14 @@ from siriuspy.pwrsupply.status import PSCStatus
 BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI5'
 
 
-def create_udc(bbbname):
+def create_udc(bbbname=BBBNAME):
     """Create UDC."""
     pru = PRU(bbbname=bbbname)
     bsmps = PSSearch.conv_bbbname_2_bsmps(bbbname)
     psnames, device_ids = zip(*bsmps)
     psmodel = PSSearch.conv_psname_2_psmodel(psnames[0])
-    _udc = UDC(pru=pru, psmodel=psmodel, device_ids=device_ids)
-    return _udc
+    udc = UDC(pru=pru, psmodel=psmodel, device_ids=device_ids)
+    return udc
 
 
 def print_status(ps_list):
@@ -109,14 +109,19 @@ def print_basic_info(ps_list):
     # plot_wfmref(ps)
 
 
-def reset_powersupplies(ps_list=None):
+def reset_powersupplies(udc, ps_list, opmode='SlowRef'):
     """."""
     # reset UDC
     udc.reset()
 
-    if ps_list is None:
-        ps_list = (ps1, ps2, ps3, ps4)
-
+    ps = ps_list[0]
+    if opmode == 'SlowRef':
+        opmode = ps.CONST_PSBSMP.E_STATE_SLOWREF
+    elif opmode == 'RmpWfm':
+        opmode = ps.CONST_PSBSMP.E_STATE_RMPWFM
+    else:
+        print('Invalid opmode.')
+        return
     for ps in ps_list:
         # turn power supply on
         ps.execute_function(
@@ -126,7 +131,7 @@ def reset_powersupplies(ps_list=None):
         # change mode to RmpWfm
         ps.execute_function(
             func_id=ps.CONST_PSBSMP.F_SELECT_OP_MODE,
-            input_val=ps.CONST_PSBSMP.E_STATE_RMPWFM,
+            input_val=opmode,
             timeout=100)
         time.sleep(0.010)  # needed?
 
@@ -151,12 +156,3 @@ def test_write_wfmref(ps):
     plt.ylabel('Current [A]')
     plt.legend()
     plt.show()
-
-# --- create global objects ---
-
-udc = create_udc(bbbname=BBBNAME)
-ps1 = udc[1]
-ps2 = udc[2]
-ps3 = udc[3]
-ps4 = udc[4]
-all_ps = [ps1, ps2, ps3, ps4]
