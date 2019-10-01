@@ -356,7 +356,8 @@ class PRUController:
         """Return wfmref curve."""
         with self._lock:
             psupply = self._psupplies[device_id]
-            return _dcopy(psupply.wfmref)
+            return _dcopy(psupply.wfmref_sp)
+            # return _dcopy(psupply.wfmref)
 
     def wfmref_write(self, device_ids, data):
         """Write wfmref curves."""
@@ -862,6 +863,8 @@ class PRUController:
                 # print(dev_id, curve[0])
                 psupply = self._psupplies[dev_id]
                 psupply.psbsmp.wfmref_write(curve)
+                curve = psupply.psbsmp.wfmref_write(curve)
+                psupply.wfmref_sp = curve
             # update curves
             self._bsmp_wfmref_update(device_ids)
         except (_SerialError, IndexError):
@@ -1074,6 +1077,9 @@ class PRUController:
 
     def _bsmp_init_wfmref(self):
         self._bsmp_wfmref_update(self._device_ids)
+        for psupply in self._psupplies.values():
+            psupply.update_wfmref()
+            psupply.wfmref_sp = psupply.wfmref
 
     def _bsmp_init_variable_values(self):
 
