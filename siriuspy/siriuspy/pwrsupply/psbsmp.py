@@ -104,7 +104,7 @@ class PSBSMP(_BSMP):
 
     @property
     def wfmref_select(self):
-        """."""
+        """Return ID of curve currently in use by DSP."""
         _, curve_id = self.read_variable(
             var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
@@ -112,7 +112,7 @@ class PSBSMP(_BSMP):
 
     @wfmref_select.setter
     def wfmref_select(self, curve_id):
-        """Select ID of wfmref curve."""
+        """Select ID of curve to be used by DSP."""
         ack, data = self.execute_function(
             func_id=_bsmp.ConstPSBSMP.F_SELECT_WFMREF,
             input_val=curve_id,
@@ -162,32 +162,28 @@ class PSBSMP(_BSMP):
         return pointer_values
 
     def wfmref_read(self):
-        """Return curve of currently selected WfmRef."""
+        """Return data of curve currently in use by DSP."""
+        # get curve ID
         curve_id = self.wfmref_select
 
-        # TODO: delete following test line!!!
-        curve_id = 0 if curve_id == 1 else 1
-
+        # get curve data
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
     def wfmref_write(self, curve):
-        """Write WfmRef."""
-        # get currently used wfmref curve id
-        curve_id = self.wfmref_select
-
-        # # get curve id of writable wfmref
-        # curve_id = self._wfmref_bsmp_select_writable_curve_id()
-        # TODO: delete following test line!!!
-        curve_id = 0 if curve_id == 1 else 1
+        """Write WfmRef to currently ."""
+        # # get id of writable wfmref curve
+        curve_id = self._wfmref_bsmp_select_writable_curve_id()
 
         # write curve
-        self.curve_write(curve_id, curve)
+        curve = self.curve_write(curve_id, curve)
 
-        # _time.sleep(0.1) necessary??
+        _time.sleep(0.020)  # TODO: necessary??
 
-        # # execute selection of WfmRef to be used
-        # self.wfmref_select = curve_id
+        # execute selection of WfmRef to be used
+        self.wfmref_select = curve_id
+
+        return curve
 
     # --- curve methods ---
 
@@ -203,6 +199,13 @@ class PSBSMP(_BSMP):
 
         # send curve blocks
         self._curve_bsmp_write(curve_id, curve)
+
+        # # get curve just written
+        # curve = self.curve_read(curve_id)
+
+        # return curve
+
+        return _np.array(curve)
 
     def curve_maxsize(self, curve_id):
         """Return max size if t_float units according to BSMP spec."""
@@ -222,23 +225,31 @@ class PSBSMP(_BSMP):
         if 0 in curves and 1 in curves:
             curve0, curve1 = curves[0], curves[1]
             if False in (curve0.waccess, curve1.waccess) or \
-                curve0.size != curve1.size or \
-                curve0.nblocks != curve1.nblocks:
+               curve0.size != curve1.size or \
+               curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
     def _wfmref_bsmp_select_writable_curve_id(self):
-        # get curve id of current buffer
-        curve_id = self.wfmref_select
-
-        # select the other buffer and send curve blocks
-        curve_id = 0 if curve_id == 1 else 0
+        # read status
+        var_ids = (
+            _bsmp.ConstPSBSMP.V_PS_STATUS,
+            _bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+          )
+        data = self._bsmp_get_variable_values(*var_ids)
+        state = data[0] & 0b1111
+        curve_id = data[1]
+        if state in (_bsmp.ConstPSBSMP.E_STATE_RMPWFM,
+                     _bsmp.ConstPSBSMP.E_STATE_MIGWFM):
+            # select the other buffer and send curve blocks
+            curve_id = 0 if curve_id == 1 else 1
 
         return curve_id
 
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
         wfmref_size = self.wfmref_size
-        wfmref_size_min = self._curve_get_implementable_size(curve_id, wfmref_size)
+        wfmref_size_min = self._curve_get_implementable_size(
+            curve_id, wfmref_size)
 
         # create initial output data
         curve = _np.zeros(wfmref_size_min)
@@ -262,7 +273,9 @@ class PSBSMP(_BSMP):
                     curve_id=curve_id,
                     block=block,
                     index=idx)
-            curve[idx[0]:idx[1]] = data
+            idx_w = slice(idx[0], idx[1])
+            idx_r = slice(0, idx[1] - idx[0])
+            curve[idx_w] = data[idx_r]
         return curve
 
     def _curve_bsmp_write(self, curve_id, curve):

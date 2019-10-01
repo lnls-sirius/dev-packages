@@ -1,5 +1,6 @@
 """Power Supply Module."""
 
+from copy import deepcopy as _dcopy
 from siriuspy.bsmp import SerialError as _SerialError
 
 
@@ -29,7 +30,9 @@ class PSupply:
         self._connected = None
         self._groups = dict()
         self._variables = dict()
+        self._curves = dict()
         self._wfmref = None
+        self._wfmref_sp = None
 
     @property
     def psbsmp(self):
@@ -45,6 +48,16 @@ class PSupply:
     def wfmref(self):
         """Return wfmref."""
         return self._wfmref
+
+    @property
+    def wfmref_sp(self):
+        """Return wfmref_sp."""
+        return self._wfmref_sp
+
+    @wfmref_sp.setter
+    def wfmref_sp(self, value):
+        """Set wfmref_sp."""
+        self._wfmref_sp = _dcopy(value)
 
     @property
     def variables(self):

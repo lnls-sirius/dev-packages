@@ -16,14 +16,14 @@ from siriuspy.pwrsupply.status import PSCStatus
 BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI5'
 
 
-def create_udc(bbbname):
+def create_udc(bbbname=BBBNAME):
     """Create UDC."""
     pru = PRU(bbbname=bbbname)
     bsmps = PSSearch.conv_bbbname_2_bsmps(bbbname)
     psnames, device_ids = zip(*bsmps)
     psmodel = PSSearch.conv_psname_2_psmodel(psnames[0])
-    _udc = UDC(pru=pru, psmodel=psmodel, device_ids=device_ids)
-    return _udc
+    udc = UDC(pru=pru, psmodel=psmodel, device_ids=device_ids)
+    return udc
 
 
 def print_status(ps_list):
@@ -109,14 +109,19 @@ def print_basic_info(ps_list):
     # plot_wfmref(ps)
 
 
-def reset_powersupplies(ps_list=None):
+def reset_powersupplies(udc, ps_list, opmode='SlowRef'):
     """."""
     # reset UDC
     udc.reset()
 
-    if ps_list is None:
-        ps_list = (ps1, ps2, ps3, ps4)
-
+    ps = ps_list[0]
+    if opmode == 'SlowRef':
+        opmode = ps.CONST_PSBSMP.E_STATE_SLOWREF
+    elif opmode == 'RmpWfm':
+        opmode = ps.CONST_PSBSMP.E_STATE_RMPWFM
+    else:
+        print('Invalid opmode.')
+        return
     for ps in ps_list:
         # turn power supply on
         ps.execute_function(
@@ -126,37 +131,45 @@ def reset_powersupplies(ps_list=None):
         # change mode to RmpWfm
         ps.execute_function(
             func_id=ps.CONST_PSBSMP.F_SELECT_OP_MODE,
-            input_val=ps.CONST_PSBSMP.E_STATE_RMPWFM,
+            input_val=opmode,
             timeout=100)
         time.sleep(0.010)  # needed?
 
 
-def test_write_wfmref(ps):
-    """."""
-    reset_powersupplies([ps, ])
-
-    # read original wfmref curve
-    curve1 = np.array(ps.wfmref_read())
-    # change it
-    # new_curve = [2.0*i/len(curve1) for i in range(len(curve1))]
-    new_curve = curve1[::-1]
-    # write new wfmref curve and get it back
-    ps.wfmref_write(new_curve)
-    curve2 = np.array(ps.wfmref_read())
-    # compare previous and next wfmref curves
-    plt.plot(curve1, label='Prev WfmRef ({} points)'.format(len(curve1)))
-    # plt.plot(new_curve, label='New curve ({} points)'.format(len(new_curve)))
-    plt.plot(curve2, label='Next WfmRef ({} points)'.format(len(curve2)))
-    plt.xlabel('Index')
-    plt.ylabel('Current [A]')
+def wfmref_flip(ps):
+    id1 = ps.wfmref_select
+    c1 = ps.wfmref_read()
+    c_new = c1[::-1]
+    # c_new = [i/1023 for i in range(1024)] # c_new[:500]
+    # c_new = c1[:500]
+    ps.wfmref_write(c_new)
+    id2 = ps.wfmref_select
+    c2 = ps.wfmref_read()
+    plt.plot(c1, label='prev (id:{})'.format(id1))
+    plt.plot(c2, label='next (id:{})'.format(id2))
     plt.legend()
     plt.show()
 
-# --- create global objects ---
 
-udc = create_udc(bbbname=BBBNAME)
-ps1 = udc[1]
-ps2 = udc[2]
-ps3 = udc[3]
-ps4 = udc[4]
-all_ps = [ps1, ps2, ps3, ps4]
+def test_wfmref_write_slowref():
+    udc = create_udc('IA-08RaCtrl:CO-PSCtrl-SI5')
+    all_ps = [udc[5], udc[6], udc[7]]
+    ps5 = all_ps[0]
+    reset_powersupplies(udc, all_ps, 'SlowRef')
+    print_basic_info(all_ps)
+    wfmref_flip(ps5)
+    print_basic_info(all_ps)
+    wfmref_flip(ps5)
+    return udc, all_ps
+
+
+def test_wfmref_write_rmpwfm():
+    udc = create_udc('IA-08RaCtrl:CO-PSCtrl-SI5')
+    all_ps = [udc[5], udc[6], udc[7]]
+    ps5 = all_ps[0]
+    reset_powersupplies(udc, all_ps, 'RmpWfm')
+    print_basic_info(all_ps)
+    wfmref_flip(ps5)
+    print_basic_info(all_ps)
+    wfmref_flip(ps5)
+    return udc, all_ps
