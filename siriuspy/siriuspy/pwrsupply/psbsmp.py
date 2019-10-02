@@ -17,13 +17,13 @@ class PSBSMP(_BSMP):
 
     CONST_BSMP = _const_bsmp
 
-    _timeout_read_variable = 100  # [us]
-    _timeout_execute_function = 100  # [us]
-    _timeout_remove_vars_groups = 100  # [us]
-    _timeout_create_vars_groups = 100  # [us]
-    _timeout_read_group_of_variables = 100  # [us]
-    _timeout_request_curve_block = 100  # [us]
-    _timeout_curve_block = 100  # [us]
+    _timeout_read_variable = 100  # [ms]
+    _timeout_execute_function = 100  # [ms]
+    _timeout_remove_vars_groups = 100  # [ms]
+    _timeout_create_vars_groups = 100  # [ms]
+    _timeout_read_group_of_variables = 100  # [ms]
+    _timeout_request_curve_block = 100  # [ms]
+    _timeout_curve_block = 100  # [ms]
 
     _sleep_turn_onoff = 0.020  # [s]
     _sleep_reset_udc = 0.500  # [s]

@@ -8,7 +8,7 @@ from . import prucparms as _prucparms
 class UDC:
     """UDC."""
 
-    _timeout_default = 100  # [us]
+    _timeout_default = 100  # [ms]
 
     _prucparms = {
         'FBP': _prucparms.PRUCParmsFBP,
@@ -63,14 +63,15 @@ class UDC:
                 func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
 
         # reset UDC proper.
-        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # fisrt bsmp
         bsmp_dev.execute_function(
             func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
 
     def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
-        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
+        # uses first BSMP device
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # first bsmp
         return bsmp_dev.parse_firmware_version(version)
 
     def reset_groups_of_variables(self, groups):

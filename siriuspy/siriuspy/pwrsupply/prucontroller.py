@@ -140,14 +140,14 @@ class PRUController:
             self._parms.FREQ_RAMP = freqs[1]
 
         # set PRU delays
-        self._pru_delays = dict()
-        self._pru_delays[self._parms.PRU.SYNC_MODE.MIGINT] = None
-        self._pru_delays[self._parms.PRU.SYNC_MODE.MIGEND] = \
+        self._pru_sync_delays = dict()
+        self._pru_sync_delays[self._parms.PRU.SYNC_MODE.MIGINT] = None
+        self._pru_sync_delays[self._parms.PRU.SYNC_MODE.MIGEND] = \
             PRUController._delay_func_set_slowref_fbp
-        self._pru_delays[self._parms.PRU.SYNC_MODE.RMPINT] = None
-        self._pru_delays[self._parms.PRU.SYNC_MODE.RMPEND] = \
+        self._pru_sync_delays[self._parms.PRU.SYNC_MODE.RMPINT] = None
+        self._pru_sync_delays[self._parms.PRU.SYNC_MODE.RMPEND] = \
             PRUController._delay_func_set_slowref_fbp
-        self._pru_delays[self._parms.PRU.SYNC_MODE.BRDCST] = \
+        self._pru_sync_delays[self._parms.PRU.SYNC_MODE.BRDCST] = \
             PRUController._delay_func_sync_pulse
 
         # create PRU (sync mode off).
@@ -495,7 +495,7 @@ class PRUController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            delay=self._pru_delays[sync_mode],
+            delay=self._pru_sync_delays[sync_mode],
             sync_address=self._device_ids[0])
 
         # update time interval according to new sync mode selected
