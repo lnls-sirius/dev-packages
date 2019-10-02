@@ -98,7 +98,7 @@ class _PSModel:
         elif epics_field == 'WfmRef-Mon':
             return _fields.WfmRefMonCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
-            return _fields.Constant(0)
+            return _fields.WfmIndexCurve(pru_controller, device_id)
         elif epics_field == 'PRUSyncMode-Mon':
             return _fields.PRUSyncMode(pru_controller)
         return None
@@ -194,12 +194,9 @@ class PSModelFBP(_PSModel):
                 device_ids, pru_controller, setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
-        elif epics_field == 'CurvesAcq-Sel':
-            return _functions.PSCurvesAcq(device_ids, pru_controller,
+        elif epics_field == 'WfmAcq-Sel':
+            return _functions.WfmAcqCurve(device_ids, pru_controller,
                                           setpoints)
-        elif epics_field == 'CurvesAcq-Cmd':
-            return _functions.PSCurvesAcqCmd(device_ids, pru_controller,
-                                             setpoints)
         else:
             return _functions.BSMPFunctionNull()
 

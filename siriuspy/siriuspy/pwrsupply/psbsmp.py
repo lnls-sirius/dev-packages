@@ -26,7 +26,7 @@ class PSBSMP(_BSMP):
     _timeout_curve_block = 100  # [us]
 
     _sleep_turn_onoff = 0.020  # [s]
-    _sleep_reset_udc = 0.050  # [s]
+    _sleep_reset_udc = 0.500  # [s]
 
     _wfmref_pointers_var_ids = {
         0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
@@ -130,8 +130,7 @@ class PSBSMP(_BSMP):
         # ARM controller
         i_beg, i_end, _ = self._wfmref_bsmp_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_end)
-        wfmref_size = 1 + (values[1] - values[0]) // 2
-        return wfmref_size
+        return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
     def wfmref_idx(self):
@@ -144,8 +143,7 @@ class PSBSMP(_BSMP):
         # ARM controller
         i_beg, _, i_idx = self._wfmref_bsmp_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_idx)
-        wfmref_idx = 1 + (values[1] - values[0]) // 2
-        return wfmref_idx
+        return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
     def wfmref_maxsize(self):
@@ -212,6 +210,11 @@ class PSBSMP(_BSMP):
         curve_entity = self.entities.curves[curve_id]
         maxsize = curve_entity.max_size_t_float
         return maxsize
+
+    @staticmethod
+    def curve_index_calc(beg, end):
+        """Calculate curve index."""
+        return 1 + (end - beg) // 2
 
     # --- private methods ---
 

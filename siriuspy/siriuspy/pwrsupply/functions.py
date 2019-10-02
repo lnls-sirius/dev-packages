@@ -82,6 +82,28 @@ class PRUCurve(Function):
                     print(str(err))
 
 
+class WfmAcqCurve(Function):
+    """Enable/Disable curve acquisition."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """Define CurveAcq."""
+        self._device_ids = device_ids
+        self.enable = BSMPFunction(
+            device_ids, pru_controller, _consts_psbsmp.F_ENABLE_BUF_SAMPLES)
+        self.disable = BSMPFunction(
+            device_ids, pru_controller, _consts_psbsmp.F_DISABLE_BUF_SAMPLES)
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute Command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            if value == 1:
+                self.enable.execute()
+            elif value == 0:
+                self.disable.execute()
+
+
 class WfmSPCurve(Function):
     """Executes a ps wfmref curve write command."""
 
@@ -97,24 +119,6 @@ class WfmSPCurve(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             for dev_id in self._device_ids:
                 self.pru_controller.wfm_write(dev_id, value)
-
-
-class PSCurvesAcqCmd(Function):
-    """Executes a ps curve update."""
-
-    def __init__(self, device_ids, pru_controller, setpoints=()):
-        """Get pru controller."""
-        self._device_ids = device_ids
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.update_ps_curves(self._device_ids, 0)
-            self.pru_controller.update_ps_curves(self._device_ids, 1)
-            self.pru_controller.update_ps_curves(self._device_ids, 2)
 
 
 class PRUProperty(Function):
@@ -156,28 +160,6 @@ class PSPwrState(Function):
                 self.close_loop.execute()
             elif value == 0:
                 self.turn_off.execute()
-
-
-class PSCurvesAcq(Function):
-    """Enable/Disable curve acquisition."""
-
-    def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Define CurveAcq."""
-        self._device_ids = device_ids
-        self.enable = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_ENABLE_BUF_SAMPLES)
-        self.disable = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_DISABLE_BUF_SAMPLES)
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute Command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            if value == 1:
-                self.enable.execute()
-            elif value == 0:
-                self.disable.execute()
 
 
 class BSMPComm(Function):

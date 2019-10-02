@@ -357,12 +357,6 @@ class PRUController:
             psupply = self._psupplies[device_id]
             return _dcopy(psupply.wfmref_sp)
 
-    def wfmref_read(self, device_id):
-        """Return wfm curve."""
-        with self._lock:
-            psupply = self._psupplies[device_id]
-            return _dcopy(psupply.wfmref)
-
     def wfm_write(self, device_ids, data):
         """Write wfm curves."""
         if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
@@ -375,6 +369,34 @@ class PRUController:
             return True
         else:
             return False
+
+    def wfmref_read(self, device_id):
+        """Return wfm curve."""
+        with self._lock:
+            psupply = self._psupplies[device_id]
+            return _dcopy(psupply.wfmref)
+
+    def wfmref_index(self, device_id):
+        """Return current index into DSP selected curve."""
+        # NOTE: change this to use only psupply object, not _variables_values!
+        # if not hasattr(self, '_ggg'):
+        #     self._ggg = 0
+        # else:
+        #     self._ggg += 1
+        with self._lock:
+            psupply = self._psupplies[device_id]
+            dev_variables = self._variables_values[device_id]
+            curve_id = \
+                dev_variables[self.params.CONST_PSBSMP.V_WFMREF_SELECTED]
+            if curve_id == 0:
+                beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_START]
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_START]
+            else:
+                beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_START]
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_START]
+            index = psupply.psbsmp.curve_index_calc(beg, end)
+            # return self._ggg
+            return index
 
     def exec_functions(self, device_ids, function_id, args=None):
         """
@@ -995,7 +1017,6 @@ class PRUController:
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
 
-        # self._lock.release()
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line

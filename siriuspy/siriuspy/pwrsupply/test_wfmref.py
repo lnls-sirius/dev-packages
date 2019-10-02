@@ -16,11 +16,18 @@ from siriuspy.pwrsupply.status import PSCStatus
 BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI5'
 
 
-def create_udc(bbbname=BBBNAME):
+def create_udc(bbbname=BBBNAME, udc_index=None):
     """Create UDC."""
     pru = PRU(bbbname=bbbname)
-    bsmps = PSSearch.conv_bbbname_2_bsmps(bbbname)
+    if udc_index is not None:
+        udc_list = PSSearch.conv_bbbname_2_udc(bbbname)
+        udcname = udc_list[udc_index]
+        bsmps = PSSearch.conv_udc_2_bsmps(udcname)
+    else:
+        bsmps = PSSearch.conv_bbbname_2_bsmps(bbbname)
     psnames, device_ids = zip(*bsmps)
+    for psname, dev_id in bsmps:
+        print('psname: {:<15}   dev_id: {}'.format(psname, dev_id))
     psmodel = PSSearch.conv_psname_2_psmodel(psnames[0])
     udc = UDC(pru=pru, psmodel=psmodel, device_ids=device_ids)
     return udc
@@ -108,6 +115,19 @@ def print_basic_info(ps_list):
     # print()
     # plot_wfmref(ps)
 
+
+def test_reset(udc, ps_list):
+    """."""
+    curve = [0.0 for i in range(500)]
+    ps_list[0].wfmref_write(curve)
+    print_basic_info(ps_list)
+    udc.reset()
+    print_basic_info(ps_list)
+
+def test_reset_2019_10_02():
+    udc = create_udc(BBBNAME, 1)
+    ps_list = [udc[5], udc[6], udc[7]]
+    test_reset(udc, ps_list)
 
 def reset_powersupplies(udc, ps_list, opmode='SlowRef'):
     """."""
