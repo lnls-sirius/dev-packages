@@ -447,6 +447,9 @@ def get_basic_propty_database():
         'WfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
                        'value': list(DEFAULT_WFM),
                        'prec': DEFLT_PS_CURR_PREC},
+        'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
+                    'value': list(DEFAULT_WFM),
+                    'prec': DEFLT_PS_CURR_PREC},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
         # 'WfmAcq-Sel': {'type': 'enum', 'values': [Dsbl', 'Enbl'], 'value': 0},
     })

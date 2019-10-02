@@ -376,6 +376,14 @@ class PRUController:
             psupply = self._psupplies[device_id]
             return _dcopy(psupply.wfmref)
 
+    def wfmmon_read(self, device_id):
+        """ Return Wfm-Mon curve."""
+        # NOTE: implement this!!!
+        with self._lock:
+            psupply = self._psupplies[device_id]
+            curve = psupply.wfmref[::-1]
+            return curve
+
     def wfmref_index(self, device_id):
         """Return current index into DSP selected curve."""
         # NOTE: change this to use only psupply object, not _variables_values!

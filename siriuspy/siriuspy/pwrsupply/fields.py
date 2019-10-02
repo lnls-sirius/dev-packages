@@ -66,6 +66,20 @@ class WfmRefMonCurve:
         return data
 
 
+class WfmMonCurve:
+    """BSMP PS Wfm-Mon Curve read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        data = self.pru_controller.wfmmon_read(self.device_id)
+        return data
+
+
 class WfmIndexCurve:
     """BSMP PS WfmIndex Curve read."""
 

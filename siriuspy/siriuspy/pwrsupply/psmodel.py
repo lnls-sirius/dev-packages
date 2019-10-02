@@ -97,6 +97,8 @@ class _PSModel:
             return _fields.WfmRBCurve(pru_controller, device_id)
         elif epics_field == 'WfmRef-Mon':
             return _fields.WfmRefMonCurve(pru_controller, device_id)
+        elif epics_field == 'Wfm-Mon':
+            return _fields.WfmMonCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
             return _fields.WfmIndexCurve(pru_controller, device_id)
         elif epics_field == 'PRUSyncMode-Mon':
