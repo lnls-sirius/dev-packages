@@ -284,6 +284,10 @@ class EpicsCorrectors(BaseCorrectors):
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
 
+    @property
+    def corrs(self):
+        return self._corrs
+
     def get_map2write(self):
         """Get the write methods of the class."""
         db = {
