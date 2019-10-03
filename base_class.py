@@ -44,7 +44,7 @@ class BaseClass(_Callback):
     @property
     def isring(self):
         """Ring accelerator status."""
-        return self._csorb.isring()
+        return self._csorb.isring
 
     @property
     def status(self):
