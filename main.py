@@ -33,7 +33,7 @@ class SOFB(_BaseClass):
         self._max_kick = {'ch': 3000, 'cv': 3000}
         self._max_delta_kick = {'ch': 3000, 'cv': 3000}
         self._meas_respmat_kick = {'ch': 300, 'cv': 150}
-        if self.isring:
+        if self.acc == 'SI':
             self._corr_factor['rf'] = 1.00
             self._max_kick['rf'] = 3000
             self._max_delta_kick['rf'] = 500
@@ -67,6 +67,7 @@ class SOFB(_BaseClass):
             }
         if self.isring:
             db['RingSize-SP'] = self.set_ring_extension
+        if self.acc == 'SI':
             db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
             db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
@@ -260,9 +261,9 @@ class SOFB(_BaseClass):
             dkicks[nr_ch:] = 0
         elif code == self._csorb.ApplyDelta.CV:
             dkicks[:nr_ch] = 0
-            if self.isring:
+            if self.acc == 'SI':
                 dkicks[-1] = 0
-        elif self.isring and code == self._csorb.ApplyDelta.RF:
+        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
             dkicks[:-1] = 0
         msg = 'Applying {0:s} kicks.'.format(
                         self._csorb.ApplyDelta._fields[code])
@@ -435,7 +436,7 @@ class SOFB(_BaseClass):
             return
         nr_ch = self._csorb.NR_CH
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
-        if self.isring:
+        if self.acc == 'SI':
             slcs = {
                 'ch': slice(None, nr_ch),
                 'cv': slice(nr_ch, -1),

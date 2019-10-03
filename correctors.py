@@ -277,8 +277,9 @@ class EpicsCorrectors(BaseCorrectors):
         self._acq_rate = 2
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._corrs = [CHCV(dev) for dev in self._names]
-        if self.isring:
+        if self.acc == 'SI':
             self._corrs.append(RFCtrl(self.acc))
+        if self.isring:
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
@@ -309,7 +310,7 @@ class EpicsCorrectors(BaseCorrectors):
         elif code == self._csorb.ApplyDelta.CV:
             corrs = corrs[nr_ch:nr_chcv]
             values = values[nr_ch:nr_chcv]
-        elif self.isring and code == self._csorb.ApplyDelta.RF:
+        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
             corrs = [corrs[-1], ]
             values = [values[-1], ]
 
@@ -406,7 +407,7 @@ class EpicsCorrectors(BaseCorrectors):
             self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
             self.run_callbacks(
                 'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
-            if self.isring:
+            if self.acc == 'SI':
                 self.run_callbacks('KickRF-Mon', corr_vals[-1])
         except Exception as err:
             self._update_log('ERR: ' + str(err))
@@ -460,7 +461,12 @@ class EpicsCorrectors(BaseCorrectors):
         return True
 
     def _update_status(self):
-        status = 0b1111111 if self.isring else 0b0000111
+        status = 0b0000111
+        if self.acc == 'SI':
+            status = 0b1111111
+        elif self.isring:
+            status = 0b0011111
+
         chcvs = self._corrs[:self._csorb.NR_CHCV]
         status = _util.update_bit(
             status, bit_pos=0,
@@ -472,11 +478,12 @@ class EpicsCorrectors(BaseCorrectors):
             status, bit_pos=2,
             bit_val=not all(corr.state for corr in chcvs))
         if self.isring:
-            rfctrl = self._corrs[-1]
             status = _util.update_bit(
                 status, bit_pos=3, bit_val=not self.timing.connected)
             status = _util.update_bit(
                 status, bit_pos=4, bit_val=not self.timing.is_ok)
+        if self.acc == 'SI':
+            rfctrl = self._corrs[-1]
             status = _util.update_bit(
                 status, bit_pos=5, bit_val=not rfctrl.connected)
             status = _util.update_bit(

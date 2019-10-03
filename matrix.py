@@ -30,7 +30,7 @@ class EpicsMatrix(BaseMatrix):
             'bpmx': 'BPMXEnblList-RB',
             'bpmy': 'BPMYEnblList-RB',
             }
-        if self.isring:
+        if self.acc == 'SI':
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
         self.num_sing_values = self._csorb.NR_SING_VALS
@@ -54,7 +54,7 @@ class EpicsMatrix(BaseMatrix):
             'BPMYEnblList-SP': _part(self.set_enbllist, 'bpmy'),
             'NrSingValues-SP': self.set_num_sing_values,
             }
-        if self.isring:
+        if self.acc == 'SI':
             db['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return db
 
@@ -211,7 +211,7 @@ class EpicsMatrix(BaseMatrix):
         nr_chcv = self._csorb.NR_CHCV
         self.run_callbacks('DeltaKickCH-Mon', list(kicks[:nr_ch]))
         self.run_callbacks('DeltaKickCV-Mon', list(kicks[nr_ch:nr_chcv]))
-        if self.isring:
+        if self.acc == 'SI':
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
         return kicks
 
@@ -230,7 +230,7 @@ class EpicsMatrix(BaseMatrix):
     def get_max_num_sing_values(self):
         ncorr = _np.sum(self.select_items['ch'])
         ncorr += _np.sum(self.select_items['cv'])
-        if self.isring:
+        if self.acc == 'SI':
             ncorr += _np.sum(self.select_items['rf'])
         nbpm = _np.sum(self.select_items['bpmx'])
         nbpm += _np.sum(self.select_items['bpmy'])
@@ -243,7 +243,7 @@ class EpicsMatrix(BaseMatrix):
         sel_ = self.select_items
         selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
         seleccor = _np.hstack([sel_['ch'], sel_['cv']])
-        if self.isring:
+        if self.acc == 'SI':
             seleccor = _np.hstack([seleccor, sel_['rf']])
         if not any(selecbpm):
             msg = 'ERR: No BPM selected in EnblList'
