@@ -132,7 +132,7 @@ class SOFBTLines(ConstTLines):
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
 
-        if not self.isring():
+        if not self.isring:
             self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
         else:
             self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
@@ -145,6 +145,7 @@ class SOFBTLines(ConstTLines):
         self.C0 = 22 if self.acc == 'TB' else 30  # in meters
         self.T0 = self.C0 / 299792458  # in seconds
 
+    @property
     def isring(self):
         return self.acc in self.Rings._fields
 
