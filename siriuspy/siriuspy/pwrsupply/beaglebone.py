@@ -122,6 +122,9 @@ class BBBFactory:
         if bbbname in ('test1', 'test2'):
             testname = bbbname
             bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI5'
+        elif bbbname in ('test3'):
+            testname = bbbname
+            bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI3'
         else:
             testname = None
 
@@ -150,6 +153,9 @@ class BBBFactory:
             udc_list = [udc_list[0], ]
         elif testname == 'test2':
             udc_list = [udc_list[1], ]
+        elif testname == 'test3':
+            # udc_list = [udc_list[0], ]
+            pass
 
         for udc in udc_list:
 
