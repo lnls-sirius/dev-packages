@@ -386,11 +386,11 @@ class EpicsCorrectors(BaseCorrectors):
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
                 corr_values[i] = corr.value
-            # else:
-            #     msg = 'ERR: Failed to get value from '
-            #     msg += corr.name
-            #     self._update_log(msg)
-            #     _log.error(msg[5:])
+            else:
+                msg = 'ERR: Failed to get value from '
+                msg += corr.name
+                self._update_log(msg)
+                _log.error(msg[5:])
         return corr_values
 
     def set_kick_acq_rate(self, value):
