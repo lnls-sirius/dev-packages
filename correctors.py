@@ -98,8 +98,10 @@ class Corrector(_BaseTimingConfig):
 
     def equalKick(self, value):
         """Equal kick."""
-        if self._sp.connected and self._sp.value is not None:
-            return _math.isclose(self._sp.value, value, abs_tol=self.TINY_KICK)
+        if self._sp.connected:
+            val = self._sp.value
+            if val is not None:
+                return _math.isclose(val, value, abs_tol=self.TINY_KICK)
         return False
 
 
