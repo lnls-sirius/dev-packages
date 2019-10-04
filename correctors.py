@@ -351,7 +351,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def send_evt(self):
         """Send event method."""
-        if not self.isring and not self._synced_kicks:
+        if not self.isring or not self._synced_kicks:
             return
         if not self.timing.connected:
             msg = 'ERR: timing disconnected.'
