@@ -54,6 +54,7 @@ class ConstTLines(_cutil.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
+    TINY_KICK = 1e-3  # urad
 
     EnbldDsbld = _cutil.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
