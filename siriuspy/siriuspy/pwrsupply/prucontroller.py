@@ -954,11 +954,15 @@ class PRUController:
                 ack[dev_id], data[dev_id] = \
                     self._udc[dev_id].read_group_of_variables(
                         group_id=group_id)
+                psupply = self._psupplies[dev_id]
+                psupply.update_wfmref(interval=1.0)
+
             tstamp = _time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, False)
             self._last_operation = operation
         except (_SerialError, IndexError):
+            print('error!!!')
             tstamp = _time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, True)
