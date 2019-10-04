@@ -25,8 +25,8 @@ class PSBSMP(_BSMP):
     _timeout_request_curve_block = 100  # [ms]
     _timeout_curve_block = 100  # [ms]
 
-    _sleep_turn_onoff = 0.020  # [s]
-    _sleep_reset_udc = 0.500  # [s]
+    _sleep_turn_onoff = 0.050  # [s]
+    _sleep_reset_udc = 1.000  # [s]
 
     _wfmref_pointers_var_ids = {
         0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
@@ -176,7 +176,7 @@ class PSBSMP(_BSMP):
         # write curve
         curve = self.curve_write(curve_id, curve)
 
-        _time.sleep(0.020)  # TODO: necessary??
+        # _time.sleep(0.020)  # TODO: necessary??
 
         # execute selection of WfmRef to be used
         self.wfmref_select = curve_id
@@ -233,20 +233,31 @@ class PSBSMP(_BSMP):
                 raise ValueError('Inconsistent curves!')
 
     def _wfmref_bsmp_select_writable_curve_id(self):
-        # read status
-        var_ids = (
-            _bsmp.ConstPSBSMP.V_PS_STATUS,
-            _bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
-          )
-        data = self._bsmp_get_variable_values(*var_ids)
-        state = data[0] & 0b1111
-        curve_id = data[1]
-        if state in (_bsmp.ConstPSBSMP.E_STATE_RMPWFM,
-                     _bsmp.ConstPSBSMP.E_STATE_MIGWFM):
-            # select the other buffer and send curve blocks
-            curve_id = 0 if curve_id == 1 else 1
+
+        # get current curve id
+        _, curve_id = self.read_variable(
+            var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+            timeout=PSBSMP._timeout_read_variable)
+
+        # select the other buffer and send curve blocks
+        curve_id = 0 if curve_id == 1 else 1
 
         return curve_id
+
+        # # read status
+        # var_ids = (
+        #     _bsmp.ConstPSBSMP.V_PS_STATUS,
+        #     _bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+        #   )
+        # data = self._bsmp_get_variable_values(*var_ids)
+        # state = data[0] & 0b1111
+        # curve_id = data[1]
+        # if state in (_bsmp.ConstPSBSMP.E_STATE_RMPWFM,
+        #              _bsmp.ConstPSBSMP.E_STATE_MIGWFM):
+        #     # select the other buffer and send curve blocks
+        #     curve_id = 0 if curve_id == 1 else 1
+
+        # return curve_id
 
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
@@ -292,6 +303,7 @@ class PSBSMP(_BSMP):
         # print('writing - curve id: ', curve_id)
         # print('writing - indices: ', indices)
 
+        # time0 = _time.time()
         for block, idx in enumerate(indices):
             data = curve[idx[0]:idx[1]]
             # print(sum(data))
@@ -308,6 +320,8 @@ class PSBSMP(_BSMP):
                     curve_id=curve_id,
                     block=block,
                     index=idx)
+        # time1 = _time.time()
+        # print('blocks write: {:.4f} ms'.format(1000*(time1 - time0)))
 
     def _bsmp_get_variable_values(self, *var_ids):
         values = [None] * len(var_ids)
