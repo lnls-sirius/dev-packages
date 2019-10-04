@@ -7,6 +7,7 @@ from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
 from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
 from .exceptions import SerialErrMsgShort as _SerialErrMsgShort
 
+import time as _time
 
 class Message:
     """BSMP Message.
@@ -164,6 +165,7 @@ class Channel:
         """Set channel."""
         self._pru = pru  # PRU object to communicate with bsmp device
         self._address = address  # address of recipient device.
+        self._size_counter = 0  # stream size counter [bytes]
 
     @property
     def pru(self):
@@ -175,6 +177,15 @@ class Channel:
         """Return attached bsmp device id."""
         return self._address
 
+    @property
+    def size_counter(self):
+        """Return stream size of last request."""
+        return self._size_counter
+
+    def size_counter_reset(self):
+        """Reset stream size counter."""
+        self._size_counter = 0
+
     def read(self):
         """Read from serial."""
         resp = self.pru.UART_read()
@@ -183,6 +194,7 @@ class Channel:
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
+        self._size_counter += len(package.stream)
         return package.message
 
     def write(self, message, timeout=100):
@@ -190,6 +202,9 @@ class Channel:
         stream = Package.package(self._address, message).stream
         # print('write query : ', [hex(ord(c)) for c in stream])
         response = self.pru.UART_write(stream, timeout=timeout)
+        self._size_counter += len(stream)
+        # self.time1 = _time.time()
+        # print('write: {:.4f} ms'.format(1000*(time1-time0)))
         return response
 
     def request(self, message, timeout=100, read_flag=True):
