@@ -342,7 +342,7 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 return
-            msg = ' {0:d}/{1:d} : {2:s}'.format(
+            msg = '{0:d}/{1:d} -> {2:s}'.format(
                 i+1, nr_corrs, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
