@@ -1,7 +1,6 @@
 """Module to deal with correctors."""
 
 import time as _time
-import math as _math
 import logging as _log
 import numpy as _np
 from siriuspy.epics import PV as _PV
@@ -11,17 +10,14 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.search import HLTimeSearch as _HLTimesearch
 from siriuspy.envars import vaca_prefix as LL_PREF
-from .base_class import (
-    BaseClass as _BaseClass,
-    BaseTimingConfig as _BaseTimingConfig)
+from .base_class import BaseClass as _BaseClass, \
+    BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
 
 TIMEOUT = 0.05
 
 
 class Corrector(_BaseTimingConfig):
     """Corrector class."""
-
-    TINY_KICK = 1e-3  # urad
 
     def __init__(self, corr_name):
         """Init method."""
@@ -101,7 +97,7 @@ class Corrector(_BaseTimingConfig):
         if self._sp.connected:
             val = self._sp.value
             if val is not None:
-                return _math.isclose(val, value, abs_tol=self.TINY_KICK)
+                return _compare_kicks(val, value)
         return False
 
 
@@ -299,28 +295,16 @@ class EpicsCorrectors(BaseCorrectors):
             db['CorrSync-Sel'] = self.set_corrs_mode
         return db
 
-    def apply_kicks(self, values, code=None):
+    def apply_kicks(self, values):
         """Apply kicks."""
-        corrs = self._corrs
-        nr_ch = self._csorb.NR_CH
-        nr_chcv = self._csorb.NR_CHCV
-        if code == self._csorb.ApplyDelta.CH:
-            corrs = corrs[:nr_ch]
-            values = values[:nr_ch]
-        elif code == self._csorb.ApplyDelta.CV:
-            corrs = corrs[nr_ch:nr_chcv]
-            values = values[nr_ch:nr_chcv]
-        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
-            corrs = [corrs[-1], ]
-            values = [values[-1], ]
-
         strn = '    TIMEIT: {0:20s} - {1:7.3f}'
         _log.debug('    TIMEIT: BEGIN')
         t1 = _time.time()
 
         # Send correctors setpoint
-        for i, corr in enumerate(corrs):
-            self.put_value_in_corr(corr, values[i])
+        for i, corr in enumerate(self._corrs):
+            if values[i] is not None:
+                self.put_value_in_corr(corr, values[i])
         t2 = _time.time()
         _log.debug(strn.format('send sp:', 1000*(t2-t1)))
 
@@ -362,7 +346,7 @@ class EpicsCorrectors(BaseCorrectors):
             msg = 'ERR: ' + corr.name + ' mode not configured.'
             self._update_log(msg)
             _log.error(msg[5:])
-        elif not corr.equalKick(value):
+        else:
             corr.value = value
 
     def send_evt(self):

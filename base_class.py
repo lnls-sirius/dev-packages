@@ -1,7 +1,8 @@
 """Definition module."""
 import math as _math
 import logging as _log
-from siriuspy.csdevice.orbitcorr import SOFBFactory as _SOFBFactory
+from siriuspy.csdevice.orbitcorr import SOFBFactory as _SOFBFactory, \
+    ConstTLines as _ConstTLines
 from siriuspy.callbacks import Callback as _Callback
 
 _CSACCELS = {}
@@ -141,3 +142,7 @@ class BaseTimingConfig:
         for k, pv in self._config_pvs_sp.items():
             pv.value = self._config_ok_vals[k]
         return True
+
+
+def compare_kicks(val1, val2):
+    return _math.isclose(val1, val2, abs_tol=_ConstTLines.TINY_KICK)

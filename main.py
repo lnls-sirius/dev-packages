@@ -9,7 +9,8 @@ from pcaspy import Driver as _PCasDriver
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
 from .correctors import BaseCorrectors as _BaseCorrectors
-from .base_class import BaseClass as _BaseClass
+from .base_class import BaseClass as _BaseClass, \
+    compare_kicks as _compare_kicks
 
 INTERVAL = 1
 
@@ -269,11 +270,10 @@ class SOFB(_BaseClass):
                         self._csorb.ApplyDelta._fields[code])
         self._update_log(msg)
         _log.info(msg)
-        dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
-        if dkicks is None:
+        kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+        if kicks is None:
             return
-        kicks = self._ref_corr_kicks + dkicks
-        self.correctors.apply_kicks(kicks, code=code)
+        self.correctors.apply_kicks(kicks)
 
     def update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
@@ -338,7 +338,6 @@ class SOFB(_BaseClass):
             if not self._measuring_respmat:
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
-                self.correctors.apply_kicks(orig_kicks)
                 msg = 'Measurement aborted.'
                 self._update_log(msg)
                 _log.info(msg)
@@ -347,23 +346,29 @@ class SOFB(_BaseClass):
                 i+1, nr_corrs, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
+
             if i < self._csorb.NR_CH:
                 delta = self._meas_respmat_kick['ch']
             elif i < self._csorb.NR_CH + self._csorb.NR_CV:
                 delta = self._meas_respmat_kick['cv']
             elif i < self._csorb.NR_CORRS:
                 delta = self._meas_respmat_kick['rf']
-            kicks = orig_kicks.copy()
-            kicks[i] += delta/2
+
+            kicks = [None, ] * nr_corrs
+            kicks[i] = orig_kicks[i] + delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
             orbp = self.orbit.get_orbit(True)
-            kicks[i] += -delta
+
+            kicks[i] = orig_kicks[i] - delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
             orbn = self.orbit.get_orbit(True)
             mat.append((orbp-orbn)/delta)
-        self.correctors.apply_kicks(orig_kicks)
+
+            kicks[i] = orig_kicks[i]
+            self.correctors.apply_kicks(kicks)
+
         msg = 'Measurement Completed.'
         self._update_log(msg)
         _log.info(msg)
@@ -388,8 +393,8 @@ class SOFB(_BaseClass):
             kicks = self.correctors.get_strength()
             t3 = _time.time()
             _log.debug(strn.format('get strength:', 1000*(t3-t2)))
-            dkicks = self._process_kicks(kicks, dkicks)
-            if dkicks is None:
+            kicks = self._process_kicks(kicks, dkicks)
+            if kicks is None:
                 self._auto_corr = self._csorb.ClosedLoop.Off
                 msg = 'ERR: Opening the Loop'
                 self._update_log(msg)
@@ -398,7 +403,6 @@ class SOFB(_BaseClass):
                 continue
             t4 = _time.time()
             _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
-            kicks += dkicks
             self.correctors.apply_kicks(kicks)  # slowest part
             t5 = _time.time()
             _log.debug(strn.format('apply kicks:', 1000*(t5-t4)))
@@ -484,4 +488,9 @@ class SOFB(_BaseClass):
                                                         pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
-        return dkicks
+
+        newkicks = [None, ] * len(dkicks)
+        for i, dkick in enumerate(dkicks):
+            if not _compare_kicks(dkick, 0):
+                newkicks[i] = kicks[i] + dkick
+        return newkicks
