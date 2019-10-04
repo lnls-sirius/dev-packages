@@ -1,5 +1,6 @@
 """Power Supply Module."""
 
+import time as _time
 from copy import deepcopy as _dcopy
 from siriuspy.bsmp import SerialError as _SerialError
 
@@ -33,6 +34,7 @@ class PSupply:
         self._curves = dict()
         self._wfmref = None
         self._wfmref_sp = None
+        self._last_wfm_update = None
 
     @property
     def psbsmp(self):
@@ -92,9 +94,21 @@ class PSupply:
             self._groups[group_id] = var_ids
 
     @_psupply_update_connected
-    def update_wfmref(self):
+    def update_wfmref(self, interval=0.5):
         """Update wfmref."""
-        self._wfmref = self._psbsmp.wfmref_read()
+        # address = self._psbsmp.channel.address
+        now = _time.time()
+        # if address == 1:
+        #     print('update_wfmref: {}'.format(now))
+        if self._last_wfm_update is None or \
+           (now - self._last_wfm_update) > interval:
+            # t0 = _time.time()
+            self._wfmref = self._psbsmp.wfmref_read()
+            # t1 = _time.time()
+            # if address == 1:
+            #     print('wfmref_read took {:.1f} ms, @ time {:6f}'.format(
+            #         1000*(t1-t0), now - 1570129351))
+            self._last_wfm_update = now
 
     @_psupply_update_connected
     def update_variables_in_group(self, group_id):

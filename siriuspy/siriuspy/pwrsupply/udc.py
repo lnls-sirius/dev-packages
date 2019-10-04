@@ -51,6 +51,12 @@ class UDC:
         return UDC._prucparms[self._psmodel]
 
     @property
+    def CONST_BSMP(self):
+        """Return PSBSMP constants."""
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # first bsmp
+        return bsmp_dev.CONST_BSMP
+
+    @property
     def CONST_PSBSMP(self):
         """Return PSBSMP constants."""
         return self.prucparms.CONST_PSBSMP
@@ -59,14 +65,19 @@ class UDC:
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
         for bsmp in self._bsmp_devs.values():
-            bsmp.execute_function(
+            ack, data = bsmp.execute_function(
                 func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
+            if ack != self.CONST_BSMP.ACK_OK:
+                print('error here')
+                return ack, data
 
         # reset UDC proper.
         bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # fisrt bsmp
         bsmp_dev.execute_function(
             func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
             read_flag=False)
+
+        return ack, data
 
     def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
