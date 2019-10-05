@@ -7,7 +7,6 @@ from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
 from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
 from .exceptions import SerialErrMsgShort as _SerialErrMsgShort
 
-import time as _time
 
 class Message:
     """BSMP Message.
@@ -203,8 +202,6 @@ class Channel:
         # print('write query : ', [hex(ord(c)) for c in stream])
         response = self.pru.UART_write(stream, timeout=timeout)
         self._size_counter += len(stream)
-        # self.time1 = _time.time()
-        # print('write: {:.4f} ms'.format(1000*(time1-time0)))
         return response
 
     def request(self, message, timeout=100, read_flag=True):
