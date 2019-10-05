@@ -100,7 +100,7 @@ class ConstBSMP:
     F_RESET_COUNTERS = 18
     F_SCALE_WFMREF = 19
     F_SELECT_WFMREF = 20
-    F_SAVE_WFMREF = 21
+    F_GET_WFMREF_SIZE = 21
     F_RESET_WFMREF = 22
     F_CFG_SIGGEN = 23
     F_SET_SIGGEN = 24
@@ -141,13 +141,14 @@ class ConstBSMP:
     V_WFMREF_SYNC_MODE = 15
     V_WFMREF_GAIN = 16
     V_WFMREF_OFFSET = 17
-    V_WFMREF_START = 18
-    V_WFMREF_END = 19
-    V_WFMREF_IDX = 20
+    V_WFMREF0_START = 18
+    V_WFMREF0_END = 19
+    V_WFMREF0_IDX = 20
+    V_WFMREF1_START = 21
+    V_WFMREF1_END = 22
+    V_WFMREF1_IDX = 23
+
     # --- undefined variables
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
     V_UNDEF24 = 24
 
     # --- power supply parameters ---
@@ -772,8 +773,8 @@ _BSMP_Functions = (
      'o_type': (_Types.T_UINT8,)},
     {'eid': ConstBSMP.F_SELECT_WFMREF,
      'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': ConstBSMP.F_SAVE_WFMREF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_GET_WFMREF_SIZE,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
     {'eid': ConstBSMP.F_RESET_WFMREF,
      'i_type': (), 'o_type': (_Types.T_UINT8, )},
     {'eid': ConstBSMP.F_CFG_SIGGEN,
@@ -802,7 +803,35 @@ _BSMP_Functions = (
     {'eid': ConstBSMP.F_GET_PARAM,
      'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
      'o_type': (_Types.T_FLOAT,)},
-)
+    {'eid': ConstBSMP.F_SAVE_PARAM_EEPROM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_LOAD_PARAM_EEPROM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SAVE_PARAM_BANK,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_LOAD_PARAM_BANK,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SET_DSP_COEFFS,
+     # NOTE: fix last argument!
+     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_FLOAT,),
+     'o_type': (_Types.T_FLOAT,)},
+    {'eid': ConstBSMP.F_GET_DSP_COEFF,
+     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_UINT16,),
+     'o_type': (_Types.T_FLOAT,)},
+    {'eid': ConstBSMP.F_SAVE_DSP_COEFFS_EEPROM,
+     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_LOAD_DSP_COEFFS_EEPROM,
+     'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, ),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SAVE_DSP_MODULES_EEPROM,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_LOAD_DSP_MODULES_EEPROM,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_RESET_UDC,
+     'i_type': (), 'o_type': ()},)
 
 
 # --- DCDC ---
@@ -812,7 +841,6 @@ class EntitiesFBP(_Entities):
     """FBP-type power supply entities."""
 
     Variables = (
-        # --- common variables
         {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -834,10 +862,10 @@ class EntitiesFBP(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         # --- FBP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -891,12 +919,11 @@ class EntitiesFBP(_Entities):
 
     Curves = (
         {'eid': 0, 'waccess': True, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': True, 'count': 256,
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},)
 
     Functions = _BSMP_Functions
 
