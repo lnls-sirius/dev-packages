@@ -890,7 +890,7 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},)
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},)
 
 
 class EntitiesFAC_DCDC(EntitiesPS):
