@@ -11,6 +11,7 @@ from siriuspy.pwrsupply.udc import UDC
 from siriuspy.pwrsupply.pru import PRU
 # from siriuspy.pwrsupply.bsmp import FBP
 from siriuspy.pwrsupply.status import PSCStatus
+from siriuspy.pwrsupply.psupply import PSupply
 
 
 # BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI5'
@@ -87,7 +88,7 @@ def measure_duration_wfmref_read(psupply):
     psupply.channel.size_counter_reset()
     psupply.channel.pru.wr_duration_reset()
     time0 = time.time()
-    psupply.wfmref_read()
+    psupply.wfmref_mon_read()
     time1 = time.time()
     nrbytes = psupply.channel.size_counter
     duration_serial = r485_message_duration(nrbytes=nrbytes)
@@ -96,6 +97,7 @@ def measure_duration_wfmref_read(psupply):
     print('python duration: {:.2f} ms'.format(1000*duration_python))
     print('prulib duration: {:.2f} ms'.format(1000*duration_prulib))
     print('serial duration: {:.2f} ms'.format(1000*duration_serial))
+
 
 # --- info print ---
 
@@ -118,7 +120,8 @@ def process_response(response, msg=''):
 
 def print_status(ps_list):
     """Print status."""
-
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     st1, st2, st3, st4, st5, st6, = ['{:<15}:'] * 6
     va1, va2, va3, va4, va5, va6, = \
         [['state'], ['open_loop'], ['interface'],
@@ -158,6 +161,8 @@ def print_status(ps_list):
 
 def print_wfmref(ps_list):
     """Print wfmref data."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     st1, st2, st3, st4, st5, st6, st7 = ['{:<15}:'] * 7
     va1, va2, va3, va4, va5, va6, va7 = \
         [['wfmref_select'],
@@ -168,21 +173,21 @@ def print_wfmref(ps_list):
          ['wfmref_ptr_end'],
          ['wfmref_ptr_idx']]
     for ps in ps_list:
-        wfmref_ptr_values = ps.wfmref_pointer_values
+        wfmref_mon_ptr_values = ps.wfmref_mon_pointer_values
         st1 += ' {:6d}'
-        va1.append(ps.wfmref_select)
+        va1.append(ps.wfmref_mon_select)
         st2 += ' {:6d}'
-        va2.append(ps.wfmref_maxsize)
+        va2.append(ps.wfmref_mon_maxsize)
         st3 += ' {:6d}'
-        va3.append(ps.wfmref_size)
+        va3.append(ps.wfmref_mon_size)
         st4 += ' {:6d}'
-        va4.append(ps.wfmref_idx)
+        va4.append(ps.wfmref_mon_idx)
         st5 += ' {:6d}'
-        va5.append(wfmref_ptr_values[0])
+        va5.append(wfmref_mon_ptr_values[0])
         st6 += ' {:6d}'
-        va6.append(wfmref_ptr_values[1])
+        va6.append(wfmref_mon_ptr_values[1])
         st7 += ' {:6d}'
-        va7.append(wfmref_ptr_values[2])
+        va7.append(wfmref_mon_ptr_values[2])
     sts = [st1, st2, st3, st4, st5, st6, st7]
     vas = [va1, va2, va3, va4, va5, va6, va7]
     for st, va in zip(sts, vas):
@@ -191,6 +196,8 @@ def print_wfmref(ps_list):
 
 def print_info(ps_list):
     """Print all info."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     print('--- power supply status ---')
     print_status(ps_list)
     print_wfmref(ps_list)
@@ -198,6 +205,8 @@ def print_info(ps_list):
 
 def turn_on_opmode_slowref(ps_list):
     """."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     # turn ps on
     for psupply in ps_list:
         psupply.execute_function(0, timeout=100)
@@ -209,6 +218,8 @@ def turn_on_opmode_slowref(ps_list):
 
 def turn_on_opmode_rmpwfm(ps_list):
     """."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     # turn ps on
     for psupply in ps_list:
         psupply.execute_function(0, timeout=100)
@@ -217,20 +228,25 @@ def turn_on_opmode_rmpwfm(ps_list):
     for psupply in ps_list:
         psupply.execute_function(4, 6, timeout=100)
 
+
 # --- set wfmref ---
 
 
 def set_wfmref(ps_list, amplitude=0):
     """."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     curve = amplitude * np.sin([2*3.14159 * i/1023.0 for i in range(1024)])
     for i, psupply in enumerate(ps_list):
-        psupply.wfmref_write((i+1) * curve)
+        psupply.wfmref_mon_write((i+1) * curve)
 
 
 def plot_wfmref(ps_list):
     """Plot wfmref."""
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     for i, psupply in enumerate(ps_list):
-        curve = psupply.wfmref_read()
+        curve = psupply.wfmref_mon_read()
         plt.plot(curve, label='ps{} ({} points)'.format(i+1, len(curve)))
     plt.xlabel('Index')
     plt.ylabel('Current [A]')
@@ -240,7 +256,8 @@ def plot_wfmref(ps_list):
 
 def reset_powersupplies(udc, ps_list, opmode='SlowRef'):
     """."""
-
+    if not isinstance(ps_list, (list, tuple)):
+        ps_list = [ps_list, ]
     # select opmode
     ps = ps_list[0]
     if opmode == 'SlowRef':
@@ -269,13 +286,10 @@ def reset_powersupplies(udc, ps_list, opmode='SlowRef'):
     print()
 
 
-
-
-
 def test_reset(udc, ps_list):
     """."""
     curve = [0.0 for i in range(500)]
-    ps_list[0].wfmref_write(curve)
+    ps_list[0].wfmref_mon_write(curve)
     print_basic_info(ps_list)
     udc.reset()
     print_basic_info(ps_list)
@@ -288,14 +302,14 @@ def test_reset_2019_10_02():
 
 
 def wfmref_flip(ps):
-    id1 = ps.wfmref_select
-    c1 = ps.wfmref_read()
+    id1 = ps.wfmref_mon_select
+    c1 = ps.wfmref_mon_read()
     c_new = c1[::-1]
     # c_new = [i/1023 for i in range(1024)] # c_new[:500]
     # c_new = c1[:500]
-    ps.wfmref_write(c_new)
-    id2 = ps.wfmref_select
-    c2 = ps.wfmref_read()
+    ps.wfmref_mon_write(c_new)
+    id2 = ps.wfmref_mon_select
+    c2 = ps.wfmref_mon_read()
     plt.plot(c1, label='prev (id:{})'.format(id1))
     plt.plot(c2, label='next (id:{})'.format(id2))
     plt.legend()

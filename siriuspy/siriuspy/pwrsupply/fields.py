@@ -48,7 +48,7 @@ class WfmRBCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.wfm_read(self.device_id)
+        data = self.pru_controller.wfm_rb_read(self.device_id)
         return data
 
 
@@ -62,7 +62,7 @@ class WfmRefMonCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.wfmref_read(self.device_id)
+        data = self.pru_controller.wfmref_mon_read(self.device_id)
         return data
 
 
@@ -76,7 +76,7 @@ class WfmMonCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.wfmmon_read(self.device_id)
+        data = self.pru_controller.wfm_mon_read(self.device_id)
         return data
 
 
@@ -90,7 +90,7 @@ class WfmIndexCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.wfmref_index(self.device_id)
+        data = self.pru_controller.wfmref_mon_index(self.device_id)
         return data
 
 
