@@ -34,15 +34,37 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self):
+    def query_list_of_group_of_variables(self, timeout):
         """Consult groups list. Command 0x04."""
-        # TODO: needs implementation!
-        raise NotImplementedError()
+        # command and expected response
+        cmd, ack = _consts.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
+            _consts.CMD_LIST_OF_GROUP_OF_VARIABLES
+
+        # build payload
+        payload = []
+
+        # send request package
+        msg = _Message.message(cmd, payload=payload)
+        res = self.channel.request(msg, timeout=timeout)
+
+        # expected response
+        if res.cmd == ack:
+            groupdata = list()
+            for groupchar in res.payload:
+                byte = ord(groupchar)
+                waccess = (byte & 0b10000000) > 0
+                nrvars = (byte & 0b01111111)
+                groupdata.append((waccess, nrvars))
+            return _consts.ACK_OK, groupdata
+
+        # anomalous response
+        return BSMP._anomalous_response(cmd, res.cmd)
 
     def query_group_of_variables(self, group_id, timeout):
         """Return id of the variables in the given group."""
         # command and expected response
-        cmd, ack = _consts.CMD_QUERY_GROUP_OF_VARIABLES, _consts.CMD_GROUP_OF_VARIABLES
+        cmd, ack = _consts.CMD_QUERY_GROUP_OF_VARIABLES, \
+            _consts.CMD_GROUP_OF_VARIABLES
 
         # build payload
         payload = [chr(group_id)]
