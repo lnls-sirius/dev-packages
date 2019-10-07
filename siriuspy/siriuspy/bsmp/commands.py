@@ -222,7 +222,7 @@ class BSMP:
         return BSMP._anomalous_response(cmd, res.cmd, payload=res.payload)
 
     # 0x4_
-    def request_curve_block(self, curve_id, block, timeout):
+    def request_curve_block(self, curve_id, block, timeout, print_error=True):
         """Read curve block."""
         # command and expected response
         cmd, ack = _consts.CMD_REQUEST_CURVE_BLOCK, _consts.CMD_CURVE_BLOCK
@@ -260,7 +260,7 @@ class BSMP:
             return _consts.ACK_OK, data_float
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP._anomalous_response(cmd, res.cmd, print_error=print_error)
 
     def curve_block(self, curve_id, block, value, timeout):
         """Write to curve block."""
@@ -305,7 +305,7 @@ class BSMP:
 
     # 0x5_
     def execute_function(self, func_id, input_val=None, timeout=100,
-                         read_flag=True):
+                         read_flag=True, print_error=True):
         """Execute a function.
 
         parameter:
@@ -340,21 +340,27 @@ class BSMP:
                 return res.cmd, res.payload[0]
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd, func_id=func_id)
+        return BSMP._anomalous_response(
+            cmd, res.cmd, func_id=func_id, print_error=print_error)
 
     @staticmethod
     def _anomalous_response(cmd, ack, **kwargs):
         # response with error
         if _consts.ACK_OK < ack <= _consts.ACK_RESOURCE_BUSY:
+            if 'print_error' not in kwargs or kwargs['print_error']:
+                fmts = 'BSMP response (error) for command 0x{:02X}: 0x{:02X}!'
+                print(fmts.format(cmd, ack))
+                for key, value in kwargs.items():
+                    print('{}: {}'.format(key, value))
             return ack, None
 
-        # unexpected response
-        fmts = 'Unexpected BSMP response for command 0x{:02X}: 0x{:02X}!'
-        print(fmts.format(cmd, ack))
-        for key, value in kwargs.items():
-            print('{}: {}'.format(key, value))
+        # unexpected response, raise Exception
+        if 'print_error' not in kwargs or kwargs['print_error']:
+            fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
+            print(fmts.format(cmd, ack))
+            for key, value in kwargs.items():
+                print('{}: {}'.format(key, value))
         raise _SerialAnomResp
-        # return None, None
 
 
 class BSMPSim:
