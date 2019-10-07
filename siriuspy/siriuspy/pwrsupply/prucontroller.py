@@ -606,7 +606,7 @@ class PRUController:
     def _init_prune_mirror_group(self, psmodel_name, device_ids, groups):
 
         if psmodel_name != 'FBP':
-            return
+            return groups
 
         # gather mirror variables that will be used
         nr_devs = len(device_ids)
