@@ -326,7 +326,7 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
 
 
 class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
-    """FAC_2P4S_DCDC power supply model."""
+    """FAC_2P4S_DCDC power supply model (BO Dipoles)."""
 
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
@@ -371,6 +371,30 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'PWMDutyCycle8-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_8,
         'Arm1Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_1,
         'Arm2Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_2,
+        'IIB1InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_1,
+        'IIB2InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_2,
+        'IIB3InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_3,
+        'IIB3HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_3,
+        'IIB4InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_4,
+        'IIB4HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_4,
+        'IIB5InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_5,
+        'IIB5HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_5,
+        'IIB6InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_6,
+        'IIB6HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_6,
+        'IIB7InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_7,
+        'IIB7HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_7,
+        'IIB8InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_8,
+        'IIB8HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_8,
+        'IntlkIIB1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_1,
+        'IntlkIIB2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_2,
+        'IntlkIIB3-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_3,
+        'IntlkIIB4-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_4,
+        'IntlkIIB5-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_5,
+        'IntlkIIB6-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_6,
+        'IntlkIIB7-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_7,
+        'IntlkIIB8-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_8,
     }
 
     @property
