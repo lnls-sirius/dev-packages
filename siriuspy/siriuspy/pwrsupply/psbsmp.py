@@ -30,6 +30,7 @@ class PSBSMP(_BSMP):
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
     _sleep_disable_bufsample = 0.5  # [s]
+    _sleep_enable_bufsample = 0.5  # [s]
 
     _wfmref_mon_pointers_var_ids = {
         0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
@@ -81,17 +82,21 @@ class PSBSMP(_BSMP):
 
         # create variables groups
         for var_ids in varids_groups:
-            self.create_group_of_variables(
+            ack, data = self.create_group_of_variables(
                 var_ids, timeout=PSBSMP._timeout_create_vars_groups)
+            if ack != PSBSMP.CONST_BSMP.ACK_OK:
+                return ack, data
 
         if not add_wfmref_group:
             return
 
         # add group fro wfmref vars
-        self.create_group_of_variables(
+        ack, data = self.create_group_of_variables(
             PSBSMP._wfmref_vars_ids,
             timeout=PSBSMP._timeout_create_vars_groups)
         self._wfmref_vars_group_id = 1 + len(varids_groups)
+
+        return ack, data
 
 
     # --- bsmp overriden methods ---
@@ -115,7 +120,11 @@ class PSBSMP(_BSMP):
         if func_id == _bsmp.ConstPSBSMP.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
         elif func_id == _bsmp.ConstPSBSMP.F_DISABLE_BUF_SAMPLES:
+            # print('sleeping bufsample disable!')
             _time.sleep(PSBSMP._sleep_disable_bufsample)
+        elif func_id == _bsmp.ConstPSBSMP.F_ENABLE_BUF_SAMPLES:
+            # print('sleeping bufsample enable!')
+            _time.sleep(PSBSMP._sleep_enable_bufsample)
         elif func_id in (_bsmp.ConstPSBSMP.F_TURN_ON,
                          _bsmp.ConstPSBSMP.F_TURN_OFF,
                          _bsmp.ConstPSBSMP.F_OPEN_LOOP,
@@ -341,15 +350,22 @@ class PSBSMP(_BSMP):
         # print('reading - curve id: ', curve_id)
         # print('reading - indices: ', indices)
         for block, idx in enumerate(indices):
+            # print('psbsmp.curve_read-0 ', curve_id, block)
             ack, data = self.request_curve_block(
                 curve_id=curve_id,
                 block=block,
-                timeout=PSBSMP._timeout_request_curve_block)
+                timeout=PSBSMP._timeout_request_curve_block,
+                print_error=False)
             # print(sum(data))
             # print((hex(ack), sum(data)))
+            # print('psbsmp.curve_read-1')
             if ack != self.CONST_BSMP.ACK_OK:
-                print(('BSMP response not OK in '
-                       '_curve_bsmp_read: ack = 0x{:02X}!').format(ack))
+                # print('psbsmp.curve_read-2')
+                if curve_id == PSBSMP.ID_CURVE_BUFSAMPLE and \
+                   ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
+                    # This is the expected behaviour when DSP is writting to buffer sample
+                    return None
+                # anomalous response!
                 self._anomalous_response(
                     self.CONST_BSMP.CMD_REQUEST_CURVE_BLOCK, ack,
                     curve_len=len(curve),
