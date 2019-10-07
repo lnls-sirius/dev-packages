@@ -207,11 +207,12 @@ class Channel:
     def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
 
-        # print('[request]')
-        # print('address : {}'.format(self.address))
-        # print('cmd     : 0x{:02X}'.format(message.cmd))
-        # print('payload : {}'.format([ord(c) for c in message.payload]))
-        # print()
+        # if message.cmd == 0x50:
+        #     print('[request]')
+        #     print('address : {}'.format(self.address))
+        #     print('cmd     : 0x{:02X}'.format(message.cmd))
+        #     print('payload : {}'.format([ord(c) for c in message.payload]))
+        #     print()
 
         # if message.cmd not in (0x32, 0x30):
         #     while True:

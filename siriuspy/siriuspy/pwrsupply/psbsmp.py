@@ -30,7 +30,6 @@ class PSBSMP(_BSMP):
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
     _sleep_disable_bufsample = 0.5  # [s]
-    _sleep_enable_bufsample = 0.5  # [s]
 
     _wfmref_mon_pointers_var_ids = {
         0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
@@ -98,12 +97,12 @@ class PSBSMP(_BSMP):
 
         return ack, data
 
-
     # --- bsmp overriden methods ---
 
     def execute_function(
             self, func_id, input_val=None,
-            timeout=_timeout_execute_function, read_flag=True):
+            timeout=_timeout_execute_function,
+            read_flag=True, print_error=True):
         """."""
         # execute function
         # print('--- execute_function ---')
@@ -120,11 +119,10 @@ class PSBSMP(_BSMP):
         if func_id == _bsmp.ConstPSBSMP.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
         elif func_id == _bsmp.ConstPSBSMP.F_DISABLE_BUF_SAMPLES:
-            # print('sleeping bufsample disable!')
-            _time.sleep(PSBSMP._sleep_disable_bufsample)
-        elif func_id == _bsmp.ConstPSBSMP.F_ENABLE_BUF_SAMPLES:
-            # print('sleeping bufsample enable!')
-            _time.sleep(PSBSMP._sleep_enable_bufsample)
+            # NOTE: sleep is implemented in UDC class,
+            # for optimization purpose!
+            # _time.sleep(PSBSMP._sleep_disable_bufsample)
+            pass
         elif func_id in (_bsmp.ConstPSBSMP.F_TURN_ON,
                          _bsmp.ConstPSBSMP.F_TURN_OFF,
                          _bsmp.ConstPSBSMP.F_OPEN_LOOP,
@@ -156,7 +154,6 @@ class PSBSMP(_BSMP):
             group_id=group_id, timeout=timeout)
 
         return response
-
 
     # --- wfmref methods ---
 
@@ -254,6 +251,7 @@ class PSBSMP(_BSMP):
 
     def wfmref_mon_bufsample_disable(self):
         """Disable buffer samples."""
+        # print('disabling bufsample.')
         ack, data = self.execute_function(
             func_id=_bsmp.ConstPSBSMP.F_DISABLE_BUF_SAMPLES,
             timeout=PSBSMP._timeout_execute_function)
@@ -363,6 +361,7 @@ class PSBSMP(_BSMP):
                 # print('psbsmp.curve_read-2')
                 if curve_id == PSBSMP.ID_CURVE_BUFSAMPLE and \
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
+                    # print('sit1, add:{}, curve_id:{}, block:{}'.format(add, curve_id, block))
                     # This is the expected behaviour when DSP is writting to buffer sample
                     return None
                 # anomalous response!
@@ -372,8 +371,12 @@ class PSBSMP(_BSMP):
                     curve_id=curve_id,
                     block=block,
                     index=idx)
+                # print('sit2, add:{}, curve_id:{}, block:{}'.format(
+                    # add, curve_id, block))
                 return None
             else:
+                # print('sit3, add:{}, curve_id:{}, block:{}'.format(
+                #     add, curve_id, block))
                 idx_w = slice(idx[0], idx[1])
                 idx_r = slice(0, idx[1] - idx[0])
                 curve[idx_w] = data[idx_r]

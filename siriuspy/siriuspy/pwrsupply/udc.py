@@ -1,5 +1,6 @@
 """UDC class."""
 
+import time as _time
 from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from .psmodel import PSModelFactory as _PSModelFactory
 from . import prucparms as _prucparms
@@ -80,11 +81,22 @@ class UDC:
 
     def bufsample_disable(self):
         """Disable DSP from writting to bufsample curve."""
-        return self._first_dev.wfmref_mon_bufsample_disable()
+        for bsmp in self._bsmp_devs.values():
+            ack, data = bsmp.wfmref_mon_bufsample_disable()
+            if ack != self.CONST_BSMP.ACK_OK:
+                return ack, data
+        # a single sleep for all devices
+        sleep_time = self._first_dev._sleep_disable_bufsample = 0.5  # [s]
+        _time.sleep(sleep_time)
+        return ack, data
 
     def bufsample_enable(self):
         """Enable DSP from writting to bufsample curve."""
-        return self._first_dev.wfmref_mon_bufsample_enable()
+        for bsmp in self._bsmp_devs.values():
+            ack, data = bsmp.wfmref_mon_bufsample_enable()
+            if ack != self.CONST_BSMP.ACK_OK:
+                return ack, data
+        return ack, data
 
     def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""

@@ -77,6 +77,7 @@ class WfmMonCurve:
     def read(self):
         """Read curve."""
         data = self.pru_controller.wfm_mon_read(self.device_id)
+        # print(self.device_id, data)
         return data
 
 

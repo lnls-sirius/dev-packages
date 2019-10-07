@@ -1117,7 +1117,7 @@ class PRUController:
         # raise ValueError('!!! Debug stop !!!')
 
         # enable bufsample
-        self._udc.bufsample_enable()
+        # self._udc.bufsample_enable()
 
         # raise ValueError('!!! Debug stop !!!')
 

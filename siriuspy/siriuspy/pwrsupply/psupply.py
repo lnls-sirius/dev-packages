@@ -157,13 +157,11 @@ class PSupply:
             # update wfm_mon
             wfm_mon = self._psbsmp.wfm_mon_read()
             if wfm_mon is not None:
-                # NOTE: a successful read means bufsample is not 
+                self._wfm_mon = wfm_mon
+                # NOTE: a successful read means bufsample is not
                 # currently being filled by DSP. Therefore an issue
                 # of a bufsample enable command is in order!
                 self._psbsmp.wfmref_mon_bufsample_enable()
-                # print('enable bufsample executed!')
-                self._wfm_mon = wfm_mon
-
             # update timestamp
             self._timestamp_update_wfm = now
         return True
