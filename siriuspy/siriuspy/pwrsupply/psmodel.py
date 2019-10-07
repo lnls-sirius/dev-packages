@@ -694,6 +694,32 @@ class PSModelFAC_2S_ACDC(_PSModel):
 class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     """FAC_2P4S_ACDC model."""
 
+    _variables = {
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-RB': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_SETPOINT,
+        'CapacitorBankVoltageRef-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_PS_REFERENCE,
+        'CapacitorBankVoltage-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_V_CAPACITOR_BANK,
+        'RectifierVoltage-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK,
+        'InductorsTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_DUTY_CYCLE,
+        'IIBISInductorTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTOR_IS_IIB,
+        'IIBISHeatSinkTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK_IS_IIB,
+        'IIBCmdInductorTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTOR_CMD_IIB,
+        'IIBCmdHeatSinkTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK_CMD_IIB,
+        'IntlkIIBIS-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_IIB_INTERLOCKS_IS,
+        'IntlkIIBCmd-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_IIB_INTERLOCKS_CMD,
+    }
+
     @property
     def name(self):
         """Model name."""

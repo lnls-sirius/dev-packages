@@ -565,8 +565,29 @@ class ConstFAC_2S_ACDC(ConstPSBSMP):
     V_IIB_INTERLOCKS_CMD = 43
 
 
-class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
+class ConstFAC_2P4S_ACDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
+
+    # --- FAC_2P4S_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_V_CAPACITOR_BANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
+    V_I_INPUT_IS_IIB = 33
+    V_V_INPUT_IS_IIB = 34
+    V_TEMP_INDUCTOR_IS_IIB = 35
+    V_TEMP_HEATSINK_IS_IIB = 36
+    V_V_OUTPUT_CMD_IIB = 37
+    V_V_CAPBANK_CMD_IIB = 38
+    V_TEMP_INDUCTOR_CMD_IIB = 39
+    V_TEMP_HEATSINK_CMD_IIB = 40
+    V_I_LEAKAGE_CMD_IIB = 41
+    V_IIB_INTERLOCKS_IS = 42
+    V_IIB_INTERLOCKS_CMD = 43
 
 
 # Mirror power supply variables (FBP)
@@ -981,7 +1002,7 @@ class EntitiesFAC_DCDC(EntitiesPS):
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 class EntitiesFAC_2P4S_DCDC(EntitiesPS):
@@ -1085,6 +1106,7 @@ class EntitiesFAC_2P4S_DCDC(EntitiesPS):
         {'eid': 118, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 119, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 120, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+
 
 class EntitiesFAC_2S_DCDC(EntitiesPS):
     """FAC_2S-type power supply entities."""
@@ -1293,5 +1315,29 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
     _ps_curves = ()
 
 
-class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
+class EntitiesFAC_2P4S_ACDC(EntitiesPS):
     """FAC_2P4S_ACDC-type power supply entities."""
+
+    _ps_variables = EntitiesPS._ps_variables + (
+        # --- FAC_2P4S_ACDC-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
+
+    _ps_curves = ()
