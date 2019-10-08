@@ -14,7 +14,7 @@ from siriuspy.bsmp import Types as _Types
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V0.36w2019-09-30V0.36w2019-09-30'
+__version__ = 'V0.36w2019-10-07V0.36w2019-10-07'
 
 # --- DCDC ---
 
@@ -303,6 +303,70 @@ class ConstFAC_2P4S_DCDC(ConstPSBSMP):
     V_DUTY_CYCLE_6 = 54
     V_DUTY_CYCLE_7 = 55
     V_DUTY_CYCLE_8 = 56
+    V_I_INPUT_IIB_1 = 57
+    V_I_OUTPUT_IIB_1 = 58
+    V_V_INPUT_IIB_1 = 59
+    V_TEMP_INDUCTOR_IIB_1 = 60
+    V_TEMP_HEATSINK_IIB_1 = 61
+    V_DRIVER_ERROR_1_IIB_1 = 62
+    V_DRIVER_ERROR_2_IIB_1 = 63
+    V_I_INPUT_IIB_2 = 64
+    V_I_OUTPUT_IIB_2 = 65
+    V_V_INPUT_IIB_2 = 66
+    V_TEMP_INDUCTOR_IIB_2 = 67
+    V_TEMP_HEATSINK_IIB_2 = 68
+    V_DRIVER_ERROR_1_IIB_2 = 69
+    V_DRIVER_ERROR_2_IIB_2 = 70
+    V_I_INPUT_IIB_3 = 71
+    V_I_OUTPUT_IIB_3 = 72
+    V_V_INPUT_IIB_3 = 73
+    V_TEMP_INDUCTOR_IIB_3 = 74
+    V_TEMP_HEATSINK_IIB_3 = 75
+    V_DRIVER_ERROR_1_IIB_3 = 76
+    V_DRIVER_ERROR_2_IIB_3 = 77
+    V_I_INPUT_IIB_4 = 78
+    V_I_OUTPUT_IIB_4 = 79
+    V_V_INPUT_IIB_4 = 80
+    V_TEMP_INDUCTOR_IIB_4 = 81
+    V_TEMP_HEATSINK_IIB_4 = 82
+    V_DRIVER_ERROR_1_IIB_4 = 83
+    V_DRIVER_ERROR_2_IIB_4 = 84
+    V_I_INPUT_IIB_5 = 85
+    V_I_OUTPUT_IIB_5 = 86
+    V_V_INPUT_IIB_5 = 87
+    V_TEMP_INDUCTOR_IIB_5 = 88
+    V_TEMP_HEATSINK_IIB_5 = 89
+    V_DRIVER_ERROR_1_IIB_5 = 90
+    V_DRIVER_ERROR_2_IIB_5 = 91
+    V_I_INPUT_IIB_6 = 92
+    V_I_OUTPUT_IIB_6 = 93
+    V_V_INPUT_IIB_6 = 94
+    V_TEMP_INDUCTOR_IIB_6 = 95
+    V_TEMP_HEATSINK_IIB_6 = 96
+    V_DRIVER_ERROR_1_IIB_6 = 97
+    V_DRIVER_ERROR_2_IIB_6 = 98
+    V_I_INPUT_IIB_7 = 99
+    V_I_OUTPUT_IIB_7 = 100
+    V_V_INPUT_IIB_7 = 101
+    V_TEMP_INDUCTOR_IIB_7 = 102
+    V_TEMP_HEATSINK_IIB_7 = 103
+    V_DRIVER_ERROR_1_IIB_7 = 104
+    V_DRIVER_ERROR_2_IIB_7 = 105
+    V_I_INPUT_IIB_8 = 106
+    V_I_OUTPUT_IIB_8 = 107
+    V_V_INPUT_IIB_8 = 108
+    V_TEMP_INDUCTOR_IIB_8 = 109
+    V_TEMP_HEATSINK_IIB_8 = 110
+    V_DRIVER_ERROR_1_IIB_8 = 111
+    V_DRIVER_ERROR_2_IIB_8 = 112
+    V_IIB_INTERLOCKS_1 = 113
+    V_IIB_INTERLOCKS_2 = 114
+    V_IIB_INTERLOCKS_3 = 115
+    V_IIB_INTERLOCKS_4 = 116
+    V_IIB_INTERLOCKS_5 = 117
+    V_IIB_INTERLOCKS_6 = 118
+    V_IIB_INTERLOCKS_7 = 119
+    V_IIB_INTERLOCKS_8 = 120
 
 
 class ConstFAC_2S_DCDC(ConstPSBSMP):
@@ -501,8 +565,29 @@ class ConstFAC_2S_ACDC(ConstPSBSMP):
     V_IIB_INTERLOCKS_CMD = 43
 
 
-class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
+class ConstFAC_2P4S_ACDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
+
+    # --- FAC_2P4S_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_V_CAPACITOR_BANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
+    V_I_INPUT_IS_IIB = 33
+    V_V_INPUT_IS_IIB = 34
+    V_TEMP_INDUCTOR_IS_IIB = 35
+    V_TEMP_HEATSINK_IS_IIB = 36
+    V_V_OUTPUT_CMD_IIB = 37
+    V_V_CAPBANK_CMD_IIB = 38
+    V_TEMP_INDUCTOR_CMD_IIB = 39
+    V_TEMP_HEATSINK_CMD_IIB = 40
+    V_I_LEAKAGE_CMD_IIB = 41
+    V_IIB_INTERLOCKS_IS = 42
+    V_IIB_INTERLOCKS_CMD = 43
 
 
 # Mirror power supply variables (FBP)
@@ -890,7 +975,7 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 1, 'waccess': True, 'count': 256,
          'nblocks': 4, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},)
+         'nblocks': 4, 'var_type': _Types.T_FLOAT},)
 
 
 class EntitiesFAC_DCDC(EntitiesPS):
@@ -917,11 +1002,11 @@ class EntitiesFAC_DCDC(EntitiesPS):
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 class EntitiesFAC_2P4S_DCDC(EntitiesPS):
-    """FAC_2P4S-type power supply entities."""
+    """FAC_2P4S-type power supply entities (BO Dipoles)."""
 
     _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_2P4S-specific variables
@@ -956,7 +1041,71 @@ class EntitiesFAC_2P4S_DCDC(EntitiesPS):
         {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 58, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 59, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 60, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 61, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 62, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 64, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 65, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 66, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 67, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 68, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 69, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 70, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 71, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 72, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 73, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 74, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 75, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 76, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 77, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 78, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 79, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 80, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 81, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 82, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 83, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 84, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 85, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 86, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 87, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 88, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 89, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 90, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 91, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 92, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 93, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 94, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 95, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 96, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 97, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 98, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 99, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 100, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 101, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 102, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 103, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 104, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 106, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 107, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 108, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 109, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 110, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 111, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 112, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 113, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 114, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 115, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 116, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 117, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 118, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 119, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 120, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 
 class EntitiesFAC_2S_DCDC(EntitiesPS):
@@ -1166,5 +1315,29 @@ class EntitiesFAC_2S_ACDC(EntitiesPS):
     _ps_curves = ()
 
 
-class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
+class EntitiesFAC_2P4S_ACDC(EntitiesPS):
     """FAC_2P4S_ACDC-type power supply entities."""
+
+    _ps_variables = EntitiesPS._ps_variables + (
+        # --- FAC_2P4S_ACDC-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
+
+    _ps_curves = ()

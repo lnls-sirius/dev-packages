@@ -164,6 +164,7 @@ class Channel:
         """Set channel."""
         self._pru = pru  # PRU object to communicate with bsmp device
         self._address = address  # address of recipient device.
+        self._size_counter = 0  # stream size counter [bytes]
 
     @property
     def pru(self):
@@ -175,6 +176,15 @@ class Channel:
         """Return attached bsmp device id."""
         return self._address
 
+    @property
+    def size_counter(self):
+        """Return stream size of last request."""
+        return self._size_counter
+
+    def size_counter_reset(self):
+        """Reset stream size counter."""
+        self._size_counter = 0
+
     def read(self):
         """Read from serial."""
         resp = self.pru.UART_read()
@@ -183,6 +193,7 @@ class Channel:
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
+        self._size_counter += len(package.stream)
         return package.message
 
     def write(self, message, timeout=100):
@@ -190,16 +201,31 @@ class Channel:
         stream = Package.package(self._address, message).stream
         # print('write query : ', [hex(ord(c)) for c in stream])
         response = self.pru.UART_write(stream, timeout=timeout)
+        self._size_counter += len(stream)
         return response
 
     def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
+
+        # if message.cmd == 0x50:
+        # print('[request]')
+        # print('address : {}'.format(self.address))
+        # print('cmd     : 0x{:02X}'.format(message.cmd))
+        # print('payload : {}'.format([ord(c) for c in message.payload]))
+        # print()
+
+        # if message.cmd not in (0x32, 0x30):
+        #     while True:
+        #         pass
+
         # This lock is important in order to avoid threads in the same process
         # space to read each other's responses.
         with Channel._lock:
             self.write(message, timeout)
             if read_flag:
                 response = self.read()
+                # print(response.cmd)
+                # print(response.payload)
             else:
                 # NOTE: for functions with no return (F_RESET_UDC, for example)
                 # artificially return 0xE0 (OK)

@@ -72,7 +72,6 @@ from .psupply import PSupply as _PSupply
 #     patricia will work on this.
 
 
-
 class PRUController:
     """Beaglebone controller.
 
@@ -105,6 +104,7 @@ class PRUController:
 
     _delay_func_sync_pulse = 100  # [us]
     _delay_func_set_slowref_fbp = 100  # [us]
+    _update_wfm_period = 2.0  # [s]
 
     # --- public interface ---
 
@@ -115,11 +115,13 @@ class PRUController:
                  device_ids,
                  processing=True,
                  scanning=True,
-                 reset=True,
                  freqs=None):
         """Init."""
         # create lock
         self._lock = _Lock()
+
+        # pru comm. object
+        self._pru = pru
 
         # store psmodel
         self._psmodel = psmodel
@@ -128,35 +130,26 @@ class PRUController:
         self._device_ids = sorted(device_ids)
 
         # initialize UDC
-        self._udc = None
-        self._parms = None
-        self._psupplies = dict()
-        self._init_udc(pru, self._psmodel.name, self._device_ids)
+        self._udc, self._parms, self._psupplies = \
+            self._init_udc(pru, self._psmodel.name, self._device_ids, freqs)
 
-        # bypass psmodel default frequencies
-        if freqs is not None:
-            # TODO: this alters const params. check!
-            self._parms.FREQ_SCAN = freqs[0]
-            self._parms.FREQ_RAMP = freqs[1]
+        # prune variables of mirror groups (sync_on mode)
+        self._parms.groups = \
+            self._init_prune_mirror_group(
+                self._psmodel.name, self._device_ids, self._parms.groups)
 
         # set PRU delays
-        self._pru_delays = dict()
-        self._pru_delays[self._parms.PRU.SYNC_MODE.MIGINT] = None
-        self._pru_delays[self._parms.PRU.SYNC_MODE.MIGEND] = \
-            PRUController._delay_func_set_slowref_fbp
-        self._pru_delays[self._parms.PRU.SYNC_MODE.RMPINT] = None
-        self._pru_delays[self._parms.PRU.SYNC_MODE.RMPEND] = \
-            PRUController._delay_func_set_slowref_fbp
-        self._pru_delays[self._parms.PRU.SYNC_MODE.BRDCST] = \
-            PRUController._delay_func_sync_pulse
+        self._pru_sync_delays = self._init_pru_sync_delays(self._parms)
 
-        # create PRU (sync mode off).
-        self._init_pru(pru)
+        # index of dev_id in self._device_ids for wfmref update
+        self._wfm_update_dev_idx = 0  # cyclical updates!
+        # self._wfm_update_dev_idx = None  # np updates!
 
-        # reset power supply controllers
-        # NOTE: this should be invoked in the case of IOC setting state of HW
-        if reset is True:
-            self._bsmp_reset_ps_controllers()  # (contains first BSMP comm)
+        # initializes PRU parameters (in sync mode off).
+        self._scan_interval, self._curves = self._init_pru()
+
+        # reset power supply controllers (contains first BSMP comm)
+        self._bsmp_reset_udc()
 
         # update state of PRUController from ps controller
         self._bsmp_init_update()
@@ -338,30 +331,60 @@ class PRUController:
 
         return values
 
-    def wfm_update(self, device_ids):
+    def wfm_update(self, device_ids, interval=None):
         """Queue update wfm curve."""
         if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
             if isinstance(device_ids, int):
                 device_ids = (device_ids, )
-            operation = (self._bsmp_wfm_update, (device_ids, ))
+            operation = (self._bsmp_update_wfm, (device_ids, interval, ))
             self._queue.append(operation)
             return True
         else:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
 
-    def wfm_read(self, device_id):
-        """Return wfm curve."""
+    def wfm_rb_read(self, device_id):
+        """Return wfm_rb curve."""
+        psupply = self._psupplies[device_id]
         with self._lock:
-            psupply = self._psupplies[device_id]
-            return _dcopy(psupply.wfmref_sp)
+            return _dcopy(psupply.wfm_rb)
 
-    def wfmref_read(self, device_id):
+    def wfmref_mon_read(self, device_id):
         """Return wfm curve."""
+        psupply = self._psupplies[device_id]
         with self._lock:
-            psupply = self._psupplies[device_id]
-            return _dcopy(psupply.wfmref)
+            curve = psupply.wfmref_mon
+            # if device_id == 1:
+            #     print('update wfmref_mon ', curve[100])
+            return _dcopy(curve)
+
+    def wfm_mon_read(self, device_id):
+        """Return Wfm-Mon curve."""
+        psupply = self._psupplies[device_id]
+        with self._lock:
+            return _dcopy(psupply.wfm_mon)
+
+    def wfmref_mon_index(self, device_id):
+        """Return current index into DSP selected curve."""
+        # TODO: this should be done within either psupply or psbsmp!
+        # psupply = self._psupplies[device_id]
+        # with self._lock:
+        #     index = psypply.wfmref_mon_index
+        # return index
+        psupply = self._psupplies[device_id]
+        dev_variables = self._variables_values[device_id]
+        with self._lock:
+            curve_id = \
+                dev_variables[self.params.CONST_PSBSMP.V_WFMREF_SELECTED]
+            if curve_id == 0:
+                beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_START]
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_END]
+            else:
+                beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_START]
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_END]
+        index = psupply.psbsmp.curve_index_calc(beg, end)
+        return index
 
     def wfm_write(self, device_ids, data):
         """Write wfm curves."""
@@ -463,7 +486,7 @@ class PRUController:
         # This is supposedly needed in cases where the last operation
         # in the queue was a function execution.
         # TODO: test this! but is it really necessary?
-        self._bsmp_update_variables(self.device_ids,
+        self._bsmp_update(self.device_ids,
                                     self._parms.SYNCOFF)
         self._scanning_false_wait_empty_queue()
 
@@ -473,7 +496,7 @@ class PRUController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            delay=self._pru_delays[sync_mode],
+            delay=self._pru_sync_delays[sync_mode],
             sync_address=self._device_ids[0])
 
         # update time interval according to new sync mode selected
@@ -534,7 +557,7 @@ class PRUController:
         # select devices and variable group, defining the read group
         # opertation to be performed
         device_ids, group_id = self._select_device_group_ids()
-        operation = (self._bsmp_update_variables,
+        operation = (self._bsmp_update,
                      (device_ids, group_id, ))
         if len(self._queue) == 0 or \
            operation != self._queue.last_operation:
@@ -565,6 +588,76 @@ class PRUController:
 
     # --- private methods: initializations ---
 
+    def _init_udc(self, pru, psmodel_name, device_ids, freqs):
+
+        # create UDC
+        udc = _UDC(pru, psmodel_name, device_ids)
+        parms = udc.prucparms
+
+        # create PSupply objects
+        psupplies = dict()
+        for dev_id in device_ids:
+            psupplies[dev_id] = _PSupply(psbsmp=udc[dev_id])
+
+        # bypass psmodel default frequencies
+        if freqs is not None:
+            parms.FREQ_SCAN = freqs[0]
+            parms.FREQ_RAMP = freqs[1]
+
+        # print info on scan frequency
+        fstr = ('id:{:2d}, FREQS  sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
+        for dev in device_ids:
+            freqs = (10, 2) if freqs is None else freqs
+            print(fstr.format(dev, *freqs))
+        print()
+
+        return udc, parms, psupplies
+
+    def _init_prune_mirror_group(self, psmodel_name, device_ids, groups):
+
+        if psmodel_name != 'FBP':
+            return groups
+
+        # gather mirror variables that will be used
+        nr_devs = len(device_ids)
+        var_ids = []
+        for var_id in list(groups[self._parms.MIRROR]):
+            dev_idx, _ = _mirror_map_fbp[var_id]
+            if dev_idx <= nr_devs:
+                var_ids.append(var_id)
+
+        # prune from mirror group variables not used
+        groups[self._parms.MIRROR] = tuple(var_ids)
+
+        return groups
+
+    def _init_pru_sync_delays(self, parms):
+        pru_sync_delays = dict()
+        pru_sync_delays[parms.PRU.SYNC_MODE.MIGINT] = None
+        pru_sync_delays[parms.PRU.SYNC_MODE.MIGEND] = \
+            PRUController._delay_func_set_slowref_fbp
+        pru_sync_delays[parms.PRU.SYNC_MODE.RMPINT] = None
+        pru_sync_delays[parms.PRU.SYNC_MODE.RMPEND] = \
+            PRUController._delay_func_set_slowref_fbp
+        pru_sync_delays[parms.PRU.SYNC_MODE.BRDCST] = \
+            PRUController._delay_func_sync_pulse
+
+        return pru_sync_delays
+
+    def _init_pru(self):
+
+        # update time interval attribute
+        scan_interval = self._get_scan_interval()
+
+        # initialize PRU curves
+        curves = [
+            list(_DEFAULT_WFMDATA),  # 1st power supply
+            list(_DEFAULT_WFMDATA),  # 2nd power supply
+            list(_DEFAULT_WFMDATA),  # 3rd power supply
+            list(_DEFAULT_WFMDATA)]  # 4th power supply
+
+        return scan_interval, curves
+
     def _scanning_false_wait_empty_queue(self):
         # wait for all queued operations to be processed
         self._queue.ignore_set()  # ignore eventual new operation requests
@@ -578,61 +671,11 @@ class PRUController:
         self.scanning = False
         self.processing = False
 
-    def _init_pru(self, pru):
-
-        # create PRU attribute
-        self._pru = pru
-
-        # update time interval attribute
-        self._scan_interval = self._get_scan_interval()
-
-        # initialize PRU curves
-        # TODO: read curves from PRU memory.
-        # CON is working in a PRU library that allows this.
-        self._curves = [list(_DEFAULT_WFMDATA),  # 1st power supply
-                        list(_DEFAULT_WFMDATA),  # 2nd power supply
-                        list(_DEFAULT_WFMDATA),  # 3rd power supply
-                        list(_DEFAULT_WFMDATA),  # 4th power supply
-                        ]
-
-    def _init_udc(self, pru, psmodel_name, device_ids):
-
-        # create UDC
-        self._udc = _UDC(pru, psmodel_name, device_ids)
-        self._parms = self._udc.prucparms
-
-        # create PSupply objects
-        self._init_psupplies(udc=self._udc)
-
-        # prune variables from mirror group
-        self._init_prune_mirror_group()
-
-    def _init_psupplies(self, udc):
-        for dev_id in self._udc.device_ids:
-            psupply = _PSupply(psbsmp=udc[dev_id])
-            self._psupplies[dev_id] = psupply
-
     def _init_devices(self):
 
         # TODO: should something be done here?
         for dev_id in self._device_ids:
             pass
-
-    def _init_prune_mirror_group(self):
-
-        if self._psmodel.name != 'FBP':
-            return
-
-        # gather mirror variables that will be used
-        nr_devs = len(self.device_ids)
-        var_ids = []
-        for var_id in list(self._parms.groups[self._parms.MIRROR]):
-            dev_idx, _ = _mirror_map_fbp[var_id]
-            if dev_idx <= nr_devs:
-                var_ids.append(var_id)
-
-        # prune from mirror group variables not used
-        self._parms.groups[self._parms.MIRROR] = tuple(var_ids)
 
     def _init_check_version(self):
         if not self.connected:
@@ -812,71 +855,50 @@ class PRUController:
 
     # --- private methods: BSMP UART communications ---
 
-    def _bsmp_reset_ps_controllers(self):
+    def _bsmp_reset_udc(self):
 
         # turn PRU sync off
         self.pru_sync_abort()
 
         # initialize variable groups (first BSMP comm.)
-        self._bsmp_init_groups()
+        self._bsmp_init_devices()
 
-        # init curves in ps controller
+        # initializes PRU curves
         # NOTE: somehow this is necessary. if curves are not set in
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
-
         self.pru_curve_write(self.device_ids[0], self._curves[0])
 
-    def _bsmp_wfm_sizes(self, device_ids):
-        time_init = _time()
-        sizes = dict()
-        try:
-            for dev_id in device_ids:
-                psbsmp = self._udc[dev_id]
-                sizes[dev_id] = psbsmp.wfmref_size
-            return sizes
-        except (_SerialError, IndexError):
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('CS', tstamp, dtime, device_ids, True)
-            self._last_operation = operation
-            self._serial_error(device_ids)
+    def _bsmp_init_devices(self):
 
-    def _bsmp_wfm_update(self, device_ids):
-        """Read curve from devices."""
-        time_init = _time()
-        with self._lock:
-            try:
-                for dev_id in device_ids:
-                    psupply = self._psupplies[dev_id]
-                    psupply.update_wfmref()
-            except (_SerialError, IndexError):
-                print('bsmp_wfm_update error!')
-                tstamp = _time()
-                dtime = tstamp - time_init
-                operation = ('CR', tstamp, dtime, device_ids, True)
-                self._last_operation = operation
-                self._serial_error(device_ids)
+        # create vars groups list from dict
+        groups = PRUController._dict2list_vargroups(self._parms.groups)
 
-    def _bsmp_wfm_write(self, device_ids, curve):
-        """Write curve to devices."""
-        time_init = _time()
-        try:
-            # write curves
-            for dev_id in device_ids:
-                # print(dev_id, curve[0])
-                psupply = self._psupplies[dev_id]
-                curve = psupply.psbsmp.wfmref_write(curve)
-                psupply.wfmref_sp = curve
-            # update curves
-            self._bsmp_wfm_update(device_ids)
-        except (_SerialError, IndexError):
-            print('bsmp_wfm_write error!')
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('CW', tstamp, dtime, device_ids, True)
-            self._last_operation = operation
-            self._serial_error(device_ids)
+        # 1. reset group of bsmp variables for all devices
+        for dev_id in self._device_ids:
+            psbsmp = self._udc[dev_id]
+            ack, _ = \
+                psbsmp.reset_groups_of_variables(groups[3:], add_wfmref_group=True)
+            if ack != self._udc.CONST_BSMP.ACK_OK:
+                raise ValueError('Could not reset group in device!')
+
+        # 2. disable DSP from writting to bufsample (uses first device)
+        self._udc.bufsample_disable()
+
+    def _bsmp_update(self, device_ids, group_id):
+        # update variables
+        # print('here')
+        self._bsmp_update_variables(device_ids, group_id)
+
+        # is attribute is not, does not update!
+        if self._wfm_update_dev_idx is None:
+            return  # does not update!
+
+        # update device wfm curves cyclically
+        self._wfm_update_dev_idx = \
+            (self._wfm_update_dev_idx + 1) % len(self._device_ids)
+        dev_id = self._device_ids[self._wfm_update_dev_idx]
+        self._bsmp_update_wfm([dev_id, ])
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).
@@ -897,25 +919,6 @@ class PRUController:
             supply) in order to update a subset of variables for all devices
             at 2 Hz.
         """
-
-        # NOTE: trial to move state to psupply objects
-        # print('HERE1')
-        # time_init = _time()
-        # with self._lock:
-        #     try:
-        #         for dev_id in device_ids:
-        #             psupply = self._psupplies[dev_id]
-        #             psupply.update_variables_in_group(group_id=group_id)
-        #             print('HERE2')
-        #     except (_SerialError, IndexError):
-        #         tstamp = _time()
-        #         dtime = tstamp - time_init
-        #         operation = ('V', tstamp, dtime, device_ids, group_id, True)
-        #         self._last_operation = operation
-        #         self._serial_error(device_ids)
-        #         return
-        # return
-
         ack, data = dict(), dict()
         # --- send requests to serial line
         time_init = _time()
@@ -924,11 +927,13 @@ class PRUController:
                 ack[dev_id], data[dev_id] = \
                     self._udc[dev_id].read_group_of_variables(
                         group_id=group_id)
+
             tstamp = _time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, False)
             self._last_operation = operation
         except (_SerialError, IndexError):
+            print('error!!!')
             tstamp = _time()
             dtime = tstamp - time_init
             operation = ('V', tstamp, dtime, device_ids, group_id, True)
@@ -939,15 +944,19 @@ class PRUController:
         # --- make copy of state for updating
         with self._lock:
             copy_var_vals = _dcopy(self._variables_values)
-            # copy_var_vals = self._variables_values
+            # update psupply connection state.
+            for dev_id in device_ids:
+                psupply = self._psupplies[dev_id]
+                if ack[dev_id] == _const_bsmp.ACK_OK:
+                    psupply._connected = True
+                else:
+                    psupply._connected = False
 
         # --- update variables, if ack is ok
         nr_devs = len(self.device_ids)
         var_ids = self._parms.groups[group_id]
         for dev_id in device_ids:
-            psupply = self._psupplies[dev_id]
             if ack[dev_id] == _const_bsmp.ACK_OK:
-                psupply._connected = True
                 values = data[dev_id]
                 for i, value in enumerate(values):
                     # ===
@@ -987,15 +996,53 @@ class PRUController:
                 #         += 0.00001*_random.uniform(-1.0, +1.0)
 
             elif ack[dev_id] == _const_bsmp.ACK_INVALID_ID:
-                psupply._connected = False
                 self._bsmp_init_groups()  # NOTE: necessary?!
-            else:
-                psupply._connected = False
 
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
 
-        # self._lock.release()
+    def _bsmp_update_wfm(self, device_ids, interval=None):
+        """Read curve from devices."""
+        time_init = _time()
+
+        if interval is None:
+            interval = self._update_wfm_period
+        # copy structure
+        with self._lock:
+            psupplies = _dcopy(self._psupplies)
+
+        try:
+            for dev_id in device_ids:
+                psupply = psupplies[dev_id]
+                psupply.update_wfm(interval=interval)
+        except (_SerialError, IndexError):
+            print('bsmp_wfm_update error!')
+            tstamp = _time()
+            dtime = tstamp - time_init
+            operation = ('CR', tstamp, dtime, device_ids, True)
+            self._last_operation = operation
+
+        # stores updated psupplies dict
+        self._psupplies = psupplies  # atomic operation
+
+    def _bsmp_wfm_write(self, device_ids, curve):
+        """Write curve to devices."""
+        time_init = _time()
+        try:
+            # write curves
+            for dev_id in device_ids:
+                psupply = self._psupplies[dev_id]
+                curve = psupply.psbsmp.wfmref_mon_write(curve)
+                with self._lock:
+                    psupply.wfm_rb = curve
+                    psupply.update_wfm(interval=0.0)
+        except (_SerialError, IndexError):
+            print('bsmp_wfm_write error!')
+            tstamp = _time()
+            dtime = tstamp - time_init
+            operation = ('CW', tstamp, dtime, device_ids, True)
+            self._last_operation = operation
+            self._serial_error(device_ids)
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line
@@ -1049,42 +1096,51 @@ class PRUController:
     def _bsmp_init_update(self):
 
         # initialize variables_values, a mirror state of BSMP devices
+        # print('disable init_variables!!!')
         self._bsmp_init_variable_values()
+
+        # raise ValueError('!!! Debug stop !!!')
 
         # initialize ps curves
         self._bsmp_init_wfm()
 
+        # raise ValueError
+
         # check if ps controller version is compatible with bsmp.py
         self._init_check_version()
+
+        # raise ValueError('!!! Debug stop !!!')
 
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
         # self._bsmp_init_parameters_values()
 
-    def _bsmp_init_groups(self):
-        # check if groups definition is ok
-        self._check_groups()
-
-        # create list of variable ids
-        var_ids_list = []
-        for group_id in sorted(self._parms.groups.keys()):
-            var_ids_list.append(self._parms.groups[group_id])
-
-        # reset groups of variables for all bsmp devices
-        for dev_id in self._device_ids:
-            psupply = self._psupplies[dev_id]
-            # reset var groups - first three groups are reserved default groups
-            psupply.psbsmp.reset_groups_of_variables(var_ids_list[3:])
-            # update psupply state
-            psupply.update_groups(var_ids_list)
-
     def _bsmp_init_wfm(self):
-        self._bsmp_wfm_update(self._device_ids)
+
         for psupply in self._psupplies.values():
-            psupply.update_wfmref()
-            psupply.wfmref_sp = psupply.wfmref
+
+            # update
+            psupply.update_wfm(interval=0.0)
+
+            # raise ValueError('!!! Debug stop !!!')
+
+            # registers RB using psupply object
+            psupply.wfm_rb = psupply.wfmref_mon
+
+            # raise ValueError('!!! Debug stop !!!')
+
+        # raise ValueError('!!! Debug stop !!!')
+
+        # enable bufsample
+        # self._udc.bufsample_enable()
+
+        # raise ValueError('!!! Debug stop !!!')
 
     def _bsmp_init_variable_values(self):
+
+        # init psupplies variables
+        for psupply in self._psupplies.values():
+            psupply.update_variables(interval=0.0)
 
         # create _variables_values
         gids = sorted(self._parms.groups.keys())
@@ -1096,7 +1152,23 @@ class PRUController:
 
         # read all variable from BSMP devices
         self._bsmp_update_variables(device_ids=self._device_ids,
-                                    group_id=self._parms.ALLRELEVANT)
+                          group_id=self._parms.ALLRELEVANT)
+
+    @staticmethod
+    def _dict2list_vargroups(groups_dict):
+        group_ids = sorted(groups_dict.keys())
+        if len(group_ids) < 3:  # needs to have all default groups
+            print('Incorrect variables group definition: '
+                  'it does not have all three standard groups!')
+            raise ValueError
+        for i in range(len(group_ids)):  # consecutive?
+            if i not in group_ids:
+                print('Incorrect variables group definition: '
+                      'it does not have consecutive group ids!')
+                raise ValueError
+        # create list of variable ids
+        groups_list = [groups_dict[gid] for gid in group_ids]
+        return groups_list
 
     # def _bsmp_init_parameters_values(self, bsmp_entities):
     #

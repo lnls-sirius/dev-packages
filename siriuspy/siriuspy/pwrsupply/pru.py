@@ -3,6 +3,8 @@ import os as _os
 import sys as _sys
 import threading as _threading
 
+import time as _time
+
 import epics as _epics
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
@@ -40,6 +42,9 @@ class PRUInterface:
     def __init__(self):
         """Init method."""
         self._sync_mode = None
+        self._timestamp_write = _time.time()
+        self._timestamp_read = self._timestamp_write
+        self._wr_duration = 0.0
 
     # --- public interface ---
 
@@ -84,18 +89,30 @@ class PRUInterface:
         """Return synchronism pulse count."""
         return self._get_sync_pulse_count()
 
+    @property
+    def wr_duration(self):
+        """Return write-read accumulated duration."""
+        return self._wr_duration
+
+    def wr_duration_reset(self):
+        """Reset write/read accumulated duration."""
+        self._wr_duration = 0.0
+
     def clear_pulse_count_sync(self):
         """Clear pulse count sync."""
         return self._clear_pulse_count_sync()
 
     def UART_write(self, stream, timeout):
         """Write stream to serial port."""
+        self._timestamp_write = _time.time()
         ret = self._UART_write(stream, timeout=timeout)
         return ret
 
     def UART_read(self):
         """Return read from UART."""
         value = self._UART_read()
+        self._timestamp_read = _time.time()
+        self._wr_duration += self._timestamp_read - self._timestamp_write
         return value
 
     def curve(self, curve1, curve2, curve3, curve4, block):

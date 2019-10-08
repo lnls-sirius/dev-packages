@@ -1,7 +1,7 @@
 """Power Supply Model classes."""
 
 from . import bsmp as _psbsmp
-from . import bsmpsim as _psbsmpsim
+from . import psbsmpsim as _psbsmpsim
 from . import fields as _fields
 from . import functions as _functions
 from . import controller as _controller
@@ -97,8 +97,10 @@ class _PSModel:
             return _fields.WfmRBCurve(pru_controller, device_id)
         elif epics_field == 'WfmRef-Mon':
             return _fields.WfmRefMonCurve(pru_controller, device_id)
+        elif epics_field == 'Wfm-Mon':
+            return _fields.WfmMonCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
-            return _fields.Constant(0)
+            return _fields.WfmIndexCurve(pru_controller, device_id)
         elif epics_field == 'PRUSyncMode-Mon':
             return _fields.PRUSyncMode(pru_controller)
         return None
@@ -118,6 +120,7 @@ class PSModelFBP(_PSModel):
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB':  _psbsmp.ConstFBP.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFBP.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFBP.V_I_LOAD,
@@ -143,7 +146,7 @@ class PSModelFBP(_PSModel):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FBP
+        return _psbsmpsim.FBP
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -192,14 +195,14 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'Wfm-SP':
             return _functions.WfmSPCurve(
                 device_ids, pru_controller, setpoints)
+        elif epics_field == 'WfmUpdate-Cmd':
+            return _functions.WfmUpdate(
+                device_ids, pru_controller, setpoints)
+        elif epics_field == 'WfmAcq-Sel':
+            return _functions.WfmAcqCurve(device_ids, pru_controller,
+                                          setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
-        elif epics_field == 'CurvesAcq-Sel':
-            return _functions.PSCurvesAcq(device_ids, pru_controller,
-                                          setpoints)
-        elif epics_field == 'CurvesAcq-Cmd':
-            return _functions.PSCurvesAcqCmd(device_ids, pru_controller,
-                                             setpoints)
         else:
             return _functions.BSMPFunctionNull()
 
@@ -231,7 +234,7 @@ class PSModelFBP_FOFB(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FBP
+        return _psbsmpsim.FBP
 
 
 class PSModelFAC_DCDC(PSModelFBP):
@@ -240,6 +243,7 @@ class PSModelFAC_DCDC(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB': _psbsmp.ConstFAC_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_DCDC.V_PS_REFERENCE,
         'Current-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
@@ -269,7 +273,7 @@ class PSModelFAC_DCDC(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_DCDC
+        return _psbsmpsim.FAC_DCDC
 
 
 class PSModelFAC_2S_DCDC(PSModelFBP):
@@ -280,6 +284,7 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
         'CurrentRef-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_REFERENCE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD2,
@@ -323,17 +328,18 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_2S_DCDC
+        return _psbsmpsim.FAC_2S_DCDC
 
 
 class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
-    """FAC_2P4S_DCDC power supply model."""
+    """FAC_2P4S_DCDC power supply model (BO Dipoles)."""
 
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
@@ -372,6 +378,30 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'PWMDutyCycle8-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_8,
         'Arm1Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_1,
         'Arm2Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_ARM_2,
+        'IIB1InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_1,
+        'IIB2InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_2,
+        'IIB3InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_3,
+        'IIB3HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_3,
+        'IIB4InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_4,
+        'IIB4HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_4,
+        'IIB5InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_5,
+        'IIB5HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_5,
+        'IIB6InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_6,
+        'IIB6HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_6,
+        'IIB7InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_7,
+        'IIB7HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_7,
+        'IIB8InductorTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_INDUCTOR_IIB_8,
+        'IIB8HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_TEMP_HEATSINK_IIB_8,
+        'IntlkIIB1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_1,
+        'IntlkIIB2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_2,
+        'IntlkIIB3-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_3,
+        'IntlkIIB4-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_4,
+        'IntlkIIB5-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_5,
+        'IntlkIIB6-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_6,
+        'IntlkIIB7-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_7,
+        'IntlkIIB8-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_IIB_INTERLOCKS_8,
     }
 
     @property
@@ -392,7 +422,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_2P4S_DCDC
+        return _psbsmpsim.FAC_2P4S_DCDC
 
 
 class PSModelFAP(PSModelFBP):
@@ -401,6 +431,7 @@ class PSModelFAP(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'IntlkIIB-Mon': _psbsmp.ConstFAP.V_IIB_INTERLOCKS,
         'Current-RB': _psbsmp.ConstFAP.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAP.V_PS_REFERENCE,
@@ -427,7 +458,7 @@ class PSModelFAP(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAP
+        return _psbsmpsim.FAP
 
 
 class PSModelFAP_4P(PSModelFBP):
@@ -451,7 +482,7 @@ class PSModelFAP_4P(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAP_4P
+        return _psbsmpsim.FAP_4P
 
 
 class PSModelFAP_2P2S(PSModelFBP):
@@ -460,6 +491,7 @@ class PSModelFAP_2P2S(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB':  _psbsmp.ConstFAP_2P2S.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
@@ -501,7 +533,7 @@ class PSModelFAP_2P2S(PSModelFBP):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAP_2P2S
+        return _psbsmpsim.FAP_2P2S
 
 
 class PSModelCommercial(PSModelFAC_DCDC):
@@ -525,7 +557,7 @@ class PSModelCommercial(PSModelFAC_DCDC):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_DCDC
+        return _psbsmpsim.FAC_DCDC
 
 
 # --- ACDC ---
@@ -565,7 +597,7 @@ class PSModelFBP_DCLink(_PSModel):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FBP_DCLink
+        return _psbsmpsim.FBP_DCLink
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -633,7 +665,7 @@ class PSModelFAC_2S_ACDC(_PSModel):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_2S_ACDC
+        return _psbsmpsim.FAC_2S_ACDC
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -671,6 +703,32 @@ class PSModelFAC_2S_ACDC(_PSModel):
 class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     """FAC_2P4S_ACDC model."""
 
+    _variables = {
+        'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-RB': _psbsmp.ConstFAC_2P4S_ACDC.V_PS_SETPOINT,
+        'CapacitorBankVoltageRef-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_PS_REFERENCE,
+        'CapacitorBankVoltage-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_V_CAPACITOR_BANK,
+        'RectifierVoltage-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK,
+        'InductorsTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_DUTY_CYCLE,
+        'IIBISInductorTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTOR_IS_IIB,
+        'IIBISHeatSinkTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK_IS_IIB,
+        'IIBCmdInductorTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_INDUCTOR_CMD_IIB,
+        'IIBCmdHeatSinkTemperature-Mon':
+            _psbsmp.ConstFAC_2P4S_ACDC.V_TEMP_HEATSINK_CMD_IIB,
+        'IntlkIIBIS-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_IIB_INTERLOCKS_IS,
+        'IntlkIIBCmd-Mon': _psbsmp.ConstFAC_2P4S_ACDC.V_IIB_INTERLOCKS_CMD,
+    }
+
     @property
     def name(self):
         """Model name."""
@@ -689,7 +747,7 @@ class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _psbsmpsim.BSMPSim_FAC_2P4S_ACDC
+        return _psbsmpsim.FAC_2P4S_ACDC
 
 
 # --- Factory ---

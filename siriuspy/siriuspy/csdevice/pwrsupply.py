@@ -18,6 +18,11 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
 # _SIZE = 4096
+MAX_WFMSIZE_FBP = 1024
+DEF_WFMSIZE_FBP = 980
+MAX_WFMSIZE_OTHERS = 4096
+DEF_WFMSIZE_OTHERS = 3920
+
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
 
 # --- SigGen ---
@@ -430,16 +435,14 @@ def get_basic_propty_database():
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
-        # Wfm
-        'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        # WfmData - PRU
         'WfmData-SP': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': DEFLT_PS_CURR_PREC},
         'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': DEFLT_PS_CURR_PREC},
-        # PS BSMP Curves
-        # 'CurvesUpdate-Cmd': {'type': 'int', 'value': 0},
+        # Wfm - UDC
         'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM),
                    'prec': DEFLT_PS_CURR_PREC},
@@ -449,7 +452,12 @@ def get_basic_propty_database():
         'WfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
                        'value': list(DEFAULT_WFM),
                        'prec': DEFLT_PS_CURR_PREC},
-        # 'WfmIdx-Mon: {'type': 'int', 'value': 0 },
+        'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
+                    'value': list(DEFAULT_WFM),
+                    'prec': DEFLT_PS_CURR_PREC},
+        'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        'WfmSyncPulseCount-Mon': {'type': 'int', 'value': 0},
+        'WfmUpdate-Cmd': {'type': 'int', 'value': 0},
     })
     return db
 

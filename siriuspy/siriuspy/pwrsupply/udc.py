@@ -1,5 +1,6 @@
 """UDC class."""
 
+import time as _time
 from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from .psmodel import PSModelFactory as _PSModelFactory
 from . import prucparms as _prucparms
@@ -7,8 +8,6 @@ from . import prucparms as _prucparms
 
 class UDC:
     """UDC."""
-
-    _timeout_default = 100  # [us]
 
     _prucparms = {
         'FBP': _prucparms.PRUCParmsFBP,
@@ -29,6 +28,7 @@ class UDC:
         self._device_ids = device_ids
         self._psmodel = psmodel
         self._bsmp_devs = self._create_bsmp_connectors()
+        self._first_dev = self._bsmp_devs[min(self._device_ids)]
 
     @property
     def pru(self):
@@ -47,30 +47,61 @@ class UDC:
 
     @property
     def prucparms(self):
-        """PRU Controller parameters."""
-        return UDC._prucparms[self._psmodel]
+        """Return PRU Controller parameters object."""
+        prucparms_class = UDC._prucparms[self._psmodel]
+        return prucparms_class()
+
+    @property
+    def CONST_BSMP(self):
+        """Return PSBSMP constants."""
+        return self._first_dev.CONST_BSMP
 
     @property
     def CONST_PSBSMP(self):
         """Return PSBSMP constants."""
         return self.prucparms.CONST_PSBSMP
 
-    def reset(self, timeout=_timeout_default):
+    def reset(self, **kwargs):
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
         for bsmp in self._bsmp_devs.values():
-            bsmp.execute_function(
+            ack, data = bsmp.execute_function(
                 func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
+            if ack != self.CONST_BSMP.ACK_OK:
+                dev_id = bsmp.channel.address
+                print(('UDC.reset: could not turn off '
+                       'device id:{} !').format(dev_id))
+                return ack, data
 
         # reset UDC proper.
-        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
-        bsmp_dev.execute_function(
-            func_id=self.CONST_PSBSMP.F_RESET_UDC, timeout=timeout,
-            read_flag=False)
+        self._first_dev.execute_function(
+            func_id=self.CONST_PSBSMP.F_RESET_UDC, **kwargs, read_flag=False)
+
+        return ack, data
+
+    def bufsample_disable(self):
+        """Disable DSP from writting to bufsample curve."""
+        for bsmp in self._bsmp_devs.values():
+            ack, data = bsmp.wfmref_mon_bufsample_disable()
+            if ack != self.CONST_BSMP.ACK_OK:
+                return ack, data
+        # a single sleep for all devices
+        sleep_time = self._first_dev._sleep_disable_bufsample = 0.5  # [s]
+        _time.sleep(sleep_time)
+        return ack, data
+
+    def bufsample_enable(self):
+        """Enable DSP from writting to bufsample curve."""
+        for bsmp in self._bsmp_devs.values():
+            ack, data = bsmp.wfmref_mon_bufsample_enable()
+            if ack != self.CONST_BSMP.ACK_OK:
+                return ack, data
+        return ack, data
 
     def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
-        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # uses first BSMP device
+        # uses first BSMP device
+        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # first bsmp
         return bsmp_dev.parse_firmware_version(version)
 
     def reset_groups_of_variables(self, groups):
