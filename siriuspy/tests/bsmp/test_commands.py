@@ -50,6 +50,7 @@ class TestBSMP0x0(TestCase):
     def setUp(self):
         """Common setup for all tests."""
         self.serial = Mock()
+        # self.serial.len.return_value = 30
         self.entities = None
         self.bsmp = BSMP(self.serial, 1, self.entities)
 
@@ -63,10 +64,9 @@ class TestBSMP0x0(TestCase):
         with self.assertRaises(NotImplementedError):
             self.bsmp.query_list_of_variables()
 
-    def test_query_list_of_group_of_variables(self):
-        """Test query_list_of_group_of_variables."""
-        with self.assertRaises(NotImplementedError):
-            self.bsmp.query_list_of_group_of_variables()
+    # def test_query_list_of_group_of_variables(self):
+    #     """Test query_list_of_group_of_variables."""
+    #     self.bsmp.query_list_of_group_of_variables(timeout=100)
 
     def test_query_group_of_variables(self):
         """Test query_group_of_variables."""
