@@ -267,21 +267,40 @@ class BoosterRamp(_ConfigDBDocument):
             self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_wfm_nrpoints(self):
+    def ps_ramp_wfm_nrpoints_fams(self):
         """Power supplies waveform number of points."""
         rdip = self._value['ps_ramp']
-        return rdip['wfm_nrpoints']
+        return rdip['wfm_nrpoints_fams']
 
-    @ps_ramp_wfm_nrpoints.setter
-    def ps_ramp_wfm_nrpoints(self, value):
-        """Set power supplies waveform number of points."""
+    @ps_ramp_wfm_nrpoints_fams.setter
+    def ps_ramp_wfm_nrpoints_fams(self, value):
+        """Set power supplies waveform number of points for families."""
         value = int(value)
         rdip = self._value['ps_ramp']
-        if value != rdip['wfm_nrpoints']:
+        if value != rdip['wfm_nrpoints_fams']:
             if not 1 <= value <= _MAX_WFMSIZE:
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
-            rdip['wfm_nrpoints'] = value
+            rdip['wfm_nrpoints_fams'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
+
+    @property
+    def ps_ramp_wfm_nrpoints_corrs(self):
+        """Power supplies waveform number of points for correctors."""
+        rdip = self._value['ps_ramp']
+        return rdip['wfm_nrpoints_corrs']
+
+    @ps_ramp_wfm_nrpoints_corrs.setter
+    def ps_ramp_wfm_nrpoints_corrs(self, value):
+        """Set power supplies waveform number of points for correctors."""
+        value = int(value)
+        rdip = self._value['ps_ramp']
+        if value != rdip['wfm_nrpoints_corrs']:
+            if not 1 <= value <= _MAX_WFMSIZE:
+                raise _RampInvalidDipoleWfmParms(
+                    'Invalid number of points for waveforms.')
+            rdip['wfm_nrpoints_corrs'] = value
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -830,10 +849,10 @@ class BoosterRamp(_ConfigDBDocument):
         """Set ps waveform for a given power supply."""
         self._ps_waveforms[maname] = _dcopy(waveform)
 
-    def ps_waveform_get_times(self):
+    def ps_waveform_get_times(self, maname):
         """Return ramp energy at a given time."""
-        self._update_ps_waveform(self.MANAME_DIPOLE)
-        times = self._ps_waveforms[self.MANAME_DIPOLE].times
+        self._update_ps_waveform(maname)
+        times = self._ps_waveforms[maname].times
         return times
 
     def ps_waveform_get_currents(self, maname):
@@ -859,8 +878,8 @@ class BoosterRamp(_ConfigDBDocument):
         Use only energies until rampdown-start time.
         """
         rampdown_start_time = self.ps_ramp_rampdown_start_time
-        times = [time for time in self.ps_waveform_get_times()
-                 if time < rampdown_start_time]
+        times = [t for t in self.ps_waveform_get_times(self.MANAME_DIPOLE)
+                 if t < rampdown_start_time]
         energies = self._ps_waveforms[self.MANAME_DIPOLE].strengths[
                  0:len(times)]
         time = _np.interp(energy, energies, times)
@@ -872,7 +891,7 @@ class BoosterRamp(_ConfigDBDocument):
                 maname != self.MANAME_DIPOLE:
             raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
-        times = self.ps_waveform_get_times()
+        times = self.ps_waveform_get_times(maname)
         strengths = self._ps_waveforms[maname].strengths
         strength = _np.interp(time, times, strengths)
         return strength
@@ -883,7 +902,7 @@ class BoosterRamp(_ConfigDBDocument):
                 maname != self.MANAME_DIPOLE:
             raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
-        times = self.ps_waveform_get_times()
+        times = self.ps_waveform_get_times(maname)
         currents = self._ps_waveforms[maname].currents
         current = _np.interp(time, times, currents)
         return current
@@ -984,11 +1003,12 @@ class BoosterRamp(_ConfigDBDocument):
         self._ps_nconfigs = norm_configs
 
     def _update_ps_normalized_config_energy(self, nconfig_obj, time):
-        indices = self._conv_times_2_indices([time])
+        indices = self._conv_times_2_indices(self.MANAME_DIPOLE, [time])
         strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
-        strength = _np.interp(indices[0],
-                              list(range(self.ps_ramp_wfm_nrpoints)),
-                              strengths)
+        strength = _np.interp(
+            indices[0],
+            list(range(self._get_appropriate_wfmnrpoints(self.MANAME_DIPOLE))),
+            strengths)
         nconfig_obj[self.MANAME_DIPOLE] = strength
         return nconfig_obj
 
@@ -1026,8 +1046,8 @@ class BoosterRamp(_ConfigDBDocument):
             nconf_strength.append(nconfig[maname])
 
         # interpolate strengths
-        wfm_nrpoints = self._value['ps_ramp']['wfm_nrpoints']
-        nconf_indices = self._conv_times_2_indices(nconf_times)
+        wfm_nrpoints = self._get_appropriate_wfmnrpoints(maname)
+        nconf_indices = self._conv_times_2_indices(maname, nconf_times)
         wfm_indices = [i for i in range(wfm_nrpoints)]
         wfm_strengths = _np.interp(wfm_indices, nconf_indices, nconf_strength)
 
@@ -1035,10 +1055,10 @@ class BoosterRamp(_ConfigDBDocument):
         dipole = self._ps_waveforms[dipole]
         if family is not None:
             family = self._ps_waveforms[family]
-        self._ps_waveforms[maname] = _Waveform(maname=maname,
-                                               dipole=dipole,
-                                               family=family,
-                                               strengths=wfm_strengths)
+        self._ps_waveforms[maname] = _Waveform(
+            maname=maname, dipole=dipole, family=family,
+            strengths=wfm_strengths,
+            wfm_nrpoints=self._get_appropriate_wfmnrpoints(maname))
 
     def _update_ps_waveform_dipole(self):
         dipole = self._create_new_ps_waveform_dipole()
@@ -1048,7 +1068,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         dipole = _WaveformDipole(
             maname=self.MANAME_DIPOLE,
-            wfm_nrpoints=rdip['wfm_nrpoints'],
+            wfm_nrpoints=self._get_appropriate_wfmnrpoints(self.MANAME_DIPOLE),
             duration=rdip['duration'],
             start_energy=rdip['start_energy'],
             rampup1_start_time=rdip['rampup1_start_time'],
@@ -1065,10 +1085,10 @@ class BoosterRamp(_ConfigDBDocument):
             rampdown_smooth_energy=rdip['rampdown_smooth_energy'])
         return dipole
 
-    def _conv_times_2_indices(self, times):
+    def _conv_times_2_indices(self, maname, times):
         rdip = self._value['ps_ramp']
         duration = rdip['duration']
-        wfm_nrpoints = rdip['wfm_nrpoints']
+        wfm_nrpoints = self._get_appropriate_wfmnrpoints(maname)
         interval = duration / (wfm_nrpoints - 1.0)
         indices = [t/interval for t in times]
         return indices
@@ -1098,6 +1118,13 @@ class BoosterRamp(_ConfigDBDocument):
         else:
             raise _RampError(
                 'Time value must be between 0 and {}!'.format(d))
+
+    def _get_appropriate_wfmnrpoints(self, maname):
+        """Return appropriate number of points for maname."""
+        if 'CH' in maname or 'CV' in maname or 'QS' in maname:
+            return self.ps_ramp_wfm_nrpoints_corrs
+        else:
+            return self.ps_ramp_wfm_nrpoints_fams
 
 
 class SiriusMig(BoosterRamp):
