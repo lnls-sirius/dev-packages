@@ -451,6 +451,7 @@ def get_basic_propty_database():
                     'value': list(DEFAULT_WFM),
                     'prec': DEFLT_PS_CURR_PREC},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        'WfmSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         # 'WfmAcq-Sel': {'type': 'enum', 'values': [Dsbl', 'Enbl'], 'value': 0},
     })
     return db

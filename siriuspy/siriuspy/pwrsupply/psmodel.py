@@ -120,6 +120,7 @@ class PSModelFBP(_PSModel):
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB':  _psbsmp.ConstFBP.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFBP.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFBP.V_I_LOAD,
@@ -239,6 +240,7 @@ class PSModelFAC_DCDC(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB': _psbsmp.ConstFAC_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_DCDC.V_PS_REFERENCE,
         'Current-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
@@ -279,6 +281,7 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
         'CurrentRef-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_REFERENCE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD2,
@@ -333,6 +336,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'CurrentRef-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
@@ -424,6 +428,7 @@ class PSModelFAP(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'IntlkIIB-Mon': _psbsmp.ConstFAP.V_IIB_INTERLOCKS,
         'Current-RB': _psbsmp.ConstFAP.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAP.V_PS_REFERENCE,
@@ -483,6 +488,7 @@ class PSModelFAP_2P2S(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB':  _psbsmp.ConstFAP_2P2S.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
