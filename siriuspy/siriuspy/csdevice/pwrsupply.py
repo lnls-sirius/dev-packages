@@ -17,6 +17,12 @@ DEF_WFMSIZE = 3920
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 
+# --- Wfm ---
+MAX_WFMSIZE_FBP = 1024
+DEF_WFMSIZE_FBP = 980
+MAX_WFMSIZE_OTHERS = 4096
+DEF_WFMSIZE_OTHERS = 3920
+
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
 _SIZE = 4096
