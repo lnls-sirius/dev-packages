@@ -89,6 +89,8 @@ class TestPRUInterface(TestCase):
         'set_curve_block',
         'read_curve_block',
         'close',
+        'wr_duration',
+        'wr_duration_reset',
     )
 
     def test_public_interface(self):

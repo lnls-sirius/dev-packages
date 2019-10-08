@@ -8,6 +8,8 @@ from .exceptions import SerialAnomResp as _SerialAnomResp
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
+    _timeout_execute_function = 100  # [ms]
+
     def __init__(self, pru, slave_address, entities):
         """_cructor."""
         self._entities = entities
@@ -123,7 +125,8 @@ class BSMP:
         """Read variable group."""
         # command and expected response
         cmd, ack = \
-            _consts.CMD_READ_GROUP_OF_VARIABLES, _consts.CMD_GROUP_OF_VARIABLES_VALUE
+            _consts.CMD_READ_GROUP_OF_VARIABLES, \
+            _consts.CMD_GROUP_OF_VARIABLES_VALUE
 
         # build payload
         payload = [chr(group_id)]
@@ -151,22 +154,27 @@ class BSMP:
     # 0x2_
     def write_variable(self, var_id, value):
         """Write to variable. Command 0x20."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def write_group_of_variables(self, group_id, value):
         """Write to the variables of a group. Command 0x22."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def binoperation_variable(self, var_id, operation, mask):
         """Perform a binary operation to variable. Command 0x24."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def binoperation_group(self, group_id, operation, mask):
         """Perform a binary oeration to the vars of a group. Command 0x26."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def write_and_read_variable(self, w_var_id, r_var_id, value):
         """Write value to a var and read another var value. Command 0x28."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     # 0x3_
@@ -304,7 +312,8 @@ class BSMP:
         return BSMP._anomalous_response(cmd, res.cmd)
 
     # 0x5_
-    def execute_function(self, func_id, input_val=None, timeout=100,
+    def execute_function(self, func_id, input_val=None,
+                         timeout=_timeout_execute_function,
                          read_flag=True, print_error=True):
         """Execute a function.
 
@@ -323,8 +332,9 @@ class BSMP:
         res = self.channel.request(msg, timeout=timeout, read_flag=read_flag)
 
         # TODO: This should be temporary. It is used for ps F_RESET_UDC.
+        # PS Firmware should change so that F_RESET_UDC returns ack.
         if not read_flag:
-            return
+            return None
 
         if res.cmd == ack:
             # print(len(res.payload))
@@ -361,83 +371,3 @@ class BSMP:
             for key, value in kwargs.items():
                 print('{}: {}'.format(key, value))
         raise _SerialAnomResp
-
-
-class BSMPSim:
-    """BSMP protocol implementation for simulated Master Node."""
-
-    def __init__(self, entities):
-        """Entities."""
-        self._variables = []
-        self._entities = entities
-
-    def __getitem__(self, index):
-        """Getitem."""
-        return self.bsmp_conn[index]
-
-    @property
-    def entities(self):
-        """PS entities."""
-        return self._entities
-
-    # 0x1_
-    def read_variable(self, var_id, timeout):
-        """Read a variable."""
-        return _consts.ACK_OK, self._variables[var_id]
-
-    def read_group_of_variables(self, group_id, timeout):
-        """Read group of variables."""
-        ids = [var.eid for var in self.entities.groups[group_id].variables]
-        values = [self.read_variable(id, timeout=timeout)[1] for id in ids]
-        return _consts.ACK_OK, values
-
-    # 0x3_
-    def create_group_of_variables(self, var_ids, timeout):
-        """Create new group."""
-        # NOTE: should we alter entities?!
-        self.entities.add_group(var_ids)
-        return _consts.ACK_OK, None
-
-    def remove_all_groups_of_variables(self, timeout):
-        """Remove all groups."""
-        self.entities.remove_all_groups_of_variables()
-        return _consts.ACK_OK, None
-
-    # 0x4_
-    def request_curve_block(self, curve_id, block, timeout):
-        """Read curve block. Command 0x40."""
-        curve = self.entities.curves[curve_id]
-        lsb, hsb = block & 0xff, (block & 0xff00) >> 8
-        m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
-        # print([hex(ord(c)) for c in m.stream])
-        response = self.channel.request(m, timeout)
-        # print(response.cmd)
-        load = response.payload
-        data = load[3:]
-        # print('load len: ', len(load))
-        if response.cmd == 0x41:
-            # print('here1', len(data), curve.size)
-            if len(data) == curve.size:
-                # print('here2')
-                cid = ord(load[0])
-                cblock = ord(load[1]) << 8 + ord(load[0])
-                if cid != curve_id or cblock != block:
-                    print('Invalid curve id or block number in response!')
-                    print('expected: ', curve_id, block)
-                    print('received: ', cid, cblock)
-                    return None, None
-                else:
-                    # print('here4')
-                    return _consts.ACK_OK, curve.load_to_value(data)
-        else:
-            # print('here5')
-            if response.cmd > 0xE0 and response.cmd <= 0xE8:
-                return response.cmd, None
-
-        return None, None
-
-    # 0x5_
-    def execute_function(self,
-                         func_id, input_val=None, timeout=100, read_flag=True):
-        """Execute a function."""
-        raise NotImplementedError()
