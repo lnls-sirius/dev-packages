@@ -516,7 +516,6 @@ class FAP_2P2S(PSBSMP):
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
-
 # --- ACDC ---
 
 
