@@ -18,6 +18,11 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
 # _SIZE = 4096
+MAX_WFMSIZE_FBP = 1024
+DEF_WFMSIZE_FBP = 980
+MAX_WFMSIZE_OTHERS = 4096
+DEF_WFMSIZE_OTHERS = 3920
+
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
 
 # --- SigGen ---
