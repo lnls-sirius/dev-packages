@@ -99,7 +99,8 @@ class PSupply:
 
     def update(self, interval=0.0):
         """Update all power supply entities.
-        Does not update groups of variables.
+
+        Method does not update groups of variables.
         """
         now = _time.time()
         tstamp = self._timestamp_update

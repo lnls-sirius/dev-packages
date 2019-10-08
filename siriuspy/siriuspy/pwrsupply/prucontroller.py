@@ -72,7 +72,6 @@ from .psupply import PSupply as _PSupply
 #     patricia will work on this.
 
 
-
 class PRUController:
     """Beaglebone controller.
 
@@ -143,7 +142,8 @@ class PRUController:
         self._pru_sync_delays = self._init_pru_sync_delays(self._parms)
 
         # index of dev_id in self._device_ids for wfmref update
-        self._wfm_update_dev_idx = 0
+        self._wfm_update_dev_idx = 0  # cyclical updates!
+        # self._wfm_update_dev_idx = None  # np updates!
 
         # initializes PRU parameters (in sync mode off).
         self._scan_interval, self._curves = self._init_pru()
@@ -331,13 +331,13 @@ class PRUController:
 
         return values
 
-    def wfm_update(self, device_ids):
+    def wfm_update(self, device_ids, interval=None):
         """Queue update wfm curve."""
         if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
             if isinstance(device_ids, int):
                 device_ids = (device_ids, )
-            operation = (self._bsmp_update_wfm, (device_ids, ))
+            operation = (self._bsmp_update_wfm, (device_ids, interval, ))
             self._queue.append(operation)
             return True
         else:
@@ -890,12 +890,15 @@ class PRUController:
         # print('here')
         self._bsmp_update_variables(device_ids, group_id)
 
+        # is attribute is not, does not update!
+        if self._wfm_update_dev_idx is None:
+            return  # does not update!
+
+        # update device wfm curves cyclically
         self._wfm_update_dev_idx = \
             (self._wfm_update_dev_idx + 1) % len(self._device_ids)
-
-        idx = self._wfm_update_dev_idx
-        dev_ids = [self._device_ids[idx], ]
-        self._bsmp_update_wfm(dev_ids)
+        dev_id = self._device_ids[self._wfm_update_dev_idx]
+        self._bsmp_update_wfm([dev_id, ])
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).
@@ -998,10 +1001,12 @@ class PRUController:
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
 
-    def _bsmp_update_wfm(self, device_ids):
+    def _bsmp_update_wfm(self, device_ids, interval=None):
         """Read curve from devices."""
         time_init = _time()
 
+        if interval is None:
+            interval = self._update_wfm_period
         # copy structure
         with self._lock:
             psupplies = _dcopy(self._psupplies)
@@ -1009,7 +1014,7 @@ class PRUController:
         try:
             for dev_id in device_ids:
                 psupply = psupplies[dev_id]
-                psupply.update_wfm(interval=self._update_wfm_period)
+                psupply.update_wfm(interval=interval)
         except (_SerialError, IndexError):
             print('bsmp_wfm_update error!')
             tstamp = _time()

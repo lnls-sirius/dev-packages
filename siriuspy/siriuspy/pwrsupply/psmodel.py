@@ -195,11 +195,14 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'Wfm-SP':
             return _functions.WfmSPCurve(
                 device_ids, pru_controller, setpoints)
-        elif epics_field == 'BSMPComm-Sel':
-            return _functions.BSMPComm(pru_controller, setpoints)
+        elif epics_field == 'WfmUpdate-Cmd':
+            return _functions.WfmUpdate(
+                device_ids, pru_controller, setpoints)
         elif epics_field == 'WfmAcq-Sel':
             return _functions.WfmAcqCurve(device_ids, pru_controller,
                                           setpoints)
+        elif epics_field == 'BSMPComm-Sel':
+            return _functions.BSMPComm(pru_controller, setpoints)
         else:
             return _functions.BSMPFunctionNull()
 

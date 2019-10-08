@@ -1,4 +1,4 @@
-"""Define fields that map episc fields to bsmp entity ids.
+"""Define fields that map epics PVs to bsmp entity ids or calculation methods.
 
 These classes implement a common interface that exposes the `read` method.
 """
