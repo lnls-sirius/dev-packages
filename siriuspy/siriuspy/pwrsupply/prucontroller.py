@@ -368,6 +368,10 @@ class PRUController:
     def wfmref_mon_index(self, device_id):
         """Return current index into DSP selected curve."""
         # TODO: this should be done within either psupply or psbsmp!
+        # psupply = self._psupplies[device_id]
+        # with self._lock:
+        #     index = psypply.wfmref_mon_index
+        # return index
         psupply = self._psupplies[device_id]
         dev_variables = self._variables_values[device_id]
         with self._lock:
@@ -599,6 +603,13 @@ class PRUController:
         if freqs is not None:
             parms.FREQ_SCAN = freqs[0]
             parms.FREQ_RAMP = freqs[1]
+
+        # print info on scan frequency
+        fstr = ('id:{:2d}, FREQS  sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
+        for dev in device_ids:
+            freqs = (10, 2) if freqs is None else freqs
+            print(fstr.format(dev, *freqs))
+        print()
 
         return udc, parms, psupplies
 

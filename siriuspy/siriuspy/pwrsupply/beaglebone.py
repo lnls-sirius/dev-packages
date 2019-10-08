@@ -117,17 +117,6 @@ class BBBFactory:
     def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
 
-        # TODO: Test!!! remember to delete!!!
-        print('Test BeagleBone!')
-        if bbbname in ('test1', 'test2'):
-            testname = bbbname
-            bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI5'
-        elif bbbname in ('test3'):
-            testname = bbbname
-            bbbname = 'IA-08RaCtrl:CO-PSCtrl-SI3'
-        else:
-            testname = None
-
         # Create PRU
         if eth:
             pru = _PRU(bbbname=bbbname)
@@ -137,7 +126,7 @@ class BBBFactory:
         # create DequeThread
         prucqueue = _DequeThread()
 
-        db = dict()
+        dbase = dict()
         controllers = dict()  # 1 controller per UDC
         databases = dict()
 
@@ -148,14 +137,6 @@ class BBBFactory:
             freqs = None
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
-        print('Delete test conditional in beaglebone.py!')
-        if testname == 'test1':
-            udc_list = [udc_list[0], ]
-        elif testname == 'test2':
-            udc_list = [udc_list[1], ]
-        elif testname == 'test3':
-            # udc_list = [udc_list[0], ]
-            pass
 
         for udc in udc_list:
 
@@ -168,13 +149,11 @@ class BBBFactory:
             devices = _PSSearch.conv_udc_2_bsmps(udc)
 
             # print info on scan frequency
-            fstr = ('udc:{:<25s} ps:{:<16s} (id:{:2d}), FREQS  '
-                    'sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
+            fstr = ('udc:{:<25s} ps:{:<16s} (id:{:2d})')
             print()
             for dev in devices:
                 freqs = (10, 2) if freqs is None else freqs
-                print(fstr.format(udc, *dev, *freqs))
-            print()
+                print(fstr.format(udc, *dev))
 
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)
@@ -199,7 +178,7 @@ class BBBFactory:
 
             # Build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
-                db, model, setpoints,
+                dbase, model, setpoints,
                 devices, database, pru_controller)
 
             # Build connections and device_ids dicts
@@ -215,7 +194,7 @@ class BBBFactory:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
 
-        return BeagleBone(controllers, databases), db
+        return BeagleBone(controllers, databases), dbase
 
     @staticmethod
     def check_ps_models(devices):
@@ -254,7 +233,7 @@ class BBBFactory:
         return setpoints
 
     @staticmethod
-    def _build_fields_functions_dict(db, model, setpoints, devices,
+    def _build_fields_functions_dict(dbase, model, setpoints, devices,
                                      database, pru_controller):
         functions = dict()
         fields = dict()
@@ -264,17 +243,17 @@ class BBBFactory:
                     model, field, devices, setpoints, pru_controller))
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
-                    db[pvname] = _deepcopy(database[field])
+                    dbase[pvname] = _deepcopy(database[field])
                     fields[pvname] = setpoints[pvname]
             elif _Constant.match(field) and field != 'Version-Cte':
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
-                    db[name] = _deepcopy(database[field])
+                    dbase[name] = _deepcopy(database[field])
                     fields[name] = _Constant(database[field]['value'])
             else:
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
-                    db[name] = _deepcopy(database[field])
+                    dbase[name] = _deepcopy(database[field])
                     fields[name] = model.field(
                         dev_id, field, pru_controller)
         return fields, functions

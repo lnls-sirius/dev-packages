@@ -66,6 +66,24 @@ class PSupply:
         return self._wfmref_mon
 
     @property
+    def wfmref_mon_index(self):
+        """Return current index into DSP selected curve."""
+        curve_id = \
+            self._variables[self._psbsmp.CONST_PSBSMP.V_WFMREF_SELECTED]
+        if curve_id == 0:
+            beg = self._variables[
+                self._psbsmp.CONST_PSBSMP.V_WFMREF0_START]
+            end = self._variables[
+                self._psbsmp.CONST_PSBSMP.V_WFMREF0_END]
+        else:
+            beg = self._variables[
+                self._psbsmp.CONST_PSBSMP.V_WFMREF1_START]
+            end = self._variables[
+                self._psbsmp.CONST_PSBSMP.V_WFMREF1_END]
+        index = self._psbsmp.curve_index_calc(beg, end)
+        return index
+
+    @property
     def wfm_mon(self):
         """Return wfmref."""
         return self._wfm_mon

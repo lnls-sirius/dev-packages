@@ -224,6 +224,8 @@ class Channel:
             self.write(message, timeout)
             if read_flag:
                 response = self.read()
+                # print(response.cmd)
+                # print(response.payload)
             else:
                 # NOTE: for functions with no return (F_RESET_UDC, for example)
                 # artificially return 0xE0 (OK)

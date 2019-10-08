@@ -190,7 +190,7 @@ class PSBSMP(_BSMP):
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
-    def wfmref_mon_idx(self):
+    def wfmref_mon_index(self):
         """Return WfmRef Index
 
             This index refers to the current waveform in use by the
