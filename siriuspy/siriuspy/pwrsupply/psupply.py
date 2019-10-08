@@ -146,6 +146,8 @@ class PSupply:
     @_psupply_update_connected
     def update_wfm(self, interval=0.0):
         """Update wfmref."""
+        if self._psbsmp.IS_DCLINK:
+            return True
         now = _time.time()
         tstamp = self._timestamp_update_wfm
         if tstamp is None or (now - tstamp) >= interval:

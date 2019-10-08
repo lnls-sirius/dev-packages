@@ -440,6 +440,8 @@ class PSBSMP(_BSMP):
 class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
+    IS_DCLINK = False
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFBP
@@ -448,6 +450,8 @@ class FBP(PSBSMP):
 
 class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
+
+    IS_DCLINK = False
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
@@ -458,6 +462,8 @@ class FAC_DCDC(PSBSMP):
 class FAC_2P4S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_DCDC."""
 
+    IS_DCLINK = False
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFAC_2P4S_DCDC
@@ -466,6 +472,8 @@ class FAC_2P4S_DCDC(PSBSMP):
 
 class FAC_2S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_DCDC."""
+
+    IS_DCLINK = False
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
@@ -476,6 +484,8 @@ class FAC_2S_DCDC(PSBSMP):
 class FAP(PSBSMP):
     """BSMP with EntitiesFAP."""
 
+    IS_DCLINK = False
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFAP
@@ -485,6 +495,8 @@ class FAP(PSBSMP):
 class FAP_4P(PSBSMP):
     """BSMP with EntitiesFAP_4P."""
 
+    IS_DCLINK = False
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFAP_4P
@@ -493,6 +505,8 @@ class FAP_4P(PSBSMP):
 
 class FAP_2P2S(PSBSMP):
     """BSMP with EntitiesFAP_2P2S."""
+
+    IS_DCLINK = False
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
@@ -507,6 +521,8 @@ class FAP_2P2S(PSBSMP):
 class FBP_DCLink(PSBSMP):
     """BSMP with EntitiesFBP_DCLink."""
 
+    IS_DCLINK = True
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFBP_DCLink
@@ -516,6 +532,8 @@ class FBP_DCLink(PSBSMP):
 class FAC_2P4S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_ACDC."""
 
+    IS_DCLINK = True
+
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         self.CONST_PSBSMP = _bsmp.ConstFAC_2P4S_ACDC
@@ -524,6 +542,8 @@ class FAC_2P4S_ACDC(PSBSMP):
 
 class FAC_2S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_ACDC."""
+
+    IS_DCLINK = True
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
