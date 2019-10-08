@@ -367,21 +367,20 @@ class PRUController:
 
     def wfmref_mon_index(self, device_id):
         """Return current index into DSP selected curve."""
+        # TODO: this should be done within either psupply or psbsmp!
         psupply = self._psupplies[device_id]
+        dev_variables = self._variables_values[device_id]
         with self._lock:
-            # TODO: this should be done within either psupply or psbsmp!
-            dev_variables = self._variables_values[device_id]
             curve_id = \
                 dev_variables[self.params.CONST_PSBSMP.V_WFMREF_SELECTED]
             if curve_id == 0:
                 beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_START]
-                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_START]
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF0_END]
             else:
                 beg = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_START]
-                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_START]
-            index = psupply.psbsmp.curve_index_calc(beg, end)
-            # return self._ggg
-            return index
+                end = dev_variables[self.params.CONST_PSBSMP.V_WFMREF1_END]
+        index = psupply.psbsmp.curve_index_calc(beg, end)
+        return index
 
     def wfm_write(self, device_ids, data):
         """Write wfm curves."""

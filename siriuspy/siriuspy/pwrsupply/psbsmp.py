@@ -76,8 +76,10 @@ class PSBSMP(_BSMP):
                                   add_wfmref_group=False):
         """Reset groups of variables."""
         # remove previous variables groups
-        self.remove_all_groups_of_variables(
+        ack, data = self.remove_all_groups_of_variables(
             timeout=PSBSMP._timeout_remove_vars_groups)
+        if ack != PSBSMP.CONST_BSMP.ACK_OK:
+            return ack, data
 
         # create variables groups
         for var_ids in varids_groups:
@@ -87,7 +89,7 @@ class PSBSMP(_BSMP):
                 return ack, data
 
         if not add_wfmref_group:
-            return
+            return ack, data
 
         # add group fro wfmref vars
         ack, data = self.create_group_of_variables(
