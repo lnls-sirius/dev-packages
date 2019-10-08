@@ -2094,7 +2094,7 @@ def bo_get_default_waveform(maname, nrpoints=None, duration=None,
     if ramp_config is None:
         # Uses a template wfmdata scaled to maximum magnet ps current
         if nrpoints is None:
-            if 'CH' in maname or 'CV' in maname:
+            if 'CH' in maname or 'CV' in maname or 'QS' in maname:
                 nrpoints = _DEF_WFMSIZE_FBP
             else:
                 nrpoints = _DEF_WFMSIZE_OTHERS
