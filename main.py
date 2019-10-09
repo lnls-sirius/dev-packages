@@ -445,6 +445,16 @@ class SOFB(_BaseClass):
     def _process_kicks(self, kicks, dkicks):
         if dkicks is None:
             return
+
+        # keep track of which dkicks were originally different from zero:
+        newkicks = [None, ] * len(dkicks)
+        for i, dkick in enumerate(dkicks):
+            if not _compare_kicks(dkick, 0):
+                newkicks[i] = 0.0
+        idcs_to_process = _np.array(newkicks) != None
+        if not idcs_to_process.any():
+            return newkicks
+
         nr_ch = self._csorb.NR_CH
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.acc == 'SI':
@@ -454,34 +464,41 @@ class SOFB(_BaseClass):
                 'rf': slice(-1, None)}
         for pln in sorted(slcs.keys()):
             slc = slcs[pln]
-            dkicks[slc] *= self._corr_factor[pln]
+            idcs_pln = idcs_to_process[slc]
+            if not idcs_pln.any():
+                continue
+            dk_slc = dkicks[slc][idcs_pln]
+            k_slc = kicks[slc][idcs_pln]
+            dk_slc *= self._corr_factor[pln]
 
-            # Check if any delta kick is larger the maximum allowed
-            max_delta_kick = _np.max(_np.abs(dkicks[slc]))
-            factor1 = 1.0
-            if max_delta_kick > self._max_delta_kick[pln]:
-                factor1 = self._max_delta_kick[pln]/max_delta_kick
-                dkicks[slc] *= factor1
-                percent = self._corr_factor[pln] * factor1 * 100
-                msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
-                                                        pln.upper(), percent)
-                self._update_log(msg)
-                _log.warning(msg[6:])
             # Check if any kick is larger than the maximum allowed:
-            ind, *_ = _np.where(_np.abs(kicks[slc]) > self._max_kick[pln])
+            ind, *_ = _np.where(_np.abs(k_slc) > self._max_kick[pln])
             if ind.size:
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return
+
+            # Check if any delta kick is larger the maximum allowed
+            max_delta_kick = _np.max(_np.abs(dk_slc))
+            factor1 = 1.0
+            if max_delta_kick > self._max_delta_kick[pln]:
+                factor1 = self._max_delta_kick[pln]/max_delta_kick
+                dk_slc *= factor1
+                percent = self._corr_factor[pln] * factor1 * 100
+                msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
+                                                        pln.upper(), percent)
+                self._update_log(msg)
+                _log.warning(msg[6:])
+
             # Check if any kick + delta kick is larger than the maximum allowed
-            max_kick = _np.max(_np.abs(kicks[slc] + dkicks[slc]))
+            max_kick = _np.max(_np.abs(k_slc + dk_slc))
             factor2 = 1.0
             if max_kick > self._max_kick[pln]:
-                Q = _np.ones((2, kicks[slc].size), dtype=float)
+                Q = _np.ones((2, k_slc.size), dtype=float)
                 # perform the modulus inequality:
-                Q[0, :] = (-self._max_kick[pln] - kicks[slc]) / dkicks[slc]
-                Q[1, :] = (self._max_kick[pln] - kicks[slc]) / dkicks[slc]
+                Q[0, :] = (-self._max_kick[pln] - k_slc) / dk_slc
+                Q[1, :] = (self._max_kick[pln] - k_slc) / dk_slc
                 # since we know that any initial kick is lesser than max_kick
                 # from the previous comparison, at this point each column of Q
                 # has a positive and a negative value. We must consider only
@@ -489,15 +506,16 @@ class SOFB(_BaseClass):
                 # to be the multiplicative factor:
                 Q = _np.max(Q, axis=0)
                 factor2 = min(_np.min(Q), 1.0)
-                dkicks[slc] *= factor2
+                dk_slc *= factor2
                 percent = self._corr_factor[pln] * factor1 * factor2 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
                                                         pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
 
-        newkicks = [None, ] * len(dkicks)
+            dkicks[slc][idcs_pln] = dk_slc
+
         for i, dkick in enumerate(dkicks):
-            if not _compare_kicks(dkick, 0):
+            if newkicks[i] is not None:
                 newkicks[i] = kicks[i] + dkick
         return newkicks
