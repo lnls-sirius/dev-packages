@@ -44,6 +44,19 @@ class EpicsMatrix(BaseMatrix):
         self.select_items_extended = _dcopy(self.select_items)
         self._load_respmat()
 
+    @property
+    def bpm_enbllist(self):
+        sel_ = self.select_items
+        return _np.hstack([sel_['bpmx'], sel_['bpmy']])
+
+    @property
+    def corrs_enbllist(self):
+        sel_ = self.select_items
+        seleccor = _np.hstack([sel_['ch'], sel_['cv']])
+        if self.acc == 'SI':
+            seleccor = _np.hstack([seleccor, sel_['rf']])
+        return seleccor
+
     def get_map2write(self):
         """Get the write methods of the class."""
         db = {
@@ -240,11 +253,8 @@ class EpicsMatrix(BaseMatrix):
         msg = 'Calculating Inverse Matrix.'
         self._update_log(msg)
         _log.info(msg)
-        sel_ = self.select_items
-        selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
-        seleccor = _np.hstack([sel_['ch'], sel_['cv']])
-        if self.acc == 'SI':
-            seleccor = _np.hstack([seleccor, sel_['rf']])
+        selecbpm = self.bpm_enbllist
+        seleccor = self.corrs_enbllist
         if not any(selecbpm):
             msg = 'ERR: No BPM selected in EnblList'
             self._update_log(msg)
