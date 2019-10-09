@@ -333,6 +333,7 @@ class SOFB(_BaseClass):
             'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Measuring)
         mat = list()
         orig_kicks = self.correctors.get_strength()
+        enbllist = self.matrix.corrs_enbllist
         nr_corrs = len(orig_kicks)
         for i in range(nr_corrs):
             if not self._measuring_respmat:
@@ -346,6 +347,12 @@ class SOFB(_BaseClass):
                 i+1, nr_corrs, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
+            if not enbllist[i]:
+                mat.append(0.0 * self.orbit.get_orbit(True))
+                msg = '   Not Enabled. Skipping...'
+                self._update_log(msg)
+                _log.info(msg)
+                continue
 
             if i < self._csorb.NR_CH:
                 delta = self._meas_respmat_kick['ch']
