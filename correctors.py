@@ -71,18 +71,6 @@ class Corrector(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     @property
-    def ready(self):
-        """Ready status."""
-        if self._rb.connected and self._rb.value is not None:
-            return self.equalKick(self._rb.value)
-        return False
-
-    @property
-    def applied(self):
-        """Status applied."""
-        return self.ready
-
-    @property
     def value(self):
         """Value."""
         if self._rb.connected:
@@ -92,13 +80,9 @@ class Corrector(_BaseTimingConfig):
     def value(self, val):
         self._sp.put(val, wait=False)
 
-    def equalKick(self, value):
-        """Equal kick."""
-        if self._sp.connected:
-            val = self._sp.value
-            if val is not None:
-                return _compare_kicks(val, value)
-        return False
+    @property
+    def refvalue(self):
+        return self.value
 
 
 class RFCtrl(Corrector):
@@ -188,11 +172,9 @@ class CHCV(Corrector):
         return conn
 
     @property
-    def applied(self):
-        """Status applied."""
-        if self._ref.connected and self._ref.value is not None:
-            return self.equalKick(self._ref.value)
-        return False
+    def refvalue(self):
+        if self._ref.connected:
+            return self._ref.value
 
 
 class TimingConfig(_BaseTimingConfig):
@@ -309,10 +291,7 @@ class EpicsCorrectors(BaseCorrectors):
         _log.debug(strn.format('send sp:', 1000*(t2-t1)))
 
         # Wait for readbacks to be updated
-        if self._timed_out(mode='ready'):
-            msg = 'ERR: timeout waiting correctors RB'
-            self._update_log(msg)
-            _log.error(msg[5:])
+        if self._timed_out(values, mode='ready'):
             return
         t3 = _time.time()
         _log.debug(strn.format('check ready:', 1000*(t3-t2)))
@@ -324,10 +303,8 @@ class EpicsCorrectors(BaseCorrectors):
         _log.debug(strn.format('send evt:', 1000*(t4-t3)))
 
         # Wait for references to be updated
-        if self._timed_out(mode='applied'):
-            msg = 'ERR: timeout waiting correctors Ref'
-            self._update_log(msg)
-            _log.error(msg[5:])
+        if self._timed_out(values, mode='applied'):
+            return
         t5 = _time.time()
         _log.debug(strn.format('check applied:', 1000*(t5-t4)))
         _log.debug('    TIMEIT: END')
@@ -475,13 +452,24 @@ class EpicsCorrectors(BaseCorrectors):
         self._status = status
         self.run_callbacks('CorrStatus-Mon', status)
 
-    def _timed_out(self, mode='ready'):
+    def _timed_out(self, values, mode='ready'):
         for _ in range(self.NUM_TIMEOUT):
             okg = [False, ] * len(self._corrs)
             for i, corr in enumerate(self._corrs):
                 if not okg[i]:
-                    okg[i] = corr.ready if mode == 'ready' else corr.applied
+                    if values[i] is None:
+                        okg[i] = True
+                        continue
+                    val = corr.value if mode == 'ready' else corr.refvalue
+                    okg[i] = val is not None and _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
+
+        mde = 'RB' if mode == 'ready' else 'Ref'
+        for oki, corr in zip(okg, self._corrs):
+            if not oki:
+                msg = 'ERR: timeout {0:3s}: {1:s}'.format(mde, corr.name)
+                self._update_log(msg)
+                _log.error(msg[5:])
         return True
