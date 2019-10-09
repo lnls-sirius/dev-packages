@@ -695,12 +695,13 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
 class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
-    def __init__(self, maname, dipole=None, family=None, strengths=None):
+    def __init__(self, maname, dipole=None, family=None, strengths=None,
+                 wfm_nrpoints=_DEF_WFMSIZE):
         """Constructor."""
         if dipole is None:
             raise ValueError('{} waveform needs an associated '
                              'dipole waveform!'.format(maname))
-        _WaveformMagnet.__init__(self, maname)
+        _WaveformMagnet.__init__(self, maname, wfm_nrpoints=wfm_nrpoints)
         self._dipole = dipole
         self._family = family
         if strengths is None:
@@ -708,14 +709,9 @@ class Waveform(_WaveformMagnet):
                 nom_strengths = _ru.NOMINAL_STRENGTHS[maname]
             else:
                 nom_strengths = 0.0
-            strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
+            strengths = [nom_strengths, ] * self._wfm_nrpoints
         self._currents = self._conv_strengths_2_currents(strengths)
         self._strengths = self._conv_currents_2_strengths(self._currents)
-
-    @property
-    def wfm_nrpoints(self):
-        """Waveform nrpoints."""
-        return self._dipole.wfm_nrpoints
 
     @property
     def duration(self):
@@ -747,17 +743,37 @@ class Waveform(_WaveformMagnet):
     def _conv_currents_2_strengths(self, currents):
         kwargs = {'currents': currents}
         if self._dipole is not None:
-            kwargs['strengths_dipole'] = self._dipole.strengths
+            if self._dipole.wfm_nrpoints != self._wfm_nrpoints:
+                dip_strengths = _np.interp(
+                    self.times, self._dipole.times, self._dipole.strengths)
+            else:
+                dip_strengths = self._dipole.strengths
+            kwargs['strengths_dipole'] = dip_strengths
         if self._family is not None:
-            kwargs['strengths_family'] = self._family.strengths
+            if self._family.wfm_nrpoints != self._wfm_nrpoints:
+                fam_strengths = _np.interp(
+                    self.times, self._family.times, self._family.strengths)
+            else:
+                fam_strengths = self._family.strengths
+            kwargs['strengths_family'] = fam_strengths
         return self.conv_current_2_strength(**kwargs)
 
     def _conv_strengths_2_currents(self, strengths):
         kwargs = {'strengths': strengths}
         if self._dipole is not None:
-            kwargs['strengths_dipole'] = self._dipole.strengths
+            if self._dipole.wfm_nrpoints != self._wfm_nrpoints:
+                dip_strengths = _np.interp(
+                    self.times, self._dipole.times, self._dipole.strengths)
+            else:
+                dip_strengths = self._dipole.strengths
+            kwargs['strengths_dipole'] = dip_strengths
         if self._family is not None:
-            kwargs['strengths_family'] = self._family.strengths
+            if self._family.wfm_nrpoints != self._wfm_nrpoints:
+                fam_strengths = _np.interp(
+                    self.times, self._family.times, self._family.strengths)
+            else:
+                fam_strengths = self._family.strengths
+            kwargs['strengths_family'] = fam_strengths
         return self.conv_strength_2_current(**kwargs)
 
     # --- list methods (strengths) ---

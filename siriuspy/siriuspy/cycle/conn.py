@@ -15,8 +15,7 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put
-from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_DURATION,\
-    DEFAULT_RAMP_NRPULSES, DEFAULT_RAMP_TOTDURATION, \
+from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
 
@@ -30,17 +29,19 @@ class Timing:
 
     EVTNAME_CYCLE = 'Cycle'
 
-    DEFAULT_CYCLE_DURATION = 150  # [us]
-    DEFAULT_CYCLE_NRPULSES = 1
+    DEFAULT_DURATION = 150  # [us]
+    DEFAULT_NRPULSES = 1
     DEFAULT_DELAY = 0  # [us]
     DEFAULT_POLARITY = _TIConst.TrigPol.Normal  # test
     DEFAULT_STATE = _TIConst.DsblEnbl.Enbl
 
     _trigger_list = [
-        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs']
+        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs-WfmRef']
+    # TODO: update to official trigger names after tests are well succeeded
+    #     'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs']
     # TODO: uncomment when using TS and SI
-    #    'TS-Glob:TI-Mags', 'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
-    #    'SI-Glob:TI-Sexts', 'SI-Glob:TI-Skews', 'SI-Glob:TI-Corrs']
+    #     'TS-Glob:TI-Mags', 'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
+    #     'SI-Glob:TI-Sexts', 'SI-Glob:TI-Skews', 'SI-Glob:TI-Corrs']
 
     _pvs = dict()
     properties = dict()
@@ -111,15 +112,16 @@ class Timing:
                     defval = Timing.cycle_idx[prop_sts.device_name]
 
                 if prop_sts.propty_name.endswith(('Duration', 'Delay')):
-                    tol = 0.008 * 1.5
-                    if mode == 'Ramp':
-                        tol *= DEFAULT_RAMP_NRPULSES
+                    tol = 0.008 * 15
                     if not _isclose(pv.value, defval, abs_tol=tol):
+                        # print(pv.pvname, pv.value, defval)
                         return False
                 elif isinstance(defval, (_np.ndarray, list, tuple)):
                     if _np.any(pv.value[0:len(defval)] != defval):
+                        # print(pv.pvname, pv.value, defval)
                         return False
                 elif pv.value != defval:
+                    # print(pv.pvname, pv.value, defval)
                     return False
         return True
 
@@ -222,19 +224,13 @@ class Timing:
         }
 
         for trig in cls._trigger_list:
-            props['Cycle'][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
-            props['Cycle'][trig+':Duration-SP'] = cls.DEFAULT_CYCLE_DURATION
-            props['Cycle'][trig+':NrPulses-SP'] = cls.DEFAULT_CYCLE_NRPULSES
-            props['Cycle'][trig+':Delay-SP'] = cls.DEFAULT_DELAY
-            props['Cycle'][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
-            props['Cycle'][trig+':State-Sel'] = cls.DEFAULT_STATE
-
-            props['Ramp'][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
-            props['Ramp'][trig+':Duration-SP'] = DEFAULT_RAMP_DURATION
-            props['Ramp'][trig+':NrPulses-SP'] = DEFAULT_RAMP_NRPULSES
-            props['Ramp'][trig+':Delay-SP'] = cls.DEFAULT_DELAY
-            props['Ramp'][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
-            props['Ramp'][trig+':State-Sel'] = cls.DEFAULT_STATE
+            for mode in ['Cycle', 'Ramp']:
+                props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
+                props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION
+                props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
+                props[mode][trig+':Delay-SP'] = cls.DEFAULT_DELAY
+                props[mode][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
+                props[mode][trig+':State-Sel'] = cls.DEFAULT_STATE
 
             _trig_db = _get_trig_db(trig)
             cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
@@ -255,8 +251,8 @@ class MagnetCycler:
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
         'CycleEnbl-Mon',
-        'WfmData-SP', 'WfmData-RB',
-        'PRUSyncPulseCount-Mon',
+        'Wfm-SP', 'Wfm-RB',
+        'WfmIndex-Mon', 'WfmSyncPulseCount-Mon',
         'IntlkSoft-Mon', 'IntlkHard-Mon'
     ]
 
@@ -264,9 +260,10 @@ class MagnetCycler:
         """Constructor."""
         self._maname = maname
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
-        self._siggen = None
         self._ramp_config = ramp_config
         self._waveform = None
+        self._siggen = None
+        self._init_wfm_pulsecnt = None
         self._pvs = dict()
         for prop in MagnetCycler.properties:
             if prop not in self._pvs.keys():
@@ -282,14 +279,18 @@ class MagnetCycler:
 
     @property
     def connected(self):
-        """Return connected state."""
+        """Connection state."""
         for prop in MagnetCycler.properties:
-            if not self[prop].connected:
+            if prop in ['Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
+                        'WfmSyncPulseCount-Mon'] and 'TB' in self.maname:
+                pass
+            elif not self[prop].connected:
                 return False
         return True
 
     @property
     def waveform(self):
+        """Default waveform."""
         if self._waveform is None:
             self._waveform = _bo_get_default_waveform(
                 maname=self.maname, ramp_config=self._ramp_config)
@@ -297,9 +298,21 @@ class MagnetCycler:
 
     @property
     def siggen(self):
+        """Default siggen."""
         if self._siggen is None:
             self._siggen = _PSSearch.conv_psname_2_siggenconf(self._psnames[0])
         return self._siggen
+
+    @property
+    def init_wfm_pulsecnt(self):
+        """Initial waveform sync pulse count."""
+        if self._init_wfm_pulsecnt is None:
+            self.update_wfm_pulsecnt()
+        return self._init_wfm_pulsecnt
+
+    def update_wfm_pulsecnt(self):
+        """Update waveform sync pulse count to current value."""
+        self._init_wfm_pulsecnt = self._pvs['WfmSyncPulseCount-Mon'].get()
 
     def cycle_duration(self, mode):
         """Return the duration of the cycling in seconds."""
@@ -345,7 +358,7 @@ class MagnetCycler:
             status &= _pv_conn_put(self['CycleNrCycles-SP'],
                                    self.siggen.num_cycles)
         else:
-            status &= _pv_conn_put(self['WfmData-SP'], self.waveform)
+            status &= _pv_conn_put(self['Wfm-SP'], self.waveform)
         return status
 
     def check_params(self, mode):
@@ -363,7 +376,7 @@ class MagnetCycler:
             status &= _pv_timed_get(
                 self['CycleNrCycles-RB'], self.siggen.num_cycles)
         else:
-            status &= _pv_timed_get(self['WfmData-RB'], self.waveform)
+            status &= _pv_timed_get(self['Wfm-RB'], self.waveform)
         return status
 
     def prepare(self, mode):
@@ -378,6 +391,8 @@ class MagnetCycler:
 
         status &= self.set_params(mode)
         status &= self.check_params(mode)
+
+        self.update_wfm_pulsecnt()
         return status
 
     def is_prepared(self, mode):
@@ -412,9 +427,12 @@ class MagnetCycler:
 
     def check_final_state(self, mode):
         if mode == 'Ramp':
-            pulses = DEFAULT_RAMP_NRCYCLES*DEFAULT_RAMP_NRPULSES
-            status = _pv_timed_get(
-                self['PRUSyncPulseCount-Mon'], pulses, wait=10.0)
+            indices = len(self.waveform)
+            status = _pv_timed_get(self['WfmIndex-Mon'], indices, wait=10.0)
+            status &= _pv_timed_get(
+                self['WfmSyncPulseCount-Mon'],
+                self.init_wfm_pulsecnt + DEFAULT_RAMP_NRCYCLES, wait=10.0)
+            self.update_wfm_pulsecnt()
             if not status:
                 return 1  # indicate lack of trigger pulses
             status = self.set_opmode_slowref()

@@ -225,7 +225,6 @@ class TestWaveform(TestCase):
     """Test Waveform class."""
 
     public_interface = (
-        'wfm_nrpoints',
         'duration',
         'update',
     )
@@ -236,11 +235,6 @@ class TestWaveform(TestCase):
                 Waveform,
                 TestWaveform.public_interface)
         self.assertTrue(valid)
-
-    def test_wfm_nrpoints(self):
-        """Test wfm_nrpoints."""
-        # TODO: implement it!
-        pass
 
     def test_duration(self):
         """Test duration."""

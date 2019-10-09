@@ -44,7 +44,7 @@ class ConnTiming(_EpicsPropsList):
 
         # Trigger prefixes
         TrgMags = 'BO-Glob:TI-Mags'
-        TrgCorrs = 'BO-Glob:TI-Corrs'
+        TrgCorrs = 'BO-Glob:TI-Corrs-WfmRef'
         TrgLLRFRmp = 'BO-Glob:TI-LLRF-Rmp'
         TrgEGunSglBun = 'LI-01:TI-EGun-SglBun'
         TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
@@ -93,7 +93,8 @@ class ConnTiming(_EpicsPropsList):
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
         """Do setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
-        for ppty in sp:
+        ppties = list(sp.keys())
+        for ppty in ppties:
             if 'Status-Mon' in ppty:
                 sp.pop(ppty)
         return self._command(sp, timeout)
@@ -239,12 +240,12 @@ class ConnTiming(_EpicsPropsList):
             c.EvtRmpBO_Delay: 0,          # [us]
             c.EvtInjSI_Delay: 0,          # [us]
             # Mags trigger
-            c.TrgMags_NrPulses: 3920,
-            c.TrgMags_Duration: 490000,   # [us]
+            c.TrgMags_NrPulses: 1,
+            c.TrgMags_Duration: 150,      # [us]
             c.TrgMags_Delay: 0,           # [us]
             # Corrs trigger
-            c.TrgCorrs_NrPulses: 3920,
-            c.TrgCorrs_Duration: 490000,  # [us]
+            c.TrgCorrs_NrPulses: 1,
+            c.TrgCorrs_Duration: 150,     # [us]
             c.TrgCorrs_Delay: 0,          # [us]
             # LLRFRmp trigger
             c.TrgLLRFRmp_Delay: 0}        # [us]
@@ -349,7 +350,7 @@ class ConnMagnets(_EpicsPropsList):
                              desired_readback=_PSConst.States.RmpWfm,
                              timeout=timeout)
 
-    def cmd_wfmdata(self, manames=list(), timeout=_TIMEOUT_DFLT):
+    def cmd_wfm(self, manames=list(), timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
@@ -359,7 +360,7 @@ class ConnMagnets(_EpicsPropsList):
             # get value (wfmdata)
             wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
-            name = maname + ':WfmData-SP'
+            name = maname + ':Wfm-SP'
             sp[name] = value
         return self.set_setpoints_check(sp, timeout=timeout)
 
@@ -407,7 +408,7 @@ class ConnMagnets(_EpicsPropsList):
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':WfmData-SP', p,
+                _EpicsProperty(maname + ':Wfm-SP', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
