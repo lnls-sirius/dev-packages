@@ -18,10 +18,10 @@ from siriuspy.ramp import util as _rutil
 
 
 _prefix = _envars.vaca_prefix
-_TIMEOUT_DFLT = 5
-_TIMEOUT_PWRSTATE_ON = 1.4
-_TIMEOUT_PWRSTATE_OFF = 0.8
-_TIMEOUT_OPMODE_CHANGE = 5
+_TIMEOUT_DFLT = 8
+_TIMEOUT_PWRSTATE_ON = 2
+_TIMEOUT_PWRSTATE_OFF = 1
+_TIMEOUT_OPMODE_CHANGE = 6
 
 
 class ConnTiming(_EpicsPropsList):
@@ -30,17 +30,31 @@ class ConnTiming(_EpicsPropsList):
     class Const(_cutil.Const):
         """Properties names."""
 
+        BO_HarmNum = 828
+        EVG_RFDiv = 4
+
         # EVG PVs
         EVG = _LLTimeSearch.get_evg_name()
         EVG_DevEnbl = EVG + ':DevEnbl-Sel'
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
+        EVG_FPGAClk = EVG + ':FPGAClk-Cte'
 
         # Event prefixes
         EvtLinac = EVG + ':Linac'
         EvtInjBO = EVG + ':InjBO'
-        EvtRmpBO = EVG + ':RmpBO'
         EvtInjSI = EVG + ':InjSI'
+        EvtRmpBO = EVG + ':RmpBO'
+        EvtDigLI = EVG + ':DigLI'
+        EvtDigTB = EVG + ':DigTB'
+        EvtDigBO = EVG + ':DigBO'
+        EvtDigTS = EVG + ':DigTS'
+        EvtDigSI = EVG + ':DigSI'
+        EvtOrbBO = EVG + ':OrbBO'
+        EvtOrbSI = EVG + ':OrbSI'
+        EvtCplSI = EVG + ':CplSI'
+        EvtTunSI = EVG + ':TunSI'
+        EvtStudy = EVG + ':Study'
 
         # Trigger prefixes
         TrgMags = 'BO-Glob:TI-Mags'
@@ -59,7 +73,10 @@ class ConnTiming(_EpicsPropsList):
 
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
-    for attr in ['EvtLinac', 'EvtInjBO', 'EvtRmpBO', 'EvtInjSI']:
+    for attr in ['EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
+                 'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
+                 'EvtDigSI', 'EvtOrbBO', 'EvtOrbSI', 'EvtStudy',
+                 'EvtCplSI', 'EvtTunSI']:
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
@@ -99,28 +116,52 @@ class ConnTiming(_EpicsPropsList):
                 sp.pop(ppty)
         return self._command(sp, timeout)
 
-    def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
+    def cmd_config_ramp(self, events_inj, events_eje, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to TI subsystem."""
-        if not self._ramp_config:
+        if self._ramp_config is None:
             return
 
         sp = dict()
         c = ConnTiming.Const
-        sp[c.TrgMags_Duration] = self._ramp_config.ps_ramp_duration
-        sp[c.TrgCorrs_Duration] = self._ramp_config.ps_ramp_duration
-        sp[c.TrgMags_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
-        sp[c.TrgCorrs_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
+        sp[c.TrgMags_Duration] = 150
+        sp[c.TrgCorrs_Duration] = 150
+
+        sp[c.TrgMags_NrPulses] = 1
+        sp[c.TrgCorrs_NrPulses] = 1
+
         sp[c.TrgMags_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgCorrs_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgLLRFRmp_Delay] = self._ramp_config.ti_params_rf_ramp_delay
 
         # Event delays
         sp[c.EvtRmpBO_Delay] = 0
-        [linac_dly, injbo_dly, injsi_dly] = self.calc_evts_delay()
-        sp[c.EvtLinac_Delay] = linac_dly
-        sp[c.EvtInjBO_Delay] = injbo_dly
-        sp[c.EvtInjSI_Delay] = injsi_dly
+        delays = self.calc_evts_delay(events_inj, events_eje)
+        sp[c.EvtLinac_Delay] = delays['Linac']
+        sp[c.EvtInjBO_Delay] = delays['InjBO']
+        sp[c.EvtInjSI_Delay] = delays['InjSI']
+        if 'DigLI' in events_inj or 'DigLI' in events_eje:
+            sp[c.EvtDigLI_Delay] = delays['DigLI']
+        if 'DigTB' in events_inj or 'DigTB' in events_eje:
+            sp[c.EvtDigTB_Delay] = delays['DigTB']
+        if 'DigBO' in events_inj or 'DigBO' in events_eje:
+            sp[c.EvtDigBO_Delay] = delays['DigBO']
+        if 'OrbBO' in events_inj or 'OrbBO' in events_eje:
+            sp[c.EvtOrbBO_Delay] = delays['OrbBO']
+        if 'Study' in events_inj or 'Study' in events_eje:
+            sp[c.EvtStudy_Delay] = delays['Study']
+        if 'DigTS' in events_inj or 'DigTS' in events_eje:
+            sp[c.EvtDigTS_Delay] = delays['DigTS']
+        if 'DigSI' in events_inj or 'DigSI' in events_eje:
+            sp[c.EvtDigSI_Delay] = delays['DigSI']
+        if 'OrbSI' in events_inj or 'OrbSI' in events_eje:
+            sp[c.EvtOrbSI_Delay] = delays['OrbSI']
+        if 'CplSI' in events_inj or 'CplSI' in events_eje:
+            sp[c.EvtCplSI_Delay] = delays['CplSI']
+        if 'TunSI' in events_inj or 'TunSI' in events_eje:
+            sp[c.EvtTunSI_Delay] = delays['TunSI']
 
+        print(sp)
+        return
         return self._command(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
@@ -165,30 +206,55 @@ class ConnTiming(_EpicsPropsList):
 
     # --- helper methods ---
 
-    def calc_evts_delay(self):
+    def calc_evts_delay(self, events_inj, events_eje):
         """Calculate event delays."""
-        if not self._ramp_config:
+        if self._ramp_config is None:
             return False
         if not self.connected:
             return False
 
         c = ConnTiming.Const
-        injection_time = self._ramp_config.ti_params_injection_time
+        evg_base_time = 1 / self.get_readback(c.EVG_FPGAClk)
+        bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
+
+        # Injection
+        injection_time = self._ramp_config.ti_params_injection_time*1e3
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        linac_dly = injection_time - egun_dly
+        delay_inj = injection_time - egun_dly
 
         curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        delta_dly = linac_dly - curr_linac_dly
-        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        injbo_dly = curr_injbo_dly + delta_dly
+        dlt_inj_dly = delay_inj - curr_linac_dly
+        dlt_inj_dly = int(dlt_inj_dly/bo_rev)*bo_rev
 
-        ejection_time = self._ramp_config.ti_params_ejection_time
+        # Ejection
+        ejection_time = self._ramp_config.ti_params_ejection_time*1e3
         ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
-        injsi_dly = ejection_time - ejekckr_dly
+        delay_eje = ejection_time - ejekckr_dly
 
-        return [linac_dly, injbo_dly, injsi_dly]
+        curr_injsi_dly = self.get_readback(c.EvtInjSI_Delay)
+        dlt_eje_dly = delay_eje - curr_injsi_dly
+        dlt_eje_dly = int(dlt_eje_dly/bo_rev)*bo_rev
+
+        # calc delays
+        delays = dict()
+
+        events_inj = sorted(events_inj)
+        # events_inj.extend(['Linac', 'InjBO'])
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            curr = self.get_readback(attr)
+            delays[event] = curr + dlt_inj_dly
+
+        events_eje = sorted(events_eje)
+        # events_eje.append('InjSI')
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            curr = self.get_readback(attr)
+            delays[event] = curr + dlt_eje_dly
+
+        return delays
 
     # --- private methods ---
 
@@ -239,6 +305,16 @@ class ConnTiming(_EpicsPropsList):
             c.EvtInjBO_Delay: 0,          # [us]
             c.EvtRmpBO_Delay: 0,          # [us]
             c.EvtInjSI_Delay: 0,          # [us]
+            c.EvtDigLI_Delay: 0,          # [us]
+            c.EvtDigTB_Delay: 0,          # [us]
+            c.EvtDigBO_Delay: 0,          # [us]
+            c.EvtDigTS_Delay: 0,          # [us]
+            c.EvtDigSI_Delay: 0,          # [us]
+            c.EvtOrbBO_Delay: 0,          # [us]
+            c.EvtOrbSI_Delay: 0,          # [us]
+            c.EvtCplSI_Delay: 0,          # [us]
+            c.EvtTunSI_Delay: 0,          # [us]
+            c.EvtStudy_Delay: 0,          # [us]
             # Mags trigger
             c.TrgMags_NrPulses: 1,
             c.TrgMags_Duration: 150,      # [us]
@@ -256,6 +332,7 @@ class ConnTiming(_EpicsPropsList):
 
         self._reading_propties = {
             # EGun trigger delays
+            c.EVG_FPGAClk: 0,
             c.TrgEGunSglBun_Delay: 0,     # [us]
             c.TrgEGunMultBun_Delay: 0,    # [us]
             # EjeKckr trigger delay
@@ -449,7 +526,7 @@ class ConnRF(_EpicsPropsList):
     class Const(_cutil.Const):
         """Properties names."""
 
-        DevName = 'BO-05D:RF-LLRF'
+        DevName = 'BR-RF-DLLRF-01'
         Rmp_Enbl = DevName + ':RmpEnbl-Sel'
         Rmp_Ts1 = DevName + ':RmpTs1-SP'
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
@@ -583,10 +660,10 @@ class ConnSOFB(_EpicsPropsList):
         """Get CH and CV delta kicks calculated by SOFB."""
         bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
-        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH']
+        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon']
         ch_names = bo_sofb_db.CH_NAMES
 
-        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV']
+        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon']
         cv_names = bo_sofb_db.CV_NAMES
 
         corrs2dkicks_dict = dict()
