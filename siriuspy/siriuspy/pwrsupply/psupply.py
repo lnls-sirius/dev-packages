@@ -93,6 +93,13 @@ class PSupply:
         """."""
         return self._variables
 
+    @property
+    def timestamp_update(self):
+        """Return timestamp of last power supply update."""
+        # TODO: change this as soon as PRUController starts updating psupply variables.
+        # return self._timestamp_update
+        return self._timestamp_update_wfm
+
     def get_variable(self, var_id):
         """."""
         return self._variables[var_id]
@@ -183,7 +190,7 @@ class PSupply:
                 # currently being filled by DSP. Therefore an issue
                 # of a bufsample enable command is in order!
                 self._psbsmp.wfmref_mon_bufsample_enable()
-            # update timestamp
+            # update timestamp (even it could not read wfm_mon)
             self._timestamp_update_wfm = now
         return True
 

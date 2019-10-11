@@ -2,6 +2,7 @@
 
 These classes implement a common interface that exposes the `read` method.
 """
+import time as _time
 import re as _re
 
 from PRUserial485 import ConstSyncMode as _SYNC_MODE
@@ -95,13 +96,27 @@ class WfmIndexCurve:
         return data
 
 
+class TimestampUpdate:
+    """Timestamp update read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        timestamp = self.pru_controller.timestamp_update(self.device_id)
+        return timestamp
+
+
 class PRUProperty:
     """Read a PRU property."""
 
-    def __init__(self, pru_controller, property):
+    def __init__(self, pru_controller, pru_property):
         """Get pru controller and property name."""
         self.pru_controller = pru_controller
-        self.property = property
+        self.property = pru_property
 
     def read(self):
         """Read pru property."""

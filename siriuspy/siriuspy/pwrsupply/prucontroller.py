@@ -142,8 +142,8 @@ class PRUController:
         self._pru_sync_delays = self._init_pru_sync_delays(self._parms)
 
         # index of dev_id in self._device_ids for wfmref update
+        self._wfm_update = True
         self._wfm_update_dev_idx = 0  # cyclical updates!
-        # self._wfm_update_dev_idx = None  # np updates!
 
         # initializes PRU parameters (in sync mode off).
         self._scan_interval, self._curves = self._init_pru()
@@ -152,6 +152,7 @@ class PRUController:
         self._bsmp_reset_udc()
 
         # update state of PRUController from ps controller
+        self._timestamp_update = _time()
         self._bsmp_init_update()
 
         # initialize BSMP devices (might contain BSMP comm)
@@ -253,6 +254,15 @@ class PRUController:
         # TODO: may not be the true current connection state
         psupply = self._psupplies[device_id]
         return psupply.connected
+
+    def timestamp_update(self, device_id):
+        """Return tmestamp of last device update."""
+        # TODO: reimplement this
+        # psupply = self._psupplies[device_id]
+        # with self._lock:
+        #     tstamp = psupply.timestamp_update
+        # return tstamp
+        return self._timestamp_update
 
     # --- public methods: bbb controller ---
 
@@ -559,8 +569,7 @@ class PRUController:
         device_ids, group_id = self._select_device_group_ids()
         operation = (self._bsmp_update,
                      (device_ids, group_id, ))
-        if len(self._queue) == 0 or \
-           operation != self._queue.last_operation:
+        if not self._queue or operation != self._queue.last_operation:
             if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
                 # with sync off, function executions are allowed and
                 # therefore operations must be queued in order
@@ -886,12 +895,15 @@ class PRUController:
         self._udc.bufsample_disable()
 
     def _bsmp_update(self, device_ids, group_id):
-        # update variables
-        # print('here')
-        self._bsmp_update_variables(device_ids, group_id)
+        # update
+        self._timestamp_update = _time()
 
-        # is attribute is not, does not update!
-        if self._wfm_update_dev_idx is None:
+        # update variables
+        self._bsmp_update_variables(device_ids, group_id)
+        # self._bsmp_update_variables_new(device_ids, group_id)
+
+        # return of wfm is not to be updated
+        if not self._wfm_update:
             return  # does not update!
 
         # update device wfm curves cyclically
@@ -899,6 +911,12 @@ class PRUController:
             (self._wfm_update_dev_idx + 1) % len(self._device_ids)
         dev_id = self._device_ids[self._wfm_update_dev_idx]
         self._bsmp_update_wfm([dev_id, ])
+
+    def _bsmp_update_variables_new(self, device_ids, group_id):
+        # update variables
+        for dev_id, psupply in self._psupplies.items():
+            psupply.update_variables()
+            self._variables_values[dev_id] = psupply._variables
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).
@@ -1152,6 +1170,7 @@ class PRUController:
 
         # read all variable from BSMP devices
         self._bsmp_update_variables(device_ids=self._device_ids,
+        # self._bsmp_update_variables_new(device_ids=self._device_ids,
                           group_id=self._parms.ALLRELEVANT)
 
     @staticmethod

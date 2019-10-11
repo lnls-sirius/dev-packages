@@ -117,6 +117,9 @@ class BBBFactory:
     def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
 
+        # get current timestamp
+        timestamp = _time.time()
+
         # Create PRU
         if eth:
             pru = _PRU(bbbname=bbbname)
@@ -172,6 +175,9 @@ class BBBFactory:
 
             # Get model database
             database = _PSData(devices[0][0]).propty_database
+
+            # set bootime in epics database
+            database['TimestampBoot-Cte']['value'] = timestamp
 
             # Build setpoints
             setpoints = BBBFactory._build_setpoints_dict(devices, database)

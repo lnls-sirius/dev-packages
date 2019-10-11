@@ -12,6 +12,7 @@ class _PSModel:
 
     _c = _psbsmp.ConstPSBSMP
     _e2v = {
+        # Epics to direct BSMP variable
         'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
         'CycleType-Sts': _c.V_SIGGEN_TYPE,
         'CycleNrCycles-RB': _c.V_SIGGEN_NUM_CYCLES,
@@ -21,18 +22,20 @@ class _PSModel:
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM}
     _e2f = {
+        # Epics to BSMP variable with pre-processing
         'PwrState-Sts': (_fields.PwrState, _c.V_PS_STATUS),
         'OpMode-Sts': (_fields.OpMode, _c.V_PS_STATUS),
         'CtrlMode-Mon': (_fields.CtrlMode, _c.V_PS_STATUS),
         'CtrlLoop-Sts': (_fields.CtrlLoop, _c.V_PS_STATUS),
         'Version-Cte': (_fields.Version, _c.V_FIRMWARE_VERSION)}
     _e2c = {
+        # Epics to PRUCrontroller property
         'PRUBlockIndex-Mon': 'pru_curve_block',
         'PRUSyncPulseCount-Mon': 'pru_sync_pulse_count',
         'PRUCtrlQueueSize-Mon': 'queue_length',
-        'BSMPComm-Sts': 'bsmpcomm'}
+        'BSMPComm-Sts': 'bsmpcomm', }
 
-    _variables = {}
+    _variables = dict()  # this will be filled in derived classes
 
     @property
     def name(self):
@@ -83,14 +86,16 @@ class _PSModel:
 
     def _common_fields(self, device_id, epics_field, pru_controller):
         if epics_field in self._e2v:
-            bsmpid = self._e2v[epics_field]
-            return _fields.Variable(pru_controller, device_id, bsmpid)
+            var_id = self._e2v[epics_field]
+            return _fields.Variable(pru_controller, device_id, var_id)
         elif epics_field in self._e2f:
-            field, bsmpid = self._e2f[epics_field]
-            return field(_fields.Variable(pru_controller, device_id, bsmpid))
+            field, var_id = self._e2f[epics_field]
+            return field(_fields.Variable(pru_controller, device_id, var_id))
         elif epics_field in self._e2c:
             attr = self._e2c[epics_field]
             return _fields.PRUProperty(pru_controller, attr)
+        elif epics_field == 'TimestampUpdate-Mon':
+            return _fields.TimestampUpdate(pru_controller, device_id)
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'Wfm-RB':
