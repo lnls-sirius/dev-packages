@@ -1,13 +1,14 @@
 """Booster cycle data."""
 
 import numpy as _np
+from siriuspy.csdevice.pwrsupply import \
+    DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
+    DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
 from siriuspy.search import MASearch as _MASearch
 
 # Constants
 
 DEFAULT_RAMP_DURATION = 490000  # [us]
-
-DEFAULT_RAMP_NRPULSES = 3920
 
 DEFAULT_RAMP_NRCYCLES = 16
 
@@ -15,7 +16,7 @@ DEFAULT_RAMP_TOTDURATION = DEFAULT_RAMP_DURATION * \
     DEFAULT_RAMP_NRCYCLES/1000000  # [s]
 
 DEFAULT_RAMP_AMPLITUDE = {  # A
-    'BO-Fam:MA-B':  1000,
+    'BO-Fam:MA-B':  1072,
     'BO-Fam:MA-QD': 30,
     'BO-Fam:MA-QF': 120,
     'BO-Fam:MA-SD': 149,
@@ -2074,25 +2075,30 @@ BASE_RAMP_CURVE_ORIG = \
          [490,                5.59746080853394e-06]])
 
 
-def bo_generate_base_waveform(nrpulses, duration):
+def bo_generate_base_waveform(nrpoints, duration):
     """Return base waveform of required number of points and duration."""
-    if nrpulses is None:
-        nrpulses = DEFAULT_RAMP_NRPULSES
+    if nrpoints is None:
+        raise Exception('Missing number of points to generate waveform!')
     if duration is None:
         duration = DEFAULT_RAMP_DURATION/1000
 
     t0 = BASE_RAMP_CURVE_ORIG[:, 0]
     w0 = BASE_RAMP_CURVE_ORIG[:, 1]
-    t = _np.linspace(0.0, duration, nrpulses)
+    t = _np.linspace(0.0, duration, nrpoints)
     w = _np.interp(t, t0, w0)
     return w
 
 
-def bo_get_default_waveform(maname, nrpulses=None, duration=None,
+def bo_get_default_waveform(maname, nrpoints=None, duration=None,
                             ramp_config=None):
     if ramp_config is None:
         # Uses a template wfmdata scaled to maximum magnet ps current
-        w = bo_generate_base_waveform(nrpulses, duration)
+        if nrpoints is None:
+            if 'CH' in maname or 'CV' in maname or 'QS' in maname:
+                nrpoints = _DEF_WFMSIZE_FBP
+            else:
+                nrpoints = _DEF_WFMSIZE_OTHERS
+        w = bo_generate_base_waveform(nrpoints, duration)
         if maname in DEFAULT_RAMP_AMPLITUDE:
             # bypass upper_limit if maname in dictionary
             amp = DEFAULT_RAMP_AMPLITUDE[maname]
