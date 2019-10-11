@@ -256,6 +256,22 @@ class ConnTiming(_EpicsPropsList):
 
         return delays
 
+    def get_injection_time(self):
+        """Return injection time."""
+        c = ConnTiming.Const
+        curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
+            if self.get_readback(c.LinacEgun_SglBun_State) \
+            else self.get_readback(c.TrgEGunMultBun_Delay)
+        return curr_linac_dly + egun_dly
+
+    def get_ejection_time(self):
+        """Return ejection time."""
+        c = ConnTiming.Const
+        curr_injsi_dly = self.get_readback(c.EvtInjSI_Delay)
+        ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
+        return curr_injsi_dly + ejekckr_dly
+
     # --- private methods ---
 
     def _define_properties(self, prefix, connection_callback, callback):
