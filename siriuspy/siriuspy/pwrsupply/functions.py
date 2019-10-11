@@ -82,8 +82,8 @@ class PRUCurve(Function):
                     print(str(err))
 
 
-class WfmAcqCurve(Function):
-    """Enable/Disable curve acquisition."""
+class WfmMonAcq(Function):
+    """Enable/Disable Wfm-Mon curve acquisition."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define CurveAcq."""
@@ -104,8 +104,8 @@ class WfmAcqCurve(Function):
                 self.disable.execute()
 
 
-class WfmSPCurve(Function):
-    """Executes a ps wfmref curve write command."""
+class WfmSP(Function):
+    """Executes a Wfm curve write command."""
 
     def __init__(self, device_ids, pru_controller, setpoints=()):
         """Get pru controller."""
@@ -136,6 +136,24 @@ class WfmUpdate(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.wfm_update(self._device_ids, interval=0)
 
+
+class WfmUpdateAutoSel(Function):
+    """Enable/Disable curves acquisition."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """Define CurveAcq."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute Command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            if value == 1:
+                self.pru_controller.wfm_update_auto_enable()
+            elif value == 0:
+                self.pru_controller.wfm_update_auto_disable()
 
 class PRUProperty(Function):
     """Executes a PRUProperty command."""

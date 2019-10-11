@@ -458,9 +458,16 @@ def get_basic_propty_database():
         'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
                     'value': list(DEFAULT_WFM),
                     'prec': DEFLT_PS_CURR_PREC},
+        # 'WfmMonAcq-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+        #                   'value': Const.DsblEnbl.Dsbl},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
         'WfmSyncPulseCount-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         'WfmUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'WfmUpdateAuto-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                              'value': Const.DsblEnbl.Dsbl},
+        'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                              'value': Const.DsblEnbl.Dsbl},
+
     })
     return dbase
 
