@@ -96,6 +96,20 @@ class WfmIndexCurve:
         return data
 
 
+class WfmUpdateAutoSts:
+    """Wfm Update Auto Status."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read status."""
+        data = self.pru_controller.wfm_update_auto
+        return data
+
+
 class TimestampUpdate:
     """Timestamp update read."""
 

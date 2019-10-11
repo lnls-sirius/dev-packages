@@ -75,6 +75,9 @@ class PSController:
                 try:
                     value = self._readers[rb_field].read()
                 except KeyError:
+                    err_str = '\
+                        Could not find reader for PV {}!'.format(rb_field)
+                    print(err_str)
                     continue
                 else:
                     if key.endswith('OpMode-Sel'):

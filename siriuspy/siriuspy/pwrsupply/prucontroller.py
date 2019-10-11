@@ -341,6 +341,19 @@ class PRUController:
 
         return values
 
+    def wfm_update_auto_enable(self):
+        """Enable wfm updates."""
+        self._wfm_update = True
+
+    def wfm_update_auto_disable(self):
+        """Disable wfm updates."""
+        self._wfm_update = False
+
+    @property
+    def wfm_update_auto(self):
+        """Return state of wfm_update_auto."""
+        return self._wfm_update
+
     def wfm_update(self, device_ids, interval=None):
         """Queue update wfm curve."""
         if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
