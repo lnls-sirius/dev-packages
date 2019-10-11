@@ -4,6 +4,7 @@ This module implements connector classes responsible for communications with
 magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
+import math as _math
 from siriuspy import envars as _envars
 from siriuspy.epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
@@ -50,10 +51,6 @@ class ConnTiming(_EpicsPropsList):
         EvtDigBO = EVG + ':DigBO'
         EvtDigTS = EVG + ':DigTS'
         EvtDigSI = EVG + ':DigSI'
-        EvtOrbBO = EVG + ':OrbBO'
-        EvtOrbSI = EVG + ':OrbSI'
-        EvtCplSI = EVG + ':CplSI'
-        EvtTunSI = EVG + ':TunSI'
         EvtStudy = EVG + ':Study'
 
         # Trigger prefixes
@@ -75,8 +72,7 @@ class ConnTiming(_EpicsPropsList):
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
     for attr in ['EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
                  'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
-                 'EvtDigSI', 'EvtOrbBO', 'EvtOrbSI', 'EvtStudy',
-                 'EvtCplSI', 'EvtTunSI']:
+                 'EvtDigSI', 'EvtStudy']:
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
@@ -91,7 +87,6 @@ class ConnTiming(_EpicsPropsList):
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, trg_pfx+':'+p)
-    Const.TrgLLRFRmp_RFDelayType = Const.TrgLLRFRmp + ':RFDelayType-Sel'
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
@@ -123,8 +118,8 @@ class ConnTiming(_EpicsPropsList):
 
         sp = dict()
         c = ConnTiming.Const
-        sp[c.TrgMags_Duration] = 150
-        sp[c.TrgCorrs_Duration] = 150
+        sp[c.TrgMags_Duration] = 150.0
+        sp[c.TrgCorrs_Duration] = 150.0
 
         sp[c.TrgMags_NrPulses] = 1
         sp[c.TrgCorrs_NrPulses] = 1
@@ -139,29 +134,13 @@ class ConnTiming(_EpicsPropsList):
         sp[c.EvtLinac_Delay] = delays['Linac']
         sp[c.EvtInjBO_Delay] = delays['InjBO']
         sp[c.EvtInjSI_Delay] = delays['InjSI']
-        if 'DigLI' in events_inj or 'DigLI' in events_eje:
-            sp[c.EvtDigLI_Delay] = delays['DigLI']
-        if 'DigTB' in events_inj or 'DigTB' in events_eje:
-            sp[c.EvtDigTB_Delay] = delays['DigTB']
-        if 'DigBO' in events_inj or 'DigBO' in events_eje:
-            sp[c.EvtDigBO_Delay] = delays['DigBO']
-        if 'OrbBO' in events_inj or 'OrbBO' in events_eje:
-            sp[c.EvtOrbBO_Delay] = delays['OrbBO']
-        if 'Study' in events_inj or 'Study' in events_eje:
-            sp[c.EvtStudy_Delay] = delays['Study']
-        if 'DigTS' in events_inj or 'DigTS' in events_eje:
-            sp[c.EvtDigTS_Delay] = delays['DigTS']
-        if 'DigSI' in events_inj or 'DigSI' in events_eje:
-            sp[c.EvtDigSI_Delay] = delays['DigSI']
-        if 'OrbSI' in events_inj or 'OrbSI' in events_eje:
-            sp[c.EvtOrbSI_Delay] = delays['OrbSI']
-        if 'CplSI' in events_inj or 'CplSI' in events_eje:
-            sp[c.EvtCplSI_Delay] = delays['CplSI']
-        if 'TunSI' in events_inj or 'TunSI' in events_eje:
-            sp[c.EvtTunSI_Delay] = delays['TunSI']
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            sp[attr] = delays[event]
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            sp[attr] = delays[event]
 
-        print(sp)
-        return
         return self._command(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
@@ -254,6 +233,21 @@ class ConnTiming(_EpicsPropsList):
             curr = self.get_readback(attr)
             delays[event] = curr + dlt_eje_dly
 
+        # update desired values
+        self.ramp_configsetup[c.EvtRmpBO_Delay] = 0
+        self.ramp_configsetup[c.TrgMags_Delay] = \
+            self._ramp_config.ti_params_ps_ramp_delay
+        self.ramp_configsetup[c.TrgCorrs_Delay] = \
+            self._ramp_config.ti_params_ps_ramp_delay
+        self.ramp_configsetup[c.TrgLLRFRmp_Delay] = \
+            self._ramp_config.ti_params_rf_ramp_delay
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            self.ramp_configsetup[attr] = delays[event]
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            self.ramp_configsetup[attr] = delays[event]
+
         return delays
 
     def get_injection_time(self):
@@ -284,63 +278,46 @@ class ConnTiming(_EpicsPropsList):
         self.ramp_basicsetup = {
             # EVG
             c.EVG_DevEnbl: _TIConst.DsblEnbl.Enbl,
-            # Linac Event
-            c.EvtLinac_Mode: _TIConst.EvtModes.Injection,
-            c.EvtLinac_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # InjBO Event
-            c.EvtInjBO_Mode: _TIConst.EvtModes.Injection,
-            c.EvtInjBO_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # RmpBO Event
-            c.EvtRmpBO_Mode: _TIConst.EvtModes.Continuous,
-            c.EvtRmpBO_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # InjSI Event
-            c.EvtInjSI_Mode: _TIConst.EvtModes.Injection,
-            c.EvtInjSI_DelayType: _TIConst.EvtDlyTyp.Incr,
             # Mags trigger
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgMags_Polarity: _TIConst.TrigPol.Normal,
             c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
-            c.TrgMags_Status: 0,
+            # c.TrgMags_Status: 0,
             # Corrs trigger
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgCorrs_Polarity: _TIConst.TrigPol.Normal,
             c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
-            c.TrgCorrs_Status: 0,
+            # c.TrgCorrs_Status: 0,
             # LLRFRmp trigger
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Normal,
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
-            c.TrgLLRFRmp_Duration: 0.016,
-            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual,
-            c.TrgLLRFRmp_Status: 0}
+            c.TrgLLRFRmp_Duration: 150}
+        #     c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays
-            c.EvtLinac_Delay: 0,          # [us]
-            c.EvtInjBO_Delay: 0,          # [us]
-            c.EvtRmpBO_Delay: 0,          # [us]
-            c.EvtInjSI_Delay: 0,          # [us]
-            c.EvtDigLI_Delay: 0,          # [us]
-            c.EvtDigTB_Delay: 0,          # [us]
-            c.EvtDigBO_Delay: 0,          # [us]
-            c.EvtDigTS_Delay: 0,          # [us]
-            c.EvtDigSI_Delay: 0,          # [us]
-            c.EvtOrbBO_Delay: 0,          # [us]
-            c.EvtOrbSI_Delay: 0,          # [us]
-            c.EvtCplSI_Delay: 0,          # [us]
-            c.EvtTunSI_Delay: 0,          # [us]
-            c.EvtStudy_Delay: 0,          # [us]
+            c.EvtLinac_Delay: None,          # [us]
+            c.EvtInjBO_Delay: None,          # [us]
+            c.EvtRmpBO_Delay: None,          # [us]
+            c.EvtInjSI_Delay: None,          # [us]
+            c.EvtDigLI_Delay: None,          # [us]
+            c.EvtDigTB_Delay: None,          # [us]
+            c.EvtDigBO_Delay: None,          # [us]
+            c.EvtDigTS_Delay: None,          # [us]
+            c.EvtDigSI_Delay: None,          # [us]
+            c.EvtStudy_Delay: None,          # [us]
             # Mags trigger
             c.TrgMags_NrPulses: 1,
-            c.TrgMags_Duration: 150,      # [us]
-            c.TrgMags_Delay: 0,           # [us]
+            c.TrgMags_Duration: 150.0,      # [us]
+            c.TrgMags_Delay: 0.0,           # [us]
             # Corrs trigger
             c.TrgCorrs_NrPulses: 1,
-            c.TrgCorrs_Duration: 150,     # [us]
-            c.TrgCorrs_Delay: 0,          # [us]
+            c.TrgCorrs_Duration: 150.0,     # [us]
+            c.TrgCorrs_Delay: 0.0,          # [us]
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Delay: 0}        # [us]
+            c.TrgLLRFRmp_Delay: 0.0}        # [us]
 
         self._evgcontrol_propties = {
             c.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl,
@@ -380,7 +357,13 @@ class ConnTiming(_EpicsPropsList):
 
     def _check(self, readbacks):
         for name, value in readbacks.items():
-            if not self.get_readback(name) == value:
+            if value is None:
+                continue
+            elif isinstance(value, float):
+                if not _math.isclose(value, self.get_readback(name),
+                                     abs_tol=0.008):
+                    return False
+            elif not self.get_readback(name) == value:
                 return False
         return True
 
