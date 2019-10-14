@@ -94,6 +94,7 @@ class Timing:
             if pv.connected:
                 pv.value = defval
                 _time.sleep(1.5*SLEEP_CAPUT)
+        self.update_events()
 
     def check(self, mode, sections=list()):
         """Check if timing is configured."""
@@ -161,6 +162,11 @@ class Timing:
             pv = Timing._pvs[trig+':State-Sel']
             pv.value = _TIConst.DsblEnbl.Dsbl
 
+    def update_events(self):
+        """Update events."""
+        pv = Timing._pvs[Timing.evg_name+':UpdateEvt-Cmd']
+        pv.value = 1
+
     def restore_initial_state(self):
         """Restore initial state."""
         for pvname, init_val in self._initial_state.items():
@@ -168,6 +174,7 @@ class Timing:
                 init_val = [init_val, ]
             Timing._pvs[pvname].put(init_val)
             _time.sleep(1.5*SLEEP_CAPUT)
+        self.update_events()
 
     def _create_pvs(self):
         """Create PVs."""
@@ -201,11 +208,13 @@ class Timing:
             'Cycle': {
                 # EVG settings
                 cls.evg_name+':DevEnbl-Sel': cls.DEFAULT_STATE,
-                cls.evg_name+':UpdateEvt-Cmd': 1,
+                cls.evg_name+':InjectionEvt-Sel': _TIConst.DsblEnbl.Dsbl,
+                cls.evg_name+':UpdateEvt-Cmd': None,
 
                 # Cycle event settings
                 cls.evg_name+':CycleMode-Sel': _TIConst.EvtModes.External,
                 cls.evg_name+':CycleDelayType-Sel': _TIConst.EvtDlyTyp.Fixed,
+                cls.evg_name+':CycleDelay-SP': cls.DEFAULT_DELAY,
                 cls.evg_name+':CycleExtTrig-Cmd': None,
             },
             'Ramp': {
@@ -215,6 +224,7 @@ class Timing:
                 cls.evg_name+':BucketList-SP': [1, ],
                 cls.evg_name+':RepeatBucketList-SP': DEFAULT_RAMP_NRCYCLES,
                 cls.evg_name+':InjCount-Mon': None,
+                cls.evg_name+':UpdateEvt-Cmd': None,
 
                 # Cycle event settings
                 cls.evg_name+':CycleMode-Sel': _TIConst.EvtModes.Injection,
