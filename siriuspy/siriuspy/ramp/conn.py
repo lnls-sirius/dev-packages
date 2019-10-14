@@ -118,12 +118,8 @@ class ConnTiming(_EpicsPropsList):
 
         sp = dict()
         c = ConnTiming.Const
-        sp[c.TrgMags_Duration] = 150.0
-        sp[c.TrgCorrs_Duration] = 150.0
 
-        sp[c.TrgMags_NrPulses] = 1
-        sp[c.TrgCorrs_NrPulses] = 1
-
+        # Triggers delays
         sp[c.TrgMags_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgCorrs_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgLLRFRmp_Delay] = self._ramp_config.ti_params_rf_ramp_delay
@@ -140,6 +136,9 @@ class ConnTiming(_EpicsPropsList):
         for event in events_eje:
             attr = getattr(c, 'Evt'+event+'_Delay')
             sp[attr] = delays[event]
+
+        # Update ramp_configsetup
+        self.update_ramp_configsetup(events_inj, events_eje, delays)
 
         return self._command(sp, timeout)
 
@@ -233,7 +232,11 @@ class ConnTiming(_EpicsPropsList):
             curr = self.get_readback(attr)
             delays[event] = curr + dlt_eje_dly
 
-        # update desired values
+        return delays
+
+    def update_ramp_configsetup(self, events_inj, events_eje, delays):
+        """Update ramp_configsetup dict."""
+        c = ConnTiming.Const
         self.ramp_configsetup[c.EvtRmpBO_Delay] = 0
         self.ramp_configsetup[c.TrgMags_Delay] = \
             self._ramp_config.ti_params_ps_ramp_delay
@@ -247,8 +250,6 @@ class ConnTiming(_EpicsPropsList):
         for event in events_eje:
             attr = getattr(c, 'Evt'+event+'_Delay')
             self.ramp_configsetup[attr] = delays[event]
-
-        return delays
 
     def get_injection_time(self):
         """Return injection time."""
