@@ -20,8 +20,10 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 # --- Wfm ---
 MAX_WFMSIZE_FBP = 1024
 DEF_WFMSIZE_FBP = 980
+DEFAULT_WFM_FBP = _np.zeros(DEF_WFMSIZE_FBP)
 MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
+DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS)
 
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
