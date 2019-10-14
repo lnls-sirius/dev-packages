@@ -136,7 +136,7 @@ class Timing:
 
             pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sts']
             t0 = _time.time()
-            while _time.time() - t0 < TIMEOUT_CHECK:
+            while _time.time() - t0 < TIMEOUT_CHECK*3:
                 if pv.value == _TIConst.DsblEnbl.Enbl:
                     break
                 _time.sleep(SLEEP_CAPUT)
