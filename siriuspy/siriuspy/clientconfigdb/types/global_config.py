@@ -1,6 +1,5 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
-import numpy as _np
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFM_FBP as \
     _DEFAULT_WFM_FBP
