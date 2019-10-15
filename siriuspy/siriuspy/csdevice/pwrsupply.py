@@ -345,6 +345,7 @@ class ETypes(_cutil.ETypes):
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
+    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
