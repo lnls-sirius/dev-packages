@@ -148,8 +148,6 @@ class PRUController:
         # initializes PRU parameters (in sync mode off).
         self._scan_interval, self._curves = self._init_pru()
 
-        raise ValueError
-
         # reset power supply controllers (contains first BSMP comm)
         self._bsmp_reset_udc()
 
