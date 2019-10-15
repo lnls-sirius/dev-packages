@@ -374,7 +374,6 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
-    ['BO-Glob:TI-LLRF-PsMtn:RFDelayType-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
@@ -384,7 +383,6 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
-    ['BO-Glob:TI-LLRF-Rmp:RFDelayType-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
@@ -703,7 +701,6 @@ _pvs_timing = [
     ['SI-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:TI-LLRF-PsMtn:RFDelayType-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
@@ -713,7 +710,6 @@ _pvs_timing = [
     ['SI-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:TI-LLRF-Rmp:RFDelayType-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
