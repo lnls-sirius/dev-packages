@@ -358,7 +358,8 @@ class ConnTiming(_EpicsPropsList):
 
     def _command(self, setpoints, timeout):
         if self.connected:
-            return self.set_setpoints_check(setpoints, timeout=timeout)
+            return self.set_setpoints_check(setpoints, timeout=timeout,
+                                            rel_tol=0.05, abs_tol=0.008)
         else:
             return False
 
