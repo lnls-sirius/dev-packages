@@ -493,6 +493,28 @@ class PSModelFAP(PSModelFBP):
 class PSModelFAP_4P(PSModelFBP):
     """FAP_4P power supply model."""
 
+    _variables = {
+        'IntlkSoft-Mon': _psbsmp.ConstFAP_4P.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _psbsmp.ConstFAP_4P.V_PS_HARD_INTERLOCKS,
+        'Intlk1IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_1,
+        'Intlk2IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_2,
+        'Intlk3IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_3,
+        'Intlk4IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_4,
+        'Current-RB': _psbsmp.ConstFAP_4P.V_PS_SETPOINT,
+        'CurrentRef-Mon': _psbsmp.ConstFAP_4P.V_PS_REFERENCE,
+        'Current-Mon': _psbsmp.ConstFAP_4P.V_I_LOAD_MEAN,
+        'Current1-Mon': _psbsmp.ConstFAP_4P.V_I_LOAD1,
+        'Current2-Mon': _psbsmp.ConstFAP_4P.V_I_LOAD2,
+        'DCLink1Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_1,
+        'DCLink2Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_1,
+        'DCLink3Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_3,
+        'DCLink4Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_4,
+        'Mod1Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_1,
+        'Mod2Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_2,
+        'Mod3Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_3,
+        'Mod4Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_4,
+    }
+
     @property
     def name(self):
         """Model name."""

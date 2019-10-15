@@ -287,6 +287,33 @@ class ETypes(_cutil.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    SOFT_INTLCK_FAP_4P = SOFT_INTLCK_FAP
+    HARD_INTLCK_FAP_4P = (
+        'Sobre-corrente na carga',
+        'Sobre-tensão na carga',
+        'Sobre-corrente no IGBT 1 do modulo 1',
+        'Sobre-corrente no IGBT 2 do modulo 1',
+        'Sobre-corrente no IGBT 1 do modulo 2',
+        'Sobre-corrente no IGBT 2 do modulo 2',
+        'Sobre-corrente no IGBT 1 do modulo 3',
+        'Sobre-corrente no IGBT 2 do modulo 3',
+        'Sobre-corrente no IGBT 1 do modulo 4',
+        'Sobre-corrente no IGBT 2 do modulo 4',
+        'Falha no contator de entrada do DC-Link do modulo 1',
+        'Falha no contator de entrada do DC-Link do modulo 2',
+        'Falha no contator de entrada do DC-Link do modulo 3',
+        'Falha no contator de entrada do DC-Link do modulo 4',
+        'Sobre-tensao do DC-Link do modulo 1',
+        'Sobre-tensao do DC-Link do modulo 2',
+        'Sobre-tensao do DC-Link do modulo 3',
+        'Sobre-tensao do DC-Link do modulo 4',
+        'Sub-tensao do DC-Link do modulo 1',
+        'Sub-tensao do DC-Link do modulo 2',
+        'Sub-tensao do DC-Link do modulo 3',
+        'Sub-tensao do DC-Link do modulo 4',
+        'Interlock da placa IIB', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
@@ -1222,8 +1249,64 @@ def _get_ps_FAP_propty_database():
 
 def _get_ps_FAP_4P_propty_database():
     """Return database with FAP_4P pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
+                         'unit': 'A'},
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
+                         'unit': 'A'},
+        'DCLink1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
+                               'unit': 'V'},
+        'DCLink2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
+                               'unit': 'V'},
+        'DCLink3Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
+                               'unit': 'V'},
+        'DCLink4Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
+                               'unit': 'V'},
+        'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                            'unit': 'A'},
+        'Mod2Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                            'unit': 'A'},
+        'Mod3Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                            'unit': 'A'},
+        'Mod4Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                            'unit': 'A'},
+        'Intlk1IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk2IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk3IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk4IIB-Mon': {'type': 'int', 'value': 0},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAP_4P),
+                                 'value': _et.SOFT_INTLCK_FAP_4P},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAP_4P),
+                                 'value': _et.HARD_INTLCK_FAP_4P},
+        'Intlk1IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk2IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk3IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk4IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAP_2P2S_propty_database():
