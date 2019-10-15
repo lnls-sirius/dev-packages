@@ -387,7 +387,7 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_WFMREF1_START,
         CONST_PSBSMP.V_WFMREF1_END,
         CONST_PSBSMP.V_WFMREF1_IDX,
-        # --- FAC variables ---
+        # --- FAC_2P4S_DCDC variables ---
         CONST_PSBSMP.V_PS_SOFT_INTERLOCKS,
         CONST_PSBSMP.V_PS_HARD_INTERLOCKS,
         CONST_PSBSMP.V_I_LOAD_MEAN,
@@ -509,7 +509,7 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_WFMREF1_START,
         CONST_PSBSMP.V_WFMREF1_END,
         CONST_PSBSMP.V_WFMREF1_IDX,
-        # --- FAC variables ---
+        # --- FAC_2P4S_DCDC variables ---
         CONST_PSBSMP.V_PS_SOFT_INTERLOCKS,
         CONST_PSBSMP.V_PS_HARD_INTERLOCKS,
         CONST_PSBSMP.V_I_LOAD_MEAN,
