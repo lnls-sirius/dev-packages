@@ -20,8 +20,10 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 # _SIZE = 4096
 MAX_WFMSIZE_FBP = 1024
 DEF_WFMSIZE_FBP = 980
+DEFAULT_WFM_FBP = _np.zeros(DEF_WFMSIZE_FBP, dtype=float)
 MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
+DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
 
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
 
@@ -29,10 +31,11 @@ DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 
 # --- PS currents/voltage precision and unit ---
-DEFLT_PS_CURR_PREC = 4
-DEFLT_PU_CURR_PREC = 4
-_DEFLT_PS_CURR_UNIT = None
-_DEFLT_PU_CURR_UNIT = None
+DEFAULT_PS_CURRENT_PRECISION = 4
+DEFAULT_PU_CURRENT_PRECISION = 4
+_DEFAULT_PS_CURRENT_UNIT = None
+_DEFAULT_PU_CURRENT_UNIT = None
+
 
 # --- Alarms ---
 # _SEVERITY_NO_ALARM = _Severity.NO_ALARM
@@ -342,18 +345,18 @@ class Const(_cutil.Const):
 
 def get_ps_current_unit():
     """Return power supply current unit."""
-    global _DEFLT_PS_CURR_UNIT
-    if _DEFLT_PS_CURR_UNIT is None:
-        _DEFLT_PS_CURR_UNIT = _PSSearch.get_splims_unit('FBP')
-    return _DEFLT_PS_CURR_UNIT
+    global _DEFAULT_PS_CURRENT_UNIT
+    if _DEFAULT_PS_CURRENT_UNIT is None:
+        _DEFAULT_PS_CURRENT_UNIT = _PSSearch.get_splims_unit('FBP')
+    return _DEFAULT_PS_CURRENT_UNIT
 
 
 def get_pu_current_unit():
     """Return pulsed power supply 'current' unit."""
-    global _DEFLT_PU_CURR_UNIT
-    if _DEFLT_PU_CURR_UNIT is None:
-        _DEFLT_PU_CURR_UNIT = _PSSearch.get_splims_unit('')
-    return _DEFLT_PU_CURR_UNIT
+    global _DEFAULT_PU_CURRENT_UNIT
+    if _DEFAULT_PU_CURRENT_UNIT is None:
+        _DEFAULT_PU_CURRENT_UNIT = _PSSearch.get_splims_unit('')
+    return _DEFAULT_PU_CURRENT_UNIT
 
 
 def get_common_propty_database():
@@ -408,13 +411,13 @@ def get_basic_propty_database():
     dbase = get_common_propty_database()
     dbase.update({
         'Current-SP': {'type': 'float', 'value': 0.0,
-                       'prec': DEFLT_PS_CURR_PREC},
+                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         'Current-RB': {'type': 'float', 'value': 0.0,
-                       'prec': DEFLT_PS_CURR_PREC},
+                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
-                           'prec': DEFLT_PS_CURR_PREC},
-        'Current-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': DEFLT_PS_CURR_PREC},
+                           'prec': DEFAULT_PS_CURRENT_PRECISION},
+        'Current-Mon': {'type': 'float',  'value': 0.0,
+                        'prec': DEFAULT_PS_CURRENT_PRECISION},
         # Commands
         'Abort-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Cycle
@@ -441,23 +444,23 @@ def get_basic_propty_database():
         # WfmData - PRU
         'WfmData-SP': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
-                       'prec': DEFLT_PS_CURR_PREC},
+                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
-                       'prec': DEFLT_PS_CURR_PREC},
+                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         # Wfm - UDC
         'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM),
-                   'prec': DEFLT_PS_CURR_PREC},
+                   'prec': DEFAULT_PS_CURRENT_PRECISION},
         'Wfm-RB': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM),
-                   'prec': DEFLT_PS_CURR_PREC},
+                   'prec': DEFAULT_PS_CURRENT_PRECISION},
         'WfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
                        'value': list(DEFAULT_WFM),
-                       'prec': DEFLT_PS_CURR_PREC},
+                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
                     'value': list(DEFAULT_WFM),
-                    'prec': DEFLT_PS_CURR_PREC},
+                    'prec': DEFAULT_PS_CURRENT_PRECISION},
         # 'WfmMonAcq-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
         #                   'value': Const.DsblEnbl.Dsbl},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
@@ -498,11 +501,11 @@ def get_common_pu_propty_database():
         'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                       'value': Const.DsblEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
-                       'prec': DEFLT_PU_CURR_PREC},
+                       'prec': DEFAULT_PU_CURRENT_PRECISION},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
-                       'prec': DEFLT_PU_CURR_PREC},
+                       'prec': DEFAULT_PU_CURRENT_PRECISION},
         'Voltage-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': DEFLT_PU_CURR_PREC},
+                        'prec': DEFAULT_PU_CURRENT_PRECISION},
         'Intlk1-Mon': {'type': 'int', 'value': 0},
         'Intlk2-Mon': {'type': 'int', 'value': 0},
         'Intlk3-Mon': {'type': 'int', 'value': 0},
@@ -791,7 +794,7 @@ def _get_ps_FBP_propty_database():
                                     'prec': 2,
                                     'unit': 'C'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
-                             'prec': DEFLT_PS_CURR_PREC},
+                             'prec': DEFAULT_PS_CURRENT_PRECISION},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -839,13 +842,13 @@ def _get_ps_FAC_DCDC_propty_database():
                                  'count': len(_et.HARD_INTLCK_FAC_DCDC),
                                  'value': _et.HARD_INTLCK_FAC_DCDC},
         'Current1-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'V'},
         'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
                                      'prec': 2,
@@ -854,7 +857,7 @@ def _get_ps_FAC_DCDC_propty_database():
                                  'prec': 2,
                                  'unit': 'C'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
-                             'prec': DEFLT_PS_CURR_PREC},
+                             'prec': DEFAULT_PS_CURRENT_PRECISION},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -871,32 +874,32 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                                  'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
                                  'value': _et.HARD_INTLCK_FAC_2S_DCDC},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Current2-Mon': {'type': 'float', 'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'V'},
         'Module1Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module2Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'CapacitorBank1Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank2Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'PWMDutyCycle1-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle2-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC},
+                            'prec': DEFAULT_PS_CURRENT_PRECISION},
         'IIB1InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
                                          'prec': 2,
                                          'unit': 'C'},
@@ -921,10 +924,10 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
     propty_db = get_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2P4S),
@@ -933,77 +936,77 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
                                  'count': len(_et.HARD_INTLCK_FAC_2P4S),
                                  'value': _et.HARD_INTLCK_FAC_2P4S},
         'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'V'},
         'CapacitorBank1Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank2Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank3Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank4Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank5Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank6Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank7Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'CapacitorBank8Voltage-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': DEFLT_PS_CURR_PREC,
+                                      'prec': DEFAULT_PS_CURRENT_PRECISION,
                                       'unit': 'V'},
         'Module1Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module2Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module3Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module4Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module5Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module6Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module7Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'Module8Voltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': DEFLT_PS_CURR_PREC,
+                               'prec': DEFAULT_PS_CURRENT_PRECISION,
                                'unit': 'V'},
         'PWMDutyCycle1-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle2-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle3-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle4-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle5-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle6-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle7-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'PWMDutyCycle8-Mon': {'type': 'float', 'value': 0.0,
-                              'prec': DEFLT_PS_CURR_PREC},
+                              'prec': DEFAULT_PS_CURRENT_PRECISION},
         'Arm1Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'Arm2Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'}
     }
     propty_db.update(db_ps)
@@ -1024,23 +1027,23 @@ def _get_ps_FAC_2S_ACDC_propty_database():
                                  'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
                                  'value': _et.HARD_INTLCK_FAC_2S_ACDC},
         'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
-                                    'prec': DEFLT_PS_CURR_PREC,
+                                    'prec': DEFAULT_PS_CURRENT_PRECISION,
                                     'lolim': 0.0, 'hilim': 1.0,
                                     'unit': 'V'},
         'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
-                                    'prec': DEFLT_PS_CURR_PREC,
+                                    'prec': DEFAULT_PS_CURRENT_PRECISION,
                                     'unit': 'V'},
         'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': DEFLT_PS_CURR_PREC,
+                                        'prec': DEFAULT_PS_CURRENT_PRECISION,
                                         'unit': 'V'},
         'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': DEFLT_PS_CURR_PREC,
+                                     'prec': DEFAULT_PS_CURRENT_PRECISION,
                                      'unit': 'V'},
         'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': DEFLT_PS_CURR_PREC,
+                                 'prec': DEFAULT_PS_CURRENT_PRECISION,
                                  'unit': 'V'},
         'RectifierCurrent-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': DEFLT_PS_CURR_PREC,
+                                 'prec': DEFAULT_PS_CURRENT_PRECISION,
                                  'unit': 'V'},
         'HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': 2,
@@ -1049,7 +1052,7 @@ def _get_ps_FAC_2S_ACDC_propty_database():
                                      'prec': 2,
                                      'unit': 'C'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': DEFLT_PS_CURR_PREC},
+                                     'prec': DEFAULT_PS_CURRENT_PRECISION},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1074,10 +1077,10 @@ def _get_ps_FAP_propty_database():
     propty_db = get_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'IntlkIIB-Mon': {'type': 'int',    'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -1106,10 +1109,10 @@ def _get_ps_FAP_2P2S_propty_database():
     propty_db = get_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': DEFLT_PS_CURR_PREC,
+                         'prec': DEFAULT_PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Intlk1IIB-Mon': {'type': 'int', 'value': 0},
         'Intlk2IIB-Mon': {'type': 'int', 'value': 0},
@@ -1134,16 +1137,16 @@ def _get_ps_FAP_2P2S_propty_database():
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
                                  'value': _et.IIB_INTLCK_FAP},
         'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'Mod2Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'Mod3Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'Mod4Current-Mon': {'type': 'float', 'value': 0.0,
-                            'prec': DEFLT_PS_CURR_PREC,
+                            'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'IIB1InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
@@ -1223,7 +1226,7 @@ def _set_limits(pstype, database):
             dbase['unit'] = get_ps_current_unit()
         # define prec of current
         if propty in signals_prec:
-            dbase['prec'] = DEFLT_PS_CURR_PREC
+            dbase['prec'] = DEFAULT_PS_CURRENT_PRECISION
 
 
 def _get_model_db(psmodel):

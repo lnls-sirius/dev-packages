@@ -17,8 +17,7 @@ class LLTimeSearch:
 
     LLRegExp = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
 
-    # defines the relations between input and output of the timing devices
-    # that are possible taking into consideration only the devices architecture
+    # defines the relations between input and output of the timing devices.
     In2OutMap = {
         'EVG': {
             'UPLINK': (
@@ -97,6 +96,8 @@ class LLTimeSearch:
         }
     In2OutMap['DIO'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(110)}
+    In2OutMap['DIO'].update({
+        'P{0:02d}'.format(i): ('P{0:02d}'.format(i), ) for i in range(1, 25)})
     In2OutMap['DIO']['P052B'] = ('P052B', )
     In2OutMap['DIO']['P027B'] = ('P027B', )
 
