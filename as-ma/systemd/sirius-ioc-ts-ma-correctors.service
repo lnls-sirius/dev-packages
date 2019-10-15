@@ -15,7 +15,7 @@ ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
 TS-01:MA-CV-1 \
 TS-01:MA-CH \
 TS-01:MA-CV-2 \
-TS-02:MA-CH 4 \
+TS-02:MA-CH \
 TS-02:MA-CV \
 TS-03:MA-CH \
 TS-03:MA-CV \
