@@ -283,9 +283,13 @@ class CycleController:
                     'Verify the number of pulses '+maname+' received!',
                     error=True)
             elif has_prob == 2 and self._is_cycling_dict[maname]:
+                self._update_log(
+                    'Verify '+maname+' OpMode! SlowRef command was sent...',
+                    warning=True)
+            elif has_prob == 3 and self._is_cycling_dict[maname]:
                 self._update_log(maname+' is finishing cycling...',
                                  warning=True)
-            elif has_prob == 3:
+            elif has_prob == 4:
                 self._update_log(maname+' has interlock problems.',
                                  error=True)
         return True

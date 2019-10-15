@@ -480,17 +480,20 @@ class MagnetCycler:
             self.update_wfm_pulsecnt()
             if not status:
                 return 1  # indicate lack of trigger pulses
+
             status = self.set_opmode_slowref()
             status &= _pv_timed_get(
                 self['OpMode-Sts'], _PSConst.States.SlowRef)
+            if not status:
+                return 2  # indicate opmode is not in slowref yet
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 2  # indicate cycling not finished yet
+                return 3  # indicate cycling not finished yet
 
-        status &= self.check_intlks()
+        status = self.check_intlks()
         if not status:
-            return 3  # indicate interlock problems
+            return 4  # indicate interlock problems
 
         return 0
 
@@ -585,7 +588,7 @@ class LinacMagnetCycler:
         status &= self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 3  # indicate interlock problems
+            return 4  # indicate interlock problems
         return 0
 
     def _get_duration_and_waveform(self):
