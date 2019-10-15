@@ -162,6 +162,12 @@ class ConnTiming(_EpicsPropsList):
         sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
         return self._command(sp, timeout)
 
+    def cmd_set_magnet_trigger_state(self, state, timeout=_TIMEOUT_DFLT):
+        c = ConnTiming.Const
+        sp = {c.TrgMags_State: state,
+              c.TrgCorrs_State: state}
+        return self._command(sp, timeout)
+
     # --- timing mode check ---
 
     def check_intlk(self):
@@ -187,9 +193,9 @@ class ConnTiming(_EpicsPropsList):
     def calc_evts_delay(self, events_inj, events_eje):
         """Calculate event delays."""
         if self._ramp_config is None:
-            return False
+            return
         if not self.connected:
-            return False
+            return
 
         c = ConnTiming.Const
         evg_base_time = 1 / self.get_readback(c.EVG_FPGAClk)
@@ -237,19 +243,19 @@ class ConnTiming(_EpicsPropsList):
     def update_ramp_configsetup(self, events_inj, events_eje, delays):
         """Update ramp_configsetup dict."""
         c = ConnTiming.Const
-        self.ramp_configsetup[c.EvtRmpBO_Delay] = 0
-        self.ramp_configsetup[c.TrgMags_Delay] = \
-            self._ramp_config.ti_params_ps_ramp_delay
-        self.ramp_configsetup[c.TrgCorrs_Delay] = \
-            self._ramp_config.ti_params_ps_ramp_delay
-        self.ramp_configsetup[c.TrgLLRFRmp_Delay] = \
-            self._ramp_config.ti_params_rf_ramp_delay
+        self.ramp_configsetup.update({c.EvtRmpBO_Delay: 0})
+        self.ramp_configsetup.update(
+            {c.TrgMags_Delay: self._ramp_config.ti_params_ps_ramp_delay})
+        self.ramp_configsetup.update(
+            {c.TrgCorrs_Delay: self._ramp_config.ti_params_ps_ramp_delay})
+        self.ramp_configsetup.update(
+            {c.TrgLLRFRmp_Delay: self._ramp_config.ti_params_rf_ramp_delay})
         for event in events_inj:
             attr = getattr(c, 'Evt'+event+'_Delay')
-            self.ramp_configsetup[attr] = delays[event]
+            self.ramp_configsetup.update({attr: delays[event]})
         for event in events_eje:
             attr = getattr(c, 'Evt'+event+'_Delay')
-            self.ramp_configsetup[attr] = delays[event]
+            self.ramp_configsetup.update({attr: delays[event]})
 
     def get_injection_time(self):
         """Return injection time."""
@@ -394,38 +400,38 @@ class ConnMagnets(_EpicsPropsList):
 
     def cmd_pwrstate_on(self, timeout=_TIMEOUT_PWRSTATE_ON):
         """Turn all power supplies on."""
-        return self._command('PwrState-Sel',
-                             _PSConst.PwrStateSel.On,
-                             desired_readback=_PSConst.PwrStateSts.On,
-                             timeout=timeout)
+        return self._command_all('PwrState-Sel',
+                                 _PSConst.PwrStateSel.On,
+                                 desired_readback=_PSConst.PwrStateSts.On,
+                                 timeout=timeout)
 
     def cmd_pwrstate_off(self, timeout=_TIMEOUT_PWRSTATE_OFF):
         """Turn all power supplies off."""
-        return self._command('PwrState-Sel',
-                             _PSConst.PwrStateSel.Off,
-                             desired_readback=_PSConst.PwrStateSts.Off,
-                             timeout=timeout)
+        return self._command_all('PwrState-Sel',
+                                 _PSConst.PwrStateSel.Off,
+                                 desired_readback=_PSConst.PwrStateSts.Off,
+                                 timeout=timeout)
 
     def cmd_opmode_slowref(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select SlowRef opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.SlowRef,
-                             desired_readback=_PSConst.States.SlowRef,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.SlowRef,
+                                 desired_readback=_PSConst.States.SlowRef,
+                                 timeout=timeout)
 
     def cmd_opmode_cycle(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select Cycle opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.Cycle,
-                             desired_readback=_PSConst.States.Cycle,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.Cycle,
+                                 desired_readback=_PSConst.States.Cycle,
+                                 timeout=timeout)
 
     def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select RmpWfm opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.RmpWfm,
-                             desired_readback=_PSConst.States.RmpWfm,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.RmpWfm,
+                                 desired_readback=_PSConst.States.RmpWfm,
+                                 timeout=timeout)
 
     def cmd_wfm(self, manames=list(), timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
@@ -445,27 +451,27 @@ class ConnMagnets(_EpicsPropsList):
 
     def check_pwrstate_on(self):
         """Check pwrstates of all power supplies are On."""
-        return self._check('PwrState-Sel', _PSConst.PwrStateSts.On)
+        return self._check_all('PwrState-Sel', _PSConst.PwrStateSts.On)
 
     def check_opmode_slowref(self):
         """Check opmodes of all power supplies ar SlowRef."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.SlowRef)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.SlowRef)
 
     def check_opmode_cycle(self):
         """Check opmodes of all power supplies ar Cycle."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.Cycle)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.Cycle)
 
     def check_opmode_rmpwfm(self):
         """Check opmodes of all power supplies ar RmpWfm."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.RmpWfm)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.RmpWfm)
 
     def check_intlksoft(self):
         """Check if software interlocks are reset."""
-        return self._check('IntlkSoft-Mon', 0)
+        return self._check_all('IntlkSoft-Mon', 0)
 
     def check_intlkhard(self):
         """Check if hardware interlocks are reset."""
-        return self._check('IntlkHard-Mon', 0)
+        return self._check_all('IntlkHard-Mon', 0)
 
     # --- private methods ---
 
@@ -498,20 +504,29 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
         return properties
 
-    def _command(self, prop, setpoint, desired_readback=None,
-                 timeout=_TIMEOUT_DFLT):
+    def _command_all(self, prop, setpoint, desired_readback=None,
+                     timeout=_TIMEOUT_DFLT):
         """Exec command for all power supplies."""
         sp = dict()
         rb = dict()
         for maname in self.manames:
             name = maname + ':' + prop
-            sp[name] = setpoint
-            rb[name] = desired_readback if desired_readback else setpoint
-        result = self.set_setpoints_check(
-            sp, desired_readbacks=rb, timeout=timeout)
+            check_val = desired_readback if desired_readback else setpoint
+            if not self._check_magnet(maname, prop, check_val):
+                sp[name] = setpoint
+                rb[name] = check_val
+        result = self.set_setpoints_check(setpoints=sp,
+                                          desired_readbacks=rb,
+                                          timeout=timeout)
         return result
 
-    def _check(self, prop, value):
+    def _check_magnet(self, maname, prop, value):
+        """Check a prop of a power supplies for a value."""
+        if not self.get_readback(maname + ':' + prop) == value:
+            return False
+        return True
+
+    def _check_all(self, prop, value):
         """Check a prop of all power supplies for a value."""
         for maname in self.manames:
             name = maname + ':' + prop
