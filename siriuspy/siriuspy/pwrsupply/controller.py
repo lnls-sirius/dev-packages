@@ -194,16 +194,19 @@ class StandardPSController(PSController):
         self._pre_opmode(op_mode)
         writer.execute(op_mode)
         self._pos_opmode(op_mode)
-        if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
-            return self._pru_controller.pru_sync_start(sync_mode)
-        elif op_mode == _PSConst.OpMode.RmpWfm:
-            # sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
-            # return self._pru_controller.pru_sync_start(sync_mode)
+        # if op_mode == _PSConst.OpMode.Cycle:
+        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
+        #     return self._pru_controller.pru_sync_start(sync_mode)
+        # elif op_mode == _PSConst.OpMode.RmpWfm:
+        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
+        #     return self._pru_controller.pru_sync_start(sync_mode)
+        # elif op_mode == _PSConst.OpMode.MigWfm:
+        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
+        #     return self._pru_controller.pru_sync_start(sync_mode)
+        if op_mode in (_PSConst.OpMode.Cycle,
+                       _PSConst.OpMode.RmpWfm,
+                       _PSConst.OpMode.MigWfm):
             pass
-        elif op_mode == _PSConst.OpMode.MigWfm:
-            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
-            return self._pru_controller.pru_sync_start(sync_mode)
 
     def _get_siggen_arg_values(self, device_name):
         """Get cfg_siggen args and execute it."""
