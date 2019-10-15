@@ -62,10 +62,17 @@ class CycleController:
         self.prepare_magnets_max_duration = 20
 
         self.cycle_size = (len(self.manames)+3 +  # check params
-                           2*len(self.manames) +  # opmode
+                           len(self.manames) +    # check opmode
                            1+round(self._cycle_duration) +  # cycle
-                           len(self.manames)+2)  # check final
-        self.cycle_max_duration = 15 + round(self._cycle_duration)
+                           len(self.manames) +  # check final
+                           len(self.manames)+2)  # reset subsystems
+        self.cycle_max_duration = (
+                           2 +  # check params
+                           2 +  # check opmode
+                           TIMEOUT_CHECK*3 +  # wait for timing trigger
+                           round(self._cycle_duration) +  # cycle
+                           2 +  # check final
+                           2)   # reset subsystems
 
         # logger
         self._logger = logger
