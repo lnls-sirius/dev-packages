@@ -464,6 +464,9 @@ class PSModelFAP(PSModelFBP):
         'Current-Mon': _psbsmp.ConstFAP.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAP.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAP.V_I_LOAD2,
+        'IIBLeakCurrent-Mon': _psbsmp.ConstFAP.V_I_LEAKAGE_IIB,
+        'IIBInductorTemperature-Mon': _psbsmp.ConstFAP.V_TEMP_INDUCTOR_IIB,
+        'IIBHeatSinkTemperature-Mon': _psbsmp.ConstFAP.V_TEMP_HEATSINK_IIB,
     }
 
     @property

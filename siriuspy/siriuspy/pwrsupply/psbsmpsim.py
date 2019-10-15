@@ -952,8 +952,8 @@ class FAP(PSBSMP, _PSSpecFAP):
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-35]
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
-            0,  # [47 - iib_interlocks]
-            ]
+            0.0,  # [47]
+            0]  # iib_interlocks [48]
         return variables
 
 

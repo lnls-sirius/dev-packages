@@ -430,7 +430,8 @@ class ConstFAP(ConstPSBSMP):
     V_I_DRIVER_2_IIB = 44
     V_TEMP_INDUCTOR_IIB = 45
     V_TEMP_HEATSINK_IIB = 46
-    V_IIB_INTERLOCKS = 47
+    V_I_LEAKAGE_IIB = 47
+    V_IIB_INTERLOCKS = 48
 
 
 class ConstFAP_4P(ConstFAP):
@@ -1171,7 +1172,8 @@ class EntitiesFAP(EntitiesPS):
         {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 48, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 class EntitiesFAP_4P(EntitiesFAP):

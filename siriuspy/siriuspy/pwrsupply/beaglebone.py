@@ -156,6 +156,13 @@ class BBBFactory:
             print()
             for dev in devices:
                 freqs = (10, 2) if freqs is None else freqs
+                # --
+                # TODO: delete this temporary configuration
+                if udc == 'PA-RaPSC03:PS-UDC-BO1':
+                    freqs = (2, 2)
+                elif udc == 'PA-RaPSC03:PS-UDC-BO2':
+                    freqs = (10, 2)
+                # ---
                 print(fstr.format(udc, *dev))
 
             # Check if there is only one psmodel
