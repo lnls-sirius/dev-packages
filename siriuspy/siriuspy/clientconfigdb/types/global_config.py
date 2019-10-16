@@ -1253,16 +1253,6 @@ _pvs_bo_ps = [
     ['BO-49U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0]]
 
 _rf_pvs = [
-    ['BO-05D:RF-LLRF:RmpEnbl-Sel', 0, 0.0],
-    ['BO-05D:RF-LLRF:RmpTs1-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpTs2-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpTs3-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpTs4-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpIncTs-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpVoltBot-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpVoltTop-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpPhsBot-SP', 0.0, 0.0],
-    ['BO-05D:RF-LLRF:RmpPhsTop-SP', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA2:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA3:S', 0.0, 0.0],
