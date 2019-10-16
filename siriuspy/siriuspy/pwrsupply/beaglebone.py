@@ -45,6 +45,9 @@ class BeagleBone:
         # init mirror variables and last update timestamp dicts
         self._create_dev2mirr_dev2timestamp_dict()
 
+        # TODO: remove this once machine-application PR is merged!
+        self.start()
+
     @property
     def psnames(self):
         """PS names."""
@@ -95,6 +98,15 @@ class BeagleBone:
         """Device database."""
         return self._databases[device_name]
 
+    def start(self):
+        """Start processing and scanning threads in controllers."""
+        # turn PRUcontroller processing on.
+        for controller in self._controllers.values():
+            controller.pru_controller.processing = True
+        # turn PRUcontroller scanning on.
+        for controller in self._controllers.values():
+            controller.pru_controller.scanning = True
+
     def _create_dev2mirr_dev2timestamp_dict(self):
         self._dev2timestamp = dict()
         self._dev2mirror = dict()
@@ -116,7 +128,6 @@ class BBBFactory:
     @staticmethod
     def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
-
         # get current timestamp
         timestamp = _time.time()
 
@@ -176,7 +187,6 @@ class BBBFactory:
             psmodel = _PSModelFactory.create(psmodel_name)
 
             # Create pru controller for devices
-            dev_ids = [device[1] for device in devices]
             pru_controller = _PRUController(pru, prucqueue,
                                             psmodel, devices,
                                             processing=False,
@@ -209,14 +219,6 @@ class BBBFactory:
             for dev_name, dev_id in devices:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
-
-        # turn PRUcontroller processing on.
-        for controller in controllers.values():
-            controller.pru_controller.processing = True
-
-        # turn PRUcontroller scanning on.
-        for controller in controllers.values():
-            controller.pru_controller.scanning = True
 
         return BeagleBone(controllers, databases), dbase
 
