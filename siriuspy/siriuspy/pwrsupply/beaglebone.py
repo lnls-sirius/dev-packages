@@ -166,18 +166,21 @@ class BBBFactory:
                 print(fstr.format(udc, *dev))
 
             # Check if there is only one psmodel
-            psmodel = BBBFactory.check_ps_models(devices)
+            psmodel_name = BBBFactory.check_ps_models(devices)
 
             # Ignore regatron ps model
-            if psmodel == 'REGATRON_DCLink':
+            if psmodel_name == 'REGATRON_DCLink':
                 continue
 
             # Get out model object
-            model = _PSModelFactory.create(psmodel)
+            psmodel = _PSModelFactory.create(psmodel_name)
 
             # Create pru controller for devices
-            ids = [device[1] for device in devices]
-            pru_controller = _PRUController(pru, prucqueue, model, ids,
+            dev_ids = [device[1] for device in devices]
+            pru_controller = _PRUController(pru, prucqueue,
+                                            psmodel, devices,
+                                            processing=False,
+                                            scanning=False,
                                             freqs=freqs)
 
             # Get model database
@@ -191,7 +194,7 @@ class BBBFactory:
 
             # Build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
-                dbase, model, setpoints,
+                dbase, psmodel, setpoints,
                 devices, database, pru_controller)
 
             # Build connections and device_ids dicts
@@ -201,11 +204,19 @@ class BBBFactory:
                 connections[dev_name] = Connection(dev_id, pru_controller)
 
             # Build controller
-            controller = model.controller(
+            controller = psmodel.controller(
                 fields, functions, connections, pru_controller, devices_ids)
             for dev_name, dev_id in devices:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
+
+        # turn PRUcontroller processing on.
+        for controller in controllers.values():
+            controller.pru_controller.processing = True
+
+        # turn PRUcontroller scanning on.
+        for controller in controllers.values():
+            controller.pru_controller.scanning = True
 
         return BeagleBone(controllers, databases), dbase
 

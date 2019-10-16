@@ -112,7 +112,7 @@ class PRUController:
                  pru,
                  prucqueue,
                  psmodel,
-                 device_ids,
+                 devices,
                  processing=True,
                  scanning=True,
                  freqs=None):
@@ -126,8 +126,11 @@ class PRUController:
         # store power supply model
         self._psmodel = psmodel
 
+        # devices
+        self._devices = _dcopy(devices)
+
         # sorted list of device ids
-        self._device_ids = sorted(device_ids)
+        self._device_ids = sorted([dev[1] for dev in devices])
 
         # initialize UDC
         self._udc, self._parms, self._psupplies = \
