@@ -120,10 +120,10 @@ class PRUController:
         # create lock
         self._lock = _Lock()
 
-        # pru comm. object
+        # PRU communication object
         self._pru = pru
 
-        # store psmodel
+        # store power supply model
         self._psmodel = psmodel
 
         # sorted list of device ids
@@ -145,8 +145,11 @@ class PRUController:
         self._wfm_update = True
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
+        # update time interval attribute
+        self._scan_interval = self._get_scan_interval()
+
         # initializes PRU parameters (in sync mode off).
-        self._scan_interval, self._curves = self._init_pru()
+        self._curves = self._init_pru_curves()
 
         # reset power supply controllers (contains first BSMP comm)
         self._bsmp_reset_udc()
@@ -666,11 +669,7 @@ class PRUController:
 
         return pru_sync_delays
 
-    def _init_pru(self):
-
-        # update time interval attribute
-        scan_interval = self._get_scan_interval()
-
+    def _init_pru_curves(self):
         # initialize PRU curves
         curves = [
             list(_DEFAULT_WFMDATA),  # 1st power supply
@@ -678,7 +677,7 @@ class PRUController:
             list(_DEFAULT_WFMDATA),  # 3rd power supply
             list(_DEFAULT_WFMDATA)]  # 4th power supply
 
-        return scan_interval, curves
+        return curves
 
     def _scanning_false_wait_empty_queue(self):
         # wait for all queued operations to be processed
@@ -917,7 +916,7 @@ class PRUController:
 
         # return of wfm is not to be updated
         if not self._wfm_update:
-            return  # does not update!
+            return  # does not update wfm!
 
         # update device wfm curves cyclically
         self._wfm_update_dev_idx = \
