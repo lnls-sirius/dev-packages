@@ -1621,5 +1621,5 @@ _rf_pvs = [
 _template_dict = {
     'pvs':
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing +
-        _pvs_li_ps + _pvs_tb_ps + _pvs_pu + _pvs_bo_ps  # + _rf_pvs
+        _pvs_li_ps + _pvs_tb_ps + _pvs_pu + _pvs_bo_ps + _rf_pvs
     }
