@@ -266,9 +266,9 @@ class PSOpMode(Function):
         """Command."""
         self._device_ids = device_ids
         self.function = function
-        self.disable_siggen = \
-            BSMPFunction(device_ids, function.pru_controller,
-                         _consts_psbsmp.F_DISABLE_SIGGEN)
+        # self.disable_siggen = \
+        #     BSMPFunction(device_ids, function.pru_controller,
+        #                  _consts_psbsmp.F_DISABLE_SIGGEN)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -294,8 +294,8 @@ class PSOpMode(Function):
             self.function.execute(op_mode)
 
             # NOTE: should this be set only when changing to SlowRef?
-            if value == _consts_ps.OpMode.SlowRef:
-                self.disable_siggen.execute(None)
+            # if value == _consts_ps.OpMode.SlowRef:
+            #     self.disable_siggen.execute(None)
 
 
 class Current(Function):

@@ -287,10 +287,10 @@ class BBBFactory:
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        if field in ('OpMode-Sel', 'CycleType-Sel', 'CycleNrCycles-SP',
+        if field in ('CycleType-Sel', 'CycleNrCycles-SP',
                      'CycleFreq-SP', 'CycleAmpl-SP',
                      'CycleOffset-SP', 'CycleAuxParam-SP'):
-            # Make one object for all devices
+            # Make one object for all devices (UDC-shared)
             ids, sps = list(), list()
             for dev_name, dev_id in devices:
                 pvname = dev_name + ':' + field

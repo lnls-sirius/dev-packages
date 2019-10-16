@@ -30,6 +30,7 @@ class PSBSMP(_BSMP):
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
     _sleep_disable_bufsample = 0.5  # [s]
+    _sleep_select_op_mode = 0.030  # [s]
 
     _wfmref_mon_pointers_var_ids = {
         0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
@@ -124,6 +125,9 @@ class PSBSMP(_BSMP):
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
             # _time.sleep(PSBSMP._sleep_disable_bufsample)
+            pass
+        elif func_id == _bsmp.ConstPSBSMP.F_SELECT_OP_MODE:
+            # _time.sleep(PSBSMP._sleep_select_op_mode)
             pass
         elif func_id in (_bsmp.ConstPSBSMP.F_TURN_ON,
                          _bsmp.ConstPSBSMP.F_TURN_OFF,
