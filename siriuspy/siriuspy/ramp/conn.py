@@ -4,6 +4,7 @@ This module implements connector classes responsible for communications with
 magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
+import numpy as _np
 import math as _math
 from siriuspy import envars as _envars
 from siriuspy.epics import EpicsProperty as _EpicsProperty, \
@@ -518,20 +519,25 @@ class ConnMagnets(_EpicsPropsList):
                 rb[name] = check_val
         result = self.set_setpoints_check(setpoints=sp,
                                           desired_readbacks=rb,
-                                          timeout=timeout)
+                                          timeout=timeout,
+                                          abs_tol=1e-5)
         return result
 
     def _check_magnet(self, maname, prop, value):
         """Check a prop of a power supplies for a value."""
-        if not self.get_readback(maname + ':' + prop) == value:
+        if isinstance(value, (_np.ndarray, float)):
+            ok = _np.isclose(self.get_readback(maname + ':' + prop), value,
+                             atol=1e-5)
+        else:
+            ok = self.get_readback(maname + ':' + prop) == value
+        if not ok:
             return False
         return True
 
     def _check_all(self, prop, value):
         """Check a prop of all power supplies for a value."""
         for maname in self.manames:
-            name = maname + ':' + prop
-            if not self.get_readback(name) == value:
+            if not self._check_magnet(maname, prop, value):
                 return False
         return True
 

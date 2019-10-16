@@ -5,7 +5,6 @@ import epics as _epics
 
 
 import numpy as _np
-from math import isclose as _isclose
 from siriuspy.envars import vaca_prefix as _prefix
 from siriuspy.namesys.implementation import \
     SiriusPVName as _SiriusPVName, \
@@ -223,14 +222,12 @@ class EpicsPropertiesList:
                     if len(value) != len(rb):
                         finished = False
                         break
-                    for i in range(len(value)):
-                        if not _isclose(rb[i], value[i],
-                                        rel_tol=rel_tol, abs_tol=abs_tol):
-                            finished = False
-                            break
+                    if not all(_np.isclose(rb, value,
+                                           rtol=rel_tol, atol=abs_tol)):
+                        finished = False
+                        break
                 else:
-                    if not _isclose(rb, value,
-                                    rel_tol=rel_tol, abs_tol=abs_tol):
+                    if not _np.isclose(rb, value, rtol=rel_tol, atol=abs_tol):
                         finished = False
                         break
             if finished:
