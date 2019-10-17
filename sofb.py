@@ -9,9 +9,12 @@ class SOFB:
 
     def __init__(self, acc):
         self.data = SOFBFactory.create(acc)
-        orbtp = 'MTurnIdx' if acc == 'BO' else 'SPass'
+        orbtp = 'MTurn' if self.data.isring else 'SPass'
         self._trajx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'OrbX-Mon')
         self._trajy = PV(acc+'-Glob:AP-SOFB:'+orbtp+'OrbY-Mon')
+        if self.data.isring:
+            self._trajx_idx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'Idx'+'OrbX-Mon')
+            self._trajy_idx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'Idx'+'OrbY-Mon')
         self._rst = PV(acc+'-Glob:AP-SOFB:SmoothReset-Cmd')
         self._npts_sp = PV(acc+'-Glob:AP-SOFB:SmoothNrPts-SP')
         self._npts_rb = PV(acc+'-Glob:AP-SOFB:BufferCount-Mon')
@@ -36,6 +39,16 @@ class SOFB:
     @property
     def trajy(self):
         return self._trajy.get()
+
+    @property
+    def trajx_idx(self):
+        return self._trajx_idx.get() if self.data.isring \
+            else self.trajx
+
+    @property
+    def trajy_idx(self):
+        return self._trajy_idx.get() if self.data.isring \
+            else self.trajy
 
     @property
     def sum(self):
