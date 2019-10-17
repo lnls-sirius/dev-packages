@@ -5,14 +5,12 @@ from unittest import TestCase
 
 from siriuspy import util
 from siriuspy.pwrsupply import pru
-from siriuspy.pwrsupply.pru import Const
 from siriuspy.pwrsupply.pru import PRUInterface
 from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.pru import PRUSim
 
 
 public_interface = (
-    'Const',
     'PRUInterface',
     'PRU',
     'PRUSim',
@@ -30,49 +28,11 @@ class TestModule(TestCase):
         self.assertTrue(valid)
 
 
-class TestConst(TestCase):
-    """Test Const class interface."""
-
-    public_interface = (
-        'RETURN',
-        'SYNC_MODE',
-        'SYNC_STATE',
-    )
-
-    def test_public_interface(self):
-        """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-                Const,
-                TestConst.public_interface)
-        self.assertTrue(valid)
-
-    def test_RETURN(self):
-        """Test RETURN."""
-        self.assertIn('SYNC_OFF', dir(Const.RETURN))
-        self.assertIn('SYNC_OFF', dir(Const.RETURN))
-        self.assertIn('SYNC_ON', dir(Const.RETURN))
-        self.assertIn('OK', dir(Const.RETURN))
-
-    def test_SYNC_MODE(self):
-        """Test SYNC_MODE."""
-        modes = ('MIGINT', 'MIGEND', 'RMPINT', 'RMPEND', 'BRDCST')
-        self.assertIn('ALL', dir(Const.SYNC_MODE))
-        self.assertIsInstance(Const.SYNC_MODE.ALL, tuple)
-        for mode in modes:
-            self.assertIn(mode, dir(Const.SYNC_MODE))
-            self.assertIn(getattr(Const.SYNC_MODE, mode), Const.SYNC_MODE.ALL)
-
-    def test_SYNC_STATE(self):
-        """Test SYNC_STATE."""
-        # TODO: implement test!
-        self.assertIn('OFF', dir(Const.SYNC_STATE))
-        self.assertIn('ON', dir(Const.SYNC_STATE))
-
-
 class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
     public_interface = (
+        'OK',
         'simulated',
         'UART_write',
         'UART_read',

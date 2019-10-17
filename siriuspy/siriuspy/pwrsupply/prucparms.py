@@ -1,6 +1,5 @@
 """Model abstract factory."""
 
-from siriuspy.pwrsupply.pru import Const as _PRUConst
 from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
 
 
@@ -22,8 +21,6 @@ class _PRUCParms:
     MIGWFM = MIRROR
     CYCLE = SYNCOFF
     RMPWFM = MIRROR
-
-    PRU = _PRUConst
 
 
 class PRUCParmsFBP(_PRUCParms):

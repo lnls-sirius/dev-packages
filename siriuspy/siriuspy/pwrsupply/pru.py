@@ -21,21 +21,10 @@ if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
     raise ValueError(_ERR_MSG)
 
 
-class Const:
-    """Namespace for constants."""
-
-    RETURN = _PRUserial485.ConstReturn
-    SYNC_MODE = _PRUserial485.ConstSyncMode
-
-    class SYNC_STATE:
-        """Namespace for sync state constants."""
-
-        OFF = False
-        ON = True
-
-
 class PRUInterface:
     """Interface class for programmable real-time units."""
+
+    OK = 0
 
     def __init__(self):
         """Init method."""
@@ -124,7 +113,7 @@ class PRU(PRUInterface):
         baud_rate = 6
         mode = b"M"  # "S": slave | "M": master
         ret = _PRUserial485.PRUserial485_open(baud_rate, mode)
-        if ret != Const.RETURN.OK:
+        if ret != PRUInterface.OK:
             raise ValueError(('Error {} returned in '
                               'PRUserial485_open').format(ret))
 
