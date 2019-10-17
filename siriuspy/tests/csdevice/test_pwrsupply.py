@@ -14,15 +14,12 @@ public_interface = (
     'MAX_WFMSIZE',
     'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
-    'DEFAULT_WFMDATA',
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
     'DEFAULT_WFM_FBP',
     'MAX_WFMSIZE_OTHERS',
     'DEF_WFMSIZE_OTHERS',
     'DEFAULT_WFM',
-    # 'DEFLT_PS_CURR_PREC',
-    # 'DEFLT_PU_CURR_PREC',
     'DEFAULT_WFM_OTHERS',
     'DEFAULT_PS_CURRENT_PRECISION',
     'DEFAULT_PU_CURRENT_PRECISION',
@@ -140,11 +137,6 @@ class TestPwrSupply(TestCase):
         self.assertIsInstance(pwrsupply.DEFAULT_SIGGEN_CONFIG, tuple)
         self.assertTrue(len(pwrsupply.DEFAULT_SIGGEN_CONFIG), 9)
 
-    def test_DEFAULT_WFMDATA(self):
-        """Test DEFAULT_WFMDATA."""
-        self.assertIsInstance(pwrsupply.DEFAULT_WFMDATA, tuple)
-        self.assertTrue(len(pwrsupply.DEFAULT_WFMDATA), pwrsupply.MAX_WFMSIZE)
-
     def test_ps_current_unit(self):
         """Test  ps_current_unit."""
         unit = pwrsupply.get_ps_current_unit()
@@ -180,14 +172,13 @@ class TestPwrSupply(TestCase):
         for prop in db:
             self.assertIsInstance(db[prop], dict)
         # test precision consistency
-        proptys = TestPwrSupply.ps_alarm + ('WfmData-SP', 'WfmData-RB')
+        proptys = TestPwrSupply.ps_alarm
         for propty in proptys:
             self.assertIn(propty, db)
 
     def test_ps_propty_database(self):
         """Test ps_propty_database."""
-        current_pvs = TestPwrSupply.ps_alarm + \
-            ('WfmData-SP', 'WfmData-RB')
+        current_pvs = TestPwrSupply.ps_alarm
         for pstype in TestPwrSupply.pstypes:
             db = pwrsupply.get_ps_propty_database('FBP', pstype)
             unit = db['Current-SP']['unit']
