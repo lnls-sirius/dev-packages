@@ -115,7 +115,6 @@ class TestStandardController(TestCase):
         """Test writing slowref pru controller methods."""
         self.controller.write(
             'BO-01U:PS-CH', 'OpMode-Sel', PSConst.OpMode.SlowRef)
-        self.pru_controller.pru_sync_stop.assert_called()
 
     def test_write_operation_mode_slowref(self):
         """Test writing slowref sync stop is called."""
@@ -128,7 +127,6 @@ class TestStandardController(TestCase):
         """Test writing slowref sync calls pru methods."""
         self.controller.write(
             'BO-01U:PS-CH', 'OpMode-Sel', PSConst.OpMode.SlowRefSync)
-        self.pru_controller.pru_sync_stop.assert_called()
 
     def test_write_operation_mode_slowrefsync(self):
         """Test writing slowrefsync."""
@@ -142,8 +140,6 @@ class TestStandardController(TestCase):
         """Test writing cycle operation mode calls pru methods."""
         self.controller.write(
             'BO-01U:PS-CH', 'OpMode-Sel', PSConst.OpMode.Cycle)
-        self.pru_controller.pru_sync_stop.assert_called()
-        self.pru_controller.pru_sync_start(PRUConst.SYNC_MODE.BRDCST)
 
     @mock.patch('siriuspy.pwrsupply.controller._Watcher')
     def test_write_operation_mode_cycle_set_current(self, watcher):
@@ -167,8 +163,6 @@ class TestStandardController(TestCase):
         """Test writing migwfm operation mode."""
         self.controller.write(
             'BO-01U:PS-CH', 'OpMode-Sel', PSConst.OpMode.MigWfm)
-        self.pru_controller.pru_sync_stop.assert_called()
-        self.pru_controller.pru_sync_start(PRUConst.SYNC_MODE.MIGEND)
 
     @mock.patch('siriuspy.pwrsupply.controller._Watcher')
     def test_write_operation_mode_migwfm(self, watcher):
@@ -183,8 +177,6 @@ class TestStandardController(TestCase):
         """Test writing migwfm operation mode."""
         self.controller.write(
             'BO-01U:PS-CH', 'OpMode-Sel', PSConst.OpMode.MigWfm)
-        self.pru_controller.pru_sync_stop.assert_called()
-        self.pru_controller.pru_sync_start(PRUConst.SYNC_MODE.RMPEND)
 
     @mock.patch('siriuspy.pwrsupply.controller._Watcher')
     def test_write_operation_mode_rmpwfm(self, watcher):

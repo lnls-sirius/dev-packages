@@ -60,28 +60,6 @@ class BSMPFunctionNull(BSMPFunction):
         """Do nothing."""
         pass
 
-
-class PRUCurve(Function):
-    """Executes a pru curve write command."""
-
-    def __init__(self, device_ids, pru_controller, setpoints=()):
-        """Get pru controller."""
-        self._device_ids = device_ids
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            for dev_id in self._device_ids:
-                try:
-                    self.pru_controller.pru_curve_write(dev_id, value)
-                except ValueError as err:
-                    # Probably invalid curve size
-                    print(str(err))
-
-
 class WfmMonAcq(Function):
     """Enable/Disable Wfm-Mon curve acquisition."""
 
@@ -196,24 +174,6 @@ class PSPwrState(Function):
                 self.turn_off.execute()
 
 
-class BSMPComm(Function):
-    """Adapter to deal with turning PRUController BSMP comm on and off."""
-
-    def __init__(self, pru_controller, setpoints=None):
-        """Init."""
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                self.setpoints.apply(value):
-            if value == 1:
-                self.pru_controller.bsmpcomm = True
-            elif value == 0:
-                self.pru_controller.bsmpcomm = False
-
-
 class PSPwrStateFBP_DCLink(Function):
     """Adapter to deal with FBP_DCLink turn on/off functions."""
 
@@ -300,7 +260,8 @@ class PSOpMode(Function):
 
 class Current(Function):
     """Command to set current in PSs linked to magnets."""
-
+    # NOTE: This was needed when PRU was used to control timing.
+    # It may be discarded...
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set current."""
         self._device_ids = device_ids
@@ -313,17 +274,8 @@ class Current(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            op_modes = [_PSCStatus(self.pru_controller.read_variables(
-                device_id, 0)).state for device_id in self._device_ids]
-            slowsync = False
-            if _consts_ps.States.SlowRefSync in op_modes:
-                slowsync = True
-                self.pru_controller.pru_sync_stop()
 
             self.set_current.execute(value)
-
-            if slowsync:
-                self.pru_controller.pru_sync_start(0x5B)
 
 
 class Voltage(Function):

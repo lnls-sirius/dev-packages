@@ -13,9 +13,6 @@ from threading import Lock as _Lock
 from siriuspy.bsmp import constants as _const_bsmp
 from siriuspy.bsmp import SerialError as _SerialError
 
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
-from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
-
 from .bsmp import __version__ as _devpckg_firmware_version
 from .bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from .udc import UDC as _UDC
@@ -24,52 +21,8 @@ from .psupply import PSupply as _PSupply
 
 # NOTE: On current behaviour of PRUC and Power Supplies:
 #
-# 01. Currently curve block changes are implemented only upon the arrival of
-#     timing trigger that corresponds to the last curve point.
-#     This better preserves magnetic history of the magnet while being
-#     able to change the curve on the fly.
-#
-# 02. PRU 'sync_stop' aborts the sync mode right away. Maybe it should be
-#     renamed to 'sync_abort' and a new command named 'sync_stop' should be
-#     provided that implements abort only at the end of the ramp, thus
-#     preserving the magnetic history of the magnets sourced my the power
-#     supplies. Without this abort at the end of the ramp, the high level
-#     has to be responsible for first turning the 2Hz timing trigger off
-#     before switching the power supply off the ramp mode.
-#     This is prone to operation errors!
-#
-# 03. Change of curves on the fly. In order to allow this blocks 0 and 1 of
-#     curves will be used in a cyclic way. This should be transparent for
-#     users of the PRUController. At this points only one high level curve
-#     for each power supply is implemented. Also we have not implemented yet
-#     the possibility of changing the curve length.
-#
-# 04. Discretization of the current-mon can mascarade measurements of update
+# 01. Discretization of the current-mon can mascarade measurements of update
 #     rates. For testing we should add a small random fluctuation.
-#
-# 05. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
-#     expected to return to SlowRef automatically without changing CurrentRef.
-#     In the current firmware version when the controller executes a
-#     SELECT_OP_MODE with SlowRef as argument it automatically sets CurrentRef
-#     (V_PS_REFERENCE) to the Current-RB (V_PS_SETPOINT). This is a problem
-#     after cycling since we want the IOC to move back to SlowRef automatically
-#     So the IOC has to set Current-SP to the same value as SigGen's offset
-#     before moving the power supply to Cycle mode. This is being done with the
-#     current version of the IOC.
-#
-# 06. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
-#     power supplies after setting the last curve point may not be the
-#     final value given by PS_REFERENCE. This is due to the fact that the
-#     power supply control loop takes some time to converge and the PRU may
-#     block serial comm. before it. This is evident in SlowRefSync mode, where
-#     reference values may change considerably between two setpoints.
-
-# TODO: discuss with patricia:
-#
-# 01. What does the 'delay' param in 'PRUserial485.UART_write' mean exactly?
-# 02. Request a 'sync_abort' function in the PRUserial485 library.
-# 03. Requested new function that reads curves at PRU memory.
-#     patricia will work on this.
 
 
 class PRUController:
@@ -79,7 +32,6 @@ class PRUController:
     of the Beaglebone computer connected through a serial line to power supply
     controllers.
     """
-
     # TODO: test not dcopying self._variables_values in _bsmp_update_variables.
     #       we need to lock up whole section in that function that does
     #       updating of _variables_values, though. Also to lock up other class
@@ -87,7 +39,6 @@ class PRUController:
     # TODO: move scan and process threads to BeagleBone objects. With this
     #       change the code will map to the power supply architecture more
     #       naturally.
-    # TODO: use specialized Serial exceptions, not general SerialException.
     #
     # NOTE: All private methods starting with '_bsmp' string make a direct
     #       write to the serial line.
@@ -96,14 +47,6 @@ class PRUController:
 
     _delay_sleep = 0.020  # [s]
 
-    # --- default delays for sync modes
-    # This this is delay PRU observes right after finishing writting to UART
-    # the BSMP broadcast command 0x0F 'sync_pulse' before processing the UART
-    # buffer again. This delay has to be longer than the duration of the
-    # controller's response to 'sync_pulse'.
-
-    _delay_func_sync_pulse = 100  # [us]
-    _delay_func_set_slowref_fbp = 100  # [us]
     _update_wfm_period = 2.0  # [s]
 
     # --- public interface ---
@@ -143,18 +86,12 @@ class PRUController:
             self._init_prune_mirror_group(
                 self._psmodel.name, self._device_ids, self._parms.groups)
 
-        # set PRU delays
-        self._pru_sync_delays = self._init_pru_sync_delays(self._parms)
-
         # index of dev_id in self._device_ids for wfmref update
         self._wfm_update = True
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
         # update time interval attribute
         self._scan_interval = self._get_scan_interval()
-
-        # initializes PRU parameters (in sync mode off).
-        self._curves = self._init_pru_curves()
 
         # --- BSMP communication ---
 
@@ -212,16 +149,6 @@ class PRUController:
         self._scanning = value
 
     @property
-    def bsmpcomm(self):
-        """Return bsmpcomm state."""
-        return self._queue.enabled
-
-    @bsmpcomm.setter
-    def bsmpcomm(self, value):
-        """Set bsmpcomm state."""
-        self._queue.enabled = value
-
-    @property
     def processing(self):
         """Return processing state."""
         return self._processing
@@ -265,8 +192,7 @@ class PRUController:
 
     def disconnect(self):
         """Disconnect to BSMP devices and stop threads."""
-        # move PRU sync to off
-        self.pru_sync_abort()
+        self._scan_interval = self._get_scan_interval()
 
         # wait for empty queue
         self._scanning_false_wait_empty_queue()
@@ -353,16 +279,11 @@ class PRUController:
 
     def wfm_update(self, device_ids, interval=None):
         """Queue update wfm curve."""
-        if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
-            # in PRU sync off mode, append BSM function exec operation to queue
-            if isinstance(device_ids, int):
-                device_ids = (device_ids, )
-            operation = (self._bsmp_update_wfm, (device_ids, interval, ))
-            self._queue.append(operation)
-            return True
-        else:
-            # does nothing if PRU sync is on, regardless of sync mode.
-            return False
+        if isinstance(device_ids, int):
+            device_ids = (device_ids, )
+        operation = (self._bsmp_update_wfm, (device_ids, interval, ))
+        self._queue.append(operation)
+        return True
 
     def wfm_rb_read(self, device_id):
         """Return wfm_rb curve."""
@@ -408,16 +329,12 @@ class PRUController:
 
     def wfm_write(self, device_ids, data):
         """Write wfm curves."""
-        if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
-            # in PRU sync off mode, append BSM function exec operation to queue
-            if isinstance(device_ids, int):
-                device_ids = (device_ids, )
-            operation = (self._bsmp_wfm_write,
-                         (device_ids, data))
-            self._queue.append(operation)
-            return True
-        else:
-            return False
+        # in PRU sync off mode, append BSM function exec operation to queue
+        if isinstance(device_ids, int):
+            device_ids = (device_ids, )
+        operation = (self._bsmp_wfm_write, (device_ids, data))
+        self._queue.append(operation)
+        return True
 
     def exec_functions(self, device_ids, function_id, args=None):
         """
@@ -439,136 +356,16 @@ class PRUController:
             because of the PRU sync state.
 
         """
-        if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
-            # in PRU sync off mode, append BSM function exec operation to queue
-            if isinstance(device_ids, int):
-                device_ids = (device_ids, )
-            if args is None:
-                args = (device_ids, function_id)
-            else:
-                args = (device_ids, function_id, args)
-            operation = (self._bsmp_exec_function, args)
-            self._queue.append(operation)
-            return True
+        # in PRU sync off mode, append BSM function exec operation to queue
+        if isinstance(device_ids, int):
+            device_ids = (device_ids, )
+        if args is None:
+            args = (device_ids, function_id)
         else:
-            # does nothing if PRU sync is on, regardless of sync mode.
-            return False
-
-    # --- public methods: access to PRU properties ---
-
-    @property
-    def pru_sync_mode(self):
-        """PRU sync mode."""
-        return self._pru.sync_mode
-
-    @property
-    def pru_sync_status(self):
-        """PRU sync status."""
-        return self._pru.sync_status
-
-    def pru_sync_start(self, sync_mode):
-        """Start PRU sync mode.
-
-        Before starting a sync_mode this method does a number of actions:
-
-        01. Checks if requested mode exists. If not, raises NotImplementedError
-        02. Moves sync state to off.
-        03. Stops scanning device variables
-        04. Waits untill all operations in queue are processed.
-        05. Executes a final variable scan in the queue.
-        06. Start sync in requested mode
-        07. Waits untill all operations in queue are processed.
-        08. Turn scanning back on again.
-
-        obs: Since operation in queue are processed before changing to
-        he new sync mode, this method can safely be invoked right away after
-        any other PRUController method, withou any inserted delay.
-        """
-        # test if sync_mode is valid
-        if sync_mode not in self._parms.PRU.SYNC_MODE.ALL:
-            self.disconnect()
-            raise NotImplementedError('Invalid sync mode {}'.format(
-                hex(sync_mode)))
-
-        # try to abandon previous sync mode gracefully
-        if self.pru_sync_status != self._parms.PRU.SYNC_STATE.OFF:
-            # --- already with sync mode on.
-            self.pru_sync_abort()
-        else:
-            # --- current sync mode is off
-            pass
-
-        # wait for all queued operations to be processed
-        self.bsmp_scan()
-        self._scanning_false_wait_empty_queue()
-
-        # execute a last BSMP read group so that mirror is updated.
-        # This is supposedly needed in cases where the last operation
-        # in the queue was a function execution.
-        # TODO: test this! but is it really necessary?
-        self._bsmp_update(self._device_ids,
-                          self._parms.SYNCOFF)
-        self._scanning_false_wait_empty_queue()
-
-        # reset curve index
-        self._pru.set_curve_pointer(0)
-
-        # set selected sync mode
-        self._pru.sync_start(
-            sync_mode=sync_mode,
-            delay=self._pru_sync_delays[sync_mode],
-            sync_address=self._device_ids[0])
-
-        # update time interval according to new sync mode selected
-        self._scan_interval = self._get_scan_interval()
-
-        # accept back new operation requests
-        self.scanning = True
-        self._queue.ignore_clear()
-
-    def pru_sync_stop(self):
-        """Stop PRU sync mode."""
-        # TODO: should we do more than what is implemented?
-        self._pru.sync_stop()  # TODO: implemented as a sync_abort!!!
-        self._scan_interval = self._get_scan_interval()
-
-    def pru_sync_abort(self):
-        """Force stop PRU sync mode."""
-        # TODO: should we do more than what is implemented?
-        self._pru.sync_abort()
-        self._scan_interval = self._get_scan_interval()
-
-    @property
-    def pru_sync_pulse_count(self):
-        """PRU sync pulse count."""
-        return self._pru.sync_pulse_count
-
-    @property
-    def pru_curve_block(self):
-        """PRU curves block index."""
-        return self._pru.read_curve_block()
-
-    # TODO: since now we have many concurrent PRUController objects in the
-    # same process, due to the fact that a single BBB can communicate with
-    # more than one UDC, we should move WfmData (curves) to a separate
-    # class that maps more naturally to the BBB-PRUC... Maybe in this
-    #  process rename PRUController to something like "UDCComm"
-
-    def pru_curve_read(self, device_id):
-        """Read curve of a device from PRU memory."""
-        # pass reference to curve, not a copy! this is necessary otherwise
-        # it is hard to achieve update rate of 10 Hz of the IOC.
-        idx = self._device_ids.index(device_id)
-        # curve = _dcopy(self._curves[idx])
-        curve = self._curves[idx]
-        return curve
-
-    def pru_curve_write(self, device_id, curve):
-        """Write curve for a device to the correponding PRU memory."""
-        # prepare curves, trimming or padding...
-        self._curve_set(device_id, curve)
-        # write curve to PRU memory
-        self._curve_send()
+            args = (device_ids, function_id, args)
+        operation = (self._bsmp_exec_function, args)
+        self._queue.append(operation)
+        return True
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -580,19 +377,8 @@ class PRUController:
         operation = (self._bsmp_update,
                      (device_ids, group_id, ))
         if not self._queue or operation != self._queue.last_operation:
-            if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
-                # with sync off, function executions are allowed and
-                # therefore operations must be queued in order
-                if self.bsmpcomm:
-                    # queue operation only if serial is available.
-                    self._queue.append(operation)
-            else:
-                # for sync on, no function execution is accepted and
-                # we can therefore append only unique operations since
-                # processing order is not relevant.
-                if self.bsmpcomm:
-                    # queue operation only if serial is reserved.
-                    self._queue.append(operation, unique=True)
+            self._queue.append(operation)
+            # self._queue.append(operation, unique=True)
         else:
             # does not append if last operation is the same as last one
             # operation appended to queue
@@ -600,10 +386,8 @@ class PRUController:
 
     def bsmp_process(self):
         """Run process once."""
-        # process first operation in queue, if any and
-        # if serial line is available.
-        if self.bsmpcomm:
-            self._queue.process()
+        # process first operation in queue, if any.
+        self._queue.process()
 
     # --- private methods: initializations ---
 
@@ -650,29 +434,6 @@ class PRUController:
 
         return groups
 
-    def _init_pru_sync_delays(self, parms):
-        pru_sync_delays = dict()
-        pru_sync_delays[parms.PRU.SYNC_MODE.MIGINT] = None
-        pru_sync_delays[parms.PRU.SYNC_MODE.MIGEND] = \
-            PRUController._delay_func_set_slowref_fbp
-        pru_sync_delays[parms.PRU.SYNC_MODE.RMPINT] = None
-        pru_sync_delays[parms.PRU.SYNC_MODE.RMPEND] = \
-            PRUController._delay_func_set_slowref_fbp
-        pru_sync_delays[parms.PRU.SYNC_MODE.BRDCST] = \
-            PRUController._delay_func_sync_pulse
-
-        return pru_sync_delays
-
-    def _init_pru_curves(self):
-        # initialize PRU curves
-        curves = [
-            list(_DEFAULT_WFMDATA),  # 1st power supply
-            list(_DEFAULT_WFMDATA),  # 2nd power supply
-            list(_DEFAULT_WFMDATA),  # 3rd power supply
-            list(_DEFAULT_WFMDATA)]  # 4th power supply
-
-        return curves
-
     def _scanning_false_wait_empty_queue(self):
         # wait for all queued operations to be processed
         self._queue.ignore_set()  # ignore eventual new operation requests
@@ -708,54 +469,6 @@ class PRUController:
                 print()
                 # raise ValueError(errmsg)
 
-    def _curve_set(self, device_id, curve):
-        """Set PRU curve of a BSMP device."""
-        # get index of curve for the given device id
-        idx = self._device_ids.index(device_id)
-
-        # if the case, trim or padd existing curves
-        curvsize, curvsize0 = len(curve), len(self._curves[idx])
-        if curvsize == 0:
-            raise ValueError('Invalid empty curve!')
-        elif curvsize > _MAX_WFMSIZE:
-            raise ValueError('Curve length exceeds maximum value!')
-        elif curvsize > curvsize0:
-            for curv in self._curves:
-                # padd wfmdata with last current value
-                curv += [curv[-1], ] * (curvsize - curvsize0)
-        elif curvsize < curvsize0:
-            for curv in self._curves:
-                # trim wfmdata
-                del curv[curvsize:]
-
-        # store curve in PRUController attribute
-        self._curves[idx] = list(curve)
-
-    def _curve_send(self):
-        """Send PRUController curves to PRU."""
-        # NOTE: we the current PRU lib version we can deal with only
-        # 4 curves for each controller, corresponding to 4 power supply
-        # waveforms. If the number of bsmp devices is bigger than 4 and
-        # this method is invoked, exception is raised!
-        if len(self._device_ids) > 4:
-            errmsg = 'Invalid method invocation when number of devs > 4'
-            print(errmsg)
-            # raise ValueError(errmsg)
-
-        # select in which block the new curve will be stored
-        block_curr = self._pru.read_curve_block()
-        block_next = 1 if block_curr == 0 else 0
-
-        self._pru.curve(self._curves[0],
-                        self._curves[1],
-                        self._curves[2],
-                        self._curves[3],
-                        block_next)
-        # TODO: do we need a sleep here?
-
-        # select block to be used at next start of ramp
-        self._pru.set_curve_block(block_next)
-
     # --- private methods: scan and process ---
 
     def _loop_scan(self):
@@ -781,19 +494,7 @@ class PRUController:
 
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
-        if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF:
-            return self._device_ids, self._parms.SLOWREF
-        elif self._pru.sync_mode == self._parms.PRU.SYNC_MODE.MIGEND:
-            dev_ids = self._select_next_device_id()
-            return dev_ids, self._parms.MIGWFM
-        elif self._pru.sync_mode == self._parms.PRU.SYNC_MODE.RMPEND:
-            dev_ids = self._select_next_device_id()
-            return dev_ids, self._parms.RMPWFM
-        elif self._pru.sync_mode == self._parms.PRU.SYNC_MODE.BRDCST:
-            return self._device_ids, self._parms.CYCLE
-        else:
-            self.disconnect()
-            raise NotImplementedError('Sync mode not implemented!')
+        return self._device_ids, self._parms.SLOWREF
 
     def _select_next_device_id(self):
         # select device ids to be read (when not in sync_off mode)
@@ -810,17 +511,10 @@ class PRUController:
         return (dev_id, )
 
     def _get_scan_interval(self):
-        if self.pru_sync_status == self._parms.PRU.SYNC_STATE.OFF or \
-           self.pru_sync_mode == self._parms.PRU.SYNC_MODE.BRDCST:
-            if self._parms.FREQ_SCAN == 0:
-                return 0
-            else:
-                return 1.0/self._parms.FREQ_SCAN  # [s]
+        if self._parms.FREQ_SCAN == 0:
+            return 0
         else:
-            if self._parms.FREQ_RAMP == 0:
-                return 0
-            else:
-                return 1.0/self._parms.FREQ_RAMP  # [s]
+            return 1.0/self._parms.FREQ_SCAN  # [s]
 
     def _serial_error(self, device_ids):
         # signal disconnected for device ids.
@@ -866,17 +560,10 @@ class PRUController:
 
     def _bsmp_reset_udc(self):
 
-        # turn PRU sync off
-        self.pru_sync_abort()
+        self._scan_interval = self._get_scan_interval()
 
         # initialize variable groups (first BSMP comm.)
         self._bsmp_init_devices()
-
-        # initializes PRU curves
-        # NOTE: somehow this is necessary. if curves are not set in
-        # initialization, RMPEND does not work! sometimes the ps controllers
-        # are put in a non-responsive state!!!
-        self.pru_curve_write(self._device_ids[0], self._curves[0])
 
     def _bsmp_init_devices(self):
 

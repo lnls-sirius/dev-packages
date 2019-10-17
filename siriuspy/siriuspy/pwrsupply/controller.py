@@ -47,7 +47,9 @@ class PSController:
                 sel.apply(sts.read())
 
         reader = self._readers[pvname]
-        return reader.read()
+        if reader is not None:
+            return reader.read()
+        raise AttributeError('Could not find reader for "{}"'.format(field))
 
     def read_all_fields(self, device_name):
         """Read all fields value from device."""
@@ -72,18 +74,27 @@ class PSController:
         for key, reader in self._readers.items():
             if key.endswith(('-Sel', '-SP')):
                 rb_field = PSController._get_readback_field(key)
-                try:
-                    value = self._readers[rb_field].read()
-                except KeyError:
-                    err_str = '\
-                        Could not find reader for PV {}!'.format(rb_field)
-                    print(err_str)
-                    continue
-                else:
-                    if key.endswith('OpMode-Sel'):
-                        if value is not None:
-                            value = 0 if value < 3 else value - 3
-                    reader.apply(value)
+                rdr = self._readers[rb_field]
+                if rdr is None:
+                    raise AttributeError(
+                        'Could not find reader for "{}"'.format(rb_field))
+                value = rdr.read()
+                if key.endswith('OpMode-Sel'):
+                    if value is not None:
+                        value = 0 if value < 3 else value - 3
+                reader.apply(value)
+                # try:
+                #     value = self._readers[rb_field].read()
+                # except KeyError:
+                #     err_str = '\
+                #         Could not find reader for PV {}!'.format(rb_field)
+                #     print(err_str)
+                #     continue
+                # else:
+                #     if key.endswith('OpMode-Sel'):
+                #         if value is not None:
+                #             value = 0 if value < 3 else value - 3
+                #     reader.apply(value)
 
     @staticmethod
     def _get_readback_field(field):
@@ -190,19 +201,9 @@ class StandardPSController(PSController):
             self._set_watchers(setpoint)
 
     def _set_opmode(self, writer, op_mode):
-        self._pru_controller.pru_sync_stop()
         self._pre_opmode(op_mode)
         writer.execute(op_mode)
         self._pos_opmode(op_mode)
-        # if op_mode == _PSConst.OpMode.Cycle:
-        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
-        #     return self._pru_controller.pru_sync_start(sync_mode)
-        # elif op_mode == _PSConst.OpMode.RmpWfm:
-        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
-        #     return self._pru_controller.pru_sync_start(sync_mode)
-        # elif op_mode == _PSConst.OpMode.MigWfm:
-        #     sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
-        #     return self._pru_controller.pru_sync_start(sync_mode)
         if op_mode in (_PSConst.OpMode.Cycle,
                        _PSConst.OpMode.RmpWfm,
                        _PSConst.OpMode.MigWfm):

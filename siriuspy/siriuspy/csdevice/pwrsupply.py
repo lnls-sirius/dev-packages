@@ -12,7 +12,6 @@ from siriuspy.csdevice import util as _cutil
 # --- WfmData ---
 MAX_WFMSIZE = 4000
 DEF_WFMSIZE = 3920
-DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 
 # --- Wfm ---
 # NOTE: _SIZE has to be consistent with
@@ -412,19 +411,10 @@ def get_common_propty_database():
         'OpMode-Sts': {'type': 'enum', 'enums': _et.STATES,
                        'value': Const.OpMode.SlowRef},
         # PRU
-        'PRUSyncMode-Mon': {'type': 'enum', 'enums': _et.SYNC_MODES,
-                            'value': Const.SyncMode.Off},
-        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
-        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'unit': 'count',
                                  'low': -1, 'lolo': -1,
                                  'high': 50, 'hihi': 50},
-        # BSMPComm
-        'BSMPComm-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
-                         'value': Const.PwrStateSel.On},
-        'BSMPComm-Sts': {'type': 'enum', 'enums': _et.PWRSTATE_STS,
-                         'value': Const.PwrStateSts.On},
         # Interlocks
         'IntlkSoft-Mon': {'type': 'int',    'value': 0},
         'IntlkHard-Mon': {'type': 'int',    'value': 0},
@@ -470,13 +460,6 @@ def get_basic_propty_database():
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
-        # WfmData - PRU
-        'WfmData-SP': {'type': 'float', 'count': DEF_WFMSIZE,
-                       'value': list(DEFAULT_WFMDATA),
-                       'prec': DEFAULT_PS_CURRENT_PRECISION},
-        'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
-                       'value': list(DEFAULT_WFMDATA),
-                       'prec': DEFAULT_PS_CURRENT_PRECISION},
         # Wfm - UDC
         'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM),

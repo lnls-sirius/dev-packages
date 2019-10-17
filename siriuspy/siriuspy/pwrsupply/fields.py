@@ -25,20 +25,6 @@ class Variable:
         return value
 
 
-class PRUCurve:
-    """PRU Curve read."""
-
-    def __init__(self, pru_controller, device_id):
-        """Init properties."""
-        self.pru_controller = pru_controller
-        self.device_id = device_id
-
-    def read(self):
-        """Read curve."""
-        data = self.pru_controller.pru_curve_read(self.device_id)
-        return data
-
-
 class WfmRBCurve:
     """BSMP PS WfmRB Curve read."""
 
@@ -135,27 +121,6 @@ class PRUProperty:
     def read(self):
         """Read pru property."""
         return getattr(self.pru_controller, self.property)
-
-
-class PRUSyncMode:
-    """Return sync mode."""
-
-    _sync_mode = {
-        _SYNC_MODE.BRDCST: 1,
-        _SYNC_MODE.RMPEND: 2,
-        _SYNC_MODE.MIGEND: 3}
-
-    def __init__(self, pru_controller):
-        """Init."""
-        self.sync_status = PRUProperty(pru_controller, 'pru_sync_status')
-        self.sync_mode = PRUProperty(pru_controller, 'pru_sync_mode')
-
-    def read(self):
-        """Read."""
-        if not self.sync_status.read():
-            return 0
-        else:
-            return PRUSyncMode._sync_mode[self.sync_mode.read()]
 
 
 class PwrState:

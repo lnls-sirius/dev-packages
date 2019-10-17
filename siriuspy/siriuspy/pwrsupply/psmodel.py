@@ -30,10 +30,7 @@ class _PSModel:
         'Version-Cte': (_fields.Version, _c.V_FIRMWARE_VERSION)}
     _e2c = {
         # Epics to PRUCrontroller property
-        'PRUBlockIndex-Mon': 'pru_curve_block',
-        'PRUSyncPulseCount-Mon': 'pru_sync_pulse_count',
-        'PRUCtrlQueueSize-Mon': 'queue_length',
-        'BSMPComm-Sts': 'bsmpcomm', }
+        'PRUCtrlQueueSize-Mon': 'queue_length'}
 
     _variables = dict()  # this will be filled in derived classes
 
@@ -96,8 +93,6 @@ class _PSModel:
             return _fields.PRUProperty(pru_controller, attr)
         elif epics_field == 'TimestampUpdate-Mon':
             return _fields.TimestampUpdate(pru_controller, device_id)
-        elif epics_field == 'WfmData-RB':
-            return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'Wfm-RB':
             return _fields.WfmRBCurve(pru_controller, device_id)
         elif epics_field == 'WfmRef-Mon':
@@ -108,8 +103,6 @@ class _PSModel:
             return _fields.WfmIndexCurve(pru_controller, device_id)
         elif epics_field == 'WfmUpdateAuto-Sts':
             return _fields.WfmUpdateAutoSts(pru_controller, device_id)
-        elif epics_field == 'PRUSyncMode-Mon':
-            return _fields.PRUSyncMode(pru_controller)
         return None
 
     def _specific_fields(self, device_id, epics_field, pru_controller):
@@ -196,9 +189,6 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'CycleAuxParam-SP':
             return _functions.CfgSiggen(
                 device_ids, pru_controller, 5, setpoints)
-        elif epics_field == 'WfmData-SP':
-            return _functions.PRUCurve(
-                device_ids, pru_controller, setpoints)
         elif epics_field == 'Wfm-SP':
             return _functions.WfmSP(
                 device_ids, pru_controller, setpoints)
@@ -211,8 +201,6 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'WfmMonAcq-Sel':
             return _functions.WfmMonAcq(device_ids, pru_controller,
                                         setpoints)
-        elif epics_field == 'BSMPComm-Sel':
-            return _functions.BSMPComm(pru_controller, setpoints)
         else:
             return _functions.BSMPFunctionNull()
 
