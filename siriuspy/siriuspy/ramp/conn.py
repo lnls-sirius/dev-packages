@@ -41,6 +41,7 @@ class ConnTiming(_EpicsPropsList):
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
         EVG_FPGAClk = EVG + ':FPGAClk-Cte'
+        EVG_UpdateEvt = EVG + ':UpdateEvt-Cmd'
 
         # Event prefixes
         EvtLinac = EVG + ':Linac'
@@ -167,6 +168,10 @@ class ConnTiming(_EpicsPropsList):
         c = ConnTiming.Const
         sp = {c.TrgMags_State: state,
               c.TrgCorrs_State: state}
+        return self._command(sp, timeout)
+
+    def cmd_update_evts(self, timeout=_TIMEOUT_DFLT):
+        sp = {ConnTiming.Const.EVG_UpdateEvt: 1}
         return self._command(sp, timeout)
 
     # --- timing mode check ---
@@ -301,7 +306,7 @@ class ConnTiming(_EpicsPropsList):
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Normal,
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
-            c.TrgLLRFRmp_Duration: 150}
+            c.TrgLLRFRmp_Duration: 150.0}
         #     c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
@@ -329,7 +334,8 @@ class ConnTiming(_EpicsPropsList):
 
         self._evgcontrol_propties = {
             c.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl,
-            c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
+            c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl,
+            c.EVG_UpdateEvt: None}
 
         self._reading_propties = {
             # EGun trigger delays
@@ -517,11 +523,10 @@ class ConnMagnets(_EpicsPropsList):
             if not self._check_magnet(maname, prop, check_val):
                 sp[name] = setpoint
                 rb[name] = check_val
-        result = self.set_setpoints_check(setpoints=sp,
-                                          desired_readbacks=rb,
-                                          timeout=timeout,
-                                          abs_tol=1e-5)
-        return result
+        return self.set_setpoints_check(setpoints=sp,
+                                        desired_readbacks=rb,
+                                        timeout=timeout,
+                                        abs_tol=1e-5)
 
     def _check_magnet(self, maname, prop, value):
         """Check a prop of a power supplies for a value."""

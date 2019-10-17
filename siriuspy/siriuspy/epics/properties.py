@@ -200,11 +200,14 @@ class EpicsPropertiesList:
         if order is None:
             order = list(setpoints.keys())
         # setpoints
+        is_nok = list()
         for name in order:
             value = setpoints[name]
             if value is not None:
                 ppty = self._properties[name]
                 ppty.setpoint = value
+                if 'Cmd' not in name:
+                    is_nok.append(name)
         # check
         if not desired_readbacks:
             desired_readbacks = setpoints
@@ -213,6 +216,8 @@ class EpicsPropertiesList:
             finished = True
             for pvname, value in desired_readbacks.items():
                 if value is None:
+                    continue
+                if pvname not in is_nok:
                     continue
                 rb = self._properties[pvname].readback
                 if isinstance(value, (tuple, list, _np.ndarray)):
@@ -230,10 +235,12 @@ class EpicsPropertiesList:
                     if not _np.isclose(rb, value, rtol=rel_tol, atol=abs_tol):
                         finished = False
                         break
+                if finished:
+                    is_nok.remove(pvname)
             if finished:
                 break
             _time.sleep(timeout/10.0)
-        return finished
+        return finished, is_nok
 
     def reset_default(self):
         """Reset properties to default values."""
