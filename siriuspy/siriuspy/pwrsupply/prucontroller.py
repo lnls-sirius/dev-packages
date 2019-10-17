@@ -186,7 +186,6 @@ class PRUController:
         # define scan thread
         self._dev_idx_last_scanned = \
             len(self._device_ids)-1  # the next will be the first bsmp dev
-        self._last_operation = None  # registers last operation
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
         self._scanning = scanning
 
@@ -236,11 +235,6 @@ class PRUController:
     def queue_length(self):
         """Store number of operations currently in the queue."""
         return len(self._queue)
-
-    @property
-    def last_operation(self):
-        """Return last operation information."""
-        return self._last_operation
 
     @property
     def params(self):
@@ -945,23 +939,14 @@ class PRUController:
         """
         ack, data = dict(), dict()
         # --- send requests to serial line
-        time_init = _time()
         try:
             for dev_id in device_ids:
                 ack[dev_id], data[dev_id] = \
                     self._udc[dev_id].read_group_of_variables(
                         group_id=group_id)
 
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('V', tstamp, dtime, device_ids, group_id, False)
-            self._last_operation = operation
         except (_SerialError, IndexError):
             print('error!!!')
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('V', tstamp, dtime, device_ids, group_id, True)
-            self._last_operation = operation
             self._serial_error(device_ids)
             return
 
@@ -1027,8 +1012,6 @@ class PRUController:
 
     def _bsmp_update_wfm(self, device_ids, interval=None):
         """Read curve from devices."""
-        time_init = _time()
-
         if interval is None:
             interval = self._update_wfm_period
         # copy structure
@@ -1041,17 +1024,12 @@ class PRUController:
                 psupply.update_wfm(interval=interval)
         except (_SerialError, IndexError):
             print('bsmp_wfm_update error!')
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('CR', tstamp, dtime, device_ids, True)
-            self._last_operation = operation
 
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
 
     def _bsmp_wfm_write(self, device_ids, curve):
         """Write curve to devices."""
-        time_init = _time()
         try:
             # write curves
             for dev_id in device_ids:
@@ -1062,10 +1040,6 @@ class PRUController:
                     psupply.update_wfm(interval=0.0)
         except (_SerialError, IndexError):
             print('bsmp_wfm_write error!')
-            tstamp = _time()
-            dtime = tstamp - time_init
-            operation = ('CW', tstamp, dtime, device_ids, True)
-            self._last_operation = operation
             self._serial_error(device_ids)
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
@@ -1078,33 +1052,26 @@ class PRUController:
         ack, data = dict(), dict()
 
         # --- send requests to serial line
-        time_init = _time()
         try:
             for dev_id in device_ids:
                 ack[dev_id], data[dev_id] = \
                     self._udc[dev_id].execute_function(function_id, args)
                 # check anomalous response
-                if data[dev_id] != 0:
-                    print('! anomalous response')
-                    print('device_id:   {}'.format(dev_id))
-                    print('function_id: {}'.format(function_id))
-                    print('response:    {}'.format(data[dev_id]))
-                # if UDC receives stacking write requests for different power
-                # supplies it may respond with anomalous data. a sleep
-                # therefore might eliminate this problem.
-                if function_id in (0, 1, 2, 3):
-                    # print('dev_id:{}, func_id:{}, resp:{}'.format(dev_id,
-                    #       function_id, data[dev_id]))
-                    # NOTE: sleep really necessary?
-                    _sleep(0.020)
-
-        except (_SerialError, IndexError):
+                if ack[dev_id] != _const_bsmp.ACK_OK:
+                    print('PRUController: anomalous response !')
+                    self._udc[dev_id]._anomalous_response(
+                        _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
+                        device_id=dev_id,
+                        function_id=function_id,
+                        data=data[dev_id])
+                    # print('ack        : {}'.format(ack[dev_id]))
+                    # print('device_id  : {}'.format(dev_id))
+                    # print('function_id: {}'.format(function_id))
+                    # print('response   : {}'.format(data[dev_id]))
+        except _SerialError:
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id, args)))
             return None
-        dtime = _time() - time_init
-        self._last_operation = ('F', dtime,
-                                device_ids, function_id)
 
         # --- check if all function executions succeeded.
         success = True
