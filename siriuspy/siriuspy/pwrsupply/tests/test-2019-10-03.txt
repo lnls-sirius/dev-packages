@@ -1,3 +1,0 @@
-- apos executar repetidos comandos RESET_UDC (intervalo de 0.5s), as 4 fontes entraram num estado estranho.
-  apenas id:1 respondia. depois respondiam com 0x53 (leitura de status, por exemplo).
-
