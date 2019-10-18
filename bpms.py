@@ -630,8 +630,6 @@ class TimingConfig(_BaseTimingConfig):
         trig = self._csorb.TRIGGER_ACQ_NAME
         evg = self._csorb.EVG_NAME
         opt = {'connection_timeout': TIMEOUT}
-        self._inj_val = None
-
         self._config_ok_vals = {
             'NrPulses': 1,
             'State': _cstime.Const.TrigStates.Enbl}
