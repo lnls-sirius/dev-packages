@@ -249,10 +249,10 @@ class SOFBTLines(ConstTLines):
         db = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
                 'unit': 'urad'},
@@ -400,10 +400,10 @@ class SOFBTLines(ConstTLines):
                 'enums': self.TrigAcqDataPol._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'OrbAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
