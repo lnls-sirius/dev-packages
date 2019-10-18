@@ -486,7 +486,6 @@ class EpicsOrbit(BaseOrbit):
             _log.warning(msg[6:])
         with self._lock_raw_orbs:
             self._multiturnidx = int(value)
-            self._reset_orbs()
         self.run_callbacks('MTurnIdx-RB', self._multiturnidx)
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
