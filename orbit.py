@@ -26,6 +26,7 @@ class EpicsOrbit(BaseOrbit):
         super().__init__(acc, prefix=prefix, callback=callback)
 
         self._mode = self._csorb.SOFBMode.Offline
+        self._sync_with_inj = True
         self.ref_orbs = {
                 'X': _np.zeros(self._csorb.NR_BPMS),
                 'Y': _np.zeros(self._csorb.NR_BPMS)}
@@ -68,6 +69,7 @@ class EpicsOrbit(BaseOrbit):
         """Get the write methods of the class."""
         db = {
             'SOFBMode-Sel': self.set_orbit_mode,
+            'SyncWithInjection-Sel': self.set_sync_with_injection,
             'TrigAcqConfig-Cmd': self.acq_config_bpms,
             'TrigAcqCtrl-Sel': self.set_trig_acq_control,
             'TrigAcqChan-Sel': self.set_trig_acq_channel,
@@ -115,6 +117,10 @@ class EpicsOrbit(BaseOrbit):
     @property
     def acqtrignrsamples(self):
         return self._acqtrignrsamplespre + self._acqtrignrsamplespost
+
+    @property
+    def update_raws(self):
+        return not self._sync_with_inj or self.timing.injecting
 
     def set_ring_extension(self, val):
         maval = self._csorb.MAX_RINGSZ
@@ -424,6 +430,11 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SOFBMode-Sts', value)
         return True
 
+    def set_sync_with_injection(self, boo):
+        self._sync_with_inj = bool(boo)
+        self.run_callbacks('SyncWithInjection-Sts', bool(boo))
+        return True
+
     def _prepare_mode(self, oldmode=None):
         oldmode = self._mode if oldmode is None else oldmode
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
@@ -706,7 +717,8 @@ class EpicsOrbit(BaseOrbit):
         for plane in planes:
             with self._lock_raw_orbs:
                 raws = self.raw_sporbs if sp else self.raw_orbs
-                raws[plane].append(orbs[plane])
+                if not sp or self.update_raws:
+                    raws[plane].append(orbs[plane])
                 raws[plane] = raws[plane][-self._smooth_npts:]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raws[plane], axis=0)
@@ -766,7 +778,8 @@ class EpicsOrbit(BaseOrbit):
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
                 norb = norb.T.reshape(-1, orbsz)  # turns/rz x rz*bpms
-                raw.append(norb)
+                if self.update_raws:
+                    raw.append(norb)
                 del raw[:-nr_pts]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raw, axis=0)
@@ -813,7 +826,8 @@ class EpicsOrbit(BaseOrbit):
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
                 norb = norb.reshape(-1)
-                raw.append(norb)
+                if self.update_raws:
+                    raw.append(norb)
                 del raw[:-nr_pts]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raw, axis=0)

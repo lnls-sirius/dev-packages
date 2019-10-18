@@ -26,6 +26,7 @@ class BPM(_BaseTimingConfig):
         self._spposx = _PV(LL_PREF + self._name + ':SPPosX-Mon', **opt)
         self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
         self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
+        opt['auto_monitor'] = False
         self._spanta = _PV(LL_PREF + self._name + ':SP_AArrayData', **opt)
         self._spantb = _PV(LL_PREF + self._name + ':SP_BArrayData', **opt)
         self._spantc = _PV(LL_PREF + self._name + ':SP_CArrayData', **opt)
@@ -33,6 +34,7 @@ class BPM(_BaseTimingConfig):
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
         self._arrays = _PV(LL_PREF + self._name + ':GEN_SUMArrayData', **opt)
+        opt.pop('auto_monitor')
         self._offsetx = _PV(LL_PREF + self._name + ':PosXOffset-RB', **opt)
         self._offsety = _PV(LL_PREF + self._name + ':PosYOffset-RB', **opt)
         self._config_ok_vals = {
@@ -626,7 +628,10 @@ class TimingConfig(_BaseTimingConfig):
     def __init__(self, acc):
         super().__init__(acc)
         trig = self._csorb.TRIGGER_ACQ_NAME
+        evg = self._csorb.EVG_NAME
         opt = {'connection_timeout': TIMEOUT}
+        self._inj_val = None
+
         self._config_ok_vals = {
             'NrPulses': 1,
             'State': _cstime.Const.TrigStates.Enbl}
@@ -638,7 +643,10 @@ class TimingConfig(_BaseTimingConfig):
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
-            'State': _PV(pref_name + 'State-Sts', **opt)}
+            'State': _PV(pref_name + 'State-Sts', **opt),
+            'Injecting': _PV(LL_PREF + evg + ':InjectionEvt-Sts', **opt),
+            'EGTrig': _PV('LI-01:EG-TriggerPS:status', **opt),
+            }
         self._config_pvs_sp = {
             'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
             'State': _PV(pref_name + 'State-Sel', **opt)}
@@ -647,6 +655,12 @@ class TimingConfig(_BaseTimingConfig):
                             pref_name + 'RFDelayType-Sts', **opt)
             self._config_pvs_sp['RFDelayType'] = _PV(
                             pref_name + 'RFDelayType-Sel', **opt)
+
+    @property
+    def injecting(self):
+        inj = bool(self._config_pvs_rb['Injecting'].value)
+        eg_trig = bool(self._config_pvs_rb['EGTrig'].value)
+        return inj and eg_trig
 
     @property
     def nrpulses(self):
