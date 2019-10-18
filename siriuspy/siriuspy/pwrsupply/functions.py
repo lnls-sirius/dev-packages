@@ -60,6 +60,7 @@ class BSMPFunctionNull(BSMPFunction):
         """Do nothing."""
         pass
 
+
 class WfmMonAcq(Function):
     """Enable/Disable Wfm-Mon curve acquisition."""
 
@@ -132,6 +133,7 @@ class WfmUpdateAutoSel(Function):
                 self.pru_controller.wfm_update_auto_enable()
             elif value == 0:
                 self.pru_controller.wfm_update_auto_disable()
+
 
 class PRUProperty(Function):
     """Executes a PRUProperty command."""
@@ -226,16 +228,12 @@ class PSOpMode(Function):
         """Command."""
         self._device_ids = device_ids
         self.function = function
-        # self.disable_siggen = \
-        #     BSMPFunction(device_ids, function.pru_controller,
-        #                  _consts_psbsmp.F_DISABLE_SIGGEN)
         self.setpoints = setpoints
 
     def execute(self, value=None):
         """Parse before executing."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            op_mode = value
             if value == _consts_ps.OpMode.SlowRef:
                 op_mode = _consts_ps.States.SlowRef
             elif value == _consts_ps.OpMode.SlowRefSync:
@@ -243,19 +241,13 @@ class PSOpMode(Function):
             elif value == _consts_ps.OpMode.Cycle:
                 op_mode = _consts_ps.States.Cycle
             elif value == _consts_ps.OpMode.RmpWfm:
-                # op_mode = _consts_ps.States.SlowRef  # RmpWfm -> SlowRef
                 op_mode = _consts_ps.States.RmpWfm
             elif value == _consts_ps.OpMode.MigWfm:
-                op_mode = _consts_ps.States.SlowRef  # MigWfm -> SlowRef
-                # op_mode = _consts_ps.States.FastRef  # MigWfm -> FastRef
+                op_mode = _consts_ps.States.MigWfm
             else:
                 op_mode = value
-
+            # execute opmode change
             self.function.execute(op_mode)
-
-            # NOTE: should this be set only when changing to SlowRef?
-            # if value == _consts_ps.OpMode.SlowRef:
-            #     self.disable_siggen.execute(None)
 
 
 class Current(Function):

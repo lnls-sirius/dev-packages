@@ -181,7 +181,7 @@ def print_wfmref(ps_list):
         st3 += ' {:6d}'
         va3.append(ps.wfmref_mon_size)
         st4 += ' {:6d}'
-        va4.append(ps.wfmref_mon_idx)
+        va4.append(ps.wfmref_mon_index)
         st5 += ' {:6d}'
         va5.append(wfmref_mon_ptr_values[0])
         st6 += ' {:6d}'

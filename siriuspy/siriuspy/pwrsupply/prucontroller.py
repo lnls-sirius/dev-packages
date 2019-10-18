@@ -750,6 +750,7 @@ class PRUController:
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
                         device_id=dev_id,
                         function_id=function_id,
+                        data_len=len(data[dev_id]),
                         data=data[dev_id])
                     # print('ack        : {}'.format(ack[dev_id]))
                     # print('device_id  : {}'.format(dev_id))
