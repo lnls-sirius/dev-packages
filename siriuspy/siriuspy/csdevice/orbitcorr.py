@@ -77,6 +77,7 @@ class ConstTLines(_cutil.Const):
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
+    SyncWithInj = _cutil.Const.register('SyncWithInj', _et.OFF_ON)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
     StsLblsCorr = _cutil.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
@@ -307,6 +308,14 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.SOFBMode.Offline,
                 'enums': self.SOFBMode._fields},
+            'SyncWithInjection-Sel': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
+            'SyncWithInjection-Sts': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
