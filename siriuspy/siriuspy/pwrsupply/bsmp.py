@@ -476,42 +476,42 @@ class ConstFAP_4P(ConstFAP):
     V_TEMP_INDUCTOR_IIB_1 = 61
     V_TEMP_HEATSINK_IIB_1 = 62
     V_I_LEAKAGE_IIB_1 = 63
-    V_V_INPUT_IIB_1 = 64
-    V_V_OUTPUT_IIB_1 = 65
-    V_I_IGBT_1_IIB_1 = 66
-    V_I_IGBT_2_IIB_1 = 67
-    V_TEMP_IGBT_1_IIB_1 = 68
-    V_TEMP_IGBT_2_IIB_1 = 69
-    V_V_DRIVER_IIB_1 = 70
-    V_I_DRIVER_1_IIB_1 = 71
-    V_I_DRIVER_2_IIB_1 = 72
-    V_TEMP_INDUCTOR_IIB_1 = 73
-    V_TEMP_HEATSINK_IIB_1 = 74
-    V_I_LEAKAGE_IIB_1 = 75
-    V_V_INPUT_IIB_1 = 76
-    V_V_OUTPUT_IIB_1 = 77
-    V_I_IGBT_1_IIB_1 = 78
-    V_I_IGBT_2_IIB_1 = 79
-    V_TEMP_IGBT_1_IIB_1 = 80
-    V_TEMP_IGBT_2_IIB_1 = 81
-    V_V_DRIVER_IIB_1 = 82
-    V_I_DRIVER_1_IIB_1 = 83
-    V_I_DRIVER_2_IIB_1 = 84
-    V_TEMP_INDUCTOR_IIB_1 = 85
-    V_TEMP_HEATSINK_IIB_1 = 86
-    V_I_LEAKAGE_IIB_1 = 87
-    V_V_INPUT_IIB_1 = 88
-    V_V_OUTPUT_IIB_1 = 89
-    V_I_IGBT_1_IIB_1 = 90
-    V_I_IGBT_2_IIB_1 = 91
-    V_TEMP_IGBT_1_IIB_1 = 92
-    V_TEMP_IGBT_2_IIB_1 = 93
-    V_V_DRIVER_IIB_1 = 94
-    V_I_DRIVER_1_IIB_1 = 95
-    V_I_DRIVER_2_IIB_1 = 96
-    V_TEMP_INDUCTOR_IIB_1 = 97
-    V_TEMP_HEATSINK_IIB_1 = 98
-    V_I_LEAKAGE_IIB_1 = 99
+    V_V_INPUT_IIB_2 = 64
+    V_V_OUTPUT_IIB_2 = 65
+    V_I_IGBT_1_IIB_2 = 66
+    V_I_IGBT_2_IIB_2 = 67
+    V_TEMP_IGBT_1_IIB_2 = 68
+    V_TEMP_IGBT_2_IIB_2 = 69
+    V_V_DRIVER_IIB_2 = 70
+    V_I_DRIVER_1_IIB_2 = 71
+    V_I_DRIVER_2_IIB_2 = 72
+    V_TEMP_INDUCTOR_IIB_2 = 73
+    V_TEMP_HEATSINK_IIB_2 = 74
+    V_I_LEAKAGE_IIB_2 = 75
+    V_V_INPUT_IIB_3 = 76
+    V_V_OUTPUT_IIB_3 = 77
+    V_I_IGBT_1_IIB_3 = 78
+    V_I_IGBT_2_IIB_3 = 79
+    V_TEMP_IGBT_1_IIB_3 = 80
+    V_TEMP_IGBT_2_IIB_3 = 81
+    V_V_DRIVER_IIB_3 = 82
+    V_I_DRIVER_1_IIB_3 = 83
+    V_I_DRIVER_2_IIB_3 = 84
+    V_TEMP_INDUCTOR_IIB_3 = 85
+    V_TEMP_HEATSINK_IIB_3 = 86
+    V_I_LEAKAGE_IIB_3 = 87
+    V_V_INPUT_IIB_4 = 88
+    V_V_OUTPUT_IIB_4 = 89
+    V_I_IGBT_1_IIB_4 = 90
+    V_I_IGBT_2_IIB_4 = 91
+    V_TEMP_IGBT_1_IIB_4 = 92
+    V_TEMP_IGBT_2_IIB_4 = 93
+    V_V_DRIVER_IIB_4 = 94
+    V_I_DRIVER_1_IIB_4 = 95
+    V_I_DRIVER_2_IIB_4 = 96
+    V_TEMP_INDUCTOR_IIB_4 = 97
+    V_TEMP_HEATSINK_IIB_4 = 98
+    V_I_LEAKAGE_IIB_4 = 99
     V_IIB_INTERLOCKS_1 = 100
     V_IIB_INTERLOCKS_2 = 101
     V_IIB_INTERLOCKS_3 = 102
@@ -1264,33 +1264,6 @@ class EntitiesFAP_4P(EntitiesPS):
 
     _ps_variables = EntitiesPS._ps_variables + (
         # --- FAP_4P-specific variables
-        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
-        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
-        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        # --- undefined variables
-        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FBP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},

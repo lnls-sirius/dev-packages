@@ -484,6 +484,7 @@ class PSModelFAP_4P(PSModelFBP):
     _variables = {
         'IntlkSoft-Mon': _psbsmp.ConstFAP_4P.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAP_4P.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Intlk1IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_1,
         'Intlk2IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_2,
         'Intlk3IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_3,
