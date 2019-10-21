@@ -99,9 +99,13 @@ class PSupply:
     @property
     def timestamp_update(self):
         """Return timestamp of last power supply update."""
-        # TODO: change this as soon as PRUController starts updating psupply variables.
-        # return self._timestamp_update
-        return self._timestamp_update_wfm
+        tstamps = (
+            self._timestamp_update,
+            self._timestamp_update_group,
+            self._timestamp_update_variables,
+            self._timestamp_update_wfm)
+        maxtstamp = max(val if val is not None else 0 for val in tstamps)
+        return maxtstamp
 
     def get_variable(self, var_id):
         """."""

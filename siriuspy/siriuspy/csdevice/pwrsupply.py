@@ -310,9 +310,11 @@ class ETypes(_cutil.ETypes):
         'Sub-tensao do DC-Link do modulo 2',
         'Sub-tensao do DC-Link do modulo 3',
         'Sub-tensao do DC-Link do modulo 4',
-        'Interlock da placa IIB', 'Bit23',
-        'Bit24', 'Bit25', 'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+        'Interlock da placa IIB do modulo 1',
+        'Interlock da placa IIB do modulo 2',
+        'Interlock da placa IIB do modulo 3',
+        'Interlock da placa IIB do modulo 4',
+        'Bit26', 'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
