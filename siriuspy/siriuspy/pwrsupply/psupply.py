@@ -203,21 +203,9 @@ class PSupply:
 
     def reset_variables_groups(self, groups):
         """."""
-        # checks groups in dictionary
-        # NOTE: this is a legacy check, for PRUcontroller.
-        # it can be relaxed in the future.
-        group_ids = sorted(groups.keys())
-        if len(group_ids) < 3:  # needs to have all default groups
-            return False
-        for i in range(len(group_ids)):  # consecutive?
-            if i not in group_ids:
-                return False
-
-        # create list of variable ids
-        varids_groups = [groups[gid] for gid in group_ids]
-
         # reset groups of variables for all bsmp devices
-        self._psbsmp.reset_groups_of_variables(
-            varids_groups[3:], add_wfmref_group=True)
-
+        ack, _ = self._psbsmp.reset_groups_of_variables(
+            groups[3:], add_wfmref_group=True)
+        if ack != self.psbsmp.CONST_BSMP.ACK_OK:
+            ValueError('Could not reset groups of variables!')
         return True

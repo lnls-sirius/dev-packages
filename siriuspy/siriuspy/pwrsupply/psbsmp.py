@@ -76,6 +76,7 @@ class PSBSMP(_BSMP):
     def reset_groups_of_variables(self, varids_groups,
                                   add_wfmref_group=False):
         """Reset groups of variables."""
+
         # remove previous variables groups
         ack, data = self.remove_all_groups_of_variables(
             timeout=PSBSMP._timeout_remove_vars_groups)

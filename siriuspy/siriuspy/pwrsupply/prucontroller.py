@@ -481,13 +481,8 @@ class PRUController:
         time0 = _time()
 
         # 1. reset group of bsmp variables for all devices
-        for dev_id in self._device_ids:
-            psbsmp = self._udc[dev_id]
-            ack, _ = \
-                psbsmp.reset_groups_of_variables(
-                    groups[3:], add_wfmref_group=True)
-            if ack != self._udc.CONST_BSMP.ACK_OK:
-                raise ValueError('Could not reset group in device!')
+        for psupply in self._psupplies.values():
+            psupply.reset_variables_groups(groups)
 
         # time interval
         time1 = _time()
