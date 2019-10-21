@@ -75,11 +75,6 @@ class PRUController:
         self._udc, self._parms, self._psupplies = PRUController._init_udc(
             pru, self._psmodel.name, self._device_ids, freqs)
 
-        # prune variables of mirror groups (sync_on mode)
-        # self._parms.groups = \
-        #     self._init_prune_mirror_group(
-        #         self._psmodel.name, self._device_ids, self._parms.groups)
-
         # index of dev_id in self._device_ids for wfmref update
         self._wfm_update = True
         self._wfm_update_dev_idx = 0  # cyclical updates!
@@ -372,24 +367,6 @@ class PRUController:
         print()
 
         return udc, parms, psupplies
-
-    def _init_prune_mirror_group(self, psmodel_name, device_ids, groups):
-
-        if psmodel_name != 'FBP':
-            return groups
-
-        # gather mirror variables that will be used
-        nr_devs = len(device_ids)
-        var_ids = []
-        for var_id in list(groups[self._parms.MIRROR]):
-            dev_idx, _ = _mirror_map_fbp[var_id]
-            if dev_idx <= nr_devs:
-                var_ids.append(var_id)
-
-        # prune from mirror group variables not used
-        groups[self._parms.MIRROR] = tuple(var_ids)
-
-        return groups
 
     def _init_check_version(self):
         if not self.connected:

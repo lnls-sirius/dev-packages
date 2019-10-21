@@ -14,13 +14,7 @@ class _PRUCParms:
     READONLY = 1
     WRITEABLE = 2
     ALLRELEVANT = 3
-    SYNCOFF = 4
-    MIRROR = 5
-
-    SLOWREF = SYNCOFF
-    MIGWFM = MIRROR
-    CYCLE = SYNCOFF
-    RMPWFM = MIRROR
+    SCAN = 4
 
 
 class PRUCParmsFBP(_PRUCParms):
@@ -73,11 +67,12 @@ class PRUCParmsFBP(_PRUCParms):
         CONST_PSBSMP.V_V_DCLINK,
         CONST_PSBSMP.V_TEMP_SWITCHES,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
         CONST_PSBSMP.V_PS_REFERENCE,
+        # CONST_PSBSMP.V_FIRMWARE_VERSION,
         CONST_PSBSMP.V_COUNTER_SET_SLOWREF,
         CONST_PSBSMP.V_COUNTER_SYNC_PULSE,
         CONST_PSBSMP.V_SIGGEN_ENABLE,
@@ -148,7 +143,7 @@ class PRUCParmsFBP_DCLink(_PRUCParms):
         CONST_PSBSMP.V_V_OUT_2,
         CONST_PSBSMP.V_V_OUT_3,
         CONST_PSBSMP.V_DIG_POT_TAP,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -249,7 +244,7 @@ class PRUCParmsFAC_2S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_DRIVER_ERROR_2_IIB_2,
         CONST_PSBSMP.V_IIB_INTERLOCKS_1,
         CONST_PSBSMP.V_IIB_INTERLOCKS_2)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -449,7 +444,7 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_IIB_INTERLOCKS_6,
         CONST_PSBSMP.V_IIB_INTERLOCKS_7,
         CONST_PSBSMP.V_IIB_INTERLOCKS_8,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -629,7 +624,7 @@ class PRUCParmsFAC_DCDC(_PRUCParms):
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_TEMP_IGBTS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -718,7 +713,7 @@ class PRUCParmsFAC_2S_ACDC(_PRUCParms):
         CONST_PSBSMP.V_TEMP_HEATSINK,
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -806,7 +801,7 @@ class PRUCParmsFAC_2P4S_ACDC(_PRUCParms):
         CONST_PSBSMP.V_I_LEAKAGE_CMD_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS_IS,
         CONST_PSBSMP.V_IIB_INTERLOCKS_CMD,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -913,7 +908,7 @@ class PRUCParmsFAP(_PRUCParms):
         CONST_PSBSMP.V_TEMP_HEATSINK_IIB,
         CONST_PSBSMP.V_I_LEAKAGE_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS,)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -1093,7 +1088,7 @@ class PRUCParmsFAP_4P(_PRUCParms):
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
         CONST_PSBSMP.V_PS_REFERENCE,
@@ -1331,7 +1326,7 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_PRUCParms.SYNCOFF] = (
+    groups[_PRUCParms.SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
