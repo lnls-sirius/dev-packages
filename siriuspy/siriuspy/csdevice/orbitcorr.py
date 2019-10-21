@@ -77,6 +77,7 @@ class ConstTLines(_cutil.Const):
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
+    SyncWithInj = _cutil.Const.register('SyncWithInj', _et.OFF_ON)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
     StsLblsCorr = _cutil.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
@@ -249,10 +250,10 @@ class SOFBTLines(ConstTLines):
         db = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
                 'unit': 'urad'},
@@ -307,6 +308,14 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.SOFBMode.Offline,
                 'enums': self.SOFBMode._fields},
+            'SyncWithInjection-Sel': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
+            'SyncWithInjection-Sts': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
@@ -400,10 +409,10 @@ class SOFBTLines(ConstTLines):
                 'enums': self.TrigAcqDataPol._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'OrbAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
