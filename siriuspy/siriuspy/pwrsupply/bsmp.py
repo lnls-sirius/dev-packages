@@ -16,7 +16,9 @@ from siriuspy.bsmp import Types as _Types
 
 __version__ = 'V0.36w2019-10-07V0.36w2019-10-07'
 
-# --- DCDC ---
+
+# --- Const DCDC ---
+
 
 class ConstPSBSMP:
     """Namespace for organizing power supply BSMP constants."""
@@ -521,6 +523,7 @@ class ConstFAP_4P(ConstFAP):
     V_I_MOD_3 = 106
     V_I_MOD_4 = 107
 
+
 class ConstFAP_2P2S(ConstPSBSMP):
     """Namespace for organizing power supply FAP_2P2S BSMP constants."""
 
@@ -608,7 +611,7 @@ class ConstFAP_2P2S(ConstPSBSMP):
     V_I_MOD_4 = 105
 
 
-# --- ACDC ---
+# --- Const ACDC ---
 
 class ConstFBP_DCLink(ConstPSBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
@@ -672,61 +675,6 @@ class ConstFAC_2P4S_ACDC(ConstPSBSMP):
     V_I_LEAKAGE_CMD_IIB = 41
     V_IIB_INTERLOCKS_IS = 42
     V_IIB_INTERLOCKS_CMD = 43
-
-
-# Mirror power supply variables (FBP)
-# ===================================
-#
-# The current version of Beaglebone's PRU library is able to send only one
-# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
-# there is no way a read command to multiple power supplies can be sent.
-# At each ramp cycle a single power supply attached to the Beaglebone can be
-# selected for its state to be read. With a ramp running at 2 Hz, the update
-# of each power supply in a create with 4 powet supplies would be slowed to
-# 0.5 Hz = 2 Hz / 4 power supploes.
-#
-# In order to keep a refresh rate of 2 Hz, a modification of the specification
-# for the BSMP power supply was done. Each power supply will register a
-# selected set of BSMP variables corresponding to variables of the other
-# power supplies. This is simple to implement in the firmware of the
-# ARM controller.
-#
-# Power supply variables with IDs in the range [40,63] serve this purpose.
-# The dictionary MAP_MIRROR_2_ORIG maps the so-called mirror variable ids
-# onto the original variable IDs.
-
-MAP_MIRROR_2_ORIG_FBP = {
-    # This dictionary maps variable ids of mirror variables to the
-    # corresponding original power supply crate index and variable ids,
-    # organized as a tuple (device_idx, variable_id).
-    ConstFBP.V_PS_STATUS_1: (1, 0),
-    ConstFBP.V_PS_STATUS_2: (2, 0),
-    ConstFBP.V_PS_STATUS_3: (3, 0),
-    ConstFBP.V_PS_STATUS_4: (4, 0),
-    ConstFBP.V_PS_SETPOINT_1: (1, 1),
-    ConstFBP.V_PS_SETPOINT_2: (2, 1),
-    ConstFBP.V_PS_SETPOINT_3: (3, 1),
-    ConstFBP.V_PS_SETPOINT_4: (4, 1),
-    ConstFBP.V_PS_REFERENCE_1: (1, 2),
-    ConstFBP.V_PS_REFERENCE_2: (2, 2),
-    ConstFBP.V_PS_REFERENCE_3: (3, 2),
-    ConstFBP.V_PS_REFERENCE_4: (4, 2),
-    ConstFBP.V_PS_SOFT_INTERLOCKS_1: (1, 25),
-    ConstFBP.V_PS_SOFT_INTERLOCKS_2: (2, 25),
-    ConstFBP.V_PS_SOFT_INTERLOCKS_3: (3, 25),
-    ConstFBP.V_PS_SOFT_INTERLOCKS_4: (4, 25),
-    ConstFBP.V_PS_HARD_INTERLOCKS_1: (1, 26),
-    ConstFBP.V_PS_HARD_INTERLOCKS_2: (2, 26),
-    ConstFBP.V_PS_HARD_INTERLOCKS_3: (3, 26),
-    ConstFBP.V_PS_HARD_INTERLOCKS_4: (4, 26),
-    ConstFBP.V_I_LOAD_1: (1, 27),
-    ConstFBP.V_I_LOAD_2: (2, 27),
-    ConstFBP.V_I_LOAD_3: (3, 27),
-    ConstFBP.V_I_LOAD_4: (4, 27)}
-
-
-# TODO: delete functions and parameters which do not make sense for Entities
-#       which are specialized.
 
 
 class Parameters:
@@ -996,7 +944,7 @@ class EntitiesPS(_Entities):
             self._ps_variables, self._ps_curves, self._ps_functions)
 
 
-# --- DCDC ---
+# --- Entities DCDC ---
 
 
 class EntitiesFBP(EntitiesPS):
@@ -1441,7 +1389,7 @@ class EntitiesFAP_2P2S(EntitiesPS):
         {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
 
 
-# --- ACDC ---
+# --- Entities ACDC ---
 
 
 class EntitiesFBP_DCLink(EntitiesPS):

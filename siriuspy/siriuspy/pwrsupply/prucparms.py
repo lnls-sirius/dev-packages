@@ -26,7 +26,6 @@ class _PRUCParms:
 class PRUCParmsFBP(_PRUCParms):
     """FBP-specific PRUC parameters."""
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -106,38 +105,11 @@ class PRUCParmsFBP(_PRUCParms):
         CONST_PSBSMP.V_V_LOAD,
         CONST_PSBSMP.V_V_DCLINK,
         CONST_PSBSMP.V_TEMP_SWITCHES,)
-    groups[_PRUCParms.MIRROR] = (
-        # --- mirror variables ---
-        CONST_PSBSMP.V_PS_STATUS_1,
-        CONST_PSBSMP.V_PS_STATUS_2,
-        CONST_PSBSMP.V_PS_STATUS_3,
-        CONST_PSBSMP.V_PS_STATUS_4,
-        CONST_PSBSMP.V_PS_SETPOINT_1,
-        CONST_PSBSMP.V_PS_SETPOINT_2,
-        CONST_PSBSMP.V_PS_SETPOINT_3,
-        CONST_PSBSMP.V_PS_SETPOINT_4,
-        CONST_PSBSMP.V_PS_REFERENCE_1,
-        CONST_PSBSMP.V_PS_REFERENCE_2,
-        CONST_PSBSMP.V_PS_REFERENCE_3,
-        CONST_PSBSMP.V_PS_REFERENCE_4,
-        CONST_PSBSMP.V_PS_SOFT_INTERLOCKS_1,
-        CONST_PSBSMP.V_PS_SOFT_INTERLOCKS_2,
-        CONST_PSBSMP.V_PS_SOFT_INTERLOCKS_3,
-        CONST_PSBSMP.V_PS_SOFT_INTERLOCKS_4,
-        CONST_PSBSMP.V_PS_HARD_INTERLOCKS_1,
-        CONST_PSBSMP.V_PS_HARD_INTERLOCKS_2,
-        CONST_PSBSMP.V_PS_HARD_INTERLOCKS_3,
-        CONST_PSBSMP.V_PS_HARD_INTERLOCKS_4,
-        CONST_PSBSMP.V_I_LOAD_1,
-        CONST_PSBSMP.V_I_LOAD_2,
-        CONST_PSBSMP.V_I_LOAD_3,
-        CONST_PSBSMP.V_I_LOAD_4,)
 
 
 class PRUCParmsFBP_DCLink(_PRUCParms):
     """FBP_DCLink-specific PRUC parameters."""
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # PS model parms
@@ -200,7 +172,6 @@ class PRUCParmsFBP_DCLink(_PRUCParms):
         CONST_PSBSMP.V_V_OUT_2,
         CONST_PSBSMP.V_V_OUT_3,
         CONST_PSBSMP.V_DIG_POT_TAP,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAC_2S_DCDC(_PRUCParms):
@@ -209,7 +180,6 @@ class PRUCParmsFAC_2S_DCDC(_PRUCParms):
     Represent FAC_2S_DCDC psmodels.
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -335,7 +305,6 @@ class PRUCParmsFAC_2S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_DRIVER_ERROR_2_IIB_2,
         CONST_PSBSMP.V_IIB_INTERLOCKS_1,
         CONST_PSBSMP.V_IIB_INTERLOCKS_2)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
@@ -344,7 +313,6 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
     Represent FAC_2P4S psmodels.
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -603,7 +571,6 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
         CONST_PSBSMP.V_IIB_INTERLOCKS_6,
         CONST_PSBSMP.V_IIB_INTERLOCKS_7,
         CONST_PSBSMP.V_IIB_INTERLOCKS_8,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAC_DCDC(_PRUCParms):
@@ -612,7 +579,6 @@ class PRUCParmsFAC_DCDC(_PRUCParms):
     Represent FAC, FAC_2S, FAC_2P4S psmodels.
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -699,13 +665,11 @@ class PRUCParmsFAC_DCDC(_PRUCParms):
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_TEMP_IGBTS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAC_2S_ACDC(_PRUCParms):
     """FAC_2S_ACDC-specific PRUC parameters."""
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # PS model parms
@@ -788,13 +752,11 @@ class PRUCParmsFAC_2S_ACDC(_PRUCParms):
         CONST_PSBSMP.V_TEMP_HEATSINK,
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAC_2P4S_ACDC(_PRUCParms):
     """FAC_2P4S_ACDC-specific PRUC parameters."""
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # PS model parms
@@ -879,7 +841,6 @@ class PRUCParmsFAC_2P4S_ACDC(_PRUCParms):
         CONST_PSBSMP.V_I_LEAKAGE_CMD_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS_IS,
         CONST_PSBSMP.V_IIB_INTERLOCKS_CMD,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAP(_PRUCParms):
@@ -888,7 +849,6 @@ class PRUCParmsFAP(_PRUCParms):
     Represent FAP
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -1003,7 +963,6 @@ class PRUCParmsFAP(_PRUCParms):
         CONST_PSBSMP.V_TEMP_HEATSINK_IIB,
         CONST_PSBSMP.V_I_LEAKAGE_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAP_4P(_PRUCParms):
@@ -1012,7 +971,6 @@ class PRUCParmsFAP_4P(_PRUCParms):
     Represent FAP_4P
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -1244,7 +1202,6 @@ class PRUCParmsFAP_4P(_PRUCParms):
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParmsFAP_2P2S(_PRUCParms):
@@ -1253,7 +1210,6 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
     Represent FAP_2P2S
     """
 
-    FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
@@ -1483,4 +1439,3 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]

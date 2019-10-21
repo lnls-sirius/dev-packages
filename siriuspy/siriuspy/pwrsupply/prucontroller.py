@@ -14,7 +14,7 @@ from siriuspy.bsmp import constants as _const_bsmp
 from siriuspy.bsmp import SerialError as _SerialError
 
 from .bsmp import __version__ as _devpckg_firmware_version
-from .bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
+# from .bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from .udc import UDC as _UDC
 from .psupply import PSupply as _PSupply
 
@@ -76,9 +76,9 @@ class PRUController:
             pru, self._psmodel.name, self._device_ids, freqs)
 
         # prune variables of mirror groups (sync_on mode)
-        self._parms.groups = \
-            self._init_prune_mirror_group(
-                self._psmodel.name, self._device_ids, self._parms.groups)
+        # self._parms.groups = \
+        #     self._init_prune_mirror_group(
+        #         self._psmodel.name, self._device_ids, self._parms.groups)
 
         # index of dev_id in self._device_ids for wfmref update
         self._wfm_update = True
@@ -363,7 +363,6 @@ class PRUController:
         # bypass psmodel default frequencies
         if freqs is not None:
             parms.FREQ_SCAN = freqs[0]
-            parms.FREQ_RAMP = freqs[1]
 
         # print info on scan frequency
         fstr = ('id:{:2d}, FREQS  sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')

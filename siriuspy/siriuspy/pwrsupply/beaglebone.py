@@ -118,8 +118,7 @@ class BeagleBone:
         self._dev2interval = dict()
         for devname, controller in self._controllers.items():
             pruc = controller.pru_controller
-            f = max(pruc.params.FREQ_RAMP, pruc.params.FREQ_SCAN)
-            self._dev2interval[devname] = 1.0/f
+            self._dev2interval[devname] = 1.0/pruc.params.FREQ_SCAN
 
 
 class BBBFactory:
