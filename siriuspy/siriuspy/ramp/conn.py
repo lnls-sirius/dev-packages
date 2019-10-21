@@ -57,7 +57,7 @@ class ConnTiming(_EpicsPropsList):
 
         # Trigger prefixes
         TrgMags = 'BO-Glob:TI-Mags'
-        TrgCorrs = 'BO-Glob:TI-Corrs-WfmRef'
+        TrgCorrs = 'BO-Glob:TI-Corrs'
         TrgLLRFRmp = 'BO-Glob:TI-LLRF-Rmp'
         TrgEGunSglBun = 'LI-01:TI-EGun-SglBun'
         TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
