@@ -196,7 +196,7 @@ class ConnTiming(_EpicsPropsList):
 
     # --- helper methods ---
 
-    def calc_evts_delay(self, events_inj, events_eje):
+    def calc_evts_delay(self, events_inj=list(), events_eje=list()):
         """Calculate event delays."""
         if self._ramp_config is None:
             return
@@ -204,7 +204,7 @@ class ConnTiming(_EpicsPropsList):
             return
 
         c = ConnTiming.Const
-        evg_base_time = 1 / self.get_readback(c.EVG_FPGAClk)
+        evg_base_time = 1.0 / self.get_readback(c.EVG_FPGAClk)
         bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
 
         # Injection
@@ -231,14 +231,18 @@ class ConnTiming(_EpicsPropsList):
         delays = dict()
 
         events_inj = sorted(events_inj)
-        # events_inj.extend(['Linac', 'InjBO'])
+        if 'Linac' not in events_inj:
+            events_inj.append('Linac')
+        if 'InjBO' not in events_inj:
+            events_inj.append('InjBO')
         for event in events_inj:
             attr = getattr(c, 'Evt'+event+'_Delay')
             curr = self.get_readback(attr)
             delays[event] = curr + dlt_inj_dly
 
         events_eje = sorted(events_eje)
-        # events_eje.append('InjSI')
+        if 'InjSI' not in events_eje:
+            events_eje.append('InjSI')
         for event in events_eje:
             attr = getattr(c, 'Evt'+event+'_Delay')
             curr = self.get_readback(attr)
