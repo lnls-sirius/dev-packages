@@ -164,7 +164,7 @@ class BBBFactory:
 
             # print info on scan frequency
             fstr = ('udc:{:<25s} ps:{:<16s} (id:{:2d})')
-            print()
+            print('BeagleBone: udc initialization\n')
             for dev in devices:
                 freqs = (10, 2) if freqs is None else freqs
                 # --

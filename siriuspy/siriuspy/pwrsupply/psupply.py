@@ -25,6 +25,9 @@ class PSupply:
     Contains the state of a BSMP power supply.
     """
 
+    DEFAULT_UPDATE_INTERVAL_WFM = 2.0  # [s]
+    DEFAULT_UPDATE_INTERVAL_VARIABLES = 0.1  # [s]
+
     def __init__(self, psbsmp):
         """Init."""
         self._psbsmp = psbsmp
@@ -114,11 +117,11 @@ class PSupply:
         if tstamp is None or (now - tstamp) > interval:
             connected = True
             # variables
-            if not self.update_variables():
+            if not self.update_variables(interval=0.0):
                 return False
             connected &= self._connected
             # wfmref
-            if not self.update_wfm():
+            if not self.update_wfm(interval=0.0):
                 return False
             connected &= self._connected
             # update connected state
@@ -148,8 +151,10 @@ class PSupply:
         return True
 
     @_psupply_update_connected
-    def update_variables(self, interval=0.0):
+    def update_variables(self, interval=None):
         """Update all variables."""
+        if interval is None:
+            interval = PSupply.DEFAULT_UPDATE_INTERVAL_VARIABLES
         now = _time.time()
         tstamp = self._timestamp_update_variables
         if tstamp is None or (now - tstamp) >= interval:
@@ -170,10 +175,12 @@ class PSupply:
         return True
 
     @_psupply_update_connected
-    def update_wfm(self, interval=0.0):
+    def update_wfm(self, interval=None):
         """Update wfmref."""
         if self._psbsmp.IS_DCLINK:
             return True
+        if interval is None:
+            interval = PSupply.DEFAULT_UPDATE_INTERVAL_WFM
         now = _time.time()
         tstamp = self._timestamp_update_wfm
         if tstamp is None or (now - tstamp) >= interval:
