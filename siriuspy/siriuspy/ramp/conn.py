@@ -204,7 +204,7 @@ class ConnTiming(_EpicsPropsList):
             return
 
         c = ConnTiming.Const
-        evg_base_time = 1.0 / self.get_readback(c.EVG_FPGAClk)
+        evg_base_time = 1e6 / self.get_readback(c.EVG_FPGAClk)
         bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
 
         # Injection
