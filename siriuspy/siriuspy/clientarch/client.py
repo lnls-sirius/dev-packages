@@ -13,6 +13,10 @@ import siriuspy.envars as _envars
 # See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
 
 
+class AuthenticationError(Exception):
+    pass
+
+
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
@@ -30,8 +34,8 @@ class ClientArchiver:
         """."""
         headers = {"User-Agent": "Mozilla/5.0"}
         payload = {"username": username, "password": password}
-        self.session = requests.Session()
         url = self._create_url(method='login')
+        self.session = requests.Session()
         response = self.session.post(
             url, headers=headers, data=payload, verify=False)
         return b"authenticated" in response.content
@@ -41,14 +45,14 @@ class ClientArchiver:
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
-        return self.session.get(url).json()
+        return self._make_request(url).json()
 
     def getAllPVs(self, pvnames):
         """."""
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getAllPVs', pv=pvnames, limit='-1')
-        return self.session.get(url).json()
+        return self._make_request(url).json()
 
     def deletePVs(self, pvnames):
         """."""
@@ -57,12 +61,12 @@ class ClientArchiver:
         for pvname in pvnames:
             url = self._create_url(
                 method='deletePV', pv=pvname, deleteData='true')
-            self.session.get(url)
+            self._make_request(url, need_login=True)
 
     def getPausedPVsReport(self):
         """."""
         url = self._create_url(method='getPausedPVsReport')
-        return self.session.get(url).json()
+        return self._make_request(url).json()
 
     def pausePVs(self, pvnames):
         """."""
@@ -70,12 +74,12 @@ class ClientArchiver:
             pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(method='pauseArchivingPV', pv=pvname)
-            self.session.get(url)
+            self._make_request(url, need_login=True)
 
     def renamePV(self, oldname, newname):
         """."""
         url = self._create_url(method='renamePV', pv=oldname, newname=newname)
-        self.session.get(url)
+        self._make_request(url, need_login=True)
 
     def resumePVs(self, pvnames):
         """."""
@@ -83,7 +87,7 @@ class ClientArchiver:
             pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
-            self.session.get(url)
+            self._make_request(url, need_login=True)
 
     def getData(self, pvname, timestamp_start, timestamp_stop):
         """Get archiver data.
@@ -98,13 +102,24 @@ class ClientArchiver:
         tstop = _parse.quote(timestamp_stop)
         url = self._create_url(
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
-        req = self.session.get(url)
+        req = self._make_request(url)
+        if not req.ok:
+            return None
         data = req.json()[0]['data']
         value = [v['val'] for v in data]
         timestamp = [v['secs'] + v['nanos']/1.0e9 for v in data]
         status = [v['status'] for v in data]
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
+
+    def _make_request(self, url, need_login=False):
+        if self.session is not None:
+            req = self.session.get(url)
+        elif need_login:
+            raise AuthenticationError('You need to login first.')
+        else:
+            req = requests.get(url, verify=False)
+        return req
 
     def _create_url(self, method, **kwargs):
         """."""
