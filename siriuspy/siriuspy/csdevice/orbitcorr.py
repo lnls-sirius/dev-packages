@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import os as _os
 from copy import deepcopy as _dcopy
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
@@ -117,11 +118,15 @@ class SOFBTLines(ConstTLines):
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
         self.CH_NAMES = _MASearch.get_manames(
-                            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+        if self.acc == 'TS':
+            self.CH_NAMES = [_PVName('TS-01:PM-EjeSeptG'), ] + self.CH_NAMES
         self.CV_NAMES = _MASearch.get_manames(
                             {'sec': acc, 'dis': 'MA', 'dev': 'CV'})
         self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
         self.CH_NICKNAMES = _MASearch.get_manicknames(self.CH_NAMES)
+        if self.acc == 'TS':
+            self.CH_NICKNAMES[0] = 'EjeseptG'
         self.CV_NICKNAMES = _MASearch.get_manicknames(self.CV_NAMES)
         self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
         self.CH_POS = _MASearch.get_mapositions(self.CH_NAMES)
