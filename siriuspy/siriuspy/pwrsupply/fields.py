@@ -106,7 +106,7 @@ class TimestampUpdate:
 
     def read(self):
         """Read curve."""
-        timestamp = self.pru_controller.timestamp_update(self.device_id)
+        timestamp = self.pru_controller.timestamp_update()
         return timestamp
 
 

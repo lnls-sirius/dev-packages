@@ -149,9 +149,14 @@ class BBBFactory:
         # except KeyError:
         #     freq = None
 
+        print('BEAGLEBONE: {}'.format(bbbname))
+
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
-        print('BEAGLEBONE: {}'.format(bbbname))
+        try:
+            freq = _PSSearch.conv_bbbname_2_freqs(bbbname)
+        except KeyError:
+            freq = None
 
         for udc in udc_list:
 
@@ -162,12 +167,10 @@ class BBBFactory:
             try:
                 freq = _PSSearch.conv_bbbname_2_freqs(udc)
             except KeyError:
-                freq = None
+                pass
+            freq = 10.0 if freq is None else freq
 
             devices = _PSSearch.conv_udc_2_bsmps(udc)
-
-            for dev in devices:
-                freq = 10.0 if freq is None else freq[0]
 
             # Check if there is only one psmodel
             psmodel_name = BBBFactory.check_ps_models(devices)

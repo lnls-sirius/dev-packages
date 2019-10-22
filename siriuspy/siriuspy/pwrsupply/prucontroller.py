@@ -53,6 +53,10 @@ class PRUController:
         print()
         print('PRUController: struct initialization')
         print('devices: {}'.format(devices))
+
+        # init timetsamp
+        self._timestamp_update = _time()
+
         # init time interval
         time0 = _time()
 
@@ -185,12 +189,13 @@ class PRUController:
         psupply = self._psupplies[device_id]
         return psupply.connected
 
-    def timestamp_update(self, device_id):
+    def timestamp_update(self):
         """Return tmestamp of last device update."""
-        psupply = self._psupplies[device_id]
-        with self._lock:
-            tstamp = psupply.timestamp_update
-        return tstamp
+        return self._timestamp_update
+        # psupply = self._psupplies[device_id]
+        # with self._lock:
+        #     tstamp = psupply.timestamp_update
+        # return tstamp
 
     # --- public methods: bsmp variable read and func exec ---
 
@@ -509,7 +514,12 @@ class PRUController:
 
         # update variables
         for psupply in self._psupplies.values():
-            psupply.update_variables()
+            try:
+                self._timestamp_update = _time()
+                psupply.update_variables()
+            except _SerialError:
+                # no serial connection !
+                pass
 
         # time1 = _time()
         # print('TIMING _bsmp_update_variables [{:.3f} ms]'.format(1000*(time1-time0)))
@@ -531,8 +541,9 @@ class PRUController:
         try:
             psupply = psupplies[device_id]
             psupply.update_wfm()
-        except (_SerialError, IndexError):
-            print('bsmp_wfm_update error!')
+        except _SerialError:
+            # no serial connection !
+            pass
 
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
@@ -582,8 +593,6 @@ class PRUController:
                     # print('function_id: {}'.format(function_id))
                     # print('response   : {}'.format(data[dev_id]))
         except _SerialError:
-            print('SerialError exception in {}'.format(
-                ('F', device_ids, function_id, args)))
             return None
 
         # --- check if all function executions succeeded.
