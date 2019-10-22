@@ -221,25 +221,27 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
