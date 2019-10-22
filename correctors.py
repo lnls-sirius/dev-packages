@@ -177,6 +177,67 @@ class CHCV(Corrector):
             return self._ref.value
 
 
+class Septum(Corrector):
+    """CHCV class."""
+
+    def __init__(self, corr_name):
+        """Init method."""
+        super().__init__(corr_name)
+        opt = {'connection_timeout': TIMEOUT}
+        self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
+        self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
+        self._nominalkick = 3.6 * 3.1415926/180 * 1000  # mrad
+        self._config_ok_vals = {
+            'Pulse': 1,
+            'PwrState': _PSConst.PwrStateSel.On}
+        self._config_pvs_sp = {
+            'Pulse': _PV(LL_PREF+self._name+':Pulse-Sel', **opt),
+            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
+        self._config_pvs_rb = {
+            'Pulse': _PV(LL_PREF+self._name+':Pulse-Sts', **opt),
+            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt)}
+
+    @property
+    def opmode_ok(self):
+        """Opmode ok status."""
+        return self.opmode == self._config_ok_vals['Pulse']
+
+    @property
+    def opmode(self):
+        """Opmode."""
+        pv = self._config_pvs_rb['Pulse']
+        if not pv.connected:
+            return None
+        return pv.value
+
+    @opmode.setter
+    def opmode(self, val):
+        pv = self._config_pvs_sp['Pulse']
+        self._config_ok_vals['Pulse'] = val
+        if pv.connected and pv.value != val:
+            pv.put(val, wait=False)
+
+    @property
+    def value(self):
+        """Value."""
+        if self._rb.connected:
+            val = self._rb.value
+            if val is not None:
+                return (val - self._nominalkick) * 1e3
+
+    @value.setter
+    def value(self, val):
+        self._sp.put(val/1e3 + self._nominalkick, wait=False)
+
+
+def get_corr(name):
+    if name.dis == 'PM':
+        print(name)
+        return Septum(name)
+    else:
+        return CHCV(name)
+
+
 class TimingConfig(_BaseTimingConfig):
     """Timing configuration class."""
 
@@ -254,7 +315,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._synced_kicks = False
         self._acq_rate = 2
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
-        self._corrs = [CHCV(dev) for dev in self._names]
+        self._corrs = [get_corr(dev) for dev in self._names]
         if self.acc == 'SI':
             self._corrs.append(RFCtrl(self.acc))
         if self.isring:
