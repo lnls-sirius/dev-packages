@@ -495,6 +495,11 @@ class PRUController:
 
     def _bsmp_update(self):
 
+        # time0 = _time()
+
+        # update timestamp
+        self._timestamp_update = _time()
+
         # update variables
         self._bsmp_update_variables()
 
@@ -508,6 +513,10 @@ class PRUController:
         dev_id = self._device_ids[self._wfm_update_dev_idx]
         self._bsmp_update_wfm(dev_id)
 
+        # time1 = _time()
+        # print('devices: {}, time {}'.format(
+        #     self._device_ids, 1000*(time1 - time0)))
+
     def _bsmp_update_variables(self):
 
         # time0 = _time()
@@ -515,7 +524,6 @@ class PRUController:
         # update variables
         for psupply in self._psupplies.values():
             try:
-                self._timestamp_update = _time()
                 psupply.update_variables()
             except _SerialError:
                 # no serial connection !

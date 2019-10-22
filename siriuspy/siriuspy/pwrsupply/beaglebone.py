@@ -57,10 +57,8 @@ class BeagleBone:
         """Update interval, as defined in PRUcontrollers."""
         if device_name is not None:
             return self._dev2interval[device_name]
-
-        m = self._dev2interval
-        intervals = [m[dev] for dev in m]
-        return max(intervals)
+        intervals = tuple(self._dev2interval.values())
+        return min(intervals)
 
     def read(self, device_name, field=None, force_update=False):
         """Read from device."""
@@ -142,12 +140,6 @@ class BBBFactory:
         dbase = dict()
         controllers = dict()  # 1 controller per UDC
         databases = dict()
-
-        # # bypass SCAN and RAMP frequencies.
-        # try:
-        #     freq = _PSSearch.conv_bbbname_2_freqs(bbbname)
-        # except KeyError:
-        #     freq = None
 
         print('BEAGLEBONE: {}'.format(bbbname))
 
