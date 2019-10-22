@@ -206,42 +206,6 @@ class ConstFBP(ConstPSBSMP):
     V_TEMP_SWITCHES = 30
     V_DUTY_CYCLE = 31  # (float)
 
-    # # --- undefined variables
-    # V_UNDEF32 = 32
-    # V_UNDEF33 = 33
-    # V_UNDEF34 = 34
-    # V_UNDEF35 = 35
-    # V_UNDEF36 = 36
-    # V_UNDEF37 = 37
-    # V_UNDEF38 = 38
-    # V_UNDEF39 = 39
-
-    # # --- mirror variables ---
-    # V_PS_STATUS_1 = 40
-    # V_PS_STATUS_2 = 41
-    # V_PS_STATUS_3 = 42
-    # V_PS_STATUS_4 = 43
-    # V_PS_SETPOINT_1 = 44  # corresponds to IOC Current-RB
-    # V_PS_SETPOINT_2 = 45  # corresponds to IOC Current-RB
-    # V_PS_SETPOINT_3 = 46  # corresponds to IOC Current-RB
-    # V_PS_SETPOINT_4 = 47  # corresponds to IOC Current-RB
-    # V_PS_REFERENCE_1 = 48  # corresponds to IOC CurrentRef-Mon
-    # V_PS_REFERENCE_2 = 49  # corresponds to IOC CurrentRef-Mon
-    # V_PS_REFERENCE_3 = 50  # corresponds to IOC CurrentRef-Mon
-    # V_PS_REFERENCE_4 = 51  # corresponds to IOC CurrentRef-Mon
-    # V_PS_SOFT_INTERLOCKS_1 = 52
-    # V_PS_SOFT_INTERLOCKS_2 = 53
-    # V_PS_SOFT_INTERLOCKS_3 = 54
-    # V_PS_SOFT_INTERLOCKS_4 = 55
-    # V_PS_HARD_INTERLOCKS_1 = 56
-    # V_PS_HARD_INTERLOCKS_2 = 57
-    # V_PS_HARD_INTERLOCKS_3 = 58
-    # V_PS_HARD_INTERLOCKS_4 = 59
-    # V_I_LOAD_1 = 60  # corresponds to IOC Current-Mon
-    # V_I_LOAD_2 = 61  # corresponds to IOC Current-Mon
-    # V_I_LOAD_3 = 62  # corresponds to IOC Current-Mon
-    # V_I_LOAD_4 = 63  # corresponds to IOC Current-Mon
-
 
 class ConstFAC_DCDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_DCDC BSMP constants."""

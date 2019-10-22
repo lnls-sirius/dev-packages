@@ -46,13 +46,13 @@ class PRUController:
                  devices,
                  processing=True,
                  scanning=True,
-                 freqs=None):
+                 freq=None):
         """Init."""
         # --- Init structures ---
 
         print()
         print('PRUController: struct initialization')
-        print('devices: {}\n'.format(devices))
+        print('devices: {}'.format(devices))
         # init time interval
         time0 = _time()
 
@@ -73,7 +73,7 @@ class PRUController:
 
         # initialize UDC
         self._udc, self._parms, self._psupplies = PRUController._init_udc(
-            pru, self._psmodel.name, self._device_ids, freqs)
+            pru, self._psmodel.name, self._device_ids, freq)
 
         # index of dev_id in self._device_ids for wfmref update
         self._wfm_update = True
@@ -84,7 +84,7 @@ class PRUController:
 
         # time interval
         time1 = _time()
-        print('TIMING struct init [{:.3f} ms]\n'.format(
+        print('TIMING struct init [{:.3f} ms]'.format(
             1000*(time1 - time0)))
 
         # --- BSMP communication ---
@@ -344,7 +344,7 @@ class PRUController:
     # --- private methods: initializations ---
 
     @staticmethod
-    def _init_udc(pru, psmodel_name, device_ids, freqs):
+    def _init_udc(pru, psmodel_name, device_ids, freq):
 
         # create UDC
         udc = _UDC(pru, psmodel_name, device_ids)
@@ -356,14 +356,14 @@ class PRUController:
             psupplies[dev_id] = _PSupply(psbsmp=udc[dev_id])
 
         # bypass psmodel default frequencies
-        if freqs is not None:
-            parms.FREQ_SCAN = freqs[0]
+        if freq is not None:
+            parms.FREQ_SCAN = freq
 
         # print info on scan frequency
-        fstr = ('id:{:2d}, FREQS  sync_off:{:4.1f} Hz  sync_on:{:4.1f} Hz')
+        fstr = ('device_id:{:2d}, scan_freq: {:4.1f} Hz')
         for dev in device_ids:
-            freqs = (10, 2) if freqs is None else freqs
-            print(fstr.format(dev, *freqs))
+            freq = 10.0 if freq is None else freq
+            print(fstr.format(dev, freq))
         print()
 
         return udc, parms, psupplies

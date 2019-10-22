@@ -143,37 +143,31 @@ class BBBFactory:
         controllers = dict()  # 1 controller per UDC
         databases = dict()
 
-        # bypass SCAN and RAMP frequencies.
-        try:
-            freqs = _PSSearch.conv_bbbname_2_freqs(bbbname)
-        except KeyError:
-            freqs = None
+        # # bypass SCAN and RAMP frequencies.
+        # try:
+        #     freq = _PSSearch.conv_bbbname_2_freqs(bbbname)
+        # except KeyError:
+        #     freq = None
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
+        print('BEAGLEBONE: {}'.format(bbbname))
+
         for udc in udc_list:
+
+            fstr = ('\nUDC:{:<25s}')
+            print(fstr.format(udc))
 
             # UDC-specific frequencies
             try:
-                freqs = _PSSearch.conv_bbbname_2_freqs(udc)
+                freq = _PSSearch.conv_bbbname_2_freqs(udc)
             except KeyError:
-                pass
+                freq = None
 
             devices = _PSSearch.conv_udc_2_bsmps(udc)
 
-            # print info on scan frequency
-            fstr = ('udc:{:<25s} ps:{:<16s} (id:{:2d})')
-            print('BeagleBone: udc initialization\n')
             for dev in devices:
-                freqs = (10, 2) if freqs is None else freqs
-                # --
-                # TODO: delete this temporary configuration
-                if udc == 'PA-RaPSC03:PS-UDC-BO1':
-                    freqs = (2, 2)
-                elif udc == 'PA-RaPSC03:PS-UDC-BO2':
-                    freqs = (10, 2)
-                # ---
-                print(fstr.format(udc, *dev))
+                freq = 10.0 if freq is None else freq[0]
 
             # Check if there is only one psmodel
             psmodel_name = BBBFactory.check_ps_models(devices)
@@ -190,7 +184,7 @@ class BBBFactory:
                                             psmodel, devices,
                                             processing=False,
                                             scanning=False,
-                                            freqs=freqs)
+                                            freq=freq)
 
             # Get model database
             database = _PSData(devices[0][0]).propty_database
