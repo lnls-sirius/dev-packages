@@ -154,7 +154,7 @@ class BBBFactory:
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
         try:
-            freq = _PSSearch.conv_bbbname_2_freqs(bbbname)
+            freq = _PSSearch.conv_bbbname_2_freq(bbbname)
         except KeyError:
             freq = None
 
@@ -165,7 +165,7 @@ class BBBFactory:
 
             # UDC-specific frequencies
             try:
-                freq = _PSSearch.conv_bbbname_2_freqs(udc)
+                freq = _PSSearch.conv_bbbname_2_freq(udc)
             except KeyError:
                 pass
             freq = 10.0 if freq is None else freq

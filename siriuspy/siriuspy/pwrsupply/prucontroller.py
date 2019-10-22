@@ -368,7 +368,7 @@ class PRUController:
         fstr = ('device_id:{:2d}, scan_freq: {:4.1f} Hz')
         for dev in device_ids:
             freq = 10.0 if freq is None else freq
-            print(fstr.format(dev, freq))
+            print(fstr.format(dev, parms.FREQ_SCAN))
         print()
 
         return udc, parms, psupplies
