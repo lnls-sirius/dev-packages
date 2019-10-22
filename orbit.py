@@ -851,10 +851,11 @@ class EpicsOrbit(BaseOrbit):
         nok = not all(bpm.state for bpm in self.bpms)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=nok)
 
-        isok = all(bpm.is_ok for bpm in self.bpms)
-        isok |= self._mode != self._csorb.SOFBMode.SinglePass
+        trig_modes = [self._csorb.SOFBMode.SinglePass, ]
         if self._csorb.isring:
-            isok |= self._mode != self._csorb.SOFBMode.MultiTurn
+            trig_modes.append(self._csorb.SOFBMode.MultiTurn)
+        isok = all(bpm.is_ok for bpm in self.bpms)
+        isok |= self._mode not in trig_modes
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         self._status = status
