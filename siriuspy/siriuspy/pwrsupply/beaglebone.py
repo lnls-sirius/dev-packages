@@ -119,6 +119,7 @@ class BeagleBone:
             self._dev2interval[devname] = 1.0/pruc.params.FREQ_SCAN
 
 
+
 class BBBFactory:
     """Build BeagleBones."""
 
@@ -150,6 +151,13 @@ class BBBFactory:
         except KeyError:
             freq = None
 
+        # TODO: temporary optimization: grouping of devices of the
+        # same psmodel.
+        if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2', 'LA-RaPS04:CO-PSCtrl-TS']:
+            udc_list_orig = udc_list
+            udc_list = udc_list[:1]
+            # freq = 2.0
+
         for udc in udc_list:
 
             fstr = ('\nUDC:{:<25s}')
@@ -162,7 +170,17 @@ class BBBFactory:
                 pass
             freq = 10.0 if freq is None else freq
 
-            devices = _PSSearch.conv_udc_2_bsmps(udc)
+            # TODO: temporary optimization: grouping of devices of the
+            # same psmodel.
+            if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',
+                           'LA-RaPS04:CO-PSCtrl-TS']:
+                devices = []
+                for _udc in udc_list_orig:
+                    devs = _PSSearch.conv_udc_2_bsmps(_udc)
+                    devices.extend(devs)
+                print(devices)
+            else:
+                devices = _PSSearch.conv_udc_2_bsmps(udc)
 
             # Check if there is only one psmodel
             psmodel_name = BBBFactory.check_ps_models(devices)
