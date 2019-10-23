@@ -58,7 +58,8 @@ def get_currinfo_database(acc):
                                         'prec': 1, 'unit': 's'}
     elif acc == 'BO':
         pvs_db['RawReadings-Mon'] = {'type': 'float', 'count': 100000,
-                                     'value': _np.array(100000*[0.0])}
+                                     'value': _np.array(100000*[0.0]),
+                                     'unit': 'mA'}
 
         pvs_db['Current150MeV-Mon'] = {'type': 'float', 'value': 0.0,
                                        'prec': 3, 'unit': 'mA'}
