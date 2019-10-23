@@ -3,7 +3,7 @@
 import time as _time
 import numpy as _numpy
 import epics as _epics
-import siriuspy.epics as _siriuspy_epics
+from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from siriuspy.csdevice.currinfo import Const as _Const
 import as_ap_currinfo.lifetime.pvs as _pvs
 
@@ -30,17 +30,16 @@ class App:
         _pvs.print_banner()
 
         self._driver = driver
-        self._pvs_database = App.pvs_database
+        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
+        self._PREFIX = _pvs.get_pvs_prefix()
 
         self._current_pv = _epics.PV(
-            _pvs.get_pvs_vaca_prefix() + _pvs.get_pvs_section().upper() +
-            '-Glob:AP-CurrInfo:Current-Mon',
+            self._PREFIX+':Current-Mon',
             callback=self._callback_calclifetime)
         self._storedebeam_pv = _epics.PV(
-            _pvs.get_pvs_vaca_prefix() + _pvs.get_pvs_section().upper() +
-            '-Glob:AP-CurrInfo:StoredEBeam-Mon')
+            self._PREFIX+':StoredEBeam-Mon')
         self._injstate_pv = _epics.PV(
-            _pvs.get_pvs_vaca_prefix()+'AS-Glob:TI-EVG:InjectionState-Sts',
+            self._PREFIX_VACA+'AS-RaMO:TI-EVG:InjectionEvt-Sts',
             callback=self._callback_get_injstate)
 
         self._lifetime = 0
@@ -55,7 +54,7 @@ class App:
         self._dcurrfactor = 0.01
         self._sampling_time = 10.0
         self._buffer_max_size = 0
-        self._current_buffer = _siriuspy_epics.SiriusPVTimeSerie(
+        self._current_buffer = _SiriusPVTimeSerie(
                                pv=self._current_pv,
                                time_window=self._sampling_time,
                                nr_max_points=None,
