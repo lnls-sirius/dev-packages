@@ -73,6 +73,7 @@ class SOFB:
     def wait(self, timeout=10):
         inter = 0.05
         n = int(timeout/inter)
+        _time.sleep(inter)
         for _ in range(n):
             if self._npts_rb.value >= self._npts_sp.value:
                 break
