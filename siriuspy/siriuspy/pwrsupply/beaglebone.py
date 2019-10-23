@@ -153,10 +153,21 @@ class BBBFactory:
 
         # TODO: temporary optimization: grouping of devices of the
         # same psmodel.
-        if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2', 'LA-RaPS04:CO-PSCtrl-TS']:
+        if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
+                       'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
+                       'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
+                       'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
+                       'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
+                       ]:
+            print('Temporary pwrsupply grouping into one UDC for optimization!')
             udc_list_orig = udc_list
             udc_list = udc_list[:1]
-            # freq = 2.0
+        elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
+                         'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
+                         ]:
+            print('Temporary pwrsupply grouping into one UDC for optimization!')
+            udc_list_orig = udc_list
+            udc_list = udc_list[:2]
 
         for udc in udc_list:
 
@@ -172,13 +183,28 @@ class BBBFactory:
 
             # TODO: temporary optimization: grouping of devices of the
             # same psmodel.
-            if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',
-                           'LA-RaPS04:CO-PSCtrl-TS']:
+            if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
+                           'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
+                           'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
+                           'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
+                           'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
+                           ]:
                 devices = []
                 for _udc in udc_list_orig:
                     devs = _PSSearch.conv_udc_2_bsmps(_udc)
                     devices.extend(devs)
-                print(devices)
+            elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
+                             'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
+                             ]:
+                if udc in ['PA-RaPSE05:PS-UDC-BO1', 'PA-RaPSF05:PS-UDC-BO1']:
+                    # first UDC
+                    devices = _PSSearch.conv_udc_2_bsmps(udc)
+                else:
+                    # second UDC
+                    devices = []
+                    for _udc in udc_list_orig[1:]:
+                        devs = _PSSearch.conv_udc_2_bsmps(_udc)
+                        devices.extend(devs)
             else:
                 devices = _PSSearch.conv_udc_2_bsmps(udc)
 
