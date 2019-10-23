@@ -7,7 +7,6 @@ from unittest import mock
 import siriuspy.util as util
 from as_ap_currinfo.lifetime.lifetime import _PCASDriver
 from as_ap_currinfo.lifetime.main import App
-import as_ap_currinfo.lifetime.pvs as pvs
 
 
 valid_interface = (
@@ -26,7 +25,6 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
     def setUp(self):
         """Initialize Soft IOC."""
         self.mock_driver = mock.create_autospec(_PCASDriver)
-        pvs.select_ioc('si')
         App.init_class()
         printbanner_patcher = mock.patch(
             "as_ap_currinfo.lifetime.pvs.print_banner",
@@ -64,12 +62,12 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
         self.assertEqual(app._current_buffer.time_window, 100)
         self.mock_driver.setParam.assert_called_with('SplIntvl-RB', 100)
 
-    @mock.patch("as_ap_currinfo.lifetime.main._siriuspy_epics")
-    def test_write_BuffRst_Cmd(self, epics):
+    @mock.patch("as_ap_currinfo.lifetime.main._SiriusPVTimeSerie")
+    def test_write_BuffRst_Cmd(self, timeserie):
         """Test write BuffRst-Cmd."""
         app = App(self.mock_driver)
         app.write('BuffRst-Cmd', 0)
-        epics.SiriusPVTimeSerie.return_value.clearserie.assert_called_once()
+        timeserie.return_value.clearserie.assert_called_once()
 
     def test_write_BuffAutoRst(self):
         """Test write BuffAutoRst-Sel."""

@@ -7,22 +7,8 @@ from siriuspy.csdevice.currinfo import get_lifetime_database as _get_database
 
 _COMMIT_HASH = _util.get_last_commit_hash()
 _PREFIX_VACA = _vaca_prefix
-_ACC = None
-_DEVICE = None
-_PREFIX = None
-
-
-def select_ioc(acc):
-    """Select IOC to build database for."""
-    global _ACC, _PREFIX, _DEVICE
-    _ACC = acc.upper()
-    _DEVICE = _ACC + '-Glob:AP-CurrInfo:'
-    _PREFIX = _PREFIX_VACA + _DEVICE
-
-
-def get_pvs_section():
-    """Return Soft IOC transport line."""
-    return _ACC
+_DEVICE = 'SI-Glob:AP-CurrInfo:'
+_PREFIX = _PREFIX_VACA + _DEVICE
 
 
 def get_pvs_vaca_prefix():
@@ -45,8 +31,8 @@ def get_pvs_database():
 def print_banner():
     """Print Soft IOC banner."""
     _util.print_ioc_banner(
-        ioc_name=_ACC.lower()+'-ap-currinfo-lifetime',
+        ioc_name='si-ap-currinfo-lifetime',
         db=get_pvs_database(),
-        description=_ACC.upper()+'-AP-CurrInfo-Lifetime Soft IOC',
+        description='SI-AP-CurrInfo-Lifetime Soft IOC',
         version=_COMMIT_HASH,
         prefix=_PREFIX)
