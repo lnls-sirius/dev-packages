@@ -166,6 +166,9 @@ class PSModelFBP(_PSModel):
         elif epics_field == 'Reset-Cmd':
             return _functions.Command(
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
+        elif epics_field == 'SyncPulse-Cmd':
+            return _functions.Command(
+                device_ids, pru_controller, _c.F_SYNC_PULSE, setpoints)
         elif epics_field == 'Abort-Cmd':
             return _functions.BSMPFunctionNull()
         elif epics_field == 'CycleDsbl-Cmd':

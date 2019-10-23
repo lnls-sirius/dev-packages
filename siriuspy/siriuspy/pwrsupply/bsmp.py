@@ -405,9 +405,9 @@ class ConstFAP_4P(ConstFAP):
     # --- FAP variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD_MEAN = 27  # corresponds to IOC Current-Mon
-    V_I_LOAD1 = 28  # corresponds to IOC Current1-Mon
-    V_I_LOAD2 = 29  # corresponds to IOC Current2-Mon
+    V_I_LOAD1 = 27  # corresponds to IOC Current1-Mon
+    V_I_LOAD2 = 28  # corresponds to IOC Current2-Mon
+    V_I_LOAD_MEAN = 29  # corresponds to IOC Current-Mon
     V_V_LOAD = 30
     V_I_IGBT_1_1 = 31
     V_I_IGBT_2_1 = 32

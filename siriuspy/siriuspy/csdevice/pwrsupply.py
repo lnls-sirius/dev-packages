@@ -441,6 +441,7 @@ def get_basic_propty_database():
                         'prec': DEFAULT_PS_CURRENT_PRECISION},
         # Commands
         'Abort-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'SyncPulse-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Cycle
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
