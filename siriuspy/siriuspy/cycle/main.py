@@ -38,8 +38,9 @@ class CycleController:
                     self.cyclers[name] = MagnetCycler(name, ramp_config)
 
         # timing connector
-        sections = _get_sections(self.psnames)
-        self._only_linac = (len(sections) == 1) and (sections[0] == 'LI')
+        self._sections = _get_sections(self.psnames)
+        self._only_linac = (len(self._sections) == 1) and \
+                           (self._sections[0] == 'LI')
         if not self._only_linac:
             self._timing = timing if timing is not None else Timing()
 
@@ -120,11 +121,8 @@ class CycleController:
         if self._only_linac:
             return
         self._timing.turnoff()
-        sections = ['TB', ] if self.mode == 'Cycle' else ['BO', ]
-        # TODO: uncomment when using TS and SI
-        # sections = ['TB', 'TS', 'SI'] if mode == 'Cycle' else ['BO', ]
         self._update_log('Preparing Timing...')
-        self._timing.prepare(self.mode, sections)
+        self._timing.prepare(self.mode, self._sections)
         self._update_log(done=True)
 
     def check_all_magnets(self, ppty):
@@ -174,13 +172,10 @@ class CycleController:
         if self._only_linac:
             return True
 
-        sections = ['TB', ] if self.mode == 'Cycle' else ['BO', ]
-        # TODO: uncomment when using TS and SI
-        # sections = ['TB', 'TS', 'SI'] if self.mode == 'Cycle' else ['BO', ]
         self._update_log('Checking Timing...')
         t0 = _time.time()
         while _time.time()-t0 < TIMEOUT_CHECK/2:
-            status = self._timing.check(self.mode, sections)
+            status = self._timing.check(self.mode, self._sections)
             if status:
                 break
             _time.sleep(TIMEOUT_SLEEP)
@@ -380,13 +375,15 @@ class CycleController:
         """Return psnames to cycle."""
         if self.cyclers:
             psnames = _Filter.process_filters(
-                self.cyclers.keys(), filters={'sec': 'TB', 'dis': 'PS'})
-        # TODO: uncomment when using TS and SI
+                self.cyclers.keys(), filters={'sec': '(TB|TS)', 'dis': 'PS'})
+        # TODO: uncomment when using SI
         #    self.cyclers.keys(), filters={'sec':'(TB|TS|SI)', 'dis':'PS'})
             lipsnames = _Filter.process_filters(
                 self.cyclers.keys(), filters={'sec': 'LI', 'dis': 'PS'})
         else:
-            psnames = _PSSearch.get_psnames({'sec': 'TB', 'dis': 'PS'})
+            psnames = _PSSearch.get_psnames({'sec': '(TB|TS)', 'dis': 'PS'})
+        # TODO: uncomment when using SI
+        #     psnames = _PSSearch.get_psnames({'sec':'(TB|TS|SI)', 'dis':'PS'})
             lipsnames = _PSSearch.get_psnames({'sec': 'LI', 'dis': 'PS'})
         psnames.extend(lipsnames)
         self.psnames_li = lipsnames

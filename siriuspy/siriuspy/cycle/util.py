@@ -10,8 +10,8 @@ from siriuspy.search import PSSearch as _PSSearch
 
 def get_psnames():
     """Return psnames."""
-    names = _PSSearch.get_psnames({'sec': '(TB|BO)', 'dis': 'PS'})
-    # TODO: uncomment when using TS and SI
+    names = _PSSearch.get_psnames({'sec': '(TB|BO|TS)', 'dis': 'PS'})
+    # TODO: uncomment when using SI
     # names = _PSSearch.get_psnames({'sec': '(TB|BO|TS|SI)', 'dis': 'PS'})
     names.extend(_PSSearch.get_psnames({'sec': 'LI'}))
     return names
