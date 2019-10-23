@@ -58,16 +58,16 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertIsInstance(db, dict)
 
         # PV names
-        self.assertTrue(['RawReadings-Mon'] in db)
-        self.assertTrue(['Current150MeV-Mon'] in db)
-        self.assertTrue(['Current1GeV-Mon'] in db)
-        self.assertTrue(['Current2GeV-Mon'] in db)
-        self.assertTrue(['Current3GeV-Mon'] in db)
-        self.assertTrue(['Charge150MeV-Mon'] in db)
-        self.assertTrue(['Charge1GeV-Mon'] in db)
-        self.assertTrue(['Charge2GeV-Mon'] in db)
-        self.assertTrue(['Charge3GeV-Mon'] in db)
-        self.assertTrue(['RampEff-Mon'] in db)
+        self.assertTrue('RawReadings-Mon' in db)
+        self.assertTrue('Current150MeV-Mon' in db)
+        self.assertTrue('Current1GeV-Mon' in db)
+        self.assertTrue('Current2GeV-Mon' in db)
+        self.assertTrue('Current3GeV-Mon' in db)
+        self.assertTrue('Charge150MeV-Mon' in db)
+        self.assertTrue('Charge1GeV-Mon' in db)
+        self.assertTrue('Charge2GeV-Mon' in db)
+        self.assertTrue('Charge3GeV-Mon' in db)
+        self.assertTrue('RampEff-Mon' in db)
 
         # PVs units
         self.assertEqual(db['RawReadings-Mon']['unit'], 'mA')
