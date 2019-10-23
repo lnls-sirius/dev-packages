@@ -9,7 +9,7 @@ from siriuspy.clientarch import ClientArchiver as _ClientArch
 import as_ap_currinfo.pvs as _pvs
 
 
-BO_REV_PERIOD = 1.6571334792998411  # [us]
+BO_REV_PERIOD = 1.6571334792998411 * 1e-6 / 3600  # [h]
 BO_ENERGY2TIME = {  # energy vs. time[s]
     '150MeV': 0.0000,
     '1GeV': 0.0859,
@@ -144,7 +144,7 @@ class BOApp:
                 self.driver.setParam('Current'+str(energy)+'-Mon',
                                      self._currents[energy])
                 # charges
-                self._charges[energy] += current*BO_REV_PERIOD
+                self._charges[energy] += current/1000 * BO_REV_PERIOD
                 self.driver.setParam('Charge'+str(energy)+'-Mon',
                                      self._charges[energy])
         # ramp efficiency
