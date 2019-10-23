@@ -70,13 +70,13 @@ def get_currinfo_database(acc):
                                      'prec': 3, 'unit': 'mA'}
 
         pvs_db['Charge150MeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                      'prec': 10, 'unit': 'nC'}
+                                      'prec': 10, 'unit': 'A.h'}
         pvs_db['Charge1GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 10, 'unit': 'nC'}
+                                    'prec': 10, 'unit': 'A.h'}
         pvs_db['Charge2GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 10, 'unit': 'nC'}
+                                    'prec': 10, 'unit': 'A.h'}
         pvs_db['Charge3GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 10, 'unit': 'nC'}
+                                    'prec': 10, 'unit': 'A.h'}
 
         pvs_db['RampEff-Mon'] = {'type': 'float', 'value': 0.0,
                                  'prec': 2, 'unit': '%'}
