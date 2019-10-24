@@ -4,7 +4,7 @@ import numpy as _np
 from siriuspy.csdevice.pwrsupply import \
     DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
     DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
-from siriuspy.search import MASearch as _MASearch
+from siriuspy.search import PSSearch as _PSSearch
 
 # Constants
 
@@ -16,11 +16,12 @@ DEFAULT_RAMP_TOTDURATION = DEFAULT_RAMP_DURATION * \
     DEFAULT_RAMP_NRCYCLES/1000000  # [s]
 
 DEFAULT_RAMP_AMPLITUDE = {  # A
-    'BO-Fam:MA-B':  1072,
-    'BO-Fam:MA-QD': 30,
-    'BO-Fam:MA-QF': 120,
-    'BO-Fam:MA-SD': 149,
-    'BO-Fam:MA-SF': 149}
+    'BO-Fam:PS-B-1': 1072,
+    'BO-Fam:PS-B-2': 1072,
+    'BO-Fam:PS-QD': 30,
+    'BO-Fam:PS-QF': 120,
+    'BO-Fam:PS-SD': 149,
+    'BO-Fam:PS-SF': 149}
 
 # Time x Current, units: [ms] x [A]
 BASE_RAMP_CURVE_ORIG = \
@@ -2089,21 +2090,23 @@ def bo_generate_base_waveform(nrpoints, duration):
     return w
 
 
-def bo_get_default_waveform(maname, nrpoints=None, duration=None,
+def bo_get_default_waveform(psname, nrpoints=None, duration=None,
                             ramp_config=None):
     if ramp_config is None:
-        # Uses a template wfmdata scaled to maximum magnet ps current
+        # Uses a template wfmdata scaled to maximum ps current
         if nrpoints is None:
-            if 'CH' in maname or 'CV' in maname or 'QS' in maname:
+            if 'CH' in psname or 'CV' in psname or 'QS' in psname:
                 nrpoints = _DEF_WFMSIZE_FBP
             else:
                 nrpoints = _DEF_WFMSIZE_OTHERS
         w = bo_generate_base_waveform(nrpoints, duration)
-        if maname in DEFAULT_RAMP_AMPLITUDE:
-            # bypass upper_limit if maname in dictionary
-            amp = DEFAULT_RAMP_AMPLITUDE[maname]
+        if psname in DEFAULT_RAMP_AMPLITUDE:
+            # bypass upper_limit if psname in dictionary
+            amp = DEFAULT_RAMP_AMPLITUDE[psname]
         else:
-            amp = _MASearch.get_splims(maname, 'hilim')
+            pstype = _PSSearch.conv_psname_2_pstype(psname)
+            splims = _PSSearch.conv_pstype_2_splims(pstype)
+            amp = splims['HIHI']
         wfmdata = amp * w
     else:
         # load waveform from config database

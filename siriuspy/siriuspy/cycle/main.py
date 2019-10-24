@@ -7,7 +7,7 @@ import threading as _thread
 from epics import PV as _PV
 from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
 from siriuspy.search import PSSearch as _PSSearch
-from .conn import Timing, MagnetCycler, LinacMagnetCycler
+from .conn import Timing, PSCycler, LinacPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
 from .util import get_sections as _get_sections
 
@@ -33,9 +33,9 @@ class CycleController:
             psnames = ps2ramp if is_bo else ps2cycle
             for name in psnames:
                 if 'LI' in name:
-                    self.cyclers[name] = LinacMagnetCycler(name)
+                    self.cyclers[name] = LinacPSCycler(name)
                 else:
-                    self.cyclers[name] = MagnetCycler(name, ramp_config)
+                    self.cyclers[name] = PSCycler(name, ramp_config)
 
         # timing connector
         self._sections = _get_sections(self.psnames)
@@ -59,8 +59,8 @@ class CycleController:
         self.prepare_timing_size = 3
         self.prepare_timing_max_duration = 15
 
-        self.prepare_magnets_size = 2*len(self.psnames)+1
-        self.prepare_magnets_max_duration = 20
+        self.prepare_ps_size = 2*len(self.psnames)+1
+        self.prepare_ps_max_duration = 20
 
         self.cycle_size = (len(self.psnames)+3 +  # check params
                            len(self.psnames) +    # check opmode
@@ -93,24 +93,24 @@ class CycleController:
         """Mode."""
         return self._mode
 
-    def config_all_magnets(self, ppty):
-        """Prepare magnets to cycle according to mode."""
+    def config_all_pwrsupplies(self, ppty):
+        """Prepare power supplies to cycle according to mode."""
         if ppty == 'opmode':
-            psnames = [ma for ma in self.psnames if 'LI' not in ma]
+            psnames = [ps for ps in self.psnames if 'LI' not in ps]
         else:
             psnames = self.psnames
         threads = list()
         for psname in psnames:
             t = _thread.Thread(
-                target=self.config_magnet, args=(psname, ppty), daemon=True)
+                target=self.config_pwrsupply, args=(psname, ppty), daemon=True)
             self._update_log('Preparing '+psname+' '+ppty+'...')
             threads.append(t)
             t.start()
         for t in threads:
             t.join()
 
-    def config_magnet(self, psname, ppty):
-        """Prepare magnet parameters."""
+    def config_pwrsupply(self, psname, ppty):
+        """Prepare power supplies parameters."""
         if ppty == 'parameters':
             self.cyclers[psname].prepare(self.mode)
         elif ppty == 'opmode' and 'LI' not in psname:
@@ -125,8 +125,8 @@ class CycleController:
         self._timing.prepare(self.mode, self._sections)
         self._update_log(done=True)
 
-    def check_all_magnets(self, ppty):
-        """Check all magnets according to mode."""
+    def check_all_pwrsupplies(self, ppty):
+        """Check all power supplies according to mode."""
         if ppty == 'opmode':
             psnames = [ps for ps in self.psnames if 'LI' not in ps]
         else:
@@ -135,7 +135,7 @@ class CycleController:
         self._checks_result = dict()
         for psname in psnames:
             t = _thread.Thread(
-                target=self.check_magnet,
+                target=self.check_pwrsupply,
                 args=(psname, ppty), daemon=True)
             threads.append(t)
             t.start()
@@ -152,8 +152,8 @@ class CycleController:
                 status &= False
         return status
 
-    def check_magnet(self, psname, ppty):
-        """Check magnet."""
+    def check_pwrsupply(self, psname, ppty):
+        """Check power supply."""
         t0 = _time.time()
         cycler = self.cyclers[psname]
         r = False
@@ -233,7 +233,7 @@ class CycleController:
                           DEFAULT_RAMP_DURATION/1000000)
             self._update_log('Remaining time: {}s...'.format(t))
 
-            # verify if magnets started to cycle
+            # verify if power supplies started to cycle
             if (self.mode == 'Cycle') and (5 < _time.time() - t0 < 6):
                 for psname in self.psnames:
                     if _PVName(psname).sec == 'LI':
@@ -243,7 +243,8 @@ class CycleController:
                                          warning=True)
                         self._is_cycling_dict[psname] = False
             if all([v is False for v in self._is_cycling_dict.values()]):
-                self._update_log('All magnets failed. Stopping.', error=True)
+                self._update_log(
+                    'All power supplies failed. Stopping.', error=True)
                 return False
 
             # update keep_waiting
@@ -255,13 +256,13 @@ class CycleController:
         self._update_log(done=True)
         return True
 
-    def check_all_magnets_final_state(self):
-        """Check all magnets final state according to mode."""
+    def check_all_pwrsupplies_final_state(self):
+        """Check all power supplies final state according to mode."""
         threads = list()
         self._checks_final_result = dict()
         for psname in self.psnames:
             t = _thread.Thread(
-                target=self.check_magnet_final_state,
+                target=self.check_pwrsupplies_final_state,
                 args=(psname, ), daemon=True)
             threads.append(t)
             t.start()
@@ -289,8 +290,8 @@ class CycleController:
                                  error=True)
         return True
 
-    def check_magnet_final_state(self, psname):
-        """Check magnet final state."""
+    def check_pwrsupplies_final_state(self, psname):
+        """Check power supplies final state."""
         self._checks_final_result[psname] = \
             self.cyclers[psname].check_final_state(self.mode)
 
@@ -298,13 +299,13 @@ class CycleController:
         """Reset all subsystems."""
         if self._only_linac:
             return
-        self._update_log('Setting magnets to SlowRef...')
+        self._update_log('Setting power supplies to SlowRef...')
         threads = list()
-        for ma in self.psnames:
-            if 'LI' in ma:
+        for ps in self.psnames:
+            if 'LI' in ps:
                 continue
             t = _thread.Thread(
-                target=self.cyclers[ma].set_opmode_slowref, daemon=True)
+                target=self.cyclers[ps].set_opmode_slowref, daemon=True)
             threads.append(t)
             t.start()
         for t in threads:
@@ -321,25 +322,25 @@ class CycleController:
             return
         self._update_log('Timing preparation finished!')
 
-    def prepare_magnets_parameters(self):
+    def prepare_pwrsupplies_parameters(self):
         """Prepare to cycle."""
-        self.config_all_magnets('parameters')
-        if not self.check_all_magnets('parameters'):
+        self.config_all_pwrsupplies('parameters')
+        if not self.check_all_pwrsupplies('parameters'):
             self._update_log(
-                'There are magnets not configured to cycle.',
+                'There are power supplies not configured to cycle.',
                 error=True)
             return
-        self._update_log('Magnets parameters preparation finished!')
+        self._update_log('Power supplies parameters preparation finished!')
 
-    def prepare_magnets_opmode(self):
+    def prepare_pwrsupplies_opmode(self):
         """Prepare to cycle."""
-        self.config_all_magnets('opmode')
-        if not self.check_all_magnets('opmode'):
+        self.config_all_pwrsupplies('opmode')
+        if not self.check_all_pwrsupplies('opmode'):
             self._update_log(
-                'There are magnets with wrong opmode.',
+                'There are power supplies with wrong opmode.',
                 error=True)
             return
-        self._update_log('Magnets OpMode preparation finished!')
+        self._update_log('Power supplies OpMode preparation finished!')
 
     def cycle(self):
         """Cycle."""
@@ -348,21 +349,21 @@ class CycleController:
             return
         if not self.check_timing():
             return
-        if not self.check_all_magnets('parameters'):
+        if not self.check_all_pwrsupplies('parameters'):
             self._update_log(
-                'There are magnets not configured to cycle. Stopping.',
+                'There are power supplies not configured to cycle. Stopping.',
                 error=True)
             return
-        if not self.check_all_magnets('opmode'):
+        if not self.check_all_pwrsupplies('opmode'):
             self._update_log(
-                'There are magnets with wrong opmode. Stopping.',
+                'There are power supplies with wrong opmode. Stopping.',
                 error=True)
             return
 
         self.init()
         if not self.wait():
             return
-        self.check_all_magnets_final_state()
+        self.check_all_pwrsupplies_final_state()
         _time.sleep(4)  # TODO: replace by checks
         self.reset_all_subsystems()
 
