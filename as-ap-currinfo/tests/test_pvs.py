@@ -5,7 +5,7 @@
 import unittest
 from unittest import mock
 import siriuspy.util as util
-import as_ap_currinfo.current.pvs as pvs
+import as_ap_currinfo.pvs as pvs
 
 
 valid_interface = (
@@ -24,7 +24,7 @@ class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
     def setUp(self):
         """Set tests up."""
         csdevice_patcher = mock.patch(
-            "as_ap_currinfo.current.pvs._get_database",
+            "as_ap_currinfo.pvs._get_database",
             autospec=True)
         self.addCleanup(csdevice_patcher.stop)
         self.mock_csdevice = csdevice_patcher.start()
@@ -70,7 +70,7 @@ class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
         pvs.get_pvs_database()
         self.mock_csdevice.assert_called()
 
-    @mock.patch("as_ap_currinfo.current.pvs._util")
+    @mock.patch("as_ap_currinfo.pvs._util")
     def test_print_banner(self, util):
         """Test print_banner."""
         pvs.print_banner()

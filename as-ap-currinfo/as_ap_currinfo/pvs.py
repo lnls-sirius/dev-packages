@@ -2,13 +2,27 @@
 
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
-from siriuspy.csdevice.currinfo import get_charge_database as _get_database
+from siriuspy.csdevice.currinfo import get_currinfo_database as _get_database
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
 _PREFIX_VACA = _vaca_prefix
-_DEVICE = 'SI-Glob:AP-CurrInfo:'
-_PREFIX = _PREFIX_VACA + _DEVICE
+_ACC = None
+_DEVICE = None
+_PREFIX = None
+
+
+def select_ioc(acc):
+    """Select IOC to build database for."""
+    global _ACC, _PREFIX, _DEVICE
+    _ACC = acc.upper()
+    _DEVICE = _ACC + '-Glob:AP-CurrInfo:'
+    _PREFIX = _PREFIX_VACA + _DEVICE
+
+
+def get_pvs_section():
+    """Return Soft IOC transport line."""
+    return _ACC
 
 
 def get_pvs_vaca_prefix():
@@ -22,8 +36,8 @@ def get_pvs_prefix():
 
 
 def get_pvs_database():
-    """Return Soft IOC database."""
-    pvs_database = _get_database()
+    """Return IOC database."""
+    pvs_database = _get_database(_ACC)
     pvs_database['Version-Cte']['value'] = _COMMIT_HASH
     return pvs_database
 
@@ -31,8 +45,8 @@ def get_pvs_database():
 def print_banner():
     """Print Soft IOC banner."""
     _util.print_ioc_banner(
-        ioc_name='si-ap-currinfo-charge',
+        ioc_name=_ACC.lower()+'-ap-currinfo',
         db=get_pvs_database(),
-        description='SI-AP-CurrInfo-Charge Soft IOC',
+        description=_ACC.upper()+'-AP-CurrInfo Soft IOC',
         version=_COMMIT_HASH,
         prefix=_PREFIX)
