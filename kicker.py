@@ -8,12 +8,13 @@ class Kicker:
 
     def __init__(self, name):
         self._name = SiriusPVName(name)
-        self._dly_sp = PV(self._name.substitute(prpty='Delay-SP'))
-        self._dly_rb = PV(self._name.substitute(prpty='Delay-RB'))
-        self._volt_sp = PV(self._name.substitute(prpty='Voltage-SP'))
-        self._volt_rb = PV(self._name.substitute(prpty='Voltage-RB'))
-        self._pulse_sp = PV(self._name.substitute(prpty='Pulse-SP'))
-        self._pulse_rb = PV(self._name.substitute(prpty='Pulse-RB'))
+        tiname = self._name.substitute(dis='TI')
+        self._dly_sp = PV(tiname.substitute(propty='Delay-SP'))
+        self._dly_rb = PV(tiname.substitute(propty='Delay-RB'))
+        self._volt_sp = PV(self._name.substitute(propty='Voltage-SP'))
+        self._volt_rb = PV(self._name.substitute(propty='Voltage-RB'))
+        self._pulse_sp = PV(self._name.substitute(propty='Pulse-Sel'))
+        self._pulse_rb = PV(self._name.substitute(propty='Pulse-Sts'))
 
     @property
     def name(self):
