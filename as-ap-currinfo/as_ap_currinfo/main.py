@@ -16,6 +16,7 @@ BO_ENERGY2TIME = {  # energy vs. time[s]
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
+CURR_LIM = 0.002
 
 
 def _get_value_from_arch(pvname):
@@ -148,8 +149,10 @@ class BOApp:
                 self.driver.setParam('Charge'+str(energy)+'-Mon',
                                      self._charges[energy])
         # ramp efficiency
-        inj_curr = self._currents['150MeV']
-        eje_curr = self._currents['3GeV']
+        c150mev = self._currents['150MeV']
+        inj_curr = c150mev if c150mev > CURR_LIM else CURR_LIM
+        c3gev = self._currents['3GeV']
+        eje_curr = c3gev if c3gev > 0 else 0
         if inj_curr > eje_curr:
             self._rampeff = 100*eje_curr/inj_curr
             self.driver.setParam('RampEff-Mon', self._rampeff)
