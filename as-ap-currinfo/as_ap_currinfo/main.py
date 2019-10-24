@@ -55,9 +55,11 @@ class BOApp:
             self._currents[k] = 0.0
             # charges
             ppty = 'Charge'+k+'-Mon'
-            charge = _get_value_from_arch(self._PREFIX+':'+ppty)
-            if charge is None:
+            data = _get_value_from_arch(self._PREFIX+ppty)
+            if data is None:
                 charge = 0.0
+            else:
+                charge = data[1][0]
             self._charges[k] = charge
             self.driver.setParam(ppty, charge)
         self.driver.updatePVs()
@@ -188,9 +190,11 @@ class SIApp:
         self._storedebeam_13C4_value = 0
         self._storedebeam_14C4_value = 0
         self._chargecalcintvl = 100.0
-        self._charge = _get_value_from_arch(self._PREFIX+':Charge-Mon')
-        if self._charge is None:
+        data = _get_value_from_arch(self._PREFIX+'Charge-Mon')
+        if data is None:
             self._charge = 0.0
+        else:
+            self._charge = data[1][0]
 
         # pvs
         self._current_13C4_pv = _epics.PV(
