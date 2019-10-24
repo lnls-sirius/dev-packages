@@ -1,6 +1,6 @@
 from .main import CycleController
-from .conn import Timing, MagnetCycler, LinacMagnetCycler
-from .util import get_manames, get_manames_from_same_udc
+from .conn import Timing, PSCycler, LinacPSCycler
+from .util import get_psnames, get_psnames_from_same_udc
 from .bo_cycle_data import \
     DEFAULT_RAMP_AMPLITUDE, DEFAULT_RAMP_DURATION, DEFAULT_RAMP_NRCYCLES,\
     DEFAULT_RAMP_TOTDURATION, BASE_RAMP_CURVE_ORIG, \
