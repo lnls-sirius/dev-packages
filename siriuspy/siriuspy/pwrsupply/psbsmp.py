@@ -13,7 +13,11 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 
 
 class PSBSMP(_BSMP):
-    """Power supply BSMP."""
+    """Power supply BSMP.
+
+    This class derives from basic BSMP class.
+    It overrides methods with power supply specific parameters.
+    """
 
     CONST_BSMP = _const_bsmp
 
@@ -114,6 +118,13 @@ class PSBSMP(_BSMP):
         # print('input_val: ', input_val)
         # print('timeout: ', timeout)
         # print('read_flag: ', read_flag)
+
+        if func_id in (_bsmp.ConstPSBSMP.F_SYNC_PULSE,
+                       _bsmp.ConstPSBSMP.F_RESET_UDC):
+            # NOTE: this is necessary while PS BSMP spec is
+            # not updated!
+            read_flag = False
+
         response = super().execute_function(
             func_id=func_id, input_val=input_val,
             timeout=timeout, read_flag=read_flag)
@@ -135,6 +146,7 @@ class PSBSMP(_BSMP):
                          _bsmp.ConstPSBSMP.F_OPEN_LOOP,
                          _bsmp.ConstPSBSMP.F_CLOSE_LOOP):
             _time.sleep(PSBSMP._sleep_turn_onoff)
+
 
         return response
 

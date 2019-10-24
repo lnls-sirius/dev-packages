@@ -4,7 +4,7 @@ pending:
 2019-10-18 - [firmware]: when a setpoint is received while in SlowRefSync, update PS_SETPOINT variable so that the IOC knows that the UDC received its request.
 2019-10-23 - [firmware]: disabling BUFSAMPLE from one ps applies to all in the same UDC?
 2019-10-23 - [firmware]: create new BSMP variable that mirrors last setpoint received by ARM
-2019-10-23 - [firmware]: change SYNC_PULSE and RESET_UDC bsmp functions so that they return OK.
+2019-10-23 - [firmware]: change SYNC_PULSE and RESET_UDC bsmp functions so that they always return OK.
 
 2019-10-18 - [etherbridge]: write new optimized version.
 
