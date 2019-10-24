@@ -16,7 +16,7 @@ BO_ENERGY2TIME = {  # energy vs. time[s]
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
-CURR_LIM = 0.002
+CURR_LIM = 0.005
 
 
 def _get_value_from_arch(pvname):
