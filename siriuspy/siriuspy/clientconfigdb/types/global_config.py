@@ -1527,14 +1527,14 @@ _pvs_bo_ps = [
     ['BO-49U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0]]
 
 _pvs_ts_ps = [
-    ['TS-Fam:PS-B:OpMode-SP', _SLOWREF, 0.0],
+    ['TS-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-QF1A:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-QF1B:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-02:PS-QF2:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-03:PS-QF3:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-QF4:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-02:PS-QD2:OpMode-Sel', _SLOWREF, 0.0],
-    ['TS-03:PS-QD4A:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-QD4A:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-QD4B:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-02:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
