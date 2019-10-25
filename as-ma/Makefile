@@ -13,8 +13,8 @@ uninstall: clean uninstall-scripts uninstall-services
 clean:
 	git clean -fdX
 
-develop-scripts: clean
-	sudo -H pip-sirius install -e --no-deps ./
+develop-scripts:
+	sudo -H pip-sirius install --no-deps -e ./
 
 install-scripts: clean uninstall-scripts
 ifneq (, $(wildcard $(TMPFOLDER)))
