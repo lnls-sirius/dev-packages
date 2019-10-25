@@ -2,6 +2,7 @@ DISTPATH=$(shell python-sirius -c "import site; print(site.getsitepackages())" |
 PACKAGE:=$(shell basename $(shell pwd))
 ISINST=$(shell sudo pip-sirius show $(PACKAGE) | wc -l )
 EGGLINK=$(DISTPATH)/$(PACKAGE).egg-link
+TMPFOLDER=/tmp/install-$(PACKAGE)
 
 install: clean install-scripts install-services
 
@@ -14,7 +15,12 @@ clean:
 	git clean -fdX
 
 install-scripts: clean
-	sudo ./setup.py install --single-version-externally-managed --compile --force --record /dev/null
+ifneq (, $(wildcard $(TMPFOLDER)))
+	rm -rf /tmp/install-$(PACKAGE)
+endif
+	cp -rRL ../$(PACKAGE) /tmp/install-$(PACKAGE)
+	cd /tmp/install-$(PACKAGE)/; sudo -H pip-sirius install ./
+	rm -rf /tmp/install-$(PACKAGE)
 
 install-services:
 	cd systemd; sudo make install-services
@@ -30,5 +36,5 @@ ifneq ($(ISINST),0)
 	sudo -H pip-sirius uninstall -y $(PACKAGE)
 	sudo sed -i '/$(PACKAGE)/d' $(DISTPATH)/easy-install.pth
 else
-	echo 'already uninstalled $(EGGLINK)'
+	echo 'already uninstalled $(PACKAGE)'
 endif
