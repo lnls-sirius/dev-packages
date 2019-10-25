@@ -211,7 +211,7 @@ install-ts-pm: preparation
 
 stop-ts-ma:
 	@printf "Stopping sirius-ioc-ts-ma services...\n"
-	systemctl stop sirius-ioc-ts-ma-corrector.service
+	systemctl stop sirius-ioc-ts-ma-correctors.service
 	systemctl stop sirius-ioc-ts-ma-quadrupoles-34.service
 	systemctl stop sirius-ioc-ts-ma-quadrupoles-12.service
 	systemctl stop sirius-ioc-ts-ma-dipoles.service
@@ -226,7 +226,7 @@ start-ts-ma: preparation
 	systemctl start sirius-ioc-ts-ma-dipoles.service
 	systemctl start sirius-ioc-ts-ma-quadrupoles-12.service
 	systemctl start sirius-ioc-ts-ma-quadrupoles-34.service
-	systemctl start sirius-ioc-ts-ma-corrector.service
+	systemctl start sirius-ioc-ts-ma-correctors.service
 
 start-ts-pm: preparation
 	@printf "Starting sirius-ioc-ts-pm services...\n"
@@ -235,7 +235,7 @@ start-ts-pm: preparation
 
 disable-ts-ma:
 	@printf "Disabling sirius-ioc-ts-ma services...\n"
-	systemctl disable sirius-ioc-ts-ma-corrector.service
+	systemctl disable sirius-ioc-ts-ma-correctors.service
 	systemctl disable sirius-ioc-ts-ma-quadrupoles-34.service
 	systemctl disable sirius-ioc-ts-ma-quadrupoles-12.service
 	systemctl disable sirius-ioc-ts-ma-dipoles.service
@@ -247,7 +247,7 @@ disable-ts-pm:
 
 uninstall-ts-ma: stop-ts-ma disable-ts-ma
 	@printf "Uninstalling sirius-ioc-ts-ma services...\n"
-	rm -rf /etc/systemd/system/sirius-ioc-ts-ma-corrector.service
+	rm -rf /etc/systemd/system/sirius-ioc-ts-ma-correctors.service
 	rm -rf /etc/systemd/system/sirius-ioc-ts-ma-quadrupoles-34.service
 	rm -rf /etc/systemd/system/sirius-ioc-ts-ma-quadrupoles-12.service
 	rm -rf /etc/systemd/system/sirius-ioc-ts-ma-dipoles.service
