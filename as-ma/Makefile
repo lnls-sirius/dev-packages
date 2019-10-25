@@ -23,12 +23,12 @@ uninstall-services:
 	cd systemd; sudo make uninstall-services
 
 uninstall-scripts:
-ifneq ($(ISINST),0)
-	sudo -H pip-sirius uninstall -y $(PACKAGE)
 ifneq (,$(wildcard $(EGGLINK)))
 	sudo rm -r $(EGGLINK)
 endif
+ifneq ($(ISINST),0)
+	sudo -H pip-sirius uninstall -y $(PACKAGE)
 	sudo sed -i '/$(PACKAGE)/d' $(DISTPATH)/easy-install.pth
 else
-	echo 'already uninstalled'
+	echo 'already uninstalled $(EGGLINK)'
 endif
