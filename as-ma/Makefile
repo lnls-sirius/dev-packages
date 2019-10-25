@@ -6,15 +6,17 @@ TMPFOLDER=/tmp/install-$(PACKAGE)
 
 install: clean install-scripts install-services
 
-develop: clean install-services
-	sudo -H pip-sirius install -e ./
+develop: develop-scripts install-services
 
 uninstall: clean uninstall-scripts uninstall-services
 
 clean:
 	git clean -fdX
 
-install-scripts: clean
+develop-scripts: clean
+	sudo -H pip-sirius install -e ./
+
+install-scripts: clean uninstall-scripts
 ifneq (, $(wildcard $(TMPFOLDER)))
 	rm -rf /tmp/install-$(PACKAGE)
 endif
@@ -22,12 +24,8 @@ endif
 	cd /tmp/install-$(PACKAGE)/; sudo -H pip-sirius install ./
 	rm -rf /tmp/install-$(PACKAGE)
 
-install-services:
-	cd systemd; sudo make install-services
-
-uninstall-services:
-	cd systemd; sudo make uninstall-services
-
+# known issue: It will fail to uninstall scripts
+#  if they were installed in develop mode
 uninstall-scripts:
 ifneq (,$(wildcard $(EGGLINK)))
 	sudo rm -r $(EGGLINK)
@@ -38,3 +36,9 @@ ifneq ($(ISINST),0)
 else
 	echo 'already uninstalled $(PACKAGE)'
 endif
+
+install-services:
+	cd systemd; sudo make install-services
+
+uninstall-services:
+	cd systemd; sudo make uninstall-services
