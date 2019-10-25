@@ -14,14 +14,14 @@ clean:
 	git clean -fdX
 
 develop-scripts: clean
-	sudo -H pip-sirius install -e ./
+	sudo -H pip-sirius install -e --no-deps ./
 
 install-scripts: clean uninstall-scripts
 ifneq (, $(wildcard $(TMPFOLDER)))
 	rm -rf /tmp/install-$(PACKAGE)
 endif
 	cp -rRL ../$(PACKAGE) /tmp/install-$(PACKAGE)
-	cd /tmp/install-$(PACKAGE)/; sudo -H pip-sirius install ./
+	cd /tmp/install-$(PACKAGE)/; sudo -H pip-sirius install --no-deps ./
 	rm -rf /tmp/install-$(PACKAGE)
 
 # known issue: It will fail to uninstall scripts
