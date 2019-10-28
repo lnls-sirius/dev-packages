@@ -8,7 +8,7 @@ import numpy as _np
 from siriuspy.namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
 from siriuspy.envars import vaca_prefix as VACA_PREFIX
-from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch, \
+from siriuspy.search import PSSearch as _PSSearch, \
     LLTimeSearch as _LLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet
 from siriuspy.csdevice.timesys import Const as _TIConst, \
@@ -35,11 +35,10 @@ class Timing:
     DEFAULT_POLARITY = _TIConst.TrigPol.Normal
 
     _trigger_list = [
-        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs-WfmRef']
-    # TODO: update to official trigger names after tests are well succeeded
-    #     'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs']
-    # TODO: uncomment when using TS and SI
-    #     'TS-Glob:TI-Mags', 'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
+        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs',
+        'TS-Glob:TI-Mags']
+    # TODO: uncomment when using SI
+    #     'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
     #     'SI-Glob:TI-Sexts', 'SI-Glob:TI-Skews', 'SI-Glob:TI-Corrs']
 
     _pvs = dict()
@@ -115,7 +114,7 @@ class Timing:
         return True
 
     def trigger(self, mode):
-        """Trigger timming to cycle magnets."""
+        """Trigger timming to cycle power supply."""
         if mode == 'Cycle':
             pv = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
             pv.value = 1
@@ -282,8 +281,8 @@ class Timing:
         cls.properties = props
 
 
-class MagnetCycler:
-    """Handle magnet properties related to Cycle and RmpWfm ps modes."""
+class PSCycler:
+    """Handle power supplies properties related to Cycle and RmpWfm modes."""
 
     properties = [
         'Current-SP', 'Current-RB', 'CurrentRef-Mon',
@@ -301,33 +300,32 @@ class MagnetCycler:
         'IntlkSoft-Mon', 'IntlkHard-Mon'
     ]
 
-    def __init__(self, maname, ramp_config=None):
+    def __init__(self, psname, ramp_config=None):
         """Constructor."""
-        self._maname = maname
-        self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
+        self._psname = psname
         self._ramp_config = ramp_config
         self._waveform = None
         self._siggen = None
         self._init_wfm_pulsecnt = None
         self._pvs = dict()
-        for prop in MagnetCycler.properties:
+        for prop in PSCycler.properties:
             if prop not in self._pvs.keys():
-                pvname = VACA_PREFIX + self._maname + ':' + prop
+                pvname = VACA_PREFIX + self._psname + ':' + prop
                 self._pvs[prop] = _PV(
                     pvname, connection_timeout=TIMEOUT_CONNECTION)
                 self._pvs[prop].get()
 
     @property
-    def maname(self):
-        """Magnet name."""
-        return self._maname
+    def psname(self):
+        """Power supply name."""
+        return self._psname
 
     @property
     def connected(self):
         """Connection state."""
-        for prop in MagnetCycler.properties:
+        for prop in PSCycler.properties:
             if prop in ['Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
-                        'WfmSyncPulseCount-Mon'] and 'TB' in self.maname:
+                        'WfmSyncPulseCount-Mon'] and 'TB' in self.psname:
                 pass
             elif not self[prop].connected:
                 return False
@@ -338,14 +336,14 @@ class MagnetCycler:
         """Default waveform."""
         if self._waveform is None:
             self._waveform = _bo_get_default_waveform(
-                maname=self.maname, ramp_config=self._ramp_config)
+                psname=self.psname, ramp_config=self._ramp_config)
         return self._waveform
 
     @property
     def siggen(self):
         """Default siggen."""
         if self._siggen is None:
-            self._siggen = _PSSearch.conv_psname_2_siggenconf(self._psnames[0])
+            self._siggen = _PSSearch.conv_psname_2_siggenconf(self._psname)
         return self._siggen
 
     @property
@@ -372,7 +370,7 @@ class MagnetCycler:
         return status
 
     def check_on(self):
-        """Return wether magnet PS is on."""
+        """Return wether power supply PS is on."""
         return _pv_timed_get(self['PwrState-Sts'], _PSConst.PwrStateSts.On)
 
     def set_current_zero(self):
@@ -380,7 +378,7 @@ class MagnetCycler:
         return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self):
-        """Return wether magnet PS current is zero."""
+        """Return wether power supply PS current is zero."""
         if not self.connected:
             return False
         return _isclose(self['CurrentRef-Mon'].value, 0, abs_tol=0.05)
@@ -407,7 +405,7 @@ class MagnetCycler:
         return status
 
     def check_params(self, mode):
-        """Return wether magnet cycling parameters are set."""
+        """Return wether power supply cycling parameters are set."""
         status = True
         if mode == 'Cycle':
             type_idx = _PSet.CYCLE_TYPES.index(self.siggen.type)
@@ -425,7 +423,7 @@ class MagnetCycler:
         return status
 
     def prepare(self, mode):
-        """Config magnet to cycling mode."""
+        """Config power supply to cycling mode."""
         status = True
 
         status &= self.set_opmode_slowref()
@@ -441,14 +439,14 @@ class MagnetCycler:
         return status
 
     def is_prepared(self, mode):
-        """Return wether magnet is ready."""
+        """Return wether power supply is ready."""
         status = True
         status &= self.check_current_zero()
         status &= self.check_params(mode)
         return status
 
     def set_opmode(self, opmode):
-        """Set magnet opmode to mode."""
+        """Set power supply opmode to mode."""
         return _pv_conn_put(self['OpMode-Sel'], opmode)
 
     def set_opmode_slowref(self):
@@ -460,7 +458,7 @@ class MagnetCycler:
         return self.set_opmode(opmode)
 
     def check_opmode_cycle(self, mode):
-        """Return wether magnet is in mode."""
+        """Return wether power supply is in mode."""
         opmode = _PSConst.States.Cycle if mode == 'Cycle'\
             else _PSConst.States.RmpWfm
         return _pv_timed_get(self['OpMode-Sts'], opmode)
@@ -480,17 +478,20 @@ class MagnetCycler:
             self.update_wfm_pulsecnt()
             if not status:
                 return 1  # indicate lack of trigger pulses
+
             status = self.set_opmode_slowref()
             status &= _pv_timed_get(
                 self['OpMode-Sts'], _PSConst.States.SlowRef)
+            if not status:
+                return 2  # indicate opmode is not in slowref yet
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 2  # indicate cycling not finished yet
+                return 3  # indicate cycling not finished yet
 
-        status &= self.check_intlks()
+        status = self.check_intlks()
         if not status:
-            return 3  # indicate interlock problems
+            return 4  # indicate interlock problems
 
         return 0
 
@@ -499,35 +500,35 @@ class MagnetCycler:
         return self._pvs[prop]
 
 
-class LinacMagnetCycler:
-    """Handle Linac magnet properties to cycle."""
+class LinacPSCycler:
+    """Handle Linac power supply properties to cycle."""
 
     properties = [
         'seti', 'rdi', 'setpwm', 'interlock'
     ]
 
-    def __init__(self, maname, ramp_config=None):
+    def __init__(self, psname, ramp_config=None):
         """Constructor."""
-        self._maname = maname
+        self._psname = psname
         self._waveform = None
         self._cycle_duration = None
         self._pvs = dict()
-        for prop in LinacMagnetCycler.properties:
+        for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
-                pvname = VACA_PREFIX + self._maname + ':' + prop
+                pvname = VACA_PREFIX + self._psname + ':' + prop
                 self._pvs[prop] = _PV(
                     pvname, connection_timeout=TIMEOUT_CONNECTION)
                 self._pvs[prop].get()
 
     @property
-    def maname(self):
-        """Magnet name."""
-        return self._maname
+    def psname(self):
+        """Power supply name."""
+        return self._psname
 
     @property
     def connected(self):
         """Return connected state."""
-        for prop in LinacMagnetCycler.properties:
+        for prop in LinacPSCycler.properties:
             if not self[prop].connected:
                 return False
         return True
@@ -550,7 +551,7 @@ class LinacMagnetCycler:
         return self['interlock'].value < 55
 
     def check_on(self):
-        """Return wether magnet PS is on."""
+        """Return wether power supply PS is on."""
         return _pv_timed_get(self['setpwm'], 1)
 
     def set_current_zero(self):
@@ -558,18 +559,18 @@ class LinacMagnetCycler:
         return _pv_conn_put(self['seti'], 0)
 
     def check_current_zero(self):
-        """Return wether magnet PS current is zero."""
+        """Return wether power supply PS current is zero."""
         if not self.connected:
             return False
         return _isclose(self['rdi'].value, 0, abs_tol=0.1)
 
     def prepare(self, mode):
-        """Config magnet to cycling mode."""
+        """Config power supply to cycling mode."""
         status = self.set_current_zero()
         return status
 
     def is_prepared(self, mode):
-        """Return wether magnet is ready."""
+        """Return wether power supply is ready."""
         status = self.check_current_zero()
         return status
 
@@ -585,12 +586,12 @@ class LinacMagnetCycler:
         status &= self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 3  # indicate interlock problems
+            return 4  # indicate interlock problems
         return 0
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
-        t, w = _li_get_default_waveform(psname=self.maname)
+        t, w = _li_get_default_waveform(psname=self.psname)
         self._times = t
         self._cycle_duration = max(t)
         self._waveform = w

@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import os as _os
 from copy import deepcopy as _dcopy
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
@@ -77,6 +78,7 @@ class ConstTLines(_cutil.Const):
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
+    SyncWithInj = _cutil.Const.register('SyncWithInj', _et.OFF_ON)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
     StsLblsCorr = _cutil.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
@@ -116,11 +118,15 @@ class SOFBTLines(ConstTLines):
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
         self.CH_NAMES = _MASearch.get_manames(
-                            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+        if self.acc == 'TS':
+            self.CH_NAMES = [_PVName('TS-01:PM-EjeSeptG'), ] + self.CH_NAMES
         self.CV_NAMES = _MASearch.get_manames(
                             {'sec': acc, 'dis': 'MA', 'dev': 'CV'})
         self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
         self.CH_NICKNAMES = _MASearch.get_manicknames(self.CH_NAMES)
+        if self.acc == 'TS':
+            self.CH_NICKNAMES[0] = 'EjeseptG'
         self.CV_NICKNAMES = _MASearch.get_manicknames(self.CV_NAMES)
         self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
         self.CH_POS = _MASearch.get_mapositions(self.CH_NAMES)
@@ -215,25 +221,27 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
@@ -249,10 +257,10 @@ class SOFBTLines(ConstTLines):
         db = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
                 'unit': 'urad'},
@@ -307,6 +315,14 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.SOFBMode.Offline,
                 'enums': self.SOFBMode._fields},
+            'SyncWithInjection-Sel': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
+            'SyncWithInjection-Sts': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
@@ -400,10 +416,10 @@ class SOFBTLines(ConstTLines):
                 'enums': self.TrigAcqDataPol._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'OrbAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',

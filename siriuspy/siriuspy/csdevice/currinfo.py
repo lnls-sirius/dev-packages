@@ -1,4 +1,5 @@
 """Define PVs, constants and properties of CurrInfo SoftIOCs."""
+import numpy as _np
 from siriuspy.csdevice import util as _cutil
 
 
@@ -29,48 +30,64 @@ _c = Const  # syntactic sugar
 
 # --- Databases ---
 
-def get_charge_database():
-    """Return CurrentInfo-Charge Soft IOC database."""
-    pvs_database = {
-        'Version-Cte':        {'type': 'string', 'value': 'UNDEF'},
-        'Charge-Mon':         {'type': 'float', 'value': 0.0, 'prec': 10,
-                               'unit': 'A.h'},
-        'ChargeCalcIntvl-SP': {'type': 'float', 'value': 100.0, 'prec': 1,
-                               'unit': 's'},
-        'ChargeCalcIntvl-RB': {'type': 'float', 'value': 100.0, 'prec': 1,
-                               'unit': 's'},
-        }
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
-    return pvs_database
-
-
-def get_current_database(acc):
-    """Return CurrentInfo-Current Soft IOC database."""
-    pvs_database = {
-        'Version-Cte':     {'type': 'string', 'value': 'UNDEF'},
-        'Current-Mon':     {'type': 'float', 'value': 0.0, 'prec': 3,
-                            'unit': 'mA'},
-        'StoredEBeam-Mon': {'type': 'int', 'value': 0},
-    }
-
+def get_currinfo_database(acc):
+    """Return CurrentInfo Soft IOC database."""
+    pvs_db = {'Version-Cte': {'type': 'string', 'value': 'UNDEF'}}
     if acc == 'SI':
-        pvs_database['DCCT-Sel'] = {'type': 'enum', 'value': _c.DCCT.Avg,
-                                    'enums': _et.DCCTSELECTIONTYP}
-        pvs_database['DCCT-Sts'] = {'type': 'enum', 'value': _c.DCCT.Avg,
-                                    'enums': _et.DCCTSELECTIONTYP}
-        pvs_database['DCCTFltCheck-Sel'] = {'type': 'enum',
-                                            'enums': _et.OFF_ON,
-                                            'value': _c.DCCTFltCheck.On}
-        pvs_database['DCCTFltCheck-Sts'] = {'type': 'enum',
-                                            'enums': _et.OFF_ON,
-                                            'value': _c.DCCTFltCheck.On}
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
-    return pvs_database
+        pvs_db['Current-Mon'] = {'type': 'float', 'value': 0.0,
+                                 'prec': 3, 'unit': 'mA'}
+
+        pvs_db['StoredEBeam-Mon'] = {'type': 'int', 'value': 0}
+
+        pvs_db['DCCT-Sel'] = {'type': 'enum', 'value': _c.DCCT.Avg,
+                              'enums': _et.DCCTSELECTIONTYP}
+        pvs_db['DCCT-Sts'] = {'type': 'enum', 'value': _c.DCCT.Avg,
+                              'enums': _et.DCCTSELECTIONTYP}
+
+        pvs_db['DCCTFltCheck-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                      'value': _c.DCCTFltCheck.On}
+        pvs_db['DCCTFltCheck-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                      'value': _c.DCCTFltCheck.On}
+
+        pvs_db['Charge-Mon'] = {'type': 'float', 'value': 0.0,
+                                'prec': 12, 'unit': 'A.h'}
+
+        pvs_db['ChargeCalcIntvl-SP'] = {'type': 'float', 'value': 100.0,
+                                        'prec': 1, 'unit': 's'}
+        pvs_db['ChargeCalcIntvl-RB'] = {'type': 'float', 'value': 100.0,
+                                        'prec': 1, 'unit': 's'}
+    elif acc == 'BO':
+        pvs_db['RawReadings-Mon'] = {'type': 'float', 'count': 100000,
+                                     'value': _np.array(100000*[0.0]),
+                                     'unit': 'mA'}
+
+        pvs_db['Current150MeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                       'prec': 3, 'unit': 'mA'}
+        pvs_db['Current1GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                     'prec': 3, 'unit': 'mA'}
+        pvs_db['Current2GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                     'prec': 3, 'unit': 'mA'}
+        pvs_db['Current3GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                     'prec': 3, 'unit': 'mA'}
+
+        pvs_db['Charge150MeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                      'prec': 12, 'unit': 'A.h'}
+        pvs_db['Charge1GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                    'prec': 12, 'unit': 'A.h'}
+        pvs_db['Charge2GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                    'prec': 12, 'unit': 'A.h'}
+        pvs_db['Charge3GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                    'prec': 12, 'unit': 'A.h'}
+
+        pvs_db['RampEff-Mon'] = {'type': 'float', 'value': 0.0,
+                                 'prec': 2, 'unit': '%'}
+    pvs_db = _cutil.add_pvslist_cte(pvs_db)
+    return pvs_db
 
 
 def get_lifetime_database():
     """Return CurrentInfo-Lifetime Soft IOC database."""
-    pvs_database = {
+    pvs_db = {
         'Version-Cte':     {'type': 'string', 'value': 'UNDEF'},
         'Lifetime-Mon':    {'type': 'float', 'value': 0.0, 'prec': 0,
                             'unit': 's'},
@@ -90,5 +107,5 @@ def get_lifetime_database():
         'DCurrFactor-Cte': {'type': 'float', 'value': 0.003, 'prec': 2,
                             'unit': 'mA'}
         }
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
-    return pvs_database
+    pvs_db = _cutil.add_pvslist_cte(pvs_db)
+    return pvs_db
