@@ -563,7 +563,6 @@ class ConnRF(_EpicsPropsList):
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_IncTs = DevName + ':RmpIncTs-SP'
         Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
         Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
@@ -607,15 +606,9 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         sp[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        sp[c.Rmp_IncTs] = 0
         return self.set_setpoints_check(sp, timeout=timeout)
 
     # --- RF checks ---
-
-    def check_ramping_enable(self):
-        """Check ramping enable."""
-        rb = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.DsblEnbl.Enbl}
-        return self._check(rb)
 
     def check_config_ramp(self):
         """Check if configured to ramp."""
@@ -629,7 +622,6 @@ class ConnRF(_EpicsPropsList):
         rb[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         rb[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         rb[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        rb[c.Rmp_IncTs] = 0
         return self._check(rb)
 
     def check_intlk(self):
@@ -638,7 +630,8 @@ class ConnRF(_EpicsPropsList):
 
     def check_rmpready(self):
         """Check if ramp increase was concluded."""
-        return self._check({ConnRF.Const.Rmp_RmpReady: 1})
+        return self._check({ConnRF.Const.Rmp_Enbl: 1,
+                            ConnRF.Const.Rmp_RmpReady: 1})
 
     # --- private methods ---
 
@@ -654,7 +647,6 @@ class ConnRF(_EpicsPropsList):
             c.Rmp_VoltTop: _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
             c.Rmp_PhsBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
             c.Rmp_PhsTop: _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
-            c.Rmp_IncTs: 0,
             c.Rmp_Intlk: None,
             c.Rmp_RmpReady: None}
 
