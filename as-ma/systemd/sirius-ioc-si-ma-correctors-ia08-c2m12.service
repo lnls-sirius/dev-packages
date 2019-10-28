@@ -1,0 +1,21 @@
+[Unit]
+Description=Power Supply IOC - SI Correctors Subsections 08C2, 08M1, 08M2
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-correctors-ia08-c2m12'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-correctors-ia08-c2m12
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+SI-08C2:MA-CH \
+SI-08C2:MA-CV-1 \
+SI-08C2:MA-CV-2 \
+SI-08M1:MA-CH \
+SI-08M1:MA-CV \
+SI-08M2:MA-CH \
+SI-08M2:MA-CV
