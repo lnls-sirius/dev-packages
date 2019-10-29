@@ -1,5 +1,10 @@
-# Sirius Power Supplies Controls System - BeagleBoneBlack IP Mapping
-# ==================================================================
+# Sirius Power Supplies Controls System
+# =====================================
+
+# TODO: rename this file to 'device-ip.txt' and move it to another folder.
+
+# BeagleBone IP Mapping
+# ---------------------
 
 
 # ______ TB ______
@@ -17,8 +22,8 @@ LA-RaCtrl:CO-PSCtrl-TB2     10.128.121.104
 # ______ BO ______
 
 # --- BO Dipoles ---
-PA-RaPSF05:CO-PSCtrl-BO    10.128.123.105
-PA-RaPSE05:CO-PSCtrl-BO    10.128.123.106
+PA-RaPSF05:CO-PSCtrl-BO     10.128.123.105
+PA-RaPSE05:CO-PSCtrl-BO     10.128.123.106
 
 # --- BO QF, QD, SF, SD (FAC) ---
 PA-RaPSC03:CO-PSCtrl-BO1    10.128.123.101
@@ -248,3 +253,55 @@ IA-17RaCtrl:CO-PSCtrl-SI7
 IA-18RaCtrl:CO-PSCtrl-SI7
 IA-19RaCtrl:CO-PSCtrl-SI7
 IA-20RaCtrl:CO-PSCtrl-SI7
+
+
+# Regatron DCLink IP Mapping
+# --------------------------
+
+# ______ SI ______
+
+# --- SI Dipoles ---
+PA-RaPSD01:PS-DCLink-1A        10.128.125.101
+PA-RaPSD01:PS-DCLink-1B        10.128.125.102
+PA-RaPSD03:PS-DCLink-2A        10.128.125.103
+PA-RaPSD03:PS-DCLink-2B        10.128.125.104
+PA-RaPSD01:PS-DCLink-3A        10.128.125.105
+PA-RaPSD01:PS-DCLink-3B        10.128.125.106
+PA-RaPSD03:PS-DCLink-4A        10.128.125.107
+PA-RaPSD03:PS-DCLink-4B        10.128.125.108
+PA-RaPSD05:PS-DCLink-1A        10.128.125.109
+PA-RaPSD05:PS-DCLink-1B        10.128.125.110
+PA-RaPSD07:PS-DCLink-2A        10.128.125.111
+PA-RaPSD07:PS-DCLink-2B        10.128.125.112
+PA-RaPSD05:PS-DCLink-3A        10.128.125.113
+PA-RaPSD05:PS-DCLink-3B        10.128.125.114
+PA-RaPSD07:PS-DCLink-4A        10.128.125.115
+PA-RaPSD07:PS-DCLink-4B        10.128.125.116
+
+# --- SI Quadrupoles ---
+PA-RaPSA01:PS-DCLink-QFAP      10.128.125.117
+PA-RaPSA01:PS-DCLink-QFB       10.128.125.118
+PA-RaPSA03:PS-DCLink-QDAP      10.128.125.119
+PA-RaPSA04:PS-DCLink-QDB       10.128.125.120
+PA-RaPSA06:PS-DCLink-Q12A      10.128.125.121
+PA-RaPSA06:PS-DCLink-Q12B      10.128.125.122
+PA-RaPSA06:PS-DCLink-Q12C      10.128.125.123
+PA-RaPSA07:PS-DCLink-Q34A      10.128.125.124
+PA-RaPSA07:PS-DCLink-Q34B      10.128.125.125
+PA-RaPSA07:PS-DCLink-Q34C      10.128.125.126
+
+# --- SI Sextupoles ---
+PA-RaPSB01:PS-DCLink-SDB0      10.128.125.128
+PA-RaPSB04:PS-DCLink-SDB1      10.128.125.131
+PA-RaPSB05:PS-DCLink-SDB2      10.128.125.134
+PA-RaPSB07:PS-DCLink-SDB3      10.128.125.136
+PA-RaPSB03:PS-DCLink-SFB0      10.128.125.130
+PA-RaPSB08:PS-DCLink-SFB1      10.128.125.138
+PA-RaPSB10:PS-DCLink-SFB2      10.128.125.140
+PA-RaPSB04:SI-DCLink-SDA12     10.128.125.132
+PA-RaPSB01:SI-DCLink-SDAP0     10.128.125.127
+PA-RaPSB03:SI-DCLink-SFAP0     10.128.125.129
+PA-RaPSB10:SI-DCLink-SFP12     10.128.125.139
+PA-RaPSB08:SI-DCLink-SDP23     10.128.125.137
+PA-RaPSB05:SI-DCLink-SDA3SFA1  10.128.125.133
+PA-RaPSB07:SI-DCLink-SFA2SDP1  10.128.125.135

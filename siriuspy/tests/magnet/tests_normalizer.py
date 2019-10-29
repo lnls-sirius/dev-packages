@@ -20,7 +20,7 @@ class DipoleNormalizerTest(TestCase):
                "current": 476.0,
                "strength": 0.28171517156419867},
         "BO": {"name": "BO-Fam:MA-B",
-               "current": 981.778,
+               "current": 981.8604620640567,
                "strength": 2.9171485448187342},
         "TS": {"name": "TS-Fam:MA-B",
                "current": 680.1,

@@ -1,0 +1,8 @@
+# List of power supplies of type ts-quadrupole-q14-qd
+# ===================================================
+
+# number of power supplies: 3
+
+TS-02:PS-QD2
+TS-04:PS-QD4A
+TS-04:PS-QD4B
