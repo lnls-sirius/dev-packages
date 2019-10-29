@@ -1,5 +1,5 @@
 [Unit]
-Description=Power Supply IOC - SI Sextupoles SDB3, SFB1, SFB2
+Description=Soft IOC for SI Sextupoles SDB3, SFB1, SFB2
 After=multi-user.target
 
 [Service]

@@ -1,5 +1,5 @@
 [Unit]
-Description=Power Supply IOC - SI Correctors Subsections 06C1, 06C3, 06C4
+Description=Soft IOC for SI Correctors Subsections 06C1, 06C3, 06C4
 After=multi-user.target
 
 [Service]
