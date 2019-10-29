@@ -71,7 +71,7 @@ class TestClientWeb(TestCase):
         'ps_siggen_configuration_read',
         'ps_psmodels_read',
         'pu_psmodels_read',
-        'beaglebone_freqs_mapping',
+        'beaglebone_freq_mapping',
         'beaglebone_ip_list',
         'bbb_udc_mapping',
         'udc_ps_mapping',

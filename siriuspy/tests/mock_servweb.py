@@ -54,7 +54,7 @@ mock1.ps_psmodels_read.return_value = _read_test_file(
     'pwrsupply/psmodels.txt')
 mock1.pu_psmodels_read.return_value = _read_test_file(
     'pwrsupply/pumodels.txt')
-mock1.beaglebone_freqs_mapping.return_value = _read_test_file(
+mock1.beaglebone_freq_mapping.return_value = _read_test_file(
     'beaglebone/beaglebone-freq.txt')
 mock1.bbb_udc_mapping.return_value = _read_test_file(
     'beaglebone/beaglebone-udc.txt')

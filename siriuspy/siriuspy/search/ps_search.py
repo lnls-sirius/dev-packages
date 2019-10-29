@@ -29,7 +29,7 @@ class PSSearch:
     _bsmps_2_bbbname_dict = None
 
     _bbbname_2_udc_dict = None
-    _bbbname_2_freqs_dict = None
+    _bbbname_2_freq_dict = None
     _udc_2_bbbname_dict = None
     _udc_2_bsmp_dict = None
     _bsmp_2_udc_dict = None
@@ -171,10 +171,10 @@ class PSSearch:
         return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
     @staticmethod
-    def conv_bbbname_2_freqs(bbbname):
+    def conv_bbbname_2_freq(bbbname):
         """Given bbb name return PRU sync off and on update frequencies."""
-        PSSearch._reload_bbb_2_freqs_dict()
-        return PSSearch._bbbname_2_freqs_dict[bbbname]
+        PSSearch._reload_bbb_2_freq_dict()
+        return PSSearch._bbbname_2_freq_dict[bbbname]
 
     @staticmethod
     def conv_bbbname_2_udc(bbbname):
@@ -380,20 +380,19 @@ class PSSearch:
             PSSearch._bsmps_2_bbbname_dict = bsmps_2_bbbname_dict
 
     @staticmethod
-    def _reload_bbb_2_freqs_dict():
+    def _reload_bbb_2_freq_dict():
         with PSSearch._lock:
-            if PSSearch._bbbname_2_freqs_dict is not None:
+            if PSSearch._bbbname_2_freq_dict is not None:
                 return
             if not _web.server_online():
                 raise Exception(
                     'could not read BBB frequency map from web server')
-            data, _ = _util.read_text_data(_web.beaglebone_freqs_mapping())
-            bbbname_2_freqs_dict = dict()
+            data, _ = _util.read_text_data(_web.beaglebone_freq_mapping())
+            bbbname_2_freq_dict = dict()
             for line in data:
-                bbbname, sync_off_freq, sync_on_freq = line
-                bbbname_2_freqs_dict[bbbname] = \
-                    (float(sync_off_freq), float(sync_on_freq))
-            PSSearch._bbbname_2_freqs_dict = bbbname_2_freqs_dict
+                bbbname, sync_off_freq = line
+                bbbname_2_freq_dict[bbbname] = float(sync_off_freq)
+            PSSearch._bbbname_2_freq_dict = bbbname_2_freq_dict
 
     @staticmethod
     def _reload_bbb_2_udc_dict():

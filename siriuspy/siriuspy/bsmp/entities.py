@@ -1,4 +1,5 @@
 """BSMP entities."""
+import numpy as _np
 import struct as _struct
 
 
@@ -38,13 +39,14 @@ class _Entity:
             return self._conv_value(var_types[0].fmt, values[0])
 
     def _conv_load_to_value(self, var_types, size, load):
+        # NOTE: optimize this critical function!
         load = [ord(c) for c in load]
         if len(var_types) > 1:
             values = []
             offset = 0
             for var_type in var_types:
-                ld = load[offset:offset+var_type.size]
-                values.append(_struct.unpack(var_type.fmt, bytes(ld))[0])
+                datum = load[offset:offset+var_type.size]
+                values.append(_struct.unpack(var_type.fmt, bytes(datum))[0])
                 offset += var_type.size
             return values
         else:
@@ -133,17 +135,42 @@ class Curve(_Entity):
         self.size = (var_type.size * count)  # 1..128 bytes
         self.type = var_type
         self.nblocks = nblocks  # Number of blocks
+        self.max_size_t_float = self.nblocks * (self.size // self.type.size)
         self._var_types = [var_type for _ in range(count)]
 
     def load_to_value(self, load):
         """Parse value from load."""
-        return self._conv_load_to_value(self._var_types, self.size, load)
+        # print('self.size:', self.size)
+        # print('len(self._var_types):', len(self._var_types))
+        # print('self._var_types[0].size:', self._var_types[0].size)
+        load = [ord(c) for c in load]
+        values = []
+        offset = 0
+        for var_type in self._var_types:
+            datum = load[offset:offset+var_type.size]
+            values.append(_struct.unpack(var_type.fmt, bytes(datum))[0])
+            offset += var_type.size
+            if offset >= len(load):
+                break
+        return values
 
     def value_to_load(self, value):
         """Convert curve block number to load."""
-        if not isinstance(value, (list, tuple)):
-            value = [value, ]
-        return self._conv_value_to_load(self._var_types, self.size, value)
+        load = []
+        for idx, val in enumerate(value):
+            self._check_type(self._var_types[idx], val)
+            load += self._conv_value(self._var_types[idx].fmt, val)
+        return load
+
+    def get_indices(self, data_length):
+        """Return list of indices corresponding to data blocks."""
+        block_len = self.size // self.type.size
+        nblocks = int(_np.ceil(data_length / block_len))
+        indices = []
+        for i in range(nblocks-1):
+            indices.append((block_len*i, block_len*(i+1)))
+        indices.append((block_len*(nblocks-1), data_length))
+        return indices
 
 
 class Function(_Entity):
@@ -181,10 +208,6 @@ class Function(_Entity):
 
 class Entities:
     """BSMP entities."""
-
-    # TODO: use 'variables_def' instead of 'variables'?
-    # TODO: use 'curves_def' instead of 'curves'?
-    # TODO: use 'functions_def' instead of 'functions'?
 
     def __init__(self, variables, curves, functions):
         """Constructor."""
@@ -251,7 +274,7 @@ class Entities:
             variables.append(self.variables[var_id])
         self.groups.append(VariablesGroup(len(self.groups), False, variables))
 
-    def remove_all_groups(self):
+    def remove_all_groups_of_variables(self):
         """Remove all groups bigger than eid 2."""
         self._groups = self.groups[:3]
 

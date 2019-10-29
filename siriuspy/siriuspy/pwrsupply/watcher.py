@@ -113,13 +113,13 @@ class Watcher(_threading.Thread):
         return self.controller.read(self.dev_name, 'CycleEnbl-Mon') == 0
 
     def _sync_started(self):
-        return self.controller.pru_controller.pru_sync_status == 1
+        return False
 
     def _sync_stopped(self):
-        return self.controller.pru_controller.pru_sync_status == 0
+        return True
 
     def _sync_pulsed(self):
-        return self.controller.pru_controller.pru_sync_pulse_count > 0
+        return False
 
     def _set_current(self):
         dev_name = self.dev_name
