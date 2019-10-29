@@ -235,6 +235,8 @@ class BoosterRamp(_ConfigDBDocument):
         else:
             name = names[index]
         times = self.ps_normalized_configs_times
+        if times[index] == new_time:
+            return
         times[index] = new_time
 
         # set config energy appropriately if needed
@@ -365,9 +367,11 @@ class BoosterRamp(_ConfigDBDocument):
     def ps_ramp_rampup1_start_time(self, value):
         """Return."""
         self._check_valid_time(value)
-        self._value['ps_ramp']['rampup1_start_time'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampup1_start_time']:
+            rdip['rampup1_start_energy'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampup1_slope(self):
@@ -401,9 +405,11 @@ class BoosterRamp(_ConfigDBDocument):
     def ps_ramp_rampup2_start_time(self, value):
         """Return."""
         self._check_valid_time(value)
-        self._value['ps_ramp']['rampup2_start_time'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampup2_start_time']:
+            rdip['rampup2_start_time'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampup2_slope(self):
@@ -419,9 +425,11 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampup_smooth_energy.setter
     def ps_ramp_rampup_smooth_energy(self, value):
         """Return."""
-        self._value['ps_ramp']['rampup_smooth_energy'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampup_smooth_energy']:
+            rdip['rampup_smooth_energy'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampup_smooth_intvl(self):
@@ -431,9 +439,11 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampup_smooth_intvl.setter
     def ps_ramp_rampup_smooth_intvl(self, value):
         """Return."""
-        self._value['ps_ramp']['rampup_smooth_intvl'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampup_smooth_intvl']:
+            rdip['rampup_smooth_intvl'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_start_energy(self):
@@ -461,9 +471,11 @@ class BoosterRamp(_ConfigDBDocument):
     def ps_ramp_rampdown_start_time(self, value):
         """Return."""
         self._check_valid_time(value)
-        self._value['ps_ramp']['rampdown_start_time'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampdown_start_time']:
+            rdip['rampdown_start_time'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_stop_energy(self):
@@ -491,9 +503,11 @@ class BoosterRamp(_ConfigDBDocument):
     def ps_ramp_rampdown_stop_time(self, value):
         """Return."""
         self._check_valid_time(value)
-        self._value['ps_ramp']['rampdown_stop_time'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampdown_stop_time']:
+            rdip['rampdown_stop_time'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_slope(self):
@@ -509,9 +523,11 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampdown_smooth_energy.setter
     def ps_ramp_rampdown_smooth_energy(self, value):
         """Return."""
-        self._value['ps_ramp']['rampdown_smooth_energy'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampdown_smooth_energy']:
+            rdip['rampdown_smooth_energy'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_smooth_intvl(self):
@@ -521,9 +537,11 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampdown_smooth_intvl.setter
     def ps_ramp_rampdown_smooth_intvl(self, value):
         """Return."""
-        self._value['ps_ramp']['rampdown_smooth_intvl'] = value
-        self._synchronized = False
-        self._invalidate_ps_waveforms(True)
+        rdip = self._value['ps_ramp']
+        if value != rdip['rampdown_smooth_intvl']:
+            rdip['rampdown_smooth_intvl'] = value
+            self._synchronized = False
+            self._invalidate_ps_waveforms(True)
 
     # ---- rf ramp parameters ----
 
