@@ -5,3 +5,4 @@ from .sofb import SOFB
 from .kicker import Kicker
 from .septum import Septum
 from .screen import Screen
+from .bpm import BPM
