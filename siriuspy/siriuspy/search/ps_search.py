@@ -390,7 +390,7 @@ class PSSearch:
             data, _ = _util.read_text_data(_web.beaglebone_freq_mapping())
             bbbname_2_freq_dict = dict()
             for line in data:
-                bbbname, sync_off_freq, _ = line
+                bbbname, sync_off_freq = line
                 bbbname_2_freq_dict[bbbname] = float(sync_off_freq)
             PSSearch._bbbname_2_freq_dict = bbbname_2_freq_dict
 
