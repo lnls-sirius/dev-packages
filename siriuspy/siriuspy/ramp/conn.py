@@ -26,7 +26,7 @@ _TIMEOUT_PWRSTATE_OFF = 1
 _TIMEOUT_OPMODE_CHANGE = 6
 
 
-class ConnTiming(_EpicsPropsList):
+class ConnTI(_EpicsPropsList):
     """Timing connector class."""
 
     class Const(_cutil.Const):
@@ -119,7 +119,7 @@ class ConnTiming(_EpicsPropsList):
             return
 
         sp = dict()
-        c = ConnTiming.Const
+        c = ConnTI.Const
 
         # Triggers delays
         sp[c.TrgMags_Delay] = self._ramp_config.ti_params_ps_ramp_delay
@@ -146,39 +146,39 @@ class ConnTiming(_EpicsPropsList):
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
-        sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
+        sp = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
         return self._command(sp, timeout)
 
     def cmd_stop_ramp(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG continuous events."""
-        sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl}
+        sp = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl}
         return self._command(sp, timeout)
 
     def cmd_start_injection(self, timeout=_TIMEOUT_DFLT):
         """Start EVG injection events."""
-        sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
+        sp = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
         return self._command(sp, timeout)
 
     def cmd_stop_injection(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG injection events."""
-        sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
+        sp = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
         return self._command(sp, timeout)
 
     def cmd_set_magnet_trigger_state(self, state, timeout=_TIMEOUT_DFLT):
-        c = ConnTiming.Const
+        c = ConnTI.Const
         sp = {c.TrgMags_State: state,
               c.TrgCorrs_State: state}
         return self._command(sp, timeout)
 
     def cmd_update_evts(self, timeout=_TIMEOUT_DFLT):
-        sp = {ConnTiming.Const.EVG_UpdateEvt: 1}
+        sp = {ConnTI.Const.EVG_UpdateEvt: 1}
         return self._command(sp, timeout)
 
     # --- timing mode check ---
 
     def check_intlk(self):
         """Check if interlock is reset."""
-        return self._check(ConnTiming.Const.Intlk, 0)
+        return self._check(ConnTI.Const.Intlk, 0)
 
     def check_setup_ramp(self):
         """Check if ramp basic setup is implemented."""
@@ -186,12 +186,12 @@ class ConnTiming(_EpicsPropsList):
 
     def check_ramping(self):
         """Check if continuous events are enabled."""
-        rb = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
+        rb = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
         return self._check(rb)
 
     def check_injecting(self):
         """Check if injection events are enabled."""
-        rb = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
+        rb = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
         return self._check(rb)
 
     # --- helper methods ---
@@ -203,7 +203,7 @@ class ConnTiming(_EpicsPropsList):
         if not self.connected:
             return
 
-        c = ConnTiming.Const
+        c = ConnTI.Const
         evg_base_time = 1e6 / self.get_readback(c.EVG_FPGAClk)
         bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
 
@@ -252,7 +252,7 @@ class ConnTiming(_EpicsPropsList):
 
     def update_ramp_configsetup(self, events_inj, events_eje, delays):
         """Update ramp_configsetup dict."""
-        c = ConnTiming.Const
+        c = ConnTI.Const
         self.ramp_configsetup.update({c.EvtRmpBO_Delay: 0})
         self.ramp_configsetup.update(
             {c.TrgMags_Delay: self._ramp_config.ti_params_ps_ramp_delay})
@@ -269,7 +269,7 @@ class ConnTiming(_EpicsPropsList):
 
     def get_injection_time(self):
         """Return injection time."""
-        c = ConnTiming.Const
+        c = ConnTI.Const
         curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
@@ -278,7 +278,7 @@ class ConnTiming(_EpicsPropsList):
 
     def get_ejection_time(self):
         """Return ejection time."""
-        c = ConnTiming.Const
+        c = ConnTI.Const
         curr_injsi_dly = self.get_readback(c.EvtInjSI_Delay)
         ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
         return curr_injsi_dly + ejekckr_dly
@@ -286,7 +286,7 @@ class ConnTiming(_EpicsPropsList):
     # --- private methods ---
 
     def _define_properties(self, prefix, connection_callback, callback):
-        c = ConnTiming.Const
+        c = ConnTI.Const
 
         mags_db = _get_trig_db(c.TrgMags)
         corrs_db = _get_trig_db(c.TrgCorrs)
@@ -387,7 +387,7 @@ class ConnTiming(_EpicsPropsList):
         return True
 
 
-class ConnMagnets(_EpicsPropsList):
+class ConnMA(_EpicsPropsList):
     """Magnets connector class."""
 
     def __init__(self, ramp_config=None, prefix=_prefix,
@@ -563,7 +563,6 @@ class ConnRF(_EpicsPropsList):
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_IncTs = DevName + ':RmpIncTs-SP'
         Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
         Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
@@ -607,15 +606,9 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         sp[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        sp[c.Rmp_IncTs] = 0
         return self.set_setpoints_check(sp, timeout=timeout)
 
     # --- RF checks ---
-
-    def check_ramping_enable(self):
-        """Check ramping enable."""
-        rb = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.DsblEnbl.Enbl}
-        return self._check(rb)
 
     def check_config_ramp(self):
         """Check if configured to ramp."""
@@ -629,7 +622,6 @@ class ConnRF(_EpicsPropsList):
         rb[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         rb[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         rb[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        rb[c.Rmp_IncTs] = 0
         return self._check(rb)
 
     def check_intlk(self):
@@ -638,7 +630,8 @@ class ConnRF(_EpicsPropsList):
 
     def check_rmpready(self):
         """Check if ramp increase was concluded."""
-        return self._check({ConnRF.Const.Rmp_RmpReady: 1})
+        return self._check({ConnRF.Const.Rmp_Enbl: 1,
+                            ConnRF.Const.Rmp_RmpReady: 1})
 
     # --- private methods ---
 
@@ -654,7 +647,6 @@ class ConnRF(_EpicsPropsList):
             c.Rmp_VoltTop: _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
             c.Rmp_PhsBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
             c.Rmp_PhsTop: _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
-            c.Rmp_IncTs: 0,
             c.Rmp_Intlk: None,
             c.Rmp_RmpReady: None}
 
