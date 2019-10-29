@@ -34,10 +34,10 @@ class App:
         self._PREFIX = _pvs.get_pvs_prefix()
 
         self._current_pv = _epics.PV(
-            self._PREFIX+':Current-Mon',
+            self._PREFIX+'Current-Mon',
             callback=self._callback_calclifetime)
         self._storedebeam_pv = _epics.PV(
-            self._PREFIX+':StoredEBeam-Mon')
+            self._PREFIX+'StoredEBeam-Mon')
         self._injstate_pv = _epics.PV(
             self._PREFIX_VACA+'AS-RaMO:TI-EVG:InjectionEvt-Sts',
             callback=self._callback_get_injstate)

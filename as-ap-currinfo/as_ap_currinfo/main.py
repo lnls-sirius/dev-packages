@@ -16,6 +16,7 @@ BO_ENERGY2TIME = {  # energy vs. time[s]
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
+CURR_LIM = 0.005
 
 
 def _get_value_from_arch(pvname):
@@ -54,9 +55,11 @@ class BOApp:
             self._currents[k] = 0.0
             # charges
             ppty = 'Charge'+k+'-Mon'
-            charge = _get_value_from_arch(self._PREFIX+':'+ppty)
-            if charge is None:
+            data = _get_value_from_arch(self._PREFIX+ppty)
+            if data is None:
                 charge = 0.0
+            else:
+                charge = data[1][0]
             self._charges[k] = charge
             self.driver.setParam(ppty, charge)
         self.driver.updatePVs()
@@ -148,8 +151,10 @@ class BOApp:
                 self.driver.setParam('Charge'+str(energy)+'-Mon',
                                      self._charges[energy])
         # ramp efficiency
-        inj_curr = self._currents['150MeV']
-        eje_curr = self._currents['3GeV']
+        c150mev = self._currents['150MeV']
+        inj_curr = c150mev if c150mev > CURR_LIM else CURR_LIM
+        c3gev = self._currents['3GeV']
+        eje_curr = c3gev if c3gev > 0 else 0
         if inj_curr > eje_curr:
             self._rampeff = 100*eje_curr/inj_curr
             self.driver.setParam('RampEff-Mon', self._rampeff)
@@ -185,9 +190,11 @@ class SIApp:
         self._storedebeam_13C4_value = 0
         self._storedebeam_14C4_value = 0
         self._chargecalcintvl = 100.0
-        self._charge = _get_value_from_arch(self._PREFIX+':Charge-Mon')
-        if self._charge is None:
+        data = _get_value_from_arch(self._PREFIX+'Charge-Mon')
+        if data is None:
             self._charge = 0.0
+        else:
+            self._charge = data[1][0]
 
         # pvs
         self._current_13C4_pv = _epics.PV(
