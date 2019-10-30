@@ -175,10 +175,8 @@ class TestBSMPVariablesGroup(TestCase):
         self.assertEqual(load, expected_load)
 
 
-class TestPSCurve(TestCase):
-    """Test PS Curve class."""
-
-    pass
+class TestWfmCurve(TestCase):
+    """Test WfmRef Curve class."""
 
 
 class TestBSMPFunction(TestCase):
@@ -315,5 +313,3 @@ class TestBSMPFunction(TestCase):
 
 class TestBSMPEntities(TestCase):
     """This class only has propertyies."""
-
-    pass

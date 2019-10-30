@@ -4,6 +4,8 @@ This module implements connector classes responsible for communications with
 magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
+import numpy as _np
+import math as _math
 from siriuspy import envars as _envars
 from siriuspy.epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
@@ -18,29 +20,40 @@ from siriuspy.ramp import util as _rutil
 
 
 _prefix = _envars.vaca_prefix
-_TIMEOUT_DFLT = 5
-_TIMEOUT_PWRSTATE_ON = 1.4
-_TIMEOUT_PWRSTATE_OFF = 0.8
-_TIMEOUT_OPMODE_CHANGE = 5
+_TIMEOUT_DFLT = 8
+_TIMEOUT_PWRSTATE_ON = 2
+_TIMEOUT_PWRSTATE_OFF = 1
+_TIMEOUT_OPMODE_CHANGE = 6
 
 
-class ConnTiming(_EpicsPropsList):
+class ConnTI(_EpicsPropsList):
     """Timing connector class."""
 
     class Const(_cutil.Const):
         """Properties names."""
+
+        BO_HarmNum = 828
+        EVG_RFDiv = 4
 
         # EVG PVs
         EVG = _LLTimeSearch.get_evg_name()
         EVG_DevEnbl = EVG + ':DevEnbl-Sel'
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
+        EVG_FPGAClk = EVG + ':FPGAClk-Cte'
+        EVG_UpdateEvt = EVG + ':UpdateEvt-Cmd'
 
         # Event prefixes
         EvtLinac = EVG + ':Linac'
         EvtInjBO = EVG + ':InjBO'
-        EvtRmpBO = EVG + ':RmpBO'
         EvtInjSI = EVG + ':InjSI'
+        EvtRmpBO = EVG + ':RmpBO'
+        EvtDigLI = EVG + ':DigLI'
+        EvtDigTB = EVG + ':DigTB'
+        EvtDigBO = EVG + ':DigBO'
+        EvtDigTS = EVG + ':DigTS'
+        EvtDigSI = EVG + ':DigSI'
+        EvtStudy = EVG + ':Study'
 
         # Trigger prefixes
         TrgMags = 'BO-Glob:TI-Mags'
@@ -59,7 +72,9 @@ class ConnTiming(_EpicsPropsList):
 
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
-    for attr in ['EvtLinac', 'EvtInjBO', 'EvtRmpBO', 'EvtInjSI']:
+    for attr in ['EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
+                 'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
+                 'EvtDigSI', 'EvtStudy']:
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
@@ -74,7 +89,6 @@ class ConnTiming(_EpicsPropsList):
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, trg_pfx+':'+p)
-    Const.TrgLLRFRmp_RFDelayType = Const.TrgLLRFRmp + ':RFDelayType-Sel'
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
@@ -93,60 +107,78 @@ class ConnTiming(_EpicsPropsList):
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
         """Do setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
-        for ppty in sp:
+        ppties = list(sp.keys())
+        for ppty in ppties:
             if 'Status-Mon' in ppty:
                 sp.pop(ppty)
         return self._command(sp, timeout)
 
-    def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
+    def cmd_config_ramp(self, events_inj, events_eje, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to TI subsystem."""
-        if not self._ramp_config:
+        if self._ramp_config is None:
             return
 
         sp = dict()
-        c = ConnTiming.Const
-        sp[c.TrgMags_Duration] = self._ramp_config.ps_ramp_duration
-        sp[c.TrgCorrs_Duration] = self._ramp_config.ps_ramp_duration
-        sp[c.TrgMags_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
-        sp[c.TrgCorrs_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
+        c = ConnTI.Const
+
+        # Triggers delays
         sp[c.TrgMags_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgCorrs_Delay] = self._ramp_config.ti_params_ps_ramp_delay
         sp[c.TrgLLRFRmp_Delay] = self._ramp_config.ti_params_rf_ramp_delay
 
         # Event delays
         sp[c.EvtRmpBO_Delay] = 0
-        [linac_dly, injbo_dly, injsi_dly] = self.calc_evts_delay()
-        sp[c.EvtLinac_Delay] = linac_dly
-        sp[c.EvtInjBO_Delay] = injbo_dly
-        sp[c.EvtInjSI_Delay] = injsi_dly
+        delays = self.calc_evts_delay(events_inj, events_eje)
+        sp[c.EvtLinac_Delay] = delays['Linac']
+        sp[c.EvtInjBO_Delay] = delays['InjBO']
+        sp[c.EvtInjSI_Delay] = delays['InjSI']
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            sp[attr] = delays[event]
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            sp[attr] = delays[event]
+
+        # Update ramp_configsetup
+        self.update_ramp_configsetup(events_inj, events_eje, delays)
 
         return self._command(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
-        sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
+        sp = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
         return self._command(sp, timeout)
 
     def cmd_stop_ramp(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG continuous events."""
-        sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl}
+        sp = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl}
         return self._command(sp, timeout)
 
     def cmd_start_injection(self, timeout=_TIMEOUT_DFLT):
         """Start EVG injection events."""
-        sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
+        sp = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
         return self._command(sp, timeout)
 
     def cmd_stop_injection(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG injection events."""
-        sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
+        sp = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
+        return self._command(sp, timeout)
+
+    def cmd_set_magnet_trigger_state(self, state, timeout=_TIMEOUT_DFLT):
+        c = ConnTI.Const
+        sp = {c.TrgMags_State: state,
+              c.TrgCorrs_State: state}
+        return self._command(sp, timeout)
+
+    def cmd_update_evts(self, timeout=_TIMEOUT_DFLT):
+        sp = {ConnTI.Const.EVG_UpdateEvt: 1}
         return self._command(sp, timeout)
 
     # --- timing mode check ---
 
     def check_intlk(self):
         """Check if interlock is reset."""
-        return self._check(ConnTiming.Const.Intlk, 0)
+        return self._check(ConnTI.Const.Intlk, 0)
 
     def check_setup_ramp(self):
         """Check if ramp basic setup is implemented."""
@@ -154,45 +186,107 @@ class ConnTiming(_EpicsPropsList):
 
     def check_ramping(self):
         """Check if continuous events are enabled."""
-        rb = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
+        rb = {ConnTI.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
         return self._check(rb)
 
     def check_injecting(self):
         """Check if injection events are enabled."""
-        rb = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
+        rb = {ConnTI.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
         return self._check(rb)
 
     # --- helper methods ---
 
-    def calc_evts_delay(self):
+    def calc_evts_delay(self, events_inj=list(), events_eje=list()):
         """Calculate event delays."""
-        if not self._ramp_config:
-            return False
+        if self._ramp_config is None:
+            return
         if not self.connected:
-            return False
+            return
 
-        c = ConnTiming.Const
-        injection_time = self._ramp_config.ti_params_injection_time
+        c = ConnTI.Const
+        evg_base_time = 1e6 / self.get_readback(c.EVG_FPGAClk)
+        bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
+
+        # Injection
+        injection_time = self._ramp_config.ti_params_injection_time*1e3
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        linac_dly = injection_time - egun_dly
+        delay_inj = injection_time - egun_dly
 
         curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        delta_dly = linac_dly - curr_linac_dly
-        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        injbo_dly = curr_injbo_dly + delta_dly
+        dlt_inj_dly = delay_inj - curr_linac_dly
+        dlt_inj_dly = int(dlt_inj_dly/bo_rev)*bo_rev
 
-        ejection_time = self._ramp_config.ti_params_ejection_time
+        # Ejection
+        ejection_time = self._ramp_config.ti_params_ejection_time*1e3
         ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
-        injsi_dly = ejection_time - ejekckr_dly
+        delay_eje = ejection_time - ejekckr_dly
 
-        return [linac_dly, injbo_dly, injsi_dly]
+        curr_injsi_dly = self.get_readback(c.EvtInjSI_Delay)
+        dlt_eje_dly = delay_eje - curr_injsi_dly
+        dlt_eje_dly = int(dlt_eje_dly/bo_rev)*bo_rev
+
+        # calc delays
+        delays = dict()
+
+        events_inj = sorted(events_inj)
+        if 'Linac' not in events_inj:
+            events_inj.append('Linac')
+        if 'InjBO' not in events_inj:
+            events_inj.append('InjBO')
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            curr = self.get_readback(attr)
+            delays[event] = curr + dlt_inj_dly
+
+        events_eje = sorted(events_eje)
+        if 'InjSI' not in events_eje:
+            events_eje.append('InjSI')
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            curr = self.get_readback(attr)
+            delays[event] = curr + dlt_eje_dly
+
+        return delays
+
+    def update_ramp_configsetup(self, events_inj, events_eje, delays):
+        """Update ramp_configsetup dict."""
+        c = ConnTI.Const
+        self.ramp_configsetup.update({c.EvtRmpBO_Delay: 0})
+        self.ramp_configsetup.update(
+            {c.TrgMags_Delay: self._ramp_config.ti_params_ps_ramp_delay})
+        self.ramp_configsetup.update(
+            {c.TrgCorrs_Delay: self._ramp_config.ti_params_ps_ramp_delay})
+        self.ramp_configsetup.update(
+            {c.TrgLLRFRmp_Delay: self._ramp_config.ti_params_rf_ramp_delay})
+        for event in events_inj:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            self.ramp_configsetup.update({attr: delays[event]})
+        for event in events_eje:
+            attr = getattr(c, 'Evt'+event+'_Delay')
+            self.ramp_configsetup.update({attr: delays[event]})
+
+    def get_injection_time(self):
+        """Return injection time."""
+        c = ConnTI.Const
+        curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
+            if self.get_readback(c.LinacEgun_SglBun_State) \
+            else self.get_readback(c.TrgEGunMultBun_Delay)
+        return curr_linac_dly + egun_dly
+
+    def get_ejection_time(self):
+        """Return ejection time."""
+        c = ConnTI.Const
+        curr_injsi_dly = self.get_readback(c.EvtInjSI_Delay)
+        ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
+        return curr_injsi_dly + ejekckr_dly
 
     # --- private methods ---
 
     def _define_properties(self, prefix, connection_callback, callback):
-        c = ConnTiming.Const
+        c = ConnTI.Const
 
         mags_db = _get_trig_db(c.TrgMags)
         corrs_db = _get_trig_db(c.TrgCorrs)
@@ -201,60 +295,55 @@ class ConnTiming(_EpicsPropsList):
         self.ramp_basicsetup = {
             # EVG
             c.EVG_DevEnbl: _TIConst.DsblEnbl.Enbl,
-            # Linac Event
-            c.EvtLinac_Mode: _TIConst.EvtModes.Injection,
-            c.EvtLinac_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # InjBO Event
-            c.EvtInjBO_Mode: _TIConst.EvtModes.Injection,
-            c.EvtInjBO_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # RmpBO Event
-            c.EvtRmpBO_Mode: _TIConst.EvtModes.Continuous,
-            c.EvtRmpBO_DelayType: _TIConst.EvtDlyTyp.Incr,
-            # InjSI Event
-            c.EvtInjSI_Mode: _TIConst.EvtModes.Injection,
-            c.EvtInjSI_DelayType: _TIConst.EvtDlyTyp.Incr,
             # Mags trigger
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgMags_Polarity: _TIConst.TrigPol.Normal,
             c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
-            c.TrgMags_Status: 0,
+            # c.TrgMags_Status: 0,
             # Corrs trigger
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgCorrs_Polarity: _TIConst.TrigPol.Normal,
             c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
-            c.TrgCorrs_Status: 0,
+            # c.TrgCorrs_Status: 0,
             # LLRFRmp trigger
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Normal,
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
-            c.TrgLLRFRmp_Duration: 0.016,
-            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual,
-            c.TrgLLRFRmp_Status: 0}
+            c.TrgLLRFRmp_Duration: 150.0}
+        #     c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays
-            c.EvtLinac_Delay: 0,          # [us]
-            c.EvtInjBO_Delay: 0,          # [us]
-            c.EvtRmpBO_Delay: 0,          # [us]
-            c.EvtInjSI_Delay: 0,          # [us]
+            c.EvtLinac_Delay: None,          # [us]
+            c.EvtInjBO_Delay: None,          # [us]
+            c.EvtRmpBO_Delay: None,          # [us]
+            c.EvtInjSI_Delay: None,          # [us]
+            c.EvtDigLI_Delay: None,          # [us]
+            c.EvtDigTB_Delay: None,          # [us]
+            c.EvtDigBO_Delay: None,          # [us]
+            c.EvtDigTS_Delay: None,          # [us]
+            c.EvtDigSI_Delay: None,          # [us]
+            c.EvtStudy_Delay: None,          # [us]
             # Mags trigger
-            c.TrgMags_NrPulses: 3920,
-            c.TrgMags_Duration: 490000,   # [us]
-            c.TrgMags_Delay: 0,           # [us]
+            c.TrgMags_NrPulses: 1,
+            c.TrgMags_Duration: 150.0,      # [us]
+            c.TrgMags_Delay: 0.0,           # [us]
             # Corrs trigger
-            c.TrgCorrs_NrPulses: 3920,
-            c.TrgCorrs_Duration: 490000,  # [us]
-            c.TrgCorrs_Delay: 0,          # [us]
+            c.TrgCorrs_NrPulses: 1,
+            c.TrgCorrs_Duration: 150.0,     # [us]
+            c.TrgCorrs_Delay: 0.0,          # [us]
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Delay: 0}        # [us]
+            c.TrgLLRFRmp_Delay: 0.0}        # [us]
 
         self._evgcontrol_propties = {
             c.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl,
-            c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
+            c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl,
+            c.EVG_UpdateEvt: None}
 
         self._reading_propties = {
             # EGun trigger delays
+            c.EVG_FPGAClk: 0,
             c.TrgEGunSglBun_Delay: 0,     # [us]
             c.TrgEGunMultBun_Delay: 0,    # [us]
             # EjeKckr trigger delay
@@ -280,18 +369,25 @@ class ConnTiming(_EpicsPropsList):
 
     def _command(self, setpoints, timeout):
         if self.connected:
-            return self.set_setpoints_check(setpoints, timeout=timeout)
+            return self.set_setpoints_check(setpoints, timeout=timeout,
+                                            rel_tol=0.05, abs_tol=0.008)
         else:
             return False
 
     def _check(self, readbacks):
         for name, value in readbacks.items():
-            if not self.get_readback(name) == value:
+            if value is None:
+                continue
+            elif isinstance(value, float):
+                if not _math.isclose(value, self.get_readback(name),
+                                     abs_tol=0.008):
+                    return False
+            elif not self.get_readback(name) == value:
                 return False
         return True
 
 
-class ConnMagnets(_EpicsPropsList):
+class ConnMA(_EpicsPropsList):
     """Magnets connector class."""
 
     def __init__(self, ramp_config=None, prefix=_prefix,
@@ -316,40 +412,40 @@ class ConnMagnets(_EpicsPropsList):
 
     def cmd_pwrstate_on(self, timeout=_TIMEOUT_PWRSTATE_ON):
         """Turn all power supplies on."""
-        return self._command('PwrState-Sel',
-                             _PSConst.PwrStateSel.On,
-                             desired_readback=_PSConst.PwrStateSts.On,
-                             timeout=timeout)
+        return self._command_all('PwrState-Sel',
+                                 _PSConst.PwrStateSel.On,
+                                 desired_readback=_PSConst.PwrStateSts.On,
+                                 timeout=timeout)
 
     def cmd_pwrstate_off(self, timeout=_TIMEOUT_PWRSTATE_OFF):
         """Turn all power supplies off."""
-        return self._command('PwrState-Sel',
-                             _PSConst.PwrStateSel.Off,
-                             desired_readback=_PSConst.PwrStateSts.Off,
-                             timeout=timeout)
+        return self._command_all('PwrState-Sel',
+                                 _PSConst.PwrStateSel.Off,
+                                 desired_readback=_PSConst.PwrStateSts.Off,
+                                 timeout=timeout)
 
     def cmd_opmode_slowref(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select SlowRef opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.SlowRef,
-                             desired_readback=_PSConst.States.SlowRef,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.SlowRef,
+                                 desired_readback=_PSConst.States.SlowRef,
+                                 timeout=timeout)
 
     def cmd_opmode_cycle(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select Cycle opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.Cycle,
-                             desired_readback=_PSConst.States.Cycle,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.Cycle,
+                                 desired_readback=_PSConst.States.Cycle,
+                                 timeout=timeout)
 
     def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select RmpWfm opmode for all power supplies."""
-        return self._command('OpMode-Sel',
-                             _PSConst.OpMode.RmpWfm,
-                             desired_readback=_PSConst.States.RmpWfm,
-                             timeout=timeout)
+        return self._command_all('OpMode-Sel',
+                                 _PSConst.OpMode.RmpWfm,
+                                 desired_readback=_PSConst.States.RmpWfm,
+                                 timeout=timeout)
 
-    def cmd_wfmdata(self, manames=list(), timeout=_TIMEOUT_DFLT):
+    def cmd_wfm(self, manames=list(), timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
@@ -359,7 +455,7 @@ class ConnMagnets(_EpicsPropsList):
             # get value (wfmdata)
             wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
-            name = maname + ':WfmData-SP'
+            name = maname + ':Wfm-SP'
             sp[name] = value
         return self.set_setpoints_check(sp, timeout=timeout)
 
@@ -367,27 +463,27 @@ class ConnMagnets(_EpicsPropsList):
 
     def check_pwrstate_on(self):
         """Check pwrstates of all power supplies are On."""
-        return self._check('PwrState-Sel', _PSConst.PwrStateSts.On)
+        return self._check_all('PwrState-Sel', _PSConst.PwrStateSts.On)
 
     def check_opmode_slowref(self):
         """Check opmodes of all power supplies ar SlowRef."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.SlowRef)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.SlowRef)
 
     def check_opmode_cycle(self):
         """Check opmodes of all power supplies ar Cycle."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.Cycle)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.Cycle)
 
     def check_opmode_rmpwfm(self):
         """Check opmodes of all power supplies ar RmpWfm."""
-        return self._check('OpMode-Sel', _PSConst.OpMode.RmpWfm)
+        return self._check_all('OpMode-Sel', _PSConst.OpMode.RmpWfm)
 
     def check_intlksoft(self):
         """Check if software interlocks are reset."""
-        return self._check('IntlkSoft-Mon', 0)
+        return self._check_all('IntlkSoft-Mon', 0)
 
     def check_intlkhard(self):
         """Check if hardware interlocks are reset."""
-        return self._check('IntlkHard-Mon', 0)
+        return self._check_all('IntlkHard-Mon', 0)
 
     # --- private methods ---
 
@@ -407,7 +503,7 @@ class ConnMagnets(_EpicsPropsList):
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':WfmData-SP', p,
+                _EpicsProperty(maname + ':Wfm-SP', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
@@ -420,24 +516,37 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
         return properties
 
-    def _command(self, prop, setpoint, desired_readback=None,
-                 timeout=_TIMEOUT_DFLT):
+    def _command_all(self, prop, setpoint, desired_readback=None,
+                     timeout=_TIMEOUT_DFLT):
         """Exec command for all power supplies."""
         sp = dict()
         rb = dict()
         for maname in self.manames:
             name = maname + ':' + prop
-            sp[name] = setpoint
-            rb[name] = desired_readback if desired_readback else setpoint
-        result = self.set_setpoints_check(
-            sp, desired_readbacks=rb, timeout=timeout)
-        return result
+            check_val = desired_readback if desired_readback else setpoint
+            if not self._check_magnet(maname, prop, check_val):
+                sp[name] = setpoint
+                rb[name] = check_val
+        return self.set_setpoints_check(setpoints=sp,
+                                        desired_readbacks=rb,
+                                        timeout=timeout,
+                                        abs_tol=1e-5)
 
-    def _check(self, prop, value):
+    def _check_magnet(self, maname, prop, value):
+        """Check a prop of a power supplies for a value."""
+        if isinstance(value, (_np.ndarray, float)):
+            ok = _np.isclose(self.get_readback(maname + ':' + prop), value,
+                             atol=1e-5)
+        else:
+            ok = self.get_readback(maname + ':' + prop) == value
+        if not ok:
+            return False
+        return True
+
+    def _check_all(self, prop, value):
         """Check a prop of all power supplies for a value."""
         for maname in self.manames:
-            name = maname + ':' + prop
-            if not self.get_readback(name) == value:
+            if not self._check_magnet(maname, prop, value):
                 return False
         return True
 
@@ -448,13 +557,12 @@ class ConnRF(_EpicsPropsList):
     class Const(_cutil.Const):
         """Properties names."""
 
-        DevName = 'BO-05D:RF-LLRF'
+        DevName = 'BR-RF-DLLRF-01'
         Rmp_Enbl = DevName + ':RmpEnbl-Sel'
         Rmp_Ts1 = DevName + ':RmpTs1-SP'
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_IncTs = DevName + ':RmpIncTs-SP'
         Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
         Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
@@ -498,15 +606,9 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         sp[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        sp[c.Rmp_IncTs] = 0
         return self.set_setpoints_check(sp, timeout=timeout)
 
     # --- RF checks ---
-
-    def check_ramping_enable(self):
-        """Check ramping enable."""
-        rb = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.DsblEnbl.Enbl}
-        return self._check(rb)
 
     def check_config_ramp(self):
         """Check if configured to ramp."""
@@ -520,7 +622,6 @@ class ConnRF(_EpicsPropsList):
         rb[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         rb[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         rb[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        rb[c.Rmp_IncTs] = 0
         return self._check(rb)
 
     def check_intlk(self):
@@ -529,7 +630,8 @@ class ConnRF(_EpicsPropsList):
 
     def check_rmpready(self):
         """Check if ramp increase was concluded."""
-        return self._check({ConnRF.Const.Rmp_RmpReady: 1})
+        return self._check({ConnRF.Const.Rmp_Enbl: 1,
+                            ConnRF.Const.Rmp_RmpReady: 1})
 
     # --- private methods ---
 
@@ -545,7 +647,6 @@ class ConnRF(_EpicsPropsList):
             c.Rmp_VoltTop: _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
             c.Rmp_PhsBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
             c.Rmp_PhsTop: _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
-            c.Rmp_IncTs: 0,
             c.Rmp_Intlk: None,
             c.Rmp_RmpReady: None}
 
@@ -582,10 +683,10 @@ class ConnSOFB(_EpicsPropsList):
         """Get CH and CV delta kicks calculated by SOFB."""
         bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
-        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH']
+        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon']
         ch_names = bo_sofb_db.CH_NAMES
 
-        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV']
+        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon']
         cv_names = bo_sofb_db.CV_NAMES
 
         corrs2dkicks_dict = dict()

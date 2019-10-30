@@ -12,15 +12,12 @@ from siriuspy.computer import Computer as _Computer
 
 # beta(energy) ~ 1 approximation is more computationally efficient.
 _BETA_APPROXIMATION = True
-
-
 if not _BETA_APPROXIMATION:
-    _gamma_2_GeV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
+    _GAMMA_2_GEV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
 
-_magfuncs = _mutil.get_magfunc_2_multipole_dict()
-
-_is_dipole = _re.compile(".*:[A-Z]{2}-B.*:.+$")
-_is_fam = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
+_MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
+_IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
+_IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 
 
 class _MagnetNormalizer(_Computer):
@@ -32,7 +29,7 @@ class _MagnetNormalizer(_Computer):
         self._madata = _MAData(maname=maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._magnet_conv_sign = magnet_conv_sign
-        self._mfmult = _magfuncs[self._magfunc]
+        self._mfmult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
 
@@ -103,7 +100,6 @@ class _MagnetNormalizer(_Computer):
             else:
                 return [0.0, ] * len(currents)
         # ---
-
         strengths = self._conv_intfield_2_strength(intfields, **kwargs)
         strengths = self._conv_default_2_epicsdb(strengths)
         return strengths
@@ -140,7 +136,7 @@ class _MagnetNormalizer(_Computer):
         if len(computed_pv.pvs) == 1:  # Dipole
             return self.conv_current_2_strength(value)
         elif len(computed_pv.pvs) == 2:  # Standard Magnet
-            if _is_dipole.match(updated_pv_name):  # Use regexp?
+            if _IS_DIPOLE.match(updated_pv_name):  # Use regexp?
                 current = computed_pv.pvs[0].get()
                 strength_dipole = value
             else:
@@ -149,11 +145,11 @@ class _MagnetNormalizer(_Computer):
             return self.conv_current_2_strength(
                 currents=current, strengths_dipole=strength_dipole)
         elif len(computed_pv.pvs) == 3:  # Trim Magnet
-            if not _is_fam.match(updated_pv_name):  # Use Regexp?
+            if not _IS_FAM.match(updated_pv_name):  # Use Regexp?
                 current = value
                 strength_dipole = computed_pv.pvs[1].get()
                 strength_family = computed_pv.pvs[2].get()
-            elif _is_dipole.match(updated_pv_name):
+            elif _IS_DIPOLE.match(updated_pv_name):
                 current = computed_pv.pvs[0].get()
                 strength_dipole = value
                 strength_family = computed_pv.pvs[2].get()
@@ -277,14 +273,14 @@ class DipoleNormalizer(_MagnetNormalizer):
         ang = DipoleNormalizer._ref_angles
         if self._maname.sec == 'SI':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, self._ref_beta, *_ = \
+            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
                 _util.beam_rigidity(self._ref_energy)
             self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
         elif self._maname.sec == 'BO':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, self._ref_beta, *_ = \
+            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
                 _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
             self._ref_BL = - self._ref_brho * self._ref_angle
@@ -326,7 +322,7 @@ class DipoleNormalizer(_MagnetNormalizer):
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
                 intfields = (- self._ref_angle *
-                    (self._ref_brho / self._ref_energy) * strengths)
+                             (self._ref_brho / self._ref_energy) * strengths)
             else:
                 # 2. without approximation
                 brho, *_ = _util.beam_rigidity(strengths)
@@ -340,15 +336,18 @@ class DipoleNormalizer(_MagnetNormalizer):
         if self._maname.sec == 'SI':
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
+                total_bl = intfields + self._ref_BL_BC
                 strengths = -self._magnet_conv_sign * \
                     ((self._ref_energy / self._ref_brho) *
-                     (- intfields - self._ref_BL_BC) / self._ref_angle)
+                     (-total_bl) / self._ref_angle)
             else:
                 # 2. without approximation
-                gamma = _np.sqrt(1.0 + (-intfields - self._ref_BL_BC) /
-                                 self._ref_angle *
-                                 (self._ref_beta / self._ref_brho))
-                strengths = gamma * _gamma_2_GeV
+                total_bl = intfields + self._ref_BL_BC
+                beam_rigidity = -total_bl / self._ref_angle
+                alpha = (beam_rigidity / self._ref_brho) * \
+                    (self._ref_gamma**2 - 1.0)/(self._ref_gamma)
+                gamma = (alpha/2) + _np.sqrt(1.0 + (alpha/2)**2)
+                strengths = gamma * _GAMMA_2_GEV
         else:
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
@@ -357,10 +356,13 @@ class DipoleNormalizer(_MagnetNormalizer):
                      (- intfields) / self._ref_angle)
             else:
                 # 2. without approximation
-                gamma = _np.sqrt(1.0 + (-intfields) /
-                                 self._ref_angle *
-                                 (self._ref_beta / self._ref_brho))
-                strengths = gamma * _gamma_2_GeV
+                total_bl = intfields
+                beam_rigidity = -total_bl / self._ref_angle
+                alpha = (beam_rigidity / self._ref_brho) * \
+                    (self._ref_gamma**2 - 1.0)/(self._ref_gamma)
+                gamma = (alpha/2) + _np.sqrt(1.0 + (alpha/2)**2)
+                strengths = gamma * _GAMMA_2_GEV
+
         return strengths
 
     def _power_supplies(self):

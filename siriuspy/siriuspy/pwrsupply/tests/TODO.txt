@@ -1,0 +1,19 @@
+pending:
+
+2019-10-18 - [firmware]: do not ignore requests for OpMode changes if wfmref index is not parked. Process these requests at the end of ramp cycles.
+2019-10-18 - [firmware]: when a setpoint is received while in SlowRefSync, update PS_SETPOINT variable so that the IOC knows that the UDC received its request.
+2019-10-23 - [firmware]: disabling BUFSAMPLE from one ps applies to all in the same UDC?
+2019-10-23 - [firmware]: create new BSMP variable that mirrors last setpoint received by ARM
+2019-10-23 - [firmware]: change SYNC_PULSE and RESET_UDC bsmp functions so that they always return OK.
+
+2019-10-18 - [etherbridge]: write new optimized version.
+
+2019-10-18 - [psioc]: debug anomalous responses
+2019-10-18 - [psioc]: benchmark all BSMP commands for all power supply models
+2019-10-18 - [psioc]: implement BSMP read/write classes for BSMP parameters.
+
+
+solved:
+
+2019-10-21 - [firmware]: discard FBP mirror bsmp variables
+             these variables will continue to exist for debugging purposes. the IOC will not use them.

@@ -5,7 +5,6 @@ import epics as _epics
 
 
 import numpy as _np
-from math import isclose as _isclose
 from siriuspy.envars import vaca_prefix as _prefix
 from siriuspy.namesys.implementation import \
     SiriusPVName as _SiriusPVName, \
@@ -196,16 +195,19 @@ class EpicsPropertiesList:
         return ppty.setpoint
 
     def set_setpoints_check(self, setpoints, desired_readbacks=dict(),
-                            timeout=5, order=None):
+                            timeout=5, order=None, rel_tol=1e-6, abs_tol=0.0):
         """Set setpoints of properties."""
         if order is None:
             order = list(setpoints.keys())
         # setpoints
+        is_nok = list()
         for name in order:
             value = setpoints[name]
             if value is not None:
                 ppty = self._properties[name]
                 ppty.setpoint = value
+                if 'Cmd' not in name:
+                    is_nok.append(name)
         # check
         if not desired_readbacks:
             desired_readbacks = setpoints
@@ -215,6 +217,8 @@ class EpicsPropertiesList:
             for pvname, value in desired_readbacks.items():
                 if value is None:
                     continue
+                if pvname not in is_nok:
+                    continue
                 rb = self._properties[pvname].readback
                 if isinstance(value, (tuple, list, _np.ndarray)):
                     if not isinstance(rb, (tuple, list, _np.ndarray)):
@@ -223,19 +227,20 @@ class EpicsPropertiesList:
                     if len(value) != len(rb):
                         finished = False
                         break
-                    for i in range(len(value)):
-                        if not _isclose(rb[i], value[i],
-                                        rel_tol=1e-06, abs_tol=0.0):
-                            finished = False
-                            break
-                else:
-                    if not _isclose(rb, value, rel_tol=1e-06, abs_tol=0.0):
+                    if not all(_np.isclose(rb, value,
+                                           rtol=rel_tol, atol=abs_tol)):
                         finished = False
                         break
+                else:
+                    if not _np.isclose(rb, value, rtol=rel_tol, atol=abs_tol):
+                        finished = False
+                        break
+                if finished:
+                    is_nok.remove(pvname)
             if finished:
                 break
             _time.sleep(timeout/10.0)
-        return finished
+        return finished, is_nok
 
     def reset_default(self):
         """Reset properties to default values."""

@@ -1,6 +1,7 @@
 # Power Supply to DCLink Mapping
 # ==============================
 
+# TODO: file to be renamed to "ps-dclink.txt"
 
 # ______ TB ______
 
@@ -145,45 +146,45 @@ TS-04:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
 # ______ SI ______
 
 # --- SI Dipoles ---
-SI-Fam:PS-B1B2-1   None
-SI-Fam:PS-B1B2-2   None
+SI-Fam:PS-B1B2-1   PA-RaPSD01:PS-DCLink-1A PA-RaPSD01:PS-DCLink-1B PA-RaPSD03:PS-DCLink-2A PA-RaPSD03:PS-DCLink-2B PA-RaPSD01:PS-DCLink-3A PA-RaPSD01:PS-DCLink-3B PA-RaPSD03:PS-DCLink-4A PA-RaPSD03:PS-DCLink-4B
+SI-Fam:PS-B1B2-2   PA-RaPSD05:PS-DCLink-1A PA-RaPSD05:PS-DCLink-1B PA-RaPSD07:PS-DCLink-2A PA-RaPSD07:PS-DCLink-2B PA-RaPSD05:PS-DCLink-3A PA-RaPSD05:PS-DCLink-3B PA-RaPSD07:PS-DCLink-4A PA-RaPSD07:PS-DCLink-4B
 
 # --- SI Quadrupoles ---
-SI-Fam:PS-Q1       None
-SI-Fam:PS-Q2       None
-SI-Fam:PS-Q3       None
-SI-Fam:PS-Q4       None
-SI-Fam:PS-QDA      None
-SI-Fam:PS-QDB1     None
-SI-Fam:PS-QDB2     None
-SI-Fam:PS-QDP1     None
-SI-Fam:PS-QDP2     None
-SI-Fam:PS-QFA      None
-SI-Fam:PS-QFB      None
-SI-Fam:PS-QFP      None
+SI-Fam:PS-QFA      PA-RaPSA01:PS-DCLink-QFAP
+SI-Fam:PS-QFP      PA-RaPSA01:PS-DCLink-QFAP
+SI-Fam:PS-QFB      PA-RaPSA01:PS-DCLink-QFB
+SI-Fam:PS-QDA      PA-RaPSA03:PS-DCLink-QDAP
+SI-Fam:PS-QDP1     PA-RaPSA03:PS-DCLink-QDAP
+SI-Fam:PS-QDP2     PA-RaPSA03:PS-DCLink-QDAP
+SI-Fam:PS-QDB1     PA-RaPSA04:PS-DCLink-QDB
+SI-Fam:PS-QDB2     PA-RaPSA04:PS-DCLink-QDB
+SI-Fam:PS-Q1       PA-RaPSA06:PS-DCLink-Q12A PA-RaPSA06:PS-DCLink-Q12B PA-RaPSA06:PS-DCLink-Q12C
+SI-Fam:PS-Q2       PA-RaPSA06:PS-DCLink-Q12A PA-RaPSA06:PS-DCLink-Q12B PA-RaPSA06:PS-DCLink-Q12C
+SI-Fam:PS-Q3       PA-RaPSA07:PS-DCLink-Q34A PA-RaPSA07:PS-DCLink-Q34B PA-RaPSA07:PS-DCLink-Q34C
+SI-Fam:PS-Q4       PA-RaPSA07:PS-DCLink-Q34A PA-RaPSA07:PS-DCLink-Q34B PA-RaPSA07:PS-DCLink-Q34C
 
 # --- SI Sextupoles ---
-SI-Fam:PS-SDA0     None
-SI-Fam:PS-SDA1     None
-SI-Fam:PS-SDA2     None
-SI-Fam:PS-SDA3     None
-SI-Fam:PS-SDB0     None
-SI-Fam:PS-SDB1     None
-SI-Fam:PS-SDB2     None
-SI-Fam:PS-SDB3     None
-SI-Fam:PS-SDP0     None
-SI-Fam:PS-SDP1     None
-SI-Fam:PS-SDP2     None
-SI-Fam:PS-SDP3     None
-SI-Fam:PS-SFA0     None
-SI-Fam:PS-SFA1     None
-SI-Fam:PS-SFA2     None
-SI-Fam:PS-SFB0     None
-SI-Fam:PS-SFB1     None
-SI-Fam:PS-SFB2     None
-SI-Fam:PS-SFP0     None
-SI-Fam:PS-SFP1     None
-SI-Fam:PS-SFP2     None
+SI-Fam:PS-SDB0     PA-RaPSB01:PS-DCLink-SDB0
+SI-Fam:PS-SDB1     PA-RaPSB04:PS-DCLink-SDB1
+SI-Fam:PS-SDB2     PA-RaPSB05:PS-DCLink-SDB2
+SI-Fam:PS-SDB3     PA-RaPSB07:PS-DCLink-SDB3
+SI-Fam:PS-SFB0     PA-RaPSB03:PS-DCLink-SFB0
+SI-Fam:PS-SFB1     PA-RaPSB08:PS-DCLink-SFB1
+SI-Fam:PS-SFB2     PA-RaPSB10:PS-DCLink-SFB2
+SI-Fam:PS-SDA1     PA-RaPSB04:SI-DCLink-SDA12
+SI-Fam:PS-SDA2     PA-RaPSB04:SI-DCLink-SDA12
+SI-Fam:PS-SDA0     PA-RaPSB01:SI-DCLink-SDAP0
+SI-Fam:PS-SDP0     PA-RaPSB01:SI-DCLink-SDAP0
+SI-Fam:PS-SFA0     PA-RaPSB03:SI-DCLink-SFAP0
+SI-Fam:PS-SFP0     PA-RaPSB03:SI-DCLink-SFAP0
+SI-Fam:PS-SFP1     PA-RaPSB10:SI-DCLink-SFP12
+SI-Fam:PS-SFP2     PA-RaPSB10:SI-DCLink-SFP12
+SI-Fam:PS-SDP2     PA-RaPSB08:SI-DCLink-SDP23
+SI-Fam:PS-SDP3     PA-RaPSB08:SI-DCLink-SDP23
+SI-Fam:PS-SDA3     PA-RaPSB05:SI-DCLink-SDA3SFA1
+SI-Fam:PS-SFA1     PA-RaPSB05:SI-DCLink-SDA3SFA1
+SI-Fam:PS-SFA2     PA-RaPSB07:SI-DCLink-SFA2SDP1
+SI-Fam:PS-SDP1     PA-RaPSB07:SI-DCLink-SFA2SDP1
 
 # --- SI Correctors ---
 SI-01M1:PS-CH      IA-01RaPS01:PS-DCLink-AS
@@ -647,7 +648,7 @@ SI-20C1:PS-QS      IA-20RaPS02:PS-DCLink-SI
 SI-20C2:PS-QS      IA-20RaPS02:PS-DCLink-SI
 SI-20C3:PS-QS      IA-20RaPS02:PS-DCLink-SI
 
-# --- SI Trims---
+# --- SI Quadrupole Trims ---
 SI-01M1:PS-QDA     IA-01RaPS01:PS-DCLink-AS
 SI-01M1:PS-QFA     IA-01RaPS01:PS-DCLink-AS
 SI-01M2:PS-QDA     IA-01RaPS01:PS-DCLink-AS

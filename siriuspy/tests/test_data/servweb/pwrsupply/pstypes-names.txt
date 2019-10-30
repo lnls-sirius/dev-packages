@@ -46,6 +46,11 @@ si-injdpk                    monopolar        corrector-horizontal
 si-injnlk                    monopolar        corrector-horizontal
 
 ts-dipole-b-fam              monopolar        dipole
+ts-quadrupole-q14-qf         monopolar        quadrupole
+ts-quadrupole-q14-qd         monopolar        quadrupole
+ts-quadrupole-q20-qf         monopolar        quadrupole
+ts-corrector-ch              bipolar          corrector-horizontal
+ts-corrector-cv              bipolar          corrector-vertical
 ts-injseptum-thick           monopolar        corrector-horizontal
 ts-injseptum-thin            monopolar        corrector-horizontal
 ts-ejeseptum-thick           monopolar        corrector-horizontal
@@ -64,10 +69,6 @@ si-corrector-fcv             bipolar          corrector-vertical
 si-hping                     bipolar          corrector-horizontal
 si-vping                     bipolar          corrector-vertical
 
-ts-quadrupole-q14            bipolar          quadrupole
-ts-quadrupole-q20            bipolar          quadrupole
-ts-corrector-ch              bipolar          corrector-horizontal
-ts-corrector-cv              bipolar          corrector-vertical
 
 
 # DCLinks
