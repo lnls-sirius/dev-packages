@@ -17,8 +17,7 @@ class LLTimeSearch:
 
     LLRegExp = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
 
-    # defines the relations between input and output of the timing devices
-    # that are possible taking into consideration only the devices architecture
+    # defines the relations between input and output of the timing devices.
     In2OutMap = {
         'EVG': {
             'UPLINK': (
@@ -95,10 +94,12 @@ class LLTimeSearch:
         'OERFRx': {'OPTICALACP': ('SIGNAL', )},
         'OERFTx': {'SIGNAL': ('OPTICALACP', )},
         }
-    In2OutMap['FibPatch'] = {
-        'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
-    In2OutMap['FibPatch']['P052B'] = ('P052B', )
-    In2OutMap['FibPatch']['P027B'] = ('P027B', )
+    In2OutMap['DIO'] = {
+        'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(110)}
+    In2OutMap['DIO'].update({
+        'P{0:02d}'.format(i): ('P{0:02d}'.format(i), ) for i in range(1, 25)})
+    In2OutMap['DIO']['P052B'] = ('P052B', )
+    In2OutMap['DIO']['P027B'] = ('P027B', )
 
     Out2InMap = dict()
     for dev, conns_ in In2OutMap.items():
@@ -170,6 +171,10 @@ class LLTimeSearch:
         cls._get_timedata()
         return _Filter.process_filters(
                 sorted(cls._all_devices), filters=filters, sorting=sorting)
+
+    @classmethod
+    def get_evg_name(cls):
+        return cls.get_device_names({'dev': 'EVG'})[0]
 
     @classmethod
     def get_triggersource_devices(cls):

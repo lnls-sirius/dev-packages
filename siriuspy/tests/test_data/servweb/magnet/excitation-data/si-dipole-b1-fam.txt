@@ -1,0 +1,76 @@
+# HEADER
+# ======
+# label           si-dipole-b1-fam
+# harmonics       0  1  2  3  4  5  6
+# main_harmonic   0 normal
+# units           Ampere  T*m T*m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  
+
+# EXCITATION DATA
+# ===============
++00.0000  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  
++381.7000  -4.5610e-01 +0.0000e+00  +6.1263e+00 +0.0000e+00  +1.7033e+00 +0.0000e+00  -5.8889e+01 +0.0000e+00  -9.3230e+02 +0.0000e+00  -3.8067e+03 +0.0000e+00  +1.4891e+06 +0.0000e+00  
++401.8000  -4.7970e-01 +0.0000e+00  +6.4401e+00 +0.0000e+00  +1.8379e+00 +0.0000e+00  -5.1988e+01 +0.0000e+00  -4.3634e+02 +0.0000e+00  -6.9401e+04 +0.0000e+00  -3.4748e+05 +0.0000e+00  
++403.6000  -4.8182e-01 +0.0000e+00  +6.4682e+00 +0.0000e+00  +1.9165e+00 +0.0000e+00  -5.9263e+01 +0.0000e+00  -1.4866e+03 +0.0000e+00  -2.8823e+04 +0.0000e+00  +5.1840e+06 +0.0000e+00  
++421.9000  -5.0328e-01 +0.0000e+00  +6.7514e+00 +0.0000e+00  +2.0841e+00 +0.0000e+00  -5.6663e+01 +0.0000e+00  -8.4032e+02 +0.0000e+00  -6.2287e+04 +0.0000e+00  +9.8441e+05 +0.0000e+00  
+ 
+# COMMENTS
+# ========
+# 1. generated automatically with "sirius_si_create_excitation_files.m"
+# 2. data taken from rotcoil measurements
+# 3. average excitation curves for magnets:
+#    B1-025 B1-040 B1-003 B1-031 B1-029 B1-038 B1-004 B1-005 B1-024 B1-016 
+#    B1-012 B1-030 B1-018 B1-011 B1-033 B1-013 B1-015 B1-042 B1-021 B1-019 
+#    B1-043 B1-009 B1-036 B1-034 B1-020 B1-010 B1-027 B1-002 B1-023 B1-014 
+#    B1-035 B1-032 B1-039 B1-017 B1-028 B1-037 B1-006 B1-046 B1-041 B1-026 
+#    
+ 
+# POLARITY TABLE
+# ==============
+# 
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+# 
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+# 
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+ 
+# STATIC DATA FILE FORMAT
+# =======================
+# 
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

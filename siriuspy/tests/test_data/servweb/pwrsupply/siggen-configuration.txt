@@ -107,27 +107,27 @@ BO-49U:PS-CV            DampedSine           100         2.0         10.0       
 
 # PSNAME                TYPE                 NR_CYCLES   FREQ[Hz]    AMPLITUDE[A]    OFFSET[A]     PARAM0:Beg[deg]  PARAM1:End[deg]  PARAM2:Tau[s]     PARAM3:<NOT_USED>
 
-TS-Fam:PS-B             Trapezoidal          5           0.0         50.0            0.0           0.0                    0.0                      0.0                     0.0
+TS-Fam:PS-B             DampedSquaredSine     32         0.167      749.0            0.0           0.0              0.0              24.0              0.0
 
-TS-01:PS-QF1A           DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-01:PS-QF1B           DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-02:PS-QD2            DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-02:PS-QF2            DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-03:PS-QF3            DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-QD4A           DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-QD4B           DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-QF4            DampedSine           100         1.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
+TS-01:PS-QF1A           DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-01:PS-QF1B           DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-02:PS-QD2            DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-02:PS-QF2            DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-03:PS-QF3            DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-QD4A           DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-QD4B           DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-QF4            DampedSquaredSine     32         0.167      150.0            0.0           0.0              0.0              24.0              0.0
 
-TS-01:PS-CH             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-01:PS-CV-1           DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-01:PS-CV-2           DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-02:PS-CH             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-02:PS-CV             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-03:PS-CH             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-03:PS-CV             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-CH             DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-CV-1           DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
-TS-04:PS-CV-2           DampedSine           100         2.0         10.0            0.0           0.0                    0.0                      6.0                     0.0
+TS-01:PS-CH             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-01:PS-CV-1           DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-01:PS-CV-2           DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-02:PS-CH             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-02:PS-CV             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-03:PS-CH             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-03:PS-CV             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-CH             DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-CV-1           DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
+TS-04:PS-CV-2           DampedSine            32         0.167       10.0            0.0           0.0              0.0              24.0              0.0
 
 
 # === SI ===

@@ -1,9 +1,0 @@
-# label           ts-quadrupole-q20
-# harmonics       1 5 9 13
-# main_harmonic   1 normal
-# units           Ampere  T T  T/m^4 T/m^4  T/m^8 T/m^8  T/m^12 T/m^12
-#
-  +0.00   +0.0000e+00  +0.0000e+00  +0.0000e+00  +0.0000e+00  +0.0000e+00  +0.0000e+00  +0.0000e+00  +0.0000e+00
-+164.66   +9.4848e+00  +0.0000e+00  -1.6827e+05  +0.0000e+00  +3.6722e+13  +0.0000e+00  -6.9418e+20  +0.0000e+00
-
-# copied from si-quadrupole-q20-fam.txt

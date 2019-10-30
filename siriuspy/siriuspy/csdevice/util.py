@@ -74,8 +74,11 @@ def _reload_device_2_ioc_ip():
     # power supplies
     dic = dict()
     for bbbname, ip in _device_2_ioc_ip_dict.items():
-        bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
-        for bsmp in bsmps:
-            psname, _ = bsmp
-            dic[psname] = ip
+        try:
+            bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
+            for bsmp in bsmps:
+                psname, _ = bsmp
+                dic[psname] = ip
+        except KeyError:
+            pass
     _device_2_ioc_ip_dict.update(dic)

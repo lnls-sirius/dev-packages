@@ -1,0 +1,75 @@
+# HEADER
+# ======
+# label           si-dipole-b2-fam
+# harmonics       0  1  2  3  4  5  6
+# main_harmonic   0 normal
+# units           Ampere  T*m T*m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  
+
+# EXCITATION DATA
+# ===============
++00.0000  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  +0.0000e+00 +0.0000e+00  
++381.7000  -6.7804e-01 +0.0000e+00  +9.0970e+00 +0.0000e+00  +1.6930e+00 +0.0000e+00  -5.8685e+01 +0.0000e+00  +1.4982e+03 +0.0000e+00  -7.1748e+04 +0.0000e+00  -1.1284e+07 +0.0000e+00  
++401.8000  -7.1321e-01 +0.0000e+00  +9.5650e+00 +0.0000e+00  +1.9217e+00 +0.0000e+00  -6.0588e+01 +0.0000e+00  +1.1648e+03 +0.0000e+00  -7.2741e+04 +0.0000e+00  -1.0211e+07 +0.0000e+00  
++421.9000  -7.4831e-01 +0.0000e+00  +1.0030e+01 +0.0000e+00  +2.1525e+00 +0.0000e+00  -6.4508e+01 +0.0000e+00  +2.8683e+02 +0.0000e+00  -8.5855e+04 +0.0000e+00  -6.1669e+06 +0.0000e+00  
+ 
+# COMMENTS
+# ========
+# 1. generated automatically with "sirius_si_create_excitation_files.m"
+# 2. data taken from rotcoil measurements
+# 3. average excitation curves for magnets:
+#    B2-002 B2-001 B2-010 B2-011 B2-017 B2-014 B2-032 B2-043 B2-022 B2-045 
+#    B2-004 B2-015 B2-023 B2-037 B2-008 B2-013 B2-019 B2-030 B2-033 B2-007 
+#    B2-042 B2-016 B2-034 B2-018 B2-036 B2-038 B2-021 B2-005 B2-006 B2-029 
+#    B2-003 B2-027 B2-040 B2-044 B2-031 B2-028 B2-026 B2-025 B2-046 B2-009 
+#    
+ 
+# POLARITY TABLE
+# ==============
+# 
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+# 
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+# 
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+ 
+# STATIC DATA FILE FORMAT
+# =======================
+# 
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

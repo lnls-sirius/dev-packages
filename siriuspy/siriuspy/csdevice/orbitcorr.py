@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import os as _os
 from copy import deepcopy as _dcopy
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
@@ -22,8 +23,8 @@ class ETypes(_cutil.ETypes):
     SPASS_BG_CTRL = ('Acquire', 'Reset')
     SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
     SPASS_USE_BG = ('NotUsing', 'Using')
-    APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
+    APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
@@ -33,10 +34,9 @@ class ETypes(_cutil.ETypes):
 
     STS_LBLS_CORR_TLINES = (
         'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn')
-    STS_LBLS_CORR_RINGS = (
-        'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn',
-        'TimingConnected', 'TimingConfigured', 'RFConnected',
-        'RFPwrStateOn')
+    STS_LBLS_CORR_RINGS = STS_LBLS_CORR_TLINES + (
+        'TimingConnected', 'TimingConfigured')
+    STS_LBLS_CORR_SI = STS_LBLS_CORR_RINGS + ('RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
         'BPMsEnabled', 'BPMsConfigured')
@@ -51,10 +51,11 @@ _et = ETypes  # syntactic sugar
 class ConstTLines(_cutil.Const):
     """Const class defining transport lines orbitcorr constants."""
 
-    EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
+    EVG_NAME = _TISearch.get_evg_name()
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
+    TINY_KICK = 1e-3  # urad
 
     EnbldDsbld = _cutil.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
@@ -77,25 +78,33 @@ class ConstTLines(_cutil.Const):
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
+    SyncWithInj = _cutil.Const.register('SyncWithInj', _et.OFF_ON)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
     StsLblsCorr = _cutil.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
     StsLblsOrb = _cutil.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
     StsLblsGlob = _cutil.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
+    ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
+
 
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
-    ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_RINGS)
     StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
+    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
+
+
+class ConstSI(ConstRings):
+    """Const class defining rings orbitcorr constants."""
+
+    ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
+    StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
-    ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
-    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
 
 # --- Database classes ---
@@ -109,11 +118,15 @@ class SOFBTLines(ConstTLines):
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
         self.CH_NAMES = _MASearch.get_manames(
-                            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+        if self.acc == 'TS':
+            self.CH_NAMES = [_PVName('TS-01:PM-EjeSeptG'), ] + self.CH_NAMES
         self.CV_NAMES = _MASearch.get_manames(
                             {'sec': acc, 'dis': 'MA', 'dev': 'CV'})
         self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
         self.CH_NICKNAMES = _MASearch.get_manicknames(self.CH_NAMES)
+        if self.acc == 'TS':
+            self.CH_NICKNAMES[0] = 'EjeseptG'
         self.CV_NICKNAMES = _MASearch.get_manicknames(self.CV_NAMES)
         self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
         self.CH_POS = _MASearch.get_mapositions(self.CH_NAMES)
@@ -129,9 +142,9 @@ class SOFBTLines(ConstTLines):
         ext = acc.lower() + 'respmat'
         self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
 
-        self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
+        self.NR_CORRS = self.NR_CHCV + 1 if acc == 'SI' else self.NR_CHCV
 
-        if not self.isring():
+        if not self.isring:
             self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
         else:
             self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
@@ -144,6 +157,7 @@ class SOFBTLines(ConstTLines):
         self.C0 = 22 if self.acc == 'TB' else 30  # in meters
         self.T0 = self.C0 / 299792458  # in seconds
 
+    @property
     def isring(self):
         return self.acc in self.Rings._fields
 
@@ -160,6 +174,15 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
+            'ClosedLoop-Sel': {
+                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
+            'ClosedLoop-Sts': {
+                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
+            'ClosedLoopFreq-SP': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1e-3, 'hilim': 20},
+            'ClosedLoopFreq-RB': {
+                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},
@@ -198,25 +221,27 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 500000},
             'MaxKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
                 'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
@@ -232,10 +257,10 @@ class SOFBTLines(ConstTLines):
         db = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
                 'unit': 'urad'},
@@ -290,6 +315,14 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.SOFBMode.Offline,
                 'enums': self.SOFBMode._fields},
+            'SyncWithInjection-Sel': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
+            'SyncWithInjection-Sts': {
+                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'value': self.SyncWithInj.On,
+                'enums': self.SyncWithInj._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
@@ -383,10 +416,10 @@ class SOFBTLines(ConstTLines):
                 'enums': self.TrigAcqDataPol._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'OrbAcqRate-RB': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
-                'hilim': 20, 'lolim': 0.5},
+                'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
@@ -528,7 +561,7 @@ class SOFBRings(SOFBTLines, ConstRings):
         vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
         vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
         self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
-        self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
+        self.C0 = 496.8  # in meter
         self.T0 = self.C0 / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
@@ -542,38 +575,6 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'int', 'value': 1, 'lolim': 0,
                 'hilim': self.MAX_RINGSZ+1,
                 'unit': 'Nr Times to extend the ring'},
-            'ClosedLoop-Sel': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoop-Sts': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoopFreq-SP': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 20},
-            'ClosedLoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
-            'MeasRespMatKickRF-SP': {
-                'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1, 'hilim': 400},
-            'MeasRespMatKickRF-RB': {
-                'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1, 'hilim': 400},
-            'DeltaFactorRF-SP': {
-                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
-            'DeltaFactorRF-RB': {
-                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'MaxKickRF-SP': {
-                'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
-            'MaxKickRF-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz',
-                'lolim': 0, 'hilim': 10000},
-            'MaxDeltaKickRF-SP': {
-                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
-            'MaxDeltaKickRF-RB': {
-                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
-                'lolim': 0, 'hilim': 10000},
             }
         db = super().get_sofb_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
@@ -582,8 +583,6 @@ class SOFBRings(SOFBTLines, ConstRings):
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db_ring = {
-            'KickRF-Mon': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
@@ -663,6 +662,55 @@ class SOFBRings(SOFBTLines, ConstRings):
         db.update(self._add_prefix(db_ring, prefix))
         return db
 
+
+class SOFBSI(SOFBRings, ConstSI):
+    """SOFB class."""
+
+    def __init__(self, acc):
+        """Init method."""
+        SOFBRings.__init__(self, acc)
+        self.C0 = 518.396  # in meter
+        self.T0 = self.C0 / 299792458  # in seconds
+
+    def get_sofb_database(self, prefix=''):
+        """Return OpticsCorr-Chrom Soft IOC database."""
+        db_ring = {
+            'MeasRespMatKickRF-SP': {
+                'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1, 'hilim': 400},
+            'MeasRespMatKickRF-RB': {
+                'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1, 'hilim': 400},
+            'DeltaFactorRF-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -1000, 'hilim': 1000},
+            'DeltaFactorRF-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'MaxKickRF-SP': {
+                'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxKickRF-RB': {
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-SP': {
+                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-RB': {
+                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            }
+        db = super().get_sofb_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
+        return db
+
+    def get_corrs_database(self, prefix=''):
+        """Return OpticsCorr-Chrom Soft IOC database."""
+        db_ring = {'KickRF-Mon': {
+            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3}}
+        db = super().get_corrs_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
+        return db
+
     def get_respmat_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db_ring = {
@@ -688,7 +736,9 @@ class SOFBFactory:
     def create(acc):
         """Return appropriate SOFB object."""
         acc = acc.upper()
-        if acc in _et.RINGS:
+        if acc == 'SI':
+            return SOFBSI(acc)
+        elif acc in _et.RINGS:
             return SOFBRings(acc)
         elif acc in _et.TLINES:
             return SOFBTLines(acc)

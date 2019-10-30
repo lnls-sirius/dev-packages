@@ -4,33 +4,35 @@
 import time as _time
 import numpy as _np
 from math import isclose as _isclose
-from siriuspy.namesys import Filter as _Filter
-from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
+from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
+from siriuspy.search import PSSearch as _PSSearch
 
 
-def get_manames():
-    """Return manames."""
-    names = _MASearch.get_manames({'sec': '(TB|BO)', 'dis': 'MA'})
-    # TODO: uncomment when using TS and SI
-    # names = _MASearch.get_manames({'sec': '(TB|BO|TS|SI)', 'dis': 'MA'})
+def get_psnames():
+    """Return psnames."""
+    names = _PSSearch.get_psnames({'sec': '(TB|BO|TS)', 'dis': 'PS'})
+    # TODO: uncomment when using SI
+    # names = _PSSearch.get_psnames({'sec': '(TB|BO|TS|SI)', 'dis': 'PS'})
     names.extend(_PSSearch.get_psnames({'sec': 'LI'}))
     return names
 
 
-def get_manames_from_same_udc(maname):
-    """Return manames that are controled by same udc as maname."""
-    psname = _MASearch.conv_maname_2_psnames(maname)[0]
-    udc = _PSSearch.conv_psname_2_udc(psname)
-    bsmp_list = _PSSearch.conv_udc_2_bsmps(udc)
-    psnames = [bsmp[0] for bsmp in bsmp_list]
-    manames = set([_MASearch.conv_psname_2_psmaname(name) for name in psnames])
-    return manames
+def get_psnames_from_same_udc(psname):
+    """Return psnames that are controled by same udc as psname."""
+    psname = _PVName(psname)
+    if psname.dev == 'B':
+        psnames = _PSSearch.get_psnames({'sec': psname.sec, 'dev': 'B'})
+    else:
+        udc = _PSSearch.conv_psname_2_udc(psname)
+        bsmp_list = _PSSearch.conv_udc_2_bsmps(udc)
+        psnames = [bsmp[0] for bsmp in bsmp_list]
+    return psnames
 
 
-def get_sections(manames):
+def get_sections(psnames):
     sections = list()
     for s in ['LI', 'TB', 'BO', 'TS', 'SI']:
-        if _Filter.process_filters(manames, filters={'sec': s}):
+        if _Filter.process_filters(psnames, filters={'sec': s}):
             sections.append(s)
     return sections
 
