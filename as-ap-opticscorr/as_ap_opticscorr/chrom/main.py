@@ -146,7 +146,7 @@ class App:
 
         # Connect to Timing
         if self._ACC == 'SI':
-            SEXTS_TRIG = 'SI-Glob:TI-Sexts'
+            SEXTS_TRIG = 'SI-Glob:TI-Mags-Sexts'
             self._timing_sexts_state_sel = _epics.PV(
                 self._PREFIX_VACA+SEXTS_TRIG+':State-Sel')
             self._timing_sexts_state_sts = _epics.PV(
