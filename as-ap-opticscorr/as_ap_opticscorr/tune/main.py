@@ -148,7 +148,7 @@ class App:
 
         # Connect to Timing
         if self._ACC == 'SI':
-            QUADS_TRIG = 'SI-Glob:TI-Quads'
+            QUADS_TRIG = 'SI-Glob:TI-Mags-Quads'
             self._timing_quads_state_sel = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':State-Sel')
             self._timing_quads_state_sts = _epics.PV(
