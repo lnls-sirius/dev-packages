@@ -1,0 +1,22 @@
+[Unit]
+Description=Soft IOC for SI Trims and Skew Quadrupoles Subsections 07M1, 07M2
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-trims-qs-m12-ia07'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-trims-qs-m12-ia07
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+SI-07M2:PS-QFP \
+SI-07M2:PS-QDP1 \
+SI-07M2:PS-QDP2 \
+SI-08M1:PS-QFB \
+SI-08M1:PS-QDB1 \
+SI-08M1:PS-QDB2 \
+SI-07M1:PS-QS \
+SI-07M2:PS-QS

@@ -1,0 +1,21 @@
+[Unit]
+Description=Soft IOC for SI Correctors Subsections 09C2, 09M1, 09M2
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-correctors-c2m12-ia09'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-correctors-c2m12-ia09
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+SI-09C2:MA-CH \
+SI-09C2:MA-CV-1 \
+SI-09C2:MA-CV-2 \
+SI-09M1:MA-CH \
+SI-09M1:MA-CV \
+SI-09M2:MA-CH \
+SI-09M2:MA-CV
