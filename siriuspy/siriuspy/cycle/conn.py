@@ -35,11 +35,12 @@ class Timing:
     DEFAULT_POLARITY = _TIConst.TrigPol.Normal
 
     _trigger_list = [
-        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags', 'BO-Glob:TI-Corrs',
+        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
         'TS-Glob:TI-Mags']
     # TODO: uncomment when using SI
-    #     'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
-    #     'SI-Glob:TI-Sexts', 'SI-Glob:TI-Skews', 'SI-Glob:TI-Corrs']
+    #     'SI-Glob:TI-Mags-Bends', 'SI-Glob:TI-Mags-Quads',
+    #     'SI-Glob:TI-Mags-Sexts', 'SI-Glob:TI-Mags-Skews',
+    #     'SI-Glob:TI-Mags-Corrs']
 
     _pvs = dict()
     properties = dict()
