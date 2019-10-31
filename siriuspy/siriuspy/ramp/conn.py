@@ -56,8 +56,8 @@ class ConnTI(_EpicsPropsList):
         EvtStudy = EVG + ':Study'
 
         # Trigger prefixes
-        TrgMags = 'BO-Glob:TI-Mags'
-        TrgCorrs = 'BO-Glob:TI-Corrs'
+        TrgMags = 'BO-Glob:TI-Mags-Fams'
+        TrgCorrs = 'BO-Glob:TI-Mags-Corrs'
         TrgLLRFRmp = 'BO-Glob:TI-LLRF-Rmp'
         TrgEGunSglBun = 'LI-01:TI-EGun-SglBun'
         TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
