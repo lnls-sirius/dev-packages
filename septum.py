@@ -8,12 +8,7 @@ class Septum:
 
     def __init__(self, name):
         self._name = SiriusPVName(name)
-        tidev = self._name.dev
-        tisub = self._name.sub
-        if tidev.endswith(('F', 'G')):
-            tidev = tidev[:-1]
-            tisub = 'Fam'
-        tiname = self._name.substitute(dis='TI', dev=tidev, sub=tisub)
+        tiname = self._name.substitute(dis='TI')
         self._dly_sp = PV(tiname.substitute(propty='Delay-SP'))
         self._dly_rb = PV(tiname.substitute(propty='Delay-RB'))
         self._volt_sp = PV(self._name.substitute(propty='Voltage-SP'))
