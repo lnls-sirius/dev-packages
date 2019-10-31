@@ -356,15 +356,6 @@ _pvs_timing = [
     ['BO-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-Mags-Corrs:Delay-SP', 0, 0.0],  # us
-    ['BO-Glob:TI-Mags-Corrs:Duration-SP', 0, 0.0],  # us
-    ['BO-Glob:TI-Mags-Corrs:NrPulses-SP', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:Src-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
-    ['BO-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
-
     ['BO-Glob:TI-LLRF-PsMtn:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
@@ -382,6 +373,15 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-LLRF-Rmp:LowLvlLock-Sel', 0, 0.0],
+
+    ['BO-Glob:TI-Mags-Corrs:Delay-SP', 0, 0.0],  # us
+    ['BO-Glob:TI-Mags-Corrs:Duration-SP', 0, 0.0],  # us
+    ['BO-Glob:TI-Mags-Corrs:NrPulses-SP', 0, 0.0],
+    ['BO-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
+    ['BO-Glob:TI-Mags-Corrs:Src-Sel', 0, 0.0],
+    ['BO-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
+    ['BO-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-Mags-Fams:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-Mags-Fams:Duration-SP', 0, 0.0],  # us
