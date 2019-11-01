@@ -17,17 +17,19 @@ class MeasEnergy(_BaseClass):
 
     def __init__(self, callback=None):
         """."""
-        prof = 'LA-BI:PRF4'
         self.energy_calculator = CalcEnergy()
         self.image_processor = ProcessImage()
-        self.image_processor.readingorder = self.image_processor.CLIKE
-        self._profile = prof
-        self._coefx = _PV(prof+':X:Gauss:Coef', callback=self._update_coefx)
-        self._coefy = _PV(prof+':Y:Gauss:Coef', callback=self._update_coefy)
+        self._profile = self.DEFAULT_PROFILE
+        self._coefx = _PV(
+            self.DEFAULT_PROFILE+':X:Gauss:Coef', callback=self._update_coefx)
+        self._coefy = _PV(
+            self.DEFAULT_PROFILE+':Y:Gauss:Coef', callback=self._update_coefy)
         self._width_source = _PV(
-            prof + ':ROI:MaxSizeX_RBV', callback=self._update_width)
-        self._image_source = _PV(prof + ':RAW:ArrayData', auto_monitor=False)
-        self._current_source = _PV(CalcEnergy.DEFAULT_SPECT + ':rdi')
+            self.DEFAULT_PROFILE + ':ROI:MaxSizeX_RBV',
+            callback=self._update_width)
+        self._image_source = _PV(
+            self.DEFAULT_PROFILE + ':RAW:ArrayData', auto_monitor=False)
+        self._current_source = _PV(self.DEFAULT_SPECT + ':rdi')
         super().__init__(callback=callback)
         self._thread = _Repeater(0.5, self.meas_energy, niter=0)
         self._thread.pause()
@@ -36,13 +38,13 @@ class MeasEnergy(_BaseClass):
     def get_map2write(self):
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.energy_calculator.get_map2write())
-        dic_.update({'MeasureCtrl-Cmd': _part(self.write, 'measuring')})
+        dic_.update({'MeasureCtrl-Sel': _part(self.write, 'measuring')})
         return dic_
 
     def get_map2read(self):
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.energy_calculator.get_map2read())
-        dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
+        dic_.update({'MeasureCtrl-Sts': _part(self.read, 'measuring')})
         return dic_
 
     def start(self):

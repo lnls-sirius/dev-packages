@@ -7,33 +7,40 @@ from scipy.optimize import curve_fit
 from siriuspy.search import PSSearch as _PSS
 import mathphys.constants as _consts
 from siriuspy.factory import NormalizerFactory as _NormFact
-from siriuspy.csdevice.energymeas import Const as _Const
 from .base import BaseClass as _BaseClass
 
 C = _consts.light_speed
 E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
 
 
-class ProcessImage(_BaseClass, _Const):
+class ProcessImage(_BaseClass):
 
     def __init__(self):
         super().__init__()
         self._roi_autocenter = True
         self._roi_cen = [0, 0]
-        self._roi_size = [500, 500]
+        self._roi_size = [self.DEFAULT_ROI_SIZE, self.DEFAULT_ROI_SIZE]
         self._roi_start = [0, 0]
         self._roi_end = [0, 0]
-        self._roi_axis = [_np.array([], dtype=int), _np.array([], dtype=int)]
-        self._roi_proj = [_np.array([], dtype=int), _np.array([], dtype=int)]
-        self._roi_gauss = [_np.array([], dtype=int), _np.array([], dtype=int)]
-        self._background = _np.zeros((1024, 1024), dtype=int)
+        self._roi_axis = [
+            _np.arange(self.DEFAULT_ROI_SIZE, dtype=int),
+            _np.arange(self.DEFAULT_ROI_SIZE, dtype=int)]
+        self._roi_proj = [
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int),
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int)]
+        self._roi_gauss = [
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
+        self._background = _np.zeros(
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
         self._background_use = False
         self._crop = [0, 255]
         self._crop_use = False
         self._width = 0
         self._reading_order = self.ReadingOrder.CLike
         self._method = self.Method.GaussFit
-        self._image = _np.zeros((1024, 1024), dtype=int)
+        self._image = _np.zeros(
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
@@ -109,7 +116,7 @@ class ProcessImage(_BaseClass, _Const):
 
     @property
     def image(self):
-        return self._image.copy()
+        return self._image.copy().flatten()
 
     @image.setter
     def image(self, val):
@@ -125,6 +132,7 @@ class ProcessImage(_BaseClass, _Const):
     @imagewidth.setter
     def imagewidth(self, val):
         if val is None or int(val) == self._width:
+            _log.error('could not set width')
             return
         self._width = int(val)
         img = self._adjust_image_dimensions(self._background)
@@ -281,11 +289,12 @@ class ProcessImage(_BaseClass, _Const):
 
     @property
     def background(self):
-        return self._background.copy()
+        return self._background.copy().flatten()
 
     @background.setter
     def background(self, val):
-        if not isinstance(val, _np.ndarray) or len(val.shape) != 2:
+        if not isinstance(val, _np.ndarray):
+            _log.error('Could not set background')
             return
         img = self._adjust_image_dimensions(val.copy())
         if img is None:
@@ -341,6 +350,8 @@ class ProcessImage(_BaseClass, _Const):
     def px2mmscalex(self, val):
         if val != 0:
             self._conv_scale[self.Plane.X] = val
+        else:
+            _log.error('Could not set px2mmscaley')
 
     @property
     def px2mmscaley(self):
@@ -350,6 +361,8 @@ class ProcessImage(_BaseClass, _Const):
     def px2mmscaley(self, val):
         if val != 0:
             self._conv_scale[self.Plane.Y] = val
+        else:
+            _log.error('Could not set px2mmscaley')
 
     @property
     def px2mmautocenter(self):
@@ -366,10 +379,13 @@ class ProcessImage(_BaseClass, _Const):
     @px2mmcenterx.setter
     def px2mmcenterx(self, val):
         if self._conv_autocenter:
+            _log.error('Could not set px2mmcenterx')
             return
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._conv_cen[self.Plane.X] = val
+        else:
+            _log.error('Could not set px2mmcenterx')
 
     @property
     def px2mmcentery(self):
@@ -378,10 +394,13 @@ class ProcessImage(_BaseClass, _Const):
     @px2mmcentery.setter
     def px2mmcentery(self, val):
         if self._conv_autocenter:
+            _log.error('Could not set px2mmcentery')
             return
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._conv_cen[self.Plane.Y] = val
+        else:
+            _log.error('Could not set px2mmcentery')
 
     @property
     def beamcentermmx(self):
@@ -406,7 +425,7 @@ class ProcessImage(_BaseClass, _Const):
     def _process_image(self, image):
         image = self._adjust_image_dimensions(image.copy())
         if image is None:
-            _log.error('Image is not a numpy array')
+            _log.error('Image is None')
             return
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
@@ -441,7 +460,7 @@ class ProcessImage(_BaseClass, _Const):
     def _adjust_image_dimensions(self, img):
         if len(img.shape) == 1:
             if self._width <= 1:
-                _log.error('Width not set.')
+                _log.error('Invalid value for Width.')
                 return None
             try:
                 if self._reading_order == self.ReadingOrder.CLike:
@@ -526,16 +545,13 @@ class ProcessImage(_BaseClass, _Const):
         try:
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:
-            _log.error('Could not fig gaussian.')
+            _log.error('Could not fit gaussian.')
             pass
         return par
 
 
 class CalcEnergy(_BaseClass):
     """."""
-    DEFAULT_DISP = 1.087
-    DEFAULT_B_ANG = _np.pi/4
-    DEFAULT_SPECT = 'LI-01:PS-Spect'
 
     def __init__(self, dispersion=None, angle=None, spectrometer=None):
         """."""

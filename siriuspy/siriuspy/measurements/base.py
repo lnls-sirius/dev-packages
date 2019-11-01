@@ -1,7 +1,7 @@
 from siriuspy.callbacks import Callback
+from siriuspy.csdevice.energymeas import Const as _Const
 
-
-class BaseClass(Callback):
+class BaseClass(Callback, _Const):
 
     def __init__(self, callback=None):
         self._map2read = self.get_map2read()
