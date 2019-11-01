@@ -5,6 +5,8 @@ pending:
 2019-10-23 - [firmware]: disabling BUFSAMPLE from one ps applies to all in the same UDC?
 2019-10-23 - [firmware]: create new BSMP variable that mirrors last setpoint received by ARM
 2019-10-23 - [firmware]: change SYNC_PULSE and RESET_UDC bsmp functions so that they always return OK.
+2019-11-01 - [firmware]: P_PS_NAME: a) use byte 0x00 as terminator, b) use ',' to separate psnames.
+2019-11-01 - [firmware]: fix bug when F_SET_PARAM of uninitialized parameters (it is responsind with 0x53)
 
 2019-10-18 - [etherbridge]: write new optimized version.
 

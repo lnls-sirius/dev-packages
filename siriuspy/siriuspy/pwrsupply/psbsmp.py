@@ -147,7 +147,6 @@ class PSBSMP(_BSMP):
                          _bsmp.ConstPSBSMP.F_CLOSE_LOOP):
             _time.sleep(PSBSMP._sleep_turn_onoff)
 
-
         return response
 
     def read_group_of_variables(
@@ -173,6 +172,59 @@ class PSBSMP(_BSMP):
             group_id=group_id, timeout=timeout)
 
         return response
+
+    # --- pwrsupply parameters ---
+
+    def parameter_read(self, eid, index=0):
+        """Return power supply parameter."""
+        parameter = self.entities.parameters[eid]
+        count = parameter['count']
+        if eid == _bsmp.ConstPSBSMP.P_PS_NAME:
+            # PS_NAME parameter
+            value = _np.zeros(count)
+            for index in range(count):
+                _, value[index] = self.execute_function(
+                    func_id=_bsmp.ConstPSBSMP.F_GET_PARAM,
+                    input_val=(eid, index))
+                if value[index] == 0.0:
+                    # TODO: this end-of-string convention is
+                    # yet to be implemented!
+                    value = value[:index]
+                    break
+            value = ''.join([chr(int(v)) for v in value]).strip()
+        else:
+            # other parameters
+            ack, value = self.execute_function(
+                func_id=_bsmp.ConstPSBSMP.F_GET_PARAM,
+                input_val=(eid, index))
+            if ack == PSBSMP.CONST_BSMP.CMD_FUNCTION_ERROR:
+                # TODO: when a uninitialized parameter is requested
+                # the UDC responds with a function error.
+                # this is a temporary bug bypass while firmware is not
+                # updated!
+                value = float('NaN')
+
+        return value
+
+    def parameter_write(self, eid, value, index=0):
+        """Set power supply parameter."""
+        parameter = self.entities.parameters[eid]
+        count = parameter['count']
+        val = value[:count]
+        if eid == _bsmp.ConstPSBSMP.P_PS_NAME:
+            # PS_NAME parameter
+            value = _np.zeros(count)
+            value[:len(val)] = [float(ord(c)) for c in val]
+            for index, value_datum in enumerate(value):
+                self.execute_function(
+                    func_id=_bsmp.ConstPSBSMP.F_SET_PARAM,
+                    input_val=(eid, index, value_datum))
+        else:
+            self.execute_function(
+                func_id=_bsmp.ConstPSBSMP.F_SET_PARAM,
+                input_val=(eid, index, value))
+
+
 
     # --- wfmref methods ---
 
