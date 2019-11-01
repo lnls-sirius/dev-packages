@@ -1,13 +1,11 @@
 """Module implementing PRU elements."""
-import os as _os
 import sys as _sys
-import threading as _threading
-
 import time as _time
 
 import epics as _epics
-
 import PRUserial485 as _PRUserial485
+
+from siriuspy.csdevice import util as _util
 
 
 # check PRUserial485 package version
@@ -81,24 +79,23 @@ class PRUInterface:
 class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
-    def __init__(self, bbbname=None):
+    def __init__(self, bbbname=None, ip_address=None):
         """Init method."""
         # check if appropriate conditions are met
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
-        if bbbname is None:
-            self.version = __version1__
-            self.version_server = None
-            # check if process is running as root
-            if _os.geteuid() != 0:
-                _sys.exit('You need to have root privileges to use PRU')
-        else:
-            if _PRUserial485.__version__ != __version2__:
-                _sys.exit('PRUserial485 library if not ethernet client-server')
-            # tell PRUserial485_eth what BBB it should connect to
-            _PRUserial485.set_beaglebone_ip(bbbname)
-            self.version = __version2__
-            self.version_server = _PRUserial485.PRUserial485_version()
+
+        # if ip address was not given, get it from bbbname
+        if ip_address is None:
+            dev2ips = _util.get_device_2_ioc_ip()
+            ip_address = dev2ips[bbbname]
+
+        # set ip address of beaglebone
+        if _PRUserial485.__version__ != __version2__:
+            _sys.exit('PRUserial485 library if not ethernet client-server')
+        _PRUserial485.BBB_IP = ip_address
+        self.version = __version2__
+        self.version_server = _PRUserial485.PRUserial485_version()
 
         # print prulib version
         fmtstr = 'PRUserial485 lib version_{}: {}'
@@ -108,6 +105,9 @@ class PRU(PRUInterface):
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
+
+        # start communication threads
+        _PRUserial485.PRUserial485_threads_start()
 
         # start PRU library and set PRU to sync off
         baud_rate = 6
