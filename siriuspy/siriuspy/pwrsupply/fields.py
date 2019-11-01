@@ -1,7 +1,8 @@
-"""Define fields that map episc fields to bsmp entity ids.
+"""Define fields that map epics PVs to bsmp entity ids or calculation methods.
 
 These classes implement a common interface that exposes the `read` method.
 """
+import time as _time
 import re as _re
 
 from PRUserial485 import ConstSyncMode as _SYNC_MODE
@@ -9,7 +10,7 @@ from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 
 class Variable:
-    """Readable variable."""
+    """Readable BSMP variable."""
 
     def __init__(self, pru_controller, device_id, bsmp_id):
         """Init properties."""
@@ -24,8 +25,8 @@ class Variable:
         return value
 
 
-class PRUCurve:
-    """PRU Curve read."""
+class WfmRBCurve:
+    """BSMP PS WfmRB Curve read."""
 
     def __init__(self, pru_controller, device_id):
         """Init properties."""
@@ -34,58 +35,92 @@ class PRUCurve:
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.pru_curve_read(self.device_id)
+        data = self.pru_controller.wfm_rb_read(self.device_id)
         return data
 
 
-class PSCurve:
-    """BSMP PS Curve read."""
+class WfmRefMonCurve:
+    """BSMP PS WfmRef-Mon Curve read."""
 
-    def __init__(self, pru_controller, device_id, curve_id):
+    def __init__(self, pru_controller, device_id):
         """Init properties."""
         self.pru_controller = pru_controller
         self.device_id = device_id
-        self.curve_id = curve_id
 
     def read(self):
         """Read curve."""
-        data = self.pru_controller.read_ps_curves(self.device_id, self.curve_id)
-        data = data[self.device_id]
+        data = self.pru_controller.wfmref_mon_read(self.device_id)
         return data
+
+
+class WfmMonCurve:
+    """BSMP PS Wfm-Mon Curve read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        data = self.pru_controller.wfm_mon_read(self.device_id)
+        # print(self.device_id, data)
+        return data
+
+
+class WfmIndexCurve:
+    """BSMP PS WfmIndex Curve read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        data = self.pru_controller.wfmref_mon_index(self.device_id)
+        return data
+
+
+class WfmUpdateAutoSts:
+    """Wfm Update Auto Status."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read status."""
+        data = self.pru_controller.wfm_update_auto
+        return data
+
+
+class TimestampUpdate:
+    """Timestamp update read."""
+
+    def __init__(self, pru_controller, device_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+
+    def read(self):
+        """Read curve."""
+        timestamp = self.pru_controller.timestamp_update()
+        return timestamp
 
 
 class PRUProperty:
     """Read a PRU property."""
 
-    def __init__(self, pru_controller, property):
+    def __init__(self, pru_controller, pru_property):
         """Get pru controller and property name."""
         self.pru_controller = pru_controller
-        self.property = property
+        self.property = pru_property
 
     def read(self):
         """Read pru property."""
         return getattr(self.pru_controller, self.property)
-
-
-class PRUSyncMode:
-    """Return sync mode."""
-
-    _sync_mode = {
-        _SYNC_MODE.BRDCST: 1,
-        _SYNC_MODE.RMPEND: 2,
-        _SYNC_MODE.MIGEND: 3}
-
-    def __init__(self, pru_controller):
-        """Init."""
-        self.sync_status = PRUProperty(pru_controller, 'pru_sync_status')
-        self.sync_mode = PRUProperty(pru_controller, 'pru_sync_mode')
-
-    def read(self):
-        """Read."""
-        if not self.sync_status.read():
-            return 0
-        else:
-            return PRUSyncMode._sync_mode[self.sync_mode.read()]
 
 
 class PwrState:

@@ -1,13 +1,14 @@
 """Booster cycle data."""
 
 import numpy as _np
-from siriuspy.search import MASearch as _MASearch
+from siriuspy.csdevice.pwrsupply import \
+    DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
+    DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
+from siriuspy.search import PSSearch as _PSSearch
 
 # Constants
 
 DEFAULT_RAMP_DURATION = 490000  # [us]
-
-DEFAULT_RAMP_NRPULSES = 3920
 
 DEFAULT_RAMP_NRCYCLES = 16
 
@@ -15,11 +16,12 @@ DEFAULT_RAMP_TOTDURATION = DEFAULT_RAMP_DURATION * \
     DEFAULT_RAMP_NRCYCLES/1000000  # [s]
 
 DEFAULT_RAMP_AMPLITUDE = {  # A
-    'BO-Fam:MA-B':  1000,
-    'BO-Fam:MA-QD': 30,
-    'BO-Fam:MA-QF': 120,
-    'BO-Fam:MA-SD': 149,
-    'BO-Fam:MA-SF': 149}
+    'BO-Fam:PS-B-1': 1072,
+    'BO-Fam:PS-B-2': 1072,
+    'BO-Fam:PS-QD': 30,
+    'BO-Fam:PS-QF': 120,
+    'BO-Fam:PS-SD': 149,
+    'BO-Fam:PS-SF': 149}
 
 # Time x Current, units: [ms] x [A]
 BASE_RAMP_CURVE_ORIG = \
@@ -2074,30 +2076,37 @@ BASE_RAMP_CURVE_ORIG = \
          [490,                5.59746080853394e-06]])
 
 
-def bo_generate_base_waveform(nrpulses, duration):
+def bo_generate_base_waveform(nrpoints, duration):
     """Return base waveform of required number of points and duration."""
-    if nrpulses is None:
-        nrpulses = DEFAULT_RAMP_NRPULSES
+    if nrpoints is None:
+        raise Exception('Missing number of points to generate waveform!')
     if duration is None:
         duration = DEFAULT_RAMP_DURATION/1000
 
     t0 = BASE_RAMP_CURVE_ORIG[:, 0]
     w0 = BASE_RAMP_CURVE_ORIG[:, 1]
-    t = _np.linspace(0.0, duration, nrpulses)
+    t = _np.linspace(0.0, duration, nrpoints)
     w = _np.interp(t, t0, w0)
     return w
 
 
-def bo_get_default_waveform(maname, nrpulses=None, duration=None,
+def bo_get_default_waveform(psname, nrpoints=None, duration=None,
                             ramp_config=None):
     if ramp_config is None:
-        # Uses a template wfmdata scaled to maximum magnet ps current
-        w = bo_generate_base_waveform(nrpulses, duration)
-        if maname in DEFAULT_RAMP_AMPLITUDE:
-            # bypass upper_limit if maname in dictionary
-            amp = DEFAULT_RAMP_AMPLITUDE[maname]
+        # Uses a template wfmdata scaled to maximum ps current
+        if nrpoints is None:
+            if 'CH' in psname or 'CV' in psname or 'QS' in psname:
+                nrpoints = _DEF_WFMSIZE_FBP
+            else:
+                nrpoints = _DEF_WFMSIZE_OTHERS
+        w = bo_generate_base_waveform(nrpoints, duration)
+        if psname in DEFAULT_RAMP_AMPLITUDE:
+            # bypass upper_limit if psname in dictionary
+            amp = DEFAULT_RAMP_AMPLITUDE[psname]
         else:
-            amp = _MASearch.get_splims(maname, 'hilim')
+            pstype = _PSSearch.conv_psname_2_pstype(psname)
+            splims = _PSSearch.conv_pstype_2_splims(pstype)
+            amp = splims['HIHI']
         wfmdata = amp * w
     else:
         # load waveform from config database

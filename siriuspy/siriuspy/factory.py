@@ -19,24 +19,22 @@ class NormalizerFactory:
         madata = _MAData(maname)
         magfunc = madata.magfunc(madata.psnames[0])
         ma_class = _mutil.magnet_class(maname)
-        if 'dipole' == ma_class:
+        if ma_class == 'dipole':
             return _norm.DipoleNormalizer(maname, magnet_conv_sign=-1.0)
-        elif 'trim' == ma_class:
+        elif ma_class == 'trim':
             return _norm.TrimNormalizer(
                 maname, magnet_conv_sign=-1.0,
                 dipole_name=_mutil.get_section_dipole_name(maname),
                 family_name=_mutil.get_magnet_family_name(maname))
+        elif magfunc == 'corrector-horizontal':
+            return _norm.MagnetNormalizer(
+                maname, magnet_conv_sign=+1.0,
+                dipole_name=_mutil.get_section_dipole_name(maname))
+        elif 'TB' in maname and 'QD' in maname:
+            return _norm.MagnetNormalizer(
+                maname, magnet_conv_sign=+1.0,
+                dipole_name=_mutil.get_section_dipole_name(maname))
         else:
-            if magfunc in ('corrector-horizontal', 'quadrupole-skew'):
-                return _norm.MagnetNormalizer(
-                    maname, magnet_conv_sign=+1.0,
-                    dipole_name=_mutil.get_section_dipole_name(maname))
-            else:
-                if 'TB' in maname and 'QD' in maname:
-                    return _norm.MagnetNormalizer(
-                        maname, magnet_conv_sign=+1.0,
-                        dipole_name=_mutil.get_section_dipole_name(maname))
-                else:
-                    return _norm.MagnetNormalizer(
-                        maname, magnet_conv_sign=-1.0,
-                        dipole_name=_mutil.get_section_dipole_name(maname))
+            return _norm.MagnetNormalizer(
+                maname, magnet_conv_sign=-1.0,
+                dipole_name=_mutil.get_section_dipole_name(maname))

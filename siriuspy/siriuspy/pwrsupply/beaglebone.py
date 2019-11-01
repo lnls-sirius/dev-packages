@@ -1,4 +1,4 @@
-"""Beagle Bone implementation module."""
+"""BeagleBone Implementation Module."""
 # NOTE on current behaviour of BeagleBone:
 #
 # 01. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
@@ -8,14 +8,6 @@
 #     block serial comm. before it. This is evident in SlowRefSync mode, where
 #     reference values may change considerably between two setpoints.
 #     (see identical note in PRUController)
-
-# TODO: improve code
-#
-# 01. try to optimize it. At this point it is taking up 80% of BBB1 CPU time.
-#     from which ~20% comes from PRController. I think we could keep some kind
-#     of device state mirror in E2SController such that it does not have to
-#     invoke PRUController read at every device field update. This mirror state
-#     could be updated in one go.
 
 import time as _time
 from copy import deepcopy as _deepcopy
@@ -29,7 +21,7 @@ from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.fields import Constant as _Constant
 from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
 from siriuspy.pwrsupply.fields import Setpoints as _Setpoints
-from siriuspy.pwrsupply.model_factory import ModelFactory as _ModelFactory
+from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
 
 
 class BeagleBone:
@@ -53,6 +45,9 @@ class BeagleBone:
         # init mirror variables and last update timestamp dicts
         self._create_dev2mirr_dev2timestamp_dict()
 
+        # TODO: remove this once machine-application PR is merged!
+        self.start()
+
     @property
     def psnames(self):
         """PS names."""
@@ -62,18 +57,8 @@ class BeagleBone:
         """Update interval, as defined in PRUcontrollers."""
         if device_name is not None:
             return self._dev2interval[device_name]
-            # pruc = self._controllers[device_name].pru_controller
-            # f_max = max(pruc.params.FREQ_SCAN, pruc.params.FREQ_RAMP)
-        else:
-            # f_ramp = tuple(c.pru_controller.params.FREQ_RAMP for c in
-            #                self._controllers.values())
-            # f_scan = tuple(c.pru_controller.params.FREQ_SCAN for c in
-            #                self._controllers.values())
-            # f_max = max(f_ramp + f_scan)
-            m = self._dev2interval
-            intervals = [m[dev] for dev in m]
-            return max(intervals)
-        # return 1.0 / f_max
+        intervals = tuple(self._dev2interval.values())
+        return min(intervals)
 
     def read(self, device_name, field=None, force_update=False):
         """Read from device."""
@@ -81,9 +66,7 @@ class BeagleBone:
         last = self._dev2timestamp[device_name]
 
         # NOTE: update frequency with which class updates state mirror of
-        # power supply. Still testing...
-        # interval = self.update_interval(device_name)
-        # interval = 0.05  # [s]
+        # power supply.
         interval = self._dev2interval[device_name]
 
         # reads, if updating is needed
@@ -98,7 +81,8 @@ class BeagleBone:
         if field is None:
             return self._dev2mirror[device_name], updated
         else:
-            return self._dev2mirror[device_name][device_name+':'+field], updated
+            return \
+                self._dev2mirror[device_name][device_name+':'+field], updated
 
     def write(self, device_name, field, value):
         """Write to device."""
@@ -112,6 +96,15 @@ class BeagleBone:
         """Device database."""
         return self._databases[device_name]
 
+    def start(self):
+        """Start processing and scanning threads in controllers."""
+        # turn PRUcontroller processing on.
+        for controller in self._controllers.values():
+            controller.pru_controller.processing = True
+        # turn PRUcontroller scanning on.
+        for controller in self._controllers.values():
+            controller.pru_controller.scanning = True
+
     def _create_dev2mirr_dev2timestamp_dict(self):
         self._dev2timestamp = dict()
         self._dev2mirror = dict()
@@ -123,8 +116,9 @@ class BeagleBone:
         self._dev2interval = dict()
         for devname, controller in self._controllers.items():
             pruc = controller.pru_controller
-            f = max(pruc.params.FREQ_RAMP, pruc.params.FREQ_SCAN)
-            self._dev2interval[devname] = 1.0/f
+            self._dev2interval[devname] = 1.0/pruc.params.FREQ_SCAN
+
+
 
 class BBBFactory:
     """Build BeagleBones."""
@@ -132,6 +126,9 @@ class BBBFactory:
     @staticmethod
     def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
+        # get current timestamp
+        timestamp = _time.time()
+
         # Create PRU
         if eth:
             pru = _PRU(bbbname=bbbname)
@@ -141,47 +138,105 @@ class BBBFactory:
         # create DequeThread
         prucqueue = _DequeThread()
 
-        db = dict()
+        dbase = dict()
         controllers = dict()  # 1 controller per UDC
         databases = dict()
 
-        # bypass SCAN and RAMP frequencies.
-        try:
-            freqs = _PSSearch.conv_bbbname_2_freqs(bbbname)
-        except KeyError:
-            freqs = None
+        print('BEAGLEBONE: {}'.format(bbbname))
 
         udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
+
+        try:
+            freq = _PSSearch.conv_bbbname_2_freq(bbbname)
+        except KeyError:
+            freq = None
+
+        # TODO: temporary optimization: grouping of devices of the
+        # same psmodel.
+        if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
+                       'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
+                       'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
+                       'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
+                       'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
+                       ]:
+            print('Temporary pwrsupply grouping into one UDC for optimization!')
+            udc_list_orig = udc_list
+            udc_list = udc_list[:1]
+        elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
+                         'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
+                         ]:
+            print('Temporary pwrsupply grouping into one UDC for optimization!')
+            udc_list_orig = udc_list
+            udc_list = udc_list[:2]
+
         for udc in udc_list:
+
+            fstr = ('\nUDC:{:<25s}')
+            print(fstr.format(udc))
 
             # UDC-specific frequencies
             try:
-                freqs = _PSSearch.conv_bbbname_2_freqs(udc)
+                freq = _PSSearch.conv_bbbname_2_freq(udc)
             except KeyError:
                 pass
+            freq = 10.0 if freq is None else freq
 
-            devices = _PSSearch.conv_udc_2_bsmps(udc)
+            # TODO: temporary optimization: grouping of devices of the
+            # same psmodel.
+            if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
+                           'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
+                           'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
+                           'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
+                           'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
+                           ]:
+                devices = []
+                for _udc in udc_list_orig:
+                    devs = _PSSearch.conv_udc_2_bsmps(_udc)
+                    devices.extend(devs)
+            elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
+                             'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
+                             ]:
+                if udc in ['PA-RaPSE05:PS-UDC-BO1', 'PA-RaPSF05:PS-UDC-BO1']:
+                    # first UDC
+                    devices = _PSSearch.conv_udc_2_bsmps(udc)
+                else:
+                    # second UDC
+                    devices = []
+                    for _udc in udc_list_orig[1:]:
+                        devs = _PSSearch.conv_udc_2_bsmps(_udc)
+                        devices.extend(devs)
+            else:
+                devices = _PSSearch.conv_udc_2_bsmps(udc)
 
             # Check if there is only one psmodel
-            psmodel = BBBFactory.check_ps_models(devices)
+            psmodel_name = BBBFactory.check_ps_models(devices)
+
+            # Ignore regatron ps model
+            if psmodel_name == 'REGATRON_DCLink':
+                continue
 
             # Get out model object
-            model = _ModelFactory.create(psmodel)
+            psmodel = _PSModelFactory.create(psmodel_name)
 
             # Create pru controller for devices
-            ids = [device[1] for device in devices]
-            pru_controller = _PRUController(pru, prucqueue, model, ids,
-                                            freqs=freqs)
+            pru_controller = _PRUController(pru, prucqueue,
+                                            psmodel, devices,
+                                            processing=False,
+                                            scanning=False,
+                                            freq=freq)
 
             # Get model database
             database = _PSData(devices[0][0]).propty_database
+
+            # set bootime in epics database
+            database['TimestampBoot-Cte']['value'] = timestamp
 
             # Build setpoints
             setpoints = BBBFactory._build_setpoints_dict(devices, database)
 
             # Build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
-                db, model, setpoints,
+                dbase, psmodel, setpoints,
                 devices, database, pru_controller)
 
             # Build connections and device_ids dicts
@@ -191,13 +246,13 @@ class BBBFactory:
                 connections[dev_name] = Connection(dev_id, pru_controller)
 
             # Build controller
-            controller = model.controller(
+            controller = psmodel.controller(
                 fields, functions, connections, pru_controller, devices_ids)
             for dev_name, dev_id in devices:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
 
-        return BeagleBone(controllers, databases), db
+        return BeagleBone(controllers, databases), dbase
 
     @staticmethod
     def check_ps_models(devices):
@@ -208,7 +263,7 @@ class BBBFactory:
         """
         psmodels = {_PSData(psname).psmodel for psname, bsmp_id in devices}
         if len(psmodels) > 1:
-            raise ValueError('Too many psmodels')
+            raise ValueError('Different psmodels in the same UDC')
         return psmodels.pop()
 
     @staticmethod
@@ -236,7 +291,7 @@ class BBBFactory:
         return setpoints
 
     @staticmethod
-    def _build_fields_functions_dict(db, model, setpoints, devices,
+    def _build_fields_functions_dict(dbase, model, setpoints, devices,
                                      database, pru_controller):
         functions = dict()
         fields = dict()
@@ -246,17 +301,17 @@ class BBBFactory:
                     model, field, devices, setpoints, pru_controller))
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
-                    db[pvname] = _deepcopy(database[field])
+                    dbase[pvname] = _deepcopy(database[field])
                     fields[pvname] = setpoints[pvname]
             elif _Constant.match(field) and field != 'Version-Cte':
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
-                    db[name] = _deepcopy(database[field])
+                    dbase[name] = _deepcopy(database[field])
                     fields[name] = _Constant(database[field]['value'])
             else:
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
-                    db[name] = _deepcopy(database[field])
+                    dbase[name] = _deepcopy(database[field])
                     fields[name] = model.field(
                         dev_id, field, pru_controller)
         return fields, functions
@@ -264,11 +319,10 @@ class BBBFactory:
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        # if isinstance(model, (FBPFactory, FACFactory, FAPFactory)):
-        if field in ('OpMode-Sel', 'CycleType-Sel', 'CycleNrCycles-SP',
+        if field in ('CycleType-Sel', 'CycleNrCycles-SP',
                      'CycleFreq-SP', 'CycleAmpl-SP',
                      'CycleOffset-SP', 'CycleAuxParam-SP'):
-            # Make one object for all devices
+            # Make one object for all devices (UDC-shared)
             ids, sps = list(), list()
             for dev_name, dev_id in devices:
                 pvname = dev_name + ':' + field

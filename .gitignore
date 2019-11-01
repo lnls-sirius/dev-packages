@@ -4,6 +4,10 @@
 __pycache__/
 *.py[cod]
 
+# ipython notebooks
+
+siriuspy/siriuspy/pwrsupply/tests/.ipynb_checkpoints/
+
 # C extensions
 *.so
 

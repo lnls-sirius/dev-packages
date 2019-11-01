@@ -69,12 +69,20 @@ class HLTimeSearch:
         return dic_
 
     @classmethod
-    def get_ll_trigger_names(cls, hl_trigger=None, channels=None):
+    def get_ll_trigger_names(cls, hl_trigger):
         """Get Low Level trigger object names."""
         cls._init()
-        ret = cls._hl_triggers.get(hl_trigger)
-        chans = ret['channels'] if ret else (channels or list())
-        return sorted({_LLSearch.get_trigger_name(chan) for chan in chans})
+        return sorted(cls._hl2ll_trigs.get(hl_trigger, list()))
+
+    @classmethod
+    def get_hl_from_ll_triggers(cls, channel):
+        # channel = _LLSearch.get_channel_output_port_pvname(channel)
+        prpt = channel.propty
+        if prpt.startswith('OTP'):
+            val = int(prpt[3:]) - 12
+            newprpt = 'OUT'+str(val) if 0 <= val < 8 else 'OTP'+str(val+12)
+            channel = channel.substitute(propty=newprpt)
+        return cls._ll2hl_trigs.get(channel, '')
 
     @classmethod
     def get_hl_trigger_channels(cls, hl_trigger):
@@ -150,3 +158,13 @@ class HLTimeSearch:
                 hl_trigs[_PVName(k)] = vs
             cls._hl_triggers = hl_trigs
             cls._hl_events = _ast.literal_eval(text2)
+
+            hl2ll = dict()
+            for hlt, val in cls._hl_triggers.items():
+                chans = val['channels']
+                hl2ll[hlt] = {_LLSearch.get_trigger_name(c) for c in chans}
+            ll2hl = dict()
+            for k, vs in hl2ll.items():
+                ll2hl.update({v: k for v in vs})
+            cls._hl2ll_trigs = hl2ll
+            cls._ll2hl_trigs = ll2hl

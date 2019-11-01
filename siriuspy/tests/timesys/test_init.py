@@ -11,7 +11,6 @@ public_interface = (
     'read_data_from_local_excel_file',
     'util',
     'HLTrigger',
-    'get_evg_name',
     'get_ll_trigger',
     )
 

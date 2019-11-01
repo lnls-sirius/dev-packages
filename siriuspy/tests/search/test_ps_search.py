@@ -44,7 +44,7 @@ class TestPSSearch(TestCase):
         'conv_psname_2_bbbname',
         'conv_bbbname_2_psnames',
         'conv_bbbname_2_bsmps',
-        'conv_bbbname_2_freqs',
+        'conv_bbbname_2_freq',
         'conv_bbbname_2_udc',
         'conv_udc_2_bbbname',
         'conv_udc_2_bsmps',
@@ -288,16 +288,13 @@ class TestPSSearch(TestCase):
         self.assertIsInstance(bsmps[0][0], str)
         self.assertIsInstance(bsmps[0][1], int)
 
-    def test_conv_bbbname_2_freqs(self):
+    def test_conv_bbbname_2_freq(self):
         """Test conv_bbbname_2_freqs."""
-        self.assertRaises(TypeError, PSSearch.conv_bbbname_2_freqs)
+        self.assertRaises(TypeError, PSSearch.conv_bbbname_2_freq)
         self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
-        freqs = PSSearch.conv_bbbname_2_freqs(
+        freq = PSSearch.conv_bbbname_2_freq(
             bbbname='LA-RaCtrl:CO-PSCtrl-TB1')
-        self.assertIsInstance(freqs, tuple)
-        self.assertEqual(len(freqs), 2)
-        self.assertIsInstance(freqs[0], float)
-        self.assertIsInstance(freqs[1], float)
+        self.assertIsInstance(freq, float)
 
     def test_get_pstype_2_psnames_dict(self):
         """Test get_pstype_2_psnames_dict."""

@@ -110,6 +110,7 @@ class PSEpics(PSCommInterface):
     def _connected(self):
         for pv in self._pvs.values():
             if not pv.connected:
+                # print(pv.pvname)
                 return False
         return True
 
