@@ -144,11 +144,9 @@ class SOFBTLines(ConstTLines):
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc == 'SI' else self.NR_CHCV
 
-        if not self.isring:
-            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
-        else:
-            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
-            self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Corrs'
+        self.TRIGGER_ACQ_NAME = self.acc + '-Fam:TI-BPM'
+        if self.isring:
+            self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags-Corrs'
             self.EVT_COR_NAME = 'Orb' + self.acc
 
         self.EVT_ACQ_NAME = 'Dig' + self.acc
