@@ -9,13 +9,11 @@ from siriuspy.csdevice import util as _util
 
 
 # check PRUserial485 package version
-__version1__ = '1.3.3'  # PRUserial485
-__version2__ = '2.3.3'  # eth-PRUserial485
-__prulib_ver__ = _PRUserial485.__version__
-if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
-    # loaded library has an incompatible version!
-    _ERR_MSG = 'Invalid PRUserial485 library version! {} != {} or {}'.format(
-        _PRUserial485.__version__, __version1__, __version2__)
+__version_eth_required__ = '2.4.0'  # eth-PRUserial485
+__version_eth_implmntd__ = _PRUserial485.__version__
+if __version_eth_implmntd__ != __version_eth_required__:
+    _ERR_MSG = 'Incompatible PRUserial485 library versions: {} != {}'.format(
+        __version_eth_implmntd__, __version_eth_required__)
     raise ValueError(_ERR_MSG)
 
 
@@ -89,25 +87,19 @@ class PRU(PRUInterface):
         if ip_address is None:
             dev2ips = _util.get_device_2_ioc_ip()
             ip_address = dev2ips[bbbname]
+        print('BEAGLEBONE: ', bbbname)
+        print('IP_ADDRESS: ', ip_address)
 
-        # set ip address of beaglebone
-        if _PRUserial485.__version__ != __version2__:
-            _sys.exit('PRUserial485 library if not ethernet client-server')
-        _PRUserial485.BBB_IP = ip_address
-        self.version = __version2__
-        self.version_server = _PRUserial485.PRUserial485_version()
+        # start communication threads
+        _PRUserial485.PRUserial485_set_bbb_ip_address(ip_address)
+        _PRUserial485.PRUserial485_threads_start()
 
         # print prulib version
-        fmtstr = 'PRUserial485 lib version_{}: {}'
-        print(fmtstr.format('client', self.version))
-        print(fmtstr.format('server', self.version_server))
-        print()
+        fmtstr = 'PRUVERSION:  {} (eth)\n'
+        print(fmtstr.format(__version_eth_required__))
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
-
-        # start communication threads
-        _PRUserial485.PRUserial485_threads_start()
 
         # start PRU library and set PRU to sync off
         baud_rate = 6
