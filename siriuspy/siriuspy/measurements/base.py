@@ -1,10 +1,12 @@
+from siriuspy.callbacks import Callback
 
 
-class BaseClass:
+class BaseClass(Callback):
 
-    def __init__(self):
+    def __init__(self, callback=None):
         self._map2read = self.get_map2read()
         self._map2write = self.get_map2write()
+        super().__init__(callback=callback)
 
     def get_map2write(self):
         return dict()

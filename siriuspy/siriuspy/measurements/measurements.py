@@ -1,12 +1,10 @@
 
 from functools import partial as _part
+from threading import Event as _Event
 import numpy as _np
 from epics import PV as _PV
 import mathphys.constants as _consts
-from threading import Event as _Event
 from siriuspy.thread import RepeaterThread as _Repeater
-from siriuspy.search import PSSearch as _PSS
-from siriuspy.factory import NormalizerFactory as _NormFact
 from .calculations import CalcEnergy, ProcessImage
 from .base import BaseClass as _BaseClass
 
@@ -17,38 +15,35 @@ E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
 class MeasEnergy(_BaseClass):
     """."""
 
-    def __init__(self):
+    def __init__(self, callback=None):
         """."""
         prof = 'LA-BI:PRF4'
         self.energy_calculator = CalcEnergy()
         self.image_processor = ProcessImage()
         self.image_processor.readingorder = self.image_processor.CLIKE
         self._profile = prof
-        self._coefx = _PV(
-            prof+':X:Gauss:Coef', callback=_part(self._update_coef, pln='x'))
-        self._coefy = _PV(
-            prof+':Y:Gauss:Coef', callback=_part(self._update_coef, pln='y'))
+        self._coefx = _PV(prof+':X:Gauss:Coef', callback=self._update_coefx)
+        self._coefy = _PV(prof+':Y:Gauss:Coef', callback=self._update_coefy)
         self._width_source = _PV(
             prof + ':ROI:MaxSizeX_RBV', callback=self._update_width)
-        self._image_source = _PV(prof + ':RAW:ArrayData')
-        self._current_source = _PV('LA-CN:H1DPPS-1:seti')
-        self._thread = _Repeater(0.5, self._meas_energy, niter=0)
+        self._image_source = _PV(prof + ':RAW:ArrayData', auto_monitor=False)
+        self._current_source = _PV(CalcEnergy.DEFAULT_SPECT + ':rdi')
+        super().__init__(callback=callback)
+        self._thread = _Repeater(0.5, self.meas_energy, niter=0)
         self._thread.pause()
         self._thread.start()
 
     def get_map2write(self):
-        database = dict()
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.energy_calculator.get_map2write())
         dic_.update({'MeasureCtrl-Cmd': _part(self.write, 'measuring')})
-        return {k: v for k, v in dic_.items() if k in database}
+        return dic_
 
     def get_map2read(self):
-        database = dict()
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.energy_calculator.get_map2read())
         dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
-        return {k: v for k, v in dic_.items() if k in database}
+        return dic_
 
     def start(self):
         """."""
@@ -57,6 +52,18 @@ class MeasEnergy(_BaseClass):
     def stop(self):
         """."""
         self._thread.pause()
+
+    @property
+    def connected(self):
+        conn = self._coefx.connected
+        conn &= self._coefy.connected
+        conn &= self._width_source.connected
+        conn &= self._image_source.connected
+        return conn
+
+    @property
+    def current(self):
+        return self._current_source.get()
 
     @property
     def rate(self):
@@ -77,24 +84,29 @@ class MeasEnergy(_BaseClass):
     def measuring(self, val):
         return self.start() if val else self.stop()
 
-    def _update_coef(self, _, val, pln='x', **kwargs):
-        if val is None:
+    def _update_coefx(self, pvname, value, **kwargs):
+        if value is None:
             return
-        if pln.startswith('x'):
-            self.image_processor.pxl2mmscalex = val
-        elif pln.startswith('y'):
-            self.image_processor.pxl2mmscaley = val
+        self.image_processor.pxl2mmscalex = value
 
-    def _update_width(self, _, val, **kwargs):
-        if isinstance(val, (float, int)):
-            self.image_processor.imagewidth = int(val)
+    def _update_coefy(self, pvname, value, **kwargs):
+        if value is None:
+            return
+        self.image_processor.pxl2mmscaley = value
 
-    def _meas_energy(self):
+    def _update_width(self, pvname, value, **kwargs):
+        if isinstance(value, (float, int)):
+            self.image_processor.imagewidth = int(value)
+
+    def meas_energy(self):
         self.image_processor.image = self._image_source.get()
         self.energy_calculator.set_data(
-            self._current_source.get(),
+            self.current,
             self.image_processor.beamcentermmx,
             self.image_processor.beamsizemmx)
+        for k, func in self._map2read.items():
+            if k.endswith(('-RB', '-Mon', '-Cte')):
+                self.run_callbacks(k, func())
 
 
 class CalcEmmitance(_BaseClass):
@@ -144,10 +156,10 @@ class CalcEmmitance(_BaseClass):
                 prof+':ROI:MaxSizeX_RBV', callback=self._update_width)
             self._coefx = _PV(
                 prof+':X:Gauss:Coef',
-                callback=_part(self._update_coef, pln='x'))
+                callback=self._update_coefx, pln='x')
             self._coefy = _PV(
                 prof+':Y:Gauss:Coef',
-                callback=_part(self._update_coef, pln='y'))
+                callback=self._update_coefy)
             self.quad_I_sp = _PV('LI-01:PS-QF3:seti')
             self.quad_I_rb = _PV('LI-01:PS-QF3:rdi')
         elif self._place.lower().startswith('tb'):
@@ -156,25 +168,27 @@ class CalcEmmitance(_BaseClass):
                 'TB-02:DI-Scrn-2:ImgMaxWidth-Cte', callback=self._update_width)
             self._coefx = _PV(
                 'TB-02:DI-ScrnCam-2:ImgScaleFactorX-RB',
-                callback=_part(self._update_coef, pln='x'))
+                callback=self._update_coefx)
             self._coefy = _PV(
                 'TB-02:DI-ScrnCam-2:ImgScaleFactorY-RB',
-                callback=_part(self._update_coef, pln='y'))
+                callback=self._update_coefy)
             quad = self.emittance_calculator.quadname
             self.quad_I_sp = _PV(quad + ':Current-SP')
             self.quad_I_rb = _PV(quad + ':Current-RB')
 
-    def _update_coef(self, _, val, pln='x', **kwargs):
-        if val is None:
+    def _update_coefx(self, pvname, value, **kwargs):
+        if value is None:
             return
-        if pln.startswith('x'):
-            self.image_processor.pxl2mmscalex = val
-        elif pln.startswith('y'):
-            self.image_processor.pxl2mmscaley = val
+        self.image_processor.pxl2mmscalex = value
 
-    def _update_width(self, _, val, **kwargs):
-        if isinstance(val, (float, int)):
-            self.image_processor.imagewidth = int(val)
+    def _update_coefy(self, pvname, value, **kwargs):
+        if value is None:
+            return
+        self.image_processor.pxl2mmscaley = value
+
+    def _update_width(self, pvname, value, **kwargs):
+        if isinstance(value, (float, int)):
+            self.image_processor.imagewidth = int(value)
 
     def _acquire_data(self):
         samples = self.spbox_samples.value()
@@ -183,7 +197,7 @@ class CalcEmmitance(_BaseClass):
         I_end = self.spbox_I_end.value()
 
         pl = 'y' if self.cbbox_plane.currentIndex() else 'x'
-        curr_list = np.linspace(I_ini, I_end, nsteps)
+        curr_list = _np.linspace(I_ini, I_end, nsteps)
         sigma = []
         I_meas = []
         for i, I in enumerate(curr_list):

@@ -1,36 +1,26 @@
 
 from functools import partial as _part
 from copy import deepcopy as _dcopy
+import logging as _log
 import numpy as _np
 from scipy.optimize import curve_fit
 from siriuspy.search import PSSearch as _PSS
 import mathphys.constants as _consts
 from siriuspy.factory import NormalizerFactory as _NormFact
+from siriuspy.csdevice.energymeas import Const as _Const
 from .base import BaseClass as _BaseClass
 
 C = _consts.light_speed
 E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
 
 
-class ProcessImage(_BaseClass):
-    X = 1
-    Y = 0
-    AMP = 0
-    CEN = 1
-    SIG = 2
-    OFF = 3
-    LOW = 0
-    HIGH = 1
-    MOMENTS = 0
-    GAUSS = 1
-    CLIKE = 0
-    FORTRANLIKE = 1
+class ProcessImage(_BaseClass, _Const):
 
     def __init__(self):
         super().__init__()
         self._roi_autocenter = True
         self._roi_cen = [0, 0]
-        self._roi_size = [0, 0]
+        self._roi_size = [500, 500]
         self._roi_start = [0, 0]
         self._roi_end = [0, 0]
         self._roi_axis = [_np.array([], dtype=int), _np.array([], dtype=int)]
@@ -41,16 +31,13 @@ class ProcessImage(_BaseClass):
         self._crop = [0, 255]
         self._crop_use = False
         self._width = 0
-        self._reading_order = self.CLIKE
-        self._method = self.GAUSS
-        self._image_raw = _np.zeros((1024, 1024), dtype=int)
-        self._image_proc = _np.zeros((1024, 1024), dtype=int)
+        self._reading_order = self.ReadingOrder.CLike
+        self._method = self.Method.GaussFit
+        self._image = _np.zeros((1024, 1024), dtype=int)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
-        self.roisizex = 500
-        self.roisizey = 500
 
     def get_map2write(self):
         return {
@@ -122,14 +109,14 @@ class ProcessImage(_BaseClass):
 
     @property
     def image(self):
-        return self._image_proc.copy()
+        return self._image.copy()
 
     @image.setter
     def image(self, val):
         if not isinstance(val, _np.ndarray):
+            _log.error('Image is not a numpy array')
             return
-        self._image_raw = val.copy()
-        self._process_image()
+        self._process_image(val)
 
     @property
     def imagewidth(self):
@@ -143,7 +130,8 @@ class ProcessImage(_BaseClass):
         img = self._adjust_image_dimensions(self._background)
         if img is not None:
             self._background = img
-        self._process_image()
+        else:
+            _log.error('could not set background')
 
     @property
     def readingorder(self):
@@ -151,32 +139,28 @@ class ProcessImage(_BaseClass):
 
     @readingorder.setter
     def readingorder(self, val):
-        self._reading_order = self.CLIKE
-        if val == self.FORTRANLIKE:
-            self._reading_order = val
-        self._process_image()
+        if int(val) in self.ReadingOrder:
+            self._reading_order = int(val)
 
     @property
     def imagecroplow(self):
-        return self._crop[self.LOW]
+        return self._crop[self.CropIdx.Low]
 
     @imagecroplow.setter
     def imagecroplow(self, val):
         val = int(val)
-        if 0 <= val < self._crop[self.HIGH]:
-            self._crop[self.LOW] = val
-            self._process_image()
+        if 0 <= val < self._crop[self.CropIdx.High]:
+            self._crop[self.CropIdx.Low] = val
 
     @property
     def imagecrophigh(self):
-        return self._crop[self.HIGH]
+        return self._crop[self.CropIdx.High]
 
     @imagecrophigh.setter
     def imagecrophigh(self, val):
         val = int(val)
-        if self._crop[self.LOW] < val:
-            self._crop[self.HIGH] = val
-            self._process_image()
+        if self._crop[self.CropIdx.Low] < val:
+            self._crop[self.CropIdx.High] = val
 
     @property
     def useimagecrop(self):
@@ -185,15 +169,14 @@ class ProcessImage(_BaseClass):
     @useimagecrop.setter
     def useimagecrop(self, val):
         self._crop_use = bool(val)
-        self._process_image()
 
     @property
     def imagesizex(self):
-        return self._image_raw.shape[self.X]
+        return self._image.shape[self.Plane.X]
 
     @property
     def imagesizey(self):
-        return self._image_raw.shape[self.Y]
+        return self._image.shape[self.Plane.Y]
 
     @property
     def method(self):
@@ -201,8 +184,8 @@ class ProcessImage(_BaseClass):
 
     @method.setter
     def method(self, val):
-        self._method = self.MOMENTS if int(val) == self.MOMENTS else self.GAUSS
-        self._process_image()
+        if int(val) in self.Method:
+            self._method = int(val)
 
     @property
     def roiautocenter(self):
@@ -211,95 +194,90 @@ class ProcessImage(_BaseClass):
     @roiautocenter.setter
     def roiautocenter(self, val):
         self._roi_autocenter = bool(val)
-        self._process_image()
 
     @property
     def roicenterx(self):
-        return self._roi_cen[self.X]
+        return self._roi_cen[self.Plane.X]
 
     @roicenterx.setter
     def roicenterx(self, val):
         if self._roi_autocenter:
             return
         val = int(val)
-        if 0 <= val < self._image_raw.shape[self.X]:
-            self._roi_cen[self.X] = val
-            self._process_image()
+        if 0 <= val < self._image.shape[self.Plane.X]:
+            self._roi_cen[self.Plane.X] = val
 
     @property
     def roicentery(self):
-        return self._roi_cen[self.Y]
+        return self._roi_cen[self.Plane.Y]
 
     @roicentery.setter
     def roicentery(self, val):
         if self._roi_autocenter:
             return
         val = int(val)
-        if 0 <= val < self._image_raw.shape[self.Y]:
-            self._roi_cen[self.Y] = val
-            self._process_image()
+        if 0 <= val < self._image.shape[self.Plane.Y]:
+            self._roi_cen[self.Plane.Y] = val
 
     @property
     def roisizex(self):
-        return self._roi_size[self.X]
+        return self._roi_size[self.Plane.X]
 
     @roisizex.setter
     def roisizex(self, val):
         val = int(val)
-        if 1 <= val < self._image_raw.shape[self.X]:
-            self._roi_size[self.X] = val
-            self._process_image()
+        if 1 <= val < self._image.shape[self.Plane.X]:
+            self._roi_size[self.Plane.X] = val
 
     @property
     def roisizey(self):
-        return self._roi_size[self.Y]
+        return self._roi_size[self.Plane.Y]
 
     @roisizey.setter
     def roisizey(self, val):
         val = int(val)
-        if 1 <= val < self._image_raw.shape[self.Y]:
-            self._roi_size[self.Y] = val
-            self._process_image()
+        if 1 <= val < self._image.shape[self.Plane.Y]:
+            self._roi_size[self.Plane.Y] = val
 
     @property
     def roistartx(self):
-        return self._roi_start[self.X]
+        return self._roi_start[self.Plane.X]
 
     @property
     def roistarty(self):
-        return self._roi_start[self.Y]
+        return self._roi_start[self.Plane.Y]
 
     @property
     def roiendx(self):
-        return self._roi_end[self.X]
+        return self._roi_end[self.Plane.X]
 
     @property
     def roiendy(self):
-        return self._roi_end[self.Y]
+        return self._roi_end[self.Plane.Y]
 
     @property
     def roiprojx(self):
-        return self._roi_proj[self.X].copy()
+        return self._roi_proj[self.Plane.X].copy()
 
     @property
     def roiprojy(self):
-        return self._roi_proj[self.Y].copy()
+        return self._roi_proj[self.Plane.Y].copy()
 
     @property
     def roiaxisx(self):
-        return self._roi_axis[self.X].copy()
+        return self._roi_axis[self.Plane.X].copy()
 
     @property
     def roiaxisy(self):
-        return self._roi_axis[self.Y].copy()
+        return self._roi_axis[self.Plane.Y].copy()
 
     @property
     def roigaussx(self):
-        return self._roi_gauss[self.X].copy()
+        return self._roi_gauss[self.Plane.X].copy()
 
     @property
     def roigaussy(self):
-        return self._roi_gauss[self.Y].copy()
+        return self._roi_gauss[self.Plane.Y].copy()
 
     @property
     def background(self):
@@ -311,9 +289,9 @@ class ProcessImage(_BaseClass):
             return
         img = self._adjust_image_dimensions(val.copy())
         if img is None:
+            _log.error('Could not set background')
             return
         self._background = img
-        self._process_image()
 
     @property
     def usebackground(self):
@@ -322,57 +300,56 @@ class ProcessImage(_BaseClass):
     @usebackground.setter
     def usebackground(self, val):
         self._background_use = bool(val)
-        self._process_image()
 
     @property
     def beamcenterx(self):
-        return self._beam_params[self.X][self.CEN]
+        return self._beam_params[self.Plane.X][self.FitParams.Cen]
 
     @property
     def beamcentery(self):
-        return self._beam_params[self.Y][self.CEN]
+        return self._beam_params[self.Plane.Y][self.FitParams.Cen]
 
     @property
     def beamsizex(self):
-        return self._beam_params[self.X][self.SIG]
+        return self._beam_params[self.Plane.X][self.FitParams.Sig]
 
     @property
     def beamsizey(self):
-        return self._beam_params[self.Y][self.SIG]
+        return self._beam_params[self.Plane.Y][self.FitParams.Sig]
 
     @property
     def beamamplx(self):
-        return self._beam_params[self.X][self.AMP]
+        return self._beam_params[self.Plane.X][self.FitParams.Amp]
 
     @property
     def beamamply(self):
-        return self._beam_params[self.Y][self.AMP]
+        return self._beam_params[self.Plane.Y][self.FitParams.Amp]
 
     @property
     def bgoffsetx(self):
-        return self._beam_params[self.X][self.OFF]
+        return self._beam_params[self.Plane.X][self.FitParams.Off]
 
     @property
     def bgoffsety(self):
-        return self._beam_params[self.Y][self.OFF]
+        return self._beam_params[self.Plane.Y][self.FitParams.Off]
 
     @property
     def px2mmscalex(self):
-        return self._conv_scale[self.X]
+        return self._conv_scale[self.Plane.X]
 
     @px2mmscalex.setter
     def px2mmscalex(self, val):
         if val != 0:
-            self._conv_scale[self.X] = val
+            self._conv_scale[self.Plane.X] = val
 
     @property
     def px2mmscaley(self):
-        return self._conv_scale[self.Y]
+        return self._conv_scale[self.Plane.Y]
 
     @px2mmscaley.setter
     def px2mmscaley(self, val):
         if val != 0:
-            self._conv_scale[self.Y] = val
+            self._conv_scale[self.Plane.Y] = val
 
     @property
     def px2mmautocenter(self):
@@ -384,51 +361,52 @@ class ProcessImage(_BaseClass):
 
     @property
     def px2mmcenterx(self):
-        return self._conv_cen[self.X]
+        return self._conv_cen[self.Plane.X]
 
     @px2mmcenterx.setter
     def px2mmcenterx(self, val):
         if self._conv_autocenter:
             return
         val = int(val)
-        if 0 <= val < self._image_raw.shape[self.Y]:
-            self._conv_cen[self.X] = val
+        if 0 <= val < self._image.shape[self.Plane.Y]:
+            self._conv_cen[self.Plane.X] = val
 
     @property
     def px2mmcentery(self):
-        return self._conv_cen[self.Y]
+        return self._conv_cen[self.Plane.Y]
 
     @px2mmcentery.setter
     def px2mmcentery(self, val):
         if self._conv_autocenter:
             return
         val = int(val)
-        if 0 <= val < self._image_raw.shape[self.Y]:
-            self._conv_cen[self.Y] = val
+        if 0 <= val < self._image.shape[self.Plane.Y]:
+            self._conv_cen[self.Plane.Y] = val
 
     @property
     def beamcentermmx(self):
-        val = self.beamcenterx - self._conv_cen[self.X]
-        val *= self._conv_scale[self.X]
+        val = self.beamcenterx - self._conv_cen[self.Plane.X]
+        val *= self._conv_scale[self.Plane.X]
         return val
 
     @property
     def beamcentermmy(self):
-        val = self.beamcentery - self._conv_cen[self.Y]
-        val *= self._conv_scale[self.Y]
+        val = self.beamcentery - self._conv_cen[self.Plane.Y]
+        val *= self._conv_scale[self.Plane.Y]
         return val
 
     @property
     def beamsizemmx(self):
-        return self.beamsizex * self._conv_scale[self.X]
+        return self.beamsizex * self._conv_scale[self.Plane.X]
 
     @property
     def beamsizemmy(self):
-        return self.beamsizey * self._conv_scale[self.Y]
+        return self.beamsizey * self._conv_scale[self.Plane.Y]
 
-    def _process_image(self):
-        image = self._adjust_image_dimensions(self._image_raw.copy())
+    def _process_image(self, image):
+        image = self._adjust_image_dimensions(image.copy())
         if image is None:
+            _log.error('Image is not a numpy array')
             return
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
@@ -438,74 +416,79 @@ class ProcessImage(_BaseClass):
             self._background_use = False
 
         if self._crop_use:
-            boo = image > self._crop[self.HIGH]
-            image[boo] = self._crop[self.HIGH]
-            boo = image < self._crop[self.LOW]
-            image[boo] = self._crop[self.LOW]
+            boo = image > self._crop[self.CropIdx.High]
+            image[boo] = self._crop[self.CropIdx.High]
+            boo = image < self._crop[self.CropIdx.Low]
+            image[boo] = self._crop[self.CropIdx.Low]
 
-        self._image_proc = image
+        self._image = image
         self._update_roi()
-        axisx = self._roi_axis[self.X]
-        projx = self._roi_proj[self.X]
-        axisy = self._roi_axis[self.Y]
-        projy = self._roi_proj[self.Y]
-        if self._method == self.MOMENTS:
+        axisx = self._roi_axis[self.Plane.X]
+        projx = self._roi_proj[self.Plane.X]
+        axisy = self._roi_axis[self.Plane.Y]
+        projy = self._roi_proj[self.Plane.Y]
+        if self._method == self.Method.Moments:
             parx = self._calc_moments(axisx, projx)
             pary = self._calc_moments(axisy, projy)
         else:
             parx = self._fit_gaussian(axisx, projx)
             pary = self._fit_gaussian(axisy, projy)
-        self._roi_gauss[self.X] = self._gaussian(axisx, *parx)
-        self._roi_gauss[self.Y] = self._gaussian(axisy, *pary)
-        self._beam_params[self.X] = parx
-        self._beam_params[self.Y] = pary
+        self._roi_gauss[self.Plane.X] = self._gaussian(axisx, *parx)
+        self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
+        self._beam_params[self.Plane.X] = parx
+        self._beam_params[self.Plane.Y] = pary
 
     def _adjust_image_dimensions(self, img):
         if len(img.shape) == 1:
             if self._width <= 1:
+                _log.error('Width not set.')
                 return None
             try:
-                if self._reading_order == self.CLIKE:
+                if self._reading_order == self.ReadingOrder.CLike:
                     img = img.reshape((-1, self._width), order='C')
                 else:
                     img = img.reshape((self._width, -1), order='F')
             except ValueError:
+                _log.error('Problem reshaping image.')
                 return None
         return img
 
     def _update_roi(self):
-        image = self._image_proc
+        image = self._image
         axis_x = _np.arange(image.shape[1])
         axis_y = _np.arange(image.shape[0])
 
         if self._conv_autocenter:
-            self._conv_cen[self.X] = image.shape[self.X]//2
-            self._conv_cen[self.Y] = image.shape[self.Y]//2
+            self._conv_cen[self.Plane.X] = image.shape[self.Plane.X]//2
+            self._conv_cen[self.Plane.Y] = image.shape[self.Plane.Y]//2
 
         if self._roi_autocenter:
             proj_x = image.sum(axis=0)
             proj_y = image.sum(axis=1)
             parx = self._calc_moments(axis_x, proj_x)
             pary = self._calc_moments(axis_y, proj_y)
-            self._roi_cen[self.X] = int(parx[self.CEN])
-            self._roi_cen[self.Y] = int(pary[self.CEN])
+            if not any(_np.isnan(parx+pary)):
+                self._roi_cen[self.Plane.X] = int(parx[self.FitParams.Cen])
+                self._roi_cen[self.Plane.Y] = int(pary[self.FitParams.Cen])
+            else:
+                _log.error('Some fitted params are NaN.')
 
-        strtx = self._roi_cen[self.X] + self._roi_size[self.X]
-        endx = self._roi_cen[self.X] - self._roi_size[self.X]
-        strty = self._roi_cen[self.Y] + self._roi_size[self.Y]
-        endy = self._roi_cen[self.Y] - self._roi_size[self.Y]
+        strtx = self._roi_cen[self.Plane.X] - self._roi_size[self.Plane.X]
+        endx = self._roi_cen[self.Plane.X] + self._roi_size[self.Plane.X]
+        strty = self._roi_cen[self.Plane.Y] - self._roi_size[self.Plane.Y]
+        endy = self._roi_cen[self.Plane.Y] + self._roi_size[self.Plane.Y]
         strtx, strty = max(strtx, 0), max(strty, 0)
         endx, endy = min(endx, image.shape[1]), min(endy, image.shape[0])
 
         image = image[strty:endy, strtx:endx]
-        self._roi_proj[self.X] = image.sum(axis=0)
-        self._roi_proj[self.Y] = image.sum(axis=1)
-        self._roi_axis[self.X] = axis_x[strtx:endx]
-        self._roi_axis[self.Y] = axis_y[strty:endy]
-        self._roi_start[self.X] = strtx
-        self._roi_start[self.Y] = strty
-        self._roi_end[self.X] = endx
-        self._roi_end[self.Y] = endy
+        self._roi_proj[self.Plane.X] = image.sum(axis=0)
+        self._roi_proj[self.Plane.Y] = image.sum(axis=1)
+        self._roi_axis[self.Plane.X] = axis_x[strtx:endx]
+        self._roi_axis[self.Plane.Y] = axis_y[strty:endy]
+        self._roi_start[self.Plane.X] = strtx
+        self._roi_start[self.Plane.Y] = strty
+        self._roi_end[self.Plane.X] = endx
+        self._roi_end[self.Plane.Y] = endy
 
     @classmethod
     def _calc_moments(cls, axis, proj):
@@ -518,31 +501,32 @@ class ProcessImage(_BaseClass):
         cen = _np.trapz(proj*axis, dx=dx)/Norm
         sec = _np.trapz(proj*axis*axis, dx=dx)/Norm
         std = _np.sqrt(sec - cen*cen)
-        ret[cls.AMP] = amp
-        ret[cls.CEN] = cen
-        ret[cls.SIG] = std
-        ret[cls.OFF] = y0
+        ret[cls.FitParams.Amp] = amp
+        ret[cls.FitParams.Cen] = cen
+        ret[cls.FitParams.Sig] = std
+        ret[cls.FitParams.Off] = y0
         return ret
 
     @classmethod
     def _gaussian(cls, x, *args):
-        mu = args[cls.CEN]
-        sigma = args[cls.SIG]
-        y0 = args[cls.OFF]
-        amp = args[cls.AMP]
+        mu = args[cls.FitParams.Cen]
+        sigma = args[cls.FitParams.Sig]
+        y0 = args[cls.FitParams.Off]
+        amp = args[cls.FitParams.Amp]
         x = x - mu
         return amp*_np.exp(-x*x/(2.0*sigma*sigma))+y0
 
     @classmethod
     def _fit_gaussian(cls, x, y, amp=None, mu=None, sigma=None, y0=None):
         par = cls._calc_moments(x, y)
-        par[cls.CEN] = mu or par[cls.CEN]
-        par[cls.SIG] = sigma or par[cls.SIG]
-        par[cls.OFF] = y0 or par[cls.OFF]
-        par[cls.AMP] = amp or par[cls.AMP]
+        par[cls.FitParams.Cen] = mu or par[cls.FitParams.Cen]
+        par[cls.FitParams.Sig] = sigma or par[cls.FitParams.Sig]
+        par[cls.FitParams.Off] = y0 or par[cls.FitParams.Off]
+        par[cls.FitParams.Amp] = amp or par[cls.FitParams.Amp]
         try:
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:
+            _log.error('Could not fig gaussian.')
             pass
         return par
 
@@ -703,7 +687,7 @@ class CalcEmmitance(_BaseClass):
         self._beamsize_fit = _np.array([], dtype=float)
         self._currents = _np.array([], dtype=float)
         self._quadstren = _np.array([], dtype=float)
-        self._plane = self.X
+        self._plane = self.Plane.X
         self._energy = 0.15
         self._emittance = 0.0
         self._beta = 0.0
@@ -751,20 +735,18 @@ class CalcEmmitance(_BaseClass):
 
     @plane.setter
     def plane(self, val):
-        if not isinstance(val, (int, float)):
-            return
-        self._plane = self.X if val == self.X else self.Y
+        if int(val) in self.Plane:
+            self._plane = int(val)
         self._perform_analysis()
 
     @property
     def plane_str(self):
-        return self._plane
+        return self.Plane._fields[self._plane]
 
     @plane_str.setter
     def plane_str(self, val):
-        if not isinstance(val, str):
-            return
-        self.plane = self.X if val.lower == 'x' else self.Y
+        if val in self.Plane._fields:
+            self.plane = self.Plane._fields.index(val)
 
     @property
     def quadname(self):
@@ -856,7 +838,7 @@ class CalcEmmitance(_BaseClass):
         KL = self._conv2kl.conv_current_2_strength(
             self._currents, strengths_dipole=self._energy)
         self._quadstren = KL/self._quadlen
-        if self._plane == self.Y:
+        if self._plane == self.Plane.Y:
             self._quadstren *= -1
 
     def _thin_lens_approx(self):
