@@ -1,16 +1,23 @@
 #!/usr/bin/env python-sirius
+"""."""
 
 from epics import PV
 
 
 class LiLLRF:
+    """."""
+
+    NAME_SHB = 'shb'
+    NAME_K1 = 'kly1'
+    NAME_K2 = 'kly2'
 
     def __init__(self, device_name):
-        if device_name == 'SHB':
+        """."""
+        if not set(self.NAME_SHB) - set(device_name.lower()):
             name = 'BUN1'
-        elif device_name == 'Klystron1':
+        elif not set(self.NAME_K1) - set(device_name.lower()):
             name = 'KLY1'
-        elif device_name == 'Klystron2':
+        elif not set(self.NAME_K2) - set(device_name.lower()):
             name = 'KLY2'
         else:
             raise Exception('Set device name: SHB, Klystron1 or Klystron2')
@@ -22,6 +29,7 @@ class LiLLRF:
 
     @property
     def amplitude(self):
+        """."""
         return self._amp_rb.value
 
     @amplitude.setter
@@ -30,6 +38,7 @@ class LiLLRF:
 
     @property
     def phase(self):
+        """."""
         return self._ph_rb.value
 
     @phase.setter
@@ -38,6 +47,7 @@ class LiLLRF:
 
     @property
     def connected(self):
+        """."""
         conn = self._amp_sp.connected
         conn &= self._amp_rb.connected
         conn &= self._ph_sp.connected
