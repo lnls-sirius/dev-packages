@@ -8,7 +8,5 @@ from .screen import Screen
 from .bpm import BPM
 from .ict import ICT
 from .ict import TranspEff
-from .egun import Bias
+from .egun import HVPS
 from .egun import Filament
-from .egun import LeakCurr
-from .egun import HighVoltage
