@@ -1,12 +1,19 @@
 #!/usr/bin/env python-sirius
+"""."""
 
+
+from collections import namedtuple
 from siriuspy.epics import PV
 from siriuspy.namesys import SiriusPVName
 
 
 class Septum:
+    """."""
+
+    STATUS = namedtuple('Status', 'Off On')(0, 1)
 
     def __init__(self, name):
+        """."""
         self._name = SiriusPVName(name)
         tidev = self._name.dev
         tisub = self._name.sub
@@ -23,10 +30,12 @@ class Septum:
 
     @property
     def name(self):
+        """."""
         return self._name
 
     @property
     def voltage(self):
+        """."""
         return self._volt_rb.value
 
     @voltage.setter
@@ -35,6 +44,7 @@ class Septum:
 
     @property
     def delay(self):
+        """."""
         return self._dly_rb.value
 
     @delay.setter
@@ -43,6 +53,7 @@ class Septum:
 
     @property
     def pulse(self):
+        """."""
         return self._pulse_rb.value
 
     @pulse.setter
@@ -50,13 +61,16 @@ class Septum:
         self._pulse_sp.value = value
 
     def turnon_pulse(self):
-        self.pulse = 1
+        """."""
+        self.pulse = self.STATUS.On
 
     def turnoff_pulse(self):
-        self.pulse = 0
+        """."""
+        self.pulse = self.STATUS.Off
 
     @property
     def connected(self):
+        """."""
         conn = self._volt_sp.connected
         conn &= self._volt_rb.connected
         conn &= self._dly_sp.connected

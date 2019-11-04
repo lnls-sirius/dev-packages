@@ -1,12 +1,15 @@
 #!/usr/bin/env python-sirius
+"""."""
 
 import time as _time
 from epics import PV
 
 
 class RF:
+    """."""
 
     def __init__(self):
+        """."""
         self._phase_sp = PV('BR-RF-DLLRF-01:PL:REF:S')
         self._phase_rb = PV('BR-RF-DLLRF-01:SL:INP:PHS')
         self._voltage_sp = PV('BR-RF-DLLRF-01:mV:AL:REF:S')
@@ -17,6 +20,7 @@ class RF:
 
     @property
     def connected(self):
+        """."""
         conn = self._phase_rb.connected
         conn &= self._phase_sp.connected
         conn &= self._voltage_sp.connected
@@ -28,10 +32,12 @@ class RF:
 
     @property
     def power(self):
+        """."""
         return self._power_mon.value
 
     @property
     def phase(self):
+        """."""
         return self._phase_rb.value
 
     @phase.setter
@@ -40,6 +46,7 @@ class RF:
 
     @property
     def voltage(self):
+        """."""
         return self._voltage_rb.value
 
     @voltage.setter
@@ -48,6 +55,7 @@ class RF:
 
     @property
     def frequency(self):
+        """."""
         return self._frequency_rb.value
 
     @frequency.setter
@@ -55,18 +63,22 @@ class RF:
         self._frequency_sp.value = value
 
     def set_voltage(self, value, timeout=10):
+        """."""
         self.voltage = value
         self.wait(timeout, 'voltage')
 
     def set_phase(self, value, timeout=10):
+        """."""
         self.phase = value
         self.wait(timeout, 'phase')
 
     def set_frequency(self, value, timeout=10):
+        """."""
         self.frequency = value
         self.wait(timeout, 'frequency')
 
     def wait(self, timeout=10, prop=None):
+        """."""
         nrp = int(timeout / 0.1)
         for _ in range(nrp):
             _time.sleep(0.1)

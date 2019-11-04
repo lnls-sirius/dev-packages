@@ -1,12 +1,18 @@
 #!/usr/bin/env python-sirius
+"""."""
 
+from collections import namedtuple
 from siriuspy.epics import PV
 from siriuspy.namesys import SiriusPVName
 
 
 class Kicker:
+    """."""
+
+    STATUS = namedtuple('Status', 'Off On')(0, 1)
 
     def __init__(self, name):
+        """."""
         self._name = SiriusPVName(name)
         tiname = self._name.substitute(dis='TI')
         self._dly_sp = PV(tiname.substitute(propty='Delay-SP'))
@@ -18,10 +24,12 @@ class Kicker:
 
     @property
     def name(self):
+        """."""
         return self._name
 
     @property
     def voltage(self):
+        """."""
         return self._volt_rb.value
 
     @voltage.setter
@@ -30,6 +38,7 @@ class Kicker:
 
     @property
     def delay(self):
+        """."""
         return self._dly_rb.value
 
     @delay.setter
@@ -38,6 +47,7 @@ class Kicker:
 
     @property
     def pulse(self):
+        """."""
         return self._pulse_rb.value
 
     @pulse.setter
@@ -45,13 +55,16 @@ class Kicker:
         self._pulse_sp.value = value
 
     def turnon_pulse(self):
-        self.pulse = 1
+        """."""
+        self.pulse = self.STATUS.On
 
     def turnoff_pulse(self):
-        self.pulse = 0
+        """."""
+        self.pulse = self.STATUS.Off
 
     @property
     def connected(self):
+        """."""
         conn = self._volt_sp.connected
         conn &= self._volt_rb.connected
         conn &= self._dly_sp.connected

@@ -1,4 +1,5 @@
 #!/usr/bin/env python-sirius
+"""."""
 
 import time as _time
 from epics import PV
@@ -6,8 +7,10 @@ from siriuspy.csdevice.orbitcorr import SOFBFactory
 
 
 class SOFB:
+    """."""
 
     def __init__(self, acc):
+        """."""
         self.data = SOFBFactory.create(acc)
         orbtp = 'MTurn' if self.data.isring else 'SPass'
         self._trajx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'OrbX-Mon')
@@ -24,6 +27,7 @@ class SOFB:
 
     @property
     def connected(self):
+        """."""
         conn = self._trajx.connected
         conn &= self._trajy.connected
         conn &= self._sum.connected
@@ -34,28 +38,34 @@ class SOFB:
 
     @property
     def trajx(self):
+        """."""
         return self._trajx.get()
 
     @property
     def trajy(self):
+        """."""
         return self._trajy.get()
 
     @property
     def trajx_idx(self):
+        """."""
         return self._trajx_idx.get() if self.data.isring \
             else self.trajx
 
     @property
     def trajy_idx(self):
+        """."""
         return self._trajy_idx.get() if self.data.isring \
             else self.trajy
 
     @property
     def sum(self):
+        """."""
         return self._sum.get()
 
     @property
     def nr_points(self):
+        """."""
         return self._npts_rb.value
 
     @nr_points.setter
@@ -64,6 +74,7 @@ class SOFB:
 
     @property
     def trigsample(self):
+        """."""
         return self._trigsample_rb.value
 
     @trigsample.setter
@@ -71,6 +82,7 @@ class SOFB:
         self._trigsample_sp.value = int(value)
 
     def wait(self, timeout=10):
+        """."""
         inter = 0.05
         n = int(timeout/inter)
         _time.sleep(4*inter)
@@ -82,4 +94,5 @@ class SOFB:
             print('WARN: Timed out waiting orbit.')
 
     def reset(self):
+        """."""
         self._rst.value = 1
