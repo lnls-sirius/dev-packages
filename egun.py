@@ -156,11 +156,15 @@ class HVPS:
     def turn_on(self):
         """."""
         self._enable.value = self.STATUS.On
+        self._switch.value = self.STATUS.On
 
     def turn_off(self):
         """."""
         self._enable.value = self.STATUS.Off
+        self._switch.value = self.STATUS.Off
 
     def is_on(self):
         """."""
-        return self._enable_sts.value == self.STATUS.On
+        ison = self._enable_sts.value == self.STATUS.On
+        ison &= self._switch_sts.value == self.STATUS.On
+        return ison
