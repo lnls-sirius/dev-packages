@@ -17,16 +17,14 @@ class MeasEnergy(_BaseClass):
 
     def __init__(self, callback=None):
         """."""
-        self.energy_calculator = CalcEnergy()
-        self.image_processor = ProcessImage()
+        self.energy_calculator = CalcEnergy(callback=callback)
+        self.image_processor = ProcessImage(callback=callback)
         self._profile = self.DEFAULT_PROFILE
         self._coefx = _PV(
             self.DEFAULT_PROFILE+':X:Gauss:Coef', callback=self._update_coefx)
         self._coefy = _PV(
             self.DEFAULT_PROFILE+':Y:Gauss:Coef', callback=self._update_coefy)
-        self._width_source = _PV(
-            self.DEFAULT_PROFILE + ':ROI:MaxSizeX_RBV',
-            callback=self._update_width)
+        self._width_source = _PV(self.DEFAULT_PROFILE + ':ROI:MaxSizeX_RBV')
         self._image_source = _PV(
             self.DEFAULT_PROFILE + ':RAW:ArrayData', auto_monitor=False)
         self._current_source = _PV(self.DEFAULT_SPECT + ':rdi')
@@ -50,10 +48,12 @@ class MeasEnergy(_BaseClass):
     def start(self):
         """."""
         self._thread.resume()
+        self.run_callbacks('MeasureCtrl-Sts', 1)
 
     def stop(self):
         """."""
         self._thread.pause()
+        self.run_callbacks('MeasureCtrl-Sts', 0)
 
     @property
     def connected(self):
@@ -84,31 +84,33 @@ class MeasEnergy(_BaseClass):
 
     @measuring.setter
     def measuring(self, val):
-        return self.start() if val else self.stop()
+        if val:
+            self.start()
+        else:
+            self.stop()
 
     def _update_coefx(self, pvname, value, **kwargs):
         if value is None:
             return
-        self.image_processor.pxl2mmscalex = value
+        self.image_processor.px2mmscalex = value
 
     def _update_coefy(self, pvname, value, **kwargs):
         if value is None:
             return
-        self.image_processor.pxl2mmscaley = value
+        self.image_processor.px2mmscaley = value
 
-    def _update_width(self, pvname, value, **kwargs):
+    def meas_energy(self):
+        self.image_processor.imageflipx = self.image_processor.ImgFlip.On
+        self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
+        value = self._width_source.value
         if isinstance(value, (float, int)):
             self.image_processor.imagewidth = int(value)
 
-    def meas_energy(self):
         self.image_processor.image = self._image_source.get()
         self.energy_calculator.set_data(
             self.current,
             self.image_processor.beamcentermmx,
             self.image_processor.beamsizemmx)
-        for k, func in self._map2read.items():
-            if k.endswith(('-RB', '-Mon', '-Cte')):
-                self.run_callbacks(k, func())
 
 
 class CalcEmmitance(_BaseClass):
@@ -129,14 +131,14 @@ class CalcEmmitance(_BaseClass):
         database = dict()
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.emittance_calculator.get_map2write())
-        dic_.update({'MeasureCtrl-Cmd': _part(self.write, 'measuring')})
+        dic_.update({'MeasureCtrl-Sel': _part(self.write, 'measuring')})
         return {k: v for k, v in dic_.items() if k in database}
 
     def get_map2read(self):
         database = dict()
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.emittance_calculator.get_map2read())
-        dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
+        dic_.update({'MeasureCtrl-Sts': _part(self.read, 'measuring')})
         return {k: v for k, v in dic_.items() if k in database}
 
     @property
@@ -158,7 +160,7 @@ class CalcEmmitance(_BaseClass):
                 prof+':ROI:MaxSizeX_RBV', callback=self._update_width)
             self._coefx = _PV(
                 prof+':X:Gauss:Coef',
-                callback=self._update_coefx, pln='x')
+                callback=self._update_coefx)
             self._coefy = _PV(
                 prof+':Y:Gauss:Coef',
                 callback=self._update_coefy)

@@ -10,13 +10,13 @@ from siriuspy.factory import NormalizerFactory as _NormFact
 from .base import BaseClass as _BaseClass
 
 C = _consts.light_speed
-E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
+E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-6  # in MeV
 
 
 class ProcessImage(_BaseClass):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, callback=None):
+        super().__init__(callback=callback)
         self._roi_autocenter = True
         self._roi_cen = [0, 0]
         self._roi_size = [self.DEFAULT_ROI_SIZE, self.DEFAULT_ROI_SIZE]
@@ -44,6 +44,7 @@ class ProcessImage(_BaseClass):
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
+        self._flip = [False, False]
         self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
 
     def get_map2write(self):
@@ -54,6 +55,8 @@ class ProcessImage(_BaseClass):
             'ImgCropLow-SP': _part(self.write, 'imagecroplow'),
             'ImgCropHigh-SP': _part(self.write, 'imagecrophigh'),
             'ImgCropUse-Sel': _part(self.write, 'useimagecrop'),
+            'ImgFlipX-Sel': _part(self.write, 'imageflipx'),
+            'ImgFlipY-Sel': _part(self.write, 'imageflipy'),
             'CalcMethod-Sel': _part(self.write, 'method'),
             'ROIAutoCenter-Sel': _part(self.write, 'roiautocenter'),
             'ROICenterX-SP': _part(self.write, 'roicenterx'),
@@ -77,6 +80,8 @@ class ProcessImage(_BaseClass):
             'ImgCropLow-RB': _part(self.read, 'imagecroplow'),
             'ImgCropHigh-RB': _part(self.read, 'imagecrophigh'),
             'ImgCropUse-Sts': _part(self.read, 'useimagecrop'),
+            'ImgFlipX-Sts': _part(self.read, 'imageflipx'),
+            'ImgFlipY-Sts': _part(self.read, 'imageflipy'),
             'CalcMethod-Sts': _part(self.read, 'method'),
             'ROIAutoCenter-Sts': _part(self.read, 'roiautocenter'),
             'ROICenterX-RB': _part(self.read, 'roicenterx'),
@@ -103,8 +108,8 @@ class ProcessImage(_BaseClass):
             'BeamSizemmY-Mon': _part(self.read, 'beamsizemmy'),
             'BeamAmplX-Mon': _part(self.read, 'beamamplx'),
             'BeamAmplY-Mon': _part(self.read, 'beamamply'),
-            'BgOffsetX-Mon': _part(self.read, 'bgoffsetx'),
-            'BgOffsetY-Mon': _part(self.read, 'bgoffsety'),
+            'BeamOffsetX-Mon': _part(self.read, 'beamoffsetx'),
+            'BeamOffsetY-Mon': _part(self.read, 'beamoffsety'),
             'Background-RB': _part(self.read, 'background'),
             'BgUse-Sts': _part(self.read, 'usebackground'),
             'Px2mmScaleX-RB': _part(self.read, 'px2mmscalex'),
@@ -131,10 +136,11 @@ class ProcessImage(_BaseClass):
 
     @imagewidth.setter
     def imagewidth(self, val):
-        if val is None or int(val) == self._width:
+        if val is None:
             _log.error('could not set width')
             return
         self._width = int(val)
+        self.run_callbacks('Width-RB', int(val))
         img = self._adjust_image_dimensions(self._background)
         if img is not None:
             self._background = img
@@ -149,6 +155,7 @@ class ProcessImage(_BaseClass):
     def readingorder(self, val):
         if int(val) in self.ReadingOrder:
             self._reading_order = int(val)
+            self.run_callbacks('ReadingOrder-Sts', int(val))
 
     @property
     def imagecroplow(self):
@@ -159,6 +166,7 @@ class ProcessImage(_BaseClass):
         val = int(val)
         if 0 <= val < self._crop[self.CropIdx.High]:
             self._crop[self.CropIdx.Low] = val
+            self.run_callbacks('ImgCropLow-RB', val)
 
     @property
     def imagecrophigh(self):
@@ -169,6 +177,7 @@ class ProcessImage(_BaseClass):
         val = int(val)
         if self._crop[self.CropIdx.Low] < val:
             self._crop[self.CropIdx.High] = val
+            self.run_callbacks('ImgCropHigh-RB', val)
 
     @property
     def useimagecrop(self):
@@ -177,6 +186,25 @@ class ProcessImage(_BaseClass):
     @useimagecrop.setter
     def useimagecrop(self, val):
         self._crop_use = bool(val)
+        self.run_callbacks('ImgCropUse-Sts', int(val))
+
+    @property
+    def imageflipx(self):
+        return self._flip[self.Plane.X]
+
+    @imageflipx.setter
+    def imageflipx(self, val):
+        self._flip[self.Plane.X] = bool(val)
+        self.run_callbacks('ImgFlipX-Sts', int(val))
+
+    @property
+    def imageflipy(self):
+        return self._flip[self.Plane.Y]
+
+    @imageflipy.setter
+    def imageflipy(self, val):
+        self._flip[self.Plane.Y] = bool(val)
+        self.run_callbacks('ImgFlipY-Sts', int(val))
 
     @property
     def imagesizex(self):
@@ -194,6 +222,7 @@ class ProcessImage(_BaseClass):
     def method(self, val):
         if int(val) in self.Method:
             self._method = int(val)
+            self.run_callbacks('CalcMethod-Sts', int(val))
 
     @property
     def roiautocenter(self):
@@ -202,6 +231,7 @@ class ProcessImage(_BaseClass):
     @roiautocenter.setter
     def roiautocenter(self, val):
         self._roi_autocenter = bool(val)
+        self.run_callbacks('ROIAutoCenter-Sts', int(val))
 
     @property
     def roicenterx(self):
@@ -209,11 +239,10 @@ class ProcessImage(_BaseClass):
 
     @roicenterx.setter
     def roicenterx(self, val):
-        if self._roi_autocenter:
-            return
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.X]:
             self._roi_cen[self.Plane.X] = val
+            self.run_callbacks('ROICenterX-RB', val)
 
     @property
     def roicentery(self):
@@ -221,11 +250,10 @@ class ProcessImage(_BaseClass):
 
     @roicentery.setter
     def roicentery(self, val):
-        if self._roi_autocenter:
-            return
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._roi_cen[self.Plane.Y] = val
+            self.run_callbacks('ROICenterY-RB', val)
 
     @property
     def roisizex(self):
@@ -236,6 +264,7 @@ class ProcessImage(_BaseClass):
         val = int(val)
         if 1 <= val < self._image.shape[self.Plane.X]:
             self._roi_size[self.Plane.X] = val
+            self.run_callbacks('ROISizeX-RB', val)
 
     @property
     def roisizey(self):
@@ -246,6 +275,7 @@ class ProcessImage(_BaseClass):
         val = int(val)
         if 1 <= val < self._image.shape[self.Plane.Y]:
             self._roi_size[self.Plane.Y] = val
+            self.run_callbacks('ROISizeY-RB', val)
 
     @property
     def roistartx(self):
@@ -301,6 +331,7 @@ class ProcessImage(_BaseClass):
             _log.error('Could not set background')
             return
         self._background = img
+        self.run_callbacks('Background-RB', self.background)
 
     @property
     def usebackground(self):
@@ -309,6 +340,7 @@ class ProcessImage(_BaseClass):
     @usebackground.setter
     def usebackground(self, val):
         self._background_use = bool(val)
+        self.run_callbacks('BgUse-Sts', val)
 
     @property
     def beamcenterx(self):
@@ -320,11 +352,11 @@ class ProcessImage(_BaseClass):
 
     @property
     def beamsizex(self):
-        return self._beam_params[self.Plane.X][self.FitParams.Sig]
+        return abs(self._beam_params[self.Plane.X][self.FitParams.Sig])
 
     @property
     def beamsizey(self):
-        return self._beam_params[self.Plane.Y][self.FitParams.Sig]
+        return abs(self._beam_params[self.Plane.Y][self.FitParams.Sig])
 
     @property
     def beamamplx(self):
@@ -335,11 +367,11 @@ class ProcessImage(_BaseClass):
         return self._beam_params[self.Plane.Y][self.FitParams.Amp]
 
     @property
-    def bgoffsetx(self):
+    def beamoffsetx(self):
         return self._beam_params[self.Plane.X][self.FitParams.Off]
 
     @property
-    def bgoffsety(self):
+    def beamoffsety(self):
         return self._beam_params[self.Plane.Y][self.FitParams.Off]
 
     @property
@@ -350,6 +382,7 @@ class ProcessImage(_BaseClass):
     def px2mmscalex(self, val):
         if val != 0:
             self._conv_scale[self.Plane.X] = val
+            self.run_callbacks('Px2mmScaleX-RB', val)
         else:
             _log.error('Could not set px2mmscaley')
 
@@ -361,6 +394,7 @@ class ProcessImage(_BaseClass):
     def px2mmscaley(self, val):
         if val != 0:
             self._conv_scale[self.Plane.Y] = val
+            self.run_callbacks('Px2mmScaleY-RB', val)
         else:
             _log.error('Could not set px2mmscaley')
 
@@ -371,6 +405,7 @@ class ProcessImage(_BaseClass):
     @px2mmautocenter.setter
     def px2mmautocenter(self, val):
         self._conv_autocenter = bool(val)
+        self.run_callbacks('Px2mmAutoCenter-Sts', val)
 
     @property
     def px2mmcenterx(self):
@@ -378,12 +413,10 @@ class ProcessImage(_BaseClass):
 
     @px2mmcenterx.setter
     def px2mmcenterx(self, val):
-        if self._conv_autocenter:
-            _log.error('Could not set px2mmcenterx')
-            return
         val = int(val)
-        if 0 <= val < self._image.shape[self.Plane.Y]:
+        if 0 <= val < self._image.shape[self.Plane.X]:
             self._conv_cen[self.Plane.X] = val
+            self.run_callbacks('Px2mmCenterX-RB', val)
         else:
             _log.error('Could not set px2mmcenterx')
 
@@ -393,12 +426,10 @@ class ProcessImage(_BaseClass):
 
     @px2mmcentery.setter
     def px2mmcentery(self, val):
-        if self._conv_autocenter:
-            _log.error('Could not set px2mmcentery')
-            return
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._conv_cen[self.Plane.Y] = val
+            self.run_callbacks('Px2mmCenterY-RB', val)
         else:
             _log.error('Could not set px2mmcentery')
 
@@ -410,7 +441,8 @@ class ProcessImage(_BaseClass):
 
     @property
     def beamcentermmy(self):
-        val = self.beamcentery - self._conv_cen[self.Plane.Y]
+        # Inverted due image origin in Pxls:
+        val = self._conv_cen[self.Plane.Y] - self.beamcentery
         val *= self._conv_scale[self.Plane.Y]
         return val
 
@@ -432,7 +464,7 @@ class ProcessImage(_BaseClass):
             b = _np.where(image < 0)
             image[b] = 0
         else:
-            self._background_use = False
+            self.usebackground = False
 
         if self._crop_use:
             boo = image > self._crop[self.CropIdx.High]
@@ -440,7 +472,13 @@ class ProcessImage(_BaseClass):
             boo = image < self._crop[self.CropIdx.Low]
             image[boo] = self._crop[self.CropIdx.Low]
 
-        self._image = image
+        if self._flip[self.Plane.X]:
+            image = _np.flip(image, axis=self.Plane.X)
+        if self._flip[self.Plane.Y]:
+            image = _np.flip(image, axis=self.Plane.Y)
+
+        self._image = _np.array(image, dtype=_np.int16)
+        self.run_callbacks('Image-RB', self.image)
         self._update_roi()
         axisx = self._roi_axis[self.Plane.X]
         projx = self._roi_proj[self.Plane.X]
@@ -456,6 +494,20 @@ class ProcessImage(_BaseClass):
         self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.Plane.X] = parx
         self._beam_params[self.Plane.Y] = pary
+        self.run_callbacks('ROIGaussFitX-Mon', self._roi_gauss[self.Plane.X])
+        self.run_callbacks('ROIGaussFitY-Mon', self._roi_gauss[self.Plane.Y])
+        self.run_callbacks('BeamCenterX-Mon', self.beamcenterx)
+        self.run_callbacks('BeamCenterY-Mon', self.beamcentery)
+        self.run_callbacks('BeamSizeX-Mon', self.beamsizex)
+        self.run_callbacks('BeamSizeY-Mon', self.beamsizey)
+        self.run_callbacks('BeamCentermmX-Mon', self.beamcentermmx)
+        self.run_callbacks('BeamCentermmY-Mon', self.beamcentermmy)
+        self.run_callbacks('BeamSizemmX-Mon', self.beamsizemmx)
+        self.run_callbacks('BeamSizemmY-Mon', self.beamsizemmy)
+        self.run_callbacks('BeamAmplX-Mon', self.beamamplx)
+        self.run_callbacks('BeamAmplY-Mon', self.beamamply)
+        self.run_callbacks('BeamOffsetX-Mon', self.beamoffsetx)
+        self.run_callbacks('BeamOffsetY-Mon', self.beamoffsety)
 
     def _adjust_image_dimensions(self, img):
         if len(img.shape) == 1:
@@ -474,12 +526,12 @@ class ProcessImage(_BaseClass):
 
     def _update_roi(self):
         image = self._image
-        axis_x = _np.arange(image.shape[1])
-        axis_y = _np.arange(image.shape[0])
+        axis_x = _np.arange(image.shape[self.Plane.X])
+        axis_y = _np.arange(image.shape[self.Plane.Y])
 
         if self._conv_autocenter:
-            self._conv_cen[self.Plane.X] = image.shape[self.Plane.X]//2
-            self._conv_cen[self.Plane.Y] = image.shape[self.Plane.Y]//2
+            self.px2mmcenterx = image.shape[self.Plane.X]//2
+            self.px2mmcentery = image.shape[self.Plane.Y]//2
 
         if self._roi_autocenter:
             proj_x = image.sum(axis=0)
@@ -487,8 +539,8 @@ class ProcessImage(_BaseClass):
             parx = self._calc_moments(axis_x, proj_x)
             pary = self._calc_moments(axis_y, proj_y)
             if not any(_np.isnan(parx+pary)):
-                self._roi_cen[self.Plane.X] = int(parx[self.FitParams.Cen])
-                self._roi_cen[self.Plane.Y] = int(pary[self.FitParams.Cen])
+                self.roicenterx = int(parx[self.FitParams.Cen])
+                self.roicentery = int(pary[self.FitParams.Cen])
             else:
                 _log.error('Some fitted params are NaN.')
 
@@ -497,7 +549,8 @@ class ProcessImage(_BaseClass):
         strty = self._roi_cen[self.Plane.Y] - self._roi_size[self.Plane.Y]
         endy = self._roi_cen[self.Plane.Y] + self._roi_size[self.Plane.Y]
         strtx, strty = max(strtx, 0), max(strty, 0)
-        endx, endy = min(endx, image.shape[1]), min(endy, image.shape[0])
+        endx = min(endx, image.shape[self.Plane.X])
+        endy = min(endy, image.shape[self.Plane.Y])
 
         image = image[strty:endy, strtx:endx]
         self._roi_proj[self.Plane.X] = image.sum(axis=0)
@@ -508,6 +561,14 @@ class ProcessImage(_BaseClass):
         self._roi_start[self.Plane.Y] = strty
         self._roi_end[self.Plane.X] = endx
         self._roi_end[self.Plane.Y] = endy
+        self.run_callbacks('ROIProjX-Mon', self._roi_proj[self.Plane.X])
+        self.run_callbacks('ROIProjY-Mon', self._roi_proj[self.Plane.Y])
+        self.run_callbacks('ROIAxisX-Mon', self._roi_axis[self.Plane.X])
+        self.run_callbacks('ROIAxisY-Mon', self._roi_axis[self.Plane.Y])
+        self.run_callbacks('ROIStartX-Mon', self._roi_start[self.Plane.X])
+        self.run_callbacks('ROIStartY-Mon', self._roi_start[self.Plane.Y])
+        self.run_callbacks('ROIEndX-Mon', self._roi_end[self.Plane.X])
+        self.run_callbacks('ROIEndY-Mon', self._roi_end[self.Plane.Y])
 
     @classmethod
     def _calc_moments(cls, axis, proj):
@@ -553,9 +614,10 @@ class ProcessImage(_BaseClass):
 class CalcEnergy(_BaseClass):
     """."""
 
-    def __init__(self, dispersion=None, angle=None, spectrometer=None):
+    def __init__(self, callback=None, dispersion=None, angle=None,
+                 spectrometer=None):
         """."""
-        super().__init__()
+        super().__init__(callback=callback)
         self._dispersion = dispersion or self.DEFAULT_DISP
         self._angle = angle or self.DEFAULT_B_ANG
         self._spect = spectrometer or self.DEFAULT_SPECT
@@ -593,7 +655,8 @@ class CalcEnergy(_BaseClass):
     def dispersion(self, val):
         if isinstance(val, (float, int)) and val != 0:
             self._dispersion = val
-        self._perform_analysis()
+            self.run_callbacks('Dispersion-RB', val)
+            self._perform_analysis()
 
     @property
     def angle(self):
@@ -605,6 +668,7 @@ class CalcEnergy(_BaseClass):
         if isinstance(val, (float, int)) and val != 0 and abs(val) < _np.pi:
             self._angle = val
             self._perform_analysis()
+            self.run_callbacks('Angle-RB', val)
 
     @property
     def spectrometer(self):
@@ -619,6 +683,7 @@ class CalcEnergy(_BaseClass):
             return
         self._spect = val
         self._perform_analysis()
+        self.run_callbacks('Spectrometer-RB', val)
 
     @property
     def currents(self):
@@ -681,10 +746,13 @@ class CalcEnergy(_BaseClass):
         cond |= self._beamsize == 0
         if cond:
             return
-        pc_nom = self._intdipole / self._angle * C * 1e-9  # in GeV
-        pc = pc_nom * (1 - self._beamcenter / self._dispersion)
+        pc_nom = self._intdipole / self._angle * C * 1e-6  # in MeV
+        pc = pc_nom * (1 + self._beamcenter / self._dispersion)
         self._energy = _np.sqrt(pc**2 + E0*E0)
         self._spread = self._beamsize / self._dispersion * 100  # in percent%
+        self.run_callbacks('Energy-Mon', self._energy)
+        self.run_callbacks('Spread-Mon', self._spread)
+        self.run_callbacks('IntDipole-Mon', self._intdipole)
 
 
 class CalcEmmitance(_BaseClass):

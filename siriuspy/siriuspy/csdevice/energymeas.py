@@ -17,7 +17,8 @@ class ETypes(_cutil.ETypes):
     BG_USAGE = ('NotUsing', 'Using')
     CROPIDX = ('Low', 'High')
     FITPARAMS = ('Amp', 'Cen', 'Sig', 'Off')
-    PLANE = ('X', 'Y')
+    PLANE = ('Y', 'X')
+    FLIP = ('Off', 'On')
 
 
 _et = ETypes  # syntactic sugar
@@ -28,14 +29,14 @@ _et = ETypes  # syntactic sugar
 class Const(_cutil.Const):
     """Const class defining constants."""
 
-    DEFAULT_DISP = 1.087
+    DEFAULT_DISP = 1087  # in mm
     DEFAULT_B_ANG = _np.pi/4
     DEFAULT_SPECT = 'LI-01:PS-Spect'
     DEFAULT_PROFILE = 'LA-BI:PRF4'
     DEFAULT_WIDTH = 1024
     DEFAULT_HEIGHT = 1090
     DEFAULT_ROI_SIZE = 500
-    MAX_WIDTH = 4000
+    MAX_WIDTH = 3000
 
     MeasureState = _cutil.Const.register('MeasureState', _et.MEASURESTATE)
     ReadingOrder = _cutil.Const.register('ReadingOrder', _et.READINGORDER)
@@ -46,6 +47,7 @@ class Const(_cutil.Const):
     CropIdx = _cutil.Const.register('CropIdx', _et.CROPIDX)
     FitParams = _cutil.Const.register('FitParams', _et.FITPARAMS)
     Plane = _cutil.Const.register('Plane', _et.PLANE)
+    ImgFlip = _cutil.Const.register('ImgFlip', _et.FLIP)
 
 
 # --- Database classes ---
@@ -58,20 +60,22 @@ class EnergyMeas(Const):
         """Return IOC database."""
         db = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
-            # 'Image-SP': {
-            #     'type': 'int',
-            #     'value': _np.zeros(cls.DEFAULT_WIDTH*cls.DEFAULT_WIDTH),
-            #     'count': cls.MAX_WIDTH*cls.MAX_WIDTH},
-            # 'Image-RB': {
-            #     'type': 'int',
-            #     'value': _np.zeros(cls.DEFAULT_WIDTH*cls.DEFAULT_WIDTH),
-            #     'count': cls.MAX_WIDTH*cls.MAX_WIDTH},
-            # 'Width-SP': {
-            #     'type': 'int', 'value': cls.DEFAULT_WIDTH, 'unit': 'px',
-            #     'lolim': 0, 'hilim': cls.MAX_WIDTH},
-            # 'Width-RB': {
-            #     'type': 'int', 'value': cls.DEFAULT_WIDTH, 'unit': 'px',
-            #     'lolim': 0, 'hilim': cls.MAX_WIDTH},
+            'Image-SP': {
+                'type': 'int',
+                'value': _np.zeros(
+                    cls.DEFAULT_WIDTH*cls.DEFAULT_WIDTH, dtype=int),
+                'count': cls.MAX_WIDTH*cls.MAX_WIDTH},
+            'Image-RB': {
+                'type': 'int',
+                'value': _np.zeros(
+                    cls.DEFAULT_WIDTH*cls.DEFAULT_WIDTH, dtype=int),
+                'count': cls.MAX_WIDTH*cls.MAX_WIDTH},
+            'Width-SP': {
+                'type': 'int', 'value': cls.DEFAULT_WIDTH, 'unit': 'px',
+                'lolim': 0, 'hilim': cls.MAX_WIDTH},
+            'Width-RB': {
+                'type': 'int', 'value': cls.DEFAULT_WIDTH, 'unit': 'px',
+                'lolim': 0, 'hilim': cls.MAX_WIDTH},
             # 'ReadingOrder-Sel': {
             #     'type': 'enum', 'value': cls.ReadingOrder.CLike,
             #     'enums': cls.ReadingOrder._fields},
@@ -85,10 +89,10 @@ class EnergyMeas(Const):
                 'type': 'int', 'value': 0, 'unit': '',
                 'lolim': 0, 'hilim': 255},
             'ImgCropHigh-SP': {
-                'type': 'int', 'value': 0, 'unit': '',
+                'type': 'int', 'value': 255, 'unit': '',
                 'lolim': 0, 'hilim': 255},
             'ImgCropHigh-RB': {
-                'type': 'int', 'value': 0, 'unit': '',
+                'type': 'int', 'value': 255, 'unit': '',
                 'lolim': 0, 'hilim': 255},
             'ImgCropUse-Sel': {
                 'type': 'enum', 'value': cls.BgUsage.NotUsing,
@@ -96,6 +100,18 @@ class EnergyMeas(Const):
             'ImgCropUse-Sts': {
                 'type': 'enum', 'value': cls.BgUsage.NotUsing,
                 'enums': cls.BgUsage._fields},
+            # 'ImgFlipX-Sel': {
+            #     'type': 'enum', 'value': cls.ImgFlip.Off,
+            #     'enums': cls.ImgFlip._fields},
+            # 'ImgFlipX-Sts': {
+            #     'type': 'enum', 'value': cls.ImgFlip.Off,
+            #     'enums': cls.ImgFlip._fields},
+            # 'ImgFlipY-Sel': {
+            #     'type': 'enum', 'value': cls.ImgFlip.Off,
+            #     'enums': cls.ImgFlip._fields},
+            # 'ImgFlipY-Sts': {
+            #     'type': 'enum', 'value': cls.ImgFlip.Off,
+            #     'enums': cls.ImgFlip._fields},
             'CalcMethod-Sel': {
                 'type': 'enum', 'value': cls.Method.GaussFit,
                 'enums': cls.Method._fields},
@@ -146,36 +162,36 @@ class EnergyMeas(Const):
             # 'BgUse-Sts': {
             #     'type': 'enum', 'value': cls.BgUsage.NotUsing,
             #     'enums': cls.BgUsage._fields},
-            # 'Px2mmScaleX-SP': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmScaleX-RB': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmScaleY-SP': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmScaleY-RB': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmAutoCenter-Sel': {
-            #     'type': 'enum', 'value': cls.AutoCenter.Auto,
-            #     'enums': cls.AutoCenter._fields},
-            # 'Px2mmAutoCenter-Sts': {
-            #     'type': 'enum', 'value': cls.AutoCenter.Auto,
-            #     'enums': cls.AutoCenter._fields},
-            # 'Px2mmCenterX-SP': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmCenterX-RB': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmCenterY-SP': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
-            # 'Px2mmCenterY-RB': {
-            #     'type': 'float', 'value': 1, 'prec': 6,
-            #     'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
+            'Px2mmScaleX-SP': {
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
+            'Px2mmScaleX-RB': {
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
+            'Px2mmScaleY-SP': {
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
+            'Px2mmScaleY-RB': {
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm/px', 'lolim': 0, 'hilim': 10},
+            'Px2mmAutoCenter-Sel': {
+                'type': 'enum', 'value': cls.AutoCenter.Auto,
+                'enums': cls.AutoCenter._fields},
+            'Px2mmAutoCenter-Sts': {
+                'type': 'enum', 'value': cls.AutoCenter.Auto,
+                'enums': cls.AutoCenter._fields},
+            'Px2mmCenterX-SP': {
+                'type': 'int', 'value': 0,
+                'unit': 'px', 'lolim': 0, 'hilim': cls.MAX_WIDTH},
+            'Px2mmCenterX-RB': {
+                'type': 'int', 'value': 0,
+                'unit': 'px', 'lolim': 0, 'hilim': cls.MAX_WIDTH},
+            'Px2mmCenterY-SP': {
+                'type': 'int', 'value': 0,
+                'unit': 'px', 'lolim': 0, 'hilim': cls.MAX_WIDTH},
+            'Px2mmCenterY-RB': {
+                'type': 'int', 'value': 0,
+                'unit': 'px', 'lolim': 0, 'hilim': cls.MAX_WIDTH},
             'ROIStartX-Mon': {
                 'type': 'int', 'value': 0, 'unit': 'px',
                 'lolim': 0, 'hilim': cls.MAX_WIDTH},
@@ -219,48 +235,48 @@ class EnergyMeas(Const):
                 'type': 'int', 'value': 1, 'unit': 'px',
                 'lolim': 0, 'hilim': cls.MAX_WIDTH},
             'BeamCentermmX-Mon': {
-                'type': 'float', 'value': 1, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
             'BeamCentermmY-Mon': {
-                'type': 'float', 'value': 1, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
             'BeamSizemmX-Mon': {
-                'type': 'float', 'value': 1, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
             'BeamSizemmY-Mon': {
-                'type': 'float', 'value': 1, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 1, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
             'BeamAmplX-Mon': {
-                'type': 'float', 'value': 0, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 0, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
             'BeamAmplY-Mon': {
-                'type': 'float', 'value': 0, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
-            'BgOffsetX-Mon': {
-                'type': 'float', 'value': 0, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
-            'BgOffsetY-Mon': {
-                'type': 'float', 'value': 0, 'prec': 6,
-                'unit': 'mm', 'lolim': 0, 'hilim': 10},
+                'type': 'float', 'value': 0, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
+            'BeamOffsetX-Mon': {
+                'type': 'float', 'value': 0, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
+            'BeamOffsetY-Mon': {
+                'type': 'float', 'value': 0, 'prec': 3,
+                'unit': 'mm', 'lolim': -20, 'hilim': 20},
 
             'Dispersion-SP': {
-                'type': 'float', 'prec': 4, 'unit': '%',
+                'type': 'float', 'prec': 4, 'unit': 'mm',
                 'value': cls.DEFAULT_DISP},
             'Dispersion-RB': {
-                'type': 'float', 'prec': 4, 'unit': '%',
+                'type': 'float', 'prec': 4, 'unit': 'mm',
                 'value': cls.DEFAULT_DISP},
             # 'Angle-SP': {
-            #     'type': 'float', 'prec': 4, 'unit': '%',
+            #     'type': 'float', 'prec': 4, 'unit': 'deg',
             #     'value': cls.DEFAULT_B_ANG},
             # 'Angle-RB': {
-            #     'type': 'float', 'prec': 4, 'unit': '%',
+            #     'type': 'float', 'prec': 4, 'unit': 'deg',
             #     'value': cls.DEFAULT_B_ANG},
             # 'Spectrometer-SP': {
             #     'type': 'string', 'value': cls.DEFAULT_SPECT},
             # 'Spectrometer-RB': {
             #     'type': 'string', 'value': cls.DEFAULT_SPECT},
             'IntDipole-Mon': {
-                'type': 'float', 'prec': 4, 'unit': '%', 'value': 0},
+                'type': 'float', 'prec': 4, 'unit': 'T.m', 'value': 0},
             'Energy-Mon': {
                 'type': 'float', 'prec': 2, 'unit': 'MeV', 'value': 0},
             'Spread-Mon': {
