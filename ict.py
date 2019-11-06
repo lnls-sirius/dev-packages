@@ -11,10 +11,10 @@ class ICT:
         """."""
         if name in ['ICT-1', 'ICT-2']:
             self._charge = PV('LI-01:DI-' + name + ':Charge-Mon')
-            self._charge_avg = PV('LI-01:DI-' + name + 'ICT-1:ChargeAvg-Mon')
-            self._charge_max = PV('LI-01:DI-' + name + 'ICT-1:ChargeMax-Mon')
-            self._charge_min = PV('LI-01:DI-' + name + 'ICT-1:ChargeMin-Mon')
-            self._charge_std = PV('LI-01:DI-' + name + 'ICT-1:ChargeStd-Mon')
+            self._charge_avg = PV('LI-01:DI-' + name + ':ChargeAvg-Mon')
+            self._charge_max = PV('LI-01:DI-' + name + ':ChargeMax-Mon')
+            self._charge_min = PV('LI-01:DI-' + name + ':ChargeMin-Mon')
+            self._charge_std = PV('LI-01:DI-' + name + ':ChargeStd-Mon')
             self._pulse_cnt = PV('LI-01:DI-' + name + ':PulseCount-Mon')
         else:
             raise Exception('Set device name: ICT-1 or ICT-2')
