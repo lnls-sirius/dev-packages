@@ -35,12 +35,11 @@ class Timing:
     DEFAULT_POLARITY = _TIConst.TrigPol.Normal
 
     _trigger_list = [
-        'TB-Glob:TI-Mags', 'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
-        'TS-Glob:TI-Mags']
-    # TODO: uncomment when using SI
-    #     'SI-Glob:TI-Mags-Bends', 'SI-Glob:TI-Mags-Quads',
-    #     'SI-Glob:TI-Mags-Sexts', 'SI-Glob:TI-Mags-Skews',
-    #     'SI-Glob:TI-Mags-Corrs']
+        'TB-Glob:TI-Mags', 'TS-Glob:TI-Mags',
+        'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
+        'SI-Glob:TI-Mags-Bends', 'SI-Glob:TI-Mags-Quads',
+        'SI-Glob:TI-Mags-Sexts', 'SI-Glob:TI-Mags-Skews',
+        'SI-Glob:TI-Mags-Corrs']
 
     _pvs = dict()
     properties = dict()
@@ -298,7 +297,8 @@ class PSCycler:
         'CycleEnbl-Mon',
         'Wfm-SP', 'Wfm-RB',
         'WfmIndex-Mon', 'WfmSyncPulseCount-Mon',
-        'IntlkSoft-Mon', 'IntlkHard-Mon'
+        'IntlkSoft-Mon', 'IntlkHard-Mon',
+        'SyncPulse-Cmd'
     ]
 
     def __init__(self, psname, ramp_config=None):
@@ -468,6 +468,9 @@ class PSCycler:
         if not self.connected:
             return False
         return self['CycleEnbl-Mon'].value == _PSConst.DsblEnbl.Enbl
+
+    def pulse(self):
+        return _pv_conn_put(self['SyncPulse-Cmd'], 1)
 
     def check_final_state(self, mode):
         if mode == 'Ramp':

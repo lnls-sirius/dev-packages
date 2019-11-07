@@ -197,6 +197,24 @@ class CycleController:
         else:
             return True
 
+    def pulse_si_pwrsupplies(self):
+        """Send sync pulse to power supplies."""
+        psnames = [ps for ps in self.psnames
+                   if ('SI' in ps)]  # and 'Fam' not in ps)]
+        threads = list()
+        for psname in psnames:
+            t = _thread.Thread(
+                target=self.pulse_pwrsupply, args=(psname, ), daemon=True)
+            self._update_log('Pulsing '+psname+'...')
+            threads.append(t)
+            t.start()
+        for t in threads:
+            t.join()
+
+    def pulse_pwrsupply(self, psname):
+        """Send sync pulse to power supply."""
+        self.cyclers[psname].pulse()
+
     def init(self):
         """Trigger timing according to mode to init cycling."""
         # initialize dict to check which ps is cycling
@@ -214,6 +232,8 @@ class CycleController:
         if not psnames:
             return
         self._update_log('Triggering timing...')
+        # TODO: remove the following line when SI timing is ok
+        self.pulse_si_pwrsupplies()
         self._timing.trigger(self.mode)
         self._update_log(done=True)
 
@@ -376,15 +396,13 @@ class CycleController:
         """Return psnames to cycle."""
         if self.cyclers:
             psnames = _Filter.process_filters(
-                self.cyclers.keys(), filters={'sec': '(TB|TS)', 'dis': 'PS'})
-        # TODO: uncomment when using SI
-        #    self.cyclers.keys(), filters={'sec':'(TB|TS|SI)', 'dis':'PS'})
+                self.cyclers.keys(),
+                filters={'sec': '(TB|TS|SI)', 'dis': 'PS'})
             lipsnames = _Filter.process_filters(
-                self.cyclers.keys(), filters={'sec': 'LI', 'dis': 'PS'})
+                self.cyclers.keys(),
+                filters={'sec': 'LI', 'dis': 'PS'})
         else:
-            psnames = _PSSearch.get_psnames({'sec': '(TB|TS)', 'dis': 'PS'})
-        # TODO: uncomment when using SI
-        #     psnames = _PSSearch.get_psnames({'sec':'(TB|TS|SI)', 'dis':'PS'})
+            psnames = _PSSearch.get_psnames({'sec': '(TB|TS|SI)', 'dis': 'PS'})
             lipsnames = _PSSearch.get_psnames({'sec': 'LI', 'dis': 'PS'})
         psnames.extend(lipsnames)
         self.psnames_li = lipsnames
