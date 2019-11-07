@@ -9,8 +9,8 @@ Type=simple
 WorkingDirectory=/home/sirius/iocs-log
 StandardOutput=syslog
 StandardError=syslog
-ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sda1b12'
-EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sda1b12
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sda12b2'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sda12b2
 ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
 SI-Fam:MA-SDB2 \
 SI-Fam:MA-SDA2 \
