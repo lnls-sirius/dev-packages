@@ -193,6 +193,11 @@ class ConstPSBSMP:
     # ----- class Analog Variables -----
     P_ANALOG_MAX = 46
     P_ANALOG_MIN = 47
+    # ----- Debounding manager -----
+    P_HARD_INTLK_DEBOUNCE_TIME = 48
+    P_HARD_INTLK_RESET_TIME = 49
+    P_SOFT_INTLK_DEBOUNCE_TIME = 50
+    P_SOFT_INTLK_RESET_TIME = 51
 
 
 class ConstFBP(ConstPSBSMP):
@@ -741,7 +746,15 @@ class Parameters(_Entity):
         46: {'count': 64, 'var_type': _Types.T_FLOAT, 'unit': '',
              'init': False, 'Op': True},
         47: {'count': 64, 'var_type': _Types.T_FLOAT, 'unit': '',
-             'init': False, 'Op': True}}
+             'init': False, 'Op': True},
+        48: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        49: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        50: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        51: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False}}
 
     def value_to_load(self, eid, value):
         """."""
