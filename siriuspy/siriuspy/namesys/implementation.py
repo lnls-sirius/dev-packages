@@ -360,6 +360,8 @@ class Filter:
                 f['dev'] = '.+'
             pattern = (f['sec'] + '-' + f['sub'] + ':' +
                        f['dis'] + '-' + f['dev'])
+            if 'idx' in f:
+                pattern += '-' + f['idx']
             regexp = _re.compile(pattern)
             fs.append(regexp)
 
