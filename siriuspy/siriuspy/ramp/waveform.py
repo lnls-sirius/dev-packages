@@ -6,7 +6,7 @@ from mathphys import constants as _c
 from mathphys import units as _mu
 from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _ru
-from siriuspy.ramp.magnet import Magnet as _Magnet
+from siriuspy.ramp.magnet import get_magnet as _get_magnet
 
 
 class WaveformParam:
@@ -375,11 +375,8 @@ class WaveformParam:
 class _WaveformMagnet:
     """Base class of magnet waveforms."""
 
-    _magnets = dict()  # dict with magnets objects to improve efficiency
-
     def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE):
-        if maname not in _WaveformMagnet._magnets:
-            _WaveformMagnet._magnets[maname] = _Magnet(maname)
+        self._magnet = _get_magnet(maname)
         self._maname = maname
         self._wfm_nrpoints = wfm_nrpoints
 
@@ -433,11 +430,11 @@ class _WaveformMagnet:
         return self.waveform == value
 
     def conv_current_2_strength(self, currents, **kwargs):
-        return _WaveformMagnet._magnets[self._maname].conv_current_2_strength(
+        return self._magnet.conv_current_2_strength(
             currents, **kwargs)
 
     def conv_strength_2_current(self, strengths, **kwargs):
-        return _WaveformMagnet._magnets[self._maname].conv_strength_2_current(
+        return self._magnet.conv_strength_2_current(
             strengths, **kwargs)
 
 

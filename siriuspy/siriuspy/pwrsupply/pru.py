@@ -1,9 +1,9 @@
 """Module implementing PRU elements."""
-import sys as _sys
 import time as _time
 
 import epics as _epics
 import PRUserial485 as _PRUserial485
+from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
 
 from siriuspy.csdevice import util as _util
 
@@ -91,12 +91,14 @@ class PRU(PRUInterface):
         print('IP_ADDRESS: ', ip_address)
 
         # start communication threads
-        _PRUserial485.PRUserial485_set_bbb_ip_address(ip_address)
-        _PRUserial485.PRUserial485_threads_start()
+        self._ethbrigde = _EthBrigdeClient(ip_address=ip_address)
+        self._ethbrigde.threads_start()
 
         # print prulib version
-        fmtstr = 'PRUVERSION:  {} (eth)\n'
-        print(fmtstr.format(__version_eth_required__))
+        # fmtstr = 'PRUserial485 lib version_{}: {}'
+        # print(fmtstr.format('client', self.version))
+        # print(fmtstr.format('server', self.version_server))
+        # print()
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
@@ -104,7 +106,7 @@ class PRU(PRUInterface):
         # start PRU library and set PRU to sync off
         baud_rate = 6
         mode = b"M"  # "S": slave | "M": master
-        ret = _PRUserial485.PRUserial485_open(baud_rate, mode)
+        ret = self._ethbrigde.open(baud_rate, mode)
         if ret != PRUInterface.OK:
             raise ValueError(('Error {} returned in '
                               'PRUserial485_open').format(ret))
@@ -114,16 +116,16 @@ class PRU(PRUInterface):
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = _PRUserial485.PRUserial485_write(stream, timeout)
+        ret = self._ethbrigde.write(stream, timeout)
         return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        value = _PRUserial485.PRUserial485_read()
+        value = self._ethbrigde.read()
         return value
 
     def _close(self):
-        _PRUserial485.PRUserial485_close()
+        self._ethbrigde.close()
         return None
 
 

@@ -12,6 +12,7 @@
 import time as _time
 from copy import deepcopy as _deepcopy
 
+from siriuspy import util as _util
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.thread import DequeThread as _DequeThread
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -44,9 +45,6 @@ class BeagleBone:
 
         # init mirror variables and last update timestamp dicts
         self._create_dev2mirr_dev2timestamp_dict()
-
-        # TODO: remove this once machine-application PR is merged!
-        self.start()
 
     @property
     def psnames(self):
@@ -123,16 +121,16 @@ class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def create(bbbname=None, simulate=False, eth=False):
+    def create(bbbname=None, simulate=False):
         """Return BBB object."""
         # get current timestamp
         timestamp = _time.time()
 
         # create PRU
-        if eth:
-            pru = _PRU(bbbname=bbbname)
+        if simulate:
+            pru = _PRUSim()
         else:
-            pru = _PRUSim() if simulate else _PRU()
+            pru = _PRU(bbbname=bbbname)
 
         # create DequeThread
         prucqueue = _DequeThread()
@@ -152,6 +150,12 @@ class BBBFactory:
             psmodel = psmodels_dict[psmodel_name]
             devices = devices_dict[psmodel_name]
 
+            # Get model database
+            database = _PSData(devices[0][0]).propty_database
+
+            # check if IOC is already running
+            BBBFactory._check_ioc_online(devices[0][0], database)
+
             # Create pru controller for devices
             freq = freqs_dict[psmodel_name]
             freq = None if freq == 0 else freq
@@ -160,9 +164,6 @@ class BBBFactory:
                                             processing=False,
                                             scanning=False,
                                             freq=freq)
-
-            # Get model database
-            database = _PSData(devices[0][0]).propty_database
 
             # set bootime in epics database
             database['TimestampBoot-Cte']['value'] = timestamp
@@ -261,7 +262,8 @@ class BBBFactory:
                     pvname = dev_name + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
                     fields[pvname] = setpoints[pvname]
-            elif _Constant.match(field) and field != 'Version-Cte':
+            elif _Constant.match(field) and field != 'Version-Cte' and \
+                    not field.startswith('Param'):
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
                     dbase[name] = _deepcopy(database[field])
@@ -297,6 +299,17 @@ class BBBFactory:
             funcs[dev_name + ':' + field] = model.function(
                 [dev_id], field, pru_controller, setpoint)
         return funcs
+
+    @staticmethod
+    def _check_ioc_online(psname, database):
+        # print(psname)
+        # print(list(database.keys()))
+        propty = next(iter(database))
+        pvname = psname + ':' + propty
+        running = _util.check_pv_online(
+            pvname=pvname, use_prefix=False, timeout=0.5)
+        if running:
+            raise ValueError('Another IOC is already running !')
 
 
 class Connection:

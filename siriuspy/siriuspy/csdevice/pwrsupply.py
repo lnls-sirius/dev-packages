@@ -489,8 +489,41 @@ def get_basic_propty_database():
                               'value': Const.DsblEnbl.Dsbl},
         'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                               'value': Const.DsblEnbl.Dsbl},
-
-    })
+        # Power Supply Parameters
+        'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
+        'ParamPSModel-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamNrModules-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
+                                   'value': _np.array([float('NaN'), ] * 4)},
+        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCommEthIP-Cte':
+            {'type': 'float', 'count': 4,
+             'value': _np.array([float('NaN'), ] * 4)},
+        'ParamCommEthSubnetMask-Cte':
+            {'type': 'float', 'count': 4,
+             'value': _np.array([float('NaN'), ] * 4)},
+        'ParamCommBuzVol-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlFreqCtrlISR-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlFreqTimeSlicer-Cte':
+            {'type': 'float', 'count': 4,
+             'value': _np.array([float('NaN'), ] * 4)},
+        'ParamCtrlMaxRef-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlMinRef-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlMaxRefOpenLoop-Cte':
+            {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlMinRefOpenLoop-Cte':
+            {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlSlewRateSlowRef-Cte':
+            {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlSlewRateSigGenAmp-Cte':
+            {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlSlewRateSigGenOffset-Cte':
+            {'type': 'float', 'value': float('NaN')},
+        'ParamCtrlSlewRateWfmRef-Cte':
+            {'type': 'float', 'value': float('NaN')}})
     return dbase
 
 

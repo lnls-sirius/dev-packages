@@ -2,10 +2,8 @@
 
 These classes implement a common interface that exposes the `read` method.
 """
-import time as _time
 import re as _re
 
-from PRUserial485 import ConstSyncMode as _SYNC_MODE
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 
@@ -228,6 +226,28 @@ class Constant:
     def match(field):
         """Check if field is a constant."""
         return Constant._constant_regexp.match(field)
+
+
+class ConstParameter:
+    """Readable power supply parameter."""
+
+    def __init__(self, pru_controller, device_id, param_id):
+        """Init properties."""
+        self.pru_controller = pru_controller
+        self.device_id = device_id
+        self.param_id = param_id
+        self.value = None
+
+    def read(self):
+        """Read ps parameter from pru controller."""
+        if self.value is None:
+            self.update()
+        return self.value
+
+    def update(self):
+        """Update value."""
+        self.value = self.pru_controller.read_parameters(
+            self.device_id, self.param_id)
 
 
 class Setpoint:
