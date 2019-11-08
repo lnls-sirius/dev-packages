@@ -78,18 +78,6 @@ class PSController:
                     if value is not None:
                         value = 0 if value < 3 else value - 3
                 reader.apply(value)
-                # try:
-                #     value = self._readers[rb_field].read()
-                # except KeyError:
-                #     err_str = '\
-                #         Could not find reader for PV {}!'.format(rb_field)
-                #     print(err_str)
-                #     continue
-                # else:
-                #     if key.endswith('OpMode-Sel'):
-                #         if value is not None:
-                #             value = 0 if value < 3 else value - 3
-                #     reader.apply(value)
 
     @staticmethod
     def _get_readback_field(field):

@@ -20,6 +20,7 @@ class PSBSMP(_BSMP):
     """
 
     CONST_BSMP = _const_bsmp
+    CONST = _bsmp.ConstPSBSMP
 
     _timeout_read_variable = 100  # [ms]
     _timeout_execute_function = 100  # [ms]
@@ -37,27 +38,27 @@ class PSBSMP(_BSMP):
     _sleep_select_op_mode = 0.030  # [s]
 
     _wfmref_mon_pointers_var_ids = {
-        0: (_bsmp.ConstPSBSMP.V_WFMREF0_START,
-            _bsmp.ConstPSBSMP.V_WFMREF0_END,
-            _bsmp.ConstPSBSMP.V_WFMREF0_IDX),
-        1: (_bsmp.ConstPSBSMP.V_WFMREF1_START,
-            _bsmp.ConstPSBSMP.V_WFMREF1_END,
-            _bsmp.ConstPSBSMP.V_WFMREF1_IDX),
+        0: (CONST.V_WFMREF0_START,
+            CONST.V_WFMREF0_END,
+            CONST.V_WFMREF0_IDX),
+        1: (CONST.V_WFMREF1_START,
+            CONST.V_WFMREF1_END,
+            CONST.V_WFMREF1_IDX),
     }
 
     ID_CURVE_BUFSAMPLE = 2
 
     _wfmref_vars_ids = (
-        _bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
-        _bsmp.ConstPSBSMP.V_WFMREF_SYNC_MODE,
-        _bsmp.ConstPSBSMP.V_WFMREF_GAIN,
-        _bsmp.ConstPSBSMP.V_WFMREF_OFFSET,
-        _bsmp.ConstPSBSMP.V_WFMREF0_START,
-        _bsmp.ConstPSBSMP.V_WFMREF0_END,
-        _bsmp.ConstPSBSMP.V_WFMREF0_IDX,
-        _bsmp.ConstPSBSMP.V_WFMREF1_START,
-        _bsmp.ConstPSBSMP.V_WFMREF1_END,
-        _bsmp.ConstPSBSMP.V_WFMREF1_IDX,
+        CONST.V_WFMREF_SELECTED,
+        CONST.V_WFMREF_SYNC_MODE,
+        CONST.V_WFMREF_GAIN,
+        CONST.V_WFMREF_OFFSET,
+        CONST.V_WFMREF0_START,
+        CONST.V_WFMREF0_END,
+        CONST.V_WFMREF0_IDX,
+        CONST.V_WFMREF1_START,
+        CONST.V_WFMREF1_END,
+        CONST.V_WFMREF1_IDX,
     )
 
     def __init__(self, slave_address, entities, pru=None):
@@ -119,8 +120,8 @@ class PSBSMP(_BSMP):
         # print('timeout: ', timeout)
         # print('read_flag: ', read_flag)
 
-        if func_id in (_bsmp.ConstPSBSMP.F_SYNC_PULSE,
-                       _bsmp.ConstPSBSMP.F_RESET_UDC):
+        if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
+                       PSBSMP.CONST.F_RESET_UDC):
             # NOTE: this is necessary while PS BSMP spec is
             # not updated!
             read_flag = False
@@ -131,22 +132,21 @@ class PSBSMP(_BSMP):
 
         # introduces necessary sleeps
         # TODO: check with ELP if these numbers can be optimized further!
-        if func_id == _bsmp.ConstPSBSMP.F_RESET_UDC:
+        if func_id == PSBSMP.CONST.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
-        elif func_id == _bsmp.ConstPSBSMP.F_DISABLE_BUF_SAMPLES:
+        elif func_id == PSBSMP.CONST.F_DISABLE_BUF_SAMPLES:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
             # _time.sleep(PSBSMP._sleep_disable_bufsample)
             pass
-        elif func_id == _bsmp.ConstPSBSMP.F_SELECT_OP_MODE:
+        elif func_id == PSBSMP.CONST.F_SELECT_OP_MODE:
             # _time.sleep(PSBSMP._sleep_select_op_mode)
             pass
-        elif func_id in (_bsmp.ConstPSBSMP.F_TURN_ON,
-                         _bsmp.ConstPSBSMP.F_TURN_OFF,
-                         _bsmp.ConstPSBSMP.F_OPEN_LOOP,
-                         _bsmp.ConstPSBSMP.F_CLOSE_LOOP):
+        elif func_id in (PSBSMP.CONST.F_TURN_ON,
+                         PSBSMP.CONST.F_TURN_OFF,
+                         PSBSMP.CONST.F_OPEN_LOOP,
+                         PSBSMP.CONST.F_CLOSE_LOOP):
             _time.sleep(PSBSMP._sleep_turn_onoff)
-
 
         return response
 
@@ -174,13 +174,67 @@ class PSBSMP(_BSMP):
 
         return response
 
+    # --- pwrsupply parameters ---
+
+    def parameter_read(self, eid, index=None):
+        """Return power supply parameter."""
+
+        parameter = self.entities.parameters[eid]
+        count = parameter['count']
+        if eid == PSBSMP.CONST.P_PS_NAME:
+            # PS_NAME parameter
+            value = _np.zeros(count)
+            for index in range(count):
+                value[index] = self._read_parm(eid, index)
+                if value[index] == 0.0:
+                    # TODO: this end-of-string convention is
+                    # yet to be implemented!
+                    value = value[:index]
+                    break
+            value = ''.join([chr(int(v)) for v in value]).strip()
+        else:
+            # other parameters
+            if index is None:
+                value = _np.zeros(count)
+                for idx in range(count):
+                    val = self._read_parm(eid, idx)
+                    if val is None:
+                        return None
+                    value[idx] = val
+                if count == 1:
+                    value = value[0]
+            else:
+                value = self._read_parm(eid, index)
+                if value is None:
+                    return None
+        return value
+
+    def parameter_write(self, eid, value, index=0):
+        """Set power supply parameter."""
+        parameter = self.entities.parameters[eid]
+        count = parameter['count']
+        val = value[:count]
+        if eid == PSBSMP.CONST.P_PS_NAME:
+            # PS_NAME parameter
+            value = _np.zeros(count)
+            value[:len(val)] = [float(ord(c)) for c in val]
+            for index, value_datum in enumerate(value):
+                self.execute_function(
+                    func_id=PSBSMP.CONST.F_SET_PARAM,
+                    input_val=(eid, index, value_datum))
+        else:
+            self.execute_function(
+                func_id=PSBSMP.CONST.F_SET_PARAM,
+                input_val=(eid, index, value))
+
+
     # --- wfmref methods ---
 
     @property
     def wfmref_mon_select(self):
         """Return ID of curve currently in use by DSP."""
         _, curve_id = self.read_variable(
-            var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+            var_id=PSBSMP.CONST.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
         return curve_id
 
@@ -188,7 +242,7 @@ class PSBSMP(_BSMP):
     def wfmref_mon_select(self, curve_id):
         """Select ID of curve to be used by DSP."""
         ack, data = self.execute_function(
-            func_id=_bsmp.ConstPSBSMP.F_SELECT_WFMREF,
+            func_id=PSBSMP.CONST.F_SELECT_WFMREF,
             input_val=curve_id,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
@@ -264,7 +318,7 @@ class PSBSMP(_BSMP):
     def wfmref_mon_bufsample_enable(self):
         """Enable buffer samples."""
         ack, data = self.execute_function(
-            func_id=_bsmp.ConstPSBSMP.F_ENABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_ENABLE_BUF_SAMPLES,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
@@ -272,7 +326,7 @@ class PSBSMP(_BSMP):
         """Disable buffer samples."""
         # print('disabling bufsample.')
         ack, data = self.execute_function(
-            func_id=_bsmp.ConstPSBSMP.F_DISABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_DISABLE_BUF_SAMPLES,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
@@ -329,7 +383,7 @@ class PSBSMP(_BSMP):
 
         # get current curve id
         _, curve_id = self.read_variable(
-            var_id=_bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+            var_id=PSBSMP.CONST.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
 
         # select the other buffer and send curve blocks
@@ -339,14 +393,14 @@ class PSBSMP(_BSMP):
 
         # # read status
         # var_ids = (
-        #     _bsmp.ConstPSBSMP.V_PS_STATUS,
-        #     _bsmp.ConstPSBSMP.V_WFMREF_SELECTED,
+        #     PSBSMP.CONST.V_PS_STATUS,
+        #     PSBSMP.CONST.V_WFMREF_SELECTED,
         #   )
         # data = self._bsmp_get_variable_values(*var_ids)
         # state = data[0] & 0b1111
         # curve_id = data[1]
-        # if state in (_bsmp.ConstPSBSMP.E_STATE_RMPWFM,
-        #              _bsmp.ConstPSBSMP.E_STATE_MIGWFM):
+        # if state in (PSBSMP.CONST.E_STATE_RMPWFM,
+        #              PSBSMP.CONST.E_STATE_MIGWFM):
         #     # select the other buffer and send curve blocks
         #     curve_id = 0 if curve_id == 1 else 1
 
@@ -451,6 +505,19 @@ class PSBSMP(_BSMP):
         if curve_size > self.curve_maxsize(curve_id=curve_id):
             raise IndexError('Curve exceeds maximum size according to spec!')
 
+    def _read_parm(self, eid, idx):
+        ack, val = self.execute_function(
+            func_id=PSBSMP.CONST.F_GET_PARAM,
+            input_val=(eid, idx))
+        if ack == PSBSMP.CONST_BSMP.CMD_FUNCTION_ERROR:
+            # TODO: when a uninitialized parameter is requested
+            # the UDC responds with a function error.
+            # this is a temporary bug bypass while firmware is not
+            # updated!
+            val = float('NaN')
+        elif ack != PSBSMP.CONST_BSMP.ACK_OK:
+            return None
+        return val
 
 
 # --- DCDC ---
@@ -460,10 +527,10 @@ class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFBP
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFBP
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP(), pru=pru)
 
 
@@ -471,10 +538,10 @@ class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAC_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAC_DCDC
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_DCDC(), pru=pru)
 
 
@@ -482,10 +549,10 @@ class FAC_2P4S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_DCDC."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAC_2P4S_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAC_2P4S_DCDC
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2P4S_DCDC(), pru=pru)
 
 
@@ -493,10 +560,10 @@ class FAC_2S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_DCDC."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAC_2S_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAC_2S_DCDC
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2S_DCDC(), pru=pru)
 
 
@@ -504,10 +571,10 @@ class FAP(PSBSMP):
     """BSMP with EntitiesFAP."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAP
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAP
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP(), pru=pru)
 
 
@@ -515,10 +582,10 @@ class FAP_4P(PSBSMP):
     """BSMP with EntitiesFAP_4P."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAP_4P
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAP_4P
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP_4P(), pru=pru)
 
 
@@ -526,10 +593,10 @@ class FAP_2P2S(PSBSMP):
     """BSMP with EntitiesFAP_2P2S."""
 
     IS_DCLINK = False
+    CONST = _bsmp.ConstFAP_2P2S
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAP_2P2S
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
@@ -540,10 +607,10 @@ class FBP_DCLink(PSBSMP):
     """BSMP with EntitiesFBP_DCLink."""
 
     IS_DCLINK = True
+    CONST = _bsmp.ConstFBP_DCLink
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFBP_DCLink
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP_DCLink(), pru=pru)
 
 
@@ -551,10 +618,10 @@ class FAC_2P4S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_ACDC."""
 
     IS_DCLINK = True
+    CONST = _bsmp.ConstFAC_2P4S_ACDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAC_2P4S_ACDC
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2P4S_ACDC(), pru=pru)
 
 
@@ -562,10 +629,10 @@ class FAC_2S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_ACDC."""
 
     IS_DCLINK = True
+    CONST = _bsmp.ConstFAC_2S_ACDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        self.CONST_PSBSMP = _bsmp.ConstFAC_2S_ACDC
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2S_ACDC(), pru=pru)
 
 

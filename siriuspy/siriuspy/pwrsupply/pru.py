@@ -101,10 +101,10 @@ class PRU(PRUInterface):
             self.version_server = _PRUserial485.PRUserial485_version()
 
         # print prulib version
-        fmtstr = 'PRUserial485 lib version_{}: {}'
-        print(fmtstr.format('client', self.version))
-        print(fmtstr.format('server', self.version_server))
-        print()
+        # fmtstr = 'PRUserial485 lib version_{}: {}'
+        # print(fmtstr.format('client', self.version))
+        # print(fmtstr.format('server', self.version_server))
+        # print()
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
