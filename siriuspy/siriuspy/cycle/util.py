@@ -4,7 +4,7 @@
 import time as _time
 import numpy as _np
 from math import isclose as _isclose
-from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
+from siriuspy.namesys import Filter as _Filter
 from siriuspy.search import PSSearch as _PSSearch
 
 
@@ -17,18 +17,6 @@ def get_psnames():
         {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
          'dev': 'CV', 'idx': '2'}))
     return names
-
-
-def get_psnames_from_same_udc(psname):
-    """Return psnames that are controled by same udc as psname."""
-    psname = _PVName(psname)
-    if psname.dev == 'B':
-        psnames = _PSSearch.get_psnames({'sec': psname.sec, 'dev': 'B'})
-    else:
-        udc = _PSSearch.conv_psname_2_udc(psname)
-        bsmp_list = _PSSearch.conv_udc_2_bsmps(udc)
-        psnames = [bsmp[0] for bsmp in bsmp_list]
-    return psnames
 
 
 def get_sections(psnames):
