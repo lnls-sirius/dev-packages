@@ -276,7 +276,7 @@ install-si-ma: preparation
 	cp -rf sirius-ioc-si-ma-quadrupoles-q.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service /etc/systemd/system/
-	cp -rf sirius-ioc-si-ma-sextupoles-sda1b12.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sda12b2.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service /etc/systemd/system/
@@ -375,7 +375,7 @@ stop-si-ma:
 	systemctl stop sirius-ioc-si-ma-quadrupoles-q.service
 	systemctl stop sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
 	systemctl stop sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
-	systemctl stop sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sda12b2.service
 	systemctl stop sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
 	systemctl stop sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
 	systemctl stop sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
@@ -472,7 +472,7 @@ start-si-ma: preparation
 	systemctl start sirius-ioc-si-ma-quadrupoles-q.service
 	systemctl start sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
 	systemctl start sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
-	systemctl start sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sda12b2.service
 	systemctl start sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
 	systemctl start sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
 	systemctl start sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
@@ -569,7 +569,7 @@ disable-si-ma:
 	systemctl disable sirius-ioc-si-ma-quadrupoles-q.service
 	systemctl disable sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
 	systemctl disable sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
-	systemctl disable sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sda12b2.service
 	systemctl disable sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
 	systemctl disable sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
 	systemctl disable sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
@@ -666,7 +666,7 @@ uninstall-si-ma: stop-si-ma disable-si-ma
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-q.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
-	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sda1b12.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sda12b2.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
