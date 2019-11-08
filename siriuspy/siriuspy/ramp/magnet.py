@@ -11,6 +11,14 @@ from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
+_magnets_dict = dict()
+
+
+def get_magnet(maname):
+    if maname not in _magnets_dict:
+        _magnets_dict[maname] = Magnet(maname)
+    return _magnets_dict[maname]
+
 
 class Magnet:
     """Base class for handling magnets."""
@@ -26,6 +34,9 @@ class Magnet:
         self._strength_obj = _NormalizerFactory.create(maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc)
+
+        if maname not in _magnets_dict:
+            _magnets_dict[maname] = self
 
     @property
     def maname(self):

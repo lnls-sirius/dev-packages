@@ -148,6 +148,16 @@ class EpicsPropertiesList:
         for ppty in properties:
             self._properties[ppty.name] = ppty
         self._default = {p.name: p.default for p in self._properties.values()}
+        self._logger = None
+
+    @property
+    def logger(self):
+        """Return logger."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        self._logger = logger
 
     @property
     def connected(self):
@@ -208,6 +218,8 @@ class EpicsPropertiesList:
                 ppty.setpoint = value
                 if 'Cmd' not in name:
                     is_nok.append(name)
+            if self._logger is not None:
+                self._logger.update(name)
         # check
         if not desired_readbacks:
             desired_readbacks = setpoints

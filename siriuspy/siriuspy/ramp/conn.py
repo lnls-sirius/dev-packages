@@ -260,12 +260,10 @@ class ConnTI(_EpicsPropsList):
             {c.TrgCorrs_Delay: self._ramp_config.ti_params_ps_ramp_delay})
         self.ramp_configsetup.update(
             {c.TrgLLRFRmp_Delay: self._ramp_config.ti_params_rf_ramp_delay})
-        for event in events_inj:
-            attr = getattr(c, 'Evt'+event+'_Delay')
-            self.ramp_configsetup.update({attr: delays[event]})
-        for event in events_eje:
-            attr = getattr(c, 'Evt'+event+'_Delay')
-            self.ramp_configsetup.update({attr: delays[event]})
+        for events in [events_inj, events_eje]:
+            for evt in events:
+                attr = getattr(c, 'Evt'+evt+'_Delay')
+                self.ramp_configsetup.update({attr: delays[evt]})
 
     def get_injection_time(self):
         """Return injection time."""
@@ -299,18 +297,22 @@ class ConnTI(_EpicsPropsList):
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
             c.TrgMags_Polarity: _TIConst.TrigPol.Normal,
             c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgMags_NrPulses: 1,
+            c.TrgMags_Duration: 150.0,       # [us]
             # c.TrgMags_Status: 0,
             # Corrs trigger
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
             c.TrgCorrs_Polarity: _TIConst.TrigPol.Normal,
             c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgCorrs_NrPulses: 1,
+            c.TrgCorrs_Duration: 150.0,      # [us]
             # c.TrgCorrs_Status: 0,
             # LLRFRmp trigger
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Normal,
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
-            c.TrgLLRFRmp_Duration: 150.0}
+            c.TrgLLRFRmp_Duration: 150.0}    # [us]
         #     c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
@@ -326,12 +328,8 @@ class ConnTI(_EpicsPropsList):
             c.EvtDigSI_Delay: None,          # [us]
             c.EvtStudy_Delay: None,          # [us]
             # Mags trigger
-            c.TrgMags_NrPulses: 1,
-            c.TrgMags_Duration: 150.0,      # [us]
             c.TrgMags_Delay: 0.0,           # [us]
             # Corrs trigger
-            c.TrgCorrs_NrPulses: 1,
-            c.TrgCorrs_Duration: 150.0,     # [us]
             c.TrgCorrs_Delay: 0.0,          # [us]
             # LLRFRmp trigger
             c.TrgLLRFRmp_Delay: 0.0}        # [us]
@@ -457,7 +455,7 @@ class ConnMA(_EpicsPropsList):
             value = wf.currents
             name = maname + ':Wfm-SP'
             sp[name] = value
-        return self.set_setpoints_check(sp, timeout=timeout)
+        return self.set_setpoints_check(sp, timeout=timeout, abs_tol=1e-5)
 
     # --- power supplies checks ---
 

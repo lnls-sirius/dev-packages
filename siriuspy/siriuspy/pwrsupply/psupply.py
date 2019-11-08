@@ -27,6 +27,7 @@ class PSupply:
 
     DEFAULT_UPDATE_INTERVAL_WFM = 2.0  # [s]
     DEFAULT_UPDATE_INTERVAL_VARIABLES = 0.1  # [s]
+    DEFAULT_UPDATE_INTERVAL_PARAMETERS = 2.0  # [s]
 
     def __init__(self, psbsmp):
         """Init."""
@@ -35,6 +36,7 @@ class PSupply:
         self._groups = dict()
         self._variables = dict()
         self._curves = dict()
+        self._parameters = dict()
         self._wfm_rb = None
         self._wfmref_mon = None
         self._wfm_mon = None
@@ -42,6 +44,7 @@ class PSupply:
         self._timestamp_update_group = None
         self._timestamp_update_variables = None
         self._timestamp_update_wfm = None
+        self._timestamp_update_parameters = None
 
     @property
     def psbsmp(self):
@@ -72,17 +75,17 @@ class PSupply:
     def wfmref_mon_index(self):
         """Return current index into DSP selected curve."""
         curve_id = \
-            self._variables[self._psbsmp.CONST_PSBSMP.V_WFMREF_SELECTED]
+            self._variables[self._psbsmp.CONST.V_WFMREF_SELECTED]
         if curve_id == 0:
             beg = self._variables[
-                self._psbsmp.CONST_PSBSMP.V_WFMREF0_START]
+                self._psbsmp.CONST.V_WFMREF0_START]
             end = self._variables[
-                self._psbsmp.CONST_PSBSMP.V_WFMREF0_END]
+                self._psbsmp.CONST.V_WFMREF0_END]
         else:
             beg = self._variables[
-                self._psbsmp.CONST_PSBSMP.V_WFMREF1_START]
+                self._psbsmp.CONST.V_WFMREF1_START]
             end = self._variables[
-                self._psbsmp.CONST_PSBSMP.V_WFMREF1_END]
+                self._psbsmp.CONST.V_WFMREF1_END]
         index = self._psbsmp.curve_index_calc(beg, end)
         return index
 
@@ -95,6 +98,11 @@ class PSupply:
     def variables(self):
         """."""
         return self._variables
+
+    @property
+    def parameters(self):
+        """."""
+        return self._parameters
 
     @property
     def timestamp_update(self):
@@ -111,6 +119,10 @@ class PSupply:
         """."""
         return self._variables[var_id]
 
+    def get_parameter(self, eid):
+        """."""
+        return self._parameters[eid]
+
     def update(self, interval=0.0):
         """Update all power supply entities.
 
@@ -126,6 +138,10 @@ class PSupply:
             connected &= self._connected
             # wfmref
             if not self.update_wfm(interval=0.0):
+                return False
+            connected &= self._connected
+            # parameters
+            if not self.update_parameters(interval=0.0):
                 return False
             connected &= self._connected
             # update connected state
@@ -203,6 +219,33 @@ class PSupply:
                 self._psbsmp.wfmref_mon_bufsample_enable()
             # update timestamp (even it could not read wfm_mon)
             self._timestamp_update_wfm = now
+        return True
+
+    @_psupply_update_connected
+    def update_parameters(self, interval=None):
+        """Update power supply parameters."""
+        if interval is None:
+            interval = PSupply.DEFAULT_UPDATE_INTERVAL_PARAMETERS
+        now = _time.time()
+        tstamp = self._timestamp_update_parameters
+        if tstamp is None or (now - tstamp) >= interval:
+            parameters = self._psbsmp.entities.parameters
+            for eid in parameters.eids:
+                parameter = parameters[eid]
+                counter = parameter['count']
+                if eid != self._psbsmp.CONST.P_PS_NAME and counter > 1:
+                    value = _np.zeros(counter) * float('NaN')
+                    for idx in range(counter):
+                        value[idx] = self._psbsmp.parameter_read(eid, idx)
+                else:
+                    value = self._psbsmp.parameter_read(eid)
+                self._parameters[eid] = value
+                # print(eid, value)
+            if value is not None:
+                self._timestamp_update_variables = now
+                return True
+            else:
+                return False
         return True
 
     def reset_variables_groups(self, groups):
