@@ -14,7 +14,8 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
-from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put
+from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
+    get_trigger_by_psname as _get_trigger_by_psname
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
@@ -66,14 +67,14 @@ class Timing:
 
     # ----- main commands -----
 
-    def prepare(self, mode, sections=list()):
+    def prepare(self, mode, triggers=list()):
         """Initialize properties."""
         # Enable EVG
         self.enable_evg()
         # Disable Injection
         self.set_injection_state(_TIConst.DsblEnbl.Dsbl)
         # Config. triggers and events
-        pvs_2_init = self.get_pvname_2_defval_dict(mode, sections)
+        pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             pv = Timing._pvs[prop]
             pv.get()  # force connection
@@ -83,9 +84,9 @@ class Timing:
         # Update events
         self.update_events()
 
-    def check(self, mode, sections=list()):
+    def check(self, mode, triggers=list()):
         """Check if timing is configured."""
-        pvs_2_init = self.get_pvname_2_defval_dict(mode, sections)
+        pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             try:
                 prop_sts = _get_pair_sprb(prop)[1]
@@ -163,6 +164,8 @@ class Timing:
         """Restore initial state."""
         # Config. triggers and events to initial state
         for pvname, init_val in self._initial_state.items():
+            if init_val is None:
+                continue
             if ':InjectionEvt-Sel' in pvname:
                 inj_state = init_val
                 continue
@@ -187,22 +190,23 @@ class Timing:
             pv = Timing._pvs[trig+':State-Sel']
             pv.value = _TIConst.DsblEnbl.Dsbl
 
-    def get_pvnames_by_section(self, sections=list()):
+    def get_pvnames_by_psnames(self, psnames=list()):
+        triggers = _get_trigger_by_psname(psnames)
         pvnames = set()
         for mode in Timing.properties:
             for prop in Timing.properties[mode]:
                 prop = _PVName(prop)
-                if prop.dev == 'EVG' or prop.sec in sections:
+                if prop.dev == 'EVG' or prop.device_name in triggers:
                     pvnames.add(prop)
         return pvnames
 
-    def get_pvname_2_defval_dict(self, mode, sections=list()):
+    def get_pvname_2_defval_dict(self, mode, triggers=list()):
         pvname_2_defval_dict = dict()
         for prop, defval in Timing.properties[mode].items():
             if defval is None:
                 continue
             prop = _PVName(prop)
-            if prop.dev == 'EVG' or prop.sec in sections:
+            if prop.dev == 'EVG' or prop.device_name in triggers:
                 pvname_2_defval_dict[prop] = defval
         return pvname_2_defval_dict
 
