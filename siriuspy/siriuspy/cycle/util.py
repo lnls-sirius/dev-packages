@@ -27,6 +27,38 @@ def get_sections(psnames):
     return sections
 
 
+def get_trigger_by_psname(psnames):
+    triggers = set()
+    if _Filter.process_filters(psnames, filters={'sec': 'TB'}):
+        triggers.add('TB-Glob:TI-Mags')
+    if _Filter.process_filters(psnames, filters={'sec': 'TS'}):
+        triggers.add('TS-Glob:TI-Mags')
+    if _Filter.process_filters(psnames, filters={'sec': 'BO', 'sub': 'Fam'}):
+        triggers.add('BO-Glob:TI-Mags-Fams')
+    if _Filter.process_filters(
+            psnames, filters={'sec': 'BO', 'sub': '[0-2][0-9].*'}):
+        triggers.add('BO-Glob:TI-Mags-Corrs')
+    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'B1B2'}):
+        triggers.add('SI-Glob:TI-Mags-Bends')
+    if _Filter.process_filters(psnames, filters={
+            'sec': 'SI', 'sub': 'Fam', 'dev': '(QD.*|QF.*|Q[1-4])'}):
+        triggers.add('SI-Glob:TI-Mags-Quads')
+    if _Filter.process_filters(psnames, filters={
+            'sec': 'SI', 'sub': '[0-2][0-9].*', 'dev': '(QD.*|QF.*|Q[1-4])'}):
+        triggers.add('SI-Glob:TI-Mags-QTrims')
+        # TODO: remove following line when timing table is updated
+        triggers.add('SI-Glob:TI-Mags-Skews')
+    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'QS'}):
+        triggers.add('SI-Glob:TI-Mags-Skews')
+        # TODO: remove following line when timing table is updated
+        triggers.add('SI-Glob:TI-Mags-QTrims')
+    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'S.*'}):
+        triggers.add('SI-Glob:TI-Mags-Sexts')
+    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'C.*'}):
+        triggers.add('SI-Glob:TI-Mags-Corrs')
+    return triggers
+
+
 def pv_timed_get(pv, value, wait=5):
     """Do timed get."""
     if not pv.connected:
