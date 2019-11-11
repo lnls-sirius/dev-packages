@@ -3,7 +3,6 @@
 
 import time as _time
 import numpy as _np
-from math import isclose as _isclose
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.search import PSSearch as _PSSearch
 
@@ -59,7 +58,7 @@ def get_trigger_by_psname(psnames):
     return triggers
 
 
-def pv_timed_get(pv, value, wait=5):
+def pv_timed_get(pv, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
     """Do timed get."""
     if not pv.connected:
         return False
@@ -73,21 +72,14 @@ def pv_timed_get(pv, value, wait=5):
             elif len(value) != len(pvvalue):
                 status = False
             else:
-                for i in range(len(value)):
-                    if _isclose(pvvalue[i], value[i],
-                                rel_tol=1e-06, abs_tol=0.0):
-                        status = True
-                    else:
-                        status = False
-                        break
-                else:
+                if all(_np.isclose(pvvalue, value,
+                                   atol=abs_tol, rtol=rel_tol)):
+                    status = True
                     break
         else:
-            if _isclose(pvvalue, value, rel_tol=1e-06, abs_tol=0.0):
+            if _np.isclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
                 status = True
                 break
-            else:
-                status = False
         _time.sleep(wait/10.0)
     return status
 
