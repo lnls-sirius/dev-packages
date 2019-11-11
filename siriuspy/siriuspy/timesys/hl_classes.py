@@ -126,7 +126,7 @@ class _BaseHL(_Base):
             self._timer.start()
 
     def _update_pvs_thread(self):
-        _time.sleep(1/20)  # limit update in 20Hz
+        _time.sleep(1/10)  # limit update in 10Hz
         for prop, suf in self._all_props_suffix.items():
             if self._iscmdpv(suf):
                 continue
