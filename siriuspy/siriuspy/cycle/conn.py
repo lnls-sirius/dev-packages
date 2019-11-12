@@ -15,7 +15,8 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
-    get_trigger_by_psname as _get_trigger_by_psname
+    get_trigger_by_psname as _get_trigger_by_psname, \
+    TRIGGER_NAMES as _TRIGGER_NAMES
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
@@ -34,13 +35,6 @@ class Timing:
     DEFAULT_NRPULSES = 1
     DEFAULT_DELAY = 0  # [us]
     DEFAULT_POLARITY = _TIConst.TrigPol.Normal
-
-    _trigger_list = [
-        'TB-Glob:TI-Mags', 'TS-Glob:TI-Mags',
-        'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
-        'SI-Glob:TI-Mags-Bends', 'SI-Glob:TI-Mags-Quads',
-        'SI-Glob:TI-Mags-Sexts', 'SI-Glob:TI-Mags-Skews',
-        'SI-Glob:TI-Mags-Corrs']
 
     _pvs = dict()
     properties = dict()
@@ -184,7 +178,7 @@ class Timing:
         pv_event.value = _TIConst.EvtModes.Disabled
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
-        for trig in self._trigger_list:
+        for trig in _TRIGGER_NAMES:
             pv = Timing._pvs[trig+':Src-Sel']
             pv.value = _TIConst.DsblEnbl.Dsbl
             pv = Timing._pvs[trig+':State-Sel']
@@ -271,7 +265,7 @@ class Timing:
             }
         }
 
-        for trig in cls._trigger_list:
+        for trig in _TRIGGER_NAMES:
             for mode in ['Cycle', 'Ramp']:
                 props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
                 props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION

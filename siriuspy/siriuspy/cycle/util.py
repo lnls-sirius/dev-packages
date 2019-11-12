@@ -7,6 +7,14 @@ from siriuspy.namesys import Filter as _Filter
 from siriuspy.search import PSSearch as _PSSearch
 
 
+TRIGGER_NAMES = {
+    'TB-Glob:TI-Mags', 'TS-Glob:TI-Mags',
+    'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
+    'SI-Glob:TI-Mags-Bends', 'SI-Glob:TI-Mags-Quads',
+    'SI-Glob:TI-Mags-Sexts', 'SI-Glob:TI-Mags-Skews',
+    'SI-Glob:TI-Mags-Corrs', 'SI-Glob:TI-Mags-QTrims'}
+
+
 def get_psnames():
     """Return psnames."""
     names = _PSSearch.get_psnames({'sec': '(LI|TB|BO|TS)', 'dis': 'PS'})
