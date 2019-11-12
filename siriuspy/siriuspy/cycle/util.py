@@ -4,7 +4,8 @@
 import time as _time
 import numpy as _np
 from siriuspy.namesys import Filter as _Filter
-from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.search import PSSearch as _PSSearch, \
+    HLTimeSearch as _HLTimeSearch
 
 
 TRIGGER_NAMES = {
@@ -35,34 +36,18 @@ def get_sections(psnames):
 
 
 def get_trigger_by_psname(psnames):
+    psnames = set(psnames)
     triggers = set()
-    if _Filter.process_filters(psnames, filters={'sec': 'TB'}):
-        triggers.add('TB-Glob:TI-Mags')
-    if _Filter.process_filters(psnames, filters={'sec': 'TS'}):
-        triggers.add('TS-Glob:TI-Mags')
-    if _Filter.process_filters(psnames, filters={'sec': 'BO', 'sub': 'Fam'}):
-        triggers.add('BO-Glob:TI-Mags-Fams')
-    if _Filter.process_filters(
-            psnames, filters={'sec': 'BO', 'sub': '[0-2][0-9].*'}):
-        triggers.add('BO-Glob:TI-Mags-Corrs')
-    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'B1B2'}):
-        triggers.add('SI-Glob:TI-Mags-Bends')
-    if _Filter.process_filters(psnames, filters={
-            'sec': 'SI', 'sub': 'Fam', 'dev': '(QD.*|QF.*|Q[1-4])'}):
-        triggers.add('SI-Glob:TI-Mags-Quads')
-    if _Filter.process_filters(psnames, filters={
-            'sec': 'SI', 'sub': '[0-2][0-9].*', 'dev': '(QD.*|QF.*|Q[1-4])'}):
-        triggers.add('SI-Glob:TI-Mags-QTrims')
-        # TODO: remove following line when timing table is updated
+    for trig in TRIGGER_NAMES:
+        dev_names = set(_HLTimeSearch.get_hl_trigger_channels(trig))
+        dev_names = {dev.device_name for dev in dev_names}
+        if psnames & dev_names:
+            triggers.add(trig)
+    # TODO: remove the following lines when TI static tables are updated
+    if 'SI-Glob:TI-Mags-QTrims' in triggers:
         triggers.add('SI-Glob:TI-Mags-Skews')
-    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'QS'}):
-        triggers.add('SI-Glob:TI-Mags-Skews')
-        # TODO: remove following line when timing table is updated
+    elif 'SI-Glob:TI-Mags-Skews' in triggers:
         triggers.add('SI-Glob:TI-Mags-QTrims')
-    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'S.*'}):
-        triggers.add('SI-Glob:TI-Mags-Sexts')
-    if _Filter.process_filters(psnames, filters={'sec': 'SI', 'dev': 'C.*'}):
-        triggers.add('SI-Glob:TI-Mags-Corrs')
     return triggers
 
 
