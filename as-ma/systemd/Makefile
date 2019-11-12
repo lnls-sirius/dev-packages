@@ -207,6 +207,9 @@ install-ts-pm: preparation
 	@printf "Installing sirius-ioc-ts-pm services...\n"
 	cp -rf sirius-ioc-ts-pm-ejeseptf.service /etc/systemd/system/
 	cp -rf sirius-ioc-ts-pm-ejeseptg.service /etc/systemd/system/
+	cp -rf sirius-ioc-ts-pm-injseptf.service /etc/systemd/system/
+	cp -rf sirius-ioc-ts-pm-injseptg1.service /etc/systemd/system/
+	cp -rf sirius-ioc-ts-pm-injseptg2.service /etc/systemd/system/
 	systemctl daemon-reload
 
 stop-ts-ma:
@@ -220,6 +223,9 @@ stop-ts-pm:
 	@printf "Stopping sirius-ioc-ts-pm services...\n"
 	systemctl stop sirius-ioc-ts-pm-ejeseptf.service
 	systemctl stop sirius-ioc-ts-pm-ejeseptg.service
+	systemctl stop sirius-ioc-ts-pm-injseptf.service
+	systemctl stop sirius-ioc-ts-pm-injseptg1.service
+	systemctl stop sirius-ioc-ts-pm-injseptg2.service
 
 start-ts-ma: preparation
 	@printf "Starting sirius-ioc-ts-ma services...\n"
@@ -232,6 +238,9 @@ start-ts-pm: preparation
 	@printf "Starting sirius-ioc-ts-pm services...\n"
 	systemctl start sirius-ioc-ts-pm-ejeseptf.service
 	systemctl start sirius-ioc-ts-pm-ejeseptg.service
+	systemctl start sirius-ioc-ts-pm-injseptf.service
+	systemctl start sirius-ioc-ts-pm-injseptg1.service
+	systemctl start sirius-ioc-ts-pm-injseptg2.service
 
 disable-ts-ma:
 	@printf "Disabling sirius-ioc-ts-ma services...\n"
@@ -244,6 +253,9 @@ disable-ts-pm:
 	@printf "Disabling sirius-ioc-ts-pm services...\n"
 	systemctl disable sirius-ioc-ts-pm-ejeseptf.service
 	systemctl disable sirius-ioc-ts-pm-ejeseptg.service
+	systemctl disable sirius-ioc-ts-pm-injseptf.service
+	systemctl disable sirius-ioc-ts-pm-injseptg1.service
+	systemctl disable sirius-ioc-ts-pm-injseptg2.service
 
 uninstall-ts-ma: stop-ts-ma disable-ts-ma
 	@printf "Uninstalling sirius-ioc-ts-ma services...\n"
@@ -258,6 +270,9 @@ uninstall-ts-pm: stop-ts-pm disable-ts-pm
 	@printf "Uninstalling sirius-ioc-ts-pm services...\n"
 	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-ejeseptf.service
 	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-ejeseptg.service
+	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-injseptf.service
+	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-injseptg1.service
+	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-injseptg2.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
