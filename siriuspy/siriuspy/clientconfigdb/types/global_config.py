@@ -728,6 +728,15 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Quads:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Quads:LowLvlLock-Sel', 0, 0.0],
 
+    ['SI-Glob:TI-Mags-QTrims:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-Mags-QTrims:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-Mags-QTrims:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-QTrims:LowLvlLock-Sel', 0, 0.0],
+
     ['SI-Glob:TI-Mags-Sexts:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Sexts:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Sexts:NrPulses-SP', 0, 0.0],
