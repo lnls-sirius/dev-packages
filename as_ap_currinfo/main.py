@@ -16,6 +16,7 @@ BO_ENERGY2TIME = {  # energy vs. time[s]
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
+INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
 
 
 def _get_value_from_arch(pvname):
@@ -67,6 +68,14 @@ class BOApp:
                 charge = data[1][0]
             self._charges[k] = charge
             self.driver.setParam(ppty, charge)
+
+        intcurr_ppty = 'IntCurrent3GeV-Mon'
+        data = _get_value_from_arch(self._PREFIX+intcurr_ppty)
+        if data is None:
+            self._intcurrent3gev = 0.0
+        else:
+            self._intcurrent3gev = data[1][0]
+        self.driver.setParam(intcurr_ppty, self._intcurrent3gev)
         self.driver.updatePVs()
 
         # PVs
@@ -174,9 +183,15 @@ class BOApp:
                 self._charges[energy] += current * BO_REV_PERIOD
                 self.driver.setParam('Charge'+str(energy)+'-Mon',
                                      self._charges[energy])
-        # ramp efficiency
+
         c150mev = self._currents['150MeV']
         c3gev = self._currents['3GeV']
+
+        # integrated current in 3GeV
+        self._intcurrent3gev += c3gev * INTCURR_INTVL  # [mA.h]
+        self.driver.setParam('IntCurrent3GeV-Mon', self._intcurrent3gev)
+
+        # ramp efficiency
         if c150mev > c3gev:
             self._rampeff = 100*c3gev/c150mev
             self.driver.setParam('RampEff-Mon', self._rampeff)
