@@ -728,6 +728,15 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Quads:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Quads:LowLvlLock-Sel', 0, 0.0],
 
+    ['SI-Glob:TI-Mags-QTrims:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-Mags-QTrims:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-Mags-QTrims:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-Mags-QTrims:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-QTrims:LowLvlLock-Sel', 0, 0.0],
+
     ['SI-Glob:TI-Mags-Sexts:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Sexts:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Sexts:NrPulses-SP', 0, 0.0],
@@ -959,6 +968,7 @@ _pvs_pu = [
     ['TB-04:PU-InjSept:PwrState-Sel', _OFF, 0.0],
     ['BO-01D:PU-InjKckr:PwrState-Sel', _OFF, 0.0],
     ['BO-48D:PU-EjeKckr:PwrState-Sel', _OFF, 0.0],
+    ['SI-01SA:PU-InjDpKckr:PwrState-Sel', _OFF, 0.0],
     ['TS-04:PU-InjSeptG-1:PwrState-Sel', _OFF, 0.0],
     ['TS-04:PU-InjSeptG-2:PwrState-Sel', _OFF, 0.0],
     ['TS-04:PU-InjSeptF:PwrState-Sel', _OFF, 0.0],
@@ -967,6 +977,7 @@ _pvs_pu = [
     ['TB-04:PU-InjSept:Pulse-Sel', 0, 0.0],
     ['BO-01D:PU-InjKckr:Pulse-Sel', 0, 0.0],
     ['BO-48D:PU-EjeKckr:Pulse-Sel', 0, 0.0],
+    ['SI-01SA:PU-InjDpKckr:Pulse-Sel', 0, 0.0],
     ['TS-04:PU-InjSeptG-1:Pulse-Sel', 0, 0.0],
     ['TS-04:PU-InjSeptG-2:Pulse-Sel', 0, 0.0],
     ['TS-04:PU-InjSeptF:Pulse-Sel', 0, 0.0],
@@ -975,6 +986,7 @@ _pvs_pu = [
     ['TB-04:PU-InjSept:Voltage-SP', 0.0, 0.0],   # [Volt]
     ['BO-01D:PU-InjKckr:Voltage-SP', 0.0, 0.0],  # [Volt]
     ['BO-48D:PU-EjeKckr:Voltage-SP', 0.0, 0.0],  # [Volt]
+    ['SI-01SA:PU-InjDpKckr:Voltage-SP', 0.0, 0.0],  # [Volt]
     ['TS-04:PU-InjSeptG-1:Voltage-SP', 0.0, 0.0],  # [Volt]
     ['TS-04:PU-InjSeptG-2:Voltage-SP', 0.0, 0.0],  # [Volt]
     ['TS-04:PU-InjSeptF:Voltage-SP', 0.0, 0.0],  # [Volt]
