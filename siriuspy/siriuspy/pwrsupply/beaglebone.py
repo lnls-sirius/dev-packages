@@ -279,7 +279,7 @@ class BBBFactory:
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        # NOTE: Each pwrsupply should have all varables independent
+        # NOTE: Each pwrsupply should have all variables independent
         #       in the near future.
         # if field in ('CycleType-Sel', 'CycleNrCycles-SP',
         #              'CycleFreq-SP', 'CycleAmpl-SP',
