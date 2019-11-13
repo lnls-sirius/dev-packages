@@ -6,16 +6,22 @@ pending:
 2019-10-23 - [firmware]: create new BSMP variable that mirrors last setpoint received by ARM
 2019-10-23 - [firmware]: change SYNC_PULSE and RESET_UDC bsmp functions so that they always return OK.
 2019-11-01 - [firmware]: P_PS_NAME: a) use byte 0x00 as terminator, b) use ',' to separate psnames.
-2019-11-01 - [firmware]: fix bug when F_SET_PARAM of uninitialized parameters (it is responsind with 0x53)
+2019-11-01 - [firmware]: fix bug when F_SET_PARAM of uninitialized parameters (it is responding with 0x53)
+2019-11-13 - [firmware]: independent siggen parameters for pwrsupplies in the same UDC.
 
 2019-10-18 - [etherbridge]: write new optimized version.
+2019-11-13 - [etherbridge]: new object-oriented client version. PR opened.
 
-2019-10-18 - [psioc]: debug anomalous responses
 2019-10-18 - [psioc]: benchmark all BSMP commands for all power supply models
-2019-10-18 - [psioc]: implement BSMP read/write classes for BSMP parameters.
 
 
 solved:
+
+2019-10-18 - [psioc]: implement BSMP read/write classes for BSMP parameters.
+             done. (2019-11-05)
+
+2019-10-18 - [psioc]: debug anomalous responses
+             done. (2019-11-13)
 
 2019-10-21 - [firmware]: discard FBP mirror bsmp variables
              these variables will continue to exist for debugging purposes. the IOC will not use them.
