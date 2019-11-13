@@ -1,6 +1,7 @@
 #!/usr/bin/env python-sirius
 """."""
 
+import time as _time
 from epics import PV
 
 
@@ -53,3 +54,30 @@ class LiLLRF:
         conn &= self._ph_sp.connected
         conn &= self._ph_rb.connected
         return conn
+
+    def wait(self, timeout=10, prop=None):
+        """."""
+        nrp = int(timeout / 0.1)
+        for _ in range(nrp):
+            _time.sleep(0.1)
+            if prop == 'phase':
+                if abs(self.phase - self._ph_sp.value) < 0.1:
+                    break
+            elif prop == 'amplitude':
+                if abs(self.amplitude - self._amp_sp.value) < 0.1:
+                    break
+            else:
+                raise Exception(
+                    'Set LLRF property (phase or amplitude)')
+        else:
+            print('timed out waiting LLRF.')
+
+    def set_phase(self, value, timeout=10):
+        """."""
+        self.phase = value
+        self.wait(timeout, 'phase')
+
+    def set_amplitude(self, value, timeout=30):
+        """."""
+        self.amplitude = value
+        self.wait(timeout, 'amplitude')
