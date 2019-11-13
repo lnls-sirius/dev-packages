@@ -7,6 +7,7 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
+from siriuspy.bsmp import Entity as _Entity
 from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
 
@@ -192,6 +193,11 @@ class ConstPSBSMP:
     # ----- class Analog Variables -----
     P_ANALOG_MAX = 46
     P_ANALOG_MIN = 47
+    # ----- Debounding manager -----
+    P_HARD_INTLK_DEBOUNCE_TIME = 48
+    P_HARD_INTLK_RESET_TIME = 49
+    P_SOFT_INTLK_DEBOUNCE_TIME = 50
+    P_SOFT_INTLK_RESET_TIME = 51
 
 
 class ConstFBP(ConstPSBSMP):
@@ -641,119 +647,143 @@ class ConstFAC_2P4S_ACDC(ConstPSBSMP):
     V_IIB_INTERLOCKS_CMD = 43
 
 
-class Parameters:
+class Parameters(_Entity):
     """Power supply parameters."""
 
-    _parameters = (
-        {'eid': 0, 'count': 1, 'type': str, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 1, 'count': 1, 'type': str, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 2, 'count': 1, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 3, 'count': 1, 'type': int, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 4, 'count': 1, 'type': int, 'unit': 'bps',
-         'init': True, 'Op': False},
-        {'eid': 5, 'count': 4, 'type': str, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 6, 'count': 1, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 7, 'count': 1, 'type': str, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 8, 'count': 4, 'type': str, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 9, 'count': 4, 'type': str, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 10, 'count': 1, 'type': float, 'unit': '%',
-         'init': True, 'Op': False},
-        {'eid': 11, 'count': 1, 'type': float, 'unit': 'Hz',
-         'init': True, 'Op': False},
-        {'eid': 12, 'count': 4, 'type': float, 'unit': 'Hz',
-         'init': True, 'Op': False},
-        {'eid': 13, 'count': 1, 'type': float, 'unit': 'A/V',
-         'init': False, 'Op': True},
-        {'eid': 14, 'count': 1, 'type': float, 'unit': 'A/V',
-         'init': False, 'Op': True},
-        {'eid': 15, 'count': 1, 'type': float, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 16, 'count': 1, 'type': float, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 17, 'count': 1, 'type': float, 'unit': 'Ref/s',
-         'init': True, 'Op': False},
-        {'eid': 18, 'count': 1, 'type': float, 'unit': 'Ref/s',
-         'init': True, 'Op': False},
-        {'eid': 19, 'count': 1, 'type': float, 'unit': 'Ref/s',
-         'init': True, 'Op': False},
-        {'eid': 20, 'count': 1, 'type': float, 'unit': 'Ref/s',
-         'init': True, 'Op': False},
-        {'eid': 21, 'count': 1, 'type': float, 'unit': 'Hz',
-         'init': True, 'Op': False},
-        {'eid': 22, 'count': 1, 'type': float, 'unit': 'ns',
-         'init': True, 'Op': False},
-        {'eid': 23, 'count': 1, 'type': float, 'unit': '%',
-         'init': False, 'Op': True},
-        {'eid': 24, 'count': 1, 'type': float, 'unit': '%',
-         'init': False, 'Op': True},
-        {'eid': 25, 'count': 1, 'type': float, 'unit': '%',
-         'init': False, 'Op': True},
-        {'eid': 26, 'count': 1, 'type': float, 'unit': '%',
-         'init': False, 'Op': True},
-        {'eid': 27, 'count': 1, 'type': float, 'unit': '%',
-         'init': False, 'Op': True},
-        {'eid': 28, 'count': 1, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 29, 'count': 1, 'type': float, 'unit': 'MHz',
-         'init': True, 'Op': False},
-        {'eid': 30, 'count': 1, 'type': float, 'unit': 'Hz',
-         'init': True, 'Op': False},
-        {'eid': 31, 'count': 4, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 32, 'count': 4, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 33, 'count': 4, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 34, 'count': 4, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 35, 'count': 4, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 36, 'count': 1, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 37, 'count': 1, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 38, 'count': 1, 'type': float, 'unit': 'Hz',
-         'init': False, 'Op': True},
-        {'eid': 39, 'count': 1, 'type': float, 'unit': 'A/V/%',
-         'init': False, 'Op': True},
-        {'eid': 40, 'count': 1, 'type': float, 'unit': 'A/V/%',
-         'init': False, 'Op': True},
-        {'eid': 41, 'count': 4, 'type': float, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 42, 'count': 1, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 43, 'count': 1, 'type': int, 'unit': '',
-         'init': True, 'Op': False},
-        {'eid': 44, 'count': 1, 'type': float, 'unit': 'A/V/%',
-         'init': False, 'Op': True},
-        {'eid': 45, 'count': 1, 'type': float, 'unit': 'A/V/%',
-         'init': False, 'Op': True},
-        {'eid': 46, 'count': 64, 'type': float, 'unit': '',
-         'init': False, 'Op': True},
-        {'eid': 47, 'count': 64, 'type': float, 'unit': '',
-         'init': False, 'Op': True},
-    )
+    _parameters = {
+        0: {'count': 64, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': False, 'Op': True},
+        1: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        2: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        3: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': False, 'Op': True},
+        4: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'bps',
+            'init': True, 'Op': False},
+        5: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': False, 'Op': True},
+        6: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        7: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        8: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        9: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+            'init': True, 'Op': False},
+        10: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': True, 'Op': False},
+        11: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Hz',
+             'init': True, 'Op': False},
+        12: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': 'Hz',
+             'init': True, 'Op': False},
+        13: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V',
+             'init': False, 'Op': True},
+        14: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V',
+             'init': False, 'Op': True},
+        15: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': False, 'Op': True},
+        16: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': False, 'Op': True},
+        17: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Ref/s',
+             'init': True, 'Op': False},
+        18: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Ref/s',
+             'init': True, 'Op': False},
+        19: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Ref/s',
+             'init': True, 'Op': False},
+        20: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Ref/s',
+             'init': True, 'Op': False},
+        21: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Hz',
+             'init': True, 'Op': False},
+        22: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'ns',
+             'init': True, 'Op': False},
+        23: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': False, 'Op': True},
+        24: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': False, 'Op': True},
+        25: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': False, 'Op': True},
+        26: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': False, 'Op': True},
+        27: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '%',
+             'init': False, 'Op': True},
+        28: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        29: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'MHz',
+             'init': True, 'Op': False},
+        30: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Hz',
+             'init': True, 'Op': False},
+        31: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        32: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        33: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        34: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        35: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        36: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        37: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        38: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'Hz',
+             'init': False, 'Op': True},
+        39: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V/%',
+             'init': False, 'Op': True},
+        40: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V/%',
+             'init': False, 'Op': True},
+        41: {'count': 4, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        42: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        43: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': True, 'Op': False},
+        44: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V/%',
+             'init': False, 'Op': True},
+        45: {'count': 1, 'var_type': _Types.T_FLOAT, 'unit': 'A/V/%',
+             'init': False, 'Op': True},
+        46: {'count': 64, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': False, 'Op': True},
+        47: {'count': 64, 'var_type': _Types.T_FLOAT, 'unit': '',
+             'init': False, 'Op': True},
+        48: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        49: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        50: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False},
+        51: {'count': 32, 'var_type': _Types.T_FLOAT, 'unit': 'us',
+             'init': True, 'Op': False}}
 
-    @staticmethod
-    def conv(eid, value):
-        """Convert from float to parameter type."""
-        type_cast = Parameters._parameters[eid]['type']
-        cast_value = type_cast(value)
-        return cast_value
+    def value_to_load(self, eid, value):
+        """."""
+        size = Parameters._parameters[eid]['count']
+        var_types = [Parameters._parameters[eid]['var_type']] * size
+        if eid == 0:
+            # power supply name
+            value = [float(ord(c)) for c in value]
+        load = self._conv_value_to_load(var_types, size, value)
+        return load
 
-    @staticmethod
-    def get_eids():
-        """Return parameters eids."""
-        return list(Parameters._parameters.keys())
+    def load_to_value(self, eid, load):
+        """."""
+        size = Parameters._parameters[eid]['count']
+        var_types = [Parameters._parameters[eid]['var_type']] * size
+        value = self._conv_load_to_value(var_types, size, load)
+        if eid == 0:
+            # power supply name
+            value = [chr(int(v)) for v in value]
+        return value
+
+    @property
+    def eids(self):
+        """Return entities identifications."""
+        return tuple(Parameters._parameters.keys())
+
+    def __getitem__(self, key):
+        """."""
+        return Parameters._parameters[key]
 
 
 class EntitiesPS(_Entities):
@@ -902,10 +932,17 @@ class EntitiesPS(_Entities):
         {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},)
 
+    _ps_parameters = Parameters()
+
     def __init__(self):
         """Call super."""
         super().__init__(
             self._ps_variables, self._ps_curves, self._ps_functions)
+
+    @property
+    def parameters(self):
+        """Return pwrsuppli parameters."""
+        return EntitiesPS._ps_parameters
 
 
 # --- Entities DCDC ---

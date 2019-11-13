@@ -7,7 +7,7 @@
 # This file define the triggers used in Sirius operation system and
 # maps them with several important properties.
 {
-    'SI-Glob:TI-Corrs': {
+    'SI-Glob:TI-Mags-Corrs': {
         'database': {
             'Src': {'value': 0, 'enums': ('MigSI', 'OrbSI', 'Cycle', 'Study')},
             'Delay': {'value': 0.0, 'hilim': 1.0, 'high': 1.0, 'hihi': 1.0},

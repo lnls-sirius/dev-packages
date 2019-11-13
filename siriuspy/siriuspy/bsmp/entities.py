@@ -1,9 +1,10 @@
 """BSMP entities."""
-import numpy as _np
 import struct as _struct
 
+import numpy as _np
 
-class _Entity:
+
+class Entity:
     """BSMP entity."""
 
     def _conv_value(self, fmt, value):
@@ -53,7 +54,7 @@ class _Entity:
             return _struct.unpack(var_types[0].fmt, bytes(load))[0]
 
 
-class Variable(_Entity):
+class Variable(Entity):
     """BSMP variable."""
 
     def __init__(self, eid, waccess, var_type, count=1):
@@ -82,7 +83,7 @@ class Variable(_Entity):
         return self._conv_value_to_load(self._var_types, self.size, value)
 
 
-class VariablesGroup(_Entity):
+class VariablesGroup(Entity):
     """BSMP variables group entity."""
 
     ALL = 0
@@ -124,7 +125,7 @@ class VariablesGroup(_Entity):
         return size
 
 
-class Curve(_Entity):
+class Curve(Entity):
     """BSMP Curve entity."""
 
     def __init__(self, eid, waccess, var_type, nblocks, count):
@@ -173,7 +174,7 @@ class Curve(_Entity):
         return indices
 
 
-class Function(_Entity):
+class Function(Entity):
     """BSMP function."""
 
     def __init__(self, eid, i_type, o_type):
@@ -193,8 +194,12 @@ class Function(_Entity):
 
     def load_to_value(self, load):  # Parse output_size
         """Parse value from load."""
-        if load is None or len(load) == 0:
+        if load is None or not load:
             return None
+        # print('---')
+        # print(self.o_type)
+        # print(self.o_size)
+        # print(load)
         return self._conv_load_to_value(self.o_type, self.o_size, load)
 
     def value_to_load(self, value):

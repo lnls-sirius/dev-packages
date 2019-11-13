@@ -44,8 +44,8 @@ class PRUController:
                  prucqueue,
                  psmodel,
                  devices,
-                 processing=True,
-                 scanning=True,
+                 processing=False,
+                 scanning=False,
                  freq=None):
         """Init."""
         # --- Init structures ---
@@ -91,29 +91,6 @@ class PRUController:
         print('TIMING struct init [{:.3f} ms]'.format(
             1000*(time1 - time0)))
 
-        # --- BSMP communication ---
-
-        print()
-        print('PRUController: bsmp initialization')
-        # init time interval
-        time0 = _time()
-
-        # reset power supply controllers (contains first BSMP comm)
-        self._bsmp_reset_udc()
-
-        # update state of PRUController from ps controller
-        self._bsmp_init_update()
-
-        # time interval
-        time1 = _time()
-        print('TIMING bsmp init [{:.3f} ms]\n'.format(
-            1000*(time1 - time0)))
-
-        # --- Threads ---
-
-        print('PRUController: scan and process threads initialization')
-        print()
-
         # PRUCQueue is of class DequeThread which invoke BSMP communications
         # using an append-right, pop-left queue. It also processes the next
         # operation in a way as to circumvent the blocking character of UART
@@ -125,21 +102,12 @@ class PRUController:
         # order to avoid other write executations to read the respond of
         # previous write executions.
         self._queue = prucqueue
-
-        # define process thread
-        self._thread_process = _Thread(target=self._loop_process, daemon=True)
         self._processing = processing
-
-        # define scan thread
-        self._dev_idx_last_scanned = \
-            len(self._device_ids)-1  # the next will be the first bsmp dev
-        self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
         self._scanning = scanning
 
-        # after all initializations, threads are started
-        self._running = True
-        self._thread_process.start()
-        self._thread_scan.start()
+        # starts communications
+        self._bsmp_init_communication()
+
 
     # --- properties to read and set controller state and access functions ---
 
@@ -230,6 +198,29 @@ class PRUController:
             else:
                 values[dev_id] = \
                     self._psupplies[dev_id].get_variable(variable_id)
+
+        # make copy
+        with self._lock:
+            if isinstance(device_ids, int):
+                return _dcopy(values[device_ids])
+            return _dcopy(values)
+
+    def read_parameters(self, device_ids, parameter_id=None):
+        """Return power supply parameters."""
+        # process device_ids
+        if isinstance(device_ids, int):
+            dev_ids = (device_ids, )
+        else:
+            dev_ids = device_ids
+
+        # builds dict of requested values
+        values = dict()
+        for dev_id in dev_ids:
+            if parameter_id is None:
+                values[dev_id] = self._psupplies[dev_id].parameters
+            else:
+                values[dev_id] = \
+                    self._psupplies[dev_id].get_parameter(parameter_id)
 
         # make copy
         with self._lock:
@@ -445,6 +436,44 @@ class PRUController:
 
     # --- private methods: BSMP UART communications ---
 
+    def _bsmp_init_communication(self):
+        """."""
+        # --- BSMP communication ---
+
+        print()
+        print('PRUController: bsmp initialization')
+        # init time interval
+        time0 = _time()
+
+        # reset power supply controllers (contains first BSMP comm)
+        self._bsmp_reset_udc()
+
+        # update state of PRUController from ps controller
+        self._bsmp_init_update()
+
+        # time interval
+        time1 = _time()
+        print('TIMING bsmp init [{:.3f} ms]\n'.format(
+            1000*(time1 - time0)))
+
+        # --- Threads ---
+
+        print('PRUController: scan and process threads initialization')
+        print()
+
+        # define process thread
+        self._thread_process = _Thread(target=self._loop_process, daemon=True)
+
+        # define scan thread
+        self._dev_idx_last_scanned = \
+            len(self._device_ids)-1  # the next will be the first bsmp dev
+        self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
+
+        # after all initializations, threads are started
+        self._running = True
+        self._thread_process.start()
+        self._thread_scan.start()
+
     def _bsmp_reset_udc(self):
 
         # set scan interval
@@ -616,34 +645,26 @@ class PRUController:
 
     def _bsmp_init_update(self):
 
-        # init time interval
-        time0 = _time()
-
         # initialize variables_values, a mirror state of BSMP devices
-        self._bsmp_init_variable_values()
-
-        # time interval
-        time1 = _time()
-        print('  - bsmp_init_update (variables_values) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
-
-        # init time interval
         time0 = _time()
+        self._bsmp_init_variable_values()
+        time1 = _time()
+        print('  - bsmp_init_update (variable_values) [{:.3f} ms]'.format(
+            1000*(time1 - time0)))
 
         # initialize ps curves
+        time0 = _time()
         self._bsmp_init_wfm()
-
-        # time interval
         time1 = _time()
-        print('  - bsmp_init_update (waveforms) [{:.3f} ms]'.format(
+        print('  - bsmp_init_update (waveform_values) [{:.3f} ms]'.format(
             1000*(time1 - time0)))
 
-        # check if ps controller version is compatible with bsmp.py
-        # self._init_check_version()
-
-        # initialize parameters_values, a mirror state of BSMP devices
-        # TODO: finish implementation of _bsmp_init_parameters_values!
-        # self._bsmp_init_parameters_values()
+        # initialize parameters
+        time0 = _time()
+        self._bsmp_init_parameter_values()
+        time1 = _time()
+        print('  - bsmp_init_update (parameter_values) [{:.3f} ms]'.format(
+            1000*(time1 - time0)))
 
     def _bsmp_init_wfm(self):
 
@@ -672,8 +693,11 @@ class PRUController:
         for psupply in self._psupplies.values():
             psupply.update_variables(interval=0.0)
 
-        # read all variable from BSMP devices
-        self._bsmp_update_variables()
+    def _bsmp_init_parameter_values(self):
+
+        # init psupplies variables
+        for psupply in self._psupplies.values():
+            psupply.update_parameters(interval=0.0)
 
     @staticmethod
     def _dict2list_vargroups(groups_dict):
@@ -690,36 +714,3 @@ class PRUController:
         # create list of variable ids
         groups_list = [groups_dict[gid] for gid in group_ids]
         return groups_list
-
-    # def _bsmp_init_parameters_values(self, bsmp_entities):
-    #
-    #     # create _parameters_values
-    #     self._parameters_values = {id: {} for id in self._device_ids}
-    #
-    #     # read from ps controllers
-    #     self._bsmp_update_parameters(device_ids=self._device_ids,
-    #                                  parameter_ids=_Parameters.get_eids())
-
-    # def _bsmp_read_parameters(self, device_ids, parameter_ids=None):
-    #     # NOTE: this method is not being used yet.
-    #     # reads parameters into pdata dictionary
-    #     pdata = {id: {pid: [] for pid in parameter_ids} for id in device_ids}
-    #     for id in device_ids:
-    #         for pid in parameter_ids:
-    #             indices = [0]
-    #             for idx in indices:
-    #                 data = self._bsmp_exec_function(
-    #                     (id,), self._parms.CONST_PSBSMP.F_GET_PARAM,
-    #                     args=(pid, idx))
-    #                 if data[id] is None:
-    #                     return None
-    #                 else:
-    #                     if len(indices) > 1:
-    #                         pdata[id][pid].append(data[id])
-    #                     else:
-    #                         pdata[id][pid] = data[id]
-    #
-    #     # update _parameters_values
-    #     for id in pdata:
-    #         for pid in pdata[id]:
-    #             self._parameters_values[id][pid] = pdata[id][pid]

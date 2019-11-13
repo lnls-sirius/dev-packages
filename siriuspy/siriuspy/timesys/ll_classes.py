@@ -365,9 +365,9 @@ class _EVROUT(_BaseLL):
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'LinkStatus-Mon',
             'Intlk': self.prefix + 'IntlkStatus-Mon',
-            'Los': self.prefix + 'Los-Mon',
+            # 'Los': self.prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
-            'FoutLos': _fout_prefix + 'Los-Mon',
+            # 'FoutLos': _fout_prefix + 'Los-Mon',
             'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
@@ -407,9 +407,9 @@ class _EVROUT(_BaseLL):
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
             'Intlk': _partial(self._get_status, 'Intlk'),
-            'Los': _partial(self._get_status, 'Los'),
+            # 'Los': _partial(self._get_status, 'Los'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
-            'FoutLos': _partial(self._get_status, 'FoutLos'),
+            # 'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             }
@@ -445,21 +445,22 @@ class _EVROUT(_BaseLL):
             dic_['Intlk'] = self._get_from_pvs(False, 'Intlk', def_val=1)
 
         prt_num = 0
-        dic_['Los'] = 0b00000000
-        if 'Los' not in self._REMOVE_PROPS:
-            prt_num = int(self.channel[-1])  # get OUT number for EVR
-            dic_['Los'] = self._get_from_pvs(False, 'Los', def_val=0b11111111)
+        # dic_['Los'] = 0b00000000
+        # if 'Los' not in self._REMOVE_PROPS:
+        #     prt_num = int(self.channel[-1])  # get OUT number for EVR
+        #     dic_['Los'] = self._get_from_pvs(
+        #           False, 'Los', def_val=0b11111111)
         dic_['EVGLos'] = self._get_from_pvs(
                                 False, 'EVGLos', def_val=0b11111111)
-        dic_['FoutLos'] = self._get_from_pvs(
-                                False, 'FoutLos', def_val=0b11111111)
+        # dic_['FoutLos'] = self._get_from_pvs(
+        #                         False, 'FoutLos', def_val=0b11111111)
 
         if value is not None:
             dic_[prop] = value
 
-        dic_['Los'] = _get_bit(dic_['Los'], prt_num)
+        # dic_['Los'] = _get_bit(dic_['Los'], prt_num)
         dic_['EVGLos'] = _get_bit(dic_['EVGLos'], self._evg_out)
-        dic_['FoutLos'] = _get_bit(dic_['FoutLos'], self._fout_out)
+        # dic_['FoutLos'] = _get_bit(dic_['FoutLos'], self._fout_out)
 
         prob, bit = 0, 0
         prob, bit = _update_bit(prob, bit, not dic_['PVsConn']), bit+1
@@ -468,8 +469,8 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, not dic_['EVGDevEnbl']), bit+1
         prob, bit = _update_bit(prob, bit, not dic_['Network']), bit+1
         prob, bit = _update_bit(prob, bit, not dic_['Link']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
+        # prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
+        # prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
         return {'Status': prob}
@@ -638,7 +639,7 @@ class _EVROUT(_BaseLL):
 
 class _EVROTP(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los'}
+        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType'}  # , 'Los'}
 
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
@@ -679,12 +680,12 @@ class _EVEOTP(_EVROTP):
 
 
 class _EVEOUT(_EVROUT):
-    _REMOVE_PROPS = {'Los', }
+    pass  # _REMOVE_PROPS = {'Los', }
 
 
 class _AMCFPGAEVRAMC(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Los', 'Intlk'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk'}  # , 'Los'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)

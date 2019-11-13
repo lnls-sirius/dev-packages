@@ -1,13 +1,13 @@
 #!/usr/bin/env python-sirius
 """Magnet class test module."""
 
-from unittest import mock, TestCase
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.ramp import magnet
-import siriuspy.search as _search
 
 
 public_interface = (
+    'get_magnet',
     'Magnet',
 )
 

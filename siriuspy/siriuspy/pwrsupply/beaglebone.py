@@ -12,6 +12,7 @@
 import time as _time
 from copy import deepcopy as _deepcopy
 
+from siriuspy import util as _util
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.thread import DequeThread as _DequeThread
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -44,9 +45,6 @@ class BeagleBone:
 
         # init mirror variables and last update timestamp dicts
         self._create_dev2mirr_dev2timestamp_dict()
-
-        # TODO: remove this once machine-application PR is merged!
-        self.start()
 
     @property
     def psnames(self):
@@ -119,114 +117,53 @@ class BeagleBone:
             self._dev2interval[devname] = 1.0/pruc.params.FREQ_SCAN
 
 
-
 class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def create(bbbname=None, simulate=False, eth=False):
+    def create(bbbname=None, simulate=False):
         """Return BBB object."""
         # get current timestamp
         timestamp = _time.time()
 
-        # Create PRU
-        if eth:
-            pru = _PRU(bbbname=bbbname)
+        # create PRU
+        if simulate:
+            pru = _PRUSim()
         else:
-            pru = _PRUSim() if simulate else _PRU()
+            pru = _PRU(bbbname=bbbname)
 
         # create DequeThread
         prucqueue = _DequeThread()
 
+        # build dicts for grouped udc.
+        print('BEAGLEBONE: {}'.format(bbbname))
+        udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
+        psmodels_dict, devices_dict, freqs_dict = \
+            BBBFactory._build_udcgrouped_dicts(bbbname, udc_list)
+
         dbase = dict()
-        controllers = dict()  # 1 controller per UDC
+        controllers = dict()  # 1 controller per UDC class
         databases = dict()
 
-        print('BEAGLEBONE: {}'.format(bbbname))
+        for psmodel_name in psmodels_dict:
 
-        udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
+            psmodel = psmodels_dict[psmodel_name]
+            devices = devices_dict[psmodel_name]
 
-        try:
-            freq = _PSSearch.conv_bbbname_2_freq(bbbname)
-        except KeyError:
-            freq = None
+            # Get model database
+            database = _PSData(devices[0][0]).propty_database
 
-        # TODO: temporary optimization: grouping of devices of the
-        # same psmodel.
-        if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
-                       'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
-                       'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
-                       'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
-                       'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
-                       ]:
-            print('Temporary pwrsupply grouping into one UDC for optimization!')
-            udc_list_orig = udc_list
-            udc_list = udc_list[:1]
-        elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
-                         'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
-                         ]:
-            print('Temporary pwrsupply grouping into one UDC for optimization!')
-            udc_list_orig = udc_list
-            udc_list = udc_list[:2]
-
-        for udc in udc_list:
-
-            fstr = ('\nUDC:{:<25s}')
-            print(fstr.format(udc))
-
-            # UDC-specific frequencies
-            try:
-                freq = _PSSearch.conv_bbbname_2_freq(udc)
-            except KeyError:
-                pass
-            freq = 10.0 if freq is None else freq
-
-            # TODO: temporary optimization: grouping of devices of the
-            # same psmodel.
-            if bbbname in ['LA-RaPS02:CO-PSCtrl-TS2',  # TS sector 01 quads
-                           'LA-RaPS04:CO-PSCtrl-TS',  # TS sector 05 quads
-                           'LA-RaCtrl:CO-PSCtrl-TS',  # TS correctors
-                           'LA-RaCtrl:CO-PSCtrl-TB1',  # TB quadrupoles
-                           'LA-RaCtrl:CO-PSCtrl-TB2',  # TB correctors
-                           ]:
-                devices = []
-                for _udc in udc_list_orig:
-                    devs = _PSSearch.conv_udc_2_bsmps(_udc)
-                    devices.extend(devs)
-            elif bbbname in ['PA-RaPSE05:CO-PSCtrl-BO',  # BO dipole 1
-                             'PA-RaPSF05:CO-PSCtrl-BO',  # BO dipole 2
-                             ]:
-                if udc in ['PA-RaPSE05:PS-UDC-BO1', 'PA-RaPSF05:PS-UDC-BO1']:
-                    # first UDC
-                    devices = _PSSearch.conv_udc_2_bsmps(udc)
-                else:
-                    # second UDC
-                    devices = []
-                    for _udc in udc_list_orig[1:]:
-                        devs = _PSSearch.conv_udc_2_bsmps(_udc)
-                        devices.extend(devs)
-            else:
-                devices = _PSSearch.conv_udc_2_bsmps(udc)
-
-            # Check if there is only one psmodel
-            psmodel_name = BBBFactory.check_ps_models(devices)
-
-            # Ignore regatron ps model
-            if psmodel_name == 'REGATRON_DCLink':
-                continue
-
-            # Get out model object
-            psmodel = _PSModelFactory.create(psmodel_name)
+            # check if IOC is already running
+            BBBFactory._check_ioc_online(devices[0][0], database)
 
             # Create pru controller for devices
+            freq = freqs_dict[psmodel_name]
+            freq = None if freq == 0 else freq
             pru_controller = _PRUController(pru, prucqueue,
                                             psmodel, devices,
                                             processing=False,
                                             scanning=False,
                                             freq=freq)
-
-            # Get model database
-            database = _PSData(devices[0][0]).propty_database
 
             # set bootime in epics database
             database['TimestampBoot-Cte']['value'] = timestamp
@@ -255,6 +192,40 @@ class BBBFactory:
         return BeagleBone(controllers, databases), dbase
 
     @staticmethod
+    def _build_udcgrouped_dicts(bbbname, udc_list):
+        psmodels_dict = dict()
+        devices_dict = dict()
+        freqs_dict = dict()
+        for udc in udc_list:
+
+            # add devices
+            devices = _PSSearch.conv_udc_2_bsmps(udc)
+            print('UDC: ', udc, ', DEVICES: ', devices)
+            psmodel_name = BBBFactory.check_ps_models(devices)
+            if psmodel_name in psmodels_dict:
+                devices_dict[psmodel_name].extend(devices)
+            else:
+                devices_dict[psmodel_name] = devices
+
+            # add psmodel
+            psmodel = _PSModelFactory.create(psmodel_name)
+            psmodels_dict[psmodel_name] = psmodel
+
+            # add freqs
+            try:
+                freq = _PSSearch.conv_bbbname_2_freq(udc)
+            except KeyError:
+                try:
+                    freq = _PSSearch.conv_bbbname_2_freq(bbbname)
+                except KeyError:
+                    freq = 0.0
+            if psmodel_name not in freqs_dict:
+                freqs_dict[psmodel_name] = freq
+            else:
+                freqs_dict[psmodel_name] = max(freqs_dict[psmodel_name], freq)
+        return psmodels_dict, devices_dict, freqs_dict
+
+    @staticmethod
     def check_ps_models(devices):
         """Check number of ps models.
 
@@ -265,18 +236,6 @@ class BBBFactory:
         if len(psmodels) > 1:
             raise ValueError('Different psmodels in the same UDC')
         return psmodels.pop()
-
-    @staticmethod
-    def _build_psmodels_dict(devices):
-        # Build psmodels dict with bsmp devices
-        psmodels = dict()
-        for device in devices:
-            psname = device[0]
-            psmodel = _PSData(psname).psmodel
-            if psmodel not in psmodels:
-                psmodels[psmodel] = list()
-            psmodels[psmodel].append(device)
-        return psmodels
 
     @staticmethod
     def _build_setpoints_dict(devices, database):
@@ -303,7 +262,8 @@ class BBBFactory:
                     pvname = dev_name + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
                     fields[pvname] = setpoints[pvname]
-            elif _Constant.match(field) and field != 'Version-Cte':
+            elif _Constant.match(field) and field != 'Version-Cte' and \
+                    not field.startswith('Param'):
                 for dev_name, dev_id in devices:
                     name = dev_name + ':' + field
                     dbase[name] = _deepcopy(database[field])
@@ -339,6 +299,17 @@ class BBBFactory:
             funcs[dev_name + ':' + field] = model.function(
                 [dev_id], field, pru_controller, setpoint)
         return funcs
+
+    @staticmethod
+    def _check_ioc_online(psname, database):
+        # print(psname)
+        # print(list(database.keys()))
+        propty = next(iter(database))
+        pvname = psname + ':' + propty
+        running = _util.check_pv_online(
+            pvname=pvname, use_prefix=False, timeout=0.5)
+        if running:
+            raise ValueError('Another IOC is already running !')
 
 
 class Connection:
