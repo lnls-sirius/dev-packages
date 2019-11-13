@@ -8,10 +8,17 @@ from epics import PV
 class RF:
     """."""
 
-    def __init__(self):
+    def __init__(self, is_cw=True):
         """."""
-        self._phase_sp = PV('BR-RF-DLLRF-01:PL:REF:S')
-        self._phase_rb = PV('BR-RF-DLLRF-01:SL:INP:PHS')
+        self.is_cw = is_cw
+        if self.is_cw:
+            self._phase_sp = PV('BR-RF-DLLRF-01:PL:REF:S')
+            self._phase_rb = PV('BR-RF-DLLRF-01:SL:INP:PHS')
+        else:
+            self._phase_bot_sp = PV('BR-RF-DLLRF-01:RmpPhsBot-SP')
+            self._phase_bot_rb = PV('BR-RF-DLLRF-01:RmpPhsBot-SP')
+            self._phase_top_sp = PV('BR-RF-DLLRF-01:RmpPhsTop-SP')
+            self._phase_top_rb = PV('BR-RF-DLLRF-01:RmpPhsTop-SP')
         self._voltage_sp = PV('BR-RF-DLLRF-01:mV:AL:REF:S')
         self._voltage_rb = PV('BR-RF-DLLRF-01:SL:REF:AMP')
         self._power_mon = PV('RA-RaBO01:RF-LLRFCalSys:PwrW1-Mon')
@@ -21,8 +28,14 @@ class RF:
     @property
     def connected(self):
         """."""
-        conn = self._phase_rb.connected
-        conn &= self._phase_sp.connected
+        if self.is_cw:
+            conn = self._phase_rb.connected
+            conn &= self._phase_sp.connected
+        else:
+            conn = self._phase_bot_rb.connected
+            conn &= self._phase_bot_sp.connected
+            conn &= self._phase_top_sp.connected
+            conn &= self._phase_top_sp.connected
         conn &= self._voltage_sp.connected
         conn &= self._voltage_rb.connected
         conn &= self._power_mon.connected
@@ -38,11 +51,15 @@ class RF:
     @property
     def phase(self):
         """."""
-        return self._phase_rb.value
+        return self._phase_rb.value if self.is_cw else self._phase_bot_rb.value
 
     @phase.setter
     def phase(self, value):
-        self._phase_sp.value = value
+        if self.is_cw:
+            self._phase_sp.value = value
+        else:
+            self._phase_bot_sp.value = value
+            self._phase_top_sp.value = value
 
     @property
     def voltage(self):
@@ -83,7 +100,11 @@ class RF:
         for _ in range(nrp):
             _time.sleep(0.1)
             if prop == 'phase':
-                if abs(self.phase - self._phase_sp.value) < 0.1:
+                if self.is_cw:
+                    phase_sp = self._phase_sp.value
+                else:
+                    phase_sp = self._phase_bot_sp.value
+                if abs(self.phase - phase_sp) < 0.1:
                     break
             elif prop == 'voltage':
                 if abs(self.voltage - self._voltage_sp.value) < 0.1:
