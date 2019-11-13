@@ -79,6 +79,9 @@ def get_currinfo_database(acc):
         pvs_db['Charge3GeV-Mon'] = {'type': 'float', 'value': 0.0,
                                     'prec': 4, 'unit': 'nC'}
 
+        pvs_db['IntCurrent3GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                        'prec': 9, 'unit': 'mA.h'}
+
         pvs_db['CurrThold-SP'] = {'type': 'float', 'value': 0.004,
                                   'prec': 4, 'unit': 'mA', 'lolo': 0.0,
                                   'low': 0.0, 'lolim': 0.0, 'hilim': 0.010,
