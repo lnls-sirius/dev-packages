@@ -150,13 +150,13 @@ class BBBFactory:
             psmodel = psmodels_dict[psmodel_name]
             devices = devices_dict[psmodel_name]
 
-            # Get model database
+            # get model database
             database = _PSData(devices[0][0]).propty_database
 
             # check if IOC is already running
             BBBFactory._check_ioc_online(devices[0][0], database)
 
-            # Create pru controller for devices
+            # create pru controller for devices
             freq = freqs_dict[psmodel_name]
             freq = None if freq == 0 else freq
             pru_controller = _PRUController(pru, prucqueue,
@@ -168,21 +168,21 @@ class BBBFactory:
             # set bootime in epics database
             database['TimestampBoot-Cte']['value'] = timestamp
 
-            # Build setpoints
+            # build setpoints
             setpoints = BBBFactory._build_setpoints_dict(devices, database)
 
-            # Build fields and functions dicts
+            # build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
                 dbase, psmodel, setpoints,
                 devices, database, pru_controller)
 
-            # Build connections and device_ids dicts
+            # build connections and device_ids dicts
             connections, devices_ids = dict(), dict()
             for dev_name, dev_id in devices:
                 devices_ids[dev_name] = dev_id
                 connections[dev_name] = Connection(dev_id, pru_controller)
 
-            # Build controller
+            # build controller
             controller = psmodel.controller(
                 fields, functions, connections, pru_controller, devices_ids)
             for dev_name, dev_id in devices:
@@ -279,20 +279,21 @@ class BBBFactory:
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        if field in ('CycleType-Sel', 'CycleNrCycles-SP',
-                     'CycleFreq-SP', 'CycleAmpl-SP',
-                     'CycleOffset-SP', 'CycleAuxParam-SP'):
-            # Make one object for all devices (UDC-shared)
-            ids, sps = list(), list()
-            for dev_name, dev_id in devices:
-                pvname = dev_name + ':' + field
-                ids.append(dev_id)
-                sps.append(setpoints[pvname])
-            function = model.function(
-                ids, field, pru_controller, _Setpoints(sps))
-            return {device[0] + ':' + field: function
-                    for device in devices}
-
+        # NOTE: Each pwrsupply should have all variables independent
+        #       in the near future.
+        # if field in ('CycleType-Sel', 'CycleNrCycles-SP',
+        #              'CycleFreq-SP', 'CycleAmpl-SP',
+        #              'CycleOffset-SP', 'CycleAuxParam-SP'):
+        #     # Make one object for all devices (UDC-shared)
+        #     ids, sps = list(), list()
+        #     for dev_name, dev_id in devices:
+        #         pvname = dev_name + ':' + field
+        #         ids.append(dev_id)
+        #         sps.append(setpoints[pvname])
+        #     function = model.function(
+        #         ids, field, pru_controller, _Setpoints(sps))
+        #     return {device[0] + ':' + field: function
+        #             for device in devices}
         funcs = dict()
         for dev_name, dev_id in devices:
             setpoint = setpoints[dev_name + ':' + field]
