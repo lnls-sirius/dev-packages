@@ -9,14 +9,14 @@ from siriuspy.clientarch import ClientArchiver as _ClientArch
 import as_ap_currinfo.pvs as _pvs
 
 
-BO_REV_PERIOD = 1.6571334792998411 * 1e-6 / 3600  # [h]
+BO_REV_PERIOD = 1.6571334792998411  # [us]
 BO_ENERGY2TIME = {  # energy vs. time[s]
     '150MeV': 0.0000,
     '1GeV': 0.0859,
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
-CURR_LIM = 0.005
+INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
 
 
 def _get_value_from_arch(pvname):
@@ -47,6 +47,12 @@ class BOApp:
         self._measperiod = None
         self._reliablemeas = None
         self._last_raw_reading = None
+
+        currthold_db = self.pvs_database['CurrThold-SP']
+        self._currthold = currthold_db['value']
+        self._currthold_lolim = currthold_db['lolim']
+        self._currthold_hilim = currthold_db['hilim']
+
         self._rampeff = None
         self._currents = dict()
         self._charges = dict()
@@ -62,6 +68,14 @@ class BOApp:
                 charge = data[1][0]
             self._charges[k] = charge
             self.driver.setParam(ppty, charge)
+
+        intcurr_ppty = 'IntCurrent3GeV-Mon'
+        data = _get_value_from_arch(self._PREFIX+intcurr_ppty)
+        if data is None:
+            self._intcurrent3gev = 0.0
+        else:
+            self._intcurrent3gev = data[1][0]
+        self.driver.setParam(intcurr_ppty, self._intcurrent3gev)
         self.driver.updatePVs()
 
         # PVs
@@ -101,6 +115,12 @@ class BOApp:
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         status = False
+        if reason == 'CurrThold-SP':
+            if self._currthold_lolim < value < self._currthold_hilim:
+                self._currthold = value
+                self.driver.setParam('CurrThold-RB', value)
+                self.driver.updatePVs()
+                status = True
         return status
 
     # ----- callbacks -----
@@ -138,25 +158,42 @@ class BOApp:
             return
 
         times = _np.linspace(0.0, self._measperiod, self._samplecnt)  # [ms]
+
+        # calculate offset
+        time_offset = BO_ENERGY2TIME['3GeV'] + 0.0250
+        idx_offset = _np.where(_np.isclose(times, time_offset, atol=0.0005))[0]
+        try:
+            samples_offset = self._last_raw_reading[idx_offset[0]:]
+            offset = _np.mean(samples_offset)
+        except Exception:
+            offset = 0.0
+
+        # update pvs
         for energy, time in BO_ENERGY2TIME.items():
             idx = _np.where(_np.isclose(times, time, atol=0.0005))[0]
             if len(idx):
                 # currents
-                current = self._last_raw_reading[idx[0]]
+                current = self._last_raw_reading[idx[0]] - offset
+                if current < self._currthold:
+                    current = 0.0
                 self._currents[energy] = current
                 self.driver.setParam('Current'+str(energy)+'-Mon',
                                      self._currents[energy])
                 # charges
-                self._charges[energy] += current/1000 * BO_REV_PERIOD
+                self._charges[energy] += current * BO_REV_PERIOD
                 self.driver.setParam('Charge'+str(energy)+'-Mon',
                                      self._charges[energy])
-        # ramp efficiency
+
         c150mev = self._currents['150MeV']
-        inj_curr = c150mev if c150mev > CURR_LIM else CURR_LIM
         c3gev = self._currents['3GeV']
-        eje_curr = c3gev if c3gev > 0 else 0
-        if inj_curr > eje_curr:
-            self._rampeff = 100*eje_curr/inj_curr
+
+        # integrated current in 3GeV
+        self._intcurrent3gev += c3gev * INTCURR_INTVL  # [mA.h]
+        self.driver.setParam('IntCurrent3GeV-Mon', self._intcurrent3gev)
+
+        # ramp efficiency
+        if c150mev > c3gev:
+            self._rampeff = 100*c3gev/c150mev
             self.driver.setParam('RampEff-Mon', self._rampeff)
 
         self.driver.updatePVs()
