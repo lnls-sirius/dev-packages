@@ -93,6 +93,16 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._bbbname_2_bsmps_dict)
 
     @staticmethod
+    def get_udc_dict():
+        """Return udc dictionary.
+
+        With key,value pairs of udc and corresponding power supplies.
+        """
+        with PSSearch._lock:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return _copy.deepcopy(PSSearch._udc_2_bsmp_dict)
+
+    @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
         with PSSearch._lock:
