@@ -245,6 +245,7 @@ class BoosterRamp(_ConfigDBDocument):
                 self._ps_nconfigs[name], new_time)
 
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
+        nconfigs = sorted(nconfigs, key=lambda x: x[0])
         self._set_ps_normalized_configs(nconfigs)
         self._synchronized = False
         self._invalidate_ps_waveforms()

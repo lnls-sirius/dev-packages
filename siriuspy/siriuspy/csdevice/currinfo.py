@@ -71,13 +71,25 @@ def get_currinfo_database(acc):
                                      'prec': 3, 'unit': 'mA'}
 
         pvs_db['Charge150MeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                      'prec': 12, 'unit': 'A.h'}
+                                      'prec': 4, 'unit': 'nC'}
         pvs_db['Charge1GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 12, 'unit': 'A.h'}
+                                    'prec': 4, 'unit': 'nC'}
         pvs_db['Charge2GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 12, 'unit': 'A.h'}
+                                    'prec': 4, 'unit': 'nC'}
         pvs_db['Charge3GeV-Mon'] = {'type': 'float', 'value': 0.0,
-                                    'prec': 12, 'unit': 'A.h'}
+                                    'prec': 4, 'unit': 'nC'}
+
+        pvs_db['IntCurrent3GeV-Mon'] = {'type': 'float', 'value': 0.0,
+                                        'prec': 9, 'unit': 'mA.h'}
+
+        pvs_db['CurrThold-SP'] = {'type': 'float', 'value': 0.004,
+                                  'prec': 4, 'unit': 'mA', 'lolo': 0.0,
+                                  'low': 0.0, 'lolim': 0.0, 'hilim': 0.010,
+                                  'high': 0.010, 'hihi': 0.010}
+        pvs_db['CurrThold-RB'] = {'type': 'float', 'value': 0.004,
+                                  'prec': 4, 'unit': 'mA', 'lolo': 0.0,
+                                  'low': 0.0, 'lolim': 0.0, 'hilim': 0.010,
+                                  'high': 0.010, 'hihi': 0.010}
 
         pvs_db['RampEff-Mon'] = {'type': 'float', 'value': 0.0,
                                  'prec': 2, 'unit': '%'}
