@@ -75,10 +75,10 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertEqual(db['Current1GeV-Mon']['unit'], 'mA')
         self.assertEqual(db['Current2GeV-Mon']['unit'], 'mA')
         self.assertEqual(db['Current3GeV-Mon']['unit'], 'mA')
-        self.assertEqual(db['Charge150MeV-Mon']['unit'], 'A.h')
-        self.assertEqual(db['Charge1GeV-Mon']['unit'], 'A.h')
-        self.assertEqual(db['Charge2GeV-Mon']['unit'], 'A.h')
-        self.assertEqual(db['Charge3GeV-Mon']['unit'], 'A.h')
+        self.assertEqual(db['Charge150MeV-Mon']['unit'], 'nC')
+        self.assertEqual(db['Charge1GeV-Mon']['unit'], 'nC')
+        self.assertEqual(db['Charge2GeV-Mon']['unit'], 'nC')
+        self.assertEqual(db['Charge3GeV-Mon']['unit'], 'nC')
         self.assertEqual(db['RampEff-Mon']['unit'], '%')
 
     def test_get_lifetime_database(self):
