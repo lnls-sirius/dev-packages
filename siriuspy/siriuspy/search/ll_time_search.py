@@ -78,8 +78,8 @@ class LLTimeSearch:
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
             },
-        'PSCtrl': {
-            'TIMIN': ('RS485',),
+        'UDC': {
+            'SYNCIN': ('BCKPLN', 'SYNCOUT'),
             },
         'Crate': {
             'CRT0': ('CRT0', ),
@@ -355,7 +355,7 @@ class LLTimeSearch:
                 twds_evg[inn] = {out}
         cls._conn_from_evg = from_evg
         cls._conn_twds_evg = twds_evg
-        cls._add_bbb_info()
+        cls._add_udc_info()
         cls._add_crates_info()
 
     @classmethod
@@ -383,11 +383,11 @@ class LLTimeSearch:
         # print(conn_dict.keys() - used)
 
     @classmethod
-    def _add_bbb_info(cls):
+    def _add_udc_info(cls):
         """Add the information of bbb to PS to timing map."""
-        data = _PSSearch.get_bbbname_dict()
-        conn_dict = {bbb: [x[0] for x in bsmps] for bbb, bsmps in data.items()}
-        conn = list(cls.In2OutMap['PSCtrl'].values())[0][0]
+        data = _PSSearch.get_udc_dict()
+        conn_dict = {udc: [x[0] for x in bsmps] for udc, bsmps in data.items()}
+        conn = list(cls.In2OutMap['UDC'].values())[0][0]
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():

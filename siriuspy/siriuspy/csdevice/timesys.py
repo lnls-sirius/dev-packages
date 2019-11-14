@@ -8,6 +8,20 @@ from siriuspy.optics import constants as _oc
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 
+# This is a way of defining a readable class property to fix the problem of
+# initialization of this module, where it used to make calls to timing static
+# tables during import time.
+# This solution was copied from:
+# https://stackoverflow.com/questions/5189699/how-to-make-a-class-property
+class _classproperty():
+
+    def __init__(self, f):
+        self.f = f
+
+    def __get__(self, obj, owner):
+        return self.f(owner)
+
+
 # --- Enumeration Types ---
 
 class ETypes(_cutil.ETypes):
@@ -59,8 +73,8 @@ class Const(_cutil.Const):
         'Interlock Status',
         )
 
-    EvtHL2LLMap = _HLTimeSearch.get_hl_events()
-    EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
+    __EvtHL2LLMap = None
+    __EvtLL2HLMap = None
 
     evt_ll_codes = list(range(64)) + [124]
     evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
@@ -80,6 +94,19 @@ class Const(_cutil.Const):
     ClkLL = _cutil.Const.register(
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
+
+    @_classproperty
+    def EvtHL2LLMap(cls):
+        if cls.__EvtHL2LLMap is None:
+            cls.__EvtHL2LLMap = _HLTimeSearch.get_hl_events()
+            cls.__EvtLL2HLMap = {
+                val: key for key, val in cls.__EvtHL2LLMap.items()}
+        return cls.__EvtHL2LLMap
+
+    @_classproperty
+    def EvtLL2HLMap(cls):
+        cls.EvtHL2LLMap
+        return cls.__EvtLL2HLMap
 
 
 def get_otp_database(otp_num=0, prefix=None):
