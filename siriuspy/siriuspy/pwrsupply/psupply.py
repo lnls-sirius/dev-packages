@@ -33,10 +33,10 @@ class PSupply:
         """Init."""
         self._psbsmp = psbsmp
         self._connected = None
-        self._groups = dict()
-        self._variables = dict()
-        self._curves = dict()
-        self._parameters = dict()
+        self._groups = self._init_groups()
+        self._variables = self._init_variables()
+        self._curves = self._init_curves()
+        self._parameters = self._init_parameters()
         self._wfm_rb = None
         self._wfmref_mon = None
         self._wfm_mon = None
@@ -45,6 +45,7 @@ class PSupply:
         self._timestamp_update_variables = None
         self._timestamp_update_wfm = None
         self._timestamp_update_parameters = None
+
 
     @property
     def psbsmp(self):
@@ -256,3 +257,26 @@ class PSupply:
         if ack != self.psbsmp.CONST_BSMP.ACK_OK:
             ValueError('Could not reset groups of variables!')
         return True
+
+    def _init_groups(self):
+        return dict()
+
+    def _init_variables(self):
+        return dict()
+
+    def _init_curves(self):
+        return dict()
+
+    def _init_parameters(self):
+        """Init power supply parameters."""
+        parameters = self._psbsmp.entities.parameters
+        parameters_values = dict()
+        for eid in parameters.eids:
+            if eid == 0:
+                parameters_values[eid] = ''
+            else:
+                parameter = parameters[eid]
+                counter = parameter['count']
+                value = _np.zeros(counter) * float('NaN')
+                parameters_values[eid] = value
+        return parameters_values
