@@ -42,11 +42,7 @@ class CycleController:
         self._sections = _get_sections(self.psnames)
         self._only_linac = (len(self._sections) == 1) and \
                            (self._sections[0] == 'LI')
-        # TODO: remove following lines when TI is ok for SI
-        self._only_si = (len(self._sections) == 1) and \
-                        (self._sections[0] == 'SI')
-        # if not self._only_linac:
-        if not self._only_linac and not self._only_si:
+        if not self._only_linac:
             self._timing = timing if timing is not None else Timing()
             self._triggers = _get_trigger_by_psname(self.psnames)
 
@@ -126,9 +122,6 @@ class CycleController:
         """Prepare timing to cycle according to mode."""
         if self._only_linac:
             return
-        # TODO: remove following lines when TI is updated for SI
-        if self._only_si:
-            return
         self._timing.turnoff()
         self._update_log('Preparing Timing...')
         self._timing.prepare(self.mode, self._triggers)
@@ -180,9 +173,6 @@ class CycleController:
         """Check timing preparation."""
         if self._only_linac:
             return True
-        # TODO: remove following lines when TI is updated for SI
-        if self._only_si:
-            return True
 
         self._update_log('Checking Timing...')
         t0 = _time.time()
@@ -212,7 +202,7 @@ class CycleController:
     def pulse_si_pwrsupplies(self):
         """Send sync pulse to power supplies."""
         psnames = [ps for ps in self.psnames
-                   if ('SI' in ps)]  # and 'Fam' not in ps)]
+                   if ('SI' in ps and 'Fam' not in ps)]
         threads = list()
         for psname in psnames:
             t = _thread.Thread(
