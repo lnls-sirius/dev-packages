@@ -43,11 +43,6 @@ def get_trigger_by_psname(psnames):
         dev_names = {dev.device_name for dev in dev_names}
         if psnames & dev_names:
             triggers.add(trig)
-    # TODO: remove the following lines when TI static tables are updated
-    if 'SI-Glob:TI-Mags-QTrims' in triggers:
-        triggers.add('SI-Glob:TI-Mags-Skews')
-    elif 'SI-Glob:TI-Mags-Skews' in triggers:
-        triggers.add('SI-Glob:TI-Mags-QTrims')
     return triggers
 
 
