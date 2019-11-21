@@ -247,10 +247,10 @@ class EpicsOrbit(BaseOrbit):
 
     def set_spass_mask(self, val, beg=True):
         val = int(val) if val > 0 else 0
-        other_mask = self._spass_mask[not beg]
+        other_mask = self._spass_mask[1 if beg else 0]
         maxsz = self.bpms[0].tbtrate - other_mask - 2
         val = val if val < maxsz else maxsz
-        self._spass_mask[beg] = val
+        self._spass_mask[0 if beg else 1] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
         return True
