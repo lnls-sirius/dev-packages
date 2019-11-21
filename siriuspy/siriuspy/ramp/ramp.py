@@ -1017,8 +1017,8 @@ class BoosterRamp(_ConfigDBDocument):
                 norm_configs[name] = self._ps_nconfigs[name]
             else:
                 norm_configs[name] = BoosterNormalized(name)
-                self._synchronized = False
-                self._invalidate_ps_waveforms()
+        self._synchronized = False
+        self._invalidate_ps_waveforms()
         self._ps_nconfigs = norm_configs
 
     def _update_ps_normalized_config_energy(self, nconfig_obj, time):
@@ -1049,7 +1049,6 @@ class BoosterRamp(_ConfigDBDocument):
 
     def _update_ps_waveform_not_dipole(self, maname, dipole, family=None):
         # sort ps normalized configs
-        self._update_ps_normalized_configs_objects()
         nconf_times = self.ps_normalized_configs_times
         nconf_names = self.ps_normalized_configs_names
         nconf_times, nconf_names = \
