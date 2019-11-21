@@ -20,7 +20,7 @@ def get_ps_diag_propty_database(psname):
     """Return property database of diagnostics for power supplies."""
     pstype = _PSSearch.conv_psname_2_pstype(psname)
     splims = _PSSearch.conv_pstype_2_splims(pstype)
-    dtol = splims['DTOL']
+    dtol = splims['DTOL_CUR']
     db = {
         'DiagVersion-Cte': {'type': 'str', 'value': 'UNDEF'},
         'DiagCurrentDiff-Mon': {'type': 'float', 'value': 0.0,
