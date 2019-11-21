@@ -57,7 +57,6 @@ class PSStatusPV(Computer):
     MAOPMD_SEL = 6
     PSCONN_MON = 7
     WAVFRM_MON = 8
-    WFMREF_MON = 9
 
     DTOLWFM_DICT = dict()
 
@@ -115,12 +114,11 @@ class PSStatusPV(Computer):
             # waveform diff?
             elif (psname.sec == 'BO') and (sts == _PSConst.States.RmpWfm):
                 mon = computed_pv.pvs[PSStatusPV.WAVFRM_MON].value
-                ref = computed_pv.pvs[PSStatusPV.WFMREF_MON].value
                 if psname not in PSStatusPV.DTOLWFM_DICT.keys():
                     pstype = _PSSearch.conv_psname_2_pstype(psname)
                     PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
                         pstype, 'DTOL_WFM')
-                if not _np.allclose(mon, ref,
+                if not _np.allclose(mon, 0.0,
                                     atol=PSStatusPV.DTOLWFM_DICT[psname]):
                     value |= PSStatusPV.BIT_BOWFMDIFF
         else:
