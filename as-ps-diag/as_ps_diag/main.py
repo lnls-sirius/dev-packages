@@ -67,7 +67,7 @@ class App:
                              monitor=False)
             self.pvs.append(pv)
             # DiagStatus-Mon
-            pvs = [None]*10
+            pvs = [None]*9
             pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
             pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
             pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
@@ -75,7 +75,6 @@ class App:
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
             pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
             pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
-            pvs[_PSStatusPV.WFMREF_MON] = devname + ':WfmRef-Mon'
             pvs[_PSStatusPV.MAOPMD_SEL] = magname + ':OpMode-Sel'
             pvs[_PSStatusPV.PSCONN_MON] = magname + ':PSConnStatus-Mon'
             # TODO: Add other interlocks for PS types that have them
