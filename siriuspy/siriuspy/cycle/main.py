@@ -317,21 +317,10 @@ class CycleController:
         self._checks_final_result[psname] = \
             self.cyclers[psname].check_final_state(self.mode)
 
-    def reset_all_subsystems(self):
+    def restore_timing_initial_state(self):
         """Reset all subsystems."""
         if self._only_linac:
             return
-        self._update_log('Setting power supplies to SlowRef...')
-        threads = list()
-        for ps in self.psnames:
-            if 'LI' in ps:
-                continue
-            t = _thread.Thread(
-                target=self.cyclers[ps].set_opmode_slowref, daemon=True)
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
         self._update_log('Restoring Timing initial state...')
         self._timing.restore_initial_state()
         self._update_log(done=True)
@@ -387,7 +376,7 @@ class CycleController:
             return
         self.check_all_pwrsupplies_final_state()
         _time.sleep(4)  # TODO: replace by checks
-        self.reset_all_subsystems()
+        self.restore_timing_initial_state()
 
         # Indicate cycle end
         self._update_log('Cycle finished!')
