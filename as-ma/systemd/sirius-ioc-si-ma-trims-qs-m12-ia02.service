@@ -12,11 +12,11 @@ StandardError=syslog
 ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-trims-qs-m12-ia02'
 EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-trims-qs-m12-ia02
 ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
-SI-02M2:PS-QFB \
-SI-02M2:PS-QDB1 \
-SI-02M2:PS-QDB2 \
-SI-03M1:PS-QFP \
-SI-03M1:PS-QDP1 \
-SI-03M1:PS-QDP2 \
-SI-02M1:PS-QS \
-SI-02M2:PS-QS
+SI-02M2:MA-QFB \
+SI-02M2:MA-QDB1 \
+SI-02M2:MA-QDB2 \
+SI-03M1:MA-QFP \
+SI-03M1:MA-QDP1 \
+SI-03M1:MA-QDP2 \
+SI-02M1:MA-QS \
+SI-02M2:MA-QS
