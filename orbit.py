@@ -719,6 +719,8 @@ class EpicsOrbit(BaseOrbit):
                 if not sp or self.update_raws:
                     raws[plane].append(orbs[plane])
                 raws[plane] = raws[plane][-self._smooth_npts:]
+                if not raws[plane]:
+                    return
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raws[plane], axis=0)
                 else:
@@ -780,6 +782,8 @@ class EpicsOrbit(BaseOrbit):
                 if self.update_raws:
                     raw.append(norb)
                 del raw[:-nr_pts]
+                if not raw:
+                    return
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raw, axis=0)
                 else:
@@ -828,6 +832,8 @@ class EpicsOrbit(BaseOrbit):
                 if self.update_raws:
                     raw.append(norb)
                 del raw[:-nr_pts]
+                if not raw:
+                    return
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raw, axis=0)
                 else:
