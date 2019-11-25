@@ -994,11 +994,19 @@ class BoosterRamp(_ConfigDBDocument):
             st += strfmt3.format('', time[i], name[i])
         return st
 
+    def __setitem__(self, index, value):
+        """Set configuration item."""
+        self._set_item(index, value)
+
     def _get_item(self, name):
         return _dcopy(self._ps_nconfigs[name])
 
     def _set_item(self, name, value):
+        if name in self._ps_nconfigs.keys() and \
+                not self._check_ps_normalized_modified(value):
+            return
         self._ps_nconfigs[name] = value
+        self._synchronized = False
         self._invalidate_ps_waveforms()
 
     def _set_value(self, value):
