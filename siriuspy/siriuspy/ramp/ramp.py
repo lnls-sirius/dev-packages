@@ -4,7 +4,7 @@ import numpy as _np
 from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
-from siriuspy.search import MASearch as _MASearch
+from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName
 from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 from siriuspy.magnet.util import \
@@ -1147,7 +1147,8 @@ class BoosterRamp(_ConfigDBDocument):
 
     def _get_appropriate_wfmnrpoints(self, maname):
         """Return appropriate number of points for maname."""
-        if 'CH' in maname or 'CV' in maname or 'QS' in maname:
+        psname = _MASearch.conv_maname_2_psnames(maname)
+        if _PSSearch.conv_psname_2_psmodel(psname[0]) == 'FBP':
             return self.ps_ramp_wfm_nrpoints_corrs
         else:
             return self.ps_ramp_wfm_nrpoints_fams
