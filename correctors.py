@@ -91,31 +91,33 @@ class RFCtrl(Corrector):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        self._name = self._csorb.RF_GEN_NAME
+        self._name = 'RF-Gen'  # self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _PV(LL_PREF+self._name+':Freq-SP', **opt)
-        self._rb = _PV(LL_PREF+self._name+':Freq-RB', **opt)
+        self._sp = _PV(LL_PREF+self._name+':GeneralFreq-SP', **opt)
+        self._rb = _PV(LL_PREF+self._name+':GeneralFreq-RB', **opt)
         self._config_ok_vals = {'PwrState': 1}
-        self._config_pvs_sp = {
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
-        self._config_pvs_rb = {
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt)}
+        self._config_pvs_sp = dict()
+        #     'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
+        self._config_pvs_rb = dict()
+        #     'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt)}
 
     @property
     def state(self):
         """State."""
         # TODO: database of RF GEN
-        pv = self._config_pvs_rb['PwrState']
-        return pv.value == 1 if pv.connected else False
+        return True
+        # pv = self._config_pvs_rb['PwrState']
+        # return pv.value == 1 if pv.connected else False
 
     @state.setter
     def state(self, boo):
         # TODO: database of RF GEN
-        val = 1 if boo else 0
-        pv = self._config_pvs_sp['PwrState']
-        if pv.connected:
-            self._config_ok_vals['PwrState'] = val
-            pv.put(val, wait=False)
+        return
+        # val = 1 if boo else 0
+        # pv = self._config_pvs_sp['PwrState']
+        # if pv.connected:
+        #     self._config_ok_vals['PwrState'] = val
+        #     pv.put(val, wait=False)
 
 
 class CHCV(Corrector):
@@ -186,7 +188,7 @@ class Septum(Corrector):
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
         self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
-        self._nominalkick = 3.6 * 3.1415926/180 * 1000  # mrad
+        self._nominalkick = 99.4  # mrad
         self._config_ok_vals = {
             'Pulse': 1,
             'PwrState': _PSConst.PwrStateSel.On}
