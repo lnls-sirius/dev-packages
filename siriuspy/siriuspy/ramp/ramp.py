@@ -4,7 +4,7 @@ import numpy as _np
 from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
-from siriuspy.search import MASearch as _MASearch
+from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName
 from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 from siriuspy.magnet.util import \
@@ -42,6 +42,17 @@ class BoosterNormalized(_ConfigDBDocument):
     def _set_item(self, maname, value):
         index = self._manames2index[maname]
         self._value['pvs'][index][1] = value
+
+    def verify_syncronized(self):
+        oconfig = BoosterNormalized(name=self.name)
+        oconfig.load()
+
+        modified = False
+        for mag in oconfig.manames:
+            if oconfig[mag] != self[mag]:
+                modified = True
+                break
+        self._synchronized = not modified
 
     def __str__(self):
         """Return string representation of configuration."""
@@ -110,6 +121,7 @@ class BoosterRamp(_ConfigDBDocument):
     def save(self, new_name=None):
         """Save configuration to config server."""
         # save each ps normalized configuration
+        nconfig_sub_dict = dict()
         for config in self._ps_nconfigs.values():
             if config.exist():
                 if self._check_ps_normalized_modified(config):
@@ -128,6 +140,7 @@ class BoosterRamp(_ConfigDBDocument):
                         if nconfigs[i][1] == old:
                             nconfigs[i][1] = new
                     self._value['ps_normalized_configs*'] = nconfigs
+                    nconfig_sub_dict[old] = new
                 else:
                     config._synchronized = True
             else:
@@ -137,6 +150,8 @@ class BoosterRamp(_ConfigDBDocument):
         super().save(new_name)
 
         self._synchronized = True  # all went well
+
+        return nconfig_sub_dict
 
     # ---- ps_normalized_configs ----
 
@@ -994,11 +1009,19 @@ class BoosterRamp(_ConfigDBDocument):
             st += strfmt3.format('', time[i], name[i])
         return st
 
+    def __setitem__(self, index, value):
+        """Set configuration item."""
+        self._set_item(index, value)
+
     def _get_item(self, name):
         return _dcopy(self._ps_nconfigs[name])
 
     def _set_item(self, name, value):
+        if name in self._ps_nconfigs.keys() and \
+                not self._check_ps_normalized_modified(value):
+            return
         self._ps_nconfigs[name] = value
+        self._synchronized = False
         self._invalidate_ps_waveforms()
 
     def _set_value(self, value):
@@ -1139,7 +1162,8 @@ class BoosterRamp(_ConfigDBDocument):
 
     def _get_appropriate_wfmnrpoints(self, maname):
         """Return appropriate number of points for maname."""
-        if 'CH' in maname or 'CV' in maname or 'QS' in maname:
+        psname = _MASearch.conv_maname_2_psnames(maname)
+        if _PSSearch.conv_psname_2_psmodel(psname[0]) == 'FBP':
             return self.ps_ramp_wfm_nrpoints_corrs
         else:
             return self.ps_ramp_wfm_nrpoints_fams
