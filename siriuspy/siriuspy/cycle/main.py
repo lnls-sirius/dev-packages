@@ -375,7 +375,6 @@ class CycleController:
         if not self.wait():
             return
         self.check_all_pwrsupplies_final_state()
-        _time.sleep(4)  # TODO: replace by checks
         self.restore_timing_initial_state()
 
         # Indicate cycle end
