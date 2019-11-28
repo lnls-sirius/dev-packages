@@ -430,12 +430,16 @@ class _WaveformMagnet:
         return self.waveform == value
 
     def conv_current_2_strength(self, currents, **kwargs):
-        return self._magnet.conv_current_2_strength(
-            currents, **kwargs)
+        return self._magnet.conv_current_2_strength(currents, **kwargs)
 
     def conv_strength_2_current(self, strengths, **kwargs):
-        return self._magnet.conv_strength_2_current(
-            strengths, **kwargs)
+        return self._magnet.conv_strength_2_current(strengths, **kwargs)
+
+    def get_current_from_time(self, time):
+        return _np.interp(time, self.times, self.currents)
+
+    def get_strength_from_time(self, time):
+        return _np.interp(time, self.times, self.strengths)
 
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
