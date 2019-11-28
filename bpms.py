@@ -13,8 +13,8 @@ TIMEOUT = 0.05
 
 class BPM(_BaseTimingConfig):
 
-    def __init__(self, name):
-        super().__init__(name[:2])
+    def __init__(self, name, callback=None):
+        super().__init__(name[:2], callback)
         self._name = name
         self.ORB_CONV = self._csorb.ORBIT_CONVERSION_UNIT
         opt = {'connection_timeout': TIMEOUT}
@@ -160,19 +160,26 @@ class BPM(_BaseTimingConfig):
 
     @property
     def is_ok(self):
-        ok = super().is_ok
+        if not super().is_ok:
+            return False
+
         pv = self._config_pvs_rb['ACQStatus']
         stts = _csbpm.AcqStates
-        ok &= pv.value not in {
+        okay = pv.value not in {
             stts.Error, stts.No_Memory, stts.Too_Few_Samples,
             stts.Too_Many_Samples, stts.Acq_Overflow}
+
         if self._config_ok_vals['ACQTriggerEvent'] == _csbpm.AcqEvents.Start:
-            ok &= pv.value not in {stts.Idle, stts.Aborted}
+            okay &= pv.value not in {stts.Idle, stts.Aborted}
         else:
-            ok &= pv.value not in {
+            okay &= pv.value not in {
                 stts.Waiting, stts.External_Trig, stts.Data_Trig,
                 stts.Software_Trig, stts.Acquiring}
-        return ok
+        if not okay:
+            msg = 'ERR: Error in {0:s}'.format(pv.pvname)
+            self.run_callbacks('Log-Mon', msg)
+            _log.warning(msg[5:])
+        return okay
 
     @property
     def state(self):
@@ -625,8 +632,8 @@ class BPM(_BaseTimingConfig):
 
 class TimingConfig(_BaseTimingConfig):
 
-    def __init__(self, acc):
-        super().__init__(acc)
+    def __init__(self, acc, callback=None):
+        super().__init__(acc, callback=callback)
         trig = self._csorb.TRIGGER_ACQ_NAME
         evg = self._csorb.EVG_NAME
         opt = {'connection_timeout': TIMEOUT}

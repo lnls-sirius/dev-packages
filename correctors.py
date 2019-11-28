@@ -298,7 +298,6 @@ class TimingConfig(_BaseTimingConfig):
 
 class BaseCorrectors(_BaseClass):
     """Base correctors class."""
-
     pass
 
 
@@ -475,10 +474,11 @@ class EpicsCorrectors(BaseCorrectors):
         if not self.isring:
             return True
 
-        if not self.timing.configure():
-            msg = 'ERR: Failed to configure timing'
-            self._update_log(msg)
-            _log.error(msg[5:])
+        if self._synced_kicks == self._csorb.CorrSync.On:
+            if not self.timing.configure():
+                msg = 'ERR: Failed to configure timing'
+                self._update_log(msg)
+                _log.error(msg[5:])
         return True
 
     def _update_status(self):
@@ -498,11 +498,13 @@ class EpicsCorrectors(BaseCorrectors):
         status = _util.update_bit(
             status, bit_pos=2,
             bit_val=not all(corr.state for corr in chcvs))
-        if self.isring:
-            status = _util.update_bit(
-                status, bit_pos=3, bit_val=not self.timing.connected)
-            status = _util.update_bit(
-                status, bit_pos=4, bit_val=not self.timing.is_ok)
+        if self.isring and self._synced_kicks == self._csorb.CorrSync.On:
+            tim_conn = self.timing.connected
+            tim_conf = self.timing.is_ok
+        else:
+            tim_conn = tim_conf = True
+        status = _util.update_bit(status, bit_pos=3, bit_val=not tim_conn)
+        status = _util.update_bit(status, bit_pos=4, bit_val=not tim_conf)
         if self.acc == 'SI':
             rfctrl = self._corrs[-1]
             status = _util.update_bit(

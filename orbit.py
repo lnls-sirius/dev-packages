@@ -58,8 +58,8 @@ class EpicsOrbit(BaseOrbit):
         self._mturndownsample = 1
         self._timevector = None
         self._ring_extension = 1
-        self.bpms = [BPM(name) for name in self._csorb.BPM_NAMES]
-        self.timing = TimingConfig(acc)
+        self.bpms = [BPM(name, callback) for name in self._csorb.BPM_NAMES]
+        self.timing = TimingConfig(acc, callback)
         self._orbit_thread = _Repeat(
                         1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
@@ -443,7 +443,7 @@ class EpicsOrbit(BaseOrbit):
                 break
             _time.sleep(0.1)
         else:
-            _log.warning('Timeout waiting bpms.')
+            _log.warning('Timeout waiting BPMs.')
 
         trigmodes = {self._csorb.SOFBMode.SinglePass, }
         if self.isring:
@@ -846,22 +846,32 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_status(self):
         status = 0b11111
-        status = _util.update_bit(
-            status, bit_pos=0, bit_val=not self.timing.connected)
-        status = _util.update_bit(
-            status, bit_pos=1, bit_val=not self.timing.is_ok)
-
-        nok = not all(bpm.connected for bpm in self.bpms)
-        status = _util.update_bit(v=status, bit_pos=2, bit_val=nok)
-
-        nok = not all(bpm.state for bpm in self.bpms)
-        status = _util.update_bit(v=status, bit_pos=3, bit_val=nok)
-
-        trig_modes = [self._csorb.SOFBMode.SinglePass, ]
+        trig_modes = {self._csorb.SOFBMode.SinglePass, }
         if self._csorb.isring:
-            trig_modes.append(self._csorb.SOFBMode.MultiTurn)
-        isok = all(bpm.is_ok for bpm in self.bpms)
-        isok |= self._mode not in trig_modes
+            trig_modes.add(self._csorb.SOFBMode.MultiTurn)
+
+        if self._mode in trig_modes:
+            tim_conn = self.timing.connected
+            tim_conf = self.timing.is_ok
+        else:
+            tim_conn = True
+            tim_conf = True
+        status = _util.update_bit(status, bit_pos=0, bit_val=not tim_conn)
+        status = _util.update_bit(status, bit_pos=1, bit_val=not tim_conf)
+
+        if self._mode == self._csorb.SOFBMode.Offline:
+            bpm_conn = True
+            bpm_stt = True
+        else:
+            bpm_conn = all(bpm.connected for bpm in self.bpms)
+            bpm_stt = all(bpm.state for bpm in self.bpms)
+        status = _util.update_bit(v=status, bit_pos=2, bit_val=not bpm_conn)
+        status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
+
+        if self._mode in trig_modes:
+            isok = all(bpm.is_ok for bpm in self.bpms)
+        else:
+            isok = True
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         self._status = status

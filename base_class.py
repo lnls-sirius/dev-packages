@@ -87,11 +87,12 @@ class BaseClass(_Callback):
         pass
 
 
-class BaseTimingConfig:
+class BaseTimingConfig(_Callback):
     """Base timing configuration class."""
 
-    def __init__(self, acc):
+    def __init__(self, acc, callback=None):
         """Init method."""
+        super().__init__(callback)
         self._csorb = _create_csorb(acc)
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
@@ -114,7 +115,6 @@ class BaseTimingConfig:
     @property
     def is_ok(self):
         """Ok status."""
-        ok = True
         for k, val in self._config_ok_vals.items():
             pv = self._config_pvs_rb[k]
             pvval = None
@@ -128,12 +128,12 @@ class BaseTimingConfig:
             else:
                 okay = val == pvval
             if not okay:
-                _log.info('NOT CONF: {0:s} okv = {1:f}, v = {2}'.format(
-                    pv.pvname, val, pvval))
-            ok &= okay
-            if not ok:
-                break
-        return ok
+                msg = 'ERR: NOT CONF: {0:s}'.format(pv.pvname)
+                self.run_callbacks('Log-Mon', msg)
+                msg = msg[5:] + ' okv = {0}, v = {1}'.format(val, pvval)
+                _log.warning(msg)
+                return False
+        return True
 
     def configure(self):
         """Configure method."""
