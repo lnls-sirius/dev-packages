@@ -43,6 +43,17 @@ class BoosterNormalized(_ConfigDBDocument):
         index = self._manames2index[maname]
         self._value['pvs'][index][1] = value
 
+    def verify_syncronized(self):
+        oconfig = BoosterNormalized(name=self.name)
+        oconfig.load()
+
+        modified = False
+        for mag in oconfig.manames:
+            if oconfig[mag] != self[mag]:
+                modified = True
+                break
+        self._synchronized = not modified
+
     def __str__(self):
         """Return string representation of configuration."""
         if not self._value:
