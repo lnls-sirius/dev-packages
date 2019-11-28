@@ -121,6 +121,7 @@ class BoosterRamp(_ConfigDBDocument):
     def save(self, new_name=None):
         """Save configuration to config server."""
         # save each ps normalized configuration
+        nconfig_sub_dict = dict()
         for config in self._ps_nconfigs.values():
             if config.exist():
                 if self._check_ps_normalized_modified(config):
@@ -139,6 +140,7 @@ class BoosterRamp(_ConfigDBDocument):
                         if nconfigs[i][1] == old:
                             nconfigs[i][1] = new
                     self._value['ps_normalized_configs*'] = nconfigs
+                    nconfig_sub_dict[old] = new
                 else:
                     config._synchronized = True
             else:
@@ -148,6 +150,8 @@ class BoosterRamp(_ConfigDBDocument):
         super().save(new_name)
 
         self._synchronized = True  # all went well
+
+        return nconfig_sub_dict
 
     # ---- ps_normalized_configs ----
 
