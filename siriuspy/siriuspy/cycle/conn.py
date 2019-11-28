@@ -216,6 +216,10 @@ class Timing:
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
                     VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+
+                if pvname.propty_suffix == 'Cmd':
+                    continue
+
                 self._initial_state[pvname] = Timing._pvs[pvname].get()
 
                 if pvname.propty_suffix == 'SP':
