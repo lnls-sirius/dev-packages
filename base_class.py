@@ -140,7 +140,7 @@ class BaseTimingConfig(_Callback):
         if not self.connected:
             return False
         for k, pv in self._config_pvs_sp.items():
-            pv.value = self._config_ok_vals[k]
+            pv.put(self._config_ok_vals[k], wait=False)
         return True
 
 
