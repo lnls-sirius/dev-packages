@@ -438,12 +438,6 @@ class EpicsOrbit(BaseOrbit):
     def _prepare_mode(self, oldmode=None):
         oldmode = self._mode if oldmode is None else oldmode
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
-        for _ in range(40):
-            if all(map(lambda x: x.is_ok, self.bpms)):
-                break
-            _time.sleep(0.1)
-        else:
-            _log.warning('Timeout waiting BPMs.')
 
         trigmodes = {self._csorb.SOFBMode.SinglePass, }
         if self.isring:
@@ -473,6 +467,7 @@ class EpicsOrbit(BaseOrbit):
                 self.set_acq_nrsamples(pts, ispost=True)
         self._update_time_vector()
         self.acq_config_bpms()
+
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
         return True
 
@@ -508,9 +503,16 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_trig_acq_control(self, value):
+        acqctrl = self._csorb.TrigAcqCtrl
+        if value == acqctrl.Start:
+            self._wait_bpms()
+
         for bpm in self.bpms:
             bpm.ctrl = value
         self.run_callbacks('TrigAcqCtrl-Sts', value)
+
+        if value in {acqctrl.Stop, acqctrl.Abort}:
+            self._wait_bpms()
         return True
 
     def set_trig_acq_channel(self, value):
@@ -615,6 +617,14 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('MTurnDownSample-RB', val)
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
+
+    def _wait_bpms(self):
+        for _ in range(40):
+            if all(map(lambda x: x.is_ok, self.bpms)):
+                break
+            _time.sleep(0.1)
+        else:
+            _log.warning('Timeout waiting BPMs.')
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
         if not self.isring:
