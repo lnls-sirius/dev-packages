@@ -430,12 +430,16 @@ class _WaveformMagnet:
         return self.waveform == value
 
     def conv_current_2_strength(self, currents, **kwargs):
-        return self._magnet.conv_current_2_strength(
-            currents, **kwargs)
+        return self._magnet.conv_current_2_strength(currents, **kwargs)
 
     def conv_strength_2_current(self, strengths, **kwargs):
-        return self._magnet.conv_strength_2_current(
-            strengths, **kwargs)
+        return self._magnet.conv_strength_2_current(strengths, **kwargs)
+
+    def get_current_from_time(self, time):
+        return _np.interp(time, self.times, self.currents)
+
+    def get_strength_from_time(self, time):
+        return _np.interp(time, self.times, self.strengths)
 
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
@@ -693,7 +697,7 @@ class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
     def __init__(self, maname, dipole=None, family=None, strengths=None,
-                 wfm_nrpoints=_DEF_WFMSIZE):
+                 currents=None, wfm_nrpoints=_DEF_WFMSIZE):
         """Constructor."""
         if dipole is None:
             raise ValueError('{} waveform needs an associated '
@@ -701,6 +705,8 @@ class Waveform(_WaveformMagnet):
         _WaveformMagnet.__init__(self, maname, wfm_nrpoints=wfm_nrpoints)
         self._dipole = dipole
         self._family = family
+        if currents is not None:
+            strengths = self._conv_currents_2_strengths(currents)
         if strengths is None:
             if maname in _ru.NOMINAL_STRENGTHS:
                 nom_strengths = _ru.NOMINAL_STRENGTHS[maname]
