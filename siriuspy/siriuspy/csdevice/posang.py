@@ -1,17 +1,23 @@
 """Define PVs, contants and properties of PosAng SoftIOCs."""
 
 from siriuspy.csdevice import util as _cutil
+from siriuspy.namesys import SiriusPVName as _PVName
 
 
 class Const:
     """Const class defining PosAng constants."""
 
-    TB_CORRH_POSANG_CHSEPT = ('TB-04:MA-CH-1', 'TB-04:PM-InjSept')
-    TB_CORRH_POSANG_CHCH = ('TB-04:MA-CH-1', 'TB-04:MA-CH-2')
-    TB_CORRV_POSANG = ('TB-04:MA-CV-1', 'TB-04:MA-CV-2')
+    TB_CORRH_POSANG_CHSEPT = (
+        _PVName('TB-04:MA-CH-1'), _PVName('TB-04:PM-InjSept'))
+    TB_CORRH_POSANG_CHCH = (
+        _PVName('TB-04:MA-CH-1'), _PVName('TB-04:MA-CH-2'))
+    TB_CORRV_POSANG = (
+        _PVName('TB-04:MA-CV-1'), _PVName('TB-04:MA-CV-2'))
 
-    TS_CORRH_POSANG = ('TS-04:MA-CH', 'TS-04:PM-InjSeptF')
-    TS_CORRV_POSANG = ('TS-04:MA-CV-1', 'TS-04:MA-CV-2')
+    TS_CORRH_POSANG = (
+        _PVName('TS-04:MA-CH'), _PVName('TS-04:PM-InjSeptF'))
+    TS_CORRV_POSANG = (
+        _PVName('TS-04:MA-CV-1'), _PVName('TS-04:MA-CV-2'))
 
     STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode', 'MA CtrlMode')
 
