@@ -25,7 +25,7 @@ class ETypes(_cutil.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
-    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
+    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     TLINES = ('TB', 'TS')
