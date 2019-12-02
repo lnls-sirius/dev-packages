@@ -12,6 +12,7 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
+from siriuspy.factory import NormalizerFactory
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
         get_config_name as _get_config_name,
@@ -48,6 +49,7 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._SFAMS = _pvs.get_corr_fams()
+        self._ENERGY = 0.140 if self._ACC in {'TB', 'BO'} else 3.0
 
         self._driver = driver
 
@@ -61,7 +63,7 @@ class App:
         self._sfam_check_ctrlmode_mon = len(self._SFAMS)*[1]
 
         self._apply_corr_cmd_count = 0
-        self._config_ma_cmd_count = 0
+        self._config_ps_cmd_count = 0
         self._lastcalc_sl = len(self._SFAMS)*[0]
 
         self._sfam_sl_rb = len(self._SFAMS)*[0]
@@ -111,8 +113,9 @@ class App:
                             "configdb.")
 
         # Connect to Sextupoles Families
-        self._sfam_sl_sp_pvs = {}
-        self._sfam_sl_rb_pvs = {}
+        self._sfam_norm = {}
+        self._sfam_curr_sp_pvs = {}
+        self._sfam_curr_rb_pvs = {}
         self._sfam_pwrstate_sel_pvs = {}
         self._sfam_pwrstate_sts_pvs = {}
         self._sfam_opmode_sel_pvs = {}
@@ -120,28 +123,30 @@ class App:
         self._sfam_ctrlmode_mon_pvs = {}
 
         for fam in self._SFAMS:
-            self._sfam_sl_sp_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':SL-SP')
-
-            self._sfam_sl_rb_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':SL-RB',
+            mag = _SiriusPVName(self._ACC + '-Fam:MA-' + fam)
+            pss = mag.substitute(prefix=self._PREFIX_VACA, dis='PS')
+            self._sfam_norm[fam] = NormalizerFactory.create(mag)
+            self._sfam_curr_sp_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='Current', propty_suffix='SP'))
+            self._sfam_curr_rb_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='Current', propty_suffix='RB'),
                 callback=self._callback_estimate_chrom,
                 connection_callback=self._connection_callback_sfam_sl_rb)
 
             self._sfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
+                pss.substitute(propty_name='PwrState', propty_suffix='Sel'))
             self._sfam_pwrstate_sts_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
+                pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_sfam_pwrstate_sts)
 
             self._sfam_opmode_sel_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
+                pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
             self._sfam_opmode_sts_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
+                pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
                 callback=self._callback_sfam_opmode_sts)
 
             self._sfam_ctrlmode_mon_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
+                pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
                 callback=self._callback_sfam_ctrlmode_mon)
 
         # Connect to Timing
@@ -226,24 +231,26 @@ class App:
 
     def process(self, interval):
         """Sleep."""
-        _time.sleep(interval)
+        t0 = _time.time()
+        limit_names = {
+            'hilim': 'upper_disp_limit', 'lolim': 'lower_disp_limit',
+            'high': 'upper_alarm_limit', 'low': 'lower_alarm_limit',
+            'hihi': 'upper_warning_limit', 'lolo': 'lower_warning_limit'}
+        if (self._status & 0x1) == 0:  # Check connection
+            for fam in self._SFAMS:
+                lis = {}
+                data = self._sfam_curr_rb_pvs[fam].get_ctrlvars()
+                if self._sfam_curr_rb_pvs[fam].upper_disp_limit is not None:
+                    for k, v in limit_names.items():
+                        lis[k] = self._sfam_norm[fam].conv_current_2_strength(
+                            data[v], strengths_dipole=self._ENERGY)
+                self.driver.setParamInfo('SL'+fam+'-Mon', lis)
+            self.driver.updatePVs()
+        dt = interval - (_time.time() - t0)
+        _time.sleep(max(dt, 0))
 
     def read(self, reason):
         """Read from IOC database."""
-        if reason == 'Version-Cte':
-            if (self._status & 0x1) == 0:  # Check connection
-                for fam in self._SFAMS:
-                    limits = {}
-                    data = self._sfam_sl_rb_pvs[fam].get_ctrlvars()
-                    if self._sfam_sl_rb_pvs[fam].upper_disp_limit is not None:
-                        limits['hilim'] = data['upper_disp_limit']
-                        limits['lolim'] = data['lower_disp_limit']
-                        limits['high'] = data['upper_alarm_limit']
-                        limits['low'] = data['lower_alarm_limit']
-                        limits['hihi'] = data['upper_warning_limit']
-                        limits['lolo'] = data['lower_warning_limit']
-                    self.driver.setParamInfo('SL'+fam+'-Mon', limits)
-                self.driver.updatePVs()
         return None
 
     def write(self, reason, value):
@@ -307,12 +314,10 @@ class App:
             if value != self._sync_corr:
                 self._sync_corr = value
 
-                done = self._config_ma()
-                if done:
-                    self._config_ma_cmd_count += 1
-                    self.driver.setParam('ConfigMA-Cmd',
-                                         self._config_ma_cmd_count)
-
+                if self._config_ps():
+                    self._config_ps_cmd_count += 1
+                    self.driver.setParam(
+                        'ConfigPS-Cmd', self._config_ps_cmd_count)
                 if value == 1:
                     done = self._config_timing()
                     if done:
@@ -341,12 +346,11 @@ class App:
                 self.driver.updatePVs()
                 status = True
 
-        elif reason == 'ConfigMA-Cmd':
-            done = self._config_ma()
-            if done:
-                self._config_ma_cmd_count += 1
-                self.driver.setParam('ConfigMA-Cmd',
-                                     self._config_ma_cmd_count)
+        elif reason == 'ConfigPS-Cmd':
+            if self._config_ps():
+                self._config_ps_cmd_count += 1
+                self.driver.setParam(
+                    'ConfigPS-Cmd', self._config_ps_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
@@ -388,13 +392,15 @@ class App:
 
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
-            current_sl = self._sfam_sl_rb_pvs[fam].get()
-            if current_sl is None:
+            curr_now = self._sfam_curr_rb_pvs[fam].get()
+            if curr_now is None:
                 return
-            self._lastcalc_sl[fam_index] = (current_sl +
-                                            lastcalc_deltasl[fam_index])
-            self.driver.setParam('SL' + fam + '-Mon',
-                                 self._lastcalc_sl[fam_index])
+            sl_now = self._sfam_norm[fam].conv_current_2_strength(
+                curr_now, strengths_dipole=self._ENERGY)
+            self._lastcalc_sl[fam_index] = (
+                sl_now + lastcalc_deltasl[fam_index])
+            self.driver.setParam(
+                'SL' + fam + '-Mon', self._lastcalc_sl[fam_index])
 
         self.driver.setParam('Log-Mon', 'Calculated SL values.')
         self.driver.updatePVs()
@@ -403,11 +409,14 @@ class App:
         if ((self._status == _ALLCLR_SYNCOFF and
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
-            pvs = self._sfam_sl_sp_pvs
+            pvs = self._sfam_curr_sp_pvs
             for fam in pvs:
                 fam_index = self._SFAMS.index(fam)
                 pv = pvs[fam]
-                pv.put(self._lastcalc_sl[fam_index])
+                curr = self._sfam_norm[fam].conv_strength_2_current(
+                    self._lastcalc_sl[fam_index],
+                    strengths_dipole=self._ENERGY)
+                pv.put(curr)
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
@@ -437,8 +446,13 @@ class App:
         self.driver.updatePVs()
 
     def _callback_estimate_chrom(self, pvname, value, **kws):
-        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_sl_rb[fam_index] = value
+        if value is None:
+            return
+        fam = _SiriusPVName(pvname).dev
+        fam_index = self._SFAMS.index(fam)
+        sl_now = self._sfam_norm[fam].conv_current_2_strength(
+                value, strengths_dipole=self._ENERGY)
+        self._sfam_sl_rb[fam_index] = sl_now
 
         sfam_deltasl = len(self._SFAMS)*[0]
         for fam in self._SFAMS:
@@ -528,7 +542,7 @@ class App:
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _config_ma(self):
+    def _config_ps(self):
         opmode = self._sync_corr
         for fam in self._SFAMS:
             if self._sfam_pwrstate_sel_pvs[fam].connected:
