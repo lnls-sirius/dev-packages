@@ -9,7 +9,9 @@ from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.search import HLTimeSearch as _HLTimesearch
+from siriuspy.factory import NormalizerFactory
 from siriuspy.envars import vaca_prefix as LL_PREF
+from siriuspy.namesys import SiriusPVName as _PVName
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
 
@@ -22,7 +24,7 @@ class Corrector(_BaseTimingConfig):
     def __init__(self, corr_name):
         """Init method."""
         super().__init__(corr_name[:2])
-        self._name = corr_name
+        self._name = _PVName(corr_name)
         self._sp = None
         self._rb = None
 
@@ -127,9 +129,15 @@ class CHCV(Corrector):
         """Init method."""
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
-        self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
-        self._ref = _PV(LL_PREF + self._name + ':KickRef-Mon', **opt)
+        pvsp = self._name.substitute(
+            prefix=LL_PREF, dis='PS', propty_name='Current',
+            propty_suffix='SP')
+        pvrb = pvsp.substitute(propty_suffix='RB')
+        pvref = pvsp.substitute(propty_name='CurrentRef', propty_suffix='Mon')
+        self._norm = NormalizerFactory.create(self._name)
+        self._sp = _PV(pvsp, **opt)
+        self._rb = _PV(pvrb, **opt)
+        self._ref = _PV(pvref, **opt)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRef,
             'PwrState': _PSConst.PwrStateSel.On}
@@ -174,9 +182,27 @@ class CHCV(Corrector):
         return conn
 
     @property
+    def value(self):
+        """Value."""
+        if self._rb.connected:
+            val = self._rb.value
+            if val is not None:
+                return self._norm.conv_current_2_strength(
+                    val, strengths_dipole=self._csorb.ENERGY)
+
+    @value.setter
+    def value(self, val):
+        val = self._norm.conv_strength_2_current(
+            val, strengths_dipole=self._csorb.ENERGY)
+        self._sp.put(val, wait=False)
+
+    @property
     def refvalue(self):
         if self._ref.connected:
-            return self._ref.value
+            val = self._ref.value
+            if val is not None:
+                return self._norm.conv_current_2_strength(
+                    val, strengths_dipole=self._csorb.ENERGY)
 
 
 class Septum(Corrector):
@@ -186,8 +212,13 @@ class Septum(Corrector):
         """Init method."""
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
-        self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
+        pvsp = self._name.substitute(
+            prefix=LL_PREF, dis='PU', propty_name='Voltage',
+            propty_suffix='SP')
+        pvrb = pvsp.substitute(propty_suffix='RB')
+        self._norm = NormalizerFactory.create(self._name)
+        self._sp = _PV(pvsp, **opt)
+        self._rb = _PV(pvrb, **opt)
         self._nominalkick = 99.4  # mrad
         self._config_ok_vals = {
             'Pulse': 1,
@@ -218,6 +249,24 @@ class Septum(Corrector):
         self._config_ok_vals['Pulse'] = val
         if pv.connected and pv.value != val:
             pv.put(val, wait=False)
+
+    @property
+    def value(self):
+        """Value."""
+        if self._rb.connected:
+            val = self._rb.value
+            if val is not None:
+                val = self._norm.conv_current_2_strength(
+                    val, strengths_dipole=self._csorb.ENERGY)
+                return (-val - self._nominalkick) * 1e3
+
+    @value.setter
+    def value(self, val):
+        val = val/1e3 + self._nominalkick
+        val = self._norm.conv_strength_2_current(
+            -val, strengths_dipole=self._csorb.ENERGY)
+        self._sp.put(val, wait=False)
+
 
     @property
     def value(self):
