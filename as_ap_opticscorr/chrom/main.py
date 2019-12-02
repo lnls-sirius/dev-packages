@@ -176,9 +176,9 @@ class App:
             except Exception:
                 self._chromsi_src_idx = 1
 
-            self._timing_sexts_pulses_sp = _epics.PV(
+            self._timing_sexts_nrpulses_sp = _epics.PV(
                 self._PREFIX_VACA+SEXTS_TRIG+':NrPulses-SP')
-            self._timing_sexts_pulses_rb = _epics.PV(
+            self._timing_sexts_nrpulses_rb = _epics.PV(
                 self._PREFIX_VACA+SEXTS_TRIG+':NrPulses-RB',
                 callback=self._callback_timing_state)
 
@@ -272,16 +272,16 @@ class App:
             done = self._apply_corr()
             if done:
                 self._apply_corr_cmd_count += 1
-                self.driver.setParam('ApplyDelta-Cmd',
-                                     self._apply_corr_cmd_count)
+                self.driver.setParam(
+                    'ApplyDelta-Cmd', self._apply_corr_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                _set_config_name(acc=self._ACC.lower(),
-                                 opticsparam='chrom',
-                                 config_name=value)
+                _set_config_name(
+                    acc=self._ACC.lower(), opticsparam='chrom',
+                    config_name=value)
                 self.driver.setParam('ConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
                 self.driver.setParam('RespMat-Mon', self._nominal_matrix)
@@ -293,8 +293,8 @@ class App:
                 self._opticscorr.nominal_intstrengths = self._sfam_nomsl
                 self._opticscorr.nominal_opticsparam = self._nomchrom
                 self._calc_sl()
-                self.driver.setParam('Log-Mon',
-                                     'Updated correction parameters.')
+                self.driver.setParam(
+                    'Log-Mon', 'Updated correction parameters.')
                 self.driver.updatePVs()
                 status = True
             else:
@@ -319,12 +319,12 @@ class App:
                     self.driver.setParam(
                         'ConfigPS-Cmd', self._config_ps_cmd_count)
                 if value == 1:
-                    done = self._config_timing()
-                    if done:
+                    if self._config_timing():
                         self._config_timing_cmd_count += 1
-                        self.driver.setParam('ConfigTiming-Cmd',
-                                             self._config_timing_cmd_count)
+                        self.driver.setParam(
+                            'ConfigTiming-Cmd', self._config_timing_cmd_count)
 
+                val = 1
                 if (self._status & 0x1) == 0:
                     for fam in self._SFAMS:
                         fam_index = self._SFAMS.index(fam)
@@ -335,8 +335,6 @@ class App:
                         else _PSConst.OpMode.SlowRef
                     val = any(op != opmode
                               for op in self._sfam_check_opmode_sts)
-                else:
-                    val = 1
 
                 self._status = _siriuspy.util.update_bit(
                     v=self._status, bit_pos=2, bit_val=val)
@@ -354,8 +352,7 @@ class App:
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
-            done = self._config_timing()
-            if done:
+            if self._config_timing():
                 self._config_timing_cmd_count += 1
                 self.driver.setParam('ConfigTiming-Cmd',
                                      self._config_timing_cmd_count)
@@ -549,8 +546,8 @@ class App:
                 self._sfam_pwrstate_sel_pvs[fam].put(1)
                 self._sfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.driver.setParam('Log-Mon',
-                                     'ERR:' + fam + ' is disconnected.')
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:' + fam + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
         self.driver.setParam('Log-Mon', 'Sent configuration to sextupoles.')
@@ -559,19 +556,19 @@ class App:
 
     def _config_timing(self):
         conn = not any(pv.connected is False for pv in [
-                       self._timing_sexts_state_sel,
-                       self._timing_sexts_polarity_sel,
-                       self._timing_sexts_scr_sel,
-                       self._timing_sexts_nrpulses_sp,
-                       self._timing_sexts_duration_sp,
-                       self._timing_sexts_delay_sp,
-                       self._timing_evg_chromsimode_sel,
-                       self._timing_evg_chromsidelaytype_sel,
-                       self._timing_evg_chromsidelay_sp])
+            self._timing_sexts_state_sel,
+            self._timing_sexts_polarity_sel,
+            self._timing_sexts_src_sel,
+            self._timing_sexts_nrpulses_sp,
+            self._timing_sexts_duration_sp,
+            self._timing_sexts_delay_sp,
+            self._timing_evg_chromsimode_sel,
+            self._timing_evg_chromsidelaytype_sel,
+            self._timing_evg_chromsidelay_sp])
         if conn:
             self._timing_sexts_state_sel.put(_TIConst.DsblEnbl.Enbl)
             self._timing_sexts_polarity_sel.put(_TIConst.TrigPol.Normal)
-            self._timing_sexts_scr_sel.put(self._chromsi_src_idx)
+            self._timing_sexts_src_sel.put(self._chromsi_src_idx)
             self._timing_sexts_nrpulses_sp.put(1)
             self._timing_sexts_duration_sp.put(0.15)
             self._timing_sexts_delay_sp.put(0)
@@ -583,7 +580,7 @@ class App:
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon',
-                                 'ERR:Some TI PV is disconnected.')
+            self.driver.setParam(
+                'Log-Mon', 'ERR:Some TI PV is disconnected.')
             self.driver.updatePVs()
             return False
