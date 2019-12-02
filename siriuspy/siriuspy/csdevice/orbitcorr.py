@@ -152,7 +152,7 @@ class SOFBTLines(ConstTLines):
         self.EVT_ACQ_NAME = 'Dig' + self.acc
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
-        self.C0 = 22 if self.acc == 'TB' else 30  # in meters
+        self.C0 = 21.2477 if self.acc == 'TB' else 26.8933  # in meters
         self.T0 = self.C0 / 299792458  # in seconds
         self.ENERGY = 0.144 if self.acc in {'TB', 'BO'} else 3.0
 
