@@ -14,8 +14,8 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
-from siriuspy.search import MASearch as _MASearch, \
-    LLTimeSearch as _LLTimeSearch, PSSearch as _PSSearch
+from siriuspy.search import LLTimeSearch as _LLTimeSearch, \
+    PSSearch as _PSSearch
 from siriuspy.ramp import util as _rutil
 
 
@@ -386,7 +386,7 @@ class ConnTI(_EpicsPropsList):
 
 
 class ConnPS(_EpicsPropsList):
-    """Magnets connector class."""
+    """Power supplies connector class."""
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
@@ -449,13 +449,8 @@ class ConnPS(_EpicsPropsList):
             return False
         pwrsupplys = psnames if psnames else self.psnames
         sp = dict()
-        for psname in pwrsupplys:
-            # get value (wfmdata)
-            maname = _MASearch.conv_psname_2_psmaname(psname)
-            wf = self._ramp_config.ps_waveform_get(maname)
-            value = wf.currents
-            name = psname + ':Wfm-SP'
-            sp[name] = value
+        for ps in pwrsupplys:
+            sp[ps+':Wfm-SP'] = self._ramp_config.ps_waveform_get_currents(ps)
         return self.set_setpoints_check(sp, timeout=timeout, abs_tol=1e-5)
 
     # --- power supplies checks ---
