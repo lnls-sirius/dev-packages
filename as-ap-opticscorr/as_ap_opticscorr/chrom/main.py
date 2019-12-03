@@ -12,7 +12,6 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
-from siriuspy.factory import NormalizerFactory
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
         get_config_name as _get_config_name,
@@ -49,7 +48,6 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._SFAMS = _pvs.get_corr_fams()
-        self._ENERGY = 0.14 if self._ACC == 'BO' else 3.0
 
         self._driver = driver
 
@@ -113,9 +111,8 @@ class App:
                 "Could not read correction parameters from configdb.")
 
         # Connect to Sextupoles Families
-        self._sfam_norm = {}
-        self._sfam_curr_sp_pvs = {}
-        self._sfam_curr_rb_pvs = {}
+        self._sfam_sl_sp_pvs = {}
+        self._sfam_sl_rb_pvs = {}
         self._sfam_pwrstate_sel_pvs = {}
         self._sfam_pwrstate_sts_pvs = {}
         self._sfam_opmode_sel_pvs = {}
@@ -123,13 +120,11 @@ class App:
         self._sfam_ctrlmode_mon_pvs = {}
 
         for fam in self._SFAMS:
-            mag = _SiriusPVName(self._ACC + '-Fam:MA-' + fam)
-            pss = mag.substitute(prefix=self._PREFIX_VACA, dis='PS')
-            self._sfam_norm[fam] = NormalizerFactory.create(mag)
-            self._sfam_curr_sp_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='Current', propty_suffix='SP'))
-            self._sfam_curr_rb_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='Current', propty_suffix='RB'),
+            pss = _SiriusPVName(self._PREFIX_VACA+self._ACC+'-Fam:PS-'+fam)
+            self._sfam_sl_sp_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='SL', propty_suffix='SP'))
+            self._sfam_sl_rb_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='SL', propty_suffix='RB'),
                 callback=self._callback_estimate_chrom,
                 connection_callback=self._connection_callback_sfam_sl_rb)
 
@@ -238,14 +233,11 @@ class App:
             'hihi': 'upper_warning_limit', 'lolo': 'lower_warning_limit'}
         if (self._status & 0x1) == 0:  # Check connection
             for fam in self._SFAMS:
-                lis = {}
-                data = self._sfam_curr_rb_pvs[fam].get_ctrlvars()
-                if self._sfam_curr_rb_pvs[fam].upper_disp_limit is not None:
-                    for k, v in limit_names.items():
-                        lis[k] = self._sfam_norm[fam].conv_current_2_strength(
-                            data[v], strengths_dipole=self._ENERGY)
-                self.driver.setParamInfo('SL'+fam+'-Mon', lis)
-            self.driver.updatePVs()
+                data = self._sfam_sl_rb_pvs[fam].get_ctrlvars()
+                if self._sfam_sl_rb_pvs[fam].upper_disp_limit is not None:
+                    lis = {k: data[v] for k, v in limit_names.items():}
+                    self.driver.setParamInfo('SL'+fam+'-Mon', lis)
+                    self.driver.updatePV('SL'+fam+'-Mon')
         dt = interval - (_time.time() - t0)
         _time.sleep(max(dt, 0))
 
@@ -385,11 +377,9 @@ class App:
 
         for fam in self._SFAMS:
             fam_idx = self._SFAMS.index(fam)
-            curr_now = self._sfam_curr_rb_pvs[fam].get()
-            if curr_now is None:
+            sl_now = self._sfam_sl_rb_pvs[fam].get()
+            if sl_now is None:
                 return
-            sl_now = self._sfam_norm[fam].conv_current_2_strength(
-                curr_now, strengths_dipole=self._ENERGY)
             self._lastcalc_sl[fam_idx] = sl_now + lastcalc_deltasl[fam_idx]
             self.driver.setParam('SL'+fam+'-Mon', self._lastcalc_sl[fam_idx])
 
@@ -400,13 +390,10 @@ class App:
         if ((self._status == _ALLCLR_SYNCOFF and
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
-            pvs = self._sfam_curr_sp_pvs
-            for fam in pvs:
+            pvs = self._sfam_sl_sp_pvs
+            for fam, pv in pvs.items():
                 fam_idx = self._SFAMS.index(fam)
-                pv = pvs[fam]
-                curr = self._sfam_norm[fam].conv_strength_2_current(
-                    self._lastcalc_sl[fam_idx], strengths_dipole=self._ENERGY)
-                pv.put(curr)
+                pv.put(self._lastcalc_sl[fam_idx])
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
@@ -440,9 +427,7 @@ class App:
             return
         fam = _SiriusPVName(pvname).dev
         fam_idx = self._SFAMS.index(fam)
-        sl_now = self._sfam_norm[fam].conv_current_2_strength(
-                value, strengths_dipole=self._ENERGY)
-        self._sfam_sl_rb[fam_idx] = sl_now
+        self._sfam_sl_rb[fam_idx] = value
 
         sfam_deltasl = len(self._SFAMS)*[0]
         for fam in self._SFAMS:
