@@ -167,9 +167,9 @@ class App:
                 self._PREFIX_VACA+QUADS_TRIG+':Polarity-Sts',
                 callback=self._callback_timing_state)
 
-            self._timing_quads_scr_sel = _epics.PV(
+            self._timing_quads_src_sel = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':Src-Sel')
-            self._timing_quads_scr_sts = _epics.PV(
+            self._timing_quads_src_sts = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':Src-Sts',
                 callback=self._callback_timing_state)
             trig_db = _get_trig_db(QUADS_TRIG)
@@ -255,16 +255,15 @@ class App:
             done = self._apply_corr()
             if done:
                 self._apply_corr_cmd_count += 1
-                self.driver.setParam('ApplyDelta-Cmd',
-                                     self._apply_corr_cmd_count)
+                self.driver.setParam(
+                    'ApplyDelta-Cmd', self._apply_corr_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                _set_config_name(acc=self._ACC.lower(),
-                                 opticsparam='tune',
-                                 config_name=value)
+                _set_config_name(
+                    acc=self._ACC.lower(), opticsparam='tune', config_name=value)
                 self.driver.setParam('ConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
                 self.driver.setParam('RespMat-Mon', self._nominal_matrix)
@@ -273,8 +272,8 @@ class App:
                 self._opticscorr.nominal_matrix = self._nominal_matrix
                 self._opticscorr.nominal_intstrengths = self._qfam_nomkl
                 self._calc_deltakl()
-                self.driver.setParam('Log-Mon',
-                                     'Updated correction parameters.')
+                self.driver.setParam(
+                    'Log-Mon', 'Updated correction parameters.')
                 self.driver.updatePVs()
                 status = True
             else:
@@ -300,11 +299,10 @@ class App:
                         'ConfigPS-Cmd', self._config_ps_cmd_count)
 
                 if value == 1:
-                    done = self._config_timing()
-                    if done:
+                    if self._config_timing():
                         self._config_timing_cmd_count += 1
-                        self.driver.setParam('ConfigTiming-Cmd',
-                                             self._config_timing_cmd_count)
+                        self.driver.setParam(
+                            'ConfigTiming-Cmd', self._config_timing_cmd_count)
 
                 if (self._status & 0x1) == 0:
                     for fam in self._QFAMS:
@@ -314,8 +312,8 @@ class App:
 
                     opmode = _PSConst.OpMode.SlowRefSync if value \
                         else _PSConst.OpMode.SlowRef
-                    val = any(op != opmode
-                              for op in self._qfam_check_opmode_sts)
+                    val = any(
+                        op != opmode for op in self._qfam_check_opmode_sts)
                 else:
                     val = 1
 
@@ -339,15 +337,15 @@ class App:
             done = self._config_timing()
             if done:
                 self._config_timing_cmd_count += 1
-                self.driver.setParam('ConfigTiming-Cmd',
-                                     self._config_timing_cmd_count)
+                self.driver.setParam(
+                    'ConfigTiming-Cmd', self._config_timing_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'SetNewRefKL-Cmd':
             self._update_ref()
             self._set_new_refkl_cmd_count += 1
-            self.driver.setParam('SetNewRefKL-Cmd',
-                                 self._set_new_refkl_cmd_count)
+            self.driver.setParam(
+                'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
             self.driver.updatePVs()  # in case PV states change.
 
         return status  # return True to invoke super().write of PCASDriver
@@ -437,8 +435,8 @@ class App:
 
             self.driver.setParam('Log-Mon', 'Updated KL references.')
         else:
-            self.driver.setParam('Log-Mon',
-                                 'ERR:Some magnet family is disconnected.')
+            self.driver.setParam(
+                'Log-Mon', 'ERR:Some magnet family is disconnected.')
         self.driver.updatePVs()
 
     def _estimate_current_deltatune(self):
@@ -577,8 +575,8 @@ class App:
                 self._qfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
                 self._qfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.driver.setParam('Log-Mon',
-                                     'ERR:'+fam+' is disconnected.')
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:'+fam+' is disconnected.')
                 self.driver.updatePVs()
                 return False
         self.driver.setParam('Log-Mon', 'Sent configuration to quadrupoles.')
@@ -587,19 +585,19 @@ class App:
 
     def _config_timing(self):
         conn = not any(pv.connected is False for pv in [
-                       self._timing_quads_state_sel,
-                       self._timing_quads_polarity_sel,
-                       self._timing_quads_scr_sel,
-                       self._timing_quads_nrpulses_sp,
-                       self._timing_quads_duration_sp,
-                       self._timing_quads_delay_sp,
-                       self._timing_evg_tunsimode_sel,
-                       self._timing_evg_tunsidelaytype_sel,
-                       self._timing_evg_tunsidelay_sp])
+            self._timing_quads_state_sel,
+            self._timing_quads_polarity_sel,
+            self._timing_quads_src_sel,
+            self._timing_quads_nrpulses_sp,
+            self._timing_quads_duration_sp,
+            self._timing_quads_delay_sp,
+            self._timing_evg_tunsimode_sel,
+            self._timing_evg_tunsidelaytype_sel,
+            self._timing_evg_tunsidelay_sp])
         if conn:
             self._timing_quads_state_sel.put(_TIConst.DsblEnbl.Enbl)
             self._timing_quads_polarity_sel.put(_TIConst.TrigPol.Normal)
-            self._timing_quads_scr_sel.put(self._tunsi_src_idx)
+            self._timing_quads_src_sel.put(self._tunsi_src_idx)
             self._timing_quads_nrpulses_sp.put(1)
             self._timing_quads_duration_sp.put(0.15)
             self._timing_quads_delay_sp.put(0)
@@ -611,7 +609,7 @@ class App:
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon',
-                                 'ERR:Some TI PV is disconnected.')
+            self.driver.setParam(
+                'Log-Mon', 'ERR:Some TI PV is disconnected.')
             self.driver.updatePVs()
             return False
