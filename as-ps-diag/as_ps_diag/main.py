@@ -58,11 +58,9 @@ class App:
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
             pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
-            pv = _ComputedPV(psname + ':DiagCurrentDiff-Mon',
-                             _PSDiffPV(),
-                             self._queue,
-                             pvs,
-                             monitor=False)
+            pv = _ComputedPV(
+                psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
+                pvs, monitor=False)
             self.pvs.append(pv)
             # DiagStatus-Mon
             pvs = [None]*9
@@ -74,34 +72,28 @@ class App:
             pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
             pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
             # TODO: Add other interlocks for PS types that have them
-            pv = _ComputedPV(psname + ':DiagStatus-Mon',
-                             _PSStatusPV(),
-                             self._queue,
-                             pvs,
-                             monitor=False)
+            pv = _ComputedPV(
+                psname + ':DiagStatus-Mon', _PSStatusPV(), self._queue,
+                pvs, monitor=False)
             self.pvs.append(pv)
 
     def scan(self):
         """Run as a thread scanning PVs."""
-        connected = dict()
-        for pv in self.pvs:
-            connected[pv] = False
+        connected = {pv: False for pv in pvs}
         while not self.quit:
             if self.scanning:
                 for pv in self.pvs:
                     if not pv.connected:
                         if connected[pv]:
-                            self.driver.setParamStatus(pv.pvname,
-                                                       _Alarm.TIMEOUT_ALARM,
-                                                       _Severity.INVALID_ALARM)
+                            self.driver.setParamStatus(
+                                pv.pvname, _Alarm.TIMEOUT_ALARM, _Severity.INVALID_ALARM)
                         connected[pv] = False
                         if 'DiagStatus' in pv.pvname:
                             self.driver.setParam(pv.pvname, pv.value)
                     else:
                         if not connected[pv]:
-                            self.driver.setParamStatus(pv.pvname,
-                                                       _Alarm.NO_ALARM,
-                                                       _Severity.NO_ALARM)
+                            self.driver.setParamStatus(
+                                pv.pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM)
                         connected[pv] = True
                         self.driver.setParam(pv.pvname, pv.value)
                 self.driver.updatePVs()
