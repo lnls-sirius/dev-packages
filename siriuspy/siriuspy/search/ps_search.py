@@ -154,6 +154,13 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
 
     @staticmethod
+    def conv_psname_2_magfunc(psname):
+        """Return magnetic function of a given power supply type."""
+        pstype = PSSearch.conv_psname_2_pstype(psname)
+        psfunc = PSSearch.conv_pstype_2_magfunc(pstype)
+        return _copy.deepcopy(psfunc)
+
+    @staticmethod
     def conv_psname_2_excdata(psname):
         """Convert psname to excdata."""
         pstype = PSSearch.conv_psname_2_pstype(psname)
