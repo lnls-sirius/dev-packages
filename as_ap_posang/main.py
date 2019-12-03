@@ -9,7 +9,6 @@ from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
 from siriuspy.csdevice.pwrsupply import Const as _PSC
 from siriuspy.csdevice.posang import Const as _PAConst
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.factory import NormalizerFactory
 import as_ap_posang.pvs as _pvs
 
 # Coding guidelines:
@@ -43,7 +42,6 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()
         self._CORRSTYPE = _pvs.get_corrs_type()
-        self._ENERGY = 0.14 if self._TL == 'TB' else 3.0
 
         self._driver = driver
 
@@ -96,9 +94,8 @@ class App:
             self._correctors[3] = _PAConst.TB_CORRV_POSANG[1]
 
         # Connect to correctors
-        self._curr_norm = {}
-        self._corr_curr_sp_pvs = {}
-        self._corr_curr_rb_pvs = {}
+        self._corr_kick_sp_pvs = {}
+        self._corr_kick_rb_pvs = {}
         self._corr_pwrstate_sel_pvs = {}
         self._corr_pwrstate_sts_pvs = {}
         self._corr_opmode_sel_pvs = {}
@@ -109,16 +106,13 @@ class App:
         for corr in self._correctors:
             corr_index = self._correctors.index(corr)
 
-            propty = 'Current' if corr.dis == 'PS' else 'Voltage'
             pss = corr.substitute(prefix=self._PREFIX_VACA)
-            man = corr.substitute(dis='MA' if corr.dis == 'PS' else 'PM')
-            self._curr_norm[corr] = NormalizerFactory.create(man)
-            self._corr_curr_sp_pvs[corr] = _epics.PV(
-                pss.substitute(propty_name=propty, propty_suffix='SP'))
+            self._corr_kick_sp_pvs[corr] = _epics.PV(
+                pss.substitute(propty_name='Kick', propty_suffix='SP'))
 
             self._corr_refkick[corr] = 0
-            self._corr_curr_rb_pvs[corr] = _epics.PV(
-                pss.substitute(propty_name=propty, propty_suffix='RB'),
+            self._corr_kick_rb_pvs[corr] = _epics.PV(
+                pss.substitute(propty_name='Kick', propty_suffix='RB'),
                 callback=self._callback_init_refkick,
                 connection_callback=self._connection_callback_corr_kick_pvs)
 
@@ -155,10 +149,6 @@ class App:
     def process(self, interval):
         """Sleep."""
         _time.sleep(interval)
-
-    def read(self, reason):
-        """Read from IOC database."""
-        return None
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
@@ -274,8 +264,8 @@ class App:
             respmat = self._respmat_x
             corr1 = self._correctors[0]
             corr2 = self._correctors[1]
-            c1_kick_sp_pv = self._corr_curr_sp_pvs[corr1]
-            c2_kick_sp_pv = self._corr_curr_sp_pvs[corr2]
+            c1_kick_sp_pv = self._corr_kick_sp_pvs[corr1]
+            c2_kick_sp_pv = self._corr_kick_sp_pvs[corr2]
             c1_refkick = self._corr_refkick[corr1]
             c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
@@ -287,8 +277,8 @@ class App:
             respmat = self._respmat_y
             corr1 = self._correctors[0]
             corr2 = self._correctors[1]
-            c1_kick_sp_pv = self._corr_curr_sp_pvs[corr1]
-            c2_kick_sp_pv = self._corr_curr_sp_pvs[corr2]
+            c1_kick_sp_pv = self._corr_kick_sp_pvs[corr1]
+            c2_kick_sp_pv = self._corr_kick_sp_pvs[corr2]
             c1_refkick = self._corr_refkick[corr1]
             c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
@@ -310,10 +300,6 @@ class App:
             # Convert kicks from rad to correctors units
             vl1 = (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor
             vl2 = (c2_refkick_rad + c2_deltakick_rad)/c2_unit_factor
-            vl1 = self._curr_norm[corr1].conv_strength_2_current(
-                vl1, strengths_dipole=self._ENERGY)
-            vl2 = self._curr_norm[corr2].conv_strength_2_current(
-                vl2, strengths_dipole=self._ENERGY)
             c1_kick_sp_pv.put(vl1)
             c2_kick_sp_pv.put(vl2)
 
@@ -332,9 +318,7 @@ class App:
             corr_id = ['CH1', 'CH2', 'CV1', 'CV2']
             for corr in self._correctors:
                 corr_index = self._correctors.index(corr)
-                value = self._corr_curr_rb_pvs[corr].get()
-                value = self._curr_norm[corr].conv_current_2_strength(
-                    value, strengths_dipole=self._ENERGY)
+                value = self._corr_kick_rb_pvs[corr].get()
                 # Get correctors kick in urad (MA) or mrad (PM).
                 self._corr_refkick[corr] = value
                 self.driver.setParam(
@@ -370,8 +354,6 @@ class App:
         corr_index = self._correctors.index(corr)
 
         # Get reference. Correctors kick in urad (MA) or mrad (PM).
-        value = self._curr_norm[corr].conv_current_2_strength(
-            value, strengths_dipole=self._ENERGY)
         self._corr_refkick[corr] = value
         corr_id = ['CH1', 'CH2', 'CV1', 'CV2']
         self.driver.setParam(
@@ -450,10 +432,10 @@ class App:
                         (self._CORRSTYPE == 'ch-ch'):
                     self._corr_opmode_sel_pvs[corr].put(0)
             else:
-                self.driver.setParam('Log-Mon',
-                                     'ERR:' + corr + ' is disconnected.')
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:' + corr + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to correctors.')
+        self.driver.setParam('Log-Mon', 'Configuration sent to correctors.')
         self.driver.updatePVs()
         return True
