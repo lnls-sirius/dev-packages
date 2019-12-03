@@ -9,6 +9,7 @@ from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
 from siriuspy.csdevice.pwrsupply import Const as _PSC
 from siriuspy.csdevice.posang import Const as _PAConst
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.factory import NormalizerFactory
 import as_ap_posang.pvs as _pvs
 
 # Coding guidelines:
@@ -42,6 +43,7 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()
         self._CORRSTYPE = _pvs.get_corrs_type()
+        self._ENERGY = 0.14 if self._TL == 'TB' else 3.0
 
         self._driver = driver
 
@@ -51,7 +53,7 @@ class App:
         self._orbx_deltaang = 0
         self._orby_deltaang = 0
         self._setnewrefkick_cmd_count = 0
-        self._config_ma_cmd_count = 0
+        self._config_ps_cmd_count = 0
 
         self._corr_check_connection = 4*[0]
         self._corr_check_pwrstate_sts = 4*[0]
@@ -94,8 +96,9 @@ class App:
             self._correctors[3] = _PAConst.TB_CORRV_POSANG[1]
 
         # Connect to correctors
-        self._corr_kick_sp_pvs = {}
-        self._corr_kick_rb_pvs = {}
+        self._curr_norm = {}
+        self._corr_curr_sp_pvs = {}
+        self._corr_curr_rb_pvs = {}
         self._corr_pwrstate_sel_pvs = {}
         self._corr_pwrstate_sts_pvs = {}
         self._corr_opmode_sel_pvs = {}
@@ -106,30 +109,34 @@ class App:
         for corr in self._correctors:
             corr_index = self._correctors.index(corr)
 
-            self._corr_kick_sp_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':Kick-SP')
+            propty = 'Current' if corr.dis == 'PS' else 'Voltage'
+            pss = corr.substitute(prefix=self._PREFIX_VACA)
+            man = corr.substitute(dis='MA' if corr.dis == 'PS' else 'PM')
+            self._curr_norm[corr] = NormalizerFactory.create(man)
+            self._corr_curr_sp_pvs[corr] = _epics.PV(
+                pss.substitute(propty_name=propty, propty_suffix='SP'))
 
             self._corr_refkick[corr] = 0
-            self._corr_kick_rb_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':Kick-RB',
+            self._corr_curr_rb_pvs[corr] = _epics.PV(
+                pss.substitute(propty_name=propty, propty_suffix='RB'),
                 callback=self._callback_init_refkick,
                 connection_callback=self._connection_callback_corr_kick_pvs)
 
             self._corr_pwrstate_sel_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':PwrState-Sel')
+                pss.substitute(propty_name='PwrState', propty_suffix='Sel'))
             self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':PwrState-Sts',
+                pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_corr_pwrstate_sts)
             if (self._CORRSTYPE == 'ch-sept' and corr_index != 1) or \
                     (self._CORRSTYPE == 'ch-ch'):
                 self._corr_opmode_sel_pvs[corr] = _epics.PV(
-                    self._PREFIX_VACA + corr + ':OpMode-Sel')
+                    pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
                 self._corr_opmode_sts_pvs[corr] = _epics.PV(
-                    self._PREFIX_VACA + corr + ':OpMode-Sts',
+                    pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
                     callback=self._callback_corr_opmode_sts)
 
                 self._corr_ctrlmode_mon_pvs[corr] = _epics.PV(
-                    self._PREFIX_VACA + corr + ':CtrlMode-Mon',
+                    pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
                     callback=self._callback_corr_ctrlmode_mon)
 
         self.driver.setParam('Log-Mon', 'Started.')
@@ -196,12 +203,12 @@ class App:
                                      self._setnewrefkick_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'ConfigMA-Cmd':
-            done = self._config_ma()
+        elif reason == 'ConfigPS-Cmd':
+            done = self._config_ps()
             if done:
-                self._config_ma_cmd_count += 1
-                self.driver.setParam('ConfigMA-Cmd',
-                                     self._config_ma_cmd_count)
+                self._config_ps_cmd_count += 1
+                self.driver.setParam(
+                    'ConfigPS-Cmd', self._config_ps_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigName-SP':
@@ -265,10 +272,12 @@ class App:
     def _update_delta(self, delta_pos, delta_ang, orbit):
         if orbit == 'x':
             respmat = self._respmat_x
-            c1_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[0]]
-            c2_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[1]]
-            c1_refkick = self._corr_refkick[self._correctors[0]]
-            c2_refkick = self._corr_refkick[self._correctors[1]]
+            corr1 = self._correctors[0]
+            corr2 = self._correctors[1]
+            c1_kick_sp_pv = self._corr_curr_sp_pvs[corr1]
+            c2_kick_sp_pv = self._corr_curr_sp_pvs[corr2]
+            c1_refkick = self._corr_refkick[corr1]
+            c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
             if self._CORRSTYPE == 'ch-sept':
                 c2_unit_factor = 1e-3  # mrad to rad
@@ -276,10 +285,12 @@ class App:
                 c2_unit_factor = 1e-6  # urad to rad
         else:
             respmat = self._respmat_y
-            c1_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[2]]
-            c2_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[3]]
-            c1_refkick = self._corr_refkick[self._correctors[2]]
-            c2_refkick = self._corr_refkick[self._correctors[3]]
+            corr1 = self._correctors[0]
+            corr2 = self._correctors[1]
+            c1_kick_sp_pv = self._corr_curr_sp_pvs[corr1]
+            c2_kick_sp_pv = self._corr_curr_sp_pvs[corr2]
+            c1_refkick = self._corr_refkick[corr1]
+            c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
             c2_unit_factor = 1e-6  # urad to rad
 
@@ -297,10 +308,14 @@ class App:
                 _np.array([[delta_pos_meters], [delta_ang_rad]]))
 
             # Convert kicks from rad to correctors units
-            c1_kick_sp_pv.put(
-                (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor)
-            c2_kick_sp_pv.put(
-                (c2_refkick_rad + c2_deltakick_rad)/c2_unit_factor)
+            vl1 = (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor
+            vl2 = (c2_refkick_rad + c2_deltakick_rad)/c2_unit_factor
+            vl1 = self._curr_norm[corr1].conv_strength_2_current(
+                vl1, strengths_dipole=self._ENERGY)
+            vl2 = self._curr_norm[corr2].conv_strength_2_current(
+                vl2, strengths_dipole=self._ENERGY)
+            c1_kick_sp_pv.put(vl1)
+            c2_kick_sp_pv.put(vl2)
 
             self.driver.setParam('Log-Mon', 'Applied new delta.')
             self.driver.updatePVs()
@@ -317,12 +332,13 @@ class App:
             corr_id = ['CH1', 'CH2', 'CV1', 'CV2']
             for corr in self._correctors:
                 corr_index = self._correctors.index(corr)
-                value = self._corr_kick_rb_pvs[
-                        self._correctors[corr_index]].get()
+                value = self._corr_curr_rb_pvs[corr].get()
+                value = self._curr_norm[corr].conv_current_2_strength(
+                    value, strengths_dipole=self._ENERGY)
                 # Get correctors kick in urad (MA) or mrad (PM).
-                self._corr_refkick[self._correctors[corr_index]] = value
-                self.driver.setParam('RefKick' + corr_id[corr_index] + '-Mon',
-                                     value)
+                self._corr_refkick[corr] = value
+                self.driver.setParam(
+                    'RefKick' + corr_id[corr_index] + '-Mon', value)
 
             # the deltas from new kick references are zero
             self._orbx_deltapos = 0
@@ -348,13 +364,18 @@ class App:
 
     def _callback_init_refkick(self, pvname, value, cb_info, **kws):
         """Initialize RefKick-Mon pvs and remove this callback."""
-        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
+        if value is None:
+            return
+        corr = _SiriusPVName(pvname).device_name
+        corr_index = self._correctors.index(corr)
 
         # Get reference. Correctors kick in urad (MA) or mrad (PM).
-        self._corr_refkick[self._correctors[corr_index]] = value
+        value = self._curr_norm[corr].conv_current_2_strength(
+            value, strengths_dipole=self._ENERGY)
+        self._corr_refkick[corr] = value
         corr_id = ['CH1', 'CH2', 'CV1', 'CV2']
-        self.driver.setParam('RefKick' + corr_id[corr_index] + '-Mon',
-                             self._corr_refkick[self._correctors[corr_index]])
+        self.driver.setParam(
+            'RefKick' + corr_id[corr_index] + '-Mon', self._corr_refkick[corr])
 
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
@@ -420,7 +441,7 @@ class App:
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _config_ma(self):
+    def _config_ps(self):
         for corr in self._correctors:
             corr_index = self._correctors.index(corr)
             if self._corr_pwrstate_sel_pvs[corr].connected:
