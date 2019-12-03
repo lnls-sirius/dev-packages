@@ -8,18 +8,18 @@ class Const:
     """Const class defining PosAng constants."""
 
     TB_CORRH_POSANG_CHSEPT = (
-        _PVName('TB-04:MA-CH-1'), _PVName('TB-04:PM-InjSept'))
+        _PVName('TB-04:PS-CH-1'), _PVName('TB-04:PU-InjSept'))
     TB_CORRH_POSANG_CHCH = (
-        _PVName('TB-04:MA-CH-1'), _PVName('TB-04:MA-CH-2'))
+        _PVName('TB-04:PS-CH-1'), _PVName('TB-04:PS-CH-2'))
     TB_CORRV_POSANG = (
-        _PVName('TB-04:MA-CV-1'), _PVName('TB-04:MA-CV-2'))
+        _PVName('TB-04:PS-CV-1'), _PVName('TB-04:PS-CV-2'))
 
     TS_CORRH_POSANG = (
-        _PVName('TS-04:MA-CH'), _PVName('TS-04:PM-InjSeptF'))
+        _PVName('TS-04:PS-CH'), _PVName('TS-04:PU-InjSeptF'))
     TS_CORRV_POSANG = (
-        _PVName('TS-04:MA-CV-1'), _PVName('TS-04:MA-CV-2'))
+        _PVName('TS-04:PS-CV-1'), _PVName('TS-04:PS-CV-2'))
 
-    STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode', 'MA CtrlMode')
+    STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
 
 
 def get_posang_database(tl, correctors_type):
@@ -79,7 +79,7 @@ def get_posang_database(tl, correctors_type):
                               'unit': 'urad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
 
-        'ConfigMA-Cmd':      {'type': 'int', 'value': 0},
+        'ConfigPS-Cmd':      {'type': 'int', 'value': 0},
 
         'Status-Mon':        {'type': 'int', 'value': 0b1111},
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
