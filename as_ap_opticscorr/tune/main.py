@@ -12,7 +12,6 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
-from siriuspy.factory import NormalizerFactory
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
         get_config_name as _get_config_name,
@@ -49,7 +48,6 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._QFAMS = _pvs.get_corr_fams()
-        self._ENERGY = 0.14 if self._ACC == 'BO' else 3.0
 
         self._driver = driver
 
@@ -112,9 +110,8 @@ class App:
                 "Could not read correction parameters from configdb.")
 
         # Connect to Quadrupoles Families
-        self._qfam_norm = {}
-        self._qfam_curr_sp_pvs = {}
-        self._qfam_curr_rb_pvs = {}
+        self._qfam_kl_sp_pvs = {}
+        self._qfam_kl_rb_pvs = {}
         self._qfam_pwrstate_sel_pvs = {}
         self._qfam_pwrstate_sts_pvs = {}
         self._qfam_opmode_sel_pvs = {}
@@ -123,15 +120,13 @@ class App:
         self._qfam_refkl = {}
 
         for fam in self._QFAMS:
-            mag = _SiriusPVName(self._ACC + '-Fam:MA-' + fam)
-            pss = mag.substitute(prefix=self._PREFIX_VACA, dis='PS')
-            self._qfam_norm[fam] = NormalizerFactory.create(mag)
-            self._qfam_curr_sp_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='Current', propty_suffix='SP'))
+            pss = _SiriusPVName(self._PREFIX_VACA+self._ACC+'-Fam:PS-'+fam)
+            self._qfam_kl_sp_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='KL', propty_suffix='SP'))
 
             self._qfam_refkl[fam] = 0
-            self._qfam_curr_rb_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='Current', propty_suffix='RB'),
+            self._qfam_kl_rb_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='KL', propty_suffix='RB'),
                 callback=[
                     self._callback_init_refkl,
                     self._callback_estimate_deltatune],
@@ -382,13 +377,9 @@ class App:
         if ((self._status == _ALLCLR_SYNCOFF and
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
-            for fam in self._qfam_curr_sp_pvs:
+            for fam, pv in self._qfam_kl_sp_pvs.items():
                 fam_idx = self._QFAMS.index(fam)
-                pv = self._qfam_curr_sp_pvs[fam]
-                curr = self._qfam_norm[fam].conv_strength_2_current(
-                    self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx],
-                    strengths_dipole=self._ENERGY)
-                pv.put(curr)
+                pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx])
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
@@ -406,11 +397,9 @@ class App:
         if (self._status & 0x1) == 0:  # Check connection
             # updates reference
             for fam in self._QFAMS:
-                value = self._qfam_curr_rb_pvs[fam].get()
+                value = self._qfam_kl_rb_pvs[fam].get()
                 if value is None:
                     return
-                value = self._qfam_norm[fam].conv_current_2_strength(
-                    value, strengths_dipole=self._ENERGY)
                 self._qfam_refkl[fam] = value
                 self.driver.setParam(
                     'RefKL' + fam + '-Mon', self._qfam_refkl[fam])
@@ -448,8 +437,6 @@ class App:
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-        value = self._qfam_norm[fam].conv_current_2_strength(
-            value, strengths_dipole=self._ENERGY)
         self._qfam_refkl[fam] = value
         self.driver.setParam('RefKL'+fam+'-Mon', self._qfam_refkl[fam])
 
@@ -476,8 +463,6 @@ class App:
             return
         fam = _SiriusPVName(pvname).dev
         fam_idx = self._QFAMS.index(fam)
-        value = self._qfam_norm[fam].conv_current_2_strength(
-            value, strengths_dipole=self._ENERGY)
 
         self._qfam_kl_rb[fam_idx] = value
         delta_tunex, delta_tuney = self._estimate_current_deltatune()
