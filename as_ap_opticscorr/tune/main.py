@@ -49,7 +49,7 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._QFAMS = _pvs.get_corr_fams()
-        self._ENERGY = 0.14 if self._ACC in {'TB', 'BO'} else 3.0
+        self._ENERGY = 0.14 if self._ACC == 'BO' else 3.0
 
         self._driver = driver
 
@@ -90,8 +90,8 @@ class App:
         qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
-        config_name = _get_config_name(acc=self._ACC.lower(),
-                                       opticsparam='tune')
+        config_name = _get_config_name(
+            acc=self._ACC.lower(), opticsparam='tune')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('ConfigName-SP', config_name)
@@ -108,8 +108,8 @@ class App:
                 magnetfams_focusing=qfam_focusing,
                 magnetfams_defocusing=qfam_defocusing)
         else:
-            raise Exception("Could not read correction parameters from "
-                            "configdb.")
+            raise Exception(
+                "Could not read correction parameters from configdb.")
 
         # Connect to Quadrupoles Families
         self._qfam_norm = {}
@@ -132,8 +132,9 @@ class App:
             self._qfam_refkl[fam] = 0
             self._qfam_curr_rb_pvs[fam] = _epics.PV(
                 pss.substitute(propty_name='Current', propty_suffix='RB'),
-                callback=[self._callback_init_refkl,
-                          self._callback_estimate_deltatune],
+                callback=[
+                    self._callback_init_refkl,
+                    self._callback_estimate_deltatune],
                 connection_callback=self._connection_callback_qfam_kl_rb)
 
             self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
@@ -232,10 +233,6 @@ class App:
         """Sleep."""
         _time.sleep(interval)
 
-    def read(self, reason):
-        """Read from IOC database."""
-        return None
-
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         status = False
@@ -263,7 +260,8 @@ class App:
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 _set_config_name(
-                    acc=self._ACC.lower(), opticsparam='tune', config_name=value)
+                    acc=self._ACC.lower(), opticsparam='tune',
+                    config_name=value)
                 self.driver.setParam('ConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
                 self.driver.setParam('RespMat-Mon', self._nominal_matrix)
@@ -303,19 +301,17 @@ class App:
                         self._config_timing_cmd_count += 1
                         self.driver.setParam(
                             'ConfigTiming-Cmd', self._config_timing_cmd_count)
-
+                val = 1
                 if (self._status & 0x1) == 0:
                     for fam in self._QFAMS:
-                        fam_index = self._QFAMS.index(fam)
-                        self._qfam_check_opmode_sts[fam_index] = (
-                            self._qfam_opmode_sts_pvs[fam].value)
+                        fam_idx = self._QFAMS.index(fam)
+                        self._qfam_check_opmode_sts[fam_idx] = \
+                            self._qfam_opmode_sts_pvs[fam].value
 
                     opmode = _PSConst.OpMode.SlowRefSync if value \
                         else _PSConst.OpMode.SlowRef
                     val = any(
                         op != opmode for op in self._qfam_check_opmode_sts)
-                else:
-                    val = 1
 
                 self._status = _siriuspy.util.update_bit(
                     v=self._status, bit_pos=2, bit_val=val)
@@ -377,10 +373,9 @@ class App:
 
         self._lastcalc_deltakl = lastcalc_deltakl
         for fam in self._QFAMS:
-            fam_index = self._QFAMS.index(fam)
+            fam_idx = self._QFAMS.index(fam)
             self.driver.setParam(
-                'DeltaKL' + fam + '-Mon',
-                self._lastcalc_deltakl[fam_index])
+                'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam_idx])
         self.driver.updatePVs()
 
     def _apply_corr(self):
@@ -388,10 +383,10 @@ class App:
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
             for fam in self._qfam_curr_sp_pvs:
-                fam_index = self._QFAMS.index(fam)
+                fam_idx = self._QFAMS.index(fam)
                 pv = self._qfam_curr_sp_pvs[fam]
                 curr = self._qfam_norm[fam].conv_strength_2_current(
-                    self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_index],
+                    self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx],
                     strengths_dipole=self._ENERGY)
                 pv.put(curr)
             self.driver.setParam('Log-Mon', 'Applied correction.')
@@ -420,8 +415,8 @@ class App:
                 self.driver.setParam(
                     'RefKL' + fam + '-Mon', self._qfam_refkl[fam])
 
-                fam_index = self._QFAMS.index(fam)
-                self._lastcalc_deltakl[fam_index] = 0
+                fam_idx = self._QFAMS.index(fam)
+                self._lastcalc_deltakl[fam_idx] = 0
                 self.driver.setParam('DeltaKL' + fam + '-Mon', 0)
 
             # the deltas from new kl references are zero
@@ -442,9 +437,9 @@ class App:
     def _estimate_current_deltatune(self):
         qfam_deltakl = len(self._QFAMS)*[0]
         for fam in self._QFAMS:
-            fam_index = self._QFAMS.index(fam)
-            qfam_deltakl[fam_index] = (
-                self._qfam_kl_rb[fam_index] - self._qfam_refkl[fam])
+            fam_idx = self._QFAMS.index(fam)
+            qfam_deltakl[fam_idx] = \
+                self._qfam_kl_rb[fam_idx] - self._qfam_refkl[fam]
         return self._opticscorr.calculate_opticsparam(qfam_deltakl)
 
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
@@ -466,8 +461,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
             self.driver.updatePVs()
 
-        fam_index = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_connection[fam_index] = (1 if conn else 0)
+        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
+        self._qfam_check_connection[fam_idx] = (1 if conn else 0)
 
         # Change the first bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -480,11 +475,11 @@ class App:
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-        fam_index = self._QFAMS.index(fam)
+        fam_idx = self._QFAMS.index(fam)
         value = self._qfam_norm[fam].conv_current_2_strength(
             value, strengths_dipole=self._ENERGY)
 
-        self._qfam_kl_rb[fam_index] = value
+        self._qfam_kl_rb[fam_idx] = value
         delta_tunex, delta_tuney = self._estimate_current_deltatune()
         self.driver.setParam('DeltaTuneX-RB', delta_tunex)
         self.driver.setParam('DeltaTuneY-RB', delta_tuney)
@@ -495,8 +490,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
             self.driver.updatePVs()
 
-        fam_index = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_pwrstate_sts[fam_index] = value
+        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
+        self._qfam_check_pwrstate_sts[fam_idx] = value
 
         # Change the second bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -510,8 +505,8 @@ class App:
         self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
         self.driver.updatePVs()
 
-        fam_index = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_opmode_sts[fam_index] = value
+        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
+        self._qfam_check_opmode_sts[fam_idx] = value
 
         # Change the third bit of correction status
         opmode = _PSConst.States.SlowRefSync if self._sync_corr \
@@ -527,8 +522,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
             self.driver.updatePVs()
 
-        fam_index = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_ctrlmode_mon[fam_index] = value
+        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
+        self._qfam_check_ctrlmode_mon[fam_idx] = value
 
         # Change the fourth bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -579,7 +574,7 @@ class App:
                     'Log-Mon', 'ERR:'+fam+' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to quadrupoles.')
+        self.driver.setParam('Log-Mon', 'Configuration sent to quadrupoles.')
         self.driver.updatePVs()
         return True
 
@@ -605,11 +600,10 @@ class App:
             self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Fixed)
             self._timing_evg_tunsidelay_sp.put(0)
 
-            self.driver.setParam('Log-Mon', 'Sent configuration to TI.')
+            self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam(
-                'Log-Mon', 'ERR:Some TI PV is disconnected.')
+            self.driver.setParam('Log-Mon', 'ERR:Some TI PV is disconnected.')
             self.driver.updatePVs()
             return False
