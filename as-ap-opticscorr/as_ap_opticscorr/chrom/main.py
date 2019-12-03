@@ -49,7 +49,7 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._SFAMS = _pvs.get_corr_fams()
-        self._ENERGY = 0.140 if self._ACC in {'TB', 'BO'} else 3.0
+        self._ENERGY = 0.14 if self._ACC == 'BO' else 3.0
 
         self._driver = driver
 
@@ -89,8 +89,8 @@ class App:
         sfam_defocusing = tuple(sfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
-        config_name = _get_config_name(acc=self._ACC.lower(),
-                                       opticsparam='chrom')
+        config_name = _get_config_name(
+            acc=self._ACC.lower(), opticsparam='chrom')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('ConfigName-SP', config_name)
@@ -109,8 +109,8 @@ class App:
                 magnetfams_focusing=sfam_focusing,
                 magnetfams_defocusing=sfam_defocusing)
         else:
-            raise Exception("Could not read correction parameters from "
-                            "configdb.")
+            raise Exception(
+                "Could not read correction parameters from configdb.")
 
         # Connect to Sextupoles Families
         self._sfam_norm = {}
@@ -249,10 +249,6 @@ class App:
         dt = interval - (_time.time() - t0)
         _time.sleep(max(dt, 0))
 
-    def read(self, reason):
-        """Read from IOC database."""
-        return None
-
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         status = False
@@ -327,9 +323,9 @@ class App:
                 val = 1
                 if (self._status & 0x1) == 0:
                     for fam in self._SFAMS:
-                        fam_index = self._SFAMS.index(fam)
-                        self._sfam_check_opmode_sts[fam_index] = (
-                            self._sfam_opmode_sts_pvs[fam].value)
+                        fam_idx = self._SFAMS.index(fam)
+                        self._sfam_check_opmode_sts[fam_idx] = \
+                            self._sfam_opmode_sts_pvs[fam].value
 
                     opmode = _PSConst.OpMode.SlowRefSync if value \
                         else _PSConst.OpMode.SlowRef
@@ -354,8 +350,8 @@ class App:
         elif reason == 'ConfigTiming-Cmd':
             if self._config_timing():
                 self._config_timing_cmd_count += 1
-                self.driver.setParam('ConfigTiming-Cmd',
-                                     self._config_timing_cmd_count)
+                self.driver.setParam(
+                    'ConfigTiming-Cmd', self._config_timing_cmd_count)
                 self.driver.updatePVs()
 
         return status  # return True to invoke super().write of PCASDriver
@@ -388,16 +384,14 @@ class App:
                 delta_opticsparam=[delta_chromx, delta_chromy])
 
         for fam in self._SFAMS:
-            fam_index = self._SFAMS.index(fam)
+            fam_idx = self._SFAMS.index(fam)
             curr_now = self._sfam_curr_rb_pvs[fam].get()
             if curr_now is None:
                 return
             sl_now = self._sfam_norm[fam].conv_current_2_strength(
                 curr_now, strengths_dipole=self._ENERGY)
-            self._lastcalc_sl[fam_index] = (
-                sl_now + lastcalc_deltasl[fam_index])
-            self.driver.setParam(
-                'SL' + fam + '-Mon', self._lastcalc_sl[fam_index])
+            self._lastcalc_sl[fam_idx] = sl_now + lastcalc_deltasl[fam_idx]
+            self.driver.setParam('SL'+fam+'-Mon', self._lastcalc_sl[fam_idx])
 
         self.driver.setParam('Log-Mon', 'Calculated SL values.')
         self.driver.updatePVs()
@@ -408,11 +402,10 @@ class App:
                 self._status == _ALLCLR_SYNCON):
             pvs = self._sfam_curr_sp_pvs
             for fam in pvs:
-                fam_index = self._SFAMS.index(fam)
+                fam_idx = self._SFAMS.index(fam)
                 pv = pvs[fam]
                 curr = self._sfam_norm[fam].conv_strength_2_current(
-                    self._lastcalc_sl[fam_index],
-                    strengths_dipole=self._ENERGY)
+                    self._lastcalc_sl[fam_idx], strengths_dipole=self._ENERGY)
                 pv.put(curr)
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
@@ -432,8 +425,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
             self.driver.updatePVs()
 
-        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_connection[fam_index] = (1 if conn else 0)
+        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
+        self._sfam_check_connection[fam_idx] = (1 if conn else 0)
 
         # Change the first bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -446,16 +439,16 @@ class App:
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-        fam_index = self._SFAMS.index(fam)
+        fam_idx = self._SFAMS.index(fam)
         sl_now = self._sfam_norm[fam].conv_current_2_strength(
                 value, strengths_dipole=self._ENERGY)
-        self._sfam_sl_rb[fam_index] = sl_now
+        self._sfam_sl_rb[fam_idx] = sl_now
 
         sfam_deltasl = len(self._SFAMS)*[0]
         for fam in self._SFAMS:
-            fam_index = self._SFAMS.index(fam)
-            sfam_deltasl[fam_index] = (self._sfam_sl_rb[fam_index] -
-                                       self._sfam_nomsl[fam_index])
+            fam_idx = self._SFAMS.index(fam)
+            sfam_deltasl[fam_idx] = \
+                self._sfam_sl_rb[fam_idx] - self._sfam_nomsl[fam_idx]
 
         self._chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
         self.driver.setParam('ChromX-RB', self._chrom_rb[0])
@@ -467,8 +460,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is Off.')
             self.driver.updatePVs()
 
-        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_pwrstate_sts[fam_index] = value
+        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
+        self._sfam_check_pwrstate_sts[fam_idx] = value
 
         # Change the second bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -482,8 +475,8 @@ class App:
         self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
         self.driver.updatePVs()
 
-        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_opmode_sts[fam_index] = value
+        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
+        self._sfam_check_opmode_sts[fam_idx] = value
 
         # Change the third bit of correction status
         opmode = _PSConst.States.SlowRefSync if self._sync_corr \
@@ -499,8 +492,8 @@ class App:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
             self.driver.updatePVs()
 
-        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_ctrlmode_mon[fam_index] = value
+        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
+        self._sfam_check_ctrlmode_mon[fam_idx] = value
 
         # Change the fourth bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -550,7 +543,7 @@ class App:
                     'Log-Mon', 'ERR:' + fam + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to sextupoles.')
+        self.driver.setParam('Log-Mon', 'Configuration sent to sextupoles.')
         self.driver.updatePVs()
         return True
 
@@ -576,7 +569,7 @@ class App:
             self._timing_evg_chromsidelaytype_sel.put(_TIConst.EvtDlyTyp.Fixed)
             self._timing_evg_chromsidelay_sp.put(0)
 
-            self.driver.setParam('Log-Mon', 'Sent configuration to TI.')
+            self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
             self.driver.updatePVs()
             return True
         else:
