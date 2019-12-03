@@ -120,6 +120,15 @@ class PSSearch:
         raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
+    def conv_psname_2_splims(psname):
+        """Convert maname powersupply to a dict with its setpoint limits."""
+        if psname is None:
+            return None
+        pstype = PSSearch.conv_psname_2_pstype(psname)
+        splims = PSSearch.conv_pstype_2_splims(pstype)
+        return _copy.deepcopy(splims)
+
+    @staticmethod
     def conv_pstype_2_polarity(pstype):
         """Return polarity of a given power supply type."""
         with PSSearch._lock:
