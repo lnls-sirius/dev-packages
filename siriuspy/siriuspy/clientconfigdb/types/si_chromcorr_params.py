@@ -19,11 +19,11 @@ def get_dict():
 
 # Chromaticity Correction Parameters for Storage Ring
 #
-# | ChromX |   | NominalChromX |   | m00  m01...m014 |   | SL SI-Fam:MA-SFA1 |
+# | ChromX |   | NominalChromX |   | m00  m01...m014 |   | SL SI-Fam:PS-SFA1 |
 # |        | = |               | + |                 | * |         .         |
 # | ChromY |   | NominalChromY |   | m10  m11...m114 |   |         .         |
 #                                                        |         .         |
-#                                                        | SL SI-Fam:MA-SDP3 |
+#                                                        | SL SI-Fam:PS-SDP3 |
 # Data ordering:
 #
 # Nominal Chromaticity
