@@ -275,8 +275,8 @@ class App:
                 c2_unit_factor = 1e-6  # urad to rad
         else:
             respmat = self._respmat_y
-            corr1 = self._correctors[0]
-            corr2 = self._correctors[1]
+            corr1 = self._correctors[2]
+            corr2 = self._correctors[3]
             c1_kick_sp_pv = self._corr_kick_sp_pvs[corr1]
             c2_kick_sp_pv = self._corr_kick_sp_pvs[corr2]
             c1_refkick = self._corr_refkick[corr1]
