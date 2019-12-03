@@ -206,7 +206,7 @@ class CHCV(Corrector):
 
 
 class Septum(Corrector):
-    """CHCV class."""
+    """Septum class."""
 
     def __init__(self, corr_name):
         """Init method."""
@@ -266,19 +266,6 @@ class Septum(Corrector):
         val = self._norm.conv_strength_2_current(
             -val, strengths_dipole=self._csorb.ENERGY)
         self._sp.put(val, wait=False)
-
-
-    @property
-    def value(self):
-        """Value."""
-        if self._rb.connected:
-            val = self._rb.value
-            if val is not None:
-                return (val - self._nominalkick) * 1e3
-
-    @value.setter
-    def value(self, val):
-        self._sp.put(val/1e3 + self._nominalkick, wait=False)
 
 
 def get_corr(name):
