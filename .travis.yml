@@ -6,10 +6,10 @@ script:
   - pip install -r requirements.txt
 # install Eth-Bridge-PRUserial485
   - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
-  - cd client
+  - cd eth-bridge-pru-serial485/client
   - sed -i s/python-sirius/python/g setup.py
-  - make Install
-  - cd ../
+  - make install
+  - cd ../../
 # install mathphys
   - git clone https://github.com/lnls-fac/mathphys.git
   - cd mathphys
