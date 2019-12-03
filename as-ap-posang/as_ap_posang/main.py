@@ -321,8 +321,8 @@ class App:
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon',
-                                 'ERR:Failed on applying new delta.')
+            self.driver.setParam(
+                'Log-Mon', 'ERR:Failed on applying new delta.')
             self.driver.updatePVs()
             return False
 
