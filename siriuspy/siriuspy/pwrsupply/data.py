@@ -8,7 +8,7 @@ from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
 
 
 class PSData:
-    """MAData Class.
+    """PSData Class.
 
     Class objects that group power supply data.
     """
