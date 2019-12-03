@@ -1,23 +1,19 @@
 """Module implementing PRU elements."""
-import os as _os
-import sys as _sys
-import threading as _threading
-
 import time as _time
 
 import epics as _epics
-
 import PRUserial485 as _PRUserial485
+from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
+
+from siriuspy.csdevice import util as _util
 
 
 # check PRUserial485 package version
-__version1__ = '1.3.3'  # PRUserial485
-__version2__ = '2.3.3'  # eth-PRUserial485
-__prulib_ver__ = _PRUserial485.__version__
-if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
-    # loaded library has an incompatible version!
-    _ERR_MSG = 'Invalid PRUserial485 library version! {} != {} or {}'.format(
-        _PRUserial485.__version__, __version1__, __version2__)
+__version_eth_required__ = '2.4.0'  # eth-PRUserial485
+__version_eth_implmntd__ = _PRUserial485.__version__
+if __version_eth_implmntd__ != __version_eth_required__:
+    _ERR_MSG = 'Incompatible PRUserial485 library versions: {} != {}'.format(
+        __version_eth_implmntd__, __version_eth_required__)
     raise ValueError(_ERR_MSG)
 
 
@@ -81,24 +77,22 @@ class PRUInterface:
 class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
-    def __init__(self, bbbname=None):
+    def __init__(self, bbbname=None, ip_address=None):
         """Init method."""
         # check if appropriate conditions are met
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
-        if bbbname is None:
-            self.version = __version1__
-            self.version_server = None
-            # check if process is running as root
-            if _os.geteuid() != 0:
-                _sys.exit('You need to have root privileges to use PRU')
-        else:
-            if _PRUserial485.__version__ != __version2__:
-                _sys.exit('PRUserial485 library if not ethernet client-server')
-            # tell PRUserial485_eth what BBB it should connect to
-            _PRUserial485.set_beaglebone_ip(bbbname)
-            self.version = __version2__
-            self.version_server = _PRUserial485.PRUserial485_version()
+
+        # if ip address was not given, get it from bbbname
+        if ip_address is None:
+            dev2ips = _util.get_device_2_ioc_ip()
+            ip_address = dev2ips[bbbname]
+        print('BEAGLEBONE: ', bbbname)
+        print('IP_ADDRESS: ', ip_address)
+
+        # start communication threads
+        self._ethbrigde = _EthBrigdeClient(ip_address=ip_address)
+        self._ethbrigde.threads_start()
 
         # print prulib version
         # fmtstr = 'PRUserial485 lib version_{}: {}'
@@ -112,7 +106,7 @@ class PRU(PRUInterface):
         # start PRU library and set PRU to sync off
         baud_rate = 6
         mode = b"M"  # "S": slave | "M": master
-        ret = _PRUserial485.PRUserial485_open(baud_rate, mode)
+        ret = self._ethbrigde.open(baud_rate, mode)
         if ret != PRUInterface.OK:
             raise ValueError(('Error {} returned in '
                               'PRUserial485_open').format(ret))
@@ -122,16 +116,16 @@ class PRU(PRUInterface):
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = _PRUserial485.PRUserial485_write(stream, timeout)
+        ret = self._ethbrigde.write(stream, timeout)
         return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        value = _PRUserial485.PRUserial485_read()
+        value = self._ethbrigde.read()
         return value
 
     def _close(self):
-        _PRUserial485.PRUserial485_close()
+        self._ethbrigde.close()
         return None
 
 
