@@ -71,6 +71,14 @@ class BoosterNormalized(_ConfigDBDocument):
             st += fmtstr1.format(k[i], v1[i], v2[i])
         return st
 
+    def __eq__(self, value):
+        for ma in self.manames:
+            if ma == 'BO-Fam:MA-B':
+                continue
+            if not _np.isclose(self[ma], value[ma], atol=1e-5):
+                return False
+        return True
+
 
 class BoosterRamp(_ConfigDBDocument):
     """Booster ramp class."""
@@ -159,6 +167,17 @@ class BoosterRamp(_ConfigDBDocument):
     def ps_normalized_configs(self):
         """List of ps normalized config."""
         return _dcopy(self._value['ps_normalized_configs*'])
+
+    def ps_normalized_configs_set(self, value):
+        """Receive a list of [time, BoosterNormalized]."""
+        self._ps_nconfigs = dict()
+        nconfigs = list()
+        for time, nconfig in value:
+            nconfigs.append([time, nconfig.name])
+            self._ps_nconfigs[nconfig.name] = nconfig
+        self._set_ps_normalized_configs(nconfigs)
+        self._synchronized = False
+        self._invalidate_ps_waveforms()
 
     @property
     def ps_normalized_configs_times(self):
