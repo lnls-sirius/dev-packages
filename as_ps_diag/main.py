@@ -79,14 +79,15 @@ class App:
 
     def scan(self):
         """Run as a thread scanning PVs."""
-        connected = {pv: False for pv in pvs}
+        connected = {pv: False for pv in self.pvs}
         while not self.quit:
             if self.scanning:
                 for pv in self.pvs:
                     if not pv.connected:
                         if connected[pv]:
                             self.driver.setParamStatus(
-                                pv.pvname, _Alarm.TIMEOUT_ALARM, _Severity.INVALID_ALARM)
+                                pv.pvname, _Alarm.TIMEOUT_ALARM,
+                                _Severity.INVALID_ALARM)
                         connected[pv] = False
                         if 'DiagStatus' in pv.pvname:
                             self.driver.setParam(pv.pvname, pv.value)
