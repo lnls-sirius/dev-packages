@@ -12,6 +12,7 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
+from siriuspy.factory import NormalizerFactory
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
         get_config_name as _get_config_name,
@@ -48,6 +49,7 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
         self._QFAMS = _pvs.get_corr_fams()
+        self._ENERGY = 0.14 if self._ACC in {'TB', 'BO'} else 3.0
 
         self._driver = driver
 
@@ -62,7 +64,7 @@ class App:
 
         self._set_new_refkl_cmd_count = 0
         self._apply_corr_cmd_count = 0
-        self._config_ma_cmd_count = 0
+        self._config_ps_cmd_count = 0
         self._lastcalc_deltakl = len(self._QFAMS)*[0]
 
         self._qfam_kl_rb = len(self._QFAMS)*[0]
@@ -110,8 +112,9 @@ class App:
                             "configdb.")
 
         # Connect to Quadrupoles Families
-        self._qfam_kl_sp_pvs = {}
-        self._qfam_kl_rb_pvs = {}
+        self._qfam_norm = {}
+        self._qfam_curr_sp_pvs = {}
+        self._qfam_curr_rb_pvs = {}
         self._qfam_pwrstate_sel_pvs = {}
         self._qfam_pwrstate_sts_pvs = {}
         self._qfam_opmode_sel_pvs = {}
@@ -120,30 +123,33 @@ class App:
         self._qfam_refkl = {}
 
         for fam in self._QFAMS:
-            self._qfam_kl_sp_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':KL-SP')
+            mag = _SiriusPVName(self._ACC + '-Fam:MA-' + fam)
+            pss = mag.substitute(prefix=self._PREFIX_VACA, dis='PS')
+            self._qfam_norm[fam] = NormalizerFactory.create(mag)
+            self._qfam_curr_sp_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='Current', propty_suffix='SP'))
 
             self._qfam_refkl[fam] = 0
-            self._qfam_kl_rb_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':KL-RB',
+            self._qfam_curr_rb_pvs[fam] = _epics.PV(
+                pss.substitute(propty_name='Current', propty_suffix='RB'),
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
                 connection_callback=self._connection_callback_qfam_kl_rb)
 
             self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
+                pss.substitute(propty_name='PwrState', propty_suffix='Sel'))
             self._qfam_pwrstate_sts_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
+                pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_qfam_pwrstate_sts)
 
             self._qfam_opmode_sel_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
+                pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
             self._qfam_opmode_sts_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
+                pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
                 callback=self._callback_qfam_opmode_sts)
 
             self._qfam_ctrlmode_mon_pvs[fam] = _epics.PV(
-                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
+                pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
                 callback=self._callback_qfam_ctrlmode_mon)
 
         # Connect to Timing
@@ -288,11 +294,10 @@ class App:
             if value != self._sync_corr:
                 self._sync_corr = value
 
-                done = self._config_ma()
-                if done:
-                    self._config_ma_cmd_count += 1
-                    self.driver.setParam('ConfigMA-Cmd',
-                                         self._config_ma_cmd_count)
+                if self._config_ps():
+                    self._config_ps_cmd_count += 1
+                    self.driver.setParam(
+                        'ConfigPS-Cmd', self._config_ps_cmd_count)
 
                 if value == 1:
                     done = self._config_timing()
@@ -322,12 +327,12 @@ class App:
                 self.driver.updatePVs()
                 status = True
 
-        elif reason == 'ConfigMA-Cmd':
-            done = self._config_ma()
+        elif reason == 'ConfigPS-Cmd':
+            done = self._config_ps()
             if done:
-                self._config_ma_cmd_count += 1
-                self.driver.setParam('ConfigMA-Cmd',
-                                     self._config_ma_cmd_count)
+                self._config_ps_cmd_count += 1
+                self.driver.setParam(
+                    'ConfigPS-Cmd', self._config_ps_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
@@ -384,10 +389,13 @@ class App:
         if ((self._status == _ALLCLR_SYNCOFF and
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
-            for fam in self._qfam_kl_sp_pvs:
+            for fam in self._qfam_curr_sp_pvs:
                 fam_index = self._QFAMS.index(fam)
-                pv = self._qfam_kl_sp_pvs[fam]
-                pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_index])
+                pv = self._qfam_curr_sp_pvs[fam]
+                curr = self._qfam_norm[fam].conv_strength_2_current(
+                    self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_index],
+                    strengths_dipole=self._ENERGY)
+                pv.put(curr)
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
@@ -405,12 +413,14 @@ class App:
         if (self._status & 0x1) == 0:  # Check connection
             # updates reference
             for fam in self._QFAMS:
-                value = self._qfam_kl_rb_pvs[fam].get()
+                value = self._qfam_curr_rb_pvs[fam].get()
                 if value is None:
                     return
+                value = self._qfam_norm[fam].conv_current_2_strength(
+                    value, strengths_dipole=self._ENERGY)
                 self._qfam_refkl[fam] = value
-                self.driver.setParam('RefKL' + fam + '-Mon',
-                                     self._qfam_refkl[fam])
+                self.driver.setParam(
+                    'RefKL' + fam + '-Mon', self._qfam_refkl[fam])
 
                 fam_index = self._QFAMS.index(fam)
                 self._lastcalc_deltakl[fam_index] = 0
@@ -442,7 +452,11 @@ class App:
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
         """Initialize RefKL-Mon pvs and remove this callback."""
         # Get reference
+        if value is None:
+            return
         fam = _SiriusPVName(pvname).dev
+        value = self._qfam_norm[fam].conv_current_2_strength(
+            value, strengths_dipole=self._ENERGY)
         self._qfam_refkl[fam] = value
         self.driver.setParam('RefKL'+fam+'-Mon', self._qfam_refkl[fam])
 
@@ -465,9 +479,14 @@ class App:
         self.driver.updatePVs()
 
     def _callback_estimate_deltatune(self, pvname, value, **kws):
-        fam_index = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_kl_rb[fam_index] = value
+        if value is None:
+            return
+        fam = _SiriusPVName(pvname).dev
+        fam_index = self._QFAMS.index(fam)
+        value = self._qfam_norm[fam].conv_current_2_strength(
+            value, strengths_dipole=self._ENERGY)
 
+        self._qfam_kl_rb[fam_index] = value
         delta_tunex, delta_tuney = self._estimate_current_deltatune()
         self.driver.setParam('DeltaTuneX-RB', delta_tunex)
         self.driver.setParam('DeltaTuneY-RB', delta_tuney)
@@ -550,7 +569,7 @@ class App:
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _config_ma(self):
+    def _config_ps(self):
         opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
             else _PSConst.OpMode.SlowRef
         for fam in self._QFAMS:
