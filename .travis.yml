@@ -4,12 +4,12 @@ python:
   - "3.6"
 script:
   - pip install -r requirements.txt
-# install PRUserial485
-  - git clone https://github.com/lnls-sirius/pru-serial485.git
-  - cd pru-serial485/src
-  - sed -i s/python-sirius/python/g library_build.sh
-  - ./library_build.sh develop
-  - cd ../../
+# install Eth-Bridge-PRUserial485
+  - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
+  - cd client
+  - sed -i s/python-sirius/python/g setup.py
+  - make Install
+  - cd ../
 # install mathphys
   - git clone https://github.com/lnls-fac/mathphys.git
   - cd mathphys
