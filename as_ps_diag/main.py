@@ -8,7 +8,6 @@ from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 
 from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.epics.psdiag_pv import PSStatusPV as _PSStatusPV
 from siriuspy.epics.psdiag_pv import PSDiffPV as _PSDiffPV
@@ -55,7 +54,6 @@ class App:
     def _create_computed_pvs(self):
         for psname in self._psnames:
             devname = self._prefix + psname
-            magname = self._prefix + _MASearch.conv_psname_2_psmaname(psname)
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
@@ -75,8 +73,6 @@ class App:
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
             pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
             pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
-            pvs[_PSStatusPV.MAOPMD_SEL] = magname + ':OpMode-Sel'
-            pvs[_PSStatusPV.PSCONN_MON] = magname + ':PSConnStatus-Mon'
             # TODO: Add other interlocks for PS types that have them
             pv = _ComputedPV(psname + ':DiagStatus-Mon',
                              _PSStatusPV(),
