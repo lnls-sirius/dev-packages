@@ -626,6 +626,8 @@ class BPM(_BaseTimingConfig):
         d2 = (vs['D'][m2] - vs['C'][m2]) / s2[m2]
         x[:rnts][m1] = (d1 + d2) * self.kx/2 * self.ORB_CONV
         y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
+        x[:rnts][m1] -= self.offsetx or 0.0
+        y[:rnts][m2] -= self.offsety or 0.0
         s[:rnts] = (s1 + s2) * self.ksum / 2**28
         return x, y, s
 
