@@ -46,6 +46,16 @@ class PSSearch:
                                               filters=filters))
 
     @staticmethod
+    def get_psnicknames(names=None, filters=None):
+        """Return a list with Magnet nicknames."""
+        if not names:
+            names = PSSearch.get_psnames(filters=filters)
+        nicknames = len(names)*['']
+        for i, pss in enumerate(names):
+            nicknames[i] = pss.sub + ('-' + pss.idx if pss.idx else '')
+        return nicknames
+
+    @staticmethod
     def get_pstype_names():
         """Return sorted list of power supply types."""
         with PSSearch._lock:

@@ -28,6 +28,7 @@ class TestPSSearch(TestCase):
 
     public_interface = (
         'get_psnames',
+        'get_psnicknames',
         'get_pstype_names',
         'get_bbbnames',
         'get_splims',
