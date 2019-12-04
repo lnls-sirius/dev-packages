@@ -52,7 +52,7 @@ class TestOpticsCorrCSDevice(TestCase):
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalChrom-Mon' in db)
             self.assertTrue('NominalSL-Mon' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
+            self.assertTrue('ConfigPS-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
 
@@ -85,7 +85,7 @@ class TestOpticsCorrCSDevice(TestCase):
             self.assertTrue('ApplyDelta-Cmd' in db)
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
+            self.assertTrue('ConfigPS-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
 
