@@ -438,7 +438,7 @@ class EpicsOrbit(BaseOrbit):
 
         points = self._ring_extension
         if self._mode == self._csorb.SOFBMode.SinglePass:
-            chan = self._csorb.TrigAcqChan.ADC
+            chan = self._csorb.TrigAcqChan.ADCSwp
             rep = self._csorb.TrigAcqRepeat.Repetitive
             points *= self._spass_average * self.bpms[0].tbtrate
         elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
