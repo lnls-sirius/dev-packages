@@ -27,10 +27,10 @@ class BPM(_BaseTimingConfig):
         self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
         self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
         opt['auto_monitor'] = False
-        self._spanta = _PV(LL_PREF + self._name + ':SP_AArrayData', **opt)
-        self._spantb = _PV(LL_PREF + self._name + ':SP_BArrayData', **opt)
-        self._spantc = _PV(LL_PREF + self._name + ':SP_CArrayData', **opt)
-        self._spantd = _PV(LL_PREF + self._name + ':SP_DArrayData', **opt)
+        self._arraya = _PV(LL_PREF + self._name + ':GEN_AArrayData', **opt)
+        self._arrayb = _PV(LL_PREF + self._name + ':GEN_BArrayData', **opt)
+        self._arrayc = _PV(LL_PREF + self._name + ':GEN_CArrayData', **opt)
+        self._arrayd = _PV(LL_PREF + self._name + ':GEN_DArrayData', **opt)
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
         self._arrays = _PV(LL_PREF + self._name + ':GEN_SUMArrayData', **opt)
@@ -150,7 +150,7 @@ class BPM(_BaseTimingConfig):
             self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
-            self._spanta, self._spantb, self._spantc, self._spantd,
+            self._arraya, self._arrayb, self._arrayc, self._arrayd,
             self._kx, self._ky, self._ksum)
         for pv in pvs:
             if not pv.connected:
@@ -314,23 +314,23 @@ class BPM(_BaseTimingConfig):
             return val / 2**28
 
     @property
-    def spanta(self):
-        pv = self._spanta
+    def arraya(self):
+        pv = self._arraya
         return pv.get() if pv.connected else None
 
     @property
-    def spantb(self):
-        pv = self._spantb
+    def arrayb(self):
+        pv = self._arrayb
         return pv.get() if pv.connected else None
 
     @property
-    def spantc(self):
-        pv = self._spantc
+    def arrayc(self):
+        pv = self._arrayc
         return pv.get() if pv.connected else None
 
     @property
-    def spantd(self):
-        pv = self._spantd
+    def arrayd(self):
+        pv = self._arrayd
         return pv.get() if pv.connected else None
 
     @property
@@ -593,8 +593,8 @@ class BPM(_BaseTimingConfig):
         mask = slice(maskbeg, wsize - maskend)
 
         vs = {
-            'A': self.spanta, 'B': self.spantb,
-            'C': self.spantc, 'D': self.spantd}
+            'A': self.arraya, 'B': self.arrayb,
+            'C': self.arrayc, 'D': self.arrayd}
         siz = None
         for a, v in vs.items():
             if v is None or v.size == 0:

@@ -43,7 +43,6 @@ class EpicsOrbit(BaseOrbit):
                 'Y': _np.zeros(self._csorb.NR_BPMS)}
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
-        self._spass_method = self._csorb.SPassMethod.FromBPMs
         self._spass_mask = [0, 0]
         self._spass_average = 1
         self._spass_th_acqbg = None
@@ -89,7 +88,6 @@ class EpicsOrbit(BaseOrbit):
             'SmoothNrPts-SP': self.set_smooth_npts,
             'SmoothMethod-Sel': self.set_smooth_method,
             'SmoothReset-Cmd': self.set_smooth_reset,
-            'SPassMethod-Sel': self.set_spass_method,
             'SPassMaskSplBeg-SP': _part(self.set_spass_mask, beg=True),
             'SPassMaskSplEnd-SP': _part(self.set_spass_mask, beg=False),
             'SPassBgCtrl-Cmd': self.set_spass_bg,
@@ -235,14 +233,6 @@ class EpicsOrbit(BaseOrbit):
     def set_smooth_method(self, meth):
         self._smooth_meth = meth
         self.run_callbacks('SmoothMethod-Sts', meth)
-        return True
-
-    def set_spass_method(self, meth):
-        if self._mode == self._csorb.SOFBMode.SinglePass:
-            with self._lock_raw_orbs:
-                self._spass_method = meth
-                self._reset_orbs()
-        self.run_callbacks('SPassMethod-Sts', meth)
         return True
 
     def set_spass_mask(self, val, beg=True):
@@ -449,7 +439,7 @@ class EpicsOrbit(BaseOrbit):
         points = self._ring_extension
         if self._mode == self._csorb.SOFBMode.SinglePass:
             chan = self._csorb.TrigAcqChan.ADC
-            rep = self._csorb.TrigAcqRepeat.Normal
+            rep = self._csorb.TrigAcqRepeat.Repetitive
             points *= self._spass_average * self.bpms[0].tbtrate
         elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
             chan = self._csorb.TrigAcqChan.TbT
@@ -496,7 +486,7 @@ class EpicsOrbit(BaseOrbit):
                 bpm.configure()
                 self.timing.configure()
             elif self._mode == self._csorb.SOFBMode.SinglePass:
-                bpm.mode = _csbpm.OpModes.SinglePass
+                bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.configure()
                 self.timing.configure()
             bpm.set_auto_monitor(False)
@@ -694,40 +684,34 @@ class EpicsOrbit(BaseOrbit):
                 self._update_multiturn_orbits()
                 count = len(self.raw_mtorbs['X'])
             elif self._mode == self._csorb.SOFBMode.SinglePass:
-                if self._spass_method == self._csorb.SPassMethod.FromBPMs:
-                    self._update_online_orbits(sp=True)
-                else:
-                    self._update_singlepass_orbits()
+                self._update_singlepass_orbits()
                 count = len(self.raw_sporbs['X'])
             elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
-                self._update_online_orbits(sp=False)
+                self._update_online_orbits()
                 count = len(self.raw_orbs['X'])
             self.run_callbacks('BufferCount-Mon', count)
         except Exception as err:
             self._update_log('ERR: ' + str(err))
             _log.error(str(err))
 
-    def _update_online_orbits(self, sp=False):
+    def _update_online_orbits(self):
         nrb = self._csorb.NR_BPMS
         orbsz = nrb * self._ring_extension
         orb = _np.zeros(orbsz, dtype=float)
-        orbs = {'X': orb, 'Y': orb.copy(), 'Sum': orb.copy()}
+        orbs = {'X': orb, 'Y': orb.copy()}
         ref = self.ref_orbs
         for i, bpm in enumerate(self.bpms):
-            pos = bpm.spposx if sp else bpm.posx
+            pos = bpm.posx
             orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos
-            pos = bpm.spposy if sp else bpm.posy
+            pos = bpm.posy
             orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos
-            pos = bpm.spsum if sp else 0.0
-            orbs['Sum'][i::nrb] = 0.0 if pos is None else pos
 
-        planes = ('X', 'Y', 'Sum') if sp else ('X', 'Y')
-        smooth = self.smooth_sporb if sp else self.smooth_orb
+        planes = ('X', 'Y')
+        smooth = self.smooth_orb
         for plane in planes:
             with self._lock_raw_orbs:
-                raws = self.raw_sporbs if sp else self.raw_orbs
-                if not sp or self.update_raws:
-                    raws[plane].append(orbs[plane])
+                raws = self.raw_orbs
+                raws[plane].append(orbs[plane])
                 raws[plane] = raws[plane][-self._smooth_npts:]
                 if not raws[plane]:
                     return
@@ -736,9 +720,8 @@ class EpicsOrbit(BaseOrbit):
                 else:
                     orb = _np.median(raws[plane], axis=0)
             smooth[plane] = orb
-            pref = 'SPass' if sp else 'Slow'
             name = ('Orb' if plane != 'Sum' else '') + plane
-            self.run_callbacks(pref + name + '-Mon', list(orb))
+            self.run_callbacks('Slow' + name + '-Mon', list(orb))
 
     def _update_multiturn_orbits(self):
         if self._ring_extension != 1 and self._mturndownsample != 1:
