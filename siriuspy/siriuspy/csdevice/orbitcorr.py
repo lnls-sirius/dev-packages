@@ -7,7 +7,8 @@ import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice import timesys as _cstiming
 from siriuspy.search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
-    LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch
+    LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
+    PSSearch as _PSSearch
 
 
 # --- Enumeration Types ---
@@ -117,20 +118,31 @@ class SOFBTLines(ConstTLines):
         self.acc = acc.upper()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
-        self.CH_NAMES = _MASearch.get_manames(
-            {'sec': acc, 'dis': 'MA', 'dev': 'CH'})
+        self.CH_NAMES = _PSSearch.get_psnames(
+            {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         if self.acc == 'TS':
-            self.CH_NAMES = [_PVName('TS-01:PM-EjeSeptG'), ] + self.CH_NAMES
-        self.CV_NAMES = _MASearch.get_manames(
-                            {'sec': acc, 'dis': 'MA', 'dev': 'CV'})
+            self.CH_NAMES = [_PVName('TS-01:PU-EjeSeptG'), ] + self.CH_NAMES
+        elif self.acc == 'TB':
+            self.CH_NAMES = [_PVName('LI-01:RF-LLRF-Kly2'), ] + self.CH_NAMES
+        self.CV_NAMES = _PSSearch.get_psnames(
+            {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
         self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
-        self.CH_NICKNAMES = _MASearch.get_manicknames(self.CH_NAMES)
+        self.CH_NICKNAMES = _PSSearch.get_psnicknames(self.CH_NAMES)
         if self.acc == 'TS':
             self.CH_NICKNAMES[0] = 'EjeseptG'
-        self.CV_NICKNAMES = _MASearch.get_manicknames(self.CV_NAMES)
+        elif self.acc == 'TB':
+            self.CH_NICKNAMES[0] = 'Kly2'
+        self.CV_NICKNAMES = _PSSearch.get_psnicknames(self.CV_NAMES)
         self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
-        self.CH_POS = _MASearch.get_mapositions(self.CH_NAMES)
-        self.CV_POS = _MASearch.get_mapositions(self.CV_NAMES)
+
+        func = lambda x: x.substitute(dis='MA' if x.dis=='PS' else 'PM')
+        if self.acc == 'TB':
+            self.CH_POS = _MASearch.get_mapositions(
+                map(func, self.CH_NAMES[1:]))
+            self.CH_POS = [0.0, ] + self.CH_POS
+        else:
+            self.CH_POS = _MASearch.get_mapositions(map(func, self.CH_NAMES))
+        self.CV_POS = _MASearch.get_mapositions(map(func, self.CV_NAMES))
         self.NR_CH = len(self.CH_NAMES)
         self.NR_CV = len(self.CV_NAMES)
         self.NR_CHCV = self.NR_CH + self.NR_CV
