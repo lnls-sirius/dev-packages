@@ -97,13 +97,13 @@ class ETypes(_cutil.ETypes):
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FBP_DCLINK = (
-        'Falha na fonte 1', 'Falha na fonte 2',
-        'Falha na fonte 3', 'Sobre-tensao da saida do bastidor DC-Link',
+        'Falha na fonte 1', 'Falha na fonte 2', 'Falha na fonte 3',
+        'Sobre-tensao da saida do bastidor DC-Link',
         'Sobre-tensao da fonte 1', 'Sobre-tensao na fonte 2',
         'Sobre-tensao na fonte 3', 'Sub-tensao da saida do bastidor DC-Link',
         'Sub-tensao na fonte 1', 'Sub-tensao na fonte 2',
-        'Sub-tensao na fonte 3', 'Sensor de fumaca',
-        'Interlock externo', 'Bit13', 'Bit14', 'Bit15',
+        'Sub-tensao na fonte 3', 'Sensor de fumaca', 'Interlock externo',
+        'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -174,9 +174,9 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensao no banco de capacitores',
         'Sobre-corrente na saida do retificador',
         'Falha no contator de entrada AC trifasica',
-        'Interlock da placa IIB 1',
-        'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
-        'Interlock da placa IIB 4', 'Bit11',
+        'Interlock da placa IIB 1', 'Interlock da placa IIB 2',
+        'Interlock da placa IIB 3', 'Interlock da placa IIB 4', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -187,8 +187,9 @@ class ETypes(_cutil.ETypes):
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferenca entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
-        'Falha na leitura da corrente na carga do DCCT 2', 'Bit7',
-        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Falha na leitura da corrente na carga do DCCT 2',
+        'Sobre-corrente no braço 1', 'Sobre-corrente no braço 2',
+        'Alta diferença entre a corrente dos braços', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -220,8 +221,12 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensao na saida do modulo 6',
         'Sobre-tensao na saida do modulo 7',
         'Sobre-tensao na saida do modulo 8',
-        'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+        'Interlock da placa IIB do módulo 1',
+        'Interlock da placa IIB do módulo 2',
+        'Interlock da placa IIB do módulo 3',
+        'Interlock da placa IIB do módulo 4',
+        'Interlock da placa IIB do módulo 5',
+        'Interlock da placa IIB do módulo 6')
     SOFT_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Bit2', 'Bit3',
@@ -238,8 +243,9 @@ class ETypes(_cutil.ETypes):
         'Sub-tensao na saida do retificador',
         'Sobre-corrente na saida do retificador',
         'Falha no contator de entrada AC trifasica', 'Falha no driver do IGBT',
-        'Bit6', 'Bit7',
-        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Interlock da placa IIB 1', 'Interlock da placa IIB 2',
+        'Interlock da placa IIB 3', 'Interlock da placa IIB 4',
+        'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -250,7 +256,8 @@ class ETypes(_cutil.ETypes):
         'Alta diferenca entre DCCTs',
         'Falha de leitura da corrente na carga do DCCT 1',
         'Falha de leitura da corrente na carga do DCCT 2',
-        'Bit5', 'Bit6', 'Bit7',
+        'Alta diferença entre a corrente dos IGBTs',
+        'Bit6', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
@@ -282,7 +289,7 @@ class ETypes(_cutil.ETypes):
         'Sobre-temperatura nos indutores', 'Sobre-temperatura no dissipador',
         'Falha no contator de entrada do DC-Link', 'Interlock externo',
         'Alta corrente de fuga', 'Interlock do rack',
-        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
@@ -315,7 +322,20 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
         'Bit26', 'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
+    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
+    SOFT_INTLCK_FAP_2P2S = (
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferenca entre DCCTs',
+        'Falha de leitura da corrente na carga do DCCT 1',
+        'Falha de leitura da corrente na carga do DCCT 2',
+        'Alta diferença entre a corrente dos braços',
+        'Alta diferença entre a corrente dos IGBTs', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
         'Sobre-corrente no IGBT 1 do modulo 1',
@@ -342,11 +362,11 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do modulo 2',
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
-        'Bit25', 'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+        'Sobre-corrente no braço 1',
+        'Sobre-corrente no braço 2',
+        'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
-    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
