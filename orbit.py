@@ -313,10 +313,10 @@ class EpicsOrbit(BaseOrbit):
         # Acquire the samples
         for _ in range(self._smooth_npts):
             for i, bpm in enumerate(self.bpms):
-                bgs[i]['A'].append(bpm.spanta)
-                bgs[i]['B'].append(bpm.spantb)
-                bgs[i]['C'].append(bpm.spantc)
-                bgs[i]['D'].append(bpm.spantd)
+                bgs[i]['A'].append(bpm.arraya)
+                bgs[i]['B'].append(bpm.arrayb)
+                bgs[i]['C'].append(bpm.arrayc)
+                bgs[i]['D'].append(bpm.arrayd)
             _time.sleep(1/self._acqrate)
         # Make the smoothing
         try:
