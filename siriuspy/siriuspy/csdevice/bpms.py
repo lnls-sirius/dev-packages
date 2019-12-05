@@ -115,7 +115,7 @@ def get_bpm_database(prefix=''):
         'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
 
     # ARRAY DATA FROM TRIGGERED ACQUISITIONS
-    for acq_tp in ['GEN', 'SP', 'PM']:
+    for acq_tp in ('GEN', 'SP', 'PM'):
         for prop in data_names[acq_tp]:
             nm = acq_tp + '_' + prop
             db[nm + 'ArrayData'] = _dcopy(data_db)
@@ -124,7 +124,7 @@ def get_bpm_database(prefix=''):
                 db.update(get_fft_database(nm))
 
     # TRIGGERED ACQUISITIONS CONFIGURATION
-    for acq_md in ['ACQ', 'ACQ_PM']:
+    for acq_md in ('ACQ', 'ACQ_PM'):
         db.update(get_config_database(acq_md))
 
     for k, v in db.items():

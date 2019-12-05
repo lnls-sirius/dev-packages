@@ -71,20 +71,20 @@ class ConnTI(_EpicsPropsList):
         Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
 
     # Add events properties to Const
-    evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
-    for attr in ['EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
+    evt_propties = ('Mode-Sel', 'DelayType-Sel', 'Delay-SP')
+    for attr in ('EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
                  'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
-                 'EvtDigSI', 'EvtStudy']:
+                 'EvtDigSI', 'EvtStudy'):
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, evt_pfx+p)
 
     # Add trigger properties to Const
-    trg_propties = ['State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
-                    'Duration-SP', 'Delay-SP', 'Status-Mon']
-    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
-                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr']:
+    trg_propties = ('State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
+                    'Duration-SP', 'Delay-SP', 'Status-Mon')
+    for attr in ('TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
+                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr'):
         for p in trg_propties:
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
