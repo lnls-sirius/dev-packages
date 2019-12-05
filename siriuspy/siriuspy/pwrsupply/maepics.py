@@ -509,10 +509,12 @@ class SConvEpics:
             return fam_stre
         return None
 
-    def conv_current_2_strength(self, currents):
+    def conv_current_2_strength(self, currents,
+                                strengths_dipole=None,
+                                strengths_family=None):
         """Convert currents to strengths."""
         norm = self._norm_mag
-        kwargs = self._get_kwargs()
+        kwargs = self._get_kwargs(strengths_dipole, strengths_family)
         if kwargs is None:
             return None
         strengths = \
@@ -580,30 +582,37 @@ class SConvEpics:
                 'SI-Fam:MA-B1B2', proptype, connection_timeout)
         return conn_dip, conn_fam
 
-    def _get_kwargs(self):
+    def _get_kwargs(self,
+                    strengths_dipole=None,
+                    strengths_family=None):
         if not self._conn_dip:
             # is a dipole
             kwargs = dict()
             return kwargs
         if not self._conn_fam:
             # is not a trim
+            if strengths_dipole is None:
+                dip_curr = self._conn_dip.value
+                if dip_curr is None:
+                    return None
+                strengths_dipole = self._norm_dip.conv_current_2_strength(
+                    currents=dip_curr)
+            kwargs = {'strengths_dipole': strengths_dipole}
+            return kwargs
+        # is a trim
+        if strengths_dipole is None:
             dip_curr = self._conn_dip.value
             if dip_curr is None:
                 return None
-            dip_stre = self._norm_dip.conv_current_2_strength(
+            strengths_dipole = self._norm_dip.conv_current_2_strength(
                 currents=dip_curr)
-            kwargs = {'strengths_dipole': dip_stre}
-            return kwargs
-        # is a trim
-        dip_curr = self._conn_dip.value
-        if dip_curr is None:
-            return None
-        dip_stre = self._norm_dip.conv_current_2_strength(currents=dip_curr)
-        fam_curr = self._conn_fam.value
-        if fam_curr is None:
-            return None
-        fam_stre = self._norm_fam.conv_current_2_strength(
-            currents=fam_curr, strengths_dipole=dip_stre)
+        if strengths_family is None:
+            fam_curr = self._conn_fam.value
+            if fam_curr is None:
+                return None
+            strengths_family = self._norm_fam.conv_current_2_strength(
+                currents=fam_curr, strengths_dipole=strengths_dipole)
         kwargs = {
-            'strengths_dipole': dip_stre, 'strengths_family': fam_stre}
+            'strengths_dipole': strengths_dipole,
+            'strengths_family': strengths_family}
         return kwargs
