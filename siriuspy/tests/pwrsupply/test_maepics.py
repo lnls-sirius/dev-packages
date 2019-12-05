@@ -28,6 +28,8 @@ public_interface = (
     'PSCommInterface',
     'PSEpics',
     'MAEpics',
+    'PSEpicsConn',
+    'SConvEpics'
 )
 
 

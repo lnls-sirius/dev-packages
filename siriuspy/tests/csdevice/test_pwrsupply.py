@@ -109,6 +109,7 @@ class TestPwrSupply(TestCase):
                 TestPwrSupply.pstypes
             self.m_PSSearch.get_splims.side_effect = get_splims
             self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
+            self.m_PSSearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
             _MASearch_patcher = mock.patch(
                 'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
             self.addCleanup(_MASearch_patcher.stop)
@@ -166,7 +167,7 @@ class TestPwrSupply(TestCase):
             self.assertIsInstance(db[prop], dict)
 
     def test_ps_FBP_propty_database(self):
-        """Test common_ps_propty_database."""
+        """Test ps_FBP_propty_database."""
         db = pwrsupply.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
         self.assertIsInstance(db, dict)
         for prop in db:
