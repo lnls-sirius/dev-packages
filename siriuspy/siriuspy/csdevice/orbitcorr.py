@@ -25,7 +25,7 @@ class ETypes(_cutil.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
-    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
+    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     TLINES = ('TB', 'TS')
@@ -66,7 +66,6 @@ class ConstTLines(_cutil.Const):
     TrigAcqRepeat = _csbpm.AcqRepeat
     TrigAcqTrig = _cutil.Const.register('TrigAcqTrig', ('External', 'Data'))
     SmoothMeth = _cutil.Const.register('SmoothMeth', _et.SMOOTH_METH)
-    SPassMethod = _cutil.Const.register('SPassMethod', _et.SPASS_METHOD)
     SPassBgCtrl = _cutil.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
     SPassBgSts = _cutil.Const.register('SPassBgSts', _et.SPASS_BG_STS)
     SPassUseBg = _cutil.Const.register('SPassUseBg', _et.SPASS_USE_BG)
@@ -436,12 +435,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BufferCount-Mon': {
                 'type': 'int', 'value': 0, 'unit': 'Current buffer size'},
-            'SPassMethod-Sel': {
-                'type': 'enum', 'value': self.SPassMethod.FromBPMs,
-                'enums': self.SPassMethod._fields},
-            'SPassMethod-Sts': {
-                'type': 'enum', 'value': self.SPassMethod.FromBPMs,
-                'enums': self.SPassMethod._fields},
             'SPassMaskSplBeg-SP': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
             'SPassMaskSplBeg-RB': {
