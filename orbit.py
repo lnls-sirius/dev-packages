@@ -676,6 +676,7 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_sporb = {'X': None, 'Y': None, 'Sum': None}
         self.raw_mtorbs = {'X': [], 'Y': [], 'Sum': []}
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
+        self.run_callbacks('BufferCount-Mon', 0)
 
     def _update_orbits(self):
         try:
