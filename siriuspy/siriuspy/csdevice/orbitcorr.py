@@ -122,26 +122,17 @@ class SOFBTLines(ConstTLines):
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         if self.acc == 'TS':
             self.CH_NAMES = [_PVName('TS-01:PU-EjeSeptG'), ] + self.CH_NAMES
-        elif self.acc == 'TB':
-            self.CH_NAMES = [_PVName('LI-01:RF-LLRF-Kly2'), ] + self.CH_NAMES
         self.CV_NAMES = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
         self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
         self.CH_NICKNAMES = _PSSearch.get_psnicknames(self.CH_NAMES)
         if self.acc == 'TS':
             self.CH_NICKNAMES[0] = 'EjeseptG'
-        elif self.acc == 'TB':
-            self.CH_NICKNAMES[0] = 'Kly2'
         self.CV_NICKNAMES = _PSSearch.get_psnicknames(self.CV_NAMES)
         self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
 
         func = lambda x: x.substitute(dis='MA' if x.dis=='PS' else 'PM')
-        if self.acc == 'TB':
-            self.CH_POS = _MASearch.get_mapositions(
-                map(func, self.CH_NAMES[1:]))
-            self.CH_POS = [0.0, ] + self.CH_POS
-        else:
-            self.CH_POS = _MASearch.get_mapositions(map(func, self.CH_NAMES))
+        self.CH_POS = _MASearch.get_mapositions(map(func, self.CH_NAMES))
         self.CV_POS = _MASearch.get_mapositions(map(func, self.CV_NAMES))
         self.NR_CH = len(self.CH_NAMES)
         self.NR_CV = len(self.CV_NAMES)
