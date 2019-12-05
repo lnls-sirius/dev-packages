@@ -8,7 +8,7 @@
 # BBBNAME|UDC           FREQUENCY[Hz]
 
 # --- BO B-1 pwrsupply
-PA-RaPSE05:PS-UDC-BO1     10.0
+#PA-RaPSE05:PS-UDC-BO1     10.0
 # --- BO B-1 pwrsupply dclinks
 PA-RaPSE05:PS-UDC-BO2      1.0
 PA-RaPSE05:PS-UDC-BO3      1.0
@@ -16,7 +16,7 @@ PA-RaPSE05:PS-UDC-BO4      1.0
 PA-RaPSE05:PS-UDC-BO5      1.0
 
 # --- BO B-2 pwrsupply
-PA-RaPSF05:PS-UDC-BO1     10.0
+#PA-RaPSF05:PS-UDC-BO1     10.0
 # --- BO B-2 pwrsupply dclinks
 PA-RaPSF05:PS-UDC-BO2      1.0
 PA-RaPSF05:PS-UDC-BO3      1.0
@@ -24,31 +24,31 @@ PA-RaPSF05:PS-UDC-BO4      1.0
 PA-RaPSF05:PS-UDC-BO5      1.0
 
 # --- BO QF pwrsupply
-PA-RaPSC03:PS-UDC-BO2     10.0
+#PA-RaPSC03:PS-UDC-BO2     10.0
 # --- BO QF pwrsupply dclinks
 PA-RaPSC03:PS-UDC-BO1      1.0
 
 # --- BO QD pwrsupply
-PA-RaPSC03:PS-UDC-BO5     10.0
+#PA-RaPSC03:PS-UDC-BO5     10.0
 # --- BO SF pwrsupply
-PA-RaPSC03:PS-UDC-BO3     10.0
+#PA-RaPSC03:PS-UDC-BO3     10.0
 # --- BO SD pwrsupply
-PA-RaPSC03:PS-UDC-BO4     10.0
+#PA-RaPSC03:PS-UDC-BO4     10.0
 
 # --- BO correctors ---
-IA-01RaCtrl:CO-PSCtrl-BO   5.0
-IA-02RaCtrl:CO-PSCtrl-BO   5.0
-IA-04RaCtrl:CO-PSCtrl-BO   5.0
-IA-05RaCtrl:CO-PSCtrl-BO   5.0
-IA-07RaCtrl:CO-PSCtrl-BO   5.0
-IA-08RaCtrl:CO-PSCtrl-BO   5.0
-IA-10RaCtrl:CO-PSCtrl-BO   5.0
-IA-11RaCtrl:CO-PSCtrl-BO   5.0
-IA-13RaCtrl:CO-PSCtrl-BO   5.0
-IA-14RaCtrl:CO-PSCtrl-BO   5.0
-IA-16RaCtrl:CO-PSCtrl-BO   5.0
-IA-17RaCtrl:CO-PSCtrl-BO   5.0
-IA-20RaCtrl:CO-PSCtrl-BO   5.0
+#IA-01RaCtrl:CO-PSCtrl-BO   10.0
+#IA-02RaCtrl:CO-PSCtrl-BO   10.0
+#IA-04RaCtrl:CO-PSCtrl-BO   10.0
+#IA-05RaCtrl:CO-PSCtrl-BO   10.0
+#IA-07RaCtrl:CO-PSCtrl-BO   10.0
+#IA-08RaCtrl:CO-PSCtrl-BO   10.0
+#IA-10RaCtrl:CO-PSCtrl-BO   10.0
+#IA-11RaCtrl:CO-PSCtrl-BO   10.0
+#IA-13RaCtrl:CO-PSCtrl-BO   10.0
+#IA-14RaCtrl:CO-PSCtrl-BO   10.0
+#IA-16RaCtrl:CO-PSCtrl-BO   10.0
+#IA-17RaCtrl:CO-PSCtrl-BO   10.0
+#IA-20RaCtrl:CO-PSCtrl-BO   10.0
 
 # --- TS corrector pwrsupplies
 # NOTE: request CON to change BBB name from "-TB3" to "-AS"
@@ -65,3 +65,26 @@ LA-RaCtrl:CO-PSCtrl-TS4    5.0
 
 # --- TB quad and corrs and TS corr dclinks
 LA-RaCtrl:CO-PSCtrl-AS     5.0
+
+
+# --- BO and SI correctors dclinks ---
+IA-01RaCtrl:CO-DCLinkCtrl  10.0
+IA-02RaCtrl:CO-DCLinkCtrl  10.0
+IA-03RaCtrl:CO-DCLinkCtrl  10.0
+IA-04RaCtrl:CO-DCLinkCtrl  10.0
+IA-05RaCtrl:CO-DCLinkCtrl  10.0
+IA-06RaCtrl:CO-DCLinkCtrl  10.0
+IA-07RaCtrl:CO-DCLinkCtrl  10.0
+IA-08RaCtrl:CO-DCLinkCtrl  10.0
+IA-09RaCtrl:CO-DCLinkCtrl  10.0
+IA-10RaCtrl:CO-DCLinkCtrl  10.0
+IA-11RaCtrl:CO-DCLinkCtrl  10.0
+IA-12RaCtrl:CO-DCLinkCtrl  10.0
+IA-13RaCtrl:CO-DCLinkCtrl  10.0
+IA-14RaCtrl:CO-DCLinkCtrl  10.0
+IA-15RaCtrl:CO-DCLinkCtrl  10.0
+IA-16RaCtrl:CO-DCLinkCtrl  10.0
+IA-17RaCtrl:CO-DCLinkCtrl  10.0
+IA-18RaCtrl:CO-DCLinkCtrl  10.0
+IA-19RaCtrl:CO-DCLinkCtrl  10.0
+IA-20RaCtrl:CO-DCLinkCtrl  10.0

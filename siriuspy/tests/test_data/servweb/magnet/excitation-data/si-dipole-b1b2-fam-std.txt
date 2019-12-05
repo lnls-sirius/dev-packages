@@ -3,26 +3,26 @@
 # label           si-dipole-b1b2-fam
 # harmonics       0  1  2  3  4  5  6
 # main_harmonic   0 normal
-# units           Ampere  T*m T*m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  
+# units           Ampere  T*m T*m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5
 
 # EXCITATION DATA
 # ===============
-+00.0000  +1.8032e-03 +0.0000e+00  +8.2174e-02 +0.0000e+00  +8.1283e+00 +0.0000e+00  +8.9430e+02 +0.0000e+00  +1.3121e+05 +0.0000e+00  +4.9894e+06 +0.0000e+00  +7.0306e+08 +0.0000e+00  
-+381.7000  +1.8698e-04 +0.0000e+00  +7.3904e-03 +0.0000e+00  +3.4247e-01 +0.0000e+00  +2.7801e+01 +0.0000e+00  +5.1990e+03 +0.0000e+00  +1.5138e+05 +0.0000e+00  +2.7388e+07 +0.0000e+00  
-+401.8000  +1.8753e-04 +0.0000e+00  +6.9237e-03 +0.0000e+00  +3.1836e-01 +0.0000e+00  +3.4525e+01 +0.0000e+00  +4.9640e+03 +0.0000e+00  +1.9935e+05 +0.0000e+00  +2.7419e+07 +0.0000e+00  
-+403.6000  +1.8897e-04 +0.0000e+00  +7.1321e-03 +0.0000e+00  +3.7150e-01 +0.0000e+00  +2.9035e+01 +0.0000e+00  +4.8391e+03 +0.0000e+00  +1.6215e+05 +0.0000e+00  +2.6214e+07 +0.0000e+00  
-+421.9000  +2.2299e-04 +0.0000e+00  +7.3089e-03 +0.0000e+00  +4.3152e-01 +0.0000e+00  +3.6243e+01 +0.0000e+00  +5.7758e+03 +0.0000e+00  +2.0276e+05 +0.0000e+00  +3.1026e+07 +0.0000e+00  
- 
++00.0000  +1.8032e-03 +0.0000e+00  +8.2174e-02 +0.0000e+00  +8.1283e+00 +0.0000e+00  +8.9430e+02 +0.0000e+00  +1.3121e+05 +0.0000e+00  +4.9894e+06 +0.0000e+00  +7.0306e+08 +0.0000e+00
++381.7000  +1.8698e-04 +0.0000e+00  +7.3904e-03 +0.0000e+00  +3.4247e-01 +0.0000e+00  +2.7801e+01 +0.0000e+00  +5.1990e+03 +0.0000e+00  +1.5138e+05 +0.0000e+00  +2.7388e+07 +0.0000e+00
++401.8000  +1.8753e-04 +0.0000e+00  +6.9237e-03 +0.0000e+00  +3.1836e-01 +0.0000e+00  +3.4525e+01 +0.0000e+00  +4.9640e+03 +0.0000e+00  +1.9935e+05 +0.0000e+00  +2.7419e+07 +0.0000e+00
++403.6000  +1.8897e-04 +0.0000e+00  +7.1321e-03 +0.0000e+00  +3.7150e-01 +0.0000e+00  +2.9035e+01 +0.0000e+00  +4.8391e+03 +0.0000e+00  +1.6215e+05 +0.0000e+00  +2.6214e+07 +0.0000e+00
++421.9000  +2.2299e-04 +0.0000e+00  +7.3089e-03 +0.0000e+00  +4.3152e-01 +0.0000e+00  +3.6243e+01 +0.0000e+00  +5.7758e+03 +0.0000e+00  +2.0276e+05 +0.0000e+00  +3.1026e+07 +0.0000e+00
+
 # COMMENTS
 # ========
 # 1. generated automatically with "sirius_si_create_excitation_files.m"
 # 2. the excitation data above is the sum of combined B1 and B2 dipoles.
 # 3. see files 'si-dipole-b1-fam.txt' and 'si-dipole-b2-fam.txt' for original data
-# 
- 
+#
+
 # POLARITY TABLE
 # ==============
-# 
+#
 # Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
 # ------------------------|----------------|-------------|-------------|-----------
 # dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
@@ -30,10 +30,10 @@
 # corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
 # quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
 # quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
-# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# quadrupole (skew)       | KL    < 0      | D1SL > 0    | -1.0        | I > 0
 # sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
 # sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
-# 
+#
 # Defs:
 # ----
 # BYL   := \int{dz By|_{x=y=0}}.
@@ -47,7 +47,7 @@
 # VKick := ConvSign * BXL / abs(Brho)
 # KL    := ConvSign * D1NL / abs(Brho)
 # SL    := ConvSign * D2NL / abs(Brho)
-# 
+#
 # Obs:
 # ---
 # (1) Parameter definition.
@@ -58,10 +58,10 @@
 # (3) Conversion sign for IntField <-> IntStrength
 # (4) Convention of magnet excitation polarity, so that when I > 0 the strength
 #     of the magnet has the expected conventional sign.
- 
+
 # STATIC DATA FILE FORMAT
 # =======================
-# 
+#
 # These static data files should comply with the following formatting rules:
 # 1. If the first alphanumeric character of the line is not the pound sign
 #    then the lines is a comment.

@@ -1,0 +1,7 @@
+# List of power supplies of type ts-corrector-cv-strong
+# =====================================================
+
+# number of power supplies: 2
+
+TS-01:PS-CV-1
+TS-04:PS-CV-1
