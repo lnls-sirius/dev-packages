@@ -130,11 +130,11 @@ class CHCV(Corrector):
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         pvsp = self._name.substitute(
-            prefix=LL_PREF, dis='PS', propty_name='Current',
-            propty_suffix='SP')
+            prefix=LL_PREF, propty_name='Current', propty_suffix='SP')
         pvrb = pvsp.substitute(propty_suffix='RB')
         pvref = pvsp.substitute(propty_name='CurrentRef', propty_suffix='Mon')
-        self._norm = NormalizerFactory.create(self._name)
+        mag = self._name.substitute(dis='MA')
+        self._norm = NormalizerFactory.create(mag)
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._ref = _PV(pvref, **opt)
@@ -213,10 +213,10 @@ class Septum(Corrector):
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         pvsp = self._name.substitute(
-            prefix=LL_PREF, dis='PU', propty_name='Voltage',
-            propty_suffix='SP')
+            prefix=LL_PREF, propty_name='Voltage', propty_suffix='SP')
         pvrb = pvsp.substitute(propty_suffix='RB')
-        self._norm = NormalizerFactory.create(self._name)
+        mag = self._name.substitute(dis='PM')
+        self._norm = NormalizerFactory.create(mag)
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._nominalkick = 99.4  # mrad
