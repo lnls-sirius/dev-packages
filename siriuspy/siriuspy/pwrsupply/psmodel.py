@@ -194,23 +194,26 @@ class _PSModel:
         if epics_field in self._e2p:
             param_id = self._e2p[epics_field]
             return _fields.ConstParameter(pru_controller, device_id, param_id)
-        elif epics_field in self._e2f:
+        if epics_field in self._e2f:
             field, var_id = self._e2f[epics_field]
             return field(_fields.Variable(pru_controller, device_id, var_id))
-        elif epics_field in self._e2c:
+        if epics_field in self._e2c:
             attr = self._e2c[epics_field]
             return _fields.PRUProperty(pru_controller, attr)
-        elif epics_field == 'TimestampUpdate-Mon':
+        if epics_field in self._e2c:
+            attr = self._e2c[epics_field]
+            return _fields.PRUProperty(pru_controller, attr)
+        if epics_field == 'TimestampUpdate-Mon':
             return _fields.TimestampUpdate(pru_controller, device_id)
-        elif epics_field == 'Wfm-RB':
+        if epics_field == 'Wfm-RB':
             return _fields.WfmRBCurve(pru_controller, device_id)
-        elif epics_field == 'WfmRef-Mon':
+        if epics_field == 'WfmRef-Mon':
             return _fields.WfmRefMonCurve(pru_controller, device_id)
-        elif epics_field == 'Wfm-Mon':
+        if epics_field == 'Wfm-Mon':
             return _fields.WfmMonCurve(pru_controller, device_id)
-        elif epics_field == 'WfmIndex-Mon':
+        if epics_field == 'WfmIndex-Mon':
             return _fields.WfmIndexCurve(pru_controller, device_id)
-        elif epics_field == 'WfmUpdateAuto-Sts':
+        if epics_field == 'WfmUpdateAuto-Sts':
             return _fields.WfmUpdateAutoSts(pru_controller, device_id)
         return None
 

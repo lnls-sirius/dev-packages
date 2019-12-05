@@ -33,6 +33,11 @@ class _MagnetNormalizer(_Computer):
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
 
+    @property
+    def magfunc(self):
+        """Return magnet function string."""
+        return self._magfunc
+
     # --- computer interface ---
 
     def compute_put(self, computed_pv, value):
@@ -92,7 +97,6 @@ class _MagnetNormalizer(_Computer):
         if currents is None:
             return None
         intfields = self._conv_current_2_intfield(currents)
-
         # TODO: really necessary? ---
         if intfields is None:
             if isinstance(currents, (int, float)):
@@ -190,7 +194,7 @@ class _MagnetNormalizer(_Computer):
         return msum
 
     def _get_energy(self, current_dipole):
-        return self._dipole.conv_current_2_strength(currents=current_dipole)
+        return self._dip.conv_current_2_strength(currents=current_dipole)
 
     def _get_brho(self, currents_dipole):
         """Get Magnetic Rigidity."""
@@ -247,6 +251,8 @@ class _MagnetNormalizer(_Computer):
 
 class DipoleNormalizer(_MagnetNormalizer):
     """Convert magnet current to strength and vice versa."""
+
+    TYPE = 'DipoleNormalizer'
 
     _ref_angles = _mutil.get_nominal_dipole_angles()
 
@@ -378,17 +384,17 @@ class MagnetNormalizer(_MagnetNormalizer):
     conversion from current to strength and vice-versa.
     """
 
+    TYPE = 'MagnetNormalizer'
+
     def __init__(self, maname, dipole_name, **kwargs):
-        """Call super and initializes a dipole."""
+        """Call supercu  and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
-        self._dipole = DipoleNormalizer(dipole_name, **kwargs)
+        self._dip = DipoleNormalizer(dipole_name, **kwargs)
 
     # --- computer interface ---
 
     def _compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
-        # print('here: ', self._maname, computed_pv.pvname,
-        #       computed_pv.upper_alarm_limit)
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
             return self.compute_limits(computed_pv)
@@ -428,11 +434,13 @@ class MagnetNormalizer(_MagnetNormalizer):
 class TrimNormalizer(_MagnetNormalizer):
     """Convert trim magnet current to strength and vice versa."""
 
+    TYPE = 'TrimNormalizer'
+
     def __init__(self, maname, dipole_name, family_name, magnet_conv_sign=-1.0,
                  **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
-        self._dipole = DipoleNormalizer(dipole_name, **kwargs)
+        self._dip = DipoleNormalizer(dipole_name, **kwargs)
         self._fam = MagnetNormalizer(family_name, dipole_name, **kwargs)
 
     # --- computer interface ---
@@ -460,14 +468,13 @@ class TrimNormalizer(_MagnetNormalizer):
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
-        if isinstance(intfields, list):
+        if isinstance(intfields, (list, tuple)):
             intfields = _np.array(intfields)
         brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
         if brhos == 0:
-            return 0
+            return 0 * intfields
         strengths_trim = - intfields / brhos
-        # strengths_fam = self._fam.conv_current_2_strength(
-        #     currents=kwargs["currents_family"],
-        #     currents_dipole=kwargs["currents_dipole"])
+        # integrated field in excitation data for trims is just
+        # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
         return strengths_trim + strengths_fam

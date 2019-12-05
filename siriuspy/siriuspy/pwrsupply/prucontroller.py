@@ -14,7 +14,6 @@ from siriuspy.bsmp import constants as _const_bsmp
 from siriuspy.bsmp import SerialError as _SerialError
 
 from .bsmp import __version__ as _devpckg_firmware_version
-# from .bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from .udc import UDC as _UDC
 from .psupply import PSupply as _PSupply
 
