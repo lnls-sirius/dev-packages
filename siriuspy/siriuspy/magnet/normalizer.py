@@ -387,7 +387,7 @@ class MagnetNormalizer(_MagnetNormalizer):
     TYPE = 'MagnetNormalizer'
 
     def __init__(self, maname, dipole_name, **kwargs):
-        """Call supercu  and initializes a dipole."""
+        """Call superclass init and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
         self._dip = DipoleNormalizer(dipole_name, **kwargs)
 
@@ -408,23 +408,23 @@ class MagnetNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        intfields = self._magnet_conv_sign * brhos * strengths
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        intfields = self._magnet_conv_sign * brho * strengths
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        if isinstance(brhos, _np.ndarray):
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        if isinstance(brho, _np.ndarray):
             with _np.errstate(divide='ignore', invalid='ignore'):
-                strengths = self._magnet_conv_sign * intfields / brhos
-                strengths[brhos == 0] = 0.0
+                strengths = self._magnet_conv_sign * intfields / brho
+                strengths[brho == 0] = 0.0
         else:
-            if brhos == 0:
+            if brho == 0:
                 strengths = 0.0
             else:
-                strengths = self._magnet_conv_sign * intfields / brhos
+                strengths = self._magnet_conv_sign * intfields / brho
         if not isinstance(intfields, (int, float)):
             if isinstance(strengths, (int, float)):
                 strengths = [strengths, ] * len(intfields)
@@ -463,17 +463,17 @@ class TrimNormalizer(_MagnetNormalizer):
         #     currents=kwargs["strengths_family"],
         #     currents_dipole=kwargs["strengths_dipole"])
         strengths_fam = kwargs['strengths_family']
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        intfields = - brhos * (strengths - strengths_fam)
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        intfields = - brho * (strengths - strengths_fam)
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, (list, tuple)):
             intfields = _np.array(intfields)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        if brhos == 0:
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        if brho == 0:
             return 0 * intfields
-        strengths_trim = - intfields / brhos
+        strengths_trim = - intfields / brho
         # integrated field in excitation data for trims is just
         # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
