@@ -19,6 +19,7 @@ _MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
 _IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
 _IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 
+# TODO: cleanup code now that BC nominal angle is not being considered!
 
 class _MagnetNormalizer(_Computer):
     """Base class for converting magnet properties: current and strength."""
