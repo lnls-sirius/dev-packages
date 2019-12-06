@@ -32,9 +32,9 @@ DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 
 # --- PS currents/voltage precision and unit ---
 DEFAULT_PS_CURRENT_PRECISION = 4
-DEFAULT_PU_CURRENT_PRECISION = 4
+DEFAULT_PU_VOLTAGE_PRECISION = 4
 _DEFAULT_PS_CURRENT_UNIT = None
-_DEFAULT_PU_CURRENT_UNIT = None
+_DEFAULT_PU_VOLTAGE_UNIT = None
 
 
 # --- Alarms ---
@@ -402,14 +402,6 @@ def get_ps_current_unit():
     return _DEFAULT_PS_CURRENT_UNIT
 
 
-def get_pu_current_unit():
-    """Return pulsed power supply 'current' unit."""
-    global _DEFAULT_PU_CURRENT_UNIT
-    if _DEFAULT_PU_CURRENT_UNIT is None:
-        _DEFAULT_PU_CURRENT_UNIT = _PSSearch.get_splims_unit('')
-    return _DEFAULT_PU_CURRENT_UNIT
-
-
 def get_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
@@ -574,11 +566,11 @@ def get_common_pu_propty_database():
         'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                       'value': Const.DsblEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': DEFAULT_PU_CURRENT_PRECISION},
+                        'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Intlk1-Mon': {'type': 'int', 'value': 0},
         'Intlk2-Mon': {'type': 'int', 'value': 0},
         'Intlk3-Mon': {'type': 'int', 'value': 0},
@@ -646,6 +638,18 @@ def get_pu_propty_database(pstype):
     # add pvs list
     database = _cutil.add_pvslist_cte(database)
     return database
+
+
+def get_pu_propty_database_new():
+    """Return database definition for a pulsed power supply type."""
+    dbase = dict()
+    dbase['Kick-SP'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-RB'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    return dbase
 
 
 def get_ma_propty_database(maname):

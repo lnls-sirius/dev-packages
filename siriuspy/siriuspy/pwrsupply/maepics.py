@@ -370,9 +370,10 @@ class MAEpics(PSEpics):
 
 
 class PSEpicsConn:
-    """."""
+    """Power Supplu Epics Connector."""
 
     CONNECTION_TIMEOUT = 0.010  # [s]
+    PROPNAME = 'Current'
     PROPTYPES = {'-SP', '-RB', 'Ref-Mon', '-Mon'}
 
     _dips2 = {'BO-Fam:PS-B-1', 'BO-Fam:PS-B-2',
@@ -434,17 +435,33 @@ class PSEpicsConn:
         if psname in PSEpicsConn._dips2:
             # dipoles with two power supplies.
             psname = psname.replace('-1', '').replace('-2', '')
-            pvname = psname + '-1:Current' + self._proptype
+            pvname = psname + '-1:' + self.PROPNAME + self._proptype
             pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
-            pvname = psname + '-2:Current' + self._proptype
+            pvname = psname + '-2:' + self.PROPNAME + self._proptype
             pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         else:
-            pvname = psname + ':Current' + self._proptype
+            pvname = psname + ':' + self.PROPNAME + self._proptype
             pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         return pvs
+
+
+class PUEpicsConn(PSEpicsConn):
+    """Pulsed Power Supplu Epics Connector."""
+
+    PROPNAME = 'Voltage'
+
+    @property
+    def value(self):
+        """Return value."""
+        return super().value
+
+    @value.setter
+    def value(self, voltage):
+        """Set voltage."""
+        self._pvs[0].value = voltage
 
 
 class SConvEpics:
@@ -542,7 +559,7 @@ class SConvEpics:
         elif self._psname.sec == 'SI' and self._psname.dev == 'B1B2':
             norm_mag = _NormalizerFactory.create('SI-Fam:MA-B1B2')
         else:
-            maname = self._psname.replace(':PS', ':MA')
+            maname = self._psname.replace(':PS', ':MA').replace(':PU', ':PM')
             # mag
             norm_mag = _NormalizerFactory.create(maname)
             # dip
@@ -568,15 +585,15 @@ class SConvEpics:
         if self._psname.dev in ('B', 'B1B2'):
             pass
         elif self._is_trim(self._psname):
-            maname = 'SI-Fam:MA-B1B2'
-            conn_dip = PSEpicsConn(maname, proptype, connection_timeout)
-            maname = self._psname
-            maname = maname.replace(maname.sub, 'Fam')
-            conn_fam = PSEpicsConn(maname, proptype, connection_timeout)
+            conn_dip = PSEpicsConn(self._psname, proptype, connection_timeout)
+            psname = psname.replace(self._psname.sub, 'Fam')
+            conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
         elif self._psname.startswith('TB'):
-            conn_dip = PSEpicsConn('TB-Fam:MA-B', proptype, connection_timeout)
+            conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('BO'):
-            conn_dip = PSEpicsConn('BO-Fam:MA-B', proptype, connection_timeout)
+            conn_dip = PSEpicsConn('BO-Fam:PS-B', proptype, connection_timeout)
+        elif self._psname.startswith('TS'):
+            conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
             conn_dip = PSEpicsConn(
                 'SI-Fam:MA-B1B2', proptype, connection_timeout)
