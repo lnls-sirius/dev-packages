@@ -8,19 +8,25 @@ from epics import PV
 class RF:
     """."""
 
-    def __init__(self, is_cw=True):
+    def __init__(self, acc=None, is_cw=True):
         """."""
+        if acc == 'SI':
+            pre = 'SR'
+        elif acc == 'BO':
+            pre = 'BR'
+        else:
+            raise Exception('Set BO or SI.')
         self.is_cw = is_cw
         if self.is_cw:
-            self._phase_sp = PV('BR-RF-DLLRF-01:PL:REF:S')
-            self._phase_rb = PV('BR-RF-DLLRF-01:SL:INP:PHS')
+            self._phase_sp = PV(pre+'-RF-DLLRF-01:PL:REF:S')
+            self._phase_rb = PV(pre+'-RF-DLLRF-01:SL:INP:PHS')
         else:
-            self._phase_bot_sp = PV('BR-RF-DLLRF-01:RmpPhsBot-SP')
-            self._phase_bot_rb = PV('BR-RF-DLLRF-01:RmpPhsBot-SP')
-            self._phase_top_sp = PV('BR-RF-DLLRF-01:RmpPhsTop-SP')
-            self._phase_top_rb = PV('BR-RF-DLLRF-01:RmpPhsTop-SP')
-        self._voltage_sp = PV('BR-RF-DLLRF-01:mV:AL:REF:S')
-        self._voltage_rb = PV('BR-RF-DLLRF-01:SL:REF:AMP')
+            self._phase_bot_sp = PV(pre+'-RF-DLLRF-01:RmpPhsBot-SP')
+            self._phase_bot_rb = PV(pre+'-RF-DLLRF-01:RmpPhsBot-SP')
+            self._phase_top_sp = PV(pre+'-RF-DLLRF-01:RmpPhsTop-SP')
+            self._phase_top_rb = PV(pre+'-RF-DLLRF-01:RmpPhsTop-SP')
+        self._voltage_sp = PV(pre+'-RF-DLLRF-01:mV:AL:REF:S')
+        self._voltage_rb = PV(pre+'-RF-DLLRF-01:SL:REF:AMP')
         self._power_mon = PV('RA-RaBO01:RF-LLRFCalSys:PwrW1-Mon')
         self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
         self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
