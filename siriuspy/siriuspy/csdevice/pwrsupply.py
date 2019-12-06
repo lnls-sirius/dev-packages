@@ -640,7 +640,7 @@ def get_pu_propty_database(pstype):
     return database
 
 
-def get_pu_propty_database_new():
+def get_pu_conv_propty_database():
     """Return database definition for a pulsed power supply type."""
     dbase = dict()
     dbase['Kick-SP'] = {

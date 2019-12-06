@@ -29,6 +29,7 @@ public_interface = (
     'PSEpics',
     'MAEpics',
     'PSEpicsConn',
+    'PUEpicsConn',
     'SConvEpics'
 )
 
