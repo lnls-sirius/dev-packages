@@ -1,4 +1,4 @@
-"""This module contain classes for normalizing currents."""
+"""This module contains classes for current normalization."""
 import re as _re
 import numpy as _np
 
@@ -19,7 +19,9 @@ _MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
 _IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
 _IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 
+
 # TODO: cleanup code now that BC nominal angle is not being considered!
+
 
 class _MagnetNormalizer(_Computer):
     """Base class for converting magnet properties: current and strength."""
@@ -45,9 +47,6 @@ class _MagnetNormalizer(_Computer):
         """Put strength value."""
         # convert strength to current
         kwargs = self._get_params(computed_pv)
-        # value_conv = value if self._coef_def2edb == 1.0 else \
-        #     self._conv_epicsdb_2_default(value)
-        # current = self.conv_strength_2_current(value_conv, **kwargs)
         current = self.conv_strength_2_current(value, **kwargs)
         # first PV must be actual magnet current
         computed_pv.pvs[0].put(current)
@@ -81,9 +80,6 @@ class _MagnetNormalizer(_Computer):
         lims = (lims['HIHI'], lims['HIGH'], lims['HOPR'],
                 lims['LOPR'], lims['LOW'], lims['LOLO'])
         lims = self.conv_current_2_strength(lims, **kwargs)
-        # lims_default = self.conv_current_2_strength(lims, **kwargs)
-        # lims = lims_default if self._coef_def2edb == 1.0 else \
-        #     self._conv_default_2_epicsdb(lims_default)
         tlim = (lims[0], lims[-1])
         hihi, lolo = max(tlim), min(tlim)
         tlim = (lims[1], lims[-2])
@@ -248,6 +244,9 @@ class _MagnetNormalizer(_Computer):
                 self._coef_def2edb = 1e6
                 return
         self._coef_def2edb = 1.0
+
+    def _conv_intfield_2_strength(self, intfields, **kwargs):
+        raise NotImplementedError
 
 
 class DipoleNormalizer(_MagnetNormalizer):
