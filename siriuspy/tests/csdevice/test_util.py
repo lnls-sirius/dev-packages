@@ -29,7 +29,7 @@ class TestUtil(TestCase):
         db = cutil.add_pvslist_cte(db)
         self.assertEqual(len(db), 3)
         self.assertIn('Properties-Cte', db)
-        self.assertEqual(db['Properties-Cte']['count'], 17)
+        self.assertEqual(db['Properties-Cte']['count'], 18)
         self.assertEqual(db['Properties-Cte']['value'], 'Properties-Cte a b')
 
     def test_get_device_2_ioc_ip(self):
