@@ -1511,13 +1511,13 @@ def _insert_strengths(database, pstype):
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     if magfunc in {'quadrupole', 'quadrupole-skew'}:
         database['KL-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': '1/m'}
         database['KL-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': '1/m'}
         database['KLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': '1/m'}
         database['KL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': '1/m'}
     elif magfunc == 'sextupole':
         database['SL-SP'] = {
             'type': 'float', 'value': 0.0, 'unit': '1/m^2'}
@@ -1529,22 +1529,22 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'unit': '1/m^2'}
     elif magfunc == 'dipole':
         database['Energy-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'GeV'}
         database['Energy-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'GeV'}
         database['EnergyRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'GeV'}
         database['Energy-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'GeV'}
     elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'urad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'urad'}
         database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'urad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'urad'}
     else:
         raise NotImplementedError('Missing {} implementation'.format(magfunc))
     return database
