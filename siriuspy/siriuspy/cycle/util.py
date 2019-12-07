@@ -28,10 +28,11 @@ def get_psnames():
 
 
 def get_sections(psnames):
+    """Return sections."""
     sections = list()
-    for s in ['LI', 'TB', 'BO', 'TS', 'SI']:
-        if _Filter.process_filters(psnames, filters={'sec': s}):
-            sections.append(s)
+    for sec in ('LI', 'TB', 'BO', 'TS', 'SI'):
+        if _Filter.process_filters(psnames, filters={'sec': sec}):
+            sections.append(sec)
     return sections
 
 
