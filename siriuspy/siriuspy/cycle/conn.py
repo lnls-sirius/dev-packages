@@ -270,7 +270,7 @@ class Timing:
         }
 
         for trig in _TRIGGER_NAMES:
-            for mode in ['Cycle', 'Ramp']:
+            for mode in ('Cycle', 'Ramp'):
                 props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
                 props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION
                 props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
@@ -327,8 +327,8 @@ class PSCycler:
     def connected(self):
         """Connection state."""
         for prop in PSCycler.properties:
-            if prop in ['Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
-                        'WfmSyncPulseCount-Mon'] and 'TB' in self.psname:
+            if prop in {'Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
+                        'WfmSyncPulseCount-Mon'} and 'TB' in self.psname:
                 pass
             elif not self[prop].connected:
                 return False
