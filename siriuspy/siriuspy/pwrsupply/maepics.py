@@ -605,7 +605,7 @@ class SConvEpics:
             conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
             conn_dip = PSEpicsConn(
-                'SI-Fam:MA-B1B2', proptype, connection_timeout)
+                'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
         return conn_dip, conn_fam
 
     def _get_kwargs(self,
