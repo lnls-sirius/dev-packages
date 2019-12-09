@@ -594,12 +594,13 @@ class SConvEpics:
             pass
         elif self._is_trim(self._psname):
             conn_dip = PSEpicsConn(self._psname, proptype, connection_timeout)
-            psname = psname.replace(self._psname.sub, 'Fam')
+            psname = self._psname.replace(self._psname.sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
         elif self._psname.startswith('TB'):
             conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('BO'):
-            conn_dip = PSEpicsConn('BO-Fam:PS-B', proptype, connection_timeout)
+            conn_dip = PSEpicsConn(
+                'BO-Fam:PS-B-1', proptype, connection_timeout)
         elif self._psname.startswith('TS'):
             conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
