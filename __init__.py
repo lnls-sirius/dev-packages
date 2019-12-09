@@ -11,3 +11,4 @@ from .ict import TranspEff
 from .egun import Bias
 from .egun import Filament
 from .egun import HVPS
+from .timing import Timing
