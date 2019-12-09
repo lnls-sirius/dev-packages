@@ -10,6 +10,7 @@ from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice import util as _cutil
 
 # --- WfmData ---
+# TODO: delete these deprecated parameters from packages
 MAX_WFMSIZE = 4000
 DEF_WFMSIZE = 3920
 
@@ -24,16 +25,16 @@ MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
 DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
 
-DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
+DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 
 # --- PS currents/voltage precision and unit ---
 DEFAULT_PS_CURRENT_PRECISION = 4
-DEFAULT_PU_CURRENT_PRECISION = 4
+DEFAULT_PU_VOLTAGE_PRECISION = 4
 _DEFAULT_PS_CURRENT_UNIT = None
-_DEFAULT_PU_CURRENT_UNIT = None
+_DEFAULT_PU_VOLTAGE_UNIT = None
 
 
 # --- Alarms ---
@@ -401,14 +402,6 @@ def get_ps_current_unit():
     return _DEFAULT_PS_CURRENT_UNIT
 
 
-def get_pu_current_unit():
-    """Return pulsed power supply 'current' unit."""
-    global _DEFAULT_PU_CURRENT_UNIT
-    if _DEFAULT_PU_CURRENT_UNIT is None:
-        _DEFAULT_PU_CURRENT_UNIT = _PSSearch.get_splims_unit('')
-    return _DEFAULT_PU_CURRENT_UNIT
-
-
 def get_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
@@ -573,11 +566,11 @@ def get_common_pu_propty_database():
         'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                       'value': Const.DsblEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': DEFAULT_PU_CURRENT_PRECISION},
+                        'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Intlk1-Mon': {'type': 'int', 'value': 0},
         'Intlk2-Mon': {'type': 'int', 'value': 0},
         'Intlk3-Mon': {'type': 'int', 'value': 0},
@@ -618,6 +611,7 @@ def get_common_pu_SI_InjKicker_propty_database():
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
     database = _get_model_db(psmodel)
+    database = _insert_strengths(database, pstype)
     _set_limits(pstype, database)
     # add pvs list
     database = _cutil.add_pvslist_cte(database)
@@ -646,6 +640,18 @@ def get_pu_propty_database(pstype):
     return database
 
 
+def get_pu_conv_propty_database():
+    """Return database definition for a pulsed power supply type."""
+    dbase = dict()
+    dbase['Kick-SP'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-RB'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    return dbase
+
+
 def get_ma_propty_database(maname):
     """Return property database of a magnet type device."""
     current_alarm = ('Current-SP', 'Current-RB',
@@ -662,7 +668,7 @@ def get_ma_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         dbase[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
-        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
             dbase[psname]['Current' + field]['lolo'] = \
                 _MASearch.get_splims(maname, 'lolo')
             dbase[psname]['Current' + field]['low'] = \
@@ -678,7 +684,7 @@ def get_ma_propty_database(maname):
         for propty in current_pvs:
             dbase[psname][propty]['unit'] = unit[0]
         # set approriate MA limits and unit
-        if magfunc in ('quadrupole', 'quadrupole-skew'):
+        if magfunc in {'quadrupole', 'quadrupole-skew'}:
             strength_name = 'KL'
             unit = '1/m'
         elif magfunc == 'sextupole':
@@ -687,7 +693,7 @@ def get_ma_propty_database(maname):
         elif magfunc == 'dipole':
             strength_name = 'Energy'
             unit = 'GeV'
-        elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
+        elif magfunc in {'corrector-vertical', 'corrector-horizontal'}:
             strength_name = 'Kick'
             unit = 'urad'
 
@@ -704,7 +710,7 @@ def get_ma_propty_database(maname):
             _copy.deepcopy(dbase[psname]['Current-Mon'])
         dbase[psname][strength_name + '-Mon']['unit'] = unit
 
-        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
             dbase[psname][strength_name + field]['lolo'] = 0.0
             dbase[psname][strength_name + field]['low'] = 0.0
             dbase[psname][strength_name + field]['lolim'] = 0.0
@@ -748,7 +754,7 @@ def get_pm_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         dbase[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
-        for field in ["-SP", "-RB", "-Mon"]:
+        for field in ('-SP', '-RB', '-Mon'):
             dbase[psname]['Voltage' + field]['lolo'] = \
                 _MASearch.get_splims(maname, 'lolo')
             dbase[psname]['Voltage' + field]['low'] = \
@@ -772,7 +778,7 @@ def get_pm_propty_database(maname):
             dbase[psname]['Kick-Mon'] = _copy.deepcopy(dbase[psname]['Voltage-Mon'])
             dbase[psname]['Kick-Mon']['unit'] = 'mrad'
 
-            for field in ["-SP", "-RB", "-Mon"]:
+            for field in ('-SP', '-RB', '-Mon'):
                 dbase[psname]['Kick' + field]['lolo'] = 0.0
                 dbase[psname]['Kick' + field]['low'] = 0.0
                 dbase[psname]['Kick' + field]['lolim'] = 0.0
@@ -1503,3 +1509,47 @@ def _get_model_db(psmodel):
     else:
         raise ValueError(
             'DB for psmodel "{}" not implemented!'.format(psmodel))
+
+
+def _insert_strengths(database, pstype):
+    magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
+    prec = 5
+    if magfunc in {'quadrupole', 'quadrupole-skew'}:
+        database['KL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KL-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KLRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KL-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+    elif magfunc == 'sextupole':
+        database['SL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SL-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SLRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SL-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+    elif magfunc == 'dipole':
+        database['Energy-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['Energy-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['EnergyRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['Energy-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+    elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
+        database['Kick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['Kick-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['KickRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+    else:
+        raise NotImplementedError('Missing {} implementation'.format(magfunc))
+    return database

@@ -51,6 +51,7 @@ ts-quadrupole-q14-qd         monopolar        quadrupole
 ts-quadrupole-q20-qf         monopolar        quadrupole
 ts-corrector-ch              bipolar          corrector-horizontal
 ts-corrector-cv              bipolar          corrector-vertical
+ts-corrector-cv-strong       bipolar          corrector-vertical
 ts-injseptum-thick           monopolar        corrector-horizontal
 ts-injseptum-thin            monopolar        corrector-horizontal
 ts-ejeseptum-thick           monopolar        corrector-horizontal
