@@ -223,6 +223,16 @@ class SiriusPVName(str):
         dic_.update({k: v for k, v in kwargs.items() if isinstance(v, str)})
         return join_name(**dic_)
 
+    def get_nickname(self, sec=False, dev=False):
+        nickname = ''
+        if sec:
+            nickname += self.sec + '-'
+        nickname += self.sub
+        if dev:
+            nickname += ':' + self.dev
+        nickname += '-' + self.idx if self.idx else ''
+        return nickname
+
     def __lt__(self, other):
         """Less-than operator."""
         cond = ((type(other) == type(self)) and
