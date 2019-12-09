@@ -31,7 +31,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_chrom_database(self):
         """Test get_chrom_database."""
-        for accelerator in ['SI', 'BO']:
+        for accelerator in ('SI', 'BO'):
             if accelerator == 'SI':
                 sfams = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                          'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
@@ -68,7 +68,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_tune_database(self):
         """Test get_tune_database."""
-        for accelerator in ['SI', 'BO']:
+        for accelerator in ('SI', 'BO'):
             if accelerator == 'SI':
                 qfams = ('QFA', 'QFB', 'QFP',
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
