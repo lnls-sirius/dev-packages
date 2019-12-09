@@ -587,6 +587,13 @@ class SConvEpics:
         else:
             # is a trim
 
+            # gets min and max dipole strengths
+        norm = self._norm_mag
+        dip_lims = self._conn_dip.limits
+        strengths_dipole = self._norm_dip.conv_current_2_strength(
+            currents=dip_lims)
+        kwargs_min = {'strengths_dipole': min(strengths_dipole)}
+        kwargs_max = {'strengths_dipole': max(strengths_dipole)}
 
         return min_max
 
