@@ -11,6 +11,10 @@ _manames = None
 _bbbnames = None
 
 
+# NOTE: maximum epics array size
+os.environ['EPICS_CA_MAX_ARRAY_BYTES'] = '100000'
+
+
 def build_maname_list(devname_list):
     """Return list with manames fomr a device name list."""
     global _manames, _bbbnames
