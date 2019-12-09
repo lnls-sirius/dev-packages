@@ -10,16 +10,28 @@ class DCCT:
     """."""
 
     STATUS = namedtuple('Status', 'Off On')(0, 1)
+    NAME_BO = 'bo'
+    NAME_SI_1 = 'si-1'
+    NAME_SI_2 = 'si-2'
 
-    def __init__(self):
+    def __init__(self, name):
         """."""
-        self._current = PV('BO-35D:DI-DCCT:RawReadings-Mon')
-        self._meas_per_sp = PV('BO-35D:DI-DCCT:FastMeasPeriod-SP')
-        self._meas_per_rb = PV('BO-35D:DI-DCCT:FastMeasPeriod-RB')
-        self._nr_samples_sp = PV('BO-35D:DI-DCCT:FastSampleCnt-SP')
-        self._nr_samples_rb = PV('BO-35D:DI-DCCT:FastSampleCnt-RB')
-        self._acq_ctrl_sp = PV('BO-35D:DI-DCCT:MeasTrg-Sel')
-        self._acq_ctrl_rb = PV('BO-35D:DI-DCCT:MeasTrg-Sts')
+        if not set(self.NAME_BO) - set(name.lower()):
+            name = 'BO-35D:DI-DCCT:'
+        elif not set(self.NAME_SI_1) - set(name.lower()):
+            name = 'SI-13C4:DI-DCCT:'
+        elif not set(self.NAME_SI_2) - set(name.lower()):
+            name = 'SI-14C4:DI-DCCT:'
+        else:
+            raise Exception('Set DCCT name: BO, SI-1 or SI-2')
+        self._current = PV(name+'RawReadings-Mon')
+        self._meas_per_sp = PV(name+'FastMeasPeriod-SP')
+        self._meas_per_rb = PV(name+'FastMeasPeriod-RB')
+        self._nr_samples_sp = PV(name+'FastSampleCnt-SP')
+        self._nr_samples_rb = PV(name+'FastSampleCnt-RB')
+        self._acq_ctrl_sp = PV(name+'MeasTrg-Sel')
+        self._acq_ctrl_rb = PV(name+'MeasTrg-Sts')
+
 
     @property
     def connected(self):
