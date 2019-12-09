@@ -419,6 +419,18 @@ class PSEpicsConn:
             value1 = self._pvs[0].value
             return value1
 
+    @property
+    def limits(self):
+        """Return PV limits."""
+        limits = (
+            self._pvs[0].lower_alarm_limit,
+            self._pvs[0].lower_warning_limit,
+            self._pvs[0].lower_disp_limit,
+            self._pvs[0].upper_disp_limit,
+            self._pvs[0].upper_warning_limit,
+            self._pvs[0].upper_alarm_limit)
+        return limits
+
     @value.setter
     def value(self, setpoint):
         """Set voltage."""
