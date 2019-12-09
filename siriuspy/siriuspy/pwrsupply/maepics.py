@@ -432,10 +432,10 @@ class PSEpicsConn:
         return limits
 
     @value.setter
-    def value(self, setpoint):
-        """Set voltage."""
+    def value(self, current):
+        """Set current."""
         for pvobj in self._pvs:
-            pvobj.value = setpoint
+            pvobj.value = current
 
     def _check_psname(self, psname):
         psname = _SiriusPVName(psname)
@@ -546,15 +546,57 @@ class SConvEpics:
             norm.conv_current_2_strength(currents=currents, **kwargs)
         return strengths
 
-    def conv_strength_2_current(self, strengths):
+    def conv_strength_2_current(self, strengths,
+                                strengths_dipole=None,
+                                strengths_family=None):
         """Convert strengths to currents."""
         norm = self._norm_mag
-        kwargs = self._get_kwargs()
+        kwargs = self._get_kwargs(strengths_dipole, strengths_family)
         if kwargs is None:
             return None
         currents = \
             norm.conv_strength_2_current(strengths=strengths, **kwargs)
         return currents
+
+    def conv_current_2_strength_limits(self, currents):
+        """Calculate strength limits."""
+        if not self._conn_dip:
+            # dipole
+            strengths = self.conv_current_2_strength(currents)
+            min_max = min(strengths). max(strengths)
+            return min_max
+
+        # gets min and max dipole strengths
+        norm = self._norm_mag
+        dip_lims = self._conn_dip.limits
+        strengths_dipole = self._norm_dip.conv_current_2_strength(
+            currents=dip_lims)
+        kwargs_min = {'strengths_dipole': min(strengths_dipole)}
+        kwargs_max = {'strengths_dipole': max(strengths_dipole)}
+
+        if not self._conn_fam:
+            # is not a trim
+            strengths_min = \
+                norm.conv_current_2_strength(currents=currents, **kwargs_min)
+            strengths_max = \
+                norm.conv_current_2_strength(currents=currents, **kwargs_max)
+            min_max = (
+                min(*strengths_min, *strengths_max),
+                max(*strengths_min, *strengths_max))
+            return min_max
+        else:
+            # is a trim
+
+
+        return min_max
+
+
+
+            if strengths_dipole is None:
+
+            norm = self._norm_mag
+            norm.conv_current_2_strength(curr)
+
 
     def _create_normalizer(self):
         norm_mag, norm_dip, norm_fam = None, None, None
