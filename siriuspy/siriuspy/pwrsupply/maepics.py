@@ -419,6 +419,12 @@ class PSEpicsConn:
             value1 = self._pvs[0].value
             return value1
 
+    @value.setter
+    def value(self, setpoint):
+        """Set voltage."""
+        for pvobj in self._pvs:
+            pvobj.value = setpoint
+
     def _check_psname(self, psname):
         psname = _SiriusPVName(psname)
         return psname
@@ -452,16 +458,6 @@ class PUEpicsConn(PSEpicsConn):
     """Pulsed Power Supplu Epics Connector."""
 
     PROPNAME = 'Voltage'
-
-    @property
-    def value(self):
-        """Return value."""
-        return super().value
-
-    @value.setter
-    def value(self, voltage):
-        """Set voltage."""
-        self._pvs[0].value = voltage
 
 
 class SConvEpics:
