@@ -1,4 +1,4 @@
-"""This module contain classes for normalizing currents."""
+"""This module contains classes for current normalization."""
 import re as _re
 import numpy as _np
 
@@ -20,6 +20,9 @@ _IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
 _IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 
 
+# TODO: cleanup code now that BC nominal angle is not being considered!
+
+
 class _MagnetNormalizer(_Computer):
     """Base class for converting magnet properties: current and strength."""
 
@@ -33,15 +36,17 @@ class _MagnetNormalizer(_Computer):
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
 
+    @property
+    def magfunc(self):
+        """Return magnet function string."""
+        return self._magfunc
+
     # --- computer interface ---
 
     def compute_put(self, computed_pv, value):
         """Put strength value."""
         # convert strength to current
         kwargs = self._get_params(computed_pv)
-        # value_conv = value if self._coef_def2edb == 1.0 else \
-        #     self._conv_epicsdb_2_default(value)
-        # current = self.conv_strength_2_current(value_conv, **kwargs)
         current = self.conv_strength_2_current(value, **kwargs)
         # first PV must be actual magnet current
         computed_pv.pvs[0].put(current)
@@ -75,9 +80,6 @@ class _MagnetNormalizer(_Computer):
         lims = (lims['HIHI'], lims['HIGH'], lims['HOPR'],
                 lims['LOPR'], lims['LOW'], lims['LOLO'])
         lims = self.conv_current_2_strength(lims, **kwargs)
-        # lims_default = self.conv_current_2_strength(lims, **kwargs)
-        # lims = lims_default if self._coef_def2edb == 1.0 else \
-        #     self._conv_default_2_epicsdb(lims_default)
         tlim = (lims[0], lims[-1])
         hihi, lolo = max(tlim), min(tlim)
         tlim = (lims[1], lims[-2])
@@ -92,7 +94,6 @@ class _MagnetNormalizer(_Computer):
         if currents is None:
             return None
         intfields = self._conv_current_2_intfield(currents)
-
         # TODO: really necessary? ---
         if intfields is None:
             if isinstance(currents, (int, float)):
@@ -190,7 +191,7 @@ class _MagnetNormalizer(_Computer):
         return msum
 
     def _get_energy(self, current_dipole):
-        return self._dipole.conv_current_2_strength(currents=current_dipole)
+        return self._dip.conv_current_2_strength(currents=current_dipole)
 
     def _get_brho(self, currents_dipole):
         """Get Magnetic Rigidity."""
@@ -244,9 +245,14 @@ class _MagnetNormalizer(_Computer):
                 return
         self._coef_def2edb = 1.0
 
+    def _conv_intfield_2_strength(self, intfields, **kwargs):
+        raise NotImplementedError
+
 
 class DipoleNormalizer(_MagnetNormalizer):
     """Convert magnet current to strength and vice versa."""
+
+    TYPE = 'DipoleNormalizer'
 
     _ref_angles = _mutil.get_nominal_dipole_angles()
 
@@ -378,17 +384,17 @@ class MagnetNormalizer(_MagnetNormalizer):
     conversion from current to strength and vice-versa.
     """
 
+    TYPE = 'MagnetNormalizer'
+
     def __init__(self, maname, dipole_name, **kwargs):
-        """Call super and initializes a dipole."""
+        """Call superclass init and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
-        self._dipole = DipoleNormalizer(dipole_name, **kwargs)
+        self._dip = DipoleNormalizer(dipole_name, **kwargs)
 
     # --- computer interface ---
 
     def _compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
-        # print('here: ', self._maname, computed_pv.pvname,
-        #       computed_pv.upper_alarm_limit)
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
             return self.compute_limits(computed_pv)
@@ -402,23 +408,23 @@ class MagnetNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        intfields = self._magnet_conv_sign * brhos * strengths
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        intfields = self._magnet_conv_sign * brho * strengths
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        if isinstance(brhos, _np.ndarray):
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        if isinstance(brho, _np.ndarray):
             with _np.errstate(divide='ignore', invalid='ignore'):
-                strengths = self._magnet_conv_sign * intfields / brhos
-                strengths[brhos == 0] = 0.0
+                strengths = self._magnet_conv_sign * intfields / brho
+                strengths[brho == 0] = 0.0
         else:
-            if brhos == 0:
+            if brho == 0:
                 strengths = 0.0
             else:
-                strengths = self._magnet_conv_sign * intfields / brhos
+                strengths = self._magnet_conv_sign * intfields / brho
         if not isinstance(intfields, (int, float)):
             if isinstance(strengths, (int, float)):
                 strengths = [strengths, ] * len(intfields)
@@ -428,11 +434,13 @@ class MagnetNormalizer(_MagnetNormalizer):
 class TrimNormalizer(_MagnetNormalizer):
     """Convert trim magnet current to strength and vice versa."""
 
+    TYPE = 'TrimNormalizer'
+
     def __init__(self, maname, dipole_name, family_name, magnet_conv_sign=-1.0,
                  **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
-        self._dipole = DipoleNormalizer(dipole_name, **kwargs)
+        self._dip = DipoleNormalizer(dipole_name, **kwargs)
         self._fam = MagnetNormalizer(family_name, dipole_name, **kwargs)
 
     # --- computer interface ---
@@ -455,19 +463,18 @@ class TrimNormalizer(_MagnetNormalizer):
         #     currents=kwargs["strengths_family"],
         #     currents_dipole=kwargs["strengths_dipole"])
         strengths_fam = kwargs['strengths_family']
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        intfields = - brhos * (strengths - strengths_fam)
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        intfields = - brho * (strengths - strengths_fam)
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
-        if isinstance(intfields, list):
+        if isinstance(intfields, (list, tuple)):
             intfields = _np.array(intfields)
-        brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        if brhos == 0:
-            return 0
-        strengths_trim = - intfields / brhos
-        # strengths_fam = self._fam.conv_current_2_strength(
-        #     currents=kwargs["currents_family"],
-        #     currents_dipole=kwargs["currents_dipole"])
+        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+        if brho == 0:
+            return 0 * intfields
+        strengths_trim = - intfields / brho
+        # integrated field in excitation data for trims is just
+        # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
         return strengths_trim + strengths_fam

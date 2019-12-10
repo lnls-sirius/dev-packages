@@ -118,14 +118,14 @@ class TestUtil(TestCase):
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX')
         text = fi.getvalue()
-        self.assertEqual(len(text.splitlines()), 18)
+        self.assertEqual(len(text.splitlines()), 17)
         db.update({'PV09': None, 'PV10': None, 'PV11': None, 'PV12': None, })
         db.update({'PV13': None, 'PV14': None, 'PV15': None, 'PV16': None, })
         util.print_ioc_banner('test-ioc', db,
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX')
         text = fi.getvalue()
-        self.assertEqual(len(text.splitlines()), 26+18)
+        self.assertEqual(len(text.splitlines()), 25+17)
 
     def test_configure_log_file(self):
         """Test configure_log_file."""

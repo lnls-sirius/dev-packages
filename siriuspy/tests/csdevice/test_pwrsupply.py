@@ -22,17 +22,17 @@ public_interface = (
     'DEFAULT_WFM',
     'DEFAULT_WFM_OTHERS',
     'DEFAULT_PS_CURRENT_PRECISION',
-    'DEFAULT_PU_CURRENT_PRECISION',
+    'DEFAULT_PU_VOLTAGE_PRECISION',
     'ETypes',
     'Const',
     'get_ps_current_unit',
-    'get_pu_current_unit',
     'get_basic_propty_database',
     'get_common_propty_database',
     'get_common_pu_propty_database',
     'get_common_pu_SI_InjKicker_propty_database',
     'get_ps_propty_database',
     'get_pu_propty_database',
+    'get_pu_conv_propty_database',
     'get_ma_propty_database',
     'get_li_ma_propty_database',
     'get_pm_propty_database',
@@ -109,6 +109,7 @@ class TestPwrSupply(TestCase):
                 TestPwrSupply.pstypes
             self.m_PSSearch.get_splims.side_effect = get_splims
             self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
+            self.m_PSSearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
             _MASearch_patcher = mock.patch(
                 'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
             self.addCleanup(_MASearch_patcher.stop)
@@ -144,13 +145,6 @@ class TestPwrSupply(TestCase):
         self.assertEqual(unit[0], 'A')
         self.assertEqual(unit[1], 'Ampere')
 
-    def test_pu_current_unit(self):
-        """Test  pu_current_unit."""
-        unit = pwrsupply.get_pu_current_unit()
-        self.assertIsInstance(unit, (list, tuple))
-        self.assertEqual(unit[0], 'V')
-        self.assertEqual(unit[1], 'Voltage')
-
     def test_basic_propty_database(self):
         """Test common_propty_database."""
         db = pwrsupply.get_basic_propty_database()
@@ -166,7 +160,7 @@ class TestPwrSupply(TestCase):
             self.assertIsInstance(db[prop], dict)
 
     def test_ps_FBP_propty_database(self):
-        """Test common_ps_propty_database."""
+        """Test ps_FBP_propty_database."""
         db = pwrsupply.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
         self.assertIsInstance(db, dict)
         for prop in db:

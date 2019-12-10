@@ -9,6 +9,12 @@ class PSController:
     variable.
     """
 
+    _ignored_fields = {
+        'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
+        'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
+        'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
+        'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon'}
+
     def __init__(self, readers, functions, connections, pru_controller):
         """Create class properties."""
         self._readers = readers
@@ -50,6 +56,8 @@ class PSController:
         """Read all fields value from device."""
         values = dict()
         for field in self._fields:
+            if field in PSController._ignored_fields:
+                continue
             pvname = device_name + ':' + field
             value = self.read(device_name, field)
             values[pvname] = value
@@ -67,6 +75,10 @@ class PSController:
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
+            # ignore strength fields
+            *_, prop = key.split(':')
+            if prop in PSController._ignored_fields:
+                continue
             if key.endswith(('-Sel', '-SP')):
                 rb_field = PSController._get_readback_field(key)
                 rdr = self._readers[rb_field]

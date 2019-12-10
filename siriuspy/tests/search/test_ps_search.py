@@ -335,4 +335,5 @@ class TestPSSearch(TestCase):
         """Test get_splims_labels."""
         self.assertEqual(PSSearch.get_splims_labels(),
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
-                          'HOPR', 'HIGH', 'HIHI', 'DRVH', 'DTOL'])
+                          'HOPR', 'HIGH', 'HIHI', 'DRVH',
+                          'DTOL_CUR', 'DTOL_WFM'])
