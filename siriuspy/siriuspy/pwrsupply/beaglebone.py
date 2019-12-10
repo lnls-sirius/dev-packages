@@ -43,7 +43,7 @@ class BeagleBone:
         # psnames
         self._psnames = tuple(self._controllers.keys())
 
-        # strength name
+        # strength property name
         self._strenames = self._get_strength_name()
 
         # create device_name to scan interval dict
@@ -409,14 +409,14 @@ class BBBFactory:
             elif _Constant.match(field) and field != 'Version-Cte' and \
                     not field.startswith('Param'):
                 for dev_name, dev_id in devices:
-                    name = dev_name + ':' + field
-                    dbase[name] = _deepcopy(database[field])
-                    fields[name] = _Constant(database[field]['value'])
+                    pvname = dev_name + ':' + field
+                    dbase[pvname] = _deepcopy(database[field])
+                    fields[pvname] = _Constant(database[field]['value'])
             else:
                 for dev_name, dev_id in devices:
-                    name = dev_name + ':' + field
-                    dbase[name] = _deepcopy(database[field])
-                    fields[name] = model.field(
+                    pvname = dev_name + ':' + field
+                    dbase[pvname] = _deepcopy(database[field])
+                    fields[pvname] = model.field(
                         dev_id, field, pru_controller)
         return fields, functions
 
