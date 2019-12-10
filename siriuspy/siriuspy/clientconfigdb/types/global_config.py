@@ -1590,10 +1590,14 @@ _pvs_ts_ps = [
     ['TS-03:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-01:PS-CV-1E2:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-02:PS-CV-0:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-02:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-03:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-CV-0:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-CV-1E2:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
 
     ['TS-Fam:PS-B:Current-SP', 0.0, 0.0],    # unit: A
@@ -1610,10 +1614,14 @@ _pvs_ts_ps = [
     ['TS-03:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-01:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-01:PS-CV-1E2:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-01:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-02:PS-CV-0:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-02:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-03:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-04:PS-CV-0:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-04:PS-CV-1E2:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
     ]
 
