@@ -217,7 +217,6 @@ class BBBFactory:
 
         has_bo_qs = False
         has_ts_cv1 = False
-        has_ts_cv2 = False
 
         for psmodel_name in psmodels_dict:
 
