@@ -2,14 +2,12 @@
 
 import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
+from siriuspy.search import PSSearch as _PSSearch, MASearch as _MASearch
 from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
     _RampInvalidDipoleWfmParms
 
-
-_magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
 _magnets_dict = dict()
 
@@ -26,12 +24,13 @@ class Magnet:
     def __init__(self, maname):
         """Init method."""
         self._maname = _SiriusPVName(maname)
-        self._madata = _MAData(maname=self._maname)
+        psnames = _MASearch.conv_maname_2_psnames(maname)
+        pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
+        self._magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
+        self._splims = _MASearch.conv_maname_2_splims(self._maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
         self._family_name = _mutil.get_magnet_family_name(self._maname)
-        self._magfunc = self._madata.magfunc(self._madata.psnames[0])
-        self._mfmult = _magfuncs[self.magfunc]
-        self._strength_obj = _NormalizerFactory.create(maname)
+        self._strength_obj = _NormalizerFactory.create(self._maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc)
 
@@ -76,17 +75,17 @@ class Magnet:
     @property
     def current_min(self):
         """Mininum current for magnet power supply."""
-        return self._madata.splims['DRVL']
+        return self._splims['DRVL']
 
     @property
     def current_max(self):
         """Maximum current for magnet power supply."""
-        return self._madata.splims['DRVH']
+        return self._splims['DRVH']
 
     @property
     def splims(self):
         """Magnet SP limits."""
-        return self._madata.splims
+        return self._splims
 
     def conv_current_2_strength(self, currents, **kwargs):
         """Return strength value from current(s)."""

@@ -7,6 +7,7 @@ from mathphys import units as _mu
 from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _ru
 from siriuspy.ramp.magnet import get_magnet as _get_magnet
+from siriuspy.search import MASearch as _MASearch
 
 
 class WaveformParam:
@@ -375,9 +376,10 @@ class WaveformParam:
 class _WaveformMagnet:
     """Base class of magnet waveforms."""
 
-    def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE):
+    def __init__(self, psname, wfm_nrpoints=_DEF_WFMSIZE):
+        maname = _MASearch.conv_psname_2_psmaname(psname)
         self._magnet = _get_magnet(maname)
-        self._maname = maname
+        self._psname = psname
         self._wfm_nrpoints = wfm_nrpoints
 
     @property
@@ -448,7 +450,7 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
     _E0 = _c.electron_rest_energy * _mu.joule_2_GeV
 
     def __init__(
-            self, maname='BO-Fam:MA-B', wfm_nrpoints=_DEF_WFMSIZE,
+            self, psname='BO-Fam:PS-B-1', wfm_nrpoints=_DEF_WFMSIZE,
             duration=_ru.DEFAULT_PS_RAMP_DURATION,
             start_energy=_ru.DEFAULT_PS_RAMP_START_ENERGY,
             rampup1_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
@@ -465,7 +467,7 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
             rampdown_smooth_energy=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_ENERGY
             ):
         """Constructor."""
-        _WaveformMagnet.__init__(self, maname, wfm_nrpoints)
+        _WaveformMagnet.__init__(self, psname, wfm_nrpoints)
 
         self._start_energy = start_energy
         self._rampup1_start_energy = rampup1_start_energy
@@ -696,20 +698,20 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
 class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
-    def __init__(self, maname, dipole=None, family=None, strengths=None,
+    def __init__(self, psname, dipole=None, family=None, strengths=None,
                  currents=None, wfm_nrpoints=_DEF_WFMSIZE):
         """Constructor."""
         if dipole is None:
             raise ValueError('{} waveform needs an associated '
-                             'dipole waveform!'.format(maname))
-        _WaveformMagnet.__init__(self, maname, wfm_nrpoints=wfm_nrpoints)
+                             'dipole waveform!'.format(psname))
+        _WaveformMagnet.__init__(self, psname, wfm_nrpoints=wfm_nrpoints)
         self._dipole = dipole
         self._family = family
         if currents is not None:
             strengths = self._conv_currents_2_strengths(currents)
         if strengths is None:
-            if maname in _ru.NOMINAL_STRENGTHS:
-                nom_strengths = _ru.NOMINAL_STRENGTHS[maname]
+            if psname in _ru.NOMINAL_STRENGTHS:
+                nom_strengths = _ru.NOMINAL_STRENGTHS[psname]
             else:
                 nom_strengths = 0.0
             strengths = [nom_strengths, ] * self._wfm_nrpoints
