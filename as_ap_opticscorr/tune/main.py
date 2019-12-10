@@ -2,7 +2,7 @@
 
 import time as _time
 import epics as _epics
-
+import numpy as _np
 import siriuspy as _siriuspy
 from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
@@ -151,6 +151,9 @@ class App:
         # Connect to Timing
         if self._ACC == 'SI':
             QUADS_TRIG = 'SI-Glob:TI-Mags-Quads'
+            trig_db = _get_trig_db(QUADS_TRIG)
+            self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index('TunSI')
+
             self._timing_quads_state_sel = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':State-Sel')
             self._timing_quads_state_sts = _epics.PV(
@@ -168,8 +171,6 @@ class App:
             self._timing_quads_src_sts = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':Src-Sts',
                 callback=self._callback_timing_state)
-            trig_db = _get_trig_db(QUADS_TRIG)
-            self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index('TunSI')
 
             self._timing_quads_nrpulses_sp = _epics.PV(
                 self._PREFIX_VACA+QUADS_TRIG+':NrPulses-SP')
@@ -528,9 +529,11 @@ class App:
         elif 'Quads:NrPulses' in pvname:
             self._timing_check_config[3] = (value == 1)  # 1 pulse
         elif 'Quads:Duration' in pvname:
-            self._timing_check_config[4] = (value == 150)  # 150us
+            self._timing_check_config[4] = \
+                _np.isclose(value, 150, atol=0.1)  # 150us
         elif 'Quads:Delay' in pvname:
-            self._timing_check_config[5] = (value == 0)  # 0us
+            self._timing_check_config[5] = \
+                _np.isclose(value, 0, atol=0.1)  # 0us
         elif 'TunSIMode' in pvname:
             self._timing_check_config[6] = \
                 (value == _TIConst.EvtModes.External)
@@ -538,7 +541,8 @@ class App:
             self._timing_check_config[7] = (
                 value == _TIConst.EvtDlyTyp.Fixed)
         elif 'TunSIDelay' in pvname:
-            self._timing_check_config[8] = (value == 0)  # 0us
+            self._timing_check_config[8] = \
+                _np.isclose(value, 0, atol=0.1)  # 0us
 
         # Change the fifth bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -579,7 +583,7 @@ class App:
             self._timing_quads_polarity_sel.put(_TIConst.TrigPol.Normal)
             self._timing_quads_src_sel.put(self._tunsi_src_idx)
             self._timing_quads_nrpulses_sp.put(1)
-            self._timing_quads_duration_sp.put(0.15)
+            self._timing_quads_duration_sp.put(150)
             self._timing_quads_delay_sp.put(0)
             self._timing_evg_tunsimode_sel.put(_TIConst.EvtModes.External)
             self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Fixed)
