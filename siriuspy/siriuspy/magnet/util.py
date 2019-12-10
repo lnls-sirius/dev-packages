@@ -150,9 +150,9 @@ def get_section_dipole_name(maname):
         return "SI-Fam:MA-B1B2"
     elif maname.sec == "BO":
         if maname.dev == 'InjKckr':
-            return "TB-Fam:PS-B"
+            return "TB-Fam:MA-B"
         if maname.dev == "EjeKckr":
-            return "TS-Fam:PS-B"
+            return "TS-Fam:MA-B"
         return "BO-Fam:MA-B"
     elif maname.sec in ("TB", "LI"):
         return "TB-Fam:MA-B"
