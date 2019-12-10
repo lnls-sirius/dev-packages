@@ -63,7 +63,7 @@ class App:
                 pvs, monitor=False)
             self.pvs.append(pv)
             # DiagStatus-Mon
-            pvs = [None]*9
+            pvs = [None]*7
             pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
             pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
             pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
