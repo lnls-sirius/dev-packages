@@ -23,7 +23,7 @@ def get_dict():
 #
 # Horizontal Matrix:
 #
-#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:MA-CH    |
+#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:PS-CH    |
 #  |                             | =  |          | * |                     |
 #  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PM-InjSeptF |
 #
@@ -33,9 +33,9 @@ def get_dict():
 #
 # Vertical Matrix:
 #
-#  | DeltaPosY @ TS-04:DI-Scrn-3 |    | v11  v12 |   | Kick TS-04:MA-CV-1 |
+#  | DeltaPosY @ TS-04:DI-Scrn-3 |    | v11  v12 |   | Kick TS-04:PS-CV-1 |
 #  |                             | =  |          | * |                    |
-#  | DeltaAngY @ TS-04:DI-Scrn-3 |    | v21  v22 |   | Kick TS-04:MA-CV-2 |
+#  | DeltaAngY @ TS-04:DI-Scrn-3 |    | v21  v22 |   | Kick TS-04:PS-CV-2 |
 #
 # Data structure:
 #         v11   v12
