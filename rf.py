@@ -12,8 +12,12 @@ class RF:
         """."""
         if acc == 'SI':
             pre = 'SR'
+            self._frequency_sp = PV('RF-SI-Gen:GeneralFreq-SP')
+            self._frequency_rb = PV('RF-SI-Gen:GeneralFreq-RB')
         elif acc == 'BO':
             pre = 'BR'
+            self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
+            self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
         else:
             raise Exception('Set BO or SI.')
         self.is_cw = is_cw
@@ -28,8 +32,6 @@ class RF:
         self._voltage_sp = PV(pre+'-RF-DLLRF-01:mV:AL:REF:S')
         self._voltage_rb = PV(pre+'-RF-DLLRF-01:SL:REF:AMP')
         self._power_mon = PV('RA-RaBO01:RF-LLRFCalSys:PwrW1-Mon')
-        self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
-        self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
 
     @property
     def connected(self):
