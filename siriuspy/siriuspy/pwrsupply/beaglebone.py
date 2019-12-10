@@ -216,6 +216,9 @@ class BBBFactory:
         databases = dict()
 
         has_bo_qs = False
+        has_ts_cv1 = False
+        has_ts_cv2 = False
+
         for psmodel_name in psmodels_dict:
 
             psmodel = psmodels_dict[psmodel_name]
@@ -224,6 +227,11 @@ class BBBFactory:
             if ('BO-02D:PS-QS', 3) in devices:
                 has_bo_qs = True
                 devices = devices[:2]
+            if ('TS-02:PS-CV-0', 11) in devices:
+                has_ts_cv1 = True
+                devices = [('TB-01:PS-QD1', 1), ('TB-01:PS-QF1', 2), ('TB-02:PS-QD2A', 3),
+                           ('TB-02:PS-QF2A', 4), ('TB-02:PS-QD2B', 5), ('TB-02:PS-QF2B', 6),
+                           ('TB-03:PS-QD3', 7), ('TB-03:PS-QF3', 8), ('TB-04:PS-QD4', 9), ('TB-04:PS-QF4', 10)]
 
             # get model database
             database = _PSData(devices[0][0]).propty_database
@@ -264,9 +272,16 @@ class BBBFactory:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
 
+        # TODO: clean this work-around!!!
         if has_bo_qs:
-            # TODO: clean this work-around!!!
-            BBBFactory._insert_bo_qs(
+            BBBFactory._insert_exception(
+                'FBP', [('BO-02D:PS-QS', 3), ],
+                pru, prucqueue, timestamp,
+                dbase, controllers, databases,
+                psmodels_dict, freqs_dict)
+        if has_ts_cv1:
+            BBBFactory._insert_exception(
+                'FBP', [('TS-01:PS-CV-1E2', 11), ('TS-02:PS-CV-0', 12)],
                 pru, prucqueue, timestamp,
                 dbase, controllers, databases,
                 psmodels_dict, freqs_dict)
@@ -274,14 +289,13 @@ class BBBFactory:
         return BeagleBone(controllers, databases), dbase
 
     @staticmethod
-    def _insert_bo_qs(pru, prucqueue, timestamp,
-                      dbase, controllers, databases,
-                      psmodels_dict, freqs_dict):
-
-        psmodel_name = 'FBP'
+    def _insert_exception(
+            psmodel_name, devices,
+            pru, prucqueue, timestamp,
+            dbase, controllers, databases,
+            psmodels_dict, freqs_dict):
 
         psmodel = psmodels_dict[psmodel_name]
-        devices = [('BO-02D:PS-QS', 3), ]
 
         # get model database
         database = _PSData(devices[0][0]).propty_database
