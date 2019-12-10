@@ -235,7 +235,7 @@ class App:
             for fam in self._SFAMS:
                 data = self._sfam_sl_rb_pvs[fam].get_ctrlvars()
                 if self._sfam_sl_rb_pvs[fam].upper_disp_limit is not None:
-                    lis = {k: data[v] for k, v in limit_names.items():}
+                    lis = {k: data[v] for k, v in limit_names.items()}
                     self.driver.setParamInfo('SL'+fam+'-Mon', lis)
                     self.driver.updatePV('SL'+fam+'-Mon')
         dt = interval - (_time.time() - t0)
