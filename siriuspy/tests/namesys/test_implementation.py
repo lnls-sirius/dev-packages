@@ -104,6 +104,7 @@ class TestSiriusPVName(TestCase):
     public_interface = (
         'substitute',
         'device_name',
+        'get_nickname',
     )
 
     def test_public_interface(self):
