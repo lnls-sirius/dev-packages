@@ -252,7 +252,7 @@ class Septum(Corrector):
 
 
 def get_corr(name):
-    if name.dis == 'PM':
+    if name.dis == 'PU':
         return Septum(name)
     else:
         return CHCV(name)
