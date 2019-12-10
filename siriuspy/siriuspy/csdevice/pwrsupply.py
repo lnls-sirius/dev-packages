@@ -1550,6 +1550,4 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
-    else:
-        raise NotImplementedError('Missing {} implementation'.format(magfunc))
     return database
