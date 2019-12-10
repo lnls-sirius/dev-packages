@@ -9,7 +9,6 @@ from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.search import HLTimeSearch as _HLTimesearch
-from siriuspy.factory import NormalizerFactory
 from siriuspy.envars import vaca_prefix as LL_PREF
 from siriuspy.namesys import SiriusPVName as _PVName
 from .base_class import BaseClass as _BaseClass, \
@@ -130,11 +129,9 @@ class CHCV(Corrector):
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         pvsp = self._name.substitute(
-            prefix=LL_PREF, propty_name='Current', propty_suffix='SP')
+            prefix=LL_PREF, propty_name='Kick', propty_suffix='SP')
         pvrb = pvsp.substitute(propty_suffix='RB')
-        pvref = pvsp.substitute(propty_name='CurrentRef', propty_suffix='Mon')
-        mag = self._name.substitute(dis='MA')
-        self._norm = NormalizerFactory.create(mag)
+        pvref = pvsp.substitute(propty_name='KickRef', propty_suffix='Mon')
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._ref = _PV(pvref, **opt)
@@ -185,24 +182,16 @@ class CHCV(Corrector):
     def value(self):
         """Value."""
         if self._rb.connected:
-            val = self._rb.value
-            if val is not None:
-                return self._norm.conv_current_2_strength(
-                    val, strengths_dipole=self._csorb.ENERGY)
+            return self._rb.value
 
     @value.setter
     def value(self, val):
-        val = self._norm.conv_strength_2_current(
-            val, strengths_dipole=self._csorb.ENERGY)
         self._sp.put(val, wait=False)
 
     @property
     def refvalue(self):
         if self._ref.connected:
-            val = self._ref.value
-            if val is not None:
-                return self._norm.conv_current_2_strength(
-                    val, strengths_dipole=self._csorb.ENERGY)
+            return self._ref.value
 
 
 class Septum(Corrector):
@@ -213,10 +202,8 @@ class Septum(Corrector):
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         pvsp = self._name.substitute(
-            prefix=LL_PREF, propty_name='Voltage', propty_suffix='SP')
+            prefix=LL_PREF, propty_name='Kick', propty_suffix='SP')
         pvrb = pvsp.substitute(propty_suffix='RB')
-        mag = self._name.substitute(dis='PM')
-        self._norm = NormalizerFactory.create(mag)
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._nominalkick = 99.4  # mrad
@@ -256,16 +243,12 @@ class Septum(Corrector):
         if self._rb.connected:
             val = self._rb.value
             if val is not None:
-                val = self._norm.conv_current_2_strength(
-                    val, strengths_dipole=self._csorb.ENERGY)
-                return (-val - self._nominalkick) * 1e3
+                return -(val + self._nominalkick) * 1e3
 
     @value.setter
     def value(self, val):
         val = val/1e3 + self._nominalkick
-        val = self._norm.conv_strength_2_current(
-            -val, strengths_dipole=self._csorb.ENERGY)
-        self._sp.put(val, wait=False)
+        self._sp.put(-val, wait=False)
 
 
 def get_corr(name):
