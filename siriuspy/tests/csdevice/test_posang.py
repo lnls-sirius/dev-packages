@@ -53,7 +53,7 @@ class TestOpticsCorrCSDevice(TestCase):
         self.assertTrue('RefKickCV1-Mon' in db)
         self.assertTrue('RefKickCV2-Mon' in db)
         self.assertTrue('SetNewRefKick-Cmd' in db)
-        self.assertTrue('ConfigMA-Cmd' in db)
+        self.assertTrue('ConfigPS-Cmd' in db)
         self.assertTrue('Status-Mon' in db)
         self.assertTrue('StatusLabels-Cte' in db)
 

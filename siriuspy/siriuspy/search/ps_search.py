@@ -46,6 +46,16 @@ class PSSearch:
                                               filters=filters))
 
     @staticmethod
+    def get_psnicknames(names=None, filters=None):
+        """Return a list with Magnet nicknames."""
+        if not names:
+            names = PSSearch.get_psnames(filters=filters)
+        nicknames = len(names)*['']
+        for i, pss in enumerate(names):
+            nicknames[i] = pss.sub + ('-' + pss.idx if pss.idx else '')
+        return nicknames
+
+    @staticmethod
     def get_pstype_names():
         """Return sorted list of power supply types."""
         with PSSearch._lock:
@@ -120,6 +130,15 @@ class PSSearch:
         raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
+    def conv_psname_2_splims(psname):
+        """Convert maname powersupply to a dict with its setpoint limits."""
+        if psname is None:
+            return None
+        pstype = PSSearch.conv_psname_2_pstype(psname)
+        splims = PSSearch.conv_pstype_2_splims(pstype)
+        return _copy.deepcopy(splims)
+
+    @staticmethod
     def conv_pstype_2_polarity(pstype):
         """Return polarity of a given power supply type."""
         with PSSearch._lock:
@@ -143,6 +162,13 @@ class PSSearch:
             return None
         PSSearch._reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
+
+    @staticmethod
+    def conv_psname_2_magfunc(psname):
+        """Return magnetic function of a given power supply type."""
+        pstype = PSSearch.conv_psname_2_pstype(psname)
+        psfunc = PSSearch.conv_pstype_2_magfunc(pstype)
+        return _copy.deepcopy(psfunc)
 
     @staticmethod
     def conv_psname_2_excdata(psname):

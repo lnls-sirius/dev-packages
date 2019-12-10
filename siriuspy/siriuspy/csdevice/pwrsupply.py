@@ -771,11 +771,14 @@ def get_pm_propty_database(maname):
             dbase[psname][propty]['unit'] = unit[0]
         # set approriate MA limits and unit
         if magfunc in ('corrector-vertical', 'corrector-horizontal'):
-            dbase[psname]['Kick-SP'] = _copy.deepcopy(dbase[psname]['Voltage-SP'])
+            dbase[psname]['Kick-SP'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-SP'])
             dbase[psname]['Kick-SP']['unit'] = 'mrad'
-            dbase[psname]['Kick-RB'] = _copy.deepcopy(dbase[psname]['Voltage-RB'])
+            dbase[psname]['Kick-RB'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-RB'])
             dbase[psname]['Kick-RB']['unit'] = 'mrad'
-            dbase[psname]['Kick-Mon'] = _copy.deepcopy(dbase[psname]['Voltage-Mon'])
+            dbase[psname]['Kick-Mon'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-Mon'])
             dbase[psname]['Kick-Mon']['unit'] = 'mrad'
 
             for field in ('-SP', '-RB', '-Mon'):
@@ -1089,35 +1092,35 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
         'IIB1InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': 'C'},
         'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB2InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB2HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB3InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB3HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB4InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB4HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB5InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB5HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB6InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB6HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB7InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB7HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB8InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB8HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB3-Mon': {'type': 'int', 'value': 0},
@@ -1256,7 +1259,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                             'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
         'IntlkIIBCmd-Cte':  {'type': 'string',
                              'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-                             'value': _et.HARD_INTLCK_FAC_2S_ACDC}, }
+                             'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}, }
     propty_db.update(db_ps)
     return propty_db
 
@@ -1375,22 +1378,22 @@ def _get_ps_FAP_2P2S_propty_database():
         'Intlk4IIB-Mon': {'type': 'int', 'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAP_2P2S),
-                                 'value': _et.SOFT_INTLCK_FAP},
+                                 'value': _et.SOFT_INTLCK_FAP_2P2S},
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAP_2P2S),
-                                 'value': _et.HARD_INTLCK_FAP},
+                                 'value': _et.HARD_INTLCK_FAP_2P2S},
         'Intlk1IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk2IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk3IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk4IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
                             'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
@@ -1407,8 +1410,8 @@ def _get_ps_FAP_2P2S_propty_database():
                                         'prec': 2,
                                         'unit': 'C'},
         'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                         'prec': 2,
-                                         'unit': 'C'},
+                                        'prec': 2,
+                                        'unit': 'C'},
         'IIB2InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
                                         'unit': 'C'},
@@ -1550,6 +1553,4 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
-    else:
-        raise NotImplementedError('Missing {} implementation'.format(magfunc))
     return database

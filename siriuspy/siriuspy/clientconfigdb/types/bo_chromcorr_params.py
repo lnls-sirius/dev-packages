@@ -19,9 +19,9 @@ def get_dict():
 
 # Chromaticity Correction Parameters for Booster
 #
-# | ChromX |   | NominalChromX |   | m00  m01 |   | SL BO-Fam:MA-SF |
+# | ChromX |   | NominalChromX |   | m00  m01 |   | SL BO-Fam:PS-SF |
 # |        | = |               | + |          | * |                 |
-# | ChromY |   | NominalChromY |   | m10  m11 |   | SL BO-Fam:MA-SD |
+# | ChromY |   | NominalChromY |   | m10  m11 |   | SL BO-Fam:PS-SD |
 #
 # Nominal Chromaticity
 #   NominalChromX   NominalChromY

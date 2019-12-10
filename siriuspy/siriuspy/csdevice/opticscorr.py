@@ -27,8 +27,8 @@ class Const(_cutil.Const):
     BO_QFAMS_TUNECORR = ('QF', 'QD')
     SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
-    STATUS_LABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
-                     'MA CtrlMode', 'Timing Config')
+    STATUS_LABELS = ('PS Connection', 'PS PwrState', 'PS OpMode',
+                     'PS CtrlMode', 'Timing Config')
 
 
 _c = Const  # syntactic sugar
@@ -47,7 +47,7 @@ def get_chrom_database(acc):
     corrmat_size = len(sfams)*2
 
     pvs_database = {
-        'Version-Cte':      {'type': 'string', 'value': 'UNDEF', 'scan': 0.25},
+        'Version-Cte':      {'type': 'string', 'value': 'UNDEF'},
 
         'Log-Mon':          {'type': 'string', 'value': 'Starting...'},
 
@@ -72,7 +72,7 @@ def get_chrom_database(acc):
         'NominalSL-Mon':    {'type': 'float', 'count': len(sfams),
                              'value': len(sfams)*[0], 'prec': 6},
 
-        'ConfigMA-Cmd':     {'type': 'int', 'value': 0},
+        'ConfigPS-Cmd':     {'type': 'int', 'value': 0},
 
         'Status-Mon':       {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'char', 'count': 1000,
@@ -138,7 +138,7 @@ def get_tune_database(acc):
         'NominalKL-Mon':   {'type': 'float', 'count': len(qfams),
                             'value': len(qfams)*[0], 'prec': 6},
 
-        'ConfigMA-Cmd':    {'type': 'int', 'value': 0},
+        'ConfigPS-Cmd':    {'type': 'int', 'value': 0},
 
         'SetNewRefKL-Cmd': {'type': 'int', 'value': 0},
 

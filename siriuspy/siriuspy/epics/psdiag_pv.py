@@ -39,14 +39,12 @@ class PSStatusPV(Computer):
 
     # TODO: Add other interlocks for some PS types
 
-    BIT_PSCONNECT = 0b00000001
-    BIT_MACONNECT = 0b00000010
-    BIT_PSMACOMOK = 0b00000100
-    BIT_PWRSTATON = 0b00001000
-    BIT_OPMODEDIF = 0b00010000
-    BIT_CURRTDIFF = 0b00100000
-    BIT_INTERLKOK = 0b01000000
-    BIT_BOWFMDIFF = 0b10000000
+    BIT_PSCONNECT = 0b000001
+    BIT_PWRSTATON = 0b000010
+    BIT_OPMODEDIF = 0b000100
+    BIT_CURRTDIFF = 0b001000
+    BIT_INTERLKOK = 0b010000
+    BIT_BOWFMDIFF = 0b100000
 
     PWRSTE_STS = 0
     INTLK_SOFT = 1
@@ -54,9 +52,7 @@ class PSStatusPV(Computer):
     OPMODE_SEL = 3
     OPMODE_STS = 4
     CURRT_DIFF = 5
-    MAOPMD_SEL = 6
-    PSCONN_MON = 7
-    WAVFRM_MON = 8
+    WAVFRM_MON = 6
 
     DTOLWFM_DICT = dict()
 
@@ -80,18 +76,6 @@ class PSStatusPV(Computer):
             value |= PSStatusPV.BIT_CURRTDIFF
             value |= PSStatusPV.BIT_BOWFMDIFF
             return {'value': value}
-
-        # ma connected?
-        disconnected = \
-            not computed_pv.pvs[PSStatusPV.MAOPMD_SEL].connected
-        if disconnected:
-            value |= PSStatusPV.BIT_MACONNECT
-            value |= PSStatusPV.BIT_PSMACOMOK
-        else:
-            # ps-ma comm ok?
-            psconn = computed_pv.pvs[PSStatusPV.PSCONN_MON].value
-            if psconn is None or psconn == 0:
-                value |= PSStatusPV.BIT_PSMACOMOK
 
         # pwrstate?
         pwrsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].value
