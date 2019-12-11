@@ -1,10 +1,15 @@
+"""Sirius PV class."""
+
+
 import epics as _epics
 
 
 class PV(_epics.pv.PV):
+    """PV class."""
 
     # @_epics.pv._ensure_context
     def set_auto_monitor(self, mask=True):
+        """Set auto monitor."""
         if not self.connected:
             return
         elif not mask:
