@@ -131,7 +131,8 @@ class BoosterRamp(_ConfigDBDocument):
         """Save configuration to config server."""
         # save each ps normalized configuration
         nconfig_sub_dict = dict()
-        for config in self._ps_nconfigs.values():
+        for key in list(self._ps_nconfigs.keys()):
+            config = self._ps_nconfigs[key]
             if config.exist():
                 if self._check_ps_normalized_modified(config):
                     # save changes in an existing normalized config
