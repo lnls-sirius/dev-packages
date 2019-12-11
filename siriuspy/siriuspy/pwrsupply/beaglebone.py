@@ -12,17 +12,17 @@
 import time as _time
 from copy import deepcopy as _deepcopy
 
-from siriuspy import util as _util
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.thread import DequeThread as _DequeThread
-from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.pru import PRU as _PRU
-from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
-from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
-from siriuspy.pwrsupply.fields import Constant as _Constant
-from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
-from siriuspy.pwrsupply.fields import Setpoints as _Setpoints
-from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
+from .. import util as _util
+from ..search import PSSearch as _PSSearch
+from ..thread import DequeThread as _DequeThread
+from ..pwrsupply.data import PSData as _PSData
+from .pru import PRU as _PRU
+from .pru import PRUSim as _PRUSim
+from .prucontroller import PRUController as _PRUController
+from .fields import Constant as _Constant
+from .fields import Setpoint as _Setpoint
+from .psmodel import PSModelFactory as _PSModelFactory
+from .maepics import SConvEpics as _SConvEpics
 
 
 class BeagleBone:
@@ -40,16 +40,26 @@ class BeagleBone:
         self._controllers = controllers
         self._databases = databases
 
+        # psnames
+        self._psnames = tuple(self._controllers.keys())
+
+        # strength property name
+        self._strenames = self._get_strength_name()
+
         # create device_name to scan interval dict
         self._create_dev2interval_dict()
 
         # init mirror variables and last update timestamp dicts
         self._create_dev2mirr_dev2timestamp_dict()
 
+        # create strength conv epics objects
+        self._streconvs, self._streconnected = \
+            self._create_streconvs()
+
     @property
     def psnames(self):
         """PS names."""
-        return list(self._controllers.keys())
+        return self._psnames
 
     def update_interval(self, device_name=None):
         """Update interval, as defined in PRUcontrollers."""
@@ -72,6 +82,7 @@ class BeagleBone:
             updated = True
             self._dev2mirror[device_name] = \
                 self._controllers[device_name].read_all_fields(device_name)
+            self._update_strengths(device_name)
             self._dev2timestamp[device_name] = now
         else:
             updated = False
@@ -79,16 +90,26 @@ class BeagleBone:
         if field is None:
             return self._dev2mirror[device_name], updated
         else:
-            return \
-                self._dev2mirror[device_name][device_name+':'+field], updated
+            pvname = device_name + ':' + field
+            return self._dev2mirror[device_name][pvname], updated
 
     def write(self, device_name, field, value):
         """Write to device."""
-        self._controllers[device_name].write(device_name, field, value)
+        if field in {'Energy-SP', 'Kick-SP', 'KL-SP', 'SL-SP'}:
+            streconv = self._streconvs[device_name]
+            curr = streconv.conv_strength_2_current(value)
+            self._controllers[device_name].write(
+                device_name, 'Current-SP', curr)
+        else:
+            self._controllers[device_name].write(device_name, field, value)
 
     def check_connected(self, device_name):
         """Check wether device is connected."""
         return self._controllers[device_name].check_connected(device_name)
+
+    def check_connected_strength(self, device_name):
+        """Check connection with PVs for strength calc."""
+        return self._streconnected[device_name]
 
     def database(self, device_name):
         """Device database."""
@@ -103,6 +124,21 @@ class BeagleBone:
         for controller in self._controllers.values():
             controller.pru_controller.scanning = True
 
+    def _get_strength_name(self):
+        strenames = dict()
+        for psname, dbase in self._databases.items():
+            if 'Energy-SP' in dbase:
+                strenames[psname] = 'Energy'
+            elif 'Kick-SP' in dbase:
+                strenames[psname] = 'Kick'
+            elif 'KL-SP' in dbase:
+                strenames[psname] = 'KL'
+            elif 'SL-SP' in dbase:
+                strenames[psname] = 'SL'
+            else:
+                strenames[psname] = None
+        return strenames
+
     def _create_dev2mirr_dev2timestamp_dict(self):
         self._dev2timestamp = dict()
         self._dev2mirror = dict()
@@ -115,6 +151,40 @@ class BeagleBone:
         for devname, controller in self._controllers.items():
             pruc = controller.pru_controller
             self._dev2interval[devname] = 1.0/pruc.params.FREQ_SCAN
+
+    def _create_streconvs(self):
+        streconvs = dict()
+        strec = dict()
+        for psname in self.psnames:
+            strec[psname] = False
+            # NOTE: use 'Ref-Mon' proptype for all
+            if 'DCLink' not in psname:
+                streconvs[psname] = _SConvEpics(psname, 'Ref-Mon')
+        return streconvs, strec
+
+    def _update_strengths(self, psname):
+        # t0 = _time.time()
+        if 'DCLink' in psname:
+            return
+        streconv = self._streconvs[psname]
+        mirror = self._dev2mirror[psname]
+        curr0 = mirror[psname + ':Current-SP']
+        curr1 = mirror[psname + ':Current-RB']
+        curr2 = mirror[psname + ':CurrentRef-Mon']
+        curr3 = mirror[psname + ':Current-Mon']
+        currs = (curr0, curr1, curr2, curr3)
+        strengths = streconv.conv_current_2_strength(currents=currs)
+        if strengths is None or None in strengths:
+            self._streconnected[psname] = False
+        else:
+            self._streconnected[psname] = True
+            propname = psname + ':' + self._strenames[psname]
+            mirror[propname + '-SP'] = strengths[0]
+            mirror[propname + '-RB'] = strengths[1]
+            mirror[propname + 'Ref-Mon'] = strengths[2]
+            mirror[propname + '-Mon'] = strengths[3]
+        # t1 = _time.time()
+        # print('update_strengths: {:.3f}'.format(1000*(t1-t0)))
 
 
 class BBBFactory:
@@ -145,18 +215,30 @@ class BBBFactory:
         controllers = dict()  # 1 controller per UDC class
         databases = dict()
 
+        has_bo_qs = False
+        has_ts_cv1 = False
+
         for psmodel_name in psmodels_dict:
 
             psmodel = psmodels_dict[psmodel_name]
             devices = devices_dict[psmodel_name]
 
-            # Get model database
+            if ('BO-02D:PS-QS', 3) in devices:
+                has_bo_qs = True
+                devices = devices[:2]
+            # if ('TS-02:PS-CV-0', 12) in devices:
+            #     has_ts_cv1 = True
+            #     devices = [('TB-01:PS-QD1', 1), ('TB-01:PS-QF1', 2), ('TB-02:PS-QD2A', 3),
+            #                ('TB-02:PS-QF2A', 4), ('TB-02:PS-QD2B', 5), ('TB-02:PS-QF2B', 6),
+            #                ('TB-03:PS-QD3', 7), ('TB-03:PS-QF3', 8), ('TB-04:PS-QD4', 9), ('TB-04:PS-QF4', 10)]
+
+            # get model database
             database = _PSData(devices[0][0]).propty_database
 
             # check if IOC is already running
             BBBFactory._check_ioc_online(devices[0][0], database)
 
-            # Create pru controller for devices
+            # create pru controller for devices
             freq = freqs_dict[psmodel_name]
             freq = None if freq == 0 else freq
             pru_controller = _PRUController(pru, prucqueue,
@@ -168,28 +250,90 @@ class BBBFactory:
             # set bootime in epics database
             database['TimestampBoot-Cte']['value'] = timestamp
 
-            # Build setpoints
+            # build setpoints
             setpoints = BBBFactory._build_setpoints_dict(devices, database)
 
-            # Build fields and functions dicts
+            # build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
                 dbase, psmodel, setpoints,
                 devices, database, pru_controller)
 
-            # Build connections and device_ids dicts
+            # build connections and device_ids dicts
             connections, devices_ids = dict(), dict()
             for dev_name, dev_id in devices:
                 devices_ids[dev_name] = dev_id
                 connections[dev_name] = Connection(dev_id, pru_controller)
 
-            # Build controller
+            # build controller
             controller = psmodel.controller(
                 fields, functions, connections, pru_controller, devices_ids)
             for dev_name, dev_id in devices:
                 controllers[dev_name] = controller
                 databases[dev_name] = database
 
+        # TODO: clean this work-around!!!
+        if has_bo_qs:
+            BBBFactory._insert_exception(
+                'FBP', [('BO-02D:PS-QS', 3), ],
+                pru, prucqueue, timestamp,
+                dbase, controllers, databases,
+                psmodels_dict, freqs_dict)
+        if has_ts_cv1:
+            BBBFactory._insert_exception(
+                'FBP', [('TS-01:PS-CV-1E2', 11), ('TS-02:PS-CV-0', 12)],
+                pru, prucqueue, timestamp,
+                dbase, controllers, databases,
+                psmodels_dict, freqs_dict)
+
         return BeagleBone(controllers, databases), dbase
+
+    @staticmethod
+    def _insert_exception(
+            psmodel_name, devices,
+            pru, prucqueue, timestamp,
+            dbase, controllers, databases,
+            psmodels_dict, freqs_dict):
+
+        psmodel = psmodels_dict[psmodel_name]
+
+        # get model database
+        database = _PSData(devices[0][0]).propty_database
+
+        # check if IOC is already running
+        BBBFactory._check_ioc_online(devices[0][0], database)
+
+        # create pru controller for devices
+        freq = freqs_dict[psmodel_name]
+        freq = None if freq == 0 else freq
+        pru_controller = _PRUController(pru, prucqueue,
+                                        psmodel, devices,
+                                        processing=False,
+                                        scanning=False,
+                                        freq=freq)
+
+        # set bootime in epics database
+        database['TimestampBoot-Cte']['value'] = timestamp
+
+        # build setpoints
+        setpoints = BBBFactory._build_setpoints_dict(devices, database)
+
+        # build fields and functions dicts
+        fields, functions = BBBFactory._build_fields_functions_dict(
+            dbase, psmodel, setpoints,
+            devices, database, pru_controller)
+
+        # build connections and device_ids dicts
+        connections, devices_ids = dict(), dict()
+        for dev_name, dev_id in devices:
+            devices_ids[dev_name] = dev_id
+            connections[dev_name] = Connection(dev_id, pru_controller)
+
+        # build controller
+        controller = psmodel.controller(
+            fields, functions, connections, pru_controller, devices_ids)
+        for dev_name, dev_id in devices:
+            controllers[dev_name] = controller
+            databases[dev_name] = database
 
     @staticmethod
     def _build_udcgrouped_dicts(bbbname, udc_list):
@@ -265,34 +409,35 @@ class BBBFactory:
             elif _Constant.match(field) and field != 'Version-Cte' and \
                     not field.startswith('Param'):
                 for dev_name, dev_id in devices:
-                    name = dev_name + ':' + field
-                    dbase[name] = _deepcopy(database[field])
-                    fields[name] = _Constant(database[field]['value'])
+                    pvname = dev_name + ':' + field
+                    dbase[pvname] = _deepcopy(database[field])
+                    fields[pvname] = _Constant(database[field]['value'])
             else:
                 for dev_name, dev_id in devices:
-                    name = dev_name + ':' + field
-                    dbase[name] = _deepcopy(database[field])
-                    fields[name] = model.field(
+                    pvname = dev_name + ':' + field
+                    dbase[pvname] = _deepcopy(database[field])
+                    fields[pvname] = model.field(
                         dev_id, field, pru_controller)
         return fields, functions
 
     @staticmethod
     def _get_functions(model, field, devices,
                        setpoints, pru_controller):
-        if field in ('CycleType-Sel', 'CycleNrCycles-SP',
-                     'CycleFreq-SP', 'CycleAmpl-SP',
-                     'CycleOffset-SP', 'CycleAuxParam-SP'):
-            # Make one object for all devices (UDC-shared)
-            ids, sps = list(), list()
-            for dev_name, dev_id in devices:
-                pvname = dev_name + ':' + field
-                ids.append(dev_id)
-                sps.append(setpoints[pvname])
-            function = model.function(
-                ids, field, pru_controller, _Setpoints(sps))
-            return {device[0] + ':' + field: function
-                    for device in devices}
-
+        # NOTE: Each pwrsupply should have all variables independent
+        #       in the near future.
+        # if field in ('CycleType-Sel', 'CycleNrCycles-SP',
+        #              'CycleFreq-SP', 'CycleAmpl-SP',
+        #              'CycleOffset-SP', 'CycleAuxParam-SP'):
+        #     # Make one object for all devices (UDC-shared)
+        #     ids, sps = list(), list()
+        #     for dev_name, dev_id in devices:
+        #         pvname = dev_name + ':' + field
+        #         ids.append(dev_id)
+        #         sps.append(setpoints[pvname])
+        #     function = model.function(
+        #         ids, field, pru_controller, _Setpoints(sps))
+        #     return {device[0] + ':' + field: function
+        #             for device in devices}
         funcs = dict()
         for dev_name, dev_id in devices:
             setpoint = setpoints[dev_name + ':' + field]
@@ -302,8 +447,6 @@ class BBBFactory:
 
     @staticmethod
     def _check_ioc_online(psname, database):
-        # print(psname)
-        # print(list(database.keys()))
         propty = next(iter(database))
         pvname = psname + ':' + propty
         running = _util.check_pv_online(

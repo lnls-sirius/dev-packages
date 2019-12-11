@@ -19,9 +19,9 @@ def get_dict():
 
 # Tune Correction Response Matrix for Booster
 #
-# | DeltaTuneX |   | m00  m01 |   | KL BO-Fam:MA-QF |
+# | DeltaTuneX |   | m00  m01 |   | KL BO-Fam:PS-QF |
 # |            | = |          | * |                 |
-# | DeltaTuneY |   | m10  m11 |   | KL BO-Fam:MA-QD |
+# | DeltaTuneY |   | m10  m11 |   | KL BO-Fam:PS-QD |
 #
 # Correction Matrix
 #   m(0,0)   m(0,1)

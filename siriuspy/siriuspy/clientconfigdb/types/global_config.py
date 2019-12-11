@@ -1590,10 +1590,14 @@ _pvs_ts_ps = [
     ['TS-03:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-01:PS-CV-1E2:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-02:PS-CV-0:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-02:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-03:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-CV-0:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-CV-1E2:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
 
     ['TS-Fam:PS-B:Current-SP', 0.0, 0.0],    # unit: A
@@ -1610,14 +1614,18 @@ _pvs_ts_ps = [
     ['TS-03:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-01:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-01:PS-CV-1E2:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-01:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-02:PS-CV-0:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-02:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-03:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-04:PS-CV-0:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['TS-04:PS-CV-1E2:Current-SP', 0.0, 0.0],  # unit: A
     ['TS-04:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
     ]
 
-_pvs_si_ps = [
+_pvs_si_fam_ps = [
     ['SI-Fam:PS-B1B2-1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-B1B2-2:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
@@ -1689,47 +1697,1328 @@ _pvs_si_ps = [
     ['SI-Fam:PS-SDP1:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-Fam:PS-SDP2:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-Fam:PS-SDP3:Current-SP', 0.0, 0.0],  # unit: A
+    ]
 
-    ['SI-Fam:PS-B1B2-1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-B1B2-2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QFA:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QFB:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QFP:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QDA:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QDB1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QDB2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QDP1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-QDP2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-Q1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-Q2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-Q3:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-Q4:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFA0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFA1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFA2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFB0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFB1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFB2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFP0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFP1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SFP2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDA0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDA1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDA2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDA3:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDB0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDB1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDB2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDB3:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDP0:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDP1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDP2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
-    ['SI-Fam:PS-SDP3:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],
+_pvs_si_ch_ps = [
+    ['SI-01M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+
+    ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C4:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
+    ]
+
+_pvs_si_cv_ps = [
+    ['SI-01M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+
+    ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C4:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
+    ]
+
+_pvs_si_qs_ps = [
+    ['SI-01M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+
+    ['SI-01M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
+    ]
+
+_pvs_si_qn_ps = [
+    ['SI-01M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-02C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M1:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03M2:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-03C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-04C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-05C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-06C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M1:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07M2:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-07C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-08C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-09C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M1:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11M2:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-11C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-12C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-13C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M1:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15M2:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-15C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-16C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-17C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-18C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M1:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-QDP1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-QDP2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19M2:PS-QFP:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-19C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M1:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-QDB1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-QDB2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20M2:PS-QFB:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C1:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C2:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-Q3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C3:PS-Q4:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-20C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+
+    ['SI-01M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-02C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M1:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03M2:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-03C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-04C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M1:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M1:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-05C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-06C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M1:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07M2:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-07C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-08C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M1:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M1:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-09C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-10C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M1:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11M2:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-11C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-12C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M1:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M1:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-13C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-14C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M1:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15M2:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-15C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-16C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M1:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M1:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-17C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-18C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M1:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-QDP1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-QDP2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19M2:PS-QFP:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-19C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M1:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-QDB1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-QDB2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20M2:PS-QFB:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C1:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C1:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C2:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-Q3:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C3:PS-Q4:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C4:PS-Q1:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-20C4:PS-Q2:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M1:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
+    ['SI-01M1:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
     ]
 
 _template_dict = {
     'pvs':
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing +
         _pvs_li_ps + _pvs_pu + _rf_pvs +
-        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps + _pvs_si_ps
+        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps + _pvs_si_fam_ps +
+        _pvs_si_ch_ps + _pvs_si_cv_ps + _pvs_si_qs_ps + _pvs_si_qn_ps
     }

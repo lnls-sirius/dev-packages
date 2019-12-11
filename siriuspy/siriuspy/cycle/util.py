@@ -19,19 +19,23 @@ TRIGGER_NAMES = {
 def get_psnames():
     """Return psnames."""
     names = _PSSearch.get_psnames({'sec': '(LI|TB|BO|TS)', 'dis': 'PS'})
-    # names.extend(_PSSearch.get_psnames(
-    #     {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
-    # names.extend(_PSSearch.get_psnames(
-    #     {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-    #      'dev': 'CV', 'idx': '2'}))
+    names.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
+    names.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+         'dev': 'CV', 'idx': '2'}))
+    to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
+    for name in to_remove:
+        names.remove(name)
     return names
 
 
 def get_sections(psnames):
+    """Return sections."""
     sections = list()
-    for s in ['LI', 'TB', 'BO', 'TS', 'SI']:
-        if _Filter.process_filters(psnames, filters={'sec': s}):
-            sections.append(s)
+    for sec in ('LI', 'TB', 'BO', 'TS', 'SI'):
+        if _Filter.process_filters(psnames, filters={'sec': sec}):
+            sections.append(sec)
     return sections
 
 
@@ -43,11 +47,6 @@ def get_trigger_by_psname(psnames):
         dev_names = {dev.device_name for dev in dev_names}
         if psnames & dev_names:
             triggers.add(trig)
-    # TODO: remove the following lines when TI static tables are updated
-    if 'SI-Glob:TI-Mags-QTrims' in triggers:
-        triggers.add('SI-Glob:TI-Mags-Skews')
-    elif 'SI-Glob:TI-Mags-Skews' in triggers:
-        triggers.add('SI-Glob:TI-Mags-QTrims')
     return triggers
 
 

@@ -28,16 +28,20 @@ class TestPSSearch(TestCase):
 
     public_interface = (
         'get_psnames',
+        'get_psnicknames',
         'get_pstype_names',
         'get_bbbnames',
         'get_splims',
         'get_pstype_dict',
         'get_bbbname_dict',
+        'get_udc_dict',
         'get_polarities',
         'conv_psname_2_pstype',
+        'conv_psname_2_splims',
         'conv_pstype_2_polarity',
         'conv_pstype_2_magfunc',
         'conv_pstype_2_splims',
+        'conv_psname_2_magfunc',
         'conv_psname_2_excdata',
         'conv_psname_2_psmodel',
         'conv_psname_2_siggenconf',
@@ -331,4 +335,5 @@ class TestPSSearch(TestCase):
         """Test get_splims_labels."""
         self.assertEqual(PSSearch.get_splims_labels(),
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
-                          'HOPR', 'HIGH', 'HIHI', 'DRVH', 'DTOL'])
+                          'HOPR', 'HIGH', 'HIHI', 'DRVH',
+                          'DTOL_CUR', 'DTOL_WFM'])

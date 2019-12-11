@@ -31,7 +31,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_chrom_database(self):
         """Test get_chrom_database."""
-        for accelerator in ['SI', 'BO']:
+        for accelerator in ('SI', 'BO'):
             if accelerator == 'SI':
                 sfams = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                          'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
@@ -52,7 +52,7 @@ class TestOpticsCorrCSDevice(TestCase):
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalChrom-Mon' in db)
             self.assertTrue('NominalSL-Mon' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
+            self.assertTrue('ConfigPS-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
 
@@ -68,7 +68,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_tune_database(self):
         """Test get_tune_database."""
-        for accelerator in ['SI', 'BO']:
+        for accelerator in ('SI', 'BO'):
             if accelerator == 'SI':
                 qfams = ('QFA', 'QFB', 'QFP',
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
@@ -85,7 +85,7 @@ class TestOpticsCorrCSDevice(TestCase):
             self.assertTrue('ApplyDelta-Cmd' in db)
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
+            self.assertTrue('ConfigPS-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
 

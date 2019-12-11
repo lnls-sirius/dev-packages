@@ -216,6 +216,10 @@ class Timing:
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
                     VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+
+                if pvname.propty_suffix == 'Cmd':
+                    continue
+
                 self._initial_state[pvname] = Timing._pvs[pvname].get()
 
                 if pvname.propty_suffix == 'SP':
@@ -266,7 +270,7 @@ class Timing:
         }
 
         for trig in _TRIGGER_NAMES:
-            for mode in ['Cycle', 'Ramp']:
+            for mode in ('Cycle', 'Ramp'):
                 props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
                 props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION
                 props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
@@ -323,8 +327,8 @@ class PSCycler:
     def connected(self):
         """Connection state."""
         for prop in PSCycler.properties:
-            if prop in ['Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
-                        'WfmSyncPulseCount-Mon'] and 'TB' in self.psname:
+            if prop in {'Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
+                        'WfmSyncPulseCount-Mon'} and 'TB' in self.psname:
                 pass
             elif not self[prop].connected:
                 return False
@@ -426,7 +430,6 @@ class PSCycler:
         status = True
 
         status &= self.set_opmode_slowref()
-        status &= _pv_timed_get(self['OpMode-Sts'], _PSConst.States.SlowRef)
 
         status &= self.set_current_zero()
         status &= self.check_current_zero()
@@ -449,7 +452,10 @@ class PSCycler:
         return _pv_conn_put(self['OpMode-Sel'], opmode)
 
     def set_opmode_slowref(self):
-        return self.set_opmode(_PSConst.OpMode.SlowRef)
+        status = self.set_opmode(_PSConst.OpMode.SlowRef)
+        status &= _pv_timed_get(
+            self['OpMode-Sts'], _PSConst.States.SlowRef, wait=10.0)
+        return status
 
     def set_opmode_cycle(self, mode):
         opmode = _PSConst.OpMode.Cycle if mode == 'Cycle'\
@@ -480,16 +486,14 @@ class PSCycler:
             self.update_wfm_pulsecnt()
             if not status:
                 return 1  # indicate lack of trigger pulses
-
-            status = self.set_opmode_slowref()
-            status &= _pv_timed_get(
-                self['OpMode-Sts'], _PSConst.States.SlowRef)
-            if not status:
-                return 2  # indicate opmode is not in slowref yet
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
                 return 3  # indicate cycling not finished yet
+
+        status = self.set_opmode_slowref()
+        if not status:
+            return 2  # indicate opmode is not in slowref yet
 
         status = self.check_intlks()
         if not status:

@@ -266,7 +266,6 @@ class Current(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-
             self.set_current.execute(value)
 
 

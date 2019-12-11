@@ -1,15 +1,16 @@
 """Module with general utilities."""
 
 import os as _os
+import sys as _sys
+import time as _time
 from collections import Counter as _Counter
+from collections import namedtuple as _namedtuple
 import logging as _log
 import inspect as _inspect
 import subprocess as _sp
-import time as _time
 import datetime as _datetime
+
 import epics as _epics
-import sys as _sys
-from collections import namedtuple as _namedtuple
 
 from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars
@@ -100,22 +101,21 @@ def read_text_data(text):
 
 def print_ioc_banner(ioc_name, db, description, version, prefix):
     """IOC banner."""
-    ld = '==================================='
-    nw = (len(ld)-len(ioc_name))//2
-    line = ' '*nw + ioc_name + ' '*nw
-    _log.info(ld)
+    strl = '==================================='
+    nchars = (len(strl)-len(ioc_name))//2
+    line = ' '*nchars + ioc_name + ' '*nchars
+    _log.info(strl)
     _log.info(line)
-    _log.info(ld)
+    _log.info(strl)
     _log.info(description)
     _log.info('LNLS, Sirius Project.')
-    _log.info('Version   : ' + version)
-    _log.info('Timestamp : ' + get_timestamp())
-    _log.info('Prefix    : ' + prefix)
+    _log.info('Version   : %s', version)
+    _log.info('Timestamp : %s', get_timestamp())
+    _log.info('Prefix    : %s', prefix)
     _log.info('')
     pvs = sorted(tuple(db.keys()))
-    for i, pv in enumerate(pvs, 1):
-        _log.info('{0:04d} {1:<}'.format(i, pv))
-    _log.info('')
+    for i, pvname in enumerate(pvs, 1):
+        _log.info('{0:04d} {1:<}'.format(i, pvname))
 
 
 def configure_log_file(stream=None, filename=None, debug=False):

@@ -1,7 +1,7 @@
 """Module with connector classes.
 
 This module implements connector classes responsible for communications with
-magnet soft IOcs, ConfigDB service and orbit IOCs.
+pwrsupply soft IOcs, ConfigDB service and orbit IOCs.
 """
 
 import numpy as _np
@@ -14,8 +14,8 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
-from siriuspy.search import MASearch as _MASearch, \
-    LLTimeSearch as _LLTimeSearch
+from siriuspy.search import LLTimeSearch as _LLTimeSearch, \
+    PSSearch as _PSSearch
 from siriuspy.ramp import util as _rutil
 
 
@@ -71,20 +71,20 @@ class ConnTI(_EpicsPropsList):
         Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
 
     # Add events properties to Const
-    evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
-    for attr in ['EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
+    evt_propties = ('Mode-Sel', 'DelayType-Sel', 'Delay-SP')
+    for attr in ('EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
                  'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
-                 'EvtDigSI', 'EvtStudy']:
+                 'EvtDigSI', 'EvtStudy'):
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, evt_pfx+p)
 
     # Add trigger properties to Const
-    trg_propties = ['State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
-                    'Duration-SP', 'Delay-SP', 'Status-Mon']
-    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
-                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr']:
+    trg_propties = ('State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
+                    'Duration-SP', 'Delay-SP', 'Status-Mon')
+    for attr in ('TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
+                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr'):
         for p in trg_propties:
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
@@ -385,22 +385,22 @@ class ConnTI(_EpicsPropsList):
         return True
 
 
-class ConnMA(_EpicsPropsList):
-    """Magnets connector class."""
+class ConnPS(_EpicsPropsList):
+    """Power supplies connector class."""
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
-        self._get_manames()
+        self._get_psnames()
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
 
     @property
-    def manames(self):
-        """Return manames."""
-        return self._manames
+    def psnames(self):
+        """Return psnames."""
+        return self._psnames
 
     def get_ramp_config(self, ramp_config):
         """Receive BoosterRamp configuration."""
@@ -443,18 +443,14 @@ class ConnMA(_EpicsPropsList):
                                  desired_readback=_PSConst.States.RmpWfm,
                                  timeout=timeout)
 
-    def cmd_wfm(self, manames=list(), timeout=_TIMEOUT_DFLT):
+    def cmd_wfm(self, psnames=list(), timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
-        magnets = manames if manames else self.manames
+        pwrsupplys = psnames if psnames else self.psnames
         sp = dict()
-        for maname in magnets:
-            # get value (wfmdata)
-            wf = self._ramp_config.ps_waveform_get(maname)
-            value = wf.currents
-            name = maname + ':Wfm-SP'
-            sp[name] = value
+        for ps in pwrsupplys:
+            sp[ps+':Wfm-SP'] = self._ramp_config.ps_waveform_get_currents(ps)
         return self.set_setpoints_check(sp, timeout=timeout, abs_tol=1e-5)
 
     # --- power supplies checks ---
@@ -485,31 +481,31 @@ class ConnMA(_EpicsPropsList):
 
     # --- private methods ---
 
-    def _get_manames(self):
-        self._manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
+    def _get_psnames(self):
+        self._psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
 
     def _define_properties(self, prefix, connection_callback, callback):
         p = prefix
         properties = []
-        for maname in self._manames:
+        for psname in self._psnames:
             properties.append(
-                _EpicsProperty(maname + ':PwrState-Sel', p,
+                _EpicsProperty(psname + ':PwrState-Sel', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':OpMode-Sel', p,
+                _EpicsProperty(psname + ':OpMode-Sel', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':Wfm-SP', p,
+                _EpicsProperty(psname + ':Wfm-SP', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':IntlkSoft-Mon', p,
+                _EpicsProperty(psname + ':IntlkSoft-Mon', p,
                                connection_callback=connection_callback,
                                callback=callback))
             properties.append(
-                _EpicsProperty(maname + ':IntlkHard-Mon', p,
+                _EpicsProperty(psname + ':IntlkHard-Mon', p,
                                connection_callback=connection_callback,
                                callback=callback))
         return properties
@@ -519,10 +515,10 @@ class ConnMA(_EpicsPropsList):
         """Exec command for all power supplies."""
         sp = dict()
         rb = dict()
-        for maname in self.manames:
-            name = maname + ':' + prop
+        for psname in self.psnames:
+            name = psname + ':' + prop
             check_val = desired_readback if desired_readback else setpoint
-            if not self._check_magnet(maname, prop, check_val):
+            if not self._check_pwrsupply(psname, prop, check_val):
                 sp[name] = setpoint
                 rb[name] = check_val
         return self.set_setpoints_check(setpoints=sp,
@@ -530,21 +526,21 @@ class ConnMA(_EpicsPropsList):
                                         timeout=timeout,
                                         abs_tol=1e-5)
 
-    def _check_magnet(self, maname, prop, value):
+    def _check_pwrsupply(self, psname, prop, value):
         """Check a prop of a power supplies for a value."""
         if isinstance(value, (_np.ndarray, float)):
-            ok = _np.isclose(self.get_readback(maname + ':' + prop), value,
+            ok = _np.isclose(self.get_readback(psname + ':' + prop), value,
                              atol=1e-5)
         else:
-            ok = self.get_readback(maname + ':' + prop) == value
+            ok = self.get_readback(psname + ':' + prop) == value
         if not ok:
             return False
         return True
 
     def _check_all(self, prop, value):
         """Check a prop of all power supplies for a value."""
-        for maname in self.manames:
-            if not self._check_magnet(maname, prop, value):
+        for psname in self.psnames:
+            if not self._check_pwrsupply(psname, prop, value):
                 return False
         return True
 

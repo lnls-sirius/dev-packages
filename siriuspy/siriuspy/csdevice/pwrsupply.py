@@ -10,6 +10,7 @@ from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice import util as _cutil
 
 # --- WfmData ---
+# TODO: delete these deprecated parameters from packages
 MAX_WFMSIZE = 4000
 DEF_WFMSIZE = 3920
 
@@ -24,16 +25,16 @@ MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
 DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
 
-DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
+DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 
 # --- PS currents/voltage precision and unit ---
 DEFAULT_PS_CURRENT_PRECISION = 4
-DEFAULT_PU_CURRENT_PRECISION = 4
+DEFAULT_PU_VOLTAGE_PRECISION = 4
 _DEFAULT_PS_CURRENT_UNIT = None
-_DEFAULT_PU_CURRENT_UNIT = None
+_DEFAULT_PU_VOLTAGE_UNIT = None
 
 
 # --- Alarms ---
@@ -97,13 +98,13 @@ class ETypes(_cutil.ETypes):
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FBP_DCLINK = (
-        'Falha na fonte 1', 'Falha na fonte 2',
-        'Falha na fonte 3', 'Sobre-tensao da saida do bastidor DC-Link',
+        'Falha na fonte 1', 'Falha na fonte 2', 'Falha na fonte 3',
+        'Sobre-tensao da saida do bastidor DC-Link',
         'Sobre-tensao da fonte 1', 'Sobre-tensao na fonte 2',
         'Sobre-tensao na fonte 3', 'Sub-tensao da saida do bastidor DC-Link',
         'Sub-tensao na fonte 1', 'Sub-tensao na fonte 2',
-        'Sub-tensao na fonte 3', 'Sensor de fumaca',
-        'Interlock externo', 'Bit13', 'Bit14', 'Bit15',
+        'Sub-tensao na fonte 3', 'Sensor de fumaca', 'Interlock externo',
+        'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -174,9 +175,9 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensao no banco de capacitores',
         'Sobre-corrente na saida do retificador',
         'Falha no contator de entrada AC trifasica',
-        'Interlock da placa IIB 1',
-        'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
-        'Interlock da placa IIB 4', 'Bit11',
+        'Interlock da placa IIB 1', 'Interlock da placa IIB 2',
+        'Interlock da placa IIB 3', 'Interlock da placa IIB 4', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -187,8 +188,9 @@ class ETypes(_cutil.ETypes):
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferenca entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
-        'Falha na leitura da corrente na carga do DCCT 2', 'Bit7',
-        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Falha na leitura da corrente na carga do DCCT 2',
+        'Sobre-corrente no braço 1', 'Sobre-corrente no braço 2',
+        'Alta diferença entre a corrente dos braços', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -220,8 +222,12 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensao na saida do modulo 6',
         'Sobre-tensao na saida do modulo 7',
         'Sobre-tensao na saida do modulo 8',
-        'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+        'Interlock da placa IIB do módulo 1',
+        'Interlock da placa IIB do módulo 2',
+        'Interlock da placa IIB do módulo 3',
+        'Interlock da placa IIB do módulo 4',
+        'Interlock da placa IIB do módulo 5',
+        'Interlock da placa IIB do módulo 6')
     SOFT_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Bit2', 'Bit3',
@@ -238,8 +244,9 @@ class ETypes(_cutil.ETypes):
         'Sub-tensao na saida do retificador',
         'Sobre-corrente na saida do retificador',
         'Falha no contator de entrada AC trifasica', 'Falha no driver do IGBT',
-        'Bit6', 'Bit7',
-        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Interlock da placa IIB 1', 'Interlock da placa IIB 2',
+        'Interlock da placa IIB 3', 'Interlock da placa IIB 4',
+        'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
@@ -250,7 +257,8 @@ class ETypes(_cutil.ETypes):
         'Alta diferenca entre DCCTs',
         'Falha de leitura da corrente na carga do DCCT 1',
         'Falha de leitura da corrente na carga do DCCT 2',
-        'Bit5', 'Bit6', 'Bit7',
+        'Alta diferença entre a corrente dos IGBTs',
+        'Bit6', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
@@ -282,7 +290,7 @@ class ETypes(_cutil.ETypes):
         'Sobre-temperatura nos indutores', 'Sobre-temperatura no dissipador',
         'Falha no contator de entrada do DC-Link', 'Interlock externo',
         'Alta corrente de fuga', 'Interlock do rack',
-        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
@@ -315,7 +323,20 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
         'Bit26', 'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
+    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
+    SOFT_INTLCK_FAP_2P2S = (
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferenca entre DCCTs',
+        'Falha de leitura da corrente na carga do DCCT 1',
+        'Falha de leitura da corrente na carga do DCCT 2',
+        'Alta diferença entre a corrente dos braços',
+        'Alta diferença entre a corrente dos IGBTs', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
         'Sobre-corrente no IGBT 1 do modulo 1',
@@ -342,11 +363,11 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do modulo 2',
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
-        'Bit25', 'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+        'Sobre-corrente no braço 1',
+        'Sobre-corrente no braço 2',
+        'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
-    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -379,14 +400,6 @@ def get_ps_current_unit():
     if _DEFAULT_PS_CURRENT_UNIT is None:
         _DEFAULT_PS_CURRENT_UNIT = _PSSearch.get_splims_unit('FBP')
     return _DEFAULT_PS_CURRENT_UNIT
-
-
-def get_pu_current_unit():
-    """Return pulsed power supply 'current' unit."""
-    global _DEFAULT_PU_CURRENT_UNIT
-    if _DEFAULT_PU_CURRENT_UNIT is None:
-        _DEFAULT_PU_CURRENT_UNIT = _PSSearch.get_splims_unit('')
-    return _DEFAULT_PU_CURRENT_UNIT
 
 
 def get_common_propty_database():
@@ -553,11 +566,11 @@ def get_common_pu_propty_database():
         'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                       'value': Const.DsblEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
-                       'prec': DEFAULT_PU_CURRENT_PRECISION},
+                       'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Voltage-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': DEFAULT_PU_CURRENT_PRECISION},
+                        'prec': DEFAULT_PU_VOLTAGE_PRECISION},
         'Intlk1-Mon': {'type': 'int', 'value': 0},
         'Intlk2-Mon': {'type': 'int', 'value': 0},
         'Intlk3-Mon': {'type': 'int', 'value': 0},
@@ -598,6 +611,7 @@ def get_common_pu_SI_InjKicker_propty_database():
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
     database = _get_model_db(psmodel)
+    database = _insert_strengths(database, pstype)
     _set_limits(pstype, database)
     # add pvs list
     database = _cutil.add_pvslist_cte(database)
@@ -626,6 +640,18 @@ def get_pu_propty_database(pstype):
     return database
 
 
+def get_pu_conv_propty_database():
+    """Return database definition for a pulsed power supply type."""
+    dbase = dict()
+    dbase['Kick-SP'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-RB'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase['Kick-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    return dbase
+
+
 def get_ma_propty_database(maname):
     """Return property database of a magnet type device."""
     current_alarm = ('Current-SP', 'Current-RB',
@@ -642,7 +668,7 @@ def get_ma_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         dbase[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
-        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
             dbase[psname]['Current' + field]['lolo'] = \
                 _MASearch.get_splims(maname, 'lolo')
             dbase[psname]['Current' + field]['low'] = \
@@ -658,7 +684,7 @@ def get_ma_propty_database(maname):
         for propty in current_pvs:
             dbase[psname][propty]['unit'] = unit[0]
         # set approriate MA limits and unit
-        if magfunc in ('quadrupole', 'quadrupole-skew'):
+        if magfunc in {'quadrupole', 'quadrupole-skew'}:
             strength_name = 'KL'
             unit = '1/m'
         elif magfunc == 'sextupole':
@@ -667,7 +693,7 @@ def get_ma_propty_database(maname):
         elif magfunc == 'dipole':
             strength_name = 'Energy'
             unit = 'GeV'
-        elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
+        elif magfunc in {'corrector-vertical', 'corrector-horizontal'}:
             strength_name = 'Kick'
             unit = 'urad'
 
@@ -684,7 +710,7 @@ def get_ma_propty_database(maname):
             _copy.deepcopy(dbase[psname]['Current-Mon'])
         dbase[psname][strength_name + '-Mon']['unit'] = unit
 
-        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
             dbase[psname][strength_name + field]['lolo'] = 0.0
             dbase[psname][strength_name + field]['low'] = 0.0
             dbase[psname][strength_name + field]['lolim'] = 0.0
@@ -728,7 +754,7 @@ def get_pm_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         dbase[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
-        for field in ["-SP", "-RB", "-Mon"]:
+        for field in ('-SP', '-RB', '-Mon'):
             dbase[psname]['Voltage' + field]['lolo'] = \
                 _MASearch.get_splims(maname, 'lolo')
             dbase[psname]['Voltage' + field]['low'] = \
@@ -745,14 +771,17 @@ def get_pm_propty_database(maname):
             dbase[psname][propty]['unit'] = unit[0]
         # set approriate MA limits and unit
         if magfunc in ('corrector-vertical', 'corrector-horizontal'):
-            dbase[psname]['Kick-SP'] = _copy.deepcopy(dbase[psname]['Voltage-SP'])
+            dbase[psname]['Kick-SP'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-SP'])
             dbase[psname]['Kick-SP']['unit'] = 'mrad'
-            dbase[psname]['Kick-RB'] = _copy.deepcopy(dbase[psname]['Voltage-RB'])
+            dbase[psname]['Kick-RB'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-RB'])
             dbase[psname]['Kick-RB']['unit'] = 'mrad'
-            dbase[psname]['Kick-Mon'] = _copy.deepcopy(dbase[psname]['Voltage-Mon'])
+            dbase[psname]['Kick-Mon'] = \
+                _copy.deepcopy(dbase[psname]['Voltage-Mon'])
             dbase[psname]['Kick-Mon']['unit'] = 'mrad'
 
-            for field in ["-SP", "-RB", "-Mon"]:
+            for field in ('-SP', '-RB', '-Mon'):
                 dbase[psname]['Kick' + field]['lolo'] = 0.0
                 dbase[psname]['Kick' + field]['low'] = 0.0
                 dbase[psname]['Kick' + field]['lolim'] = 0.0
@@ -1063,35 +1092,35 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
         'IIB1InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': 'C'},
         'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB2InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB2HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB3InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB3HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB4InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB4HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB5InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB5HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB6InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB6HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB7InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB7HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB8InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IIB8HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2, 'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB3-Mon': {'type': 'int', 'value': 0},
@@ -1230,7 +1259,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                             'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
         'IntlkIIBCmd-Cte':  {'type': 'string',
                              'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-                             'value': _et.HARD_INTLCK_FAC_2S_ACDC}, }
+                             'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}, }
     propty_db.update(db_ps)
     return propty_db
 
@@ -1349,22 +1378,22 @@ def _get_ps_FAP_2P2S_propty_database():
         'Intlk4IIB-Mon': {'type': 'int', 'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAP_2P2S),
-                                 'value': _et.SOFT_INTLCK_FAP},
+                                 'value': _et.SOFT_INTLCK_FAP_2P2S},
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAP_2P2S),
-                                 'value': _et.HARD_INTLCK_FAP},
+                                 'value': _et.HARD_INTLCK_FAP_2P2S},
         'Intlk1IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk2IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk3IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Intlk4IIBLabels-Cte':  {'type': 'string',
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP},
+                                 'value': _et.IIB_INTLCK_FAP_2P2S},
         'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
                             'prec': DEFAULT_PS_CURRENT_PRECISION,
                             'unit': 'A'},
@@ -1381,8 +1410,8 @@ def _get_ps_FAP_2P2S_propty_database():
                                         'prec': 2,
                                         'unit': 'C'},
         'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                         'prec': 2,
-                                         'unit': 'C'},
+                                        'prec': 2,
+                                        'unit': 'C'},
         'IIB2InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
                                         'unit': 'C'},
@@ -1483,3 +1512,45 @@ def _get_model_db(psmodel):
     else:
         raise ValueError(
             'DB for psmodel "{}" not implemented!'.format(psmodel))
+
+
+def _insert_strengths(database, pstype):
+    magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
+    prec = 5
+    if magfunc in {'quadrupole', 'quadrupole-skew'}:
+        database['KL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KL-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KLRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+        database['KL-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+    elif magfunc == 'sextupole':
+        database['SL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SL-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SLRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+        database['SL-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+    elif magfunc == 'dipole':
+        database['Energy-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['Energy-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['EnergyRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+        database['Energy-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+    elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
+        database['Kick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['Kick-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['KickRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+        database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+    return database
