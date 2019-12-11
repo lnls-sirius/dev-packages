@@ -1038,12 +1038,12 @@ class BoosterRamp(_ConfigDBDocument):
         return _dcopy(self._ps_nconfigs[name])
 
     def _set_item(self, name, value):
+        self._ps_nconfigs[name] = value
+        self._invalidate_ps_waveforms()
         if name in self._ps_nconfigs.keys() and \
                 not self._check_ps_normalized_modified(value):
             return
-        self._ps_nconfigs[name] = value
         self._synchronized = False
-        self._invalidate_ps_waveforms()
 
     def _set_value(self, value):
         super()._set_value(value)
