@@ -88,20 +88,23 @@ class PSEpicsConn:
 
     def _create_pvs(self):
 
-        psname = self._prefix + self._psname
+        psname = self._psname
         pvs = list()
         if psname in PSEpicsConn._dips2:
             # dipoles with two power supplies.
             psname = psname.replace('-1', '').replace('-2', '')
             pvname = psname + '-1:' + self.PROPNAME + self._proptype
-            pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
+            pvobj = _PV(self._prefix + pvname, 
+                connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
             pvname = psname + '-2:' + self.PROPNAME + self._proptype
-            pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
+            pvobj = _PV(self._prefix + pvname,
+                connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         else:
             pvname = psname + ':' + self.PROPNAME + self._proptype
-            pvobj = _PV(pvname, connection_timeout=self._connection_timeout)
+            pvobj = _PV(self._prefix + pvname,
+                connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         return pvs
 
@@ -230,17 +233,25 @@ class SConvEpics:
 
     def _create_connectors(self, proptype, connection_timeout):
         conn_dip, conn_fam = None, None
-        if self._psname.dev in ('B', 'B1B2'):
+        sub, dev = self._psname.sub, self._psname.dev
+        if dev in ('B', 'B1B2'):
             pass
         elif self._is_trim(self._psname):
-            conn_dip = PSEpicsConn(self._psname, proptype, connection_timeout)
-            psname = self._psname.replace(self._psname.sub, 'Fam')
+            conn_dip = PSEpicsConn('SI-Fam:PS-B1B2-1', proptype, connection_timeout)
+            psname = self._psname.replace(sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
         elif self._psname.startswith('TB'):
             conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('BO'):
-            conn_dip = PSEpicsConn(
-                'BO-Fam:PS-B-1', proptype, connection_timeout)
+            if dev == 'InjKckr':
+                conn_dip = PSEpicsConn(
+                    'TB-Fam:PS-B', proptype, connection_timeout)
+            elif dev == 'EjeKckr':
+                conn_dip = PSEpicsConn(
+                    'TS-Fam:PS-B', proptype, connection_timeout)
+            else:
+                conn_dip = PSEpicsConn(
+                    'BO-Fam:PS-B-1', proptype, connection_timeout)
         elif self._psname.startswith('TS'):
             conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
