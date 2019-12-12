@@ -9,7 +9,7 @@ from siriuspy.magnet import util as _mutil
 
 
 class PSEpicsConn:
-    """Power Supplu Epics Connector."""
+    """Power Supply Epics Connector."""
 
     CONNECTION_TIMEOUT = 0.010  # [s]
     PROPNAME = 'Current'
