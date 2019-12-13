@@ -235,30 +235,40 @@ class SConvEpics:
         conn_dip, conn_fam = None, None
         sub, dev = self._psname.sub, self._psname.dev
         if dev in {'B', 'B1B2'}:
+            # dipoles need no connectors
             pass
         elif self._is_trim(self._psname):
-            conn_dip = PSEpicsConn('SI-Fam:PS-B1B2-1', proptype, connection_timeout)
+            # trims need dipole and family connectors
+            conn_dip = PSEpicsConn(
+                'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
             psname = self._psname.replace(sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
         elif self._psname.startswith('TB'):
+            # all TB ps other than dipoles need dipole connectors
             conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('BO'):
             if dev == 'InjKckr':
+                # BO injection kicker uses TB dipole normalizer
                 conn_dip = PSEpicsConn(
                     'TB-Fam:PS-B', proptype, connection_timeout)
             elif dev == 'EjeKckr':
+                # BO ejection kicker uses TS dipole normalizer
                 conn_dip = PSEpicsConn(
                     'TS-Fam:PS-B', proptype, connection_timeout)
             else:
+                # other BO ps use BO dipoles as normalizer
                 conn_dip = PSEpicsConn(
                     'BO-Fam:PS-B-1', proptype, connection_timeout)
         elif self._psname.startswith('TS'):
+            # all TS ps use TS dipole
             conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
             if dev in {'InjDpKckr', 'InjNLKckr'}:
+                # SI injection ps use TS dipole
                 conn_dip = PSEpicsConn(
                     'TS-Fam:PS-B', proptype, connection_timeout)
             else:
+                # other SI ps use SI dipole
                 conn_dip = PSEpicsConn(
                     'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
         return conn_dip, conn_fam
