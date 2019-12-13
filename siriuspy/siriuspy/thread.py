@@ -1,13 +1,11 @@
-"Definition of thread classes to used across the package."
+"""Definition of thread classes to used across the package."""
+
 import time as _time
 from threading import Thread as _Thread
 from threading import Event as _Event
 from threading import Lock as _Lock
 from queue import Queue as _Queue
 from collections import deque as _deque
-# NOTE: QueueThread was reported as generating unstable behaviour
-# when used intensively in the SOFB IOC.
-# TODO: investigate this issue!
 
 
 class QueueThread(_Thread):
@@ -17,10 +15,14 @@ class QueueThread(_Thread):
     supplies (magnets) properties among others.
     """
 
+    # NOTE: QueueThread was reported as generating unstable behaviour
+    # when used intensively in the SOFB IOC. Currently this class is
+    # used in as-ps-diag IOC classes.
+    # TODO: investigate this issue!
+
     def __init__(self):
         """Init method."""
         super().__init__(daemon=True)
-        # self._queue = []
         self._queue = _Queue()
         self._running = False
 
@@ -40,12 +42,10 @@ class QueueThread(_Thread):
         self._running = True
         while self.running:
             func_item = self._queue.get()
-            # print(queue_size)
-            n = self._queue.qsize()
-            if n and n % 500 == 0:
-                print("Warning: ComputedPV Queue size is {}!".format(n))
+            nitems = self._queue.qsize()
+            if nitems and nitems % 500 == 0:
+                print("Warning: Queue size is {}!".format(nitems))
             function, args, kwargs = func_item
-            # print(args[0])
             function(*args, **kwargs)  # run the show!
 
     def stop(self):
@@ -128,6 +128,7 @@ class DequeThread(_deque):
     pop-left queue. Each operation processing is a method invoked as a separate
     thread.
     """
+
     def __init__(self):
         """Init."""
         super().__init__()
@@ -187,41 +188,6 @@ class DequeThread(_deque):
         """Pop left operation from queue."""
         with self._lock:
             return super().popleft()
-
-    # NOTE: delete this commented code eventually.
-    # Iit seems that having creation and initialization of threads
-    # unprotected with lock may results in concurrent deque threads, thus
-    # spoiling the order of inserted operations. This has been observed in
-    # PS IOC for TB quadrupoles and correctors!
-    #
-    # def process(self):
-    #     """Process operation from queue."""
-    #     # first check if a thread is already running
-    #
-    #     donothing = not self._enabled
-    #     donothing |= self._thread is not None and self._thread.is_alive()
-    #     if donothing:
-    #         return False
-    #
-    #     # no thread is running, we can process queue
-    #     try:
-    #         operation = self.popleft()
-    #     except IndexError:
-    #         # there is nothing in the queue
-    #         return False
-    #     # process operation taken from queue
-    #     args = tuple()
-    #     kws = dict()
-    #     if len(operation) == 1:
-    #         func = operation[0]
-    #     elif len(operation) == 2:
-    #         func, args = operation
-    #     elif len(operation) >= 3:
-    #         func, args, kws = operation[:3]
-    #     self._thread = _Thread(
-    #         target=func, args=args, kwargs=kws, daemon=True)
-    #     self._thread.start()
-    #     return True
 
     def process(self):
         """Process operation from queue."""
