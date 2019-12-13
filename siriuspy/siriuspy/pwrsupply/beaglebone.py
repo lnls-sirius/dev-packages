@@ -22,7 +22,7 @@ from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
 from .fields import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
-from .maepics import SConvEpics as _SConvEpics
+from .psconv import SConvEpics as _SConvEpics
 
 
 class BeagleBone:
