@@ -22,7 +22,7 @@ from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
 from .fields import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
-from .maepics import SConvEpics as _SConvEpics
+from .psconv import SConvEpics as _SConvEpics
 
 
 class BeagleBone:
@@ -215,28 +215,13 @@ class BBBFactory:
         controllers = dict()  # 1 controller per UDC class
         databases = dict()
 
-        has_bo_qs = False
-        has_ts_cv1 = False
+        # check if IOC is already running
+        BBBFactory._check_ioc_online(devices_dict)
 
         for psmodel_name in psmodels_dict:
 
             psmodel = psmodels_dict[psmodel_name]
             devices = devices_dict[psmodel_name]
-
-            if ('BO-02D:PS-QS', 3) in devices:
-                has_bo_qs = True
-                devices = devices[:2]
-            # if ('TS-02:PS-CV-0', 12) in devices:
-            #     has_ts_cv1 = True
-            #     devices = [('TB-01:PS-QD1', 1), ('TB-01:PS-QF1', 2), ('TB-02:PS-QD2A', 3),
-            #                ('TB-02:PS-QF2A', 4), ('TB-02:PS-QD2B', 5), ('TB-02:PS-QF2B', 6),
-            #                ('TB-03:PS-QD3', 7), ('TB-03:PS-QF3', 8), ('TB-04:PS-QD4', 9), ('TB-04:PS-QF4', 10)]
-
-            # get model database
-            database = _PSData(devices[0][0]).propty_database
-
-            # check if IOC is already running
-            BBBFactory._check_ioc_online(devices[0][0], database)
 
             # create pru controller for devices
             freq = freqs_dict[psmodel_name]
@@ -247,93 +232,48 @@ class BBBFactory:
                                             scanning=False,
                                             freq=freq)
 
-            # set bootime in epics database
-            database['TimestampBoot-Cte']['value'] = timestamp
-
-            # build setpoints
-            setpoints = BBBFactory._build_setpoints_dict(devices, database)
-
-            # build fields and functions dicts
-            fields, functions = BBBFactory._build_fields_functions_dict(
-                dbase, psmodel, setpoints,
-                devices, database, pru_controller)
-
-            # build connections and device_ids dicts
             connections, devices_ids = dict(), dict()
-            for dev_name, dev_id in devices:
-                devices_ids[dev_name] = dev_id
-                connections[dev_name] = Connection(dev_id, pru_controller)
+            fields, functions = dict(), dict()
+
+            for device in devices:
+
+                # psname and bsmp device id
+                psname, dev_id = device
+
+                # get model database
+                database = _PSData(psname).propty_database
+
+                # set bootime in epics database
+                database['TimestampBoot-Cte']['value'] = timestamp
+
+                # build setpoints
+                setpoints = BBBFactory._build_setpoints_dict(
+                    (device, ), database)
+
+                # build fields and functions dicts
+                _fields, _functions = BBBFactory._build_fields_functions_dict(
+                    dbase, psmodel, setpoints, (device, ), database,
+                    pru_controller)
+                fields.update(_fields)
+                functions.update(_functions)
+
+                # build connections and device_ids dicts
+                devices_ids[psname] = dev_id
+                connections[psname] = Connection(dev_id, pru_controller)
+
+                # add database to dictionary
+                databases[psname] = database
 
             # build controller
             controller = psmodel.controller(
                 fields, functions, connections, pru_controller, devices_ids)
-            for dev_name, dev_id in devices:
-                controllers[dev_name] = controller
-                databases[dev_name] = database
 
-        # TODO: clean this work-around!!!
-        if has_bo_qs:
-            BBBFactory._insert_exception(
-                'FBP', [('BO-02D:PS-QS', 3), ],
-                pru, prucqueue, timestamp,
-                dbase, controllers, databases,
-                psmodels_dict, freqs_dict)
-        if has_ts_cv1:
-            BBBFactory._insert_exception(
-                'FBP', [('TS-01:PS-CV-1E2', 11), ('TS-02:PS-CV-0', 12)],
-                pru, prucqueue, timestamp,
-                dbase, controllers, databases,
-                psmodels_dict, freqs_dict)
+            # add controller to dictionary
+            for device in devices:
+                psname, dev_id = device
+                controllers[psname] = controller
 
         return BeagleBone(controllers, databases), dbase
-
-    @staticmethod
-    def _insert_exception(
-            psmodel_name, devices,
-            pru, prucqueue, timestamp,
-            dbase, controllers, databases,
-            psmodels_dict, freqs_dict):
-
-        psmodel = psmodels_dict[psmodel_name]
-
-        # get model database
-        database = _PSData(devices[0][0]).propty_database
-
-        # check if IOC is already running
-        BBBFactory._check_ioc_online(devices[0][0], database)
-
-        # create pru controller for devices
-        freq = freqs_dict[psmodel_name]
-        freq = None if freq == 0 else freq
-        pru_controller = _PRUController(pru, prucqueue,
-                                        psmodel, devices,
-                                        processing=False,
-                                        scanning=False,
-                                        freq=freq)
-
-        # set bootime in epics database
-        database['TimestampBoot-Cte']['value'] = timestamp
-
-        # build setpoints
-        setpoints = BBBFactory._build_setpoints_dict(devices, database)
-
-        # build fields and functions dicts
-        fields, functions = BBBFactory._build_fields_functions_dict(
-            dbase, psmodel, setpoints,
-            devices, database, pru_controller)
-
-        # build connections and device_ids dicts
-        connections, devices_ids = dict(), dict()
-        for dev_name, dev_id in devices:
-            devices_ids[dev_name] = dev_id
-            connections[dev_name] = Connection(dev_id, pru_controller)
-
-        # build controller
-        controller = psmodel.controller(
-            fields, functions, connections, pru_controller, devices_ids)
-        for dev_name, dev_id in devices:
-            controllers[dev_name] = controller
-            databases[dev_name] = database
 
     @staticmethod
     def _build_udcgrouped_dicts(bbbname, udc_list):
@@ -446,9 +386,11 @@ class BBBFactory:
         return funcs
 
     @staticmethod
-    def _check_ioc_online(psname, database):
-        propty = next(iter(database))
-        pvname = psname + ':' + propty
+    def _check_ioc_online(devices_dict):
+        psmodel_name = next(iter(devices_dict))
+        devices = devices_dict[psmodel_name]
+        psname, _ = devices[0]
+        pvname = psname + ':Version-Cte'
         running = _util.check_pv_online(
             pvname=pvname, use_prefix=False, timeout=0.5)
         if running:

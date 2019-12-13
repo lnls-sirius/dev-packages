@@ -13,6 +13,8 @@ class ComputedPV:
     computed process variables.
     """
 
+    # NOTE: currently this is being used only in as-ps-diag IOC classes.
+
     def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
         # print('compute_pv: ', pvname, pvs)
