@@ -144,23 +144,23 @@ def get_default_ramp_waveform(interval=500, nrpts=4000,
 def get_section_dipole_name(maname):
     """Return name of dipole in the same section of given magnet name."""
     maname = _SiriusPVName(maname)
-    if _re.match("B.*", maname.dev):
+    if _re.match('B.*', maname.dev):
         return None
-    elif maname.sec == "SI":
+    elif maname.sec == 'SI':
+        if maname.dev in {"InjDpKckr", "InjNLKckr"}:
+            return 'TS-Fam:MA-B'
         return "SI-Fam:MA-B1B2"
-    elif maname.sec == "BO":
-        if maname.dev == 'InjKckr':
-            return "TB-Fam:MA-B"
-        if maname.dev == "EjeKckr":
-            return "TS-Fam:MA-B"
-        return "BO-Fam:MA-B"
-    elif maname.sec in ("TB", "LI"):
-        return "TB-Fam:MA-B"
-    elif maname.sec == "TS":
-        return "TS-Fam:MA-B"
+    elif maname.sec == 'BO':
+        if maname.dev in {'InjKckr', 'EjeKckr'}:
+            return 'TB-Fam:MA-B'
+        return 'BO-Fam:MA-B'
+    elif maname.sec in {'TB', 'LI'}:
+        return 'TB-Fam:MA-B'
+    elif maname.sec == 'TS':
+        return 'TS-Fam:MA-B'
     else:
         raise NotImplementedError(
-            "No section named {}".format(maname.sec))
+            'No section named {}'.format(maname.sec))
 
 
 def get_magnet_family_name(maname):
