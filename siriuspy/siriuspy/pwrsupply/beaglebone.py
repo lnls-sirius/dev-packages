@@ -162,7 +162,6 @@ class BeagleBone:
                 # NOTE: use 'Ref-Mon' proptype for all
                 strec[psname] = False
                 streconvs[psname] = _SConvEpics(psname, 'Ref-Mon')
-
         return streconvs, strec
 
     def _update_strengths(self, psname):
