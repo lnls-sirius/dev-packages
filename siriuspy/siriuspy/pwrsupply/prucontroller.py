@@ -613,8 +613,8 @@ class PRUController:
         # --- send requests to serial line
         try:
             for dev_id in device_ids:
-                ack[dev_id], data[dev_id] = \
-                    self._udc[dev_id].execute_function(function_id, args)
+                resp = self._udc[dev_id].execute_function(function_id, args)
+                ack[dev_id], data[dev_id] = resp
                 # check anomalous response
                 if ack[dev_id] != _const_bsmp.ACK_OK:
                     print('PRUController: anomalous response !')
@@ -630,6 +630,14 @@ class PRUController:
                     # print('response   : {}'.format(data[dev_id]))
         except _SerialError:
             return None
+        except TypeError:
+            print('--- debug ----')
+            print('device_ids  : ', device_ids)
+            print('dev_id      : ', dev_id)
+            print('function_id : ', function_id)
+            print('resp        : ', resp)
+            print('data        : ', data[dev_id])
+            raise
 
         # --- check if all function executions succeeded.
         success = True
