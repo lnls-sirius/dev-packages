@@ -18,7 +18,7 @@ PUBLIC_INTERFACE = (
 class TestModule(TestCase):
     """Test module interface."""
 
-    def test_PUBLIC_INTERFACE(self):
+    def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 pru,
