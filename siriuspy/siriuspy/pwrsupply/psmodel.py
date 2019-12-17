@@ -1,7 +1,6 @@
 """Power Supply Model classes."""
 
 from . import bsmp as _psbsmp
-from . import psbsmpsim as _psbsmpsim
 from . import fields as _fields
 from . import functions as _functions
 from . import controller as _controller
@@ -161,11 +160,6 @@ class _PSModel:
         raise NotImplementedError
 
     @property
-    def simulation_class(self):
-        """PRU Controller parameters."""
-        raise NotImplementedError
-
-    @property
     def database(self):
         """Return database."""
         raise NotImplementedError
@@ -255,11 +249,6 @@ class PSModelFBP(_PSModel):
         """Model entities."""
         return _psbsmp.EntitiesFBP()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP
-
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
         _c = _psbsmp.ConstFBP
@@ -344,11 +333,6 @@ class PSModelFBP_FOFB(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFBP()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP
-
 
 class PSModelFAC_DCDC(PSModelFBP):
     """FAC power supply model."""
@@ -382,11 +366,6 @@ class PSModelFAC_DCDC(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_DCDC
 
 
 class PSModelFAC_2S_DCDC(PSModelFBP):
@@ -437,11 +416,6 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2S_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2S_DCDC
 
 
 class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
@@ -548,11 +522,6 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2P4S_DCDC()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2P4S_DCDC
-
 
 class PSModelFAP(PSModelFBP):
     """FAP power supply model."""
@@ -586,11 +555,6 @@ class PSModelFAP(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAP()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP
 
 
 class PSModelFAP_4P(PSModelFBP):
@@ -633,11 +597,6 @@ class PSModelFAP_4P(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAP_4P()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP_4P
 
 
 class PSModelFAP_2P2S(PSModelFBP):
@@ -685,11 +644,6 @@ class PSModelFAP_2P2S(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFAP_2P2S()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP_2P2S
-
 
 class PSModelCommercial(PSModelFAC_DCDC):
     """Commercial power supply model."""
@@ -708,12 +662,6 @@ class PSModelCommercial(PSModelFAC_DCDC):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_DCDC
-
 
 # --- ACDC ---
 
@@ -748,11 +696,6 @@ class PSModelFBP_DCLink(_PSModel):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFBP_DCLink()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP_DCLink
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -816,11 +759,6 @@ class PSModelFAC_2S_ACDC(_PSModel):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2S_ACDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2S_ACDC
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -898,11 +836,6 @@ class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2P4S_ACDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2P4S_ACDC
 
 
 # --- Factory ---
