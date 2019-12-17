@@ -179,16 +179,6 @@ class CHCV(Corrector):
         return conn
 
     @property
-    def value(self):
-        """Value."""
-        if self._rb.connected:
-            return self._rb.value
-
-    @value.setter
-    def value(self, val):
-        self._sp.put(val, wait=False)
-
-    @property
     def refvalue(self):
         if self._ref.connected:
             return self._ref.value
