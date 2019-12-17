@@ -677,32 +677,32 @@ class PSModelFAP_2P2S(PSModelFBP):
         'Mod4IGBT2PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_2_4,
         'Mod1VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_1,
         'Mod1VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_1,
-        'Mod1IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_1,
-        'Mod1IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_1,
+        'Mod1IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_1,
+        'Mod1IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_1,
         'IIB1InductorTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_1,
         'IIB1HeatSinkTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_1,
         'Mod2VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_2,
         'Mod2VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_2,
-        'Mod2IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_2,
-        'Mod2IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_2,
+        'Mod2IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_2,
+        'Mod2IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_2,
         'IIB2InductorTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_2,
         'IIB2HeatSinkTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_2,
         'Mod3VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_3,
         'Mod3VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_3,
-        'Mod3IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_3,
-        'Mod3IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_3,
+        'Mod3IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_3,
+        'Mod3IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_3,
         'IIB3InductorTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_3,
         'IIB3HeatSinkTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_3,
         'Mod4VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_4,
         'Mod4VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_4,
-        'Mod4IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_4,
-        'Mod4IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_4,
+        'Mod4IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_4,
+        'Mod4IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_4,
         'IIB4InductorTemperature-Mon':
             _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_4,
         'IIB4HeatSinkTemperature-Mon':
