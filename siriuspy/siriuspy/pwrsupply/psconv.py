@@ -1,7 +1,5 @@
 """Define PS Conv Epics Class."""
 
-import numpy as _np
-
 from epics import PV as _PV
 
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
