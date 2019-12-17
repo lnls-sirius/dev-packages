@@ -1,6 +1,5 @@
 """Define PS Conv Epics Class."""
 
-import time as _time
 import numpy as _np
 
 from epics import PV as _PV
@@ -235,15 +234,6 @@ class SConvEpics:
         check &= 'QS' not in psname.dev
         check &= 'Q' in psname.dev
         return check
-
-    @staticmethod
-    def _check_value_none(value):
-        if value is None:
-            return True
-        if isinstance(value, (tuple, list, _np.ndarray)) \
-                and None in value:
-            return True
-        return False
 
     def _create_connectors(self, proptype, connection_timeout):
         conn_dip, conn_fam = None, None
