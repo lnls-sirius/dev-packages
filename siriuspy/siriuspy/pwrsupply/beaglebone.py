@@ -169,9 +169,11 @@ class BeagleBone:
         strec = dict()
         strelims = dict()
         for psname in self.psnames:
-            strec[psname] = False
-            # NOTE: use 'Ref-Mon' proptype for all
-            if 'DCLink' not in psname:
+            if 'DCLink' in psname:
+                strec[psname] = True
+            else:
+                # NOTE: use 'Ref-Mon' proptype for all
+                strec[psname] = False
                 streconvs[psname] = _SConvEpics(psname, 'Ref-Mon')
                 strelims[psname] = [None, None]
         return streconvs, strec, strelims
