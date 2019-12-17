@@ -1,5 +1,8 @@
 """Define PS Conv Epics Class."""
 
+import time as _time
+import numpy as _np
+
 from epics import PV as _PV
 
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
@@ -203,42 +206,72 @@ class SConvEpics:
 
     def conv_current_2_strength_limits(self, currents):
         """Calculate strength limits."""
-        if not self._conn_dip:
+        # t0 = _time.time()
+        # get only min and max
+        if SConvEpics._check_value_none(currents):
+            return None
+        # t1 = _time.time()
+        # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+        # t0 = _time.time()
+        if isinstance(currents, (int, float)):
+            curr_min, curr_max = currents, currents
+        else:
+            curr_min, curr_max = min(currents), max(currents)
+        # t1 = _time.time()
+        # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+
+        # get normalizer
+        norm = self._norm_mag
+
+        if self._conn_dip is None:
             # dipole
-            strengths = self.conv_current_2_strength(currents)
-            min_max = min(strengths). max(strengths)
-            return min_max
+            # t0 = _time.time()
+            strengths_mag = norm.conv_current_2_strength((curr_min, curr_max))
+            # t1 = _time.time()
+            # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+            # t0 = _time.time()
+            if SConvEpics._check_value_none(strengths_mag):
+                return None
+            # t1 = _time.time()
+            # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+            return strengths_mag
 
         # gets min and max dipole strengths
-        norm = self._norm_mag
         dip_lims = self._conn_dip.limits
-        strengths_dipole = self._norm_dip.conv_current_2_strength(
-            currents=dip_lims)
-        kwargs_min = {'strengths_dipole': min(strengths_dipole)}
-        kwargs_max = {'strengths_dipole': max(strengths_dipole)}
+        strengths_dip = self._norm_dip.conv_current_2_strength(
+            (min(dip_lims), max(dip_lims)))
+        if SConvEpics._check_value_none(strengths_dip):
+            return None
+        kwargs_min = {'strengths_dipole': strengths_dip[1]}
+        kwargs_max = {'strengths_dipole': strengths_dip[0]}
 
-        if not self._conn_fam:
-            # is not a trim
-            strengths_min = \
-                norm.conv_current_2_strength(currents=currents, **kwargs_min)
-            strengths_max = \
-                norm.conv_current_2_strength(currents=currents, **kwargs_max)
-            min_max = (
-                min(*strengths_min, *strengths_max),
-                max(*strengths_min, *strengths_max))
-            return min_max
-        else:
-            # is a trim
+        if self._conn_fam is None:
+            # not a trim
+            strengths_mag = (
+                norm.conv_current_2_strength(curr_min, **kwargs_min),
+                norm.conv_current_2_strength(curr_max, **kwargs_max))
+            if SConvEpics._check_value_none(strengths_mag):
+                return None
+            # t1 = _time.time()
+            # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+            return strengths_mag
 
-            # gets min and max dipole strengths
-        norm = self._norm_mag
-        dip_lims = self._conn_dip.limits
-        strengths_dipole = self._norm_dip.conv_current_2_strength(
-            currents=dip_lims)
-        kwargs_min = {'strengths_dipole': min(strengths_dipole)}
-        kwargs_max = {'strengths_dipole': max(strengths_dipole)}
-
-        return min_max
+        # is a trim
+        fam_lims = self._conn_fam.limits
+        strengths_fam = self._norm_fam.conv_current_2_strength(
+            (min(fam_lims), max(fam_lims)))
+        if SConvEpics._check_value_none(strengths_fam):
+            return None
+        kwargs_min = kwargs_min.update(
+            {'strengths_family': strengths_fam[0]})
+        kwargs_max = kwargs_min.update(
+            {'strengths_family': strengths_fam[1]})
+        strengths_mag = (
+            norm.conv_current_2_strength(curr_min, **kwargs_min),
+            norm.conv_current_2_strength(curr_max, **kwargs_max))
+        # t1 = _time.time()
+        # print('conv_current_2_strengths_limit: {} us'.format(1e6*(t1-t0)))
+        return strengths_mag
 
     def _create_normalizer(self):
         norm_mag, norm_dip, norm_fam = None, None, None
@@ -272,33 +305,55 @@ class SConvEpics:
         check &= 'Q' in psname.dev
         return check
 
+    @staticmethod
+    def _check_value_none(value):
+        if value is None:
+            return True
+        if isinstance(value, (tuple, list, _np.ndarray)) \
+                and None in value:
+            return True
+        return False
+
     def _create_connectors(self, proptype, connection_timeout):
         conn_dip, conn_fam = None, None
         sub, dev = self._psname.sub, self._psname.dev
         if dev in {'B', 'B1B2'}:
+            # dipoles need no connectors
             pass
         elif self._is_trim(self._psname):
+            # trims need dipole and family connectors
             conn_dip = PSEpicsConn(
                 'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
             psname = self._psname.replace(sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
         elif self._psname.startswith('TB'):
+            # all TB ps other than dipoles need dipole connectors
             conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('BO'):
             if dev == 'InjKckr':
+                # BO injection kicker uses TB dipole normalizer
                 conn_dip = PSEpicsConn(
                     'TB-Fam:PS-B', proptype, connection_timeout)
             elif dev == 'EjeKckr':
+                # BO ejection kicker uses TS dipole normalizer
                 conn_dip = PSEpicsConn(
                     'TS-Fam:PS-B', proptype, connection_timeout)
             else:
+                # other BO ps use BO dipoles as normalizer
                 conn_dip = PSEpicsConn(
                     'BO-Fam:PS-B-1', proptype, connection_timeout)
         elif self._psname.startswith('TS'):
+            # all TS ps use TS dipole
             conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
         elif self._psname.startswith('SI'):
-            conn_dip = PSEpicsConn(
-                'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
+            if dev in {'InjDpKckr', 'InjNLKckr'}:
+                # SI injection ps use TS dipole
+                conn_dip = PSEpicsConn(
+                    'TS-Fam:PS-B', proptype, connection_timeout)
+            else:
+                # other SI ps use SI dipole
+                conn_dip = PSEpicsConn(
+                    'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
         return conn_dip, conn_fam
 
     def _get_kwargs(self,

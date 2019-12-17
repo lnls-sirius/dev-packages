@@ -46,7 +46,6 @@ class PSupply:
         self._timestamp_update_wfm = None
         self._timestamp_update_parameters = None
 
-
     @property
     def psbsmp(self):
         """Return PSBSMP communication objetc."""
