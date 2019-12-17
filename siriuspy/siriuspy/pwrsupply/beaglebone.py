@@ -115,6 +115,14 @@ class BeagleBone:
         """Check connection with PVs for strength calc."""
         return self._streconnected[device_name]
 
+    def strength_name(self, device_name):
+        """Return strength name."""
+        return self._strenames[device_name]
+
+    def strength_limits(self, device_name):
+        """Return strength limits."""
+        return self._strelims[device_name]
+
     def database(self, device_name):
         """Device database."""
         return self._databases[device_name]
