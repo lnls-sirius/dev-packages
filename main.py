@@ -335,25 +335,24 @@ class SOFB(_BaseClass):
         orig_kicks = self.correctors.get_strength()
         enbllist = self.matrix.corrs_enbllist
         nr_corrs = len(orig_kicks)
-        orborig = self.orbit.get_orbit(True)
+        orbzero = self.orbit.get_orbit(True) * 0.0
         for i in range(nr_corrs):
             if not self._measuring_respmat:
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
-                msg = 'Measurement aborted.'
+                msg = 'Measurement stopped.'
                 self._update_log(msg)
                 _log.info(msg)
-                return
+                for _ in range(i, nr_corrs):
+                    mat.append(orbzero)
+                break
 
             msg = '{0:d}/{1:d} -> {2:s}'.format(
                 i+1, nr_corrs, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
             if not enbllist[i]:
-                mat.append(0.0 * orborig)
-                msg = '   Not Enabled. Skipping...'
-                self._update_log(msg)
-                _log.info(msg)
+                mat.append(orbzero)
                 continue
 
             if i < self._csorb.NR_CH:
