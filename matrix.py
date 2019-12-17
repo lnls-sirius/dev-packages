@@ -139,7 +139,10 @@ class EpicsMatrix(BaseMatrix):
             self.select_items[key] = bkup
             return False
         self.select_items_extended[key] = newb
-        self.run_callbacks(self.selection_pv_names[key], new)
+        if new.size == 1:  # Deal with RF
+            self.run_callbacks(self.selection_pv_names[key], bool(new))
+        else:
+            self.run_callbacks(self.selection_pv_names[key], new)
         self.run_callbacks('NrSingValues-RB', self.num_sing_values)
         return False
 
