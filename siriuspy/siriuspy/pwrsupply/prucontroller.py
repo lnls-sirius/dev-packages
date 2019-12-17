@@ -79,7 +79,7 @@ class PRUController:
             pru, self._psmodel.name, self._device_ids, freq)
 
         # index of dev_id in self._device_ids for wfmref update
-        self._wfm_update = True
+        self._wfm_update = False
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
         # update time interval attribute
@@ -618,16 +618,12 @@ class PRUController:
                 # check anomalous response
                 if ack[dev_id] != _const_bsmp.ACK_OK:
                     print('PRUController: anomalous response !')
-                    self._udc[dev_id]._anomalous_response(
+                    self._udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
                         device_id=dev_id,
                         function_id=function_id,
                         data_len=len(data[dev_id]),
                         data=data[dev_id])
-                    # print('ack        : {}'.format(ack[dev_id]))
-                    # print('device_id  : {}'.format(dev_id))
-                    # print('function_id: {}'.format(function_id))
-                    # print('response   : {}'.format(data[dev_id]))
         except _SerialError:
             return None
         except TypeError:

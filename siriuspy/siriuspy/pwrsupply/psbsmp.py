@@ -148,7 +148,12 @@ class PSBSMP(_BSMP):
                          PSBSMP.CONST.F_CLOSE_LOOP):
             _time.sleep(PSBSMP._sleep_turn_onoff)
 
-        return response
+        if read_flag:
+            return response
+        else:
+            # TODO: This should be temporary. It is used for F_RESET_UDC.
+            # Firmware should change so that F_RESET_UDC returns ack.
+            return self.CONST_BSMP.ACK_OK, None
 
     def read_group_of_variables(
             self, group_id, timeout=_timeout_read_group_of_variables):
@@ -438,7 +443,7 @@ class PSBSMP(_BSMP):
                     # This is the expected behaviour when DSP is writting to buffer sample
                     return None
                 # anomalous response!
-                self._anomalous_response(
+                self.anomalous_response(
                     self.CONST_BSMP.CMD_REQUEST_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
@@ -479,7 +484,7 @@ class PSBSMP(_BSMP):
             if ack != self.CONST_BSMP.ACK_OK:
                 print(('BSMP response not OK in '
                        '_curve_bsmp_write: ack = 0x{:02X}!').format(ack))
-                self._anomalous_response(
+                self.anomalous_response(
                     self.CONST_BSMP.CMD_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
