@@ -53,7 +53,7 @@ class BeagleBone:
         self._create_dev2mirr_dev2timestamp_dict()
 
         # create strength conv epics objects
-        self._streconvs, self._streconnected = \
+        self._streconv, self._streconnected, self._strelims = \
             self._create_streconvs()
 
     @property
@@ -93,10 +93,14 @@ class BeagleBone:
             pvname = device_name + ':' + field
             return self._dev2mirror[device_name][pvname], updated
 
+    def get_strength_limits(self, device_name):
+        """Return strength lower and upper limits."""
+        return self._strelims[device_name]
+
     def write(self, device_name, field, value):
         """Write to device."""
         if field in {'Energy-SP', 'Kick-SP', 'KL-SP', 'SL-SP'}:
-            streconv = self._streconvs[device_name]
+            streconv = self._streconv[device_name]
             curr = streconv.conv_strength_2_current(value)
             self._controllers[device_name].write(
                 device_name, 'Current-SP', curr)
@@ -155,24 +159,30 @@ class BeagleBone:
     def _create_streconvs(self):
         streconvs = dict()
         strec = dict()
+        strelims = dict()
         for psname in self.psnames:
             strec[psname] = False
             # NOTE: use 'Ref-Mon' proptype for all
             if 'DCLink' not in psname:
                 streconvs[psname] = _SConvEpics(psname, 'Ref-Mon')
-        return streconvs, strec
+                strelims[psname] = [None, None]
+        return streconvs, strec, strelims
 
     def _update_strengths(self, psname):
         # t0 = _time.time()
         if 'DCLink' in psname:
             return
-        streconv = self._streconvs[psname]
+        streconv = self._streconv[psname]
+        strelims = self._strelims[psname]
         mirror = self._dev2mirror[psname]
+        dbase = self._databases[psname]
         curr0 = mirror[psname + ':Current-SP']
         curr1 = mirror[psname + ':Current-RB']
         curr2 = mirror[psname + ':CurrentRef-Mon']
         curr3 = mirror[psname + ':Current-Mon']
-        currs = (curr0, curr1, curr2, curr3)
+        curr4 = dbase['Current-SP']['lolo']
+        curr5 = dbase['Current-SP']['hihi']
+        currs = (curr0, curr1, curr2, curr3, curr4, curr5)
         strengths = streconv.conv_current_2_strength(currents=currs)
         if strengths is None or None in strengths:
             self._streconnected[psname] = False
@@ -183,8 +193,12 @@ class BeagleBone:
             mirror[propname + '-RB'] = strengths[1]
             mirror[propname + 'Ref-Mon'] = strengths[2]
             mirror[propname + '-Mon'] = strengths[3]
+            # update strength limits
+            strelims[0] = strengths[4]
+            strelims[1] = strengths[5]
         # t1 = _time.time()
         # print('update_strengths: {:.3f}'.format(1000*(t1-t0)))
+
 
 
 class BBBFactory:
