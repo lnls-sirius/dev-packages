@@ -38,7 +38,7 @@ class TestPRUInterface(TestCase):
         'wr_duration_reset',
     )
 
-    def test_PUBLIC_INTERFACE(self):
+    def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(util.check_public_interface_namespace(
             PRUInterface, TestPRUInterface.PUBLIC_INTERFACE))
