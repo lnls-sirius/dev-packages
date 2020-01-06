@@ -334,6 +334,8 @@ class SOFB(_BaseClass):
         mat = list()
         orig_kicks = self.correctors.get_strength()
         enbllist = self.matrix.corrs_enbllist
+        sum_enbld = sum(enbllist)
+        j = 1
         nr_corrs = len(orig_kicks)
         orbzero = _np.zeros(len(self.matrix.bpm_enbllist), dtype=float)
         for i in range(nr_corrs):
@@ -346,14 +348,14 @@ class SOFB(_BaseClass):
                 for _ in range(i, nr_corrs):
                     mat.append(orbzero)
                 break
-
             msg = '{0:d}/{1:d} -> {2:s}'.format(
-                i+1, nr_corrs, self.correctors.corrs[i].name)
+                j, sum_enbld, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
             if not enbllist[i]:
                 mat.append(orbzero)
                 continue
+            j += 1
 
             if i < self._csorb.NR_CH:
                 delta = self._meas_respmat_kick['ch']
