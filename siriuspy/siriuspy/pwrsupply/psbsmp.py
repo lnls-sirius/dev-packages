@@ -443,7 +443,7 @@ class PSBSMP(_BSMP):
                     # This is the expected behaviour when DSP is writting to buffer sample
                     return None
                 # anomalous response!
-                self.anomalous_response(
+                PSBSMP.anomalous_response(
                     self.CONST_BSMP.CMD_REQUEST_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
@@ -484,7 +484,7 @@ class PSBSMP(_BSMP):
             if ack != self.CONST_BSMP.ACK_OK:
                 print(('BSMP response not OK in '
                        '_curve_bsmp_write: ack = 0x{:02X}!').format(ack))
-                self.anomalous_response(
+                PSBSMP.anomalous_response(
                     self.CONST_BSMP.CMD_CURVE_BLOCK, ack,
                     curve_len=len(curve),
                     curve_id=curve_id,

@@ -141,7 +141,7 @@ class BSMP:
             if len(res.payload) == group.variables_size():
                 return _consts.ACK_OK, group.load_to_value(res.payload)
             # unexpected group variables size
-            return self.anomalous_response(
+            return BSMP.anomalous_response(
                 cmd, res.cmd,
                 group_id=group_id,
                 payload_len=len(res.payload),
