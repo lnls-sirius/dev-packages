@@ -348,13 +348,13 @@ class SOFB(_BaseClass):
                 for _ in range(i, nr_corrs):
                     mat.append(orbzero)
                 break
+            if not enbllist[i]:
+                mat.append(orbzero)
+                continue
             msg = '{0:d}/{1:d} -> {2:s}'.format(
                 j, sum_enbld, self.correctors.corrs[i].name)
             self._update_log(msg)
             _log.info(msg)
-            if not enbllist[i]:
-                mat.append(orbzero)
-                continue
             j += 1
 
             if i < self._csorb.NR_CH:
