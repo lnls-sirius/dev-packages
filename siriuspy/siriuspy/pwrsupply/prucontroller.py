@@ -321,7 +321,7 @@ class PRUController:
     def bsmp_scan(self):
         """Run scan one."""
         # select devices and variable group, defining the read group
-        # opertation to be performed
+        # operation to be performed
         operation = (self._bsmp_update, ())
         if not self._queue or operation != self._queue.last_operation:
             self._queue.append(operation)
@@ -335,6 +335,7 @@ class PRUController:
         """Run process once."""
         # process first operation in queue, if any.
         self._queue.process()
+
 
     # --- private methods: initializations ---
 
@@ -399,6 +400,7 @@ class PRUController:
 
             # wait for time_interval
             _sleep(self._scan_interval)
+
 
     def _loop_process(self):
         while self._running:
@@ -552,7 +554,7 @@ class PRUController:
         # update variables
         for psupply in self._psupplies.values():
             try:
-                psupply.update_variables()
+                psupply.update_variables(interval=0.0)
             except _SerialError:
                 # no serial connection !
                 pass
