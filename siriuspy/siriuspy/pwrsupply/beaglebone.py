@@ -17,7 +17,6 @@ from ..search import PSSearch as _PSSearch
 from ..thread import DequeThread as _DequeThread
 from ..pwrsupply.data import PSData as _PSData
 from .pru import PRU as _PRU
-from .pru import PRUSim as _PRUSim
 from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
 from .fields import Setpoint as _Setpoint
@@ -193,16 +192,13 @@ class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def create(bbbname=None, simulate=False):
+    def create(bbbname=None):
         """Return BBB object."""
         # get current timestamp
         timestamp = _time.time()
 
         # create PRU
-        if simulate:
-            pru = _PRUSim()
-        else:
-            pru = _PRU(bbbname=bbbname)
+        pru = _PRU(bbbname=bbbname)
 
         # create DequeThread
         prucqueue = _DequeThread()
