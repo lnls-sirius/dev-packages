@@ -335,7 +335,7 @@ class SOFB(_BaseClass):
         orig_kicks = self.correctors.get_strength()
         enbllist = self.matrix.corrs_enbllist
         nr_corrs = len(orig_kicks)
-        orbzero = self.orbit.get_orbit(True) * 0.0
+        orbzero = _np.zeros(len(self.matrix.bpm_enbllist), dtype=float)
         for i in range(nr_corrs):
             if not self._measuring_respmat:
                 self.run_callbacks(
