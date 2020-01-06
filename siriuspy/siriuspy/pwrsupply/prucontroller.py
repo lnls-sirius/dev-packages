@@ -107,7 +107,6 @@ class PRUController:
         # starts communications
         self._bsmp_init_communication()
 
-
     # --- properties to read and set controller state and access functions ---
 
     @property
@@ -336,7 +335,6 @@ class PRUController:
         # process first operation in queue, if any.
         self._queue.process()
 
-
     # --- private methods: initializations ---
 
     @staticmethod
@@ -400,7 +398,6 @@ class PRUController:
 
             # wait for time_interval
             _sleep(self._scan_interval)
-
 
     def _loop_process(self):
         while self._running:
