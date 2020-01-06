@@ -37,6 +37,7 @@ class TestBSMPAPI(TestCase):
         'curve_block',
         'recalculate_curve_checksum',
         'execute_function',
+        'anomalous_response',
     )
 
     def test_api(self):

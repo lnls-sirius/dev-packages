@@ -59,6 +59,12 @@ class PSEpicsConn:
             value1 = self._pvs[0].value
             return value1
 
+    @value.setter
+    def value(self, current):
+        """Set current."""
+        for pvobj in self._pvs:
+            pvobj.value = current
+
     @property
     def limits(self):
         """Return PV limits."""
@@ -70,12 +76,6 @@ class PSEpicsConn:
             self._pvs[0].upper_warning_limit,
             self._pvs[0].upper_alarm_limit)
         return limits
-
-    @value.setter
-    def value(self, setpoint):
-        """Set voltage."""
-        for pvobj in self._pvs:
-            pvobj.value = setpoint
 
     def _check_psname(self, psname):
         psname = _SiriusPVName(psname)
@@ -104,7 +104,7 @@ class PSEpicsConn:
         else:
             pvname = psname + ':' + self.PROPNAME + self._proptype
             pvobj = _PV(self._prefix + pvname,
-                connection_timeout=self._connection_timeout)
+                        connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         return pvs
 
@@ -189,10 +189,12 @@ class SConvEpics:
             norm.conv_current_2_strength(currents=currents, **kwargs)
         return strengths
 
-    def conv_strength_2_current(self, strengths):
+    def conv_strength_2_current(self, strengths,
+                                strengths_dipole=None,
+                                strengths_family=None):
         """Convert strengths to currents."""
         norm = self._norm_mag
-        kwargs = self._get_kwargs()
+        kwargs = self._get_kwargs(strengths_dipole, strengths_family)
         if kwargs is None:
             return None
         currents = \
