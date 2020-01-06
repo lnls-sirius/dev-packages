@@ -60,7 +60,7 @@ class BSMP:
             return _consts.ACK_OK, groupdata
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     def query_group_of_variables(self, group_id, timeout):
         """Return id of the variables in the given group."""
@@ -80,7 +80,7 @@ class BSMP:
             return _consts.ACK_OK, list(map(ord, res.payload))
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     def query_list_of_curves(self):
         """Consult curves_list. Command 0x08."""
@@ -118,7 +118,7 @@ class BSMP:
             return None, None
 
         # anomalous response
-        return BSMP._anomalous_response(
+        return BSMP.anomalous_response(
             cmd, res.cmd, var_id=var_id, payload=res.payload)
 
     def read_group_of_variables(self, group_id, timeout):
@@ -141,7 +141,7 @@ class BSMP:
             if len(res.payload) == group.variables_size():
                 return _consts.ACK_OK, group.load_to_value(res.payload)
             # unexpected group variables size
-            return self._anomalous_response(
+            return BSMP.anomalous_response(
                 cmd, res.cmd,
                 group_id=group_id,
                 payload_len=len(res.payload),
@@ -149,7 +149,7 @@ class BSMP:
                 )
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     # 0x2_
     def write_variable(self, var_id, value):
@@ -205,7 +205,7 @@ class BSMP:
             return None, None
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     def remove_all_groups_of_variables(self, timeout):
         """Remove all groups."""
@@ -227,7 +227,7 @@ class BSMP:
             return _consts.ACK_OK, None
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd, payload=res.payload)
+        return BSMP.anomalous_response(cmd, res.cmd, payload=res.payload)
 
     # 0x4_
     def request_curve_block(self, curve_id, block, timeout, print_error=True):
@@ -268,7 +268,7 @@ class BSMP:
             return _consts.ACK_OK, data_float
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd, print_error=print_error)
+        return BSMP.anomalous_response(cmd, res.cmd, print_error=print_error)
 
     def curve_block(self, curve_id, block, value, timeout):
         """Write to curve block."""
@@ -290,7 +290,7 @@ class BSMP:
             return res.cmd, res.payload
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     def recalculate_curve_checksum(self, curve_id, timeout):
         """Recalculate curve checksum."""
@@ -309,7 +309,7 @@ class BSMP:
             return res.cmd, res.payload
 
         # anomalous response
-        return BSMP._anomalous_response(cmd, res.cmd)
+        return BSMP.anomalous_response(cmd, res.cmd)
 
     # 0x5_
     def execute_function(self, func_id, input_val=None,
@@ -350,11 +350,11 @@ class BSMP:
                 return res.cmd, res.payload[0]
 
         # anomalous response
-        return BSMP._anomalous_response(
+        return BSMP.anomalous_response(
             cmd, res.cmd, func_id=func_id, print_error=print_error)
 
     @staticmethod
-    def _anomalous_response(cmd, ack, **kwargs):
+    def anomalous_response(cmd, ack, **kwargs):
         # response with error
         if _consts.ACK_OK < ack <= _consts.ACK_RESOURCE_BUSY:
             if 'print_error' not in kwargs or kwargs['print_error']:

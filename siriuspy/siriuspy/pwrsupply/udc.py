@@ -2,7 +2,6 @@
 
 import time as _time
 from .psbsmp import PSBSMPFactory as _PSBSMPFactory
-from .psmodel import PSModelFactory as _PSModelFactory
 from . import prucparms as _prucparms
 
 
@@ -111,14 +110,9 @@ class UDC:
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
-        model = _PSModelFactory.create(self._psmodel)
-        bsmpsim_class = model.simulation_class
         for dev_id in self._device_ids:
-            if self._pru.simulated:
-                bsmp[dev_id] = bsmpsim_class(self._pru)
-            else:
-                bsmp[dev_id] = _PSBSMPFactory.create(
-                    self._psmodel, dev_id, self._pru)
+            bsmp[dev_id] = _PSBSMPFactory.create(
+                self._psmodel, dev_id, self._pru)
         return bsmp
 
     def __getitem__(self, index):

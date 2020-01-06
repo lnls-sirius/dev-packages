@@ -1,7 +1,6 @@
 """Power Supply Model classes."""
 
 from . import bsmp as _psbsmp
-from . import psbsmpsim as _psbsmpsim
 from . import fields as _fields
 from . import functions as _functions
 from . import controller as _controller
@@ -161,11 +160,6 @@ class _PSModel:
         raise NotImplementedError
 
     @property
-    def simulation_class(self):
-        """PRU Controller parameters."""
-        raise NotImplementedError
-
-    @property
     def database(self):
         """Return database."""
         raise NotImplementedError
@@ -255,11 +249,6 @@ class PSModelFBP(_PSModel):
         """Model entities."""
         return _psbsmp.EntitiesFBP()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP
-
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
         _c = _psbsmp.ConstFBP
@@ -344,11 +333,6 @@ class PSModelFBP_FOFB(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFBP()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP
-
 
 class PSModelFAC_DCDC(PSModelFBP):
     """FAC power supply model."""
@@ -382,11 +366,6 @@ class PSModelFAC_DCDC(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_DCDC
 
 
 class PSModelFAC_2S_DCDC(PSModelFBP):
@@ -437,11 +416,6 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2S_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2S_DCDC
 
 
 class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
@@ -548,11 +522,6 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2P4S_DCDC()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2P4S_DCDC
-
 
 class PSModelFAP(PSModelFBP):
     """FAP power supply model."""
@@ -587,11 +556,6 @@ class PSModelFAP(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFAP()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP
-
 
 class PSModelFAP_4P(PSModelFBP):
     """FAP_4P power supply model."""
@@ -610,7 +574,7 @@ class PSModelFAP_4P(PSModelFBP):
         'Current1-Mon': _psbsmp.ConstFAP_4P.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAP_4P.V_I_LOAD2,
         'DCLink1Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_1,
-        'DCLink2Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_1,
+        'DCLink2Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_2,
         'DCLink3Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_3,
         'DCLink4Voltage-Mon': _psbsmp.ConstFAP_4P.V_V_DCLINK_4,
         'Mod1Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_1,
@@ -634,11 +598,6 @@ class PSModelFAP_4P(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFAP_4P()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP_4P
-
 
 class PSModelFAP_2P2S(PSModelFBP):
     """FAP_2P2S power supply model."""
@@ -652,14 +611,61 @@ class PSModelFAP_2P2S(PSModelFBP):
         'Current-Mon':  _psbsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAP_2P2S.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAP_2P2S.V_I_LOAD2,
-        'IIB1InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_1,
-        'IIB1HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_1,
-        'IIB2InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_2,
-        'IIB2HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_2,
-        'IIB3InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_3,
-        'IIB3HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_3,
-        'IIB4InductorTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_4,
-        'IIB4HeatSinkTemperature-Mon': _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_4,
+        'Arm1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_ARM_1,
+        'Arm2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_ARM_2,
+        'Mod1IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_1,
+        'Mod1IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_1,
+        'Mod2IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_2,
+        'Mod2IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_2,
+        'Mod3IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_3,
+        'Mod3IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_3,
+        'Mod4IGBT1Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_4,
+        'Mod4IGBT2Current-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_4,
+        'DCLink1Voltage-Mon': _psbsmp.ConstFAP_2P2S.V_V_DCLINK_1,
+        'DCLink2Voltage-Mon': _psbsmp.ConstFAP_2P2S.V_V_DCLINK_2,
+        'DCLink3Voltage-Mon': _psbsmp.ConstFAP_2P2S.V_V_DCLINK_3,
+        'DCLink4Voltage-Mon': _psbsmp.ConstFAP_2P2S.V_V_DCLINK_4,
+        'PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_MEAN,
+        'Mod1IGBT1PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_1_1,
+        'Mod1IGBT2PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_2_1,
+        'Mod2IGBT1PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_1_2,
+        'Mod2IGBT2PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_2_2,
+        'Mod3IGBT1PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_1_3,
+        'Mod3IGBT2PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_2_3,
+        'Mod4IGBT1PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_1_4,
+        'Mod4IGBT2PWMDutyCycle-Mon': _psbsmp.ConstFAP_2P2S.V_DUTY_CYCLE_2_4,
+        'Mod1VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_1,
+        'Mod1VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_1,
+        'Mod1IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_1,
+        'Mod1IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_1,
+        'IIB1InductorTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_1,
+        'Mod2VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_2,
+        'Mod2VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_2,
+        'Mod2IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_2,
+        'Mod2IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_2,
+        'IIB2InductorTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_2,
+        'Mod3VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_3,
+        'Mod3VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_3,
+        'Mod3IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_3,
+        'Mod3IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_3,
+        'IIB3InductorTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_3,
+        'IIB3HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_3,
+        'Mod4VoltageInput-Mon': _psbsmp.ConstFAP_2P2S.V_V_INPUT_IIB_4,
+        'Mod4VoltageOutput-Mon': _psbsmp.ConstFAP_2P2S.V_V_OUTPUT_IIB_4,
+        'Mod4IGBT1IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_1_IIB_4,
+        'Mod4IGBT2IIBCurrent-Mon': _psbsmp.ConstFAP_2P2S.V_I_IGBT_2_IIB_4,
+        'IIB4InductorTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_INDUCTOR_IIB_4,
+        'IIB4HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_2P2S.V_TEMP_HEATSINK_IIB_4,
         'Intlk1IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_1,
         'Intlk2IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_2,
         'Intlk3IIB-Mon': _psbsmp.ConstFAP_2P2S.V_IIB_INTERLOCKS_3,
@@ -685,11 +691,6 @@ class PSModelFAP_2P2S(PSModelFBP):
         """Model entities."""
         return _psbsmp.EntitiesFAP_2P2S()
 
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAP_2P2S
-
 
 class PSModelCommercial(PSModelFAC_DCDC):
     """Commercial power supply model."""
@@ -708,12 +709,6 @@ class PSModelCommercial(PSModelFAC_DCDC):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_DCDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_DCDC
-
 
 # --- ACDC ---
 
@@ -748,11 +743,6 @@ class PSModelFBP_DCLink(_PSModel):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFBP_DCLink()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FBP_DCLink
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -816,11 +806,6 @@ class PSModelFAC_2S_ACDC(_PSModel):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2S_ACDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2S_ACDC
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -898,11 +883,6 @@ class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
     def entities(self):
         """Model entities."""
         return _psbsmp.EntitiesFAC_2P4S_ACDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _psbsmpsim.FAC_2P4S_ACDC
 
 
 # --- Factory ---
