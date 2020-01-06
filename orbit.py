@@ -174,26 +174,29 @@ class EpicsOrbit(BaseOrbit):
 
         if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
             orbs = self.smooth_mtorb
+            raw_orbs = self.raw_orbs
             getorb = self._get_orbit_multiturn
         elif self._mode == self._csorb.SOFBMode.SinglePass:
             orbs = self.smooth_sporb
+            raw_orbs = self.raw_sporbs
             getorb = self._get_orbit_singlepass
         elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
             orbs = self.smooth_orb
+            raw_orbs = self.raw_mtorbs
             getorb = self._get_orbit_online
 
         for _ in range(3 * self._smooth_npts):
-            if orbs['X'] is None or orbs['Y'] is None:
+            isnone = orbs['X'] is None or orbs['Y'] is None
+            if isnone or len(raw_orbs['X']) < self._smooth_meth:
                 _time.sleep(1/self._acqrate)
                 continue
             orbx, orby = getorb(orbs)
             break
         else:
-            msg = 'ERR: get orbit function timeout.'
+            msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)
             _log.error(msg[5:])
-            orbx = refx
-            orby = refy
+            orbx, orby = refx, refy
         return _np.hstack([orbx-refx, orby-refy])
 
     def _get_orbit_online(self, orbs):
