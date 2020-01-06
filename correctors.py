@@ -217,7 +217,7 @@ class Septum(Corrector):
         pvrb = pvsp.substitute(propty_suffix='RB')
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
-        self._nominalkick = 99.4  # mrad
+        self._nominalkick = 98.55  # mrad
         self._config_ok_vals = {
             'Pulse': 1,
             'PwrState': _PSConst.PwrStateSel.On}
