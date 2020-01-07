@@ -87,18 +87,18 @@ class App:
         if reason == 'BuffSizeMax-SP':
             self._update_buffsizemax(value)
             self.driver.setParam('BuffSizeMax-RB', self._buffer_max_size)
-            self.driver.updatePVs()
+            self.driver.updatePV('BuffSizeMax-RB')
             status = True
         elif reason == 'SplIntvl-SP':
             self._update_splintvl(value)
             self.driver.setParam('SplIntvl-RB', self._sampling_time)
-            self.driver.updatePVs()
+            self.driver.updatePV('SplIntvl-RB')
             status = True
         elif reason == 'BuffRst-Cmd':
             self._clear_buffer()
             self._rstbuff_cmd_count += 1
             self.driver.setParam('BuffRst-Cmd', self._rstbuff_cmd_count)
-            self.driver.updatePVs()
+            self.driver.updatePV('BuffRst-Cmd')
             status = True
         elif reason == 'BuffAutoRst-Sel':
             self._update_buffautorst_mode(value)
@@ -108,7 +108,7 @@ class App:
         elif reason == 'LtFitMode-Sel':
             self._mode = value
             self.driver.setParam('LtFitMode-Sts', value)
-            self.driver.updatePVs()
+            self.driver.updatePV('LtFitMode-Sts')
             status = True
         return status
 
@@ -190,8 +190,9 @@ class App:
                     self._lifetime = fun(timestamp, value)
 
             self.driver.setParam('Lifetime-Mon', self._lifetime)
+            self.driver.updatePV('Lifetime-Mon')
             self.driver.setParam('BuffSize-Mon', len(value))
-            self.driver.updatePVs()
+            self.driver.updatePV('BuffSize-Mon')
 
     def _buffautorst_check(self):
         """Choose mode and check situations to clear internal buffer.
