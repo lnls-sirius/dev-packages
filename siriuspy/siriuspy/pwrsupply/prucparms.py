@@ -20,10 +20,7 @@ class _PRUCParms:
 class PRUCParmsFBP(_PRUCParms):
     """FBP-specific PRUC parameters."""
 
-    # NOTE: this freq has been reduced in order to minimize cpu use.
-    # It should be raised again when more computer power is added
-    # to the grid.
-    FREQ_SCAN = 5.0  # [Hz]
+    FREQ_SCAN = 10.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FBP')
