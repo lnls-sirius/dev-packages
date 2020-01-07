@@ -225,7 +225,7 @@ class SIApp:
         self._current_value = None
         self._current_13C4_value = None
         self._current_14C4_value = None
-        self._dcct_mode = _Const.DCCT.Avg
+        self._dcct_mode = _Const.DCCT.DCCT13C4
         self._dcctfltcheck_mode = _Const.DCCTFltCheck.Off
         self._reliablemeas_13C4_value = 0
         self._reliablemeas_14C4_value = 0
@@ -314,16 +314,15 @@ class SIApp:
             self._dcct_mode = value
 
     def _update_dcct_mode_from_reliablemeas(self):
-        mode = self._dcct_mode
-        if (self._reliablemeas_13C4_value == 0
-                and self._reliablemeas_14C4_value == 0):
+        if (self._reliablemeas_13C4_value == 0 and
+                self._reliablemeas_14C4_value == 0):
             mode = _Const.DCCT.Avg
-        elif (self._reliablemeas_13C4_value == 0
-                and self._reliablemeas_14C4_value != 0):
+        elif self._reliablemeas_13C4_value == 0:
             mode = _Const.DCCT.DCCT13C4
-        elif (self._reliablemeas_13C4_value != 0
-                and self._reliablemeas_14C4_value == 0):
+        elif self._reliablemeas_14C4_value == 0:
             mode = _Const.DCCT.DCCT14C4
+        else:
+            mode = self._dcct_mode
         if mode != self._dcct_mode:
             self._dcct_mode = mode
             self.driver.setParam('DCCT-Sts', self._dcct_mode)
