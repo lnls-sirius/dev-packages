@@ -1,7 +1,7 @@
 """Main Module of the IOC Logic."""
 
 import time as _time
-import numpy as _numpy
+import numpy as _np
 import epics as _epics
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from siriuspy.csdevice.currinfo import Const as _Const
@@ -42,9 +42,10 @@ class App:
             self._PREFIX_VACA+'AS-RaMO:TI-EVG:InjectionEvt-Sts',
             callback=self._callback_get_injstate)
 
+        self._mode = _Const.Fit.Exponential
         self._lifetime = 0
         self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = _Const.BuffAutoRst.DCurrCheck
+        self._buffautorst_mode = _Const.BuffAutoRst.Off
         if self._injstate_pv.connected:
             self._is_injecting = self._injstate_pv.value
             self._changeinjstate_timestamp = self._injstate_pv.timestamp
@@ -52,8 +53,8 @@ class App:
             self._is_injecting = 0
             self._changeinjstate_timestamp = _time.time() - 0.5
         self._dcurrfactor = 0.01
-        self._sampling_time = 10.0
-        self._buffer_max_size = 0
+        self._sampling_time = 2000.0
+        self._buffer_max_size = 1000
         self._current_buffer = _SiriusPVTimeSerie(
                                pv=self._current_pv,
                                time_window=self._sampling_time,
@@ -94,12 +95,19 @@ class App:
             self.driver.updatePVs()
             status = True
         elif reason == 'BuffRst-Cmd':
+            self._clear_buffer()
             self._rstbuff_cmd_count += 1
             self.driver.setParam('BuffRst-Cmd', self._rstbuff_cmd_count)
-            self._clear_buffer()
+            self.driver.updatePVs()
+            status = True
         elif reason == 'BuffAutoRst-Sel':
             self._update_buffautorst_mode(value)
             self.driver.setParam('BuffAutoRst-Sts', self._buffautorst_mode)
+            self.driver.updatePVs()
+            status = True
+        elif reason == 'LtFitMode-Sel':
+            self._mode = value
+            self.driver.setParam('LtFitMode-Sts', value)
             self.driver.updatePVs()
             status = True
         return status
@@ -128,18 +136,44 @@ class App:
                                           self._changeinjstate_timestamp)
 
         def _lsf_exponential(_timestamp, _value):
-            timestamp = _numpy.array(_timestamp)
-            value = _numpy.array(_value)
-            value = _numpy.log(value)
+            timestamp = _np.array(_timestamp)
+            value = _np.array(_value)
+            value = _np.log(value)
             n = len(_timestamp)
-            x = _numpy.sum(timestamp)
-            x2 = _numpy.sum(_numpy.power(timestamp, 2))
-            y = _numpy.sum(value)
-            xy = _numpy.sum(timestamp*value)
-            b = -(n*x2 - x*x)/(n*xy - x*y)
-            # a  = _numpy.exp((x2*y - xy*x)/(n*x2 - x*x))
-            # model = a*_numpy.exp(timestamp*b)
-            return b
+            x = _np.sum(timestamp)
+            y = _np.sum(value)
+            x2 = _np.sum(_np.power(timestamp, 2))
+            xy = _np.sum(timestamp*value)
+            b = (n*xy - x*y)/(n*x2 - x*x)
+            lt = - 1/b
+            return lt
+
+        def _lsf_linear(_timestamp, _value):
+            timestamp = _np.array(_timestamp)
+            value = _np.array(_value)
+            n = len(_value)
+
+            # for exponential fit
+            timestamp_exp = timestamp
+            value_exp = _np.log(value)
+            x = _np.sum(timestamp_exp)
+            y = _np.sum(value_exp)
+            x2 = _np.sum(_np.power(timestamp_exp, 2))
+            xy = _np.sum(timestamp_exp*value_exp)
+            a = _np.exp((x2*y - xy*x)/(n*x2 - x*x))
+
+            # for linear fit
+            timestamp_lin = timestamp - _np.mean(timestamp)
+            value_lin = value - _np.mean(value)
+            x2 = _np.sum(_np.power(timestamp_lin, 2))
+            xy = _np.sum(timestamp_lin*value_lin)
+            b = xy/x2
+
+            lt = - a/b
+            return lt
+
+        fun = _lsf_exponential if self._mode == _Const.Fit.Exponential \
+            else _lsf_linear
 
         acquireflag = self._current_buffer.acquire()
         if acquireflag:
@@ -150,10 +184,10 @@ class App:
             [timestamp, value] = self._current_buffer.serie
             if self._buffer_max_size > 0:
                 if len(value) > min(20, self._buffer_max_size/2):
-                    self._lifetime = _lsf_exponential(timestamp, value)
+                    self._lifetime = fun(timestamp, value)
             else:
                 if len(value) > 20:
-                    self._lifetime = _lsf_exponential(timestamp, value)
+                    self._lifetime = fun(timestamp, value)
 
             self.driver.setParam('Lifetime-Mon', self._lifetime)
             self.driver.setParam('BuffSize-Mon', len(value))
