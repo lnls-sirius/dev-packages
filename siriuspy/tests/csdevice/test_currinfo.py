@@ -96,9 +96,13 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertTrue('DCurrFactor-Cte' in db)
         self.assertTrue('LtFitMode-Sel' in db)
         self.assertTrue('LtFitMode-Sts' in db)
+        self.assertTrue('CurrOffset-SP' in db)
+        self.assertTrue('CurrOffset-RB' in db)
 
         # PVs units
         self.assertEqual(db['Lifetime-Mon']['unit'], 's')
         self.assertEqual(db['SplIntvl-SP']['unit'], 's')
         self.assertEqual(db['SplIntvl-RB']['unit'], 's')
         self.assertEqual(db['DCurrFactor-Cte']['unit'], 'mA')
+        self.assertEqual(db['CurrOffset-SP']['unit'], 'mA')
+        self.assertEqual(db['CurrOffset-RB']['unit'], 'mA')

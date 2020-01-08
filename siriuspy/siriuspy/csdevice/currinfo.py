@@ -119,6 +119,10 @@ def get_lifetime_database():
                             'value': _c.Fit.Exponential},
         'LtFitMode-Sts':   {'type': 'enum', 'enums': _et.FITTYP,
                             'value': _c.Fit.Exponential},
+        'CurrOffset-SP':   {'type': 'float', 'value': 0.0, 'prec': 3,
+                            'unit': 'mA'},
+        'CurrOffset-RB':   {'type': 'float', 'value': 0.0, 'prec': 3,
+                            'unit': 'mA'},
         }
     pvs_db = _cutil.add_pvslist_cte(pvs_db)
     return pvs_db
