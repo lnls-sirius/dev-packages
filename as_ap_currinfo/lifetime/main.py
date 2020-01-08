@@ -56,11 +56,11 @@ class App:
         self._sampling_time = 2000.0
         self._buffer_max_size = 1000
         self._current_buffer = _SiriusPVTimeSerie(
-                               pv=self._current_pv,
-                               time_window=self._sampling_time,
-                               nr_max_points=None,
-                               time_min_interval=0.0,
-                               mode=0)
+            pv=self._current_pv,
+            time_window=self._sampling_time,
+            nr_max_points=self._buffer_max_size,
+            time_min_interval=0.0,
+            mode=0)
 
     @staticmethod
     def init_class():
