@@ -104,7 +104,7 @@ def get_lifetime_database():
                             'value': 1000},
         'BuffSizeMax-RB':  {'type': 'int', 'value': 1000},
         'BuffSize-Mon':	   {'type': 'int', 'value': 0},
-        'SplIntvl-SP':     {'type': 'int', 'unit': 's',  'lolim': 0,
+        'SplIntvl-SP':     {'type': 'int', 'unit': 's', 'lolim': 0,
                             'hilim': 360000, 'low': 0, 'high': 360000,
                             'lolo': 0, 'hihi': 360000, 'value': 2000},
         'SplIntvl-RB':	   {'type': 'int', 'value': 2000, 'unit': 's'},
@@ -120,9 +120,13 @@ def get_lifetime_database():
         'LtFitMode-Sts':   {'type': 'enum', 'enums': _et.FITTYP,
                             'value': _c.Fit.Exponential},
         'CurrOffset-SP':   {'type': 'float', 'value': 0.0, 'prec': 3,
-                            'unit': 'mA'},
+                            'unit': 'mA', 'lolim': -1000.0, 'hilim': 1000.0,
+                            'low': -1000.0, 'high': 1000.0, 'lolo': -1000.0,
+                            'hihi': 1000.0},
         'CurrOffset-RB':   {'type': 'float', 'value': 0.0, 'prec': 3,
-                            'unit': 'mA'},
+                            'unit': 'mA', 'lolim': -1000.0, 'hilim': 1000.0,
+                            'low': -1000.0, 'high': 1000.0, 'lolo': -1000.0,
+                            'hihi': 1000.0},
         }
     pvs_db = _cutil.add_pvslist_cte(pvs_db)
     return pvs_db
