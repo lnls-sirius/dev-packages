@@ -134,47 +134,6 @@ class App:
     def _callback_calclifetime(self, timestamp, **kws):
         self._dtime_lastchangeinjstate = (timestamp -
                                           self._changeinjstate_timestamp)
-
-        def _lsf_exponential(_timestamp, _value):
-            timestamp = _np.array(_timestamp)
-            value = _np.array(_value)
-            value = _np.log(value)
-            n = len(_timestamp)
-            x = _np.sum(timestamp)
-            y = _np.sum(value)
-            x2 = _np.sum(_np.power(timestamp, 2))
-            xy = _np.sum(timestamp*value)
-            b = (n*xy - x*y)/(n*x2 - x*x)
-            lt = - 1/b
-            return lt
-
-        def _lsf_linear(_timestamp, _value):
-            timestamp = _np.array(_timestamp)
-            value = _np.array(_value)
-            n = len(_value)
-
-            # for exponential fit
-            timestamp_exp = timestamp
-            value_exp = _np.log(value)
-            x = _np.sum(timestamp_exp)
-            y = _np.sum(value_exp)
-            x2 = _np.sum(_np.power(timestamp_exp, 2))
-            xy = _np.sum(timestamp_exp*value_exp)
-            a = _np.exp((x2*y - xy*x)/(n*x2 - x*x))
-
-            # for linear fit
-            timestamp_lin = timestamp - _np.mean(timestamp)
-            value_lin = value - _np.mean(value)
-            x2 = _np.sum(_np.power(timestamp_lin, 2))
-            xy = _np.sum(timestamp_lin*value_lin)
-            b = xy/x2
-
-            lt = - a/b
-            return lt
-
-        fun = _lsf_exponential if self._mode == _Const.Fit.Exponential \
-            else _lsf_linear
-
         acquireflag = self._current_buffer.acquire()
         if acquireflag:
             if self._buffautorst_mode != _Const.BuffAutoRst.Off:
@@ -182,12 +141,17 @@ class App:
 
             # Check min number of points in buffer to calculate lifetime
             [timestamp, value] = self._current_buffer.serie
+            timestamp = _np.array(timestamp)
+            value = _np.array(value)
+            fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
             if self._buffer_max_size > 0:
                 if len(value) > min(20, self._buffer_max_size/2):
-                    self._lifetime = fun(timestamp, value)
+                    self._lifetime = \
+                        self._least_squares_fit(timestamp, value, fit=fit)
             else:
                 if len(value) > 20:
-                    self._lifetime = fun(timestamp, value)
+                    self._lifetime = \
+                        self._least_squares_fit(timestamp, value, fit=fit)
 
             self.driver.setParam('Lifetime-Mon', self._lifetime)
             self.driver.updatePV('Lifetime-Mon')
@@ -224,3 +188,21 @@ class App:
         else:
             self._changeinjstate_timestamp = timestamp
             self._is_injecting = 0
+
+    @staticmethod
+    def _least_squares_fit(timestamp, value, fit='exp'):
+        if fit == 'exp':
+            value = _np.log(value)
+        n = len(timestamp)
+        x = _np.sum(timestamp)
+        y = _np.sum(value)
+        x2 = _np.sum(_np.power(timestamp, 2))
+        xy = _np.sum(timestamp*value)
+        a = (x2*y - xy*x)/(n*x2 - x*x)
+        b = (n*xy - x*y)/(n*x2 - x*x)
+
+        if fit == 'exp':
+            lt = - 1/b
+        else:
+            lt = - a/b
+        return lt
