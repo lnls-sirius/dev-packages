@@ -82,7 +82,7 @@ class BOApp:
         else:
             self._intcurrent3gev = data[1][0]
         self.driver.setParam(intcurr_ppty, self._intcurrent3gev)
-        self.driver.updatePVs()
+        self.driver.updatePV(intcurr_ppty)
 
         # PVs
         self._rawreadings_pv = _epics.PV(
@@ -125,7 +125,7 @@ class BOApp:
             if self._currthold_lolim < value < self._currthold_hilim:
                 self._currthold = value
                 self.driver.setParam('CurrThold-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('CurrThold-RB')
                 status = True
         return status
 
@@ -147,7 +147,7 @@ class BOApp:
         self._last_raw_reading = value
         self._update_pvs()
         self.driver.setParam('RawReadings-Mon', value)
-        self.driver.updatePVs()
+        self.driver.updatePV('RawReadings-Mon')
 
     # ----- auxiliar methods -----
 
@@ -260,7 +260,7 @@ class SIApp:
 
         # set initial pv values
         self.driver.setParam('Charge-Mon', self._charge)
-        self.driver.updatePVs()
+        self.driver.updatePV('Charge-Mon')
 
     @staticmethod
     def init_class():
@@ -287,7 +287,7 @@ class SIApp:
                 inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
                 self._charge += inc_charge
                 self.driver.setParam('Charge-Mon', self._charge)
-                self.driver.updatePVs()
+                self.driver.updatePV('Charge-Mon')
                 value = self._charge
         return value
 
@@ -298,13 +298,13 @@ class SIApp:
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
                 self._update_dcct_mode(value)
                 self.driver.setParam('DCCT-Sts', self._dcct_mode)
+                self.driver.updatePV('DCCT-Sts')
                 status = True
         elif reason == 'DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.driver.setParam('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
+            self.driver.updatePV('DCCTFltCheck-Sts')
             status = True
-        if status:
-            self.driver.updatePVs()
         return status
 
     # ----- handle writes -----
@@ -326,7 +326,7 @@ class SIApp:
         if mode != self._dcct_mode:
             self._dcct_mode = mode
             self.driver.setParam('DCCT-Sts', self._dcct_mode)
-            self.driver.updatePVs()
+            self.driver.updatePV('DCCT-Sts')
 
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
@@ -350,7 +350,7 @@ class SIApp:
 
         # update pvs
         self.driver.setParam('Current-Mon', self._current_value)
-        self.driver.updatePVs()
+        self.driver.updatePV('Current-Mon')
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
         if '13C4' in pvname:
@@ -366,7 +366,7 @@ class SIApp:
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             self._storedebeam_value = self._storedebeam_14C4_value
         self.driver.setParam('StoredEBeam-Mon', self._storedebeam_value)
-        self.driver.updatePVs()
+        self.driver.updatePV('StoredEBeam-Mon')
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
         if '13C4' in pvname:
