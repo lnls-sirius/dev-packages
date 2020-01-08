@@ -103,7 +103,7 @@ class App:
         elif reason == 'BuffAutoRst-Sel':
             self._update_buffautorst_mode(value)
             self.driver.setParam('BuffAutoRst-Sts', self._buffautorst_mode)
-            self.driver.updatePVs()
+            self.driver.updatePV('BuffAutoRst-Sts')
             status = True
         elif reason == 'LtFitMode-Sel':
             self._mode = value
