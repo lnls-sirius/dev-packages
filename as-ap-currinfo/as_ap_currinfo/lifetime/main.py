@@ -44,6 +44,7 @@ class App:
 
         self._mode = _Const.Fit.Exponential
         self._lifetime = 0
+        self._current_offset = 0.0
         self._rstbuff_cmd_count = 0
         self._buffautorst_mode = _Const.BuffAutoRst.Off
         if self._injstate_pv.connected:
@@ -110,6 +111,11 @@ class App:
             self.driver.setParam('LtFitMode-Sts', value)
             self.driver.updatePV('LtFitMode-Sts')
             status = True
+        elif reason == 'CurrOffset-SP':
+            self._current_offset = value
+            self.driver.setParam('CurrOffset-RB', value)
+            self.driver.updatePV('CurrOffset-RB')
+            status = True
         return status
 
     def _update_buffsizemax(self, value):
@@ -143,6 +149,7 @@ class App:
             [timestamp, value] = self._current_buffer.serie
             timestamp = _np.array(timestamp)
             value = _np.array(value)
+            value -= self._current_offset
             fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
             if self._buffer_max_size > 0:
                 if len(value) > min(20, self._buffer_max_size/2):
