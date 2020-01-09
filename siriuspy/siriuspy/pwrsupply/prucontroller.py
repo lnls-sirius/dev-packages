@@ -107,7 +107,6 @@ class PRUController:
         # starts communications
         self._bsmp_init_communication()
 
-
     # --- properties to read and set controller state and access functions ---
 
     @property
@@ -321,7 +320,7 @@ class PRUController:
     def bsmp_scan(self):
         """Run scan one."""
         # select devices and variable group, defining the read group
-        # opertation to be performed
+        # operation to be performed
         operation = (self._bsmp_update, ())
         if not self._queue or operation != self._queue.last_operation:
             self._queue.append(operation)
@@ -552,7 +551,7 @@ class PRUController:
         # update variables
         for psupply in self._psupplies.values():
             try:
-                psupply.update_variables()
+                psupply.update_variables(interval=0.0)
             except _SerialError:
                 # no serial connection !
                 pass
