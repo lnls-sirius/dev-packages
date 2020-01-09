@@ -378,7 +378,9 @@ class PSCycler:
 
     def set_current_zero(self):
         """Set PS current to zero ."""
-        return _pv_conn_put(self['Current-SP'], 0)
+        status = _pv_conn_put(self['Current-SP'], 0)
+        _time.sleep(SLEEP_CAPUT)
+        return status
 
     def check_current_zero(self):
         """Return wether power supply PS current is zero."""
@@ -403,8 +405,10 @@ class PSCycler:
             _time.sleep(SLEEP_CAPUT)
             status &= _pv_conn_put(self['CycleNrCycles-SP'],
                                    self.siggen.num_cycles)
+            _time.sleep(SLEEP_CAPUT)
         else:
             status &= _pv_conn_put(self['Wfm-SP'], self.waveform)
+            _time.sleep(SLEEP_CAPUT)
         return status
 
     def check_params(self, mode):
@@ -453,6 +457,7 @@ class PSCycler:
 
     def set_opmode_slowref(self):
         status = self.set_opmode(_PSConst.OpMode.SlowRef)
+        _time.sleep(SLEEP_CAPUT)
         status &= _pv_timed_get(
             self['OpMode-Sts'], _PSConst.States.SlowRef, wait=10.0)
         return status
