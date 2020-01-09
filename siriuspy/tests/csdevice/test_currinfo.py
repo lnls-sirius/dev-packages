@@ -44,14 +44,10 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertTrue('DCCTFltCheck-Sel' in db)
         self.assertTrue('DCCTFltCheck-Sts' in db)
         self.assertTrue('Charge-Mon' in db)
-        self.assertTrue('ChargeCalcIntvl-SP' in db)
-        self.assertTrue('ChargeCalcIntvl-RB' in db)
 
         # PVs units
         self.assertEqual(db['Current-Mon']['unit'], 'mA')
         self.assertEqual(db['Charge-Mon']['unit'], 'A.h')
-        self.assertEqual(db['ChargeCalcIntvl-SP']['unit'], 's')
-        self.assertEqual(db['ChargeCalcIntvl-RB']['unit'], 's')
 
         # ---- BO ----
         db = get_currinfo_database('BO')
@@ -98,9 +94,15 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertTrue('BuffAutoRst-Sel' in db)
         self.assertTrue('BuffAutoRst-Sts' in db)
         self.assertTrue('DCurrFactor-Cte' in db)
+        self.assertTrue('LtFitMode-Sel' in db)
+        self.assertTrue('LtFitMode-Sts' in db)
+        self.assertTrue('CurrOffset-SP' in db)
+        self.assertTrue('CurrOffset-RB' in db)
 
         # PVs units
         self.assertEqual(db['Lifetime-Mon']['unit'], 's')
         self.assertEqual(db['SplIntvl-SP']['unit'], 's')
         self.assertEqual(db['SplIntvl-RB']['unit'], 's')
         self.assertEqual(db['DCurrFactor-Cte']['unit'], 'mA')
+        self.assertEqual(db['CurrOffset-SP']['unit'], 'mA')
+        self.assertEqual(db['CurrOffset-RB']['unit'], 'mA')
