@@ -242,7 +242,7 @@ class _BaseLL(_Base):
             _log.error('Could not set PV {0:s}.'.format(pv.pvname))
 
     def _put_on_pv(self, pv, value, wait=False):
-        if pv.connected and pv.put_complete:
+        if pv.connected and pv.put_complete is not False:
             # wait=True is too slow for the LL Timing IOCs. It is better not
             # to use it.
             try:
