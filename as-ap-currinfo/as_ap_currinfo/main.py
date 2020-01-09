@@ -9,14 +9,20 @@ from siriuspy.clientarch import ClientArchiver as _ClientArch
 import as_ap_currinfo.pvs as _pvs
 
 
+# BO Constants
+
 BO_REV_PERIOD = 1.6571334792998411  # [us]
-BO_ENERGY2TIME = {  # energy vs. time[s]
+BO_ENERGY2TIME = {  # energy: time[s]
     '150MeV': 0.0000,
     '1GeV': 0.0859,
     '2GeV': 0.1863,
     '3GeV': 0.2850,
 }
 INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+
+# SI Constants
+
+SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
 
 
 def _get_value_from_arch(pvname):
@@ -76,7 +82,7 @@ class BOApp:
         else:
             self._intcurrent3gev = data[1][0]
         self.driver.setParam(intcurr_ppty, self._intcurrent3gev)
-        self.driver.updatePVs()
+        self.driver.updatePV(intcurr_ppty)
 
         # PVs
         self._rawreadings_pv = _epics.PV(
@@ -119,7 +125,7 @@ class BOApp:
             if self._currthold_lolim < value < self._currthold_hilim:
                 self._currthold = value
                 self.driver.setParam('CurrThold-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('CurrThold-RB')
                 status = True
         return status
 
@@ -141,7 +147,7 @@ class BOApp:
         self._last_raw_reading = value
         self._update_pvs()
         self.driver.setParam('RawReadings-Mon', value)
-        self.driver.updatePVs()
+        self.driver.updatePV('RawReadings-Mon')
 
     # ----- auxiliar methods -----
 
@@ -219,14 +225,13 @@ class SIApp:
         self._current_value = None
         self._current_13C4_value = None
         self._current_14C4_value = None
-        self._dcct_mode = _Const.DCCT.Avg
+        self._dcct_mode = _Const.DCCT.DCCT13C4
         self._dcctfltcheck_mode = _Const.DCCTFltCheck.Off
         self._reliablemeas_13C4_value = 0
         self._reliablemeas_14C4_value = 0
         self._storedebeam_value = 0
         self._storedebeam_13C4_value = 0
         self._storedebeam_14C4_value = 0
-        self._chargecalcintvl = 100.0
         data = _get_value_from_arch(self._PREFIX+'Charge-Mon')
         if data is None:
             self._charge = 0.0
@@ -255,7 +260,7 @@ class SIApp:
 
         # set initial pv values
         self.driver.setParam('Charge-Mon', self._charge)
-        self.driver.updatePVs()
+        self.driver.updatePV('Charge-Mon')
 
     @staticmethod
     def init_class():
@@ -274,6 +279,16 @@ class SIApp:
     def read(self, reason):
         """Read from IOC database."""
         value = None
+        if 'Charge' in reason:
+            if self._storedebeam_value:
+                timestamp = _time.time()
+                dt = (timestamp - self._time0)  # Delta t [s]
+                self._time0 = timestamp
+                inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
+                self._charge += inc_charge
+                self.driver.setParam('Charge-Mon', self._charge)
+                self.driver.updatePV('Charge-Mon')
+                value = self._charge
         return value
 
     def write(self, reason, value):
@@ -283,17 +298,13 @@ class SIApp:
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
                 self._update_dcct_mode(value)
                 self.driver.setParam('DCCT-Sts', self._dcct_mode)
+                self.driver.updatePV('DCCT-Sts')
                 status = True
         elif reason == 'DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.driver.setParam('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
+            self.driver.updatePV('DCCTFltCheck-Sts')
             status = True
-        elif reason == 'ChargeCalcIntvl-SP':
-            self._update_chargecalcintvl(value)
-            self.driver.setParam('ChargeCalcIntvl-RB', self._chargecalcintvl)
-            status = True
-        if status:
-            self.driver.updatePVs()
         return status
 
     # ----- handle writes -----
@@ -303,30 +314,25 @@ class SIApp:
             self._dcct_mode = value
 
     def _update_dcct_mode_from_reliablemeas(self):
-        mode = self._dcct_mode
-        if (self._reliablemeas_13C4_value == 0
-                and self._reliablemeas_14C4_value == 0):
+        if (self._reliablemeas_13C4_value == 0 and
+                self._reliablemeas_14C4_value == 0):
             mode = _Const.DCCT.Avg
-        elif (self._reliablemeas_13C4_value == 0
-                and self._reliablemeas_14C4_value != 0):
+        elif self._reliablemeas_13C4_value == 0:
             mode = _Const.DCCT.DCCT13C4
-        elif (self._reliablemeas_13C4_value != 0
-                and self._reliablemeas_14C4_value == 0):
+        elif self._reliablemeas_14C4_value == 0:
             mode = _Const.DCCT.DCCT14C4
+        else:
+            mode = self._dcct_mode
         if mode != self._dcct_mode:
             self._dcct_mode = mode
             self.driver.setParam('DCCT-Sts', self._dcct_mode)
-            self.driver.updatePVs()
+            self.driver.updatePV('DCCT-Sts')
 
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
             if value == _Const.DCCTFltCheck.On:
                 self._update_dcct_mode_from_reliablemeas()
             self._dcctfltcheck_mode = value
-
-    def _update_chargecalcintvl(self, value):
-        if self._chargecalcintvl != value:
-            self._chargecalcintvl = value
 
     # ----- callbacks -----
 
@@ -341,12 +347,10 @@ class SIApp:
         if current is None:
             return
         self._current_value = current
-        self._charge += self._calculate_inc_charge(timestamp)
 
         # update pvs
         self.driver.setParam('Current-Mon', self._current_value)
-        self.driver.setParam('Charge-Mon', self._charge)
-        self.driver.updatePVs()
+        self.driver.updatePV('Current-Mon')
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
         if '13C4' in pvname:
@@ -362,7 +366,7 @@ class SIApp:
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             self._storedebeam_value = self._storedebeam_14C4_value
         self.driver.setParam('StoredEBeam-Mon', self._storedebeam_value)
-        self.driver.updatePVs()
+        self.driver.updatePV('StoredEBeam-Mon')
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
         if '13C4' in pvname:
@@ -387,11 +391,3 @@ class SIApp:
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             current = self._current_14C4_value
         return current
-
-    def _calculate_inc_charge(self, timestamp):
-        dt = (timestamp - self._time0)  # Delta t [s]
-        if dt <= self._chargecalcintvl:
-            return 0.0
-        self._time0 = timestamp
-        inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
-        return inc_charge
