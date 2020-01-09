@@ -20,7 +20,7 @@ class _PRUCParms:
 class PRUCParmsFBP(_PRUCParms):
     """FBP-specific PRUC parameters."""
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FBP')
@@ -175,7 +175,7 @@ class PRUCParmsFAC_2S_DCDC(_PRUCParms):
     Represent FAC_2S_DCDC psmodels.
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAC_2S_DCDC')
@@ -308,7 +308,7 @@ class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
     Represent FAC_2P4S psmodels.
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAC_2P4S_DCDC')
@@ -574,7 +574,7 @@ class PRUCParmsFAC_DCDC(_PRUCParms):
     Represent FAC, FAC_2S, FAC_2P4S psmodels.
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAC_DCDC')
@@ -844,7 +844,7 @@ class PRUCParmsFAP(_PRUCParms):
     Represent FAP
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAP')
@@ -966,7 +966,7 @@ class PRUCParmsFAP_4P(_PRUCParms):
     Represent FAP_4P
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAP_4P')
@@ -1205,7 +1205,7 @@ class PRUCParmsFAP_2P2S(_PRUCParms):
     Represent FAP_2P2S
     """
 
-    FREQ_SCAN = 10.0  # [Hz]
+    FREQ_SCAN = 5.0  # [Hz]
 
     # PS model parms
     model = _PSModelFactory.create('FAP_2P2S')
