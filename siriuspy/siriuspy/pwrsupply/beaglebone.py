@@ -209,7 +209,6 @@ class BeagleBone:
         # print('update_strengths: {:.3f}'.format(1000*(t1-t0)))
 
 
-
 class BBBFactory:
     """Build BeagleBones."""
 
