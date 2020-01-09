@@ -1,5 +1,6 @@
 """Power Supply Module."""
 
+# import random as _random
 import time as _time
 import numpy as _np
 from siriuspy.bsmp import SerialError as _SerialError
@@ -188,6 +189,8 @@ class PSupply:
                 var_ids = self._groups[group_id]
                 for var_id, value in zip(var_ids, values):
                     self._variables[var_id] = value
+                # NOTE: test line for benchmarking
+                # self._variables[27] += 0.001 * (_random.random() - 0.5)
                 # update timestamp
                 self._timestamp_update_variables = now
             else:

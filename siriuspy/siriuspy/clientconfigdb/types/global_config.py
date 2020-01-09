@@ -1373,7 +1373,7 @@ _pvs_tb_ps = [
     ['TB-04:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
     ['TB-04:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
     ['TB-04:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
-    ['TB-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['TB-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.05],
 
     ['TB-Fam:PS-B:Current-SP', 0.0, 0.0],    # unit: A
     ['TB-01:PS-QD1:Current-SP', 0.0, 0.0],   # unit: A
@@ -1457,7 +1457,7 @@ _pvs_bo_ps = [
     ['BO-43U:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['BO-45U:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['BO-47U:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
-    ['BO-49U:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['BO-49U:PS-CV:OpMode-Sel', _SLOWREF, 0.05],
 
     ['BO-Fam:PS-B-1:Current-SP', 0.0, 0.0],  # unit: A
     ['BO-Fam:PS-B-2:Current-SP', 0.0, 0.0],  # unit: A
@@ -1598,7 +1598,7 @@ _pvs_ts_ps = [
     ['TS-04:PS-CV-0:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-04:PS-CV-1E2:OpMode-Sel', _SLOWREF, 0.0],
-    ['TS-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['TS-04:PS-CV-2:OpMode-Sel', _SLOWREF, 0.05],
 
     ['TS-Fam:PS-B:Current-SP', 0.0, 0.0],    # unit: A
     ['TS-01:PS-QF1A:Current-SP', 0.0, 0.0],   # unit: A
@@ -1660,7 +1660,7 @@ _pvs_si_fam_ps = [
     ['SI-Fam:PS-SDP0:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-SDP1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-SDP2:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-Fam:PS-SDP3:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-Fam:PS-SDP3:OpMode-Sel', _SLOWREF, 0.05],
 
     ['SI-Fam:PS-B1B2-1:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-Fam:PS-B1B2-2:Current-SP', 0.0, 0.0],  # unit: A
@@ -1819,7 +1819,7 @@ _pvs_si_ch_ps = [
     ['SI-20C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C3:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C4:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-01M1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-CH:OpMode-Sel', _SLOWREF, 0.05],
 
     ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # unit: A
@@ -2103,7 +2103,7 @@ _pvs_si_cv_ps = [
     ['SI-20C3:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C3:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C4:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-01M1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-CV:OpMode-Sel', _SLOWREF, 0.05],
 
     ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # unit: A
@@ -2367,7 +2367,7 @@ _pvs_si_qs_ps = [
     ['SI-20C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C3:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-01M1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-QS:OpMode-Sel', _SLOWREF, 0.05],
 
     ['SI-01M2:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-01C1:PS-QS:Current-SP', 0.0, 0.0],  # unit: A
@@ -2741,7 +2741,7 @@ _pvs_si_qn_ps = [
     ['SI-20C4:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-20C4:PS-Q2:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01M1:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-01M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-QFA:OpMode-Sel', _SLOWREF, 0.05],
 
     ['SI-01M2:PS-QDA:Current-SP', 0.0, 0.0],  # unit: A
     ['SI-01M2:PS-QFA:Current-SP', 0.0, 0.0],  # unit: A
