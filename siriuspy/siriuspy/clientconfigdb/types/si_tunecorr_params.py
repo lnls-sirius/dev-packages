@@ -27,7 +27,7 @@ def get_dict():
 # Where (1+f)KL = KL + DeltaKL.
 #
 # Correction Matrix of Svd and Additional Method
-# (obtained by matlab lnls_correct_tunes routine)
+# (obtained by matlab lnls_calc_tunecorr_params routine)
 #   m(0,0)   m(0,1)...m(0,7)
 #   m(1,0)   m(1,1)...m(1,7)
 #
