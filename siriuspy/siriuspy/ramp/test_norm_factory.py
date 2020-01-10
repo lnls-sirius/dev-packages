@@ -4,21 +4,21 @@ import numpy as _np
 import matplotlib.pyplot as plt
 from siriuspy.ramp.ramp import BoosterRamp
 from siriuspy.ramp.norm_factory import BONormFactory
-from siriuspy.search import MASearch
+from siriuspy.search import PSSearch
 
 
-manames = MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
+psnames = PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
 
-r_orig = BoosterRamp('mb_eje500mev_bpm01si_withoutSI')
+r_orig = BoosterRamp('testing')
 r_orig.load()
 
-ma2wfm = dict()
-for ma in manames:
-    if ma == 'BO-Fam:MA-B':
+ps2wfm = dict()
+for ps in psnames:
+    if ps in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
         continue
-    ma2wfm[ma] = r_orig.ps_waveform_get_currents(ma)
+    ps2wfm[ps] = r_orig.ps_waveform_get_currents(ps)
 
-fac = BONormFactory(ramp_config=r_orig, waveforms=ma2wfm)
+fac = BONormFactory(ramp_config=r_orig, waveforms=ps2wfm)
 # fac.read_waveforms()
 
 r_built = BoosterRamp('testing')
@@ -67,23 +67,23 @@ print(r_built)
 f = plt.figure()
 ax = plt.gca()
 ax.grid()
-for ma in manames:
+for ps in psnames:
     strgs = list()
     for n in names:
-        strgs.append(r_built[n][ma])
+        strgs.append(r_built[n][ps])
     strgs = _np.array(strgs)
 
-    dif = r_orig.ps_waveform_get_currents(ma) - \
-        r_built.ps_waveform_get_currents(ma)
+    dif = r_orig.ps_waveform_get_currents(ps) - \
+        r_built.ps_waveform_get_currents(ps)
     if not _np.allclose(dif, 0, atol=1e-5):
-        # ax.plot(r_orig.ps_waveform_get_times(ma),
-        #         r_orig.ps_waveform_get_strengths(ma),
-        #         'r.-', label=ma)
-        # ax.plot(r_built.ps_waveform_get_times(ma),
-        #         r_built.ps_waveform_get_strengths(ma),
-        #         'k.-', label=ma)
+        # ax.plot(r_orig.ps_waveform_get_times(ps),
+        #         r_orig.ps_waveform_get_strengths(ps),
+        #         'r.-', label=ps)
+        # ax.plot(r_built.ps_waveform_get_times(ps),
+        #         r_built.ps_waveform_get_strengths(ps),
+        #         'k.-', label=ps)
         # ax.plot(times, strgs, 'b.')
         # ax.plot(times, _np.zeros((len(times), 1)).flatten(), 'b.')
-        ax.plot(r_built.ps_waveform_get_times(ma), dif, 'g-')
+        ax.plot(r_built.ps_waveform_get_times(ps), dif, 'g-')
 ax.legend()
 plt.show()
