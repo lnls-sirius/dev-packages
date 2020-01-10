@@ -406,7 +406,7 @@ class BoosterRamp(_ConfigDBDocument):
         self._check_valid_time(value)
         rdip = self._value['ps_ramp']
         if value != rdip['rampup1_start_time']:
-            rdip['rampup1_start_energy'] = value
+            rdip['rampup1_start_time'] = value
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
