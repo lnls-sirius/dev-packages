@@ -30,6 +30,7 @@ def get_dict():
 #    NominalChromX    NominalChromY
 #
 # Correction Matrix of Additional Method
+# (obtained from matlab lnls_calc_chromcorr_params routine)
 #   m(0,0)   m(0,1) ... m(0,14)
 #   m(1,0)   m(1,1) ... m(1,14)
 #

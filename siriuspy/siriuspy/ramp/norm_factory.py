@@ -1,6 +1,6 @@
 import numpy as _np
 from epics import PV as _PV
-from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
+from siriuspy.search import PSSearch as _PSSearch
 from .ramp import BoosterRamp as _BORamp, BoosterNormalized as _BONormalized
 from .waveform import Waveform as _Waveform
 
@@ -9,18 +9,20 @@ TIMEOUT_CONN = 0.05
 
 class BONormFactory:
 
-    _MANAME_DIPOLE = 'BO-Fam:MA-B'
+    _PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
+    _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
     _PVs = dict()
 
     def __init__(self, ramp_config, waveforms=dict()):
         """Init."""
         self._ramp_config = ramp_config
-        self._dipole = ramp_config.ps_waveform_get(self._MANAME_DIPOLE)
+        self._dipole = ramp_config.ps_waveform_get(self._PSNAME_DIPOLE_REF)
         self._duration = ramp_config.ps_ramp_duration
         self._nrpoints_fams = ramp_config.ps_ramp_wfm_nrpoints_fams
         self._nrpoints_corrs = ramp_config.ps_ramp_wfm_nrpoints_corrs
-        self._manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
-        self._manames.remove(self._MANAME_DIPOLE)
+        self._psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
+        for dip in self._PSNAME_DIPOLES:
+            self._psnames.remove(dip)
 
         self._wfms_current = waveforms
         self._norm_configs_list = list()
@@ -29,17 +31,17 @@ class BONormFactory:
             self._generate_nconf_list()
 
     @property
-    def manames(self):
-        return self._manames
+    def psnames(self):
+        return self._psnames
 
     @property
     def waveforms(self):
-        """Return a dict of maname: waveform in current values."""
+        """Return a dict of psname: waveform in current values."""
         return self._wfms_current
 
     @waveforms.setter
     def waveforms(self, waveforms=dict()):
-        """Set a dict of maname: waveform in current values."""
+        """Set a dict of psname: waveform in current values."""
         self._wfms_current = waveforms
         if waveforms:
             self._create_waveform_objects()
@@ -51,10 +53,12 @@ class BONormFactory:
             self._create_pvs()
 
         self._waveforms = dict()
-        for ma in self.manames:
-            pv = BONormFactory._PVs[ma]
+        for ps in self.psnames:
+            pv = BONormFactory._PVs[ps]
             pv.wait_for_connection(10*TIMEOUT_CONN)
-            self._wfms_current[ma] = pv.get()
+            if not pv.connected:
+                raise ConnectionError('There are disconnected PVs!')
+            self._wfms_current[ps] = pv.get()
 
         self._create_waveform_objects()
         self._generate_nconf_list()
@@ -83,21 +87,20 @@ class BONormFactory:
 
     def _create_pvs(self):
         pvs = dict()
-        for ma in self.manames:
-            pvs[ma] = _PV(ma + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
+        for ps in self.psnames:
+            pvs[ps] = _PV(ps + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
         BONormFactory._PVs = pvs
 
     def _create_waveform_objects(self):
-        self._ma2wfms = dict()
-        for ma, wfm_curr in self._wfms_current.items():
-            self._ma2wfms[ma] = _Waveform(
-                ma, self._dipole, currents=wfm_curr,
-                wfm_nrpoints=self._get_appropriate_wfmnrpoints(ma))
+        self._ps2wfms = dict()
+        for ps, wfm_curr in self._wfms_current.items():
+            self._ps2wfms[ps] = _Waveform(
+                ps, self._dipole, currents=wfm_curr,
+                wfm_nrpoints=self._get_appropriate_wfmnrpoints(ps))
 
-    def _get_appropriate_wfmnrpoints(self, maname):
-        """Return appropriate number of points for maname."""
-        psname = _MASearch.conv_maname_2_psnames(maname)
-        if _PSSearch.conv_psname_2_psmodel(psname[0]) == 'FBP':
+    def _get_appropriate_wfmnrpoints(self, psname):
+        """Return appropriate number of points for psname."""
+        if _PSSearch.conv_psname_2_psmodel(psname) == 'FBP':
             return self._nrpoints_corrs
         else:
             return self._nrpoints_fams
@@ -166,9 +169,9 @@ class BONormFactory:
             r_new.ps_normalized_configs_insert(time, nconf.name, nconf.value)
 
         max_error = 0.0
-        for ma in self.manames:
-            error = self._ma2wfms[ma].currents - \
-                r_new.ps_waveform_get_currents(ma)
+        for ps in self.psnames:
+            error = self._ps2wfms[ps].currents - \
+                r_new.ps_waveform_get_currents(ps)
             max_error = max(max_error, max(error))
         return max_error
 
@@ -178,9 +181,9 @@ class BONormFactory:
             # get time instants and normalized strengths where there are
             # normalized configurations
             problems = False
-            ma2time2strg = dict()
+            ps2time2strg = dict()
             times = set()
-            for ma, wfm in self._ma2wfms.items():
+            for ps, wfm in self._ps2wfms.items():
                 nrpts_orig = wfm.wfm_nrpoints
                 ind_orig = _np.arange(0, nrpts_orig)
                 t_orig = wfm.times
@@ -192,14 +195,17 @@ class BONormFactory:
                 w = _np.interp(ind, ind_orig, w_orig)
 
                 time_inter, w_inter = self._calc_nconf_times(t, w)
-                ma2time2strg[ma] = {i: w for i, w in zip(time_inter, w_inter)}
+                ps2time2strg[ps] = {i: w for i, w in zip(time_inter, w_inter)}
                 times.update(time_inter)
                 if not all(time_inter == sorted(time_inter)):
                     problems = True
                     break
-            if problems:
+            if problems and oversampling_factor == 1:
                 oversampling_factor *= 4
                 continue
+            elif problems:
+                raise Exception(
+                    'Could not generate normalized configuration list!')
 
             # sort and verify times
             times = sorted(times)
@@ -216,14 +222,13 @@ class BONormFactory:
                 energy = self._dipole.get_strength_from_time(t)
                 nconf = _BONormalized()
                 nconf.name += ' {:.4f}GeV'.format(energy)
-                for ma in self.manames:
-                    if t in ma2time2strg[ma].keys():
-                        nconf[ma] = ma2time2strg[ma][t]
+                for ps in self.psnames:
+                    if t in ps2time2strg[ps].keys():
+                        nconf[ps] = ps2time2strg[ps][t]
                     else:
-                        wfm = self._ma2wfms[ma]
-                        nconf[ma] = wfm.get_strength_from_time(t)
+                        wfm = self._ps2wfms[ps]
+                        nconf[ps] = wfm.get_strength_from_time(t)
                 self._norm_configs_list.append([t, nconf])
 
-            # TODO: verify case of oversampling_factor > 1
-            # oversampling_factor *= 4
+            # TODO: verify case of precision not reached
             break
