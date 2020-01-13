@@ -1,7 +1,8 @@
+from copy import deepcopy as _dcopy
 import numpy as _np
 from epics import PV as _PV
 from siriuspy.search import PSSearch as _PSSearch
-from .ramp import BoosterRamp as _BORamp, BoosterNormalized as _BONormalized
+from .ramp import BoosterRamp as _BORamp
 from .waveform import Waveform as _Waveform
 
 TIMEOUT_CONN = 0.05
@@ -25,10 +26,10 @@ class BONormFactory:
             self._psnames.remove(dip)
 
         self._wfms_current = waveforms
-        self._norm_configs_list = list()
+        self._norm_configs_dict = dict()
         if waveforms:
             self._create_waveform_objects()
-            self._generate_nconf_list()
+            self._generate_nconf_dict()
 
     @property
     def psnames(self):
@@ -45,7 +46,7 @@ class BONormFactory:
         self._wfms_current = waveforms
         if waveforms:
             self._create_waveform_objects()
-            self._generate_nconf_list()
+            self._generate_nconf_dict()
 
     def read_waveforms(self):
         """Read waveform in current values from PVs."""
@@ -61,21 +62,21 @@ class BONormFactory:
             self._wfms_current[ps] = pv.get()
 
         self._create_waveform_objects()
-        self._generate_nconf_list()
+        self._generate_nconf_dict()
 
     @property
     def normalized_configs(self):
-        """Return list of [time, normalized configuration]."""
-        return self._norm_configs_list
+        """Return dict of [time: normalized configuration]."""
+        return _dcopy(self._norm_configs_dict)
 
     @property
     def precision_reached(self):
         """Precision reached.
 
-        Return if the reconstructed normalized configuration list
+        Return if the reconstructed normalized configuration dict
         reached the precision of 1.e-5.
         """
-        if not self._norm_configs_list:
+        if not self._norm_configs_dict:
             return False
 
         max_error = self._check_waveforms_error()
@@ -165,8 +166,7 @@ class BONormFactory:
         ]
         for attr in attrs:
             setattr(r_new, attr, getattr(self._ramp_config, attr))
-        for time, nconf in self._norm_configs_list:
-            r_new.ps_normalized_configs_insert(time, nconf.name, nconf.value)
+        r_new.ps_normalized_configs_set(self.normalized_configs)
 
         max_error = 0.0
         for ps in self.psnames:
@@ -175,7 +175,7 @@ class BONormFactory:
             max_error = max(max_error, max(error))
         return max_error
 
-    def _generate_nconf_list(self):
+    def _generate_nconf_dict(self):
         oversampling_factor = 1
         while not self.precision_reached:
             # get time instants and normalized strengths where there are
@@ -205,30 +205,32 @@ class BONormFactory:
                 continue
             elif problems:
                 raise Exception(
-                    'Could not generate normalized configuration list!')
+                    'Could not generate normalized configurations!')
 
             # sort and verify times
             times = sorted(times)
             if _np.any([t > self._duration for t in times]) or \
                     _np.any([t < 0 for t in times]):
                 raise Exception(
-                    'Could not generate normalized configuration list!')
+                    'Could not generate normalized configurations!')
             if not times:
                 times = {0.0, }
 
-            # generate list of normalized configs
-            self._norm_configs_list = list()
+            # generate dict of normalized configs
+            self._norm_configs_dict = dict()
             for t in times:
                 energy = self._dipole.get_strength_from_time(t)
-                nconf = _BONormalized()
-                nconf.name += ' {:.4f}GeV'.format(energy)
+                nconf = dict()
+                nconf['label'] = ' {:.4f}GeV'.format(energy)
+                for dip in self._PSNAME_DIPOLES:
+                    nconf[dip] = energy
                 for ps in self.psnames:
                     if t in ps2time2strg[ps].keys():
                         nconf[ps] = ps2time2strg[ps][t]
                     else:
                         wfm = self._ps2wfms[ps]
                         nconf[ps] = wfm.get_strength_from_time(t)
-                self._norm_configs_list.append([t, nconf])
+                self._norm_configs_dict['{:.3f}'.format(t)] = nconf
 
             # TODO: verify case of precision not reached
             break
