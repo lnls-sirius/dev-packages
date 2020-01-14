@@ -9,7 +9,7 @@ from siriuspy.search import PSSearch
 
 psnames = PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
 
-r_orig = BoosterRamp('testing')
+r_orig = BoosterRamp('testing1')
 r_orig.load()
 
 ps2wfm = dict()
@@ -55,10 +55,9 @@ attrs = [
 for attr in attrs:
     setattr(r_built, attr, getattr(r_orig, attr))
 
-for time, nconf in fac.normalized_configs:
-    r_built.ps_normalized_configs_insert(time, nconf.name, nconf.value)
+r_built.ps_normalized_configs_set(fac.normalized_configs)
 times = r_built.ps_normalized_configs_times
-names = r_built.ps_normalized_configs_names
+labels = r_built.ps_normalized_configs_labels
 
 print(r_built)
 # for name in r_built.ps_normalized_configs_names:
@@ -69,8 +68,8 @@ ax = plt.gca()
 ax.grid()
 for ps in psnames:
     strgs = list()
-    for n in names:
-        strgs.append(r_built[n][ps])
+    for t in times:
+        strgs.append(r_built[t][ps])
     strgs = _np.array(strgs)
 
     dif = r_orig.ps_waveform_get_currents(ps) - \

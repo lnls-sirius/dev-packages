@@ -13,26 +13,47 @@ from siriuspy.ramp.exceptions import RampError as _RampError, \
     RampInvalidDipoleWfmParms as _RampInvalidDipoleWfmParms, \
     RampInvalidNormConfig as _RampInvalidNormConfig, \
     RampInvalidRFParms as _RampInvalidRFParms
-from siriuspy.ramp.util import MAX_RF_RAMP_DURATION as _MAX_RF_RAMP_DURATION
-from siriuspy.ramp.waveform import \
-    WaveformDipole as _WaveformDipole, \
+from siriuspy.ramp.util import MAX_RF_RAMP_DURATION as _MAX_RF_RAMP_DURATION, \
+    NOMINAL_STRENGTHS as _NOMINAL_STRENGTHS
+from siriuspy.ramp.waveform import WaveformDipole as _WaveformDipole, \
     Waveform as _Waveform
 
 
 class BoosterNormalized(_ConfigDBDocument):
     """Booster normalized configuration."""
 
-    psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
-
     def __init__(self, name=None):
         """Constructor."""
         super().__init__('bo_normalized', name=name)
         self._value = self.get_value_template()
+        self._orig_value = None
 
         self._psnames2index = dict()
         for index, data in enumerate(self._value['pvs']):
             psname = SiriusPVName(data[0]).device_name
             self._psnames2index[psname] = index
+
+    @property
+    def psnames(self):
+        return list(self._psnames2index.keys())
+
+    def load(self):
+        super().load()
+        self._orig_value = self.value
+
+    def save(self, **kws):
+        super().save(**kws)
+        self._orig_value = self.value
+
+    def verify_synchronized(self, psname=None):
+        if not self._orig_value:
+            return
+        modified = False
+        for i in range(len(self._value['pvs'])):
+            if self._value['pvs'][i][1] != self._orig_value['pvs'][i][1]:
+                modified = True
+                break
+        self._synchronized = not modified
 
     def _get_item(self, psname):
         index = self._psnames2index[psname]
@@ -40,19 +61,23 @@ class BoosterNormalized(_ConfigDBDocument):
         return float(value)
 
     def _set_item(self, psname, value):
+        """Set configuration item."""
         index = self._psnames2index[psname]
-        self._value['pvs'][index][1] = value
+        if self._value['pvs'][index][1] != value:
+            self._value['pvs'][index][1] = value
+            self.verify_synchronized()
 
-    def verify_syncronized(self):
-        oconfig = BoosterNormalized(name=self.name)
-        oconfig.load()
-
-        modified = False
-        for mag in oconfig.psnames:
-            if oconfig[mag] != self[mag]:
-                modified = True
-                break
-        self._synchronized = not modified
+    def _set_value(self, value):
+        """Set configuration."""
+        if isinstance(value, dict):
+            for key, val in value.items():
+                if key == 'label':
+                    self.name = val
+                else:
+                    self[key] = val
+        else:
+            super()._set_value(value)
+        self.verify_synchronized()
 
     def __str__(self):
         """Return string representation of configuration."""
@@ -83,7 +108,7 @@ class BoosterNormalized(_ConfigDBDocument):
 class BoosterRamp(_ConfigDBDocument):
     """Booster ramp class."""
 
-    # Dipole psname
+    PSNAMES = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
     PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
     PSNAME_DIPOLE_REF = PSNAME_DIPOLES[0]
 
@@ -91,77 +116,23 @@ class BoosterRamp(_ConfigDBDocument):
         """Constructor."""
         super().__init__('bo_ramp', name=name)
         self._auto_update = auto_update
-        self._ps_nconfigs = dict()
         self._ps_waveforms = dict()
+        self._nominal_strengths = dict()
+        self._orig_value = None
         self.value = self.get_value_template()
 
     # --- ConfigSrv API ---
-
-    @property
-    def synchronized(self):
-        """Return synchronization state between object and config in server."""
-        if not self._synchronized:
-            return False
-        for config in self._ps_nconfigs.values():
-            if not config.synchronized:
-                return False
-        return True
 
     def load(self):
         """Load configuration from config server."""
         # load booster ramp configuration
         super().load()
-        self._synchronized = False  # in case cannot load ps norm config
-        # update ps normalized configs
-        self._update_ps_normalized_configs_objects()
-        # load ps normalized configurations one by one
-        for config in self._ps_nconfigs.values():
-            config.load()
-        self._synchronized = True  # all went well
+        self._orig_value = self.value
         self._invalidate_ps_waveforms(True)
 
-    def load_normalized_configs(self):
-        """Load ps normalized configurations from config server."""
-        # load ps normalized configurations one by one
-        for config in self._ps_nconfigs.values():
-            config.load()
-        self._invalidate_ps_waveforms()
-
     def save(self, new_name=None):
-        """Save configuration to config server."""
-        # save each ps normalized configuration
-        nconfig_sub_dict = dict()
-        for key in list(self._ps_nconfigs.keys()):
-            config = self._ps_nconfigs[key]
-            if config.exist():
-                if self._check_ps_normalized_modified(config):
-                    # save changes in an existing normalized config
-                    old = config.name
-                    new = config.generate_config_name(old)
-                    config.save(new)
-
-                    # replace old config from normalized configs dict
-                    del(self._ps_nconfigs[old])
-                    self._ps_nconfigs[new] = config
-
-                    # replace old name in normalized configs list
-                    nconfigs = self.ps_normalized_configs
-                    for i in range(len(nconfigs)):
-                        if nconfigs[i][1] == old:
-                            nconfigs[i][1] = new
-                    self._value['ps_normalized_configs*'] = nconfigs
-                    nconfig_sub_dict[old] = new
-                else:
-                    config._synchronized = True
-            else:
-                config.save()
-
-        # save booster ramp
-        super().save(new_name)
-
-        self._synchronized = True  # all went well
-
-        return nconfig_sub_dict
+        super().save(new_name=new_name)
+        self._orig_value = self.value
 
     # ---- ps_normalized_configs ----
 
@@ -171,120 +142,98 @@ class BoosterRamp(_ConfigDBDocument):
         return _dcopy(self._value['ps_normalized_configs*'])
 
     def ps_normalized_configs_set(self, value):
-        """Receive a list of [time, BoosterNormalized]."""
-        self._ps_nconfigs = dict()
-        nconfigs = list()
-        for time, nconfig in value:
-            nconfigs.append([time, nconfig.name])
-            self._ps_nconfigs[nconfig.name] = nconfig
-        self._set_ps_normalized_configs(nconfigs)
-        self._synchronized = False
+        """Receive a dict of times as keys and ps2strengths dict as values."""
+        self._value['ps_normalized_configs*'] = _dcopy(value)
+        self.verify_synchronized()
         self._invalidate_ps_waveforms()
 
     @property
     def ps_normalized_configs_times(self):
         """Return time instants corresponding to ps normalized configs."""
-        if not self._value['ps_normalized_configs*']:
-            return list()
-        else:
-            time, _ = zip(*self._value['ps_normalized_configs*'])
-            return list(time)
+        return [float(k) for k in self._value['ps_normalized_configs*'].keys()]
 
     @property
-    def ps_normalized_configs_names(self):
+    def ps_normalized_configs_labels(self):
         """Return names corresponding to ps normalized configs."""
-        if not self._value['ps_normalized_configs*']:
-            return list()
-        else:
-            _, name = zip(*self._value['ps_normalized_configs*'])
-            return list(name)
+        return [n['label'] for n in
+                self._value['ps_normalized_configs*'].values()]
 
-    def ps_normalized_configs_delete(self, index):
-        """Delete a ps normalized config either by its index or its name."""
-        names = self.ps_normalized_configs_names
-        if isinstance(index, str):
-            index = names.index(index)
-        times = self.ps_normalized_configs_times
-        names.pop(index)
-        times.pop(index)
-        nconfigs = [[times[i], names[i]] for i in range(len(times))]
-        self._set_ps_normalized_configs(nconfigs)
-        self._synchronized = False
+    def ps_normalized_configs_delete(self, time):
+        """Delete a ps normalized config by its time."""
+        self._value['ps_normalized_configs*'].pop('{:.3f}'.format(time))
+        self.verify_synchronized()
         self._invalidate_ps_waveforms()
 
-    def ps_normalized_configs_insert(self, time, name=None, nconfig=None):
+    def ps_normalized_configs_insert(self, time, label='',
+                                     psname2strength=dict()):
         """Insert a ps normalized configuration."""
-        # process ps normalized config name
-        if not isinstance(name, str) or len(name) == 0:
-            name = self.generate_config_name()
-
-        # add new entry to list with ps normalized configs metadata
+        # verify if there is no config in this time
         otimes = self.ps_normalized_configs_times
-        onames = self.ps_normalized_configs_names
-        times = otimes.copy()
-        names = onames.copy()
-        if time in times:
-            if nconfig is not None:
-                index = times.index(time)
-                names[index] = name
-            else:
-                raise _RampInvalidNormConfig(
-                    'There is already a configuration at this time.')
-        else:
-            times.append(time)
-            names.append(name)
-        times, names = \
-            [list(x) for x in zip(*sorted(zip(times, names),
-             key=lambda pair: pair[0]))]  # sort by time
-        nconfigs = [[times[i], names[i]] for i in range(len(times))]
+        if time in otimes:
+            raise _RampInvalidNormConfig(
+                'There is already a configuration at this time.')
 
-        # triggers updates for new ps normalized configs table
-        self._set_ps_normalized_configs(nconfigs)
-
-        # interpolate nconfig, if necessary
-        if nconfig is None:
+        # create nconfig data
+        nconfig = dict(label=label)
+        # interpolate strengths, if necessary
+        if not psname2strength:
+            psname2strength = dict()
             if otimes:
-                for ps in self._ps_nconfigs[name].psnames:
+                for ps in self.PSNAMES:
                     if ps in self.PSNAME_DIPOLES:
                         continue
-                    ovalues = [self._ps_nconfigs[n][ps] for n in onames]
-                    self._ps_nconfigs[name][ps] = _np.interp(
-                        time, otimes, ovalues)
+                    ovalues = list()
+                    for t in otimes:
+                        str_time = '{:.3f}'.format(t)
+                        nc = self._value['ps_normalized_configs*'][str_time]
+                        ovalues.append(nc[ps])
+                    psname2strength[ps] = _np.interp(time, otimes, ovalues)
             else:
-                self._ps_nconfigs[name].value = \
-                    BoosterNormalized().get_value_template()
+                psname2strength = self.ps_normalized_config_nominal_values
+        nconfig.update(psname2strength)
+        nconfig = self._update_ps_normalized_config_energy(nconfig, time)
+        self._value['ps_normalized_configs*']['{:.3f}'.format(time)] = nconfig
 
-            self._update_ps_normalized_config_energy(
-                self._ps_nconfigs[name], time)
-        else:
-            self._ps_nconfigs[name].value = nconfig
+        self.verify_synchronized()
+        self._invalidate_ps_waveforms()
 
-        return name
-
-    def ps_normalized_configs_change_time(self, index, new_time,
+    def ps_normalized_configs_change_time(self, time, new_time,
                                           change_energy=False):
-        """Change the time of an existing config either by index or name."""
-        names = self.ps_normalized_configs_names
-        if isinstance(index, str):
-            name = index
-            index = names.index(name)
-        else:
-            name = names[index]
-        times = self.ps_normalized_configs_times
-        if times[index] == new_time:
-            return
-        times[index] = new_time
+        """Change the time of an existing config."""
+        otimes = self.ps_normalized_configs_times
+        if new_time in otimes:
+            raise _RampInvalidNormConfig(
+                'There is already a configuration at this time.')
+        str_time = '{:.3f}'.format(time)
+        str_new_time = '{:.3f}'.format(new_time)
 
         # set config energy appropriately if needed
         if change_energy:
             self._update_ps_normalized_config_energy(
-                self._ps_nconfigs[name], new_time)
+                self._value['ps_normalized_configs*'][str_time], new_time)
 
-        nconfigs = [[times[i], names[i]] for i in range(len(times))]
-        nconfigs = sorted(nconfigs, key=lambda x: x[0])
-        self._set_ps_normalized_configs(nconfigs)
-        self._synchronized = False
+        nconfig = self._value['ps_normalized_configs*'].pop(str_time)
+        self._value['ps_normalized_configs*'][str_new_time] = nconfig
+        self.verify_synchronized()
         self._invalidate_ps_waveforms()
+
+    def ps_normalized_configs_change_label(self, time, new_label):
+        """Change the label of an existing config given its time."""
+        str_time = '{:.3f}'.format(time)
+        self._value['ps_normalized_configs*'][str_time]['label'] = new_label
+        self.verify_synchronized()
+
+    @property
+    def ps_normalized_config_nominal_values(self):
+        if not self._nominal_strengths:
+            psname2strength = dict()
+            for ps in self.PSNAMES:
+                if ps in _NOMINAL_STRENGTHS:
+                    psname2strength[ps] = _NOMINAL_STRENGTHS[ps]
+                else:
+                    psname2strength[ps] = 0.0
+            self._nominal_strengths = psname2strength
+        return self._nominal_strengths
 
     # ---- ps ramp parameters ----
 
@@ -302,7 +251,7 @@ class BoosterRamp(_ConfigDBDocument):
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid duration for waveforms.')
             self._value['ps_ramp']['duration'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -321,7 +270,7 @@ class BoosterRamp(_ConfigDBDocument):
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
             rdip['wfm_nrpoints_fams'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -340,7 +289,7 @@ class BoosterRamp(_ConfigDBDocument):
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
             rdip['wfm_nrpoints_corrs'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -375,7 +324,7 @@ class BoosterRamp(_ConfigDBDocument):
             w = self._create_new_ps_waveform_dipole()
             w.start_energy = value
             rdip['start_energy'] = w.start_energy
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -392,7 +341,7 @@ class BoosterRamp(_ConfigDBDocument):
             w = self._create_new_ps_waveform_dipole()
             w.rampup1_start_energy = value
             rdip['rampup1_start_energy'] = w.rampup1_start_energy
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -407,7 +356,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampup1_start_time']:
             rdip['rampup1_start_time'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -430,7 +379,7 @@ class BoosterRamp(_ConfigDBDocument):
             w = self._create_new_ps_waveform_dipole()
             w.rampup2_start_energy = value
             rdip['rampup2_start_energy'] = w.rampup2_start_energy
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -445,7 +394,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampup2_start_time']:
             rdip['rampup2_start_time'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -465,7 +414,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampup_smooth_energy']:
             rdip['rampup_smooth_energy'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -479,7 +428,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampup_smooth_intvl']:
             rdip['rampup_smooth_intvl'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -496,7 +445,7 @@ class BoosterRamp(_ConfigDBDocument):
             w = self._create_new_ps_waveform_dipole()
             w.rampdown_start_energy = value
             rdip['rampdown_start_energy'] = w.rampdown_start_energy
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -511,7 +460,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_start_time']:
             rdip['rampdown_start_time'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -528,7 +477,7 @@ class BoosterRamp(_ConfigDBDocument):
             w = self._create_new_ps_waveform_dipole()
             w.rampdown_stop_energy = value
             rdip['rampdown_stop_energy'] = w.rampdown_stop_energy
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -543,7 +492,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_stop_time']:
             rdip['rampdown_stop_time'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -563,7 +512,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_smooth_energy']:
             rdip['rampdown_smooth_energy'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     @property
@@ -577,7 +526,7 @@ class BoosterRamp(_ConfigDBDocument):
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_smooth_intvl']:
             rdip['rampdown_smooth_intvl'] = value
-            self._synchronized = False
+            self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
     # ---- rf ramp parameters ----
@@ -648,7 +597,7 @@ class BoosterRamp(_ConfigDBDocument):
             value - delay
         self._value['rf_ramp']['rampup_duration'] = \
             rampup_stop_time - value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_rampup_stop_time(self):
@@ -673,7 +622,7 @@ class BoosterRamp(_ConfigDBDocument):
             value - rampup_start_time
         self._value['rf_ramp']['top_duration'] = \
             rampdown_start_time - value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_rampdown_start_time(self):
@@ -699,7 +648,7 @@ class BoosterRamp(_ConfigDBDocument):
             value - rampup_stop_time
         self._value['rf_ramp']['rampdown_duration'] = \
             rampdown_stop_time - value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_rampdown_stop_time(self):
@@ -723,7 +672,7 @@ class BoosterRamp(_ConfigDBDocument):
         rampdown_start_time = self.rf_ramp_rampdown_start_time
         self._value['rf_ramp']['rampdown_duration'] = \
             value - rampdown_start_time
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_bottom_duration(self):
@@ -759,7 +708,7 @@ class BoosterRamp(_ConfigDBDocument):
             raise _RampInvalidRFParms('Invalid value to bottom voltage.')
 
         self._value['rf_ramp']['bottom_voltage'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_top_voltage(self):
@@ -775,7 +724,7 @@ class BoosterRamp(_ConfigDBDocument):
             raise _RampInvalidRFParms('Invalid value to top voltage.')
 
         self._value['rf_ramp']['top_voltage'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_bottom_phase(self):
@@ -791,7 +740,7 @@ class BoosterRamp(_ConfigDBDocument):
             raise _RampInvalidRFParms('Invalid value to bottom phase.')
 
         self._value['rf_ramp']['bottom_phase'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def rf_ramp_top_phase(self):
@@ -807,7 +756,7 @@ class BoosterRamp(_ConfigDBDocument):
             raise _RampInvalidRFParms('Invalid value to top phase.')
 
         self._value['rf_ramp']['top_phase'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     # --- timing parameters ---
 
@@ -823,7 +772,7 @@ class BoosterRamp(_ConfigDBDocument):
         if value == self._value['ti_params']['injection_time']:
             return
         self._value['ti_params']['injection_time'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def ti_params_ejection_time(self):
@@ -837,7 +786,7 @@ class BoosterRamp(_ConfigDBDocument):
         if value == self._value['ti_params']['ejection_time']:
             return
         self._value['ti_params']['ejection_time'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def ti_params_ps_ramp_delay(self):
@@ -851,7 +800,7 @@ class BoosterRamp(_ConfigDBDocument):
         if value == self._value['ti_params']['ps_ramp_delay']:
             return
         self._value['ti_params']['ps_ramp_delay'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     @property
     def ti_params_rf_ramp_delay(self):
@@ -865,7 +814,7 @@ class BoosterRamp(_ConfigDBDocument):
         if value == self._value['ti_params']['rf_ramp_delay']:
             return
         self._value['ti_params']['rf_ramp_delay'] = value
-        self._synchronized = False
+        self.verify_synchronized()
 
     # --- API for waveforms ---
 
@@ -875,7 +824,7 @@ class BoosterRamp(_ConfigDBDocument):
         if not self._value['ps_normalized_configs*']:
             psnames = list(self.PSNAME_DIPOLES)
         else:
-            psnames = BoosterNormalized.psnames
+            psnames = self.PSNAMES
         psnames_exclimits = list()
         for psname in psnames:
             self._update_ps_waveform(psname)
@@ -967,11 +916,50 @@ class BoosterRamp(_ConfigDBDocument):
         """Return ps ramp energy at a given time."""
         return self.ps_waveform_interp_strengths(self.PSNAME_DIPOLE_REF, time)
 
+    def verify_synchronized(self):
+        if not self._orig_value:
+            # print('no original value to compare')
+            return
+        modified = False
+        for group, params in self._orig_value.items():
+            if not params:
+                if self._value[group]:
+                    modified = True
+                    # print('now, it has configs', self._value[group].keys())
+                    break
+                else:
+                    # print('do not have configs')
+                    continue
+            if self._orig_value[group].keys() != self._value[group].keys():
+                modified = True
+                # print('has different keys',
+                #       self._orig_value[group].keys(),
+                #       self._value[group].keys())
+                break
+            for param, value in params.items():
+                if self._value[group][param] != value:
+                    modified = True
+                    # print('has params with different values',
+                    #       self._value[group][param], value)
+                    break
+        self._synchronized = not modified
+
+    def verify_ps_normalized_synchronized(self, time, value=None):
+        str_time = '{:.3f}'.format(time)
+        if not self._orig_value:
+            return False
+        if str_time not in self._orig_value['ps_normalized_configs*'].keys():
+            return False
+        o = self._orig_value['ps_normalized_configs*'][str_time]
+        c = value if value is not None else \
+            self._value['ps_normalized_configs*'][str_time]
+        return o == c
+
     # --- private methods ---
 
     def __len__(self):
         """Return number of ps normalized configurations."""
-        return len(self._ps_nconfigs)
+        return len(self._value['ps_normalized_configs*'])
 
     def __str__(self):
         """Return string representation of configuration."""
@@ -1026,45 +1014,28 @@ class BoosterRamp(_ConfigDBDocument):
                              '(rampdown)')
         st += strfmt1.format(labels[7], '')
         time = self.ps_normalized_configs_times
-        name = self.ps_normalized_configs_names
+        name = self.ps_normalized_configs_labels
         for i in range(len(time)):
             st += strfmt3.format('', time[i], name[i])
         return st
 
-    def __setitem__(self, index, value):
+    def _get_item(self, time):
+        str_time = '{:.3f}'.format(time)
+        return _dcopy(self._value['ps_normalized_configs*'][str_time])
+
+    def _set_item(self, time, value):
         """Set configuration item."""
-        self._set_item(index, value)
-
-    def _get_item(self, name):
-        return _dcopy(self._ps_nconfigs[name])
-
-    def _set_item(self, name, value):
-        self._ps_nconfigs[name] = value
-        self._invalidate_ps_waveforms()
-        if name in self._ps_nconfigs.keys() and \
-                not self._check_ps_normalized_modified(value):
+        str_time = '{:.3f}'.format(time)
+        if value == self._value['ps_normalized_configs*'][str_time]:
             return
-        self._synchronized = False
+        self._value['ps_normalized_configs*'][str_time] = _dcopy(value)
+        self.verify_synchronized()
+        self._invalidate_ps_waveforms()
 
     def _set_value(self, value):
         super()._set_value(value)
-        self._update_ps_normalized_configs_objects()
-
-    def _set_ps_normalized_configs(self, value):
-        """Set ps normalized config list."""
-        self._value['ps_normalized_configs*'] = _dcopy(value)
-        self._update_ps_normalized_configs_objects()
-
-    def _update_ps_normalized_configs_objects(self):
-        norm_configs = dict()
-        for _, name in self._value['ps_normalized_configs*']:
-            if name in self._ps_nconfigs:
-                norm_configs[name] = self._ps_nconfigs[name]
-            else:
-                norm_configs[name] = BoosterNormalized(name)
-        self._synchronized = False
+        self.verify_synchronized()
         self._invalidate_ps_waveforms()
-        self._ps_nconfigs = norm_configs
 
     def _update_ps_normalized_config_energy(self, nconfig_obj, time):
         indices = self._conv_times_2_indices(self.PSNAME_DIPOLE_REF, [time])
@@ -1095,26 +1066,17 @@ class BoosterRamp(_ConfigDBDocument):
                 psname, self.PSNAME_DIPOLE_REF, family)
 
     def _update_ps_waveform_not_dipole(self, psname, dipole, family=None):
-        # sort ps normalized configs
-        nconf_times = self.ps_normalized_configs_times
-        nconf_names = self.ps_normalized_configs_names
-        nconf_times, nconf_names = \
-            [list(x) for x in zip(*sorted(zip(nconf_times, nconf_names),
-             key=lambda pair: pair[0]))]  # sort by time
-
-        # build strength
-        nconf_strength = []
-        for i in range(len(nconf_times)):
-            nconfig = self._ps_nconfigs[nconf_names[i]]
-            if psname not in nconfig.psnames:
-                raise _RampInvalidNormConfig()
-            nconf_strength.append(nconfig[psname])
+        nc_times = sorted(self.ps_normalized_configs_times)
+        nc_values = list()
+        for t in nc_times:
+            nconfig = self._value['ps_normalized_configs*']['{:.3f}'.format(t)]
+            nc_values.append(nconfig[psname])
 
         # interpolate strengths
         wfm_nrpoints = self._get_appropriate_wfmnrpoints(psname)
-        nconf_indices = self._conv_times_2_indices(psname, nconf_times)
+        nc_indices = self._conv_times_2_indices(psname, nc_times)
         wfm_indices = [i for i in range(wfm_nrpoints)]
-        wfm_strengths = _np.interp(wfm_indices, nconf_indices, nconf_strength)
+        wfm_strengths = _np.interp(wfm_indices, nc_indices, nc_values)
 
         # create waveform object with given strengths
         dipole = self._ps_waveforms[dipole]
@@ -1122,8 +1084,7 @@ class BoosterRamp(_ConfigDBDocument):
             family = self._ps_waveforms[family]
         self._ps_waveforms[psname] = _Waveform(
             psname=psname, dipole=dipole, family=family,
-            strengths=wfm_strengths,
-            wfm_nrpoints=self._get_appropriate_wfmnrpoints(psname))
+            strengths=wfm_strengths, wfm_nrpoints=wfm_nrpoints)
 
     def _update_ps_waveform_dipole(self):
         for psname in self.PSNAME_DIPOLES:
@@ -1154,8 +1115,7 @@ class BoosterRamp(_ConfigDBDocument):
         return dipole
 
     def _conv_times_2_indices(self, psname, times):
-        rdip = self._value['ps_ramp']
-        duration = rdip['duration']
+        duration = self.ps_ramp_duration
         wfm_nrpoints = self._get_appropriate_wfmnrpoints(psname)
         interval = duration / (wfm_nrpoints - 1.0)
         indices = [t/interval for t in times]
@@ -1166,17 +1126,6 @@ class BoosterRamp(_ConfigDBDocument):
         for psname in psnames:
             if psname not in self.PSNAME_DIPOLES or include_dipole:
                 del(self._ps_waveforms[psname])
-
-    def _check_ps_normalized_modified(self, nconfig):
-        # load original nconfig from server
-        oconfig = BoosterNormalized(name=nconfig.name)
-        oconfig.load()
-
-        # compare values. If identical, return False
-        for mag in oconfig.psnames:
-            if oconfig[mag] != nconfig[mag]:
-                return True
-        return False
 
     def _check_valid_time(self, time):
         """Check if time is in valid interval."""
