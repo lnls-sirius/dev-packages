@@ -20,10 +20,12 @@ class PSEpicsConn:
     _prefix = _VACA_PREFIX
 
     def __init__(self, psname, proptype,
+                 propname=PROPNAME,
                  connection_timeout=CONNECTION_TIMEOUT):
         """."""
         self._psname = self._check_psname(psname)
         self._connection_timeout = connection_timeout
+        self._propname = propname
         self._proptype = self._check_proptype(proptype)
         self._pvs = self._create_pvs()
 
@@ -93,16 +95,16 @@ class PSEpicsConn:
         if psname in PSEpicsConn._dips2:
             # dipoles with two power supplies.
             psname = psname.replace('-1', '').replace('-2', '')
-            pvname = psname + '-1:' + self.PROPNAME + self._proptype
+            pvname = psname + '-1:' + self._propname + self._proptype
             pvobj = _PV(self._prefix + pvname,
                         connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
-            pvname = psname + '-2:' + self.PROPNAME + self._proptype
+            pvname = psname + '-2:' + self._propname + self._proptype
             pvobj = _PV(self._prefix + pvname,
                         connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
         else:
-            pvname = psname + ':' + self.PROPNAME + self._proptype
+            pvname = psname + ':' + self._propname + self._proptype
             pvobj = _PV(self._prefix + pvname,
                         connection_timeout=self._connection_timeout)
             pvs.append(pvobj)
@@ -242,37 +244,39 @@ class SConvEpics:
         elif self._is_trim(self._psname):
             # trims need dipole and family connectors
             conn_dip = PSEpicsConn(
-                'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
+                'SI-Fam:PS-B1B2-1', proptype, 'Energy', connection_timeout)
             psname = self._psname.replace(sub, 'Fam')
-            conn_fam = PSEpicsConn(psname, proptype, connection_timeout)
+            conn_fam = PSEpicsConn(psname, proptype, 'KL', connection_timeout)
         elif self._psname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
-            conn_dip = PSEpicsConn('TB-Fam:PS-B', proptype, connection_timeout)
+            conn_dip = PSEpicsConn(
+                'TB-Fam:PS-B', proptype, 'Energy', connection_timeout)
         elif self._psname.startswith('BO'):
             if dev == 'InjKckr':
                 # BO injection kicker uses TB dipole normalizer
                 conn_dip = PSEpicsConn(
-                    'TB-Fam:PS-B', proptype, connection_timeout)
+                    'TB-Fam:PS-B', proptype, 'Energy', connection_timeout)
             elif dev == 'EjeKckr':
                 # BO ejection kicker uses TS dipole normalizer
                 conn_dip = PSEpicsConn(
-                    'TS-Fam:PS-B', proptype, connection_timeout)
+                    'TS-Fam:PS-B', proptype, 'Energy', connection_timeout)
             else:
                 # other BO ps use BO dipoles as normalizer
                 conn_dip = PSEpicsConn(
-                    'BO-Fam:PS-B-1', proptype, connection_timeout)
+                    'BO-Fam:PS-B-1', proptype, 'Energy', connection_timeout)
         elif self._psname.startswith('TS'):
             # all TS ps use TS dipole
-            conn_dip = PSEpicsConn('TS-Fam:PS-B', proptype, connection_timeout)
+            conn_dip = PSEpicsConn(
+                'TS-Fam:PS-B', proptype, 'Energy', connection_timeout)
         elif self._psname.startswith('SI'):
             if dev in {'InjDpKckr', 'InjNLKckr'}:
                 # SI injection ps use TS dipole
                 conn_dip = PSEpicsConn(
-                    'TS-Fam:PS-B', proptype, connection_timeout)
+                    'TS-Fam:PS-B', proptype, 'Energy', connection_timeout)
             else:
                 # other SI ps use SI dipole
                 conn_dip = PSEpicsConn(
-                    'SI-Fam:PS-B1B2-1', proptype, connection_timeout)
+                    'SI-Fam:PS-B1B2-1', proptype, 'Energy', connection_timeout)
         return conn_dip, conn_fam
 
     def _get_kwargs(self,
@@ -285,26 +289,20 @@ class SConvEpics:
         if not self._conn_fam:
             # is not a trim
             if strengths_dipole is None:
-                dip_curr = self._conn_dip.value
-                if dip_curr is None:
+                strengths_dipole = self._conn_dip.value
+                if strengths_dipole is None:
                     return None
-                strengths_dipole = self._norm_dip.conv_current_2_strength(
-                    currents=dip_curr)
             kwargs = {'strengths_dipole': strengths_dipole}
             return kwargs
         # is a trim
         if strengths_dipole is None:
-            dip_curr = self._conn_dip.value
-            if dip_curr is None:
+            strengths_dipole = self._conn_dip.value
+            if strengths_dipole is None:
                 return None
-            strengths_dipole = self._norm_dip.conv_current_2_strength(
-                currents=dip_curr)
         if strengths_family is None:
-            fam_curr = self._conn_fam.value
-            if fam_curr is None:
+            strengths_family = self._conn_fam.value
+            if strengths_family is None:
                 return None
-            strengths_family = self._norm_fam.conv_current_2_strength(
-                currents=fam_curr, strengths_dipole=strengths_dipole)
         kwargs = {
             'strengths_dipole': strengths_dipole,
             'strengths_family': strengths_family}
