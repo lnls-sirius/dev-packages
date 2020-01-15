@@ -1,6 +1,7 @@
 """Main cycle module."""
 
 import sys as _sys
+from copy import deepcopy as _dcopy
 import time as _time
 import logging as _log
 import threading as _thread
@@ -14,6 +15,7 @@ from .util import get_sections as _get_sections, \
 
 TIMEOUT_SLEEP = 0.1
 TIMEOUT_CHECK = 20
+TIMEOUT_CONN = 0.5
 
 
 class CycleController:
@@ -88,7 +90,7 @@ class CycleController:
     @property
     def psnames(self):
         """Power supplies to cycle."""
-        return self.cyclers.keys()
+        return list(self.cyclers.keys())
 
     @property
     def mode(self):
@@ -103,20 +105,16 @@ class CycleController:
             psnames = self.psnames
         threads = list()
         for psname in psnames:
-            t = _thread.Thread(
-                target=self.config_pwrsupply, args=(psname, ppty), daemon=True)
+            if ppty == 'parameters':
+                target = self.cyclers[psname].prepare
+            elif ppty == 'opmode' and 'LI' not in psname:
+                target = self.cyclers[psname].set_opmode_cycle
+            t = _thread.Thread(target=target, args=(self.mode, ), daemon=True)
             self._update_log('Preparing '+psname+' '+ppty+'...')
             threads.append(t)
             t.start()
         for t in threads:
             t.join()
-
-    def config_pwrsupply(self, psname, ppty):
-        """Prepare power supplies parameters."""
-        if ppty == 'parameters':
-            self.cyclers[psname].prepare(self.mode)
-        elif ppty == 'opmode' and 'LI' not in psname:
-            self.cyclers[psname].set_opmode_cycle(self.mode)
 
     def config_timing(self):
         """Prepare timing to cycle according to mode."""
@@ -133,16 +131,27 @@ class CycleController:
             psnames = [ps for ps in self.psnames if 'LI' not in ps]
         else:
             psnames = self.psnames
-        threads = list()
+        need_check = _dcopy(psnames)
+
         self._checks_result = dict()
-        for psname in psnames:
-            t = _thread.Thread(
-                target=self.check_pwrsupply,
-                args=(psname, ppty), daemon=True)
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
+        t = _time.time()
+        while _time.time() - t < TIMEOUT_CHECK:
+            for psname in psnames:
+                if psname not in need_check:
+                    continue
+                cycler = self.cyclers[psname]
+                if ppty == 'parameters':
+                    r = cycler.is_prepared(self.mode)
+                elif ppty == 'opmode':
+                    r = cycler.check_opmode_cycle(self.mode)
+                if r:
+                    need_check.remove(psname)
+                    self._checks_result[psname] = True
+            if not need_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        for psname in need_check:
+            self._checks_result[psname] = False
 
         status = True
         for psname in psnames:
@@ -153,21 +162,6 @@ class CycleController:
                 self._update_log(psname+' is not ready.', error=True)
                 status &= False
         return status
-
-    def check_pwrsupply(self, psname, ppty):
-        """Check power supply."""
-        t0 = _time.time()
-        cycler = self.cyclers[psname]
-        r = False
-        while _time.time()-t0 < TIMEOUT_CHECK:
-            if ppty == 'parameters':
-                r = cycler.is_prepared(self.mode)
-            elif ppty == 'opmode':
-                r = cycler.check_opmode_cycle(self.mode)
-            if r:
-                break
-            _time.sleep(TIMEOUT_SLEEP)
-        self._checks_result[psname] = r
 
     def check_timing(self):
         """Check timing preparation."""
@@ -280,16 +274,23 @@ class CycleController:
 
     def check_all_pwrsupplies_final_state(self):
         """Check all power supplies final state according to mode."""
-        threads = list()
+        need_check = _dcopy(self.psnames)
+
         self._checks_final_result = dict()
-        for psname in self.psnames:
-            t = _thread.Thread(
-                target=self.check_pwrsupplies_final_state,
-                args=(psname, ), daemon=True)
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
+        t = _time.time()
+        while _time.time() - t < TIMEOUT_CHECK:
+            for psname in self.psnames:
+                if psname not in need_check:
+                    continue
+                cycler = self.cyclers[psname]
+                if cycler.check_final_state(self.mode):
+                    need_check.remove(psname)
+                    self._checks_final_result[psname] = True
+            if not need_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        for psname in need_check:
+            self._checks_final_result[psname] = False
 
         for psname in self.psnames:
             self._update_log('Checking '+psname+' state...')
@@ -311,11 +312,6 @@ class CycleController:
                 self._update_log(psname+' has interlock problems.',
                                  error=True)
         return True
-
-    def check_pwrsupplies_final_state(self, psname):
-        """Check power supplies final state."""
-        self._checks_final_result[psname] = \
-            self.cyclers[psname].check_final_state(self.mode)
 
     def restore_timing_initial_state(self):
         """Reset all subsystems."""
