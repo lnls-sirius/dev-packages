@@ -194,22 +194,16 @@ class CycleController:
             return True
 
     def pulse_si_pwrsupplies(self):
-        """Send sync pulse to power supplies."""
-        psnames = [ps for ps in self.psnames
-                   if ('SI' in ps and 'Fam' not in ps)]
+        """Send sync pulse to power supplies. Not being used."""
+        psnames = []
         threads = list()
         for psname in psnames:
-            t = _thread.Thread(
-                target=self.pulse_pwrsupply, args=(psname, ), daemon=True)
+            t = _thread.Thread(target=self.cyclers[psname].pulse, daemon=True)
             self._update_log('Pulsing '+psname+'...')
             threads.append(t)
             t.start()
         for t in threads:
             t.join()
-
-    def pulse_pwrsupply(self, psname):
-        """Send sync pulse to power supply."""
-        self.cyclers[psname].pulse()
 
     def init(self):
         """Trigger timing according to mode to init cycling."""
@@ -228,8 +222,6 @@ class CycleController:
         if not psnames:
             return
         self._update_log('Triggering timing...')
-        # TODO: remove the following line when SI timing is ok
-        self.pulse_si_pwrsupplies()
         self._timing.trigger(self.mode)
         self._update_log(done=True)
 
