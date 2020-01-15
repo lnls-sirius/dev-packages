@@ -71,8 +71,7 @@ class Timing:
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             pv = Timing._pvs[prop]
-            pv.get()  # force connection
-            if pv.connected:
+            if pv.wait_for_connection(TIMEOUT_CONNECTION):
                 pv.value = defval
                 _time.sleep(1.5*SLEEP_CAPUT)
         # Update events
@@ -87,8 +86,7 @@ class Timing:
             except TypeError:
                 continue
             pv = Timing._pvs[prop_sts]
-            pv.get()  # force connection
-            if not pv.connected:
+            if not pv.wait_for_connection(TIMEOUT_CONNECTION):
                 return False
             else:
                 if prop_sts.propty_name == 'Src':
@@ -220,7 +218,7 @@ class Timing:
                 if pvname.propty_suffix == 'Cmd':
                     continue
 
-                self._initial_state[pvname] = Timing._pvs[pvname].get()
+                self._initial_state[pvname] = Timing._pvs[pvname].value
 
                 if pvname.propty_suffix == 'SP':
                     pvname_sts = pvname.substitute(propty_suffix='RB')
@@ -231,7 +229,6 @@ class Timing:
                 Timing._pvs[pvname_sts] = _PV(
                     VACA_PREFIX+pvname_sts,
                     connection_timeout=TIMEOUT_CONNECTION)
-                Timing._pvs[pvname_sts].get()  # force connection
 
     @classmethod
     def _init_properties(cls):
@@ -313,10 +310,9 @@ class PSCycler:
         self._pvs = dict()
         for prop in PSCycler.properties:
             if prop not in self._pvs.keys():
-                pvname = VACA_PREFIX + self._psname + ':' + prop
                 self._pvs[prop] = _PV(
-                    pvname, connection_timeout=TIMEOUT_CONNECTION)
-                self._pvs[prop].get()
+                    VACA_PREFIX + self._psname + ':' + prop,
+                    connection_timeout=TIMEOUT_CONNECTION)
 
     @property
     def psname(self):
@@ -327,10 +323,13 @@ class PSCycler:
     def connected(self):
         """Connection state."""
         for prop in PSCycler.properties:
-            if prop in {'Wfm-SP', 'Wfm-RB', 'WfmIndex-Mon',
-                        'WfmSyncPulseCount-Mon'} and 'TB' in self.psname:
-                pass
-            elif not self[prop].connected:
+            if not self[prop].connected:
+                return False
+        return True
+
+    def wait_for_connection(self, timeout=0.5):
+        for pv in self._pvs.values():
+            if not pv.wait_for_connection(timeout):
                 return False
         return True
 
@@ -526,10 +525,9 @@ class LinacPSCycler:
         self._pvs = dict()
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
-                pvname = VACA_PREFIX + self._psname + ':' + prop
                 self._pvs[prop] = _PV(
-                    pvname, connection_timeout=TIMEOUT_CONNECTION)
-                self._pvs[prop].get()
+                    VACA_PREFIX + self._psname + ':' + prop,
+                    connection_timeout=TIMEOUT_CONNECTION)
 
     @property
     def psname(self):
@@ -541,6 +539,12 @@ class LinacPSCycler:
         """Return connected state."""
         for prop in LinacPSCycler.properties:
             if not self[prop].connected:
+                return False
+        return True
+
+    def wait_for_connection(self, timeout=0.5):
+        for pv in self._pvs.values():
+            if not pv.wait_for_connection(timeout):
                 return False
         return True
 
