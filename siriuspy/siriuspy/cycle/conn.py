@@ -381,11 +381,10 @@ class PSCycler:
         _time.sleep(SLEEP_CAPUT)
         return status
 
-    def check_current_zero(self):
+    def check_current_zero(self, wait=5):
         """Return wether power supply PS current is zero."""
-        if not self.connected:
-            return False
-        return _isclose(self['CurrentRef-Mon'].value, 0, abs_tol=0.05)
+        return _pv_timed_get(
+            self['CurrentRef-Mon'], 0, abs_tol=0.05, wait=wait)
 
     def set_params(self, mode):
         """Set params to cycle."""
@@ -410,45 +409,51 @@ class PSCycler:
             _time.sleep(SLEEP_CAPUT)
         return status
 
-    def check_params(self, mode):
+    def check_params(self, mode, wait=5):
         """Return wether power supply cycling parameters are set."""
         status = True
         if mode == 'Cycle':
             type_idx = _PSet.CYCLE_TYPES.index(self.siggen.type)
-            status &= _pv_timed_get(self['CycleType-Sts'], type_idx)
-            status &= _pv_timed_get(self['CycleFreq-RB'], self.siggen.freq)
+            status &= _pv_timed_get(self['CycleType-Sts'], type_idx, wait=wait)
             status &= _pv_timed_get(
-                self['CycleAmpl-RB'], self.siggen.amplitude)
-            status &= _pv_timed_get(self['CycleOffset-RB'], self.siggen.offset)
+                self['CycleFreq-RB'], self.siggen.freq, wait=wait)
             status &= _pv_timed_get(
-                self['CycleAuxParam-RB'], self.siggen.aux_param)
+                self['CycleAmpl-RB'], self.siggen.amplitude, wait=wait)
             status &= _pv_timed_get(
-                self['CycleNrCycles-RB'], self.siggen.num_cycles)
+                self['CycleOffset-RB'], self.siggen.offset, wait=wait)
+            status &= _pv_timed_get(
+                self['CycleAuxParam-RB'], self.siggen.aux_param, wait=wait)
+            status &= _pv_timed_get(
+                self['CycleNrCycles-RB'], self.siggen.num_cycles, wait=wait)
         else:
-            status &= _pv_timed_get(self['Wfm-RB'], self.waveform)
+            status &= _pv_timed_get(self['Wfm-RB'], self.waveform, wait=wait)
         return status
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        status = True
+        if not self.check_opmode_slowref(wait=0.5):
+            self.set_opmode_slowref()
+            if not self.check_opmode_slowref():
+                return False
 
-        status &= self.set_opmode_slowref()
+        if not self.check_current_zero(wait=0.5):
+            self.set_current_zero()
+            if not self.check_current_zero():
+                return False
 
-        status &= self.set_current_zero()
-        status &= self.check_current_zero()
-
-        status &= self.set_params(mode)
-        status &= self.check_params(mode)
+        if not self.check_params(mode, wait=0.5):
+            self.set_params(mode)
 
         self.update_wfm_pulsecnt()
-        return status
+        return True
 
     def is_prepared(self, mode):
         """Return wether power supply is ready."""
-        status = True
-        status &= self.check_current_zero()
-        status &= self.check_params(mode)
-        return status
+        if not self.check_current_zero():
+            return False
+        if not self.check_params(mode):
+            return False
+        return True
 
     def set_opmode(self, opmode):
         """Set power supply opmode to mode."""
@@ -457,20 +462,22 @@ class PSCycler:
     def set_opmode_slowref(self):
         status = self.set_opmode(_PSConst.OpMode.SlowRef)
         _time.sleep(SLEEP_CAPUT)
-        status &= _pv_timed_get(
-            self['OpMode-Sts'], _PSConst.States.SlowRef, wait=10.0)
         return status
+
+    def check_opmode_slowref(self, wait=10):
+        return _pv_timed_get(
+            self['OpMode-Sts'], _PSConst.States.SlowRef, wait=wait)
 
     def set_opmode_cycle(self, mode):
         opmode = _PSConst.OpMode.Cycle if mode == 'Cycle'\
             else _PSConst.OpMode.RmpWfm
         return self.set_opmode(opmode)
 
-    def check_opmode_cycle(self, mode):
+    def check_opmode_cycle(self, mode, wait=5):
         """Return wether power supply is in mode."""
         opmode = _PSConst.States.Cycle if mode == 'Cycle'\
             else _PSConst.States.RmpWfm
-        return _pv_timed_get(self['OpMode-Sts'], opmode)
+        return _pv_timed_get(self['OpMode-Sts'], opmode, wait=wait)
 
     def get_cycle_enable(self):
         if not self.connected:
@@ -496,6 +503,7 @@ class PSCycler:
                 return 3  # indicate cycling not finished yet
 
         status = self.set_opmode_slowref()
+        status &= self.check_opmode_slowref()
         if not status:
             return 2  # indicate opmode is not in slowref yet
 
@@ -573,15 +581,15 @@ class LinacPSCycler:
         """Set PS current to zero ."""
         return _pv_conn_put(self['seti'], 0)
 
-    def check_current_zero(self):
+    def check_current_zero(self, wait=5):
         """Return wether power supply PS current is zero."""
-        if not self.connected:
-            return False
-        return _isclose(self['rdi'].value, 0, abs_tol=0.1)
+        return _pv_timed_get(self['rdi'].value, 0, abs_tol=0.1, wait=wait)
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        status = self.set_current_zero()
+        status = True
+        if not self.check_current_zero(wait=0.5):
+            status &= self.set_current_zero()
         return status
 
     def is_prepared(self, mode):
