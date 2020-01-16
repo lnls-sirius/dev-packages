@@ -583,7 +583,7 @@ class LinacPSCycler:
 
     def check_current_zero(self, wait=5):
         """Return wether power supply PS current is zero."""
-        return _pv_timed_get(self['rdi'].value, 0, abs_tol=0.1, wait=wait)
+        return _pv_timed_get(self['rdi'], 0, abs_tol=0.1, wait=wait)
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
