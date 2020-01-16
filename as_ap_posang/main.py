@@ -104,6 +104,7 @@ class App:
         self._corr_refkick = {}
 
         for corr in self._correctors:
+            corr = _SiriusPVName(corr)
             corr_index = self._correctors.index(corr)
 
             pss = corr.substitute(prefix=self._PREFIX_VACA)
