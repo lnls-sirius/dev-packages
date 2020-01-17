@@ -6,7 +6,6 @@ an `execute` method.
 
 from siriuspy.pwrsupply.bsmp import ConstPSBSMP as _consts_psbsmp
 from siriuspy.csdevice.pwrsupply import Const as _consts_ps
-from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 
 class Function:
