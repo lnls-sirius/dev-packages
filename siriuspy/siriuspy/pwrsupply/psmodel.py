@@ -89,8 +89,6 @@ class _PSModel:
         # # ----- class Analog Variables -----
         # P_ANALOG_MAX = 46
         # P_ANALOG_MIN = 47
-
-
         # # ----- class Control -----
         # P_CTRL_FREQ_CONTROL_ISR = 11
         # P_CTRL_FREQ_TIME_SLICER = 12
