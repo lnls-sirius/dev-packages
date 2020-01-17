@@ -1,7 +1,6 @@
 """Define PVs, contants and properties of PosAng SoftIOCs."""
 
 from siriuspy.csdevice import util as _cutil
-# from siriuspy.namesys import SiriusPVName as _PVName
 
 
 class Const:
