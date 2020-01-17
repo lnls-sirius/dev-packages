@@ -526,7 +526,7 @@ class PRUController:
 
     def _bsmp_update(self):
 
-        time0 = _time()
+        # time0 = _time()
 
         # update timestamp
         self._timestamp_update = _time()
@@ -541,9 +541,9 @@ class PRUController:
             dev_id = self._device_ids[self._wfm_update_dev_idx]
             self._bsmp_update_wfm(dev_id)
 
-        time1 = _time()
-        print('{} devices, update total time {}'.format(
-            len(self._device_ids), 1000*(time1 - time0)))
+        # time1 = _time()
+        # print('{} devices, update total time {}'.format(
+        #     len(self._device_ids), 1000*(time1 - time0)))
 
     def _bsmp_update_variables(self):
 
