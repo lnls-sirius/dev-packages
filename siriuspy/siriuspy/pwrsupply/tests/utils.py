@@ -130,7 +130,7 @@ def print_status(ps_list):
         address = ps.channel.address
         _, ps_status = process_response(
             ps.read_variable(
-                ps.CONST_PSBSMP.V_PS_STATUS, timeout=100),
+                ps.CONST.V_PS_STATUS, timeout=100),
             'ps_status {}'.format(address))
 
         status = PSCStatus(ps_status=ps_status)

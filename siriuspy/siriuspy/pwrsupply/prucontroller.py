@@ -389,6 +389,8 @@ class PRUController:
     def _loop_scan(self):
         while self._running:
 
+            time0 = _time()
+
             # run scan method once
             if self.scanning and self._scan_interval != 0:
                 self.bsmp_scan()
@@ -397,7 +399,9 @@ class PRUController:
             self._scan_interval = self._get_scan_interval()
 
             # wait for time_interval
-            _sleep(self._scan_interval)
+            dtime = _time() - time0
+            if dtime < self._scan_interval:
+                _sleep(self._scan_interval - dtime)
 
     def _loop_process(self):
         while self._running:
@@ -530,19 +534,16 @@ class PRUController:
         # update variables
         self._bsmp_update_variables()
 
-        # return of wfm is not to be updated
-        if not self._wfm_update:
-            return  # does not update wfm!
-
         # update device wfm curves cyclically
-        self._wfm_update_dev_idx = \
-            (self._wfm_update_dev_idx + 1) % len(self._device_ids)
-        dev_id = self._device_ids[self._wfm_update_dev_idx]
-        self._bsmp_update_wfm(dev_id)
+        if self._wfm_update:
+            self._wfm_update_dev_idx = \
+                (self._wfm_update_dev_idx + 1) % len(self._device_ids)
+            dev_id = self._device_ids[self._wfm_update_dev_idx]
+            self._bsmp_update_wfm(dev_id)
 
         # time1 = _time()
-        # print('devices: {}, time {}'.format(
-        #     self._device_ids, 1000*(time1 - time0)))
+        # print('{} devices, update total time {}'.format(
+        #     len(self._device_ids), 1000*(time1 - time0)))
 
     def _bsmp_update_variables(self):
 

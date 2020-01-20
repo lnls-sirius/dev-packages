@@ -3,6 +3,7 @@
 # import random as _random
 import time as _time
 import numpy as _np
+import math as _math
 from siriuspy.bsmp import SerialError as _SerialError
 
 
@@ -34,9 +35,9 @@ class PSupply:
         """Init."""
         self._psbsmp = psbsmp
         self._connected = None
-        self._groups = self._init_groups()
-        self._variables = self._init_variables()
-        self._curves = self._init_curves()
+        self._groups = PSupply._init_groups()
+        self._variables = PSupply._init_variables()
+        self._curves = PSupply._init_curves()
         self._parameters = self._init_parameters()
         self._wfm_rb = None
         self._wfmref_mon = None
@@ -233,22 +234,28 @@ class PSupply:
         tstamp = self._timestamp_update_parameters
         if tstamp is None or (now - tstamp) >= interval:
             parameters = self._psbsmp.entities.parameters
+            conn_status_ok = True
             for eid in parameters.eids:
                 parameter = parameters[eid]
                 counter = parameter['count']
                 if eid != self._psbsmp.CONST.P_PS_NAME and counter > 1:
-                    value = _np.zeros(counter) * float('NaN')
+                    value = _np.zeros(counter)
                     for idx in range(counter):
                         value[idx] = self._psbsmp.parameter_read(eid, idx)
+                        if value[idx] is None:
+                            conn_status_ok = False
+                        if _math.isnan(value[idx]):
+                            value[idx] = 0
                 else:
                     value = self._psbsmp.parameter_read(eid)
+                    if value is None:
+                        conn_status_ok = False
                 self._parameters[eid] = value
                 # print(eid, value)
-            if value is not None:
-                self._timestamp_update_variables = now
+            if conn_status_ok:
+                self._timestamp_update_parameters = now
                 return True
-            else:
-                return False
+            return False
         return True
 
     def reset_variables_groups(self, groups):
@@ -260,13 +267,19 @@ class PSupply:
             ValueError('Could not reset groups of variables!')
         return True
 
-    def _init_groups(self):
+    @staticmethod
+    def _init_groups():
+        # NOTE: template to be expanded, if necessary.
         return dict()
 
-    def _init_variables(self):
+    @staticmethod
+    def _init_variables():
+        # NOTE: template to be expanded, if necessary.
         return dict()
 
-    def _init_curves(self):
+    @staticmethod
+    def _init_curves():
+        # NOTE: template to be expanded, if necessary.
         return dict()
 
     def _init_parameters(self):
