@@ -15,6 +15,8 @@ class SOFB:
         orbtp = 'MTurn' if self.data.isring else 'SPass'
         self._trajx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'OrbX-Mon')
         self._trajy = PV(acc+'-Glob:AP-SOFB:'+orbtp+'OrbY-Mon')
+        self._orbx = PV(acc+'-Glob:AP-SOFB:SlowOrbX-Mon', auto_monitor=False)
+        self._orby = PV(acc+'-Glob:AP-SOFB:SlowOrbY-Mon', auto_monitor=False)
         if self.data.isring:
             self._trajx_idx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'Idx'+'OrbX-Mon')
             self._trajy_idx = PV(acc+'-Glob:AP-SOFB:'+orbtp+'Idx'+'OrbY-Mon')
@@ -30,6 +32,8 @@ class SOFB:
         """."""
         conn = self._trajx.connected
         conn &= self._trajy.connected
+        conn &= self._orbx.connected
+        conn &= self._orby.connected
         conn &= self._sum.connected
         conn &= self._rst.connected
         conn &= self._npts_sp.connected
@@ -45,6 +49,16 @@ class SOFB:
     def trajy(self):
         """."""
         return self._trajy.get()
+
+    @property
+    def orbx(self):
+        """."""
+        return self._orbx.get()
+
+    @property
+    def orby(self):
+        """."""
+        return self._orby.get()
 
     @property
     def trajx_idx(self):
