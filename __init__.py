@@ -4,11 +4,9 @@ from .rf import RF
 from .sofb import SOFB
 from .kicker import Kicker
 from .septum import Septum
+from .magnets import TrimQuad, Corrector
 from .screen import Screen
 from .bpm import BPM
-from .ict import ICT
-from .ict import TranspEff
-from .egun import Bias
-from .egun import Filament
-from .egun import HVPS
+from .ict import ICT, TranspEff
+from .egun import Bias, Filament, HVPS
 from .timing import Timing
