@@ -18,15 +18,32 @@ class PVsConfig(_ConfigDBDocument):
         """Init."""
         super().__init__(config_type, name=name, url=url)
 
+    def connect(self):
+        """Create PVs."""
+        template = self.get_value_template()
+        for pvn, _, _ in template['pvs']:
+            self._get_pv(pvn)
+
+    @property
+    def connected(self):
+        template = self.get_value_template()
+        for pvn, _, _ in template['pvs']:
+            pv = self.PVs.get(pvn)
+            if pv is None:
+                return False
+            elif not pv.connected:
+                return False
+        return True
+
     def read(self, timeout=_TIMEOUT):
         """Read machine state."""
         new_config_value = dict()
         new_config_value['pvs'] = list()
 
-        # connect
         template = self.get_value_template()
-        for pvn, _, _ in template['pvs']:
-            self._get_pv(pvn)
+
+        # connect
+        self.connect()
 
         # read
         pvs_not_read = set()
@@ -57,9 +74,7 @@ class PVsConfig(_ConfigDBDocument):
     def apply(self, timeout=_TIMEOUT):
         """Apply current config value to machine and check if implemented."""
         # connect
-        template = self.get_value_template()
-        for pvn, _, _ in template['pvs']:
-            self._get_pv(pvn)
+        self.connect()
 
         pvs_not_set = set()
 
@@ -97,11 +112,11 @@ class PVsConfig(_ConfigDBDocument):
 
     # ---------- auxiliar methods ----------
 
-    def _get_pv(self, pvname):
+    def _get_pv(self, pvname, timeout=_TIMEOUT):
         """Return PV object."""
         pv = self.PVs.get(pvname)
         if pv is None:
-            pv = _get_pv(pvname)
+            pv = _get_pv(pvname, timeout=_TIMEOUT)
             self.PVs[pvname] = pv
         return pv
 
