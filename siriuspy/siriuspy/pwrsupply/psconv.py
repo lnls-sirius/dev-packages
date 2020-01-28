@@ -114,7 +114,16 @@ class PSEpicsConn:
 class PUEpicsConn(PSEpicsConn):
     """Pulsed Power Supplu Epics Connector."""
 
+    CONNECTION_TIMEOUT = 0.010  # [s]
     PROPNAME = 'Voltage'
+
+    def __init__(self, psname, proptype,
+                 propname=PROPNAME,
+                 connection_timeout=CONNECTION_TIMEOUT):
+        """."""
+        super().__init__(
+            psname, proptype,
+            PUEpicsConn.PROPNAME, connection_timeout)
 
 
 class SConvEpics:
