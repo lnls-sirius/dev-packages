@@ -155,37 +155,17 @@ class SConvEpics:
         return True
 
     @property
-    def dipole_current(self):
-        """Return dipole current."""
-        if self._conn_dip:
-            return self._conn_dip.value
-        return None
-
-    @property
     def dipole_strength(self):
         """Return dipole strength."""
         if self._conn_dip:
-            curr = self._conn_dip.value
-            stre = self._norm_dip.conv_current_2_strength(currents=curr)
-            return stre
-        return None
-
-    @property
-    def family_current(self):
-        """Return family current."""
-        if self._conn_fam:
-            return self._conn_fam.value
+            return self._conn_dip.value
         return None
 
     @property
     def family_strength(self):
         """Return family strength."""
         if self._conn_fam:
-            dip_stre = self.dipole_strength
-            fam_curr = self._conn_fam.value
-            fam_stre = self._norm_fam.conv_current_2_strength(
-                currents=fam_curr, strengths_dipole=dip_stre)
-            return fam_stre
+            return self._conn_fam.value
         return None
 
     def conv_current_2_strength(self, currents,
