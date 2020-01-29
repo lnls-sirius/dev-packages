@@ -78,6 +78,8 @@ class BaseMagnet:
         """."""
         conn = self._stren_sp.connected
         conn &= self._stren_rb.connected
+        conn &= self._current_sp.connected
+        conn &= self._current_rb.connected
         conn &= self._pwr_state_sp.connected
         conn &= self._pwr_state_rb.connected
         return conn
