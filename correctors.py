@@ -117,7 +117,7 @@ class RFCtrl(Corrector):
         delta = abs(freq-freq0)
         if delta < 0.1 or delta > 10000:
             return
-        npoints = round(delta/delta_max) + 2
+        npoints = int(round(delta/delta_max)) + 2
         freq_span = _np.linspace(freq0, freq, npoints)[1:]
         for f in freq_span:
             self._sp.put(f, wait=False)
