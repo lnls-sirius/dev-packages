@@ -174,7 +174,7 @@ class EpicsOrbit(BaseOrbit):
 
         if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
             orbs = self.smooth_mtorb
-            raw_orbs = self.raw_orbs
+            raw_orbs = self.raw_mtorbs
             getorb = self._get_orbit_multiturn
         elif self._mode == self._csorb.SOFBMode.SinglePass:
             orbs = self.smooth_sporb
@@ -182,7 +182,7 @@ class EpicsOrbit(BaseOrbit):
             getorb = self._get_orbit_singlepass
         elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
             orbs = self.smooth_orb
-            raw_orbs = self.raw_mtorbs
+            raw_orbs = self.raw_orbs
             getorb = self._get_orbit_online
 
         for _ in range(3 * self._smooth_npts):
