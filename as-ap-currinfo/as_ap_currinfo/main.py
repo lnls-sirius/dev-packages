@@ -358,7 +358,7 @@ class SIApp:
         elif '14C4' in pvname:
             self._storedebeam_14C4_value = value
 
-        elif self._dcct_mode == _Const.DCCT.Avg:
+        if self._dcct_mode == _Const.DCCT.Avg:
             self._storedebeam_value = (self._storedebeam_13C4_value and
                                        self._storedebeam_14C4_value)
         elif self._dcct_mode == _Const.DCCT.DCCT13C4:
