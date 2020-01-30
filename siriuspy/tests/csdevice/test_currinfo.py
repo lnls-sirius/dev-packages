@@ -85,9 +85,11 @@ class TestCurrInfoCSDevice(TestCase):
         # PV names
         self.assertTrue('Version-Cte' in db)
         self.assertTrue('Lifetime-Mon' in db)
+        self.assertTrue('LifetimeBPM-Mon' in db)
         self.assertTrue('BuffSizeMax-SP' in db)
         self.assertTrue('BuffSizeMax-RB' in db)
         self.assertTrue('BuffSize-Mon' in db)
+        self.assertTrue('BuffSizeBPM-Mon' in db)
         self.assertTrue('SplIntvl-SP' in db)
         self.assertTrue('SplIntvl-RB' in db)
         self.assertTrue('BuffRst-Cmd' in db)
@@ -101,6 +103,7 @@ class TestCurrInfoCSDevice(TestCase):
 
         # PVs units
         self.assertEqual(db['Lifetime-Mon']['unit'], 's')
+        self.assertEqual(db['LifetimeBPM-Mon']['unit'], 's')
         self.assertEqual(db['SplIntvl-SP']['unit'], 's')
         self.assertEqual(db['SplIntvl-RB']['unit'], 's')
         self.assertEqual(db['DCurrFactor-Cte']['unit'], 'mA')
