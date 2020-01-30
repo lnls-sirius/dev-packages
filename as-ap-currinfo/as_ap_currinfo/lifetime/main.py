@@ -33,35 +33,38 @@ class App:
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()
 
-        self._current_pv = _epics.PV(
-            self._PREFIX+'Current-Mon',
-            callback=self._callback_calclifetime)
-        self._storedebeam_pv = _epics.PV(
-            self._PREFIX+'StoredEBeam-Mon')
+        self._mode = _Const.Fit.Exponential
+        self._lifetime = 0
+        self._lifetime_bpm = 0
+        self._current_offset = 0.0
+        self._rstbuff_cmd_count = 0
+        self._buffautorst_mode = _Const.BuffAutoRst.Off
+        self._dcurrfactor = 0.01
+        self._sampling_time = 2000.0
+        self._buffer_max_size = 2000
+
+        self._current_pv = _epics.PV(self._PREFIX+'Current-Mon')
+        self._bpmsum_pv = _epics.PV(self._PREFIX_VACA+'SI-01M1:DI-BPM:Sum-Mon')
+        self._storedebeam_pv = _epics.PV(self._PREFIX+'StoredEBeam-Mon')
         self._injstate_pv = _epics.PV(
             self._PREFIX_VACA+'AS-RaMO:TI-EVG:InjectionEvt-Sts',
             callback=self._callback_get_injstate)
 
-        self._mode = _Const.Fit.Exponential
-        self._lifetime = 0
-        self._current_offset = 0.0
-        self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = _Const.BuffAutoRst.Off
+        self._current_buffer = _SiriusPVTimeSerie(
+            pv=self._current_pv, time_window=self._sampling_time, mode=0,
+            nr_max_points=self._buffer_max_size, time_min_interval=0.0)
+        self._bpmsum_buffer = _SiriusPVTimeSerie(
+            pv=self._bpmsum_pv, time_window=self._sampling_time, mode=0,
+            nr_max_points=self._buffer_max_size, time_min_interval=0.0)
+
+        self._current_pv.add_callback(self._callback_calclifetime)
+        self._bpmsum_pv.add_callback(self._callback_calclifetime)
         if self._injstate_pv.connected:
             self._is_injecting = self._injstate_pv.value
             self._changeinjstate_timestamp = self._injstate_pv.timestamp
         else:
             self._is_injecting = 0
             self._changeinjstate_timestamp = _time.time() - 0.5
-        self._dcurrfactor = 0.01
-        self._sampling_time = 2000.0
-        self._buffer_max_size = 1000
-        self._current_buffer = _SiriusPVTimeSerie(
-            pv=self._current_pv,
-            time_window=self._sampling_time,
-            nr_max_points=self._buffer_max_size,
-            time_min_interval=0.0,
-            mode=0)
 
     @staticmethod
     def init_class():
@@ -122,44 +125,59 @@ class App:
         if value < 1:
             self._buffer_max_size = 0
             self._current_buffer.nr_max_points = None
+            self._bpmsum_buffer.nr_max_points = None
         else:
             self._buffer_max_size = value
             self._current_buffer.nr_max_points = value
+            self._bpmsum_buffer.nr_max_points = value
 
     def _update_splintvl(self, value):
         self._sampling_time = value
         self._current_buffer.time_window = value
+        self._bpmsum_buffer.time_window = value
 
     def _clear_buffer(self):
         self._current_buffer.clearserie()
+        self._bpmsum_buffer.clearserie()
 
     def _update_buffautorst_mode(self, value):
         if self._buffautorst_mode != value:
             self._buffautorst_mode = value
 
-    def _callback_calclifetime(self, timestamp, **kws):
+    def _callback_calclifetime(self, pvname, timestamp, **kws):
+        buffer = self._bpmsum_buffer if 'BPM' in pvname \
+            else self._current_buffer
+
         self._dtime_lastchangeinjstate = (timestamp -
                                           self._changeinjstate_timestamp)
-        acquireflag = self._current_buffer.acquire()
+        acquireflag = buffer.acquire()
         if acquireflag:
             if self._buffautorst_mode != _Const.BuffAutoRst.Off:
                 self._buffautorst_check()
 
             # Check min number of points in buffer to calculate lifetime
-            [timestamp, value] = self._current_buffer.serie
+            [timestamp, value] = buffer.serie
             timestamp = _np.array(timestamp)
             value = _np.array(value)
             value -= self._current_offset
             fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
             if self._buffer_max_size > 0:
                 if len(value) > min(20, self._buffer_max_size/2):
-                    self._lifetime = \
-                        self._least_squares_fit(timestamp, value, fit=fit)
+                    setattr(
+                        self, '_lifetime'+('_bpm' if 'BPM' in pvname else ''),
+                        self._least_squares_fit(timestamp, value, fit=fit))
             else:
                 if len(value) > 20:
-                    self._lifetime = \
-                        self._least_squares_fit(timestamp, value, fit=fit)
+                    setattr(
+                        self, '_lifetime'+('_bpm' if 'BPM' in pvname else ''),
+                        self._least_squares_fit(timestamp, value, fit=fit))
 
+        if 'BPM' in pvname:
+            self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
+            self.driver.updatePV('LifetimeBPM-Mon')
+            self.driver.setParam('BuffSizeBPM-Mon', len(value))
+            self.driver.updatePV('BuffSizeBPM-Mon')
+        else:
             self.driver.setParam('Lifetime-Mon', self._lifetime)
             self.driver.updatePV('Lifetime-Mon')
             self.driver.setParam('BuffSize-Mon', len(value))
@@ -179,15 +197,19 @@ class App:
                     self._storedebeam_pv.value == 0):
                 self._current_buffer.clearserie()
                 self._lifetime = 0
+                self._bpmsum_buffer.clearserie()
+                self._lifetime_bpm = 0
             elif ((self._is_injecting == 1 or
                    self._dtime_lastchangeinjstate < 1) and
                   (len(value) >= 2 and
                    (abs(value[-1] - value[-2]) > 0.1))):
                 self._current_buffer.clearserie()
+                self._bpmsum_buffer.clearserie()
         elif self._buffautorst_mode == _Const.BuffAutoRst.DCurrCheck:
             if (len(value) >= 2 and
                     abs(value[-1] - value[-2]) > 100*self._dcurrfactor):
                 self._current_buffer.clearserie()
+                self._bpmsum_buffer.clearserie()
 
     def _callback_get_injstate(self, value, timestamp, **kws):
         if value == 1:
