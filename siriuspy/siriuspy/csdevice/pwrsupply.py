@@ -1378,7 +1378,7 @@ def _get_ps_FAP_4P_propty_database():
         'IIB4InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
                                         'unit': 'C'},
-        'IIB4HeatSinkTemperature-Mon':{'type': 'float', 'value': 0.0,
+        'IIB4HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
                                        'prec': 2,
                                        'unit': 'C'},
 
