@@ -117,7 +117,6 @@ class StandardPSController(PSController):
         'CycleAuxParam-SP',  # start index of auxparams
     ]
 
-
     def write(self, device_name, field, value):
         """Override write method."""
         pvname = device_name + ':' + field
