@@ -251,7 +251,7 @@ class BBBFactory:
                                             scanning=False,
                                             freq=freq)
 
-            connections, devices_ids = dict(), dict()
+            psname2dev = dict()
             fields, functions = dict(), dict()
 
             for device in devices:
@@ -276,16 +276,15 @@ class BBBFactory:
                 fields.update(_fields)
                 functions.update(_functions)
 
-                # build connections and device_ids dicts
-                devices_ids[psname] = dev_id
-                connections[psname] = Connection(dev_id, pru_controller)
+                # build device_ids dict
+                psname2dev[psname] = dev_id
 
                 # add database to dictionary
                 databases[psname] = database
 
             # build controller
             controller = psmodel.controller(
-                fields, functions, connections, pru_controller, devices_ids)
+                fields, functions, pru_controller, psname2dev)
 
             # add controller to dictionary
             for device in devices:
@@ -414,16 +413,3 @@ class BBBFactory:
             pvname=pvname, use_prefix=False, timeout=0.5)
         if running:
             raise ValueError('Another IOC is already running !')
-
-
-class Connection:
-    """Object that checks if a device is connected."""
-
-    def __init__(self, device_id, pru_controller):
-        """Init."""
-        self._device_id = device_id
-        self._pru_controller = pru_controller
-
-    def connected(self):
-        """Return wether device is connected."""
-        return self._pru_controller.check_connected(self._device_id)

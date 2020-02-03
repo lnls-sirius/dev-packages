@@ -8,7 +8,7 @@ from siriuspy.csdevice import util as _util
 
 
 # check PRUserial485 package version
-__version_eth_required__ = '2.4.0'  # eth-PRUserial485
+__version_eth_required__ = '2.5.0'  # eth-PRUserial485
 __version_eth_implmntd__ = _PRUserial485.__version__
 if __version_eth_implmntd__ != __version_eth_required__:
     _ERR_MSG = 'Incompatible PRUserial485 library versions: {} != {}'.format(
@@ -85,7 +85,8 @@ class PRU(PRUInterface):
         print('IP_ADDRESS: ', ip_address)
 
         # start communication threads
-        self._ethbrigde = _EthBrigdeClient(ip_address=ip_address)
+        self._ethbrigde = _EthBrigdeClient(
+            ip_address=ip_address, use_general=False)
         self._ethbrigde.threads_start()
 
         # print prulib version
@@ -97,13 +98,16 @@ class PRU(PRUInterface):
         # init PRUserial485 interface
         PRUInterface.__init__(self)
 
+        # NOTE: open is done automatically by eth-brigde server
+        # and cannot be used when use_general = False
+        #
         # start PRU library and set PRU to sync off
-        baud_rate = 6
-        mode = b"M"  # "S": slave | "M": master
-        ret = self._ethbrigde.open(baud_rate, mode)
-        if ret != PRUInterface.OK:
-            raise ValueError(('Error {} returned in '
-                              'PRUserial485_open').format(ret))
+        # baud_rate = 6
+        # mode = b"M"  # "S": slave | "M": master
+        # ret = self._ethbrigde.open(baud_rate, mode)
+        # if ret != PRUInterface.OK:
+        #     raise ValueError(('Error {} returned in '
+        #                       'PRUserial485_open').format(ret))
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
@@ -116,5 +120,5 @@ class PRU(PRUInterface):
         return value
 
     def _close(self):
-        self._ethbrigde.close()
+        # self._ethbrigde.close()
         return None

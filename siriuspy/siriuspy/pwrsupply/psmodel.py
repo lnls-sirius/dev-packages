@@ -174,8 +174,7 @@ class _PSModel:
         """Return function."""
         raise NotImplementedError
 
-    def controller(self, readers, writers, connections,
-                   pru_controller, devices):
+    def controller(self, readers, writers, pru_controller, devices):
         """Return controller."""
         raise NotImplementedError
 
@@ -306,11 +305,10 @@ class PSModelFBP(_PSModel):
         else:
             return _functions.BSMPFunctionNull()
 
-    def controller(self, readers, writers, connections,
-                   pru_controller, devices):
+    def controller(self, readers, writers, pru_controller, devices):
         """Return controller."""
         return _controller.StandardPSController(
-            readers, writers, connections, pru_controller, devices)
+            readers, writers, pru_controller, devices)
 
 
 class PSModelFBP_FOFB(PSModelFBP):
@@ -784,11 +782,10 @@ class PSModelFBP_DCLink(_PSModel):
         else:
             return _functions.BSMPFunctionNull()
 
-    def controller(self, readers, writers, connections,
-                   pru_controller, devices):
+    def controller(self, readers, writers, pru_controller, devices):
         """Return controller."""
         return _controller.PSController(
-            readers, writers, connections, pru_controller)
+            readers, writers, pru_controller, devices)
 
 
 class PSModelFAC_2S_ACDC(_PSModel):
@@ -848,11 +845,10 @@ class PSModelFAC_2S_ACDC(_PSModel):
         else:
             return _functions.BSMPFunctionNull()
 
-    def controller(self, readers, writers, connections,
-                   pru_controller, devices):
+    def controller(self, readers, writers, pru_controller, devices):
         """Return controller."""
         return _controller.PSController(
-            readers, writers, connections, pru_controller)
+            readers, writers, pru_controller, devices)
 
 
 class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
