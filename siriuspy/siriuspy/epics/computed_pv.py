@@ -1,6 +1,6 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
 import numpy as _np
-from epics import get_pv as _get_pv
+from epics import PV as _PV
 from siriuspy.epics import connection_timeout as _connection_timeout
 
 
@@ -12,6 +12,8 @@ class ComputedPV:
     are derived from power supply currents are typical examples of such
     computed process variables.
     """
+
+    # NOTE: currently this is being used only in as-ps-diag IOC classes.
 
     def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
@@ -127,7 +129,7 @@ class ComputedPV:
         ppvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
             if isinstance(pv, str):  # give up string option.
-                tpv = _get_pv(pv, connection_timeout=_connection_timeout)
+                tpv = _PV(pv, connection_timeout=_connection_timeout)
                 ppvs.append(tpv)
             else:
                 ppvs.append(pv)

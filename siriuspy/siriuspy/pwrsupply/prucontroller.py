@@ -31,6 +31,7 @@ class PRUController:
     of the Beaglebone computer connected through a serial line to power supply
     controllers.
     """
+
     # NOTE: All private methods starting with '_bsmp' string make a direct
     #       write to the serial line.
 
@@ -79,7 +80,7 @@ class PRUController:
             pru, self._psmodel.name, self._device_ids, freq)
 
         # index of dev_id in self._device_ids for wfmref update
-        self._wfm_update = True
+        self._wfm_update = False
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
         # update time interval attribute
@@ -106,7 +107,6 @@ class PRUController:
 
         # starts communications
         self._bsmp_init_communication()
-
 
     # --- properties to read and set controller state and access functions ---
 
@@ -321,7 +321,7 @@ class PRUController:
     def bsmp_scan(self):
         """Run scan one."""
         # select devices and variable group, defining the read group
-        # opertation to be performed
+        # operation to be performed
         operation = (self._bsmp_update, ())
         if not self._queue or operation != self._queue.last_operation:
             self._queue.append(operation)
@@ -390,6 +390,8 @@ class PRUController:
     def _loop_scan(self):
         while self._running:
 
+            time0 = _time()
+
             # run scan method once
             if self.scanning and self._scan_interval != 0:
                 self.bsmp_scan()
@@ -398,7 +400,9 @@ class PRUController:
             self._scan_interval = self._get_scan_interval()
 
             # wait for time_interval
-            _sleep(self._scan_interval)
+            dtime = _time() - time0
+            if dtime < self._scan_interval:
+                _sleep(self._scan_interval - dtime)
 
     def _loop_process(self):
         while self._running:
@@ -531,19 +535,16 @@ class PRUController:
         # update variables
         self._bsmp_update_variables()
 
-        # return of wfm is not to be updated
-        if not self._wfm_update:
-            return  # does not update wfm!
-
         # update device wfm curves cyclically
-        self._wfm_update_dev_idx = \
-            (self._wfm_update_dev_idx + 1) % len(self._device_ids)
-        dev_id = self._device_ids[self._wfm_update_dev_idx]
-        self._bsmp_update_wfm(dev_id)
+        if self._wfm_update:
+            self._wfm_update_dev_idx = \
+                (self._wfm_update_dev_idx + 1) % len(self._device_ids)
+            dev_id = self._device_ids[self._wfm_update_dev_idx]
+            self._bsmp_update_wfm(dev_id)
 
         # time1 = _time()
-        # print('devices: {}, time {}'.format(
-        #     self._device_ids, 1000*(time1 - time0)))
+        # print('{} devices, update total time {}'.format(
+        #     len(self._device_ids), 1000*(time1 - time0)))
 
     def _bsmp_update_variables(self):
 
@@ -552,7 +553,7 @@ class PRUController:
         # update variables
         for psupply in self._psupplies.values():
             try:
-                psupply.update_variables()
+                psupply.update_variables(interval=0.0)
             except _SerialError:
                 # no serial connection !
                 pass
@@ -613,23 +614,27 @@ class PRUController:
         # --- send requests to serial line
         try:
             for dev_id in device_ids:
-                ack[dev_id], data[dev_id] = \
-                    self._udc[dev_id].execute_function(function_id, args)
+                resp = self._udc[dev_id].execute_function(function_id, args)
+                ack[dev_id], data[dev_id] = resp
                 # check anomalous response
                 if ack[dev_id] != _const_bsmp.ACK_OK:
                     print('PRUController: anomalous response !')
-                    self._udc[dev_id]._anomalous_response(
+                    self._udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
                         device_id=dev_id,
                         function_id=function_id,
                         data_len=len(data[dev_id]),
                         data=data[dev_id])
-                    # print('ack        : {}'.format(ack[dev_id]))
-                    # print('device_id  : {}'.format(dev_id))
-                    # print('function_id: {}'.format(function_id))
-                    # print('response   : {}'.format(data[dev_id]))
         except _SerialError:
             return None
+        except TypeError:
+            print('--- debug ----')
+            print('device_ids  : ', device_ids)
+            print('dev_id      : ', dev_id)
+            print('function_id : ', function_id)
+            print('resp        : ', resp)
+            print('data        : ', data[dev_id])
+            raise
 
         # --- check if all function executions succeeded.
         success = True

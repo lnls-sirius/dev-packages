@@ -23,9 +23,13 @@ def get_dict():
 # |            | = |          | * |                 |
 # | DeltaTuneY |   | m10  m11 |   | KL BO-Fam:PS-QD |
 #
-# Correction Matrix
+# Correction Matrix of Additional Method
+# (obtained from lnls_calc_tunecorr_params routine)
 #   m(0,0)   m(0,1)
 #   m(1,0)   m(1,1)
+#
+# Nominal KLs
+# [quadrupole_order  QF  QD]
 
 _template_dict = {
     'matrix': [[0.0, 0.0],

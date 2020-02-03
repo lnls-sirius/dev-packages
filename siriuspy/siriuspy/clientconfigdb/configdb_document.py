@@ -78,7 +78,6 @@ class ConfigDBDocument():
     def value(self, value):
         """Set configuration."""
         self._set_value(value)
-        self._synchronized = False
 
     @property
     def synchronized(self):
@@ -149,6 +148,7 @@ class ConfigDBDocument():
     def _set_value(self, value):
         if self.check_valid_value(value):
             self._value = _dcopy(value)
+            self._synchronized = False
         else:
             raise ValueError('Invalid value.')
 
@@ -156,6 +156,7 @@ class ConfigDBDocument():
         return
 
     def _set_item(self, index, value):
+        self._synchronized = False
         return
 
     def __len__(self):
@@ -169,7 +170,6 @@ class ConfigDBDocument():
     def __setitem__(self, index, value):
         """Set configuration item."""
         self._set_item(index, value)
-        self._synchronized = False
 
     @staticmethod
     def _get_timestamp(now=None):

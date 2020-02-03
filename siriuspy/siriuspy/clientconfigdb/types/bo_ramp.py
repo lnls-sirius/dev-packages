@@ -46,7 +46,7 @@ _ps_ramp = {
 }
 
 # time [ms]            normalized configuration name
-_ps_normalized_configs = []
+_ps_normalized_configs = {}
 
 _rf_ramp = {
     # ramp intervals durations [ms]

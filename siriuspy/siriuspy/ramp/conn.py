@@ -9,6 +9,7 @@ import math as _math
 from siriuspy import envars as _envars
 from siriuspy.epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
@@ -43,26 +44,6 @@ class ConnTI(_EpicsPropsList):
         EVG_FPGAClk = EVG + ':FPGAClk-Cte'
         EVG_UpdateEvt = EVG + ':UpdateEvt-Cmd'
 
-        # Event prefixes
-        EvtLinac = EVG + ':Linac'
-        EvtInjBO = EVG + ':InjBO'
-        EvtInjSI = EVG + ':InjSI'
-        EvtRmpBO = EVG + ':RmpBO'
-        EvtDigLI = EVG + ':DigLI'
-        EvtDigTB = EVG + ':DigTB'
-        EvtDigBO = EVG + ':DigBO'
-        EvtDigTS = EVG + ':DigTS'
-        EvtDigSI = EVG + ':DigSI'
-        EvtStudy = EVG + ':Study'
-
-        # Trigger prefixes
-        TrgMags = 'BO-Glob:TI-Mags-Fams'
-        TrgCorrs = 'BO-Glob:TI-Mags-Corrs'
-        TrgLLRFRmp = 'BO-Glob:TI-LLRF-Rmp'
-        TrgEGunSglBun = 'LI-01:TI-EGun-SglBun'
-        TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
-        TrgEjeKckr = 'BO-48D:TI-EjeKckr'
-
         # Linac Egun mode properties
         LinacEgun_SglBun_State = 'LI-01:EG-PulsePS:singleselstatus'
         LinacEgun_MultBun_State = 'LI-01:EG-PulsePS:multiselstatus'
@@ -71,24 +52,43 @@ class ConnTI(_EpicsPropsList):
         Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
 
     # Add events properties to Const
+    _events = {
+        'EvtLinac': Const.EVG + ':Linac',
+        'EvtInjBO': Const.EVG + ':InjBO',
+        'EvtInjSI': Const.EVG + ':InjSI',
+        'EvtRmpBO': Const.EVG + ':RmpBO',
+        'EvtDigLI': Const.EVG + ':DigLI',
+        'EvtDigTB': Const.EVG + ':DigTB',
+        'EvtDigBO': Const.EVG + ':DigBO',
+        'EvtDigTS': Const.EVG + ':DigTS',
+        'EvtDigSI': Const.EVG + ':DigSI',
+        'EvtStudy': Const.EVG + ':Study'}
+
     evt_propties = ('Mode-Sel', 'DelayType-Sel', 'Delay-SP')
-    for attr in ('EvtLinac', 'EvtInjBO', 'EvtInjSI', 'EvtRmpBO',
-                 'EvtDigLI', 'EvtDigTB', 'EvtDigBO', 'EvtDigTS',
-                 'EvtDigSI', 'EvtStudy'):
+    for attr, evt_name in _events.items():
+        setattr(Const, attr, evt_name)
         for p in evt_propties:
-            evt_pfx = getattr(Const, attr)
-            new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
-            setattr(Const, new_attr, evt_pfx+p)
+            p = _PVName(p)
+            new_attr = attr+'_'+p.propty_name
+            setattr(Const, new_attr, evt_name+p)
 
     # Add trigger properties to Const
+    _triggers = {
+        'TrgMags': 'BO-Glob:TI-Mags-Fams',
+        'TrgCorrs': 'BO-Glob:TI-Mags-Corrs',
+        'TrgLLRFRmp': 'BO-Glob:TI-LLRF-Rmp',
+        'TrgEGunSglBun': 'LI-01:TI-EGun-SglBun',
+        'TrgEGunMultBun': 'LI-01:TI-EGun-MultBun',
+        'TrgEjeKckr': 'BO-48D:TI-EjeKckr'}
+
     trg_propties = ('State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
                     'Duration-SP', 'Delay-SP', 'Status-Mon')
-    for attr in ('TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
-                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr'):
+    for attr, trg_name in _triggers.items():
+        setattr(Const, attr, trg_name)
         for p in trg_propties:
-            trg_pfx = getattr(Const, attr)
-            new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
-            setattr(Const, new_attr, trg_pfx+':'+p)
+            p = _PVName(p)
+            new_attr = attr+'_'+p.propty_name
+            setattr(Const, new_attr, trg_name+':'+p)
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
