@@ -4,7 +4,7 @@ import types as _types
 import re as _re
 
 
-_attrs = (
+_ATTRS = (
     'channel_type',
     'prefix',
     'sec',
@@ -24,7 +24,7 @@ _attrs = (
 
 def get_siriuspvname_attrs():
     """Return SiriusPVName attributes."""
-    return [attr for attr in _attrs]
+    return [attr for attr in _ATTRS]
 
 
 def join_name(**kwargs):
@@ -94,10 +94,10 @@ def split_name(pvname, elements=None):
         elements = 'propty'
 
     # empty dictionary
-    dic_ = {attr: '' for attr in _attrs}
+    dic_ = {attr: '' for attr in _ATTRS}
     # strip PV name
     pvname = pvname.strip()
-    if len(pvname) == 0:
+    if not pvname:
         return dic_
 
     # deals with channel
@@ -285,8 +285,44 @@ class SiriusPVName(str):
         else:
             return not my_ssec[2] < th_ssec[2]
 
+    @staticmethod
+    def is_write_pv(pvname):
+        """."""
+        return SiriusPVName.is_sp_pv(pvname) or SiriusPVName.is_cmd_pv(pvname)
+
+    @staticmethod
+    def is_sp_pv(pvname):
+        """."""
+        return pvname.endswith(('-Sel', '-SP'))
+
+    @staticmethod
+    def is_cmd_pv(pvname):
+        """."""
+        return pvname.endswith('-Cmd')
+
+    @staticmethod
+    def is_cte_pv(pvname):
+        """."""
+        return pvname.endswith('-Cte')
+
+    @staticmethod
+    def is_rb_pv(pvname):
+        """."""
+        return pvname.endswith(('-Sts', '-RB'))
+
+    @staticmethod
+    def from_sp2rb(pvname):
+        """."""
+        return pvname.replace('-SP', '-RB').replace('-Sel', '-Sts')
+
+    @staticmethod
+    def from_rb2sp(pvname):
+        """."""
+        return pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
+
 
 class Filter:
+    """Filter class."""
 
     # PVName regex filters
     patterns = _types.SimpleNamespace()

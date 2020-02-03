@@ -105,6 +105,13 @@ class TestSiriusPVName(TestCase):
         'substitute',
         'device_name',
         'get_nickname',
+        'is_write_pv',
+        'is_sp_pv',
+        'is_cmd_pv',
+        'is_cte_pv',
+        'is_rb_pv',
+        'from_sp2rb',
+        'from_rb2sp',
     )
 
     def test_public_interface(self):
