@@ -85,7 +85,8 @@ class PRU(PRUInterface):
         print('IP_ADDRESS: ', ip_address)
 
         # start communication threads
-        self._ethbrigde = _EthBrigdeClient(ip_address=ip_address)
+        self._ethbrigde = _EthBrigdeClient(
+            ip_address=ip_address, use_general=False)
         self._ethbrigde.threads_start()
 
         # print prulib version
