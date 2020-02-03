@@ -1,5 +1,7 @@
 """E2SController."""
 
+from siriuspy.namesys import SiriusPVName as _PVName
+
 
 class PSController:
     """Class used to communicate with PS controller.
@@ -15,12 +17,13 @@ class PSController:
         'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
         'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon'}
 
-    def __init__(self, readers, functions, connections, pru_controller):
+    def __init__(self, readers, functions,
+                 pru_controller, psname2dev):
         """Create class properties."""
         self._readers = readers
         self._functions = functions
-        self._connections = connections
         self._pru_controller = pru_controller
+        self._psname2dev = psname2dev
 
         self._fields = set()
         for name in self._readers:
@@ -71,7 +74,8 @@ class PSController:
 
     def check_connected(self, device_name):
         """Check if device is connected."""
-        return self._connections[device_name].connected()
+        dev_id = self._psname2dev[device_name]
+        return self._pru_controller.check_connected(dev_id)
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
@@ -81,7 +85,11 @@ class PSController:
                 continue
             if key.endswith(('-Sel', '-SP')):
                 rb_field = PSController._get_readback_field(key)
+
+                # NOTE: to be updated
+                # rb_field = _PVName.from_sp2rb(key)
                 rdr = self._readers[rb_field]
+
                 if rdr is None:
                     raise AttributeError(
                         'Could not find reader for "{}"'.format(rb_field))
@@ -93,7 +101,7 @@ class PSController:
 
     @staticmethod
     def _get_readback_field(field):
-        # TODO: check if siriuspvname already has a function for this
+        # NOTE: to be updated
         return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 
@@ -108,12 +116,6 @@ class StandardPSController(PSController):
         'CycleOffset-SP',
         'CycleAuxParam-SP',  # start index of auxparams
     ]
-
-    def __init__(self, readers, functions, connections, pru_controller,
-                 devices):
-        """Call super."""
-        super().__init__(readers, functions, connections, pru_controller)
-        self._devices = devices
 
     def write(self, device_name, field, value):
         """Override write method."""

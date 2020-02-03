@@ -2,7 +2,7 @@
 
 import time as _t
 import math as _math
-# import numpy as _np
+
 
 DEFAULT_SIGGEN_CONFIG = (
     0,      # type  [0:Sine]
