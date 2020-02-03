@@ -336,9 +336,9 @@ class PSModelFAC_DCDC(PSModelFBP):
     """FAC power supply model."""
 
     _variables = {
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFAC_DCDC.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB': _psbsmp.ConstFAC_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_DCDC.V_PS_REFERENCE,
         'Current-Mon': _psbsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
@@ -372,9 +372,9 @@ class PSModelFAC_2S_DCDC(PSModelFBP):
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2S_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_REFERENCE,
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFAC_2S_DCDC.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2S_DCDC.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2S_DCDC.V_I_LOAD2,
@@ -422,9 +422,10 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
     _variables = {
         'Current-RB': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
+        'WfmSyncPulseCount-Mon':
+            _psbsmp.ConstFAC_2P4S_DCDC.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
@@ -525,18 +526,18 @@ class PSModelFAP(PSModelFBP):
     """FAP power supply model."""
 
     _variables = {
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFAP.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _psbsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'IntlkIIB-Mon': _psbsmp.ConstFAP.V_IIB_INTERLOCKS,
         'Current-RB': _psbsmp.ConstFAP.V_PS_SETPOINT,
         'CurrentRef-Mon': _psbsmp.ConstFAP.V_PS_REFERENCE,
         'Current-Mon': _psbsmp.ConstFAP.V_I_LOAD_MEAN,
         'Current1-Mon': _psbsmp.ConstFAP.V_I_LOAD1,
         'Current2-Mon': _psbsmp.ConstFAP.V_I_LOAD2,
-        'IIBLeakCurrent-Mon': _psbsmp.ConstFAP.V_I_LEAKAGE_IIB,
         'IIBInductorTemperature-Mon': _psbsmp.ConstFAP.V_TEMP_INDUCTOR_IIB,
         'IIBHeatSinkTemperature-Mon': _psbsmp.ConstFAP.V_TEMP_HEATSINK_IIB,
+        'IIBLeakCurrent-Mon': _psbsmp.ConstFAP.V_I_LEAKAGE_IIB,
     }
 
     @property
@@ -559,9 +560,9 @@ class PSModelFAP_4P(PSModelFBP):
     """FAP_4P power supply model."""
 
     _variables = {
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFAP_4P.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _psbsmp.ConstFAP_4P.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _psbsmp.ConstFAP_4P.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Intlk1IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_1,
         'Intlk2IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_2,
         'Intlk3IIB-Mon': _psbsmp.ConstFAP_4P.V_IIB_INTERLOCKS_3,
@@ -579,6 +580,22 @@ class PSModelFAP_4P(PSModelFBP):
         'Mod2Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_2,
         'Mod3Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_3,
         'Mod4Current-Mon': _psbsmp.ConstFAP_4P.V_I_MOD_4,
+        'IIB1InductorTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_HEATSINK_IIB_1,
+        'IIB2InductorTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_HEATSINK_IIB_2,
+        'IIB3InductorTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_INDUCTOR_IIB_3,
+        'IIB3HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_HEATSINK_IIB_3,
+        'IIB4InductorTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_INDUCTOR_IIB_4,
+        'IIB4HeatSinkTemperature-Mon':
+            _psbsmp.ConstFAP_4P.V_TEMP_HEATSINK_IIB_4,
     }
 
     @property
@@ -601,9 +618,9 @@ class PSModelFAP_2P2S(PSModelFBP):
     """FAP_2P2S power supply model."""
 
     _variables = {
+        'WfmSyncPulseCount-Mon': _psbsmp.ConstFAP_2P2S.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
         'Current-RB':  _psbsmp.ConstFAP_2P2S.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFAP_2P2S.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFAP_2P2S.V_I_LOAD_MEAN,
