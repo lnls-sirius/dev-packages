@@ -101,7 +101,7 @@ class PSController:
 
     @staticmethod
     def _get_readback_field(field):
-        # NOTE: to be deletedupdated
+        # NOTE: to be updated
         return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 
@@ -117,11 +117,6 @@ class StandardPSController(PSController):
         'CycleAuxParam-SP',  # start index of auxparams
     ]
 
-    # def __init__(self, readers, functions, connections, pru_controller,
-    #              psname2dev):
-    #     """Call super."""
-    #     super().__init__(readers, functions, connections, pru_controller)
-    #     self._psname2dev = psname2dev
 
     def write(self, device_name, field, value):
         """Override write method."""
