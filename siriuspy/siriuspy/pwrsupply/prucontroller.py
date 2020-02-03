@@ -31,6 +31,7 @@ class PRUController:
     of the Beaglebone computer connected through a serial line to power supply
     controllers.
     """
+
     # NOTE: All private methods starting with '_bsmp' string make a direct
     #       write to the serial line.
 
