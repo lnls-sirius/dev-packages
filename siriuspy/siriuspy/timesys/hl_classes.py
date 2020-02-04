@@ -1,7 +1,6 @@
 """Define the high level classes."""
 
 import time as _time
-from copy import deepcopy as _dcopy
 from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
@@ -9,25 +8,32 @@ import numpy as _np
 from siriuspy.util import mode as _mode
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
-from .util import Base as _Base
+
+from siriuspy.callbacks import Callback as _Callback
 from .ll_classes import get_ll_trigger as _get_ll_trigger
 
 
 # HL == High Level
-class _BaseHL(_Base):
+class _BaseHL(_Callback):
     """Define a High Level interface.
 
     Determine how to connect the driver with the classes which communicate
     with low level IOCs.
     """
+
     class Alarm:
+        """."""
+
         NO = 0
         STATE = 7
         COMM = 9
         LINK = 14
 
     class Severity:
+        """."""
+
         NO = 0
         MINOR = 1
         MAJOR = 2
@@ -67,7 +73,7 @@ class _BaseHL(_Base):
         return dict()
 
     def write(self, prop_name, value):
-        """Function to be called by the IOC to set high level properties.
+        """Write function to be called by the IOC to set high level properties.
 
         It not only sets the new high level property value but also forwards it
         to the low level classes.
@@ -78,14 +84,16 @@ class _BaseHL(_Base):
                     lambda x: x.write(prop_name, value), self._ll_objs))
 
     def read(self, prop_name, is_sp=False):
+        """Read."""
         fun = self._funs_combine_values.get(prop_name, self._combine_default)
         vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
         return fun(vals)
 
     def readall(self, is_sp=False):
+        """Read all."""
         values = dict()
         for prop, suf in self._all_props_suffix.items():
-            if self._iscmdpv(suf) or (is_sp and not self._isrbpv(suf)):
+            if _PVName.is_cmd_pv(suf) or (is_sp and not _PVName.is_rb_pv(suf)):
                 continue
             value = self.read(prop, is_sp=is_sp)
             if value is None or not value:
@@ -99,7 +107,7 @@ class _BaseHL(_Base):
         map2write = dict()
         for pvname in db:
             prop = self._get_prop_name(pvname)
-            if self._iswritepv(pvname):
+            if _PVName.is_write_pv(pvname):
                 map2write[pvname] = _partial(self.write, prop)
         return map2write
 
@@ -108,11 +116,11 @@ class _BaseHL(_Base):
         db = self.get_database()
         map2readpvs = dict()
         for pvname in db:
-            if self._isctepv(pvname) or self._iscmdpv(pvname):
+            if _PVName.is_cte_pv(pvname) or _PVName.is_cmd_pv(pvname):
                 continue
             prop = self._get_prop_name(pvname)
             map2readpvs[pvname] = _partial(
-                            self.read, prop, is_sp=self._issppv(pvname))
+                            self.read, prop, is_sp=_PVName.is_sp_pv(pvname))
         return map2readpvs
 
     def _on_change_pvs(self, channel, prop, value, is_sp=False, **kwargs):
@@ -128,7 +136,7 @@ class _BaseHL(_Base):
     def _update_pvs_thread(self):
         _time.sleep(1/10)  # limit update in 10Hz
         for prop, suf in self._all_props_suffix.items():
-            if self._iscmdpv(suf):
+            if _PVName.is_cmd_pv(suf):
                 continue
             value = self.read(prop)
             if value is None:
@@ -138,7 +146,7 @@ class _BaseHL(_Base):
             # This is not recommended though, because it can create very
             # strange unusual behavior with widgets such as spinbox in PyDM
             # and CS-Studio.
-            if not self._isrbpv(suf):
+            if not _PVName.is_rb_pv(suf):
                 continue
             value = self.read(prop, is_sp=True)
             if value is None:
@@ -157,7 +165,7 @@ class _BaseHL(_Base):
         db = self.get_database()
         props = dict()
         for pvname in db:
-            if not self._issppv(pvname) and not self._isctepv(pvname):
+            if not _PVName.is_sp_pv(pvname) and not _PVName.is_cte_pv(pvname):
                 prop, suf = self._get_prop_name(pvname, with_suffix=True)
                 props[prop] = suf
         return props
@@ -165,7 +173,7 @@ class _BaseHL(_Base):
     def _get_pv_name(self, prop, is_sp=False):
         pvname = self.prefix + prop + self._all_props_suffix[prop]
         if is_sp:
-            pvname = self._fromrb2sp(pvname)
+            pvname = _PVName.from_rb2sp(pvname)
         return pvname
 
     def _get_prop_name(self, pvname, with_suffix=False):
