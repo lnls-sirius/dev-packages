@@ -66,10 +66,6 @@ mock2 = _p.start()
 mock2.server_online.return_value = True
 mock2.magnets_excitation_ps_read.return_value = _read_test_file(
     'magnet/magnet-excitation-ps.txt')
-mock2.magnets_setpoint_limits.return_value = _read_test_file(
-    'magnet/magnet-setpoint-limits.txt')
-mock2.pulsed_magnets_setpoint_limits.return_value = _read_test_file(
-    'magnet/pulsed-magnet-setpoint-limits.txt')
 mock2.ps_pstypes_names_read.return_value = _read_test_file(
     'pwrsupply/pstypes-names.txt')
 mock2.ps_pstype_data_read.side_effect = _ps_pstype_data_read
