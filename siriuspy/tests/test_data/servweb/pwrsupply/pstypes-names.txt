@@ -49,6 +49,7 @@ ts-dipole-b-fam              monopolar        dipole
 ts-quadrupole-q14-qf         monopolar        quadrupole
 ts-quadrupole-q14-qd         monopolar        quadrupole
 ts-quadrupole-q20-qf         monopolar        quadrupole
+ts-quadrupole-q14-cv         bipolar          corrector-vertical
 ts-corrector-ch              bipolar          corrector-horizontal
 ts-corrector-cv              bipolar          corrector-vertical
 ts-corrector-cv-strong       bipolar          corrector-vertical

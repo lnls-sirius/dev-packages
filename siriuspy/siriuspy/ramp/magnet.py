@@ -9,13 +9,14 @@ from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
     _RampInvalidDipoleWfmParms
 
 
-_magnets_dict = dict()
+_MAGNETS_DICT = dict()
 
 
 def get_magnet(maname):
-    if maname not in _magnets_dict:
-        _magnets_dict[maname] = Magnet(maname)
-    return _magnets_dict[maname]
+    """."""
+    if maname not in _MAGNETS_DICT:
+        _MAGNETS_DICT[maname] = Magnet(maname)
+    return _MAGNETS_DICT[maname]
 
 
 class Magnet:
@@ -27,15 +28,15 @@ class Magnet:
         psnames = _MASearch.conv_maname_2_psnames(maname)
         pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
-        self._splims = _MASearch.conv_maname_2_splims(self._maname)
+        self._splims = _PSSearch.conv_psname_2_splims(psnames[0])
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
         self._family_name = _mutil.get_magnet_family_name(self._maname)
         self._strength_obj = _NormalizerFactory.create(self._maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc)
 
-        if maname not in _magnets_dict:
-            _magnets_dict[maname] = self
+        if maname not in _MAGNETS_DICT:
+            _MAGNETS_DICT[maname] = self
 
     @property
     def maname(self):

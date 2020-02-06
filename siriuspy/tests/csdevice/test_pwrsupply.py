@@ -33,7 +33,6 @@ public_interface = (
     'get_ps_propty_database',
     'get_pu_propty_database',
     'get_pu_conv_propty_database',
-    'get_ma_propty_database',
     'get_li_ma_propty_database',
     'get_pm_propty_database',
 )
@@ -114,7 +113,6 @@ class TestPwrSupply(TestCase):
                 'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
             self.addCleanup(_MASearch_patcher.stop)
             self.m_MASearch = _MASearch_patcher.start()
-            self.m_MASearch.get_splims_unit.side_effect = get_splims_unit
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -204,71 +202,9 @@ class TestPwrSupply(TestCase):
                 if propty in current_pvs:
                     self.assertEqual(dbi['unit'], unit)
 
-    def test_ma_propty_database(self):
-        """Test ma_propty_database."""
-        current_pvs = TestPwrSupply.ps_alarm + \
-            ('WfmData-SP', 'WfmData-RB')
-        for maname, convname in TestPwrSupply.sample.items():
-            if ':MA-' not in maname:
-                continue
-            db = pwrsupply.get_ma_propty_database(maname)
-            for psname, db_ps in db.items():
-                # check PS database
-                unit = db_ps['Current-SP']['unit']
-                for propty, dbi in db_ps.items():
-                    # set setpoint limits in database
-                    if propty in TestPwrSupply.ps_alarm:
-                        self.assertLessEqual(dbi['lolo'], dbi['low'])
-                        self.assertLessEqual(dbi['low'], dbi['lolim'])
-                        self.assertLessEqual(dbi['lolim'], dbi['hilim'])
-                        self.assertLessEqual(dbi['hilim'], dbi['high'])
-                        self.assertLessEqual(dbi['high'], dbi['hihi'])
-                    if propty in current_pvs:
-                        # print(psname, propty, dbi.keys())
-                        self.assertEqual(dbi['unit'], unit)
-                # check MA database
-                self.assertIn(convname, db_ps)
-                self.assertIn(convname.replace('-SP', '-RB'), db_ps)
-                self.assertIn(convname.replace('-SP', 'Ref-Mon'), db_ps)
-                self.assertIn(convname.replace('-SP', '-Mon'), db_ps)
-                self.assertIn('unit', db_ps[convname])
-                self.assertIn('unit', db_ps[convname.replace('-SP', '-RB')])
-                self.assertIn('unit',
-                              db_ps[convname.replace('-SP', 'Ref-Mon')])
-                self.assertIn('unit', db_ps[convname.replace('-SP', '-Mon')])
-
     def test_li_ma_propty_database(self):
         """Test li_ma_propty_database."""
         for maname, convname in TestPwrSupply.sample.items():
             if not maname.startswith('LI-'):
                 continue
             db = pwrsupply.get_li_ma_propty_database(maname)
-
-    def test_pm_propty_database(self):
-        """Test pm_propty_database."""
-        current_pvs = TestPwrSupply.pu_alarm
-        for maname, convname in TestPwrSupply.sample.items():
-            if ':PM-' not in maname:
-                continue
-            db = pwrsupply.get_pm_propty_database(maname)
-            for psname, db_ps in db.items():
-                # check PU database
-                unit = db_ps['Voltage-SP']['unit']
-                for propty, dbi in db_ps.items():
-                    # set setpoint limits in database
-                    if propty in TestPwrSupply.ps_alarm:
-                        self.assertLessEqual(dbi['lolo'], dbi['low'])
-                        self.assertLessEqual(dbi['low'], dbi['lolim'])
-                        self.assertLessEqual(dbi['lolim'], dbi['hilim'])
-                        self.assertLessEqual(dbi['hilim'], dbi['high'])
-                        self.assertLessEqual(dbi['high'], dbi['hihi'])
-                    if propty in current_pvs:
-                        # print(psname, propty, dbi.keys())
-                        self.assertEqual(dbi['unit'], unit)
-                # check PM database
-                self.assertIn(convname, db_ps)
-                self.assertIn(convname.replace('-SP', '-RB'), db_ps)
-                self.assertIn(convname.replace('-SP', '-Mon'), db_ps)
-                self.assertIn('unit', db_ps[convname])
-                self.assertIn('unit', db_ps[convname.replace('-SP', '-RB')])
-                self.assertIn('unit', db_ps[convname.replace('-SP', '-Mon')])

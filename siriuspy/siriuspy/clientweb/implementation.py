@@ -1,24 +1,19 @@
-"""Impletentation of webserver data retrievement functions."""
+"""Implementation of web server data retrieval functions."""
 import re as _re
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
 
-_timeout = 1.0  # [seconds]
-_excdat_folder = '/magnet/excitation-data/'
-_magnet_folder = '/magnet/'
-_ps_folder = '/pwrsupply/'
-_bbb_folder = '/beaglebone/'
-_pstypes_data_folder = '/pwrsupply/pstypes-data/'
-_diag_folder = '/diagnostics/'
-_timesys_folder = '/timesys/'
-_respm_folder = '/respm/'
-
-# TODO: we should adopt a naming standard for functions.
-# maybe to use a name prefix that indicates what top folder contains the data
-# to be accessed?
+_TIMEOUT = 1.0  # [seconds]
+_EXCDAT_FOLDER = '/magnet/excitation-data/'
+_MAGNET_FOLDER = '/magnet/'
+_PS_FOLDER = '/pwrsupply/'
+_BBB_FOLDER = '/beaglebone/'
+_PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
+_DIAG_FOLDER = '/diagnostics/'
+_TIMESYS_FOLDER = '/timesys/'
 
 
-def read_url(url, timeout=_timeout):
+def read_url(url, timeout=_TIMEOUT):
     """Read URL from server."""
     try:
         url = _envars.server_url_consts + url
@@ -35,110 +30,98 @@ def read_url(url, timeout=_timeout):
 def server_online():
     """Verify if the server is online."""
     try:
-        read_url('', timeout=_timeout)
+        read_url('', timeout=_TIMEOUT)
         return True
     except Exception:
         return False
 
 
-def magnets_model_data(timeout=_timeout):
+def magnets_model_data(timeout=_TIMEOUT):
     """Return the text of the retrieved magnet model data."""
-    url = _magnet_folder + 'magnets-model-data.txt'
+    url = _MAGNET_FOLDER + 'magnets-model-data.txt'
     return read_url(url, timeout=timeout)
 
 
-def magnets_excitation_data_read(filename, timeout=_timeout):
+def magnets_excitation_data_read(filename, timeout=_TIMEOUT):
     """Return the text of the retrieved magnet excitation data."""
-    return read_url(_excdat_folder + filename, timeout=timeout)
+    return read_url(_EXCDAT_FOLDER + filename, timeout=timeout)
 
 
-def magnets_setpoint_limits(timeout=_timeout):
-    """Get the magnet setpoint limits."""
-    url = _magnet_folder + 'magnet-setpoint-limits.txt'
-    return read_url(url, timeout=timeout)
-
-
-def pulsed_magnets_setpoint_limits(timeout=_timeout):
-    """Get the magnet setpoint limits."""
-    url = _magnet_folder + 'pulsed-magnet-setpoint-limits.txt'
-    return read_url(url, timeout=timeout)
-
-
-def magnets_excitation_ps_read(timeout=_timeout):
+def magnets_excitation_ps_read(timeout=_TIMEOUT):
     """Return the power supply excitation data."""
-    url = _magnet_folder + 'magnet-excitation-ps.txt'
+    url = _MAGNET_FOLDER + 'magnet-excitation-ps.txt'
     return read_url(url, timeout=timeout)
 
 
-def ps_pstypes_names_read(timeout=_timeout):
+def ps_pstypes_names_read(timeout=_TIMEOUT):
     """Return the text of the power supplies type."""
-    url = _ps_folder + 'pstypes-names.txt'
+    url = _PS_FOLDER + 'pstypes-names.txt'
     return read_url(url, timeout=timeout)
 
 
-def ps_pstype_data_read(filename, timeout=_timeout):
+def ps_pstype_data_read(filename, timeout=_TIMEOUT):
     """Return the power supply data."""
-    url = _pstypes_data_folder + filename
+    url = _PSTYPES_DATA_FOLDER + filename
     return read_url(url, timeout=timeout)
 
 
-def ps_pstype_setpoint_limits(timeout=_timeout):
+def ps_pstype_setpoint_limits(timeout=_TIMEOUT):
     """Return the power supply setpoint limits data."""
-    url = _ps_folder + 'pstypes-setpoint-limits.txt'
+    url = _PS_FOLDER + 'pstypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)
 
 
-def pu_pstype_setpoint_limits(timeout=_timeout):
+def pu_pstype_setpoint_limits(timeout=_TIMEOUT):
     """Return the power supply setpoint limits data."""
-    url = _ps_folder + 'putypes-setpoint-limits.txt'
+    url = _PS_FOLDER + 'putypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)
 
 
-def ps_psmodels_read(timeout=_timeout):
+def ps_psmodels_read(timeout=_TIMEOUT):
     """Return the psmodels file."""
-    url = _ps_folder + 'psmodels.txt'
+    url = _PS_FOLDER + 'psmodels.txt'
     return read_url(url, timeout=timeout)
 
 
-def ps_siggen_configuration_read(timeout=_timeout):
+def ps_siggen_configuration_read(timeout=_TIMEOUT):
     """Return power supplies signal default generation configuration."""
-    url = _ps_folder + 'siggen-configuration.txt'
+    url = _PS_FOLDER + 'siggen-configuration.txt'
     return read_url(url, timeout=timeout)
 
 
-def pu_psmodels_read(timeout=_timeout):
+def pu_psmodels_read(timeout=_TIMEOUT):
     """Return the pumodels file."""
-    url = _ps_folder + 'pumodels.txt'
+    url = _PS_FOLDER + 'pumodels.txt'
     return read_url(url, timeout=timeout)
 
 
-def beaglebone_freq_mapping(timeout=_timeout):
+def beaglebone_freq_mapping(timeout=_TIMEOUT):
     """Return the beaglebone Black BSMP PRU sync off and on freqs."""
-    url = _bbb_folder + 'beaglebone-freq.txt'
+    url = _BBB_FOLDER + 'beaglebone-freq.txt'
     return read_url(url, timeout=timeout)
 
 
-def beaglebone_ip_list(timeout=_timeout):
+def beaglebone_ip_list(timeout=_TIMEOUT):
     """Return the beaglebone Black IP list."""
-    url = _bbb_folder + 'ip-list.txt'
+    url = _BBB_FOLDER + 'ip-list.txt'
     return read_url(url, timeout=timeout)
 
 
-def bbb_udc_mapping(timeout=_timeout):
+def bbb_udc_mapping(timeout=_TIMEOUT):
     """Read beaglebone-udc mapping."""
-    url = _bbb_folder + 'beaglebone-udc.txt'
+    url = _BBB_FOLDER + 'beaglebone-udc.txt'
     return read_url(url, timeout=timeout)
 
 
-def udc_ps_mapping(timeout=_timeout):
+def udc_ps_mapping(timeout=_TIMEOUT):
     """Read beaglebone-udc mapping."""
-    url = _bbb_folder + 'udc-bsmp.txt'
+    url = _BBB_FOLDER + 'udc-bsmp.txt'
     return read_url(url, timeout=timeout)
 
 
-def crates_mapping(timeout=_timeout):
+def crates_mapping(timeout=_TIMEOUT):
     """Return the crates mapping."""
-    url = _diag_folder + 'microTCA-vs-BPMs-mapping/'
+    url = _DIAG_FOLDER + 'microTCA-vs-BPMs-mapping/'
     text = read_url(url, timeout=timeout)
     pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
     files = pat.findall(text)
@@ -150,31 +133,31 @@ def crates_mapping(timeout=_timeout):
     return txt
 
 
-def bpms_data(timeout=_timeout):
+def bpms_data(timeout=_TIMEOUT):
     """Return the BPMs data."""
-    url = _diag_folder + 'bpms-data.txt'
+    url = _DIAG_FOLDER + 'bpms-data.txt'
     return read_url(url, timeout=timeout)
 
 
-def timing_devices_mapping(timeout=_timeout):
+def timing_devices_mapping(timeout=_TIMEOUT):
     """Return the timing devices connections mapping."""
-    url = _timesys_folder + 'timing-devices-connection.txt'
+    url = _TIMESYS_FOLDER + 'timing-devices-connection.txt'
     return read_url(url, timeout=timeout)
 
 
-def high_level_triggers(timeout=_timeout):
+def high_level_triggers(timeout=_TIMEOUT):
     """Return the data defining the high level triggers."""
-    url = _timesys_folder + 'high-level-triggers.py'
+    url = _TIMESYS_FOLDER + 'high-level-triggers.py'
     return read_url(url, timeout=timeout)
 
 
-def high_level_events(timeout=_timeout):
+def high_level_events(timeout=_TIMEOUT):
     """Return the data defining the high level events."""
-    url = _timesys_folder + 'high-level-events.py'
+    url = _TIMESYS_FOLDER + 'high-level-events.py'
     return read_url(url, timeout=timeout)
 
 
-def bsmp_dclink_mapping(timeout=_timeout):
+def bsmp_dclink_mapping(timeout=_TIMEOUT):
     """Read bsmp dclink mapping."""
-    url = _ps_folder + 'bsmp-dclink.txt'
+    url = _PS_FOLDER + 'bsmp-dclink.txt'
     return read_url(url, timeout=timeout)
