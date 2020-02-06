@@ -27,18 +27,14 @@ class TestMASearch(TestCase):
     public_interface = (
         'get_manames',
         'get_pwrsupply_manames',
-        'get_splims_unit',
-        'get_splims',
         'get_mapositions',
         'get_manicknames',
         'conv_maname_2_trims',
         'conv_maname_2_magfunc',
-        'conv_maname_2_splims',
         'conv_maname_2_psnames',
         'conv_psmaname_2_psnames',
         'conv_bbbname_2_psmanames',
         'conv_psname_2_psmaname',
-        'get_maname_2_splims_dict',
     )
 
     maname2trims = {
@@ -134,32 +130,6 @@ class TestMASearch(TestCase):
         manames = MASearch.get_manames({'sub': '0.M1'})
         self.assertEqual(len(manames), 84)
 
-    def test_get_pwrsupply_manames(self):
-        """Test get_pwrsupply_manames."""
-        ps_manames = MASearch.get_pwrsupply_manames()
-        self.assertIsInstance(ps_manames, (list, tuple))
-        manames = tuple(MASearch.get_maname_2_splims_dict().keys())
-        for ps_maname in ps_manames:
-            self.assertIn(ps_maname, manames)
-
-    def test_get_splims_unit(self):
-        """Test get_splims_unit."""
-        # self.assertEqual(MASearch.get_splims_unit(True), ['V', 'Voltage'])
-        self.assertEqual(MASearch.get_splims_unit('FBP'), ['A', 'Ampere'])
-
-    def test_get_splims(self):
-        """Test get_pwrsupply_manames and get_splims."""
-        manames = MASearch.get_pwrsupply_manames()
-        for maname in manames:
-            lolo = MASearch.get_splims(maname, 'lolo')
-            low = MASearch.get_splims(maname, 'low')
-            high = MASearch.get_splims(maname, 'HIGH')
-            hihi = MASearch.get_splims(maname, 'HIHI')
-
-            self.assertGreaterEqual(hihi, high)
-            self.assertGreater(high, lolo)
-            self.assertGreaterEqual(low, lolo)
-
     def test_conv_maname_2_trims(self):
         """Test conv_maname_2_trims."""
         for ma, trims in TestMASearch.maname2trims.items():
@@ -169,21 +139,6 @@ class TestMASearch(TestCase):
         """Test conv_maname_2_magfunc."""
         for ma, magfuncs in TestMASearch.maname2magfuncs.items():
             self.assertEqual(MASearch.conv_maname_2_magfunc(ma), magfuncs)
-
-    def test_conv_maname_2_splims(self):
-        """Test conv_maname_2_splims."""
-        limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
-                     'HOPR', 'HIGH', 'HIHI', 'DRVH')
-        splims_dict = MASearch.get_maname_2_splims_dict()
-        self.assertIsInstance(splims_dict, dict)
-        for pstype, splims in splims_dict.items():
-            self.assertIsInstance(pstype, str)
-            self.assertIsInstance(splims, dict)
-            for limlabel in limlabels:
-                self.assertIn(limlabel, splims)
-            self.assertTrue(splims['LOLO'] <= splims['LOW'])
-            self.assertTrue(splims['LOW'] < splims['HIGH'])
-            self.assertTrue(splims['HIGH'] <= splims['HIHI'])
 
     def test_conv_maname_2_psnames(self):
         """Test conv_maname_2_psnames."""
@@ -205,18 +160,3 @@ class TestMASearch(TestCase):
     def test_conv_bbbname_2_psmanames(self):
         """Test conv_bbbname_2_psmanames."""
         self.assertRaises(KeyError, MASearch.conv_bbbname_2_psmanames, '')
-
-    def test_get_maname_2_splims_dict(self):
-        """Test get_maname_2_splims_dict."""
-        limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
-                     'HOPR', 'HIGH', 'HIHI', 'DRVH')
-        splims_dict = MASearch.get_maname_2_splims_dict()
-        self.assertIsInstance(splims_dict, dict)
-        for pstype, splims in splims_dict.items():
-            self.assertIsInstance(pstype, str)
-            self.assertIsInstance(splims, dict)
-            for limlabel in limlabels:
-                self.assertIn(limlabel, splims)
-            self.assertTrue(splims['LOLO'] <= splims['LOW'])
-            self.assertTrue(splims['LOW'] < splims['HIGH'])
-            self.assertTrue(splims['HIGH'] <= splims['HIHI'])

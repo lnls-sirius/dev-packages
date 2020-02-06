@@ -1167,13 +1167,19 @@ TS-02:MA-CH                  TS-02:PS-CH
 TS-03:MA-CH                  TS-03:PS-CH
 TS-04:MA-CH                  TS-04:PS-CH
 
-# --- ts-corrector-ch
+# --- ts-corrector-cv
 TS-01:MA-CV-1                TS-01:PS-CV-1
 TS-01:MA-CV-2                TS-01:PS-CV-2
 TS-02:MA-CV                  TS-02:PS-CV
 TS-03:MA-CV                  TS-03:PS-CV
 TS-04:MA-CV-1                TS-04:PS-CV-1
 TS-04:MA-CV-2                TS-04:PS-CV-2
+
+# --- ts-quadrupole-q14-cv ---
+TS-01:MA-CV-1E2              TS-01:PS-CV-1E2
+TS-02:MA-CV-0                TS-02:PS-CV-0
+TS-04:MA-CV-0                TS-04:PS-CV-0
+TS-04:MA-CV-1E2              TS-04:PS-CV-1E2
 
 # --- PULSED MAGNETS ---
 
