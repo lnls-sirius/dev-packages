@@ -464,7 +464,7 @@ class TrimNormalizer(_MagnetNormalizer):
         #     currents_dipole=kwargs["strengths_dipole"])
         strengths_fam = kwargs['strengths_family']
         brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        intfields = - brho * (strengths - strengths_fam)
+        intfields = self._magnet_conv_sign * brho * (strengths - strengths_fam)
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
@@ -473,7 +473,7 @@ class TrimNormalizer(_MagnetNormalizer):
         brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
         if brho == 0:
             return 0 * intfields
-        strengths_trim = - intfields / brho
+        strengths_trim = self._magnet_conv_sign * intfields / brho
         # integrated field in excitation data for trims is just
         # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
