@@ -27,7 +27,7 @@ class MeasEnergy(_BaseClass):
         self._width_source = _PV(self.DEFAULT_PROFILE + ':ROI:MaxSizeX_RBV')
         self._image_source = _PV(
             self.DEFAULT_PROFILE + ':RAW:ArrayData', auto_monitor=False)
-        self._current_source = _PV(self.DEFAULT_SPECT + ':rdi')
+        self._current_source = _PV(self.DEFAULT_SPECT + ':Current-Mon')
         super().__init__(callback=callback)
         self._thread = _Repeater(0.5, self.meas_energy, niter=0)
         self._thread.pause()
@@ -164,8 +164,8 @@ class CalcEmmitance(_BaseClass):
             self._coefy = _PV(
                 prof+':Y:Gauss:Coef',
                 callback=self._update_coefy)
-            self.quad_I_sp = _PV('LI-01:PS-QF3:seti')
-            self.quad_I_rb = _PV('LI-01:PS-QF3:rdi')
+            self.quad_I_sp = _PV('LI-01:PS-QF3:Current-SP')
+            self.quad_I_rb = _PV('LI-01:PS-QF3:Current-Mon')
         elif self._place.lower().startswith('tb'):
             self._image_source = _PV('TB-02:DI-Scrn-2:ImgData-Mon')
             self._width_source = _PV(

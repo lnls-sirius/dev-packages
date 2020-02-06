@@ -1,9 +1,10 @@
 """Connectors for cycle."""
 
 import time as _time
-from epics import PV as _PV
 from math import isclose as _isclose
+
 import numpy as _np
+from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
@@ -522,7 +523,7 @@ class LinacPSCycler:
     """Handle Linac power supply properties to cycle."""
 
     properties = [
-        'seti', 'rdi', 'setpwm', 'interlock'
+        'Current-SP', 'Current-Mon', 'PwrState-Sel', 'StatusIntlk-Mon'
     ]
 
     def __init__(self, psname, ramp_config=None):
@@ -530,6 +531,7 @@ class LinacPSCycler:
         self._psname = psname
         self._waveform = None
         self._cycle_duration = None
+        self._times = None
         self._pvs = dict()
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
@@ -551,6 +553,7 @@ class LinacPSCycler:
         return True
 
     def wait_for_connection(self, timeout=0.5):
+        """."""
         for pv in self._pvs.values():
             if not pv.wait_for_connection(timeout):
                 return False
@@ -558,6 +561,7 @@ class LinacPSCycler:
 
     @property
     def waveform(self):
+        """."""
         if self._waveform is None:
             self._get_duration_and_waveform()
         return self._waveform
@@ -569,21 +573,22 @@ class LinacPSCycler:
         return self._cycle_duration
 
     def check_intlks(self):
+        """."""
         if not self.connected:
             return False
-        return self['interlock'].value < 55
+        return self['StatusIntlk-Mon'].value < 55
 
     def check_on(self):
         """Return wether power supply PS is on."""
-        return _pv_timed_get(self['setpwm'], 1)
+        return _pv_timed_get(self['PwrState-Sel'], 1)
 
     def set_current_zero(self):
         """Set PS current to zero ."""
-        return _pv_conn_put(self['seti'], 0)
+        return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self, wait=5):
         """Return wether power supply PS current is zero."""
-        return _pv_timed_get(self['rdi'], 0, abs_tol=0.1, wait=wait)
+        return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.1, wait=wait)
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
@@ -600,9 +605,9 @@ class LinacPSCycler:
     def cycle(self):
         """Cycle. This function may run in a thread."""
         for i in range(len(self._waveform)-1):
-            self['seti'].value = self._waveform[i]
+            self['Current-SP'].value = self._waveform[i]
             _time.sleep(self._times[i+1] - self._times[i])
-        self['seti'].value = self._waveform[-1]
+        self['Current-SP'].value = self._waveform[-1]
 
     def check_final_state(self, mode):
         status = True
