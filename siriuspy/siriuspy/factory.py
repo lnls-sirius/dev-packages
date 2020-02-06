@@ -3,11 +3,10 @@
 MagnetFacoty
     used to create magnets
 """
-# import re as _re
-
-from siriuspy.magnet import util as _mutil
-from siriuspy.magnet.data import MAData as _MAData
-from siriuspy.magnet import normalizer as _norm
+from .search import PSSearch as _PSSearch
+from .search import MASearch as _MASearch
+from .magnet import util as _mutil
+from .magnet import normalizer as _norm
 
 
 class NormalizerFactory:
@@ -16,8 +15,8 @@ class NormalizerFactory:
     @staticmethod
     def create(maname):
         """Return appropriate normalizer."""
-        madata = _MAData(maname)
-        magfunc = madata.magfunc(madata.psnames[0])
+        psname = _MASearch.conv_maname_2_psnames(maname)[0]
+        magfunc = _PSSearch.conv_psname_2_magfunc(psname)
         ma_class = _mutil.magnet_class(maname)
         if ma_class == 'dipole':
             return _norm.DipoleNormalizer(maname, magnet_conv_sign=-1.0)

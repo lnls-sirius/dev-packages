@@ -16,7 +16,7 @@ class TestModule(TestCase):
         'PSSearch',
     )
 
-    def test_public_interface(self):
+    def _test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                                 ps_search, TestModule.public_interface)
@@ -336,4 +336,4 @@ class TestPSSearch(TestCase):
         self.assertEqual(PSSearch.get_splims_labels(),
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
                           'HOPR', 'HIGH', 'HIHI', 'DRVH',
-                          'DTOL_CUR', 'DTOL_WFM'])
+                          'DTOL_CUR', 'DTOL_WFM', 'TSTV', 'TSTR'])

@@ -253,13 +253,17 @@ TS-04:PS-QF4                  FAP
 # --- TS Correctors ---
 TS-01:PS-CH                   FBP
 TS-01:PS-CV-1                 FBP
+TS-01:PS-CV-1E2               FBP
 TS-01:PS-CV-2                 FBP
 TS-02:PS-CH                   FBP
+TS-02:PS-CV-0                 FBP
 TS-02:PS-CV                   FBP
 TS-03:PS-CH                   FBP
 TS-03:PS-CV                   FBP
 TS-04:PS-CH                   FBP
+TS-04:PS-CV-0                 FBP
 TS-04:PS-CV-1                 FBP
+TS-04:PS-CV-1E2               FBP
 TS-04:PS-CV-2                 FBP
 
 
