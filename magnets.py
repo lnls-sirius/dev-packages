@@ -85,12 +85,20 @@ class BaseMagnet:
         return conn
 
 
-class TrimQuad(BaseMagnet):
+class Quadrupole(BaseMagnet):
     """."""
 
     def __init__(self, name):
         """."""
         super().__init__(name, strengname='KL')
+
+
+class Sextupole(BaseMagnet):
+    """."""
+
+    def __init__(self, name):
+        """."""
+        super().__init__(name, strengname='SL')
 
 
 class Corrector(BaseMagnet):
