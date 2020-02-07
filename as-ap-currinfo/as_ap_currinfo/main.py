@@ -4,6 +4,7 @@ import time as _time
 from datetime import datetime as _datetime
 import numpy as _np
 import epics as _epics
+from siriuspy.csdevice.pwrsupply import Const as _PSc
 from siriuspy.csdevice.currinfo import Const as _Const
 from siriuspy.clientarch import ClientArchiver as _ClientArch
 import as_ap_currinfo.pvs as _pvs
@@ -232,6 +233,7 @@ class SIApp:
         self._storedebeam_value = 0
         self._storedebeam_13C4_value = 0
         self._storedebeam_14C4_value = 0
+        self._is_cycling = False
         data = _get_value_from_arch(self._PREFIX+'Charge-Mon')
         if data is None:
             self._charge = 0.0
@@ -257,6 +259,9 @@ class SIApp:
         self._reliablemeas_14C4_pv = _epics.PV(
             self._PREFIX_VACA+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
             callback=self._callback_get_reliablemeas)
+        self._dipole_opmode_pv = _epics.PV(
+            self._PREFIX_VACA+'SI-Fam:PS-B1B2-1:OpMode-Sts',
+            callback=self._callback_get_dipole_opmode)
 
         # set initial pv values
         self.driver.setParam('Charge-Mon', self._charge)
@@ -280,15 +285,15 @@ class SIApp:
         """Read from IOC database."""
         value = None
         if 'Charge' in reason:
-            if self._storedebeam_value:
-                timestamp = _time.time()
+            timestamp = _time.time()
+            if self._storedebeam_value and not self._is_cycling:
                 dt = (timestamp - self._time0)  # Delta t [s]
-                self._time0 = timestamp
                 inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
                 self._charge += inc_charge
                 self.driver.setParam('Charge-Mon', self._charge)
                 self.driver.updatePV('Charge-Mon')
                 value = self._charge
+            self._time0 = timestamp
         return value
 
     def write(self, reason, value):
@@ -376,6 +381,9 @@ class SIApp:
 
         if self._dcctfltcheck_mode == _Const.DCCTFltCheck.On:
             self._update_dcct_mode_from_reliablemeas()
+
+    def _callback_get_dipole_opmode(self, value, **kws):
+        self._is_cycling = bool(value == _PSc.States.Cycle)
 
     # ----- auxiliar methods -----
 

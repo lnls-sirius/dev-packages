@@ -172,16 +172,16 @@ class App:
                         self, '_lifetime'+('_bpm' if 'BPM' in pvname else ''),
                         self._least_squares_fit(timestamp, value, fit=fit))
 
-        if 'BPM' in pvname:
-            self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
-            self.driver.updatePV('LifetimeBPM-Mon')
-            self.driver.setParam('BuffSizeBPM-Mon', len(value))
-            self.driver.updatePV('BuffSizeBPM-Mon')
-        else:
-            self.driver.setParam('Lifetime-Mon', self._lifetime)
-            self.driver.updatePV('Lifetime-Mon')
-            self.driver.setParam('BuffSize-Mon', len(value))
-            self.driver.updatePV('BuffSize-Mon')
+            if 'BPM' in pvname:
+                self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
+                self.driver.updatePV('LifetimeBPM-Mon')
+                self.driver.setParam('BuffSizeBPM-Mon', len(value))
+                self.driver.updatePV('BuffSizeBPM-Mon')
+            else:
+                self.driver.setParam('Lifetime-Mon', self._lifetime)
+                self.driver.updatePV('Lifetime-Mon')
+                self.driver.setParam('BuffSize-Mon', len(value))
+                self.driver.updatePV('BuffSize-Mon')
 
     def _buffautorst_check(self):
         """Choose mode and check situations to clear internal buffer.
