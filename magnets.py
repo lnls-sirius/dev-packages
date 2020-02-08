@@ -14,12 +14,13 @@ class BaseMagnet:
     def __init__(self, name, strengname='KL'):
         """."""
         self._name = SiriusPVName(name)
-        self._current_sp = PV(self._name.substitute(propty='Current-SP'))
-        self._current_rb = PV(self._name.substitute(propty='Current-RB'))
-        self._stren_sp = PV(self._name.substitute(propty=strengname+'-SP'))
-        self._stren_rb = PV(self._name.substitute(propty=strengname+'-RB'))
-        self._pwr_state_sp = PV(self._name.substitute(propty='PwrState-Sel'))
-        self._pwr_state_rb = PV(self._name.substitute(propty='PwrState-Sts'))
+        fun = self._name.substitute
+        self._current_sp = PV(fun(propty='Current-SP'))
+        self._current_rb = PV(fun(propty='Current-RB'))
+        self._stren_sp = PV(fun(propty=strengname+'-SP'))
+        self._stren_rb = PV(fun(propty=strengname+'-RB'))
+        self._pwr_state_sp = PV(fun(propty='PwrState-Sel'))
+        self._pwr_state_rb = PV(fun(propty='PwrState-Sts'))
 
     @property
     def name(self):
