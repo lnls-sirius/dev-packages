@@ -5,7 +5,7 @@ from siriuspy.epics import PV as _PV
 import siriuspy.csdevice.bpms as _csbpm
 import siriuspy.csdevice.timesys as _cstime
 from siriuspy.search import HLTimeSearch as _HLTimesearch
-from siriuspy.envars import vaca_prefix as LL_PREF
+from siriuspy.envars import VACA_PREFIX as LL_PREF
 from .base_class import BaseTimingConfig as _BaseTimingConfig
 
 TIMEOUT = 0.05
