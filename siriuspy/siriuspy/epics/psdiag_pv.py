@@ -5,11 +5,10 @@ import numpy as _np
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ETypes as _ETypes
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.computer import Computer
 from siriuspy.namesys import SiriusPVName as _PVName
 
 
-class PSDiffPV(Computer):
+class PSDiffPV:
     """Diff of a PS current setpoint and a readback."""
 
     CURRT_SP = 0
@@ -27,14 +26,8 @@ class PSDiffPV(Computer):
         diff = rb - sp
         return {'value': diff}
 
-    def compute_put(self, computed_pv, value):
-        """Not needed."""
 
-    def compute_limits(self, computed_pv, updated_pv_name=None):
-        """Not needed."""
-
-
-class PSStatusPV(Computer):
+class PSStatusPV:
     """Power Supply Status PV."""
 
     # TODO: Add other interlocks for some PS types
@@ -115,9 +108,3 @@ class PSStatusPV(Computer):
                 intlkhard != 0 or intlkhard is None:
             value |= PSStatusPV.BIT_INTERLKOK
         return {'value': value}
-
-    def compute_put(self, computed_pv, value):
-        """Not needed."""
-
-    def compute_limits(self, computed_pv, updated_pv_name=None):
-        """Not needed."""
