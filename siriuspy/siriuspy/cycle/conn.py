@@ -8,7 +8,7 @@ from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
-from siriuspy.envars import vaca_prefix as VACA_PREFIX
+from siriuspy.envars import VACA_PREFIX as VACA_PREFIX
 from siriuspy.search import PSSearch as _PSSearch, \
     LLTimeSearch as _LLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet

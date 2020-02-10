@@ -1,7 +1,15 @@
-"""Definition of ComputedPV class that simulates a PV composed of epics PVs."""
+#!/usr/local/bin/python-sirius
+"""PS Diag PVs."""
+
 import numpy as _np
+
 from epics import PV as _PV
+
 from siriuspy.epics import connection_timeout as _connection_timeout
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.csdevice.pwrsupply import ETypes as _ETypes
+from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.namesys import SiriusPVName as _PVName
 
 
 class ComputedPV:
@@ -12,8 +20,6 @@ class ComputedPV:
     are derived from power supply currents are typical examples of such
     computed process variables.
     """
-
-    # NOTE: currently this is being used only in as-ps-diag IOC classes.
 
     def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
@@ -108,7 +114,7 @@ class ComputedPV:
             'lolim': self.lower_disp_limit,
             'low': self.lower_warning_limit,
             'lolo': self.lower_alarm_limit,
-            })
+        })
 
     def wait_for_connection(self, timeout):
         """Wait util computed PV is connected or until timeout."""
@@ -197,3 +203,106 @@ class ComputedPV:
     def _issue_callback(self, **kwargs):
         for index, callback in self._callbacks.items():
             callback(**kwargs)
+
+
+class PSDiffPV:
+    """Diff of a PS current setpoint and a readback."""
+
+    CURRT_SP = 0
+    CURRT_MON = 1
+
+
+    def compute_update(self, computed_pv, updated_pv_name, value):
+        """Compute difference between SP and Mon current values."""
+        disconnected = \
+            not computed_pv.pvs[PSDiffPV.CURRT_SP].connected or \
+            not computed_pv.pvs[PSDiffPV.CURRT_MON].connected
+        if disconnected:
+            return None
+        value_sp = computed_pv.pvs[PSDiffPV.CURRT_SP].value
+        value_rb = computed_pv.pvs[PSDiffPV.CURRT_MON].value
+        diff = value_rb - value_sp
+        return {'value': diff}
+
+
+class PSStatusPV:
+    """Power Supply Status PV."""
+
+    # TODO: Add other interlocks for some PS types
+
+    BIT_PSCONNECT = 0b000001
+    BIT_PWRSTATON = 0b000010
+    BIT_OPMODEDIF = 0b000100
+    BIT_CURRTDIFF = 0b001000
+    BIT_INTERLKOK = 0b010000
+    BIT_BOWFMDIFF = 0b100000
+
+    PWRSTE_STS = 0
+    INTLK_SOFT = 1
+    INTLK_HARD = 2
+    OPMODE_SEL = 3
+    OPMODE_STS = 4
+    CURRT_DIFF = 5
+    WAVFRM_MON = 6
+
+    DTOLWFM_DICT = dict()
+
+    def compute_update(self, computed_pv, updated_pv_name, value):
+        """Compute PS Status PV."""
+        psname = _PVName(computed_pv.pvs[0].pvname).device_name
+        value = 0
+        # ps connected?
+        disconnected = \
+            not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
+            not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
+            not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
+            not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
+            not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
+            not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected
+        if disconnected:
+            value |= PSStatusPV.BIT_PSCONNECT
+            value |= PSStatusPV.BIT_PWRSTATON
+            value |= PSStatusPV.BIT_INTERLKOK
+            value |= PSStatusPV.BIT_OPMODEDIF
+            value |= PSStatusPV.BIT_CURRTDIFF
+            value |= PSStatusPV.BIT_BOWFMDIFF
+            return {'value': value}
+
+        # pwrstate?
+        pwrsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].value
+        if pwrsts != _PSConst.PwrStateSts.On or pwrsts is None:
+            value |= PSStatusPV.BIT_PWRSTATON
+
+        # opmode?
+        sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
+        sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
+        if sel is not None and sts is not None:
+            opmode_sel = _ETypes.OPMODES[sel]
+            opmode_sts = _ETypes.STATES[sts]
+            if opmode_sel != opmode_sts:
+                value |= PSStatusPV.BIT_OPMODEDIF
+            # current-diff?
+            if sts == _PSConst.States.SlowRef:
+                severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+                if severity != 0:
+                    value |= PSStatusPV.BIT_CURRTDIFF
+            # waveform diff?
+            elif (psname.sec == 'BO') and (sts == _PSConst.States.RmpWfm):
+                mon = computed_pv.pvs[PSStatusPV.WAVFRM_MON].value
+                if psname not in PSStatusPV.DTOLWFM_DICT.keys():
+                    pstype = _PSSearch.conv_psname_2_pstype(psname)
+                    PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
+                        pstype, 'DTOL_WFM')
+                if not _np.allclose(mon, 0.0,
+                                    atol=PSStatusPV.DTOLWFM_DICT[psname]):
+                    value |= PSStatusPV.BIT_BOWFMDIFF
+        else:
+            value |= PSStatusPV.BIT_OPMODEDIF
+
+        # interlocks?
+        intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
+        intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
+        if intlksoft != 0 or intlksoft is None or \
+                intlkhard != 0 or intlkhard is None:
+            value |= PSStatusPV.BIT_INTERLKOK
+        return {'value': value}
