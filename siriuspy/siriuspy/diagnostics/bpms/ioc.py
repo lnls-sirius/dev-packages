@@ -7,7 +7,7 @@ from copy import deepcopy as _copy
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 from siriuspy.util import get_last_commit_hash as _get_version
-from siriuspy.envars import vaca_prefix as PREFIX
+from siriuspy.envars import VACA_PREFIX as PREFIX
 from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
 from siriuspy.csdevice.bpms import FFTWritableProps as fft_wr
 from siriuspy.diagnostics.bpms.bpm_plugins import BPMFake as BPM

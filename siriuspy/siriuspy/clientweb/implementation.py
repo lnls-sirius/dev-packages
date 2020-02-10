@@ -16,7 +16,7 @@ _TIMESYS_FOLDER = '/timesys/'
 def read_url(url, timeout=_TIMEOUT):
     """Read URL from server."""
     try:
-        url = _envars.server_url_consts + url
+        url = _envars.SRVURL_CSCONSTS + url
         response = _urllib_request.urlopen(url, timeout=timeout)
         data = response.read()
         text = data.decode('utf-8')

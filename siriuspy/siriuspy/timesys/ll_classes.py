@@ -7,7 +7,7 @@ from threading import Thread as _ThreadBase
 from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
-from siriuspy.envars import vaca_prefix as LL_PREFIX
+from siriuspy.envars import VACA_PREFIX as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
 from siriuspy.search import LLTimeSearch as _LLTimeSearch

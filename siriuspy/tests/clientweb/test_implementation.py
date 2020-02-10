@@ -7,7 +7,7 @@ from siriuspy.clientweb import implementation
 import siriuspy.util as util
 
 # Dependencies
-# _envars.server_url_consts
+# _envars.SRVURL_CSCONSTS
 # _urllib_request.urlopen
 # _urllib_request.urlopen.read
 
@@ -31,7 +31,7 @@ class TestClientWebReadUrl(TestCase):
         # Mocked methods
         self.url_mock.urlopen.return_value.read.return_value = b'FakeResponse'
         # Mock a property from envars
-        type(self.env_mock).server_url_consts = \
+        type(self.env_mock).SRVURL_CSCONSTS = \
             mock.PropertyMock(return_value=self.fake_url)
 
     def test_read_url_request(self):

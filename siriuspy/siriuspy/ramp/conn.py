@@ -20,7 +20,7 @@ from siriuspy.search import LLTimeSearch as _LLTimeSearch, \
 from siriuspy.ramp import util as _rutil
 
 
-_prefix = _envars.vaca_prefix
+_prefix = _envars.VACA_PREFIX
 _TIMEOUT_DFLT = 8
 _TIMEOUT_PWRSTATE_ON = 2
 _TIMEOUT_PWRSTATE_OFF = 1

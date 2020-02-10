@@ -2,7 +2,7 @@
 
 from epics import PV as _PV
 
-from siriuspy.envars import vaca_prefix as _VACA_PREFIX
+from siriuspy.envars import VACA_PREFIX as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet import util as _mutil
