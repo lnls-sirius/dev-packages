@@ -9,7 +9,7 @@ from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.search import HLTimeSearch as _HLTimesearch
-from siriuspy.envars import vaca_prefix as LL_PREF
+from siriuspy.envars import VACA_PREFIX as LL_PREF
 from siriuspy.namesys import SiriusPVName as _PVName
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
