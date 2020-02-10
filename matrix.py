@@ -312,6 +312,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat[sel_mat.T] = inv_mat.flatten()
         self.run_callbacks(
                 'InvRespMat-Mon', list(self.inv_respmat.flatten()))
+        msg = 'Ok!'
+        self._update_log(msg)
+        _log.info(msg)
         return True
 
     def _load_respmat(self):
@@ -327,9 +330,6 @@ class EpicsMatrix(BaseMatrix):
             _log.info(msg)
 
     def _save_respmat(self, mat):
-        msg = 'Saving RespMat to file'
-        self._update_log(msg)
-        _log.info(msg)
         path = _os.path.split(self._csorb.RESPMAT_FILENAME)[0]
         if not _os.path.isdir(path):
             _os.mkdir(path)

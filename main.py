@@ -274,6 +274,9 @@ class SOFB(_BaseClass):
         if kicks is None:
             return
         self.correctors.apply_kicks(kicks)
+        msg = 'kicks applied!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
@@ -379,14 +382,14 @@ class SOFB(_BaseClass):
             kicks[i] = orig_kicks[i]
             self.correctors.apply_kicks(kicks)
 
-        msg = 'Measurement Completed.'
-        self._update_log(msg)
-        _log.info(msg)
         mat = _np.array(mat).T
         self.matrix.set_respmat(list(mat.flatten()))
         self.run_callbacks(
             'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Completed)
         self._measuring_respmat = False
+        msg = 'RespMat Measurement Completed!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def _do_auto_corr(self):
         self.run_callbacks('ClosedLoop-Sts', 1)
