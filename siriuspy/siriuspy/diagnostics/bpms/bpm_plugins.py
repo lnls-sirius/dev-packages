@@ -1,9 +1,13 @@
-import numpy as _np
+"""BPM plugins module."""
+
 from threading import Event as _Event
 from threading import Thread as _Thread
+
+import numpy as _np
 from epics import PV as _PV
-from siriuspy.epics.fake_pv import PVFake as _PVFake
-from siriuspy.epics.fake_pv import add_to_database as _add_to_database
+
+from siriuspy.epics.pv_fake import PVFake as _PVFake
+from siriuspy.epics.pv_fake import add_to_database as _add_to_database
 from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
 from siriuspy.csdevice.bpms import FFTWritableProps
 
@@ -12,6 +16,7 @@ pvDB = _get_bpm_db()
 
 
 def get_prop_and_suffix(name):
+    """."""
     prop = name.lower().replace('-', '_').replace('.', '')
     prop = prop.split('_')
     suf = prop[1] if len(prop) > 1 else ''
@@ -34,9 +39,11 @@ class _Timer(_Thread):
                 self.function(*self.args)
 
     def restart(self):
+        """."""
         self.run_now = True
 
     def stop(self):
+        """."""
         self.run_now = False
 
 
@@ -75,9 +82,12 @@ def {0}_{1}_run_callbacks(self):
 
 
 class BPM:
+    """BPM class."""
+
     _PV_class = None
 
     def __init__(self, bpm_name, prefix='', callback=None):
+        """."""
         self.pv_prefix = prefix + bpm_name + ':'
         _add_to_database(pvDB, prefix=self.pv_prefix)
         self.pvs = dict()
@@ -101,11 +111,15 @@ class BPM:
 
 
 class BPMEpics(BPM):
+    """BPM Epics."""
+
     _PV_class = _PV
     _PV_add_class = _PVFake
 
 
 class BPMFake(BPM):
+    """BPM Fake."""
+
     _PV_class = _PVFake
     _PV_add_class = _PVFake
     M = _np.array([[-2, -2,  0,  0],
@@ -114,6 +128,7 @@ class BPMFake(BPM):
                    [-2, -2, -2, -2]])
 
     def __init__(self, bpm_name, prefix='', callback=None):
+        """."""
         super().__init__(bpm_name=bpm_name, prefix=prefix, callback=callback)
         self._x_ref = 0
         self._y_ref = 0
@@ -141,6 +156,7 @@ class BPMFake(BPM):
         self.timer.start()
 
     def set_ref_pos(self, x=None, y=None, q=None):
+        """."""
         if x is not None:
             self._x_ref = float(x)
         if y is not None:
