@@ -8,9 +8,9 @@ from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 
 from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
-from siriuspy.epics.psdiag_pv import PSStatusPV as _PSStatusPV
-from siriuspy.epics.psdiag_pv import PSDiffPV as _PSDiffPV
+from siriuspy.epics.pv_psdiag import ComputedPV as _ComputedPV
+from siriuspy.epics.pv_psdiag import PSStatusPV as _PSStatusPV
+from siriuspy.epics.pv_psdiag import PSDiffPV as _PSDiffPV
 
 SCAN_FREQUENCY = 2
 
