@@ -1,6 +1,6 @@
 """Create IOC Database."""
 
-from siriuspy.envars import vaca_prefix as _vaca_prefix
+from siriuspy.envars import VACA_PREFIX as _vaca_prefix
 from siriuspy import util as _util
 from siriuspy.csdevice.posang import get_posang_database as _get_database
 
