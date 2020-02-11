@@ -532,10 +532,10 @@ class SOFBTLines(ConstTLines):
                 'unit': 'Maximum number of SV to use'},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
-                'unit': 'urad.'},
+                'unit': 'urad'},
             'DeltaKickCV-Mon': {
                 'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
-                'unit': 'urad.'},
+                'unit': 'urad'},
             }
         return self._add_prefix(db, prefix)
 
