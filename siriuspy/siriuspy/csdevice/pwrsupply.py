@@ -759,6 +759,7 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
+    # NOTE: This is a mirror of the PS IOC database in linac-ioc-ps repo.
     version = '2020/02/12'
 
     propty_db = {
