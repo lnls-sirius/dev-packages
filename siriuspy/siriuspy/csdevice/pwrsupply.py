@@ -377,14 +377,15 @@ class ETypes(_cutil.ETypes):
     LINAC_INTLCK_SGIN = (
         'FAN', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
         'bit8', 'INTERLK1', 'INTERLK2', '0T', 'DCCT', '0C', '0V', 'DCLink')
-    LINAC_INTLCK_SGIN_MASK = (
+    LINAC_INTLCK_RDSGIN_MASK = (
         'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
         'bit8', 'bit9', 'bit10', 'bit11', 'bit12', 'bit13', 'bit14', 'bit15')
     LINAC_INTLCK_SGOUT = (
         'Main Relay1', 'bit1', 'bit2', 'bit3',
         'bit4', 'bit5', 'bit6', 'Out Interlock')
-    LINAC_INTLCK_SGOUT_MASK = (
+    LINAC_INTLCK_RDSGOUT_MASK = (
         'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7')
+
 
 _et = ETypes  # syntatic sugar
 
@@ -758,16 +759,16 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
-    version = '2020/02/06'
+    version = '2020/02/12'
 
     propty_db = {
         # --- ioc metapvs
         'Version-Cte': {'type': 'string', 'value': version},
         'TimestampBoot-Cte': {'type': 'string'},
+        'TimestampUpdate-Mon': {'type': 'float'},
         'Connected-Mon': {
             'type': 'enum', 'enums': ['Connected', 'Broken'],
             'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM]},
-
         # --- ps state
         'PwrState-Sel': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
         'PwrState-Sts': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
@@ -784,19 +785,18 @@ def _get_ps_LINAC_propty_database():
                         'hilim': 0.0, 'high': 0.0, 'hihi': 0.0,
                         'mdel': 0.000099, 'adel': 0.000099},  # f1
         'CurrentMax-Mon': {'type': 'float',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                           'prec': DEFAULT_PS_CURRENT_PRECISION,
                            'unit': 'A'},  # 91
         'CurrentMin-Mon': {'type': 'float',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                           'prec': DEFAULT_PS_CURRENT_PRECISION,
                            'unit': 'A'},  # 92
-        # f0
         'CurrentFit-Mon': {'type': 'float',
-            'prec': DEFAULT_PS_CURRENT_PRECISION},
+                           'prec': DEFAULT_PS_CURRENT_PRECISION},  # f0
         # --- interlocks
         'StatusIntlk-Mon': {'type': 'int', 'hihi': 55},
         'IntlkWarn-Mon': {'type': 'int'},  # 23
         'IntlkSignalIn-Mon': {'type': 'int'},
-        'IntlkSignalOutMask-Mon': {'type': 'int'},
+        'IntlkSignalOut-Mon': {'type': 'int'},
         'IntlkRdSignalIn-Mon': {'type': 'int'},  # 70
         'IntlkRdSignalInMask-Mon': {'type': 'int'},  # 71
         'IntlkRdSignalOut-Mon': {'type': 'int'},  # 72
@@ -810,18 +810,18 @@ def _get_ps_LINAC_propty_database():
             'type': 'string',
             'count': len(_et.LINAC_INTLCK_SGIN),
             'value': _et.LINAC_INTLCK_SGIN},
-        'IntlkSignalInMaskLabels-Cte':  {
+        'IntlkRdSignalInMaskLabels-Cte':  {
             'type': 'string',
-            'count': len(_et.LINAC_INTLCK_SGIN_MASK),
-            'value': _et.LINAC_INTLCK_SGIN_MASK},
+            'count': len(_et.LINAC_INTLCK_RDSGIN_MASK),
+            'value': _et.LINAC_INTLCK_RDSGIN_MASK},
         'IntlkSignalOutLabels-Cte':  {
             'type': 'string',
             'count': len(_et.LINAC_INTLCK_SGOUT),
             'value': _et.LINAC_INTLCK_SGOUT},
-        'IntlkSignalOutMaskLabels-Cte':  {
+        'IntlkRdSignalOutMaskLabels-Cte':  {
             'type': 'string',
-            'count': len(_et.LINAC_INTLCK_SGOUT_MASK),
-            'value': _et.LINAC_INTLCK_SGOUT_MASK},
+            'count': len(_et.LINAC_INTLCK_RDSGOUT_MASK),
+            'value': _et.LINAC_INTLCK_RDSGOUT_MASK},
         # --- misc
         'Temperature-Mon': {'type': 'float', 'prec': 4},  # 74
         'LoadVoltage-Mon': {'type': 'float', 'prec': 4},  # f2
