@@ -7,7 +7,7 @@ del _os
 __all__ = [
     'envars', 'util', 'clientweb', 'clientconfigdb',
     'diagnostics', 'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice',
-    'epics', 'callbacks']
+    'epics', 'callbacks', 'search']
 
 
 subpackages = __all__.copy()

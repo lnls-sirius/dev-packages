@@ -532,10 +532,10 @@ class SOFBTLines(ConstTLines):
                 'unit': 'Maximum number of SV to use'},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
-                'unit': 'Last CH kicks calculated.'},
+                'unit': 'urad'},
             'DeltaKickCV-Mon': {
                 'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
-                'unit': 'Last CV kicks calculated.'},
+                'unit': 'urad'},
             }
         return self._add_prefix(db, prefix)
 
@@ -700,7 +700,7 @@ class SOFBSI(SOFBRings, ConstSI):
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db_ring = {'KickRF-Mon': {
-            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3}}
+            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2}}
         db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
         return db
@@ -715,8 +715,7 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
                 'unit': 'If RF is used in correction'},
             'DeltaKickRF-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'Last RF kick calculated.'},
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
         db = super().get_respmat_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))

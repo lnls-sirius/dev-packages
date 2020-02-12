@@ -7,7 +7,7 @@ from siriuspy.clientweb import implementation
 import siriuspy.util as util
 
 # Dependencies
-# _envars.server_url_consts
+# _envars.SRVURL_CSCONSTS
 # _urllib_request.urlopen
 # _urllib_request.urlopen.read
 
@@ -31,7 +31,7 @@ class TestClientWebReadUrl(TestCase):
         # Mocked methods
         self.url_mock.urlopen.return_value.read.return_value = b'FakeResponse'
         # Mock a property from envars
-        type(self.env_mock).server_url_consts = \
+        type(self.env_mock).SRVURL_CSCONSTS = \
             mock.PropertyMock(return_value=self.fake_url)
 
     def test_read_url_request(self):
@@ -61,8 +61,6 @@ class TestClientWeb(TestCase):
         'server_online',
         'magnets_model_data',
         'magnets_excitation_data_read',
-        'magnets_setpoint_limits',
-        'pulsed_magnets_setpoint_limits',
         'magnets_excitation_ps_read',
         'ps_pstypes_names_read',
         'ps_pstype_data_read',
@@ -114,7 +112,7 @@ class TestClientWeb(TestCase):
     def test_magnets_excitation_data_read(self, mock_read):
         """Test magnets_excitation_data_read."""
         filename = "fakefile"
-        folder = implementation._excdat_folder
+        folder = implementation._EXCDAT_FOLDER
         # Call two times
         resp = implementation.magnets_excitation_data_read(filename)
         self.assertEqual(resp, "FakeResponse")
@@ -126,36 +124,9 @@ class TestClientWeb(TestCase):
             mock.call(folder + filename, timeout=1.0),
             mock.call(folder + filename, timeout=2.0)])
 
-    def test_magnets_setpoint_limits(self, mock_read):
-        """Test magnets_setpoint_limits."""
-        url = implementation._magnet_folder + 'magnet-setpoint-limits.txt'
-        # Call with different parameters
-        resp = implementation.magnets_setpoint_limits()
-        self.assertEqual(resp, "FakeResponse")
-        resp = implementation.magnets_setpoint_limits(timeout=2.0)
-        self.assertEqual(resp, "FakeResponse")
-        # Assert read_url was called correctly
-        mock_read.assert_has_calls([
-            mock.call(url, timeout=1.0),
-            mock.call(url, timeout=2.0)])
-
-    def test_pulsed_magnets_setpoint_limits(self, mock_read):
-        """Test pulsed_magnets_setpoint_limits."""
-        url = \
-            implementation._magnet_folder + 'pulsed-magnet-setpoint-limits.txt'
-        # Call with different parameters
-        resp = implementation.pulsed_magnets_setpoint_limits()
-        self.assertEqual(resp, "FakeResponse")
-        resp = implementation.pulsed_magnets_setpoint_limits(timeout=2.0)
-        self.assertEqual(resp, "FakeResponse")
-        # Assert read_url was called correctly
-        mock_read.assert_has_calls([
-            mock.call(url, timeout=1.0),
-            mock.call(url, timeout=2.0)])
-
     def test_magnets_excitation_ps_read(self, mock_read):
         """Test magnets_excitation_ps_read."""
-        url = implementation._magnet_folder + 'magnet-excitation-ps.txt'
+        url = implementation._MAGNET_FOLDER + 'magnet-excitation-ps.txt'
         # Call with different parameters
         resp = implementation.magnets_excitation_ps_read()
         self.assertEqual(resp, "FakeResponse")
@@ -168,7 +139,7 @@ class TestClientWeb(TestCase):
 
     def test_ps_pstypes_names_read(self, mock_read):
         """Test ps_pstypes_names_read."""
-        url = implementation._ps_folder + 'pstypes-names.txt'
+        url = implementation._PS_FOLDER + 'pstypes-names.txt'
         # Call with different parameters
         resp = implementation.ps_pstypes_names_read()
         self.assertEqual(resp, "FakeResponse")
@@ -182,7 +153,7 @@ class TestClientWeb(TestCase):
     def test_ps_pstype_data_read(self, mock_read):
         """Test ps_pstype_data_read."""
         filename = "fakefilename"
-        url = implementation._pstypes_data_folder + filename
+        url = implementation._PSTYPES_DATA_FOLDER + filename
         # Call with different parameters
         resp = implementation.ps_pstype_data_read(filename)
         self.assertEqual(resp, "FakeResponse")
@@ -195,7 +166,7 @@ class TestClientWeb(TestCase):
 
     def test_ps_siggen_configuration_read(self, mock_read):
         """Test ps_siggen_configuration_read."""
-        url = implementation._ps_folder + 'siggen-configuration.txt'
+        url = implementation._PS_FOLDER + 'siggen-configuration.txt'
         # Call with different parameters
         resp = implementation.ps_siggen_configuration_read()
         self.assertEqual(resp, "FakeResponse")
@@ -208,7 +179,7 @@ class TestClientWeb(TestCase):
 
     def test_ps_pstype_setpoint_limits(self, mock_read):
         """Test ps_pstype_setpoint_limits."""
-        url = implementation._ps_folder + 'pstypes-setpoint-limits.txt'
+        url = implementation._PS_FOLDER + 'pstypes-setpoint-limits.txt'
         # Call with different parameters
         resp = implementation.ps_pstype_setpoint_limits()
         self.assertEqual(resp, "FakeResponse")
@@ -221,7 +192,7 @@ class TestClientWeb(TestCase):
 
     def test_pu_pstype_setpoint_limits(self, mock_read):
         """Test pu_pstype_setpoint_limits."""
-        url = implementation._ps_folder + 'putypes-setpoint-limits.txt'
+        url = implementation._PS_FOLDER + 'putypes-setpoint-limits.txt'
         # Call with different parameters
         resp = implementation.pu_pstype_setpoint_limits()
         self.assertEqual(resp, "FakeResponse")
@@ -245,7 +216,7 @@ class TestClientWeb(TestCase):
     def test_crates_mapping(self, mock_read):
         """Test crate_to_bpm_mapping."""
         url = (
-            implementation._diag_folder + 'microTCA-vs-BPMs-mapping/')
+            implementation._DIAG_FOLDER + 'microTCA-vs-BPMs-mapping/')
         # Call with different parameters
         resp = implementation.crates_mapping()
         self.assertEqual(resp, "")
@@ -258,7 +229,7 @@ class TestClientWeb(TestCase):
 
     def test_bpms_data(self, mock_read):
         """Test bpms_data."""
-        url = implementation._diag_folder + 'bpms-data.txt'
+        url = implementation._DIAG_FOLDER + 'bpms-data.txt'
         # Call with different parameters
         resp = implementation.bpms_data()
         self.assertEqual(resp, "FakeResponse")
@@ -271,7 +242,7 @@ class TestClientWeb(TestCase):
 
     def test_timing_devices_mapping(self, mock_read):
         """Test timing_devices_mapping."""
-        url = implementation._timesys_folder + 'timing-devices-connection.txt'
+        url = implementation._TIMESYS_FOLDER + 'timing-devices-connection.txt'
         # Call with different parameters
         resp = implementation.timing_devices_mapping()
         self.assertEqual(resp, "FakeResponse")
@@ -284,7 +255,7 @@ class TestClientWeb(TestCase):
 
     def test_high_level_triggers(self, mock_read):
         """Test high_level_triggers."""
-        url = implementation._timesys_folder + 'high-level-triggers.py'
+        url = implementation._TIMESYS_FOLDER + 'high-level-triggers.py'
         # Call with different parameters
         resp = implementation.high_level_triggers()
         self.assertEqual(resp, "FakeResponse")
@@ -297,7 +268,7 @@ class TestClientWeb(TestCase):
 
     def test_high_level_events(self, mock_read):
         """Test high_level_events."""
-        url = implementation._timesys_folder + 'high-level-events.py'
+        url = implementation._TIMESYS_FOLDER + 'high-level-events.py'
         # Call with different parameters
         resp = implementation.high_level_events()
         self.assertEqual(resp, "FakeResponse")

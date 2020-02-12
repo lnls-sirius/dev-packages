@@ -15,17 +15,17 @@ valid_interface = (
 )
 
 
-@mock.patch('siriuspy.factory._MAData', autospec=True)
+# @mock.patch('siriuspy.factory._MAData', autospec=True)
 class TestMagnetFactory(TestCase):
     """Test MagnetFactory."""
 
-    def test_public_interface(self, mock_data):
+    def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(factory, valid_interface)
         self.assertTrue(valid)
 
     @mock.patch('siriuspy.factory._norm.DipoleNormalizer', autospec=True)
-    def test_dipole_creation(self, mock_ma, mock_data):
+    def test_dipole_creation(self, mock_data):
         """Test Factory.create. dipole creation."""
         maname = 'SI-Fam:MA-B1B2'
         mock_data.return_value.magfunc.return_value = 'dipole'
@@ -33,7 +33,7 @@ class TestMagnetFactory(TestCase):
         self.assertIsInstance(magnet, DipoleNormalizer)
 
     @mock.patch('siriuspy.factory._norm.MagnetNormalizer', autospec=True)
-    def test_magnet_creation(self, mock_ma, mock_data):
+    def test_magnet_creation(self, mock_data):
         """Test Factory.create magnet creation."""
         maname = 'SI-Fam:MA-QDA'
         mock_data.return_value.magfunc.return_value = 'quadrupole'
@@ -41,7 +41,7 @@ class TestMagnetFactory(TestCase):
         self.assertIsInstance(magnet, MagnetNormalizer)
 
     @mock.patch('siriuspy.factory._norm.MagnetNormalizer', autospec=True)
-    def test_pulsed_magnet_creation(self, mock_ma, mock_data):
+    def test_pulsed_magnet_creation(self, mock_data):
         """Test Factory.create magnet creation."""
         maname = 'SI-01SA:PM-InjDpKckr'
         mock_data.return_value.magfunc.return_value = 'corrector-vertical'
@@ -49,7 +49,7 @@ class TestMagnetFactory(TestCase):
         self.assertIsInstance(magnet, MagnetNormalizer)
 
     @mock.patch('siriuspy.factory._norm.TrimNormalizer', autospec=True)
-    def test_trim_creation(self, mock_ma, mock_data):
+    def test_trim_creation(self, mock_data):
         """Test Factory.create trim creation."""
         maname = 'SI-01M1:MA-QDA'
         mock_data.return_value.magfunc.return_value = 'quadrupole'

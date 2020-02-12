@@ -7,11 +7,12 @@ from threading import Thread as _ThreadBase
 from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
-from siriuspy.envars import vaca_prefix as LL_PREFIX
+from siriuspy.envars import VACA_PREFIX as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
-from .util import Base as _Base
+from siriuspy.callbacks import Callback as _Callback
+
 
 _RFFREQ = _cstime.Const.RF_FREQUENCY
 _RFDIV = _cstime.Const.RF_DIVISION
@@ -28,7 +29,7 @@ class _Thread(_ThreadBase):
         super().__init__(**kwargs)
 
 
-class _BaseLL(_Base):
+class _BaseLL(_Callback):
 
     def __init__(self, channel, prefix):
         """Initialize the Low Level object.
@@ -62,10 +63,10 @@ class _BaseLL(_Base):
         _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
             pvnamerb = pvnamesp = None
-            if not self._iswritepv(pvname):
+            if not _PVName.is_write_pv(pvname):
                 pvnamerb = pvname
-                pvnamesp = self._fromrb2sp(pvname)
-            elif self._iscmdpv(pvname):  # -Cmd is different!!
+                pvnamesp = _PVName.from_rb2sp(pvname)
+            elif _PVName.is_cmd_pv(pvname):  # -Cmd is different!!
                 self._writepvs[prop] = _PV(
                                 pvname, connection_timeout=_conn_timeout)
 
@@ -78,7 +79,7 @@ class _BaseLL(_Base):
                 self._writepvs[prop]._initialized = False
 
         for prop, pv in self._writepvs.items():
-            if self._iscmdpv(pv.pvname):
+            if _PVName.is_cmd_pv(pv.pvname):
                 continue
             pv.add_callback(self._on_change_writepv)
             pv.connection_callbacks.append(self._on_connection_writepv)
@@ -253,7 +254,7 @@ class _BaseLL(_Base):
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them
-        if value is None or self._iscmdpv(pvname):
+        if value is None or _PVName.is_cmd_pv(pvname):
             return
         _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
@@ -268,14 +269,14 @@ class _BaseLL(_Base):
         prop = self._dict_convert_pv2prop.get(pvname)
         cond = prop is not None
         cond &= self._config_ok_values.get(prop) is None
-        cond &= self._isrbpv(pvname)
+        cond &= _PVName.is_rb_pv(pvname)
         cond &= not self._locked
         if cond:
             self._config_ok_values[prop] = value
 
     def _on_change_pv_thread(self, pvname, value, **kwargs):
-        pvn = self._fromsp2rb(pvname)
-        is_sp = self._issppv(pvname)
+        pvn = _PVName.from_sp2rb(pvname)
+        is_sp = _PVName.is_sp_pv(pvname)
         fun = self._dict_functs_for_update[self._dict_convert_pv2prop[pvn]]
         props = fun(is_sp, value)
         for hl_prop, val in props.items():
@@ -283,8 +284,8 @@ class _BaseLL(_Base):
                 self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
 
     def _on_connection_writepv(self, pvname, conn, **kwargs):
-        if not self._iscmdpv(pvname):  # -Cmd must not change
-            prop = self._dict_convert_pv2prop[self._fromsp2rb(pvname)]
+        if not _PVName.is_cmd_pv(pvname):  # -Cmd must not change
+            prop = self._dict_convert_pv2prop[_PVName.from_sp2rb(pvname)]
             self._writepvs[prop]._initialized = False  # not self._locked
             self._on_connection(pvname, conn)
 

@@ -28,7 +28,7 @@ class ConfigDBClient:
             the URL defined in siripy.envars is used.
 
         """
-        self._url = url or _envars.server_url_configdb
+        self._url = url or _envars.SRVURL_CONFIGDB
         self._config_type = config_type
 
     @property

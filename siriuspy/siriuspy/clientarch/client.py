@@ -20,7 +20,7 @@ class AuthenticationError(Exception):
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
-    SERVER_URL = _envars.server_url_archiver
+    SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
 
     def __init__(self, server_url=None):

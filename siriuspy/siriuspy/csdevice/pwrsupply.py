@@ -370,7 +370,21 @@ class ETypes(_cutil.ETypes):
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
-
+    LINAC_INTLCK_WARN = (
+        'LoadI 0C Shutdown', 'LoadI 0C Interlock',
+        'LoadV 0V Shutdown', 'LoadV 0V Interlock',
+        'Ext Interlock Fault', 'LoadI Over Thrs', 'TestPoint', 'ADC Cali')
+    LINAC_INTLCK_SGIN = (
+        'FAN', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
+        'bit8', 'INTERLK1', 'INTERLK2', '0T', 'DCCT', '0C', '0V', 'DCLink')
+    LINAC_INTLCK_SGIN_MASK = (
+        'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
+        'bit8', 'bit9', 'bit10', 'bit11', 'bit12', 'bit13', 'bit14', 'bit15')
+    LINAC_INTLCK_SGOUT = (
+        'Main Relay1', 'bit1', 'bit2', 'bit3',
+        'bit4', 'bit5', 'bit6', 'Out Interlock')
+    LINAC_INTLCK_SGOUT_MASK = (
+        'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7')
 
 _et = ETypes  # syntatic sugar
 
@@ -652,83 +666,6 @@ def get_pu_conv_propty_database():
     return dbase
 
 
-def get_ma_propty_database(maname):
-    """Return property database of a magnet type device."""
-    current_alarm = ('Current-SP', 'Current-RB',
-                     'CurrentRef-Mon', 'Current-Mon', )
-    current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
-    unit = _MASearch.get_splims_unit(psmodel=psmodel)
-    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
-    pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
-    database = get_ps_propty_database(psmodel, pstype)
-    dbase = {}
-
-    for psname, magfunc in magfunc_dict.items():
-        dbase[psname] = _copy.deepcopy(database)
-        # set appropriate PS limits and unit
-        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
-            dbase[psname]['Current' + field]['lolo'] = \
-                _MASearch.get_splims(maname, 'lolo')
-            dbase[psname]['Current' + field]['low'] = \
-                _MASearch.get_splims(maname, 'low')
-            dbase[psname]['Current' + field]['lolim'] = \
-                _MASearch.get_splims(maname, 'lolim')
-            dbase[psname]['Current' + field]['hilim'] = \
-                _MASearch.get_splims(maname, 'hilim')
-            dbase[psname]['Current' + field]['high'] = \
-                _MASearch.get_splims(maname, 'high')
-            dbase[psname]['Current' + field]['hihi'] = \
-                _MASearch.get_splims(maname, 'hihi')
-        for propty in current_pvs:
-            dbase[psname][propty]['unit'] = unit[0]
-        # set approriate MA limits and unit
-        if magfunc in {'quadrupole', 'quadrupole-skew'}:
-            strength_name = 'KL'
-            unit = '1/m'
-        elif magfunc == 'sextupole':
-            strength_name = 'SL'
-            unit = '1/m^2'
-        elif magfunc == 'dipole':
-            strength_name = 'Energy'
-            unit = 'GeV'
-        elif magfunc in {'corrector-vertical', 'corrector-horizontal'}:
-            strength_name = 'Kick'
-            unit = 'urad'
-
-        dbase[psname][strength_name + '-SP'] = \
-            _copy.deepcopy(dbase[psname]['Current-SP'])
-        dbase[psname][strength_name + '-SP']['unit'] = unit
-        dbase[psname][strength_name + '-RB'] = \
-            _copy.deepcopy(dbase[psname]['Current-RB'])
-        dbase[psname][strength_name + '-RB']['unit'] = unit
-        dbase[psname][strength_name + 'Ref-Mon'] = \
-            _copy.deepcopy(dbase[psname]['CurrentRef-Mon'])
-        dbase[psname][strength_name + 'Ref-Mon']['unit'] = unit
-        dbase[psname][strength_name + '-Mon'] = \
-            _copy.deepcopy(dbase[psname]['Current-Mon'])
-        dbase[psname][strength_name + '-Mon']['unit'] = unit
-
-        for field in {'-SP', '-RB', 'Ref-Mon', '-Mon'}:
-            dbase[psname][strength_name + field]['lolo'] = 0.0
-            dbase[psname][strength_name + field]['low'] = 0.0
-            dbase[psname][strength_name + field]['lolim'] = 0.0
-            dbase[psname][strength_name + field]['hilim'] = 0.0
-            dbase[psname][strength_name + field]['high'] = 0.0
-            dbase[psname][strength_name + field]['hihi'] = 0.0
-
-        # add PSConnStatus
-        dbase[psname]['PSConnStatus-Mon'] = {
-            'type': 'enum', 'enums': _et.DISCONN_CONN,
-                            'value': Const.DisconnConn.Disconnected}
-
-        # add pvs list
-        dbase[psname] = _cutil.add_pvslist_cte(dbase[psname])
-
-    return dbase
-
-
 def get_li_ma_propty_database(maname):
     """Return property database of a magnet type device."""
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
@@ -821,41 +758,76 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
+    version = '2020/02/06'
+
     propty_db = {
-        'rdnets': {'type': 'enum', 'enums': ['Connected', 'Broken'],
-                   # 'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
-                   'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM]},
-        'setpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
-        'rdpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},   # 40
-        'seti': {'type': 'float', 'prec': 4, 'unit': 'A',
-                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                 'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},            # 90
-        'rdseti': {'type': 'float', 'prec': 4, 'unit': 'A',
-                   'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                   'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},          # 90
-        'rdmaxti': {'type': 'float', 'prec': 4, 'unit': 'A'},        # 91
-        'rdminti': {'type': 'float', 'prec': 4, 'unit': 'A'},        # 92
-        'rdseti_fit': {'type': 'float', 'prec': 4},                  # f0
-        'rdi': {'type': 'float', 'prec': 4, 'unit': 'A',
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 0.0, 'high': 0.0, 'hihi': 0.0,
-                'mdel': 0.000099, 'adel': 0.000099},                 # f1
-        'rdldv': {'type': 'float', 'prec': 4},                       # f2
-        'rdbusv': {'type': 'float', 'prec': 4},                      # f3
-        'rdwarn': {'type': 'int'},                                   # 23
-        'rdsgin': {'type': 'int'},                                   # 70
-        'rdsgin_msk': {'type': 'int'},                               # 71
-        'sgin': {'type': 'int'},
-        'rdsgout': {'type': 'int'},                                  # 72
-        'rdsgout_msk': {'type': 'int'},                              # 73
-        'sgout': {'type': 'int'},
-        'rdtp': {'type': 'float', 'prec': 4},                        # 74
-        'boottime': {'type': 'string'},
-        'interlock': {'type': 'int', 'hihi': 55},
-        'Cycle-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'Abort-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'Version-Cte': {'type': 'string', 'value': 'UNDEF'}
+        # --- ioc metapvs
+        'Version-Cte': {'type': 'string', 'value': version},
+        'TimestampBoot-Cte': {'type': 'string'},
+        'Connected-Mon': {
+            'type': 'enum', 'enums': ['Connected', 'Broken'],
+            'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM]},
+
+        # --- ps state
+        'PwrState-Sel': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
+        'PwrState-Sts': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
+        # --- current
+        'Current-SP': {'type': 'float', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+                       'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                       'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},  # 90
+        'Current-RB': {'type': 'float', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+                       'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                       'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},  # 90
+
+        'Current-Mon': {'type': 'float', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+                        'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                        'hilim': 0.0, 'high': 0.0, 'hihi': 0.0,
+                        'mdel': 0.000099, 'adel': 0.000099},  # f1
+        'CurrentMax-Mon': {'type': 'float',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                           'unit': 'A'},  # 91
+        'CurrentMin-Mon': {'type': 'float',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+                           'unit': 'A'},  # 92
+        # f0
+        'CurrentFit-Mon': {'type': 'float',
+            'prec': DEFAULT_PS_CURRENT_PRECISION},
+        # --- interlocks
+        'StatusIntlk-Mon': {'type': 'int', 'hihi': 55},
+        'IntlkWarn-Mon': {'type': 'int'},  # 23
+        'IntlkSignalIn-Mon': {'type': 'int'},
+        'IntlkSignalOutMask-Mon': {'type': 'int'},
+        'IntlkRdSignalIn-Mon': {'type': 'int'},  # 70
+        'IntlkRdSignalInMask-Mon': {'type': 'int'},  # 71
+        'IntlkRdSignalOut-Mon': {'type': 'int'},  # 72
+        'IntlkRdSignalOutMask-Mon': {'type': 'int'},  # 73
+        # --- interlock labels
+        'IntlkWarnLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.LINAC_INTLCK_WARN),
+            'value': _et.LINAC_INTLCK_WARN},
+        'IntlkSignalInLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.LINAC_INTLCK_SGIN),
+            'value': _et.LINAC_INTLCK_SGIN},
+        'IntlkSignalInMaskLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.LINAC_INTLCK_SGIN_MASK),
+            'value': _et.LINAC_INTLCK_SGIN_MASK},
+        'IntlkSignalOutLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.LINAC_INTLCK_SGOUT),
+            'value': _et.LINAC_INTLCK_SGOUT},
+        'IntlkSignalOutMaskLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.LINAC_INTLCK_SGOUT_MASK),
+            'value': _et.LINAC_INTLCK_SGOUT_MASK},
+        # --- misc
+        'Temperature-Mon': {'type': 'float', 'prec': 4},  # 74
+        'LoadVoltage-Mon': {'type': 'float', 'prec': 4},  # f2
+        'BusVoltage-Mon': {'type': 'float', 'prec': 4}  # f3
     }
+    propty_db = _cutil.add_pvslist_cte(propty_db)
     return propty_db
 
 

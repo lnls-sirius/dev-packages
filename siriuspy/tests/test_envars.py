@@ -6,47 +6,29 @@ from unittest import TestCase
 import siriuspy.envars as envars
 import siriuspy.util as util
 
-folders = (
-    'folder_root',
-    'folder_epics_base',
-    'folder_lnls_sirius',
-    'folder_lnls_fac',
-    'folder_lnls_ima',
-    'folder_fac_code',
-    'folder_fac_data',
-    'folder_lnls_sirius_csslnls',
-    'folder_lnls_sirius_discs',
-    'folder_lnls_sirius_csconstants',
-    'folder_lnls_sirius_dev_packages',
-    'folder_lnls_sirius_hla',
-)
-servers = (
-    'server_url_rbac_auth',
-    'server_url_rbac',
-    'server_url_ns',
-    'server_url_ccdb',
-    'server_url_cables',
-    'server_url_consts',
-    'server_url_logbook',
-    'server_url_configdb',
-    'server_url_archiver',
-)
-misc = (
-    'org_folders',
-    'repo_names',
-    '__loader__',
-    '_os',
-    '__doc__',
-    '__cached__',
-    '__name__',
-    '__spec__',
-    '__package__',
-    '__builtins__',
-    '__file__',
-)
-
-public_interface = folders + servers + \
-                  ('vaca_prefix', 'org_folders', 'repo_names')
+DIRS = (
+    'DIR_ROOT',
+    'DIR_EPICS_BASE',
+    'DIR_SIRIUS',
+    'DIR_FACS',
+    'DIR_IMAS',
+    'DIR_SIRIUS_CODE',
+    'DIR_FACS_CODE',
+    'DIR_SIRIUS_CODE_CSCNSTS',
+    'DIR_SIRIUS_CODE_SIRIUSPY',
+    'DIR_SIRIUS_CODE_HLA')
+SRVURLS = (
+    'SRVURL_RBACAUTH',
+    'SRVURL_RBAC',
+    'SRVURL_NS',
+    'SRVURL_CCDB',
+    'SRVURL_CABLES',
+    'SRVURL_CSCONSTS',
+    'SRVURL_LOGBOOK',
+    'SRVURL_CONFIGDB',
+    'SRVURL_ARCHIVER')
+PUBLIC_INTERFACE = DIRS + SRVURLS + \
+                  ('VACA_PREFIX', )
 
 
 class TestEnvars(TestCase):
@@ -54,25 +36,25 @@ class TestEnvars(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(envars, public_interface)
+        valid = util.check_public_interface_namespace(envars, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
-    def test_folders(self):
+    def test_dirs(self):
         """Test folder names."""
-        for folder in folders:
+        for folder in DIRS:
             self.assertIn(folder, envars.__dict__)
             value = getattr(envars, folder)
             self.assertIsInstance(value, str)
 
-    def test_servers(self):
+    def test_srvurls(self):
         """Test server names."""
-        for server in servers:
+        for server in SRVURLS:
             self.assertIn(server, envars.__dict__)
             value = getattr(envars, server)
             self.assertIsInstance(value, str)
 
     def test_vaca(self):
         """VACA prefix string."""
-        self.assertIn('vaca_prefix', envars.__dict__)
-        value = getattr(envars, 'vaca_prefix')
+        self.assertIn('VACA_PREFIX', envars.__dict__)
+        value = getattr(envars, 'VACA_PREFIX')
         self.assertIsInstance(value, str)
