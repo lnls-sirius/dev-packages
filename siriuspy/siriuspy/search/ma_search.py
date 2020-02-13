@@ -13,11 +13,11 @@ from .ps_search import PSSearch as _PSSearch
 class MASearch:
     """MA and PM Magnet Search class."""
 
-    _psnames_list = None
-    _manames_list = None
-    _maname_2_psnames_dict = None  # magnet-excitation-ps file
-    _maname_2_trim_dict = None
-    _maname_2_modeldata_dict = None
+    _psnames_list = list()
+    _manames_list = list()
+    _maname_2_psnames_dict = dict()  # magnet-excitation-ps file
+    _maname_2_trim_dict = dict()
+    _maname_2_modeldata_dict = dict()
 
     _lock = _Lock()
 
@@ -133,7 +133,7 @@ class MASearch:
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
         with MASearch._lock:
-            if MASearch._maname_2_psnames_dict is not None:
+            if MASearch._maname_2_psnames_dict:
                 return
             if not _web.server_online():
                 raise Exception(
@@ -168,7 +168,7 @@ class MASearch:
     def _reload_maname_2_model_data():
         """Build a dictionary of model information for each magnet."""
         with MASearch._lock:
-            if MASearch._maname_2_modeldata_dict is not None:
+            if MASearch._maname_2_modeldata_dict:
                 return
             if not _web.server_online():
                 raise Exception(

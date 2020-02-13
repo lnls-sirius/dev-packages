@@ -13,28 +13,25 @@ from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 class PSSearch:
     """PS and PU Power Supply Search Class."""
 
-    _pstype_dict = None
-    _splims_labels = None
-    _splims_ps_unit = None
-    _splims_pu_unit = None
-    _psnames_list = None
-    _bbbnames_list = None
-    _pstype_2_psnames_dict = None
-    _pstype_2_splims_dict = None
+    _splims_labels = list()
+    _splims_ps_unit = list()
+    _splims_pu_unit = list()
+    _psnames_list = list()
+
+    _pstype_dict = dict()
+    _pstype_2_psnames_dict = dict()
+    _pstype_2_splims_dict = dict()
     _pstype_2_excdat_dict = dict()
-    _psname_2_psmodel_dict = None
-    _psname_2_siggen_dict = None
-
-    _bbbname_2_bsmps_dict = None
-    _bsmps_2_bbbname_dict = None
-
-    _bbbname_2_udc_dict = None
-    _bbbname_2_freq_dict = None
-    _udc_2_bbbname_dict = None
-    _udc_2_bsmp_dict = None
-    _bsmp_2_udc_dict = None
-
-    _ps_2_dclink_dict = None
+    _psname_2_psmodel_dict = dict()
+    _psname_2_siggen_dict = dict()
+    _bbbname_2_bsmps_dict = dict()
+    _bsmps_2_bbbname_dict = dict()
+    _bbbname_2_udc_dict = dict()
+    _bbbname_2_freq_dict = dict()
+    _udc_2_bbbname_dict = dict()
+    _udc_2_bsmp_dict = dict()
+    _bsmp_2_udc_dict = dict()
+    _ps_2_dclink_dict = dict()
 
     _lock = _Lock()
 
@@ -345,7 +342,7 @@ class PSSearch:
     @staticmethod
     def _reload_pstype_dict():
         """Reload power supply type dictionary from web server."""
-        if PSSearch._pstype_dict is not None:
+        if PSSearch._pstype_dict:
             return
         if not _web.server_online():
             raise Exception('could not read pstypes from web server!')
@@ -361,7 +358,7 @@ class PSSearch:
     def _reload_pstype_2_psnames_dict():
         """Reload power supply type to power supply names dictionary."""
         with PSSearch._lock:
-            if PSSearch._pstype_2_psnames_dict is not None:
+            if PSSearch._pstype_2_psnames_dict:
                 return
             PSSearch._reload_pstype_dict()
             pstypes = sorted(set(PSSearch._pstype_dict.keys()))
@@ -380,7 +377,7 @@ class PSSearch:
     def _reload_pstype_2_splims_dict():
         """Reload pstype to splims dictionary."""
         with PSSearch._lock:
-            if PSSearch._pstype_2_splims_dict is not None:
+            if PSSearch._pstype_2_splims_dict:
                 return
             if not _web.server_online():
                 raise Exception(
@@ -428,7 +425,7 @@ class PSSearch:
     def _reload_psname_2_psmodel_dict():
         """Load psmodels by psname to a dict."""
         with PSSearch._lock:
-            if PSSearch._psname_2_psmodel_dict is not None:
+            if PSSearch._psname_2_psmodel_dict:
                 return
             if not _web.server_online():
                 raise Exception('could not read psmodels from web server')
@@ -445,7 +442,7 @@ class PSSearch:
     def _reload_psname_2_siggen_dict():
         """Load siggen config by psname to a dict."""
         with PSSearch._lock:
-            if PSSearch._psname_2_siggen_dict is not None:
+            if PSSearch._psname_2_siggen_dict:
                 return
             if not _web.server_online():
                 raise Exception(
@@ -463,7 +460,7 @@ class PSSearch:
     def _reload_bbb_2_bsmps_dict():
         """Test."""
         with PSSearch._lock:
-            if PSSearch._bbbname_2_bsmps_dict is not None:
+            if PSSearch._bbbname_2_bsmps_dict:
                 return
             PSSearch._reload_bbb_2_udc_dict()
             PSSearch._reload_udc_2_bsmp_dict()
@@ -484,7 +481,7 @@ class PSSearch:
     @staticmethod
     def _reload_bbb_2_freq_dict():
         with PSSearch._lock:
-            if PSSearch._bbbname_2_freq_dict is not None:
+            if PSSearch._bbbname_2_freq_dict:
                 return
             if not _web.server_online():
                 raise Exception(
@@ -498,7 +495,7 @@ class PSSearch:
 
     @staticmethod
     def _reload_bbb_2_udc_dict():
-        if PSSearch._bbbname_2_udc_dict is not None:
+        if PSSearch._bbbname_2_udc_dict:
             return
         if not _web.server_online():
             raise Exception('could not read BBB to UDC map from web server')
@@ -515,7 +512,7 @@ class PSSearch:
 
     @staticmethod
     def _reload_udc_2_bsmp_dict():
-        if PSSearch._udc_2_bsmp_dict is not None:
+        if PSSearch._udc_2_bsmp_dict:
             return
         if not _web.server_online():
             raise Exception('could not read UDC to BSMP map from web server')
@@ -535,7 +532,7 @@ class PSSearch:
     @staticmethod
     def _reload_ps_2_dclink_dict():
         with PSSearch._lock:
-            if PSSearch._ps_2_dclink_dict is not None:
+            if PSSearch._ps_2_dclink_dict:
                 return
             if not _web.server_online():
                 raise Exception(
