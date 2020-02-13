@@ -375,16 +375,16 @@ class ETypes(_cutil.ETypes):
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
         'Ext Interlock Fault', 'LoadI Over Thrs', 'TestPoint', 'ADC Cali')
     LINAC_INTLCK_SGIN = (
-        'FAN', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
-        'bit8', 'INTERLK1', 'INTERLK2', '0T', 'DCCT', '0C', '0V', 'DCLink')
+        'FAN', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'INTERLK1', 'INTERLK2', '0T', 'DCCT', '0C', '0V', 'DCLink')
     LINAC_INTLCK_RDSGIN_MASK = (
-        'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7',
-        'bit8', 'bit9', 'bit10', 'bit11', 'bit12', 'bit13', 'bit14', 'bit15')
+        'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11', 'Bit12', 'Bit13', 'Bit14', 'Bit15')
     LINAC_INTLCK_SGOUT = (
-        'Main Relay1', 'bit1', 'bit2', 'bit3',
-        'bit4', 'bit5', 'bit6', 'Out Interlock')
+        'Main Relay1', 'Bit1', 'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Out Interlock')
     LINAC_INTLCK_RDSGOUT_MASK = (
-        'bit0', 'bit1', 'bit2', 'bit3', 'bit4', 'bit5', 'bit6', 'bit7')
+        'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
 
 _et = ETypes  # syntatic sugar
