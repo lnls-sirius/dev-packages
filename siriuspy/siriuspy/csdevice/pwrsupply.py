@@ -387,6 +387,7 @@ class ETypes(_cutil.ETypes):
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
 
+
 _et = ETypes  # syntatic sugar
 
 
@@ -655,15 +656,10 @@ def get_pu_propty_database(pstype):
     return database
 
 
-def get_pu_conv_propty_database():
+def get_pu_conv_propty_database(pstype):
     """Return database definition for a pulsed power supply type."""
     dbase = dict()
-    dbase['Kick-SP'] = {
-        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
-    dbase['Kick-RB'] = {
-        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
-    dbase['Kick-Mon'] = {
-        'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mrad'}
+    dbase = _insert_strengths(dbase, pstype)
     return dbase
 
 
@@ -1630,8 +1626,23 @@ def _get_model_db(psmodel):
 
 
 def _insert_strengths(database, pstype):
-    magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     prec = 5
+    pulsed_pstypes = (
+        'tb-injseptum',
+        'bo-injkicker', 'bo-ejekicker',
+        'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
+        'ts-injseptum-thin', 'ts-injseptum-thick',
+        'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
+    if pstype in pulsed_pstypes:
+        database['Kick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+        database['Kick-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+        database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+        return database
+
+    magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     if magfunc in {'quadrupole', 'quadrupole-skew'}:
         database['KL-SP'] = {
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
@@ -1668,4 +1679,5 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+
     return database
