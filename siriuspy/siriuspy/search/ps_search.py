@@ -284,7 +284,7 @@ class PSSearch:
 
     @staticmethod
     def conv_psname_2_udc(psname):
-        """Retuen UDC associated with a power supply."""
+        """Return UDC associated with a power supply."""
         with PSSearch._lock:
             PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._bsmp_2_udc_dict[psname]
@@ -292,8 +292,8 @@ class PSSearch:
     @staticmethod
     def conv_psname_2_dclink(psname):
         """Return DCLink associated with a power supply."""
-        with PSSearch._lock:
-            PSSearch._reload_ps_2_dclink_dict()
+        # NOTE: lock is being used within private method.
+        PSSearch._reload_ps_2_dclink_dict()
         return PSSearch._ps_2_dclink_dict[psname]
 
     @staticmethod
