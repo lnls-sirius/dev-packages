@@ -112,7 +112,7 @@ class PSEpicsConn:
 
 
 class PUEpicsConn(PSEpicsConn):
-    """Pulsed Power Supplu Epics Connector."""
+    """Pulsed Power Supply Epics Connector."""
 
     CONNECTION_TIMEOUT = 0.010  # [s]
     PROPNAME = 'Voltage'
