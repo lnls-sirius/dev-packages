@@ -54,6 +54,8 @@ class TestPSSearch(TestCase):
         'conv_udc_2_bsmps',
         'conv_psname_2_udc',
         'conv_psname_2_dclink',
+        'get_linac_ps_sinap2sirius_dict',
+        'get_linac_ps_sirius2sinap_dict',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
