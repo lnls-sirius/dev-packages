@@ -5,7 +5,6 @@ from epics import PV as _PV
 from siriuspy.envars import VACA_PREFIX as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet import util as _mutil
 
 
 class PSEpicsConn:
@@ -225,6 +224,9 @@ class SConvEpics:
                 'SI-Fam:PS-B1B2-1', proptype, 'Energy', connection_timeout)
             psname = self._psname.replace(sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, 'KL', connection_timeout)
+        elif self._psname.startswith('LI'):
+            conn_dip = PSEpicsConn(
+                'TB-Fam:PS-B', proptype, 'Energy', connection_timeout)
         elif self._psname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
             conn_dip = PSEpicsConn(

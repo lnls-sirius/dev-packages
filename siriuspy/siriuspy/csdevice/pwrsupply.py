@@ -756,7 +756,6 @@ def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
     # NOTE: This is a mirror of the PS IOC database in linac-ioc-ps repo.
     version = '2020/02/12'
-
     propty_db = {
         # --- ioc metapvs
         'Version-Cte': {'type': 'string', 'value': version},
@@ -1635,6 +1634,7 @@ def _insert_strengths(database, pstype):
         'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
         'ts-injseptum-thin', 'ts-injseptum-thick',
         'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
+    # pulsed
     if pstype in pulsed_pstypes:
         database['Kick-SP'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
@@ -1642,6 +1642,17 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
+        return database
+    # linac spectrometer
+    if pstype.startswith('li-spect'):
+        database['Kick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+        database['Kick-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+        database['KickRef-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+        database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         return database
 
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
@@ -1673,7 +1684,6 @@ def _insert_strengths(database, pstype):
         database['Energy-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
     elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
-        prec = 3
         database['Kick-SP'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-RB'] = {
