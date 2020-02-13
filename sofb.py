@@ -210,7 +210,7 @@ class SOFB:
         """."""
         inter = 0.05
         n = int(timeout/inter)
-        _time.sleep(4*inter)
+        _time.sleep(10*inter)
         for _ in range(n):
             if self._npts_rb.value >= self._npts_sp.value:
                 break
@@ -230,4 +230,3 @@ class SOFB:
         self._applycorr.value = self.data.ApplyDelta.CH
         _time.sleep(0.3)
         self._applycorr.value = self.data.ApplyDelta.CV
-
