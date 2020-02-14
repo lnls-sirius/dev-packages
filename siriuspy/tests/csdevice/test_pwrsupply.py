@@ -32,7 +32,7 @@ public_interface = (
     'get_common_pu_SI_InjKicker_propty_database',
     'get_ps_propty_database',
     'get_pu_propty_database',
-    'get_pu_conv_propty_database',
+    'get_conv_propty_database',
     'get_li_ma_propty_database',
     'get_pm_propty_database',
 )

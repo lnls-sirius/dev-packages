@@ -5,7 +5,6 @@ from epics import PV as _PV
 from siriuspy.envars import VACA_PREFIX as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet import util as _mutil
 
 
 class PSEpicsConn:
@@ -133,8 +132,7 @@ class SConvEpics:
                  connection_timeout=PSEpicsConn.CONNECTION_TIMEOUT):
         """."""
         self._psname = _SiriusPVName(psname)
-        self._norm_mag, self._norm_dip, self._norm_fam = \
-            self._create_normalizer()
+        self._norm_mag = self._create_normalizer()
         self._conn_dip, self._conn_fam = \
             self._create_connectors(proptype, connection_timeout)
 
@@ -193,7 +191,6 @@ class SConvEpics:
         return currents
 
     def _create_normalizer(self):
-        norm_mag, norm_dip, norm_fam = None, None, None
         if self._psname.sec == 'TB' and self._psname.dev == 'B':
             norm_mag = _NormalizerFactory.create('TB-Fam:MA-B')
         elif self._psname.sec == 'BO' and self._psname.dev == 'B':
@@ -204,17 +201,8 @@ class SConvEpics:
             norm_mag = _NormalizerFactory.create('SI-Fam:MA-B1B2')
         else:
             maname = self._psname.replace(':PS', ':MA').replace(':PU', ':PM')
-            # mag
             norm_mag = _NormalizerFactory.create(maname)
-            # dip
-            dipname = _mutil.get_section_dipole_name(maname)
-            norm_dip = _NormalizerFactory.create(dipname)
-            # trim
-            famname = _mutil.get_magnet_family_name(maname)
-            if famname:
-                norm_fam = _NormalizerFactory.create(famname)
-
-        return norm_mag, norm_dip, norm_fam
+        return norm_mag
 
     @staticmethod
     def _is_trim(psname):
@@ -236,6 +224,9 @@ class SConvEpics:
                 'SI-Fam:PS-B1B2-1', proptype, 'Energy', connection_timeout)
             psname = self._psname.replace(sub, 'Fam')
             conn_fam = PSEpicsConn(psname, proptype, 'KL', connection_timeout)
+        elif self._psname.startswith('LI'):
+            conn_dip = PSEpicsConn(
+                'TB-Fam:PS-B', proptype, 'Energy', connection_timeout)
         elif self._psname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
             conn_dip = PSEpicsConn(

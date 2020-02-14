@@ -387,7 +387,6 @@ class ETypes(_cutil.ETypes):
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
 
-
 _et = ETypes  # syntatic sugar
 
 
@@ -656,8 +655,8 @@ def get_pu_propty_database(pstype):
     return database
 
 
-def get_pu_conv_propty_database(pstype):
-    """Return database definition for a pulsed power supply type."""
+def get_conv_propty_database(pstype):
+    """Return strength database definition for a power supply type."""
     dbase = dict()
     dbase = _insert_strengths(dbase, pstype)
     return dbase
@@ -757,7 +756,6 @@ def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
     # NOTE: This is a mirror of the PS IOC database in linac-ioc-ps repo.
     version = '2020/02/12'
-
     propty_db = {
         # --- ioc metapvs
         'Version-Cte': {'type': 'string', 'value': version},
@@ -1626,58 +1624,79 @@ def _get_model_db(psmodel):
 
 
 def _insert_strengths(database, pstype):
-    prec = 5
+    prec_kick = 3
+    prec_energy = 5
+    prec_kl = 5
+    prec_sl = 5
     pulsed_pstypes = (
         'tb-injseptum',
         'bo-injkicker', 'bo-ejekicker',
         'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
         'ts-injseptum-thin', 'ts-injseptum-thick',
         'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
+    # pulsed
     if pstype in pulsed_pstypes:
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
+        return database
+    # linac spectrometer
+    if pstype.startswith('li-spect'):
+        database['Kick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+        database['Kick-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+        database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         return database
 
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     if magfunc in {'quadrupole', 'quadrupole-skew'}:
         database['KL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
     elif magfunc == 'sextupole':
         database['SL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
     elif magfunc == 'dipole':
         database['Energy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['Energy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['EnergyRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['Energy-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
     elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
+
+    if pstype.startswith('li-'):
+        if 'KickRef-Mon' in database:
+            del database['KickRef-Mon']
+        if 'KLRef-Mon' in database:
+            del database['KLRef-Mon']
+        if 'SLRef-Mon' in database:
+            del database['SLRef-Mon']
 
     return database

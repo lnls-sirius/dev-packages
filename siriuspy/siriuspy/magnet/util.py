@@ -181,7 +181,7 @@ def magnet_class(maname):
         raise ValueError("Cannot classify {}".format(maname))
     if 'PM' == maname.dis:
         return 'pulsed'
-    if maname.dev.startswith('B') or maname.dev.startswith('Spect'):
+    if maname.dev.startswith('B'):
         return 'dipole'
     if 'QS' not in maname.dev and \
             'SI' == maname.sec and \
