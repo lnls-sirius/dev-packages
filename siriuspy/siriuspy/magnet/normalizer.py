@@ -140,8 +140,14 @@ class _MagnetNormalizer:
             if unit == 'mrad':
                 self._coef_def2edb = 1e3
                 return
-            elif unit == 'urad':
+            if unit == 'urad':
                 self._coef_def2edb = 1e6
+                return
+            if unit == 'rad':
+                self._coef_def2edb = 1
+                return
+            if unit == 'deg':
+                self._coef_def2edb = 180.0 / _np.pi
                 return
         self._coef_def2edb = 1.0
 
