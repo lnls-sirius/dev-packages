@@ -79,7 +79,8 @@ class ConnTI(_EpicsPropsList):
         'TrgLLRFRmp': 'BO-Glob:TI-LLRF-Rmp',
         'TrgEGunSglBun': 'LI-01:TI-EGun-SglBun',
         'TrgEGunMultBun': 'LI-01:TI-EGun-MultBun',
-        'TrgEjeKckr': 'BO-48D:TI-EjeKckr'}
+        'TrgEjeKckr': 'BO-48D:TI-EjeKckr',
+        'TrgInjKckr': 'SI-01SA:TI-InjDpKckr'}
 
     trg_propties = ('State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
                     'Duration-SP', 'Delay-SP', 'Status-Mon')
@@ -132,6 +133,7 @@ class ConnTI(_EpicsPropsList):
         sp[c.EvtLinac_Delay] = delays['Linac']
         sp[c.EvtInjBO_Delay] = delays['InjBO']
         sp[c.EvtInjSI_Delay] = delays['InjSI']
+        sp[c.TrgInjKckr_Delay] = delays[c.TrgInjKckr_Delay]
         for event in events_inj:
             attr = getattr(c, 'Evt'+event+'_Delay')
             sp[attr] = delays[event]
@@ -214,8 +216,9 @@ class ConnTI(_EpicsPropsList):
             else self.get_readback(c.TrgEGunMultBun_Delay)
         delay_inj = injection_time - egun_dly
 
-        curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        dlt_inj_dly = delay_inj - curr_linac_dly
+        # curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
+        dlt_inj_dly = delay_inj - curr_injbo_dly
         dlt_inj_dly = int(dlt_inj_dly/bo_rev)*bo_rev
 
         # Ejection
@@ -248,6 +251,8 @@ class ConnTI(_EpicsPropsList):
             curr = self.get_readback(attr)
             delays[event] = curr + dlt_eje_dly
 
+        injkckr_dly = self.get_readback(c.TrgInjKckr_Delay)
+        delays[c.TrgInjKckr_Delay] = injkckr_dly + dlt_eje_dly
         return delays
 
     def update_ramp_configsetup(self, events_inj, events_eje, delays):
@@ -268,11 +273,12 @@ class ConnTI(_EpicsPropsList):
     def get_injection_time(self):
         """Return injection time."""
         c = ConnTI.Const
-        curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        # curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        return curr_linac_dly + egun_dly
+        return curr_injbo_dly + egun_dly
 
     def get_ejection_time(self):
         """Return ejection time."""
@@ -313,7 +319,7 @@ class ConnTI(_EpicsPropsList):
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
             c.TrgLLRFRmp_Duration: 150.0}    # [us]
-        #     c.TrgLLRFRmp_Status: 0}
+            # c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays
@@ -327,6 +333,7 @@ class ConnTI(_EpicsPropsList):
             c.EvtDigTS_Delay: None,          # [us]
             c.EvtDigSI_Delay: None,          # [us]
             c.EvtStudy_Delay: None,          # [us]
+            c.TrgInjKckr_Delay: None,        # [us]
             # Mags trigger
             c.TrgMags_Delay: 0.0,           # [us]
             # Corrs trigger
