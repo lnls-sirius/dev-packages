@@ -2,6 +2,7 @@
 """."""
 
 import time as _time
+import numpy as _np
 from epics import PV
 
 
@@ -84,8 +85,20 @@ class RF:
         return self._frequency_rb.value
 
     @frequency.setter
-    def frequency(self, value):
-        self._frequency_sp.value = value
+    def frequency(self, freq):
+        delta_max = 20  # Hz
+        freq0 = self._frequency_sp.value
+        if freq0 is None or freq is None:
+            return
+        delta = abs(freq-freq0)
+        if delta < 0.1 or delta > 10000:
+            return
+        npoints = int(round(delta/delta_max)) + 2
+        freq_span = _np.linspace(freq0, freq, npoints)[1:]
+        for f in freq_span:
+            self._frequency_sp.put(f, wait=False)
+            _time.sleep(1)
+        self._frequency_sp.value = freq
 
     def set_voltage(self, value, timeout=10):
         """."""
