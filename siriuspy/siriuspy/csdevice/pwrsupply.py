@@ -387,7 +387,6 @@ class ETypes(_cutil.ETypes):
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
 
-
 _et = ETypes  # syntatic sugar
 
 
@@ -1626,7 +1625,10 @@ def _get_model_db(psmodel):
 
 
 def _insert_strengths(database, pstype):
-    prec = 5
+    prec_kick = 3
+    prec_energy = 5
+    prec_kl = 5
+    prec_sl = 5
     pulsed_pstypes = (
         'tb-injseptum',
         'bo-injkicker', 'bo-ejekicker',
@@ -1635,49 +1637,50 @@ def _insert_strengths(database, pstype):
         'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
     if pstype in pulsed_pstypes:
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         return database
 
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     if magfunc in {'quadrupole', 'quadrupole-skew'}:
         database['KL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
     elif magfunc == 'sextupole':
         database['SL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': '1/m^2'}
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
     elif magfunc == 'dipole':
         database['Energy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['Energy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['EnergyRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['Energy-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'GeV'}
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
     elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
+        prec = 3
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'urad'}
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
 
     return database

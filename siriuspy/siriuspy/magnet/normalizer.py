@@ -39,6 +39,11 @@ class _MagnetNormalizer:
         """Return magnet function string."""
         return self._magfunc
 
+    @property
+    def maname(self):
+        """Return magnet name."""
+        return self._maname
+
     # --- normalizer interface ---
 
     def conv_current_2_strength(self, currents, **kwargs):
@@ -94,17 +99,6 @@ class _MagnetNormalizer:
             m = excdata.interp_curr2mult(currents)
             msum = _mutil.sum_magnetic_multipoles(msum, m)
         return msum
-
-    def _get_energy(self, currents_dipole):
-        return self._dip.conv_current_2_strength(currents=currents_dipole)
-
-    def _get_brho(self, currents_dipole):
-        """Get Magnetic Rigidity."""
-        if currents_dipole is None:
-            return 0  # TODO: is this really necessary?! in what case?
-        energies = self._get_energy(currents_dipole)
-        brho, *_ = _util.beam_rigidity(energies)
-        return brho
 
     def _power_supplies(self):
         psname = self._maname.replace(":MA", ":PS").replace(':PM', ':PU')
@@ -202,9 +196,6 @@ class DipoleNormalizer(_MagnetNormalizer):
         else:
             raise NotImplementedError
 
-    def _get_energy(self, currents_dipole):
-        return self.conv_current_2_strength(currents=currents_dipole)
-
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
@@ -280,10 +271,9 @@ class MagnetNormalizer(_MagnetNormalizer):
 
     TYPE = 'MagnetNormalizer'
 
-    def __init__(self, maname, dipole_name, **kwargs):
+    def __init__(self, maname, **kwargs):
         """Call superclass init and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
-        self._dip = DipoleNormalizer(dipole_name, **kwargs)
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
@@ -316,19 +306,14 @@ class TrimNormalizer(_MagnetNormalizer):
 
     TYPE = 'TrimNormalizer'
 
-    def __init__(self, maname, dipole_name, family_name, magnet_conv_sign=-1.0,
+    def __init__(self, maname, magnet_conv_sign=-1.0,
                  **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
-        self._dip = DipoleNormalizer(dipole_name, **kwargs)
-        self._fam = MagnetNormalizer(family_name, dipole_name, **kwargs)
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        # strengths_fam = self._fam.conv_current_2_strength(
-        #     currents=kwargs["strengths_family"],
-        #     currents_dipole=kwargs["strengths_dipole"])
         strengths_fam = kwargs['strengths_family']
         brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
         intfields = self._magnet_conv_sign * brho * (strengths - strengths_fam)
