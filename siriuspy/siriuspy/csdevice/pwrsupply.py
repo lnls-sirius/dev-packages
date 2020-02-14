@@ -655,8 +655,8 @@ def get_pu_propty_database(pstype):
     return database
 
 
-def get_pu_conv_propty_database(pstype):
-    """Return database definition for a pulsed power supply type."""
+def get_conv_propty_database(pstype):
+    """Return strength database definition for a power supply type."""
     dbase = dict()
     dbase = _insert_strengths(dbase, pstype)
     return dbase
@@ -1649,8 +1649,6 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         database['Kick-RB'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
-        database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         return database
@@ -1692,5 +1690,13 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
+
+    if pstype.startswith('li-'):
+        if 'KickRef-Mon' in database:
+            del database['KickRef-Mon']
+        if 'KLRef-Mon' in database:
+            del database['KLRef-Mon']
+        if 'SLRef-Mon' in database:
+            del database['SLRef-Mon']
 
     return database
