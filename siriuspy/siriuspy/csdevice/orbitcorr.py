@@ -147,7 +147,7 @@ class SOFBTLines(ConstTLines):
         self.NR_CORRS = self.NR_CHCV + 1 if acc == 'SI' else self.NR_CHCV
 
         self.TRIGGER_ACQ_NAME = self.acc + '-Fam:TI-BPM'
-        if self.isring:
+        if self.acc == 'SI':
             self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags-Corrs'
             self.EVT_COR_NAME = 'Orb' + self.acc
 
@@ -563,10 +563,6 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
-        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
-        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
         self.C0 = 496.8  # in meter
         self.T0 = self.C0 / 299792458  # in seconds
 
@@ -661,6 +657,10 @@ class SOFBSI(SOFBRings, ConstSI):
     def __init__(self, acc):
         """Init method."""
         SOFBRings.__init__(self, acc)
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
+        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
         self.C0 = 518.396  # in meter
         self.T0 = self.C0 / 299792458  # in seconds
 
