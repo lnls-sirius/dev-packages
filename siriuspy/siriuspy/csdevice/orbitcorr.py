@@ -93,7 +93,6 @@ class ConstRings(ConstTLines):
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
-    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
 
 class ConstSI(ConstRings):
@@ -101,6 +100,7 @@ class ConstSI(ConstRings):
 
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
+    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
@@ -586,20 +586,6 @@ class SOFBRings(SOFBTLines, ConstRings):
         db.update(self._add_prefix(db_ring, prefix))
         return db
 
-    def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
-        db_ring = {
-            'CorrSync-Sel': {
-                'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
-            'CorrSync-Sts': {
-                'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
-            }
-        db = super().get_corrs_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
-
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
         nbpm = self.NR_BPMS
@@ -715,8 +701,16 @@ class SOFBSI(SOFBRings, ConstSI):
 
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
-        db_ring = {'KickRF-Mon': {
-            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2}}
+        db_ring = {
+            'CorrSync-Sel': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'value': self.CorrSync.Off},
+            'CorrSync-Sts': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'value': self.CorrSync.Off},
+            'KickRF-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
+            }
         db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
         return db
