@@ -162,7 +162,7 @@ class SOFB:
         return self._deltafactorch_rb.get()
 
     @deltafactorch.setter
-    def deltafactor(self, value):
+    def deltafactorch(self, value):
         """."""
         self._deltafactorch_sp.value = value
 
