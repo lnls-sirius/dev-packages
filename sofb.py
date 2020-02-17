@@ -20,8 +20,10 @@ class SOFB:
         self._orby = PV(pref+'SlowOrbY-Mon', auto_monitor=False)
         self._kickch = PV(pref+'KickCH-Mon', auto_monitor=False)
         self._kickcv = PV(pref+'KickCV-Mon', auto_monitor=False)
-        self._deltakickch = PV(pref+'DeltaKickCH-Mon')
-        self._deltakickcv = PV(pref+'DeltaKickCV-Mon')
+        self._deltakickch_mon = PV(pref+'DeltaKickCH-Mon')
+        self._deltakickcv_mon = PV(pref+'DeltaKickCV-Mon')
+        self._deltakickch_sp = PV(pref+'DeltaKickCH-SP')
+        self._deltakickcv_sp = PV(pref+'DeltaKickCV-SP')
         self._refx_sp = PV(pref+'RefOrbX-SP')
         self._refy_sp = PV(pref+'RefOrbY-SP')
         self._refx_rb = PV(pref+'RefOrbX-RB')
@@ -55,8 +57,10 @@ class SOFB:
         conn &= self._orby.connected
         conn &= self._kickch.connected
         conn &= self._kickcv.connected
-        conn &= self._deltakickch.connected
-        conn &= self._deltakickcv.connected
+        conn &= self._deltakickch_mon.connected
+        conn &= self._deltakickcv_mon.connected
+        conn &= self._deltakickch_sp.connected
+        conn &= self._deltakickcv_sp.connected
         conn &= self._refx_sp.connected
         conn &= self._refy_sp.connected
         conn &= self._refx_rb.connected
@@ -127,12 +131,24 @@ class SOFB:
     @property
     def deltakickch(self):
         """."""
-        return self._deltakickch.get()
+        return self._deltakickch_mon.get()
+
+    @deltakickch.setter
+    def deltakickch(self, value):
+        """."""
+        self._deltakickch_sp.value = value
 
     @property
     def deltakickcv(self):
         """."""
-        return self._deltakickcv.get()
+        return self._deltakickcv_mon.get()
+
+    @deltakickcv.setter
+    def deltakickcv(self, value):
+        """."""
+        self._deltakickcv_sp.value = value
+
+    @property
 
     @property
     def refx(self):
