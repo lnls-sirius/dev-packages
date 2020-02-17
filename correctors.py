@@ -348,7 +348,6 @@ class EpicsCorrectors(BaseCorrectors):
         self._corrs = [get_corr(dev) for dev in self._names]
         if self.acc == 'SI':
             self._corrs.append(RFCtrl(self.acc))
-        if self.isring:
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
@@ -364,7 +363,7 @@ class EpicsCorrectors(BaseCorrectors):
             'CorrConfig-Cmd': self.configure_correctors,
             'KickAcqRate-SP': self.set_kick_acq_rate,
             }
-        if self.isring:
+        if self.acc == 'SI':
             db['CorrSync-Sel'] = self.set_corrs_mode
         return db
 
@@ -419,7 +418,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def send_evt(self):
         """Send event method."""
-        if not self.isring or not self._synced_kicks:
+        if self.acc != 'SI' or not self._synced_kicks:
             return
         if not self.timing.connected:
             msg = 'ERR: timing disconnected.'
@@ -492,11 +491,14 @@ class EpicsCorrectors(BaseCorrectors):
     def configure_correctors(self, _):
         """Configure correctors method."""
         val = _PSConst.OpMode.SlowRef
-        if self.isring and self._synced_kicks == self._csorb.CorrSync.On:
+        if self.acc == 'SI' and self._synced_kicks == self._csorb.CorrSync.On:
             val = _PSConst.OpMode.SlowRefSync
         for corr in self._corrs:
             if corr.connected:
                 corr.state = True
+                # Do not configure opmode in BO corrs because they are ramping.
+                if self.acc == 'BO':
+                    continue
                 corr.opmode = val
             else:
                 msg = 'ERR: Failed to configure '
@@ -506,7 +508,7 @@ class EpicsCorrectors(BaseCorrectors):
         if not self.isring:
             return True
 
-        if self._synced_kicks == self._csorb.CorrSync.On:
+        if self.acc == 'SI' and self._synced_kicks == self._csorb.CorrSync.On:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
@@ -524,13 +526,15 @@ class EpicsCorrectors(BaseCorrectors):
         status = _util.update_bit(
             status, bit_pos=0,
             bit_val=not all(corr.connected for corr in chcvs))
-        status = _util.update_bit(
-            status, bit_pos=1,
-            bit_val=not all(corr.opmode_ok for corr in chcvs))
+        # Do not check mode of BO correctors because they are ramping.
+        opmode_ok = True
+        if self.acc != 'BO':
+            opmode_ok = all(corr.opmode_ok for corr in chcvs)
+        status = _util.update_bit(status, bit_pos=1, bit_val=not opmode_ok)
         status = _util.update_bit(
             status, bit_pos=2,
             bit_val=not all(corr.state for corr in chcvs))
-        if self.isring and self._synced_kicks == self._csorb.CorrSync.On:
+        if self.acc == 'SI' and self._synced_kicks == self._csorb.CorrSync.On:
             tim_conn = self.timing.connected
             tim_conf = self.timing.is_ok
         else:
