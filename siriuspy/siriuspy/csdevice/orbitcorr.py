@@ -243,6 +243,18 @@ class SOFBTLines(ConstTLines):
             'MaxDeltaKickCV-RB': {
                 'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
+            'DeltaKickCH-SP': {
+                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'unit': 'urad'},
+            'DeltaKickCH-RB': {
+                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-SP': {
+                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-RB': {
+                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'unit': 'urad'},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
                 'unit': 'Apply last calculated kicks.'},
@@ -692,6 +704,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'MaxDeltaKickRF-RB': {
                 'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
                 'lolim': 0, 'hilim': 10000},
+            'DeltaKickRF-SP': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            'DeltaKickRF-RB': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
         db = super().get_sofb_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
