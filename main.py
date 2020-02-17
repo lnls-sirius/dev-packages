@@ -431,9 +431,15 @@ class SOFB(_BaseClass):
         while self._auto_corr == self._csorb.ClosedLoop.On:
             t0 = _time.time()
             _log.debug('TIMEIT: BEGIN')
+            msg = 'Getting the orbit.'
+            self._update_log(msg)
+            _log.info(msg)
             orb = self.orbit.get_orbit()
             t1 = _time.time()
             _log.debug(strn.format('get orbit:', 1000*(t1-t0)))
+            msg = 'Calculating kicks.'
+            self._update_log(msg)
+            _log.info(msg)
             dkicks = self.matrix.calc_kicks(orb)
             t2 = _time.time()
             _log.debug(strn.format('calc kicks:', 1000*(t2-t1)))
@@ -450,9 +456,15 @@ class SOFB(_BaseClass):
                 continue
             t4 = _time.time()
             _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
+            msg = 'Applying kicks.'
+            self._update_log(msg)
+            _log.info(msg)
             self.correctors.apply_kicks(kicks)  # slowest part
             t5 = _time.time()
             _log.debug(strn.format('apply kicks:', 1000*(t5-t4)))
+            msg = 'kicks applied!'
+            self._update_log(msg)
+            _log.info(msg)
             dt = (_time.time()-t0)
             _log.debug(strn.format('total:', 1000*dt))
             _log.debug('TIMEIT: END')
@@ -474,7 +486,7 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
-        msg = 'Calculating the kicks.'
+        msg = 'Calculating kicks.'
         self._update_log(msg)
         _log.info(msg)
         self._ref_corr_kicks = self.correctors.get_strength()
