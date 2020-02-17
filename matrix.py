@@ -144,7 +144,7 @@ class EpicsMatrix(BaseMatrix):
         else:
             self.run_callbacks(self.selection_pv_names[key], new)
         self.run_callbacks('NrSingValues-RB', self.num_sing_values)
-        return False
+        return True
 
     def _set_enbllist(self, key, val):
         bkup = self.select_items_extended[key]
