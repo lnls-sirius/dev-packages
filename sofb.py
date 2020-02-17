@@ -24,6 +24,10 @@ class SOFB:
         self._deltakickcv_mon = PV(pref+'DeltaKickCV-Mon')
         self._deltakickch_sp = PV(pref+'DeltaKickCH-SP')
         self._deltakickcv_sp = PV(pref+'DeltaKickCV-SP')
+        self._deltafactorch_sp = PV(pref+'DeltaFactorCH-SP')
+        self._deltafactorcv_sp = PV(pref+'DeltaFactorCV-SP')
+        self._deltafactorch_rb = PV(pref+'DeltaFactorCH-RB')
+        self._deltafactorcv_rb = PV(pref+'DeltaFactorCV-RB')
         self._refx_sp = PV(pref+'RefOrbX-SP')
         self._refy_sp = PV(pref+'RefOrbY-SP')
         self._refx_rb = PV(pref+'RefOrbX-RB')
@@ -61,6 +65,10 @@ class SOFB:
         conn &= self._deltakickcv_mon.connected
         conn &= self._deltakickch_sp.connected
         conn &= self._deltakickcv_sp.connected
+        conn &= self._deltafactorch_sp.connected
+        conn &= self._deltafactorcv_sp.connected
+        conn &= self._deltafactorch_rb.connected
+        conn &= self._deltafactorcv_rb.connected
         conn &= self._refx_sp.connected
         conn &= self._refy_sp.connected
         conn &= self._refx_rb.connected
@@ -149,6 +157,24 @@ class SOFB:
         self._deltakickcv_sp.value = value
 
     @property
+    def deltafactorch(self):
+        """."""
+        return self._deltafactorch_rb.get()
+
+    @deltafactorch.setter
+    def deltafactor(self, value):
+        """."""
+        self._deltafactorch_sp.value = value
+
+    @property
+    def deltafactorcv(self):
+        """."""
+        return self._deltafactorcv_rb.get()
+
+    @deltafactorcv.setter
+    def deltafactorcv(self, value):
+        """."""
+        self._deltafactorcv_sp.value = value
 
     @property
     def refx(self):
