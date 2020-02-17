@@ -61,8 +61,10 @@ class SOFB(_BaseClass):
             'MaxKickCV-SP': _part(self.set_max_kick, 'cv'),
             'MaxDeltaKickCH-SP': _part(self.set_max_delta_kick, 'ch'),
             'MaxDeltaKickCV-SP': _part(self.set_max_delta_kick, 'cv'),
-            'DeltaKickCH-SP': _part(self.set_delta_kick, 'ch'),
-            'DeltaKickCV-SP': _part(self.set_delta_kick, 'cv'),
+            'DeltaKickCH-SP': _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.CH),
+            'DeltaKickCV-SP': _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.CV),
             'MeasRespMatKickCH-SP': _part(self.set_respmat_kick, 'ch'),
             'MeasRespMatKickCV-SP': _part(self.set_respmat_kick, 'cv'),
             'MeasRespMatWait-SP': self.set_respmat_wait_time,
@@ -74,7 +76,8 @@ class SOFB(_BaseClass):
             db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
             db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
-            db['DeltaKickRF-SP'] = _part(self.set_delta_kick, 'rf'),
+            db['DeltaKickRF-SP'] = _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.RF),
             db['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         return db
 
