@@ -61,6 +61,8 @@ class SOFB(_BaseClass):
             'MaxKickCV-SP': _part(self.set_max_kick, 'cv'),
             'MaxDeltaKickCH-SP': _part(self.set_max_delta_kick, 'ch'),
             'MaxDeltaKickCV-SP': _part(self.set_max_delta_kick, 'cv'),
+            'DeltaKickCH-SP': _part(self.set_delta_kick, 'ch'),
+            'DeltaKickCV-SP': _part(self.set_delta_kick, 'cv'),
             'MeasRespMatKickCH-SP': _part(self.set_respmat_kick, 'ch'),
             'MeasRespMatKickCV-SP': _part(self.set_respmat_kick, 'cv'),
             'MeasRespMatWait-SP': self.set_respmat_wait_time,
@@ -72,6 +74,7 @@ class SOFB(_BaseClass):
             db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
             db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            db['DeltaKickRF-SP'] = _part(self.set_delta_kick, 'rf'),
             db['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         return db
 
@@ -177,6 +180,18 @@ class SOFB(_BaseClass):
         _Thread(target=self._calc_correction, daemon=True).start()
         return True
 
+    def set_delta_kick(self, code, dkicks):
+        """Calculate correction."""
+        if self._thread and self._thread.is_alive():
+            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        _Thread(
+            target=self._set_delta_kick,
+            kwargs={'code': code, 'dkicks': dkicks}, daemon=True).start()
+        return True
+
     def set_respmat_meas_state(self, value):
         if value == self._csorb.MeasRespMatCmd.Start:
             self._start_meas_respmat()
@@ -249,6 +264,25 @@ class SOFB(_BaseClass):
         self._status = bool(
             self._correctors.status | self._matrix.status | self._orbit.status)
         self.run_callbacks('Status-Mon', self._status)
+
+    def _set_delta_kick(self, code, dkicks):
+        nr_ch = self._csorb.NR_CH
+        nr_chcv = self._csorb.NR_CHCV
+        self._ref_corr_kicks = self.correctors.get_strength()
+        if self._dtheta is None:
+            self._dtheta = _np.zeros(self._ref_corr_kicks.size, dtype=float)
+        if code == self._csorb.ApplyDelta.CH:
+            self._dtheta[:nr_ch] = dkicks
+            self.run_callbacks('DeltaKickCH-RB', list(dkicks))
+            self.run_callbacks('DeltaKickCH-Mon', list(dkicks))
+        elif code == self._csorb.ApplyDelta.CV:
+            self._dtheta[nr_ch:nr_chcv] = dkicks
+            self.run_callbacks('DeltaKickCV-RB', list(dkicks))
+            self.run_callbacks('DeltaKickCV-Mon', list(dkicks))
+        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
+            self._dtheta[-1] = dkicks
+            self.run_callbacks('DeltaKickRF-RB', float(dkicks))
+            self.run_callbacks('DeltaKickRF-Mon', float(dkicks))
 
     def _apply_corr(self, code):
         nr_ch = self._csorb.NR_CH
