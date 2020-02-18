@@ -16,6 +16,7 @@ from .util import get_sections as _get_sections, \
 TIMEOUT_SLEEP = 0.1
 TIMEOUT_CHECK = 20
 TIMEOUT_CONN = 0.5
+TIMEOUT_CHECK_SI_CURRENTS = 41
 
 
 class CycleController:
@@ -65,6 +66,11 @@ class CycleController:
 
         self.prepare_ps_size = 2*len(self.psnames)+1
         self.prepare_ps_max_duration = 20
+        if 'SI' in self._sections:
+            # set and check currents to zero
+            self.prepare_ps_size += 3*len(self.psnames)
+            self.prepare_ps_max_duration += \
+                TIMEOUT_CHECK + TIMEOUT_CHECK_SI_CURRENTS
 
         self.cycle_size = (len(self.psnames)+3 +  # check params
                            len(self.psnames) +    # check opmode
@@ -72,12 +78,12 @@ class CycleController:
                            len(self.psnames) +  # check final
                            len(self.psnames)+2)  # reset subsystems
         self.cycle_max_duration = (
-                           2 +  # check params
-                           2 +  # check opmode
+                           5 +  # check params
+                           5 +  # check opmode
                            TIMEOUT_CHECK*3 +  # wait for timing trigger
                            round(self._cycle_duration) +  # cycle
-                           2 +  # check final
-                           2)   # reset subsystems
+                           5 +  # check final
+                           5)   # reset subsystems
 
         # logger
         self._logger = logger
@@ -96,6 +102,59 @@ class CycleController:
     def mode(self):
         """Mode."""
         return self._mode
+
+    def set_check_si_pwrsupplies_currents_zero(self):
+        """Zero currents of all SI power supplies."""
+        if 'SI' not in self._sections:
+            return
+
+        psnames = _PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'})
+
+        # create cyclers, if needed
+        cyclers = dict()
+        for psname in psnames:
+            if psname in self.cyclers:
+                cyclers[psname] = self.cyclers[psname]
+            else:
+                self._update_log('Connecting to '+psname+'...')
+                cyclers[psname] = PSCycler(psname)
+
+        # wait for connections
+        for cycler in cyclers.values():
+            cycler.wait_for_connection()
+
+        # set currents to zero
+        for psname, cycler in cyclers.items():
+            self._update_log('Setting '+psname+' current to zero...')
+            cycler.set_current_zero()
+
+        # check currents zero
+        need_check = _dcopy(psnames)
+        self._checks_result = dict()
+        t = _time.time()
+        while _time.time() - t < TIMEOUT_CHECK_SI_CURRENTS:
+            for psname in psnames:
+                if psname not in need_check:
+                    continue
+                if cyclers[psname].check_current_zero():
+                    need_check.remove(psname)
+                    self._checks_result[psname] = True
+            if not need_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        for psname in need_check:
+            self._checks_result[psname] = False
+
+        status = True
+        for psname in psnames:
+            self._update_log('Checking '+psname+' currents...')
+            if self._checks_result[psname]:
+                self._update_log(done=True)
+            else:
+                self._update_log(psname+' current is not zero.', error=True)
+                status &= False
+        return status
 
     def config_all_pwrsupplies(self, ppty):
         """Prepare power supplies to cycle according to mode."""
@@ -323,6 +382,7 @@ class CycleController:
 
     def prepare_pwrsupplies_parameters(self):
         """Prepare to cycle."""
+        self.set_check_si_pwrsupplies_currents_zero()
         self.config_all_pwrsupplies('parameters')
         if not self.check_all_pwrsupplies('parameters'):
             self._update_log(
