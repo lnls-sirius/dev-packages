@@ -227,6 +227,8 @@ class PSModelFBP(_PSModel):
         'Current-RB':  _psbsmp.ConstFBP.V_PS_SETPOINT,
         'CurrentRef-Mon':  _psbsmp.ConstFBP.V_PS_REFERENCE,
         'Current-Mon':  _psbsmp.ConstFBP.V_I_LOAD,
+        'LoadVoltage-Mon': _psbsmp.ConstFBP.V_V_LOAD,
+        'DCLinkVoltage-Mon': _psbsmp.ConstFBP.V_V_DCLINK,
         'SwitchesTemperature-Mon': _psbsmp.ConstFBP.V_TEMP_SWITCHES,
         'PWMDutyCycle-Mon': _psbsmp.ConstFBP.V_DUTY_CYCLE,
     }
