@@ -994,7 +994,7 @@ _pvs_pu = [
     ['TS-01:PU-EjeSeptF:Voltage-SP', 0.0, 0.0],  # [Volt]
     ]
 
-_rf_pvs = [
+_rf_bo_pvs = [
     ['BR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA2:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA3:S', 0.0, 0.0],
@@ -1349,6 +1349,8 @@ _rf_pvs = [
     ['BR-RF-DLLRF-01:TOP:FWDSSA1:Const:OFS:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:TOP:REVSSA1:Const:Raw-U:C4:S', 0.0, 0.0],
     ]
+
+_rf_si_pvs = []
 
 _pvs_tb_ps = [
     ['TB-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
@@ -3018,7 +3020,7 @@ _pvs_si_qn_ps = [
 _template_dict = {
     'pvs':
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing +
-        _pvs_li_ps + _pvs_pu + _rf_pvs +
+        _pvs_li_ps + _pvs_pu + _rf_bo_pvs + _rf_si_pvs +
         _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps + _pvs_si_fam_ps +
         _pvs_si_ch_ps + _pvs_si_cv_ps + _pvs_si_qs_ps + _pvs_si_qn_ps
     }
