@@ -561,38 +561,38 @@ def get_basic_propty_database():
         'ParamCtrlSlewRateWfmRef-Cte':
             {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
         # --- PWM ---
-        'ParamPWMFreq':
+        'ParamPWMFreq-Cte':
             {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamPWMDeadTime':
+        'ParamPWMDeadTime-Cte':
             {'type': 'float', 'value': 0.0, 'unit': 'ns'},
-        'ParamPWMMaxDuty':
+        'ParamPWMMaxDuty-Cte':
             {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDuty':
+        'ParamPWMMinDuty-Cte':
             {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMaxDutyOpenLoop':
+        'ParamPWMMaxDutyOpenLoop-Cte':
             {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDutyOpenLoop':
+        'ParamPWMMinDutyOpenLoop-Cte':
             {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMLimDutyShare':
+        'ParamPWMLimDutyShare-Cte':
             {'type': 'float', 'value': 0.0, 'unit': '%'},
         # --- Analog Variables ---
-        'ParamAnalogMax':
+        'ParamAnalogMax-Cte':
             {'type': 'float', 'count': 64,
              'value': _np.array([0.0, ] * 64)},
-        'ParamAnalogMin':
+        'ParamAnalogMin-Cte':
             {'type': 'float', 'count': 64,
              'value': _np.array([0.0, ] * 64)},
         # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime':
+        'ParamHardIntlkDebounceTime-Cte':
             {'type': 'float', 'count': 32,
              'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamHardIntlkResetTime':
+        'ParamHardIntlkResetTime-Cte':
             {'type': 'float', 'count': 32,
              'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkDebounceTime':
+        'ParamSoftIntlkDebounceTime-Cte':
             {'type': 'float', 'count': 32,
              'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkResetTime':
+        'ParamSoftIntlkResetTime-Cte':
             {'type': 'float', 'count': 32,
              'value': _np.array([0.0, ] * 32), 'unit': 'us'},
     })

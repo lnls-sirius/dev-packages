@@ -57,13 +57,13 @@ class _PSModel:
         'ParamCtrlSlewRateSigGenOffset-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_OFFSET,  # 19
         'ParamCtrlSlewRateWfmRef-Cte': _c.P_CTRL_SLEW_RATE_WFMREF,  # 20
         # --- PWM ---
-        'ParamPWMFreq': _c.P_PWM_FREQ,  # 21
-        'ParamPWMDeadTime': _c.P_PWM_DEAD_TIME,  # 22
-        'ParamPWMMaxDuty': _c.P_PWM_MAX_DUTY,  # 23
-        'ParamPWMMinDuty': _c.P_PWM_MIN_DUTY,  # 24
-        'ParamPWMMaxDutyOpenLoop': _c.P_PWM_MAX_DUTY_OPEN_LOOP,  # 25
-        'ParamPWMMinDutyOpenLoop': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 26
-        'ParamPWMLimDutyShare': _c.P_PWM_LIM_DUTY_SHARE,  # 27
+        'ParamPWMFreq-Cte': _c.P_PWM_FREQ,  # 21
+        'ParamPWMDeadTime-Cte': _c.P_PWM_DEAD_TIME,  # 22
+        'ParamPWMMaxDuty-Cte': _c.P_PWM_MAX_DUTY,  # 23
+        'ParamPWMMinDuty-Cte': _c.P_PWM_MIN_DUTY,  # 24
+        'ParamPWMMaxDutyOpenLoop-Cte': _c.P_PWM_MAX_DUTY_OPEN_LOOP,  # 25
+        'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 26
+        'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 27
         # # --- HRADC ---
         # P_HRADC_NR_BOARDS = 28
         # P_HRADC_SPI_CLK = 29
@@ -86,13 +86,13 @@ class _PSModel:
         # P_WFMREF_GAIN = 44
         # P_WFMREF_OFFSET = 45
         # --- Analog Variables ---
-        'ParamAnalogMax': _c.P_ANALOG_MAX,  # 46
-        'ParamAnalogMin': _c.P_ANALOG_MIN,  # 47
+        'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 46
+        'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 47
         # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime': _c.P_HARD_INTLK_DEBOUNCE_TIME,  # 48
-        'ParamHardIntlkResetTime': _c.P_HARD_INTLK_RESET_TIME,  # 49
-        'ParamSoftIntlkDebounceTime': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 50
-        'ParamSoftIntlkResetTime': _c.P_SOFT_INTLK_RESET_TIME,  # 51
+        'ParamHardIntlkDebounceTime-Cte': _c.P_HARD_INTLK_DEBOUNCE_TIME,  # 48
+        'ParamHardIntlkResetTime-Cte': _c.P_HARD_INTLK_RESET_TIME,  # 49
+        'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 50
+        'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 51
     }
 
     _variables = dict()  # this will be filled in derived classes
