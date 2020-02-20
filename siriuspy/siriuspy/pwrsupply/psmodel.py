@@ -32,40 +32,39 @@ class _PSModel:
         'PRUCtrlQueueSize-Mon': 'queue_length'}
     _e2p = {
         # Epics to Power Supply parameter
-        # --- PS
-        'ParamPSName-Cte': _c.P_PS_NAME,
-        'ParamPSModel-Cte': _c.P_PS_MODEL,
-        'ParamNrModules-Cte': _c.P_PS_NR_PSMODELS,
-        # --- COMM
-        'ParamCommCmdInferface-Cte': _c.P_COMM_CMD_INTERFACE,
-        'ParamCommCMD_INTERFACE-Cte': _c.P_COMM_CMD_INTERFACE,
-        'ParamCommRS485BaudRate-Cte': _c.P_COMM_RS485_BAUDRATE,
-        'ParamCommRS485Addr-Cte': _c.P_COMM_RS485_ADDRESS,
-        'ParamCommRS485TermRes-Cte': _c.P_COMM_RS485_TERMINATOR_RESISTOR,
-        'ParamCommUDCNetAddr-Cte': _c.P_COMM_UDC_NETWORK_ADDRESS,
-        'ParamCommEthIP-Cte': _c.P_COMM_ETHERNET_IP,
-        'ParamCommEthSubnetMask-Cte': _c.P_COMM_ETHERNET_SUBNET_MASK,
-        'ParamCommBuzVol-Cte': _c. P_COMM_BUZZER_VOLUME,
-        # # ----- class Control -----
-        'ParamCtrlFreqCtrlISR-Cte': _c.P_CTRL_FREQ_CONTROL_ISR,
-        'ParamCtrlFreqTimeSlicer-Cte': _c.P_CTRL_FREQ_TIME_SLICER,
-        'ParamCtrlMaxRef-Cte': _c.P_CTRL_MAX_REF,
-        'ParamCtrlMinRef-Cte': _c.P_CTRL_MIN_REF,
-        'ParamCtrlMaxRefOpenLoop-Cte': _c.P_CTRL_MAX_REF_OPEN_LOOP,
-        'ParamCtrlMinRefOpenLoop-Cte': _c.P_CTRL_MIN_REF_OPEN_LOOP,
-        'ParamCtrlSlewRateSlowRef-Cte': _c.P_CTRL_SLEW_RATE_SLOWREF,
-        'ParamCtrlSlewRateSigGenAmp-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_AMP,
-        'ParamCtrlSlewRateSigGenOffset-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_OFFSET,
-        'ParamCtrlSlewRateWfmRef-Cte': _c.P_CTRL_SLEW_RATE_WFMREF,
-        # # ----- class PWM -----
-        # P_PWM_FREQ = 21
-        # P_PWM_DEAD_TIME = 22
-        # P_PWM_MAX_DUTY = 23
-        # P_PWM_MIN_DUTY = 24
-        # P_PWM_MAX_DUTY_OPEN_LOOP = 25
-        # P_PWM_MIN_DUTY_OPEN_LOOP = 26
-        # P_PWM_LIM_DUTY_SHARE = 27
-        # # ----- class HRADC -----
+        # --- PS ---
+        'ParamPSName-Cte': _c.P_PS_NAME,  # 00
+        'ParamPSModel-Cte': _c.P_PS_MODEL,  # 01
+        'ParamNrModules-Cte': _c.P_PS_NR_PSMODELS,  # 02
+        # --- Communication ---
+        'ParamCommCmdInferface-Cte': _c.P_COMM_CMD_INTERFACE,  # 03
+        'ParamCommRS485BaudRate-Cte': _c.P_COMM_RS485_BAUDRATE,  # 04
+        'ParamCommRS485Addr-Cte': _c.P_COMM_RS485_ADDRESS,  # 05
+        'ParamCommRS485TermRes-Cte': _c.P_COMM_RS485_TERMINATOR_RESISTOR,  # 06
+        'ParamCommUDCNetAddr-Cte': _c.P_COMM_UDC_NETWORK_ADDRESS,  # 07
+        'ParamCommEthIP-Cte': _c.P_COMM_ETHERNET_IP,  # 08
+        'ParamCommEthSubnetMask-Cte': _c.P_COMM_ETHERNET_SUBNET_MASK,  # 09
+        'ParamCommBuzVol-Cte': _c. P_COMM_BUZZER_VOLUME,  # 10
+        # --- Control ---
+        'ParamCtrlFreqCtrlISR-Cte': _c.P_CTRL_FREQ_CONTROL_ISR,  # 11
+        'ParamCtrlFreqTimeSlicer-Cte': _c.P_CTRL_FREQ_TIME_SLICER,  # 12
+        'ParamCtrlMaxRef-Cte': _c.P_CTRL_MAX_REF,  # 13
+        'ParamCtrlMinRef-Cte': _c.P_CTRL_MIN_REF,  # 14
+        'ParamCtrlMaxRefOpenLoop-Cte': _c.P_CTRL_MAX_REF_OPEN_LOOP,  # 15
+        'ParamCtrlMinRefOpenLoop-Cte': _c.P_CTRL_MIN_REF_OPEN_LOOP,  # 16
+        'ParamCtrlSlewRateSlowRef-Cte': _c.P_CTRL_SLEW_RATE_SLOWREF,  # 17
+        'ParamCtrlSlewRateSigGenAmp-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_AMP,  # 18
+        'ParamCtrlSlewRateSigGenOffset-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_OFFSET,  # 19
+        'ParamCtrlSlewRateWfmRef-Cte': _c.P_CTRL_SLEW_RATE_WFMREF,  # 20
+        # --- PWM ---
+        'ParamPWMFreq': _c.P_PWM_FREQ,  # 21
+        'ParamPWMDeadTime': _c.P_PWM_DEAD_TIME,  # 22
+        'ParamPWMMaxDuty': _c.P_PWM_MAX_DUTY,  # 23
+        'ParamPWMMinDuty': _c.P_PWM_MIN_DUTY,  # 24
+        'ParamPWMMaxDutyOpenLoop': _c.P_PWM_MAX_DUTY_OPEN_LOOP,  # 25
+        'ParamPWMMinDutyOpenLoop': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 26
+        'ParamPWMLimDutyShare': _c.P_PWM_LIM_DUTY_SHARE,  # 27
+        # # --- HRADC ---
         # P_HRADC_NR_BOARDS = 28
         # P_HRADC_SPI_CLK = 29
         # P_HRADC_FREQ_SAMPLING = 30
@@ -74,65 +73,26 @@ class _PSModel:
         # P_HRADC_TRANSDUCER_OUTPUT = 33
         # P_HRADC_TRANSDUCER_GAIN = 34
         # P_HRADC_TRANSDUCER_OFFSET = 35
-        # # ----- class SigGen -----
+        # # --- SigGen ---
         # P_SIGGEN_TYPE = 36
         # P_SIGGEN_NUM_CYCLES = 37
         # P_SIGGEN_FREQ = 38
         # P_SIGGEN_AMPLITUDE = 39
         # P_SIGGEN_OFFSET = 40
         # P_SIGGEN_AUX_PARAM = 41
-        # # ----- class WfmRef -----
+        # # --- WfmRef ---
         # P_WFMREF_ID = 42
         # P_WFMREF_SYNC_MODE = 43
         # P_WFMREF_GAIN = 44
         # P_WFMREF_OFFSET = 45
-        # # ----- class Analog Variables -----
-        # P_ANALOG_MAX = 46
-        # P_ANALOG_MIN = 47
-        # # ----- class Control -----
-        # P_CTRL_FREQ_CONTROL_ISR = 11
-        # P_CTRL_FREQ_TIME_SLICER = 12
-        # P_CTRL_MAX_REF = 13
-        # P_CTRL_MIN_REF = 14
-        # P_CTRL_MAX_REF_OPEN_LOOP = 15
-        # P_CTRL_MIN_REF_OPEN_LOOP = 16
-        # P_CTRL_SLEW_RATE_SLOWREF = 17
-        # P_CTRL_SLEW_RATE_SIGGEN_AMP = 18
-        # P_CTRL_SLEW_RATE_SIGGEN_OFFSET = 19
-        # P_CTRL_SLEW_RATE_WFMREF = 20
-        # # ----- class PWM -----
-        # P_PWM_FREQ = 21
-        # P_PWM_DEAD_TIME = 22
-        # P_PWM_MAX_DUTY = 23
-        # P_PWM_MIN_DUTY = 24
-        # P_PWM_MAX_DUTY_OPEN_LOOP = 25
-        # P_PWM_MIN_DUTY_OPEN_LOOP = 26
-        # P_PWM_LIM_DUTY_SHARE = 27
-        # # ----- class HRADC -----
-        # P_HRADC_NR_BOARDS = 28
-        # P_HRADC_SPI_CLK = 29
-        # P_HRADC_FREQ_SAMPLING = 30
-        # P_HRADC_ENABLE_HEATER = 31
-        # P_HRADC_ENABLE_RAILS_MON = 32
-        # P_HRADC_TRANSDUCER_OUTPUT = 33
-        # P_HRADC_TRANSDUCER_GAIN = 34
-        # P_HRADC_TRANSDUCER_OFFSET = 35
-        # # ----- class SigGen -----
-        # P_SIGGEN_TYPE = 36
-        # P_SIGGEN_NUM_CYCLES = 37
-        # P_SIGGEN_FREQ = 38
-        # P_SIGGEN_AMPLITUDE = 39
-        # P_SIGGEN_OFFSET = 40
-        # P_SIGGEN_AUX_PARAM = 41
-        # # ----- class WfmRef -----
-        # P_WFMREF_ID = 42
-        # P_WFMREF_SYNC_MODE = 43
-        # P_WFMREF_GAIN = 44
-        # P_WFMREF_OFFSET = 45
-        # # ----- class Analog Variables -----
-        # P_ANALOG_MAX = 46
-        # P_ANALOG_MIN = 47
-
+        # --- Analog Variables ---
+        'ParamAnalogMax': _c.P_ANALOG_MAX,  # 46
+        'ParamAnalogMin': _c.P_ANALOG_MIN,  # 47
+        # --- Debounce Manager ---
+        'ParamHardIntlkDebounceTime': _c.P_HARD_INTLK_DEBOUNCE_TIME,  # 48
+        'ParamHardIntlkResetTime': _c.P_HARD_INTLK_RESET_TIME,  # 49
+        'ParamSoftIntlkDebounceTime': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 50
+        'ParamSoftIntlkResetTime': _c.P_SOFT_INTLK_RESET_TIME,  # 51
     }
 
     _variables = dict()  # this will be filled in derived classes

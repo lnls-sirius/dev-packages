@@ -518,40 +518,85 @@ def get_basic_propty_database():
         'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                               'value': Const.DsblEnbl.Dsbl},
         # Power Supply Parameters
+        # --- PS ---
         'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
-        'ParamPSModel-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamNrModules-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': float('NaN')},
+        'ParamPSModel-Cte': {'type': 'float', 'value': 0.0},
+        'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
+        # --- COMM ---
+        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': 0.0},
         'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
-                                   'value': _np.array([float('NaN'), ] * 4)},
-        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': float('NaN')},
+                                   'value': _np.array([0.0, ] * 4)},
+        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
         'ParamCommEthIP-Cte':
             {'type': 'float', 'count': 4,
-             'value': _np.array([float('NaN'), ] * 4)},
+             'value': _np.array([0.0, ] * 4)},
         'ParamCommEthSubnetMask-Cte':
             {'type': 'float', 'count': 4,
-             'value': _np.array([float('NaN'), ] * 4)},
-        'ParamCommBuzVol-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamCtrlFreqCtrlISR-Cte': {'type': 'float', 'value': float('NaN')},
+             'value': _np.array([0.0, ] * 4)},
+        'ParamCommBuzVol-Cte':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        # --- Control ---
+        'ParamCtrlFreqCtrlISR-Cte':
+            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
         'ParamCtrlFreqTimeSlicer-Cte':
             {'type': 'float', 'count': 4,
-             'value': _np.array([float('NaN'), ] * 4)},
-        'ParamCtrlMaxRef-Cte': {'type': 'float', 'value': float('NaN')},
-        'ParamCtrlMinRef-Cte': {'type': 'float', 'value': float('NaN')},
+             'value': _np.array([0.0, ] * 4),
+             'unit': 'Hz'},
+        'ParamCtrlMaxRef-Cte':
+            {'type': 'float', 'value': 0.0, 'unit': 'A/V'},
+        'ParamCtrlMinRef-Cte':
+            {'type': 'float', 'value': 0.0, 'unit': 'A/V'},
         'ParamCtrlMaxRefOpenLoop-Cte':
-            {'type': 'float', 'value': float('NaN')},
+            {'type': 'float', 'value': 0.0},
         'ParamCtrlMinRefOpenLoop-Cte':
-            {'type': 'float', 'value': float('NaN')},
+            {'type': 'float', 'value': 0.0},
         'ParamCtrlSlewRateSlowRef-Cte':
-            {'type': 'float', 'value': float('NaN')},
+            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
         'ParamCtrlSlewRateSigGenAmp-Cte':
-            {'type': 'float', 'value': float('NaN')},
+            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
         'ParamCtrlSlewRateSigGenOffset-Cte':
-            {'type': 'float', 'value': float('NaN')},
+            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
         'ParamCtrlSlewRateWfmRef-Cte':
-            {'type': 'float', 'value': float('NaN')}})
+            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
+        # --- PWM ---
+        'ParamPWMFreq':
+            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamPWMDeadTime':
+            {'type': 'float', 'value': 0.0, 'unit': 'ns'},
+        'ParamPWMMaxDuty':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMinDuty':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMaxDutyOpenLoop':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMinDutyOpenLoop':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMLimDutyShare':
+            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        # --- Analog Variables ---
+        'ParamAnalogMax':
+            {'type': 'float', 'count': 64,
+             'value': _np.array([0.0, ] * 64)},
+        'ParamAnalogMin':
+            {'type': 'float', 'count': 64,
+             'value': _np.array([0.0, ] * 64)},
+        # --- Debounce Manager ---
+        'ParamHardIntlkDebounceTime':
+            {'type': 'float', 'count': 32,
+             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamHardIntlkResetTime':
+            {'type': 'float', 'count': 32,
+             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkDebounceTime':
+            {'type': 'float', 'count': 32,
+             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkResetTime':
+            {'type': 'float', 'count': 32,
+             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+    })
+
     return dbase
 
 
