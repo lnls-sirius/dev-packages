@@ -379,7 +379,6 @@ class PSCycler:
     def set_current_zero(self):
         """Set PS current to zero ."""
         status = _pv_conn_put(self['Current-SP'], 0)
-        _time.sleep(SLEEP_CAPUT)
         return status
 
     def check_current_zero(self, wait=5):
@@ -503,14 +502,14 @@ class PSCycler:
             if not status:
                 return 3  # indicate cycling not finished yet
 
+        status = self.check_intlks()
+        if not status:
+            return 4  # indicate interlock problems
+
         status = self.set_opmode_slowref()
         status &= self.check_opmode_slowref()
         if not status:
             return 2  # indicate opmode is not in slowref yet
-
-        status = self.check_intlks()
-        if not status:
-            return 4  # indicate interlock problems
 
         return 0
 
