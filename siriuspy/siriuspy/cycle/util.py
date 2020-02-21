@@ -18,7 +18,7 @@ TRIGGER_NAMES = {
 
 def get_psnames():
     """Return psnames."""
-    names = _PSSearch.get_psnames({'sec': '(LI|TB|BO|TS)', 'dis': 'PS'})
+    names = _PSSearch.get_psnames({'sec': '(LI|TB|TS)', 'dis': 'PS'})
     names.extend(_PSSearch.get_psnames(
         {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
     names.extend(_PSSearch.get_psnames(

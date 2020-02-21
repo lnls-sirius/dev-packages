@@ -45,7 +45,10 @@ class ClientArchiver:
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
-        return self._make_request(url).json()
+        req = self._make_request(url)
+        if not req.ok:
+            return None
+        return req.json()
 
     def getAllPVs(self, pvnames):
         """."""
@@ -95,7 +98,7 @@ class ClientArchiver:
         pvname -- name of pv.
         timestamp_start -- timestamp of interval start
                            Example: (2019-05-23T13:32:27.570Z)
-        timestamp_stop -- timestamp of interval start
+        timestamp_stop -- timestamp of interval stop
                            Example: (2019-05-23T14:32:27.570Z)
         """
         tstart = _parse.quote(timestamp_start)
@@ -111,6 +114,16 @@ class ClientArchiver:
         status = [v['status'] for v in data]
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
+
+    def getPVDetails(self, pvname):
+        """."""
+        url = self._create_url(
+            method='getPVDetails', pv=pvname)
+        req = self._make_request(url)
+        if not req.ok:
+            return None
+        data = req.json()
+        return data
 
     def _make_request(self, url, need_login=False):
         if self.session is not None:

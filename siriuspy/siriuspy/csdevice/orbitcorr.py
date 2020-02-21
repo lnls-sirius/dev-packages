@@ -93,7 +93,6 @@ class ConstRings(ConstTLines):
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
-    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
 
 class ConstSI(ConstRings):
@@ -101,6 +100,7 @@ class ConstSI(ConstRings):
 
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
+    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
@@ -147,7 +147,7 @@ class SOFBTLines(ConstTLines):
         self.NR_CORRS = self.NR_CHCV + 1 if acc == 'SI' else self.NR_CHCV
 
         self.TRIGGER_ACQ_NAME = self.acc + '-Fam:TI-BPM'
-        if self.isring:
+        if self.acc == 'SI':
             self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags-Corrs'
             self.EVT_COR_NAME = 'Orb' + self.acc
 
@@ -243,6 +243,18 @@ class SOFBTLines(ConstTLines):
             'MaxDeltaKickCV-RB': {
                 'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
+            'DeltaKickCH-SP': {
+                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'unit': 'urad'},
+            'DeltaKickCH-RB': {
+                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-SP': {
+                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-RB': {
+                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'unit': 'urad'},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
                 'unit': 'Apply last calculated kicks.'},
@@ -551,10 +563,6 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
-        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
-        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
         self.C0 = 496.8  # in meter
         self.T0 = self.C0 / 299792458  # in seconds
 
@@ -571,20 +579,6 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'unit': 'Nr Times to extend the ring'},
             }
         db = super().get_sofb_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
-
-    def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
-        db_ring = {
-            'CorrSync-Sel': {
-                'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
-            'CorrSync-Sts': {
-                'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
-            }
-        db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
         return db
 
@@ -663,6 +657,10 @@ class SOFBSI(SOFBRings, ConstSI):
     def __init__(self, acc):
         """Init method."""
         SOFBRings.__init__(self, acc)
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
+        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
         self.C0 = 518.396  # in meter
         self.T0 = self.C0 / 299792458  # in seconds
 
@@ -692,6 +690,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'MaxDeltaKickRF-RB': {
                 'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
                 'lolim': 0, 'hilim': 10000},
+            'DeltaKickRF-SP': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            'DeltaKickRF-RB': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
         db = super().get_sofb_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
@@ -699,8 +701,16 @@ class SOFBSI(SOFBRings, ConstSI):
 
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
-        db_ring = {'KickRF-Mon': {
-            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2}}
+        db_ring = {
+            'CorrSync-Sel': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'value': self.CorrSync.Off},
+            'CorrSync-Sts': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'value': self.CorrSync.Off},
+            'KickRF-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
+            }
         db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
         return db
