@@ -92,7 +92,8 @@ class ClientArchiver:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self._make_request(url, need_login=True)
 
-    def getData(self, pvname, timestamp_start, timestamp_stop):
+    def getData(self, pvname, timestamp_start, timestamp_stop,
+                get_request_url=False):
         """Get archiver data.
 
         pvname -- name of pv.
@@ -105,6 +106,8 @@ class ClientArchiver:
         tstop = _parse.quote(timestamp_stop)
         url = self._create_url(
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
+        if get_request_url:
+            return url
         req = self._make_request(url)
         if not req.ok:
             return None
@@ -115,10 +118,12 @@ class ClientArchiver:
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
 
-    def getPVDetails(self, pvname):
+    def getPVDetails(self, pvname, get_request_url=False):
         """."""
         url = self._create_url(
             method='getPVDetails', pv=pvname)
+        if get_request_url:
+            return url
         req = self._make_request(url)
         if not req.ok:
             return None
