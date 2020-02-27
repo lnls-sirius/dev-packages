@@ -11,11 +11,11 @@ class PVDetails:
         self.pvname = pvname
         self.connector = connector
         self.is_scalar = None
+        self.is_paused = None
+        self.is_connected = None
         self.nelms = None
         self.units = None
-        self.is_paused = None
         self.host_name = None
-        self.connected = None
         self.avg_bytes_per_event = None
         self.estimated_storage_rate_kb_hour = None
         self.estimated_storage_rate_mb_day = None
@@ -28,7 +28,7 @@ class PVDetails:
         return url
 
     @property
-    def archived(self):
+    def is_archived(self):
         """."""
         self.connect()
         data = self.connector.getPVDetails(self.pvname)
@@ -63,14 +63,18 @@ class PVDetails:
             elif field == 'Host name':
                 self.host_name = value
             elif field == 'Is this PV currently connected?':
-                self.connected = (value.lower() == 'yes')
+                self.is_connected = (value.lower() == 'yes')
             elif field == 'Average bytes per event':
+                value = value.replace(',','.')
                 self.avg_bytes_per_event = float(value)
             elif field == 'Estimated storage rate (KB/hour)':
+                value = value.replace(',', '.')
                 self.estimated_storage_rate_kb_hour = float(value)
             elif field == 'Estimated storage rate (MB/day)':
+                value = value.replace(',', '.')
                 self.estimated_storage_rate_mb_day = float(value)
             elif field == 'Estimated storage rate (GB/year)':
+                value = value.replace(',', '.')
                 self.estimated_storage_rate_gb_year = float(value)
         return True
 
@@ -79,11 +83,11 @@ class PVDetails:
         rst = ''
         rst += '{:<30s}: {:}\n'.format('pvname', self.pvname)
         rst += '{:<30s}: {:}\n'.format('is_scalar', self.is_scalar)
+        rst += '{:<30s}: {:}\n'.format('is_paused', self.is_paused)
+        rst += '{:<30s}: {:}\n'.format('is_connected', self.is_connected)
         rst += '{:<30s}: {:}\n'.format('nelms', self.nelms)
         rst += '{:<30s}: {:}\n'.format('units', self.units)
-        rst += '{:<30s}: {:}\n'.format('is_paused', self.is_paused)
         rst += '{:<30s}: {:}\n'.format('host_name', self.host_name)
-        rst += '{:<30s}: {:}\n'.format('connected', self.connected)
         rst += '{:<30s}: {:}\n'.format(
             'avg_bytes_per_event', self.avg_bytes_per_event)
         rst += '{:<30s}: {:}\n'.format(
@@ -120,7 +124,7 @@ class PVData:
         return url
 
     @property
-    def archived(self):
+    def is_archived(self):
         """."""
         self.connect()
         req = self.connector.getPVDetails(self.pvname)
