@@ -600,18 +600,14 @@ def get_basic_propty_database():
     return dbase
 
 
-def get_common_pu_propty_database():
-    """Return database of common to all pulsed pwrsupply PVs."""
+def get_common_pu_septum_propty_database():
+    """Return database of common to all septa pulsed pwrsupply PVs."""
     # S TB-04:PU-InjSept
     # S TS-01:PU-EjeSeptF
     # S TS-01:PU-EjeSeptG
     # S TS-04:PU-InjSeptG-1
     # S TS-04:PU-InjSeptG-2
     # S TS-04:PU-InjSeptF
-    # K BO-01D:PU-InjKckr
-    # K BO-48D:PU-EjeKckr
-    # K SI-01SA:PU-InjDpKckr
-    # P SI-19C4:PU-PingV
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon': {'type': 'enum', 'enums': _et.INTERFACE,
@@ -638,7 +634,6 @@ def get_common_pu_propty_database():
         'Intlk5-Mon': {'type': 'int', 'value': 0},
         'Intlk6-Mon': {'type': 'int', 'value': 0},
         'Intlk7-Mon': {'type': 'int', 'value': 0},
-        'Intlk8-Mon': {'type': 'int', 'value': 0},
         'Intlk1Label-Cte': {'type': 'str', 'value': 'Switch module'},
         'Intlk2Label-Cte': {'type': 'str', 'value': 'AC CPFL OFF'},
         'Intlk3Label-Cte': {'type': 'str', 'value': 'Temperature'},
@@ -646,10 +641,22 @@ def get_common_pu_propty_database():
         'Intlk5Label-Cte': {'type': 'str', 'value': 'HVPS Overcurrent'},
         'Intlk6Label-Cte': {'type': 'str', 'value': 'HVPS Overvoltage'},
         'Intlk7Label-Cte': {'type': 'str', 'value': 'External'},
-        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     }
     return dbase
 
+
+def get_common_pu_propty_database():
+    """Return database of common to all pulsed pwrsupply PVs."""
+    # K BO-01D:PU-InjKckr
+    # K BO-48D:PU-EjeKckr
+    # K SI-01SA:PU-InjDpKckr
+    # P SI-19C4:PU-PingV
+    dbase = get_common_pu_septum_propty_database()
+    dbase = dbase.update({
+        'Intlk8-Mon': {'type': 'int', 'value': 0},
+        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
+    })
+    return dbase
 
 def get_common_pu_SI_InjKicker_propty_database():
     """Return database of SI injection kicker."""
@@ -784,7 +791,7 @@ def get_pm_propty_database(maname):
 
 def _get_pu_FP_SEPT_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_common_pu_septum_propty_database()
 
 
 def _get_pu_FP_KCKR_propty_database():
