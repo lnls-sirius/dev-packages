@@ -659,23 +659,6 @@ def get_common_pu_propty_database():
     return dbase
 
 
-def get_common_pu_SI_InjKicker_propty_database():
-    """Return database of SI injection kicker."""
-    # K SI-01SA:PU-InjNLKckr
-    dbase = get_common_pu_propty_database()
-    # 'Comissioning': On-Axis magnet
-    # 'Accumulation': Non-linear kicker
-    dbase.update({
-        'OpMode-Sel': {'type': 'enum',
-                       'enums': ['Comissioning', 'Accumulation'],
-                       'value': 0},
-        'OpMode-Sts': {'type': 'enum',
-                       'enums': ['Comissioning', 'Accumulation'],
-                       'value': 0},
-    })
-    return dbase
-
-
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
     database = _get_model_db(psmodel)
@@ -687,104 +670,10 @@ def get_ps_propty_database(psmodel, pstype):
     return database
 
 
-def get_pu_propty_database(pstype):
-    """Return database definition for a pulsed power supply type."""
-    database = get_common_pu_propty_database()
-    signals_lims = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
-    signals_unit = signals_lims
-    for propty, dbase in database.items():
-        # set setpoint limits in database
-        if propty in signals_lims:
-            dbase['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
-            dbase['low'] = _PSSearch.get_splims(pstype, 'low')
-            dbase['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
-            dbase['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
-            dbase['high'] = _PSSearch.get_splims(pstype, 'high')
-            dbase['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
-        # define unit of current
-        if propty in signals_unit:
-            dbase['unit'] = get_ps_current_unit()
-    # add pvs list
-    database = _cutil.add_pvslist_cte(database)
-    return database
-
-
 def get_conv_propty_database(pstype):
     """Return strength database definition for a power supply type."""
     dbase = dict()
     dbase = _insert_strengths(dbase, pstype)
-    return dbase
-
-
-def get_li_ma_propty_database(maname):
-    """Return property database of a magnet type device."""
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    database = _get_ps_LINAC_propty_database()
-    dbase = {}
-    dbase[psnames[0]] = database
-    return dbase
-
-
-def get_pm_propty_database(maname):
-    """Return property database of a pulsed magnet type device."""
-    if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
-        database = get_common_pu_SI_InjKicker_propty_database()
-    else:
-        database = get_common_pu_propty_database()
-
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
-    current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
-    unit = _MASearch.get_splims_unit(psmodel=psmodel)
-    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
-    dbase = {}
-    for psname, magfunc in magfunc_dict.items():
-        dbase[psname] = _copy.deepcopy(database)
-        # set appropriate PS limits and unit
-        for field in ('-SP', '-RB', '-Mon'):
-            dbase[psname]['Voltage' + field]['lolo'] = \
-                _MASearch.get_splims(maname, 'lolo')
-            dbase[psname]['Voltage' + field]['low'] = \
-                _MASearch.get_splims(maname, 'low')
-            dbase[psname]['Voltage' + field]['lolim'] = \
-                _MASearch.get_splims(maname, 'lolim')
-            dbase[psname]['Voltage' + field]['hilim'] = \
-                _MASearch.get_splims(maname, 'hilim')
-            dbase[psname]['Voltage' + field]['high'] = \
-                _MASearch.get_splims(maname, 'high')
-            dbase[psname]['Voltage' + field]['hihi'] = \
-                _MASearch.get_splims(maname, 'hihi')
-        for propty in current_alarm:
-            dbase[psname][propty]['unit'] = unit[0]
-        # set approriate MA limits and unit
-        if magfunc in ('corrector-vertical', 'corrector-horizontal'):
-            dbase[psname]['Kick-SP'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-SP'])
-            dbase[psname]['Kick-SP']['unit'] = 'mrad'
-            dbase[psname]['Kick-RB'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-RB'])
-            dbase[psname]['Kick-RB']['unit'] = 'mrad'
-            dbase[psname]['Kick-Mon'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-Mon'])
-            dbase[psname]['Kick-Mon']['unit'] = 'mrad'
-
-            for field in ('-SP', '-RB', '-Mon'):
-                dbase[psname]['Kick' + field]['lolo'] = 0.0
-                dbase[psname]['Kick' + field]['low'] = 0.0
-                dbase[psname]['Kick' + field]['lolim'] = 0.0
-                dbase[psname]['Kick' + field]['hilim'] = 0.0
-                dbase[psname]['Kick' + field]['high'] = 0.0
-                dbase[psname]['Kick' + field]['hihi'] = 0.0
-        else:
-            raise ValueError('Invalid pulsed magnet power supply type!')
-
-        # add PSConnStatus
-        dbase[psname]['PSConnStatus-Mon'] = {
-            'type': 'enum', 'enums': _et.DISCONN_CONN,
-                            'value': Const.DisconnConn.Disconnected}
-        # add pvs list
-        dbase[psname] = _cutil.add_pvslist_cte(dbase[psname])
-
     return dbase
 
 
