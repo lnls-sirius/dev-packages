@@ -28,13 +28,10 @@ public_interface = (
     'get_ps_current_unit',
     'get_basic_propty_database',
     'get_common_propty_database',
+    'get_common_pu_septum_propty_database',
     'get_common_pu_propty_database',
-    'get_common_pu_SI_InjKicker_propty_database',
     'get_ps_propty_database',
-    'get_pu_propty_database',
     'get_conv_propty_database',
-    'get_li_ma_propty_database',
-    'get_pm_propty_database',
 )
 
 
@@ -174,23 +171,6 @@ class TestPwrSupply(TestCase):
         for pstype in TestPwrSupply.pstypes:
             db = pwrsupply.get_ps_propty_database('FBP', pstype)
             unit = db['Current-SP']['unit']
-            for propty, dbi in db.items():
-                # set setpoint limits in database
-                if propty in TestPwrSupply.ps_alarm:
-                    self.assertLessEqual(dbi['lolo'], dbi['low'])
-                    self.assertLessEqual(dbi['low'], dbi['lolim'])
-                    self.assertLessEqual(dbi['lolim'], dbi['hilim'])
-                    self.assertLessEqual(dbi['hilim'], dbi['high'])
-                    self.assertLessEqual(dbi['high'], dbi['hihi'])
-                if propty in current_pvs:
-                    self.assertEqual(dbi['unit'], unit)
-
-    def test_pu_propty_database(self):
-        """Test pu_propty_database."""
-        current_pvs = TestPwrSupply.pu_alarm
-        for pstype in TestPwrSupply.pstypes:
-            db = pwrsupply.get_pu_propty_database(pstype)
-            unit = db['Voltage-SP']['unit']
             for propty, dbi in db.items():
                 # set setpoint limits in database
                 if propty in TestPwrSupply.ps_alarm:
