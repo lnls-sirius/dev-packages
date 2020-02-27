@@ -609,7 +609,7 @@ def get_common_pu_septum_propty_database():
     # S TS-04:PU-InjSeptG-2
     # S TS-04:PU-InjSeptF
     dbase = {
-        'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        # 'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon': {'type': 'enum', 'enums': _et.INTERFACE,
                          'value': Const.Interface.Remote},
         'PwrState-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
@@ -658,6 +658,7 @@ def get_common_pu_propty_database():
     })
     return dbase
 
+
 def get_common_pu_SI_InjKicker_propty_database():
     """Return database of SI injection kicker."""
     # K SI-01SA:PU-InjNLKckr
@@ -681,7 +682,8 @@ def get_ps_propty_database(psmodel, pstype):
     database = _insert_strengths(database, pstype)
     _set_limits(pstype, database)
     # add pvs list
-    database = _cutil.add_pvslist_cte(database)
+    if not psmodel.startswith('FP_'):
+        database = _cutil.add_pvslist_cte(database)
     return database
 
 
