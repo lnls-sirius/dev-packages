@@ -9,19 +9,24 @@ from epics import PV
 class RF:
     """."""
 
-    def __init__(self, acc=None, is_cw=True):
+    def __init__(self, acc=None, is_cw=None):
         """."""
-        if acc == 'SI':
+        self.acc = acc.upper() if acc else 'SI'
+        defcw = True if acc == 'BO' else False
+        self.is_cw = is_cw if is_cw is not None else defcw
+        if self.acc == 'SI':
             pre = 'SR'
-            self._frequency_sp = PV('RF-SI-Gen:GeneralFreq-SP')
-            self._frequency_rb = PV('RF-SI-Gen:GeneralFreq-RB')
+            self._power_mon = PV('RA-RaSIA01:RF-LLRFCalSys:PwrW1-Mon')
         elif acc == 'BO':
             pre = 'BR'
-            self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
-            self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
+            if self.is_cw:
+                self._power_mon = PV('BO-05D:RF-P5Cav:Cell3PwrTop-Mon')
+            else:
+                self._power_mon = PV('BO-05D:RF-P5Cav:Cell3Pwr-Mon')
         else:
             raise Exception('Set BO or SI.')
-        self.is_cw = is_cw
+        self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
+        self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
         if self.is_cw:
             self._phase_sp = PV(pre+'-RF-DLLRF-01:PL:REF:S')
             self._phase_rb = PV(pre+'-RF-DLLRF-01:SL:INP:PHS')
@@ -32,7 +37,6 @@ class RF:
             self._phase_top_rb = PV(pre+'-RF-DLLRF-01:RmpPhsTop-SP')
         self._voltage_sp = PV(pre+'-RF-DLLRF-01:mV:AL:REF:S')
         self._voltage_rb = PV(pre+'-RF-DLLRF-01:SL:REF:AMP')
-        self._power_mon = PV('RA-RaBO01:RF-LLRFCalSys:PwrW1-Mon')
 
     @property
     def connected(self):
