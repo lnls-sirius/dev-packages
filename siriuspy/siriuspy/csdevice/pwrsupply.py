@@ -652,7 +652,7 @@ def get_common_pu_propty_database():
     # K SI-01SA:PU-InjDpKckr
     # P SI-19C4:PU-PingV
     dbase = get_common_pu_septum_propty_database()
-    dbase = dbase.update({
+    dbase.update({
         'Intlk8-Mon': {'type': 'int', 'value': 0},
         'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     })
