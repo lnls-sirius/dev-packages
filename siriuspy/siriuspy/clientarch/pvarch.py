@@ -4,7 +4,7 @@ from .client import ClientArchiver as _ClientArchiver
 
 
 class PVDetails:
-    """PV Arch Details."""
+    """Archive PV Details."""
 
     def __init__(self, pvname, connector=None):
         """."""
@@ -22,8 +22,14 @@ class PVDetails:
         self.estimated_storage_rate_gb_year = None
 
     @property
+    def connected(self):
+        """."""
+        return self.connector and self.connector.connected
+
+    @property
     def request_url(self):
         """."""
+        self.connect()
         url = self.connector.getPVDetails(self.pvname, get_request_url=True)
         return url
 
@@ -103,7 +109,7 @@ class PVDetails:
 
 
 class PVData:
-    """PV Arch Details."""
+    """Archive PV Data."""
 
     def __init__(self, pvname, connector=None):
         """."""
@@ -117,8 +123,14 @@ class PVData:
         self.severity = None
 
     @property
+    def connected(self):
+        """."""
+        return self.connector and self.connector.connected
+
+    @property
     def request_url(self):
         """."""
+        self.connect()
         url = self.connector.getData(
             self.pvname, self.timestamp_start, self.timestamp_stop)
         return url
@@ -148,7 +160,7 @@ class PVData:
 
 
 class PV:
-    """PV."""
+    """Archive PV."""
 
     def __init__(self, pvname, connector=None):
         """."""
@@ -156,6 +168,11 @@ class PV:
         self.connector = connector
         self.details = PVDetails(self.pvname, self.connector)
         self.data = PVData(self.pvname, self.connector)
+
+    @property
+    def connected(self):
+        """."""
+        return self.details.connected and self.data.connected
 
     def login(self, **kwargs):
         """."""
@@ -184,23 +201,3 @@ class PV:
         """."""
         self.connect()
         self.data.update()
-
-    def __str__(self):
-        """."""
-        rst = ''
-        rst += '{:<30s}: {:}\n'.format('pvname', self.pvname)
-        rst += '{:<30s}: {:}\n'.format('is_scalar', self.is_scalar)
-        rst += '{:<30s}: {:}\n'.format('nelms', self.nelms)
-        rst += '{:<30s}: {:}\n'.format('units', self.units)
-        rst += '{:<30s}: {:}\n'.format('is_paused', self.is_paused)
-        rst += '{:<30s}: {:}\n'.format('host_name', self.host_name)
-        rst += '{:<30s}: {:}\n'.format('connected', self.connected)
-        rst += '{:<30s}: {:}\n'.format(
-            'avg_bytes_per_event', self.avg_bytes_per_event)
-        rst += '{:<30s}: {:}\n'.format(
-            'estimated_storage_rate_kb_hour', self.estimated_storage_rate_kb_hour)
-        rst += '{:<30s}: {:}\n'.format(
-            'estimated_storage_rate_mb_day', self.estimated_storage_rate_mb_day)
-        rst += '{:<30s}: {:}\n'.format(
-            'estimated_storage_rate_gb_year', self.estimated_storage_rate_gb_year)
-        return rst

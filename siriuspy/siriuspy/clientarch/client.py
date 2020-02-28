@@ -14,6 +14,7 @@ import siriuspy.envars as _envars
 
 
 class AuthenticationError(Exception):
+    """."""
     pass
 
 
@@ -29,6 +30,12 @@ class ClientArchiver:
         self._url = server_url or self.SERVER_URL
         print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
+
+    @property
+    def connected(self):
+        """."""
+        # TODO: choose minimal request command in order to check connection.
+        raise NotImplementedError
 
     def login(self, username, password):
         """."""
