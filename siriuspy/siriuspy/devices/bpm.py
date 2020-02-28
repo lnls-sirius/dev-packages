@@ -53,12 +53,15 @@ class BPM:
 
     @property
     def spposx(self):
+        """."""
         return self._spposx.get()
 
     @property
     def spposy(self):
+        """."""
         return self._spposy.get()
 
     @property
     def spsum(self):
+        """."""
         return self._spsum.get()

@@ -32,7 +32,6 @@ class DCCT:
         self._acq_ctrl_sp = PV(name+'MeasTrg-Sel')
         self._acq_ctrl_rb = PV(name+'MeasTrg-Sts')
 
-
     @property
     def connected(self):
         """."""
@@ -87,12 +86,6 @@ class DCCT:
         else:
             print('timed out waiting DCCT.')
 
-    def _isok(self):
-        if self._acq_ctrl_sp.value:
-            return self.acq_ctrl == self.STATUS.On
-        else:
-            return self.acq_ctrl != self.STATUS.On
-
     def turn_on(self, timeout=10):
         """."""
         self.acq_ctrl = self.STATUS.On
@@ -102,3 +95,9 @@ class DCCT:
         """."""
         self.acq_ctrl = self.STATUS.Off
         self.wait(timeout)
+
+    def _isok(self):
+        if self._acq_ctrl_sp.value:
+            return self.acq_ctrl == self.STATUS.On
+        else:
+            return self.acq_ctrl != self.STATUS.On

@@ -54,11 +54,11 @@ class Kicker:
     def pulse(self, value):
         self._pulse_sp.value = value
 
-    def turnon_pulse(self):
+    def turn_on_pulse(self):
         """."""
         self.pulse = self.STATUS.On
 
-    def turnoff_pulse(self):
+    def turn_off_pulse(self):
         """."""
         self.pulse = self.STATUS.Off
 
