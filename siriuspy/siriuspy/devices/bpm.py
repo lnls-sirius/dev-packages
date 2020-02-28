@@ -1,67 +1,52 @@
 #!/usr/bin/env python-sirius
 """."""
 
-from epics import PV
-from siriuspy.namesys import SiriusPVName
+from .device import Device as _Device
 
 
-class BPM:
+class BPM(_Device):
     """."""
 
-    def __init__(self, name):
-        """."""
-        self._name = SiriusPVName(name)
-        self._spanta = PV(self._name.substitute(propty='SP_AArrayData'))
-        self._spantb = PV(self._name.substitute(propty='SP_BArrayData'))
-        self._spantc = PV(self._name.substitute(propty='SP_CArrayData'))
-        self._spantd = PV(self._name.substitute(propty='SP_DArrayData'))
-        self._spposx = PV(self._name.substitute(propty='SPPosX-Mon'))
-        self._spposy = PV(self._name.substitute(propty='SPPosY-Mon'))
-        self._spsum = PV(self._name.substitute(propty='SPSum-Mon'))
+    _properties = (
+        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
+        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon')
 
-    @property
-    def connected(self):
+    def __init__(self, devname):
         """."""
-        conn = self._spanta.connected
-        conn &= self._spantb.connected
-        conn &= self._spantc.connected
-        conn &= self._spantd.connected
-        conn &= self._spposx.connected
-        conn &= self._spposy.connected
-        conn &= self._spsum.connected
-        return conn
+        # call base class constructor
+        super().__init__(devname, properties=BPM._properties)
 
     @property
     def sp_anta(self):
         """."""
-        return self._spanta.get()
+        return self.get('SP_AArrayData')
 
     @property
     def sp_antb(self):
         """."""
-        return self._spantb.get()
+        return self.get('SP_BArrayData')
 
     @property
     def sp_antc(self):
         """."""
-        return self._spantc.get()
+        return self.get('SP_CArrayData')
 
     @property
     def sp_antd(self):
         """."""
-        return self._spantd.get()
+        return self.get('SP_DArrayData')
 
     @property
     def spposx(self):
         """."""
-        return self._spposx.get()
+        return self.get('SPPosX-Mon')
 
     @property
     def spposy(self):
         """."""
-        return self._spposy.get()
+        return self.get('SPPosY-Mon')
 
     @property
     def spsum(self):
         """."""
-        return self._spsum.get()
+        return self.get('SPSum-Mon')
