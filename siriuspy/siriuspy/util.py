@@ -162,7 +162,7 @@ def get_strength_label(magfunc):
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
-def get_strength_units(magfunc, pulsed=False):
+def get_strength_units(magfunc, pstype=None, pulsed=False):
     """Return strength units."""
     if magfunc == 'dipole':
         return 'GeV'
@@ -173,8 +173,9 @@ def get_strength_units(magfunc, pulsed=False):
     elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
         if not pulsed:
             return 'urad'
-        else:
-            return 'mrad'
+        if pstype and pstype.startswith('li-spect'):
+            return 'deg'
+        return 'mrad'
     else:
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
