@@ -6,6 +6,8 @@ from functools import partial as _part
 from threading import Thread as _Thread
 import numpy as _np
 from pcaspy import Driver as _PCasDriver
+
+from siriuspy.epics import PV as _PV
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
 from .correctors import BaseCorrectors as _BaseCorrectors
@@ -43,6 +45,7 @@ class SOFB(_BaseClass):
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
+        self._havebeam_pv = _PV('SI-Glob:AP-CurrInfo:StoredEBeam-Mon')
 
         self.orbit = orbit
         self.correctors = correctors
@@ -120,6 +123,12 @@ class SOFB(_BaseClass):
     def driver(self, driver):
         if isinstance(driver, _PCasDriver):
             self._driver = driver
+
+    @property
+    def havebeam(self):
+        if self.acc != 'SI':
+            return True
+        return self._havebeam_pv.connected and self._havebeam_pv.value
 
     def process(self):
         """Run continuously in the main thread."""
@@ -213,6 +222,11 @@ class SOFB(_BaseClass):
                 return False
             if self._thread and self._thread.is_alive():
                 msg = 'ERR: Cannot Correct, Measuring RespMat.'
+                self._update_log(msg)
+                _log.error(msg[5:])
+                return False
+            if not self.havebeam:
+                msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
@@ -360,6 +374,11 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
+        if not self.havebeam:
+            msg = 'ERR: Cannot Measure, We do not have stored beam!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
         msg = 'Starting RespMat measurement.'
         self._update_log(msg)
         _log.info(msg)
@@ -383,6 +402,15 @@ class SOFB(_BaseClass):
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
                 msg = 'Measurement stopped.'
+                self._update_log(msg)
+                _log.info(msg)
+                for _ in range(i, nr_corrs):
+                    mat.append(orbzero)
+                break
+            if not self.havebeam:
+                self.run_callbacks(
+                    'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
+                msg = 'ERR: Cannot Measure, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
                 for _ in range(i, nr_corrs):
@@ -432,6 +460,12 @@ class SOFB(_BaseClass):
         self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
         while self._auto_corr == self._csorb.ClosedLoop.On:
+            if not self.havebeam:
+                msg = 'ERR: Cannot Correct, We do not have stored beam!'
+                self._update_log(msg)
+                _log.info(msg)
+                break
+
             t0 = _time.time()
             _log.debug('TIMEIT: BEGIN')
             msg = 'Getting the orbit.'
@@ -446,10 +480,10 @@ class SOFB(_BaseClass):
             dkicks = self.matrix.calc_kicks(orb)
             t2 = _time.time()
             _log.debug(strn.format('calc kicks:', 1000*(t2-t1)))
-            kicks = self.correctors.get_strength()
+            self._ref_corr_kicks = self.correctors.get_strength()
             t3 = _time.time()
             _log.debug(strn.format('get strength:', 1000*(t3-t2)))
-            kicks = self._process_kicks(kicks, dkicks)
+            kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
             if kicks is None:
                 self._auto_corr = self._csorb.ClosedLoop.Off
                 msg = 'ERR: Opening the Loop'
@@ -506,7 +540,7 @@ class SOFB(_BaseClass):
         for i, dkick in enumerate(dkicks):
             if not _compare_kicks(dkick, 0):
                 newkicks[i] = 0.0
-        idcs_to_process = _np.array(newkicks) != None
+        idcs_to_process = _np.array(newkicks) is not None
         if not idcs_to_process.any():
             return newkicks
 
@@ -542,7 +576,7 @@ class SOFB(_BaseClass):
                 dk_slc *= factor1
                 percent = self._corr_factor[pln] * factor1 * 100
                 msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
-                                                        pln.upper(), percent)
+                    pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
 
@@ -564,7 +598,7 @@ class SOFB(_BaseClass):
                 dk_slc *= factor2
                 percent = self._corr_factor[pln] * factor1 * factor2 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
-                                                        pln.upper(), percent)
+                    pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
 
