@@ -56,16 +56,16 @@ class PowerSupply(_Device):
     @property
     def current(self):
         """."""
-        return self.get('Current-RB')
+        return self['Current-RB']
 
     @current.setter
     def current(self, value):
-        self._pvs['Current-SP'].value = value
+        self['Current-SP'] = value
 
     @property
     def current_mon(self):
         """."""
-        return self.get('Current-Mon')
+        return self['Current-Mon']
 
     @property
     def strength_property(self):
@@ -80,32 +80,32 @@ class PowerSupply(_Device):
     @property
     def strength(self):
         """."""
-        return self.get(self._strength_rb_propty)
+        return self[self._strength_rb_propty]
 
     @strength.setter
     def strength(self, value):
         """."""
-        self._pvs[self._strength_sp_propty].value = value
+        self[self._strength_sp_propty] = value
 
     @property
     def strength_mon(self):
         """."""
-        return self.get(self._strength_mon_propty)
+        return self[self._strength_mon_propty]
 
     @property
     def pwrstate(self):
         """."""
-        return self.get('PwrState-Sts')
+        return self['PwrState-Sts']
 
     @pwrstate.setter
     def pwrstate(self, value):
         """."""
-        self._pvs['PwrState-Sel'].value = value
+        self['PwrState-Sel'] = value
 
     @property
     def opmode(self):
         """."""
-        return self.get('OpMode-Sts')
+        return self['OpMode-Sts']
 
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
@@ -119,12 +119,12 @@ class PowerSupply(_Device):
 
     def cmd_slowref(self, timeout=_default_timeout):
         """."""
-        self._pvs['OpMode-Sel'].value = self.OPMODE_SEL.SlowRef
+        self['OpMode-Sel'] = self.OPMODE_SEL.SlowRef
         self._wait('OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
 
     def cmd_slowrefsync(self, timeout=_default_timeout):
         """."""
-        self._pvs['OpMode-Sel'].value = self.OPMODE_SEL.SlowRefSync
+        self['OpMode-Sel'] = self.OPMODE_SEL.SlowRefSync
         self._wait('OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
 
     # --- private methods ---
