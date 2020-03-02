@@ -44,12 +44,18 @@ SRVURL_CABLES = _os.environ.get(
 SRVURL_CSCONSTS = _os.environ.get(
     'SIRIUS_URL_CONSTS',
     default='http://sirius-consts.lnls.br/control-system-constants')
+SRVURL_CSCONSTS_2 = _os.environ.get(
+    'SIRIUS_URL_CONSTS_2',
+    default='http://10.0.38.46/control-system-constants')
 SRVURL_LOGBOOK = _os.environ.get(
     'SIRIUS_URL_LOGBOOK',
     default='http://sirius-logbook.lnls.br/Olog')
 SRVURL_CONFIGDB = _os.environ.get(
     'SIRIUS_URL_CONFIGDB',
     default='http://sirius-configdb.lnls.br/config-db')
+SRVURL_CONFIGDB_2 = _os.environ.get(
+    'SIRIUS_URL_CONFIGDB_2',
+    default='http://10.0.38.46/config-db')
 SRVURL_ARCHIVER = _os.environ.get(
     'SIRIUS_URL_ARCHIVER',
     default='https://sirius-archiver.lnls.br')
