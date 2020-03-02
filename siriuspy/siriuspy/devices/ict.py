@@ -1,79 +1,80 @@
-#!/usr/bin/env python-sirius
 """."""
 
-from epics import PV
+from .device import Device as _Device
 
 
-class ICT:
+class ICT(_Device):
     """."""
 
-    def __init__(self, name):
-        """."""
-        if name in ['ICT-1', 'ICT-2']:
-            self._charge = PV('LI-01:DI-' + name + ':Charge-Mon')
-            self._charge_avg = PV('LI-01:DI-' + name + ':ChargeAvg-Mon')
-            self._charge_max = PV('LI-01:DI-' + name + ':ChargeMax-Mon')
-            self._charge_min = PV('LI-01:DI-' + name + ':ChargeMin-Mon')
-            self._charge_std = PV('LI-01:DI-' + name + ':ChargeStd-Mon')
-            self._pulse_cnt = PV('LI-01:DI-' + name + ':PulseCount-Mon')
-        else:
-            raise Exception('Set device name: ICT-1 or ICT-2')
+    ICT_LI_1 = 'LI-01:DI-ICT-1'
+    ICT_LI_2 = 'LI-01:DI-ICT-2'
 
-    @property
-    def connected(self):
+    _properties_li = (
+        'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMax-Mon',
+        'ChargeMin-Mon', 'ChargeStd-Mon', 'PulseCount-Mon')
+
+    _properties = {
+        ICT_LI_1: _properties_li,
+        ICT_LI_2: _properties_li}
+
+    def __init__(self, devname):
         """."""
-        conn = self._charge.connected
-        conn &= self._charge_avg.connected
-        conn &= self._charge_max.connected
-        conn &= self._charge_min.connected
-        conn &= self._charge_std.connected
-        conn &= self._pulse_cnt.connected
-        return conn
+        if devname not in (ICT.ICT_LI_1, ICT.ICT_LI_2):
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=ICT._properties[devname])
 
     @property
     def charge(self):
         """."""
-        return self._charge.get()
+        return self['Charge-Mon']
 
     @property
     def charge_avg(self):
         """."""
-        return self._charge_avg.get()
+        return self['ChargeAvg-Mon']
 
     @property
     def charge_max(self):
         """."""
-        return self._charge_max.get()
+        return self['ChargeMax-Mon']
 
     @property
     def charge_min(self):
         """."""
-        return self._charge_min.get()
+        return self['ChargeMin-Mon']
 
     @property
     def charge_std(self):
         """."""
-        return self._charge_std.get()
+        return self['ChargeStd-Mon']
 
     @property
     def pulse_count(self):
         """."""
-        return self._pulse_cnt.get()
+        return self['PulseCount-Mon']
 
 
-class TranspEff:
+class TranspEff(_Device):
     """."""
 
-    def __init__(self):
-        """."""
-        self._eff = PV('LI-Glob:AP-TranspEff:Eff-Mon')
+    TRANSP_EFF_LI = 'LI-Glob:AP-TranspEff'
 
-    @property
-    def connected(self):
+    _properties_li = ('Eff-Mon', )
+
+    _properties = {
+        TRANSP_EFF_LI: _properties_li}
+
+    def __init__(self, devname):
         """."""
-        return self._eff.connected
+        if devname not in (TranspEff.TRANSP_EFF_LI, ):
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=TranspEff._properties[devname])
 
     @property
     def efficiency(self):
         """."""
-        return self._eff.get()
+        return self['Eff-Mon']
