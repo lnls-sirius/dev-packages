@@ -1,4 +1,3 @@
-#!/usr/bin/env python-sirius
 """."""
 
 from epics import PV

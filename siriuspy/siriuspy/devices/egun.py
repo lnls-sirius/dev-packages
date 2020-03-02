@@ -1,4 +1,3 @@
-#!/usr/bin/env python-sirius
 """."""
 
 from ..pwrsupply.status import PSCStatus as _PSCStatus

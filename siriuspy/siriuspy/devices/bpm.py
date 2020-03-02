@@ -1,4 +1,3 @@
-#!/usr/bin/env python-sirius
 """."""
 
 from .device import Device as _Device

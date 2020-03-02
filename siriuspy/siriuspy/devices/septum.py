@@ -1,6 +1,4 @@
-#!/usr/bin/env python-sirius
 """."""
-
 
 from collections import namedtuple
 from siriuspy.epics import PV

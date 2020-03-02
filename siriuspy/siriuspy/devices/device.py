@@ -1,4 +1,4 @@
-"""Eppics Device module."""
+"""Epics Device module."""
 
 import time as _time
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python-sirius
 """."""
 
 import time as _time
