@@ -41,6 +41,7 @@ class App:
         self._buffautorst_mode = _Const.BuffAutoRst.Off
         self._sampling_interval = 2000.0
         self._min_intvl_btw_spl = 0.0
+        self._is_stored = 0
 
         self._current_pv = _epics.PV(self._PREFIX+'Current-Mon')
         self._bpmsum_pv = _epics.PV(self._PREFIX_VACA+'SI-01M1:DI-BPM:Sum-Mon')
@@ -64,6 +65,8 @@ class App:
         else:
             self._is_injecting = 0
             self._changeinjstate_timestamp = _time.time() - 0.5
+
+        self._storedebeam_pv.add_callback(self._callback_get_storedebeam)
 
     @staticmethod
     def init_class():
@@ -136,45 +139,63 @@ class App:
         self._bpmsum_buffer.clearserie()
         self._rstbuff_cmd_count += 1
 
+    def _callback_get_storedebeam(self, value, **kws):
+        self._is_stored = value
 
     def _callback_calclifetime(self, pvname, timestamp, **kws):
         buffer = self._bpmsum_buffer if 'BPM' in pvname \
             else self._current_buffer
+        attrname = '_lifetime'+('_bpm' if 'BPM' in pvname else '')
 
-        self._dtime_lastchangeinjstate = (timestamp -
-                                          self._changeinjstate_timestamp)
+        # check DCCT StoredEBeam PV
+        if not self._is_stored:
+            return
+
+        # try to add a new point to buffer
         acquireflag = buffer.acquire()
-        if acquireflag:
-            if self._buffautorst_mode != _Const.BuffAutoRst.Off:
-                self._buffautorst_check()
+        if not acquireflag:
+            return
 
-            # Check min number of points in buffer to calculate lifetime
-            [timestamp, value] = buffer.serie
-            timestamp = _np.array(timestamp)
-            value = _np.array(value)
-            value -= self._current_offset
-            fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
-            if self._buffer_max_size > 0:
-                if len(value) > min(20, self._buffer_max_size/2):
-                    setattr(
-                        self, '_lifetime'+('_bpm' if 'BPM' in pvname else ''),
-                        self._least_squares_fit(timestamp, value, fit=fit))
-            else:
-                if len(value) > 20:
-                    setattr(
-                        self, '_lifetime'+('_bpm' if 'BPM' in pvname else ''),
-                        self._least_squares_fit(timestamp, value, fit=fit))
+        # check whether the buffer must be reset
+        if self._buffautorst_mode != _Const.BuffAutoRst.Off:
+            self._buffautorst_check()
 
-            if 'BPM' in pvname:
-                self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
-                self.driver.updatePV('LifetimeBPM-Mon')
-                self.driver.setParam('BuffSizeBPM-Mon', len(value))
-                self.driver.updatePV('BuffSizeBPM-Mon')
-            else:
-                self.driver.setParam('Lifetime-Mon', self._lifetime)
-                self.driver.updatePV('Lifetime-Mon')
-                self.driver.setParam('BuffSize-Mon', len(value))
-                self.driver.updatePV('BuffSize-Mon')
+        # check min number of points in buffer to calculate lifetime
+        [timestamp_dq, value_dq] = buffer.serie
+        timestamp_dq = _np.array(timestamp_dq)
+        value_dq = _np.array(value_dq)
+        if not len(timestamp_dq):
+            setattr(self, attrname, 0)
+            first_ts = 0
+            last_ts = 0
+        else:
+            value_dq -= self._current_offset
+            if len(value_dq) > 100:
+                fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
+                lt = self._least_squares_fit(timestamp_dq, value_dq, fit=fit)
+                setattr(self, attrname, lt)
+            first_ts = timestamp_dq[0]
+            last_ts = timestamp_dq[-1]
+
+        # update pvs
+        if 'BPM' in pvname:
+            self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
+            self.driver.updatePV('LifetimeBPM-Mon')
+            self.driver.setParam('BuffSizeBPM-Mon', len(value_dq))
+            self.driver.updatePV('BuffSizeBPM-Mon')
+            self.driver.setParam('BuffFirstSplTimestampBPM-Mon', first_ts)
+            self.driver.updatePV('BuffFirstSplTimestampBPM-Mon')
+            self.driver.setParam('BuffLastSplTimestampBPM-Mon', last_ts)
+            self.driver.updatePV('BuffLastSplTimestampBPM-Mon')
+        else:
+            self.driver.setParam('Lifetime-Mon', self._lifetime)
+            self.driver.updatePV('Lifetime-Mon')
+            self.driver.setParam('BuffSize-Mon', len(value_dq))
+            self.driver.updatePV('BuffSize-Mon')
+            self.driver.setParam('BuffFirstSplTimestamp-Mon', first_ts)
+            self.driver.updatePV('BuffFirstSplTimestamp-Mon')
+            self.driver.setParam('BuffLastSplTimestamp-Mon', last_ts)
+            self.driver.updatePV('BuffLastSplTimestamp-Mon')
 
     def _buffautorst_check(self):
         """Choose mode and check situations to clear internal buffer.
