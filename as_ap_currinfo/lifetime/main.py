@@ -39,6 +39,7 @@ class App:
         self._current_offset = 0.0
         self._rstbuff_cmd_count = 0
         self._buffautorst_mode = _Const.BuffAutoRst.Off
+        self._buffautorst_dcurr = 0.1
         self._sampling_interval = 2000.0
         self._min_intvl_btw_spl = 0.0
         self._is_stored = 0
@@ -46,9 +47,6 @@ class App:
         self._current_pv = _epics.PV(self._PREFIX+'Current-Mon')
         self._bpmsum_pv = _epics.PV(self._PREFIX_VACA+'SI-01M1:DI-BPM:Sum-Mon')
         self._storedebeam_pv = _epics.PV(self._PREFIX+'StoredEBeam-Mon')
-        self._injstate_pv = _epics.PV(
-            self._PREFIX_VACA+'AS-RaMO:TI-EVG:InjectionEvt-Sts',
-            callback=self._callback_get_injstate)
 
         self._current_buffer = _SiriusPVTimeSerie(
             pv=self._current_pv, time_window=self._sampling_interval, mode=0,
@@ -59,13 +57,6 @@ class App:
 
         self._current_pv.add_callback(self._callback_calclifetime)
         self._bpmsum_pv.add_callback(self._callback_calclifetime)
-        if self._injstate_pv.connected:
-            self._is_injecting = self._injstate_pv.value
-            self._changeinjstate_timestamp = self._injstate_pv.timestamp
-        else:
-            self._is_injecting = 0
-            self._changeinjstate_timestamp = _time.time() - 0.5
-
         self._storedebeam_pv.add_callback(self._callback_get_storedebeam)
 
     @staticmethod
@@ -109,6 +100,11 @@ class App:
             self._buffautorst_mode = value
             self.driver.setParam('BuffAutoRst-Sts', self._buffautorst_mode)
             self.driver.updatePV('BuffAutoRst-Sts')
+            status = True
+        elif reason == 'BuffAutoRstDCurr-SP':
+            self._buffautorst_dcurr = value
+            self.driver.setParam('BuffAutoRstDCurr-RB', self._buffautorst_mode)
+            self.driver.updatePV('BuffAutoRstDCurr-RB')
             status = True
         elif reason == 'LtFitMode-Sel':
             self._mode = value
@@ -198,39 +194,26 @@ class App:
             self.driver.updatePV('BuffLastSplTimestamp-Mon')
 
     def _buffautorst_check(self):
-        """Choose mode and check situations to clear internal buffer.
-
-        PVsTrig Mode: Check if there is EBeam and check injection activity
-        with minimum increase of current of 300uA (=0.3mA).
-        DCurrCheck Mode: Check abrupt variation of current by a factor of 35
-        times the dcct fluctuation/resolution.
+        """Check situations to clear internal buffer.
+        If BuffAutoRst == DCurrCheck, check abrupt variation of current by
+        a factor of 20 times the DCCT fluctuation/resolution.
         """
-        [timestamp, value] = self._current_buffer.serie
-        if self._buffautorst_mode == _Const.BuffAutoRst.PVsTrig:
-            if (self._storedebeam_pv.connected and
-                    self._storedebeam_pv.value == 0):
-                self._current_buffer.clearserie()
-                self._lifetime = 0
-                self._bpmsum_buffer.clearserie()
-                self._lifetime_bpm = 0
-            elif ((self._is_injecting == 1 or
-                   self._dtime_lastchangeinjstate < 1) and
-                  (len(value) >= 2 and
-                   (abs(value[-1] - value[-2]) > 0.1))):
-                self._current_buffer.clearserie()
-                self._bpmsum_buffer.clearserie()
-        elif self._buffautorst_mode == _Const.BuffAutoRst.DCurrCheck:
-            if (len(value) >= 2 and
-                    abs(value[-1] - value[-2]) > 100*self._dcurrfactor):
-                self._current_buffer.clearserie()
-                self._bpmsum_buffer.clearserie()
+        if self._buffautorst_mode == _Const.BuffAutoRst.Off:
+            return
 
-    def _callback_get_injstate(self, value, timestamp, **kws):
-        if value == 1:
-            self._is_injecting = 1
+        reset = False
+        [_, value] = self._current_buffer.serie
+        if len(value) >= 2:
+            deltacurr = value[-1] - value[-2]
         else:
-            self._changeinjstate_timestamp = timestamp
-            self._is_injecting = 0
+            deltacurr = 0.0
+        if deltacurr > self._buffautorst_dcurr:
+            reset = True
+        if reset:
+            self._current_buffer.clearserie()
+            self._lifetime = 0
+            self._bpmsum_buffer.clearserie()
+            self._lifetime_bpm = 0
 
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
