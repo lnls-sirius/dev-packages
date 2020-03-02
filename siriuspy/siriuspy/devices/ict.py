@@ -4,22 +4,23 @@ from .device import Device as _Device
 
 
 class ICT(_Device):
-    """."""
+    """ICT Device."""
 
-    ICT_LI_1 = 'LI-01:DI-ICT-1'
-    ICT_LI_2 = 'LI-01:DI-ICT-2'
+    DEVICE_LI_1 = 'LI-01:DI-ICT-1'
+    DEVICE_LI_2 = 'LI-01:DI-ICT-2'
 
     _properties_li = (
         'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMax-Mon',
         'ChargeMin-Mon', 'ChargeStd-Mon', 'PulseCount-Mon')
 
     _properties = {
-        ICT_LI_1: _properties_li,
-        ICT_LI_2: _properties_li}
+        DEVICE_LI_1: _properties_li,
+        DEVICE_LI_2: _properties_li}
 
     def __init__(self, devname):
         """."""
-        if devname not in (ICT.ICT_LI_1, ICT.ICT_LI_2):
+        # check if device exists
+        if devname not in (ICT.DEVICE_LI_1, ICT.DEVICE_LI_2):
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -57,18 +58,19 @@ class ICT(_Device):
 
 
 class TranspEff(_Device):
-    """."""
+    """Transport Efficiency Device."""
 
-    TRANSP_EFF_LI = 'LI-Glob:AP-TranspEff'
+    DEVICE_LI = 'LI-Glob:AP-TranspEff'
 
     _properties_li = ('Eff-Mon', )
 
     _properties = {
-        TRANSP_EFF_LI: _properties_li}
+        DEVICE_LI: _properties_li}
 
     def __init__(self, devname):
         """."""
-        if devname not in (TranspEff.TRANSP_EFF_LI, ):
+        # check if device exists
+        if devname not in (TranspEff.DEVICE_LI, ):
             raise NotImplementedError(devname)
 
         # call base class constructor

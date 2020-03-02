@@ -7,7 +7,12 @@ from .device import Device as _Device
 
 
 class SOFB(_Device):
-    """."""
+    """SOFB Device."""
+
+    DEVICE_TB = 'TB-Glob:AP-SOFB'
+    DEVICE_BO = 'BO-Glob:AP-SOFB'
+    DEVICE_TS = 'TS-Glob:AP-SOFB'
+    DEVICE_SI = 'SI-Glob:AP-SOFB'
 
     _properties = (
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
@@ -33,12 +38,16 @@ class SOFB(_Device):
         # properties used only for ring-type accelerators:
         '<ORBTP>' + 'Idx' + 'OrbX-Mon', '<ORBTP>' + 'Idx' + 'OrbY-Mon')
 
-    def __init__(self, acc):
+    def __init__(self, devname):
         """."""
-        self._devname = acc.upper() + '-Glob:AP-SOFB'
+        # check if device exists
+        if devname not in (
+                SOFB.DEVICE_TB, SOFB.DEVICE_BO,
+                SOFB.DEVICE_TS, SOFB.DEVICE_SI):
+            raise NotImplementedError(devname)
 
         # SOFB object
-        self.data = SOFBFactory.create(acc)
+        self.data = SOFBFactory.create(devname[:2])
 
         # define device properties
         self._orbtp, properties = \

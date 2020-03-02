@@ -4,7 +4,7 @@ from .device import Device as _Device
 
 
 class BPM(_Device):
-    """."""
+    """BPM Device."""
 
     _properties = (
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
@@ -12,6 +12,9 @@ class BPM(_Device):
 
     def __init__(self, devname):
         """."""
+        # check if device exists
+        # TODO: to be implemented!
+
         # call base class constructor
         super().__init__(devname, properties=BPM._properties)
 

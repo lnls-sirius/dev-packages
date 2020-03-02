@@ -21,6 +21,9 @@ class PowerSupply(_Device):
 
     def __init__(self, devname):
         """."""
+        # check if device exists
+        if devname not in _PSSearch.get_psnames():
+            raise NotImplementedError(devname)
         self._devname = devname
 
         # power supply type and magnetic function
