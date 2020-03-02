@@ -2,273 +2,270 @@
 """."""
 
 import time as _time
-from epics import PV
-from siriuspy.csdevice.orbitcorr import SOFBFactory
+
+from ..csdevice.orbitcorr import SOFBFactory
+from .device import Device as _Device
 
 
-class SOFB:
+class SOFB(_Device):
     """."""
+
+    _properties = (
+        'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'KickCH-Mon', 'KickCV-Mon',
+        'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
+        'DeltaKickCH-SP', 'DeltaKickCV-SP',
+        'DeltaFactorCH-SP', 'DeltaFactorCV-SP',
+        'DeltaFactorCH-RB', 'DeltaFactorCV-RB',
+        'RefOrbX-SP', 'RefOrbY-SP',
+        'RefOrbX-RB', 'RefOrbY-RB',
+        'BPMXEnblList-SP', 'BPMYEnblList-SP',
+        'BPMXEnblList-RB', 'BPMYEnblList-RB',
+        'CHEnblList-SP', 'CVEnblList-SP',
+        'CHEnblList-RB', 'CVEnblList-RB',
+        'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
+        'SmoothNrPts-SP', 'SmoothNrPts-RB',
+        'BufferCount-Mon',
+        'TrigNrSamplesPost-SP',
+        'TrigNrSamplesPost-RB',
+        # ring-type dependent properties
+        '<ORBTP>' + 'Sum-Mon',
+        '<ORBTP>' + 'OrbX-Mon', '<ORBTP>' + 'OrbY-Mon',
+        # properties used only for ring-type accelerators:
+        '<ORBTP>' + 'Idx' + 'OrbX-Mon', '<ORBTP>' + 'Idx' + 'OrbY-Mon')
 
     def __init__(self, acc):
         """."""
+        self._devname = acc.upper() + '-Glob:AP-SOFB'
+
+        # SOFB object
         self.data = SOFBFactory.create(acc)
-        orbtp = 'MTurn' if self.data.isring else 'SPass'
-        pref = acc.upper() + '-Glob:AP-SOFB:'
-        self._trajx = PV(pref+orbtp+'OrbX-Mon')
-        self._trajy = PV(pref+orbtp+'OrbY-Mon')
-        self._orbx = PV(pref+'SlowOrbX-Mon', auto_monitor=False)
-        self._orby = PV(pref+'SlowOrbY-Mon', auto_monitor=False)
-        self._kickch = PV(pref+'KickCH-Mon', auto_monitor=False)
-        self._kickcv = PV(pref+'KickCV-Mon', auto_monitor=False)
-        self._deltakickch_mon = PV(pref+'DeltaKickCH-Mon')
-        self._deltakickcv_mon = PV(pref+'DeltaKickCV-Mon')
-        self._deltakickch_sp = PV(pref+'DeltaKickCH-SP')
-        self._deltakickcv_sp = PV(pref+'DeltaKickCV-SP')
-        self._deltafactorch_sp = PV(pref+'DeltaFactorCH-SP')
-        self._deltafactorcv_sp = PV(pref+'DeltaFactorCV-SP')
-        self._deltafactorch_rb = PV(pref+'DeltaFactorCH-RB')
-        self._deltafactorcv_rb = PV(pref+'DeltaFactorCV-RB')
-        self._refx_sp = PV(pref+'RefOrbX-SP')
-        self._refy_sp = PV(pref+'RefOrbY-SP')
-        self._refx_rb = PV(pref+'RefOrbX-RB')
-        self._refy_rb = PV(pref+'RefOrbY-RB')
-        self._bpmxenbl_sp = PV(pref+'BPMXEnblList-SP')
-        self._bpmyenbl_sp = PV(pref+'BPMYEnblList-SP')
-        self._bpmxenbl_rb = PV(pref+'BPMXEnblList-RB')
-        self._bpmyenbl_rb = PV(pref+'BPMYEnblList-RB')
-        self._chenbl_sp = PV(pref+'CHEnblList-SP')
-        self._cvenbl_sp = PV(pref+'CVEnblList-SP')
-        self._chenbl_rb = PV(pref+'CHEnblList-RB')
-        self._cvenbl_rb = PV(pref+'CVEnblList-RB')
-        self._calccorr = PV(pref+'CalcDelta-Cmd')
-        self._applycorr = PV(pref+'ApplyDelta-Cmd')
-        if self.data.isring:
-            self._trajx_idx = PV(pref+orbtp+'Idx'+'OrbX-Mon')
-            self._trajy_idx = PV(pref+orbtp+'Idx'+'OrbY-Mon')
-        self._rst = PV(pref+'SmoothReset-Cmd')
-        self._npts_sp = PV(pref+'SmoothNrPts-SP')
-        self._npts_rb = PV(pref+'BufferCount-Mon')
-        self._sum = PV(pref+orbtp+'Sum-Mon')
-        self._trigsample_sp = PV(pref+'TrigNrSamplesPost-SP')
-        self._trigsample_rb = PV(pref+'TrigNrSamplesPost-RB')
+
+        # define device properties
+        self._orbtp, properties = \
+            self._set_attributes_properties()
+
+        # call base class constructor
+        super().__init__(self._devname, properties=properties)
+
+        # shortcut attributes to property names
+        self._trajx = self._orbtp + 'OrbX-Mon'
+        self._trajy = self._orbtp + 'OrbY-Mon'
+        self._sum = self._orbtp + 'Sum-Mon'
+        self._trajx_idx = self._orbtp + 'Idx' + 'OrbX-Mon'
+        self._trajy_idx = self._orbtp + 'Idx' + 'OrbY-Mon'
 
     @property
-    def connected(self):
+    def orbit_type(self):
         """."""
-        conn = self._trajx.connected
-        conn &= self._trajy.connected
-        conn &= self._orbx.connected
-        conn &= self._orby.connected
-        conn &= self._kickch.connected
-        conn &= self._kickcv.connected
-        conn &= self._deltakickch_mon.connected
-        conn &= self._deltakickcv_mon.connected
-        conn &= self._deltakickch_sp.connected
-        conn &= self._deltakickcv_sp.connected
-        conn &= self._deltafactorch_sp.connected
-        conn &= self._deltafactorcv_sp.connected
-        conn &= self._deltafactorch_rb.connected
-        conn &= self._deltafactorcv_rb.connected
-        conn &= self._refx_sp.connected
-        conn &= self._refy_sp.connected
-        conn &= self._refx_rb.connected
-        conn &= self._refy_rb.connected
-        conn &= self._bpmxenbl_sp.connected
-        conn &= self._bpmyenbl_sp.connected
-        conn &= self._bpmxenbl_rb.connected
-        conn &= self._bpmyenbl_rb.connected
-        conn &= self._chenbl_sp.connected
-        conn &= self._cvenbl_sp.connected
-        conn &= self._chenbl_rb.connected
-        conn &= self._cvenbl_rb.connected
-        conn &= self._sum.connected
-        conn &= self._rst.connected
-        conn &= self._calccorr.connected
-        conn &= self._applycorr.connected
-        conn &= self._npts_sp.connected
-        conn &= self._npts_rb.connected
-        return conn
+        return self._orbtp
 
     @property
     def trajx(self):
         """."""
-        return self._trajx.get()
+        return self[self._trajx]
 
     @property
     def trajy(self):
         """."""
-        return self._trajy.get()
+        return self[self._trajy]
 
     @property
-    def orbx(self):
+    def sum(self):
         """."""
-        return self._orbx.get()
-
-    @property
-    def orby(self):
-        """."""
-        return self._orby.get()
+        return self[self._sum]
 
     @property
     def trajx_idx(self):
         """."""
-        return self._trajx_idx.get() if self.data.isring \
+        return self[self._trajx_idx] if self.data.isring \
             else self.trajx
 
     @property
     def trajy_idx(self):
         """."""
-        return self._trajy_idx.get() if self.data.isring \
+        return self[self._trajy_idx] if self.data.isring \
             else self.trajy
 
     @property
-    def sum(self):
+    def orbx(self):
         """."""
-        return self._sum.get()
+        return self['SlowOrbX-Mon']
+
+    @property
+    def orby(self):
+        """."""
+        return self['SlowOrbY-Mon']
 
     @property
     def kickch(self):
         """."""
-        return self._kickch.get()
+        return self['KickCH-Mon']
 
     @property
     def kickcv(self):
         """."""
-        return self._kickcv.get()
+        return self['KickCV-Mon']
 
     @property
     def deltakickch(self):
         """."""
-        return self._deltakickch_mon.get()
+        return self['DeltaKickCH-Mon']
 
     @deltakickch.setter
     def deltakickch(self, value):
         """."""
-        self._deltakickch_sp.value = value
+        self['DeltaKickCH-Mon'] = value
 
     @property
     def deltakickcv(self):
         """."""
-        return self._deltakickcv_mon.get()
+        return self['DeltaKickCV-Mon']
 
     @deltakickcv.setter
     def deltakickcv(self, value):
         """."""
-        self._deltakickcv_sp.value = value
+        self['DeltaKickCV-Mon'] = value
 
     @property
     def deltafactorch(self):
         """."""
-        return self._deltafactorch_rb.get()
+        return self['DeltaFactorCH-RB']
 
     @deltafactorch.setter
     def deltafactorch(self, value):
         """."""
-        self._deltafactorch_sp.value = value
+        self['DeltaFactorCH-SP'] = value
 
     @property
     def deltafactorcv(self):
         """."""
-        return self._deltafactorcv_rb.get()
+        return self['DeltaFactorCV-RB']
 
     @deltafactorcv.setter
     def deltafactorcv(self, value):
         """."""
-        self._deltafactorcv_sp.value = value
+        self['DeltaFactorCV-SP'] = value
 
     @property
     def refx(self):
         """."""
-        return self._refx_rb.value
+        return self['RefOrbX-RB']
 
     @refx.setter
     def refx(self, value):
-        self._refx_sp.value = value
+        """."""
+        self['RefOrbX-SP'] = value
 
     @property
     def refy(self):
         """."""
-        return self._refy_rb.value
+        return self['RefOrbY-RB']
 
     @refy.setter
     def refy(self, value):
-        self._refy_sp.value = value
+        """."""
+        self['RefOrbY-SP'] = value
 
     @property
     def bpmxenbl(self):
         """."""
-        return self._bpmxenbl_rb.value
+        return self['BPMXEnblList-RB']
 
     @bpmxenbl.setter
     def bpmxenbl(self, value):
-        self._bpmxenbl_sp.value = value
+        """."""
+        self['BPMXEnblList-SP'] = value
 
     @property
     def bpmyenbl(self):
         """."""
-        return self._bpmyenbl_rb.value
+        return self['BPMYEnblList-RB']
 
     @bpmyenbl.setter
     def bpmyenbl(self, value):
-        self._bpmyenbl_sp.value = value
+        """."""
+        self['BPMYEnblList-SP'] = value
 
     @property
     def chenbl(self):
         """."""
-        return self._chenbl_rb.value
+        return self['CHEnblList-RB']
 
     @chenbl.setter
     def chenbl(self, value):
-        self._chenbl_sp.value = value
+        """."""
+        self['CHEnblList-SP'] = value
 
     @property
     def cvenbl(self):
         """."""
-        return self._cvenbl_rb.value
+        return self['CVEnblList-RB']
 
     @cvenbl.setter
     def cvenbl(self, value):
-        self._cvenbl_sp.value = value
+        """."""
+        self['CVEnblList-SP'] = value
+
+    @property
+    def buffer_count(self):
+        """."""
+        return self['BufferCount-Mon']
 
     @property
     def nr_points(self):
         """."""
-        return self._npts_rb.value
+        return self['SmoothNrPts-RB']
 
     @nr_points.setter
     def nr_points(self, value):
-        self._npts_sp.value = int(value)
+        """."""
+        self['SmoothNrPts-SP'] = int(value)
 
     @property
     def trigsample(self):
         """."""
-        return self._trigsample_rb.value
+        return self['TrigNrSamplesPost-RB']
 
     @trigsample.setter
     def trigsample(self, value):
-        self._trigsample_sp.value = int(value)
-
-    def wait(self, timeout=10):
         """."""
-        inter = 0.05
-        n = int(timeout/inter)
-        _time.sleep(10*inter)
-        for _ in range(n):
-            if self._npts_rb.value >= self._npts_sp.value:
-                break
-            _time.sleep(inter)
-        else:
-            print('WARN: Timed out waiting orbit.')
+        self['TrigNrSamplesPost-SP'] = int(value)
 
     def reset(self):
         """."""
-        self._rst.value = 1
+        self['SmoothReset-Cmd'] = 1
 
     def calccorr(self):
-        self._calccorr.value = 1
+        """."""
+        self['CalcDelta-Cmd'] = 1
 
     def applycorr(self):
         """."""
-        self._applycorr.value = self.data.ApplyDelta.CH
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
         _time.sleep(0.3)
-        self._applycorr.value = self.data.ApplyDelta.CV
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+
+    def wait(self, timeout=10):
+        """."""
+        interval = 0.050  # [s]
+        ntrials = int(timeout/interval)
+        _time.sleep(10*interval)
+        for _ in range(ntrials):
+            if self.buffer_count >= self['SmoothNrPts-SP']:
+                break
+            _time.sleep(interval)
+        else:
+            print('WARN: Timed out waiting orbit.')
+
+    # --- private methods ---
+
+    def _set_attributes_properties(self):
+        orbtp = 'MTurn' if self.data.isring else 'SPass'
+        properties = []
+        for propty in SOFB._properties:
+            propty = propty.replace('<ORBTP>', orbtp)
+            if self.data.isring or \
+                    ('IdxOrbX-Mon' not in propty and 'IdxOrbY-Mon' not in propty):
+                properties.append(propty)
+        return orbtp, properties
