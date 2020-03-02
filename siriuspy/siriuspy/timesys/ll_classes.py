@@ -332,6 +332,9 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
+            # Stop using FineDelay and RF Delay to ease consistency:
+            self._config_ok_values['FineDelay'] = 0
+            self._config_ok_values['RFDelay'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -481,26 +484,22 @@ class _EVROUT(_BaseLL):
         dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay')
         dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
         dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
+        dic_['RFDelayType'] = self._get_from_pvs(
+            is_sp, 'RFDelayType', def_val=0)
         if value is not None:
             dic_[prop] = value
-
         if dic_['Delay'] is None:
             return dict()
         delay = dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL
-        delay += dic_['RFDelay']*self._rf_del
+        if not dic_['RFDelayType']:
+            delay += dic_['RFDelay']*self._rf_del
         return {'Delay': delay}
 
     def _set_delay(self, value):
+        dic_ = {'RFDelay': 0, 'FineDelay': 0}
         if value is None:
-            return dict()
-        delay1 = int(value // self._base_del)
-        dic_ = {'Delay': delay1}
-        value -= delay1 * self._base_del
-        delay2 = value // self._rf_del
-        value -= delay2 * self._rf_del
-        delay3 = round(value / _FDEL)
-        dic_['RFDelay'] = delay2
-        dic_['FineDelay'] = delay3
+            return dic_
+        dic_['Delay'] = round(value / self._base_del)
         return dic_
 
     def _process_source(self, prop, is_sp, value=None):
