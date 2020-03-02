@@ -19,34 +19,34 @@ class BPM(_Device):
     @property
     def sp_anta(self):
         """."""
-        return self.get('SP_AArrayData')
+        return self['SP_AArrayData']
 
     @property
     def sp_antb(self):
         """."""
-        return self.get('SP_BArrayData')
+        return self['SP_BArrayData']
 
     @property
     def sp_antc(self):
         """."""
-        return self.get('SP_CArrayData')
+        return self['SP_CArrayData']
 
     @property
     def sp_antd(self):
         """."""
-        return self.get('SP_DArrayData')
+        return self['SP_DArrayData']
 
     @property
     def spposx(self):
         """."""
-        return self.get('SPPosX-Mon')
+        return self['SPPosX-Mon']
 
     @property
     def spposy(self):
         """."""
-        return self.get('SPPosY-Mon')
+        return self['SPPosY-Mon']
 
     @property
     def spsum(self):
         """."""
-        return self.get('SPSum-Mon')
+        return self['SPSum-Mon']
