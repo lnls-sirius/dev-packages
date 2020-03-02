@@ -48,11 +48,16 @@ class Device:
                 dlist.append(pvname)
         return dlist
 
-    def get(self, propty):
-        """Return value of proerty."""
+    def __getitem__(self, propty):
+        """Return value of property."""
         pvobj = self._pvs[propty]
         value = pvobj.get()
         return value
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        pvobj = self._pvs[propty]
+        pvobj.value = value
 
     # --- private methods ---
 
@@ -71,6 +76,6 @@ class Device:
         ntrials = int(timeout/interval)
         _time.sleep(4*interval)
         for _ in range(ntrials):
-            if self.get(propty) == value:
+            if self[propty] == value:
                 break
             _time.sleep(interval)
