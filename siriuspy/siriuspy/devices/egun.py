@@ -1,170 +1,140 @@
 #!/usr/bin/env python-sirius
 """."""
 
-from collections import namedtuple
-from epics import PV
+from ..pwrsupply.status import PSCStatus as _PSCStatus
+
+from .device import Device as _Device
 
 
-class Bias:
+class EGBias(_Device):
     """."""
 
-    STATUS = namedtuple('Status', 'Off On')(0, 1)
+    PWRSTATE = _PSCStatus.PWRSTATE
+
+    _properties = (
+        'voltoutsoft', 'voltinsoft', 'currentinsoft', 'switch', 'swstatus')
 
     def __init__(self):
         """."""
-        self._volt_sp = PV('LI-01:EG-BiasPS:voltoutsoft')
-        self._volt_rb = PV('LI-01:EG-BiasPS:voltinsoft')
-        self._curr_rb = PV('LI-01:EG-BiasPS:currentinsoft')
-        self._switch = PV('LI-01:EG-BiasPS:switch')
-        self._switch_sts = PV('LI-01:EG-BiasPS:swstatus')
+        # call base class constructor
+        super().__init__('LI-01:EG-BiasPS', properties=EGBias._properties)
 
     @property
     def voltage(self):
         """."""
-        return self._volt_rb.value
+        return self['voltinsoft']
 
     @voltage.setter
     def voltage(self, value):
         """."""
-        self._volt_sp.value = value
+        self['voltoutsoft'] = value
 
     @property
     def current(self):
         """."""
-        return self._curr_rb.value
+        return self['currentinsoft']
 
-    @property
-    def connected(self):
+    def cmd_turn_on(self):
         """."""
-        conn = self._volt_sp.connected
-        conn &= self._volt_rb.connected
-        conn &= self._curr_rb.connected
-        conn &= self._switch.connected
-        conn &= self._switch_sts.connected
-        return conn
+        self['switch'] = self.PWRSTATE.On
 
-    def turn_on(self):
+    def cmd_turn_off(self):
         """."""
-        self._switch.value = self.STATUS.On
-
-    def turn_off(self):
-        """."""
-        self._switch.value = self.STATUS.Off
+        self['switch'] = self.PWRSTATE.Off
 
     def is_on(self):
         """."""
-        return self._switch_sts.value == self.STATUS.On
+        return self['swstatus'] == self.PWRSTATE.On
 
 
-class Filament:
+class EGFilament(_Device):
     """."""
 
-    STATUS = namedtuple('Status', 'Off On')(0, 1)
+    PWRSTATE = _PSCStatus.PWRSTATE
+
+    _properties = (
+        'voltinsoft', 'currentinsoft', 'currentoutsoft', 'switch', 'swstatus')
 
     def __init__(self):
         """."""
-        self._volt_rb = PV('LI-01:EG-FilaPS:voltinsoft')
-        self._curr_rb = PV('LI-01:EG-FilaPS:currentinsoft')
-        self._curr_sp = PV('LI-01:EG-FilaPS:currentoutsoft')
-        self._switch = PV('LI-01:EG-FilaPS:switch')
-        self._switch_sts = PV('LI-01:EG-FilaPS:swstatus')
+        # call base class constructor
+        super().__init__('LI-01:EG-FilaPS', properties=EGFilament._properties)
 
     @property
     def voltage(self):
         """."""
-        return self._volt_rb.value
+        return self['voltinsoft']
 
     @property
     def current(self):
         """."""
-        return self._curr_rb.value
+        return self['currentinsoft']
 
     @current.setter
     def current(self, value):
-        self._curr_sp.value = value
-
-    @property
-    def connected(self):
         """."""
-        conn = self._volt_rb.connected
-        conn &= self._curr_rb.connected
-        conn &= self._curr_sp.connected
-        conn &= self._switch.connected
-        conn &= self._switch_sts.connected
-        return conn
+        self['currentoutsoft'] = value
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """."""
-        self._switch.value = self.STATUS.On
+        self['switch'] = self.PWRSTATE.On
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """."""
-        self._switch.value = self.STATUS.Off
+        self['switch'] = self.PWRSTATE.Off
 
     def is_on(self):
         """."""
-        return self._switch_sts.value == self.STATUS.On
+        return self['swstatus'] == self.PWRSTATE.On
 
 
-class HVPS:
+class EGHVPS(_Device):
     """."""
 
-    STATUS = namedtuple('Status', 'Off On')(0, 1)
+    PWRSTATE = _PSCStatus.PWRSTATE
+
+    _properties = (
+        'currentinsoft', 'currentoutsoft',
+        'voltinsoft', 'voltoutsoft',
+        'enable', 'enstatus',
+        'switch', 'swstatus')
 
     def __init__(self):
         """."""
-        self._curr_rb = PV('LI-01:EG-HVPS:currentinsoft')
-        self._curr_sp = PV('LI-01:EG-HVPS:currentoutsoft')
-        self._volt_rb = PV('LI-01:EG-HVPS:voltinsoft')
-        self._volt_sp = PV('LI-01:EG-HVPS:voltoutsoft')
-        self._enable = PV('LI-01:EG-HVPS:enable')
-        self._enable_sts = PV('LI-01:EG-HVPS:enstatus')
-        self._switch = PV('LI-01:EG-HVPS:switch')
-        self._switch_sts = PV('LI-01:EG-HVPS:swstatus')
+        # call base class constructor
+        super().__init__('LI-01:EG-HVPS', properties=EGHVPS._properties)
 
     @property
     def current(self):
         """."""
-        return self._curr_rb.value
+        return self['currentinsoft']
 
     @current.setter
     def current(self, value):
-        self._curr_sp.value = value
+        """."""
+        self['currentoutsoft'] = value
 
     @property
     def voltage(self):
         """."""
-        return self._volt_rb.value
+        return self['voltinsoft']
 
     @voltage.setter
     def voltage(self, value):
-        self._volt_sp.value = value
+        self['voltoutsoft'] = value
 
-    @property
-    def connected(self):
+    def cmd_turn_on(self):
         """."""
-        conn = self._curr_rb.connected
-        conn &= self._curr_sp.connected
-        conn &= self._volt_sp.connected
-        conn &= self._volt_rb.connected
-        conn &= self._enable.connected
-        conn &= self._enable_sts.connected
-        conn &= self._switch.connected
-        conn &= self._switch_sts.connected
-        return conn
+        self['enable'] = self.PWRSTATE.On
+        self['switch'] = self.PWRSTATE.On
 
-    def turn_on(self):
+    def cmd_turn_off(self):
         """."""
-        self._enable.value = self.STATUS.On
-        self._switch.value = self.STATUS.On
-
-    def turn_off(self):
-        """."""
-        self._enable.value = self.STATUS.Off
-        self._switch.value = self.STATUS.Off
+        self['enable'] = self.PWRSTATE.Off
+        self['switch'] = self.PWRSTATE.Off
 
     def is_on(self):
         """."""
-        ison = self._enable_sts.value == self.STATUS.On
-        ison &= self._switch_sts.value == self.STATUS.On
+        ison = self['enstatus'] == self.PWRSTATE.On
+        ison &= self['swstatus'] == self.PWRSTATE.On
         return ison

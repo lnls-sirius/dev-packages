@@ -3,7 +3,7 @@
 from .device import Device
 from .bpm import BPM
 from .dcct import DCCT
-from .egun import Bias, Filament, HVPS
+from .egun import EGBias, EGFilament, EGHVPS
 from .ict import ICT, TranspEff
 from .kicker import Kicker
 from .li_llrf import LiLLRF
