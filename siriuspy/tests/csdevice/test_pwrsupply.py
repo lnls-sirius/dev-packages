@@ -181,10 +181,3 @@ class TestPwrSupply(TestCase):
                     self.assertLessEqual(dbi['high'], dbi['hihi'])
                 if propty in current_pvs:
                     self.assertEqual(dbi['unit'], unit)
-
-    def test_li_ma_propty_database(self):
-        """Test li_ma_propty_database."""
-        for maname, convname in TestPwrSupply.sample.items():
-            if not maname.startswith('LI-'):
-                continue
-            db = pwrsupply.get_li_ma_propty_database(maname)
