@@ -17,7 +17,7 @@ BO_ENERGY2TIME = {  # energy: time[s]
     '150MeV': 0.0000,
     '1GeV': 0.0859,
     '2GeV': 0.1863,
-    '3GeV': 0.2850,
+    '3GeV': 0.2750,
 }
 INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
 
