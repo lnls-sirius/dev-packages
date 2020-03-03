@@ -1,9 +1,12 @@
 """Module with BO ramp and SI mig classes."""
 
-import numpy as _np
 from copy import deepcopy as _dcopy
+import numpy as _np
 
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE_OTHERS as \
+    _MAX_WFMSIZE_OTHERS
+
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName
 from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
@@ -266,7 +269,7 @@ class BoosterRamp(_ConfigDBDocument):
         value = int(value)
         rdip = self._value['ps_ramp']
         if value != rdip['wfm_nrpoints_fams']:
-            if not 1 <= value <= _MAX_WFMSIZE:
+            if not 1 <= value <= _MAX_WFMSIZE_OTHERS:
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
             rdip['wfm_nrpoints_fams'] = value
@@ -285,7 +288,7 @@ class BoosterRamp(_ConfigDBDocument):
         value = int(value)
         rdip = self._value['ps_ramp']
         if value != rdip['wfm_nrpoints_corrs']:
-            if not 1 <= value <= _MAX_WFMSIZE:
+            if not 1 <= value <= _MAX_WFMSIZE_FBP:
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
             rdip['wfm_nrpoints_corrs'] = value
