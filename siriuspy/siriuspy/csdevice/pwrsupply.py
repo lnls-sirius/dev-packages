@@ -417,7 +417,7 @@ def get_ps_current_unit():
     return _DEFAULT_PS_CURRENT_UNIT
 
 
-def get_common_propty_database():
+def get_ps_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
@@ -455,9 +455,9 @@ def get_common_propty_database():
     return dbase
 
 
-def get_basic_propty_database():
+def get_ps_basic_propty_database():
     """Return database entries to all power-supply-like devices."""
-    dbase = get_common_propty_database()
+    dbase = get_ps_common_propty_database()
     dbase.update({
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': DEFAULT_PS_CURRENT_PRECISION},
@@ -600,7 +600,7 @@ def get_basic_propty_database():
     return dbase
 
 
-def get_common_pu_septum_propty_database():
+def get_pu_septum_propty_database():
     """Return database of common to all septa pulsed pwrsupply PVs."""
     # S TB-04:PU-InjSept
     # S TS-01:PU-EjeSeptF
@@ -645,13 +645,13 @@ def get_common_pu_septum_propty_database():
     return dbase
 
 
-def get_common_pu_propty_database():
+def get_pu_common_propty_database():
     """Return database of common to all pulsed pwrsupply PVs."""
     # K BO-01D:PU-InjKckr
     # K BO-48D:PU-EjeKckr
     # K SI-01SA:PU-InjDpKckr
     # P SI-19C4:PU-PingV
-    dbase = get_common_pu_septum_propty_database()
+    dbase = get_pu_septum_propty_database()
     dbase.update({
         'Intlk8-Mon': {'type': 'int', 'value': 0},
         'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
@@ -682,17 +682,17 @@ def get_conv_propty_database(pstype):
 
 def _get_pu_FP_SEPT_propty_database():
     """."""
-    return get_common_pu_septum_propty_database()
+    return get_pu_septum_propty_database()
 
 
 def _get_pu_FP_KCKR_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_pu_common_propty_database()
 
 
 def _get_pu_FP_PINGER_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_pu_common_propty_database()
 
 
 def _get_ps_LINAC_propty_database():
@@ -773,7 +773,7 @@ def _get_ps_LINAC_propty_database():
 
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FBP),
@@ -799,7 +799,7 @@ def _get_ps_FBP_propty_database():
 
 def _get_ps_FBP_DCLink_propty_database():
     """Return database with FBP_DCLink pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
@@ -830,7 +830,7 @@ def _get_ps_FBP_DCLink_propty_database():
 
 def _get_ps_FAC_DCDC_propty_database():
     """Return database with FAC_DCDC pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_DCDC),
@@ -862,7 +862,7 @@ def _get_ps_FAC_DCDC_propty_database():
 
 def _get_ps_FAC_2S_DCDC_propty_database():
     """Return database with FAC_2S_DCDC pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
@@ -918,7 +918,7 @@ def _get_ps_FAC_2S_DCDC_propty_database():
 
 def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1079,7 +1079,7 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
 
 def _get_ps_FAC_2S_ACDC_propty_database():
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
@@ -1121,7 +1121,7 @@ def _get_ps_FAC_2S_ACDC_propty_database():
 
 def _get_ps_FAC_2P4S_ACDC_propty_database():
     """Return database with FAC_2P4S_ACDC pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
@@ -1184,7 +1184,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
 
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1218,7 +1218,7 @@ def _get_ps_FAP_propty_database():
 
 def _get_ps_FAP_4P_propty_database():
     """Return database with FAP_4P pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1305,7 +1305,7 @@ def _get_ps_FAP_4P_propty_database():
 
 def _get_ps_FAP_2P2S_propty_database():
     """Return database with FAP_2P2S pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,

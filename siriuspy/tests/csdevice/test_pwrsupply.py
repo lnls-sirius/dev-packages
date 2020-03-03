@@ -26,10 +26,10 @@ public_interface = (
     'ETypes',
     'Const',
     'get_ps_current_unit',
-    'get_basic_propty_database',
-    'get_common_propty_database',
-    'get_common_pu_septum_propty_database',
-    'get_common_pu_propty_database',
+    'get_ps_basic_propty_database',
+    'get_ps_common_propty_database',
+    'get_pu_septum_propty_database',
+    'get_pu_common_propty_database',
     'get_ps_propty_database',
     'get_conv_propty_database',
 )
@@ -142,14 +142,14 @@ class TestPwrSupply(TestCase):
 
     def test_basic_propty_database(self):
         """Test common_propty_database."""
-        db = pwrsupply.get_basic_propty_database()
+        db = pwrsupply.get_ps_basic_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
     def test_common_propty_database(self):
         """Test common_propty_database."""
-        db = pwrsupply.get_common_propty_database()
+        db = pwrsupply.get_ps_common_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
