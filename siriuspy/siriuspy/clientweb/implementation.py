@@ -21,9 +21,15 @@ def read_url(url, timeout=_TIMEOUT):
         data = response.read()
         text = data.decode('utf-8')
     except Exception:
-        errtxt = 'Error reading url "' + url + '"!'
-        raise Exception(errtxt)
-
+        # try redundancy server
+        try:
+            url = _envars.SRVURL_CSCONSTS_2 + url
+            response = _urllib_request.urlopen(url, timeout=timeout)
+            data = response.read()
+            text = data.decode('utf-8')
+        except Exception:
+            errtxt = 'Error reading url "' + url + '"!'
+            raise Exception(errtxt)
     return text
 
 

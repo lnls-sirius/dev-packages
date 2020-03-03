@@ -194,6 +194,14 @@ class ConfigDBClient:
         return config_type
 
     def _make_request(self, method='GET', data=None, **kwargs):
+
+        try:
+            return self._request(method, data, **kwargs)
+        except ConfigDBException:
+            self._rotate_server_url()
+            return self._request(method, data, **kwargs)
+
+    def _request(self, method='GET', data=None, **kwargs):
         url = self._create_url(**kwargs)
 
         if data is None:
@@ -215,6 +223,12 @@ class ConfigDBClient:
         if response['code'] != 200:
             raise ConfigDBException(response)
         return response['result']
+
+    def _rotate_server_url(self):
+        if self._url != _envars.SRVURL_CONFIGDB_2:
+            self._url = _envars.SRVURL_CONFIGDB_2
+        else:
+            self._url = _envars.SRVURL_CONFIGDB
 
     def _create_url(self, config_type=None, name=None, discarded=False,
                     stats=False, newname=None):
