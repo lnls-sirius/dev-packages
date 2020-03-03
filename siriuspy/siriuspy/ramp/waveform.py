@@ -701,7 +701,7 @@ class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
     def __init__(self, psname, dipole=None, family=None, strengths=None,
-                 currents=None, wfm_nrpoints=_DEF_WFMSIZE_FBP):
+                 currents=None, wfm_nrpoints=_DEF_WFMSIZE_OTHERS):
         """Constructor."""
         if dipole is None:
             raise ValueError('{} waveform needs an associated '
