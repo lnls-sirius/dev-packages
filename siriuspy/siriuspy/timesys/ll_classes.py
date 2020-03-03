@@ -49,6 +49,10 @@ class _BaseLL(_Callback):
         self._config_ok_values = dict()
         self._base_freq = _RFFREQ / _RFDIV
 
+        self._writepvs = dict()
+        self._readpvs = dict()
+        self._locked = False
+
         evg_name = _LLTimeSearch.get_evg_name()
         self._base_freq_pv = _PV(
             LL_PREFIX + evg_name + ':FPGAClk-Cte',
@@ -56,9 +60,6 @@ class _BaseLL(_Callback):
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
-        self._writepvs = dict()
-        self._readpvs = dict()
-        self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
@@ -90,6 +91,7 @@ class _BaseLL(_Callback):
     @property
     def connected(self):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
+        pvs += [self._base_freq_pv, ]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -160,8 +162,15 @@ class _BaseLL(_Callback):
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
                                 timeout=_conn_timeout) or self._base_freq
-        self._base_del = 1 / self._base_freq / _US2SEC
-        self._rf_del = self._base_del / 5
+        self.base_del = 1 / self._base_freq / _US2SEC
+        self._rf_del = self.base_del / 5
+        # Trigger update of Delay and Duration PVs.
+        for pv in self._writepvs.values():
+            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
+                self._on_change_pv_thread(pv.pvname, pv.value)
+        for pv in self._readpvs.values():
+            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
+                self._on_change_pv_thread(pv.pvname, pv.value)
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
@@ -332,6 +341,9 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
+            # Stop using FineDelay and RF Delay to ease consistency:
+            self._config_ok_values['FineDelay'] = 0
+            self._config_ok_values['RFDelay'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -386,7 +398,8 @@ class _EVROUT(_BaseLL):
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
             'NrPulses': self._set_nrpulses,
-            'Delay': self._set_delay,
+            'Delay': _partial(self._set_delay, raw=False),
+            'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
         return map_
@@ -425,6 +438,7 @@ class _EVROUT(_BaseLL):
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
+            'DelayRaw': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, ''),
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
@@ -481,26 +495,23 @@ class _EVROUT(_BaseLL):
         dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay')
         dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
         dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
+        dic_['RFDelayType'] = self._get_from_pvs(
+            is_sp, 'RFDelayType', def_val=0)
         if value is not None:
             dic_[prop] = value
-
         if dic_['Delay'] is None:
             return dict()
-        delay = dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL
-        delay += dic_['RFDelay']*self._rf_del
-        return {'Delay': delay}
+        delay = dic_['Delay']*self.base_del + dic_['FineDelay']*_FDEL
+        if not dic_['RFDelayType']:
+            delay += dic_['RFDelay']*self._rf_del
+        return {'Delay': delay, 'DelayRaw': dic_['Delay']}
 
-    def _set_delay(self, value):
+    def _set_delay(self, value, raw=False):
+        dic_ = {'RFDelay': 0, 'FineDelay': 0}
         if value is None:
-            return dict()
-        delay1 = int(value // self._base_del)
-        dic_ = {'Delay': delay1}
-        value -= delay1 * self._base_del
-        delay2 = value // self._rf_del
-        value -= delay2 * self._rf_del
-        delay3 = round(value / _FDEL)
-        dic_['RFDelay'] = delay2
-        dic_['FineDelay'] = delay3
+            return dic_
+        value = value if raw else round(value / self.base_del)
+        dic_['Delay'] = int(value)
         return dic_
 
     def _process_source(self, prop, is_sp, value=None):
@@ -571,9 +582,7 @@ class _EVROUT(_BaseLL):
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
-        offset = 0
-        if self.channel.dev.startswith('AMCFPGAEVR'):
-            offset = 1
+        offset = int(self.channel.dev.startswith('AMCFPGAEVR'))
 
         if value >= (len(self._source_enums)-1):
             return dict()
@@ -591,7 +600,7 @@ class _EVROUT(_BaseLL):
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
-                                                                self.channel)
+                self.channel)
             intrg = int(intrg[-2:])  # get internal trigger number for EVR
             dic_['SrcTrig'] = intrg
         return dic_
@@ -608,7 +617,7 @@ class _EVROUT(_BaseLL):
         if any(map(lambda x: x is None, dic_.values())):
             return dict()
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses'],
+            'Duration': 2*dic_['Width']*self.base_del*dic_['NrPulses'],
             'NrPulses': dic_['NrPulses'],
             }
 
@@ -617,7 +626,7 @@ class _EVROUT(_BaseLL):
             return dict()
         pul = pul or self._config_ok_values.get('NrPulses')
         pul = pul or 1  # BUG: handle cases where LL sets this value to 0
-        wid = value / self._base_del / pul / 2
+        wid = value / self.base_del / pul / 2
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
 
@@ -631,7 +640,7 @@ class _EVROUT(_BaseLL):
         if self._duration is None:
             # BUG: handle cases where LL sets these value to 0
             wid = self._config_ok_values.get('Width') or 1
-            self._duration = wid * pul * 2 * self._base_del
+            self._duration = wid * pul * 2 * self.base_del
 
         if self._duration is not None:
             dic.update(self._set_duration(self._duration, pul=pul))
@@ -647,10 +656,10 @@ class _EVROTP(_EVROUT):
             val = self._get_from_pvs(is_sp, 'Delay')
         if val is None:
             return dict()
-        return {'Delay': val * self._base_del}
+        return {'Delay': val * self.base_del, 'DelayRaw': val}
 
-    def _set_delay(self, value):
-        return {'Delay': round(value / self._base_del)}
+    def _set_delay(self, value, raw=False):
+        return {'Delay': int(value if raw else round(value / self.base_del))}
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
@@ -691,8 +700,8 @@ class _AMCFPGAEVRAMC(_EVROUT):
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)
 
-    def _set_delay(self, value):
-        return _EVROTP._set_delay(self, value)
+    def _set_delay(self, value, raw=False):
+        return _EVROTP._set_delay(self, value, raw=raw)
 
     def _define_convertion_prop2pv(self):
         map_ = super()._define_convertion_prop2pv()
