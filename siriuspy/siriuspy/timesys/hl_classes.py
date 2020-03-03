@@ -223,7 +223,11 @@ class HLTrigger(_BaseHL):
         """
         if value is None:
             return False
-        if prop_name.startswith('Delay'):
+        if prop_name.startswith('DelayRaw'):
+            self._update_delay(value * self._ll_objs[0].base_del)
+            value = (self._hldelay + self._hldeltadelay) / \
+                self._ll_objs[0].base_del
+        elif prop_name.startswith('Delay'):
             self._update_delay(value)
             value = self._hldelay + self._hldeltadelay
         elif prop_name.startswith('DeltaDelay'):
@@ -318,4 +322,5 @@ class HLTrigger(_BaseHL):
         return {
             'Status': self._combine_status,
             'DeltaDelay': self._combine_deltadelay,
-            'Delay': self._combine_delay}
+            'Delay': self._combine_delay,
+            'DelayRaw': self._combine_delay}

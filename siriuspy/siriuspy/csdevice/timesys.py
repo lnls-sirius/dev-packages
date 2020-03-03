@@ -549,6 +549,14 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
+    dic_ = {
+        'type': 'float', 'unit': 'hard', 'prec': 0,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+    dic_.update(trig_db.get('DelayRaw', dict()))
+    db['DelayRaw-RB'] = _dcopy(dic_)
+    db['DelayRaw-SP'] = dic_
+
     siz = len(ll_trig_names)
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'count': siz, 'value': _np.zeros(siz),
