@@ -536,11 +536,12 @@ class SOFB(_BaseClass):
             return
 
         # keep track of which dkicks were originally different from zero:
-        newkicks = [None, ] * len(dkicks)
+        newkicks = _np.array([None, ] * len(dkicks))
         for i, dkick in enumerate(dkicks):
             if not _compare_kicks(dkick, 0):
                 newkicks[i] = 0.0
-        idcs_to_process = _np.array(newkicks) != None
+        idcs_to_process = _np.array(
+            list(map(lambda x: x is not None, newkicks)))
         if not idcs_to_process.any():
             return newkicks
 
