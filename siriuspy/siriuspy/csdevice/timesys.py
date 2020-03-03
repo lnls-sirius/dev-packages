@@ -542,7 +542,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
 
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
             'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dic_.update(trig_db['Delay'])
