@@ -11,8 +11,6 @@ _mock_flag = True
 
 
 public_interface = (
-    'MAX_WFMSIZE',
-    'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
@@ -106,10 +104,6 @@ class TestPwrSupply(TestCase):
             self.m_PSSearch.get_splims.side_effect = get_splims
             self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
             self.m_PSSearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
-            _MASearch_patcher = mock.patch(
-                'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
-            self.addCleanup(_MASearch_patcher.stop)
-            self.m_MASearch = _MASearch_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -117,16 +111,28 @@ class TestPwrSupply(TestCase):
             pwrsupply, public_interface)
         self.assertTrue(valid)
 
-    def test_MAX_WFMSIZE(self):
-        """Test MAX_WFMSIZE."""
-        self.assertIsInstance(pwrsupply.MAX_WFMSIZE, int)
-        self.assertTrue(pwrsupply.MAX_WFMSIZE > 0)
+    def test_MAX_WFMSIZE_FBP(self):
+        """Test MAX_WFMSIZE_FBP."""
+        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_FBP, int)
+        self.assertTrue(pwrsupply.MAX_WFMSIZE_FBP > 0)
 
-    def test_DEF_WFMSIZE(self):
-        """Test DEF_WFMSIZE."""
-        self.assertIsInstance(pwrsupply.DEF_WFMSIZE, int)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE > 0)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE <= pwrsupply.MAX_WFMSIZE)
+    def test_DEF_WFMSIZE_FBP(self):
+        """Test DEF_WFMSIZE_FBP."""
+        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_FBP, int)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP > 0)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP <= pwrsupply.MAX_WFMSIZE_FBP)
+
+    def test_MAX_WFMSIZE_OTHERS(self):
+        """Test MAX_WFMSIZE_OTHERS."""
+        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_OTHERS, int)
+        self.assertTrue(pwrsupply.MAX_WFMSIZE_OTHERS > 0)
+
+    def test_DEF_WFMSIZE_OTHERS(self):
+        """Test DEF_WFMSIZE_OTHERS."""
+        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_OTHERS, int)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_OTHERS > 0)
+        self.assertTrue(
+            pwrsupply.DEF_WFMSIZE_OTHERS <= pwrsupply.MAX_WFMSIZE_OTHERS)
 
     def test_DEFAULT_SIGGEN_CONFIG(self):
         """Test DEFAULT_SIGGEN_CONFIG."""
