@@ -540,7 +540,7 @@ class SOFB(_BaseClass):
         for i, dkick in enumerate(dkicks):
             if not _compare_kicks(dkick, 0):
                 newkicks[i] = 0.0
-        idcs_to_process = _np.array(newkicks) is not None
+        idcs_to_process = _np.array(newkicks) != None
         if not idcs_to_process.any():
             return newkicks
 
