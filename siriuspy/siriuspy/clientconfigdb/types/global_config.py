@@ -250,7 +250,7 @@ _pvs_timing = [
     ['AS-RaMO:TI-EVG:TunSIMode-Sel', 0, 0.0],
 
     # Triggers
-    ['AS-Fam:TI-Scrn-TBBO:DelayRaw-SP', 0, 0],  # us
+    ['AS-Fam:TI-Scrn-TBBO:DelayRaw-SP', 0, 0],
     ['AS-Fam:TI-Scrn-TBBO:Duration-SP', 0, 0.0],  # us
     ['AS-Fam:TI-Scrn-TBBO:NrPulses-SP', 0, 0.0],
     ['AS-Fam:TI-Scrn-TBBO:Polarity-Sel', 0, 0.0],
@@ -260,7 +260,7 @@ _pvs_timing = [
     ['AS-Fam:TI-Scrn-TBBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Fam:TI-Scrn-TBBO:LowLvlLock-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-FCT:DelayRaw-SP', 0, 0],  # us
+    ['AS-Glob:TI-FCT:DelayRaw-SP', 0, 0],
     ['AS-Glob:TI-FCT:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FCT:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-FCT:Polarity-Sel', 0, 0.0],
@@ -270,7 +270,7 @@ _pvs_timing = [
     ['AS-Glob:TI-FCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Glob:TI-FCT:LowLvlLock-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-FillPtrnMon:DelayRaw-SP', 0, 0],  # us
+    ['AS-Glob:TI-FillPtrnMon:DelayRaw-SP', 0, 0],
     ['AS-Glob:TI-FillPtrnMon:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FillPtrnMon:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-FillPtrnMon:Polarity-Sel', 0, 0.0],
@@ -280,7 +280,7 @@ _pvs_timing = [
     ['AS-Glob:TI-FillPtrnMon:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Glob:TI-FillPtrnMon:LowLvlLock-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-Osc-EjeBO:DelayRaw-SP', 0, 0],  # us
+    ['AS-Glob:TI-Osc-EjeBO:DelayRaw-SP', 0, 0],
     ['AS-Glob:TI-Osc-EjeBO:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-EjeBO:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-Osc-EjeBO:Polarity-Sel', 0, 0.0],
@@ -290,7 +290,7 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-EjeBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Glob:TI-Osc-EjeBO:LowLvlLock-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-Osc-InjBO:DelayRaw-SP', 0, 0],  # us
+    ['AS-Glob:TI-Osc-InjBO:DelayRaw-SP', 0, 0],
     ['AS-Glob:TI-Osc-InjBO:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjBO:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-Osc-InjBO:Polarity-Sel', 0, 0.0],
@@ -299,7 +299,7 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-InjBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Glob:TI-Osc-InjBO:LowLvlLock-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-Osc-InjSI:DelayRaw-SP', 0, 0],  # us
+    ['AS-Glob:TI-Osc-InjSI:DelayRaw-SP', 0, 0],
     ['AS-Glob:TI-Osc-InjSI:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjSI:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-Osc-InjSI:Polarity-Sel', 0, 0.0],
@@ -308,7 +308,7 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-InjSI:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['AS-Glob:TI-Osc-InjSI:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:DelayRaw-SP', 0, 0],  # us
+    ['BO-01D:TI-InjKckr:DelayRaw-SP', 0, 0],
     ['BO-01D:TI-InjKckr:Duration-SP', 0, 0.0],  # us
     ['BO-01D:TI-InjKckr:NrPulses-SP', 0, 0.0],
     ['BO-01D:TI-InjKckr:Polarity-Sel', 0, 0.0],
@@ -317,7 +317,7 @@ _pvs_timing = [
     ['BO-01D:TI-InjKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-01D:TI-InjKckr:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-35D:TI-DCCT:DelayRaw-SP', 0, 0],  # us
+    ['BO-35D:TI-DCCT:DelayRaw-SP', 0, 0],
     ['BO-35D:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['BO-35D:TI-DCCT:NrPulses-SP', 0, 0.0],
     ['BO-35D:TI-DCCT:Polarity-Sel', 0, 0.0],
@@ -327,7 +327,7 @@ _pvs_timing = [
     ['BO-35D:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-35D:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-48D:TI-EjeKckr:DelayRaw-SP', 0, 0],  # us
+    ['BO-48D:TI-EjeKckr:DelayRaw-SP', 0, 0],
     ['BO-48D:TI-EjeKckr:Duration-SP', 0, 0.0],  # us
     ['BO-48D:TI-EjeKckr:NrPulses-SP', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Polarity-Sel', 0, 0.0],
@@ -337,7 +337,7 @@ _pvs_timing = [
     ['BO-48D:TI-EjeKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-48D:TI-EjeKckr:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-50U:TI-VLightCam:DelayRaw-SP', 0, 0],  # us
+    ['BO-50U:TI-VLightCam:DelayRaw-SP', 0, 0],
     ['BO-50U:TI-VLightCam:Duration-SP', 0, 0.0],  # us
     ['BO-50U:TI-VLightCam:NrPulses-SP', 0, 0.0],
     ['BO-50U:TI-VLightCam:Polarity-Sel', 0, 0.0],
@@ -347,7 +347,7 @@ _pvs_timing = [
     ['BO-50U:TI-VLightCam:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-50U:TI-VLightCam:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Fam:TI-BPM:DelayRaw-SP', 0, 0],  # us
+    ['BO-Fam:TI-BPM:DelayRaw-SP', 0, 0],
     ['BO-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['BO-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
     ['BO-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
@@ -356,7 +356,7 @@ _pvs_timing = [
     ['BO-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],  # us
+    ['BO-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
@@ -365,7 +365,7 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],  # us
+    ['BO-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
@@ -374,7 +374,7 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-LLRF-Rmp:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],  # us
+    ['BO-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-Mags-Corrs:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-Mags-Corrs:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
@@ -383,7 +383,7 @@ _pvs_timing = [
     ['BO-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-Mags-Fams:DelayRaw-SP', 0, 0],  # us
+    ['BO-Glob:TI-Mags-Fams:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-Mags-Fams:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-Mags-Fams:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-Mags-Fams:Polarity-Sel', 0, 0.0],
@@ -392,7 +392,7 @@ _pvs_timing = [
     ['BO-Glob:TI-Mags-Fams:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-Mags-Fams:LowLvlLock-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-TuneProc:DelayRaw-SP', 0, 0],  # us
+    ['BO-Glob:TI-TuneProc:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-TuneProc:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-TuneProc:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-TuneProc:Polarity-Sel', 0, 0.0],
@@ -402,7 +402,7 @@ _pvs_timing = [
     ['BO-Glob:TI-TuneProc:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-TuneProc:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-01:TI-Osc-Modltr:DelayRaw-SP', 0, 0],  # us
+    ['LI-01:TI-Osc-Modltr:DelayRaw-SP', 0, 0],
     ['LI-01:TI-Osc-Modltr:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-Osc-Modltr:NrPulses-SP', 0, 0.0],
     ['LI-01:TI-Osc-Modltr:Polarity-Sel', 0, 0.0],
@@ -411,7 +411,7 @@ _pvs_timing = [
     ['LI-01:TI-Osc-Modltr:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-Osc-Modltr:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-01:TI-EGun-MultBun:DelayRaw-SP', 0, 0],  # us
+    ['LI-01:TI-EGun-MultBun:DelayRaw-SP', 0, 0],
     ['LI-01:TI-EGun-MultBun:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-MultBun:NrPulses-SP', 0, 0.0],
     ['LI-01:TI-EGun-MultBun:Polarity-Sel', 0, 0.0],
@@ -421,7 +421,7 @@ _pvs_timing = [
     ['LI-01:TI-EGun-MultBun:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-EGun-MultBun:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-01:TI-EGun-SglBun:DelayRaw-SP', 0, 0],  # us
+    ['LI-01:TI-EGun-SglBun:DelayRaw-SP', 0, 0],
     ['LI-01:TI-EGun-SglBun:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-SglBun:NrPulses-SP', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:Polarity-Sel', 0, 0.0],
@@ -431,7 +431,7 @@ _pvs_timing = [
     ['LI-01:TI-EGun-SglBun:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-EGun-SglBun:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-01:TI-Modltr-1:DelayRaw-SP', 0, 0],  # us
+    ['LI-01:TI-Modltr-1:DelayRaw-SP', 0, 0],
     ['LI-01:TI-Modltr-1:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-1:NrPulses-SP', 0, 0.0],
     ['LI-01:TI-Modltr-1:Polarity-Sel', 0, 0.0],
@@ -440,7 +440,7 @@ _pvs_timing = [
     ['LI-01:TI-Modltr-1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-Modltr-1:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-01:TI-Modltr-2:DelayRaw-SP', 0, 0],  # us
+    ['LI-01:TI-Modltr-2:DelayRaw-SP', 0, 0],
     ['LI-01:TI-Modltr-2:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-2:NrPulses-SP', 0, 0.0],
     ['LI-01:TI-Modltr-2:Polarity-Sel', 0, 0.0],
@@ -449,7 +449,7 @@ _pvs_timing = [
     ['LI-01:TI-Modltr-2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-Modltr-2:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-BPM:DelayRaw-SP', 0, 0],  # us
+    ['LI-Fam:TI-BPM:DelayRaw-SP', 0, 0],
     ['LI-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
     ['LI-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
@@ -459,7 +459,7 @@ _pvs_timing = [
     ['LI-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-ICT:DelayRaw-SP', 0, 0],  # us
+    ['LI-Fam:TI-ICT:DelayRaw-SP', 0, 0],
     ['LI-Fam:TI-ICT:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-ICT:NrPulses-SP', 0, 0.0],
     ['LI-Fam:TI-ICT:Polarity-Sel', 0, 0.0],
@@ -469,7 +469,7 @@ _pvs_timing = [
     ['LI-Fam:TI-ICT:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Fam:TI-ICT:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-Scrn:DelayRaw-SP', 0, 0],  # us
+    ['LI-Fam:TI-Scrn:DelayRaw-SP', 0, 0],
     ['LI-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
     ['LI-Fam:TI-Scrn:Polarity-Sel', 0, 0.0],
@@ -479,7 +479,7 @@ _pvs_timing = [
     ['LI-Fam:TI-Scrn:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Fam:TI-Scrn:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-Kly1:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-LLRF-Kly1:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-LLRF-Kly1:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly1:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly1:Polarity-Sel', 0, 0.0],
@@ -488,7 +488,7 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-Kly1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-LLRF-Kly1:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-Kly2:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-LLRF-Kly2:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-LLRF-Kly2:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly2:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly2:Polarity-Sel', 0, 0.0],
@@ -497,7 +497,7 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-Kly2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-LLRF-Kly2:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-SHB:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-LLRF-SHB:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-LLRF-SHB:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-SHB:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-LLRF-SHB:Polarity-Sel', 0, 0.0],
@@ -506,7 +506,7 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-SHB:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-LLRF-SHB:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-Kly1:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-SSAmp-Kly1:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-SSAmp-Kly1:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly1:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:Polarity-Sel', 0, 0.0],
@@ -515,7 +515,7 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-Kly1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-Kly2:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-SSAmp-Kly2:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-SSAmp-Kly2:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly2:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:Polarity-Sel', 0, 0.0],
@@ -524,7 +524,7 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-Kly2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:LowLvlLock-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-SHB:DelayRaw-SP', 0, 0],  # us
+    ['LI-Glob:TI-SSAmp-SHB:DelayRaw-SP', 0, 0],
     ['LI-Glob:TI-SSAmp-SHB:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-SHB:NrPulses-SP', 0, 0.0],
     ['LI-Glob:TI-SSAmp-SHB:Polarity-Sel', 0, 0.0],
@@ -533,7 +533,7 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-SHB:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-Glob:TI-SSAmp-SHB:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-InjDpKckr:DelayRaw-SP', 0, 0],  # us
+    ['SI-01SA:TI-InjDpKckr:DelayRaw-SP', 0, 0],
     ['SI-01SA:TI-InjDpKckr:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjDpKckr:NrPulses-SP', 0, 0.0],
     ['SI-01SA:TI-InjDpKckr:Polarity-Sel', 0, 0.0],
@@ -542,7 +542,7 @@ _pvs_timing = [
     ['SI-01SA:TI-InjDpKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-01SA:TI-InjDpKckr:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-InjNLKckr:DelayRaw-SP', 0, 0],  # us
+    ['SI-01SA:TI-InjNLKckr:DelayRaw-SP', 0, 0],
     ['SI-01SA:TI-InjNLKckr:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjNLKckr:NrPulses-SP', 0, 0.0],
     ['SI-01SA:TI-InjNLKckr:Polarity-Sel', 0, 0.0],
@@ -551,7 +551,7 @@ _pvs_timing = [
     ['SI-01SA:TI-InjNLKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-01SA:TI-InjNLKckr:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-PingH:DelayRaw-SP', 0, 0],  # us
+    ['SI-01SA:TI-PingH:DelayRaw-SP', 0, 0],
     ['SI-01SA:TI-PingH:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-PingH:NrPulses-SP', 0, 0.0],
     ['SI-01SA:TI-PingH:Polarity-Sel', 0, 0.0],
@@ -560,7 +560,7 @@ _pvs_timing = [
     ['SI-01SA:TI-PingH:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-01SA:TI-PingH:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-13C4:TI-DCCT:DelayRaw-SP', 0, 0],  # us
+    ['SI-13C4:TI-DCCT:DelayRaw-SP', 0, 0],
     ['SI-13C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['SI-13C4:TI-DCCT:NrPulses-SP', 0, 0.0],
     ['SI-13C4:TI-DCCT:Polarity-Sel', 0, 0.0],
@@ -570,7 +570,7 @@ _pvs_timing = [
     ['SI-13C4:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-13C4:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-14C4:TI-DCCT:DelayRaw-SP', 0, 0],  # us
+    ['SI-14C4:TI-DCCT:DelayRaw-SP', 0, 0],
     ['SI-14C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['SI-14C4:TI-DCCT:NrPulses-SP', 0, 0.0],
     ['SI-14C4:TI-DCCT:Polarity-Sel', 0, 0.0],
@@ -580,7 +580,7 @@ _pvs_timing = [
     ['SI-14C4:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-14C4:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-19C4:TI-PingV:DelayRaw-SP', 0, 0],  # us
+    ['SI-19C4:TI-PingV:DelayRaw-SP', 0, 0],
     ['SI-19C4:TI-PingV:Duration-SP', 0, 0.0],  # us
     ['SI-19C4:TI-PingV:NrPulses-SP', 0, 0.0],
     ['SI-19C4:TI-PingV:Polarity-Sel', 0, 0.0],
@@ -590,7 +590,7 @@ _pvs_timing = [
     ['SI-19C4:TI-PingV:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-19C4:TI-PingV:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Fam:TI-BPM:DelayRaw-SP', 0, 0],  # us
+    ['SI-Fam:TI-BPM:DelayRaw-SP', 0, 0],
     ['SI-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['SI-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
     ['SI-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
@@ -599,7 +599,7 @@ _pvs_timing = [
     ['SI-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Fid:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcH-Fid:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Fid:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:Polarity-Sel', 0, 0.0],
@@ -609,7 +609,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Trig1:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig1:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcH-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig1:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:Polarity-Sel', 0, 0.0],
@@ -618,7 +618,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Trig2:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig2:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcH-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig2:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:Polarity-Sel', 0, 0.0],
@@ -627,7 +627,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Fid:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcL-Fid:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcL-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Fid:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:Polarity-Sel', 0, 0.0],
@@ -637,7 +637,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Trig1:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig1:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcL-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig1:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:Polarity-Sel', 0, 0.0],
@@ -646,7 +646,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Trig2:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig2:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcL-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig2:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:Polarity-Sel', 0, 0.0],
@@ -655,7 +655,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Fid:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcV-Fid:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcV-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Fid:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:Polarity-Sel', 0, 0.0],
@@ -665,7 +665,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcV-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Trig1:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig1:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcV-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig1:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:Polarity-Sel', 0, 0.0],
@@ -674,7 +674,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcV-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Trig2:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig2:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcV-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig2:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:Polarity-Sel', 0, 0.0],
@@ -683,7 +683,7 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcV-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
@@ -692,7 +692,7 @@ _pvs_timing = [
     ['SI-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
@@ -701,7 +701,7 @@ _pvs_timing = [
     ['SI-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-LLRF-Rmp:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-Bends:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-Bends:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-Bends:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Bends:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-Bends:Polarity-Sel', 0, 0.0],
@@ -710,7 +710,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Bends:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Bends:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-Corrs:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Corrs:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
@@ -719,7 +719,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-Quads:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-Quads:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-Quads:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Quads:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-Quads:Polarity-Sel', 0, 0.0],
@@ -728,7 +728,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Quads:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Quads:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-QTrims:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-QTrims:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-QTrims:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-QTrims:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-QTrims:Polarity-Sel', 0, 0.0],
@@ -737,7 +737,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-QTrims:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-QTrims:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-Sexts:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-Sexts:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-Sexts:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Sexts:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-Sexts:Polarity-Sel', 0, 0.0],
@@ -746,7 +746,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Sexts:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Sexts:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Mags-Skews:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-Mags-Skews:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-Mags-Skews:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Mags-Skews:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-Mags-Skews:Polarity-Sel', 0, 0.0],
@@ -755,7 +755,7 @@ _pvs_timing = [
     ['SI-Glob:TI-Mags-Skews:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Skews:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
@@ -765,7 +765,7 @@ _pvs_timing = [
     ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],  # us
+    ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
@@ -775,7 +775,7 @@ _pvs_timing = [
     ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
 
-    ['TB-04:TI-InjSept:DelayRaw-SP', 0, 0],  # us
+    ['TB-04:TI-InjSept:DelayRaw-SP', 0, 0],
     ['TB-04:TI-InjSept:Duration-SP', 0, 0.0],  # us
     ['TB-04:TI-InjSept:NrPulses-SP', 0, 0.0],
     ['TB-04:TI-InjSept:Polarity-Sel', 0, 0.0],
@@ -784,7 +784,7 @@ _pvs_timing = [
     ['TB-04:TI-InjSept:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TB-04:TI-InjSept:LowLvlLock-Sel', 0, 0.0],
 
-    ['TB-Fam:TI-BPM:DelayRaw-SP', 0, 0],  # us
+    ['TB-Fam:TI-BPM:DelayRaw-SP', 0, 0],
     ['TB-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['TB-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
     ['TB-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
@@ -793,7 +793,7 @@ _pvs_timing = [
     ['TB-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TB-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['TB-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],  # us
+    ['TB-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],
     ['TB-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
     ['TB-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
@@ -802,7 +802,7 @@ _pvs_timing = [
     ['TB-Fam:TI-ICT-Digit:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TB-Fam:TI-ICT-Digit:LowLvlLock-Sel', 0, 0.0],
 
-    ['TB-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],  # us
+    ['TB-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],
     ['TB-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
     ['TB-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
@@ -811,7 +811,7 @@ _pvs_timing = [
     ['TB-Fam:TI-ICT-Integ:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TB-Fam:TI-ICT-Integ:LowLvlLock-Sel', 0, 0.0],
 
-    ['TB-Glob:TI-Mags:DelayRaw-SP', 0, 0],  # us
+    ['TB-Glob:TI-Mags:DelayRaw-SP', 0, 0],
     ['TB-Glob:TI-Mags:Duration-SP', 0, 0.0],  # us
     ['TB-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
     ['TB-Glob:TI-Mags:Polarity-Sel', 0, 0.0],
@@ -820,7 +820,7 @@ _pvs_timing = [
     ['TB-Glob:TI-Mags:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TB-Glob:TI-Mags:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-01:TI-EjeSeptF:DelayRaw-SP', 0, 0],  # us
+    ['TS-01:TI-EjeSeptF:DelayRaw-SP', 0, 0],
     ['TS-01:TI-EjeSeptF:Duration-SP', 0, 0.0],  # us
     ['TS-01:TI-EjeSeptF:NrPulses-SP', 0, 0.0],
     ['TS-01:TI-EjeSeptF:Polarity-Sel', 0, 0.0],
@@ -830,7 +830,7 @@ _pvs_timing = [
     ['TS-01:TI-EjeSeptF:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-01:TI-EjeSeptF:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-01:TI-EjeSeptG:DelayRaw-SP', 0, 0],  # us
+    ['TS-01:TI-EjeSeptG:DelayRaw-SP', 0, 0],
     ['TS-01:TI-EjeSeptG:Duration-SP', 0, 0.0],  # us
     ['TS-01:TI-EjeSeptG:NrPulses-SP', 0, 0.0],
     ['TS-01:TI-EjeSeptG:Polarity-Sel', 0, 0.0],
@@ -840,7 +840,7 @@ _pvs_timing = [
     ['TS-01:TI-EjeSeptG:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-01:TI-EjeSeptG:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-04:TI-InjSeptF:DelayRaw-SP', 0, 0],  # us
+    ['TS-04:TI-InjSeptF:DelayRaw-SP', 0, 0],
     ['TS-04:TI-InjSeptF:Duration-SP', 0, 0.0],  # us
     ['TS-04:TI-InjSeptF:NrPulses-SP', 0, 0.0],
     ['TS-04:TI-InjSeptF:Polarity-Sel', 0, 0.0],
@@ -849,7 +849,7 @@ _pvs_timing = [
     ['TS-04:TI-InjSeptF:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-04:TI-InjSeptF:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-04:TI-InjSeptG-1:DelayRaw-SP', 0, 0],  # us
+    ['TS-04:TI-InjSeptG-1:DelayRaw-SP', 0, 0],
     ['TS-04:TI-InjSeptG-1:Duration-SP', 0, 0.0],  # us
     ['TS-04:TI-InjSeptG-1:NrPulses-SP', 0, 0.0],
     ['TS-04:TI-InjSeptG-1:Polarity-Sel', 0, 0.0],
@@ -858,7 +858,7 @@ _pvs_timing = [
     ['TS-04:TI-InjSeptG-1:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-04:TI-InjSeptG-1:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-04:TI-InjSeptG-2:DelayRaw-SP', 0, 0],  # us
+    ['TS-04:TI-InjSeptG-2:DelayRaw-SP', 0, 0],
     ['TS-04:TI-InjSeptG-2:Duration-SP', 0, 0.0],  # us
     ['TS-04:TI-InjSeptG-2:NrPulses-SP', 0, 0.0],
     ['TS-04:TI-InjSeptG-2:Polarity-Sel', 0, 0.0],
@@ -867,7 +867,7 @@ _pvs_timing = [
     ['TS-04:TI-InjSeptG-2:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-04:TI-InjSeptG-2:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-BPM:DelayRaw-SP', 0, 0],  # us
+    ['TS-Fam:TI-BPM:DelayRaw-SP', 0, 0],
     ['TS-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
     ['TS-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
@@ -876,7 +876,7 @@ _pvs_timing = [
     ['TS-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],  # us
+    ['TS-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],
     ['TS-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
     ['TS-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
@@ -885,7 +885,7 @@ _pvs_timing = [
     ['TS-Fam:TI-ICT-Digit:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-Fam:TI-ICT-Digit:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],  # us
+    ['TS-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],
     ['TS-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
     ['TS-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
@@ -894,7 +894,7 @@ _pvs_timing = [
     ['TS-Fam:TI-ICT-Integ:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-Fam:TI-ICT-Integ:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-Scrn:DelayRaw-SP', 0, 0],  # us
+    ['TS-Fam:TI-Scrn:DelayRaw-SP', 0, 0],
     ['TS-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
     ['TS-Fam:TI-Scrn:Polarity-Sel', 0, 0.0],
@@ -904,7 +904,7 @@ _pvs_timing = [
     ['TS-Fam:TI-Scrn:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['TS-Fam:TI-Scrn:LowLvlLock-Sel', 0, 0.0],
 
-    ['TS-Glob:TI-Mags:DelayRaw-SP', 0, 0],  # us
+    ['TS-Glob:TI-Mags:DelayRaw-SP', 0, 0],
     ['TS-Glob:TI-Mags:Duration-SP', 0, 0.0],  # us
     ['TS-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
     ['TS-Glob:TI-Mags:Polarity-Sel', 0, 0.0],
