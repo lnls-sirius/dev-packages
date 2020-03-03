@@ -1,18 +1,11 @@
 """Power Supply Control System Devices."""
 
-import copy as _copy
 import numpy as _np
 
 # from pcaspy import Severity as _Severity
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice import util as _cutil
-
-# --- WfmData ---
-# TODO: delete these deprecated parameters from packages
-MAX_WFMSIZE = 4000
-DEF_WFMSIZE = 3920
 
 # --- Wfm ---
 # NOTE: _SIZE has to be consistent with
@@ -417,7 +410,7 @@ def get_ps_current_unit():
     return _DEFAULT_PS_CURRENT_UNIT
 
 
-def get_common_propty_database():
+def get_ps_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
@@ -455,9 +448,9 @@ def get_common_propty_database():
     return dbase
 
 
-def get_basic_propty_database():
+def get_ps_basic_propty_database():
     """Return database entries to all power-supply-like devices."""
-    dbase = get_common_propty_database()
+    dbase = get_ps_common_propty_database()
     dbase.update({
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': DEFAULT_PS_CURRENT_PRECISION},
@@ -600,20 +593,16 @@ def get_basic_propty_database():
     return dbase
 
 
-def get_common_pu_propty_database():
-    """Return database of common to all pulsed pwrsupply PVs."""
+def get_pu_septum_propty_database():
+    """Return database of common to all septa pulsed pwrsupply PVs."""
     # S TB-04:PU-InjSept
     # S TS-01:PU-EjeSeptF
     # S TS-01:PU-EjeSeptG
     # S TS-04:PU-InjSeptG-1
     # S TS-04:PU-InjSeptG-2
     # S TS-04:PU-InjSeptF
-    # K BO-01D:PU-InjKckr
-    # K BO-48D:PU-EjeKckr
-    # K SI-01SA:PU-InjDpKckr
-    # P SI-19C4:PU-PingV
     dbase = {
-        'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        # 'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon': {'type': 'enum', 'enums': _et.INTERFACE,
                          'value': Const.Interface.Remote},
         'PwrState-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
@@ -638,7 +627,6 @@ def get_common_pu_propty_database():
         'Intlk5-Mon': {'type': 'int', 'value': 0},
         'Intlk6-Mon': {'type': 'int', 'value': 0},
         'Intlk7-Mon': {'type': 'int', 'value': 0},
-        'Intlk8-Mon': {'type': 'int', 'value': 0},
         'Intlk1Label-Cte': {'type': 'str', 'value': 'Switch module'},
         'Intlk2Label-Cte': {'type': 'str', 'value': 'AC CPFL OFF'},
         'Intlk3Label-Cte': {'type': 'str', 'value': 'Temperature'},
@@ -646,24 +634,27 @@ def get_common_pu_propty_database():
         'Intlk5Label-Cte': {'type': 'str', 'value': 'HVPS Overcurrent'},
         'Intlk6Label-Cte': {'type': 'str', 'value': 'HVPS Overvoltage'},
         'Intlk7Label-Cte': {'type': 'str', 'value': 'External'},
-        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     }
     return dbase
 
 
-def get_common_pu_SI_InjKicker_propty_database():
-    """Return database of SI injection kicker."""
-    # K SI-01SA:PU-InjNLKckr
-    dbase = get_common_pu_propty_database()
-    # 'Comissioning': On-Axis magnet
-    # 'Accumulation': Non-linear kicker
+def get_conv_propty_database(pstype):
+    """Return strength database definition for a power supply type."""
+    dbase = dict()
+    dbase = _insert_strengths(dbase, pstype)
+    return dbase
+
+
+def get_pu_common_propty_database():
+    """Return database of common to all pulsed pwrsupply PVs."""
+    # K BO-01D:PU-InjKckr
+    # K BO-48D:PU-EjeKckr
+    # K SI-01SA:PU-InjDpKckr
+    # P SI-19C4:PU-PingV
+    dbase = get_pu_septum_propty_database()
     dbase.update({
-        'OpMode-Sel': {'type': 'enum',
-                       'enums': ['Comissioning', 'Accumulation'],
-                       'value': 0},
-        'OpMode-Sts': {'type': 'enum',
-                       'enums': ['Comissioning', 'Accumulation'],
-                       'value': 0},
+        'Intlk8-Mon': {'type': 'int', 'value': 0},
+        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     })
     return dbase
 
@@ -674,109 +665,9 @@ def get_ps_propty_database(psmodel, pstype):
     database = _insert_strengths(database, pstype)
     _set_limits(pstype, database)
     # add pvs list
-    database = _cutil.add_pvslist_cte(database)
+    if not psmodel.startswith('FP_'):
+        database = _cutil.add_pvslist_cte(database)
     return database
-
-
-def get_pu_propty_database(pstype):
-    """Return database definition for a pulsed power supply type."""
-    database = get_common_pu_propty_database()
-    signals_lims = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
-    signals_unit = signals_lims
-    for propty, dbase in database.items():
-        # set setpoint limits in database
-        if propty in signals_lims:
-            dbase['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
-            dbase['low'] = _PSSearch.get_splims(pstype, 'low')
-            dbase['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
-            dbase['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
-            dbase['high'] = _PSSearch.get_splims(pstype, 'high')
-            dbase['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
-        # define unit of current
-        if propty in signals_unit:
-            dbase['unit'] = get_ps_current_unit()
-    # add pvs list
-    database = _cutil.add_pvslist_cte(database)
-    return database
-
-
-def get_conv_propty_database(pstype):
-    """Return strength database definition for a power supply type."""
-    dbase = dict()
-    dbase = _insert_strengths(dbase, pstype)
-    return dbase
-
-
-def get_li_ma_propty_database(maname):
-    """Return property database of a magnet type device."""
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    database = _get_ps_LINAC_propty_database()
-    dbase = {}
-    dbase[psnames[0]] = database
-    return dbase
-
-
-def get_pm_propty_database(maname):
-    """Return property database of a pulsed magnet type device."""
-    if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
-        database = get_common_pu_SI_InjKicker_propty_database()
-    else:
-        database = get_common_pu_propty_database()
-
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
-    current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
-    unit = _MASearch.get_splims_unit(psmodel=psmodel)
-    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
-    dbase = {}
-    for psname, magfunc in magfunc_dict.items():
-        dbase[psname] = _copy.deepcopy(database)
-        # set appropriate PS limits and unit
-        for field in ('-SP', '-RB', '-Mon'):
-            dbase[psname]['Voltage' + field]['lolo'] = \
-                _MASearch.get_splims(maname, 'lolo')
-            dbase[psname]['Voltage' + field]['low'] = \
-                _MASearch.get_splims(maname, 'low')
-            dbase[psname]['Voltage' + field]['lolim'] = \
-                _MASearch.get_splims(maname, 'lolim')
-            dbase[psname]['Voltage' + field]['hilim'] = \
-                _MASearch.get_splims(maname, 'hilim')
-            dbase[psname]['Voltage' + field]['high'] = \
-                _MASearch.get_splims(maname, 'high')
-            dbase[psname]['Voltage' + field]['hihi'] = \
-                _MASearch.get_splims(maname, 'hihi')
-        for propty in current_alarm:
-            dbase[psname][propty]['unit'] = unit[0]
-        # set approriate MA limits and unit
-        if magfunc in ('corrector-vertical', 'corrector-horizontal'):
-            dbase[psname]['Kick-SP'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-SP'])
-            dbase[psname]['Kick-SP']['unit'] = 'mrad'
-            dbase[psname]['Kick-RB'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-RB'])
-            dbase[psname]['Kick-RB']['unit'] = 'mrad'
-            dbase[psname]['Kick-Mon'] = \
-                _copy.deepcopy(dbase[psname]['Voltage-Mon'])
-            dbase[psname]['Kick-Mon']['unit'] = 'mrad'
-
-            for field in ('-SP', '-RB', '-Mon'):
-                dbase[psname]['Kick' + field]['lolo'] = 0.0
-                dbase[psname]['Kick' + field]['low'] = 0.0
-                dbase[psname]['Kick' + field]['lolim'] = 0.0
-                dbase[psname]['Kick' + field]['hilim'] = 0.0
-                dbase[psname]['Kick' + field]['high'] = 0.0
-                dbase[psname]['Kick' + field]['hihi'] = 0.0
-        else:
-            raise ValueError('Invalid pulsed magnet power supply type!')
-
-        # add PSConnStatus
-        dbase[psname]['PSConnStatus-Mon'] = {
-            'type': 'enum', 'enums': _et.DISCONN_CONN,
-                            'value': Const.DisconnConn.Disconnected}
-        # add pvs list
-        dbase[psname] = _cutil.add_pvslist_cte(dbase[psname])
-
-    return dbase
 
 
 # --- Auxiliary functions ---
@@ -784,17 +675,17 @@ def get_pm_propty_database(maname):
 
 def _get_pu_FP_SEPT_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_pu_septum_propty_database()
 
 
 def _get_pu_FP_KCKR_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_pu_common_propty_database()
 
 
 def _get_pu_FP_PINGER_propty_database():
     """."""
-    return get_common_pu_propty_database()
+    return get_pu_common_propty_database()
 
 
 def _get_ps_LINAC_propty_database():
@@ -875,7 +766,7 @@ def _get_ps_LINAC_propty_database():
 
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FBP),
@@ -901,7 +792,7 @@ def _get_ps_FBP_propty_database():
 
 def _get_ps_FBP_DCLink_propty_database():
     """Return database with FBP_DCLink pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
@@ -932,7 +823,7 @@ def _get_ps_FBP_DCLink_propty_database():
 
 def _get_ps_FAC_DCDC_propty_database():
     """Return database with FAC_DCDC pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_DCDC),
@@ -964,7 +855,7 @@ def _get_ps_FAC_DCDC_propty_database():
 
 def _get_ps_FAC_2S_DCDC_propty_database():
     """Return database with FAC_2S_DCDC pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
@@ -1020,7 +911,7 @@ def _get_ps_FAC_2S_DCDC_propty_database():
 
 def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1181,7 +1072,7 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
 
 def _get_ps_FAC_2S_ACDC_propty_database():
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
@@ -1223,7 +1114,7 @@ def _get_ps_FAC_2S_ACDC_propty_database():
 
 def _get_ps_FAC_2P4S_ACDC_propty_database():
     """Return database with FAC_2P4S_ACDC pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_ps_common_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
@@ -1286,7 +1177,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
 
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1320,7 +1211,7 @@ def _get_ps_FAP_propty_database():
 
 def _get_ps_FAP_4P_propty_database():
     """Return database with FAP_4P pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
@@ -1407,7 +1298,7 @@ def _get_ps_FAP_4P_propty_database():
 
 def _get_ps_FAP_2P2S_propty_database():
     """Return database with FAP_2P2S pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_ps_basic_propty_database()
     db_ps = {
         'Current1-Mon': {'type': 'float',  'value': 0.0,
                          'prec': DEFAULT_PS_CURRENT_PRECISION,
