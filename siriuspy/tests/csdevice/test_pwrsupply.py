@@ -140,15 +140,15 @@ class TestPwrSupply(TestCase):
         self.assertEqual(unit[0], 'A')
         self.assertEqual(unit[1], 'Ampere')
 
-    def test_basic_propty_database(self):
-        """Test common_propty_database."""
+    def test_ps_basic_propty_database(self):
+        """Test ps_basic_propty_database."""
         db = pwrsupply.get_ps_basic_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
-    def test_common_propty_database(self):
-        """Test common_propty_database."""
+    def test_ps_common_propty_database(self):
+        """Test ps_common_propty_database."""
         db = pwrsupply.get_ps_common_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
