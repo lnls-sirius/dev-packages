@@ -558,10 +558,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['DelayRaw-SP'] = dic_
 
     siz = len(ll_trig_names)
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
             'count': siz, 'value': _np.zeros(siz),
-            'lolo': -500000, 'low': -1000000, 'lolim': -10000000,
-            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+            'lolo': -5e8, 'low': -10e8, 'lolim': -10e8,
+            'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     db['DeltaDelay-RB'] = _dcopy(dic_)
     db['DeltaDelay-SP'] = dic_
 
