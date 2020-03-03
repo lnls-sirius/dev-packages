@@ -49,6 +49,10 @@ class _BaseLL(_Callback):
         self._config_ok_values = dict()
         self._base_freq = _RFFREQ / _RFDIV
 
+        self._writepvs = dict()
+        self._readpvs = dict()
+        self._locked = False
+
         evg_name = _LLTimeSearch.get_evg_name()
         self._base_freq_pv = _PV(
             LL_PREFIX + evg_name + ':FPGAClk-Cte',
@@ -56,9 +60,6 @@ class _BaseLL(_Callback):
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
-        self._writepvs = dict()
-        self._readpvs = dict()
-        self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
@@ -90,6 +91,7 @@ class _BaseLL(_Callback):
     @property
     def connected(self):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
+        pvs += [self._base_freq_pv, ]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -162,6 +164,13 @@ class _BaseLL(_Callback):
                                 timeout=_conn_timeout) or self._base_freq
         self.base_del = 1 / self._base_freq / _US2SEC
         self._rf_del = self.base_del / 5
+        # Trigger update of Delay and Duration PVs.
+        for pv in self._writepvs.values():
+            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
+                self._on_change_pv_thread(pv.pvname, pv.value)
+        for pv in self._readpvs.values():
+            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
+                self._on_change_pv_thread(pv.pvname, pv.value)
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
