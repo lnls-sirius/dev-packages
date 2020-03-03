@@ -1,18 +1,11 @@
 """Power Supply Control System Devices."""
 
-import copy as _copy
 import numpy as _np
 
 # from pcaspy import Severity as _Severity
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice import util as _cutil
-
-# --- WfmData ---
-# TODO: delete these deprecated parameters from packages
-MAX_WFMSIZE = 4000
-DEF_WFMSIZE = 3920
 
 # --- Wfm ---
 # NOTE: _SIZE has to be consistent with
@@ -645,6 +638,13 @@ def get_pu_septum_propty_database():
     return dbase
 
 
+def get_conv_propty_database(pstype):
+    """Return strength database definition for a power supply type."""
+    dbase = dict()
+    dbase = _insert_strengths(dbase, pstype)
+    return dbase
+
+
 def get_pu_common_propty_database():
     """Return database of common to all pulsed pwrsupply PVs."""
     # K BO-01D:PU-InjKckr
@@ -668,13 +668,6 @@ def get_ps_propty_database(psmodel, pstype):
     if not psmodel.startswith('FP_'):
         database = _cutil.add_pvslist_cte(database)
     return database
-
-
-def get_conv_propty_database(pstype):
-    """Return strength database definition for a power supply type."""
-    dbase = dict()
-    dbase = _insert_strengths(dbase, pstype)
-    return dbase
 
 
 # --- Auxiliary functions ---
