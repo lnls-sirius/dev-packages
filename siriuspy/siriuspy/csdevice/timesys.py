@@ -523,9 +523,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Src-Sts'] = _dcopy(dic_)
     db['Src-Sel'] = dic_
 
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
-            'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
-            'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+    dic_ = {
+        'type': 'float', 'unit': 'us', 'prec': 3,
+        'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
+        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dic_.update(trig_db['Duration'])
     db['Duration-RB'] = _dcopy(dic_)
     db['Duration-SP'] = dic_
@@ -535,22 +536,24 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Polarity-Sts'] = _dcopy(dic_)
     db['Polarity-Sel'] = dic_
 
-    dic_ = {'type': 'int', 'unit': 'numer of pulses',
-            # 'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 100000, 'high': 100000, 'hihi': 100000}
+    dic_ = {
+        'type': 'int', 'unit': 'numer of pulses',
+        # 'lolo': 1, 'low': 1, 'lolim': 1,
+        'hilim': 100000, 'high': 100000, 'hihi': 100000}
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
 
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+    dic_ = {
+        'type': 'float', 'unit': 'us', 'prec': 3,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dic_.update(trig_db['Delay'])
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'hard', 'prec': 0,
+        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
     dic_.update(trig_db.get('DelayRaw', dict()))
@@ -558,10 +561,12 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['DelayRaw-SP'] = dic_
 
     siz = len(ll_trig_names)
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
-            'count': siz, 'value': _np.zeros(siz),
-            'lolo': -5e8, 'low': -10e8, 'lolim': -10e8,
-            'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+    dic_ = {
+        'type': 'float', 'unit': 'us', 'prec': 3,
+        'count': siz, 'value': _np.zeros(siz),
+        'lolo': -5e8, 'low': -10e8, 'lolim': -10e8,
+        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+    dic_.update(trig_db.get('DeltaDelay', dict()))
     db['DeltaDelay-RB'] = _dcopy(dic_)
     db['DeltaDelay-SP'] = dic_
 
