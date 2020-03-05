@@ -54,7 +54,7 @@ class SOFB(_Device):
             self._set_attributes_properties()
 
         # call base class constructor
-        super().__init__(self._devname, properties=properties)
+        super().__init__(devname, properties=properties)
 
         # shortcut attributes to property names
         self._trajx = self._orbtp + 'OrbX-Mon'
