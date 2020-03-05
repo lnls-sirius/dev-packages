@@ -8,7 +8,7 @@ from .ict import ICT, TranspEff
 from .kicker import Kicker
 from .li_llrf import LiLLRF
 from .pwrsupply import PowerSupply
-from .rf import RF
+from .rf import RFGen, RFLL, RFPowMon, RFCav
 from .screen import Screen
 from .septum import Septum
 from .situne import SITune
