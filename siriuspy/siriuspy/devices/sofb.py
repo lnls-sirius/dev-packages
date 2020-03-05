@@ -27,16 +27,22 @@ class SOFB(_Device):
         'BPMXEnblList-RB', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CVEnblList-SP',
         'CHEnblList-RB', 'CVEnblList-RB',
+        'RFEnbl-Sel', 'RFEnbl-Sts'
         'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
+        'ClosedLoop-Sts', 'ClosedLoop-Sel'
         # ring-type dependent properties
         '<ORBTP>' + 'Sum-Mon',
         '<ORBTP>' + 'OrbX-Mon', '<ORBTP>' + 'OrbY-Mon',
         # properties used only for ring-type accelerators:
         '<ORBTP>' + 'Idx' + 'OrbX-Mon', '<ORBTP>' + 'Idx' + 'OrbY-Mon')
+
+    _default_timeout = 10  # [s]
+    _ON = 1
+    _OFF = 0
 
     def __init__(self, devname):
         """."""
@@ -216,6 +222,16 @@ class SOFB(_Device):
         self['CVEnblList-SP'] = value
 
     @property
+    def rfenbl(self):
+        """."""
+        return self['RFEnbl-Sts']
+
+    @rfenbl.setter
+    def rfenbl(self, value):
+        """."""
+        self['RFEnbl-Sel'] = value
+
+    @property
     def buffer_count(self):
         """."""
         return self['BufferCount-Mon']
@@ -240,22 +256,42 @@ class SOFB(_Device):
         """."""
         self['TrigNrSamplesPost-SP'] = int(value)
 
-    def reset(self):
+    def cmd_reset(self):
         """."""
-        self['SmoothReset-Cmd'] = 1
+        self['SmoothReset-Cmd'] = SOFB._ON
 
-    def calccorr(self):
+    def cmd_calccorr(self):
         """."""
-        self['CalcDelta-Cmd'] = 1
+        self['CalcDelta-Cmd'] = SOFB._ON
 
-    def applycorr(self):
+    def cmd_applycorr(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
         _time.sleep(0.3)
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
 
-    def wait(self, timeout=10):
+    @property
+    def autocorrsts(self):
         """."""
+        return self['ClosedLoop-Sts']
+
+    def cmd_autocorr_turn_on(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        self['ClosedLoop-Sel'] = SOFB._ON
+        self._wait(
+            'ClosedLoop-Sts', SOFB._ON, timeout=timeout)
+
+    def cmd_autocorr_turn_off(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        self['ClosedLoop-Sel'] = SOFB._OFF
+        self._wait(
+            'ClosedLoop-Sts', SOFB._OFF, timeout=timeout)
+
+    def wait_buffer(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
         interval = 0.050  # [s]
         ntrials = int(timeout/interval)
         _time.sleep(10*interval)
