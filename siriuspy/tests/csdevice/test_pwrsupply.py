@@ -11,8 +11,6 @@ _mock_flag = True
 
 
 public_interface = (
-    'MAX_WFMSIZE',
-    'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
@@ -26,15 +24,12 @@ public_interface = (
     'ETypes',
     'Const',
     'get_ps_current_unit',
-    'get_basic_propty_database',
-    'get_common_propty_database',
-    'get_common_pu_propty_database',
-    'get_common_pu_SI_InjKicker_propty_database',
+    'get_ps_basic_propty_database',
+    'get_ps_common_propty_database',
+    'get_pu_septum_propty_database',
+    'get_pu_common_propty_database',
     'get_ps_propty_database',
-    'get_pu_propty_database',
     'get_conv_propty_database',
-    'get_li_ma_propty_database',
-    'get_pm_propty_database',
 )
 
 
@@ -109,10 +104,6 @@ class TestPwrSupply(TestCase):
             self.m_PSSearch.get_splims.side_effect = get_splims
             self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
             self.m_PSSearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
-            _MASearch_patcher = mock.patch(
-                'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
-            self.addCleanup(_MASearch_patcher.stop)
-            self.m_MASearch = _MASearch_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -120,16 +111,28 @@ class TestPwrSupply(TestCase):
             pwrsupply, public_interface)
         self.assertTrue(valid)
 
-    def test_MAX_WFMSIZE(self):
-        """Test MAX_WFMSIZE."""
-        self.assertIsInstance(pwrsupply.MAX_WFMSIZE, int)
-        self.assertTrue(pwrsupply.MAX_WFMSIZE > 0)
+    def test_MAX_WFMSIZE_FBP(self):
+        """Test MAX_WFMSIZE_FBP."""
+        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_FBP, int)
+        self.assertTrue(pwrsupply.MAX_WFMSIZE_FBP > 0)
 
-    def test_DEF_WFMSIZE(self):
-        """Test DEF_WFMSIZE."""
-        self.assertIsInstance(pwrsupply.DEF_WFMSIZE, int)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE > 0)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE <= pwrsupply.MAX_WFMSIZE)
+    def test_DEF_WFMSIZE_FBP(self):
+        """Test DEF_WFMSIZE_FBP."""
+        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_FBP, int)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP > 0)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP <= pwrsupply.MAX_WFMSIZE_FBP)
+
+    def test_MAX_WFMSIZE_OTHERS(self):
+        """Test MAX_WFMSIZE_OTHERS."""
+        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_OTHERS, int)
+        self.assertTrue(pwrsupply.MAX_WFMSIZE_OTHERS > 0)
+
+    def test_DEF_WFMSIZE_OTHERS(self):
+        """Test DEF_WFMSIZE_OTHERS."""
+        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_OTHERS, int)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE_OTHERS > 0)
+        self.assertTrue(
+            pwrsupply.DEF_WFMSIZE_OTHERS <= pwrsupply.MAX_WFMSIZE_OTHERS)
 
     def test_DEFAULT_SIGGEN_CONFIG(self):
         """Test DEFAULT_SIGGEN_CONFIG."""
@@ -143,16 +146,16 @@ class TestPwrSupply(TestCase):
         self.assertEqual(unit[0], 'A')
         self.assertEqual(unit[1], 'Ampere')
 
-    def test_basic_propty_database(self):
-        """Test common_propty_database."""
-        db = pwrsupply.get_basic_propty_database()
+    def test_ps_basic_propty_database(self):
+        """Test ps_basic_propty_database."""
+        db = pwrsupply.get_ps_basic_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
-    def test_common_propty_database(self):
-        """Test common_propty_database."""
-        db = pwrsupply.get_common_propty_database()
+    def test_ps_common_propty_database(self):
+        """Test ps_common_propty_database."""
+        db = pwrsupply.get_ps_common_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
@@ -184,27 +187,3 @@ class TestPwrSupply(TestCase):
                     self.assertLessEqual(dbi['high'], dbi['hihi'])
                 if propty in current_pvs:
                     self.assertEqual(dbi['unit'], unit)
-
-    def test_pu_propty_database(self):
-        """Test pu_propty_database."""
-        current_pvs = TestPwrSupply.pu_alarm
-        for pstype in TestPwrSupply.pstypes:
-            db = pwrsupply.get_pu_propty_database(pstype)
-            unit = db['Voltage-SP']['unit']
-            for propty, dbi in db.items():
-                # set setpoint limits in database
-                if propty in TestPwrSupply.ps_alarm:
-                    self.assertLessEqual(dbi['lolo'], dbi['low'])
-                    self.assertLessEqual(dbi['low'], dbi['lolim'])
-                    self.assertLessEqual(dbi['lolim'], dbi['hilim'])
-                    self.assertLessEqual(dbi['hilim'], dbi['high'])
-                    self.assertLessEqual(dbi['high'], dbi['hihi'])
-                if propty in current_pvs:
-                    self.assertEqual(dbi['unit'], unit)
-
-    def test_li_ma_propty_database(self):
-        """Test li_ma_propty_database."""
-        for maname, convname in TestPwrSupply.sample.items():
-            if not maname.startswith('LI-'):
-                continue
-            db = pwrsupply.get_li_ma_propty_database(maname)

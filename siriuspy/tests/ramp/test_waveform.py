@@ -4,7 +4,8 @@
 from unittest import TestCase
 import numpy
 from siriuspy import util
-from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
+from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE_OTHERS as \
+    _DEF_WFMSIZE_OTHERS
 from siriuspy.ramp import waveform
 from siriuspy.ramp.waveform import WaveformParam
 from siriuspy.ramp.waveform import WaveformDipole
@@ -205,10 +206,10 @@ class TestWaveformDipole(TestCase):
         w = WaveformDipole()
         c = w.currents
         self.assertIsInstance(c, numpy.ndarray)
-        self.assertEqual(len(c), _DEF_WFMSIZE)
+        self.assertEqual(len(c), _DEF_WFMSIZE_OTHERS)
         s = w.strengths
         self.assertIsInstance(s, list)
-        self.assertEqual(len(s), _DEF_WFMSIZE)
+        self.assertEqual(len(s), _DEF_WFMSIZE_OTHERS)
 
     def test_waveform(self):
         """Test waveform."""
