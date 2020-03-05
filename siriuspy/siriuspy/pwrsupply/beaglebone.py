@@ -234,9 +234,6 @@ class BBBFactory:
         controllers = dict()  # 1 controller per UDC class
         databases = dict()
 
-        # check if IOC is already running
-        BBBFactory._check_ioc_online(devices_dict)
-
         for psmodel_name in psmodels_dict:
 
             psmodel = psmodels_dict[psmodel_name]
