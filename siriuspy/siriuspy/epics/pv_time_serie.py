@@ -12,12 +12,17 @@ class SiriusPVTimeSerie:
                  time_window=None,
                  nr_max_points=None,
                  time_min_interval=0.0,
-                 mode=0):
+                 mode=0,
+                 use_pv_timestamp=True):
         """Class constructor."""
+        if (use_pv_timestamp is False) and (mode == 1):
+            raise ValueError(
+                'Can not create an auto-fill serie without using PV timestamp!')
         self._pv = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
         self._nr_max_points = nr_max_points
+        self._use_pv_timestamp = use_pv_timestamp
         self._timestamp_deque = _collections.deque(maxlen=self._nr_max_points)
         self._value_deque = _collections.deque(maxlen=self._nr_max_points)
         self._mode = mode
@@ -122,7 +127,10 @@ class SiriusPVTimeSerie:
         # check if pv is connected
         if self.connected():
             timestamp = _time.time()
-            pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
+            if self._use_pv_timestamp:
+                pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
+            else:
+                pv_timestamp, pv_value = timestamp, self._pv.value
 
             # check if it is a new datapoint
             if len(self._timestamp_deque) == 0 or \

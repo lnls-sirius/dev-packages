@@ -83,7 +83,7 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertIsInstance(db, dict)
 
         # PV names
-        self.assertTrue('Version-Cte' in db)
+        self.assertTrue('VersionLifetime-Cte' in db)
         self.assertTrue('Lifetime-Mon' in db)
         self.assertTrue('LifetimeBPM-Mon' in db)
         self.assertTrue('SplIntvl-SP' in db)
