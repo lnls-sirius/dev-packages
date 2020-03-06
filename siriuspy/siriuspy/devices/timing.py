@@ -1,46 +1,53 @@
 """."""
 
 import time as _time
-from epics import PV
+
+from .device import Device as _Device
 
 
-class Timing:
+class Timing(_Device):
     """."""
 
-    def __init__(self):
-        """."""
-        self._pulses_sp = PV('AS-RaMO:TI-EVG:InjectionEvt-Sel')
-        self._pulses_rb = PV('AS-RaMO:TI-EVG:InjectionEvt-Sts')
+    DEVICE = 'AS-RaMO:TI-EVG'
 
-    @property
-    def connected(self):
+    _properties = (
+        'InjectionEvt-Sel',
+        'InjectionEvt-Sts')
+
+    def __init__(self, devname=DEVICE):
         """."""
-        return self._pulses_rb.connected and self._pulses_sp.connected
+
+        # check if device exists
+        if devname != Timing.DEVICE:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=Timing._properties)
 
     @property
     def pulses(self):
         """."""
-        return self._pulses_rb.value
+        return self['InjectionEvt-Sts']
 
     @pulses.setter
     def pulses(self, value):
-        self._pulses_sp.value = bool(value)
+        self['InjectionEvt-Sel'] = bool(value)
 
     def wait(self, timeout=10):
         """."""
-        inter = 0.1
-        nt = int(timeout / inter)
-        for _ in range(nt):
-            _time.sleep(inter)
-            if self._pulses_rb.value == self._pulses_sp.value:
+        interval = 0.1
+        ntrials = int(timeout / interval)
+        for _ in range(ntrials):
+            _time.sleep(interval)
+            if self.pulses == self['InjectionEvt-Sel']:
                 return
 
-    def turn_pulses_on(self, timeout=10):
+    def cmd_turn_on_pulses(self, timeout=10):
         """."""
         self.pulses = 1
         self.wait(timeout=timeout)
 
-    def turn_pulses_off(self, timeout=10):
+    def cmd_turn_off_pulses(self, timeout=10):
         """."""
         self.pulses = 0
         self.wait(timeout=timeout)

@@ -8,19 +8,20 @@ from .device import Device as _Device
 class EGBias(_Device):
     """EGun Bias Device."""
 
-    DEVICE_LI = 'LI-01:EG-BiasPS'
+    DEVICE = 'LI-01:EG-BiasPS'
+
     PWRSTATE = _PSCStatus.PWRSTATE
 
     _properties = (
         'voltoutsoft', 'voltinsoft', 'currentinsoft', 'switch', 'swstatus')
 
-    def __init__(self, devname=DEVICE_LI):
+    def __init__(self, devname=DEVICE):
         """."""
         if devname is None:
-            devname = EGBias.DEVICE_LI
+            devname = EGBias.DEVICE
 
         # check if device exists
-        if devname not in (EGBias.DEVICE_LI, ):
+        if devname not in (EGBias.DEVICE, ):
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -57,7 +58,8 @@ class EGBias(_Device):
 class EGFilament(_Device):
     """EGun Filament Device."""
 
-    DEVICE_LI = 'LI-01:EG-FilaPS'
+    DEVICE = 'LI-01:EG-FilaPS'
+
     PWRSTATE = _PSCStatus.PWRSTATE
 
     _properties = (
@@ -66,10 +68,10 @@ class EGFilament(_Device):
     def __init__(self, devname=None):
         """."""
         if devname is None:
-            devname = EGFilament.DEVICE_LI
+            devname = EGFilament.DEVICE
 
         # check if device exists
-        if devname not in (EGFilament.DEVICE_LI, ):
+        if devname not in (EGFilament.DEVICE, ):
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -106,6 +108,8 @@ class EGFilament(_Device):
 class EGHVPS(_Device):
     """Egun High-Voltage Power Supply Device."""
 
+    DEVICE = 'LI-01:EG-HVPS'
+
     PWRSTATE = _PSCStatus.PWRSTATE
 
     _properties = (
@@ -117,7 +121,7 @@ class EGHVPS(_Device):
     def __init__(self):
         """."""
         # call base class constructor
-        super().__init__('LI-01:EG-HVPS', properties=EGHVPS._properties)
+        super().__init__(EGHVPS.DEVICE, properties=EGHVPS._properties)
 
     @property
     def current(self):

@@ -12,6 +12,7 @@ class RFGen(_Device):
     """."""
 
     DEVICE = 'RF-Gen'
+
     RF_DELTA_MIN = 0.1  # [Hz]
     RF_DELTA_MAX = 1000.0  # [Hz]
     RF_DELTA_RMP = 20  # [Hz]
@@ -48,8 +49,10 @@ class RFGen(_Device):
 class RFLL(_Device):
     """."""
 
-    DEVICE_SI = 'SR-RF-DLLRF-01'
     DEVICE_BO = 'BR-RF-DLLRF-01'
+    DEVICE_SI = 'SR-RF-DLLRF-01'
+
+    DEVICES = (DEVICE_BO, DEVICE_SI)
 
     _properties = (
         'PL:REF:S', 'SL:INP:PHS',

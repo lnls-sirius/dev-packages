@@ -9,6 +9,8 @@ class ICT(_Device):
     DEVICE_LI_1 = 'LI-01:DI-ICT-1'
     DEVICE_LI_2 = 'LI-01:DI-ICT-2'
 
+    DEVICES = (DEVICE_LI_1, DEVICE_LI_2)
+
     _properties_li = (
         'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMax-Mon',
         'ChargeMin-Mon', 'ChargeStd-Mon', 'PulseCount-Mon')

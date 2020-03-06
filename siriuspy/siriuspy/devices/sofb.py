@@ -14,6 +14,8 @@ class SOFB(_Device):
     DEVICE_TS = 'TS-Glob:AP-SOFB'
     DEVICE_SI = 'SI-Glob:AP-SOFB'
 
+    DEVICES = (DEVICE_TB, DEVICE_BO, DEVICE_TS, DEVICE_SI)
+
     _properties = (
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'KickCH-Mon', 'KickCV-Mon',

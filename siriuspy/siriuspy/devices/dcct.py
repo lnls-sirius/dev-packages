@@ -14,6 +14,8 @@ class DCCT(_Device):
     DEVICE_SI_13C4 = 'SI-13C4:DI-DCCT'
     DEVICE_SI_14C4 = 'SI-14C4:DI-DCCT'
 
+    DEVICES = (DEVICE_BO, DEVICE_SI_13C4, DEVICE_SI_14C4)
+
     PWRSTATE = _PSCStatus.PWRSTATE
 
     _properties = (
@@ -26,9 +28,7 @@ class DCCT(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in (
-                DCCT.DEVICE_BO,
-                DCCT.DEVICE_SI_13C4, DCCT.DEVICE_SI_14C4):
+        if devname not in DCCT.DEVICES:
             raise NotImplementedError(devname)
 
         # call base class constructor
