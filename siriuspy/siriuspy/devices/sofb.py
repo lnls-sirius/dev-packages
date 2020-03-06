@@ -41,8 +41,7 @@ class SOFB(_Device):
         '<ORBTP>' + 'Idx' + 'OrbX-Mon', '<ORBTP>' + 'Idx' + 'OrbY-Mon')
 
     _default_timeout = 10  # [s]
-    _ON = 1
-    _OFF = 0
+    _off, _on = 0, 1
 
     def __init__(self, devname):
         """."""
@@ -258,11 +257,11 @@ class SOFB(_Device):
 
     def cmd_reset(self):
         """."""
-        self['SmoothReset-Cmd'] = SOFB._ON
+        self['SmoothReset-Cmd'] = SOFB._on
 
     def cmd_calccorr(self):
         """."""
-        self['CalcDelta-Cmd'] = SOFB._ON
+        self['CalcDelta-Cmd'] = SOFB._on
 
     def cmd_applycorr(self):
         """."""
@@ -275,19 +274,19 @@ class SOFB(_Device):
         """."""
         return self['ClosedLoop-Sts']
 
-    def cmd_autocorr_turn_on(self, timeout=None):
+    def cmd_turn_on_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._ON
+        self['ClosedLoop-Sel'] = SOFB._on
         self._wait(
-            'ClosedLoop-Sts', SOFB._ON, timeout=timeout)
+            'ClosedLoop-Sts', SOFB._on, timeout=timeout)
 
-    def cmd_autocorr_turn_off(self, timeout=None):
+    def cmd_turn_off_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._OFF
+        self['ClosedLoop-Sel'] = SOFB._off
         self._wait(
-            'ClosedLoop-Sts', SOFB._OFF, timeout=timeout)
+            'ClosedLoop-Sts', SOFB._off, timeout=timeout)
 
     def wait_buffer(self, timeout=None):
         """."""
