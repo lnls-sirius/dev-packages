@@ -1,79 +1,72 @@
 """."""
 
 import time as _time
-from collections import namedtuple
-from epics import PV
+
+from ..pwrsupply.status import PSCStatus as _PSCStatus
+
+from .device import Device as _Device
 
 
-class DCCT:
+class DCCT(_Device):
     """."""
 
-    STATUS = namedtuple('Status', 'Off On')(0, 1)
-    NAME_BO = 'bo'
-    NAME_SI_1 = 'si-1'
-    NAME_SI_2 = 'si-2'
+    DEVICE_BO = 'BO-35D:DI-DCCT'
+    DEVICE_SI_13C4 = 'SI-13C4:DI-DCCT'
+    DEVICE_SI_14C4 = 'SI-14C4:DI-DCCT'
 
-    def __init__(self, name):
-        """."""
-        if not set(self.NAME_BO) - set(name.lower()):
-            name = 'BO-35D:DI-DCCT:'
-        elif not set(self.NAME_SI_1) - set(name.lower()):
-            name = 'SI-13C4:DI-DCCT:'
-        elif not set(self.NAME_SI_2) - set(name.lower()):
-            name = 'SI-14C4:DI-DCCT:'
-        else:
-            raise Exception('Set DCCT name: BO, SI-1 or SI-2')
-        self._current = PV(name+'RawReadings-Mon')
-        self._meas_per_sp = PV(name+'FastMeasPeriod-SP')
-        self._meas_per_rb = PV(name+'FastMeasPeriod-RB')
-        self._nr_samples_sp = PV(name+'FastSampleCnt-SP')
-        self._nr_samples_rb = PV(name+'FastSampleCnt-RB')
-        self._acq_ctrl_sp = PV(name+'MeasTrg-Sel')
-        self._acq_ctrl_rb = PV(name+'MeasTrg-Sts')
+    PWRSTATE = _PSCStatus.PWRSTATE
 
-    @property
-    def connected(self):
+    _properties = (
+        'RawReadings-Mon',
+        'FastMeasPeriod-SP', 'FastMeasPeriod-RB',
+        'FastSampleCnt-SP', 'FastSampleCnt-RB',
+        'MeasTrg-Sel', 'MeasTrg-Sts',
+    )
+
+    def __init__(self, devname):
         """."""
-        conn = self._current.connected
-        conn &= self._meas_per_sp.connected
-        conn &= self._meas_per_rb.connected
-        conn &= self._nr_samples_sp.connected
-        conn &= self._nr_samples_rb.connected
-        conn &= self._acq_ctrl_sp.connected
-        conn &= self._acq_ctrl_rb.connected
-        return conn
+        # check if device exists
+        if devname not in (
+                DCCT.DEVICE_BO,
+                DCCT.DEVICE_SI_13C4, DCCT.DEVICE_SI_14C4):
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=DCCT._properties)
 
     @property
     def nrsamples(self):
         """."""
-        return self._nr_samples_rb.value
+        return self['FastSampleCnt-RB']
 
     @nrsamples.setter
     def nrsamples(self, value):
-        self._nr_samples_sp.value = value
+        """."""
+        self['FastSampleCnt-SP'] = value
 
     @property
     def period(self):
         """."""
-        return self._meas_per_rb.value
+        return self['FastMeasPeriod-RB']
 
     @period.setter
     def period(self, value):
-        self._meas_per_sp.value = value
+        self['FastMeasPeriod-SP'] = value
 
     @property
     def acq_ctrl(self):
         """."""
-        return self._acq_ctrl_rb.value
+        return self['MeasTrg-Sts']
 
     @acq_ctrl.setter
     def acq_ctrl(self, value):
-        self._acq_ctrl_sp.value = self.STATUS.On if value else self.STATUS.Off
+        """."""
+        self['MeasTrg-Sel'] = DCCT.PWRSTATE.On if value else DCCT.PWRSTATE.Off
 
     @property
     def current(self):
         """."""
-        return self._current.get()
+        return self['RawReadings-Mon']
 
     def wait(self, timeout=10):
         """."""
@@ -85,18 +78,19 @@ class DCCT:
         else:
             print('timed out waiting DCCT.')
 
-    def turn_on(self, timeout=10):
+    def cmd_turn_on(self, timeout=10):
         """."""
-        self.acq_ctrl = self.STATUS.On
+        self.acq_ctrl = DCCT.PWRSTATE.On
         self.wait(timeout)
 
-    def turn_off(self, timeout=10):
+    def cmd_turn_off(self, timeout=10):
         """."""
-        self.acq_ctrl = self.STATUS.Off
+        self.acq_ctrl = DCCT.PWRSTATE.Off
         self.wait(timeout)
+
+    # --- private methods ---
 
     def _isok(self):
-        if self._acq_ctrl_sp.value:
-            return self.acq_ctrl == self.STATUS.On
-        else:
-            return self.acq_ctrl != self.STATUS.On
+        if self['MeasTrg-Sel']:
+            return self.acq_ctrl == DCCT.PWRSTATE.On
+        return self.acq_ctrl != DCCT.PWRSTATE.On
