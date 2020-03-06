@@ -97,7 +97,7 @@ def get_currinfo_database(acc):
 def get_lifetime_database():
     """Return CurrentInfo-Lifetime Soft IOC database."""
     pvs_db = {
-        'Version-Cte': {'type': 'string', 'value': 'UNDEF'},
+        'VersionLifetime-Cte': {'type': 'string', 'value': 'UNDEF'},
         'Lifetime-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
                          'unit': 's'},
         'LifetimeBPM-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
