@@ -6,8 +6,7 @@ from siriuspy.csdevice import util as _cutil
 class Const:
     """Const class defining PosAng constants."""
 
-    TB_CORRH_POSANG_CHSEPT = ('TB-04:PS-CH-1', 'TB-04:PU-InjSept')
-    TB_CORRH_POSANG_CHCH = ('TB-04:PS-CH-1', 'TB-04:PS-CH-2')
+    TB_CORRH_POSANG = ('TB-04:PS-CH-1', 'TB-04:PU-InjSept')
     TB_CORRV_POSANG = ('TB-04:PS-CV-1', 'TB-04:PS-CV-2')
 
     TS_CORRH_POSANG = ('TS-04:PS-CH', 'TS-04:PU-InjSeptF')
@@ -16,21 +15,17 @@ class Const:
     STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
 
 
-def get_posang_database(tl, correctors_type):
+def get_posang_database(tl):
     """Return Soft IOC database."""
     if tl.upper() == 'TS':
         CORRV = Const.TS_CORRV_POSANG
         CORRH = Const.TS_CORRH_POSANG
-        ch2_unit = 'mrad'
     elif tl.upper() == 'TB':
         CORRV = Const.TB_CORRV_POSANG
-        CORRH = Const.TB_CORRH_POSANG_CHSEPT if correctors_type == 'ch-sept' \
-            else Const.TB_CORRH_POSANG_CHCH
-        ch2_unit = 'mrad' if correctors_type == 'ch-sept' else 'urad'
+        CORRH = Const.TB_CORRH_POSANG
 
     pvs_database = {
         'Version-Cte':       {'type': 'string', 'value': 'UNDEF'},
-        'CorrType-Cte':      {'type': 'string', 'value': correctors_type},
 
         'Log-Mon':           {'type': 'string', 'value': 'Starting...'},
 
@@ -64,7 +59,7 @@ def get_posang_database(tl, correctors_type):
                               'unit': 'urad'},
         'CH2-Cte':           {'type': 'string', 'value': CORRH[1]},
         'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
-                              'unit': ch2_unit},
+                              'unit': 'mrad'},
         'CV1-Cte':           {'type': 'string', 'value':  CORRV[0]},
         'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
