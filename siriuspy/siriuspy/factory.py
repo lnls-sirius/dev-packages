@@ -1,7 +1,7 @@
 """Definition of factories.
 
-MagnetFacoty
-    used to create magnets
+NormalizerFactory
+    used to create magnet normalizers
 """
 from .search import PSSearch as _PSSearch
 from .search import MASearch as _MASearch
