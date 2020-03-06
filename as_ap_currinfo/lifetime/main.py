@@ -103,7 +103,8 @@ class App:
             status = True
         elif reason == 'BuffAutoRstDCurr-SP':
             self._buffautorst_dcurr = value
-            self.driver.setParam('BuffAutoRstDCurr-RB', self._buffautorst_mode)
+            self.driver.setParam('BuffAutoRstDCurr-RB',
+                                 self._buffautorst_dcurr)
             self.driver.updatePV('BuffAutoRstDCurr-RB')
             status = True
         elif reason == 'LtFitMode-Sel':
