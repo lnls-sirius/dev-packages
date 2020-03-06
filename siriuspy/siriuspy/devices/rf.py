@@ -107,6 +107,7 @@ class RFLL(_Device):
         value = defcw if is_cw is None else is_cw
         return value
 
+
 class RFPowMon(_Device):
     """."""
 

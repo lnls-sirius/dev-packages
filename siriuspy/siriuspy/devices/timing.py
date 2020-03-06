@@ -16,7 +16,6 @@ class Timing(_Device):
 
     def __init__(self, devname=DEVICE):
         """."""
-
         # check if device exists
         if devname != Timing.DEVICE:
             raise NotImplementedError(devname)
