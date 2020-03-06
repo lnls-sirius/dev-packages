@@ -399,14 +399,3 @@ class BBBFactory:
             funcs[dev_name + ':' + field] = model.function(
                 [dev_id], field, pru_controller, setpoint)
         return funcs
-
-    @staticmethod
-    def _check_ioc_online(devices_dict):
-        psmodel_name = next(iter(devices_dict))
-        devices = devices_dict[psmodel_name]
-        psname, _ = devices[0]
-        pvname = psname + ':Version-Cte'
-        running = _util.check_pv_online(
-            pvname=pvname, use_prefix=False, timeout=0.5)
-        if running:
-            raise ValueError('Another IOC is already running !')
