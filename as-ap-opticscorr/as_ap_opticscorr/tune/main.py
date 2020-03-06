@@ -14,8 +14,8 @@ from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
-        get_config_name as _get_config_name,
-        set_config_name as _set_config_name)
+    get_config_name as _get_config_name,
+    set_config_name as _set_config_name)
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
@@ -88,15 +88,16 @@ class App:
         qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
-        config_name = _get_config_name(
-            acc=self._ACC.lower(), opticsparam='tune')
-        [done, corrparams] = self._get_corrparams(config_name)
+        self.cdb_client = _ConfigDBClient(
+            config_type=self._ACC.lower()+'_tunecorr_params')
+        [done, corrparams] = self._get_corrparams()
         if done:
-            self.driver.setParam('ConfigName-SP', config_name)
-            self.driver.setParam('ConfigName-RB', config_name)
-            self._nominal_matrix = corrparams[0]
+            self._config_name = corrparams[0]
+            self.driver.setParam('ConfigName-SP', self._config_name)
+            self.driver.setParam('ConfigName-RB', self._config_name)
+            self._nominal_matrix = corrparams[1]
             self.driver.setParam('RespMat-Mon', self._nominal_matrix)
-            self._qfam_nomkl = corrparams[1]
+            self._qfam_nomkl = corrparams[2]
             self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
             self._opticscorr = _OpticsCorr(
                 magnetfams_ordering=self._QFAMS,
@@ -258,10 +259,11 @@ class App:
                 _set_config_name(
                     acc=self._ACC.lower(), opticsparam='tune',
                     config_name=value)
-                self.driver.setParam('ConfigName-RB', value)
-                self._nominal_matrix = corrparams[0]
+                self._config_name = corrparams[0]
+                self.driver.setParam('ConfigName-RB', self._config_name)
+                self._nominal_matrix = corrparams[1]
                 self.driver.setParam('RespMat-Mon', self._nominal_matrix)
-                self._qfam_nomkl = corrparams[1]
+                self._qfam_nomkl = corrparams[2]
                 self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
                 self._opticscorr.nominal_matrix = self._nominal_matrix
                 self._opticscorr.nominal_intstrengths = self._qfam_nomkl
@@ -342,18 +344,19 @@ class App:
 
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrparams(self, config_name):
+    def _get_corrparams(self, config_name=''):
         """Get response matrix from configurations database."""
         try:
-            cdb = _ConfigDBClient()
-            params = cdb.get_config_value(
-                config_name, config_type=self._ACC.lower()+'_tunecorr_params')
+            if not config_name:
+                config_name = _get_config_name(
+                    acc=self._ACC.lower(), opticsparam='tune')
+            params = self.cdb_client.get_config_value(name=config_name)
         except _ConfigDBException:
             return [False, []]
 
         nom_matrix = [item for sublist in params['matrix'] for item in sublist]
         nom_kl = params['nominal KLs']
-        return [True, [nom_matrix, nom_kl]]
+        return [True, [config_name, nom_matrix, nom_kl]]
 
     def _calc_deltakl(self):
         if self._corr_method == _Const.CorrMeth.Proportional:

@@ -7,11 +7,13 @@ import epics as _epics
 from siriuspy.csdevice.pwrsupply import Const as _PSc
 from siriuspy.csdevice.currinfo import Const as _Const
 from siriuspy.clientarch import ClientArchiver as _ClientArch
+from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 import as_ap_currinfo.pvs as _pvs
 
 
 # BO Constants
 
+BO_HarmNum = 828
 BO_REV_PERIOD = 1.6571334792998411  # [us]
 BO_ENERGY2TIME = {  # energy: time[s]
     '150MeV': 0.0000,
@@ -20,9 +22,11 @@ BO_ENERGY2TIME = {  # energy: time[s]
     '3GeV': 0.2750,
 }
 INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+BO_CURR_THRESHOLD = 0.06
 
 # SI Constants
 
+SI_HarmNum = 864
 SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
 
 
@@ -88,8 +92,7 @@ class BOApp:
         # PVs
         self._rawreadings_pv = _epics.PV(
             self._PREFIX_VACA+self._DCCT+':RawReadings-Mon',
-            callback=self._callback_get_rawreadings,
-            auto_monitor=True)
+            callback=self._callback_get_rawreadings, auto_monitor=True)
         self._samplecnt_pv = _epics.PV(
             self._PREFIX_VACA+self._DCCT+':FastSampleCnt-RB',
             connection_timeout=0.05, callback=self._callback_get_samplecnt)
@@ -262,6 +265,14 @@ class SIApp:
         self._dipole_opmode_pv = _epics.PV(
             self._PREFIX_VACA+'SI-Fam:PS-B1B2-1:OpMode-Sts',
             callback=self._callback_get_dipole_opmode)
+        self._bo_curr3gev_pv = _epics.PV(
+            self._PREFIX_VACA+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
+            callback=self._callback_get_bo_curr3gev)
+
+        self._current_13C4_buffer = _SiriusPVTimeSerie(
+            pv=self._current_13C4_pv, time_window=0.4, use_pv_timestamp=False)
+        self._current_14C4_buffer = _SiriusPVTimeSerie(
+            pv=self._current_14C4_pv, time_window=0.4, use_pv_timestamp=False)
 
         # set initial pv values
         self.driver.setParam('Charge-Mon', self._charge)
@@ -341,11 +352,13 @@ class SIApp:
 
     # ----- callbacks -----
 
-    def _callback_get_dcct_current(self, pvname, value, timestamp, **kws):
+    def _callback_get_dcct_current(self, pvname, value, **kws):
         if '13C4' in pvname:
             self._current_13C4_value = value
+            self._current_13C4_buffer.acquire()
         elif '14C4' in pvname:
             self._current_14C4_value = value
+            self._current_14C4_buffer.acquire()
 
         # update current and charge
         current = self._get_current()
@@ -384,6 +397,30 @@ class SIApp:
 
     def _callback_get_dipole_opmode(self, value, **kws):
         self._is_cycling = bool(value == _PSc.States.Cycle)
+
+    def _callback_get_bo_curr3gev(self, value, timestamp, **kws):
+        """Get BO Current3GeV-Mon and update InjEff PV."""
+        # choose current PV
+        buffer = self._current_13C4_buffer \
+            if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
+            else self._current_14C4_buffer
+        timestamp_dq, value_dq = buffer.serie
+
+        # check buffer not empty
+        if not len(timestamp_dq):
+            return
+
+        # check if there is valid current in Booster
+        if value < BO_CURR_THRESHOLD:
+            return
+
+        # calculate efficiency
+        delta_curr = max(value_dq[-1] - value_dq[0], 0)
+        self._injeff = 100*(delta_curr/value)*(SI_HarmNum/BO_HarmNum)
+
+        # update pvs
+        self.driver.setParam('InjEff-Mon', self._injeff)
+        self.driver.updatePV('InjEff-Mon')
 
     # ----- auxiliar methods -----
 

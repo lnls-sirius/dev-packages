@@ -41,7 +41,6 @@ class App:
         self._TL = _pvs.get_pvs_section()
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()
-        self._CORRSTYPE = _pvs.get_corrs_type()
 
         self._driver = driver
 
@@ -56,23 +55,21 @@ class App:
         self._corr_check_connection = 4*[0]
         self._corr_check_pwrstate_sts = 4*[0]
 
-        if self._CORRSTYPE == 'ch-sept':
-            self._corr_check_opmode_sts = [1, _PSC.States.SlowRef, 1, 1]
-            self._corr_check_ctrlmode_mon = [1, _PSC.Interface.Remote, 1, 1]
-            # obs: ignore PM on OpMode and CtrlMode checks
-        elif self._CORRSTYPE == 'ch-ch':
-            self._corr_check_opmode_sts = 4*[1]
-            self._corr_check_ctrlmode_mon = 4*[1]
+        self._corr_check_opmode_sts = [1, _PSC.States.SlowRef, 1, 1]
+        self._corr_check_ctrlmode_mon = [1, _PSC.Interface.Remote, 1, 1]
+        # obs: ignore PM on OpMode and CtrlMode checks
 
-        config_name = self._get_config_name()
-        [done, corrparams] = self._get_corrparams(config_name)
+        self.cdb_client = _ConfigDBClient(
+            config_type=self._TL.lower()+'_posang_respm')
+        [done, corrparams] = self._get_corrparams()
         if done:
-            self.driver.setParam('ConfigName-SP', config_name)
-            self.driver.setParam('ConfigName-RB', config_name)
-            self._respmat_x = corrparams[0]
-            self.driver.setParam('RespMatX-Mon', corrparams[0])
-            self._respmat_y = corrparams[1]
-            self.driver.setParam('RespMatY-Mon', corrparams[1])
+            self._config_name = corrparams[0]
+            self.driver.setParam('ConfigName-SP', self._config_name)
+            self.driver.setParam('ConfigName-RB', self._config_name)
+            self._respmat_x = corrparams[1]
+            self.driver.setParam('RespMatX-Mon', self._respmat_x)
+            self._respmat_y = corrparams[2]
+            self.driver.setParam('RespMatY-Mon', self._respmat_y)
 
         # The correctors are listed as:
         # First horizontal corretor, second horizontal corretor,
@@ -85,11 +82,8 @@ class App:
             self._correctors[3] = _PAConst.TS_CORRV_POSANG[1]
 
         elif self._TL == 'TB':
-            CORRH = (_PAConst.TB_CORRH_POSANG_CHSEPT
-                     if self._CORRSTYPE == 'ch-sept' else
-                     _PAConst.TB_CORRH_POSANG_CHCH)
-            self._correctors[0] = CORRH[0]
-            self._correctors[1] = CORRH[1]
+            self._correctors[0] = _PAConst.TB_CORRH_POSANG[0]
+            self._correctors[1] = _PAConst.TB_CORRH_POSANG[1]
             self._correctors[2] = _PAConst.TB_CORRV_POSANG[0]
             self._correctors[3] = _PAConst.TB_CORRV_POSANG[1]
 
@@ -122,8 +116,7 @@ class App:
             self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_corr_pwrstate_sts)
-            if (self._CORRSTYPE == 'ch-sept' and corr_index != 1) or \
-                    (self._CORRSTYPE == 'ch-ch'):
+            if corr_index != 1:
                 self._corr_opmode_sel_pvs[corr] = _epics.PV(
                     pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
                 self._corr_opmode_sts_pvs[corr] = _epics.PV(
@@ -131,7 +124,8 @@ class App:
                     callback=self._callback_corr_opmode_sts)
 
                 self._corr_ctrlmode_mon_pvs[corr] = _epics.PV(
-                    pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
+                    pss.substitute(propty_name='CtrlMode',
+                                   propty_suffix='Mon'),
                     callback=self._callback_corr_ctrlmode_mon)
 
         self.driver.setParam('Log-Mon', 'Started.')
@@ -206,14 +200,15 @@ class App:
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 self._set_config_name(value)
-                self.driver.setParam('ConfigName-RB', value)
-                self._respmat_x = corrparams[0]
-                self.driver.setParam('RespMatX-Mon', corrparams[0])
-                self._respmat_y = corrparams[1]
-                self.driver.setParam('RespMatY-Mon', corrparams[1])
-                updated = self._update_delta(
+                self._config_name = corrparams[0]
+                self.driver.setParam('ConfigName-RB', self._config_name)
+                self._respmat_x = corrparams[1]
+                self.driver.setParam('RespMatX-Mon', self._respmat_x)
+                self._respmat_y = corrparams[2]
+                self.driver.setParam('RespMatY-Mon', self._respmat_y)
+                self._update_delta(
                     self._orbx_deltapos, self._orbx_deltaang, 'x')
-                updated = self._update_delta(
+                self._update_delta(
                     self._orby_deltapos, self._orby_deltaang, 'y')
                 self.driver.setParam('Log-Mon', 'Updated correction matrices.')
                 self.driver.updatePVs()
@@ -221,35 +216,32 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePVs()  # in case PV states change.
+                self.driver.updatePVs()
 
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrparams(self, config_name):
+    def _get_corrparams(self, config_name=''):
         """Get response matrix from configurations database."""
         try:
-            cdb = _ConfigDBClient()
-            mats = cdb.get_config_value(
-                config_name, config_type=self._TL.lower()+'_posang_respm')
+            if not config_name:
+                config_name = self._get_config_name()
+            mats = self.cdb_client.get_config_value(config_name)
         except _ConfigDBException:
             return [False, []]
 
         respmat_x = [item for sublist in mats['respm-x'] for item in sublist]
         respmat_y = [item for sublist in mats['respm-y'] for item in sublist]
-        return [True, [respmat_x, respmat_y]]
+        return [True, [config_name, respmat_x, respmat_y]]
 
     def _get_config_name(self):
-        fname = './' + self._TL.lower() + '-posang-' + self._CORRSTYPE + '.txt'
+        fname = './' + self._TL.lower() + '-posang.txt'
         try:
             f = open(fname, 'r')
             config_name = f.read().strip('\n')
             f.close()
         except Exception:
             f = open(fname, 'w+')
-            if self._CORRSTYPE == 'ch-sept':
-                config_name = 'Default_CHSept'
-            else:
-                config_name = 'Default_CHCH'
+            config_name = self._get_default_config_name()
             f.write(config_name)
             f.close()
         return config_name
@@ -259,6 +251,12 @@ class App:
                  self._TL.lower() + '-posang.txt', 'w+')
         f.write(config_name)
         f.close()
+
+    def _get_default_config_name(self):
+        if self._TL == 'TB':
+            return 'Default_CHSept'
+        else:
+            return 'TS.V04.01-M1'
 
     def _update_delta(self, delta_pos, delta_ang, orbit):
         if orbit == 'x':
@@ -270,10 +268,7 @@ class App:
             c1_refkick = self._corr_refkick[corr1]
             c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
-            if self._CORRSTYPE == 'ch-sept':
-                c2_unit_factor = 1e-3  # mrad to rad
-            else:
-                c2_unit_factor = 1e-6  # urad to rad
+            c2_unit_factor = 1e-3  # mrad to rad
         else:
             respmat = self._respmat_y
             corr1 = self._correctors[2]
@@ -429,8 +424,7 @@ class App:
             corr_index = self._correctors.index(corr)
             if self._corr_pwrstate_sel_pvs[corr].connected:
                 self._corr_pwrstate_sel_pvs[corr].put(1)
-                if (self._CORRSTYPE == 'ch-sept' and corr_index != 1) or \
-                        (self._CORRSTYPE == 'ch-ch'):
+                if corr_index != 1:
                     self._corr_opmode_sel_pvs[corr].put(0)
             else:
                 self.driver.setParam(

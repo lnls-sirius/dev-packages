@@ -10,21 +10,14 @@ _PREFIX_VACA = _vaca_prefix
 _TL = None
 _DEVICE = None
 _PREFIX = None
-_CORRSTYPE = None
 
 
-def select_ioc(transport_line, corrs_type):
+def select_ioc(transport_line):
     """Select IOC to build database for."""
-    global _TL, _PREFIX, _DEVICE, _PREFIX_VACA, _CORRSTYPE
+    global _TL, _PREFIX, _DEVICE, _PREFIX_VACA
     _TL = transport_line.upper()
     _DEVICE = _TL + '-Glob:AP-PosAng:'
     _PREFIX = _PREFIX_VACA + _DEVICE
-    _CORRSTYPE = corrs_type
-
-
-def get_corrs_type():
-    """Return type of horizontal correctors."""
-    return _CORRSTYPE
 
 
 def get_pvs_section():
@@ -44,7 +37,7 @@ def get_pvs_prefix():
 
 def get_pvs_database():
     """Return Soft IOC database."""
-    pvs_database = _get_database(_TL, _CORRSTYPE)
+    pvs_database = _get_database(_TL)
     pvs_database['Version-Cte']['value'] = _COMMIT_HASH
     return pvs_database
 
