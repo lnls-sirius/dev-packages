@@ -53,6 +53,9 @@ def get_currinfo_database(acc):
 
         pvs_db['Charge-Mon'] = {'type': 'float', 'value': 0.0, 'prec': 12,
                                 'unit': 'A.h', 'scan': 60}
+
+        pvs_db['InjEff-Mon'] = {'type': 'float', 'value': 0.0,
+                                'prec': 2, 'unit': '%'}
     elif acc == 'BO':
         pvs_db['RawReadings-Mon'] = {'type': 'float', 'count': 100000,
                                      'value': _np.array(100000*[0.0]),
@@ -97,7 +100,7 @@ def get_currinfo_database(acc):
 def get_lifetime_database():
     """Return CurrentInfo-Lifetime Soft IOC database."""
     pvs_db = {
-        'Version-Cte': {'type': 'string', 'value': 'UNDEF'},
+        'VersionLifetime-Cte': {'type': 'string', 'value': 'UNDEF'},
         'Lifetime-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
                          'unit': 's'},
         'LifetimeBPM-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
