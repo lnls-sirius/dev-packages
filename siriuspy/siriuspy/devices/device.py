@@ -9,6 +9,8 @@ from ..namesys import SiriusPVName as _SiriusPVName
 class Device:
     """General Epics Device."""
 
+    _properties = ()
+
     def __init__(self, devname, properties):
         """."""
         # TODO: uncomment when all devices comlpy with naming system
@@ -66,18 +68,22 @@ class Device:
 
     def _create_pvs(self):
         pvs = dict()
+        devname = '' if not self._devname else self._devname
         for propty in self._properties:
-            pvname = self._devname + ':' + propty
+            pvname = devname + ':' + propty
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return pvs
 
     # TODO: uncomment when all devices comlpy with naming system
     # def _create_pvs(self):
-    #     func = self._devname.substitute
     #     pvs = dict()
     #     for propty in self._properties:
-    #         pvname = func(propty=propty)
+    #         if self._devname:
+    #             func = self._devname.substitute
+    #             pvname = func(propty=propty)
+    #         else:
+    #             pvname = propty
     #         auto_monitor = not pvname.endswith('-Mon')
     #         pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
     #     return pvs
@@ -91,6 +97,25 @@ class Device:
             if self[propty] == value:
                 break
             _time.sleep(interval)
+
+
+class DeviceApp(Device):
+    """Application Device.
+
+    This kind of device groups properties of other devices.
+    """
+
+    def __init__(self, properties, devname=None):
+        """."""
+        self._devname_app = devname
+
+        # call base class constructor
+        super().__init__(None, properties=self._properties)
+
+    @property
+    def devname(self):
+        """Return application device name."""
+        return self._devname_app
 
 
 class Devices:
