@@ -41,7 +41,6 @@ class App:
         self._TL = _pvs.get_pvs_section()
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()
-        self._CORRSTYPE = _pvs.get_corrs_type()
 
         self._driver = driver
 
@@ -56,14 +55,12 @@ class App:
         self._corr_check_connection = 4*[0]
         self._corr_check_pwrstate_sts = 4*[0]
 
-        if self._CORRSTYPE == 'ch-sept':
-            self._corr_check_opmode_sts = [1, _PSC.States.SlowRef, 1, 1]
-            self._corr_check_ctrlmode_mon = [1, _PSC.Interface.Remote, 1, 1]
-            # obs: ignore PM on OpMode and CtrlMode checks
-        elif self._CORRSTYPE == 'ch-ch':
-            self._corr_check_opmode_sts = 4*[1]
-            self._corr_check_ctrlmode_mon = 4*[1]
+        self._corr_check_opmode_sts = [1, _PSC.States.SlowRef, 1, 1]
+        self._corr_check_ctrlmode_mon = [1, _PSC.Interface.Remote, 1, 1]
+        # obs: ignore PM on OpMode and CtrlMode checks
 
+        self.cdb_client = _ConfigDBClient(
+            config_type=self._TL.lower()+'_posang_respm')
         config_name = self._get_config_name()
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
@@ -85,11 +82,8 @@ class App:
             self._correctors[3] = _PAConst.TS_CORRV_POSANG[1]
 
         elif self._TL == 'TB':
-            CORRH = (_PAConst.TB_CORRH_POSANG_CHSEPT
-                     if self._CORRSTYPE == 'ch-sept' else
-                     _PAConst.TB_CORRH_POSANG_CHCH)
-            self._correctors[0] = CORRH[0]
-            self._correctors[1] = CORRH[1]
+            self._correctors[0] = _PAConst.TB_CORRH_POSANG[0]
+            self._correctors[1] = _PAConst.TB_CORRH_POSANG[1]
             self._correctors[2] = _PAConst.TB_CORRV_POSANG[0]
             self._correctors[3] = _PAConst.TB_CORRV_POSANG[1]
 
@@ -122,8 +116,7 @@ class App:
             self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_corr_pwrstate_sts)
-            if (self._CORRSTYPE == 'ch-sept' and corr_index != 1) or \
-                    (self._CORRSTYPE == 'ch-ch'):
+            if corr_index != 1:
                 self._corr_opmode_sel_pvs[corr] = _epics.PV(
                     pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
                 self._corr_opmode_sts_pvs[corr] = _epics.PV(
@@ -131,7 +124,8 @@ class App:
                     callback=self._callback_corr_opmode_sts)
 
                 self._corr_ctrlmode_mon_pvs[corr] = _epics.PV(
-                    pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
+                    pss.substitute(propty_name='CtrlMode',
+                                   propty_suffix='Mon'),
                     callback=self._callback_corr_ctrlmode_mon)
 
         self.driver.setParam('Log-Mon', 'Started.')
@@ -270,10 +264,7 @@ class App:
             c1_refkick = self._corr_refkick[corr1]
             c2_refkick = self._corr_refkick[corr2]
             c1_unit_factor = 1e-6  # urad to rad
-            if self._CORRSTYPE == 'ch-sept':
-                c2_unit_factor = 1e-3  # mrad to rad
-            else:
-                c2_unit_factor = 1e-6  # urad to rad
+            c2_unit_factor = 1e-3  # mrad to rad
         else:
             respmat = self._respmat_y
             corr1 = self._correctors[2]
@@ -429,8 +420,7 @@ class App:
             corr_index = self._correctors.index(corr)
             if self._corr_pwrstate_sel_pvs[corr].connected:
                 self._corr_pwrstate_sel_pvs[corr].put(1)
-                if (self._CORRSTYPE == 'ch-sept' and corr_index != 1) or \
-                        (self._CORRSTYPE == 'ch-ch'):
+                if corr_index != 1:
                     self._corr_opmode_sel_pvs[corr].put(0)
             else:
                 self.driver.setParam(
