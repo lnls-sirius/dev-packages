@@ -132,9 +132,8 @@ class App:
         self._bpmsum_buffer.time_window = value
 
     def _clear_buffer(self):
-        self._current_buffer.clearserie()
-        self._bpmsum_buffer.clearserie()
         self._rstbuff_cmd_count += 1
+        self._reset_buff()
 
     def _callback_get_storedebeam(self, value, **kws):
         self._is_stored = value
@@ -154,8 +153,7 @@ class App:
             return
 
         # check whether the buffer must be reset
-        if self._buffautorst_mode != _Const.BuffAutoRst.Off:
-            self._buffautorst_check()
+        self._buffautorst_check()
 
         # check min number of points in buffer to calculate lifetime
         [timestamp_dq, value_dq] = buffer.serie
@@ -180,19 +178,14 @@ class App:
             self.driver.updatePV('LifetimeBPM-Mon')
             self.driver.setParam('BuffSizeBPM-Mon', len(value_dq))
             self.driver.updatePV('BuffSizeBPM-Mon')
-            self.driver.setParam('BuffFirstSplTimestampBPM-Mon', first_ts)
-            self.driver.updatePV('BuffFirstSplTimestampBPM-Mon')
-            self.driver.setParam('BuffLastSplTimestampBPM-Mon', last_ts)
-            self.driver.updatePV('BuffLastSplTimestampBPM-Mon')
+            self._update_buff_samples_timestamps(
+                first_ts, last_ts, is_bpm=True)
         else:
             self.driver.setParam('Lifetime-Mon', self._lifetime)
             self.driver.updatePV('Lifetime-Mon')
             self.driver.setParam('BuffSize-Mon', len(value_dq))
             self.driver.updatePV('BuffSize-Mon')
-            self.driver.setParam('BuffFirstSplTimestamp-Mon', first_ts)
-            self.driver.updatePV('BuffFirstSplTimestamp-Mon')
-            self.driver.setParam('BuffLastSplTimestamp-Mon', last_ts)
-            self.driver.updatePV('BuffLastSplTimestamp-Mon')
+            self._update_buff_samples_timestamps(first_ts, last_ts)
 
     def _buffautorst_check(self):
         """Check situations to clear internal buffer.
@@ -205,16 +198,37 @@ class App:
         reset = False
         [_, value] = self._current_buffer.serie
         if len(value) >= 2:
-            deltacurr = value[-1] - value[-2]
+            deltacurr = abs(value[-1] - value[-2])
         else:
             deltacurr = 0.0
         if deltacurr > self._buffautorst_dcurr:
             reset = True
         if reset:
-            self._current_buffer.clearserie()
-            self._lifetime = 0
-            self._bpmsum_buffer.clearserie()
-            self._lifetime_bpm = 0
+            self._reset_buff()
+
+    def _reset_buff(self):
+        self._current_buffer.clearserie()
+        self.driver.setParam('BuffSize-Mon', 0)
+        self.driver.updatePV('BuffSize-Mon')
+        self._lifetime = 0
+        self.driver.setParam('Lifetime-Mon', self._lifetime)
+        self.driver.updatePV('Lifetime-Mon')
+        self._update_buff_samples_timestamps(0, 0)
+
+        self._bpmsum_buffer.clearserie()
+        self.driver.setParam('BuffSizeBPM-Mon', 0)
+        self.driver.updatePV('BuffSizeBPM-Mon')
+        self._lifetime_bpm = 0
+        self.driver.setParam('LifetimeBPM-Mon', self._lifetime_bpm)
+        self.driver.updatePV('LifetimeBPM-Mon')
+        self._update_buff_samples_timestamps(0, 0, is_bpm=True)
+
+    def _update_buff_samples_timestamps(self, first, last, is_bpm=False):
+        typ = ('BPM' if is_bpm else '')
+        self.driver.setParam('BuffFirstSplTimestamp'+typ+'-Mon', first)
+        self.driver.updatePV('BuffFirstSplTimestamp'+typ+'-Mon')
+        self.driver.setParam('BuffLastSplTimestamp'+typ+'-Mon', last)
+        self.driver.updatePV('BuffLastSplTimestamp'+typ+'-Mon')
 
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
