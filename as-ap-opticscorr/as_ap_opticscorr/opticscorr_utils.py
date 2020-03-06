@@ -16,7 +16,7 @@ def get_config_name(acc, opticsparam):
     except Exception:
         f = open('/home/sirius/iocs-log/'+acc+'-ap-'+opticsparam+'corr/' +
                  acc+'-'+opticsparam+'corr.txt', 'w+')
-        config_name = 'Default'
+        config_name = get_default_config_name(acc, opticsparam)
         f.write(config_name)
         f.close()
     return config_name
@@ -35,3 +35,16 @@ def set_config_name(acc, opticsparam, config_name):
              acc+'-'+opticsparam+'corr.txt', 'w+')
     f.write(config_name)
     f.close()
+
+
+def get_default_config_name(self, acc, opticsparam):
+    if opticsparam == 'tune':
+        if acc == 'BO':
+            return 'BO.V05.04.M0'
+        else:
+            return 'SI.V24.04_S05.01'
+    elif opticsparam == 'chrom':
+        if acc == 'BO':
+            return 'BO.V05.04.M0'
+        else:
+            return 'SI.V24.04_S05.01'

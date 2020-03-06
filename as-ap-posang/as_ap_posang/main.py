@@ -61,15 +61,15 @@ class App:
 
         self.cdb_client = _ConfigDBClient(
             config_type=self._TL.lower()+'_posang_respm')
-        config_name = self._get_config_name()
-        [done, corrparams] = self._get_corrparams(config_name)
+        [done, corrparams] = self._get_corrparams()
         if done:
-            self.driver.setParam('ConfigName-SP', config_name)
-            self.driver.setParam('ConfigName-RB', config_name)
-            self._respmat_x = corrparams[0]
-            self.driver.setParam('RespMatX-Mon', corrparams[0])
-            self._respmat_y = corrparams[1]
-            self.driver.setParam('RespMatY-Mon', corrparams[1])
+            self._config_name = corrparams[0]
+            self.driver.setParam('ConfigName-SP', self._config_name)
+            self.driver.setParam('ConfigName-RB', self._config_name)
+            self._respmat_x = corrparams[1]
+            self.driver.setParam('RespMatX-Mon', self._respmat_x)
+            self._respmat_y = corrparams[2]
+            self.driver.setParam('RespMatY-Mon', self._respmat_y)
 
         # The correctors are listed as:
         # First horizontal corretor, second horizontal corretor,
@@ -200,14 +200,15 @@ class App:
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 self._set_config_name(value)
-                self.driver.setParam('ConfigName-RB', value)
-                self._respmat_x = corrparams[0]
-                self.driver.setParam('RespMatX-Mon', corrparams[0])
-                self._respmat_y = corrparams[1]
-                self.driver.setParam('RespMatY-Mon', corrparams[1])
-                updated = self._update_delta(
+                self._config_name = corrparams[0]
+                self.driver.setParam('ConfigName-RB', self._config_name)
+                self._respmat_x = corrparams[1]
+                self.driver.setParam('RespMatX-Mon', self._respmat_x)
+                self._respmat_y = corrparams[2]
+                self.driver.setParam('RespMatY-Mon', self._respmat_y)
+                self._update_delta(
                     self._orbx_deltapos, self._orbx_deltaang, 'x')
-                updated = self._update_delta(
+                self._update_delta(
                     self._orby_deltapos, self._orby_deltaang, 'y')
                 self.driver.setParam('Log-Mon', 'Updated correction matrices.')
                 self.driver.updatePVs()
@@ -215,35 +216,32 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePVs()  # in case PV states change.
+                self.driver.updatePVs()
 
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrparams(self, config_name):
+    def _get_corrparams(self, config_name=''):
         """Get response matrix from configurations database."""
         try:
-            cdb = _ConfigDBClient()
-            mats = cdb.get_config_value(
-                config_name, config_type=self._TL.lower()+'_posang_respm')
+            if not config_name:
+                config_name = self._get_config_name()
+            mats = self.cdb_client.get_config_value(config_name)
         except _ConfigDBException:
             return [False, []]
 
         respmat_x = [item for sublist in mats['respm-x'] for item in sublist]
         respmat_y = [item for sublist in mats['respm-y'] for item in sublist]
-        return [True, [respmat_x, respmat_y]]
+        return [True, [config_name, respmat_x, respmat_y]]
 
     def _get_config_name(self):
-        fname = './' + self._TL.lower() + '-posang-' + self._CORRSTYPE + '.txt'
+        fname = './' + self._TL.lower() + '-posang.txt'
         try:
             f = open(fname, 'r')
             config_name = f.read().strip('\n')
             f.close()
         except Exception:
             f = open(fname, 'w+')
-            if self._CORRSTYPE == 'ch-sept':
-                config_name = 'Default_CHSept'
-            else:
-                config_name = 'Default_CHCH'
+            config_name = self._get_default_config_name()
             f.write(config_name)
             f.close()
         return config_name
@@ -253,6 +251,12 @@ class App:
                  self._TL.lower() + '-posang.txt', 'w+')
         f.write(config_name)
         f.close()
+
+    def _get_default_config_name(self):
+        if self._TL == 'TB':
+            return 'Default_CHSept'
+        else:
+            return 'TS.V04.01-M1'
 
     def _update_delta(self, delta_pos, delta_ang, orbit):
         if orbit == 'x':
