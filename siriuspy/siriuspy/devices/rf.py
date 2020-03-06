@@ -4,140 +4,219 @@ import time as _time
 import numpy as _np
 from epics import PV
 
+from .device import Device as _Device
+from .device import Devices as _Devices
 
-class RF:
+
+class RFGen(_Device):
     """."""
 
-    def __init__(self, acc=None, is_cw=None):
+    DEVICE = 'RF-Gen'
+    RF_DELTA_MIN = 0.1  # [Hz]
+    RF_DELTA_MAX = 1000.0  # [Hz]
+    RF_DELTA_RMP = 20  # [Hz]
+
+    _properties = ('GeneralFreq-SP', 'GeneralFreq-RB')
+
+    def __init__(self):
         """."""
-        self.acc = acc.upper() if acc else 'SI'
-        defcw = True if acc == 'BO' else False
-        self.is_cw = is_cw if is_cw is not None else defcw
-        if self.acc == 'SI':
-            pre = 'SR'
-            self._power_mon = PV('RA-RaSIA01:RF-LLRFCalSys:PwrW1-Mon')
-        elif acc == 'BO':
-            pre = 'BR'
-            if self.is_cw:
-                self._power_mon = PV('BO-05D:RF-P5Cav:Cell3PwrTop-Mon')
-            else:
-                self._power_mon = PV('BO-05D:RF-P5Cav:Cell3Pwr-Mon')
-        else:
-            raise Exception('Set BO or SI.')
-        self._frequency_sp = PV('RF-Gen:GeneralFreq-SP')
-        self._frequency_rb = PV('RF-Gen:GeneralFreq-RB')
-        if self.is_cw:
-            self._phase_sp = PV(pre+'-RF-DLLRF-01:PL:REF:S')
-            self._phase_rb = PV(pre+'-RF-DLLRF-01:SL:INP:PHS')
-        else:
-            self._phase_bot_sp = PV(pre+'-RF-DLLRF-01:RmpPhsBot-SP')
-            self._phase_bot_rb = PV(pre+'-RF-DLLRF-01:RmpPhsBot-SP')
-            self._phase_top_sp = PV(pre+'-RF-DLLRF-01:RmpPhsTop-SP')
-            self._phase_top_rb = PV(pre+'-RF-DLLRF-01:RmpPhsTop-SP')
-        self._voltage_sp = PV(pre+'-RF-DLLRF-01:mV:AL:REF:S')
-        self._voltage_rb = PV(pre+'-RF-DLLRF-01:SL:REF:AMP')
-
-    @property
-    def connected(self):
-        """."""
-        if self.is_cw:
-            conn = self._phase_rb.connected
-            conn &= self._phase_sp.connected
-        else:
-            conn = self._phase_bot_rb.connected
-            conn &= self._phase_bot_sp.connected
-            conn &= self._phase_top_sp.connected
-            conn &= self._phase_top_sp.connected
-        conn &= self._voltage_sp.connected
-        conn &= self._voltage_rb.connected
-        conn &= self._power_mon.connected
-        conn &= self._frequency_sp.connected
-        conn &= self._frequency_rb.connected
-        return conn
-
-    @property
-    def power(self):
-        """."""
-        return self._power_mon.value
-
-    @property
-    def phase(self):
-        """."""
-        return self._phase_rb.value if self.is_cw else self._phase_bot_rb.value
-
-    @phase.setter
-    def phase(self, value):
-        if self.is_cw:
-            self._phase_sp.value = value
-        else:
-            self._phase_bot_sp.value = value
-            self._phase_top_sp.value = value
-
-    @property
-    def voltage(self):
-        """."""
-        return self._voltage_rb.value
-
-    @voltage.setter
-    def voltage(self, value):
-        self._voltage_sp.value = value
+        # call base class constructor
+        super().__init__(RFGen.DEVICE, properties=RFGen._properties)
 
     @property
     def frequency(self):
         """."""
-        return self._frequency_rb.value
+        return self['GeneralFreq-RB']
 
     @frequency.setter
-    def frequency(self, freq):
-        delta_max = 20  # Hz
-        freq0 = self._frequency_sp.value
-        if freq0 is None or freq is None:
+    def frequency(self, value):
+        delta_max = RFGen.RF_DELTA_RMP  # [Hz]
+        freq0 = self['GeneralFreq-SP']
+        if freq0 is None or value is None:
             return
-        delta = abs(freq-freq0)
-        if delta < 0.1 or delta > 10000:
+        delta = abs(value-freq0)
+        if delta < RFGen.RF_DELTA_MIN or delta > RFGen.RF_DELTA_MAX:
             return
         npoints = int(round(delta/delta_max)) + 2
-        freq_span = _np.linspace(freq0, freq, npoints)[1:]
-        for f in freq_span:
-            self._frequency_sp.put(f, wait=False)
-            _time.sleep(1)
-        self._frequency_sp.value = freq
+        freq_span = _np.linspace(freq0, value, npoints)[1:]
+        for freq in freq_span:
+            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+            _time.sleep(1.0)
+        self['GeneralFreq-SP'] = value
 
-    def set_voltage(self, value, timeout=10):
+
+class RFLL(_Device):
+    """."""
+
+    DEVICE_SI = 'SR-RF-DLLRF-01'
+    DEVICE_BO = 'BR-RF-DLLRF-01'
+
+    _properties = (
+        'PL:REF:S', 'SL:INP:PHS',
+        'mV:AL:REF:S', 'SL:REF:AMP',
+        'RmpPhsBot-SP', 'RmpPhsBot-RB',
+        'RmpPhsTop-SP', 'RmpPhsTop-RB')
+
+    def __init__(self, devname, is_cw=None):
         """."""
-        self.voltage = value
-        self.wait(timeout, 'voltage')
+        # set is_cw
+        self._is_cw = RFLL._set_is_cw(devname, is_cw)
 
-    def set_phase(self, value, timeout=10):
+        # call base class constructor
+        super().__init__(devname, properties=RFLL._properties)
+
+    @property
+    def is_cw(self):
         """."""
-        self.phase = value
-        self.wait(timeout, 'phase')
+        return self._is_cw
 
-    def set_frequency(self, value, timeout=10):
+    @property
+    def phase(self):
         """."""
-        self.frequency = value
-        self.wait(timeout, 'frequency')
+        if self._is_cw:
+            return self['SL:INP:PHS']
+        return self['RmpPhsBot-RB']
 
-    def wait(self, timeout=10, prop=None):
+    @phase.setter
+    def phase(self, value):
+        """."""
+        if self._is_cw:
+            self['PL:REF:S'] = value
+        else:
+            self['RmpPhsBot-SP'] = value
+            self['RmpPhsTop-SP'] = value
+
+    @property
+    def voltage(self):
+        """."""
+        return self['SL:REF:AMP']
+
+    @voltage.setter
+    def voltage(self, value):
+        self['mV:AL:REF:S'] = value
+
+
+    # --- private methods ---
+
+    @staticmethod
+    def _set_is_cw(devname, is_cw):
+        defcw = (devname == RFLL.DEVICE_BO)
+        value = defcw if is_cw is None else is_cw
+        return value
+
+class RFPowMon(_Device):
+    """."""
+
+    DEVICE_SI = 'RA-RaSIA01:RF-LLRFCalSys'
+    DEVICE_BO = 'BO-05D:RF-P5Cav'
+
+    _properties = {
+        DEVICE_SI: ('PwrW1-Mon', ),
+        DEVICE_BO: ('Cell3PwrTop-Mon', 'Cell3Pwr-Mon')}
+
+    def __init__(self, devname, is_cw=None):
+        """."""
+        # set is_cw
+        self._is_cw = self._set_is_cw(devname, is_cw)
+
+        # call base class constructor
+        super().__init__(devname, properties=RFPowMon._properties[devname])
+
+    @property
+    def is_cw(self):
+        """."""
+        return self._is_cw
+
+    @property
+    def power(self):
+        """."""
+        if self._devname == RFPowMon.DEVICE_BO:
+            if self.is_cw:
+                return self['Cell3PwrTop-Mon']
+            return self['Cell3Pwr-Mon']
+        return self['PwrW1-Mon']
+
+    # --- private methods ---
+
+    @staticmethod
+    def _set_is_cw(devname, is_cw):
+        defcw = (devname == RFPowMon.DEVICE_BO)
+        value = defcw if is_cw is None else is_cw
+        return value
+
+
+class RFCav(_Devices):
+    """."""
+
+    DEVICE_SI = 'RA-RaSIA01:RF-LLRFCalSys'
+    DEVICE_BO = 'BO-05D:RF-P5Cav'
+
+    def __init__(self, devname, is_cw=None):
+        """."""
+        rfgen = RFGen()
+        if devname == RFCav.DEVICE_SI:
+            rfll = RFLL(RFLL.DEVICE_SI, is_cw)
+            rfpowmon = RFPowMon(RFPowMon.DEVICE_SI, is_cw)
+        elif devname == RFCav.DEVICE_BO:
+            rfll = RFLL(RFLL.DEVICE_BO, is_cw)
+            rfpowmon = RFPowMon(RFPowMon.DEVICE_SI, is_cw)
+        devices = (rfgen, rfll, rfpowmon)
+
+        # call base class constructor
+        super().__init__(devname, devices)
+
+    @property
+    def is_cw(self):
+        """."""
+        return self.devices[0].is_cw
+
+    @property
+    def dev_rfgen(self):
+        """Return RFGen device."""
+        return self.devices[0]
+
+    @property
+    def dev_rfll(self):
+        """Return RFLL device."""
+        return self.devices[1]
+
+    @property
+    def dev_rfpowmon(self):
+        """Return RFPoweMon device."""
+        return self.devices[2]
+
+    def cmd_set_voltage(self, value, timeout=10):
+        """."""
+        self.dev_rfll.voltage = value
+        self._wait('voltage', timeout=timeout)
+
+    def cmd_set_phase(self, value, timeout=10):
+        """."""
+        self.dev_rfll.phase = value
+        self._wait('phase', timeout=timeout)
+
+    # --- private methods ---
+
+    def _wait(self, propty, timeout=10):
         """."""
         nrp = int(timeout / 0.1)
         for _ in range(nrp):
             _time.sleep(0.1)
-            if prop == 'phase':
+            if propty == 'phase':
                 if self.is_cw:
-                    phase_sp = self._phase_sp.value
+                    phase_sp = self.dev_rfll['PL:REF:S']
                 else:
-                    phase_sp = self._phase_bot_sp.value
-                if abs(self.phase - phase_sp) < 0.1:
+                    phase_sp = self.dev_rfll['RmpPhsBot-SP']
+                if abs(self.dev_rfll.phase - phase_sp) < 0.1:
                     break
-            elif prop == 'voltage':
-                if abs(self.voltage - self._voltage_sp.value) < 0.1:
+            elif propty == 'voltage':
+                voltage_sp = self.dev_rfll['mV:AL:REF:S']
+                if abs(self.dev_rfll.voltage - voltage_sp) < 0.1:
                     break
-            elif prop == 'frequency':
-                if abs(self.frequency - self._frequency_sp.value) < 0.1:
+            elif propty == 'frequency':
+                freq_sp = self.dev_rfgen['GeneralFreq-SP']
+                if abs(self.dev_rfgen.frequency - freq_sp) < 0.1:
                     break
             else:
                 raise Exception(
                     'Set RF property (phase, voltage or frequency)')
-        else:
-            print('timed out waiting RF.')
