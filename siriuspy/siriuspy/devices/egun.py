@@ -14,7 +14,7 @@ class EGBias(_Device):
     _properties = (
         'voltoutsoft', 'voltinsoft', 'currentinsoft', 'switch', 'swstatus')
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=DEVICE_LI):
         """."""
         if devname is None:
             devname = EGBias.DEVICE_LI
