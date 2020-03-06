@@ -24,7 +24,7 @@ def get_pvs_prefix():
 def get_pvs_database():
     """Return IOC database."""
     pvs_database = _get_database()
-    pvs_database['Version-Cte']['value'] = _COMMIT_HASH
+    pvs_database['VersionLifetime-Cte']['value'] = _COMMIT_HASH
     return pvs_database
 
 
