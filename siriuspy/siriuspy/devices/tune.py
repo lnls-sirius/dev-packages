@@ -8,17 +8,19 @@ from .device import Devices as _Devices
 class TuneFrac(_Device):
     """."""
 
-    DEVICE_SI_H = 'SI-Glob:DI-Tune-H'
-    DEVICE_SI_V = 'SI-Glob:DI-Tune-V'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (DEVICE_SI_H, DEVICE_SI_V)
+        SI_H = 'SI-Glob:DI-Tune-H'
+        SI_V = 'SI-Glob:DI-Tune-V'
+        ALL = (SI_H, SI_V)
 
     _properties = ('TuneFrac-Mon', )
 
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in TuneFrac.DEVICES:
+        if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -33,17 +35,19 @@ class TuneFrac(_Device):
 class TuneProc(_Device):
     """."""
 
-    DEVICE_SI_H = 'SI-Glob:DI-TuneProc-H'
-    DEVICE_SI_V = 'SI-Glob:DI-TuneProc-V'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (DEVICE_SI_H, DEVICE_SI_V)
+        SI_H = 'SI-Glob:DI-TuneProc-H'
+        SI_V = 'SI-Glob:DI-TuneProc-V'
+        ALL = (SI_H, SI_V)
 
     _properties = ('Trace-Mon', )
 
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in TuneProc.DEVICES:
+        if devname not in TuneProc.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -58,17 +62,19 @@ class TuneProc(_Device):
 class Tune(_Devices):
     """."""
 
-    DEVICE_SI = 'SI-Glob:DI-Tune'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (DEVICE_SI, )
+        SI = 'SI-Glob:DI-Tune'
+        ALL = (SI, )
 
     def __init__(self, devname):
         """."""
-        if devname == Tune.DEVICE_SI:
-            tune_frac_h = TuneFrac(TuneFrac.DEVICE_SI_H)
-            tune_frac_v = TuneFrac(TuneFrac.DEVICE_SI_V)
-            tune_proc_h = TuneFrac(TuneProc.DEVICE_SI_H)
-            tune_proc_v = TuneFrac(TuneProc.DEVICE_SI_V)
+        if devname == Tune.DEVICES.ALL:
+            tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H)
+            tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V)
+            tune_proc_h = TuneFrac(TuneProc.DEVICES.SI_H)
+            tune_proc_v = TuneFrac(TuneProc.DEVICES.SI_V)
 
         devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
 
