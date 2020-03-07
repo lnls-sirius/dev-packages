@@ -1,6 +1,8 @@
-"""."""
+"""Power Supply Devices."""
 
 from .. import util as _util
+
+from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.status import PSCStatus as _PSCStatus
 
@@ -8,7 +10,7 @@ from .device import Device as _Device
 
 
 class _PSDev(_Device):
-    """Power Supply Device."""
+    """Base Power Supply Device."""
 
     PWRSTATE = _PSCStatus.PWRSTATE
 
@@ -24,21 +26,22 @@ class _PSDev(_Device):
         'OpMode-Sel', 'OpMode-Sts'
     )
     _properties_pulsed = (
-        'Voltage-SP', 'Voltage-RB',
-        'Delay-SP', 'Delay-RB',
+        'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
 
     def __init__(self, devname):
         """."""
+        devname = _SiriusPVName(devname)
+
         # check if device exists
         if devname not in _PSSearch.get_psnames():
             raise NotImplementedError(devname)
-        self._devname = devname
 
         # power supply type and magnetic function
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed) = self._get_device_type()
+         self._is_linac, self._is_pulsed, self._is_magps) = \
+             self._get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -51,27 +54,32 @@ class _PSDev(_Device):
 
     @property
     def pstype(self):
-        """."""
+        """Return type of magnet(s) excited by power supply device."""
         return self._pstype
 
     @property
     def psmodel(self):
-        """Return power supply model."""
+        """Return power supply model of the device."""
         return self._psmodel
 
     @property
     def magfunc(self):
-        """."""
+        """Return function of magnet excited by power supply devices."""
         return self._magfunc
 
     @property
     def is_linac(self):
-        """."""
+        """Return True if device is a Linac magnet power supply."""
         return self._is_linac
 
     @property
     def is_pulsed(self):
-        """."""
+        """Return True if device is a pulsed magnet powet supply."""
+        return self._is_pulsed
+
+    @property
+    def is_magps(self):
+        """Return True if device is a Sirius magnet power supply."""
         return self._is_pulsed
 
     @property
@@ -121,18 +129,19 @@ class _PSDev(_Device):
 
     # --- private methods ---
 
-    def _get_device_type(self):
+    def _get_device_type(self, devname):
         """."""
-        pstype = _PSSearch.conv_psname_2_pstype(self._devname)
-        psmodel = _PSSearch.conv_psname_2_psmodel(self._devname)
-        magfunc = _PSSearch.conv_psname_2_magfunc(self._devname)
+        pstype = _PSSearch.conv_psname_2_pstype(devname)
+        psmodel = _PSSearch.conv_psname_2_psmodel(devname)
+        magfunc = _PSSearch.conv_psname_2_magfunc(devname)
         strength_propty = _util.get_strength_label(magfunc)
         strength_units = _util.get_strength_units(magfunc, pstype)
-        is_linac = self._devname.startswith('LI-')
-        is_pulsed = ':PU-' in self._devname
+        is_linac = devname.sec.endswith('LI')
+        is_pulsed = devname.dis == 'PU'
+        is_magps = not is_linac and not is_pulsed
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
-                is_linac, is_pulsed)
+                is_linac, is_pulsed, is_magps)
 
     def _set_attributes_properties(self):
 
@@ -168,6 +177,10 @@ class PowerSupply(_PSDev):
     OPMODE_SEL = _PSCStatus.OPMODE
     OPMODE_STS = _PSCStatus.STATES
 
+    class DEVICES:
+        """Devices names."""
+
+
     @property
     def current(self):
         """."""
@@ -201,39 +214,46 @@ class PowerSupply(_PSDev):
 class PowerSupplyPU(_PSDev):
     """Pulsed Power Supply Device."""
 
-    DEVICE_TB_INJ_SEPT = 'TB-04:PU-InjSept'
-    DEVICE_BO_INJ_KCKR = 'BO-01D:PU-InjKckr'
-    DEVICE_BO_EJE_KCKR = 'BO-48D:PU-EjeKckr'
-    DEVICE_TS_EJE_SEPTF = 'TS-01:PU-EjeSeptF'
-    DEVICE_TS_EJE_SEPTG = 'TS-01:PU-EjeSeptG'
-    DEVICE_TS_INJ_SPETG_1 = 'TS-04:PU-InjSeptG-1'
-    DEVICE_TS_INJ_SPETG_2 = 'TS-04:PU-InjSeptG-2'
-    DEVICE_TS_INJ_SPETF = 'TS-04:PU-InjSeptF'
-    DEVICE_SI_INJ_DPKCKR = 'SI-01SA:PU-InjDpKckr'
-    DEVICE_SI_INJ_NLKCKR = 'SI-01SA:PU-InjNLKckr'
-    DEVICE_SI_PING_H = 'SI-01SA:PU-PingH'
-    DEVICE_SI_PING_V = 'SI-19C4:PU-PingV'
-
-    DEVICES = (
-        DEVICE_TB_INJ_SEPT,
-        DEVICE_BO_INJ_KCKR, DEVICE_BO_EJE_KCKR,
-        DEVICE_TS_EJE_SEPTF, DEVICE_TS_EJE_SEPTG,
-        DEVICE_TS_INJ_SPETG_1, DEVICE_TS_INJ_SPETG_2,
-        DEVICE_TS_INJ_SPETF,
-        DEVICE_SI_INJ_DPKCKR, DEVICE_SI_INJ_NLKCKR,
-        DEVICE_SI_PING_H, DEVICE_SI_PING_V,
-    )
-
     PULSTATE = _PSCStatus.PWRSTATE
+
+    class DEVICES:
+        """Devices names."""
+
+        TB_INJ_SEPT = 'TB-04:PU-InjSept'
+        BO_INJ_KCKR = 'BO-01D:PU-InjKckr'
+        BO_EJE_KCKR = 'BO-48D:PU-EjeKckr'
+        TS_EJE_SEPTF = 'TS-01:PU-EjeSeptF'
+        TS_EJE_SEPTG = 'TS-01:PU-EjeSeptG'
+        TS_INJ_SPETG_1 = 'TS-04:PU-InjSeptG-1'
+        TS_INJ_SPETG_2 = 'TS-04:PU-InjSeptG-2'
+        TS_INJ_SPETF = 'TS-04:PU-InjSeptF'
+        SI_INJ_DPKCKR = 'SI-01SA:PU-InjDpKckr'
+        SI_INJ_NLKCKR = 'SI-01SA:PU-InjNLKckr'
+        SI_PING_H = 'SI-01SA:PU-PingH'
+        SI_PING_V = 'SI-19C4:PU-PingV'
+        ALL = (
+            TB_INJ_SEPT,
+            BO_INJ_KCKR, BO_EJE_KCKR,
+            TS_EJE_SEPTF, TS_EJE_SEPTG,
+            TS_INJ_SPETG_1, TS_INJ_SPETG_2,
+            TS_INJ_SPETF,
+            SI_INJ_DPKCKR, SI_INJ_NLKCKR,
+            SI_PING_H, SI_PING_V,
+        )
+
+    _properties_timing = ('Delay-SP', 'Delay-RB')
 
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in PowerSupplyPU.DEVICES:
+        if devname not in PowerSupplyPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(devname)
+
+        # create timing device
+        self._dev_timing = self._create_timing_device()
 
     @property
     def voltage(self):
@@ -252,22 +272,22 @@ class PowerSupplyPU(_PSDev):
     @property
     def delay(self):
         """."""
-        return self['Delay-RB']
+        return self._dev_timing['Delay-RB']
 
     @delay.setter
     def delay(self, value):
         """."""
-        self['Delay-SP'] = value
+        self._dev_timing['Delay-SP'] = value
 
     @property
     def pulse(self):
         """."""
-        return self['Pulse-Sts']
+        return self._dev_timing['Pulse-Sts']
 
     @pulse.setter
     def pulse(self, value):
         """."""
-        self['Pulse-Sel'] = value
+        self._dev_timing['Pulse-Sel'] = value
 
     def cmd_turn_on_pulse(self):
         """."""
@@ -276,3 +296,65 @@ class PowerSupplyPU(_PSDev):
     def cmd_turn_off_pulse(self):
         """."""
         self.pulse = self.PULSTATE.Off
+
+    @property
+    def properties(self):
+        """Return device properties."""
+        return self._properties + self._dev_timing.properties
+
+    @property
+    def pvnames(self):
+        """Return device PV names."""
+        return super().pvnames + self._dev_timing.pvnames
+
+    @property
+    def connected(self):
+        """Return PVs connection status."""
+        if not super().connected:
+            return False
+        return self._dev_timing.connected
+
+    @property
+    def disconnected_pvnames(self):
+        """Return list of disconnected device PVs."""
+        return super().disconnected_pvnames + \
+            self._dev_timing.disconnected_pvnames
+
+    def update(self):
+        """Update device properties."""
+        super().update()
+        self._dev_timing.update()
+
+    def pv_object(self, propty):
+        """Return PV object for a given device property."""
+        if propty in self._pvs:
+            return super().pv_object(propty)
+        return self._dev_timing.pv_object(propty)
+
+    def pv_attribute_values(self, attribute):
+        """Return property-value dict of a given attribute for all PVs."""
+        attributes = super().pv_attribute_values(attribute)
+        attributes_ti = self._dev_timing.pv_attribute_values(attribute)
+        attributes.update(attributes_ti)
+        return attributes
+
+    def __getitem__(self, propty):
+        """Return value of property."""
+        if propty in self._pvs:
+            return super().__getitem__(propty)
+        return self._dev_timing[propty]
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        if propty in self._pvs:
+            super().__setitem__(propty, value)
+        else:
+            self._dev_timing[propty] = value
+
+    # --- private methods ---
+
+    def _create_timing_device(self):
+        """."""
+        devname = self._devname.substitute(dis='TI')
+        device = _Device(devname, PowerSupplyPU._properties_timing)
+        return device

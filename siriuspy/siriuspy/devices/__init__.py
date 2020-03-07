@@ -11,4 +11,4 @@ from .rf import RFGen, RFLL, RFPowMon, RFCav
 from .screen import Screen
 from .tune import TuneFrac, TuneProc, Tune
 from .sofb import SOFB
-from .timing import Timing
+from .timing import EVG

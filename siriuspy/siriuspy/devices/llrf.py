@@ -2,15 +2,19 @@
 
 import time as _time
 
-from .device import Device as _Device
+from .device import DeviceNC as _DeviceNC
 
 
-class LLRF(_Device):
+class LLRF(_DeviceNC):
     """."""
 
-    DEVICE_LI_SHB = 'LA-RF:LLRF:BUN1'
-    DEVICE_LI_KLY1 = 'LA-RF:LLRF:KLY1'
-    DEVICE_LI_KLY2 = 'LA-RF:LLRF:KLY2'
+    class DEVICES:
+        """Devices names."""
+
+        LI_SHB = 'LA-RF:LLRF:BUN1'
+        LI_KLY1 = 'LA-RF:LLRF:KLY1'
+        LI_KLY2 = 'LA-RF:LLRF:KLY2'
+        ALL = (LI_SHB, LI_KLY1, LI_KLY2)
 
     _properties = (
         'SET_AMP', 'GET_AMP',
@@ -18,6 +22,10 @@ class LLRF(_Device):
 
     def __init__(self, devname):
         """."""
+        # check if device exists
+        if devname not in LLRF.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         # call base class constructor
         super().__init__(devname, properties=LLRF._properties)
 

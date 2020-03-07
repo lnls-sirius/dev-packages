@@ -6,38 +6,28 @@ from .device import Device as _Device
 class Screen(_Device):
     """."""
 
-    DEVICE_TB_1 = 'TB-01:DI-Scrn-1'
-    DEVICE_TB_2 = 'TB-01:DI-Scrn-2'
-    DEVICE_TB_3 = 'TB-02:DI-Scrn-1'
-    DEVICE_TB_4 = 'TB-02:DI-Scrn-2'
-    DEVICE_TB_5 = 'TB-03:DI-Scrn'
-    DEVICE_TB_6 = 'TB-04:DI-Scrn'
-    DEVICE_BO_1 = 'BO-01D:DI-Scrn-1'
-    DEVICE_BO_2 = 'BO-01D:DI-Scrn-2'
-    DEVICE_BO_3 = 'BO-02U:DI-Scrn'
-    DEVICE_TS_1 = 'TS-01:DI-Scrn'
-    DEVICE_TS_2 = 'TS-02:DI-Scrn'
-    DEVICE_TS_3 = 'TS-03:DI-Scrn'
-    DEVICE_TS_4 = 'TS-04:DI-Scrn-1'
-    DEVICE_TS_5 = 'TS-04:DI-Scrn-2'
-    DEVICE_TS_6 = 'TS-04:DI-Scrn-3'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (
-        DEVICE_TB_1,
-        DEVICE_TB_2,
-        DEVICE_TB_3,
-        DEVICE_TB_4,
-        DEVICE_TB_5,
-        DEVICE_TB_6,
-        DEVICE_BO_1,
-        DEVICE_BO_2,
-        DEVICE_BO_3,
-        DEVICE_TS_1,
-        DEVICE_TS_2,
-        DEVICE_TS_3,
-        DEVICE_TS_4,
-        DEVICE_TS_5,
-        DEVICE_TS_6)
+        TB_1 = 'TB-01:DI-Scrn-1'
+        TB_2 = 'TB-01:DI-Scrn-2'
+        TB_3 = 'TB-02:DI-Scrn-1'
+        TB_4 = 'TB-02:DI-Scrn-2'
+        TB_5 = 'TB-03:DI-Scrn'
+        TB_6 = 'TB-04:DI-Scrn'
+        BO_1 = 'BO-01D:DI-Scrn-1'
+        BO_2 = 'BO-01D:DI-Scrn-2'
+        BO_3 = 'BO-02U:DI-Scrn'
+        TS_1 = 'TS-01:DI-Scrn'
+        TS_2 = 'TS-02:DI-Scrn'
+        TS_3 = 'TS-03:DI-Scrn'
+        TS_4 = 'TS-04:DI-Scrn-1'
+        TS_5 = 'TS-04:DI-Scrn-2'
+        TS_6 = 'TS-04:DI-Scrn-3'
+        ALL = (
+            TB_1, TB_2, TB_3, TB_4, TB_5, TB_6,
+            BO_1, BO_2, BO_3,
+            TS_1, TS_2, TS_3, TS_4, TS_5, TS_6)
 
     _properties = (
         'ImgData-Mon',
@@ -48,7 +38,7 @@ class Screen(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in Screen.DEVICES:
+        if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor

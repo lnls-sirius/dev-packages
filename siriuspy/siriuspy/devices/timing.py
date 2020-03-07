@@ -5,19 +5,26 @@ import time as _time
 from .device import Device as _Device
 
 
-class Timing(_Device):
+class EVG(_Device):
     """."""
 
-    DEVICE = 'AS-RaMO:TI-EVG'
+    class DEVICES:
+        """Devices names."""
+
+        AS = 'AS-RaMO:TI-EVG'
+        ALL = (AS, )
 
     _properties = (
         'InjectionEvt-Sel',
         'InjectionEvt-Sts')
 
-    def __init__(self, devname=DEVICE):
+    def __init__(self, devname=None):
         """."""
+        if devname is None:
+            devname = Timing.DEVICES.AS
+
         # check if device exists
-        if devname != Timing.DEVICE:
+        if devname != Timing.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor

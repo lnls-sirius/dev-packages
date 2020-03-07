@@ -9,12 +9,14 @@ from .device import Device as _Device
 class SOFB(_Device):
     """SOFB Device."""
 
-    DEVICE_TB = 'TB-Glob:AP-SOFB'
-    DEVICE_BO = 'BO-Glob:AP-SOFB'
-    DEVICE_TS = 'TS-Glob:AP-SOFB'
-    DEVICE_SI = 'SI-Glob:AP-SOFB'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (DEVICE_TB, DEVICE_BO, DEVICE_TS, DEVICE_SI)
+        TB = 'TB-Glob:AP-SOFB'
+        BO = 'BO-Glob:AP-SOFB'
+        TS = 'TS-Glob:AP-SOFB'
+        SI = 'SI-Glob:AP-SOFB'
+        ALL = (TB, BO, TS, SI)
 
     _properties = (
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
@@ -48,9 +50,7 @@ class SOFB(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in (
-                SOFB.DEVICE_TB, SOFB.DEVICE_BO,
-                SOFB.DEVICE_TS, SOFB.DEVICE_SI):
+        if devname not in SOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # SOFB object

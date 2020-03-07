@@ -8,20 +8,24 @@ from .device import Device as _Device
 class EGBias(_Device):
     """EGun Bias Device."""
 
-    DEVICE = 'LI-01:EG-BiasPS'
-
     PWRSTATE = _PSCStatus.PWRSTATE
+
+    class DEVICES:
+        """Devices names."""
+
+        LI = 'LI-01:EG-BiasPS'
+        ALL = (LI, )
 
     _properties = (
         'voltoutsoft', 'voltinsoft', 'currentinsoft', 'switch', 'swstatus')
 
-    def __init__(self, devname=DEVICE):
+    def __init__(self, devname=None):
         """."""
         if devname is None:
-            devname = EGBias.DEVICE
+            devname = EGBias.DEVICES.LI
 
         # check if device exists
-        if devname not in (EGBias.DEVICE, ):
+        if devname not in EGBias.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -58,9 +62,13 @@ class EGBias(_Device):
 class EGFilament(_Device):
     """EGun Filament Device."""
 
-    DEVICE = 'LI-01:EG-FilaPS'
-
     PWRSTATE = _PSCStatus.PWRSTATE
+
+    class DEVICES:
+        """Devices names."""
+
+        LI = 'LI-01:EG-FilaPS'
+        ALL = (LI, )
 
     _properties = (
         'voltinsoft', 'currentinsoft', 'currentoutsoft', 'switch', 'swstatus')
@@ -68,10 +76,10 @@ class EGFilament(_Device):
     def __init__(self, devname=None):
         """."""
         if devname is None:
-            devname = EGFilament.DEVICE
+            devname = EGFilament.DEVICES.LI
 
         # check if device exists
-        if devname not in (EGFilament.DEVICE, ):
+        if devname not in EGFilament.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -108,9 +116,13 @@ class EGFilament(_Device):
 class EGHVPS(_Device):
     """Egun High-Voltage Power Supply Device."""
 
-    DEVICE = 'LI-01:EG-HVPS'
-
     PWRSTATE = _PSCStatus.PWRSTATE
+
+    class DEVICES:
+        """Devices names."""
+
+        LI = 'LI-01:EG-HVPS'
+        ALL = (LI, )
 
     _properties = (
         'currentinsoft', 'currentoutsoft',
@@ -118,10 +130,17 @@ class EGHVPS(_Device):
         'enable', 'enstatus',
         'switch', 'swstatus')
 
-    def __init__(self):
+    def __init__(self, devname=None):
         """."""
+        if devname is None:
+            devname = EGHVPS.DEVICES.LI
+
+        # check if device exists
+        if devname not in EGHVPS.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         # call base class constructor
-        super().__init__(EGHVPS.DEVICE, properties=EGHVPS._properties)
+        super().__init__(devname, properties=EGHVPS._properties)
 
     @property
     def current(self):

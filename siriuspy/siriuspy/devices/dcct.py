@@ -10,13 +10,15 @@ from .device import Device as _Device
 class DCCT(_Device):
     """."""
 
-    DEVICE_BO = 'BO-35D:DI-DCCT'
-    DEVICE_SI_13C4 = 'SI-13C4:DI-DCCT'
-    DEVICE_SI_14C4 = 'SI-14C4:DI-DCCT'
-
-    DEVICES = (DEVICE_BO, DEVICE_SI_13C4, DEVICE_SI_14C4)
-
     PWRSTATE = _PSCStatus.PWRSTATE
+
+    class DEVICES:
+        """Devices names."""
+
+        BO = 'BO-35D:DI-DCCT'
+        SI_13C4 = 'SI-13C4:DI-DCCT'
+        SI_14C4 = 'SI-14C4:DI-DCCT'
+        ALL = (BO, SI_13C4, SI_14C4)
 
     _properties = (
         'RawReadings-Mon',
@@ -28,7 +30,7 @@ class DCCT(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in DCCT.DEVICES:
+        if devname not in DCCT.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor

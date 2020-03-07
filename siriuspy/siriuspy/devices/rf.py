@@ -4,25 +4,36 @@ import time as _time
 import numpy as _np
 from epics import PV
 
-from .device import Device as _Device
+from .device import DeviceNC as _DeviceNC
 from .device import Devices as _Devices
 
 
-class RFGen(_Device):
+class RFGen(_DeviceNC):
     """."""
-
-    DEVICE = 'RF-Gen'
 
     RF_DELTA_MIN = 0.1  # [Hz]
     RF_DELTA_MAX = 1000.0  # [Hz]
     RF_DELTA_RMP = 20  # [Hz]
 
+    class DEVICES:
+        """Devices names."""
+
+        AS = 'RF-Gen'
+        ALL = (AS, )
+
     _properties = ('GeneralFreq-SP', 'GeneralFreq-RB')
 
-    def __init__(self):
+    def __init__(self, devname=None):
         """."""
+        if devname is None:
+            devname = RFGen.DEVICES.AS
+
+        # check if device exists
+        if devname not in RFGen.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         # call base class constructor
-        super().__init__(RFGen.DEVICE, properties=RFGen._properties)
+        super().__init__(devname, properties=RFGen._properties)
 
     @property
     def frequency(self):
@@ -46,7 +57,7 @@ class RFGen(_Device):
         self['GeneralFreq-SP'] = value
 
 
-class RFLL(_Device):
+class RFLL(_DeviceNC):
     """."""
 
     DEVICE_BO = 'BR-RF-DLLRF-01'
@@ -108,7 +119,7 @@ class RFLL(_Device):
         return value
 
 
-class RFPowMon(_Device):
+class RFPowMon(_DeviceNC):
     """."""
 
     DEVICE_SI = 'RA-RaSIA01:RF-LLRFCalSys'
