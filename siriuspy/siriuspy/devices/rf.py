@@ -60,10 +60,12 @@ class RFGen(_DeviceNC):
 class RFLL(_DeviceNC):
     """."""
 
-    DEVICE_BO = 'BR-RF-DLLRF-01'
-    DEVICE_SI = 'SR-RF-DLLRF-01'
+    class DEVICES:
+        """Devices names."""
 
-    DEVICES = (DEVICE_BO, DEVICE_SI)
+        BO = 'BR-RF-DLLRF-01'
+        SI = 'SR-RF-DLLRF-01'
+        ALL = (BO, SI)
 
     _properties = (
         'PL:REF:S', 'SL:INP:PHS',
@@ -73,6 +75,10 @@ class RFLL(_DeviceNC):
 
     def __init__(self, devname, is_cw=None):
         """."""
+        # check if device exists
+        if devname not in RFLL.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         # set is_cw
         self._is_cw = RFLL._set_is_cw(devname, is_cw)
 
@@ -122,8 +128,12 @@ class RFLL(_DeviceNC):
 class RFPowMon(_DeviceNC):
     """."""
 
-    DEVICE_SI = 'RA-RaSIA01:RF-LLRFCalSys'
-    DEVICE_BO = 'BO-05D:RF-P5Cav'
+    class DEVICES:
+        """Devices names."""
+
+        BO = 'BO-05D:RF-P5Cav'
+        SI = 'RA-RaSIA01:RF-LLRFCalSys'
+        ALL = (BO, SI)
 
     _properties = {
         DEVICE_SI: ('PwrW1-Mon', ),
@@ -131,6 +141,10 @@ class RFPowMon(_DeviceNC):
 
     def __init__(self, devname, is_cw=None):
         """."""
+        # check if device exists
+        if devname not in RFPowMon.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         # set is_cw
         self._is_cw = self._set_is_cw(devname, is_cw)
 
@@ -163,11 +177,19 @@ class RFPowMon(_DeviceNC):
 class RFCav(_Devices):
     """."""
 
-    DEVICE_SI = 'RA-RaSIA01:RF-LLRFCalSys'
-    DEVICE_BO = 'BO-05D:RF-P5Cav'
+    class DEVICES:
+        """Devices names."""
+
+        BO = 'BO-05D:RF-P5Cav'
+        SI = 'RA-RaSIA01:RF-LLRFCalSys'
+        ALL = (BO, SI)
 
     def __init__(self, devname, is_cw=None):
         """."""
+        # check if device exists
+        if devname not in RFCav.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
         rfgen = RFGen()
         if devname == RFCav.DEVICE_SI:
             rfll = RFLL(RFLL.DEVICE_SI, is_cw)
