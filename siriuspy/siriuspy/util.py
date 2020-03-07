@@ -171,11 +171,11 @@ def get_strength_units(magfunc, pstype=None, pulsed=False):
     elif magfunc in ('sextupole',):
         return '1/m^2'
     elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
-        if not pulsed:
-            return 'urad'
+        if pulsed:
+            return 'mrad'
         if pstype and pstype.startswith('li-spect'):
             return 'deg'
-        return 'mrad'
+        return 'urad'
     else:
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 

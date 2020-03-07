@@ -36,7 +36,7 @@ class _PSDev(_Device):
         self._devname = devname
 
         # power supply type and magnetic function
-        (self._pstype, self._magfunc,
+        (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
          self._is_linac, self._is_pulsed) = self._get_device_type()
 
@@ -53,6 +53,11 @@ class _PSDev(_Device):
     def pstype(self):
         """."""
         return self._pstype
+
+    @property
+    def psmodel(self):
+        """Return power supply model."""
+        return self._psmodel
 
     @property
     def magfunc(self):
@@ -119,18 +124,17 @@ class _PSDev(_Device):
     def _get_device_type(self):
         """."""
         pstype = _PSSearch.conv_psname_2_pstype(self._devname)
+        psmodel = _PSSearch.conv_psname_2_psmodel(self._devname)
         magfunc = _PSSearch.conv_psname_2_magfunc(self._devname)
         strength_propty = _util.get_strength_label(magfunc)
         strength_units = _util.get_strength_units(magfunc, pstype)
         is_linac = self._devname.startswith('LI-')
         is_pulsed = ':PU-' in self._devname
-        return (pstype, magfunc, strength_propty, strength_units,
+        return (pstype, psmodel, magfunc,
+                strength_propty, strength_units,
                 is_linac, is_pulsed)
 
     def _set_attributes_properties(self):
-        strength_sp_propty = self._strength_propty + '-SP'
-        strength_rb_propty = self._strength_propty + '-RB'
-        strength_mon_propty = self._strength_propty + '-Mon'
 
         properties = _PSDev._properties_common
         if self._is_linac:
@@ -140,6 +144,16 @@ class _PSDev(_Device):
                 properties += _PSDev._properties_pulsed
             else:
                 properties += _PSDev._properties_magps
+
+        # strength properties
+        strength_sp_propty = self._strength_propty + '-SP'
+        strength_rb_propty = self._strength_propty + '-RB'
+        strength_mon_propty = self._strength_propty + '-Mon'
+        properties += (
+            strength_sp_propty,
+            strength_rb_propty,
+            strength_mon_propty,
+        )
 
         ret = (
             strength_sp_propty, strength_rb_propty, strength_mon_propty,
@@ -187,7 +201,39 @@ class PowerSupply(_PSDev):
 class PowerSupplyPU(_PSDev):
     """Pulsed Power Supply Device."""
 
+    DEVICE_TB_INJ_SEPT = 'TB-04:PU-InjSept'
+    DEVICE_BO_INJ_KCKR = 'BO-01D:PU-InjKckr'
+    DEVICE_BO_EJE_KCKR = 'BO-48D:PU-EjeKckr'
+    DEVICE_TS_EJE_SEPTF = 'TS-01:PU-EjeSeptF'
+    DEVICE_TS_EJE_SEPTG = 'TS-01:PU-EjeSeptG'
+    DEVICE_TS_INJ_SPETG_1 = 'TS-04:PU-InjSeptG-1'
+    DEVICE_TS_INJ_SPETG_2 = 'TS-04:PU-InjSeptG-2'
+    DEVICE_TS_INJ_SPETF = 'TS-04:PU-InjSeptF'
+    DEVICE_SI_INJ_DPKCKR = 'SI-01SA:PU-InjDpKckr'
+    DEVICE_SI_INJ_NLKCKR = 'SI-01SA:PU-InjNLKckr'
+    DEVICE_SI_PING_H = 'SI-01SA:PU-PingH'
+    DEVICE_SI_PING_V = 'SI-19C4:PU-PingV'
+
+    DEVICES = (
+        DEVICE_TB_INJ_SEPT,
+        DEVICE_BO_INJ_KCKR, DEVICE_BO_EJE_KCKR,
+        DEVICE_TS_EJE_SEPTF, DEVICE_TS_EJE_SEPTG,
+        DEVICE_TS_INJ_SPETG_1, DEVICE_TS_INJ_SPETG_2,
+        DEVICE_TS_INJ_SPETF,
+        DEVICE_SI_INJ_DPKCKR, DEVICE_SI_INJ_NLKCKR,
+        DEVICE_SI_PING_H, DEVICE_SI_PING_V,
+    )
+
     PULSTATE = _PSCStatus.PWRSTATE
+
+    def __init__(self, devname):
+        """."""
+        # check if device exists
+        if devname not in PowerSupplyPU.DEVICES:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname)
 
     @property
     def voltage(self):
