@@ -14,6 +14,7 @@ import siriuspy.envars as _envars
 
 
 class AuthenticationError(Exception):
+    """."""
     pass
 
 
@@ -30,6 +31,12 @@ class ClientArchiver:
         print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
+    @property
+    def connected(self):
+        """."""
+        # TODO: choose minimal request command in order to check connection.
+        raise NotImplementedError
+
     def login(self, username, password):
         """."""
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -45,7 +52,10 @@ class ClientArchiver:
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
-        return self._make_request(url).json()
+        req = self._make_request(url)
+        if not req.ok:
+            return None
+        return req.json()
 
     def getAllPVs(self, pvnames):
         """."""
@@ -89,19 +99,22 @@ class ClientArchiver:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self._make_request(url, need_login=True)
 
-    def getData(self, pvname, timestamp_start, timestamp_stop):
+    def getData(self, pvname, timestamp_start, timestamp_stop,
+                get_request_url=False):
         """Get archiver data.
 
         pvname -- name of pv.
         timestamp_start -- timestamp of interval start
                            Example: (2019-05-23T13:32:27.570Z)
-        timestamp_stop -- timestamp of interval start
+        timestamp_stop -- timestamp of interval stop
                            Example: (2019-05-23T14:32:27.570Z)
         """
         tstart = _parse.quote(timestamp_start)
         tstop = _parse.quote(timestamp_stop)
         url = self._create_url(
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
+        if get_request_url:
+            return url
         req = self._make_request(url)
         if not req.ok:
             return None
@@ -111,6 +124,18 @@ class ClientArchiver:
         status = [v['status'] for v in data]
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
+
+    def getPVDetails(self, pvname, get_request_url=False):
+        """."""
+        url = self._create_url(
+            method='getPVDetails', pv=pvname)
+        if get_request_url:
+            return url
+        req = self._make_request(url)
+        if not req.ok:
+            return None
+        data = req.json()
+        return data
 
     def _make_request(self, url, need_login=False):
         if self.session is not None:

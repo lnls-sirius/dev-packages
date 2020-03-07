@@ -193,7 +193,7 @@ class ConstPSBSMP:
     # ----- class Analog Variables -----
     P_ANALOG_MAX = 46
     P_ANALOG_MIN = 47
-    # ----- Debounding manager -----
+    # ----- class Debounding manager -----
     P_HARD_INTLK_DEBOUNCE_TIME = 48
     P_HARD_INTLK_RESET_TIME = 49
     P_SOFT_INTLK_DEBOUNCE_TIME = 50

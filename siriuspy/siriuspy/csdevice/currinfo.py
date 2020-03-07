@@ -9,7 +9,7 @@ class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
     DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
-    BUFFAUTORSTTYP = ('PVsTrig', 'DCurrCheck', 'Off')
+    BUFFAUTORSTTYP = ('Off', 'DCurrCheck')
     FITTYP = ('Exponential', 'Linear')
 
 
@@ -53,6 +53,9 @@ def get_currinfo_database(acc):
 
         pvs_db['Charge-Mon'] = {'type': 'float', 'value': 0.0, 'prec': 12,
                                 'unit': 'A.h', 'scan': 60}
+
+        pvs_db['InjEff-Mon'] = {'type': 'float', 'value': 0.0,
+                                'prec': 2, 'unit': '%'}
     elif acc == 'BO':
         pvs_db['RawReadings-Mon'] = {'type': 'float', 'count': 100000,
                                      'value': _np.array(100000*[0.0]),
@@ -97,39 +100,60 @@ def get_currinfo_database(acc):
 def get_lifetime_database():
     """Return CurrentInfo-Lifetime Soft IOC database."""
     pvs_db = {
-        'Version-Cte':     {'type': 'string', 'value': 'UNDEF'},
-        'Lifetime-Mon':    {'type': 'float', 'value': 0.0, 'prec': 2,
-                            'unit': 's'},
+        'VersionLifetime-Cte': {'type': 'string', 'value': 'UNDEF'},
+        'Lifetime-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
+                         'unit': 's'},
         'LifetimeBPM-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
                             'unit': 's'},
-        'BuffSizeMax-SP':  {'type': 'int', 'lolim': 0, 'hilim': 360000,
-                            'value': 2000},
-        'BuffSizeMax-RB':  {'type': 'int', 'value': 2000},
-        'BuffSize-Mon':	   {'type': 'int', 'value': 0},
+        'SplIntvl-SP': {'type': 'float', 'unit': 's', 'lolim': 0,
+                        'hilim': 360000, 'low': 0, 'high': 360000,
+                        'lolo': 0, 'hihi': 360000, 'prec': 2,
+                        'value': 2000},
+        'SplIntvl-RB': {'type': 'float', 'unit': 's', 'lolim': 0,
+                        'hilim': 360000, 'low': 0, 'high': 360000,
+                        'lolo': 0, 'hihi': 360000, 'prec': 2,
+                        'value': 2000},
+        'MinIntvlBtwSpl-SP': {'type': 'float', 'unit': 's', 'lolim': 0,
+                              'hilim': 1200, 'low': 0, 'high': 1200,
+                              'lolo': 0, 'hihi': 1200, 'prec': 2,
+                              'value': 0},
+        'MinIntvlBtwSpl-RB': {'type': 'float', 'value': 0, 'prec': 2,
+                              'unit': 's'},
+        'BuffSize-Mon':	{'type': 'int', 'value': 0},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
-        'SplIntvl-SP':     {'type': 'int', 'unit': 's', 'lolim': 0,
-                            'hilim': 360000, 'low': 0, 'high': 360000,
-                            'lolo': 0, 'hihi': 360000, 'value': 2000},
-        'SplIntvl-RB':	   {'type': 'int', 'value': 2000, 'unit': 's'},
-        'BuffRst-Cmd':     {'type': 'int', 'value': 0},
+        'BuffRst-Cmd': {'type': 'int', 'value': 0},
         'BuffAutoRst-Sel': {'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
                             'value': _c.BuffAutoRst.Off},
         'BuffAutoRst-Sts': {'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
                             'value': _c.BuffAutoRst.Off},
-        'DCurrFactor-Cte': {'type': 'float', 'value': 0.01, 'prec': 2,
-                            'unit': 'mA'},
-        'LtFitMode-Sel':   {'type': 'enum', 'enums': _et.FITTYP,
-                            'value': _c.Fit.Exponential},
-        'LtFitMode-Sts':   {'type': 'enum', 'enums': _et.FITTYP,
-                            'value': _c.Fit.Exponential},
-        'CurrOffset-SP':   {'type': 'float', 'value': 0.0, 'prec': 3,
-                            'unit': 'mA', 'lolim': -1000.0, 'hilim': 1000.0,
-                            'low': -1000.0, 'high': 1000.0, 'lolo': -1000.0,
-                            'hihi': 1000.0},
-        'CurrOffset-RB':   {'type': 'float', 'value': 0.0, 'prec': 3,
-                            'unit': 'mA', 'lolim': -1000.0, 'hilim': 1000.0,
-                            'low': -1000.0, 'high': 1000.0, 'lolo': -1000.0,
-                            'hihi': 1000.0},
+        'BuffAutoRstDCurr-SP': {'type': 'float', 'value': 0.1, 'prec': 2,
+                                'unit': 'mA', 'lolim': -300.0, 'hilim': 300.0,
+                                'low': -300.0, 'high': 300.0, 'lolo': -300.0,
+                                'hihi': 300.0},
+        'BuffAutoRstDCurr-RB': {'type': 'float', 'value': 0.1, 'prec': 2,
+                                'unit': 'mA', 'lolim': -300.0, 'hilim': 300.0,
+                                'low': -300.0, 'high': 300.0, 'lolo': -300.0,
+                                'hihi': 300.0},
+        'BuffFirstSplTimestamp-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': 2, 'unit': 's'},
+        'BuffFirstSplTimestampBPM-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2, 'unit': 's'},
+        'BuffLastSplTimestamp-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': 2, 'unit': 's'},
+        'BuffLastSplTimestampBPM-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2, 'unit': 's'},
+        'LtFitMode-Sel': {'type': 'enum', 'enums': _et.FITTYP,
+                          'value': _c.Fit.Exponential},
+        'LtFitMode-Sts': {'type': 'enum', 'enums': _et.FITTYP,
+                          'value': _c.Fit.Exponential},
+        'CurrOffset-SP': {'type': 'float', 'value': 0.0, 'prec': 3,
+                          'unit': 'mA', 'lolim': -10.0, 'hilim': 10.0,
+                          'low': -10.0, 'high': 10.0, 'lolo': -10.0,
+                          'hihi': 10.0},
+        'CurrOffset-RB': {'type': 'float', 'value': 0.0, 'prec': 3,
+                          'unit': 'mA', 'lolim': -10.0, 'hilim': 10.0,
+                          'low': -10.0, 'high': 10.0, 'lolo': -10.0,
+                          'hihi': 10.0},
         }
     pvs_db = _cutil.add_pvslist_cte(pvs_db)
     return pvs_db
