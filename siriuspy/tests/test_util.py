@@ -218,13 +218,13 @@ class TestUtil(TestCase):
         self.assertEqual("1/m", util.get_strength_units("quadrupole-skew"))
         self.assertEqual("1/m^2", util.get_strength_units("sextupole"))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-horizontal", False))
+            "urad", util.get_strength_units("corrector-horizontal", None, False))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-vertical", False))
+            "urad", util.get_strength_units("corrector-vertical", None, False))
         self.assertEqual(
-            "mrad", util.get_strength_units("corrector-horizontal", True))
+            "mrad", util.get_strength_units("corrector-horizontal", None, True))
         self.assertEqual(
-            "mrad", util.get_strength_units("corrector-vertical", True))
+            "mrad", util.get_strength_units("corrector-vertical", None, True))
         self.assertRaises(ValueError, util.get_strength_units, magfunc='')
 
     def test_update_bit(self):

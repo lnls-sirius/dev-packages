@@ -211,10 +211,10 @@ class PSSearch:
 
     @staticmethod
     def conv_psname_2_magfunc(psname):
-        """Return magnetic function of a given power supply type."""
+        """Return magnetic function of a given power supply."""
         pstype = PSSearch.conv_psname_2_pstype(psname)
         psfunc = PSSearch.conv_pstype_2_magfunc(pstype)
-        return _copy.deepcopy(psfunc)
+        return psfunc
 
     @staticmethod
     def conv_psname_2_excdata(psname):
