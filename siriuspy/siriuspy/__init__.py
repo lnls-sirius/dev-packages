@@ -9,4 +9,4 @@ del _os
 __all__ = [
     'envars', 'util', 'clientweb', 'clientconfigdb',
     'diagnostics', 'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice',
-    'epics', 'callbacks', 'search']
+    'epics', 'callbacks', 'search', 'devices']
