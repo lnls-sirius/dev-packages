@@ -136,8 +136,8 @@ class RFPowMon(_DeviceNC):
         ALL = (BO, SI)
 
     _properties = {
-        DEVICE_SI: ('PwrW1-Mon', ),
-        DEVICE_BO: ('Cell3PwrTop-Mon', 'Cell3Pwr-Mon')}
+        DEVICES.SI: ('PwrW1-Mon', ),
+        DEVICES.BO: ('Cell3PwrTop-Mon', 'Cell3Pwr-Mon')}
 
     def __init__(self, devname, is_cw=None):
         """."""
@@ -191,12 +191,12 @@ class RFCav(_Devices):
             raise NotImplementedError(devname)
 
         rfgen = RFGen()
-        if devname == RFCav.DEVICE_SI:
-            rfll = RFLL(RFLL.DEVICE_SI, is_cw)
-            rfpowmon = RFPowMon(RFPowMon.DEVICE_SI, is_cw)
-        elif devname == RFCav.DEVICE_BO:
-            rfll = RFLL(RFLL.DEVICE_BO, is_cw)
-            rfpowmon = RFPowMon(RFPowMon.DEVICE_SI, is_cw)
+        if devname == RFCav.DEVICES.SI:
+            rfll = RFLL(RFLL.DEVICES.SI, is_cw)
+            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI, is_cw)
+        elif devname == RFCav.DEVICES.BO:
+            rfll = RFLL(RFLL.DEVICES.BO, is_cw)
+            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI, is_cw)
         devices = (rfgen, rfll, rfpowmon)
 
         # call base class constructor
