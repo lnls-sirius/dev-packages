@@ -81,18 +81,22 @@ class Tune(_Devices):
         # call base class constructor
         super().__init__(devname, devices)
 
-    def dev_tune_frac_h(self):
+    @property
+    def tunex(self):
         """."""
-        return self.devices[0]
+        return self.devices[0].tune
 
-    def dev_tune_frac_v(self):
+    @property
+    def tuney(self):
         """."""
-        return self.devices[1]
+        return self.devices[1].tune
 
-    def dev_tune_proc_h(self):
+    @property
+    def tunex_wfm(self):
         """."""
-        return self.devices[2]
+        return self.devices[2].tune_wfm
 
-    def dev_tune_proc_v(self):
+    @property
+    def tuney_wfm(self):
         """."""
-        return self.devices[3]
+        return self.devices[3].tune_wfm
