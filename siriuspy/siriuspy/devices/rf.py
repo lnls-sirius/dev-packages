@@ -2,7 +2,6 @@
 
 import time as _time
 import numpy as _np
-from epics import PV
 
 from .device import DeviceNC as _DeviceNC
 from .device import Devices as _Devices
@@ -115,12 +114,11 @@ class RFLL(_DeviceNC):
     def voltage(self, value):
         self['mV:AL:REF:S'] = value
 
-
     # --- private methods ---
 
     @staticmethod
     def _set_is_cw(devname, is_cw):
-        defcw = (devname == RFLL.DEVICE_BO)
+        defcw = (devname == RFLL.DEVICES.BO)
         value = defcw if is_cw is None else is_cw
         return value
 
@@ -159,7 +157,7 @@ class RFPowMon(_DeviceNC):
     @property
     def power(self):
         """."""
-        if self._devname == RFPowMon.DEVICE_BO:
+        if self._devname == RFPowMon.DEVICES.BO:
             if self.is_cw:
                 return self['Cell3PwrTop-Mon']
             return self['Cell3Pwr-Mon']
@@ -169,7 +167,7 @@ class RFPowMon(_DeviceNC):
 
     @staticmethod
     def _set_is_cw(devname, is_cw):
-        defcw = (devname == RFPowMon.DEVICE_BO)
+        defcw = (devname == RFPowMon.DEVICES.BO)
         value = defcw if is_cw is None else is_cw
         return value
 
@@ -231,6 +229,11 @@ class RFCav(_Devices):
         """."""
         self.dev_rfll.phase = value
         self._wait('phase', timeout=timeout)
+
+    def cmd_set_frequency(self, value, timeout=10):
+        """."""
+        self.dev_rfgen.frequency = value
+        self._wait('frequency', timeout=timeout)
 
     # --- private methods ---
 
