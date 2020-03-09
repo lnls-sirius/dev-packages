@@ -31,8 +31,6 @@ class RFGen(_DeviceNC):
         if devname not in RFGen.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._devname = devname
-
         # call base class constructor
         super().__init__(devname, properties=RFGen._properties)
 
@@ -79,8 +77,6 @@ class RFLL(_DeviceNC):
         # check if device exists
         if devname not in RFLL.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        self._devname = devname
 
         # set is_cw
         self._is_cw = RFLL._set_is_cw(devname, is_cw)
@@ -146,8 +142,6 @@ class RFPowMon(_DeviceNC):
         # check if device exists
         if devname not in RFPowMon.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        self._devname = devname
 
         # set is_cw
         self._is_cw = self._set_is_cw(devname, is_cw)
