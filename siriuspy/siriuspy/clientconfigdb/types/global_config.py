@@ -1150,7 +1150,6 @@ _rf_pvs = [
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C2:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C1:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C0:S', 0.0, 0.0],
-
     ['BR-RF-DLLRF-01:AMPCAV:Const:Raw-U:C4:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:AMPCAV:Const:Raw-U:C3:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:AMPCAV:Const:Raw-U:C2:S', 0.0, 0.0],
