@@ -67,8 +67,8 @@ class Const(_cutil.Const):
         'EVG Enabled',
         'Network Ok',
         'UPLink Ok',
-        # 'DownLink Ok',
-        # 'Fout DownLink Ok',
+        'DownLink Ok',
+        'Fout DownLink Ok',
         'EVG DownLink Ok',
         'Interlock Status',
         )

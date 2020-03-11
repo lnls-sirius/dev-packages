@@ -120,7 +120,7 @@ class DeviceNC(Device):
 
     def _create_pvs(self, devname):
         pvs = dict()
-        devname = '' if not self._devname else self._devname
+        devname = devname or ''
         for propty in self._properties:
             pvname = devname + ':' + propty
             auto_monitor = not pvname.endswith('-Mon')

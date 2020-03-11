@@ -21,14 +21,14 @@ class EVG(_Device):
     def __init__(self, devname=None):
         """."""
         if devname is None:
-            devname = Timing.DEVICES.AS
+            devname = EVG.DEVICES.AS
 
         # check if device exists
-        if devname != Timing.DEVICES.ALL:
+        if devname != EVG.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=Timing._properties)
+        super().__init__(devname, properties=EVG._properties)
 
     @property
     def pulses(self):
