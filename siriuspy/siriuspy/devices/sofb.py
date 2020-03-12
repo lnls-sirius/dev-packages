@@ -31,18 +31,20 @@ class SOFB(_Device):
         'BPMXEnblList-RB', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CVEnblList-SP',
         'CHEnblList-RB', 'CVEnblList-RB',
-        'RFEnbl-Sel', 'RFEnbl-Sts'
+        'RFEnbl-Sel', 'RFEnbl-Sts',
         'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'ClosedLoop-Sts', 'ClosedLoop-Sel'
+        'ClosedLoop-Sts', 'ClosedLoop-Sel',
         # ring-type dependent properties
         '<ORBTP>' + 'Sum-Mon',
-        '<ORBTP>' + 'OrbX-Mon', '<ORBTP>' + 'OrbY-Mon',
-        # properties used only for ring-type accelerators:
-        '<ORBTP>' + 'Idx' + 'OrbX-Mon', '<ORBTP>' + 'Idx' + 'OrbY-Mon')
+        '<ORBTP>' + 'OrbX-Mon',
+        '<ORBTP>' + 'OrbY-Mon',
+        # properties used only for ring-type accelerators
+        '<ORBTP>' + 'Idx' + 'OrbX-Mon',
+        '<ORBTP>' + 'Idx' + 'OrbY-Mon')
 
     _default_timeout = 10  # [s]
     _off, _on = 0, 1
