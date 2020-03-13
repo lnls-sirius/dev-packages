@@ -65,7 +65,7 @@ class ConfigDBClient:
 
     def get_config_types(self):
         """Get all configuration types."""
-        return self._make_request()
+        return _templates.get_config_types()
 
     def find_configs(self,
                      name=None,
@@ -196,6 +196,7 @@ class ConfigDBClient:
     def _make_request(self, method='GET', data=None, **kwargs):
 
         try:
+            print('ok1')
             return self._request(method, data, **kwargs)
         except ConfigDBException:
             self._rotate_server_url()
