@@ -64,8 +64,12 @@ class ConfigDBClient:
         return self._make_request(stats=True)['count']
 
     def get_config_types(self):
-        """Get all configuration types."""
+        """Get all configuration types defined with templates."""
         return _templates.get_config_types()
+
+    def get_config_types_database(self):
+        """Get configuration types existing as database entries."""
+        return self._request()
 
     def find_configs(self,
                      name=None,
