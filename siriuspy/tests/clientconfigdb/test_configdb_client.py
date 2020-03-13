@@ -20,6 +20,7 @@ class TestConfigDBClient(TestCase):
         "get_dbsize",
         "get_nrconfigs",
         "get_config_types",
+        "get_config_types_database",
         "find_configs",
         "get_config_value",
         "get_config_info",
