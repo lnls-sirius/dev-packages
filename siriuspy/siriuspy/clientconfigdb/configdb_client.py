@@ -196,7 +196,6 @@ class ConfigDBClient:
     def _make_request(self, method='GET', data=None, **kwargs):
 
         try:
-            print('ok1')
             return self._request(method, data, **kwargs)
         except ConfigDBException:
             self._rotate_server_url()
