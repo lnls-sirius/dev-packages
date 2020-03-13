@@ -28,7 +28,7 @@ class BoosterNormalized(_ConfigDBDocument):
     def __init__(self, name=None):
         """Constructor."""
         super().__init__('bo_normalized', name=name)
-        self._value = self.get_value_template()
+        self._value = self.get_value_from_template()
         self._orig_value = None
 
         self._psnames2index = dict()
@@ -122,7 +122,7 @@ class BoosterRamp(_ConfigDBDocument):
         self._ps_waveforms = dict()
         self._nominal_strengths = dict()
         self._orig_value = None
-        self.value = self.get_value_template()
+        self.value = self.get_value_from_template()
 
     # --- ConfigSrv API ---
 

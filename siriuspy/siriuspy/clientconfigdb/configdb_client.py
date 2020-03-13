@@ -64,12 +64,13 @@ class ConfigDBClient:
         return self._make_request(stats=True)['count']
 
     def get_config_types(self):
-        """Get all configuration types defined with templates."""
-        return _templates.get_config_types()
-
-    def get_config_types_database(self):
         """Get configuration types existing as database entries."""
         return self._request()
+
+    @staticmethod
+    def get_config_types_from_templates():
+        """Return list of configuration types as defined in templates."""
+        return _templates.get_config_types()
 
     def find_configs(self,
                      name=None,
@@ -157,7 +158,7 @@ class ConfigDBClient:
         return self._make_request(
             config_type=config_type, name=name, discarded=True, method='POST')
 
-    def get_value_template(self, config_type=None):
+    def get_value_from_template(self, config_type=None):
         """Return value of a configuration type."""
         config_type = self._process_config_type(config_type)
         return _templates.get_template(config_type)
@@ -166,11 +167,6 @@ class ConfigDBClient:
         """Check whether values data corresponds to a configuration type."""
         config_type = self._process_config_type(config_type)
         return _templates.check_value(config_type, value)
-
-    @staticmethod
-    def get_config_types_from_templates():
-        """Return list of configuration types."""
-        return _templates.get_config_types()
 
     @classmethod
     def check_valid_configname(cls, name):
