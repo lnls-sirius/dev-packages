@@ -1218,8 +1218,7 @@ _rf_bo_pvs = [
     ['BR-RF-DLLRF-01:FF:POS:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0.0, 0.0],
-    ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0.0, 0.0],  
-    ]
+    ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0.0, 0.0]]
 
 _rf_si_pvs = [
     ['SR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],
@@ -1335,7 +1334,6 @@ _rf_si_pvs = [
     ['SR-RF-DLLRF-01:FWDPRE1:Const:OFS:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:FWDPRE2:Const:OFS:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:FWDCIRC:Const:OFS:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:OFS:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:CAV:Const:Raw-U:C4:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:CAV:Const:Raw-U:C3:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:CAV:Const:Raw-U:C2:S', 0.0, 0.0],
@@ -1426,11 +1424,6 @@ _rf_si_pvs = [
     ['SR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C2:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C1:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C0:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C4:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C3:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C2:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C1:S', 0.0, 0.0],
-    ['SR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C0:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:OLG:CAV:Const:C4:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:OLG:CAV:Const:C3:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:OLG:CAV:Const:C2:S', 0.0, 0.0],
@@ -3123,8 +3116,12 @@ _pvs_si_qn_ps = [
 
 _template_dict = {
     'pvs':
-        _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing +
-        _pvs_li_ps + _pvs_pu + _rf_bo_pvs + _rf_si_pvs +
-        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps + _pvs_si_fam_ps +
-        _pvs_si_ch_ps + _pvs_si_cv_ps + _pvs_si_qs_ps + _pvs_si_qn_ps
+        _pvs_timing +
+        _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
+        _pvs_pu +
+        _rf_bo_pvs + _rf_si_pvs +
+        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
+        _pvs_si_fam_ps +
+        _pvs_si_ch_ps + _pvs_si_cv_ps +
+        _pvs_si_qs_ps + _pvs_si_qn_ps
     }
