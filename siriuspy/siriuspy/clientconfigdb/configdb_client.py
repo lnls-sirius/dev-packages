@@ -65,7 +65,7 @@ class ConfigDBClient:
 
     def get_config_types(self):
         """Get configuration types existing as database entries."""
-        return self._request()
+        return self._make_request()
 
     @staticmethod
     def get_config_types_from_templates():
