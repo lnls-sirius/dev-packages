@@ -1,12 +1,10 @@
 #!/usr/bin/env python-sirius
 
 """Test the configuration client class."""
-from unittest import mock, TestCase
-import json
-from urllib.error import URLError
+from unittest import TestCase
 
-from siriuspy.clientconfigdb import ConfigDBClient, ConfigDBDocument, \
-    ConfigDBException
+from siriuspy.clientconfigdb import ConfigDBClient, ConfigDBDocument
+
 import siriuspy.util as util
 
 
@@ -20,6 +18,7 @@ class TestConfigDBClient(TestCase):
         "get_dbsize",
         "get_nrconfigs",
         "get_config_types",
+        "get_config_types_from_templates",
         "find_configs",
         "get_config_value",
         "get_config_info",
@@ -27,9 +26,8 @@ class TestConfigDBClient(TestCase):
         "insert_config",
         "delete_config",
         "retrieve_config",
-        "get_value_template",
+        "get_value_from_template",
         'check_valid_value',
-        "get_config_types_from_templates",
         'check_valid_configname',
         "conv_timestamp_txt_2_flt",
         "conv_timestamp_flt_2_txt",
@@ -40,15 +38,6 @@ class TestConfigDBClient(TestCase):
         valid = util.check_public_interface_namespace(
             ConfigDBClient, TestConfigDBClient.api)
         self.assertTrue(valid)
-
-    # def test_exceptions(self):
-    #     cdb = ConfigDBClient(url='http://nonexistent:80')
-    #     self.assertRaises(ConfigDBException, cdb.get_config_types)
-    #     self.assertRaises(ConfigDBException, cdb.get_dbsize)
-    #     self.assertRaises(ConfigDBException, cdb.get_nrconfigs)
-    #     self.assertRaises(
-    #         ConfigDBException, cdb.find_configs, config_type='bla')
-
 
 class TestConfigDBDocument(TestCase):
     """Test update and delete config meets requirements."""
@@ -73,7 +62,7 @@ class TestConfigDBDocument(TestCase):
         'save',
         'delete',
         'check_valid_value',
-        'get_value_template',
+        'get_value_from_template',
         'generate_config_name',
     }
 

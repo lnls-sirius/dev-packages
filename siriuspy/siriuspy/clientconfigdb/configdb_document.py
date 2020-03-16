@@ -125,8 +125,8 @@ class ConfigDBDocument():
     def check_valid_value(self, value):
         return self._configdbclient.check_valid_value(value)
 
-    def get_value_template(self):
-        return self._configdbclient.get_value_template()
+    def get_value_from_template(self):
+        return self._configdbclient.get_value_from_template()
 
     @classmethod
     def generate_config_name(cls, name=None):
