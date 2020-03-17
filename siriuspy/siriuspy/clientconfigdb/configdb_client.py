@@ -70,7 +70,7 @@ class ConfigDBClient:
     @staticmethod
     def get_config_types_from_templates():
         """Return list of configuration types as defined in templates."""
-        return _templates.get_config_types()
+        return list(_templates.get_config_types())
 
     def find_configs(self,
                      name=None,
