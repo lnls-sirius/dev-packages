@@ -1,11 +1,14 @@
 """Main Module of the IOC Logic."""
 
+import warnings
 import time as _time
 import numpy as _np
 import epics as _epics
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from siriuspy.csdevice.currinfo import Const as _Const
 import as_ap_currinfo.lifetime.pvs as _pvs
+
+warnings.filterwarnings('error')
 
 # Coding guidelines:
 # =================
@@ -233,7 +236,10 @@ class App:
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
         if fit == 'exp':
-            value = _np.log(value)
+            try:
+                value = _np.log(value)
+            except Exception:
+                return 0.0
         n = len(timestamp)
         x = _np.sum(timestamp)
         y = _np.sum(value)
