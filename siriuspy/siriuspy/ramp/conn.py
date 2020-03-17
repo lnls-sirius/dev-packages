@@ -319,7 +319,7 @@ class ConnTI(_EpicsPropsList):
             c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_NrPulses: 1,
             c.TrgLLRFRmp_Duration: 150.0}    # [us]
-            # c.TrgLLRFRmp_Status: 0}
+        #     c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays

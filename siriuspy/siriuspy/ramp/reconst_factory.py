@@ -1,14 +1,16 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 from epics import PV as _PV
-from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.search import PSSearch as _PSSearch, \
+    LLTimeSearch as _LLTimeSearch
 from .ramp import BoosterRamp as _BORamp
 from .waveform import Waveform as _Waveform
 
 TIMEOUT_CONN = 0.05
 
 
-class BONormFactory:
+class BONormListFactory:
+    """Class to rebuild Norm. Config. List from machine state."""
 
     _PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
     _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
@@ -50,12 +52,12 @@ class BONormFactory:
 
     def read_waveforms(self):
         """Read waveform in current values from PVs."""
-        if not BONormFactory._PVs:
+        if not BONormListFactory._PVs:
             self._create_pvs()
 
         self._waveforms = dict()
         for ps in self.psnames:
-            pv = BONormFactory._PVs[ps]
+            pv = BONormListFactory._PVs[ps]
             pv.wait_for_connection(10*TIMEOUT_CONN)
             if not pv.connected:
                 raise ConnectionError('There are disconnected PVs!')
@@ -90,7 +92,7 @@ class BONormFactory:
         pvs = dict()
         for ps in self.psnames:
             pvs[ps] = _PV(ps + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
-        BONormFactory._PVs = pvs
+        BONormListFactory._PVs = pvs
 
     def _create_waveform_objects(self):
         self._ps2wfms = dict()
@@ -234,3 +236,137 @@ class BONormFactory:
 
             # TODO: verify case of precision not reached
             break
+
+
+class BORFRampFactory:
+    """Class to rebuild RF ramp parameters from machine state."""
+
+    _DevName = 'BR-RF-DLLRF-01'
+    _ppties = {
+        'bottom_duration': _DevName+':RmpTs1-RB',
+        'rampup_duration': _DevName+':RmpTs2-RB',
+        'top_duration': _DevName+':RmpTs3-RB',
+        'rampdown_duration': _DevName+':RmpTs4-RB',
+        'bottom_voltage': _DevName+':RmpVoltBot-RB',
+        'top_voltage': _DevName+':RmpVoltTop-RB',
+        'bottom_phase': _DevName+':RmpPhsBot-RB',
+        'top_phase': _DevName+':RmpPhsTop-RB',
+    }
+    _PVs = dict()
+
+    def __init__(self):
+        self._rf_params = None
+        self._create_pvs()
+
+    @property
+    def rf_params(self):
+        """Return RF parameters rebuilt from PV values."""
+        self._rf_params = self._generate_rf_params()
+        return self._rf_params
+
+    # ----- auxiliar methods -----
+
+    def _create_pvs(self):
+        pvs = dict()
+        for param, pvname in BORFRampFactory._ppties.items():
+            pvs[param] = _PV(pvname, connection_timeout=TIMEOUT_CONN)
+        BORFRampFactory._PVs = pvs
+
+    def _generate_rf_params(self):
+        for pv in BORFRampFactory._PVs.values():
+            pv.wait_for_connection()
+            if not pv.connected:
+                raise Exception('There are not connected PVs!')
+
+        rf_params = dict()
+        for param in BORFRampFactory._ppties:
+            rf_params[param] = BORFRampFactory._PVs[param].value
+        return rf_params
+
+
+class BOTIRampFactory:
+    """Class to rebuild TI ramp parameters from machine state."""
+
+    _EVG = _LLTimeSearch.get_evg_name()
+    _triggers = {
+        'BO-Glob:TI-Mags-Fams', 'BO-Glob:TI-Mags-Corrs',
+        'BO-Glob:TI-LLRF-Rmp',
+        'LI-01:TI-EGun-SglBun', 'LI-01:TI-EGun-MultBun',
+        'BO-48D:TI-EjeKckr', 'SI-01SA:TI-InjDpKckr',
+    }
+    _events = {
+        _EVG+':Linac', _EVG+':InjBO', _EVG+':RmpBO', _EVG+':InjSI',
+        _EVG+':DigLI', _EVG+':DigTB', _EVG+':DigBO', _EVG+':DigTS',
+        _EVG+':DigSI', _EVG+':Study',
+    }
+    _PVs = dict()
+
+    def __init__(self):
+        self._ti_params = None
+        self._create_pvs()
+
+    @property
+    def ti_params(self):
+        """Return TI parameters rebuilt from PV values."""
+        self._ti_params = self._generate_ti_params()
+        return self._ti_params
+
+    # ----- auxiliar methods -----
+
+    def _create_pvs(self):
+        pvs = dict()
+        for trig in BOTIRampFactory._triggers:
+            for ppty in {'Src-Sts', 'Delay-RB'}:
+                pvname = trig + ':' + ppty
+                pvs[pvname] = _PV(pvname, connection_timeout=TIMEOUT_CONN)
+
+        for ev in BOTIRampFactory._events:
+            pvname = ev + 'Delay-RB'
+            pvs[pvname] = _PV(pvname, connection_timeout=TIMEOUT_CONN)
+
+        egun_sb_sts_pvname = 'LI-01:EG-PulsePS:singleselstatus'
+        pvs[egun_sb_sts_pvname] = _PV(
+            egun_sb_sts_pvname, connection_timeout=TIMEOUT_CONN)
+
+        BOTIRampFactory._PVs = pvs
+
+    def _generate_ti_params(self):
+        _pvs = BOTIRampFactory._PVs
+        for pv in _pvs.values():
+            pv.wait_for_connection()
+            if not pv.connected:
+                raise Exception('There are not connected PVs!')
+
+        ti_params = dict()
+
+        # injection time
+        egun_src_idx = _pvs['LI-01:TI-EGun-SglBun:Src-Sts'].value
+        egun_src_strs = _pvs['LI-01:TI-EGun-SglBun:Src-Sts'].enum_strs
+        egun_src_val = egun_src_strs[egun_src_idx]
+        egun_src_dly_pvn = \
+            BOTIRampFactory._EVG+':'+egun_src_val+'Delay-RB'
+        egun_src_dly = _pvs[egun_src_dly_pvn].value
+        egun_dly = _pvs['LI-01:TI-EGun-SglBun:Delay-RB'].value \
+            if _pvs['LI-01:EG-PulsePS:singleselstatus'].value \
+            else _pvs['LI-01:TI-EGun-MultBun:Delay-RB'].value
+        ti_params['injection_time'] = (egun_src_dly + egun_dly)/1e3
+
+        # ejection time
+        ejekckr_src_idx = _pvs['BO-48D:TI-EjeKckr:Src-Sts'].value
+        ejekckr_src_strs = _pvs['BO-48D:TI-EjeKckr:Src-Sts'].enum_strs
+        ejekckr_src_val = ejekckr_src_strs[ejekckr_src_idx]
+        ejekckr_src_dly_pvn = \
+            BOTIRampFactory._EVG+':'+ejekckr_src_val+'Delay-RB'
+        ejekckr_src_dly = _pvs[ejekckr_src_dly_pvn].value
+        ejekckr_dly = _pvs['BO-48D:TI-EjeKckr:Delay-RB'].value
+        ti_params['ejection_time'] = (ejekckr_src_dly + ejekckr_dly)/1e3
+
+        # mags delay
+        ps_rmp_dly_fam = _pvs['BO-Glob:TI-Mags-Fams:Delay-RB'].value
+        ti_params['ps_ramp_delay'] = (ps_rmp_dly_fam)/1e3
+
+        # rf delay
+        rf_rmp_dly = _pvs['BO-Glob:TI-LLRF-Rmp:Delay-RB'].value
+        ti_params['rf_ramp_delay'] = (rf_rmp_dly)/1e3
+
+        return ti_params
