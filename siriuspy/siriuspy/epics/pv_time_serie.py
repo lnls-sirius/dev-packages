@@ -13,19 +13,29 @@ class SiriusPVTimeSerie:
                  nr_max_points=None,
                  time_min_interval=0.0,
                  mode=0,
+                 timestamp_init_data=None,
+                 value_init_data=None,
                  use_pv_timestamp=True):
         """Class constructor."""
         if (use_pv_timestamp is False) and (mode == 1):
             raise ValueError(
-                'Can not create an auto-fill serie without using '
-                'PV timestamp!')
+                "Can not create an auto-fill serie without using "
+                "PV timestamp!")
         self._pv = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
         self._nr_max_points = nr_max_points
         self._use_pv_timestamp = use_pv_timestamp
-        self._timestamp_deque = _collections.deque(maxlen=self._nr_max_points)
-        self._value_deque = _collections.deque(maxlen=self._nr_max_points)
+        if timestamp_init_data:
+            if not value_init_data:
+                raise ValueError("Provide 'value_init_data' input!")
+            self._timestamp_deque = _collections.deque(
+                timestamp_init_data, maxlen=nr_max_points)
+            self._value_deque = _collections.deque(
+                value_init_data, maxlen=nr_max_points)
+        else:
+            self._timestamp_deque = _collections.deque(maxlen=nr_max_points)
+            self._value_deque = _collections.deque(maxlen=nr_max_points)
         self._mode = mode
         if self._mode == 1:
             self._th_auto_acquire = _threading.Thread(
@@ -114,9 +124,16 @@ class SiriusPVTimeSerie:
     @property
     def serie(self):
         """PV time series, as two separate lists: timestamp and value."""
+        return self.get_serie()
+
+    def get_serie(self, time_absolute=False):
+        """Return series, as two separate lists: timestamp and value."""
         timestamp = _time.time()
         self._update(timestamp)
-        timestamp_list = [item-timestamp for item in self._timestamp_deque]
+        if not time_absolute:
+            timestamp_list = [item-timestamp for item in self._timestamp_deque]
+        else:
+            timestamp_list = [item for item in self._timestamp_deque]
         value_list = [item for item in self._value_deque]
         return timestamp_list, value_list
 
