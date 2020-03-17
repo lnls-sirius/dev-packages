@@ -17,7 +17,8 @@ class SiriusPVTimeSerie:
         """Class constructor."""
         if (use_pv_timestamp is False) and (mode == 1):
             raise ValueError(
-                'Can not create an auto-fill serie without using PV timestamp!')
+                'Can not create an auto-fill serie without using '
+                'PV timestamp!')
         self._pv = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
