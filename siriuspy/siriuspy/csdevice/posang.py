@@ -9,20 +9,27 @@ class Const:
     TB_CORRH_POSANG = ('TB-04:PS-CH-1', 'TB-04:PU-InjSept')
     TB_CORRV_POSANG = ('TB-04:PS-CV-1', 'TB-04:PS-CV-2')
 
-    TS_CORRH_POSANG = ('TS-04:PS-CH', 'TS-04:PU-InjSeptF')
+    TS_CORRH_POSANG_CHSEPT = ('TS-04:PS-CH', 'TS-04:PU-InjSeptF')
+    TS_CORRH_POSANG_SEPTSEPT = \
+        ('TS-04:PU-InjSeptG-1', 'TS-04:PU-InjSeptG-2', 'TS-04:PU-InjSeptF')
     TS_CORRV_POSANG = ('TS-04:PS-CV-1', 'TS-04:PS-CV-2')
 
     STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
 
 
-def get_posang_database(tl):
+def get_posang_database(tl, corrs_type='ch-sept'):
     """Return Soft IOC database."""
     if tl.upper() == 'TS':
+        if corrs_type == 'ch-sept':
+            CORRH = Const.TS_CORRH_POSANG_CHSEPT
+        else:
+            CORRH = Const.TS_CORRH_POSANG_SEPTSEPT
         CORRV = Const.TS_CORRV_POSANG
-        CORRH = Const.TS_CORRH_POSANG
+        ch1_kick_unit = 'mrad'
     elif tl.upper() == 'TB':
-        CORRV = Const.TB_CORRV_POSANG
         CORRH = Const.TB_CORRH_POSANG
+        CORRV = Const.TB_CORRV_POSANG
+        ch1_kick_unit = 'urad'
 
     pvs_database = {
         'Version-Cte':       {'type': 'string', 'value': 'UNDEF'},
@@ -56,7 +63,7 @@ def get_posang_database(tl):
 
         'CH1-Cte':           {'type': 'string', 'value': CORRH[0]},
         'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
-                              'unit': 'urad'},
+                              'unit': ch1_kick_unit},
         'CH2-Cte':           {'type': 'string', 'value': CORRH[1]},
         'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'mrad'},
@@ -74,5 +81,9 @@ def get_posang_database(tl):
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
                               'value': '\n'.join(Const.STATUSLABELS)},
     }
+    if len(CORRH) == 3:
+        pvs_database['CH3-Cte'] = {'type': 'string', 'value': CORRH[2]}
+        pvs_database['RefKickCH3-Mon'] = {'type': 'float', 'value': 0,
+                                          'prec': 4, 'unit': 'mrad'}
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
