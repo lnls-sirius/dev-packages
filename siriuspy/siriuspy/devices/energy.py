@@ -15,7 +15,7 @@ class Energy(_DeviceApp):
         SI = 'SI'
         ALL = (TB, BO, TS, SI)
 
-    _properties = (
+    _props = (
         'Energy-SP', 'Energy-RB',
         'EnergyRef-Mon', 'Energy-Mon')
 
@@ -84,7 +84,7 @@ class Energy(_DeviceApp):
         properties = list()
         prop2prop = dict()
         for psname in self._psnames_dipoles:
-            for propty in Energy._properties:
+            for propty in Energy._props:
                 pvname = psname + ':' + propty
                 if propty not in prop2prop:
                     prop2prop[propty] = [pvname]
