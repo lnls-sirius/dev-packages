@@ -23,9 +23,10 @@ def get_dict():
 #
 # Horizontal Matrix:
 #
-#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:PS-CH    |
-#  |                             | =  |          | * |                     |
-#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PM-InjSeptF |
+#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:PU-InjSeptG |
+#  |                             | =  |          | * |         (1 & 2) or     |
+#  |                             |    |          |   |         TS-04:PS-CH    |
+#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PU-InjSeptF |
 #
 # Data structure:
 #         h11   h12
