@@ -139,7 +139,7 @@ class DeviceApp(Device):
         self._devname_app = devname
 
         # call base class constructor
-        super().__init__(None, properties=self._properties)
+        super().__init__(None, properties=properties)
 
     @property
     def devname(self):
