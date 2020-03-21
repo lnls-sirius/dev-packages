@@ -9,5 +9,5 @@ from .properties import *
 
 del pv
 del pv_fake
-del properties
 del pv_time_serie
+del properties
