@@ -6,7 +6,7 @@ import numpy as _np
 from siriuspy.epics import PV as _PV
 import siriuspy.util as _util
 from siriuspy.thread import RepeaterThread as _Repeat
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.pwrsupply.csdev import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.search import HLTimeSearch as _HLTimesearch
 from siriuspy.envars import VACA_PREFIX as LL_PREF
