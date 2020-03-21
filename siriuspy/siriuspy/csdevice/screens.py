@@ -6,12 +6,12 @@ This is not a primary source database. Primary sources can be found in:
  - Motor IOC: https://github.com/lnls-dig/galil-dmc30017-epics-ioc
 """
 
-from siriuspy.csdevice import util as _cutil
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     SCRNTYPESEL = ('None', 'Calibration', 'Fluorescent')
@@ -29,14 +29,14 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Const class defining Screens constants and Enum types."""
 
-    CamAcqMode = _cutil.Const.register('CamAcqMode', _et.CAMACQMODE)
-    CamExposureMode = _cutil.Const.register('CamExposureMode',
+    CamAcqMode = _csdev.Const.register('CamAcqMode', _et.CAMACQMODE)
+    CamExposureMode = _csdev.Const.register('CamExposureMode',
                                             _et.CAMEXPOSUREMODE)
-    CamLastErr = _cutil.Const.register('CamLastErr', _et.CAMLASTERR)
-    CamTempState = _cutil.Const.register('CamTempState', _et.CAMTEMPSTATE)
+    CamLastErr = _csdev.Const.register('CamLastErr', _et.CAMLASTERR)
+    CamTempState = _csdev.Const.register('CamTempState', _et.CAMTEMPSTATE)
 
 
 _c = Const  # syntactic sugar

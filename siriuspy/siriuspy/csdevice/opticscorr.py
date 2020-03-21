@@ -1,10 +1,11 @@
 """Define PVs, constants and properties of OpticsCorr SoftIOCs."""
-from siriuspy.csdevice import util as _cutil
+
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     PROP_ADD = ('Proportional', 'Additional')
@@ -15,11 +16,11 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Const class defining OpticsCorr constants and Enum types."""
 
-    CorrMeth = _cutil.Const.register('CorrMeth', _et.PROP_ADD)
-    SyncCorr = _cutil.Const.register('SyncCorr', _et.OFF_ON)
+    CorrMeth = _csdev.Const.register('CorrMeth', _et.PROP_ADD)
+    SyncCorr = _csdev.Const.register('SyncCorr', _et.OFF_ON)
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                           'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
@@ -97,7 +98,7 @@ def get_chrom_database(acc):
         #                                 'value': _c.SyncCorr.Off}
         # pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
+    pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
 
 
@@ -168,5 +169,5 @@ def get_tune_database(acc):
                                         'value': _c.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
+    pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database

@@ -3,18 +3,17 @@
 
 from unittest import TestCase
 import numpy
+
 from siriuspy import util
-from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE_OTHERS as \
+from siriuspy.pwrsupply.csdev import DEF_WFMSIZE_OTHERS as \
     _DEF_WFMSIZE_OTHERS
 from siriuspy.ramp import waveform
 from siriuspy.ramp.waveform import WaveformParam
 from siriuspy.ramp.waveform import WaveformDipole
 from siriuspy.ramp.waveform import Waveform
 
-# import siriuspy.search as _search
 
-
-public_interface = (
+PUBLIC_INTERFACE = (
     'WaveformParam',
     'WaveformDipole',
     'Waveform',
@@ -28,14 +27,14 @@ class TestModule(TestCase):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 waveform,
-                public_interface)
+                PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
 
 class TestWaveformParam(TestCase):
     """Test WaveformParam class."""
 
-    public_interface = (
+    PUBLIC_INTERFACE = (
         'N',
         'duration',
         'start_value',
@@ -61,7 +60,7 @@ class TestWaveformParam(TestCase):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 WaveformParam,
-                TestWaveformParam.public_interface)
+                TestWaveformParam.PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_rampup1_start_time(self):
@@ -174,7 +173,7 @@ class TestWaveformParam(TestCase):
 class TestWaveformDipole(TestCase):
     """Test WaveformDipole class."""
 
-    public_interface = (
+    PUBLIC_INTERFACE = (
         'waveform',
         'start_energy',
         'rampup1_start_energy',
@@ -196,7 +195,7 @@ class TestWaveformDipole(TestCase):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 WaveformDipole,
-                TestWaveformDipole.public_interface)
+                TestWaveformDipole.PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def _test_constructor(self):
@@ -225,7 +224,7 @@ class TestWaveformDipole(TestCase):
 class TestWaveform(TestCase):
     """Test Waveform class."""
 
-    public_interface = (
+    PUBLIC_INTERFACE = (
         'duration',
         'update',
     )
@@ -234,7 +233,7 @@ class TestWaveform(TestCase):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 Waveform,
-                TestWaveform.public_interface)
+                TestWaveform.PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_duration(self):

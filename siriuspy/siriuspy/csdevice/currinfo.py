@@ -1,11 +1,12 @@
 """Define PVs, constants and properties of CurrInfo SoftIOCs."""
 import numpy as _np
-from siriuspy.csdevice import util as _cutil
+
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
@@ -18,13 +19,13 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Const class defining CurrInfo constants and Enum types."""
 
-    DCCT = _cutil.Const.register('DCCT', _et.DCCTSELECTIONTYP)
-    DCCTFltCheck = _cutil.Const.register('DCCTFltCheck', _et.OFF_ON)
-    BuffAutoRst = _cutil.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
-    Fit = _cutil.Const.register('Fit', _et.FITTYP)
+    DCCT = _csdev.Const.register('DCCT', _et.DCCTSELECTIONTYP)
+    DCCTFltCheck = _csdev.Const.register('DCCTFltCheck', _et.OFF_ON)
+    BuffAutoRst = _csdev.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
+    Fit = _csdev.Const.register('Fit', _et.FITTYP)
 
 
 _c = Const  # syntactic sugar
@@ -93,7 +94,7 @@ def get_currinfo_database(acc):
 
         pvs_db['RampEff-Mon'] = {'type': 'float', 'value': 0.0,
                                  'prec': 2, 'unit': '%'}
-    pvs_db = _cutil.add_pvslist_cte(pvs_db)
+    pvs_db = _csdev.add_pvslist_cte(pvs_db)
     return pvs_db
 
 
@@ -144,5 +145,5 @@ def get_lifetime_database():
         'BufferTimestampBPM-Mon': {'type': 'float', 'count': 100000,
                                    'value': [0.0, ] * 100000, 'prec': 3},
         }
-    pvs_db = _cutil.add_pvslist_cte(pvs_db)
+    pvs_db = _csdev.add_pvslist_cte(pvs_db)
     return pvs_db

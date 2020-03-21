@@ -11,7 +11,7 @@ from siriuspy.namesys import SiriusPVName as _PVName, \
 from siriuspy.envars import VACA_PREFIX as VACA_PREFIX
 from siriuspy.search import PSSearch as _PSSearch, \
     LLTimeSearch as _LLTimeSearch
-from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet
+from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 

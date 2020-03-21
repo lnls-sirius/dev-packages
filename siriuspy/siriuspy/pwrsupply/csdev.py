@@ -3,9 +3,11 @@
 import numpy as _np
 
 # from pcaspy import Severity as _Severity
-from ..search import PSSearch as _PSSearch
-from ..pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from .. import csdev as _csdev
+from ..search import PSSearch as _PSSearch
+
+from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
+
 
 # --- Wfm ---
 # NOTE: _SIZE has to be consistent with

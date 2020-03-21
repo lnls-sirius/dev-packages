@@ -5,9 +5,10 @@ corresponding values when a new configuration is tried to be inserted in the
 servconf database.
 """
 from copy import deepcopy as _dcopy
-from siriuspy.csdevice.pwrsupply import \
+from siriuspy.pwrsupply.csdev import \
     DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
     DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
+
 from siriuspy.ramp import util as _util
 
 

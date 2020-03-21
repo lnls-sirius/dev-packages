@@ -1,12 +1,12 @@
 #!/usr/bin/env python-sirius
 
-"""Unittest module for util.py."""
+"""Unittest module for csdev.py."""
 
 from unittest import TestCase
 import siriuspy.util as util
-import siriuspy.csdevice.util as cutil
+import siriuspy.csdev as csdev
 
-public_interface = (
+PUBLIC_INTERFACE = (
     'ETypes',
     'Const',
     'add_pvslist_cte',
@@ -17,16 +17,16 @@ public_interface = (
 class TestUtil(TestCase):
     """Test util module."""
 
-    def test_public_interface(self):
+    def test_PUBLIC_INTERFACE(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            cutil, public_interface)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_adds_pvslist_cte(self):
         """Test adds_pvslist_cte."""
         db = {'a': {}, 'b': {}}
-        db = cutil.add_pvslist_cte(db)
+        db = csdev.add_pvslist_cte(db)
         self.assertEqual(len(db), 3)
         self.assertIn('Properties-Cte', db)
         self.assertEqual(db['Properties-Cte']['count'], 18)
@@ -35,4 +35,3 @@ class TestUtil(TestCase):
     def test_get_device_2_ioc_ip(self):
         """Test get_device_2_ioc_ip."""
         # TODO: implement!
-        pass

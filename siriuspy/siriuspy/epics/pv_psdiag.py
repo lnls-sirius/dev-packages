@@ -6,8 +6,8 @@ import numpy as _np
 from epics import PV as _PV
 
 from siriuspy.epics import connection_timeout as _connection_timeout
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.pwrsupply import ETypes as _ETypes
+from ..pwrsupply.csdev import Const as _PSConst
+from ..pwrsupply.csdev import ETypes as _ETypes
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName as _PVName
 

@@ -3,14 +3,14 @@
 """Unittest module for enumtypes.py."""
 
 from unittest import mock, TestCase
-import siriuspy.csdevice.pwrsupply as pwrsupply
+import siriuspy.pwrsupply.csdev as csdev
 import siriuspy.util as util
 
 
-_mock_flag = True
+_MOCK_FLAG = True
 
 
-public_interface = (
+PUBLIC_INTERFACE = (
     'DEFAULT_SIGGEN_CONFIG',
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
@@ -33,8 +33,8 @@ public_interface = (
 )
 
 
-class TestPwrSupply(TestCase):
-    """Test pwrsupply module."""
+class TestPwrSupplyCSDev(TestCase):
+    """Test pwrsupply csdev module."""
 
     ps_alarm = ('Current-SP', 'Current-RB',
                 'CurrentRef-Mon', 'Current-Mon', )
@@ -93,93 +93,93 @@ class TestPwrSupply(TestCase):
             else:
                 return ['V', 'Voltage']
 
-        if _mock_flag:
-            _PSSearch_patcher = mock.patch(
-                'siriuspy.csdevice.pwrsupply._PSSearch', autospec=True)
-            self.addCleanup(_PSSearch_patcher.stop)
-            self.m_PSSearch = _PSSearch_patcher.start()
-            self.m_PSSearch.get_splims_unit.side_effect = get_splims_unit
-            self.m_PSSearch.get_pstype_names.return_value = \
-                TestPwrSupply.pstypes
-            self.m_PSSearch.get_splims.side_effect = get_splims
-            self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
-            self.m_PSSearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
+        if _MOCK_FLAG:
+            _pssearch_patcher = mock.patch(
+                'siriuspy.pwrsupply.csdev._PSSearch', autospec=True)
+            self.addCleanup(_pssearch_patcher.stop)
+            self.m_pssearch = _pssearch_patcher.start()
+            self.m_pssearch.get_splims_unit.side_effect = get_splims_unit
+            self.m_pssearch.get_pstype_names.return_value = \
+                TestPwrSupplyCSDev.pstypes
+            self.m_pssearch.get_splims.side_effect = get_splims
+            self.m_pssearch.conv_psname_2_psmodel.return_value = 'FBP'
+            self.m_pssearch.conv_pstype_2_magfunc.return_value = 'quadrupole'
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            pwrsupply, public_interface)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_MAX_WFMSIZE_FBP(self):
         """Test MAX_WFMSIZE_FBP."""
-        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_FBP, int)
-        self.assertTrue(pwrsupply.MAX_WFMSIZE_FBP > 0)
+        self.assertIsInstance(csdev.MAX_WFMSIZE_FBP, int)
+        self.assertTrue(csdev.MAX_WFMSIZE_FBP > 0)
 
     def test_DEF_WFMSIZE_FBP(self):
         """Test DEF_WFMSIZE_FBP."""
-        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_FBP, int)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP > 0)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE_FBP <= pwrsupply.MAX_WFMSIZE_FBP)
+        self.assertIsInstance(csdev.DEF_WFMSIZE_FBP, int)
+        self.assertTrue(csdev.DEF_WFMSIZE_FBP > 0)
+        self.assertTrue(csdev.DEF_WFMSIZE_FBP <= csdev.MAX_WFMSIZE_FBP)
 
     def test_MAX_WFMSIZE_OTHERS(self):
         """Test MAX_WFMSIZE_OTHERS."""
-        self.assertIsInstance(pwrsupply.MAX_WFMSIZE_OTHERS, int)
-        self.assertTrue(pwrsupply.MAX_WFMSIZE_OTHERS > 0)
+        self.assertIsInstance(csdev.MAX_WFMSIZE_OTHERS, int)
+        self.assertTrue(csdev.MAX_WFMSIZE_OTHERS > 0)
 
     def test_DEF_WFMSIZE_OTHERS(self):
         """Test DEF_WFMSIZE_OTHERS."""
-        self.assertIsInstance(pwrsupply.DEF_WFMSIZE_OTHERS, int)
-        self.assertTrue(pwrsupply.DEF_WFMSIZE_OTHERS > 0)
+        self.assertIsInstance(csdev.DEF_WFMSIZE_OTHERS, int)
+        self.assertTrue(csdev.DEF_WFMSIZE_OTHERS > 0)
         self.assertTrue(
-            pwrsupply.DEF_WFMSIZE_OTHERS <= pwrsupply.MAX_WFMSIZE_OTHERS)
+            csdev.DEF_WFMSIZE_OTHERS <= csdev.MAX_WFMSIZE_OTHERS)
 
     def test_DEFAULT_SIGGEN_CONFIG(self):
         """Test DEFAULT_SIGGEN_CONFIG."""
-        self.assertIsInstance(pwrsupply.DEFAULT_SIGGEN_CONFIG, tuple)
-        self.assertTrue(len(pwrsupply.DEFAULT_SIGGEN_CONFIG), 9)
+        self.assertIsInstance(csdev.DEFAULT_SIGGEN_CONFIG, tuple)
+        self.assertTrue(len(csdev.DEFAULT_SIGGEN_CONFIG), 9)
 
     def test_ps_current_unit(self):
         """Test  ps_current_unit."""
-        unit = pwrsupply.get_ps_current_unit()
+        unit = csdev.get_ps_current_unit()
         self.assertIsInstance(unit, (list, tuple))
         self.assertEqual(unit[0], 'A')
         self.assertEqual(unit[1], 'Ampere')
 
     def test_ps_basic_propty_database(self):
         """Test ps_basic_propty_database."""
-        db = pwrsupply.get_ps_basic_propty_database()
+        db = csdev.get_ps_basic_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
     def test_ps_common_propty_database(self):
         """Test ps_common_propty_database."""
-        db = pwrsupply.get_ps_common_propty_database()
+        db = csdev.get_ps_common_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
     def test_ps_FBP_propty_database(self):
         """Test ps_FBP_propty_database."""
-        db = pwrsupply.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
+        db = csdev.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
         # test precision consistency
-        proptys = TestPwrSupply.ps_alarm
+        proptys = TestPwrSupplyCSDev.ps_alarm
         for propty in proptys:
             self.assertIn(propty, db)
 
     def test_ps_propty_database(self):
         """Test ps_propty_database."""
-        current_pvs = TestPwrSupply.ps_alarm
-        for pstype in TestPwrSupply.pstypes:
-            db = pwrsupply.get_ps_propty_database('FBP', pstype)
+        current_pvs = TestPwrSupplyCSDev.ps_alarm
+        for pstype in TestPwrSupplyCSDev.pstypes:
+            db = csdev.get_ps_propty_database('FBP', pstype)
             unit = db['Current-SP']['unit']
             for propty, dbi in db.items():
                 # set setpoint limits in database
-                if propty in TestPwrSupply.ps_alarm:
+                if propty in TestPwrSupplyCSDev.ps_alarm:
                     self.assertLessEqual(dbi['lolo'], dbi['low'])
                     self.assertLessEqual(dbi['low'], dbi['lolim'])
                     self.assertLessEqual(dbi['lolim'], dbi['hilim'])

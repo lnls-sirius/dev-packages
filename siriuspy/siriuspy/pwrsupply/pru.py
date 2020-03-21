@@ -4,8 +4,7 @@ import time as _time
 import PRUserial485 as _PRUserial485
 from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
 
-from siriuspy.csdevice import util as _util
-
+from .. import csdev as _csdev
 
 # check PRUserial485 package version
 __version_eth_required__ = '2.5.0'  # eth-PRUserial485
@@ -79,7 +78,7 @@ class PRU(PRUInterface):
 
         # if ip address was not given, get it from bbbname
         if ip_address is None:
-            dev2ips = _util.get_device_2_ioc_ip()
+            dev2ips = _csdev.get_device_2_ioc_ip()
             ip_address = dev2ips[bbbname]
         print('BEAGLEBONE: ', bbbname)
         print('IP_ADDRESS: ', ip_address)
