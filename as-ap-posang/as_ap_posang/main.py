@@ -6,7 +6,7 @@ import epics as _epics
 from siriuspy import util as _util
 from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
-from siriuspy.csdevice.pwrsupply import Const as _PSC
+from siriuspy.pwrsupply.csdev import Const as _PSC
 from siriuspy.csdevice.posang import Const as _PAConst
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 import as_ap_posang.pvs as _pvs
