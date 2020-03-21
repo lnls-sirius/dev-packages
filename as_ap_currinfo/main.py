@@ -4,7 +4,7 @@ import time as _time
 from datetime import datetime as _datetime
 import numpy as _np
 import epics as _epics
-from siriuspy.csdevice.pwrsupply import Const as _PSc
+from siriuspy.pwrsupply.csdev import Const as _PSc
 from siriuspy.csdevice.currinfo import Const as _Const
 from siriuspy.clientarch import ClientArchiver as _ClientArch
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
