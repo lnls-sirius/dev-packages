@@ -6,7 +6,7 @@ import logging as _log
 from threading import Thread as _ThreadBase
 from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
+from siriuspy.epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
 from siriuspy.envars import VACA_PREFIX as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
@@ -56,7 +56,7 @@ class _BaseLL(_Callback):
         evg_name = _LLTimeSearch.get_evg_name()
         self._base_freq_pv = _PV(
             LL_PREFIX + evg_name + ':FPGAClk-Cte',
-            connection_timeout=_conn_timeout)
+            connection_timeout=_CONN_TIMEOUT)
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
@@ -69,14 +69,14 @@ class _BaseLL(_Callback):
                 pvnamesp = _PVName.from_rb2sp(pvname)
             elif _PVName.is_cmd_pv(pvname):  # -Cmd is different!!
                 self._writepvs[prop] = _PV(
-                                pvname, connection_timeout=_conn_timeout)
+                                pvname, connection_timeout=_CONN_TIMEOUT)
 
             if pvnamerb is not None:
                 self._readpvs[prop] = _PV(
-                    pvnamerb, connection_timeout=_conn_timeout)
+                    pvnamerb, connection_timeout=_CONN_TIMEOUT)
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 self._writepvs[prop] = _PV(
-                    pvnamesp, connection_timeout=_conn_timeout)
+                    pvnamesp, connection_timeout=_CONN_TIMEOUT)
                 self._writepvs[prop]._initialized = False
 
         for prop, pv in self._writepvs.items():
@@ -161,7 +161,7 @@ class _BaseLL(_Callback):
 
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
-                                timeout=_conn_timeout) or self._base_freq
+                                timeout=_CONN_TIMEOUT) or self._base_freq
         self.base_del = 1 / self._base_freq / _US2SEC
         self._rf_del = self.base_del / 5
         # Trigger update of Delay and Duration PVs.
@@ -211,7 +211,7 @@ class _BaseLL(_Callback):
         pv = self._writepvs[ll_prop] if is_sp else self._readpvs[ll_prop]
         if not pv.connected:
             return def_val
-        val = pv.get(timeout=_conn_timeout)
+        val = pv.get(timeout=_CONN_TIMEOUT)
         return def_val if val is None else val
 
     def _lock_thread(self, pvname, value=None):

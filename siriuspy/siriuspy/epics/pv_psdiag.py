@@ -5,11 +5,12 @@ import numpy as _np
 
 from epics import PV as _PV
 
-from siriuspy.epics import connection_timeout as _connection_timeout
+from ..search import PSSearch as _PSSearch
+from ..namesys import SiriusPVName as _PVName
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.csdev import ETypes as _ETypes
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.namesys import SiriusPVName as _PVName
+
+from . import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 
 
 class ComputedPV:
@@ -135,7 +136,7 @@ class ComputedPV:
         ppvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
             if isinstance(pv, str):  # give up string option.
-                tpv = _PV(pv, connection_timeout=_connection_timeout)
+                tpv = _PV(pv, connection_timeout=_CONN_TIMEOUT)
                 ppvs.append(tpv)
             else:
                 ppvs.append(pv)
