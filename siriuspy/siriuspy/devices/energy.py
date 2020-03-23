@@ -1,9 +1,9 @@
 """Energy Devices."""
 
-from .device import DeviceApp as _DeviceApp
+from .syncd import DevicesSync as _DevicesSync
 
 
-class Energy(_DeviceApp):
+class Energy(_DevicesSync):
     """Energy devices."""
 
     class DEVICES:
@@ -15,9 +15,8 @@ class Energy(_DeviceApp):
         SI = 'SI'
         ALL = (TB, BO, TS, SI)
 
-    _props = (
-        'Energy-SP', 'Energy-RB',
-        'EnergyRef-Mon', 'Energy-Mon')
+    _props_sync = ('Energy-SP', 'Energy-RB', 'EnergyRef-Mon')
+    _props_async = ('Energy-Mon', )
 
     def __init__(self, devname):
         """."""
@@ -26,72 +25,32 @@ class Energy(_DeviceApp):
             raise NotImplementedError(devname)
 
         # get dipole names
-        self._psnames_dipoles = self._get_dipole_devnames(devname)
-
-        # get properties
-        properties, self._prop2prop = self._get_properties()
+        psnames_dip = self._get_dipole_devnames(devname)
 
         # call base class constructor
-        super().__init__(properties, devname)
-
-
-    @property
-    def synchronized(self):
-        """Return True if dipoles are synchronized."""
-        props = self._prop2prop['Energy-SP']
-        values = {self[prop] for prop in props}
-        if len(values) > 1:
-            return False
-        props = self._prop2prop['Energy-RB']
-        values = {self[prop] for prop in props}
-        if len(values) > 1:
-            return False
-        props = self._prop2prop['EnergyRef-Mon']
-        values = {self[prop] for prop in props}
-        if len(values) > 1:
-            return False
-        return True
+        super().__init__(
+            psnames_dip,
+            Energy._props_sync, Energy._props_async, devname)
 
     @property
     def energy(self):
         """Return Ref-Mon energy."""
-        props = self._prop2prop['EnergyRef-Mon']
-        values = [self[prop] for prop in props]
-        return sum(values) / len(values)
+        return self.value_get('EnergyRef-Mon')
 
     @energy.setter
     def energy(self, value):
         """Set energy."""
-        props = self._prop2prop['Energy-SP']
-        for prop in props:
-            self[prop] = value
+        self.value_set('Energy-SP', value)
 
     @property
     def energy_sp(self):
         """Return -SP energy."""
-        props = self._prop2prop['Energy-SP']
-        values = [self[prop] for prop in props]
-        return sum(values) / len(values)
+        return self.value_get('Energy-SP')
 
     @property
     def energy_mon(self):
         """Return -Mon energy."""
-        props = self._prop2prop['Energy-Mon']
-        values = [self[prop] for prop in props]
-        return sum(values) / len(values)
-
-    def _get_properties(self):
-        properties = list()
-        prop2prop = dict()
-        for psname in self._psnames_dipoles:
-            for propty in Energy._props:
-                pvname = psname + ':' + propty
-                if propty not in prop2prop:
-                    prop2prop[propty] = [pvname]
-                else:
-                    prop2prop[propty].append(pvname)
-                properties.append(pvname)
-        return properties, prop2prop
+        return self.value_get('Energy-Mon')
 
     @staticmethod
     def _get_dipole_devnames(devname):
