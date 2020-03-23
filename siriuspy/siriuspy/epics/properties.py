@@ -1,12 +1,12 @@
 """Epics PV derived classes."""
 
 import time as _time
+import numpy as _np
+
 import epics as _epics
 
-
-import numpy as _np
-from siriuspy.envars import VACA_PREFIX as _prefix
-from siriuspy.namesys.implementation import \
+from ..envars import VACA_PREFIX as _prefix
+from ..namesys import \
     SiriusPVName as _SiriusPVName, \
     get_pair_sprb as _get_pair_sprb
 

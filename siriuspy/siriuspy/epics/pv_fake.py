@@ -1,11 +1,10 @@
-#!/usr/bin/env python
+"""PVFake class."""
 #  M Newville <newville@cars.uchicago.edu>
 #  The University of Chicago, 2010
 #  Epics Open License
+#
+#  ps: code cleanup from LNLS-FAC staff fro pylint adaptation.
 
-"""
-  Epics Process Variable
-"""
 import sys
 import time
 import ctypes
@@ -19,29 +18,31 @@ from epics.ca import DEFAULT_CONNECTION_TIMEOUT
 from epics.ca import AUTOMONITOR_MAXLENGTH
 from epics.ca import HAS_NUMPY
 
-_PVcache_ = {}
+_PVCACHE_ = {}
 
 _PYTYPES = {'float': float, 'int': int, 'bool': int,
             'string': str, 'enum': int, 'char': str}
 _CATYPES = {'float': dbr.DOUBLE, 'int': dbr.LONG, 'bool': dbr.INT,
             'string': dbr.STRING, 'enum': dbr.ENUM, 'char': dbr.STRING}
 
-_database = dict()
+_DATABASE = dict()
 
 
 def add_to_database(db, prefix=''):
+    """."""
     if not db:
         return
     for key, val in db.items():
-        _database.update({prefix+key: copy.deepcopy(val)})
+        _DATABASE.update({prefix+key: copy.deepcopy(val)})
 
 
 def clear_database():
-    _database.clear()
+    """."""
+    _DATABASE.clear()
 
 
 def fmt_time(tstamp=None):
-    "simple formatter for time values"
+    """Return simple formatter for time values."""
     if tstamp is None:
         tstamp = time.time()
     tstamp, frac = divmod(tstamp, 1)
@@ -51,8 +52,10 @@ def fmt_time(tstamp=None):
 
 
 def promote_type(tp, use_time=False, use_ctrl=False):
-    """promotes the native field type of a ``chid`` to its TIME or CTRL variant.
-    Returns the integer corresponding to the promoted field value."""
+    """Promote the native field type of a ``chid`` to its TIME or CTRL variant.
+
+    Returns the integer corresponding to the promoted field value.
+    """
     ftype = _CATYPES[tp]
     if use_ctrl:
         ftype += dbr.CTRL_STRING
@@ -72,29 +75,32 @@ def write(msg, newline=True, flush=True):
         sys.stdout.flush()
 
 
-class PVFake(object):
-    """Fake Epics Process Variable
+class PVFake:
+    """Fake Epics Process Variable.
 
     A PV encapsulates an Epics Process Variable.
 
     The primary interface methods for a pv are to get() and put() is value::
 
-      >>> p = PV(pv_name)  # create a pv object given a pv name
-      >>> p.get()          # get pv value
-      >>> p.put(val)       # set pv to specified value.
+     >>> p = PV(pv_name)  # create a pv object given a pv name
+     >>> p.get()          # get pv value
+     >>> p.put(val)       # set pv to specified value.
 
-    Additional important attributes include::
+    Additional important attributes in  clude::
 
-      >>> p.pvname         # name of pv
-      >>> p.value          # pv value (can be set or get)
-      >>> p.char_value     # string representation of pv value
-      >>> p.count          # number of elements in array pvs
-      >>> p.type           # EPICS data type: 'string','double','enum','long',..
-"""
+     >>> p.pvname         # name of pv
+     >>> p.value          # pv value (can be set or g  et)
+     >>> p.char_value     # string representation of   pv value
+     >>> p.count          # number of elements in array pvs
+     >>> p.type           # EPICS data type: 'string','double','enum',
+                               # 'long',..
+    """
 
-    _fmtsca = "<PV '%(pvname)s', count=%(count)i, type=%(typefull)s, access=%(access)s>"
-    _fmtarr = "<PV '%(pvname)s', count=%(count)i/%(nelm)i, type=%(typefull)s, access=%(access)s>"
-    _fields = ('pvname',  'value',  'char_value',  'status',  'ftype',  'chid',
+    _fmtsca = ("<PV '%(pvname)s', count=%(count)i, "
+               "type=%(typefull)s, access=%(access)s>")
+    _fmtarr = ("<PV '%(pvname)s', count=%(count)i/%(nelm)i, "
+               "type=%(typefull)s, access=%(access)s>")
+    _fields = ('pvname', 'value', 'char_value', 'status', 'ftype', 'chid',
                'host', 'count', 'access', 'write_access', 'read_access',
                'severity', 'timestamp', 'posixseconds', 'nanoseconds',
                'precision', 'units', 'enum_strs',
@@ -107,7 +113,8 @@ class PVFake(object):
                  connection_callback=None,
                  connection_timeout=None,
                  access_callback=None):
-        db = _database.get(pvname)
+        """."""
+        db = _DATABASE.get(pvname)
         if db is None:
             raise Exception(
                 'PV does not exist in local database. Configure database ' +
@@ -177,10 +184,11 @@ class PVFake(object):
         self.__on_access_rights_event(read_access=True, write_access=True)
 
         pvid = (self.pvname, self.form, self.context)
-        if pvid not in _PVcache_:
-            _PVcache_[pvid] = self
+        if pvid not in _PVCACHE_:
+            _PVCACHE_[pvid] = self
 
     def force_connect(self, pvname=None, chid=None, conn=True, **kws):
+        """."""
         if chid is None:
             chid = self.chid
         if isinstance(chid, ctypes.c_long):
@@ -816,8 +824,8 @@ class PVFake(object):
         "disconnect PV"
         self.connected = False
         pvid = (self.pvname, self.form, self.context)
-        if pvid in _PVcache_:
-            _PVcache_.pop(pvid)
+        if pvid in _PVCACHE_:
+            _PVCACHE_.pop(pvid)
 
         if self.auto_monitor:
             self._args = {}.fromkeys(self._fields)
