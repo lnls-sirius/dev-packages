@@ -164,7 +164,7 @@ class App:
             if updated:
                 self._orbx_deltapos = value
                 self.driver.setParam('DeltaPosX-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('DeltaPosX-RB')
                 status = True
 
         elif reason == 'DeltaAngX-SP':
@@ -172,7 +172,7 @@ class App:
             if updated:
                 self._orbx_deltaang = value
                 self.driver.setParam('DeltaAngX-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('DeltaAngX-RB')
                 status = True
 
         elif reason == 'DeltaPosY-SP':
@@ -180,7 +180,7 @@ class App:
             if updated:
                 self._orby_deltapos = value
                 self.driver.setParam('DeltaPosY-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('DeltaPosY-RB')
                 status = True
 
         elif reason == 'DeltaAngY-SP':
@@ -188,16 +188,16 @@ class App:
             if updated:
                 self._orby_deltaang = value
                 self.driver.setParam('DeltaAngY-RB', value)
-                self.driver.updatePVs()
+                self.driver.updatePV('DeltaAngY-RB')
                 status = True
 
         elif reason == 'SetNewRefKick-Cmd':
             updated = self._update_ref()
             if updated:
                 self._setnewrefkick_cmd_count += 1
-                self.driver.setParam('SetNewRefKick-Cmd',
-                                     self._setnewrefkick_cmd_count)
-                self.driver.updatePVs()
+                self.driver.setParam(
+                    'SetNewRefKick-Cmd', self._setnewrefkick_cmd_count)
+                self.driver.updatePV('SetNewRefKick-Cmd')
 
         elif reason == 'ConfigPS-Cmd':
             done = self._config_ps()
@@ -205,7 +205,7 @@ class App:
                 self._config_ps_cmd_count += 1
                 self.driver.setParam(
                     'ConfigPS-Cmd', self._config_ps_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ConfigPS-Cmd')
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
@@ -227,7 +227,7 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
 
         return status  # return True to invoke super().write of PCASDriver
 
@@ -325,12 +325,12 @@ class App:
                 c2_kick_sp_pv.put(vl2)
 
             self.driver.setParam('Log-Mon', 'Applied new delta.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
             return True
         else:
             self.driver.setParam(
                 'Log-Mon', 'ERR:Failed on applying new delta.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
             return False
 
     def _update_ref(self):
@@ -358,11 +358,12 @@ class App:
             self.driver.setParam('DeltaAngY-RB', 0)
 
             self.driver.setParam('Log-Mon', 'Updated Kick References.')
+            self.driver.updatePVs()
             updated = True
         else:
             self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
+            self.driver.updatePV('Log-Mon')
             updated = False
-        self.driver.updatePVs()
         return updated
 
     def _callback_init_refkick(self, pvname, value, cb_info, **kws):
@@ -383,7 +384,7 @@ class App:
     def _connection_callback_corr_kick_pvs(self, pvname, conn, **kws):
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_connection[corr_id] = (1 if conn else 0)
@@ -393,11 +394,12 @@ class App:
             v=self._status, bit_pos=0,
             bit_val=any(q == 0 for q in self._corr_check_connection.values()))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_corr_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSC.PwrStateSts.On:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
+            self.driver.updatePV('Log-Mon')
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_pwrstate_sts[corr_id] = value
@@ -408,11 +410,11 @@ class App:
             bit_val=any(q != _PSC.PwrStateSts.On
                         for q in self._corr_check_pwrstate_sts.values()))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_corr_opmode_sts(self, pvname, value, **kws):
         self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_opmode_sts[corr_id] = value
@@ -423,12 +425,12 @@ class App:
             bit_val=any(s != _PSC.States.SlowRef
                         for s in self._corr_check_opmode_sts.values()))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_corr_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSC.Interface.Remote:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_ctrlmode_mon[corr_id] = value
@@ -439,7 +441,7 @@ class App:
             bit_val=any(q != _PSC.Interface.Remote
                         for q in self._corr_check_ctrlmode_mon.values()))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _config_ps(self):
         for corr in self._correctors:
@@ -451,8 +453,8 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:' + corr + ' is disconnected.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
                 return False
         self.driver.setParam('Log-Mon', 'Configuration sent to correctors.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
         return True
