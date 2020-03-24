@@ -9,7 +9,7 @@ class DevicesSync(_DeviceApp):
     def __init__(self, devnames, propty_sync, propty_async=None, devname=None):
         """."""
         self._devnames = devnames
-        self._props_sync = propty_sync
+        self._props_sync = list(propty_sync)
         self._props_async = [] if propty_async is None else propty_async
 
         # get properties

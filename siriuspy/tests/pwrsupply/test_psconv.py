@@ -9,7 +9,6 @@ from siriuspy.util import check_public_interface_namespace
 
 PUBLIC_INTERFACE = (
     'PSEpicsConn',
-    'PUEpicsConn',
     'SConvEpics'
 )
 
