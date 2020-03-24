@@ -24,7 +24,6 @@ from .fields import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
 
 
-
 class BeagleBone:
     """BeagleBone is a set of PSControllers.
 
