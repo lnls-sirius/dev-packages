@@ -1,9 +1,10 @@
-"""Define PS Conv Epics Class."""
+"""Define Power Supply Property and Strength Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..factory import NormalizerFactory as _NormalizerFactory
-from ..devices import DevicesSync as _DevicesSync
-from ..devices import Devices as _Devices
+
+from .device import Devices as _Devices
+from .syncd import DevicesSync as _DevicesSync
 
 
 class PSProperty(_DevicesSync):
