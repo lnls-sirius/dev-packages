@@ -7,9 +7,9 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
-from siriuspy.bsmp import Entity as _Entity
-from siriuspy.bsmp import Entities as _Entities
-from siriuspy.bsmp import Types as _Types
+from ..bsmp import Entity as _Entity
+from ..bsmp import Entities as _Entities
+from ..bsmp import Types as _Types
 
 
 # version of the BSMP implementation of power supplies that is compatible

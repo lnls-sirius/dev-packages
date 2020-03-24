@@ -4,7 +4,7 @@ These classes implement a common interface that exposes the `read` method.
 """
 import re as _re
 
-from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
+from .status import PSCStatus as _PSCStatus
 
 
 class Variable:

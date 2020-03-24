@@ -1,9 +1,12 @@
 """Magnet utils."""
 
 import math as _math
-import numpy as _numpy
 import re as _re
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
+
+import numpy as _numpy
+
+
+from ..namesys import SiriusPVName as _SiriusPVName
 
 
 def get_nominal_dipole_angles():

@@ -4,7 +4,8 @@
 import time as _time
 import numpy as _np
 import math as _math
-from siriuspy.bsmp import SerialError as _SerialError
+
+from ..bsmp import SerialError as _SerialError
 
 
 def _psupply_update_connected(func):

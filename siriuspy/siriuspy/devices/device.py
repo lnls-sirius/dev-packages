@@ -155,7 +155,7 @@ class Devices:
         self._devname = devname
         self._devices = devices
 
-        self._properties = ()
+        self._properties = []
         for dev in self._devices:
             self._properties += dev.properties
 

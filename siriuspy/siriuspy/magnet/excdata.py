@@ -2,8 +2,9 @@
 
 import numpy as _np
 
-from siriuspy import clientweb as _web
-from siriuspy.magnet import util as _util
+from .. import clientweb as _web
+
+from . import util as _util
 
 
 class ExcitationData:
@@ -125,30 +126,30 @@ class ExcitationData:
     def __str__(self):
         """Str method."""
         str_h = [str(h) for h in self._harmonics]
-        st = ''
-        st += '# Magnet Excitation Data file' + '\n'
-        st += '# ===========================' + '\n'
-        st += '#' + '\n'
-        st += '# label                      ' + self.label + '\n'
-        st += '# harmonics                  ' + ' '.join(str_h) + '\n'
-        st += '# main_multipole_harmonic    ' + \
+        rst = ''
+        rst += '# Magnet Excitation Data file' + '\n'
+        rst += '# ===========================' + '\n'
+        rst += '#' + '\n'
+        rst += '# label                      ' + self.label + '\n'
+        rst += '# harmonics                  ' + ' '.join(str_h) + '\n'
+        rst += '# main_multipole_harmonic    ' + \
             str(self._main_multipole_harmonic) + '\n'
-        st += '# main_multipole_type        ' + \
+        rst += '# main_multipole_type        ' + \
             self._main_multipole_type + '\n'
-        st += '# column_units               ' + 'A  '
+        rst += '# column_units               ' + 'A  '
         for h in self._harmonics:
-            st += '{0:s} {1:s}  '.format(_util.get_multipole_si_units(h),
+            rst += '{0:s} {1:s}  '.format(_util.get_multipole_si_units(h),
                                          _util.get_multipole_si_units(h))
-        st += '\n'
-        st += '\n'
+        rst += '\n'
+        rst += '\n'
         for i in range(len(self.currents)):
-            st += '{0:>+9.3f}  '.format(self.currents[i])
+            rst += '{0:>+9.3f}  '.format(self.currents[i])
             for h in self._harmonics:
-                st += '{0:+.5e} {1:+.5e}  '.format(
+                rst += '{0:+.5e} {1:+.5e}  '.format(
                     self.multipoles['normal'][h][i],
                     self.multipoles['skew'][h][i])
-            st += '\n'
-        return st
+            rst += '\n'
+        return rst
 
     # --- private methods ---
 
