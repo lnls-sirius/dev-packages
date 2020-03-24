@@ -10,8 +10,8 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
-from siriuspy.bsmp import constants as _const_bsmp
-from siriuspy.bsmp import SerialError as _SerialError
+from ..bsmp import constants as _const_bsmp
+from ..bsmp import SerialError as _SerialError
 
 from .bsmp import __version__ as _devpckg_firmware_version
 from .udc import UDC as _UDC

@@ -20,13 +20,13 @@ class PVsConfig(_ConfigDBDocument):
 
     def connect(self):
         """Create PVs."""
-        template = self.get_value_template()
+        template = self.get_value_from_template()
         for pvn, _, _ in template['pvs']:
             self._get_pv(pvn)
 
     @property
     def connected(self):
-        template = self.get_value_template()
+        template = self.get_value_from_template()
         for pvn, _, _ in template['pvs']:
             pv = self.PVs.get(pvn)
             if pv is None:
@@ -40,7 +40,7 @@ class PVsConfig(_ConfigDBDocument):
         new_config_value = dict()
         new_config_value['pvs'] = list()
 
-        template = self.get_value_template()
+        template = self.get_value_from_template()
 
         # connect
         self.connect()

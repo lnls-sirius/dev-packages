@@ -3,14 +3,13 @@
 
 from unittest import TestCase
 
-from siriuspy.pwrsupply import psconv
+from siriuspy.devices import psconv
 from siriuspy.util import check_public_interface_namespace
 
 
 PUBLIC_INTERFACE = (
-    'PSEpicsConn',
-    'PUEpicsConn',
-    'SConvEpics'
+    'PSProperty',
+    'StrengthConv'
 )
 
 

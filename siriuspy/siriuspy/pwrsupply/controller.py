@@ -1,6 +1,6 @@
 """E2SController."""
 
-from siriuspy.namesys import SiriusPVName as _PVName
+from ..namesys import SiriusPVName as _PVName
 
 
 class PSController:

@@ -1,6 +1,6 @@
 """Model abstract factory."""
 
-from siriuspy.pwrsupply.psmodel import PSModelFactory as _PSModelFactory
+from .psmodel import PSModelFactory as _PSModelFactory
 
 
 class _PRUCParms:

@@ -7,9 +7,9 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
-from siriuspy.bsmp import Entity as _Entity
-from siriuspy.bsmp import Entities as _Entities
-from siriuspy.bsmp import Types as _Types
+from ..bsmp import Entity as _Entity
+from ..bsmp import Entities as _Entities
+from ..bsmp import Types as _Types
 
 
 # version of the BSMP implementation of power supplies that is compatible
@@ -905,9 +905,12 @@ class EntitiesPS(_Entities):
         {'eid': ConstPSBSMP.F_LOAD_PARAM_BANK,
          'i_type': (), 'o_type': (_Types.T_UINT8,)},
         {'eid': ConstPSBSMP.F_SET_DSP_COEFFS,
-         # NOTE: fix last argument!
-         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_FLOAT,),
-         'o_type': (_Types.T_FLOAT,)},
+         'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16,
+                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
+         'o_type': (_Types.T_UINT8,)},
         {'eid': ConstPSBSMP.F_GET_DSP_COEFF,
          'i_type': (_Types.T_DSP_CLASS, _Types.T_UINT16, _Types.T_UINT16,),
          'o_type': (_Types.T_FLOAT,)},

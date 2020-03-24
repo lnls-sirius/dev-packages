@@ -2,10 +2,12 @@
 
 import time as _time
 import numpy as _np
-from siriuspy.bsmp import constants as _const_bsmp
-from siriuspy.bsmp import BSMP as _BSMP
+
+from ..bsmp import constants as _const_bsmp
+from ..bsmp import BSMP as _BSMP
+
 from . import bsmp as _bsmp
-from siriuspy.pwrsupply.pru import PRU as _PRU
+from .pru import PRU as _PRU
 
 
 # version of the BSMP implementation of power supplies that is compatible

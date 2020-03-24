@@ -1,7 +1,7 @@
 """Translate `ps_state` bits to values exposed in EPICS."""
 
-from siriuspy.csdevice.pwrsupply import ETypes as _et
-from siriuspy.csdevice.pwrsupply import Const as _c
+from ..csdevice.pwrsupply import ETypes as _et
+from ..csdevice.pwrsupply import Const as _c
 
 
 class PSCStatus:

@@ -28,7 +28,7 @@ class BoosterNormalized(_ConfigDBDocument):
     def __init__(self, name=None):
         """Constructor."""
         super().__init__('bo_normalized', name=name)
-        self._value = self.get_value_template()
+        self._value = self.get_value_from_template()
         self._orig_value = None
 
         self._psnames2index = dict()
@@ -122,7 +122,7 @@ class BoosterRamp(_ConfigDBDocument):
         self._ps_waveforms = dict()
         self._nominal_strengths = dict()
         self._orig_value = None
-        self.value = self.get_value_template()
+        self.value = self.get_value_from_template()
 
     # --- ConfigSrv API ---
 
@@ -947,16 +947,27 @@ class BoosterRamp(_ConfigDBDocument):
                     break
         self._synchronized = not modified
 
-    def verify_ps_normalized_synchronized(self, time, value=None):
+    def verify_ps_normalized_synchronized(self, time, value=None, prec=1e-6):
         str_time = '{:.3f}'.format(time)
         if not self._orig_value:
             return False
         if str_time not in self._orig_value['ps_normalized_configs*'].keys():
             return False
+
         o = self._orig_value['ps_normalized_configs*'][str_time]
         c = value if value is not None else \
             self._value['ps_normalized_configs*'][str_time]
-        return o == c
+
+        diff = list()
+        for val in c:
+            if val == 'label':
+                if c[val] != o[val]:
+                    diff.append((val, c[val], o[val]))
+            else:
+                if not _np.isclose(c[val], o[val], atol=prec):
+                    diff.append((val, c[val], o[val]))
+        # print(diff)
+        return len(diff) == 0
 
     # --- private methods ---
 
