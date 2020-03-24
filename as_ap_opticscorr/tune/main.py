@@ -238,13 +238,11 @@ class App:
         if reason == 'DeltaTuneX-SP':
             self._delta_tunex = value
             self._calc_deltakl()
-            self.driver.updatePVs()
             status = True
 
         elif reason == 'DeltaTuneY-SP':
             self._delta_tuney = value
             self._calc_deltakl()
-            self.driver.updatePVs()
             status = True
 
         elif reason == 'ApplyDelta-Cmd':
@@ -253,7 +251,7 @@ class App:
                 self._apply_corr_cmd_count += 1
                 self.driver.setParam(
                     'ApplyDelta-Cmd', self._apply_corr_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ApplyDelta-Cmd')
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
@@ -277,12 +275,13 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', value)
+                self.driver.updatePV('CorrMeth-Sts')
                 self._calc_deltakl()
                 status = True
 
@@ -334,7 +333,7 @@ class App:
                 self._config_ps_cmd_count += 1
                 self.driver.setParam(
                     'ConfigPS-Cmd', self._config_ps_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ConfigPS-Cmd')
 
         elif reason == 'ConfigTiming-Cmd':
             done = self._config_timing()
@@ -342,14 +341,14 @@ class App:
                 self._config_timing_cmd_count += 1
                 self.driver.setParam(
                     'ConfigTiming-Cmd', self._config_timing_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ConfigTiming-Cmd')
 
         elif reason == 'SetNewRefKL-Cmd':
             self._update_ref()
             self._set_new_refkl_cmd_count += 1
             self.driver.setParam(
                 'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
-            self.driver.updatePVs()  # in case PV states change.
+            self.driver.updatePV('SetNewRefKL-Cmd')
 
         return status  # return True to invoke super().write of PCASDriver
 
@@ -395,16 +394,16 @@ class App:
                 fam_idx = self._QFAMS.index(fam)
                 pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx])
             self.driver.setParam('Log-Mon', 'Applied correction.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._timing_evg_tunsiexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
             return True
         else:
             self.driver.setParam('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
         return False
 
     def _update_ref(self):
@@ -432,10 +431,11 @@ class App:
             self.driver.setParam('DeltaTuneY-RB', delta_tuney)
 
             self.driver.setParam('Log-Mon', 'Updated KL references.')
+            self.driver.updatePVs()
         else:
             self.driver.setParam(
                 'Log-Mon', 'ERR:Some magnet family is disconnected.')
-        self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
     def _estimate_current_deltatune(self):
         qfam_deltakl = len(self._QFAMS)*[0]
@@ -460,7 +460,7 @@ class App:
     def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_connection[fam_idx] = (1 if conn else 0)
@@ -470,7 +470,7 @@ class App:
             v=self._status, bit_pos=0,
             bit_val=any(q == 0 for q in self._qfam_check_connection))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_estimate_deltatune(self, pvname, value, **kws):
         if value is None:
@@ -487,7 +487,7 @@ class App:
     def _callback_qfam_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSConst.PwrStateSts.On:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_pwrstate_sts[fam_idx] = value
@@ -498,11 +498,11 @@ class App:
             bit_val=any(q != _PSConst.PwrStateSts.On
                         for q in self._qfam_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_qfam_opmode_sts(self, pvname, value, **kws):
         self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_opmode_sts[fam_idx] = value
@@ -514,12 +514,12 @@ class App:
             v=self._status, bit_pos=2,
             bit_val=any(s != opmode for s in self._qfam_check_opmode_sts))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_ctrlmode_mon[fam_idx] = value
@@ -530,7 +530,7 @@ class App:
             bit_val=any(q != _PSConst.Interface.Remote
                         for q in self._qfam_check_ctrlmode_mon))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_timing_state(self, pvname, value, **kws):
         if 'Quads:State' in pvname:
@@ -578,10 +578,10 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:'+fam+' is disconnected.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
                 return False
         self.driver.setParam('Log-Mon', 'Configuration sent to quadrupoles.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
         return True
 
     def _config_timing(self):
@@ -607,9 +607,9 @@ class App:
             self._timing_evg_tunsidelay_sp.put(0)
 
             self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
             return True
         else:
             self.driver.setParam('Log-Mon', 'ERR:Some TI PV is disconnected.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
             return False
