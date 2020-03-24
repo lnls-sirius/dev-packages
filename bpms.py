@@ -3,7 +3,7 @@ import logging as _log
 import numpy as _np
 from siriuspy.epics import PV as _PV
 import siriuspy.csdevice.bpms as _csbpm
-import siriuspy.csdevice.timesys as _cstime
+import siriuspy.timesys.csdev as _cstime
 from siriuspy.search import HLTimeSearch as _HLTimesearch
 from siriuspy.envars import VACA_PREFIX as LL_PREF
 from .base_class import BaseTimingConfig as _BaseTimingConfig
