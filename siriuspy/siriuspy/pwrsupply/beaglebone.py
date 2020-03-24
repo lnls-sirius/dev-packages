@@ -21,7 +21,7 @@ from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
 from .fields import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
-from .psconv import SConvEpics as _SConvEpics
+from .psconv import StrengthConv as _StrengthConv
 
 
 class BeagleBone:
@@ -173,7 +173,7 @@ class BeagleBone:
             else:
                 # NOTE: use 'Ref-Mon' proptype for all
                 strec[psname] = False
-                streconvs[psname] = _SConvEpics(psname, 'Ref-Mon')
+                streconvs[psname] = _StrengthConv(psname, 'Ref-Mon')
                 strelims[psname] = [None, None]
         return streconvs, strec, strelims
 

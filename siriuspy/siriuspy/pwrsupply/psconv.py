@@ -6,7 +6,7 @@ from ..devices import DevicesSync as _DevicesSync
 from ..devices import Devices as _Devices
 
 
-class PSEpicsConn(_DevicesSync):
+class PSProperty(_DevicesSync):
     """Power Supply Epics Connector."""
 
     _ps2devs = {
@@ -22,7 +22,7 @@ class PSEpicsConn(_DevicesSync):
         devname = _SiriusPVName(devname)
 
         # get devnames
-        devnames = PSEpicsConn._get_devnames(devname)
+        devnames = PSProperty._get_devnames(devname)
 
         # # get properties
         # properties = self._get_propties(devname)
@@ -62,12 +62,12 @@ class PSEpicsConn(_DevicesSync):
     @staticmethod
     def _get_devnames(devname):
         """."""
-        if devname in PSEpicsConn._ps2devs:
-            return PSEpicsConn._ps2devs[devname]
+        if devname in PSProperty._ps2devs:
+            return PSProperty._ps2devs[devname]
         return (devname, )
 
 
-class SConvEpics(_Devices):
+class StrengthConv(_Devices):
     """Strength Converter."""
 
     def __init__(self, devname, proptype):
@@ -175,22 +175,22 @@ class SConvEpics(_Devices):
     @staticmethod
     def _get_devices(devname, proptype):
         # is dipole?
-        if SConvEpics._get_dev_if_dipole(devname):
+        if StrengthConv._get_dev_if_dipole(devname):
             return None, None
 
         # is trim?
         status, dev_dip, dev_fam = \
-            SConvEpics._get_dev_if_trim(devname, proptype)
+            StrengthConv._get_dev_if_trim(devname, proptype)
         if status:
             return dev_dip, dev_fam
 
         # is booster ps?
-        status, dev_dip = SConvEpics._get_dev_if_booster(devname, proptype)
+        status, dev_dip = StrengthConv._get_dev_if_booster(devname, proptype)
         if status:
             return dev_dip, None
 
         # is others
-        return SConvEpics._get_dev_others(devname, proptype), None
+        return StrengthConv._get_dev_others(devname, proptype), None
 
     @staticmethod
     def _get_dev_if_dipole(devname):
@@ -201,11 +201,11 @@ class SConvEpics(_Devices):
 
     @staticmethod
     def _get_dev_if_trim(devname, proptype):
-        if SConvEpics._is_trim(devname):
+        if StrengthConv._is_trim(devname):
             # trims need dipole and family connectors
-            dev_dip = PSEpicsConn('SI-Fam:PS-B1B2-1', 'Energy' + proptype)
+            dev_dip = PSProperty('SI-Fam:PS-B1B2-1', 'Energy' + proptype)
             devname = devname.replace(devname.sub, 'Fam')
-            dev_fam = PSEpicsConn(devname, 'KL' + proptype)
+            dev_fam = PSProperty(devname, 'KL' + proptype)
             return True, dev_dip, dev_fam
         return False, None, None
 
@@ -214,33 +214,33 @@ class SConvEpics(_Devices):
         if devname.startswith('BO'):
             if devname.dev == 'InjKckr':
                 # BO injection kicker uses TB dipole normalizer
-                dev_dip = PSEpicsConn('TB-Fam:PS-B', 'Energy' + proptype)
+                dev_dip = PSProperty('TB-Fam:PS-B', 'Energy' + proptype)
             elif devname.dev == 'EjeKckr':
                 # BO ejection kicker uses TS dipole normalizer
-                dev_dip = PSEpicsConn('TS-Fam:PS-B', 'Energy' + proptype)
+                dev_dip = PSProperty('TS-Fam:PS-B', 'Energy' + proptype)
             else:
                 # other BO ps use BO dipoles as normalizer
-                dev_dip = PSEpicsConn('BO-Fam:PS-B-1', 'Energy' + proptype)
+                dev_dip = PSProperty('BO-Fam:PS-B-1', 'Energy' + proptype)
             return True, dev_dip
         return False, None
 
     @staticmethod
     def _get_dev_others(devname, proptype):
         if devname.startswith('LI'):
-            return PSEpicsConn('TB-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype)
         if devname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
-            return PSEpicsConn('TB-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype)
         elif devname.startswith('TS'):
             # all TS ps use TS dipole
-            return PSEpicsConn('TS-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TS-Fam:PS-B', 'Energy' + proptype)
         elif devname.startswith('SI'):
             if devname.dev in {'InjDpKckr', 'InjNLKckr'}:
                 # SI injection ps use TS dipole
-                return PSEpicsConn('TS-Fam:PS-B', 'Energy' + proptype)
+                return PSProperty('TS-Fam:PS-B', 'Energy' + proptype)
             else:
                 # other SI ps use SI dipole
-                return PSEpicsConn('SI-Fam:PS-B1B2-1', 'Energy' + proptype)
+                return PSProperty('SI-Fam:PS-B1B2-1', 'Energy' + proptype)
         return None
 
     @staticmethod
