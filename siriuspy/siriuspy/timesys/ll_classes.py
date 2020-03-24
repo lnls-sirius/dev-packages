@@ -9,7 +9,7 @@ from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 from siriuspy.epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
 from siriuspy.envars import VACA_PREFIX as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.csdevice import timesys as _cstime
+from siriuspy.timesys import csdev as _cstime
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.callbacks import Callback as _Callback
 

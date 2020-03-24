@@ -5,7 +5,7 @@
 from unittest import TestCase
 
 from siriuspy import util
-from siriuspy.csdevice import timesys
+from siriuspy.timesys import csdev
 
 
 PUBLIC_INTERFACE = (
@@ -31,7 +31,7 @@ class TestModule(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            timesys, PUBLIC_INTERFACE)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_otp_database(self):
@@ -199,5 +199,5 @@ class TestConst(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                        timesys.Const, TestConst.PUBLIC_INTERFACE)
+                        csdev.Const, TestConst.PUBLIC_INTERFACE)
         self.assertTrue(valid)
