@@ -250,13 +250,11 @@ class App:
         if reason == 'ChromX-SP':
             self._chrom_sp[0] = value
             self._calc_sl()
-            self.driver.updatePVs()
             status = True
 
         elif reason == 'ChromY-SP':
             self._chrom_sp[1] = value
             self._calc_sl()
-            self.driver.updatePVs()
             status = True
 
         elif reason == 'ApplyDelta-Cmd':
@@ -265,7 +263,7 @@ class App:
                 self._apply_corr_cmd_count += 1
                 self.driver.setParam(
                     'ApplyDelta-Cmd', self._apply_corr_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ApplyDelta-Cmd')
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
@@ -292,14 +290,14 @@ class App:
             else:
                 self.driver.setParam(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', self._corr_method)
+                self.driver.updatePV('CorrMeth-Sts')
                 self._calc_sl()
-                self.driver.updatePVs()
                 status = True
 
         elif reason == 'CorrGroup-Sel':
@@ -349,14 +347,14 @@ class App:
                 self._config_ps_cmd_count += 1
                 self.driver.setParam(
                     'ConfigPS-Cmd', self._config_ps_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ConfigPS-Cmd')
 
         elif reason == 'ConfigTiming-Cmd':
             if self._config_timing():
                 self._config_timing_cmd_count += 1
                 self.driver.setParam(
                     'ConfigTiming-Cmd', self._config_timing_cmd_count)
-                self.driver.updatePVs()
+                self.driver.updatePV('ConfigTiming-Cmd')
 
         return status  # return True to invoke super().write of PCASDriver
 
@@ -409,22 +407,22 @@ class App:
                 fam_idx = self._SFAMS.index(fam)
                 pv.put(self._lastcalc_sl[fam_idx])
             self.driver.setParam('Log-Mon', 'Applied correction.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._timing_evg_chromsiexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger.')
-                self.driver.updatePVs()
+                self.driver.updatePV('Log-Mon')
             return True
         else:
             self.driver.setParam('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
         return False
 
     def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_connection[fam_idx] = (1 if conn else 0)
@@ -434,7 +432,7 @@ class App:
             v=self._status, bit_pos=0,
             bit_val=any(s == 0 for s in self._sfam_check_connection))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_estimate_chrom(self, pvname, value, **kws):
         if value is None:
@@ -451,13 +449,14 @@ class App:
 
         self._chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
         self.driver.setParam('ChromX-RB', self._chrom_rb[0])
+        self.driver.updatePV('ChromX-RB')
         self.driver.setParam('ChromY-RB', self._chrom_rb[1])
-        self.driver.updatePVs()
+        self.driver.updatePV('ChromY-RB')
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSConst.PwrStateSts.On:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is Off.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_pwrstate_sts[fam_idx] = value
@@ -468,11 +467,11 @@ class App:
             bit_val=any(s != _PSConst.PwrStateSts.On
                         for s in self._sfam_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_sfam_opmode_sts(self, pvname, value, **kws):
         self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
 
         fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_opmode_sts[fam_idx] = value
@@ -484,12 +483,12 @@ class App:
             v=self._status, bit_pos=2,
             bit_val=any(s != opmode for s in self._sfam_check_opmode_sts))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
 
         fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_ctrlmode_mon[fam_idx] = value
@@ -500,7 +499,7 @@ class App:
             bit_val=any(s != _PSConst.Interface.Remote
                         for s in self._sfam_check_ctrlmode_mon))
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _callback_timing_state(self, pvname, value, **kws):
         if 'Sexts:State' in pvname:
@@ -541,12 +540,11 @@ class App:
                 self._sfam_pwrstate_sel_pvs[fam].put(1)
                 self._sfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.driver.setParam(
-                    'Log-Mon', 'ERR:' + fam + ' is disconnected.')
-                self.driver.updatePVs()
+                self.driver.setParam('Log-Mon', 'ERR:'+fam+' is disconnected.')
+                self.driver.updatePV('Log-Mon')
                 return False
         self.driver.setParam('Log-Mon', 'Configuration sent to sextupoles.')
-        self.driver.updatePVs()
+        self.driver.updatePV('Log-Mon')
         return True
 
     def _config_timing(self):
@@ -572,10 +570,9 @@ class App:
             self._timing_evg_chromsidelay_sp.put(0)
 
             self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
-            self.driver.updatePVs()
+            self.driver.updatePV('Log-Mon')
             return True
         else:
-            self.driver.setParam(
-                'Log-Mon', 'ERR:Some TI PV is disconnected.')
-            self.driver.updatePVs()
+            self.driver.setParam('Log-Mon', 'ERR:Some TI PV is disconnected.')
+            self.driver.updatePV('Log-Mon')
             return False
