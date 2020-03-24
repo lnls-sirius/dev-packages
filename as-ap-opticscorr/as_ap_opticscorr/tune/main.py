@@ -69,11 +69,13 @@ class App:
 
         if self._ACC.lower() == 'si':
             self._corr_method = _Const.CorrMeth.Proportional
+            self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
             self._config_timing_cmd_count = 0
             self._timing_check_config = 9*[0]
         else:
             self._corr_method = _Const.CorrMeth.Additional
+            self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
 
         # Get focusing and defocusing families
@@ -282,7 +284,14 @@ class App:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', value)
                 self._calc_deltakl()
-                self.driver.updatePVs()
+                status = True
+
+        elif reason == 'CorrGroup-Sel':
+            if value != self._corr_group:
+                self._corr_group = value
+                self.driver.setParam('CorrGroup-Sts', self._corr_group)
+                self.driver.updatePV('CorrGroup-Sts')
+                self._calc_sl()
                 status = True
 
         elif reason == 'SyncCorr-Sel':
@@ -359,14 +368,15 @@ class App:
         return [True, [config_name, nom_matrix, nom_kl]]
 
     def _calc_deltakl(self):
-        if self._corr_method == _Const.CorrMeth.Proportional:
-            lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
-                method=0, grouping='2knobs',
-                delta_opticsparam=[self._delta_tunex, self._delta_tuney])
-        else:
-            lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
-                method=1, grouping='2knobs',
-                delta_opticsparam=[self._delta_tunex, self._delta_tuney])
+        method = 0 \
+            if self._corr_method == _Const.CorrMeth.Proportional \
+            else 1
+        grouping = '2knobs' \
+            if self._corr_group == _Const.CorrGroup.TwoKnobs \
+            else 'svd'
+        lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
+            method=method, grouping=grouping,
+            delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
         self.driver.setParam('Log-Mon', 'Calculated KL values.')
 

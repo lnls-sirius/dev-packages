@@ -68,11 +68,13 @@ class App:
 
         if self._ACC == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
+            self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
             self._config_timing_cmd_count = 0
             self._timing_check_config = 9*[0]
         else:
             self._corr_method = _Const.CorrMeth.Additional
+            self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
 
         # Get focusing and defocusing families
@@ -300,6 +302,14 @@ class App:
                 self.driver.updatePVs()
                 status = True
 
+        elif reason == 'CorrGroup-Sel':
+            if value != self._corr_group:
+                self._corr_group = value
+                self.driver.setParam('CorrGroup-Sts', self._corr_group)
+                self.driver.updatePV('CorrGroup-Sts')
+                self._calc_sl()
+                status = True
+
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
                 self._sync_corr = value
@@ -369,14 +379,15 @@ class App:
         delta_chromx = self._chrom_sp[0]-self._chrom_rb[0]
         delta_chromy = self._chrom_sp[1]-self._chrom_rb[1]
 
-        if self._corr_method == _Const.CorrMeth.Proportional:
-            lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
-                method=0, grouping='svd',
-                delta_opticsparam=[delta_chromx, delta_chromy])
-        else:
-            lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
-                method=1, grouping='svd',
-                delta_opticsparam=[delta_chromx, delta_chromy])
+        method = 0 \
+            if self._corr_method == _Const.CorrMeth.Proportional \
+            else 1
+        grouping = '2knobs' \
+            if self._corr_group == _Const.CorrGroup.TwoKnobs \
+            else 'svd'
+        lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
+            method=method, grouping=grouping,
+            delta_opticsparam=[delta_chromx, delta_chromy])
 
         for fam in self._SFAMS:
             fam_idx = self._SFAMS.index(fam)
