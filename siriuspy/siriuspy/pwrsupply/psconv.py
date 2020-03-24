@@ -10,7 +10,7 @@ class PSProperty(_DevicesSync):
     """Power Supply Epics Connector."""
 
     _ps2devs = {
-        # devices which are mapped to more than onde device
+        # devices which are mapped to more than one device
         'BO-Fam:PS-B-1': ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'),
         'BO-Fam:PS-B-2': ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'),
         'SI-Fam:PS-B1B2-1': ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2'),
