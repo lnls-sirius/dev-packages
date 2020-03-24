@@ -2,8 +2,9 @@
 
 import numpy as _np
 
-from siriuspy import clientweb as _web
-from siriuspy.magnet import util as _util
+from .. import clientweb as _web
+
+from . import util as _util
 
 
 class ExcitationData:

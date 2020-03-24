@@ -7,6 +7,7 @@ import mathphys as _mp
 from .. import util as _util
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..pwrsupply.data import PSData as _PSData
+
 from . import util as _mutil
 from .data import MAData as _MAData
 
