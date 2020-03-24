@@ -552,17 +552,21 @@ class App:
                 (value == _TIConst.EvtModes.External)
         elif 'TunSIDelayType' in pvname:
             self._timing_check_config[7] = (
-                value == _TIConst.EvtDlyTyp.Fixed)
+                value == _TIConst.EvtDlyTyp.Incr)
         elif 'TunSIDelay' in pvname:
             self._timing_check_config[8] = \
                 _np.isclose(value, 0, atol=0.1)  # 0us
 
+        if self._sync_corr == _Const.SyncCorr.Off:
+            bit_val = 0
+        else:
+            bit_val = any(idx == 0 for idx in self._timing_check_config)
+
         # Change the fifth bit of correction status
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=4,
-            bit_val=any(idx == 0 for idx in self._timing_check_config))
+            v=self._status, bit_pos=4, bit_val=bit_val)
         self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePVs()
+        self.driver.updatePV('Status-Mon')
 
     def _config_ps(self):
         opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
@@ -599,7 +603,7 @@ class App:
             self._timing_quads_duration_sp.put(150)
             self._timing_quads_delay_sp.put(0)
             self._timing_evg_tunsimode_sel.put(_TIConst.EvtModes.External)
-            self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Fixed)
+            self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
             self._timing_evg_tunsidelay_sp.put(0)
 
             self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
