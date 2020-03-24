@@ -12,16 +12,17 @@
 import time as _time
 from copy import deepcopy as _deepcopy
 
-from .. import util as _util
 from ..search import PSSearch as _PSSearch
 from ..thread import DequeThread as _DequeThread
 from ..pwrsupply.data import PSData as _PSData
+from ..devices import StrengthConv as _StrengthConv
+
 from .pru import PRU as _PRU
 from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
 from .fields import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
-from .psconv import StrengthConv as _StrengthConv
+
 
 
 class BeagleBone:
