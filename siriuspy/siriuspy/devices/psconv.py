@@ -75,21 +75,18 @@ class StrengthConv(_Devices):
         devname = _SiriusPVName(devname)
 
         # get pwrsupply normalized
-        self._norm_mag = self._create_normalizer()
+        self._norm_mag = self._create_normalizer(devname)
 
         # get devices that provide normalization current for strengths
         self._dev_dip, self._dev_fam = \
             self._get_devices(devname, proptype)
         devices = (self._dev_dip, self._dev_fam) if self._dev_fam \
-            else (self._dev_dip)
+            else (self._dev_dip, )
+
+        print(devices)
 
         # call base class constructor
         super().__init__(devname, devices)
-
-    @property
-    def psname(self):
-        """Return psname."""
-        return self.devname
 
     @property
     def dipole_strength(self):
@@ -158,17 +155,18 @@ class StrengthConv(_Devices):
             'strengths_family': strengths_family}
         return kwargs
 
-    def _create_normalizer(self):
-        if self.devname.sec == 'TB' and self.devname.dev == 'B':
+    @staticmethod
+    def _create_normalizer(psname):
+        if psname.sec == 'TB' and psname.dev == 'B':
             norm_mag = _NormalizerFactory.create('TB-Fam:MA-B')
-        elif self.devname.sec == 'BO' and self.devname.dev == 'B':
+        elif psname.sec == 'BO' and psname.dev == 'B':
             norm_mag = _NormalizerFactory.create('BO-Fam:MA-B')
-        elif self.devname.sec == 'TS' and self.devname.dev == 'B':
+        elif psname.sec == 'TS' and psname.dev == 'B':
             norm_mag = _NormalizerFactory.create('TS-Fam:MA-B')
-        elif self.devname.sec == 'SI' and self.devname.dev == 'B1B2':
+        elif psname.sec == 'SI' and psname.dev == 'B1B2':
             norm_mag = _NormalizerFactory.create('SI-Fam:MA-B1B2')
         else:
-            maname = self.devname.replace(':PS', ':MA').replace(':PU', ':PM')
+            maname = psname.replace(':PS', ':MA').replace(':PU', ':PM')
             norm_mag = _NormalizerFactory.create(maname)
         return norm_mag
 
