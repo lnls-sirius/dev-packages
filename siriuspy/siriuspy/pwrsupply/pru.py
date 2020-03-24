@@ -4,7 +4,7 @@ import time as _time
 import PRUserial485 as _PRUserial485
 from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
 
-from siriuspy.csdevice import util as _util
+from ..csdevice import util as _util
 
 
 # check PRUserial485 package version

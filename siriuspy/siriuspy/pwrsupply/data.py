@@ -2,8 +2,8 @@
 
 import copy as _copy
 
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
+from ..search import PSSearch as _PSSearch
+from ..csdevice.pwrsupply import get_ps_propty_database as \
     _get_ps_propty_database
 
 
