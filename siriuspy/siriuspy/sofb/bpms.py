@@ -621,11 +621,11 @@ class BPM(_BaseTimingConfig):
             v = v.reshape(-1, wsize)[:, mask]
             vs[a] = _np.std(v, axis=1)
 
-        s1, s2 = vs['A'] + vs['B'], vs['D'] + vs['C']
+        s1, s2 = vs['A'] + vs['C'], vs['D'] + vs['B']
         m1 = _np.logical_not(_np.isclose(s1, 0.0))
         m2 = _np.logical_not(_np.isclose(s2, 0.0))
-        d1 = (vs['A'][m1] - vs['B'][m1]) / s1[m1]
-        d2 = (vs['D'][m2] - vs['C'][m2]) / s2[m2]
+        d1 = (vs['A'][m1] - vs['C'][m1]) / s1[m1]
+        d2 = (vs['D'][m2] - vs['B'][m2]) / s2[m2]
         x[:rnts][m1] = (d1 + d2) * self.kx/2 * self.ORB_CONV
         y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
         x[:rnts][m1] -= self.offsetx or 0.0
