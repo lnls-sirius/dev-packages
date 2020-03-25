@@ -13,9 +13,9 @@ from siriuspy.timesys.csdev import Const as _TIConst, \
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
-from as_ap_opticscorr.opticscorr_utils import (
-    get_config_name as _get_config_name,
-    set_config_name as _set_config_name)
+from siriuspy.opticscorr.utils import \
+    get_config_name as _get_config_name, \
+    set_config_name as _set_config_name
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
