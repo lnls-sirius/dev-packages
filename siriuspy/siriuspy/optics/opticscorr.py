@@ -3,7 +3,7 @@
 
 import numpy as _np
 from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
-from siriuspy.csdevice.opticscorr import Const as _Const
+from siriuspy.opticscorr.csdev import Const as _Const
 
 
 class OpticsCorr:
