@@ -1,5 +1,7 @@
-from siriuspy.callbacks import Callback
-from siriuspy.csdevice.energymeas import Const as _Const
+"""."""
+from ..callbacks import Callback
+from .csdev import Const as _Const
+
 
 class BaseClass(Callback, _Const):
 

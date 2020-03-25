@@ -1,10 +1,13 @@
+"""."""
 
 from functools import partial as _part
 from threading import Event as _Event
 import numpy as _np
 from epics import PV as _PV
+
 import mathphys.constants as _consts
-from siriuspy.thread import RepeaterThread as _Repeater
+
+from ..thread import RepeaterThread as _Repeater
 from .calculations import CalcEnergy, ProcessImage
 from .base import BaseClass as _BaseClass
 
@@ -34,12 +37,14 @@ class MeasEnergy(_BaseClass):
         self._thread.start()
 
     def get_map2write(self):
+        """."""
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.energy_calculator.get_map2write())
         dic_.update({'MeasureCtrl-Sel': _part(self.write, 'measuring')})
         return dic_
 
     def get_map2read(self):
+        """."""
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.energy_calculator.get_map2read())
         dic_.update({'MeasureCtrl-Sts': _part(self.read, 'measuring')})
@@ -57,6 +62,7 @@ class MeasEnergy(_BaseClass):
 
     @property
     def connected(self):
+        """."""
         conn = self._coefx.connected
         conn &= self._coefy.connected
         conn &= self._width_source.connected
@@ -65,6 +71,7 @@ class MeasEnergy(_BaseClass):
 
     @property
     def current(self):
+        """."""
         return self._current_source.get()
 
     @property
@@ -74,6 +81,7 @@ class MeasEnergy(_BaseClass):
 
     @rate.setter
     def rate(self, val):
+        """."""
         if isinstance(val, (float, int)) and 0 < val < 4:
             self._thread.interval = 1/val
 
@@ -84,22 +92,26 @@ class MeasEnergy(_BaseClass):
 
     @measuring.setter
     def measuring(self, val):
+        """."""
         if val:
             self.start()
         else:
             self.stop()
 
     def _update_coefx(self, pvname, value, **kwargs):
+        """."""
         if value is None:
             return
         self.image_processor.px2mmscalex = value
 
     def _update_coefy(self, pvname, value, **kwargs):
+        """."""
         if value is None:
             return
         self.image_processor.px2mmscaley = value
 
     def meas_energy(self):
+        """."""
         self.image_processor.imageflipx = self.image_processor.ImgFlip.On
         self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         value = self._width_source.value
@@ -119,15 +131,18 @@ class CalcEmmitance(_BaseClass):
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
 
     def __init__(self):
+        """."""
         super().__init__()
         self._measuring = _Event()
         self.emittance_calculator = CalcEmmitance()
         self.image_processor = ProcessImage()
-        self.image_processor.readingorder = self.image_processor.CLIKE
+        self.image_processor.readingorder = \
+            self.image_processor.ReadingOrder.CLike
         self._place = 'li'
         self._select_experimental_setup()
 
     def get_map2write(self):
+        """."""
         database = dict()
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.emittance_calculator.get_map2write())
@@ -135,6 +150,7 @@ class CalcEmmitance(_BaseClass):
         return {k: v for k, v in dic_.items() if k in database}
 
     def get_map2read(self):
+        """."""
         database = dict()
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.emittance_calculator.get_map2read())
@@ -143,15 +159,18 @@ class CalcEmmitance(_BaseClass):
 
     @property
     def place(self):
+        """."""
         return self._place
 
     @place.setter
     def place(self, val):
+        """."""
         if val in self.PLACES:
             self._place = val
             self._select_experimental_setup()
 
     def _select_experimental_setup(self):
+        """."""
         self.emittance_calculator.place = self._place
         if self._place.lower().startswith('li'):
             prof = 'LA-BI:PRF5'
@@ -181,20 +200,24 @@ class CalcEmmitance(_BaseClass):
             self.quad_I_rb = _PV(quad + ':Current-RB')
 
     def _update_coefx(self, pvname, value, **kwargs):
+        """."""
         if value is None:
             return
         self.image_processor.pxl2mmscalex = value
 
     def _update_coefy(self, pvname, value, **kwargs):
+        """."""
         if value is None:
             return
         self.image_processor.pxl2mmscaley = value
 
     def _update_width(self, pvname, value, **kwargs):
+        """."""
         if isinstance(value, (float, int)):
             self.image_processor.imagewidth = int(value)
 
     def _acquire_data(self):
+        """."""
         samples = self.spbox_samples.value()
         nsteps = self.spbox_steps.value()
         I_ini = self.spbox_I_ini.value()
