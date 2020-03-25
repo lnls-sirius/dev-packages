@@ -180,7 +180,7 @@ class ExcitationData:
         return interp
 
     def _process_comment_line(self, line):
-        if line[1:].strip() > 0:
+        if line[1:].strip():
             token, *words = line[1:].split()
             if token.lower() == 'label':
                 self.label = words[0]
