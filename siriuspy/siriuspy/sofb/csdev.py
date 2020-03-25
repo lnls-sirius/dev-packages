@@ -8,7 +8,6 @@ from ..util import get_namedtuple as _get_namedtuple
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
-
 from ..diag.bpm.csdev import Const as _csbpm
 from ..timesys import csdev as _cstiming
 

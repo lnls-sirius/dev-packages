@@ -10,6 +10,7 @@ import mathphys.constants as _consts
 
 from ..search import PSSearch as _PSS
 from ..factory import NormalizerFactory as _NormFact
+
 from .base import BaseClass as _BaseClass
 
 C = _consts.light_speed

@@ -8,6 +8,7 @@ from epics import PV as _PV
 import mathphys.constants as _consts
 
 from ..thread import RepeaterThread as _Repeater
+
 from .calculations import CalcEnergy, ProcessImage
 from .base import BaseClass as _BaseClass
 

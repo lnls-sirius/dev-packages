@@ -11,6 +11,7 @@ import numpy as _np
 from .. import util as _util
 from ..diag.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
+
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig
 
