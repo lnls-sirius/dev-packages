@@ -1,15 +1,19 @@
 """BPM plugins module."""
 
+# TODO: Implementations in this module make pylint very confused.
+# Is there a code efficiency reason to initializa class attributes
+# outside private methods?
+
 from threading import Event as _Event
 from threading import Thread as _Thread
 
 import numpy as _np
 from epics import PV as _PV
 
-from siriuspy.epics.pv_fake import PVFake as _PVFake
-from siriuspy.epics.pv_fake import add_to_database as _add_to_database
-from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
-from siriuspy.csdevice.bpms import FFTWritableProps
+from ...epics.pv_fake import PVFake as _PVFake
+from ...epics.pv_fake import add_to_database as _add_to_database
+from ...csdevice.bpms import get_bpm_database as _get_bpm_db
+from ...csdevice.bpms import FFTWritableProps
 
 
 pvDB = _get_bpm_db()

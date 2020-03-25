@@ -84,11 +84,6 @@ class PSData:
         """Excitation data associated with the power supply."""
         return self._excdata
 
-    @property
-    def bbbname(self):
-        """Name of the BBB that controls this power supply."""
-        return self._bbbname
-
     def __str__(self):
         """__str__ method."""
         rst = ''

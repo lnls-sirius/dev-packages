@@ -4,13 +4,18 @@ import time as _time
 import logging as _log
 import signal as _signal
 from copy import deepcopy as _copy
+
+# TODO: we should make siriuspy independent from pcaspy!
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-from siriuspy.util import get_last_commit_hash as _get_version
-from siriuspy.envars import VACA_PREFIX as PREFIX
-from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
-from siriuspy.csdevice.bpms import FFTWritableProps as fft_wr
-from siriuspy.diagnostics.bpms.bpm_plugins import BPMFake as BPM
+
+from ...util import get_last_commit_hash as _get_version
+from ...envars import VACA_PREFIX as PREFIX
+from ...csdevice.bpms import get_bpm_database as _get_bpm_db
+from ...csdevice.bpms import FFTWritableProps as fft_wr
+
+from .bpm_plugins import BPMFake as BPM
+
 
 __version__ = _get_version()
 INTERVAL = 0.1
@@ -115,7 +120,6 @@ class _PCASDriver(_pcaspy.Driver):
 
 def run(bpms_list=[], debug=False):
     """Start the IOC."""
-
     global BPMS_LIST
     BPMS_LIST.extend(bpms_list)
 

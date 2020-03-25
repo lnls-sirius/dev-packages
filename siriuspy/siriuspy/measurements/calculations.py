@@ -1,19 +1,27 @@
+"""Calculations module."""
 
 from functools import partial as _part
 from copy import deepcopy as _dcopy
 import logging as _log
 import numpy as _np
+
+# NOTE: really necessary to depend on scipy?
 from scipy.optimize import curve_fit
-from siriuspy.search import PSSearch as _PSS
+
 import mathphys.constants as _consts
-from siriuspy.factory import NormalizerFactory as _NormFact
+
+from ..search import PSSearch as _PSS
+from ..factory import NormalizerFactory as _NormFact
+
 from .base import BaseClass as _BaseClass
+
 
 C = _consts.light_speed
 E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-6  # in MeV
 
 
 class ProcessImage(_BaseClass):
+    """."""
 
     def __init__(self, callback=None):
         super().__init__(callback=callback)
@@ -121,10 +129,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def image(self):
+        """."""
         return self._image.copy().flatten()
 
     @image.setter
     def image(self, val):
+        """."""
         if not isinstance(val, _np.ndarray):
             _log.error('Image is not a numpy array')
             return
@@ -132,10 +142,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def imagewidth(self):
+        """."""
         return self._width
 
     @imagewidth.setter
     def imagewidth(self, val):
+        """."""
         if val is None:
             _log.error('could not set width')
             return
@@ -149,20 +161,24 @@ class ProcessImage(_BaseClass):
 
     @property
     def readingorder(self):
+        """."""
         return self._reading_order
 
     @readingorder.setter
     def readingorder(self, val):
+        """."""
         if int(val) in self.ReadingOrder:
             self._reading_order = int(val)
             self.run_callbacks('ReadingOrder-Sts', int(val))
 
     @property
     def imagecroplow(self):
+        """."""
         return self._crop[self.CropIdx.Low]
 
     @imagecroplow.setter
     def imagecroplow(self, val):
+        """."""
         val = int(val)
         if 0 <= val < self._crop[self.CropIdx.High]:
             self._crop[self.CropIdx.Low] = val
@@ -170,10 +186,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def imagecrophigh(self):
+        """."""
         return self._crop[self.CropIdx.High]
 
     @imagecrophigh.setter
     def imagecrophigh(self, val):
+        """."""
         val = int(val)
         if self._crop[self.CropIdx.Low] < val:
             self._crop[self.CropIdx.High] = val
@@ -181,64 +199,78 @@ class ProcessImage(_BaseClass):
 
     @property
     def useimagecrop(self):
+        """."""
         return self._crop_use
 
     @useimagecrop.setter
     def useimagecrop(self, val):
+        """."""
         self._crop_use = bool(val)
         self.run_callbacks('ImgCropUse-Sts', int(val))
 
     @property
     def imageflipx(self):
+        """."""
         return self._flip[self.Plane.X]
 
     @imageflipx.setter
     def imageflipx(self, val):
+        """."""
         self._flip[self.Plane.X] = bool(val)
         self.run_callbacks('ImgFlipX-Sts', int(val))
 
     @property
     def imageflipy(self):
+        """."""
         return self._flip[self.Plane.Y]
 
     @imageflipy.setter
     def imageflipy(self, val):
+        """."""
         self._flip[self.Plane.Y] = bool(val)
         self.run_callbacks('ImgFlipY-Sts', int(val))
 
     @property
     def imagesizex(self):
+        """."""
         return self._image.shape[self.Plane.X]
 
     @property
     def imagesizey(self):
+        """."""
         return self._image.shape[self.Plane.Y]
 
     @property
     def method(self):
+        """."""
         return self._method
 
     @method.setter
     def method(self, val):
+        """."""
         if int(val) in self.Method:
             self._method = int(val)
             self.run_callbacks('CalcMethod-Sts', int(val))
 
     @property
     def roiautocenter(self):
+        """."""
         return self._roi_autocenter
 
     @roiautocenter.setter
     def roiautocenter(self, val):
+        """."""
         self._roi_autocenter = bool(val)
         self.run_callbacks('ROIAutoCenter-Sts', int(val))
 
     @property
     def roicenterx(self):
+        """."""
         return self._roi_cen[self.Plane.X]
 
     @roicenterx.setter
     def roicenterx(self, val):
+        """."""
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.X]:
             self._roi_cen[self.Plane.X] = val
@@ -246,10 +278,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def roicentery(self):
+        """."""
         return self._roi_cen[self.Plane.Y]
 
     @roicentery.setter
     def roicentery(self, val):
+        """."""
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._roi_cen[self.Plane.Y] = val
@@ -257,10 +291,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def roisizex(self):
+        """."""
         return self._roi_size[self.Plane.X]
 
     @roisizex.setter
     def roisizex(self, val):
+        """."""
         val = int(val)
         if 1 <= val < self._image.shape[self.Plane.X]:
             self._roi_size[self.Plane.X] = val
@@ -268,10 +304,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def roisizey(self):
+        """."""
         return self._roi_size[self.Plane.Y]
 
     @roisizey.setter
     def roisizey(self, val):
+        """."""
         val = int(val)
         if 1 <= val < self._image.shape[self.Plane.Y]:
             self._roi_size[self.Plane.Y] = val
@@ -279,50 +317,62 @@ class ProcessImage(_BaseClass):
 
     @property
     def roistartx(self):
+        """."""
         return self._roi_start[self.Plane.X]
 
     @property
     def roistarty(self):
+        """."""
         return self._roi_start[self.Plane.Y]
 
     @property
     def roiendx(self):
+        """."""
         return self._roi_end[self.Plane.X]
 
     @property
     def roiendy(self):
+        """."""
         return self._roi_end[self.Plane.Y]
 
     @property
     def roiprojx(self):
+        """."""
         return self._roi_proj[self.Plane.X].copy()
 
     @property
     def roiprojy(self):
+        """."""
         return self._roi_proj[self.Plane.Y].copy()
 
     @property
     def roiaxisx(self):
+        """."""
         return self._roi_axis[self.Plane.X].copy()
 
     @property
     def roiaxisy(self):
+        """."""
         return self._roi_axis[self.Plane.Y].copy()
 
     @property
     def roigaussx(self):
+        """."""
         return self._roi_gauss[self.Plane.X].copy()
 
     @property
     def roigaussy(self):
+        """."""
         return self._roi_gauss[self.Plane.Y].copy()
 
     @property
     def background(self):
+        """."""
         return self._background.copy().flatten()
 
     @background.setter
     def background(self, val):
+        """."""
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
@@ -335,51 +385,63 @@ class ProcessImage(_BaseClass):
 
     @property
     def usebackground(self):
+        """."""
         return self._background_use
 
     @usebackground.setter
     def usebackground(self, val):
+        """."""
         self._background_use = bool(val)
         self.run_callbacks('BgUse-Sts', val)
 
     @property
     def beamcenterx(self):
+        """."""
         return self._beam_params[self.Plane.X][self.FitParams.Cen]
 
     @property
     def beamcentery(self):
+        """."""
         return self._beam_params[self.Plane.Y][self.FitParams.Cen]
 
     @property
     def beamsizex(self):
+        """."""
         return abs(self._beam_params[self.Plane.X][self.FitParams.Sig])
 
     @property
     def beamsizey(self):
+        """."""
         return abs(self._beam_params[self.Plane.Y][self.FitParams.Sig])
 
     @property
     def beamamplx(self):
+        """."""
         return self._beam_params[self.Plane.X][self.FitParams.Amp]
 
     @property
     def beamamply(self):
+        """."""
         return self._beam_params[self.Plane.Y][self.FitParams.Amp]
 
     @property
     def beamoffsetx(self):
+        """."""
         return self._beam_params[self.Plane.X][self.FitParams.Off]
 
     @property
     def beamoffsety(self):
+        """."""
         return self._beam_params[self.Plane.Y][self.FitParams.Off]
 
     @property
     def px2mmscalex(self):
+        """."""
         return self._conv_scale[self.Plane.X]
 
     @px2mmscalex.setter
     def px2mmscalex(self, val):
+        """."""
         if val != 0:
             self._conv_scale[self.Plane.X] = val
             self.run_callbacks('Px2mmScaleX-RB', val)
@@ -388,10 +450,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def px2mmscaley(self):
+        """."""
         return self._conv_scale[self.Plane.Y]
 
     @px2mmscaley.setter
     def px2mmscaley(self, val):
+        """."""
         if val != 0:
             self._conv_scale[self.Plane.Y] = val
             self.run_callbacks('Px2mmScaleY-RB', val)
@@ -400,19 +464,23 @@ class ProcessImage(_BaseClass):
 
     @property
     def px2mmautocenter(self):
+        """."""
         return self._conv_autocenter
 
     @px2mmautocenter.setter
     def px2mmautocenter(self, val):
+        """."""
         self._conv_autocenter = bool(val)
         self.run_callbacks('Px2mmAutoCenter-Sts', val)
 
     @property
     def px2mmcenterx(self):
+        """."""
         return self._conv_cen[self.Plane.X]
 
     @px2mmcenterx.setter
     def px2mmcenterx(self, val):
+        """."""
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.X]:
             self._conv_cen[self.Plane.X] = val
@@ -422,10 +490,12 @@ class ProcessImage(_BaseClass):
 
     @property
     def px2mmcentery(self):
+        """."""
         return self._conv_cen[self.Plane.Y]
 
     @px2mmcentery.setter
     def px2mmcentery(self, val):
+        """."""
         val = int(val)
         if 0 <= val < self._image.shape[self.Plane.Y]:
             self._conv_cen[self.Plane.Y] = val
@@ -435,12 +505,14 @@ class ProcessImage(_BaseClass):
 
     @property
     def beamcentermmx(self):
+        """."""
         val = self.beamcenterx - self._conv_cen[self.Plane.X]
         val *= self._conv_scale[self.Plane.X]
         return val
 
     @property
     def beamcentermmy(self):
+        """."""
         # Inverted due image origin in Pxls:
         val = self._conv_cen[self.Plane.Y] - self.beamcentery
         val *= self._conv_scale[self.Plane.Y]
@@ -448,21 +520,24 @@ class ProcessImage(_BaseClass):
 
     @property
     def beamsizemmx(self):
+        """."""
         return self.beamsizex * self._conv_scale[self.Plane.X]
 
     @property
     def beamsizemmy(self):
+        """."""
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
     def _process_image(self, image):
+        """."""
         image = self._adjust_image_dimensions(image.copy())
         if image is None:
             _log.error('Image is None')
             return
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
-            b = _np.where(image < 0)
-            image[b] = 0
+            sel = _np.where(image < 0)
+            image[sel] = 0
         else:
             self.usebackground = False
 
@@ -510,6 +585,7 @@ class ProcessImage(_BaseClass):
         self.run_callbacks('BeamOffsetY-Mon', self.beamoffsety)
 
     def _adjust_image_dimensions(self, img):
+        """."""
         if len(img.shape) == 1:
             if self._width <= 1:
                 _log.error('Invalid value for Width.')
@@ -525,6 +601,7 @@ class ProcessImage(_BaseClass):
         return img
 
     def _update_roi(self):
+        """."""
         image = self._image
         axis_x = _np.arange(image.shape[self.Plane.X])
         axis_y = _np.arange(image.shape[self.Plane.Y])
@@ -572,23 +649,25 @@ class ProcessImage(_BaseClass):
 
     @classmethod
     def _calc_moments(cls, axis, proj):
+        """."""
         ret = [0, 0, 0, 0]
-        y0 = _np.min(proj)
-        proj = proj - y0
+        posy0 = _np.min(proj)
+        proj = proj - posy0
         amp = _np.amax(proj)
-        dx = axis[1]-axis[0]
-        Norm = _np.trapz(proj, dx=dx)
-        cen = _np.trapz(proj*axis, dx=dx)/Norm
-        sec = _np.trapz(proj*axis*axis, dx=dx)/Norm
+        diffx = axis[1]-axis[0]
+        norm = _np.trapz(proj, dx=diffx)
+        cen = _np.trapz(proj*axis, dx=diffx)/norm
+        sec = _np.trapz(proj*axis*axis, dx=diffx)/norm
         std = _np.sqrt(sec - cen*cen)
         ret[cls.FitParams.Amp] = amp
         ret[cls.FitParams.Cen] = cen
         ret[cls.FitParams.Sig] = std
-        ret[cls.FitParams.Off] = y0
+        ret[cls.FitParams.Off] = posy0
         return ret
 
     @classmethod
     def _gaussian(cls, x, *args):
+        """."""
         mu = args[cls.FitParams.Cen]
         sigma = args[cls.FitParams.Sig]
         y0 = args[cls.FitParams.Off]
@@ -598,6 +677,7 @@ class ProcessImage(_BaseClass):
 
     @classmethod
     def _fit_gaussian(cls, x, y, amp=None, mu=None, sigma=None, y0=None):
+        """."""
         par = cls._calc_moments(x, y)
         par[cls.FitParams.Cen] = mu or par[cls.FitParams.Cen]
         par[cls.FitParams.Sig] = sigma or par[cls.FitParams.Sig]
@@ -607,7 +687,6 @@ class ProcessImage(_BaseClass):
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:
             _log.error('Could not fit gaussian.')
-            pass
         return par
 
 
@@ -630,6 +709,7 @@ class CalcEnergy(_BaseClass):
         self._beamsize = _np.array([], dtype=float)
 
     def get_map2write(self):
+        """."""
         return {
             'Dispersion-SP': _part(self.write, 'dispersion'),
             'Angle-SP': _part(self.write, 'angle'),
@@ -637,6 +717,7 @@ class CalcEnergy(_BaseClass):
             }
 
     def get_map2read(self):
+        """."""
         return {
             'Dispersion-RB': _part(self.read, 'dispersion'),
             'Angle-RB': _part(self.read, 'angle'),
@@ -687,29 +768,36 @@ class CalcEnergy(_BaseClass):
 
     @property
     def currents(self):
+        """."""
         return _dcopy(self._currents)
 
     @property
     def beamsize(self):
+        """."""
         return _dcopy(self._beamsize)
 
     @property
     def beamcenter(self):
+        """."""
         return _dcopy(self._beamcenter)
 
     @property
     def intdipole(self):
+        """."""
         return _dcopy(self._intdipole)
 
     @property
     def energy(self):
+        """."""
         return _dcopy(self._energy)
 
     @property
     def spread(self):
+        """."""
         return _dcopy(self._spread)
 
     def set_data(self, currents, beam_centers, beam_sizes):
+        """."""
         if None in {currents, beam_centers, beam_sizes}:
             return False
         if isinstance(beam_sizes, (int, float)):
@@ -756,11 +844,14 @@ class CalcEnergy(_BaseClass):
 
 
 class CalcEmmitance(_BaseClass):
+    """."""
+
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
 
     def __init__(self):
+        """."""
         super().__init__()
         self._place = 'LI'
         self._quadname = ''
@@ -779,12 +870,14 @@ class CalcEmmitance(_BaseClass):
         self._gamma = 0.0
 
     def get_map2write(self):
+        """."""
         return {
             'Place-Sel': _part(self.write, 'place'),
             'Plane-Sel': _part(self.write, 'plane'),
             }
 
     def get_map2read(self):
+        """."""
         return {
             'Place-Sts': _part(self.read, 'place'),
             'Plane-Sts': _part(self.read, 'plane'),
@@ -804,10 +897,12 @@ class CalcEmmitance(_BaseClass):
 
     @property
     def place(self):
+        """."""
         return self._place
 
     @place.setter
     def place(self, val):
+        """."""
         if isinstance(val, str) and val.lower() in self.PLACES:
             self._place = val
             self._select_experimental_setup()
@@ -815,72 +910,89 @@ class CalcEmmitance(_BaseClass):
 
     @property
     def plane(self):
+        """."""
         return self._plane
 
     @plane.setter
     def plane(self, val):
+        """."""
         if int(val) in self.Plane:
             self._plane = int(val)
         self._perform_analysis()
 
     @property
     def plane_str(self):
+        """."""
         return self.Plane._fields[self._plane]
 
     @plane_str.setter
     def plane_str(self, val):
+        """."""
         if val in self.Plane._fields:
             self.plane = self.Plane._fields.index(val)
 
     @property
     def quadname(self):
+        """."""
         return self._quadname
 
     @property
     def quadlen(self):
+        """."""
         return self._quadlen
 
     @property
     def distance(self):
+        """."""
         return self._distance
 
     @property
     def beamsize(self):
+        """."""
         return self._beamsize.copy()
 
     @property
     def beamsize_fit(self):
+        """."""
         return self._beamsize_fit.copy()
 
     @property
     def currents(self):
+        """."""
         return self._currents.copy()
 
     @property
     def quadstren(self):
+        """."""
         return self._quadstren.copy()
 
     @property
     def beta(self):
+        """."""
         return self._beta
 
     @property
     def alpha(self):
+        """."""
         return self._alpha
 
     @property
     def gamma(self):
+        """."""
         return self._gamma
 
     @property
     def emittance(self):
+        """."""
         return self._emittance * 1e6  # in mm.mrad
 
     @property
     def norm_emittance(self):
+        """."""
         return self.emittance * self._energy / E0
 
     def set_data(self, beam_sizes, currents):
+        """."""
         if None in {currents, beam_sizes}:
             return False
         if isinstance(beam_sizes, (int, float)):
@@ -943,15 +1055,15 @@ class CalcEmmitance(_BaseClass):
         self._update_twiss(s_11, s_12, s_22)
 
     def _get_trans_mat(self):
-        R = _np.zeros((self._quadstren.size, 2, 2))
-        Rd = self.gettransmat('drift', L=self._distance)
-        for i, k1 in enumerate(self._quadstren):
-            Rq = self.gettransmat('quad', L=self._quadlen, K1=k1)
-            R[i] = _np.dot(Rd, Rq)
-        R11 = R[:, 0, 0].reshape(-1)
-        R12 = R[:, 0, 1].reshape(-1)
-        R = _np.column_stack((R11*R11, 2*R11*R12, R12*R12))
-        return R
+        rmatrix = _np.zeros((self._quadstren.size, 2, 2))
+        rdm = self.gettransmat('drift', L=self._distance)
+        for i, k1_value in enumerate(self._quadstren):
+            rqm = self.gettransmat('quad', L=self._quadlen, K1=k1_value)
+            rmatrix[i] = _np.dot(rdm, rqm)
+        r11 = rmatrix[:, 0, 0].reshape(-1)
+        r12 = rmatrix[:, 0, 1].reshape(-1)
+        rmatrix = _np.column_stack((r11*r11, 2*r11*r12, r12*r12))
+        return rmatrix
 
     def _update_twiss(self, s_11, s_12, s_22):
         self._emittance = _np.sqrt(abs(s_11*s_22 - s_12*s_12))
@@ -961,20 +1073,21 @@ class CalcEmmitance(_BaseClass):
 
     @staticmethod
     def gettransmat(elem, L, K1=None, B=None):
-        M = _np.eye(2)
+        """."""
+        matrix = _np.eye(2)
         if elem.lower().startswith('qu') and K1 is not None and K1 == 0:
             elem = 'drift'
         if elem.lower().startswith('dr'):
-            M = _np.array([[1, L], [0, 1], ])
+            matrix = _np.array([[1, L], [0, 1], ])
         elif elem.lower().startswith('qu') and K1 is not None:
-            kq = _np.sqrt(abs(K1))
+            kqv = _np.sqrt(abs(K1))
             if K1 > 0:
-                c = _np.cos(kq*L)
-                s = _np.sin(kq*L)
-                m11, m12, m21 = c, 1/kq*s, -kq*s
+                cos = _np.cos(kqv*L)
+                sin = _np.sin(kqv*L)
+                m11, m12, m21 = cos, 1/kqv*sin, -kqv*sin
             else:
-                ch = _np.cosh(kq*L)
-                sh = _np.sinh(kq*L)
-                m11, m12, m21 = ch, 1/kq*sh, kq*sh
-            M = _np.array([[m11, m12], [m21, m11], ])
-        return M
+                hcos = _np.cosh(kqv*L)
+                hsin = _np.sinh(kqv*L)
+                m11, m12, m21 = hcos, 1/kqv*hsin, kqv*hsin
+            matrix = _np.array([[m11, m12], [m21, m11], ])
+        return matrix

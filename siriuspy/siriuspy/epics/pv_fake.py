@@ -28,11 +28,11 @@ _CATYPES = {'float': dbr.DOUBLE, 'int': dbr.LONG, 'bool': dbr.INT,
 _DATABASE = dict()
 
 
-def add_to_database(db, prefix=''):
+def add_to_database(dbase, prefix=''):
     """."""
-    if not db:
+    if not dbase:
         return
-    for key, val in db.items():
+    for key, val in dbase.items():
         _DATABASE.update({prefix+key: copy.deepcopy(val)})
 
 
@@ -114,8 +114,8 @@ class PVFake:
                  connection_timeout=None,
                  access_callback=None):
         """."""
-        db = _DATABASE.get(pvname)
-        if db is None:
+        dbase = _DATABASE.get(pvname)
+        if dbase is None:
             raise Exception(
                 'PV does not exist in local database. Configure database ' +
                 'first with add_to_database module function.')
@@ -130,30 +130,31 @@ class PVFake:
             self.connection_timeout = DEFAULT_CONNECTION_TIMEOUT
         self._args = {}.fromkeys(self._fields)
         self._args['pvname'] = self.pvname
-        self._args['value'] = db.get('value', '' if db['type'] == 'str' else 0)
+        self._args['value'] = dbase.get(
+            'value', '' if dbase['type'] == 'str' else 0)
         self._args['count'] = count
-        self._args['nelm'] = db.get('count', 1)
+        self._args['nelm'] = dbase.get('count', 1)
         self._args['type'] = 'unknown'
         self._args['typefull'] = 'unknown'
         self._args['access'] = 'unknown'
         self._args['severity'] = 0  # not simulated correctly
         self._args['status'] = 1  # not simulated correctly
-        self._args['precision'] = db.get('prec')
-        self._args['units'] = db.get('unit')
-        self._args['upper_disp_limit'] = db.get('hilim')
-        self._args['upper_disp_limit'] = db.get('lolim')
-        self._args['upper_alarm_limit'] = db.get('high')
-        self._args['upper_alarm_limit'] = db.get('low')
-        self._args['upper_warning_limit'] = db.get('hihi')
-        self._args['upper_warning_limit'] = db.get('lolo')
-        self._args['upper_ctrl_limit'] = db.get('hilim')
-        self._args['upper_ctrl_limit'] = db.get('lolim')
-        self._args['enum_strs'] = db.get('enums')
+        self._args['precision'] = dbase.get('prec')
+        self._args['units'] = dbase.get('unit')
+        self._args['upper_disp_limit'] = dbase.get('hilim')
+        self._args['upper_disp_limit'] = dbase.get('lolim')
+        self._args['upper_alarm_limit'] = dbase.get('high')
+        self._args['upper_alarm_limit'] = dbase.get('low')
+        self._args['upper_warning_limit'] = dbase.get('hihi')
+        self._args['upper_warning_limit'] = dbase.get('lolo')
+        self._args['upper_ctrl_limit'] = dbase.get('hilim')
+        self._args['upper_ctrl_limit'] = dbase.get('lolim')
+        self._args['enum_strs'] = dbase.get('enums')
 
         self.context = dbr.ECA_NORMAL
 
-        self._pytype = _PYTYPES[db['type']]
-        self.ftype = promote_type(db['type'],
+        self._pytype = _PYTYPES[dbase['type']]
+        self.ftype = promote_type(dbase['type'],
                                   use_ctrl=self.form == 'ctrl',
                                   use_time=self.form == 'time')
         self._args['type'] = dbr.Name(self.ftype).lower()
@@ -197,12 +198,12 @@ class PVFake:
         self.__on_connect(pvname=pvname, chid=chid, conn=conn, **kws)
 
     def force_read_access_rights(self):
-        """force a read of access rights, not relying
-        on last event callback.
+        """Force a read of access rights.
+
+        not relying on last event callback.
         Note: event callback seems to fail sometimes,
         at least on initial connection on Windows 64-bit.
         """
-        pass
 
     def __on_access_rights_event(self, read_access, write_access):
         self._args['read_access'] = read_access
@@ -212,16 +213,15 @@ class PVFake:
         access_strs = ('no access', 'read-only', 'write-only', 'read/write')
         self._args['access'] = access_strs[acc]
 
-        for cb in self.access_callbacks:
-            if callable(cb):
-                cb(read_access, write_access, pv=self)
+        for callback in self.access_callbacks:
+            if callable(callback):
+                callback(read_access, write_access, pv=self)
 
     def __on_connect(self, pvname=None, chid=None, conn=True):
-        "callback for connection events"
+        """Run callback for connection events."""
         # occassionally chid is still None (ie if a second PV is created
         # while __on_connect is still pending for the first one.)
         # Just return here, and connection will happen later
-        t0 = time.time()
         if conn:
             self.chid = self._args['chid'] = dbr.chid_t(chid.value)
 
@@ -257,8 +257,7 @@ class PVFake:
         return
 
     def wait_for_connection(self, timeout=None):
-        """wait for a connection that started with connect() to finish"""
-
+        """Wait for a connection that started with connect() to finish."""
         if not self.connected:
             start_time = time.time()
             if not self._conn_started:
@@ -272,7 +271,7 @@ class PVFake:
         return self.connected
 
     def connect(self, timeout=None):
-        "check that a PV is connected, forcing a connection if needed"
+        """Check that a PV is connected, forcing a connection if needed."""
         if not self.connected:
             if timeout is None:
                 timeout = self.connection_timeout
@@ -280,11 +279,11 @@ class PVFake:
         return self.connected and self.ftype is not None
 
     def clear_auto_monitor(self):
-        """turn off auto-monitoring: must reconnect to re-enable monitoring"""
+        """Turn off auto-monitoring: must reconnect to re-enable monitoring."""
         self.auto_monitor = False
 
     def reconnect(self):
-        "try to reconnect PV"
+        """Try to reconnect PV."""
         self.auto_monitor = None
         self.connected = False
         self._conn_started = False
@@ -292,7 +291,7 @@ class PVFake:
         return self.wait_for_connection()
 
     def poll(self, evt=1.e-4, iot=1.0):
-        "poll for changes"
+        """Poll for changes."""
         pass
 
     def get(self, count=None, as_string=False, as_numpy=True,
@@ -350,7 +349,9 @@ class PVFake:
 
     def put(self, value, wait=False, timeout=30.0,
             use_complete=False, callback=None, callback_data=None):
-        """set value for PV, optionally waiting until the processing is
+        """Set value for PV.
+
+        optionally waiting until the processing is
         complete, and optionally specifying a callback function to be run
         when the processing is complete.
         """
@@ -384,11 +385,11 @@ class PVFake:
         callback(**kws)
 
     def __putCallbackStub(self, pvname=None, **kws):
-        "null put-calback, so that the put_complete attribute is valid"
-        pass
+        """Null put-calback, so that the put_complete attribute is valid."""
 
     def _set_charval(self, val, call_ca=True):
-        """ sets the character representation of the value.
+        """Set the character representation of the value.
+
         intended only for internal use"""
         if val is None:
             self._args['char_value'] = 'None'
@@ -452,14 +453,14 @@ class PVFake:
                 self.get_ctrlvars()
             try:
                 cval = self._args['enum_strs'][val]
-            except (TypeError, KeyError,  IndexError):
+            except (TypeError, KeyError, IndexError):
                 cval = str(val)
 
         self._args['char_value'] = cval
         return cval
 
     def get_ctrlvars(self, timeout=5, warn=True):
-        "get control values for variable"
+        """Get control values for variable."""
         if not self.wait_for_connection():
             return None
         kwds = dict()
@@ -485,7 +486,9 @@ class PVFake:
         return kwds
 
     def __on_changes(self, value=None, **kwd):
-        """internal callback function: do not overwrite!!
+        """Run internal callback function.
+
+        Do not overwrite!!
         To have user-defined code run when the PV value changes,
         use add_callback()
         """
@@ -502,7 +505,7 @@ class PVFake:
         self.run_callbacks()
 
     def run_callbacks(self):
-        """run all user-defined callbacks with the current data
+        """Run all user-defined callbacks with the current data.
 
         Normally, this is to be run automatically on event, but
         it is provided here as a separate function for testing
@@ -512,8 +515,9 @@ class PVFake:
             self.run_callback(index)
 
     def run_callback(self, index):
-        """run a specific user-defined callback, specified by index,
-        with the current data
+        """Run a specific user-defined callback.
+
+        specified by index, with the current data.
         Note that callback functions are called with keyword/val
         arguments including:
              self._args  (all PV data available, keys = __fields)
@@ -535,17 +539,19 @@ class PVFake:
 
     def add_callback(self, callback=None, index=None, run_now=False,
                      with_ctrlvars=True, **kw):
-        """add a callback to a PV.  Optional keyword arguments
-        set here will be preserved and passed on to the callback
-        at runtime.
+        """Add a callback to a PV.
+
+        Optional keyword arguments set here will be preserved and
+        passed on to the callback at runtime.
 
         Note that a PV may have multiple callbacks, so that each
         has a unique index (small integer) that is returned by
-        add_callback.  This index is needed to remove a callback."""
+        add_callback.  This index is needed to remove a callback.
+        """
         if hasattr(callback, '__call__'):
             if index is None:
                 index = 1
-                if len(self.callbacks) > 0:
+                if self.callbacks:
                     index = 1 + max(self.callbacks.keys())
             self.callbacks[index] = (callback, kw)
 
@@ -558,16 +564,16 @@ class PVFake:
         return index
 
     def remove_callback(self, index=None):
-        """remove a callback by index"""
+        """Remove a callback by index."""
         if index in self.callbacks:
             self.callbacks.pop(index)
 
     def clear_callbacks(self):
-        "clear all callbacks"
+        """Clear all callbacks."""
         self.callbacks = {}
 
     def _getinfo(self):
-        "get information paragraph"
+        """Get information paragraph."""
         if not self.wait_for_connection():
             return None
         self.get_ctrlvars()
@@ -623,14 +629,12 @@ class PVFake:
         if self.auto_monitor is not None:
             msg = 'PV is internally monitored'
             out.append('   %s, with %i user-defined callbacks:' % (
-                                                         msg,
-                                                         len(self.callbacks)))
-            if len(self.callbacks) > 0:
+                msg, len(self.callbacks)))
+            if self.callbacks:
                 for nam in sorted(self.callbacks.keys()):
                     cback = self.callbacks[nam][0]
                     out.append('      %s in file %s' % (
-                                        cback.func_name,
-                                        cback.func_code.co_filename))
+                        cback.func_name, cback.func_code.co_filename))
         else:
             out.append('   PV is NOT internally monitored')
         out.append('=============================')
@@ -649,44 +653,47 @@ class PVFake:
         return self._args.get(arg, None)
 
     def __getval__(self):
-        "get value"
+        """get value."""
         return self._getarg('value')
 
     def __setval__(self, val):
-        "put-value"
+        """Put value."""
         return self.put(val)
 
     value = property(__getval__, __setval__, None, "value property")
 
     @property
     def char_value(self):
-        "character string representation of value"
+        """Return character string representation of value."""
         return self._getarg('char_value')
 
     @property
     def status(self):
-        "pv status"
+        """Return pv status."""
         return self._getarg('status')
 
     @property
     def type(self):
-        "pv type"
+        """"Return pv type."""
         return self._args['type']
 
     @property
     def typefull(self):
-        "pv type"
+        """Retunr full pv type."""
         return self._args['typefull']
 
     @property
     def host(self):
-        "pv host"
+        """Return pv host."""
         return self._getarg('host')
 
     @property
     def count(self):
-        """count (number of elements). For array data and later EPICS versions,
-        this is equivalent to the .NORD field.  See also 'nelm' property"""
+        """Return number of elements.
+
+        For array data and later EPICS versions,
+        this is equivalent to the .NORD field.  See also 'nelm' property.
+        """
         if self._args['count'] is not None:
             return self._args['count']
         else:
@@ -694,117 +701,120 @@ class PVFake:
 
     @property
     def nelm(self):
-        """native count (number of elements).
+        """Return native count (number of elements).
+
         For array data this will return the full array size (ie, the
-        .NELM field).  See also 'count' property"""
+        .NELM field).  See also 'count' property
+        """
         if self._getarg('count') == 1:
             return 1
         return self._getarg('nelm')
 
     @property
     def read_access(self):
-        "read access"
+        """Reurn read access."""
         return self._getarg('read_access')
 
     @property
     def write_access(self):
-        "write access"
+        """Return write access."""
         return self._getarg('write_access')
 
     @property
     def access(self):
-        "read/write access as string"
+        """Return read/write access as string."""
         return self._getarg('access')
 
     @property
     def severity(self):
-        "pv severity"
+        """Return pv severity."""
         return self._getarg('severity')
 
     @property
     def timestamp(self):
-        "timestamp of last pv action"
+        """Return timestamp of last pv action."""
         return self._getarg('timestamp')
 
     @property
     def posixseconds(self):
-        """integer seconds for timestamp of last pv action
-        using POSIX time convention"""
+        """Return integer seconds for timestamp of last pv action.
+
+        ...Using POSIX time convention.
+        """
         return self._getarg('posixseconds')
 
     @property
     def nanoseconds(self):
-        "integer nanoseconds for timestamp of last pv action"
+        """Return integer nanoseconds for timestamp of last pv action."""
         return self._getarg('nanoseconds')
 
     @property
     def precision(self):
-        "number of digits after decimal point"
+        """return number of digits after decimal point."""
         return self._getarg('precision')
 
     @property
     def units(self):
-        "engineering units for pv"
+        """Return engineering units for pv."""
         return self._getarg('units')
 
     @property
     def enum_strs(self):
-        "list of enumeration strings"
+        """Return list of enumeration strings."""
         return self._getarg('enum_strs')
 
     @property
     def upper_disp_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('upper_disp_limit')
 
     @property
     def lower_disp_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('lower_disp_limit')
 
     @property
     def upper_alarm_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('upper_alarm_limit')
 
     @property
     def lower_alarm_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('lower_alarm_limit')
 
     @property
     def lower_warning_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('lower_warning_limit')
 
     @property
     def upper_warning_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('upper_warning_limit')
 
     @property
     def upper_ctrl_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('upper_ctrl_limit')
 
     @property
     def lower_ctrl_limit(self):
-        "limit"
+        """Return limit."""
         return self._getarg('lower_ctrl_limit')
 
     @property
     def info(self):
-        "info string"
+        """Return info string."""
         return self._getinfo()
 
     @property
     def put_complete(self):
-        "returns True if a put-with-wait has completed"
+        """Return True if a put-with-wait has completed."""
         return True
 
     def __repr__(self):
-        "string representation"
-
+        """Implement string representation."""
         if self.connected:
             if self.count == 1:
                 return self._fmtsca % self._args
@@ -814,14 +824,14 @@ class PVFake:
             return "<PV '%s': not connected>" % self.pvname
 
     def __eq__(self, other):
-        "test for equality"
+        """Implement test for equality."""
         try:
             return (self.chid == other.chid)
         except AttributeError:
             return False
 
     def disconnect(self):
-        "disconnect PV"
+        """Disconnect PV."""
         self.connected = False
         pvid = (self.pvname, self.form, self.context)
         if pvid in _PVCACHE_:

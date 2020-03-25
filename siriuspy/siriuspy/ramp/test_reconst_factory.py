@@ -1,12 +1,18 @@
 #!/usr/bin/env python-sirius
 
+# TODO: is this file deprecated?
+
 import argparse as _argparse
 import numpy as _np
 import matplotlib.pyplot as plt
-from siriuspy.ramp.ramp import BoosterRamp
+
+from .ramp import BoosterRamp
+
+# TODO: module is missing...
 from siriuspy.ramp.norm_factory import BONormListFactory, BORFRampFactory, \
     BOTIRampFactory
-from siriuspy.search import PSSearch
+
+from ..search import PSSearch
 
 
 parser = _argparse.ArgumentParser(description="Test BORamp Rebuild Factories.")

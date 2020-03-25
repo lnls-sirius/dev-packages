@@ -1,7 +1,16 @@
+"""BPM model module."""
+
+# TODO: Implementations in this module make pylint very confused.
+# Is there a code efficiency reason to initializa class attributes
+# outside private methods?
+
 from collections import OrderedDict as _OrderedDict
 from epics import PV as _PV
-import siriuspy.csdevice.bpms as _csbpm
+
+from ...csdevice import bpms as _csbpm
+
 from .bpm_plugins import BPMEpics, BPMFake, get_prop_and_suffix
+
 
 pvDB = _csbpm.get_bpm_database()
 _sp_prop = """

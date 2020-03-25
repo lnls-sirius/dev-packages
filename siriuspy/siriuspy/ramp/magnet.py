@@ -1,11 +1,12 @@
 """Ramp module with conversion classes."""
 
-import siriuspy.util as _util
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet import util as _mutil
-from siriuspy.factory import NormalizerFactory as _NormalizerFactory
-from siriuspy.search import PSSearch as _PSSearch, MASearch as _MASearch
-from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
+from .. import util as _util
+from ..namesys import SiriusPVName as _SiriusPVName
+from ..magnet import util as _mutil
+from ..factory import NormalizerFactory as _NormalizerFactory
+from ..search import PSSearch as _PSSearch, MASearch as _MASearch
+
+from .exceptions import RampInvalidDipoleWfmParms as \
     _RampInvalidDipoleWfmParms
 
 

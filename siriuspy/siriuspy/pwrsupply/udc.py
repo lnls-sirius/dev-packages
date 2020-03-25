@@ -66,7 +66,7 @@ class UDC:
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
         for bsmp in self._bsmp_devs.values():
             ack, data = bsmp.execute_function(
-                func_id=self.CONST_PSBSMP.F_TURN_OFF, timeout=timeout)
+                func_id=self.CONST_PSBSMP.F_TURN_OFF)
             if ack != self.CONST_BSMP.ACK_OK:
                 dev_id = bsmp.channel.address
                 print(('UDC.reset: could not turn off '

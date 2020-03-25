@@ -559,20 +559,11 @@ class PRUController:
                 pass
 
         # time1 = _time()
-        # print('TIMING _bsmp_update_variables [{:.3f} ms]'.format(1000*(time1-time0)))
+        # print('TIMING _bsmp_update_variables [{:.3f} ms]'.format(
+        #     1000*(time1-time0)))
 
     def _bsmp_update_wfm(self, device_id):
         """Read curve from devices."""
-
-        # time0 = _time()
-
-        # TODO: Ih this really OK?!
-        # copy structure
-        # t0 = _time()
-        # with self._lock:
-        #     psupplies = _dcopy(self._psupplies)
-        # t1 = _time()
-        # print(1000*(t1-t0))
         psupplies = self._psupplies
 
         try:

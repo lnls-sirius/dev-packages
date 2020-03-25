@@ -1,6 +1,4 @@
-"""E2SController."""
-
-from ..namesys import SiriusPVName as _PVName
+"""Controller classes."""
 
 
 class PSController:

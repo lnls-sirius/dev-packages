@@ -1,4 +1,5 @@
 """MA data class definition."""
+
 from ..search import MASearch as _MASearch
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..pwrsupply.data import PSData as _PSData

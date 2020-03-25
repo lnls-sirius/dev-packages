@@ -3,10 +3,14 @@ from functools import partial as _part
 from threading import Event as _Event
 import numpy as _np
 from epics import PV as _PV
+
 import mathphys.constants as _consts
-from siriuspy.thread import RepeaterThread as _Repeater
+
+from ..thread import RepeaterThread as _Repeater
+
 from .calculations import CalcEnergy, ProcessImage
 from .base import BaseClass as _BaseClass
+
 
 C = _consts.light_speed
 E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
@@ -14,6 +18,8 @@ E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
 
 class MeasEnergy(_BaseClass):
     """."""
+
+    # NOTE: this could be a class derived from one of the Device classes.
 
     def __init__(self, callback=None):
         """."""
@@ -34,12 +40,14 @@ class MeasEnergy(_BaseClass):
         self._thread.start()
 
     def get_map2write(self):
+        """."""
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.energy_calculator.get_map2write())
         dic_.update({'MeasureCtrl-Sel': _part(self.write, 'measuring')})
         return dic_
 
     def get_map2read(self):
+        """."""
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.energy_calculator.get_map2read())
         dic_.update({'MeasureCtrl-Sts': _part(self.read, 'measuring')})
@@ -57,6 +65,7 @@ class MeasEnergy(_BaseClass):
 
     @property
     def connected(self):
+        """."""
         conn = self._coefx.connected
         conn &= self._coefy.connected
         conn &= self._width_source.connected
@@ -65,6 +74,7 @@ class MeasEnergy(_BaseClass):
 
     @property
     def current(self):
+        """."""
         return self._current_source.get()
 
     @property
@@ -74,6 +84,7 @@ class MeasEnergy(_BaseClass):
 
     @rate.setter
     def rate(self, val):
+        """."""
         if isinstance(val, (float, int)) and 0 < val < 4:
             self._thread.interval = 1/val
 
@@ -84,6 +95,7 @@ class MeasEnergy(_BaseClass):
 
     @measuring.setter
     def measuring(self, val):
+        """."""
         if val:
             self.start()
         else:
@@ -100,6 +112,7 @@ class MeasEnergy(_BaseClass):
         self.image_processor.px2mmscaley = value
 
     def meas_energy(self):
+        """."""
         self.image_processor.imageflipx = self.image_processor.ImgFlip.On
         self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         value = self._width_source.value
@@ -114,11 +127,14 @@ class MeasEnergy(_BaseClass):
 
 
 class CalcEmmitance(_BaseClass):
+    """."""
+
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
 
     def __init__(self):
+        """."""
         super().__init__()
         self._measuring = _Event()
         self.emittance_calculator = CalcEmmitance()
@@ -128,6 +144,7 @@ class CalcEmmitance(_BaseClass):
         self._select_experimental_setup()
 
     def get_map2write(self):
+        """."""
         database = dict()
         dic_ = self.image_processor.get_map2write()
         dic_.update(self.emittance_calculator.get_map2write())
@@ -135,6 +152,7 @@ class CalcEmmitance(_BaseClass):
         return {k: v for k, v in dic_.items() if k in database}
 
     def get_map2read(self):
+        """."""
         database = dict()
         dic_ = self.image_processor.get_map2read()
         dic_.update(self.emittance_calculator.get_map2read())
@@ -143,10 +161,12 @@ class CalcEmmitance(_BaseClass):
 
     @property
     def place(self):
+        """."""
         return self._place
 
     @place.setter
     def place(self, val):
+        """."""
         if val in self.PLACES:
             self._place = val
             self._select_experimental_setup()
@@ -195,6 +215,7 @@ class CalcEmmitance(_BaseClass):
             self.image_processor.imagewidth = int(value)
 
     def _acquire_data(self):
+        # TODO: unused private method?
         samples = self.spbox_samples.value()
         nsteps = self.spbox_steps.value()
         I_ini = self.spbox_I_ini.value()
@@ -206,6 +227,7 @@ class CalcEmmitance(_BaseClass):
         I_meas = []
         for i, I in enumerate(curr_list):
             print('setting Quadrupole to ', I)
+            # TODO: SIMUL seems to be undefined! bug?
             if not SIMUL:
                 self.quad_I_sp.put(I, wait=True)
             self._measuring.wait(5 if i else 15)

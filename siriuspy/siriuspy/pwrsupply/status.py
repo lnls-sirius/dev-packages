@@ -149,7 +149,7 @@ class PSCStatus:
     @ioc_pwrstate.setter
     def ioc_pwrstate(self, value):
         """Set ps_status with a given ioc-controller power state."""
-        if not (0 <= value < len(_et.PWRSTATE_SEL)):
+        if not 0 <= value < len(_et.PWRSTATE_SEL):
             raise ValueError('Invalid pwrstate value!')
         # TurnOn sets Opmode to SlowRef by default.
         state = _c.States.Off if value == _c.PwrStateSel.Off else \
@@ -166,7 +166,7 @@ class PSCStatus:
     @ioc_opmode.setter
     def ioc_opmode(self, value):
         """Set ps_status with a given ioc-controller opmode."""
-        if not (0 <= value < len(_et.OPMODES)):
+        if not 0 <= value < len(_et.OPMODES):
             raise ValueError('Invalid opmode value!')
         state = PSCStatus._ioc2psc_state[value]
         self.state = state

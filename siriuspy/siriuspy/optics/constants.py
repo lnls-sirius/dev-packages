@@ -4,13 +4,9 @@
 class Accelerator:
     """Accelerator."""
 
-    pass
-
 
 class Ring(Accelerator):
     """Ring."""
-
-    pass
 
 
 class SI(Ring):

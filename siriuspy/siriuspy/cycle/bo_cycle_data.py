@@ -26,7 +26,7 @@ DEFAULT_RAMP_AMPLITUDE = {  # A
 # Time x Current, units: [ms] x [A]
 BASE_RAMP_CURVE_ORIG = \
     _np.array(
-        [[0,                  0],
+        [[0.00000000000000,   0.000000000000000000],
          [0.239374694663160,  3.65385069867429e-07],
          [0.478749389326320,  1.61382508427320e-06],
          [0.718124083989479,  3.97292032631705e-06],
@@ -2092,6 +2092,7 @@ def bo_generate_base_waveform(nrpoints, duration):
 
 def bo_get_default_waveform(psname, nrpoints=None, duration=None,
                             ramp_config=None):
+    """."""
     if ramp_config is None:
         # Uses a template wfmdata scaled to maximum ps current
         if nrpoints is None:
