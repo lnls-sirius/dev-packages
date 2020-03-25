@@ -2,7 +2,7 @@
 import logging as _log
 import numpy as _np
 from ..epics import PV as _PV
-from ..csdevice import bpms as _csbpm
+from ..diag.bpm import csdev as _csbpm
 from ..timesys import csdev as _cstime
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF

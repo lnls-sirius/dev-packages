@@ -9,7 +9,7 @@ from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
 
-from ..csdevice import bpms as _csbpm
+from ..diag.bpm import csdev as _csbpm
 from ..timesys import csdev as _cstiming
 
 
