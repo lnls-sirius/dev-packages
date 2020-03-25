@@ -2,7 +2,7 @@
 
 import time as _time
 
-from ..csdevice.orbitcorr import SOFBFactory
+from ..sofb.csdev import SOFBFactory
 from .device import Device as _Device
 
 
