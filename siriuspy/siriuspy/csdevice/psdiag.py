@@ -1,10 +1,10 @@
 """Power Supply Diag Control System App."""
 
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.csdevice import util as _cutil
+from .. import csdev as _csdev
+from ..search import PSSearch as _PSSearch
 
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     DIAG_STATUS = (
@@ -12,7 +12,7 @@ class ETypes(_cutil.ETypes):
         'Current-(SP|Mon) differ', 'Interlocks', 'Wfm error')
 
 
-_et = ETypes  # syntatic sugar
+_et = ETypes  # syntactic sugar
 
 
 def get_ps_diag_propty_database(psname):
@@ -20,7 +20,7 @@ def get_ps_diag_propty_database(psname):
     pstype = _PSSearch.conv_psname_2_pstype(psname)
     splims = _PSSearch.conv_pstype_2_splims(pstype)
     dtol = splims['DTOL_CUR']
-    db = {
+    dbase = {
         'DiagVersion-Cte': {'type': 'str', 'value': 'UNDEF'},
         'DiagCurrentDiff-Mon': {'type': 'float', 'value': 0.0,
                                 'hilim': dtol, 'hihi': dtol, 'high': dtol,
@@ -32,5 +32,5 @@ def get_ps_diag_propty_database(psname):
         'DiagStatusLabels-Cte': {'type': 'string',
                                  'count': len(_et.DIAG_STATUS),
                                  'value': _et.DIAG_STATUS}}
-    db = _cutil.add_pvslist_cte(db, 'Diag')
-    return db
+    dbase = _csdev.add_pvslist_cte(dbase, 'Diag')
+    return dbase

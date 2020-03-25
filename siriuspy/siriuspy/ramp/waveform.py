@@ -4,8 +4,8 @@ import numpy as _np
 
 from mathphys import constants as _c
 from mathphys import units as _mu
-from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP
-from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE_OTHERS as \
+from ..pwrsupply.csdev import DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP
+from ..pwrsupply.csdev import DEF_WFMSIZE_OTHERS as \
     _DEF_WFMSIZE_OTHERS
 from siriuspy.ramp import util as _ru
 from siriuspy.ramp.magnet import get_magnet as _get_magnet

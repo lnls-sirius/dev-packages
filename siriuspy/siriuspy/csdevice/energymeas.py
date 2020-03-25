@@ -1,17 +1,18 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import numpy as _np
-from siriuspy.csdevice import util as _cutil
+
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     MEASURESTATE = ('Stopped', 'Measuring')
     READINGORDER = ('CLike', 'FortranLike')
     METHOD = ('GaussFit', 'Moments')
-    MEAS_STATE = _cutil.ETypes.OFF_ON
+    MEAS_STATE = _csdev.ETypes.OFF_ON
     AUTO_CENTER = ('Manual', 'Auto')
     BG_CTRL = ('Acquire', 'Reset')
     BG_USAGE = ('NotUsing', 'Using')
@@ -26,7 +27,7 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Const class defining constants."""
 
     DEFAULT_DISP = 1087  # in mm
@@ -38,16 +39,16 @@ class Const(_cutil.Const):
     DEFAULT_ROI_SIZE = 500
     MAX_WIDTH = 3000
 
-    MeasureState = _cutil.Const.register('MeasureState', _et.MEASURESTATE)
-    ReadingOrder = _cutil.Const.register('ReadingOrder', _et.READINGORDER)
-    Method = _cutil.Const.register('Method', _et.METHOD)
-    AutoCenter = _cutil.Const.register('AutoCenter', _et.AUTO_CENTER)
-    BgCtrl = _cutil.Const.register('BgCtrl', _et.BG_CTRL)
-    BgUsage = _cutil.Const.register('BgUsage', _et.BG_USAGE)
-    CropIdx = _cutil.Const.register('CropIdx', _et.CROPIDX)
-    FitParams = _cutil.Const.register('FitParams', _et.FITPARAMS)
-    Plane = _cutil.Const.register('Plane', _et.PLANE)
-    ImgFlip = _cutil.Const.register('ImgFlip', _et.FLIP)
+    MeasureState = _csdev.Const.register('MeasureState', _et.MEASURESTATE)
+    ReadingOrder = _csdev.Const.register('ReadingOrder', _et.READINGORDER)
+    Method = _csdev.Const.register('Method', _et.METHOD)
+    AutoCenter = _csdev.Const.register('AutoCenter', _et.AUTO_CENTER)
+    BgCtrl = _csdev.Const.register('BgCtrl', _et.BG_CTRL)
+    BgUsage = _csdev.Const.register('BgUsage', _et.BG_USAGE)
+    CropIdx = _csdev.Const.register('CropIdx', _et.CROPIDX)
+    FitParams = _csdev.Const.register('FitParams', _et.FITPARAMS)
+    Plane = _csdev.Const.register('Plane', _et.PLANE)
+    ImgFlip = _csdev.Const.register('ImgFlip', _et.FLIP)
 
 
 # --- Database classes ---

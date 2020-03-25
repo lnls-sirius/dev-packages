@@ -1,12 +1,12 @@
 """Control system Device Util Module."""
 
 import copy as _copy
-from siriuspy import util as _util
-from siriuspy.clientweb import beaglebone_ip_list as _bbb_ip_list
-from siriuspy.search.ps_search import PSSearch as _PSSearch
+from . import util as _util
+from .clientweb import beaglebone_ip_list as _bbb_ip_list
+from .search import PSSearch as _PSSearch
 
 
-_device_2_ioc_ip_dict = None
+_DEV_2_IOC_IP_DICT = None
 
 
 class ETypes:
@@ -55,25 +55,25 @@ def add_pvslist_cte(database, prefix=''):
 
 def get_device_2_ioc_ip(reload=False):
     """Return a dict of ioc IP numbers for csdevices."""
-    if _device_2_ioc_ip_dict is None or reload is True:
+    if _DEV_2_IOC_IP_DICT is None or reload is True:
         _reload_device_2_ioc_ip()
-    return _copy.deepcopy(_device_2_ioc_ip_dict)
+    return _copy.deepcopy(_DEV_2_IOC_IP_DICT)
 
 
 def _reload_device_2_ioc_ip():
-    global _device_2_ioc_ip_dict
-    _device_2_ioc_ip_dict = dict()
+    global _DEV_2_IOC_IP_DICT
+    _DEV_2_IOC_IP_DICT = dict()
 
     # beaglebone IPs
     text, _ = _util.read_text_data(_bbb_ip_list())
     for item in text:
         if len(item) == 2:
             bbbname, ip = item
-            _device_2_ioc_ip_dict[bbbname] = ip
+            _DEV_2_IOC_IP_DICT[bbbname] = ip
 
     # power supplies
     dic = dict()
-    for bbbname, ip in _device_2_ioc_ip_dict.items():
+    for bbbname, ip in _DEV_2_IOC_IP_DICT.items():
         try:
             bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
             for bsmp in bsmps:
@@ -81,4 +81,4 @@ def _reload_device_2_ioc_ip():
                 dic[psname] = ip
         except KeyError:
             pass
-    _device_2_ioc_ip_dict.update(dic)
+    _DEV_2_IOC_IP_DICT.update(dic)

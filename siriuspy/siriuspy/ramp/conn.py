@@ -4,23 +4,28 @@ This module implements connector classes responsible for communications with
 pwrsupply soft IOcs, ConfigDB service and orbit IOCs.
 """
 
-import numpy as _np
 import math as _math
-from siriuspy import envars as _envars
-from siriuspy.epics import EpicsProperty as _EpicsProperty, \
+import numpy as _np
+
+
+from .. import envars as _envars
+from .. import csdev as _csdev
+
+from ..epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.csdevice import util as _cutil
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.timesys import Const as _TIConst, \
+from ..namesys import SiriusPVName as _PVName
+
+from ..pwrsupply.csdev import Const as _PSConst
+from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
-from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
-from siriuspy.search import LLTimeSearch as _LLTimeSearch, \
+from ..csdevice.orbitcorr import SOFBRings as _SOFBRings
+from ..search import LLTimeSearch as _LLTimeSearch, \
     PSSearch as _PSSearch
-from siriuspy.ramp import util as _rutil
+
+from . import util as _rutil
 
 
-_prefix = _envars.VACA_PREFIX
+_PREFIX = _envars.VACA_PREFIX
 _TIMEOUT_DFLT = 8
 _TIMEOUT_PWRSTATE_ON = 2
 _TIMEOUT_PWRSTATE_OFF = 1
@@ -30,7 +35,7 @@ _TIMEOUT_OPMODE_CHANGE = 6
 class ConnTI(_EpicsPropsList):
     """Timing connector class."""
 
-    class Const(_cutil.Const):
+    class Const(_csdev.Const):
         """Properties names."""
 
         BO_HarmNum = 828
@@ -91,7 +96,7 @@ class ConnTI(_EpicsPropsList):
             new_attr = attr+'_'+p.propty_name
             setattr(Const, new_attr, trg_name+':'+p)
 
-    def __init__(self, ramp_config=None, prefix=_prefix,
+    def __init__(self, ramp_config=None, prefix=_PREFIX,
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
@@ -395,7 +400,7 @@ class ConnTI(_EpicsPropsList):
 class ConnPS(_EpicsPropsList):
     """Power supplies connector class."""
 
-    def __init__(self, ramp_config=None, prefix=_prefix,
+    def __init__(self, ramp_config=None, prefix=_PREFIX,
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
@@ -555,7 +560,7 @@ class ConnPS(_EpicsPropsList):
 class ConnRF(_EpicsPropsList):
     """RF connector class."""
 
-    class Const(_cutil.Const):
+    class Const(_csdev.Const):
         """Properties names."""
 
         DevName = 'BR-RF-DLLRF-01'
@@ -571,7 +576,7 @@ class ConnRF(_EpicsPropsList):
         Rmp_Intlk = DevName + ':Intlk-Mon'
         Rmp_RmpReady = DevName + ':RmpReady-Mon'
 
-    def __init__(self, ramp_config=None, prefix=_prefix,
+    def __init__(self, ramp_config=None, prefix=_PREFIX,
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
@@ -671,9 +676,9 @@ class ConnRF(_EpicsPropsList):
 class ConnSOFB(_EpicsPropsList):
     """SOFB connector class."""
 
-    IOC_Prefix = 'BO-Glob:AP-SOFB'
+    IOC_PREFIX = 'BO-Glob:AP-SOFB'
 
-    def __init__(self, prefix=_prefix,
+    def __init__(self, prefix=_PREFIX,
                  connection_callback=None, callback=None):
         """Init."""
         properties = self._define_properties(prefix, connection_callback,
@@ -684,10 +689,10 @@ class ConnSOFB(_EpicsPropsList):
         """Get CH and CV delta kicks calculated by SOFB."""
         bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
-        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon']
+        ch_dkicks = rb[ConnSOFB.IOC_PREFIX + ':DeltaKickCH-Mon']
         ch_names = bo_sofb_db.CH_NAMES
 
-        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon']
+        cv_dkicks = rb[ConnSOFB.IOC_PREFIX + ':DeltaKickCV-Mon']
         cv_names = bo_sofb_db.CV_NAMES
 
         corrs2dkicks_dict = dict()
@@ -701,7 +706,7 @@ class ConnSOFB(_EpicsPropsList):
         properties = list()
         for ppty in ['DeltaKickCH-Mon', 'DeltaKickCV-Mon']:
             properties.append(
-                _EpicsProperty(ConnSOFB.IOC_Prefix + ':' + ppty, prefix,
+                _EpicsProperty(ConnSOFB.IOC_PREFIX + ':' + ppty, prefix,
                                connection_callback=connection_callback,
                                callback=callback))
         return properties

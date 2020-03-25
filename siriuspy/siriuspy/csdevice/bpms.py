@@ -1,8 +1,9 @@
 """Define the PV database of a single BPM and its enum types."""
 from copy import deepcopy as _dcopy
 import numpy as _np
-from siriuspy.csdevice.util import ETypes as _et
-from siriuspy.util import get_namedtuple as _get_namedtuple
+
+from ..csdev import ETypes as _et
+from ..util import get_namedtuple as _get_namedtuple
 
 
 # TODO: refactor this code as to make it closer in structure to all other

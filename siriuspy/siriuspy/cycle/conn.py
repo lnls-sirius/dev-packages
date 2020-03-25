@@ -6,13 +6,12 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
-from siriuspy.namesys import SiriusPVName as _PVName, \
+from ..namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
-from siriuspy.envars import VACA_PREFIX as VACA_PREFIX
-from siriuspy.search import PSSearch as _PSSearch, \
-    LLTimeSearch as _LLTimeSearch
-from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet
-from siriuspy.csdevice.timesys import Const as _TIConst, \
+from ..envars import VACA_PREFIX
+from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
+from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
+from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \

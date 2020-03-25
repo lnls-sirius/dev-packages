@@ -1,6 +1,6 @@
 """Define PVs, contants and properties of PosAng SoftIOCs."""
 
-from siriuspy.csdevice import util as _cutil
+from .. import csdev as _csdev
 
 
 class Const:
@@ -85,5 +85,5 @@ def get_posang_database(tl, corrs_type='ch-sept'):
         pvs_database['CH3-Cte'] = {'type': 'string', 'value': CORRH[2]}
         pvs_database['RefKickCH3-Mon'] = {'type': 'float', 'value': 0,
                                           'prec': 4, 'unit': 'mrad'}
-    pvs_database = _cutil.add_pvslist_cte(pvs_database)
+    pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database

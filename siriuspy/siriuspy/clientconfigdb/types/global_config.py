@@ -1,9 +1,9 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
 
-from siriuspy.csdevice.pwrsupply import DEFAULT_WFM_FBP as \
+from siriuspy.pwrsupply.csdev import DEFAULT_WFM_FBP as \
     _DEFAULT_WFM_FBP
-from siriuspy.csdevice.pwrsupply import DEFAULT_WFM_OTHERS as \
+from siriuspy.pwrsupply.csdev import DEFAULT_WFM_OTHERS as \
     _DEFAULT_WFM_OTHERS
 
 

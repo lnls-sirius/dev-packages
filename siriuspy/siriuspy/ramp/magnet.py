@@ -106,14 +106,14 @@ class Magnet:
 
     def __str__(self):
         """__str__ method."""
-        s = ''
-        s += '\nmaname         : {}'.format(self.maname)
-        s += '\nsection        : {}'.format(self.section)
-        s += '\ndipole_name    : {}'.format(self.dipole_name)
-        s += '\nfamily_name    : {}'.format(self.family_name)
-        s += '\nmagfunc        : {}'.format(self.magfunc)
-        s += '\nstrength_label : {}'.format(self.strength_label)
-        s += '\nstrength_units : {}'.format(self.strength_units)
-        s += '\ncurrent_min    : {}'.format(self.current_min)
-        s += '\ncurrent_max    : {}'.format(self.current_max)
-        return s
+        rst = ''
+        rst += '\nmaname         : {}'.format(self.maname)
+        rst += '\nsection        : {}'.format(self.section)
+        rst += '\ndipole_name    : {}'.format(self.dipole_name)
+        rst += '\nfamily_name    : {}'.format(self.family_name)
+        rst += '\nmagfunc        : {}'.format(self.magfunc)
+        rst += '\nstrength_label : {}'.format(self.strength_label)
+        rst += '\nstrength_units : {}'.format(self.strength_units)
+        rst += '\ncurrent_min    : {}'.format(self.current_min)
+        rst += '\ncurrent_max    : {}'.format(self.current_max)
+        return rst

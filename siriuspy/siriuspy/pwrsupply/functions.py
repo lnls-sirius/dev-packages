@@ -4,10 +4,8 @@ These classes implement a command interface, that is, they have
 an `execute` method.
 """
 
-from ..csdevice.pwrsupply import Const as _consts_ps
-
 from .bsmp import ConstPSBSMP as _consts_psbsmp
-
+from .csdev import Const as _consts_ps
 
 
 class Function:

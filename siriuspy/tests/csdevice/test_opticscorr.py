@@ -11,7 +11,7 @@ from siriuspy.csdevice.opticscorr import (
 )
 
 
-public_interface = (
+PUBLIC_INTERFACE = (
         'ETypes',
         'Const',
         'get_chrom_database',
@@ -25,8 +25,7 @@ class TestOpticsCorrCSDevice(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                opticscorr,
-                public_interface)
+            opticscorr, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_chrom_database(self):
@@ -38,33 +37,33 @@ class TestOpticsCorrCSDevice(TestCase):
                          'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3')
             elif accelerator == 'BO':
                 sfams = ('SF', 'SD')
-            db = get_chrom_database(accelerator)
-            self.assertIsInstance(db, dict)
-            self.assertTrue('Version-Cte' in db)
-            self.assertTrue('Log-Mon' in db)
-            self.assertTrue('ChromX-SP' in db)
-            self.assertTrue('ChromX-RB' in db)
-            self.assertTrue('ChromY-SP' in db)
-            self.assertTrue('ChromY-RB' in db)
-            self.assertTrue('ApplyDelta-Cmd' in db)
-            self.assertTrue('ConfigName-SP' in db)
-            self.assertTrue('ConfigName-RB' in db)
-            self.assertTrue('RespMat-Mon' in db)
-            self.assertTrue('NominalChrom-Mon' in db)
-            self.assertTrue('NominalSL-Mon' in db)
-            self.assertTrue('ConfigPS-Cmd' in db)
-            self.assertTrue('Status-Mon' in db)
-            self.assertTrue('StatusLabels-Cte' in db)
+            dbase = get_chrom_database(accelerator)
+            self.assertIsInstance(dbase, dict)
+            self.assertTrue('Version-Cte' in dbase)
+            self.assertTrue('Log-Mon' in dbase)
+            self.assertTrue('ChromX-SP' in dbase)
+            self.assertTrue('ChromX-RB' in dbase)
+            self.assertTrue('ChromY-SP' in dbase)
+            self.assertTrue('ChromY-RB' in dbase)
+            self.assertTrue('ApplyDelta-Cmd' in dbase)
+            self.assertTrue('ConfigName-SP' in dbase)
+            self.assertTrue('ConfigName-RB' in dbase)
+            self.assertTrue('RespMat-Mon' in dbase)
+            self.assertTrue('NominalChrom-Mon' in dbase)
+            self.assertTrue('NominalSL-Mon' in dbase)
+            self.assertTrue('ConfigPS-Cmd' in dbase)
+            self.assertTrue('Status-Mon' in dbase)
+            self.assertTrue('StatusLabels-Cte' in dbase)
 
             for fam in sfams:
-                self.assertTrue('SL' + fam + '-Mon' in db)
-                self.assertEqual(db['SL' + fam + '-Mon']['unit'], '1/m^2')
+                self.assertTrue('SL' + fam + '-Mon' in dbase)
+                self.assertEqual(dbase['SL' + fam + '-Mon']['unit'], '1/m^2')
             if accelerator == 'SI':
-                self.assertTrue('CorrMeth-Sel' in db)
-                self.assertTrue('CorrMeth-Sts' in db)
-                # self.assertTrue('SyncCorr-Sel' in db)
-                # self.assertTrue('SyncCorr-Sts' in db)
-                # self.assertTrue('ConfigTiming-Cmd' in db)
+                self.assertTrue('CorrMeth-Sel' in dbase)
+                self.assertTrue('CorrMeth-Sts' in dbase)
+                # self.assertTrue('SyncCorr-Sel' in dbase)
+                # self.assertTrue('SyncCorr-Sts' in dbase)
+                # self.assertTrue('ConfigTiming-Cmd' in dbase)
 
     def test_get_tune_database(self):
         """Test get_tune_database."""
@@ -74,29 +73,29 @@ class TestOpticsCorrCSDevice(TestCase):
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
             elif accelerator == 'BO':
                 qfams = ('QF', 'QD')
-            db = get_tune_database(accelerator)
-            self.assertIsInstance(db, dict)
-            self.assertTrue('Version-Cte' in db)
-            self.assertTrue('Log-Mon' in db)
-            self.assertTrue('DeltaTuneX-SP' in db)
-            self.assertTrue('DeltaTuneX-RB' in db)
-            self.assertTrue('DeltaTuneY-SP' in db)
-            self.assertTrue('DeltaTuneY-RB' in db)
-            self.assertTrue('ApplyDelta-Cmd' in db)
-            self.assertTrue('RespMat-Mon' in db)
-            self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('ConfigPS-Cmd' in db)
-            self.assertTrue('Status-Mon' in db)
-            self.assertTrue('StatusLabels-Cte' in db)
+            dbase = get_tune_database(accelerator)
+            self.assertIsInstance(dbase, dict)
+            self.assertTrue('Version-Cte' in dbase)
+            self.assertTrue('Log-Mon' in dbase)
+            self.assertTrue('DeltaTuneX-SP' in dbase)
+            self.assertTrue('DeltaTuneX-RB' in dbase)
+            self.assertTrue('DeltaTuneY-SP' in dbase)
+            self.assertTrue('DeltaTuneY-RB' in dbase)
+            self.assertTrue('ApplyDelta-Cmd' in dbase)
+            self.assertTrue('RespMat-Mon' in dbase)
+            self.assertTrue('NominalKL-Mon' in dbase)
+            self.assertTrue('ConfigPS-Cmd' in dbase)
+            self.assertTrue('Status-Mon' in dbase)
+            self.assertTrue('StatusLabels-Cte' in dbase)
 
             for fam in qfams:
-                self.assertTrue('RefKL' + fam + '-Mon' in db)
-                self.assertEqual(db['RefKL' + fam + '-Mon']['unit'], '1/m')
-                self.assertTrue('DeltaKL' + fam + '-Mon' in db)
-                self.assertEqual(db['DeltaKL' + fam + '-Mon']['unit'], '1/m')
+                self.assertTrue('RefKL' + fam + '-Mon' in dbase)
+                self.assertEqual(dbase['RefKL' + fam + '-Mon']['unit'], '1/m')
+                self.assertTrue('DeltaKL' + fam + '-Mon' in dbase)
+                self.assertEqual(dbase['DeltaKL' + fam + '-Mon']['unit'], '1/m')
             if accelerator == 'SI':
-                self.assertTrue('CorrMeth-Sel' in db)
-                self.assertTrue('CorrMeth-Sts' in db)
-                self.assertTrue('SyncCorr-Sel' in db)
-                self.assertTrue('SyncCorr-Sts' in db)
-                self.assertTrue('ConfigTiming-Cmd' in db)
+                self.assertTrue('CorrMeth-Sel' in dbase)
+                self.assertTrue('CorrMeth-Sts' in dbase)
+                self.assertTrue('SyncCorr-Sel' in dbase)
+                self.assertTrue('SyncCorr-Sts' in dbase)
+                self.assertTrue('ConfigTiming-Cmd' in dbase)
