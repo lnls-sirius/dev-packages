@@ -7,8 +7,8 @@ import siriuspy as _siriuspy
 from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.timesys import Const as _TIConst, \
+from siriuspy.pwrsupply.csdev import Const as _PSConst
+from siriuspy.timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
