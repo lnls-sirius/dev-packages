@@ -313,7 +313,7 @@ class BPM(_BaseTimingConfig):
         pv = self._spsum
         val = pv.value if pv.connected else None
         if val is not None:
-            return val / 2**28
+            return val
 
     @property
     def arraya(self):
@@ -354,7 +354,7 @@ class BPM(_BaseTimingConfig):
         pv = self._arrays
         val = pv.get() if pv.connected else None
         if val is not None:
-            return val / 2**28
+            return val
 
     @property
     def offsetx(self):
@@ -630,7 +630,7 @@ class BPM(_BaseTimingConfig):
         y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
         x[:rnts][m1] -= self.offsetx or 0.0
         y[:rnts][m2] -= self.offsety or 0.0
-        s[:rnts] = (s1 + s2) * self.ksum / 2**28
+        s[:rnts] = (s1 + s2) * self.ksum
         return x, y, s
 
 
