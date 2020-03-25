@@ -1,60 +1,43 @@
-"""Define PVs, constants and properties of OrbitCorr SoftIOCs."""
+"""Define PVs, constants and properties of Meas IOCs."""
 import numpy as _np
 
 from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
-
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    MEASURESTATE = ('Stopped', 'Measuring')
     READINGORDER = ('CLike', 'FortranLike')
     METHOD = ('GaussFit', 'Moments')
-    MEAS_STATE = _csdev.ETypes.OFF_ON
     AUTO_CENTER = ('Manual', 'Auto')
     BG_CTRL = ('Acquire', 'Reset')
     BG_USAGE = ('NotUsing', 'Using')
     CROPIDX = ('Low', 'High')
-    FITPARAMS = ('Amp', 'Cen', 'Sig', 'Off')
-    PLANE = ('Y', 'X')
     FLIP = ('Off', 'On')
+    FITPARAMS = ('Amp', 'Cen', 'Sig', 'Off')
 
 
 _et = ETypes  # syntactic sugar
 
 
 # --- Const class ---
-
 class Const(_csdev.Const):
     """Const class defining constants."""
 
-    DEFAULT_DISP = 1087  # in mm
-    DEFAULT_B_ANG = _np.pi/4
-    DEFAULT_SPECT = 'LI-01:PS-Spect'
-    DEFAULT_PROFILE = 'LA-BI:PRF4'
     DEFAULT_WIDTH = 1024
     DEFAULT_HEIGHT = 1090
     DEFAULT_ROI_SIZE = 500
     MAX_WIDTH = 3000
 
-    MeasureState = _csdev.Const.register('MeasureState', _et.MEASURESTATE)
     ReadingOrder = _csdev.Const.register('ReadingOrder', _et.READINGORDER)
     Method = _csdev.Const.register('Method', _et.METHOD)
     AutoCenter = _csdev.Const.register('AutoCenter', _et.AUTO_CENTER)
     BgCtrl = _csdev.Const.register('BgCtrl', _et.BG_CTRL)
     BgUsage = _csdev.Const.register('BgUsage', _et.BG_USAGE)
     CropIdx = _csdev.Const.register('CropIdx', _et.CROPIDX)
-    FitParams = _csdev.Const.register('FitParams', _et.FITPARAMS)
-    Plane = _csdev.Const.register('Plane', _et.PLANE)
     ImgFlip = _csdev.Const.register('ImgFlip', _et.FLIP)
-
-
-# --- Database classes ---
-
-class EnergyMeas(Const):
-    """class for energy measurement."""
+    FitParams = _csdev.Const.register('FitParams', _et.FITPARAMS)
 
     @classmethod
     def get_database(cls, prefix=''):
@@ -259,36 +242,6 @@ class EnergyMeas(Const):
             'BeamOffsetY-Mon': {
                 'type': 'float', 'value': 0, 'prec': 3,
                 'unit': 'mm', 'lolim': -20, 'hilim': 20},
-
-            'Dispersion-SP': {
-                'type': 'float', 'prec': 4, 'unit': 'mm',
-                'value': cls.DEFAULT_DISP},
-            'Dispersion-RB': {
-                'type': 'float', 'prec': 4, 'unit': 'mm',
-                'value': cls.DEFAULT_DISP},
-            # 'Angle-SP': {
-            #     'type': 'float', 'prec': 4, 'unit': 'deg',
-            #     'value': cls.DEFAULT_B_ANG},
-            # 'Angle-RB': {
-            #     'type': 'float', 'prec': 4, 'unit': 'deg',
-            #     'value': cls.DEFAULT_B_ANG},
-            # 'Spectrometer-SP': {
-            #     'type': 'string', 'value': cls.DEFAULT_SPECT},
-            # 'Spectrometer-RB': {
-            #     'type': 'string', 'value': cls.DEFAULT_SPECT},
-            'IntDipole-Mon': {
-                'type': 'float', 'prec': 4, 'unit': 'T.m', 'value': 0},
-            'Energy-Mon': {
-                'type': 'float', 'prec': 2, 'unit': 'MeV', 'value': 0},
-            'Spread-Mon': {
-                'type': 'float', 'prec': 4, 'unit': '%', 'value': 0},
-
-            'MeasureCtrl-Sel': {
-                'type': 'enum', 'value': cls.MeasureState.Stopped,
-                'enums': cls.MeasureState._fields},
-            'MeasureCtrl-Sts': {
-                'type': 'enum', 'value': cls.MeasureState.Stopped,
-                'enums': cls.MeasureState._fields},
             }
         for val in db.values():
             low = val.get('lolim', None)

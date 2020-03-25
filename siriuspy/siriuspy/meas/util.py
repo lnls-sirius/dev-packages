@@ -1,23 +1,54 @@
 """."""
 
 from functools import partial as _part
-from copy import deepcopy as _dcopy
 import logging as _log
 import numpy as _np
 from scipy.optimize import curve_fit
 
-import mathphys.constants as _consts
+from ..callbacks import Callback
 
-from ..search import PSSearch as _PSS
-from ..factory import NormalizerFactory as _NormFact
-
-from .base import BaseClass as _BaseClass
-
-C = _consts.light_speed
-E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-6  # in MeV
+from .csdev import Const as _Const
 
 
-class ProcessImage(_BaseClass):
+class BaseClass(Callback, _Const):
+    """."""
+
+    def __init__(self, callback=None):
+        """."""
+        self._map2read = self.get_map2read()
+        self._map2write = self.get_map2write()
+        super().__init__(callback=callback)
+
+    def get_map2write(self):
+        """."""
+        return dict()
+
+    def get_map2read(self):
+        """."""
+        return dict()
+
+    def get(self, prop):
+        """."""
+        if prop in self._map2read:
+            return self._map2read[prop]()
+        return self.__getattribute__(prop)
+
+    def read(self, prop):
+        """."""
+        return self.get(prop)
+
+    def write(self, prop, value):
+        """."""
+        if prop in self._map2write:
+            return self._map2write[prop](value)
+        try:
+            self.__setattr__(prop, value)
+        except Exception:
+            return False
+        return True
+
+
+class ProcessImage(BaseClass):
     """."""
 
     def __init__(self, callback=None):
@@ -687,415 +718,4 @@ class ProcessImage(_BaseClass):
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:
             _log.error('Could not fit gaussian.')
-            pass
         return par
-
-
-class CalcEnergy(_BaseClass):
-    """."""
-
-    def __init__(self, callback=None, dispersion=None, angle=None,
-                 spectrometer=None):
-        """."""
-        super().__init__(callback=callback)
-        self._dispersion = dispersion or self.DEFAULT_DISP
-        self._angle = angle or self.DEFAULT_B_ANG
-        self._spect = spectrometer or self.DEFAULT_SPECT
-        self._excdata = _PSS.conv_psname_2_excdata(self._spect)
-        self._currents = _np.array([], dtype=float)
-        self._intdipole = _np.array([], dtype=float)
-        self._energy = _np.array([], dtype=float)
-        self._spread = _np.array([], dtype=float)
-        self._beamcenter = _np.array([], dtype=float)
-        self._beamsize = _np.array([], dtype=float)
-
-    def get_map2write(self):
-        """."""
-        return {
-            'Dispersion-SP': _part(self.write, 'dispersion'),
-            'Angle-SP': _part(self.write, 'angle'),
-            'Spectrometer-SP': _part(self.write, 'spectrometer'),
-            }
-
-    def get_map2read(self):
-        """."""
-        return {
-            'Dispersion-RB': _part(self.read, 'dispersion'),
-            'Angle-RB': _part(self.read, 'angle'),
-            'Spectrometer-RB': _part(self.read, 'spectrometer'),
-            'IntDipole-Mon': _part(self.read, 'intdipole'),
-            'Energy-Mon': _part(self.read, 'energy'),
-            'Spread-Mon': _part(self.read, 'spread'),
-            }
-
-    @property
-    def dispersion(self):
-        """."""
-        return self._dispersion
-
-    @dispersion.setter
-    def dispersion(self, val):
-        """."""
-        if isinstance(val, (float, int)) and val != 0:
-            self._dispersion = val
-            self.run_callbacks('Dispersion-RB', val)
-            self._perform_analysis()
-
-    @property
-    def angle(self):
-        """."""
-        return self._angle
-
-    @angle.setter
-    def angle(self, val):
-        if isinstance(val, (float, int)) and val != 0 and abs(val) < _np.pi:
-            self._angle = val
-            self._perform_analysis()
-            self.run_callbacks('Angle-RB', val)
-
-    @property
-    def spectrometer(self):
-        """."""
-        return self._spect
-
-    @spectrometer.setter
-    def spectrometer(self, val):
-        """."""
-        try:
-            self._excdata = _PSS.conv_psname_2_excdata(val)
-        except Exception:
-            return
-        self._spect = val
-        self._perform_analysis()
-        self.run_callbacks('Spectrometer-RB', val)
-
-    @property
-    def currents(self):
-        """."""
-        return _dcopy(self._currents)
-
-    @property
-    def beamsize(self):
-        """."""
-        return _dcopy(self._beamsize)
-
-    @property
-    def beamcenter(self):
-        """."""
-        return _dcopy(self._beamcenter)
-
-    @property
-    def intdipole(self):
-        """."""
-        return _dcopy(self._intdipole)
-
-    @property
-    def energy(self):
-        """."""
-        return _dcopy(self._energy)
-
-    @property
-    def spread(self):
-        """."""
-        return _dcopy(self._spread)
-
-    def set_data(self, currents, beam_centers, beam_sizes):
-        """."""
-        if None in {currents, beam_centers, beam_sizes}:
-            return False
-        if isinstance(beam_sizes, (int, float)):
-            beam_sizes = [beam_sizes]
-        if isinstance(beam_centers, (int, float)):
-            beam_centers = [beam_centers]
-        if isinstance(currents, (int, float)):
-            currents = [currents]
-        beam_sizes = _np.array(beam_sizes, dtype=float)
-        beam_centers = _np.array(beam_centers, dtype=float)
-        currents = _np.array(currents, dtype=float)
-        cond = beam_sizes.size != currents.size
-        cond |= currents.size != beam_centers.size
-        if cond:
-            return False
-        self._beamsize = beam_sizes
-        self._beamcenter = beam_centers
-        self._currents = currents
-        self._perform_analysis()
-        return True
-
-    def _update_integrated_dipole(self):
-        """."""
-        if self._currents.size == 0:
-            return
-        mult = self._excdata.interp_curr2mult(currents=self._currents)
-        self._intdipole = mult['normal'][0]
-
-    def _perform_analysis(self):
-        """."""
-        self._update_integrated_dipole()
-        cond = self._intdipole.size == 0
-        cond |= self._beamcenter.size == 0
-        cond |= self._beamsize == 0
-        if cond:
-            return
-        pc_nom = self._intdipole / self._angle * C * 1e-6  # in MeV
-        pc = pc_nom * (1 + self._beamcenter / self._dispersion)
-        self._energy = _np.sqrt(pc**2 + E0*E0)
-        self._spread = self._beamsize / self._dispersion * 100  # in percent%
-        self.run_callbacks('Energy-Mon', self._energy)
-        self.run_callbacks('Spread-Mon', self._spread)
-        self.run_callbacks('IntDipole-Mon', self._intdipole)
-
-
-class CalcEmmitance(_BaseClass):
-    X = 0
-    Y = 1
-    PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
-
-    def __init__(self):
-        """."""
-        super().__init__()
-        self._place = 'LI'
-        self._quadname = ''
-        self._quadlen = 0.0
-        self._distance = 0.0
-        self._select_experimental_setup()
-        self._beamsize = _np.array([], dtype=float)
-        self._beamsize_fit = _np.array([], dtype=float)
-        self._currents = _np.array([], dtype=float)
-        self._quadstren = _np.array([], dtype=float)
-        self._plane = self.Plane.X
-        self._energy = 0.15
-        self._emittance = 0.0
-        self._beta = 0.0
-        self._alpha = 0.0
-        self._gamma = 0.0
-
-    def get_map2write(self):
-        """."""
-        return {
-            'Place-Sel': _part(self.write, 'place'),
-            'Plane-Sel': _part(self.write, 'plane'),
-            }
-
-    def get_map2read(self):
-        """."""
-        return {
-            'Place-Sts': _part(self.read, 'place'),
-            'Plane-Sts': _part(self.read, 'plane'),
-            'QuadName-Mon': _part(self.read, 'quadname'),
-            'QuadLen-Mon': _part(self.read, 'quadlen'),
-            'Distance-Mon': _part(self.read, 'distance'),
-            'BeamSizes-Mon': _part(self.read, 'beamsize'),
-            'BeamSizesFit-Mon': _part(self.read, 'beamsize_fit'),
-            'QuadCurrents-Mon': _part(self.read, 'currents'),
-            'QuadStrens-Mon': _part(self.read, 'quadstren'),
-            'Beta-Mon': _part(self.read, 'beta'),
-            'Alpha-Mon': _part(self.read, 'alpha'),
-            'Gamma-Mon': _part(self.read, 'gamma'),
-            'Emittance-Mon': _part(self.read, 'emittance'),
-            'NormEmittance-Mon': _part(self.read, 'norm_emittance'),
-            }
-
-    @property
-    def place(self):
-        """."""
-        return self._place
-
-    @place.setter
-    def place(self, val):
-        """."""
-        if isinstance(val, str) and val.lower() in self.PLACES:
-            self._place = val
-            self._select_experimental_setup()
-            self._perform_analysis()
-
-    @property
-    def plane(self):
-        """."""
-        return self._plane
-
-    @plane.setter
-    def plane(self, val):
-        """."""
-        if int(val) in self.Plane:
-            self._plane = int(val)
-        self._perform_analysis()
-
-    @property
-    def plane_str(self):
-        """."""
-        return self.Plane._fields[self._plane]
-
-    @plane_str.setter
-    def plane_str(self, val):
-        """."""
-        if val in self.Plane._fields:
-            self.plane = self.Plane._fields.index(val)
-
-    @property
-    def quadname(self):
-        """."""
-        return self._quadname
-
-    @property
-    def quadlen(self):
-        """."""
-        return self._quadlen
-
-    @property
-    def distance(self):
-        """."""
-        return self._distance
-
-    @property
-    def beamsize(self):
-        """."""
-        return self._beamsize.copy()
-
-    @property
-    def beamsize_fit(self):
-        """."""
-        return self._beamsize_fit.copy()
-
-    @property
-    def currents(self):
-        """."""
-        return self._currents.copy()
-
-    @property
-    def quadstren(self):
-        """."""
-        return self._quadstren.copy()
-
-    @property
-    def beta(self):
-        """."""
-        return self._beta
-
-    @property
-    def alpha(self):
-        """."""
-        return self._alpha
-
-    @property
-    def gamma(self):
-        """."""
-        return self._gamma
-
-    @property
-    def emittance(self):
-        """."""
-        return self._emittance * 1e6  # in mm.mrad
-
-    @property
-    def norm_emittance(self):
-        """."""
-        return self.emittance * self._energy / E0
-
-    def set_data(self, beam_sizes, currents):
-        """."""
-        if None in {currents, beam_sizes}:
-            return False
-        if isinstance(beam_sizes, (int, float)):
-            beam_sizes = [beam_sizes]
-        if isinstance(currents, (int, float)):
-            currents = [currents]
-        beam_sizes = _np.array(beam_sizes, dtype=float)
-        currents = _np.array(currents, dtype=float)
-        if beam_sizes.size != currents.size:
-            return False
-        self._beamsize = beam_sizes
-        self._currents = currents
-        self._perform_analysis()
-        return True
-
-    def _select_experimental_setup(self):
-        """."""
-        if self.place.lower().startswith('li'):
-            self._quadname = 'LI-01:PS-QF3'
-            self._quadlen = 0.112
-            self._distance = 2.8775
-        if self.place.lower().startswith('tb-qd2a'):
-            self._quadname = 'TB-02:PS-QD2A'
-            self._quadlen = 0.1
-            self._distance = 6.904
-        if self.place.lower().startswith('tb-qf2a'):
-            self._quadname = 'TB-02:PS-QF2A'
-            self._quadlen = 0.1
-            self._distance = 6.534
-        self._conv2kl = _NormFact.create(self._quadname)
-
-    def _perform_analysis(self):
-        """."""
-        if not self._beamsize.size:
-            return
-        self._update_quad_strength()
-        self._trans_matrix_analysis()
-        self._thin_lens_approx()
-
-    def _update_quad_strength(self):
-        """."""
-        KL = self._conv2kl.conv_current_2_strength(
-            self._currents, strengths_dipole=self._energy)
-        self._quadstren = KL/self._quadlen
-        if self._plane == self.Plane.Y:
-            self._quadstren *= -1
-
-    def _thin_lens_approx(self):
-        """."""
-        fit = _np.polyfit(self._quadstren, self._beamsize**2, 2)
-        self._beamsize_fit = _np.sqrt(_np.polyval(fit, self._quadstren))
-        # d = self.distance + self.quad_length/2
-        # l = self.quad_length
-        # s_11 = fit[0]/(d*l)**2
-        # s_12 = (-fit[1]-2*d*l*s_11)/(2*l*d*d)
-        # s_22 = (fit[2]-s_11-2*d*s_12)/d**2
-        # self._update_twiss(s_11, s_12, s_22)
-
-    def _trans_matrix_analysis(self):
-        """."""
-        R = self._get_trans_mat()
-        pseudo_inv = (_np.linalg.inv(_np.transpose(R) @ R) @ _np.transpose(R))
-        [s_11, s_12, s_22] = pseudo_inv @ (self._beamsize**2)
-        # s_11, s_12, s_22 = np.linalg.lstsq(R, self._beamsize**2)[0]
-        self._update_twiss(s_11, s_12, s_22)
-
-    def _get_trans_mat(self):
-        """."""
-        R = _np.zeros((self._quadstren.size, 2, 2))
-        Rd = self.gettransmat('drift', L=self._distance)
-        for i, k1 in enumerate(self._quadstren):
-            Rq = self.gettransmat('quad', L=self._quadlen, K1=k1)
-            R[i] = _np.dot(Rd, Rq)
-        R11 = R[:, 0, 0].reshape(-1)
-        R12 = R[:, 0, 1].reshape(-1)
-        R = _np.column_stack((R11*R11, 2*R11*R12, R12*R12))
-        return R
-
-    def _update_twiss(self, s_11, s_12, s_22):
-        """."""
-        self._emittance = _np.sqrt(abs(s_11*s_22 - s_12*s_12))
-        self._beta = s_11 / self._emittance
-        self._alpha = -s_12 / self._emittance
-        self._gamma = s_22 / self._emittance
-
-    @staticmethod
-    def gettransmat(elem, L, K1=None, B=None):
-        """."""
-        M = _np.eye(2)
-        if elem.lower().startswith('qu') and K1 is not None and K1 == 0:
-            elem = 'drift'
-        if elem.lower().startswith('dr'):
-            M = _np.array([[1, L], [0, 1], ])
-        elif elem.lower().startswith('qu') and K1 is not None:
-            kq = _np.sqrt(abs(K1))
-            if K1 > 0:
-                c = _np.cos(kq*L)
-                s = _np.sin(kq*L)
-                m11, m12, m21 = c, 1/kq*s, -kq*s
-            else:
-                ch = _np.cosh(kq*L)
-                sh = _np.sinh(kq*L)
-                m11, m12, m21 = ch, 1/kq*sh, kq*sh
-            M = _np.array([[m11, m12], [m21, m11], ])
-        return M
