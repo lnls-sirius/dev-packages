@@ -1,7 +1,7 @@
 """Definition module."""
 import math as _math
 import logging as _log
-from ..sofb.csdev import SOFBFactory as _SOFBFactory, \
+from .csdev import SOFBFactory as _SOFBFactory, \
     ConstTLines as _ConstTLines
 from ..callbacks import Callback as _Callback
 

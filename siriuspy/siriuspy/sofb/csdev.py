@@ -10,7 +10,7 @@ from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     PSSearch as _PSSearch
 
 from ..csdevice import bpms as _csbpm
-from .. import timesys as _cstiming
+from ..timesys import csdev as _cstiming
 
 
 # --- Enumeration Types ---
