@@ -290,7 +290,7 @@ class App:
                 self._corr_group = value
                 self.driver.setParam('CorrGroup-Sts', self._corr_group)
                 self.driver.updatePV('CorrGroup-Sts')
-                self._calc_sl()
+                self._calc_deltakl()
                 status = True
 
         elif reason == 'SyncCorr-Sel':
