@@ -7,9 +7,10 @@ from functools import partial as _part
 from threading import Lock, Thread
 from copy import deepcopy as _dcopy
 import numpy as _np
-import siriuspy.util as _util
-import siriuspy.csdevice.bpms as _csbpm
-from siriuspy.thread import RepeaterThread as _Repeat
+
+from .. import util as _util
+from ..csdevice import bpms as _csbpm
+from ..thread import RepeaterThread as _Repeat
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig
 

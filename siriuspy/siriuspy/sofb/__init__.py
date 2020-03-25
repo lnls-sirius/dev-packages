@@ -1,8 +1,9 @@
-from . import as_ap_sofb, correctors, main, matrix, orbit
 from .main import SOFB
 from .matrix import EpicsMatrix
 from .correctors import EpicsCorrectors
 from .orbit import EpicsOrbit
+from .bpms import BPM, TimingConfig
 
-__all__ = (
-    'as_ap_sofb', 'correctors', 'main', 'matrix', 'orbit')
+del main, matrix, correctors, orbit, bpms
+
+__all__ = ('correctors', 'main', 'matrix', 'orbit', 'bpms')

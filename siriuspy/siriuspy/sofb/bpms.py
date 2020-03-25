@@ -1,11 +1,11 @@
 """Module to deal with orbit acquisition."""
 import logging as _log
 import numpy as _np
-from siriuspy.epics import PV as _PV
-import siriuspy.csdevice.bpms as _csbpm
-import siriuspy.timesys.csdev as _cstime
-from siriuspy.search import HLTimeSearch as _HLTimesearch
-from siriuspy.envars import VACA_PREFIX as LL_PREF
+from ..epics import PV as _PV
+from ..csdevice import bpms as _csbpm
+from ..timesys import csdev as _cstime
+from ..search import HLTimeSearch as _HLTimesearch
+from ..envars import VACA_PREFIX as LL_PREF
 from .base_class import BaseTimingConfig as _BaseTimingConfig
 
 TIMEOUT = 0.05

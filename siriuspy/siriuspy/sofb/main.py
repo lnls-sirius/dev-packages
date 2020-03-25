@@ -7,7 +7,7 @@ from threading import Thread as _Thread
 import numpy as _np
 from pcaspy import Driver as _PCasDriver
 
-from siriuspy.epics import PV as _PV
+from ..epics import PV as _PV
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
 from .correctors import BaseCorrectors as _BaseCorrectors

@@ -1,9 +1,9 @@
 """Definition module."""
 import math as _math
 import logging as _log
-from siriuspy.csdevice.orbitcorr import SOFBFactory as _SOFBFactory, \
+from ..csdevice.orbitcorr import SOFBFactory as _SOFBFactory, \
     ConstTLines as _ConstTLines
-from siriuspy.callbacks import Callback as _Callback
+from ..callbacks import Callback as _Callback
 
 _CSACCELS = {}
 
