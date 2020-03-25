@@ -4,12 +4,12 @@ This is not a primary source database. Primary sources can be found in:
  - Digital Multimeter: https://github.com/lnls-dig/dmm7510-epics-ioc
 """
 
-from . import util as _cutil
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     STOREDEBEAM = ('False', 'True')
@@ -27,12 +27,12 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Const class defining DCCTs constants and Enum types."""
 
-    MeasModeSel = _cutil.Const.register('MeasModeSel', _et.MEASMODE_SEL)
-    MeasModeSts = _cutil.Const.register('MeasModeSts', _et.MEASMODE_STS)
-    AvgFilterTyp = _cutil.Const.register('AvgFilterTyp', _et.AVGFILTERTYP)
+    MeasModeSel = _csdev.Const.register('MeasModeSel', _et.MEASMODE_SEL)
+    MeasModeSts = _csdev.Const.register('MeasModeSts', _et.MEASMODE_STS)
+    AvgFilterTyp = _csdev.Const.register('AvgFilterTyp', _et.AVGFILTERTYP)
 
 
 _c = Const  # syntactic sugar

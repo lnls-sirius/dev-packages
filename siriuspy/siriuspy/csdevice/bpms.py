@@ -4,7 +4,7 @@ import numpy as _np
 
 from ..util import get_namedtuple as _get_namedtuple
 
-from .util import ETypes as _et
+from ..csdev import ETypes as _et
 
 
 # TODO: refactor this code as to make it closer in structure to all other

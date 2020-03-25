@@ -2,6 +2,7 @@
 import os as _os
 from copy import deepcopy as _dcopy
 
+from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..util import get_namedtuple as _get_namedtuple
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
@@ -9,16 +10,15 @@ from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     PSSearch as _PSSearch
 
 from . import bpms as _csbpm
-from . import util as _cutil
 from . import timesys as _cstiming
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    ENBL_RF = _cutil.ETypes.OFF_ON
+    ENBL_RF = _csdev.ETypes.OFF_ON
     ORB_MODE_RINGS = ('Offline', 'SlowOrb', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
     SMOOTH_METH = ('Average', 'Median')
@@ -51,7 +51,7 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class ConstTLines(_cutil.Const):
+class ConstTLines(_csdev.Const):
     """Const class defining transport lines orbitcorr constants."""
 
     EVG_NAME = _TISearch.get_evg_name()
@@ -60,53 +60,53 @@ class ConstTLines(_cutil.Const):
     MAX_RINGSZ = 5
     TINY_KICK = 1e-3  # urad
 
-    EnbldDsbld = _cutil.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
+    EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
-    TrigAcqChan = _cutil.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
+    TrigAcqChan = _csdev.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
     TrigAcqDataChan = _csbpm.AcqChan
     TrigAcqDataSel = _csbpm.AcqDataTyp
     TrigAcqDataPol = _csbpm.Polarity
     TrigAcqRepeat = _csbpm.AcqRepeat
-    TrigAcqTrig = _cutil.Const.register('TrigAcqTrig', ('External', 'Data'))
-    SmoothMeth = _cutil.Const.register('SmoothMeth', _et.SMOOTH_METH)
-    SPassBgCtrl = _cutil.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
-    SPassBgSts = _cutil.Const.register('SPassBgSts', _et.SPASS_BG_STS)
-    SPassUseBg = _cutil.Const.register('SPassUseBg', _et.SPASS_USE_BG)
-    MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
-    MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
-    TransportLines = _cutil.Const.register(
+    TrigAcqTrig = _csdev.Const.register('TrigAcqTrig', ('External', 'Data'))
+    SmoothMeth = _csdev.Const.register('SmoothMeth', _et.SMOOTH_METH)
+    SPassBgCtrl = _csdev.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
+    SPassBgSts = _csdev.Const.register('SPassBgSts', _et.SPASS_BG_STS)
+    SPassUseBg = _csdev.Const.register('SPassUseBg', _et.SPASS_USE_BG)
+    MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
+    MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
+    TransportLines = _csdev.Const.register(
         'TransportLines', _et.TLINES, (0, 1))
-    Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
-    Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
+    Rings = _csdev.Const.register('Rings', _et.RINGS, (2, 3))
+    Accelerators = _csdev.Const.register('Accelerators', _et.ACCELERATORS)
 
-    SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
-    SyncWithInj = _cutil.Const.register('SyncWithInj', _et.OFF_ON)
-    ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
-    StsLblsCorr = _cutil.Const.register(
+    SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
+    SyncWithInj = _csdev.Const.register('SyncWithInj', _et.OFF_ON)
+    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
+    StsLblsCorr = _csdev.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
-    StsLblsOrb = _cutil.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
-    StsLblsGlob = _cutil.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
+    StsLblsOrb = _csdev.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
+    StsLblsGlob = _csdev.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
-    ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
+    ClosedLoop = _csdev.Const.register('ClosedLoop', _et.OFF_ON)
 
 
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
 
-    SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
-    StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
+    SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
+    StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
 
 
 class ConstSI(ConstRings):
     """Const class defining rings orbitcorr constants."""
 
-    ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
-    StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
-    CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
+    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
+    StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
+    CorrSync = _csdev.Const.register('CorrSync', _et.OFF_ON)
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
-    EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
+    EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
 # --- Database classes ---
@@ -170,7 +170,7 @@ class SOFBTLines(ConstTLines):
         dbase.update(self.get_corrs_database(prefix))
         dbase.update(self.get_respmat_database(prefix))
         dbase.update(self.get_orbit_database(prefix))
-        dbase = _cutil.add_pvslist_cte(dbase)
+        dbase = _csdev.add_pvslist_cte(dbase)
         return dbase
 
     def get_sofb_database(self, prefix=''):

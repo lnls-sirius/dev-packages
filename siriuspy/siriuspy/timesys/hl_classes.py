@@ -9,7 +9,7 @@ from siriuspy.util import mode as _mode
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.csdevice import timesys as _cstime
+from siriuspy.timesys import csdev as _cstime
 
 from siriuspy.callbacks import Callback as _Callback
 from .ll_classes import get_ll_trigger as _get_ll_trigger

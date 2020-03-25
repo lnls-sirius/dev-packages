@@ -3,8 +3,8 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE_OTHERS as \
+from ..pwrsupply.csdev import MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
+from ..pwrsupply.csdev import MAX_WFMSIZE_OTHERS as \
     _MAX_WFMSIZE_OTHERS
 
 from siriuspy.search import PSSearch as _PSSearch

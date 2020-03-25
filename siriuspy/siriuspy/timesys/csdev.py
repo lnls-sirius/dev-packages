@@ -3,7 +3,7 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys import constants as _c
-import siriuspy.csdevice.util as _cutil
+from .. import csdev as _csdev
 from siriuspy.optics import constants as _oc
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
@@ -24,7 +24,7 @@ class _classproperty():
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     EVT_MODES = ('Disabled', 'Continuous', 'Injection', 'OneShot', 'External')
@@ -39,7 +39,7 @@ class ETypes(_cutil.ETypes):
 _et = ETypes  # syntactic sugar
 
 
-class Const(_cutil.Const):
+class Const(_csdev.Const):
     """Constants important for the timing system."""
 
     AC_FREQUENCY = 60  # [Hz]
@@ -52,14 +52,14 @@ class Const(_cutil.Const):
     RF_DELAY = BASE_DELAY / 20
     FINE_DELAY = 5e-12  # [s] (five picoseconds)
 
-    EvtModes = _cutil.Const.register('EvtModes', _et.EVT_MODES)
-    EvtDlyTyp = _cutil.Const.register('EvtDlyTyp', _et.FIXED_INCR)
-    ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
-    TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
-    TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
-    LowLvlLock = _cutil.Const.register('LowLvlLock', _et.LOCKLL)
-    TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
-    TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
+    EvtModes = _csdev.Const.register('EvtModes', _et.EVT_MODES)
+    EvtDlyTyp = _csdev.Const.register('EvtDlyTyp', _et.FIXED_INCR)
+    ClockStates = _csdev.Const.register('ClockStates', _et.DSBL_ENBL)
+    TrigStates = _csdev.Const.register('TrigStates', _et.DSBL_ENBL)
+    TrigPol = _csdev.Const.register('TrigPol', _et.NORM_INV)
+    LowLvlLock = _csdev.Const.register('LowLvlLock', _et.LOCKLL)
+    TrigDlyTyp = _csdev.Const.register('TrigDlyTyp', _et.DLYTYP)
+    TrigSrcLL = _csdev.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     HLTrigStatusLabels = (
         'All PVs connected',
         'Device Enabled',
@@ -78,7 +78,7 @@ class Const(_cutil.Const):
 
     evt_ll_codes = list(range(64)) + [124]
     evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
-    EvtLL = _cutil.Const.register(
+    EvtLL = _csdev.Const.register(
                     'EventsLL', evt_ll_names, values=evt_ll_codes)
     del evt_ll_codes, evt_ll_names  # cleanup class namespace
 
@@ -91,7 +91,7 @@ class Const(_cutil.Const):
 
     clk_ll_codes = list(range(8))
     clk_ll_names = ['Clk{0:d}'.format(i) for i in clk_ll_codes]
-    ClkLL = _cutil.Const.register(
+    ClkLL = _csdev.Const.register(
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
 

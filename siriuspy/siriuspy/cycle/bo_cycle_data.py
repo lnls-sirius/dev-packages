@@ -1,7 +1,7 @@
 """Booster cycle data."""
 
 import numpy as _np
-from siriuspy.csdevice.pwrsupply import \
+from ..pwrsupply.csdev import \
     DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
     DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
 from siriuspy.search import PSSearch as _PSSearch

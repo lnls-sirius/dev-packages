@@ -10,7 +10,7 @@ from siriuspy.csdevice.currinfo import (
     get_lifetime_database,
 )
 
-public_interface = (
+PUBLIC_INTERFACE = (
         'ETypes',
         'Const',
         'get_currinfo_database',
@@ -25,7 +25,7 @@ class TestCurrInfoCSDevice(TestCase):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
                 currinfo,
-                public_interface)
+                PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_currinfo_database(self):

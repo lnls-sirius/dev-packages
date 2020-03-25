@@ -4,12 +4,12 @@ This is not a primary source database. Primary sources can be found in:
  - Digital Multimeter: https://github.com/lnls-dig/dmm7510-epics-ioc
 """
 
-from . import util as _cutil
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
 
-class ETypes(_cutil.ETypes):
+class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     RANGESEL = ('40 nC', '20 nC', '10 nC', '8 nC', '4 nC', '2 nC', '0.8 nC')
