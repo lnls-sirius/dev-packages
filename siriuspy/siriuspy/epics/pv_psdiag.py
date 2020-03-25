@@ -202,7 +202,7 @@ class ComputedPV:
             self._queue.add_callback(self._update_value, pvname, value)
 
     def _issue_callback(self, **kwargs):
-        for index, callback in self._callbacks.items():
+        for callback in self._callbacks.values():
             callback(**kwargs)
 
 

@@ -1,21 +1,18 @@
 #!/usr/bin/env python-sirius
-"""Fetcher module."""
+"""Fetcher module.
 
+See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+"""
 
-import requests
 from urllib import parse as _parse
+import requests
 import urllib3 as _urllib3
-# import json
 
-import siriuspy.envars as _envars
-
-
-# See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+from .. import envars as _envars
 
 
 class AuthenticationError(Exception):
     """."""
-    pass
 
 
 class ClientArchiver:

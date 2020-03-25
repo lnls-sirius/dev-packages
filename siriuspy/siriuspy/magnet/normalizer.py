@@ -1,4 +1,5 @@
 """This module contains classes for current normalization."""
+
 import re as _re
 import numpy as _np
 
@@ -77,11 +78,11 @@ class _MagnetNormalizer:
     # --- normalizer aux. methods ---
 
     def _conv_current_2_intfield(self, currents):
-        m = self._conv_current_2_multipoles(currents)
-        if m is None:
+        mpoles = self._conv_current_2_multipoles(currents)
+        if mpoles is None:
             return None
         mf = self._mfmult
-        intfield = m[mf['type']][mf['harmonic']]
+        intfield = mpoles[mf['type']][mf['harmonic']]
         return intfield
 
     def _conv_current_2_multipoles(self, currents):
@@ -93,12 +94,12 @@ class _MagnetNormalizer:
         if self._magfunc != 'dipole':
             # for psname in self._madata.psnames:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(currents)
-            msum = _mutil.sum_magnetic_multipoles(msum, m)
+            mpoles = excdata.interp_curr2mult(currents)
+            msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         else:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(currents)
-            msum = _mutil.sum_magnetic_multipoles(msum, m)
+            mpoles = excdata.interp_curr2mult(currents)
+            msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         return msum
 
     def _power_supplies(self):
@@ -127,17 +128,17 @@ class _MagnetNormalizer:
 
     def _calc_conv_coef(self):
         psdata = _PSData(self._psname)
-        db = psdata.propty_database
-        if 'Energy-SP' in db:
-            db = db['Energy-SP']
-        elif 'KL-SP' in db:
-            db = db['KL-SP']
-        elif 'SL-SP' in db:
-            db = db['SL-SP']
-        elif 'Kick-SP' in db:
-            db = db['Kick-SP']
-        if 'unit' in db:
-            unit = db['unit'].lower()
+        dbase = psdata.propty_database
+        if 'Energy-SP' in dbase:
+            dbase = dbase['Energy-SP']
+        elif 'KL-SP' in dbase:
+            dbase = dbase['KL-SP']
+        elif 'SL-SP' in dbase:
+            dbase = dbase['SL-SP']
+        elif 'Kick-SP' in dbase:
+            dbase = dbase['Kick-SP']
+        if 'unit' in dbase:
+            unit = dbase['unit'].lower()
             if unit == 'mrad':
                 self._coef_def2edb = 1e3
                 return
@@ -176,30 +177,33 @@ class DipoleNormalizer(_MagnetNormalizer):
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
                 _util.beam_rigidity(self._ref_energy)
-            # self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
-            self._ref_angle = ang['SI_B1'] + ang['SI_B2']  # + ang['SI_BC']
-            self._ref_BL = - self._ref_brho * self._ref_angle  # - self._ref_BL_BC
+            # self._ref_bl_bc = - self._ref_brho * ang['SI_BC']
+            # self._ref_angle = ang['SI_B1'] + ang['SI_B2']  + ang['SI_BC']
+            # self._ref_bl = - self._ref_brho * self._ref_angle \
+            #     - self._ref_bl_bc
+            self._ref_angle = ang['SI_B1'] + ang['SI_B2']
+            self._ref_bl = - self._ref_brho * self._ref_angle
         elif self._maname.sec == 'BO':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
                 _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
-            self._ref_BL = - self._ref_brho * self._ref_angle
+            self._ref_bl = - self._ref_brho * self._ref_angle
         elif self._maname.sec == 'TS':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
-            self._ref_BL = - self._ref_brho * self._ref_angle
+            self._ref_bl = - self._ref_brho * self._ref_angle
         elif self._maname.sec == 'TB':
             self._ref_energy = 0.150  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
-            self._ref_BL = - self._ref_brho * self._ref_angle
+            self._ref_bl = - self._ref_brho * self._ref_angle
         elif self._maname.sec == 'LI':
             self._ref_energy = 0.150  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['LI']
-            self._ref_BL = - self._ref_brho * self._ref_angle
+            self._ref_bl = - self._ref_brho * self._ref_angle
         else:
             raise NotImplementedError
 
@@ -211,11 +215,11 @@ class DipoleNormalizer(_MagnetNormalizer):
                 # 1. approximation beta(energy) ~ 1.0
                 intfields = (- self._ref_angle *
                              (self._ref_brho / self._ref_energy) *
-                             strengths)  # - self._ref_BL_BC)
+                             strengths)  # - self._ref_bl_bc)
             else:
                 # 2. without approximation
                 brho, *_ = _util.beam_rigidity(strengths)
-                intfields = brho * (- self._ref_angle)  # - self._ref_BL_BC
+                intfields = brho * (- self._ref_angle)  # - self._ref_bl_bc
         else:
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
@@ -234,13 +238,13 @@ class DipoleNormalizer(_MagnetNormalizer):
         if self._maname.sec == 'SI':
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
-                total_bl = intfields  # + self._ref_BL_BC
+                total_bl = intfields  # + self._ref_bl_bc
                 strengths = -self._magnet_conv_sign * \
                     ((self._ref_energy / self._ref_brho) *
                      (-total_bl) / self._ref_angle)
             else:
                 # 2. without approximation
-                total_bl = intfields  # + self._ref_BL_BC
+                total_bl = intfields  # + self._ref_bl_bc
                 beam_rigidity = -total_bl / self._ref_angle
                 alpha = (beam_rigidity / self._ref_brho) * \
                     (self._ref_gamma**2 - 1.0)/(self._ref_gamma)

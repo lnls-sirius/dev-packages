@@ -1,9 +1,10 @@
 """PVs Configs Handler."""
 
 import time as _time
-from epics import get_pv as _get_pv
 import numpy as _np
-from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
+from epics import get_pv as _get_pv
+
+from . import ConfigDBDocument as _ConfigDBDocument
 
 
 _TIMEOUT = 0.5
@@ -26,12 +27,13 @@ class PVsConfig(_ConfigDBDocument):
 
     @property
     def connected(self):
+        """."""
         template = self.get_value_from_template()
         for pvn, _, _ in template['pvs']:
-            pv = self.PVs.get(pvn)
-            if pv is None:
+            pvobj = self.PVs.get(pvn)
+            if pvobj is None:
                 return False
-            elif not pv.connected:
+            elif not pvobj.connected:
                 return False
         return True
 
@@ -48,9 +50,9 @@ class PVsConfig(_ConfigDBDocument):
         # read
         pvs_not_read = set()
         for pvn, _, delay in template['pvs']:
-            pv = self._get_pv(pvn)
-            if pv.wait_for_connection(timeout):
-                value = pv.get(timeout=timeout)
+            pvobj = self._get_pv(pvn)
+            if pvobj.wait_for_connection(timeout):
+                value = pvobj.get(timeout=timeout)
             else:
                 pvs_not_read.add(pvn)
                 value = 0
@@ -64,11 +66,10 @@ class PVsConfig(_ConfigDBDocument):
 
     def read_and_save(self, new_name=None):
         """Read machine state and save new configuration in config server."""
-        ok, failed_list = self.read()
-        if not ok:
+        status_ok, failed_list = self.read()
+        if not status_ok:
             return False, failed_list
-        else:
-            self.save(new_name)
+        self.save(new_name)
         return True, []
 
     def apply(self, timeout=_TIMEOUT):
@@ -80,9 +81,9 @@ class PVsConfig(_ConfigDBDocument):
 
         # set
         for pvn, value, delay in self._value['pvs']:
-            pv = self._get_pv(pvn)
+            pvobj = self._get_pv(pvn)
             try:
-                pv.put(value)
+                pvobj.put(value)
                 _time.sleep(delay)
             except TypeError:
                 pvs_not_set.add(pvn)
@@ -105,27 +106,27 @@ class PVsConfig(_ConfigDBDocument):
     def load_and_apply(self, timeout=_TIMEOUT):
         """Load from server, apply to machine and check if implemented."""
         self.load()
-        ok, failed_list = self.apply(timeout=timeout)
-        if not ok:
+        status_ok, failed_list = self.apply(timeout=timeout)
+        if not status_ok:
             return False, failed_list
         return True, []
 
-    # ---------- auxiliar methods ----------
+    # ---------- private methods ----------
 
     def _get_pv(self, pvname, timeout=_TIMEOUT):
         """Return PV object."""
-        pv = self.PVs.get(pvname)
-        if pv is None:
-            pv = _get_pv(pvname, timeout=_TIMEOUT)
-            self.PVs[pvname] = pv
-        return pv
+        pvobj = self.PVs.get(pvname)
+        if pvobj is None:
+            pvobj = _get_pv(pvname, timeout=timeout)
+            self.PVs[pvname] = pvobj
+        return pvobj
 
     def _check_pv(self, pvname, value, timeout=_TIMEOUT,
                   rel_tol=1e-06, abs_tol=0.0):
         """Check PV value."""
-        pv = self._get_pv(pvname)
-        pv.wait_for_connection(timeout)
-        curr_val = pv.get(timeout=timeout)
+        pvobj = self._get_pv(pvname)
+        pvobj.wait_for_connection(timeout)
+        curr_val = pvobj.get(timeout=timeout)
         if curr_val is None:
             return False
         elif isinstance(curr_val, (_np.ndarray, list, tuple)) or \

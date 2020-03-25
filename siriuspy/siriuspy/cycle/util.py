@@ -3,9 +3,9 @@
 
 import time as _time
 import numpy as _np
-from siriuspy.namesys import Filter as _Filter
-from siriuspy.search import PSSearch as _PSSearch, \
-    HLTimeSearch as _HLTimeSearch
+
+from ..namesys import Filter as _Filter
+from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 
 
 TRIGGER_NAMES = {
@@ -40,6 +40,7 @@ def get_sections(psnames):
 
 
 def get_trigger_by_psname(psnames):
+    """."""
     psnames = set(psnames)
     triggers = set()
     for trig in TRIGGER_NAMES:
@@ -50,13 +51,13 @@ def get_trigger_by_psname(psnames):
     return triggers
 
 
-def pv_timed_get(pv, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
+def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
     """Do timed get."""
-    if not pv.connected:
+    if not pvobj.connected:
         return False
-    t0 = _time.time()
-    while _time.time() - t0 < wait:
-        pvvalue = pv.get()
+    time0 = _time.time()
+    while _time.time() - time0 < wait:
+        pvvalue = pvobj.get()
         status = False
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
@@ -76,10 +77,10 @@ def pv_timed_get(pv, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
     return status
 
 
-def pv_conn_put(pv, value):
+def pv_conn_put(pvobj, value):
     """Put if connected."""
-    if not pv.connected:
+    if not pvobj.connected:
         return False
-    if pv.put(value):
+    if pvobj.put(value):
         return True
     return False

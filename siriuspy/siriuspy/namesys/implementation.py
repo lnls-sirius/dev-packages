@@ -32,6 +32,7 @@ def join_name(**kwargs):
 
     Parameters
     ----------
+
     channel_type [str] : PyDM channel type, ex: 'ca'
     prefix [str] : Prefix, ex: 'fac-454lnls'
     sec [str] : Section, ex: 'SI'
@@ -204,6 +205,7 @@ class SiriusPVName(str):
 
     @property
     def device_name(self):
+        """."""
         return SiriusPVName(self._device_name)
 
     def substitute(self, **kwargs):
@@ -224,6 +226,7 @@ class SiriusPVName(str):
         return join_name(**dic_)
 
     def get_nickname(self, sec=False, dev=False):
+        """."""
         nickname = ''
         if sec:
             nickname += self.sec + '-'

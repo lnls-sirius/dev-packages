@@ -234,7 +234,6 @@ class PSBSMP(_BSMP):
                 func_id=PSBSMP.CONST.F_SET_PARAM,
                 input_val=(eid, index, value))
 
-
     # --- wfmref methods ---
 
     @property
@@ -441,7 +440,8 @@ class PSBSMP(_BSMP):
                 # print('psbsmp.curve_read-2')
                 if curve_id == PSBSMP.ID_CURVE_BUFSAMPLE and \
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
-                    # print('sit1, add:{}, curve_id:{}, block:{}'.format(add, curve_id, block))
+                    # print('sit1, add:{}, curve_id:{}, block:{}'.format(
+                    #     add, curve_id, block))
                     # This is the expected behaviour when DSP is writting to buffer sample
                     return None
                 # anomalous response!
