@@ -4,8 +4,8 @@
 
 from unittest import TestCase
 from siriuspy import util
-from siriuspy.csdevice import currinfo
-from siriuspy.csdevice.currinfo import (
+from siriuspy.currinfo import csdev
+from siriuspy.currinfo.csdev import (
     get_currinfo_database,
     get_lifetime_database,
 )
@@ -19,13 +19,12 @@ PUBLIC_INTERFACE = (
 
 
 class TestCurrInfoCSDevice(TestCase):
-    """Test siriuspy.csdevice.currinfo module."""
+    """Test siriuspy.currinfo.csdev module."""
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                currinfo,
-                PUBLIC_INTERFACE)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_currinfo_database(self):
