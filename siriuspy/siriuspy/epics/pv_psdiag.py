@@ -53,25 +53,25 @@ class ComputedPV:
                 # one corresponding to the main current.
                 self.pvs[0].add_callback(self._value_update_callback)
             else:
-                for pv in self.pvs:
-                    pv.add_callback(self._value_update_callback)
+                for pvobj in self.pvs:
+                    pvobj.add_callback(self._value_update_callback)
 
         # init limits
         if self.connected:
             lims = self.computer.compute_limits(self)
             self._set_limits(lims)
 
-        for pv in self.pvs:
-            pv.run_callbacks()
+        for pvobj in self.pvs:
+            pvobj.run_callbacks()
 
     # --- public methods ---
 
     @property
     def connected(self):
         """Return wether all pvs are connected."""
-        for pv in self.pvs:
-            if not pv.connected:
-                # print(pv.pvname)
+        for pvobj in self.pvs:
+            if not pvobj.connected:
+                # print(pvobj.pvname)
                 return False
         return True
 
@@ -134,12 +134,12 @@ class ComputedPV:
     def _create_primary_pvs_list(self, pvs):
         # get list of primary pvs
         ppvs = list()  # List with PVs used by the computed PV
-        for pv in pvs:
-            if isinstance(pv, str):  # give up string option.
-                tpv = _PV(pv, connection_timeout=_CONN_TIMEOUT)
+        for pvobj in pvs:
+            if isinstance(pvobj, str):  # give up string option.
+                tpv = _PV(pvobj, connection_timeout=_CONN_TIMEOUT)
                 ppvs.append(tpv)
             else:
-                ppvs.append(pv)
+                ppvs.append(pvobj)
         return ppvs
 
     def _is_same(self, value):

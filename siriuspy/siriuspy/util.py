@@ -143,8 +143,8 @@ def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
         pvname = _envars.VACA_PREFIX + pvname
-    pv = _epics.PV(pvname=pvname, connection_timeout=timeout)
-    status = pv.wait_for_connection(timeout=timeout)
+    pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
+    status = pvobj.wait_for_connection(timeout=timeout)
     return status
 
 

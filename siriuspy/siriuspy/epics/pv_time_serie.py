@@ -21,7 +21,7 @@ class SiriusPVTimeSerie:
             raise ValueError(
                 "Can not create an auto-fill serie without using "
                 "PV timestamp!")
-        self._pv = pv
+        self._pvobj = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
         self._nr_max_points = nr_max_points
@@ -148,9 +148,10 @@ class SiriusPVTimeSerie:
         if self.connected():
             timestamp = _time.time()
             if self._use_pv_timestamp:
-                pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
+                pv_timestamp, pv_value = \
+                    self._pvobj.timestamp, self._pvobj.value
             else:
-                pv_timestamp, pv_value = timestamp, self._pv.value
+                pv_timestamp, pv_value = timestamp, self._pvobj.value
 
             # check if it is a new datapoint
             if tdeque or pv_timestamp != tdeque[-1]:
@@ -220,7 +221,8 @@ class SiriusPVTimeSerie:
                         low_interval_end)
 
             for _ in range(search_index + 1):
-                self._timestamp_deque.popleft(), self._value_deque.popleft()
+                _ = \
+                    self._timestamp_deque.popleft(), self._value_deque.poplef()
 
     def clearserie(self):
         """Clear time serie."""
@@ -229,7 +231,7 @@ class SiriusPVTimeSerie:
 
     def connected(self):
         """Check PV connection."""
-        return self._pv.connected
+        return self._pvobj.connected
 
     def __str__(self):
         """Return string representation of time series."""
