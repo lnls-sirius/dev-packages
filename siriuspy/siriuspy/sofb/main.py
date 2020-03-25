@@ -5,7 +5,6 @@ import logging as _log
 from functools import partial as _part
 from threading import Thread as _Thread
 import numpy as _np
-from pcaspy import Driver as _PCasDriver
 
 from ..epics import PV as _PV
 from .matrix import BaseMatrix as _BaseMatrix
@@ -25,8 +24,6 @@ class SOFB(_BaseClass):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
-        self.add_callback(self.update_driver)
-        self._driver = None
         self._orbit = self._correctors = self._matrix = None
         self._auto_corr = self._csorb.ClosedLoop.Off
         self._auto_corr_freq = 1
@@ -113,16 +110,6 @@ class SOFB(_BaseClass):
         if isinstance(mat, _BaseMatrix):
             self._map2write.update(mat.get_map2write())
             self._matrix = mat
-
-    @property
-    def driver(self):
-        """Set the driver of the instance."""
-        return self._driver
-
-    @driver.setter
-    def driver(self, driver):
-        if isinstance(driver, _PCasDriver):
-            self._driver = driver
 
     @property
     def havebeam(self):
@@ -328,11 +315,6 @@ class SOFB(_BaseClass):
         msg = 'kicks applied!'
         self._update_log(msg)
         _log.info(msg)
-
-    def update_driver(self, pvname, value, **kwargs):
-        if self._driver is not None:
-            self._driver.setParam(pvname, value)
-            self._driver.updatePV(pvname)
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
