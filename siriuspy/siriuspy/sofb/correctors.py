@@ -3,6 +3,7 @@
 import time as _time
 import logging as _log
 import numpy as _np
+
 from .. import util as _util
 from ..epics import PV as _PV
 from ..thread import RepeaterThread as _Repeat
@@ -11,6 +12,7 @@ from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 from ..namesys import SiriusPVName as _PVName
+
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
 

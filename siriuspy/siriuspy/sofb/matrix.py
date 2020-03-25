@@ -5,6 +5,7 @@ from copy import deepcopy as _dcopy
 import logging as _log
 import numpy as _np
 from functools import partial as _part
+
 from .base_class import BaseClass as _BaseClass
 
 
