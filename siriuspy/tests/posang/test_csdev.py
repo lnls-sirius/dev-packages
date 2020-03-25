@@ -1,11 +1,11 @@
 #!/usr/bin/env python-sirius
 
-"""Unittest module for opticscorr.py."""
+"""Unittest module for posang.py."""
 
 from unittest import TestCase
 from siriuspy import util
-from siriuspy.csdevice import posang
-from siriuspy.csdevice.posang import get_posang_database
+from siriuspy.posang import csdev
+from siriuspy.posang.csdev import get_posang_database
 
 
 PUBLIC_INTERFACE = (
@@ -14,13 +14,13 @@ PUBLIC_INTERFACE = (
     )
 
 
-class TestOpticsCorrCSDevice(TestCase):
-    """Test siriuspy.csdevice.opticscorr module."""
+class TestPosAngCSDevice(TestCase):
+    """Test siriuspy.posanf.csdev module."""
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            posang, PUBLIC_INTERFACE)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_posang_database(self):
