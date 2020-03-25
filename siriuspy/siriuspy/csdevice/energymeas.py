@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import numpy as _np
-from siriuspy.csdevice import util as _cutil
+
+from . import util as _cutil
 
 
 # --- Enumeration Types ---

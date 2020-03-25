@@ -1,7 +1,9 @@
 """Implementation of web server data retrieval functions."""
 import re as _re
 import urllib.request as _urllib_request
-import siriuspy.envars as _envars
+
+from .. import envars as _envars
+
 
 _TIMEOUT = 1.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'

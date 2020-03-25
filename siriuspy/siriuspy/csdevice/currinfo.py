@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of CurrInfo SoftIOCs."""
 import numpy as _np
-from siriuspy.csdevice import util as _cutil
+
+from . import util as _cutil
 
 
 # --- Enumeration Types ---
@@ -128,7 +129,7 @@ def get_lifetime_database():
                           'low': -10.0, 'high': 10.0, 'lolo': -10.0,
                           'hihi': 10.0},
         'Lifetime-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
-                                 'unit': 's'},
+                         'unit': 's'},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTot-Mon': {'type': 'int', 'value': 0},
         'BufferValue-Mon': {'type': 'float', 'prec': 3, 'count': 100000,

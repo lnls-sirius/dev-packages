@@ -1,5 +1,6 @@
 """Define PVs, constants and properties of OpticsCorr SoftIOCs."""
-from siriuspy.csdevice import util as _cutil
+
+from . import util as _cutil
 
 
 # --- Enumeration Types ---

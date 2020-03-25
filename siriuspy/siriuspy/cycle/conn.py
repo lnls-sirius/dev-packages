@@ -123,7 +123,7 @@ class Timing:
                     break
                 _time.sleep(SLEEP_CAPUT)
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def enable_evg(self):
         """Enable EVG."""

@@ -86,7 +86,7 @@ class BONormListFactory:
             return True, max_error
         return False, max_error
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def _create_pvs(self):
         pvs = dict()
@@ -264,7 +264,7 @@ class BORFRampFactory:
         self._rf_params = self._generate_rf_params()
         return self._rf_params
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def _create_pvs(self):
         pvs = dict()
@@ -311,7 +311,7 @@ class BOTIRampFactory:
         self._ti_params = self._generate_ti_params()
         return self._ti_params
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def _create_pvs(self):
         pvs = dict()

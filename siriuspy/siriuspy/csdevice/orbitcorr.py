@@ -1,14 +1,16 @@
 """Define PVs, constants and properties of OrbitCorr SoftIOCs."""
 import os as _os
 from copy import deepcopy as _dcopy
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.util import get_namedtuple as _get_namedtuple
-import siriuspy.csdevice.bpms as _csbpm
-from siriuspy.csdevice import util as _cutil
-from siriuspy.csdevice import timesys as _cstiming
-from siriuspy.search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
+
+from ..namesys import SiriusPVName as _PVName
+from ..util import get_namedtuple as _get_namedtuple
+from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
+
+from . import bpms as _csbpm
+from . import util as _cutil
+from . import timesys as _cstiming
 
 
 # --- Enumeration Types ---
@@ -159,20 +161,21 @@ class SOFBTLines(ConstTLines):
 
     @property
     def isring(self):
+        """."""
         return self.acc in self.Rings._fields
 
     def get_ioc_database(self, prefix=''):
         """Return IOC database."""
-        db = self.get_sofb_database(prefix)
-        db.update(self.get_corrs_database(prefix))
-        db.update(self.get_respmat_database(prefix))
-        db.update(self.get_orbit_database(prefix))
-        db = _cutil.add_pvslist_cte(db)
-        return db
+        dbase = self.get_sofb_database(prefix)
+        dbase.update(self.get_corrs_database(prefix))
+        dbase.update(self.get_respmat_database(prefix))
+        dbase.update(self.get_orbit_database(prefix))
+        dbase = _cutil.add_pvslist_cte(dbase)
+        return dbase
 
     def get_sofb_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
-        db = {
+        dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
             'ClosedLoop-Sel': {
                 'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
@@ -262,11 +265,11 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'value': 1,
                 'enums': self.StsLblsGlob._fields}
             }
-        return self._add_prefix(db, prefix)
+        return self._add_prefix(dbase, prefix)
 
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
-        db = {
+        dbase = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
                 'hilim': 20, 'lolim': 0.01, 'prec': 2},
@@ -297,7 +300,7 @@ class SOFBTLines(ConstTLines):
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields}
             }
-        return self._add_prefix(db, prefix)
+        return self._add_prefix(dbase, prefix)
 
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
@@ -312,13 +315,13 @@ class SOFBTLines(ConstTLines):
             'OfflineOrbY-SP', 'OfflineOrbY-RB',
             'BPMOffsetX-Mon', 'BPMOffsetY-Mon',
             ]
-        db = dict()
+        dbase = dict()
         prop = {
             'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
             'value': nbpm*[0]}
         for k in pvs:
-            db[k] = _dcopy(prop)
-        db.update({
+            dbase[k] = _dcopy(prop)
+        dbase.update({
             'SOFBMode-Sel': {
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.SOFBMode.Offline,
@@ -485,11 +488,11 @@ class SOFBTLines(ConstTLines):
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
                 'value': self.StsLblsOrb._fields},
             })
-        return self._add_prefix(db, prefix)
+        return self._add_prefix(dbase, prefix)
 
     def get_respmat_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
-        db = {
+        dbase = {
             'RespMat-SP': {
                 'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
                 'value': self.MTX_SZ*[0],
@@ -549,12 +552,12 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
                 'unit': 'urad'},
             }
-        return self._add_prefix(db, prefix)
+        return self._add_prefix(dbase, prefix)
 
-    def _add_prefix(self, db, prefix):
+    def _add_prefix(self, dbase, prefix):
         if prefix:
-            return {prefix + k: v for k, v in db.items()}
-        return db
+            return {prefix + k: v for k, v in dbase.items()}
+        return dbase
 
 
 class SOFBRings(SOFBTLines, ConstRings):
@@ -578,9 +581,9 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'hilim': self.MAX_RINGSZ+1,
                 'unit': 'Nr Times to extend the ring'},
             }
-        db = super().get_sofb_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
+        dbase = super().get_sofb_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
 
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
@@ -646,9 +649,9 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'unit': 's', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
             })
-        db = super().get_orbit_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
+        dbase = super().get_orbit_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
 
 
 class SOFBSI(SOFBRings, ConstSI):
@@ -695,9 +698,9 @@ class SOFBSI(SOFBRings, ConstSI):
             'DeltaKickRF-RB': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
-        db = super().get_sofb_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
+        dbase = super().get_sofb_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
 
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -711,9 +714,9 @@ class SOFBSI(SOFBRings, ConstSI):
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
             }
-        db = super().get_corrs_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
+        dbase = super().get_corrs_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
 
     def get_respmat_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -727,9 +730,9 @@ class SOFBSI(SOFBRings, ConstSI):
             'DeltaKickRF-Mon': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
-        db = super().get_respmat_database(prefix=prefix)
-        db.update(self._add_prefix(db_ring, prefix))
-        return db
+        dbase = super().get_respmat_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
 
 
 class SOFBFactory:

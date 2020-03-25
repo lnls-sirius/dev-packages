@@ -9,7 +9,8 @@ from urllib.error import URLError as _URLError
 import dateutil.parser
 import numpy as _np
 
-import siriuspy.envars as _envars
+from .. import envars as _envars
+
 from . import _templates
 
 
@@ -253,6 +254,7 @@ class ConfigDBException(Exception):
     """Default exception raised for configDB server errors."""
 
     def __init__(self, response):
+        """."""
         super().__init__('{code:d}: {message:s}.'.format(**response))
         self.server_code = response['code']
         self.server_message = response['message']

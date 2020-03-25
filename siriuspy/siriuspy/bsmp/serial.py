@@ -2,6 +2,7 @@
 
 import struct as _struct
 from threading import Lock as _Lock
+
 from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
 from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
