@@ -9,8 +9,8 @@ from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
 
-from . import bpms as _csbpm
-from . import timesys as _cstiming
+from ..csdevice import bpms as _csbpm
+from ..timesys import csdev as _cstiming
 
 
 # --- Enumeration Types ---

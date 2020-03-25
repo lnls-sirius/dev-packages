@@ -18,7 +18,7 @@ from ..namesys import SiriusPVName as _PVName
 from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
-from ..csdevice.orbitcorr import SOFBRings as _SOFBRings
+from ..sofb.csdev import SOFBRings as _SOFBRings
 from ..search import LLTimeSearch as _LLTimeSearch, \
     PSSearch as _PSSearch
 
