@@ -2,8 +2,8 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 
-from ..csdev import ETypes as _et
-from ..util import get_namedtuple as _get_namedtuple
+from ...csdev import ETypes as _et
+from ...util import get_namedtuple as _get_namedtuple
 
 
 # TODO: refactor this code as to make it closer in structure to all other

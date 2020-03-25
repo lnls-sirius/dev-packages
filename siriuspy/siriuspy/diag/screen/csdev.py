@@ -6,7 +6,7 @@ This is not a primary source database. Primary sources can be found in:
  - Motor IOC: https://github.com/lnls-dig/galil-dmc30017-epics-ioc
 """
 
-from .. import csdev as _csdev
+from ... import csdev as _csdev
 
 
 # --- Enumeration Types ---

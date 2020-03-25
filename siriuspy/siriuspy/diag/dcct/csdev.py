@@ -4,7 +4,7 @@ This is not a primary source database. Primary sources can be found in:
  - Digital Multimeter: https://github.com/lnls-dig/dmm7510-epics-ioc
 """
 
-from .. import csdev as _csdev
+from ... import csdev as _csdev
 
 
 # --- Enumeration Types ---
