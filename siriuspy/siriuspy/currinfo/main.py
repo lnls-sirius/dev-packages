@@ -11,7 +11,7 @@ from siriuspy.envars import VACA_PREFIX as _vaca_prefix
 from siriuspy.clientarch import ClientArchiver as _ClientArch
 from siriuspy.pwrsupply.csdev import Const as _PSc
 
-from siriuspy.currinfo.csdev import Const as _Const, \
+from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
 
 
