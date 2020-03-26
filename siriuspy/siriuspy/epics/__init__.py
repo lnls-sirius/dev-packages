@@ -1,4 +1,5 @@
 """Epics-related subpackage."""
+
 # the following parameter is used to establish connections with IOC PVs.
 CONNECTION_TIMEOUT = 0.050  # [s]
 

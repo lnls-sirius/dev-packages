@@ -1,15 +1,19 @@
+"""Lattice survey module."""
+
 import pyaccel
 import pymodels
-from siriuspy.namesys import join_name as _join_name, SiriusPVName as _PVName
-from siriuspy.clientweb import crates_mapping as _crates_mapping
+from ..namesys import join_name as _join_name, SiriusPVName as _PVName
+from ..clientweb import crates_mapping as _crates_mapping
 
 
 def run_all():
+    """."""
     generate_bpm_static_table()
     generate_model_static_table()
 
 
 def generate_model_static_table():
+    """."""
     disclaimer = \
         "# This file was generated automatically from the data of the \n"\
         "# models of the accelerators in the pymodels repository by the \n"\
@@ -81,6 +85,7 @@ def _append_mag_data(filename, model, acc, label, section):
 
 
 def generate_bpm_static_table():
+    """."""
     disclaimer = \
         "# This file was generated automatically from the data of the files\n"\
         "# in the subfolder Mapeamento_placas_MicroTCA_vs_BPMs and the\n"\
@@ -131,11 +136,11 @@ def _append_bpm_data(filename, model, acc, crates, label, section):
         f.write('\n\n\n# '+label+'\n')
         f.write('#'+57*'-' + '\n')
         f.write("#{bpm:20s} {pos:^15s} {timing:20s}\n".format(
-                            bpm='Name', pos='Position [m]', timing='Timing'))
+            bpm='Name', pos='Position [m]', timing='Timing'))
         f.write('#'+57*'-' + '\n')
         for bpm in bpms:
             f.write("{bpm:20s} {pos:^15.4f} {timing:20s}\n".format(
-                                bpm=bpm, **bpm_data[bpm]))
+                bpm=bpm, **bpm_data[bpm]))
 
 
 def _get_crates_mapping():
@@ -155,7 +160,7 @@ def _get_crates_mapping():
             mapping[crates[crate]].append(dev)
 
     inv_mapping = dict()
-    for k, vs in mapping.items():
-        for v in vs:
-            inv_mapping[v] = k
+    for k, values in mapping.items():
+        for value in values:
+            inv_mapping[value] = k
     return inv_mapping

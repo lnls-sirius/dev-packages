@@ -21,6 +21,7 @@ from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
 
+
 TIMEOUT_CONNECTION = 0.05
 SLEEP_CAPUT = 0.1
 TIMEOUT_CHECK = 20
@@ -28,6 +29,8 @@ TIMEOUT_CHECK = 20
 
 class Timing:
     """Timing."""
+
+    # NOTE: this could be a class derived from one of the Device classes.
 
     EVTNAME_CYCLE = 'Cycle'
 
@@ -47,22 +50,27 @@ class Timing:
         self._initial_state = dict()
         self._create_pvs()
 
-    def connected(self, sections=list(), return_disconn=False):
+    @staticmethod
+    def connected(sections=None, return_disconn=False):
         """Return connected state."""
+        if sections is None:
+            sections = list()
         disconn = set()
-        for name, pv in Timing._pvs.items():
+        for name, pvobj in Timing._pvs.items():
             name = _PVName(name)
             if (name.dev == 'EVG' or name.sec in sections) and\
-                    not pv.connected:
-                disconn.add(pv.pvname)
+                    not pvobj.connected:
+                disconn.add(pvobj.pvname)
         if return_disconn:
             return disconn
         return not bool(disconn)
 
     # ----- main commands -----
 
-    def prepare(self, mode, triggers=list()):
+    def prepare(self, mode, triggers=None):
         """Initialize properties."""
+        if triggers is None:
+            triggers = list()
         # Enable EVG
         self.enable_evg()
         # Disable Injection
@@ -70,23 +78,25 @@ class Timing:
         # Config. triggers and events
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
-            pv = Timing._pvs[prop]
-            if pv.wait_for_connection(TIMEOUT_CONNECTION):
-                pv.value = defval
+            pvobj = Timing._pvs[prop]
+            if pvobj.wait_for_connection(TIMEOUT_CONNECTION):
+                pvobj.value = defval
                 _time.sleep(1.5*SLEEP_CAPUT)
         # Update events
         self.update_events()
 
-    def check(self, mode, triggers=list()):
+    def check(self, mode, triggers=None):
         """Check if timing is configured."""
+        if triggers is None:
+            triggers = list()
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             try:
                 prop_sts = _get_pair_sprb(prop)[1]
             except TypeError:
                 continue
-            pv = Timing._pvs[prop_sts]
-            if not pv.wait_for_connection(TIMEOUT_CONNECTION):
+            pvobj = Timing._pvs[prop_sts]
+            if not pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 return False
             else:
                 if prop_sts.propty_name == 'Src':
@@ -94,63 +104,63 @@ class Timing:
 
                 if prop_sts.propty_name.endswith(('Duration', 'Delay')):
                     tol = 0.008 * 15
-                    if not _isclose(pv.value, defval, abs_tol=tol):
-                        # print(pv.pvname, pv.value, defval)
+                    if not _isclose(pvobj.value, defval, abs_tol=tol):
+                        # print(pvobj.pvname, pvobj.value, defval)
                         return False
                 elif isinstance(defval, (_np.ndarray, list, tuple)):
-                    if _np.any(pv.value[0:len(defval)] != defval):
-                        # print(pv.pvname, pv.value, defval)
+                    if _np.any(pvobj.value[0:len(defval)] != defval):
+                        # print(pvobj.pvname, pvobj.value, defval)
                         return False
-                elif pv.value != defval:
-                    # print(pv.pvname, pv.value, defval)
+                elif pvobj.value != defval:
+                    # print(pvobj.pvname, pvobj.value, defval)
                     return False
         return True
 
     def trigger(self, mode):
         """Trigger timming to cycle power supply."""
         if mode == 'Cycle':
-            pv = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
-            pv.value = 1
+            pvobj = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
+            pvobj.value = 1
         else:
-            pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
-            pv.value = _TIConst.DsblEnbl.Enbl
+            pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
+            pvobj.value = _TIConst.DsblEnbl.Enbl
 
-            pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sts']
+            pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sts']
             t0 = _time.time()
             while _time.time() - t0 < TIMEOUT_CHECK*3:
-                if pv.value == _TIConst.DsblEnbl.Enbl:
+                if pvobj.value == _TIConst.DsblEnbl.Enbl:
                     break
                 _time.sleep(SLEEP_CAPUT)
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def enable_evg(self):
         """Enable EVG."""
-        pv = Timing._pvs[Timing.evg_name+':DevEnbl-Sts']
-        if pv.value == _TIConst.DsblEnbl.Enbl:
+        pvobj = Timing._pvs[Timing.evg_name+':DevEnbl-Sts']
+        if pvobj.value == _TIConst.DsblEnbl.Enbl:
             return
         pv_sel = Timing._pvs[Timing.evg_name+':DevEnbl-Sel']
         pv_sel.value = _TIConst.DsblEnbl.Enbl
 
     def set_injection_state(self, state):
         """Turn on/off InjectionEvt-Sel."""
-        pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
-        pv.value = state
+        pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
+        pvobj.value = state
 
     def update_events(self):
         """Update events."""
-        pv = Timing._pvs[Timing.evg_name+':UpdateEvt-Cmd']
-        pv.value = 1
+        pvobj = Timing._pvs[Timing.evg_name+':UpdateEvt-Cmd']
+        pvobj.value = 1
 
     def get_cycle_count(self):
         """Get InjCount value."""
-        pv = Timing._pvs[Timing.evg_name+':InjCount-Mon']
-        return pv.value
+        pvobj = Timing._pvs[Timing.evg_name+':InjCount-Mon']
+        return pvobj.value
 
     def check_ramp_end(self):
         """Check InjCount == DEFAULT_RAMP_NRCYCLES."""
-        pv = Timing._pvs[Timing.evg_name+':InjCount-Mon']
-        return (pv.value == DEFAULT_RAMP_NRCYCLES)
+        pvobj = Timing._pvs[Timing.evg_name+':InjCount-Mon']
+        return pvobj.value == DEFAULT_RAMP_NRCYCLES
 
     def restore_initial_state(self):
         """Restore initial state."""
@@ -177,12 +187,15 @@ class Timing:
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
         for trig in _TRIGGER_NAMES:
-            pv = Timing._pvs[trig+':Src-Sel']
-            pv.value = _TIConst.DsblEnbl.Dsbl
-            pv = Timing._pvs[trig+':State-Sel']
-            pv.value = _TIConst.DsblEnbl.Dsbl
+            pvobj = Timing._pvs[trig+':Src-Sel']
+            pvobj.value = _TIConst.DsblEnbl.Dsbl
+            pvobj = Timing._pvs[trig+':State-Sel']
+            pvobj.value = _TIConst.DsblEnbl.Dsbl
 
-    def get_pvnames_by_psnames(self, psnames=list()):
+    def get_pvnames_by_psnames(self, psnames=None):
+        """."""
+        if psnames is None:
+            psnames = list()
         triggers = _get_trigger_by_psname(psnames)
         pvnames = set()
         for mode in Timing.properties:
@@ -192,7 +205,10 @@ class Timing:
                     pvnames.add(prop)
         return pvnames
 
-    def get_pvname_2_defval_dict(self, mode, triggers=list()):
+    def get_pvname_2_defval_dict(self, mode, triggers=None):
+        """."""
+        if triggers is None:
+            triggers = list()
         pvname_2_defval_dict = dict()
         for prop, defval in Timing.properties[mode].items():
             if defval is None:
@@ -283,6 +299,8 @@ class Timing:
 class PSCycler:
     """Handle power supplies properties related to Cycle and RmpWfm modes."""
 
+    # NOTE: this could be a class derived from one of the Device classes.
+
     properties = [
         'Current-SP', 'Current-RB', 'CurrentRef-Mon',
         'PwrState-Sel', 'PwrState-Sts',
@@ -321,21 +339,22 @@ class PSCycler:
 
     @property
     def connected(self):
-        """Connection state."""
+        """Return connection state."""
         for prop in PSCycler.properties:
             if not self[prop].connected:
                 return False
         return True
 
     def wait_for_connection(self, timeout=0.5):
-        for pv in self._pvs.values():
-            if not pv.wait_for_connection(timeout):
+        """."""
+        for pvobj in self._pvs.values():
+            if not pvobj.wait_for_connection(timeout):
                 return False
         return True
 
     @property
     def waveform(self):
-        """Default waveform."""
+        """Return default waveform."""
         if self._waveform is None:
             self._waveform = _bo_get_default_waveform(
                 psname=self.psname, ramp_config=self._ramp_config)
@@ -343,14 +362,14 @@ class PSCycler:
 
     @property
     def siggen(self):
-        """Default siggen."""
+        """Return default siggen."""
         if self._siggen is None:
             self._siggen = _PSSearch.conv_psname_2_siggenconf(self._psname)
         return self._siggen
 
     @property
     def init_wfm_pulsecnt(self):
-        """Initial waveform sync pulse count."""
+        """Return initial waveform sync pulse count."""
         if self._init_wfm_pulsecnt is None:
             self.update_wfm_pulsecnt()
         return self._init_wfm_pulsecnt
@@ -364,9 +383,13 @@ class PSCycler:
         if mode == 'Cycle':
             return self.siggen.num_cycles/self.siggen.freq
         else:
+            # TODO: Rewrite. Either there is a bug, if a return tuple
+            # is intended, or the parenthesis is unnecessary, as
+            # suggested by pylint.
             return (DEFAULT_RAMP_TOTDURATION)
 
     def check_intlks(self):
+        """."""
         status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
         status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
         return status
@@ -459,15 +482,18 @@ class PSCycler:
         return _pv_conn_put(self['OpMode-Sel'], opmode)
 
     def set_opmode_slowref(self):
+        """."""
         status = self.set_opmode(_PSConst.OpMode.SlowRef)
         _time.sleep(SLEEP_CAPUT)
         return status
 
     def check_opmode_slowref(self, wait=10):
+        """."""
         return _pv_timed_get(
             self['OpMode-Sts'], _PSConst.States.SlowRef, wait=wait)
 
     def set_opmode_cycle(self, mode):
+        """."""
         opmode = _PSConst.OpMode.Cycle if mode == 'Cycle'\
             else _PSConst.OpMode.RmpWfm
         return self.set_opmode(opmode)
@@ -479,14 +505,17 @@ class PSCycler:
         return _pv_timed_get(self['OpMode-Sts'], opmode, wait=wait)
 
     def get_cycle_enable(self):
+        """."""
         if not self.connected:
             return False
         return self['CycleEnbl-Mon'].value == _PSConst.DsblEnbl.Enbl
 
     def pulse(self):
+        """."""
         return _pv_conn_put(self['SyncPulse-Cmd'], 1)
 
     def check_final_state(self, mode):
+        """."""
         if mode == 'Ramp':
             indices = len(self.waveform)
             status = _pv_timed_get(self['WfmIndex-Mon'], indices, wait=10.0)
@@ -520,11 +549,13 @@ class PSCycler:
 class LinacPSCycler:
     """Handle Linac power supply properties to cycle."""
 
+    # NOTE: this could be a class derived from one of the Device classes.
+
     properties = [
         'Current-SP', 'Current-Mon', 'PwrState-Sel', 'StatusIntlk-Mon'
     ]
 
-    def __init__(self, psname, ramp_config=None):
+    def __init__(self, psname):
         """Constructor."""
         self._psname = psname
         self._waveform = None
@@ -552,8 +583,8 @@ class LinacPSCycler:
 
     def wait_for_connection(self, timeout=0.5):
         """."""
-        for pv in self._pvs.values():
-            if not pv.wait_for_connection(timeout):
+        for pvobj in self._pvs.values():
+            if not pvobj.wait_for_connection(timeout):
                 return False
         return True
 
@@ -566,6 +597,7 @@ class LinacPSCycler:
 
     def cycle_duration(self, mode):
         """Return the duration of the cycling in seconds."""
+        _ = mode  # throwaway inherited argument
         if self._cycle_duration is None:
             self._get_duration_and_waveform()
         return self._cycle_duration
@@ -590,6 +622,7 @@ class LinacPSCycler:
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
+        _ = mode  # throwaway inherited argument
         status = True
         if not self.check_current_zero(wait=0.5):
             status &= self.set_current_zero()
@@ -597,6 +630,7 @@ class LinacPSCycler:
 
     def is_prepared(self, mode):
         """Return wether power supply is ready."""
+        _ = mode  # throwaway inherited argument
         status = self.check_current_zero()
         return status
 
@@ -608,6 +642,8 @@ class LinacPSCycler:
         self['Current-SP'].value = self._waveform[-1]
 
     def check_final_state(self, mode):
+        """."""
+        _ = mode  # throwaway inherited argument
         status = True
         status &= self.check_on()
         status &= self.check_intlks()
@@ -617,10 +653,10 @@ class LinacPSCycler:
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
-        t, w = _li_get_default_waveform(psname=self.psname)
-        self._times = t
-        self._cycle_duration = max(t)
-        self._waveform = w
+        time, wfm = _li_get_default_waveform(psname=self.psname)
+        self._times = time
+        self._cycle_duration = max(time)
+        self._waveform = wfm
 
     def __getitem__(self, prop):
         """Return item."""

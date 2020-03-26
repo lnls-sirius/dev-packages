@@ -4,12 +4,13 @@ import numpy as _np
 
 from mathphys import constants as _c
 from mathphys import units as _mu
-from ..pwrsupply.csdev import DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP
+
 from ..pwrsupply.csdev import DEF_WFMSIZE_OTHERS as \
     _DEF_WFMSIZE_OTHERS
-from siriuspy.ramp import util as _ru
-from siriuspy.ramp.magnet import get_magnet as _get_magnet
-from siriuspy.search import MASearch as _MASearch
+from ..search import MASearch as _MASearch
+
+from . import util as _ru
+from .magnet import get_magnet as _get_magnet
 
 
 class WaveformParam:
@@ -33,7 +34,7 @@ class WaveformParam:
             rampdown_stop_value=_ru.DEFAULT_PS_RAMP_RAMPDOWN_STOP_CURRENT,
             rampup_smooth_value=_ru.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_CURRENT,
             rampdown_smooth_value=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_CURRENT
-            ):
+                ):
         """Init method."""
         self._duration = duration
         self._start_value = start_value

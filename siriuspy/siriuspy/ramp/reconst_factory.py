@@ -1,10 +1,13 @@
+"""."""
+
 from copy import deepcopy as _dcopy
 import numpy as _np
 from epics import PV as _PV
-from siriuspy.search import PSSearch as _PSSearch, \
-    LLTimeSearch as _LLTimeSearch
+
+from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
 from .ramp import BoosterRamp as _BORamp
 from .waveform import Waveform as _Waveform
+
 
 TIMEOUT_CONN = 0.05
 
@@ -16,8 +19,15 @@ class BONormListFactory:
     _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
     _PVs = dict()
 
-    def __init__(self, ramp_config, waveforms=dict()):
+    def __init__(self, ramp_config, waveforms=None):
         """Init."""
+        if waveforms is None:
+            waveforms = dict()
+
+        # declaration of attributes (as pylint requires)
+        self._wfms_current = None
+        self._waveforms = None
+
         self._ramp_config = ramp_config
         self._dipole = ramp_config.ps_waveform_get(self._PSNAME_DIPOLE_REF)
         self._duration = ramp_config.ps_ramp_duration
@@ -35,6 +45,7 @@ class BONormListFactory:
 
     @property
     def psnames(self):
+        """."""
         return self._psnames
 
     @property
@@ -43,8 +54,10 @@ class BONormListFactory:
         return self._wfms_current
 
     @waveforms.setter
-    def waveforms(self, waveforms=dict()):
+    def waveforms(self, waveforms=None):
         """Set a dict of psname: waveform in current values."""
+        if waveforms is None:
+            waveforms = dict()
         self._wfms_current = waveforms
         if waveforms:
             self._create_waveform_objects()
@@ -56,12 +69,12 @@ class BONormListFactory:
             self._create_pvs()
 
         self._waveforms = dict()
-        for ps in self.psnames:
-            pv = BONormListFactory._PVs[ps]
-            pv.wait_for_connection(10*TIMEOUT_CONN)
-            if not pv.connected:
+        for psname in self.psnames:
+            pvobj = BONormListFactory._PVs[psname]
+            pvobj.wait_for_connection(10*TIMEOUT_CONN)
+            if not pvobj.connected:
                 raise ConnectionError('There are disconnected PVs!')
-            self._wfms_current[ps] = pv.get()
+            self._wfms_current[psname] = pvobj.get()
 
         self._create_waveform_objects()
         self._generate_nconf_dict()
@@ -86,44 +99,44 @@ class BONormListFactory:
             return True, max_error
         return False, max_error
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def _create_pvs(self):
         pvs = dict()
-        for ps in self.psnames:
-            pvs[ps] = _PV(ps + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
+        for psname in self.psnames:
+            pvs[psname] = _PV(
+                psname + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
         BONormListFactory._PVs = pvs
 
     def _create_waveform_objects(self):
         self._ps2wfms = dict()
-        for ps, wfm_curr in self._wfms_current.items():
-            self._ps2wfms[ps] = _Waveform(
-                ps, self._dipole, currents=wfm_curr,
-                wfm_nrpoints=self._get_appropriate_wfmnrpoints(ps))
+        for psname, wfm_curr in self._wfms_current.items():
+            self._ps2wfms[psname] = _Waveform(
+                psname, self._dipole, currents=wfm_curr,
+                wfm_nrpoints=self._get_appropriate_wfmnrpoints(psname))
 
     def _get_appropriate_wfmnrpoints(self, psname):
         """Return appropriate number of points for psname."""
         if _PSSearch.conv_psname_2_psmodel(psname) == 'FBP':
             return self._nrpoints_corrs
-        else:
-            return self._nrpoints_fams
+        return self._nrpoints_fams
 
     def _calc_nconf_times(self, times, wfm):
-        d1 = _np.diff(wfm)
-        d2 = _np.diff(d1)
-        ind = _np.where(_np.abs(d2) < 1e-10)[0]
+        diff1 = _np.diff(wfm)
+        diff2 = _np.diff(diff1)
+        ind = _np.where(_np.abs(diff2) < 1e-10)[0]
         dind = _np.diff(ind)
         ind2 = _np.where(dind > 1)[0]
 
-        idd2 = _np.ones(ind2.size+1, dtype=int)*(len(d2)-1)
+        idd2 = _np.ones(ind2.size+1, dtype=int)*(len(diff2)-1)
         idd2[:ind2.size] = ind[ind2]
         idd1 = idd2 + 1
         idw = idd1 + 1
 
-        a = d1[idd1]
-        b = wfm[idw] - a*idw
-        ind_inter = -_np.diff(b)/_np.diff(a)
-        w_inter = a[:-1]*ind_inter + b[:-1]
+        diffa = diff1[idd1]
+        diffb = wfm[idw] - diffa*idw
+        ind_inter = -_np.diff(diffb)/_np.diff(diffa)
+        w_inter = diffa[:-1]*ind_inter + diffb[:-1]
 
         ind_orig = _np.arange(0, len(wfm))
         time_inter = _np.interp(ind_inter, ind_orig, times)
@@ -131,8 +144,7 @@ class BONormListFactory:
             time_inter2 = _np.round(time_inter, decimals=3)
             w_inter2 = _np.interp(time_inter2, time_inter, w_inter)
             return time_inter2, w_inter2
-        else:
-            return time_inter, w_inter
+        return time_inter, w_inter
 
     def _check_waveforms_error(self):
         r_new = _BORamp()
@@ -171,9 +183,9 @@ class BONormListFactory:
         r_new.ps_normalized_configs_set(self.normalized_configs)
 
         max_error = 0.0
-        for ps in self.psnames:
-            error = self._ps2wfms[ps].currents - \
-                r_new.ps_waveform_get_currents(ps)
+        for psname in self.psnames:
+            error = self._ps2wfms[psname].currents - \
+                r_new.ps_waveform_get_currents(psname)
             max_error = max(max_error, max(error))
         return max_error
 
@@ -185,7 +197,7 @@ class BONormListFactory:
             problems = False
             ps2time2strg = dict()
             times = set()
-            for ps, wfm in self._ps2wfms.items():
+            for psname, wfm in self._ps2wfms.items():
                 nrpts_orig = wfm.wfm_nrpoints
                 ind_orig = _np.arange(0, nrpts_orig)
                 t_orig = wfm.times
@@ -193,11 +205,11 @@ class BONormListFactory:
 
                 nrpts = nrpts_orig*oversampling_factor
                 ind = _np.linspace(0, ind_orig[-1], nrpts)
-                t = _np.interp(ind, ind_orig, t_orig)
-                w = _np.interp(ind, ind_orig, w_orig)
+                time = _np.interp(ind, ind_orig, t_orig)
+                wfm = _np.interp(ind, ind_orig, w_orig)
 
-                time_inter, w_inter = self._calc_nconf_times(t, w)
-                ps2time2strg[ps] = {i: w for i, w in zip(time_inter, w_inter)}
+                time_inter, w_inter = self._calc_nconf_times(time, wfm)
+                ps2time2strg[psname] = {i: w for i, w in zip(time_inter, w_inter)}
                 times.update(time_inter)
                 if not all(time_inter == sorted(time_inter)):
                     problems = True
@@ -220,19 +232,19 @@ class BONormListFactory:
 
             # generate dict of normalized configs
             self._norm_configs_dict = dict()
-            for t in times:
-                energy = self._dipole.get_strength_from_time(t)
+            for time in times:
+                energy = self._dipole.get_strength_from_time(time)
                 nconf = dict()
                 nconf['label'] = ' {:.4f}GeV'.format(energy)
                 for dip in self._PSNAME_DIPOLES:
                     nconf[dip] = energy
-                for ps in self.psnames:
-                    if t in ps2time2strg[ps].keys():
-                        nconf[ps] = ps2time2strg[ps][t]
+                for psname in self.psnames:
+                    if time in ps2time2strg[psname].keys():
+                        nconf[psname] = ps2time2strg[psname][time]
                     else:
-                        wfm = self._ps2wfms[ps]
-                        nconf[ps] = wfm.get_strength_from_time(t)
-                self._norm_configs_dict['{:.3f}'.format(t)] = nconf
+                        wfm = self._ps2wfms[psname]
+                        nconf[psname] = wfm.get_strength_from_time(time)
+                self._norm_configs_dict['{:.3f}'.format(time)] = nconf
 
             # TODO: verify case of precision not reached
             break
@@ -255,6 +267,7 @@ class BORFRampFactory:
     _PVs = dict()
 
     def __init__(self):
+        """."""
         self._rf_params = None
         self._create_pvs()
 
@@ -264,7 +277,7 @@ class BORFRampFactory:
         self._rf_params = self._generate_rf_params()
         return self._rf_params
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
     def _create_pvs(self):
         pvs = dict()
@@ -273,9 +286,9 @@ class BORFRampFactory:
         BORFRampFactory._PVs = pvs
 
     def _generate_rf_params(self):
-        for pv in BORFRampFactory._PVs.values():
-            pv.wait_for_connection()
-            if not pv.connected:
+        for pvobj in BORFRampFactory._PVs.values():
+            pvobj.wait_for_connection()
+            if not pvobj.connected:
                 raise Exception('There are not connected PVs!')
 
         rf_params = dict()
@@ -302,8 +315,9 @@ class BOTIRampFactory:
     _PVs = dict()
 
     def __init__(self):
+        """."""
         self._ti_params = None
-        self._create_pvs()
+        BOTIRampFactory._create_pvs()
 
     @property
     def ti_params(self):
@@ -311,9 +325,10 @@ class BOTIRampFactory:
         self._ti_params = self._generate_ti_params()
         return self._ti_params
 
-    # ----- auxiliar methods -----
+    # ----- private methods -----
 
-    def _create_pvs(self):
+    @staticmethod
+    def _create_pvs():
         pvs = dict()
         for trig in BOTIRampFactory._triggers:
             for ppty in {'Src-Sts', 'Delay-RB'}:
@@ -332,9 +347,9 @@ class BOTIRampFactory:
 
     def _generate_ti_params(self):
         _pvs = BOTIRampFactory._PVs
-        for pv in _pvs.values():
-            pv.wait_for_connection()
-            if not pv.connected:
+        for pvobj in _pvs.values():
+            pvobj.wait_for_connection()
+            if not pvobj.connected:
                 raise Exception('There are not connected PVs!')
 
         ti_params = dict()

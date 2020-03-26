@@ -55,9 +55,8 @@ class BSMPFunctionNull(BSMPFunction):
         """Do nothing."""
         super().__init__(None, None, None)
 
-    def execute(self, value):
+    def execute(self, value=None):
         """Do nothing."""
-        pass
 
 
 class WfmMonAcq(Function):

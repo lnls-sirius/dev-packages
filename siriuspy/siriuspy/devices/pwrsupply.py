@@ -41,7 +41,7 @@ class _PSDev(_Device):
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
          self._is_linac, self._is_pulsed, self._is_magps) = \
-             self._get_device_type(devname)
+            self._get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -179,7 +179,6 @@ class PowerSupply(_PSDev):
 
     class DEVICES:
         """Devices names."""
-
 
     @property
     def current(self):

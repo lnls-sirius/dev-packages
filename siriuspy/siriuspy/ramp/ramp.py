@@ -7,18 +7,20 @@ from ..pwrsupply.csdev import MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
 from ..pwrsupply.csdev import MAX_WFMSIZE_OTHERS as \
     _MAX_WFMSIZE_OTHERS
 
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.namesys import SiriusPVName
-from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
-from siriuspy.magnet.util import \
+from ..search import PSSearch as _PSSearch
+from ..namesys import SiriusPVName
+from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
+from ..magnet.util import \
     get_magnet_family_name as _get_magnet_family_name
-from siriuspy.ramp.exceptions import RampError as _RampError, \
+
+from .exceptions import RampError as _RampError, \
     RampInvalidDipoleWfmParms as _RampInvalidDipoleWfmParms, \
     RampInvalidNormConfig as _RampInvalidNormConfig, \
     RampInvalidRFParms as _RampInvalidRFParms
-from siriuspy.ramp.util import MAX_RF_RAMP_DURATION as _MAX_RF_RAMP_DURATION, \
+
+from .util import MAX_RF_RAMP_DURATION as _MAX_RF_RAMP_DURATION, \
     NOMINAL_STRENGTHS as _NOMINAL_STRENGTHS
-from siriuspy.ramp.waveform import WaveformDipole as _WaveformDipole, \
+from .waveform import WaveformDipole as _WaveformDipole, \
     Waveform as _Waveform
 
 
@@ -38,17 +40,21 @@ class BoosterNormalized(_ConfigDBDocument):
 
     @property
     def psnames(self):
+        """."""
         return list(self._psnames2index.keys())
 
     def load(self):
+        """."""
         super().load()
         self._orig_value = self.value
 
     def save(self, **kws):
+        """."""
         super().save(**kws)
         self._orig_value = self.value
 
     def verify_synchronized(self, psname=None):
+        """."""
         if not self._orig_value:
             return
         modified = False
@@ -85,25 +91,26 @@ class BoosterNormalized(_ConfigDBDocument):
     def __str__(self):
         """Return string representation of configuration."""
         if not self._value:
-            st = 'name: {}'.format(self.name)
-            return st
-        st = ''
+            rst = 'name: {}'.format(self.name)
+            return rst
+        rst = ''
         k = [data[0] for data in self._value['pvs']]
-        v1 = [data[1] for data in self._value['pvs']]
-        v2 = [data[2] for data in self._value['pvs']]
+        val1 = [data[1] for data in self._value['pvs']]
+        val2 = [data[2] for data in self._value['pvs']]
         maxlen = max(tuple(len(ky) for ky in k) + (len('name'),))
         fmtstr1 = '{:<'+str(maxlen)+'}, {:+.6f}, {:+.6f}\n'
         fmtstr2 = '{:<'+str(maxlen)+'}: {}\n'
-        st = fmtstr2.format('name', self.name)
-        for i in range(len(k)):
-            st += fmtstr1.format(k[i], v1[i], v2[i])
-        return st
+        rst = fmtstr2.format('name', self.name)
+        for i, kval in enumerate(k):
+            rst += fmtstr1.format(kval, val1[i], val2[i])
+        return rst
 
     def __eq__(self, value):
-        for ma in self.manames:
-            if ma == 'BO-Fam:MA-B':
+        # TODO: deprecated method? missing self.manames property...
+        for maname in self.manames:
+            if maname == 'BO-Fam:MA-B':
                 continue
-            if not _np.isclose(self[ma], value[ma], atol=1e-5):
+            if not _np.isclose(self[maname], value[maname], atol=1e-5):
                 return False
         return True
 
@@ -134,6 +141,7 @@ class BoosterRamp(_ConfigDBDocument):
         self._invalidate_ps_waveforms(True)
 
     def save(self, new_name=None):
+        """."""
         super().save(new_name=new_name)
         self._orig_value = self.value
 
@@ -182,15 +190,15 @@ class BoosterRamp(_ConfigDBDocument):
         if not psname2strength:
             psname2strength = dict()
             if otimes:
-                for ps in self.PSNAMES:
-                    if ps in self.PSNAME_DIPOLES:
+                for psname in self.PSNAMES:
+                    if psname in self.PSNAME_DIPOLES:
                         continue
                     ovalues = list()
-                    for t in otimes:
-                        str_time = '{:.3f}'.format(t)
-                        nc = self._value['ps_normalized_configs*'][str_time]
-                        ovalues.append(nc[ps])
-                    psname2strength[ps] = _np.interp(time, otimes, ovalues)
+                    for _time in otimes:
+                        str_time = '{:.3f}'.format(_time)
+                        ncv = self._value['ps_normalized_configs*'][str_time]
+                        ovalues.append(ncv[psname])
+                    psname2strength[psname] = _np.interp(time, otimes, ovalues)
             else:
                 psname2strength = self.ps_normalized_config_nominal_values
         nconfig.update(psname2strength)
@@ -228,13 +236,14 @@ class BoosterRamp(_ConfigDBDocument):
 
     @property
     def ps_normalized_config_nominal_values(self):
+        """."""
         if not self._nominal_strengths:
             psname2strength = dict()
-            for ps in self.PSNAMES:
-                if ps in _NOMINAL_STRENGTHS:
-                    psname2strength[ps] = _NOMINAL_STRENGTHS[ps]
+            for psname in self.PSNAMES:
+                if psname in _NOMINAL_STRENGTHS:
+                    psname2strength[psname] = _NOMINAL_STRENGTHS[psname]
                 else:
-                    psname2strength[ps] = 0.0
+                    psname2strength[psname] = 0.0
             self._nominal_strengths = psname2strength
         return self._nominal_strengths
 
@@ -298,20 +307,20 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def ps_ramp_times(self):
         """Return ps ramp times."""
-        v = (self.ps_ramp_rampup1_start_time,
-             self.ps_ramp_rampup2_start_time,
-             self.ps_ramp_rampdown_start_time,
-             self.ps_ramp_rampdown_stop_time)
-        return v
+        vals = (self.ps_ramp_rampup1_start_time,
+                self.ps_ramp_rampup2_start_time,
+                self.ps_ramp_rampdown_start_time,
+                self.ps_ramp_rampdown_stop_time)
+        return vals
 
     @property
     def ps_ramp_energies(self):
         """Return ps ramp times."""
-        v = (self.ps_ramp_rampup1_start_energy,
-             self.ps_ramp_rampup2_start_energy,
-             self.ps_ramp_rampdown_start_energy,
-             self.ps_ramp_rampdown_stop_energy)
-        return v
+        vals = (self.ps_ramp_rampup1_start_energy,
+                self.ps_ramp_rampup2_start_energy,
+                self.ps_ramp_rampdown_start_energy,
+                self.ps_ramp_rampdown_stop_energy)
+        return vals
 
     @property
     def ps_ramp_start_energy(self):
@@ -324,9 +333,9 @@ class BoosterRamp(_ConfigDBDocument):
         value = float(value)
         rdip = self._value['ps_ramp']
         if value != rdip['start_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.start_energy = value
-            rdip['start_energy'] = w.start_energy
+            wfm = self._create_new_ps_waveform_dipole()
+            wfm.start_energy = value
+            rdip['start_energy'] = wfm.start_energy
             self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
@@ -341,9 +350,9 @@ class BoosterRamp(_ConfigDBDocument):
         value = float(value)
         rdip = self._value['ps_ramp']
         if value != rdip['rampup1_start_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampup1_start_energy = value
-            rdip['rampup1_start_energy'] = w.rampup1_start_energy
+            wfm = self._create_new_ps_waveform_dipole()
+            wfm.rampup1_start_energy = value
+            rdip['rampup1_start_energy'] = wfm.rampup1_start_energy
             self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
@@ -379,9 +388,9 @@ class BoosterRamp(_ConfigDBDocument):
         value = float(value)
         rdip = self._value['ps_ramp']
         if value != rdip['rampup2_start_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampup2_start_energy = value
-            rdip['rampup2_start_energy'] = w.rampup2_start_energy
+            wfm = self._create_new_ps_waveform_dipole()
+            wfm.rampup2_start_energy = value
+            rdip['rampup2_start_energy'] = wfm.rampup2_start_energy
             self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
@@ -445,9 +454,9 @@ class BoosterRamp(_ConfigDBDocument):
         value = float(value)
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_start_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampdown_start_energy = value
-            rdip['rampdown_start_energy'] = w.rampdown_start_energy
+            wfm = self._create_new_ps_waveform_dipole()
+            wfm.rampdown_start_energy = value
+            rdip['rampdown_start_energy'] = wfm.rampdown_start_energy
             self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
@@ -477,9 +486,9 @@ class BoosterRamp(_ConfigDBDocument):
         value = float(value)
         rdip = self._value['ps_ramp']
         if value != rdip['rampdown_stop_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampdown_stop_energy = value
-            rdip['rampdown_stop_energy'] = w.rampdown_stop_energy
+            wfm = self._create_new_ps_waveform_dipole()
+            wfm.rampdown_stop_energy = value
+            rdip['rampdown_stop_energy'] = wfm.rampdown_stop_energy
             self.verify_synchronized()
             self._invalidate_ps_waveforms(True)
 
@@ -546,22 +555,23 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def rf_ramp_times(self):
         """Time instants to define RF ramp."""
-        t = (self.ti_params_rf_ramp_delay,      # = RF ramp start, bottom start
-             self.rf_ramp_rampup_start_time,    # = RF bottom stop
-             self.rf_ramp_rampup_stop_time,     # = RF top start
-             self.rf_ramp_rampdown_start_time,  # = RF top stop
-             self.rf_ramp_duration)             # = RF rampdown stop
-        return t
+        time = (
+            self.ti_params_rf_ramp_delay,      # = RF ramp start, bottom start
+            self.rf_ramp_rampup_start_time,    # = RF bottom stop
+            self.rf_ramp_rampup_stop_time,     # = RF top start
+            self.rf_ramp_rampdown_start_time,  # = RF top stop
+            self.rf_ramp_duration)             # = RF rampdown stop
+        return time
 
     @property
     def rf_ramp_voltages(self):
         """List of voltages to define RF ramp."""
-        v = (self.rf_ramp_bottom_voltage,
+        vals = (self.rf_ramp_bottom_voltage,
              self.rf_ramp_bottom_voltage,
              self.rf_ramp_top_voltage,
              self.rf_ramp_top_voltage,
              self.rf_ramp_bottom_voltage)
-        return v
+        return vals
 
     @property
     def rf_ramp_phases(self):
@@ -575,15 +585,15 @@ class BoosterRamp(_ConfigDBDocument):
 
     def rf_ramp_interp_voltages(self, time):
         """Return voltages related to times."""
-        v = _np.interp(time, self.rf_ramp_times, self.rf_ramp_voltages)
-        return v
+        vals = _np.interp(time, self.rf_ramp_times, self.rf_ramp_voltages)
+        return vals
 
     @property
     def rf_ramp_rampup_start_time(self):
         """RF ramp rampup start time."""
-        t = self.ti_params_rf_ramp_delay + \
+        time = self.ti_params_rf_ramp_delay + \
             float(self._value['rf_ramp']['bottom_duration'])
-        return t
+        return time
 
     @rf_ramp_rampup_start_time.setter
     def rf_ramp_rampup_start_time(self, value):
@@ -605,10 +615,10 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def rf_ramp_rampup_stop_time(self):
         """RF ramp rampup stop time."""
-        t = self.ti_params_rf_ramp_delay + \
+        time = self.ti_params_rf_ramp_delay + \
             float(self._value['rf_ramp']['bottom_duration']) + \
             float(self._value['rf_ramp']['rampup_duration'])
-        return t
+        return time
 
     @rf_ramp_rampup_stop_time.setter
     def rf_ramp_rampup_stop_time(self, value):
@@ -630,11 +640,11 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def rf_ramp_rampdown_start_time(self):
         """RF ramp rampdown start time."""
-        t = self.ti_params_rf_ramp_delay + \
+        time = self.ti_params_rf_ramp_delay + \
             float(self._value['rf_ramp']['bottom_duration']) + \
             float(self._value['rf_ramp']['rampup_duration']) + \
             float(self._value['rf_ramp']['top_duration'])
-        return t
+        return time
 
     @rf_ramp_rampdown_start_time.setter
     def rf_ramp_rampdown_start_time(self, value):
@@ -656,12 +666,12 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def rf_ramp_rampdown_stop_time(self):
         """RF ramp rampdown start time."""
-        t = self.ti_params_rf_ramp_delay + \
+        time = self.ti_params_rf_ramp_delay + \
             float(self._value['rf_ramp']['bottom_duration']) + \
             float(self._value['rf_ramp']['rampup_duration']) + \
             float(self._value['rf_ramp']['top_duration']) + \
             float(self._value['rf_ramp']['rampdown_duration'])
-        return t
+        return time
 
     @rf_ramp_rampdown_stop_time.setter
     def rf_ramp_rampdown_stop_time(self, value):
@@ -886,10 +896,11 @@ class BoosterRamp(_ConfigDBDocument):
         Use only energies until rampdown-start time.
         """
         rampdown_start_time = self.ps_ramp_rampdown_start_time
-        times = [t for t in self.ps_waveform_get_times(self.PSNAME_DIPOLE_REF)
-                 if t < rampdown_start_time]
-        energies = self._ps_waveforms[self.PSNAME_DIPOLE_REF].strengths[
-                 0:len(times)]
+        times = [time for time in
+                 self.ps_waveform_get_times(self.PSNAME_DIPOLE_REF)
+                 if time < rampdown_start_time]
+        energies = self._ps_waveforms[
+            self.PSNAME_DIPOLE_REF].strengths[0:len(times)]
         time = _np.interp(energy, energies, times)
         return time
 
@@ -920,6 +931,7 @@ class BoosterRamp(_ConfigDBDocument):
         return self.ps_waveform_interp_strengths(self.PSNAME_DIPOLE_REF, time)
 
     def verify_synchronized(self):
+        """."""
         if not self._orig_value:
             # print('no original value to compare')
             return
@@ -948,6 +960,7 @@ class BoosterRamp(_ConfigDBDocument):
         self._synchronized = not modified
 
     def verify_ps_normalized_synchronized(self, time, value=None, prec=1e-6):
+        """."""
         str_time = '{:.3f}'.format(time)
         if not self._orig_value:
             return False
@@ -978,8 +991,8 @@ class BoosterRamp(_ConfigDBDocument):
     def __str__(self):
         """Return string representation of configuration."""
         if not self._value:
-            st = 'name: {}'.format(self.name)
-            return st
+            rst = 'name: {}'.format(self.name)
+            return rst
         labels = (
             'ti_params_rf_ramp_delay [us]',
             'ti_params_ps_ramp_delay [us]',
@@ -990,48 +1003,48 @@ class BoosterRamp(_ConfigDBDocument):
             'ps_ramp_slopes [GeV/s]',
             'ps_normalized_configs [ms] [name]',
         )
-        st = ''
+        rst = ''
         maxlen = max(tuple(len(l) for l in labels) + (len('name'),))
         strfmt1 = '{:<' + str(maxlen) + 's}: {}\n'
         strfmt2 = strfmt1.replace('{}', '{:07.3f} {:+08.3f} {:<s}')
         strfmt3 = strfmt1.replace('{}', '{:07.3f} {}')
         strfmt4 = strfmt1.replace('{}', '{:07.3f}')
-        st += strfmt1.format('name', self.name)
-        st += strfmt1.format(labels[0], self.ti_params_rf_ramp_delay)
-        st += strfmt1.format(labels[1], self.ti_params_ps_ramp_delay)
-        st += strfmt4.format(labels[2], self.ti_params_injection_time)
-        st += strfmt4.format(labels[3], self.ti_params_ejection_time)
-        st += strfmt1.format(labels[4], self.ps_ramp_duration)
-        st += strfmt1.format(labels[5], '')
-        st += strfmt2.format('', 0.0,
-                             self.ps_ramp_start_energy, '(start)')
-        st += strfmt2.format('', self.ps_ramp_rampup1_start_time,
-                             self.ps_ramp_rampup1_start_energy,
-                             '(rampup1_start)')
-        st += strfmt2.format('', self.ps_ramp_rampup2_start_time,
-                             self.ps_ramp_rampup2_start_energy,
-                             '(rampup2_start)')
-        st += strfmt2.format('', self.ps_ramp_rampdown_start_time,
-                             self.ps_ramp_rampdown_start_energy,
-                             '(rampdown_start)')
-        st += strfmt2.format('', self.ps_ramp_rampdown_stop_time,
-                             self.ps_ramp_rampdown_stop_energy,
-                             '(rampdown_stop)')
-        st += strfmt2.format('', self.ps_ramp_duration,
-                             self.ps_ramp_start_energy, '(stop)')
-        st += strfmt1.format(labels[6], '')
-        st += strfmt3.format('', self.ps_ramp_rampup1_slope,
-                             '(rampup1)')
-        st += strfmt3.format('', self.ps_ramp_rampup2_slope,
-                             '(rampup2)')
-        st += strfmt3.format('', self.ps_ramp_rampdown_slope,
-                             '(rampdown)')
-        st += strfmt1.format(labels[7], '')
+        rst += strfmt1.format('name', self.name)
+        rst += strfmt1.format(labels[0], self.ti_params_rf_ramp_delay)
+        rst += strfmt1.format(labels[1], self.ti_params_ps_ramp_delay)
+        rst += strfmt4.format(labels[2], self.ti_params_injection_time)
+        rst += strfmt4.format(labels[3], self.ti_params_ejection_time)
+        rst += strfmt1.format(labels[4], self.ps_ramp_duration)
+        rst += strfmt1.format(labels[5], '')
+        rst += strfmt2.format(
+            '', 0.0, self.ps_ramp_start_energy, '(start)')
+        rst += strfmt2.format(
+            '', self.ps_ramp_rampup1_start_time,
+            self.ps_ramp_rampup1_start_energy, '(rampup1_start)')
+        rst += strfmt2.format(
+            '', self.ps_ramp_rampup2_start_time,
+            self.ps_ramp_rampup2_start_energy, '(rampup2_start)')
+        rst += strfmt2.format(
+            '', self.ps_ramp_rampdown_start_time,
+            self.ps_ramp_rampdown_start_energy, '(rampdown_start)')
+        rst += strfmt2.format(
+            '', self.ps_ramp_rampdown_stop_time,
+            self.ps_ramp_rampdown_stop_energy, '(rampdown_stop)')
+        rst += strfmt2.format(
+            '', self.ps_ramp_duration,
+            self.ps_ramp_start_energy, '(stop)')
+        rst += strfmt1.format(labels[6], '')
+        rst += strfmt3.format(
+            '', self.ps_ramp_rampup1_slope, '(rampup1)')
+        rst += strfmt3.format('', self.ps_ramp_rampup2_slope, '(rampup2)')
+        rst += strfmt3.format(
+            '', self.ps_ramp_rampdown_slope, '(rampdown)')
+        rst += strfmt1.format(labels[7], '')
         time = self.ps_normalized_configs_times
         name = self.ps_normalized_configs_labels
-        for i in range(len(time)):
-            st += strfmt3.format('', time[i], name[i])
-        return st
+        for i, _time in enumerate(time):
+            rst += strfmt3.format('', _time, name[i])
+        return rst
 
     def _get_item(self, time):
         str_time = '{:.3f}'.format(time)
@@ -1082,8 +1095,8 @@ class BoosterRamp(_ConfigDBDocument):
     def _update_ps_waveform_not_dipole(self, psname, dipole, family=None):
         nc_times = sorted(self.ps_normalized_configs_times)
         nc_values = list()
-        for t in nc_times:
-            nconfig = self._value['ps_normalized_configs*']['{:.3f}'.format(t)]
+        for time in nc_times:
+            nconfig = self._value['ps_normalized_configs*']['{:.3f}'.format(time)]
             nc_values.append(nconfig[psname])
 
         # interpolate strengths
@@ -1102,8 +1115,8 @@ class BoosterRamp(_ConfigDBDocument):
 
     def _update_ps_waveform_dipole(self):
         for psname in self.PSNAME_DIPOLES:
-            w = self._create_new_ps_waveform_dipole(psname)
-            self._ps_waveforms[psname] = w
+            wfm = self._create_new_ps_waveform_dipole(psname)
+            self._ps_waveforms[psname] = wfm
 
     def _create_new_ps_waveform_dipole(self, dipole=''):
         if not dipole:
@@ -1132,23 +1145,23 @@ class BoosterRamp(_ConfigDBDocument):
         duration = self.ps_ramp_duration
         wfm_nrpoints = self._get_appropriate_wfmnrpoints(psname)
         interval = duration / (wfm_nrpoints - 1.0)
-        indices = [t/interval for t in times]
+        indices = [time/interval for time in times]
         return indices
 
     def _invalidate_ps_waveforms(self, include_dipole=False):
         psnames = tuple(self._ps_waveforms.keys())
         for psname in psnames:
             if psname not in self.PSNAME_DIPOLES or include_dipole:
-                del(self._ps_waveforms[psname])
+                del self._ps_waveforms[psname]
 
     def _check_valid_time(self, time):
         """Check if time is in valid interval."""
-        d = self.ps_ramp_duration
-        if 0 < time < d:
+        duration = self.ps_ramp_duration
+        if 0 < time < duration:
             return True
         else:
             raise _RampError(
-                'Time value must be between 0 and {}!'.format(d))
+                'Time value must be between 0 and {}!'.format(duration))
 
     def _get_appropriate_wfmnrpoints(self, psname):
         """Return appropriate number of points for psname."""
