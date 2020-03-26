@@ -7,24 +7,25 @@ from threading import Thread as _Thread
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 
+from siriuspy.callbacks import Callback as _Callback
 from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics.pv_psdiag import ComputedPV as _ComputedPV
-from siriuspy.epics.pv_psdiag import PSStatusPV as _PSStatusPV
-from siriuspy.epics.pv_psdiag import PSDiffPV as _PSDiffPV
+from siriuspy.epics.pv_psdiag import \
+    ComputedPV as _ComputedPV, \
+    PSStatusPV as _PSStatusPV, \
+    PSDiffPV as _PSDiffPV
 
 SCAN_FREQUENCY = 2
 
 
-class App:
+class App(_Callback):
     """Main application responsible for updating DB."""
 
-    def __init__(self, driver, prefix, psnames):
+    def __init__(self, prefix, psnames):
         """Create Computed PVs."""
-        self._driver = driver
-
+        super().__init__()
+        self._prefix = prefix
         self._psnames = psnames
         self._queue = _QueueThread()
-        self._prefix = prefix
         self.pvs = list()
         self.scanning = False
         self.quit = False
@@ -32,11 +33,6 @@ class App:
 
         self.t = _Thread(target=self.scan, daemon=True)
         self.t.start()
-
-    @property
-    def driver(self):
-        """Return driver."""
-        return self._driver
 
     def process(self, interval):
         """Sleep."""
@@ -85,17 +81,17 @@ class App:
                 for pv in self.pvs:
                     if not pv.connected:
                         if connected[pv]:
-                            self.driver.setParamStatus(
+                            self.run_callbacks(
                                 pv.pvname, _Alarm.TIMEOUT_ALARM,
-                                _Severity.INVALID_ALARM)
+                                _Severity.INVALID_ALARM, field='status')
                         connected[pv] = False
                         if 'DiagStatus' in pv.pvname:
-                            self.driver.setParam(pv.pvname, pv.value)
+                            self.run_callbacks(pv.pvname, pv.value)
                     else:
                         if not connected[pv]:
-                            self.driver.setParamStatus(
-                                pv.pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM)
+                            self.run_callbacks(
+                                pv.pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM,
+                                field='status')
                         connected[pv] = True
-                        self.driver.setParam(pv.pvname, pv.value)
-                self.driver.updatePVs()
+                        self.run_callbacks(pv.pvname, pv.value)
             _time.sleep(1.0/SCAN_FREQUENCY)
