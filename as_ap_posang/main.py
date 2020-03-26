@@ -409,11 +409,10 @@ class App(_Callback):
         self.run_callbacks('Status-Mon', self._status)
 
     def _config_ps(self):
-        for corr in self._correctors:
-            corr_index = self._correctors.index(corr)
+        for corr in self._correctors.values():
             if self._corr_pwrstate_sel_pvs[corr].connected:
                 self._corr_pwrstate_sel_pvs[corr].put(1)
-                if corr_index != 1:
+                if 'Sept' not in corr:
                     self._corr_opmode_sel_pvs[corr].put(0)
             else:
                 self.run_callbacks(
