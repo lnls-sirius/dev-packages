@@ -97,6 +97,7 @@ class EpicsOrbit(BaseOrbit):
             'SPassAvgNrTurns-SP': self.set_spass_average,
             'OrbAcqRate-SP': self.set_orbit_acq_rate,
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
+            'PolyCalibration-Sel': self.set_poly_calibration,
             }
         if not self.isring:
             return db
@@ -631,6 +632,16 @@ class EpicsOrbit(BaseOrbit):
             self._acqtrignrshots = val
         self.run_callbacks('TrigNrShots-RB', val)
         self._update_time_vector()
+        return True
+
+    def set_poly_calibration(self, val):
+        """."""
+        value = _csbpm.EnbldDsbld.enabled
+        if val == self._csorb.EnbldDsbld.Dsbld:
+            value = _csbpm.EnbldDsbld.disabled
+        for bpm in self.bpms:
+            bpm.polycal = value
+        self.run_callbacks('PolyCalibration-Sts', val)
         return True
 
     def set_mturndownsample(self, val):

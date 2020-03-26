@@ -30,6 +30,8 @@ class BPM(_BaseTimingConfig):
         self._spposx = _PV(LL_PREF + self._name + ':SPPosX-Mon', **opt)
         self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
         self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
+        self._polyx = _PV(LL_PREF + self._name + ':GEN_PolyXArrayCoeff', **opt)
+        self._polyy = _PV(LL_PREF + self._name + ':GEN_PolyYArrayCoeff', **opt)
         opt['auto_monitor'] = False
         self._arraya = _PV(LL_PREF + self._name + ':GEN_AArrayData', **opt)
         self._arrayb = _PV(LL_PREF + self._name + ':GEN_BArrayData', **opt)
@@ -67,7 +69,9 @@ class BPM(_BaseTimingConfig):
             'TbtTagEn': _csbpm.EnbldDsbld.enabled,  # Enable TbT sync Timing
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
             'TbtDataMaskSamplesBeg': 0,
-            'TbtDataMaskSamplesEnd': 0}
+            'TbtDataMaskSamplesEnd': 0,
+            'XYPosCal': _csbpm.EnbldDsbld.disabled,
+            'SUMPosCal': _csbpm.EnbldDsbld.disabled}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'ACQBPMMode': 'ACQBPMMode-Sel',
@@ -95,7 +99,10 @@ class BPM(_BaseTimingConfig):
             'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
             'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP'}
+            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP',
+            'XYPosCal': 'XYPosCal-Sel',
+            'SUMPosCal': 'SUMPosCal-Sel'}
+
         self._config_pvs_sp = {
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
         pvs = {
@@ -134,7 +141,9 @@ class BPM(_BaseTimingConfig):
             'TbtTagEn': 'TbtTagEn-Sts',
             'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB'}
+            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB',
+            'XYPosCal': 'XYPosCal-Sts',
+            'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
 
@@ -157,6 +166,7 @@ class BPM(_BaseTimingConfig):
             self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
+            self._polyx, self._polyx,
             self._arraya, self._arrayb, self._arrayc, self._arrayd,
             self._kx, self._ky, self._ksum)
         for pv in pvs:
@@ -279,6 +289,30 @@ class BPM(_BaseTimingConfig):
         pv = self._ky
         val = pv.value if pv.connected else defv
         return val if val else defv
+
+    @property
+    def polyx(self):
+        """."""
+        pv = self._polyx
+        if pv.connected:
+            val = pv.value
+            if val is not None:
+                return val
+        defv = _np.zeros(15, dtype=float)
+        defv[0] = 1
+        return defv
+
+    @property
+    def polyy(self):
+        """."""
+        pv = self._polyy
+        if pv.connected:
+            val = pv.value
+            if val is not None:
+                return val
+        defv = _np.zeros(15, dtype=float)
+        defv[0] = 1
+        return defv
 
     @property
     def ksum(self):
@@ -598,6 +632,25 @@ class BPM(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     @property
+    def polycal(self):
+        """."""
+        pv = self._config_pvs_rb['XYPosCal']
+        return pv.value if pv.connected else None
+
+    @polycal.setter
+    def polycal(self, val):
+        """."""
+        val = _csbpm.EnbldDsbld.enabled if val else _csbpm.EnbldDsbld.disabled
+        pv1 = self._config_pvs_sp['XYPosCal']
+        pv2 = self._config_pvs_sp['SUMPosCal']
+        self._config_ok_vals['XYPosCal'] = val
+        self._config_ok_vals['SUMPosCal'] = val
+        if pv1.connected:
+            pv1.put(val, wait=False)
+        if pv2.connected:
+            pv2.put(val, wait=False)
+
+    @property
     def nrsamplespost(self):
         """."""
         # pv = self._config_pvs_rb['ACQNrSamplesPost']
@@ -695,12 +748,45 @@ class BPM(_BaseTimingConfig):
         m2 = _np.logical_not(_np.isclose(s2, 0.0))
         d1 = (vs['A'][m1] - vs['C'][m1]) / s1[m1]
         d2 = (vs['D'][m2] - vs['B'][m2]) / s2[m2]
-        x[:rnts][m1] = (d1 + d2) * self.kx/2 * self.ORB_CONV
-        y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
+        xuncal = (d1 + d2) / 2
+        yuncal = (d1 - d2) / 2
+        if self._config_ok_vals['XYPosCal'] == _csbpm.EnbldDsbld.disabled:
+            x[:rnts][m1] = xuncal * self.kx
+            y[:rnts][m2] = yuncal * self.ky
+        else:
+            x[:rnts][m1], y[:rnts][m2] = self._apply_polyxy(xuncal, yuncal)
+        x[:rnts][m1] *= self.ORB_CONV
+        y[:rnts][m2] *= self.ORB_CONV
         x[:rnts][m1] -= self.offsetx or 0.0
         y[:rnts][m2] -= self.offsety or 0.0
         s[:rnts] = (s1 + s2) * self.ksum
         return x, y, s
+
+    def _apply_polyxy(self, x, y):
+        """."""
+        xf = self._calc_poly(x, y, plane='x')
+        yf = self._calc_poly(y, x, plane='y')
+        return xf, yf
+
+    def _calc_poly(self, th1, ot1, plane='x'):
+        """."""
+        ot2 = ot1*ot1
+        ot4 = ot2*ot2
+        ot6 = ot4*ot2
+        ot8 = ot4*ot4
+        th2 = th1*th1
+        th3 = th2*th1
+        th5 = th3*th2
+        th7 = th5*th2
+        th9 = th7*th2
+        pol = self.polyx if plane == 'x' else self.polyy
+
+        return (
+            th1*(pol[0] + ot2*pol[1] + ot4*pol[2] + ot6*pol[3] + ot8*pol[4]) +
+            th3*(pol[5] + ot2*pol[6] + ot4*pol[7] + ot6*pol[8]) +
+            th5*(pol[9] + ot2*pol[10] + ot4*pol[11]) +
+            th7*(pol[12] + ot2*pol[13]) +
+            th9*pol[14])
 
 
 class TimingConfig(_BaseTimingConfig):
