@@ -27,11 +27,11 @@ class TestASAPPosAngMain(unittest.TestCase):
             'respm-y': [[5.6604558827773026, 2.4137865916000418],
                         [1.065850170973988, 0.9767489447759754]]}
         cs_patcher = mock.patch(
-            "as_ap_posang.main._ConfigDBClient", autospec=True)
+            "siriuspy.posang.main._ConfigDBClient", autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.mock_cs = cs_patcher.start()
         self.mock_cs().get_config_value.return_value = self.q_ok
-        ps_patcher = mock.patch("as_ap_posang.main._PV", autospec=True)
+        ps_patcher = mock.patch("siriuspy.posang.main._PV", autospec=True)
         self.addCleanup(ps_patcher.stop)
         self.mock_pv = ps_patcher.start()
         self.app = App('TB', 'ch-sept')

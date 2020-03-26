@@ -38,12 +38,12 @@ class TestASAPChromCorrMain(unittest.TestCase):
                       'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
                       'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3']
         cs_patcher = mock.patch(
-            "as_ap_opticscorr.chrom.main._ConfigDBClient", autospec=True)
+            "siriuspy.opticscorr.chrom.main._ConfigDBClient", autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.mock_cs = cs_patcher.start()
         self.mock_cs().get_config_value.return_value = self.q_ok
         pv_patcher = mock.patch(
-            "as_ap_opticscorr.chrom.main._PV", autospec=True)
+            "siriuspy.opticscorr.chrom.main._PV", autospec=True)
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
         self.app = App('SI')

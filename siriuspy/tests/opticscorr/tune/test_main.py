@@ -32,12 +32,12 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         self.qfams = ['QFA', 'QFB', 'QFP',
                       'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
         cs_patcher = mock.patch(
-            "as_ap_opticscorr.tune.main._ConfigDBClient", autospec=True)
+            "siriuspy.opticscorr.tune.main._ConfigDBClient", autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.mock_cs = cs_patcher.start()
         self.mock_cs().get_config_value.return_value = self.q_ok
         pv_patcher = mock.patch(
-            "as_ap_opticscorr.tune.main._PV", autospec=True)
+            "siriuspy.opticscorr.tune.main._PV", autospec=True)
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
         self.app = App('SI')
