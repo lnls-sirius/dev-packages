@@ -18,7 +18,7 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    _properties = (
+    _propty_tmpl = (
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
@@ -310,9 +310,10 @@ class SOFB(_Device):
     def _set_attributes_properties(self):
         orbtp = 'MTurn' if self.data.isring else 'SPass'
         properties = []
-        for propty in SOFB._properties:
+        for propty in SOFB._propty_tmpl:
             propty = propty.replace('<ORBTP>', orbtp)
             if self.data.isring or \
-                    ('IdxOrbX-Mon' not in propty and 'IdxOrbY-Mon' not in propty):
+                    ('IdxOrbX-Mon' not in propty and
+                     'IdxOrbY-Mon' not in propty):
                 properties.append(propty)
         return orbtp, properties
