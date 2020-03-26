@@ -14,8 +14,10 @@ TIMEOUT = 0.05
 
 
 class BPM(_BaseTimingConfig):
+    """."""
 
     def __init__(self, name, callback=None):
+        """."""
         super().__init__(name[:2], callback)
         self._name = name
         self.ORB_CONV = self._csorb.ORBIT_CONVERSION_UNIT
@@ -137,15 +139,18 @@ class BPM(_BaseTimingConfig):
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
 
     def set_auto_monitor(self, boo):
+        """."""
         self._posx.set_auto_monitor(boo)
         self._posy.set_auto_monitor(boo)
 
     @property
     def name(self):
+        """."""
         return self._name
 
     @property
     def connected(self):
+        """."""
         conn = super().connected
         pvs = (
             self._posx, self._posy,
@@ -162,6 +167,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def is_ok(self):
+        """."""
         if not super().is_ok:
             return False
 
@@ -185,11 +191,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def state(self):
+        """."""
         pv = self._config_pvs_rb['asyn.ENBL']
         return pv.value == _csbpm.EnblTyp.Enable if pv.connected else False
 
     @state.setter
     def state(self, boo):
+        """."""
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         pv = self._config_pvs_sp['asyn.ENBL']
         self._config_ok_vals['asyn.ENBL'] = val
@@ -198,6 +206,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def adcfreq(self):
+        """."""
         defv = 218446014.0 if self._csorb.acc == 'BO' else 220870069.0
         pv = self._config_pvs_rb['INFOClkFreq']
         val = pv.value if pv.connected else defv
@@ -205,6 +214,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbtrate(self):
+        """."""
         defv = 362 if self._csorb.acc == 'BO' else 382
         pv = self._config_pvs_rb['INFOTBTRate']
         val = pv.value if pv.connected else defv
@@ -212,10 +222,12 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbtperiod(self):
+        """."""
         return self.tbtrate / self.adcfreq
 
     @property
     def fofbrate(self):
+        """."""
         defv = (362 if self._csorb.acc == 'BO' else 382) * 24
         pv = self._config_pvs_rb['INFOFOFBRate']
         val = pv.value if pv.connected else defv
@@ -223,10 +235,12 @@ class BPM(_BaseTimingConfig):
 
     @property
     def fofbperiod(self):
+        """."""
         return self.fofbrate / self.adcfreq
 
     @property
     def monitrate(self):
+        """."""
         defv = (362 if self._csorb.acc == 'BO' else 382) * 59904
         pv = self._config_pvs_rb['INFOMONITRate']
         val = pv.value if pv.connected else defv
@@ -234,10 +248,12 @@ class BPM(_BaseTimingConfig):
 
     @property
     def monitperiod(self):
+        """."""
         return self.monitrate / self.adcfreq
 
     @property
     def monit1rate(self):
+        """."""
         defv = (362 if self._csorb.acc == 'BO' else 382) * 603
         pv = self._config_pvs_rb['INFOMONIT1Rate']
         val = pv.value if pv.connected else defv
@@ -245,10 +261,12 @@ class BPM(_BaseTimingConfig):
 
     @property
     def monit1period(self):
+        """."""
         return self.monit1rate / self.adcfreq
 
     @property
     def kx(self):
+        """."""
         defv = 1
         pv = self._kx
         val = pv.value if pv.connected else defv
@@ -256,6 +274,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def ky(self):
+        """."""
         defv = 1
         pv = self._ky
         val = pv.value if pv.connected else defv
@@ -263,6 +282,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def ksum(self):
+        """."""
         defv = 1
         pv = self._ksum
         val = pv.value if pv.connected else defv
@@ -270,11 +290,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def mode(self):
+        """."""
         pv = self._config_pvs_rb['ACQBPMMode']
         return pv.value if pv.connected else _csbpm.OpModes.MultiBunch
 
     @mode.setter
     def mode(self, mo):
+        """."""
         pv = self._config_pvs_sp['ACQBPMMode']
         self._config_ok_vals['ACQBPMMode'] = mo
         if pv.connected:
@@ -282,6 +304,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def posx(self):
+        """."""
         pv = self._posx
         val = pv.value if pv.connected else None
         if val is not None:
@@ -289,6 +312,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def posy(self):
+        """."""
         pv = self._posy
         val = pv.value if pv.connected else None
         if val is not None:
@@ -296,6 +320,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def spposx(self):
+        """."""
         pv = self._spposx
         val = pv.value if pv.connected else None
         if val is not None:
@@ -303,6 +328,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def spposy(self):
+        """."""
         pv = self._spposy
         val = pv.value if pv.connected else None
         if val is not None:
@@ -310,6 +336,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def spsum(self):
+        """."""
         pv = self._spsum
         val = pv.value if pv.connected else None
         if val is not None:
@@ -317,26 +344,31 @@ class BPM(_BaseTimingConfig):
 
     @property
     def arraya(self):
+        """."""
         pv = self._arraya
         return pv.get() if pv.connected else None
 
     @property
     def arrayb(self):
+        """."""
         pv = self._arrayb
         return pv.get() if pv.connected else None
 
     @property
     def arrayc(self):
+        """."""
         pv = self._arrayc
         return pv.get() if pv.connected else None
 
     @property
     def arrayd(self):
+        """."""
         pv = self._arrayd
         return pv.get() if pv.connected else None
 
     @property
     def mtposx(self):
+        """."""
         pv = self._arrayx
         val = pv.get() if pv.connected else None
         if val is not None:
@@ -344,6 +376,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def mtposy(self):
+        """."""
         pv = self._arrayy
         val = pv.get() if pv.connected else None
         if val is not None:
@@ -351,6 +384,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def mtsum(self):
+        """."""
         pv = self._arrays
         val = pv.get() if pv.connected else None
         if val is not None:
@@ -358,6 +392,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def offsetx(self):
+        """."""
         pv = self._offsetx
         val = pv.value if pv.connected else None
         if val is not None:
@@ -365,6 +400,7 @@ class BPM(_BaseTimingConfig):
 
     @property
     def offsety(self):
+        """."""
         pv = self._offsety
         val = pv.value if pv.connected else None
         if val is not None:
@@ -372,12 +408,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def ctrl(self):
+        """."""
         # pv = self._config_pvs_rb['ACQCtrl']
         pv = self._config_pvs_rb['ACQTriggerEvent']
         return pv.value if pv.connected else None
 
     @ctrl.setter
     def ctrl(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQCtrl']
         pv = self._config_pvs_sp['ACQTriggerEvent']
         # self._config_ok_vals['ACQCtrl'] = val
@@ -387,11 +425,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_type(self):
+        """."""
         pv = self._config_pvs_rb['ACQChannel']
         return pv.value if pv.connected else None
 
     @acq_type.setter
     def acq_type(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQChannel']
         self._config_ok_vals['ACQChannel'] = val
         if pv.connected:
@@ -399,12 +439,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trigger(self):
+        """."""
         # pv = self._config_pvs_rb['ACQTriggerType']
         pv = self._config_pvs_rb['ACQTrigger']
         return pv.value if pv.connected else None
 
     @acq_trigger.setter
     def acq_trigger(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQTriggerType']
         pv = self._config_pvs_sp['ACQTrigger']
         # self._config_ok_vals['ACQTriggerType'] = val
@@ -414,11 +456,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_repeat(self):
+        """."""
         pv = self._config_pvs_rb['ACQTriggerRep']
         return pv.value if pv.connected else None
 
     @acq_repeat.setter
     def acq_repeat(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQTriggerRep']
         self._config_ok_vals['ACQTriggerRep'] = val
         if pv.connected:
@@ -426,12 +470,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trig_datatype(self):
+        """."""
         # pv = self._config_pvs_rb['ACQTriggerDataChan']
         pv = self._config_pvs_rb['ACQDataTrigChan']
         return pv.value if pv.connected else None
 
     @acq_trig_datatype.setter
     def acq_trig_datatype(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQTriggerDataChan']
         pv = self._config_pvs_sp['ACQDataTrigChan']
         # self._config_ok_vals['ACQTriggerDataChan'] = val
@@ -441,11 +487,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trig_datasel(self):
+        """."""
         pv = self._config_pvs_rb['ACQTriggerDataSel']
         return pv.value if pv.connected else None
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQTriggerDataSel']
         self._config_ok_vals['ACQTriggerDataSel'] = val
         if pv.connected:
@@ -453,11 +501,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trig_datathres(self):
+        """."""
         pv = self._config_pvs_rb['ACQTriggerDataThres']
         return pv.value if pv.connected else None
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQTriggerDataThres']
         self._config_ok_vals['ACQTriggerDataThres'] = val
         if pv.connected:
@@ -465,11 +515,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trig_datahyst(self):
+        """."""
         pv = self._config_pvs_rb['ACQTriggerDataHyst']
         return pv.value if pv.connected else None
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQTriggerDataHyst']
         self._config_ok_vals['ACQTriggerDataHyst'] = val
         if pv.connected:
@@ -477,11 +529,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trig_datapol(self):
+        """."""
         pv = self._config_pvs_rb['ACQTriggerDataPol']
         return pv.value if pv.connected else None
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
+        """."""
         pv = self._config_pvs_sp['ACQTriggerDataPol']
         self._config_ok_vals['ACQTriggerDataPol'] = val
         if pv.connected:
@@ -489,11 +543,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbt_sync_enbl(self):
+        """."""
         pv = self._config_pvs_rb['TbtTagEn']
         return pv.value if pv.connected else None
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
+        """."""
         pv = self._config_pvs_sp['TbtTagEn']
         self._config_ok_vals['TbtTagEn'] = val
         if pv.connected:
@@ -501,11 +557,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbt_mask_enbl(self):
+        """."""
         pv = self._config_pvs_rb['TbtDataMaskEn']
         return pv.value if pv.connected else None
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
+        """."""
         pv = self._config_pvs_sp['TbtDataMaskEn']
         self._config_ok_vals['TbtDataMaskEn'] = val
         if pv.connected:
@@ -513,11 +571,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbt_mask_begin(self):
+        """."""
         pv = self._config_pvs_rb['TbtDataMaskSamplesBeg']
         return pv.value if pv.connected else None
 
     @tbt_mask_begin.setter
     def tbt_mask_begin(self, val):
+        """."""
         pv = self._config_pvs_sp['TbtDataMaskSamplesBeg']
         self._config_ok_vals['TbtDataMaskSamplesBeg'] = val
         if pv.connected:
@@ -525,11 +585,13 @@ class BPM(_BaseTimingConfig):
 
     @property
     def tbt_mask_end(self):
+        """."""
         pv = self._config_pvs_rb['TbtDataMaskSamplesEnd']
         return pv.value if pv.connected else None
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
+        """."""
         pv = self._config_pvs_sp['TbtDataMaskSamplesEnd']
         self._config_ok_vals['TbtDataMaskSamplesEnd'] = val
         if pv.connected:
@@ -537,12 +599,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def nrsamplespost(self):
+        """."""
         # pv = self._config_pvs_rb['ACQNrSamplesPost']
         pv = self._config_pvs_rb['ACQSamplesPost']
         return pv.value if pv.connected else None
 
     @nrsamplespost.setter
     def nrsamplespost(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQNrSamplesPost']
         pv = self._config_pvs_sp['ACQSamplesPost']
         # self._config_ok_vals['ACQNrSamplesPost'] = val
@@ -552,12 +616,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def nrsamplespre(self):
+        """."""
         # pv = self._config_pvs_rb['ACQNrSamplesPre']
         pv = self._config_pvs_rb['ACQSamplesPre']
         return pv.value if pv.connected else None
 
     @nrsamplespre.setter
     def nrsamplespre(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQNrSamplesPre']
         pv = self._config_pvs_sp['ACQSamplesPre']
         # self._config_ok_vals['ACQNrSamplesPre'] = val
@@ -567,12 +633,14 @@ class BPM(_BaseTimingConfig):
 
     @property
     def nrshots(self):
+        """."""
         # pv = self._config_pvs_rb['ACQNrShots']
         pv = self._config_pvs_rb['ACQShots']
         return pv.value if pv.connected else None
 
     @nrshots.setter
     def nrshots(self, val):
+        """."""
         # pv = self._config_pvs_sp['ACQNrShots']
         pv = self._config_pvs_sp['ACQShots']
         # self._config_ok_vals['ACQNrShots'] = val
@@ -581,6 +649,7 @@ class BPM(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     def calc_sp_multiturn_pos(self, **kwargs):
+        """."""
         nturns = kwargs.get('nturns', 1)
         refx = kwargs.get('refx', 0.0)
         refy = kwargs.get('refy', 0.0)
@@ -635,8 +704,10 @@ class BPM(_BaseTimingConfig):
 
 
 class TimingConfig(_BaseTimingConfig):
+    """."""
 
     def __init__(self, acc, callback=None):
+        """."""
         super().__init__(acc, callback=callback)
         trig = self._csorb.TRIGGER_ACQ_NAME
         evg = self._csorb.EVG_NAME
@@ -667,17 +738,20 @@ class TimingConfig(_BaseTimingConfig):
 
     @property
     def injecting(self):
+        """."""
         inj = bool(self._config_pvs_rb['Injecting'].value)
         eg_trig = bool(self._config_pvs_rb['EGTrig'].value)
         return inj and eg_trig
 
     @property
     def nrpulses(self):
+        """."""
         pv = self._config_pvs_rb['NrPulses']
         return pv.value if pv.connected else None
 
     @nrpulses.setter
     def nrpulses(self, val):
+        """."""
         pv = self._config_pvs_sp['NrPulses']
         if pv.connected:
             self._config_ok_vals['NrPulses'] = val
@@ -685,10 +759,12 @@ class TimingConfig(_BaseTimingConfig):
 
     @property
     def duration(self):
+        """."""
         pv = self._config_pvs_rb['Duration']
         return pv.value if pv.connected else None
 
     @property
     def delay(self):
+        """."""
         pv = self._config_pvs_rb['Delay']
         return pv.value if pv.connected else None
