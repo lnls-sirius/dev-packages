@@ -3,9 +3,7 @@
 """Module to test CurrInfo Lifetime Soft IOC main module."""
 
 import unittest
-from unittest import mock
 import siriuspy.util as util
-from as_ap_currinfo.lifetime.lifetime import _PCASDriver
 from as_ap_currinfo.lifetime.main import App
 
 
@@ -20,58 +18,42 @@ valid_interface = (
 class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
     """Test AS-AP-CurrInfo Lifetime Soft IOC."""
 
-    def _setUp(self):
-        """Initialize Soft IOC."""
-        self.mock_driver = mock.create_autospec(_PCASDriver)
-        printbanner_patcher = mock.patch(
-            "as_ap_currinfo.lifetime.pvs.print_banner",
-            autospec=True)
-        self.addCleanup(printbanner_patcher.stop)
-        self.mock_printbanner = printbanner_patcher.start()
-
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(App, valid_interface,
-                                                      print_flag=True)
+        valid = util.check_public_interface_namespace(
+            App, valid_interface, print_flag=True)
         self.assertTrue(valid)
 
-    def _test_write_BuffSizeMax(self):
-        """Test write BuffSizeMax-SP."""
-        app = App(self.mock_driver)
+    def test_write_MinIntvlBtwSpl(self):
+        """Test write MinIntvlBtwSmpl-SP."""
+        app = App()
 
-        app.write('BuffSizeMax-SP', -1)
-        self.assertEqual(app._current_buffer.nr_max_points, None)
-        self.mock_driver.setParam.assert_called_with('BuffSizeMax-RB', 0)
+        app.write('MinIntvlBtwSpl-SP', -1)
+        self.assertEqual(app._min_intvl_btw_spl, 0)
 
-        app.write('BuffSizeMax-SP', 0)
-        self.assertEqual(app._current_buffer.nr_max_points, None)
-        self.mock_driver.setParam.assert_called_with('BuffSizeMax-RB', 0)
+        app.write('MinIntvlBtwSpl-SP', 0)
+        self.assertEqual(app._min_intvl_btw_spl, 0)
 
-        app.write('BuffSizeMax-SP', 100)
-        self.assertEqual(app._current_buffer.nr_max_points, 100)
-        self.mock_driver.setParam.assert_called_with('BuffSizeMax-RB', 100)
+        app.write('MinIntvlBtwSpl-SP', 1)
+        self.assertEqual(app._min_intvl_btw_spl, 1)
 
-    def _test_write_SplIntvl(self):
+    def test_write_SplIntvl(self):
         """Test write SplIntvl-SP."""
-        app = App(self.mock_driver)
-
+        app = App()
         app.write('SplIntvl-SP', 100)
-        self.assertEqual(app._current_buffer.time_window, 100)
-        self.mock_driver.setParam.assert_called_with('SplIntvl-RB', 100)
+        self.assertEqual(app._sampling_interval, 100)
 
-    @mock.patch("as_ap_currinfo.lifetime.main._SiriusPVTimeSerie")
-    def _test_write_BuffRst_Cmd(self, timeserie):
-        """Test write BuffRst-Cmd."""
-        app = App(self.mock_driver)
-        app.write('BuffRst-Cmd', 0)
-        timeserie.return_value.clearserie.assert_called_once()
+    def test_write_LtFitMode(self):
+        """Test write LtFitMode-Sel."""
+        app = App()
+        app.write('LtFitMode-Sel', 1)
+        self.assertEqual(app._mode, 1)
 
-    def _test_write_BuffAutoRst(self):
-        """Test write BuffAutoRst-Sel."""
-        app = App(self.mock_driver)
-
-        app.write('BuffAutoRst-Sel', 1)
-        self.mock_driver.setParam.assert_called_with('BuffAutoRst-Sts', 1)
+    def test_write_CurrOffset(self):
+        """Test write CurrOffset-SP."""
+        app = App()
+        app.write('CurrOffset-SP', 1)
+        self.assertEqual(app._current_offset, 1)
 
 
 if __name__ == "__main__":
