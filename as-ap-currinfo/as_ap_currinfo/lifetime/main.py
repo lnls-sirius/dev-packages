@@ -4,42 +4,26 @@ import warnings
 import time as _time
 from collections import deque as _deque
 import numpy as _np
-import epics as _epics
+from epics import PV as _PV
+
+from siriuspy.callbacks import Callback as _Callback
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
-from siriuspy.csdevice.currinfo import Const as _Const
-import as_ap_currinfo.lifetime.pvs as _pvs
+from siriuspy.envars import VACA_PREFIX as _vaca_prefix
+from siriuspy.currinfo.csdev import \
+    Const as _Const, get_lifetime_database as _get_database
 
 warnings.filterwarnings('error')
-
-# Coding guidelines:
-# =================
-# 01 - pay special attention to code readability
-# 02 - simplify logic as much as possible
-# 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be
-#      easier to read!)
-# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive'
-#      (but clearer) sections fast.
-# 06 - be consistent in coding style (variable naming, spacings, prefixes,
-#      suffixes, etc)
-
 
 _MAX_BUFFER_SIZE = 100000
 
 
-class App:
+class App(_Callback):
     """Main Class of the IOC Logic."""
 
-    pvs_database = None
-
-    def __init__(self, driver):
+    def __init__(self):
         """Class constructor."""
-        _pvs.print_banner()
-
-        self._driver = driver
-        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
-        self._PREFIX = _pvs.get_pvs_prefix()
-
+        super().__init__()
+        self._pvs_database = _get_database()
         self._mode = _Const.Fit.Exponential
         self._lifetime = 0
         self._lifetime_bpm = 0
@@ -48,9 +32,15 @@ class App:
         self._min_intvl_btw_spl = 0.0
         self._is_stored = 0
 
-        self._current_pv = _epics.PV(self._PREFIX+'Current-Mon')
-        self._bpmsum_pv = _epics.PV(self._PREFIX_VACA+'SI-01M1:DI-BPM:Sum-Mon')
-        self._storedebeam_pv = _epics.PV(self._PREFIX+'StoredEBeam-Mon')
+        self._current_pv = _PV(
+            _vaca_prefix+'SI-Glob:AP-CurrInfo:Current-Mon',
+            connection_timeout=0.05)
+        self._bpmsum_pv = _PV(
+            _vaca_prefix+'SI-01M1:DI-BPM:Sum-Mon',
+            connection_timeout=0.05)
+        self._storedebeam_pv = _PV(
+            _vaca_prefix+'SI-Glob:AP-CurrInfo:StoredEBeam-Mon',
+            connection_timeout=0.05)
 
         self._current_buffer = _SiriusPVTimeSerie(
             pv=self._current_pv, mode=0, nr_max_points=_MAX_BUFFER_SIZE)
@@ -64,15 +54,9 @@ class App:
         self._bpmsum_pv.add_callback(self._callback_calclifetime)
         self._storedebeam_pv.add_callback(self._callback_get_storedebeam)
 
-    @staticmethod
-    def init_class():
-        """Init class."""
-        App.pvs_database = _pvs.get_pvs_database()
-
     @property
-    def driver(self):
-        """Return driver."""
-        return self._driver
+    def pvs_database(self):
+        return self._pvs_database
 
     def process(self, interval):
         """Sleep."""
@@ -88,23 +72,19 @@ class App:
         status = False
         if reason == 'SplIntvl-SP':
             self._update_splintvl(value)
-            self.driver.setParam('SplIntvl-RB', self._sampling_interval)
-            self.driver.updatePV('SplIntvl-RB')
+            self.run_callbacks('SplIntvl-RB', self._sampling_interval)
             status = True
         elif reason == 'MinIntvlBtwSpl-SP':
             self._update_min_intvl_btw_spl(value)
-            self.driver.setParam('MinIntvlBtwSpl-RB', self._min_intvl_btw_spl)
-            self.driver.updatePV('MinIntvlBtwSpl-RB')
+            self.run_callbacks('MinIntvlBtwSpl-RB', self._min_intvl_btw_spl)
             status = True
         elif reason == 'LtFitMode-Sel':
             self._mode = value
-            self.driver.setParam('LtFitMode-Sts', value)
-            self.driver.updatePV('LtFitMode-Sts')
+            self.run_callbacks('LtFitMode-Sts', value)
             status = True
         elif reason == 'CurrOffset-SP':
             self._current_offset = value
-            self.driver.setParam('CurrOffset-RB', value)
-            self.driver.updatePV('CurrOffset-RB')
+            self.run_callbacks('CurrOffset-RB', value)
             status = True
         return status
 
@@ -158,16 +138,11 @@ class App:
                 buffer_lt.append(lt)
 
         # update pvs
-        self.driver.setParam('BufferValue'+lt_type+'-Mon', val_dq)
-        self.driver.updatePV('BufferValue'+lt_type+'-Mon')
-        self.driver.setParam('BufferTimestamp'+lt_type+'-Mon', ts_dq)
-        self.driver.updatePV('BufferTimestamp'+lt_type+'-Mon')
-        self.driver.setParam('Lifetime'+lt_type+'-Mon', getattr(self, lt_name))
-        self.driver.updatePV('Lifetime'+lt_type+'-Mon')
-        self.driver.setParam('BuffSize'+lt_type+'-Mon', len(val_dq))
-        self.driver.updatePV('BuffSize'+lt_type+'-Mon')
-        self.driver.setParam('BuffSizeTot'+lt_type+'-Mon', len(val_abs_dqorg))
-        self.driver.updatePV('BuffSizeTot'+lt_type+'-Mon')
+        self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
+        self.run_callbacks('BufferTimestamp'+lt_type+'-Mon', ts_dq)
+        self.run_callbacks('Lifetime'+lt_type+'-Mon', getattr(self, lt_name))
+        self.run_callbacks('BuffSize'+lt_type+'-Mon', len(val_dq))
+        self.run_callbacks('BuffSizeTot'+lt_type+'-Mon', len(val_abs_dqorg))
 
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):

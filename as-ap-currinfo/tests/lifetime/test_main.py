@@ -1,6 +1,6 @@
 #!/usr/bin/env python-sirius
 
-"""Module to test AS-AP-CurrInfo Lifetime Soft IOC main module."""
+"""Module to test CurrInfo Lifetime Soft IOC main module."""
 
 import unittest
 from unittest import mock
@@ -10,22 +10,19 @@ from as_ap_currinfo.lifetime.main import App
 
 
 valid_interface = (
-    'init_class',
-    'driver',
+    'pvs_database',
     'process',
     'read',
     'write',
-    'pvs_database'
 )
 
 
 class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
     """Test AS-AP-CurrInfo Lifetime Soft IOC."""
 
-    def setUp(self):
+    def _setUp(self):
         """Initialize Soft IOC."""
         self.mock_driver = mock.create_autospec(_PCASDriver)
-        App.init_class()
         printbanner_patcher = mock.patch(
             "as_ap_currinfo.lifetime.pvs.print_banner",
             autospec=True)
@@ -38,7 +35,7 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
                                                       print_flag=True)
         self.assertTrue(valid)
 
-    def test_write_BuffSizeMax(self):
+    def _test_write_BuffSizeMax(self):
         """Test write BuffSizeMax-SP."""
         app = App(self.mock_driver)
 
@@ -54,7 +51,7 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
         self.assertEqual(app._current_buffer.nr_max_points, 100)
         self.mock_driver.setParam.assert_called_with('BuffSizeMax-RB', 100)
 
-    def test_write_SplIntvl(self):
+    def _test_write_SplIntvl(self):
         """Test write SplIntvl-SP."""
         app = App(self.mock_driver)
 
@@ -63,13 +60,13 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
         self.mock_driver.setParam.assert_called_with('SplIntvl-RB', 100)
 
     @mock.patch("as_ap_currinfo.lifetime.main._SiriusPVTimeSerie")
-    def test_write_BuffRst_Cmd(self, timeserie):
+    def _test_write_BuffRst_Cmd(self, timeserie):
         """Test write BuffRst-Cmd."""
         app = App(self.mock_driver)
         app.write('BuffRst-Cmd', 0)
         timeserie.return_value.clearserie.assert_called_once()
 
-    def test_write_BuffAutoRst(self):
+    def _test_write_BuffAutoRst(self):
         """Test write BuffAutoRst-Sel."""
         app = App(self.mock_driver)
 
