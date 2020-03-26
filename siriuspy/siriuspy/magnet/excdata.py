@@ -1,4 +1,4 @@
-"""EXcitation Data."""
+"""Excitation Data."""
 
 import numpy as _np
 
