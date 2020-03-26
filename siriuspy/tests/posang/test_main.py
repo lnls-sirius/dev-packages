@@ -34,6 +34,11 @@ class TestASAPPosAngMain(unittest.TestCase):
         ps_patcher = mock.patch("siriuspy.posang.main._PV", autospec=True)
         self.addCleanup(ps_patcher.stop)
         self.mock_pv = ps_patcher.start()
+        gcn_patcher = mock.patch(
+            "siriuspy.posang.utils.get_config_name", autospec=True)
+        self.addCleanup(gcn_patcher.stop)
+        self.mock_gcn = gcn_patcher.start()
+        self.mock_gcn('tb', 'ch-sept').return_value = 'Default_CHSept'
         self.app = App('TB', 'ch-sept')
 
     def test_public_interface(self):

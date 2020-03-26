@@ -46,6 +46,11 @@ class TestASAPChromCorrMain(unittest.TestCase):
             "siriuspy.opticscorr.chrom.main._PV", autospec=True)
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
+        gcn_patcher = mock.patch(
+            "siriuspy.opticscorr.utils.get_config_name", autospec=True)
+        self.addCleanup(gcn_patcher.stop)
+        self.mock_gcn = gcn_patcher.start()
+        self.mock_gcn('si', 'chrom').return_value = 'Default'
         self.app = App('SI')
 
     def test_public_interface(self):
