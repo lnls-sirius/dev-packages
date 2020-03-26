@@ -4,7 +4,7 @@
 
 import unittest
 import siriuspy.util as util
-from as_ap_currinfo.lifetime.main import App
+from siriuspy.currinfo.lifetime.main import App
 
 
 valid_interface = (
