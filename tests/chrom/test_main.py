@@ -7,27 +7,22 @@ from unittest import mock
 import siriuspy.util as util
 from as_ap_opticscorr.chrom.chrom import _PCASDriver
 from as_ap_opticscorr.chrom.main import App
-from as_ap_opticscorr.chrom.pvs import select_ioc
 
 
 valid_interface = (
-    'init_class',
-    'driver',
+    'pvs_database',
+    'init_database',
     'process',
-    'read',
     'write',
-    'pvs_database'
 )
 
 
 class TestASAPChromCorrMain(unittest.TestCase):
     """Test AS-AP-ChromCorr Soft IOC."""
 
-    def setUp(self):
+    def _setUp(self):
         """Initialize Soft IOC."""
         self.mock_driver = mock.create_autospec(_PCASDriver)
-        select_ioc('si')
-        App.init_class()
         self.q_ok = {'code': 200,
                      'result': {'value': {
                         'matrix': [
@@ -70,7 +65,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                                                       print_flag=True)
         self.assertTrue(valid)
 
-    def test_write_ok_syncoff_ApplyDelta(self):
+    def _test_write_ok_syncoff_ApplyDelta(self):
         """Test write on ApplyDelta-Cmd in normal operation, sync mode off."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -86,7 +81,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertEqual(count, 2*len(self.sfams))
 
-    def test_write_ok_syncon_ApplyDelta(self):
+    def _test_write_ok_syncon_ApplyDelta(self):
         """Test write on ApplyDelta-Cmd in normal operation, sync mode on."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -96,7 +91,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertEqual(count, 1+len(self.sfams))
 
-    def test_write_statuserror_ApplyDelta(self):
+    def _test_write_statuserror_ApplyDelta(self):
         """Test write on ApplyDelta-Cmd on status error."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -105,7 +100,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.assertFalse(app.write('ApplyDelta-Cmd', 0))
         self.mock_epics.PV.return_value.put.assert_not_called()
 
-    def test_write_ok_ConfigName(self):
+    def _test_write_ok_ConfigName(self):
         """Test write on ConfigName-SP in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -130,7 +125,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                 count += 1
         self.assertEqual(count, len(self.sfams))
 
-    def test_write_configdberror_ConfigName(self):
+    def _test_write_configdberror_ConfigName(self):
         """Test write on ConfigName-SP on configdb error."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -139,7 +134,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.mock_cs().get_config.return_value = self.q_error
         self.assertFalse(app.write('ConfigName-SP', 'Testing'))
 
-    def test_write_CorrMeth(self):
+    def _test_write_CorrMeth(self):
         """Test write on CorrMeth-Sel."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -155,7 +150,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                 count += 1
         self.assertEqual(count, len(self.sfams))
 
-    def test_write_Chrom_nearnominal(self):
+    def _test_write_Chrom_nearnominal(self):
         """Test write nominal values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.get.return_value = 100
@@ -172,7 +167,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                 calls.append(mock.call('SL' + fam + '-Mon', 100))
             self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
-    def test_write_Chrom_anyvalue_ProportionalMeth(self):
+    def _test_write_Chrom_anyvalue_ProportionalMeth(self):
         """Test write any values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.get.return_value = 100
@@ -195,7 +190,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                 fam_index = self.sfams.index(fam)
                 self.assertAlmostEqual(call[0][1], sl_prop[fam_index]+100)
 
-    def test_write_Chrom_anyvalue_AdditionalMeth(self):
+    def _test_write_Chrom_anyvalue_AdditionalMeth(self):
         """Test write any values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.get.return_value = 100
@@ -218,7 +213,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                 fam_index = self.sfams.index(fam)
                 self.assertAlmostEqual(call[0][1], sl_add[fam_index]+100)
 
-    def test_write_SyncCorr(self):
+    def _test_write_SyncCorr(self):
         """Test write on SyncCorr-Sel."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -229,7 +224,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
                  mock.call('Status-Mon', app._status)]
         self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
-    def test_write_ok_ConfigMA(self):
+    def _test_write_ok_ConfigMA(self):
         """Test write on ConfigMA-Cmd in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -239,7 +234,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertTrue(count, 2*len(self.sfams))
 
-    def test_write_connerror_ConfigMA(self):
+    def _test_write_connerror_ConfigMA(self):
         """Test write on ConfigMA-Cmd on configdb error."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -248,7 +243,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.assertFalse(app.write('ConfigMA-Cmd', 0))
         self.mock_epics.PV.return_value.put.assert_not_called()
 
-    def test_write_ok_ConfigTiming(self):
+    def _test_write_ok_ConfigTiming(self):
         """Test write on ConfigTiming-Cmd in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
@@ -258,7 +253,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertTrue(count, 6)
 
-    def test_write_connerror_ConfigTiming(self):
+    def _test_write_connerror_ConfigTiming(self):
         """Test write on ConfigTiming-Cmd in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
