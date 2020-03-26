@@ -5,7 +5,7 @@
 import unittest
 from unittest import mock
 import siriuspy.util as util
-from as_ap_opticscorr.chrom.main import App
+from siriuspy.opticscorr.chrom.main import App
 
 
 valid_interface = (

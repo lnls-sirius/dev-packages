@@ -5,7 +5,7 @@
 import unittest
 from unittest import mock
 import siriuspy.util as util
-from as_ap_posang.main import App
+from siriuspy.posang.main import App
 
 
 valid_interface = (

@@ -3,11 +3,9 @@
 """Module to test AS-AP-CurrInfo Current Soft IOC main module."""
 
 import unittest
-from unittest import mock
 import siriuspy.util as util
 from siriuspy.currinfo.csdev import Const
-from as_ap_currinfo.as_ap_currinfo import _PCASDriver
-from as_ap_currinfo.main import SIApp
+from siriuspy.currinfo.main import SIApp
 
 
 valid_interface = (
