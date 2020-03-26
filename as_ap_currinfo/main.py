@@ -3,12 +3,16 @@
 import time as _time
 from datetime import datetime as _datetime
 import numpy as _np
-import epics as _epics
-from siriuspy.pwrsupply.csdev import Const as _PSc
-from siriuspy.csdevice.currinfo import Const as _Const
-from siriuspy.clientarch import ClientArchiver as _ClientArch
+from epics import PV as _PV
+
+from siriuspy.callbacks import Callback as _Callback
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
-import as_ap_currinfo.pvs as _pvs
+from siriuspy.envars import VACA_PREFIX as _vaca_prefix
+from siriuspy.clientarch import ClientArchiver as _ClientArch
+from siriuspy.pwrsupply.csdev import Const as _PSc
+
+from siriuspy.currinfo.csdev import Const as _Const, \
+    get_currinfo_database as _get_database
 
 
 # BO Constants
@@ -37,20 +41,15 @@ def _get_value_from_arch(pvname):
     return data
 
 
-class BOApp:
-    """Main Class of the IOC Logic."""
+class BOApp(_Callback):
+    """Main Class."""
 
-    pvs_database = None
-
-    def __init__(self, driver):
+    def __init__(self):
         """Class constructor."""
-        _pvs.print_banner()
-
-        self._driver = driver
+        super().__init__()
 
         # consts
-        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
-        self._PREFIX = _pvs.get_pvs_prefix()
+        self._pvs_database = _get_database('BO')
         self._DCCT = 'BO-35D:DI-DCCT'
 
         # initialize vars
@@ -59,7 +58,7 @@ class BOApp:
         self._reliablemeas = None
         self._last_raw_reading = None
 
-        currthold_db = self.pvs_database['CurrThold-SP']
+        currthold_db = self._pvs_database['CurrThold-SP']
         self._currthold = currthold_db['value']
         self._currthold_lolim = currthold_db['lolim']
         self._currthold_hilim = currthold_db['hilim']
@@ -72,46 +71,44 @@ class BOApp:
             self._currents[k] = 0.0
             # charges
             ppty = 'Charge'+k+'-Mon'
-            data = _get_value_from_arch(self._PREFIX+ppty)
+            data = _get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
             if data is None:
                 charge = 0.0
             else:
                 charge = data[1][0]
             self._charges[k] = charge
-            self.driver.setParam(ppty, charge)
 
-        intcurr_ppty = 'IntCurrent3GeV-Mon'
-        data = _get_value_from_arch(self._PREFIX+intcurr_ppty)
+        data = _get_value_from_arch(
+            'BO-Glob:AP-CurrInfo:IntCurrent3GeV-Mon')
         if data is None:
             self._intcurrent3gev = 0.0
         else:
             self._intcurrent3gev = data[1][0]
-        self.driver.setParam(intcurr_ppty, self._intcurrent3gev)
-        self.driver.updatePV(intcurr_ppty)
 
         # PVs
-        self._rawreadings_pv = _epics.PV(
-            self._PREFIX_VACA+self._DCCT+':RawReadings-Mon',
-            callback=self._callback_get_rawreadings, auto_monitor=True)
-        self._samplecnt_pv = _epics.PV(
-            self._PREFIX_VACA+self._DCCT+':FastSampleCnt-RB',
+        self._rawreadings_pv = _PV(
+            _vaca_prefix+self._DCCT+':RawReadings-Mon',
+            connection_timeout=0.05, callback=self._callback_get_rawreadings,
+            auto_monitor=True)
+        self._samplecnt_pv = _PV(
+            _vaca_prefix+self._DCCT+':FastSampleCnt-RB',
             connection_timeout=0.05, callback=self._callback_get_samplecnt)
-        self._measperiod_pv = _epics.PV(
-            self._PREFIX_VACA+self._DCCT+':FastMeasPeriod-RB',
+        self._measperiod_pv = _PV(
+            _vaca_prefix+self._DCCT+':FastMeasPeriod-RB',
             connection_timeout=0.05, callback=self._callback_get_measperiod)
-        self._reliablemeas_pv = _epics.PV(
-            self._PREFIX_VACA+self._DCCT+':ReliableMeas-Mon',
+        self._reliablemeas_pv = _PV(
+            _vaca_prefix+self._DCCT+':ReliableMeas-Mon',
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
 
-    @staticmethod
-    def init_class():
-        """Init class."""
-        BOApp.pvs_database = _pvs.get_pvs_database()
+    def init_database(self):
+        for k in BO_ENERGY2TIME.keys():
+            ppty = 'Charge'+k+'-Mon'
+            self.run_callbacks(ppty, self._charges[k])
+        self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
     @property
-    def driver(self):
-        """Return driver."""
-        return self._driver
+    def pvs_database(self):
+        return self._pvs_database
 
     def process(self, interval):
         """Sleep."""
@@ -128,8 +125,7 @@ class BOApp:
         if reason == 'CurrThold-SP':
             if self._currthold_lolim < value < self._currthold_hilim:
                 self._currthold = value
-                self.driver.setParam('CurrThold-RB', value)
-                self.driver.updatePV('CurrThold-RB')
+                self.run_callbacks('CurrThold-RB', value)
                 status = True
         return status
 
@@ -150,8 +146,7 @@ class BOApp:
     def _callback_get_rawreadings(self, value, **kws):
         self._last_raw_reading = value
         self._update_pvs()
-        self.driver.setParam('RawReadings-Mon', value)
-        self.driver.updatePV('RawReadings-Mon')
+        self.run_callbacks('RawReadings-Mon', value)
 
     # ----- auxiliar methods -----
 
@@ -187,42 +182,33 @@ class BOApp:
                 if current < self._currthold:
                     current = 0.0
                 self._currents[energy] = current
-                self.driver.setParam('Current'+str(energy)+'-Mon',
-                                     self._currents[energy])
+                self.run_callbacks('Current'+str(energy)+'-Mon',
+                                   self._currents[energy])
                 # charges
                 self._charges[energy] += current * BO_REV_PERIOD
-                self.driver.setParam('Charge'+str(energy)+'-Mon',
-                                     self._charges[energy])
+                self.run_callbacks('Charge'+str(energy)+'-Mon',
+                                   self._charges[energy])
 
         c150mev = self._currents['150MeV']
         c3gev = self._currents['3GeV']
 
         # integrated current in 3GeV
         self._intcurrent3gev += c3gev * INTCURR_INTVL  # [mA.h]
-        self.driver.setParam('IntCurrent3GeV-Mon', self._intcurrent3gev)
+        self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
         # ramp efficiency
         if c150mev > c3gev:
             self._rampeff = 100*c3gev/c150mev
-            self.driver.setParam('RampEff-Mon', self._rampeff)
-
-        self.driver.updatePVs()
+            self.run_callbacks('RampEff-Mon', self._rampeff)
 
 
-class SIApp:
-    """Main Class of the IOC Logic."""
+class SIApp(_Callback):
+    """Main Class."""
 
-    pvs_database = None
-
-    def __init__(self, driver):
+    def __init__(self):
         """Class constructor."""
-        _pvs.print_banner()
-
-        self._driver = driver
-
-        # consts
-        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
-        self._PREFIX = _pvs.get_pvs_prefix()
+        super().__init__()
+        self._pvs_database = _get_database('SI')
 
         # initialize vars
         self._time0 = _time.time()
@@ -237,36 +223,44 @@ class SIApp:
         self._storedebeam_13C4_value = 0
         self._storedebeam_14C4_value = 0
         self._is_cycling = False
-        data = _get_value_from_arch(self._PREFIX+'Charge-Mon')
+        data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
         else:
             self._charge = data[1][0]
 
         # pvs
-        self._current_13C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-13C4:DI-DCCT:Current-Mon',
+        self._current_13C4_pv = _PV(
+            _vaca_prefix+'SI-13C4:DI-DCCT:Current-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_dcct_current)
-        self._current_14C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-14C4:DI-DCCT:Current-Mon',
+        self._current_14C4_pv = _PV(
+            _vaca_prefix+'SI-14C4:DI-DCCT:Current-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_dcct_current)
-        self._storedebeam_13C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
+        self._storedebeam_13C4_pv = _PV(
+            _vaca_prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
-        self._storedebeam_14C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
+        self._storedebeam_14C4_pv = _PV(
+            _vaca_prefix+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
-        self._reliablemeas_13C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
+        self._reliablemeas_13C4_pv = _PV(
+            _vaca_prefix+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
-        self._reliablemeas_14C4_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
+        self._reliablemeas_14C4_pv = _PV(
+            _vaca_prefix+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
-        self._dipole_opmode_pv = _epics.PV(
-            self._PREFIX_VACA+'SI-Fam:PS-B1B2-1:OpMode-Sts',
+        self._dipole_opmode_pv = _PV(
+            _vaca_prefix+'SI-Fam:PS-B1B2-1:OpMode-Sts',
+            connection_timeout=0.05,
             callback=self._callback_get_dipole_opmode)
-        self._bo_curr3gev_pv = _epics.PV(
-            self._PREFIX_VACA+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
+        self._bo_curr3gev_pv = _PV(
+            _vaca_prefix+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
+            connection_timeout=0.05,
             callback=self._callback_get_bo_curr3gev)
 
         self._current_13C4_buffer = _SiriusPVTimeSerie(
@@ -274,19 +268,13 @@ class SIApp:
         self._current_14C4_buffer = _SiriusPVTimeSerie(
             pv=self._current_14C4_pv, time_window=0.4, use_pv_timestamp=False)
 
-        # set initial pv values
-        self.driver.setParam('Charge-Mon', self._charge)
-        self.driver.updatePV('Charge-Mon')
-
-    @staticmethod
-    def init_class():
-        """Init class."""
-        SIApp.pvs_database = _pvs.get_pvs_database()
+    def init_database(self):
+        """Set initial PV values."""
+        self.run_callbacks('Charge-Mon', self._charge)
 
     @property
-    def driver(self):
-        """Return driver."""
-        return self._driver
+    def pvs_database(self):
+        return self._pvs_database
 
     def process(self, interval):
         """Sleep."""
@@ -301,8 +289,7 @@ class SIApp:
                 dt = (timestamp - self._time0)  # Delta t [s]
                 inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
                 self._charge += inc_charge
-                self.driver.setParam('Charge-Mon', self._charge)
-                self.driver.updatePV('Charge-Mon')
+                self.run_callbacks('Charge-Mon', self._charge)
                 value = self._charge
             self._time0 = timestamp
         return value
@@ -313,13 +300,11 @@ class SIApp:
         if reason == 'DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
                 self._update_dcct_mode(value)
-                self.driver.setParam('DCCT-Sts', self._dcct_mode)
-                self.driver.updatePV('DCCT-Sts')
+                self.run_callbacks('DCCT-Sts', self._dcct_mode)
                 status = True
         elif reason == 'DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
-            self.driver.setParam('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
-            self.driver.updatePV('DCCTFltCheck-Sts')
+            self.run_callbacks('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
             status = True
         return status
 
@@ -341,8 +326,7 @@ class SIApp:
             mode = self._dcct_mode
         if mode != self._dcct_mode:
             self._dcct_mode = mode
-            self.driver.setParam('DCCT-Sts', self._dcct_mode)
-            self.driver.updatePV('DCCT-Sts')
+            self.run_callbacks('DCCT-Sts', self._dcct_mode)
 
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
@@ -367,8 +351,7 @@ class SIApp:
         self._current_value = current
 
         # update pvs
-        self.driver.setParam('Current-Mon', self._current_value)
-        self.driver.updatePV('Current-Mon')
+        self.run_callbacks('Current-Mon', self._current_value)
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
         if '13C4' in pvname:
@@ -383,8 +366,7 @@ class SIApp:
             self._storedebeam_value = self._storedebeam_13C4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             self._storedebeam_value = self._storedebeam_14C4_value
-        self.driver.setParam('StoredEBeam-Mon', self._storedebeam_value)
-        self.driver.updatePV('StoredEBeam-Mon')
+        self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
         if '13C4' in pvname:
@@ -419,8 +401,7 @@ class SIApp:
         self._injeff = 100*(delta_curr/value)*(SI_HarmNum/BO_HarmNum)
 
         # update pvs
-        self.driver.setParam('InjEff-Mon', self._injeff)
-        self.driver.updatePV('InjEff-Mon')
+        self.run_callbacks('InjEff-Mon', self._injeff)
 
     # ----- auxiliar methods -----
 
