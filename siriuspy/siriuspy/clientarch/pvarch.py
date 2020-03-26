@@ -7,13 +7,16 @@ class PVDetails:
     """Archive PV Details."""
 
     _field2type = {
-        'Number of elements': int,
-        'Units:': str,
-        'Host name': str,
-        'Average bytes per event': float,
-        'Estimated storage rate (KB/hour)': float,
-        'Estimated storage rate (MB/day)': float,
-        'Estimated storage rate (GB/year)': float,
+        'Number of elements': ('nelms', int),
+        'Units:': ('units', str),
+        'Host name': ('host_name', str),
+        'Average bytes per event': ('avg_bytes_per_event', float),
+        'Estimated storage rate (KB/hour)':
+            ('estimated_storage_rate_kb_hour', float),
+        'Estimated storage rate (MB/day)':
+            ('estimated_storage_rate_mb_day', float),
+        'Estimated storage rate (GB/year)':
+            ('estimated_storage_rate_gb_year', float),
         }
 
     def __init__(self, pvname, connector=None):
@@ -34,7 +37,9 @@ class PVDetails:
     @property
     def connected(self):
         """."""
-        return self.connector and self.connector.connected
+        if not self.connector:
+            return False
+        return self.connector.connected
 
     @property
     def request_url(self):
@@ -67,9 +72,9 @@ class PVDetails:
             # print(datum)
             field, value = datum['name'], datum['value']
             value = value.replace(',', '.')
-            if field in PVDetails.field2type:
-                ftype = PVDetails.field2type[field]
-                setattr(self, field, ftype(value))
+            if field in PVDetails._field2type:
+                fattr, ftype = PVDetails._field2type[field]
+                setattr(self, fattr, ftype(value))
             elif field == 'Is this a scalar:':
                 self.is_scalar = (value.lower() == 'yes')
             elif field == 'Is this PV paused:':
