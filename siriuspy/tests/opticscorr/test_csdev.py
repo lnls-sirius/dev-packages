@@ -5,10 +5,9 @@
 from unittest import TestCase
 from siriuspy import util
 from siriuspy.opticscorr import csdev
-from siriuspy.opticscorr.csdev import (
-    get_chrom_database,
-    get_tune_database,
-)
+from siriuspy.opticscorr.csdev import \
+    get_chrom_database, \
+    get_tune_database
 
 
 PUBLIC_INTERFACE = (

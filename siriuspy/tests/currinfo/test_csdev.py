@@ -5,10 +5,9 @@
 from unittest import TestCase
 from siriuspy import util
 from siriuspy.currinfo import csdev
-from siriuspy.currinfo.csdev import (
-    get_currinfo_database,
-    get_lifetime_database,
-)
+from siriuspy.currinfo.csdev import \
+    get_currinfo_database, \
+    get_lifetime_database
 
 PUBLIC_INTERFACE = (
         'ETypes',
