@@ -1,6 +1,6 @@
 #!/usr/bin/env python-sirius
 
-# TODO: is this file deprecated?
+# TODO: is this module deprecated?
 
 import argparse as _argparse
 import numpy as _np

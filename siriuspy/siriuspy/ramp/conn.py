@@ -5,7 +5,7 @@ pwrsupply soft IOcs, ConfigDB service and orbit IOCs.
 """
 
 # TODO: Implementations in this module make pylint very confused.
-# Is there a code efficiency reason to initializa class attributes
+# Is there a code efficiency reason to initialize class attributes
 # outside private methods?
 
 import math as _math

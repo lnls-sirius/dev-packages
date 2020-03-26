@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 
-# TODO: deprecated?
+# TODO: is this module deprecated?
 
 import numpy as _np
 import matplotlib.pyplot as plt
