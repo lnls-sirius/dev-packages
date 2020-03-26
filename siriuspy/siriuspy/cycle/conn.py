@@ -597,6 +597,7 @@ class LinacPSCycler:
 
     def cycle_duration(self, mode):
         """Return the duration of the cycling in seconds."""
+        _ = mode
         if self._cycle_duration is None:
             self._get_duration_and_waveform()
         return self._cycle_duration
@@ -619,15 +620,17 @@ class LinacPSCycler:
         """Return wether power supply PS current is zero."""
         return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.1, wait=wait)
 
-    def prepare(self):
+    def prepare(self, mode):
         """Config power supply to cycling mode."""
+        _ = mode
         status = True
         if not self.check_current_zero(wait=0.5):
             status &= self.set_current_zero()
         return status
 
-    def is_prepared(self):
+    def is_prepared(self, mode):
         """Return wether power supply is ready."""
+        _ = mode
         status = self.check_current_zero()
         return status
 
@@ -640,6 +643,7 @@ class LinacPSCycler:
 
     def check_final_state(self, mode):
         """."""
+        _ = mode
         status = True
         status &= self.check_on()
         status &= self.check_intlks()
@@ -649,10 +653,10 @@ class LinacPSCycler:
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
-        t, w = _li_get_default_waveform(psname=self.psname)
-        self._times = t
-        self._cycle_duration = max(t)
-        self._waveform = w
+        time, wfm = _li_get_default_waveform(psname=self.psname)
+        self._times = time
+        self._cycle_duration = max(time)
+        self._waveform = wfm
 
     def __getitem__(self, prop):
         """Return item."""
