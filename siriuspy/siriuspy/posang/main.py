@@ -12,7 +12,7 @@ from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
 from siriuspy.pwrsupply.csdev import Const as _PSC
 
-from siriuspy.posang.csdev import Const as _PAConst, \
+from .csdev import Const as _PAConst, \
     get_posang_database as _get_database
 
 

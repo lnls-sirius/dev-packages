@@ -9,7 +9,7 @@ from epics import PV as _PV
 from siriuspy.callbacks import Callback as _Callback
 from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from siriuspy.envars import VACA_PREFIX as _vaca_prefix
-from siriuspy.currinfo.csdev import \
+from ..csdev import \
     Const as _Const, get_lifetime_database as _get_database
 
 warnings.filterwarnings('error')

@@ -16,9 +16,9 @@ from siriuspy.timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
-from siriuspy.opticscorr.csdev import Const as _Const, \
+from ..csdev import Const as _Const, \
     get_tune_database as _get_database
-from siriuspy.opticscorr.utils import \
+from ..utils import \
     get_config_name as _get_config_name, \
     set_config_name as _set_config_name
 
