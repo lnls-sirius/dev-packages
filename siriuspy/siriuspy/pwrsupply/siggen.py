@@ -143,15 +143,15 @@ class Signal:
         """."""
         tmax = self.duration
         tstep = tmax/(nrpts-1) if nrpts > 1 else tmax
-        tv, wv = [], []
-        t = 0
+        tval, wval = [], []
+        time = 0
         while True:
-            w = self._get_value(t)
-            tv.append(t), wv.append(w)
-            if len(tv) == nrpts:
+            wvalue = self._get_value(time)
+            _ = tval.append(time), wval.append(wvalue)
+            if len(tval) == nrpts:
                 break
-            t += tstep
-        return wv, tv
+            time += tstep
+        return wval, tval
 
     # --- virtual methods ---
 
@@ -301,7 +301,7 @@ class SignalFactory:
 
     @staticmethod
     def create(data=None, **kwargs):
-        """Factory method.
+        """Implement factory method.
 
             This methods returns a Signal object corresponding to the
         selected type.
@@ -332,47 +332,47 @@ class SignalFactory:
             typ = SignalFactory.TYPES[typ]
 
         # set ps controller initial values
-        kw = dict()
-        kw.update(kwargs)
-        kw['type'] = typ
-        p = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
+        kwa = dict()
+        kwa.update(kwargs)
+        kwa['type'] = typ
+        parms = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
 
-        kw['num_cycles'] = p[1]
-        kw['freq'] = p[2]  # [A]
-        kw['amplitude'] = p[3]
-        kw['offset'] = p[4]  # [A]
-        kw['aux_param'] = p[5:9]
+        kwa['num_cycles'] = parms[1]
+        kwa['freq'] = parms[2]  # [A]
+        kwa['amplitude'] = parms[3]
+        kwa['offset'] = parms[4]  # [A]
+        kwa['aux_param'] = parms[5:9]
 
         # process data argument
-        # kw = dict()
+        # kwa = dict()
         if data is not None:
-            kw['type'] = data[0]
-            kw['num_cycles'] = int(data[1])
-            kw['freq'] = float(data[2])
-            kw['amplitude'] = float(data[3])
-            kw['offset'] = float(data[4])
-            kw['aux_param'] = [float(d) for d in data[5:9]]
+            kwa['type'] = data[0]
+            kwa['num_cycles'] = int(data[1])
+            kwa['freq'] = float(data[2])
+            kwa['amplitude'] = float(data[3])
+            kwa['offset'] = float(data[4])
+            kwa['aux_param'] = [float(d) for d in data[5:9]]
 
         # process type argument
-        kw.update(kwargs)
-        if 'rampup_time' in kw:
-            kw['aux_param'][0] = float(kw['rampup_time'])
-        if 'rampdown_time' in kw:
-            kw['aux_param'][1] = float(kw['rampdown_time'])
-        if 'plateau_time' in kw:
-            kw['aux_param'][2] = float(kw['plateau_time'])
-        if 'theta_begin' in kw:
-            kw['aux_param'][0] = float(kw['theta_begin'])
-        if 'theta_end' in kw:
-            kw['aux_param'][1] = float(kw['theta_end'])
-        if 'decay_time' in kw:
-            kw['aux_param'][2] = float(kw['decay_time'])
+        kwa.update(kwargs)
+        if 'rampup_time' in kwa:
+            kwa['aux_param'][0] = float(kwa['rampup_time'])
+        if 'rampdown_time' in kwa:
+            kwa['aux_param'][1] = float(kwa['rampdown_time'])
+        if 'plateau_time' in kwa:
+            kwa['aux_param'][2] = float(kwa['plateau_time'])
+        if 'theta_begin' in kwa:
+            kwa['aux_param'][0] = float(kwa['theta_begin'])
+        if 'theta_end' in kwa:
+            kwa['aux_param'][1] = float(kwa['theta_end'])
+        if 'decay_time' in kwa:
+            kwa['aux_param'][2] = float(kwa['decay_time'])
 
         if typ == SignalFactory.TYPES['Trapezoidal']:
-            return SignalTrapezoidal(**kw)
+            return SignalTrapezoidal(**kwa)
         elif typ == SignalFactory.TYPES['Sine']:
-            return SignalSine(**kw)
+            return SignalSine(**kwa)
         elif typ == SignalFactory.TYPES['DampedSine']:
-            return SignalDampedSine(**kw)
+            return SignalDampedSine(**kwa)
         elif typ == SignalFactory.TYPES['DampedSquaredSine']:
-            return SignalDampedSine(**kw)
+            return SignalDampedSine(**kwa)

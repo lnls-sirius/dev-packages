@@ -2,8 +2,8 @@
 
 
 import numpy as _np
-from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
-from siriuspy.csdevice.opticscorr import Const as _Const
+from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
+from ..csdevice.opticscorr import Const as _Const
 
 
 class OpticsCorr:
@@ -17,7 +17,19 @@ class OpticsCorr:
                  nominal_matrix, nominal_intstrengths, nominal_opticsparam,
                  magnetfams_focusing, magnetfams_defocusing):
         """Class constructor."""
+        # declaration of attributes (as pylint requires)
+        self._nominal_matrix = None
         self._initialized = False
+        self._nominal_intstrengths = None
+        self._matrix_prop_svd = None
+        self._matrix_prop_2knobs = None
+        self._inverse_matrix_prop_svd = None
+        self._inverse_matrix_prop_2knobs = None
+        self._nominal_opticsparam = None
+        self._magnetfams_focusing = None
+        self._magnetfams_defocusing = None
+
+        # initialization of attributes
         self._set_magnetfams_ordering(magnetfams_ordering)
         self.nominal_matrix = nominal_matrix
         self.nominal_intstrengths = nominal_intstrengths
@@ -66,10 +78,10 @@ class OpticsCorr:
             if not isinstance(item, float):
                 raise TypeError("List elements must be floats.")
 
-        m = _np.array(value)
-        m = _np.reshape(m, [2, len(self._magnetfams_ordering)])
+        matrix = _np.array(value)
+        matrix = _np.reshape(matrix, [2, len(self._magnetfams_ordering)])
 
-        self._nominal_matrix = m
+        self._nominal_matrix = matrix
 
         if self._initialized:
             self._calculate_matrices()
@@ -134,7 +146,7 @@ class OpticsCorr:
         for item in value:
             if not isinstance(item, str):
                 raise TypeError("List elements must be strings.")
-        if len(value) < 1:
+        if not value:
             raise ValueError("At least one focusing magnet family is "
                              "necessary to correction!")
         if not all(item in self._magnetfams_ordering for item in value):
@@ -162,7 +174,7 @@ class OpticsCorr:
         for item in value:
             if not isinstance(item, str):
                 raise TypeError("List elements must be strings.")
-        if len(value) < 1:
+        if not value:
             raise ValueError("At least one defocusing magnet family is "
                              "necessary to correction!")
         if not all(item in self._magnetfams_ordering for item in value):
@@ -234,49 +246,49 @@ class OpticsCorr:
 
         delta = _np.dot(inv, delta_opticsparam).T.flatten()
 
-        f = len(self.magnetfams_focusing)
-        d = len(self.magnetfams_defocusing)
+        foc = len(self.magnetfams_focusing)
+        defoc = len(self.magnetfams_defocusing)
         if method == 0:
             if grouping == 'svd':
-                for i in range(f):
+                for i in range(foc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_focusing[i])
+                        self.magnetfams_focusing[i])
                     magnetfams_delta_intstrengths[index] = (
                         self.nominal_intstrengths[0, index] * delta[i])
-                for i in range(d):
+                for i in range(defoc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_defocusing[i])
+                        self.magnetfams_defocusing[i])
                     magnetfams_delta_intstrengths[index] = (
-                        self.nominal_intstrengths[0, index] * delta[i+f])
+                        self.nominal_intstrengths[0, index] * delta[i+foc])
             elif grouping == '2knobs':
-                for i in range(f):
+                for i in range(foc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_focusing[i])
+                        self.magnetfams_focusing[i])
                     magnetfams_delta_intstrengths[index] = (
                         self.nominal_intstrengths[0, index] * delta[0])
-                for i in range(d):
+                for i in range(defoc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_defocusing[i])
+                        self.magnetfams_defocusing[i])
                     magnetfams_delta_intstrengths[index] = (
                         self.nominal_intstrengths[0, index] * delta[1])
         elif method == 1:
             if grouping == 'svd':
-                for i in range(f):
+                for i in range(foc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_focusing[i])
+                        self.magnetfams_focusing[i])
                     magnetfams_delta_intstrengths[index] = delta[i]
-                for i in range(d):
+                for i in range(defoc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_defocusing[i])
-                    magnetfams_delta_intstrengths[index] = delta[i+f]
+                        self.magnetfams_defocusing[i])
+                    magnetfams_delta_intstrengths[index] = delta[i+foc]
             elif grouping == '2knobs':
-                for i in range(f):
+                for i in range(foc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_focusing[i])
+                        self.magnetfams_focusing[i])
                     magnetfams_delta_intstrengths[index] = delta[0]
-                for i in range(d):
+                for i in range(defoc):
                     index = self.magnetfams_ordering.index(
-                            self.magnetfams_defocusing[i])
+                        self.magnetfams_defocusing[i])
                     magnetfams_delta_intstrengths[index] = delta[1]
 
         return magnetfams_delta_intstrengths.flatten()
@@ -313,31 +325,32 @@ class OpticsCorr:
     def _calculate_matrix_svd(self, method):
         """Calculate matrix of multiple knobs (svd)."""
         if method == 0:  # proportional method
-            m = self.nominal_matrix*self.nominal_intstrengths
+            matrix = self.nominal_matrix*self.nominal_intstrengths
         elif method == 1:  # additional method
-            m = self.nominal_matrix
+            matrix = self.nominal_matrix
 
-        f = len(self.magnetfams_focusing)
-        d = len(self.magnetfams_defocusing)
-        mat_svd = _np.zeros([2, f+d])
+        foc = len(self.magnetfams_focusing)
+        defoc = len(self.magnetfams_defocusing)
+        mat_svd = _np.zeros([2, foc+defoc])
 
-        for i in range(f):
-            c = self.magnetfams_ordering.index(self.magnetfams_focusing[i])
-            mat_svd[0, i] = m[0, c]
-            mat_svd[1, i] = m[1, c]
-        for i in range(d):
-            c = self.magnetfams_ordering.index(self.magnetfams_defocusing[i])
-            mat_svd[0, i+f] = m[0, c]
-            mat_svd[1, i+f] = m[1, c]
+        for i in range(foc):
+            idxc = self.magnetfams_ordering.index(self.magnetfams_focusing[i])
+            mat_svd[0, i] = matrix[0, idxc]
+            mat_svd[1, i] = matrix[1, idxc]
+        for i in range(defoc):
+            idxc = self.magnetfams_ordering.index(
+                self.magnetfams_defocusing[i])
+            mat_svd[0, i+foc] = matrix[0, idxc]
+            mat_svd[1, i+foc] = matrix[1, idxc]
 
         return mat_svd
 
     def _calculate_matrix_2knobs(self, method):
         """Calculate matrices of 2 knobs."""
         if method == 0:  # proportional method
-            m = self.nominal_matrix*self.nominal_intstrengths
+            matrix = self.nominal_matrix*self.nominal_intstrengths
         elif method == 1:  # additional method
-            m = self.nominal_matrix
+            matrix = self.nominal_matrix
 
         mat_2knobs = _np.array([[0.0, 0.0], [0.0, 0.0]])
         # matrix indices are organized like:
@@ -346,28 +359,28 @@ class OpticsCorr:
 
         for fam in self.magnetfams_focusing:
             index = self.magnetfams_ordering.index(fam)
-            mat_2knobs[0, 0] += m[0, index]
-            mat_2knobs[1, 0] += m[1, index]
+            mat_2knobs[0, 0] += matrix[0, index]
+            mat_2knobs[1, 0] += matrix[1, index]
 
         for fam in self.magnetfams_defocusing:
             index = self.magnetfams_ordering.index(fam)
-            mat_2knobs[0, 1] += m[0, index]
-            mat_2knobs[1, 1] += m[1, index]
+            mat_2knobs[0, 1] += matrix[0, index]
+            mat_2knobs[1, 1] += matrix[1, index]
 
         return mat_2knobs
 
     def _calculate_inverse(self, method, grouping):
         """Calculate inverse of a matrix using SVD."""
-        m = self._choose_matrix(method, grouping)
+        matrix = self._choose_matrix(method, grouping)
 
         try:
-            U, S, V = _np.linalg.svd(m, full_matrices=False)
+            umat, smat, vmat = _np.linalg.svd(matrix, full_matrices=False)
         except _np.linalg.LinAlgError():
             raise Exception("Could not calculate SVD.")
-        inv = _np.dot(_np.dot(V.T, _np.diag(1/S)), U.T)
-        isNan = _np.any(_np.isnan(inv))
-        isInf = _np.any(_np.isinf(inv))
-        if isNan or isInf:
+        inv = _np.dot(_np.dot(vmat.T, _np.diag(1/smat)), umat.T)
+        isnan = _np.any(_np.isnan(inv))
+        isinf = _np.any(_np.isinf(inv))
+        if isnan or isinf:
             raise Exception("Pseudo inverse contains nan or inf.")
 
         return inv
@@ -375,28 +388,28 @@ class OpticsCorr:
     def _choose_matrix(self, method, grouping):
         if method == 0:
             if grouping == 'svd':
-                m = self.matrix_prop_svd
+                matrix = self.matrix_prop_svd
             elif grouping == '2knobs':
-                m = self.matrix_prop_2knobs
+                matrix = self.matrix_prop_2knobs
         elif method == 1:
             if grouping == 'svd':
-                m = self.matrix_add_svd
+                matrix = self.matrix_add_svd
             elif grouping == '2knobs':
-                m = self.matrix_add_2knobs
-        return m
+                matrix = self.matrix_add_2knobs
+        return matrix
 
     def _choose_inverse_matrix(self, method, grouping):
         if method == 0:
             if grouping == 'svd':
-                m = self.inverse_matrix_prop_svd
+                matrix = self.inverse_matrix_prop_svd
             elif grouping == '2knobs':
-                m = self.inverse_matrix_prop_2knobs
+                matrix = self.inverse_matrix_prop_2knobs
         elif method == 1:
             if grouping == 'svd':
-                m = self.inverse_matrix_add_svd
+                matrix = self.inverse_matrix_add_svd
             elif grouping == '2knobs':
-                m = self.inverse_matrix_add_2knobs
-        return m
+                matrix = self.inverse_matrix_add_2knobs
+        return matrix
 
 
 class BOTuneCorr(OpticsCorr, _ConfigDBDocument):

@@ -1,5 +1,8 @@
 #!/usr/bin/env python-sirius
 
+
+# TODO: is this module deprecated?
+
 import numpy as _np
 import matplotlib.pyplot as plt
 from waveform import WaveformParam

@@ -15,7 +15,7 @@ from siriuspy.magnet import excdata
 _path = os.path.abspath(os.path.dirname(__file__))
 
 
-# ### Auxiliary functions ####
+# --- auxiliar methods ---
 def _read_test_file(path):
     """Read a file."""
     prefix = _path + '/test_data/servweb/'
@@ -37,7 +37,8 @@ def _magnets_excitation_data_read(label):
         return fd.read()
 
 
-# ### Define Mocks ####
+# --- Define Mocks ---
+
 # --- mock objects ps_search _web ---
 _p = mock.patch.object(ps_search, '_web', autospec=True)
 mock1 = _p.start()

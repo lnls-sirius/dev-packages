@@ -13,8 +13,8 @@ class ConfigDBDocument():
 
     def __init__(self, config_type, name=None, url=None):
         """Constructor."""
-        self._configdbclient = _ConfigDBClient(
-                            url=url, config_type=config_type)
+        self._configdbclient = \
+            _ConfigDBClient(url=url, config_type=config_type)
         self._name = name or self.generate_config_name()
         self._info = None
         self._value = None
@@ -22,18 +22,22 @@ class ConfigDBDocument():
 
     @property
     def configdbclient(self):
+        """."""
         return self._configdbclient
 
     @property
     def url(self):
+        """."""
         return self._configdbclient.url
 
     @property
     def config_type(self):
+        """."""
         return self._configdbclient.config_type
 
     @property
     def connected(self):
+        """."""
         return self._configdbclient.connected
 
     @property
@@ -55,18 +59,22 @@ class ConfigDBDocument():
 
     @property
     def created(self):
+        """."""
         return self._info['created']
 
     @property
     def modified(self):
+        """."""
         return self._info['modified'][-1]
 
     @property
     def modified_count(self):
+        """."""
         return len(self._info['modified'])
 
     @property
     def discarded(self):
+        """."""
         return self._info['discarded']
 
     @property
@@ -117,15 +125,17 @@ class ConfigDBDocument():
 
     def delete(self):
         """Delete configuration from server."""
-        # TODO: should this method be easily available?
+        # NOTE: should this method be easily available?
         if self.exist():
             self._configdbclient.delete_config(self._name)
             self._synchronized = False
 
     def check_valid_value(self, value):
+        """."""
         return self._configdbclient.check_valid_value(value)
 
     def get_value_from_template(self):
+        """."""
         return self._configdbclient.get_value_from_template()
 
     @classmethod

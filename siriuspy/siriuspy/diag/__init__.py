@@ -1,1 +1,1 @@
-
+"""Diagnostics subpackage."""

@@ -303,7 +303,8 @@ class LLTimeSearch:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
 
-    # ############ Auxiliar methods ###########
+    # --- private methods ---
+
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
         if which_map.lower().startswith('from'):
@@ -329,7 +330,8 @@ class LLTimeSearch:
             cls._parse_text_and_build_connection_mappings(text)
             cls._update_related_maps()
 
-    # Methods auxiliar to _get_timedata
+    # --- methods auxiliar to _get_timedata ---
+
     @classmethod
     def _parse_text_and_build_connection_mappings(cls, text):
         from_evg = dict()

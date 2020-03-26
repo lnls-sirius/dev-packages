@@ -6,6 +6,19 @@ from .client import ClientArchiver as _ClientArchiver
 class PVDetails:
     """Archive PV Details."""
 
+    _field2type = {
+        'Number of elements': ('nelms', int),
+        'Units:': ('units', str),
+        'Host name': ('host_name', str),
+        'Average bytes per event': ('avg_bytes_per_event', float),
+        'Estimated storage rate (KB/hour)':
+            ('estimated_storage_rate_kb_hour', float),
+        'Estimated storage rate (MB/day)':
+            ('estimated_storage_rate_mb_day', float),
+        'Estimated storage rate (GB/year)':
+            ('estimated_storage_rate_gb_year', float),
+        }
+
     def __init__(self, pvname, connector=None):
         """."""
         self.pvname = pvname
@@ -24,7 +37,9 @@ class PVDetails:
     @property
     def connected(self):
         """."""
-        return self.connector and self.connector.connected
+        if not self.connector:
+            return False
+        return self.connector.connected
 
     @property
     def request_url(self):
@@ -56,32 +71,16 @@ class PVDetails:
         for datum in data:
             # print(datum)
             field, value = datum['name'], datum['value']
-            if field == 'Is this a scalar:':
+            value = value.replace(',', '.')
+            if field in PVDetails._field2type:
+                fattr, ftype = PVDetails._field2type[field]
+                setattr(self, fattr, ftype(value))
+            elif field == 'Is this a scalar:':
                 self.is_scalar = (value.lower() == 'yes')
-            elif field == 'Number of elements:':
-                self.nelms = int(value)
-            elif field == 'Units:':
-                self.units = value
             elif field == 'Is this PV paused:':
                 self.is_paused = (value.lower() == 'yes')
-            elif field == 'Host name':
-                self.host_name = value
-            elif field == 'Host name':
-                self.host_name = value
             elif field == 'Is this PV currently connected?':
                 self.is_connected = (value.lower() == 'yes')
-            elif field == 'Average bytes per event':
-                value = value.replace(',','.')
-                self.avg_bytes_per_event = float(value)
-            elif field == 'Estimated storage rate (KB/hour)':
-                value = value.replace(',', '.')
-                self.estimated_storage_rate_kb_hour = float(value)
-            elif field == 'Estimated storage rate (MB/day)':
-                value = value.replace(',', '.')
-                self.estimated_storage_rate_mb_day = float(value)
-            elif field == 'Estimated storage rate (GB/year)':
-                value = value.replace(',', '.')
-                self.estimated_storage_rate_gb_year = float(value)
         return True
 
     def __str__(self):
@@ -155,7 +154,7 @@ class PVData:
         data = self.connector.getData(
             self.pvname, self.timestamp_start, self.timestamp_stop)
         if not data:
-            return None
+            return
         self.timestamp, self.value, self.status, self.severity = data
 
 

@@ -4,6 +4,10 @@ This module implements connector classes responsible for communications with
 pwrsupply soft IOcs, ConfigDB service and orbit IOCs.
 """
 
+# TODO: Implementations in this module make pylint very confused.
+# Is there a code efficiency reason to initialize class attributes
+# outside private methods?
+
 import math as _math
 import numpy as _np
 
@@ -14,7 +18,6 @@ from .. import csdev as _csdev
 from ..epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
 from ..namesys import SiriusPVName as _PVName
-
 from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
