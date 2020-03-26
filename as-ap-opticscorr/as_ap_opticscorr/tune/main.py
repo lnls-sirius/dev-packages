@@ -1,35 +1,26 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import time as _time
-import epics as _epics
 import numpy as _np
-import siriuspy as _siriuspy
+from epics import PV as _PV
+
+from siriuspy import util as _util
+from siriuspy.callbacks import Callback as _Callback
+from siriuspy.envars import VACA_PREFIX as _vaca_prefix
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.csdev import Const as _PSConst
 from siriuspy.timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
-from siriuspy.csdevice.opticscorr import Const as _Const
-from siriuspy.search import LLTimeSearch as _LLTimeSearch
+
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
+from siriuspy.opticscorr.csdev import Const as _Const, \
+    get_tune_database as _get_database
 from siriuspy.opticscorr.utils import \
     get_config_name as _get_config_name, \
     set_config_name as _set_config_name
-import as_ap_opticscorr.tune.pvs as _pvs
-
-# Coding guidelines:
-# =================
-# 01 - pay special attention to code readability
-# 02 - simplify logic as much as possible
-# 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be
-#      easier to read!)
-# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive'
-#      (but clearer) sections fast.
-# 06 - be consistent in coding style (variable naming, spacings, prefixes,
-#      suffixes, etc)
-
 
 # Constants
 _ALLSET = 0x1f
@@ -37,19 +28,20 @@ _ALLCLR_SYNCON = 0x00
 _ALLCLR_SYNCOFF = 0x10
 
 
-class App:
+class App(_Callback):
     """Main application for handling tune correction."""
 
-    pvs_database = None
-
-    def __init__(self, driver):
+    def __init__(self, acc):
         """Class constructor."""
-        _pvs.print_banner()
-        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
-        self._ACC = _pvs.get_pvs_section()
-        self._QFAMS = _pvs.get_corr_fams()
+        super().__init__()
+        self._pvs_database = _get_database(acc.upper())
 
-        self._driver = driver
+        # consts
+        self._ACC = acc.upper()
+        if self._ACC == 'BO':
+            self._QFAMS = _Const.BO_QFAMS_TUNECORR
+        elif self._ACC == 'SI':
+            self._QFAMS = _Const.SI_QFAMS_TUNECORR
 
         self._delta_tunex = 0.0
         self._delta_tuney = 0.0
@@ -67,7 +59,7 @@ class App:
 
         self._qfam_kl_rb = len(self._QFAMS)*[0]
 
-        if self._ACC.lower() == 'si':
+        if self._ACC == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
             self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
@@ -95,12 +87,8 @@ class App:
         [done, corrparams] = self._get_corrparams()
         if done:
             self._config_name = corrparams[0]
-            self.driver.setParam('ConfigName-SP', self._config_name)
-            self.driver.setParam('ConfigName-RB', self._config_name)
             self._nominal_matrix = corrparams[1]
-            self.driver.setParam('RespMat-Mon', self._nominal_matrix)
             self._qfam_nomkl = corrparams[2]
-            self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
             self._opticscorr = _OpticsCorr(
                 magnetfams_ordering=self._QFAMS,
                 nominal_matrix=self._nominal_matrix,
@@ -123,33 +111,40 @@ class App:
         self._qfam_refkl = {}
 
         for fam in self._QFAMS:
-            pss = _SiriusPVName(self._PREFIX_VACA+self._ACC+'-Fam:PS-'+fam)
-            self._qfam_kl_sp_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='KL', propty_suffix='SP'))
+            pss = _SiriusPVName(_vaca_prefix+self._ACC+'-Fam:PS-'+fam)
+            self._qfam_kl_sp_pvs[fam] = _PV(
+                pss.substitute(propty_name='KL', propty_suffix='SP'),
+                connection_timeout=0.05)
 
             self._qfam_refkl[fam] = 0
-            self._qfam_kl_rb_pvs[fam] = _epics.PV(
+            self._qfam_kl_rb_pvs[fam] = _PV(
                 pss.substitute(propty_name='KL', propty_suffix='RB'),
                 callback=[
                     self._callback_init_refkl,
                     self._callback_estimate_deltatune],
-                connection_callback=self._connection_callback_qfam_kl_rb)
+                connection_callback=self._connection_callback_qfam_kl_rb,
+                connection_timeout=0.05)
 
-            self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='PwrState', propty_suffix='Sel'))
-            self._qfam_pwrstate_sts_pvs[fam] = _epics.PV(
+            self._qfam_pwrstate_sel_pvs[fam] = _PV(
+                pss.substitute(propty_name='PwrState', propty_suffix='Sel'),
+                connection_timeout=0.05)
+            self._qfam_pwrstate_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
-                callback=self._callback_qfam_pwrstate_sts)
+                callback=self._callback_qfam_pwrstate_sts,
+                connection_timeout=0.05)
 
-            self._qfam_opmode_sel_pvs[fam] = _epics.PV(
-                pss.substitute(propty_name='OpMode', propty_suffix='Sel'))
-            self._qfam_opmode_sts_pvs[fam] = _epics.PV(
+            self._qfam_opmode_sel_pvs[fam] = _PV(
+                pss.substitute(propty_name='OpMode', propty_suffix='Sel'),
+                connection_timeout=0.05)
+            self._qfam_opmode_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
-                callback=self._callback_qfam_opmode_sts)
+                callback=self._callback_qfam_opmode_sts,
+                connection_timeout=0.05)
 
-            self._qfam_ctrlmode_mon_pvs[fam] = _epics.PV(
+            self._qfam_ctrlmode_mon_pvs[fam] = _PV(
                 pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
-                callback=self._callback_qfam_ctrlmode_mon)
+                callback=self._callback_qfam_ctrlmode_mon,
+                connection_timeout=0.05)
 
         # Connect to Timing
         if self._ACC == 'SI':
@@ -157,76 +152,94 @@ class App:
             trig_db = _get_trig_db(QUADS_TRIG)
             self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index('TunSI')
 
-            self._timing_quads_state_sel = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':State-Sel')
-            self._timing_quads_state_sts = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':State-Sts',
-                callback=self._callback_timing_state)
+            self._timing_quads_state_sel = _PV(
+                _vaca_prefix+QUADS_TRIG+':State-Sel',
+                connection_timeout=0.05)
+            self._timing_quads_state_sts = _PV(
+                _vaca_prefix+QUADS_TRIG+':State-Sts',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_quads_polarity_sel = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Polarity-Sel')
-            self._timing_quads_polarity_sts = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Polarity-Sts',
-                callback=self._callback_timing_state)
+            self._timing_quads_polarity_sel = _PV(
+                _vaca_prefix+QUADS_TRIG+':Polarity-Sel',
+                connection_timeout=0.05)
+            self._timing_quads_polarity_sts = _PV(
+                _vaca_prefix+QUADS_TRIG+':Polarity-Sts',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_quads_src_sel = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Src-Sel')
-            self._timing_quads_src_sts = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Src-Sts',
-                callback=self._callback_timing_state)
+            self._timing_quads_src_sel = _PV(
+                _vaca_prefix+QUADS_TRIG+':Src-Sel',
+                connection_timeout=0.05)
+            self._timing_quads_src_sts = _PV(
+                _vaca_prefix+QUADS_TRIG+':Src-Sts',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_quads_nrpulses_sp = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':NrPulses-SP')
-            self._timing_quads_nrpulses_rb = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':NrPulses-RB',
-                callback=self._callback_timing_state)
+            self._timing_quads_nrpulses_sp = _PV(
+                _vaca_prefix+QUADS_TRIG+':NrPulses-SP',
+                connection_timeout=0.05)
+            self._timing_quads_nrpulses_rb = _PV(
+                _vaca_prefix+QUADS_TRIG+':NrPulses-RB',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_quads_duration_sp = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Duration-SP')
-            self._timing_quads_duration_rb = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Duration-RB',
-                callback=self._callback_timing_state)
+            self._timing_quads_duration_sp = _PV(
+                _vaca_prefix+QUADS_TRIG+':Duration-SP',
+                connection_timeout=0.05)
+            self._timing_quads_duration_rb = _PV(
+                _vaca_prefix+QUADS_TRIG+':Duration-RB',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_quads_delay_sp = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Delay-SP')
-            self._timing_quads_delay_rb = _epics.PV(
-                self._PREFIX_VACA+QUADS_TRIG+':Delay-RB',
-                callback=self._callback_timing_state)
+            self._timing_quads_delay_sp = _PV(
+                _vaca_prefix+QUADS_TRIG+':Delay-SP',
+                connection_timeout=0.05)
+            self._timing_quads_delay_rb = _PV(
+                _vaca_prefix+QUADS_TRIG+':Delay-RB',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
             EVG = _LLTimeSearch.get_evg_name()
-            self._timing_evg_tunsimode_sel = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIMode-Sel')
-            self._timing_evg_tunsimode_sts = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIMode-Sts',
-                callback=self._callback_timing_state)
+            self._timing_evg_tunsimode_sel = _PV(
+                _vaca_prefix+EVG+':TunSIMode-Sel',
+                connection_timeout=0.05)
+            self._timing_evg_tunsimode_sts = _PV(
+                _vaca_prefix+EVG+':TunSIMode-Sts',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_evg_tunsidelaytype_sel = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIDelayType-Sel')
-            self._timing_evg_tunsidelaytype_sts = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIDelayType-Sts',
-                callback=self._callback_timing_state)
+            self._timing_evg_tunsidelaytype_sel = _PV(
+                _vaca_prefix+EVG+':TunSIDelayType-Sel',
+                connection_timeout=0.05)
+            self._timing_evg_tunsidelaytype_sts = _PV(
+                _vaca_prefix+EVG+':TunSIDelayType-Sts',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_evg_tunsidelay_sp = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIDelay-SP')
-            self._timing_evg_tunsidelay_rb = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIDelay-RB',
-                callback=self._callback_timing_state)
+            self._timing_evg_tunsidelay_sp = _PV(
+                _vaca_prefix+EVG+':TunSIDelay-SP',
+                connection_timeout=0.05)
+            self._timing_evg_tunsidelay_rb = _PV(
+                _vaca_prefix+EVG+':TunSIDelay-RB',
+                callback=self._callback_timing_state,
+                connection_timeout=0.05)
 
-            self._timing_evg_tunsiexttrig_cmd = _epics.PV(
-                self._PREFIX_VACA+EVG+':TunSIExtTrig-Cmd')
+            self._timing_evg_tunsiexttrig_cmd = _PV(
+                _vaca_prefix+EVG+':TunSIExtTrig-Cmd',
+                connection_timeout=0.05)
 
-        self.driver.setParam('Log-Mon', 'Started.')
-        self.driver.updatePVs()
-
-    @staticmethod
-    def init_class():
-        """Init class."""
-        App.pvs_database = _pvs.get_pvs_database()
+    def init_database(self):
+        """Set initial PV values."""
+        self.run_callbacks('ConfigName-SP', self._config_name)
+        self.run_callbacks('ConfigName-RB', self._config_name)
+        self.run_callbacks('RespMat-Mon', self._nominal_matrix)
+        self.run_callbacks('NominalKL-Mon', self._qfam_nomkl)
+        self.run_callbacks('Log-Mon', 'Started.')
 
     @property
-    def driver(self):
-        """Return driver."""
-        return self._driver
+    def pvs_database(self):
+        return self._pvs_database
 
     def process(self, interval):
         """Sleep."""
@@ -249,9 +262,8 @@ class App:
             done = self._apply_corr()
             if done:
                 self._apply_corr_cmd_count += 1
-                self.driver.setParam(
+                self.run_callbacks(
                     'ApplyDelta-Cmd', self._apply_corr_cmd_count)
-                self.driver.updatePV('ApplyDelta-Cmd')
 
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
@@ -260,36 +272,31 @@ class App:
                     acc=self._ACC.lower(), opticsparam='tune',
                     config_name=value)
                 self._config_name = corrparams[0]
-                self.driver.setParam('ConfigName-RB', self._config_name)
+                self.run_callbacks('ConfigName-RB', self._config_name)
                 self._nominal_matrix = corrparams[1]
-                self.driver.setParam('RespMat-Mon', self._nominal_matrix)
+                self.run_callbacks('RespMat-Mon', self._nominal_matrix)
                 self._qfam_nomkl = corrparams[2]
-                self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
+                self.run_callbacks('NominalKL-Mon', self._qfam_nomkl)
                 self._opticscorr.nominal_matrix = self._nominal_matrix
                 self._opticscorr.nominal_intstrengths = self._qfam_nomkl
                 self._calc_deltakl()
-                self.driver.setParam(
-                    'Log-Mon', 'Updated correction parameters.')
-                self.driver.updatePVs()
+                self.run_callbacks('Log-Mon', 'Updated correction parameters.')
                 status = True
             else:
-                self.driver.setParam(
+                self.run_callbacks(
                     'Log-Mon', 'ERR:Configuration not found in configdb.')
-                self.driver.updatePV('Log-Mon')
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
                 self._corr_method = value
-                self.driver.setParam('CorrMeth-Sts', value)
-                self.driver.updatePV('CorrMeth-Sts')
+                self.run_callbacks('CorrMeth-Sts', value)
                 self._calc_deltakl()
                 status = True
 
         elif reason == 'CorrGroup-Sel':
             if value != self._corr_group:
                 self._corr_group = value
-                self.driver.setParam('CorrGroup-Sts', self._corr_group)
-                self.driver.updatePV('CorrGroup-Sts')
+                self.run_callbacks('CorrGroup-Sts', self._corr_group)
                 self._calc_deltakl()
                 status = True
 
@@ -299,13 +306,13 @@ class App:
 
                 if self._config_ps():
                     self._config_ps_cmd_count += 1
-                    self.driver.setParam(
+                    self.run_callbacks(
                         'ConfigPS-Cmd', self._config_ps_cmd_count)
 
                 if value == 1:
                     if self._config_timing():
                         self._config_timing_cmd_count += 1
-                        self.driver.setParam(
+                        self.run_callbacks(
                             'ConfigTiming-Cmd', self._config_timing_cmd_count)
                 val = 1
                 if (self._status & 0x1) == 0:
@@ -319,36 +326,32 @@ class App:
                     val = any(
                         op != opmode for op in self._qfam_check_opmode_sts)
 
-                self._status = _siriuspy.util.update_bit(
+                self._status = _util.update_bit(
                     v=self._status, bit_pos=2, bit_val=val)
 
-                self.driver.setParam('Status-Mon', self._status)
-                self.driver.setParam('SyncCorr-Sts', self._sync_corr)
-                self.driver.updatePVs()
+                self.run_callbacks('Status-Mon', self._status)
+                self.run_callbacks('SyncCorr-Sts', self._sync_corr)
                 status = True
 
         elif reason == 'ConfigPS-Cmd':
             done = self._config_ps()
             if done:
                 self._config_ps_cmd_count += 1
-                self.driver.setParam(
+                self.run_callbacks(
                     'ConfigPS-Cmd', self._config_ps_cmd_count)
-                self.driver.updatePV('ConfigPS-Cmd')
 
         elif reason == 'ConfigTiming-Cmd':
             done = self._config_timing()
             if done:
                 self._config_timing_cmd_count += 1
-                self.driver.setParam(
+                self.run_callbacks(
                     'ConfigTiming-Cmd', self._config_timing_cmd_count)
-                self.driver.updatePV('ConfigTiming-Cmd')
 
         elif reason == 'SetNewRefKL-Cmd':
             self._update_ref()
             self._set_new_refkl_cmd_count += 1
-            self.driver.setParam(
+            self.run_callbacks(
                 'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
-            self.driver.updatePV('SetNewRefKL-Cmd')
 
         return status  # return True to invoke super().write of PCASDriver
 
@@ -377,14 +380,13 @@ class App:
             method=method, grouping=grouping,
             delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        self.driver.setParam('Log-Mon', 'Calculated KL values.')
+        self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
         self._lastcalc_deltakl = lastcalc_deltakl
         for fam in self._QFAMS:
             fam_idx = self._QFAMS.index(fam)
-            self.driver.setParam(
+            self.run_callbacks(
                 'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam_idx])
-        self.driver.updatePVs()
 
     def _apply_corr(self):
         if ((self._status == _ALLCLR_SYNCOFF and
@@ -393,17 +395,14 @@ class App:
             for fam, pv in self._qfam_kl_sp_pvs.items():
                 fam_idx = self._QFAMS.index(fam)
                 pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx])
-            self.driver.setParam('Log-Mon', 'Applied correction.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._timing_evg_tunsiexttrig_cmd.put(0)
-                self.driver.setParam('Log-Mon', 'Generated trigger.')
-                self.driver.updatePV('Log-Mon')
+                self.run_callbacks('Log-Mon', 'Generated trigger.')
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
         return False
 
     def _update_ref(self):
@@ -414,28 +413,26 @@ class App:
                 if value is None:
                     return
                 self._qfam_refkl[fam] = value
-                self.driver.setParam(
+                self.run_callbacks(
                     'RefKL' + fam + '-Mon', self._qfam_refkl[fam])
 
                 fam_idx = self._QFAMS.index(fam)
                 self._lastcalc_deltakl[fam_idx] = 0
-                self.driver.setParam('DeltaKL' + fam + '-Mon', 0)
+                self.run_callbacks('DeltaKL' + fam + '-Mon', 0)
 
             # the deltas from new kl references are zero
             self._delta_tunex = 0
             self._delta_tuney = 0
-            self.driver.setParam('DeltaTuneX-SP', self._delta_tunex)
-            self.driver.setParam('DeltaTuneY-SP', self._delta_tuney)
+            self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
+            self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
             delta_tunex, delta_tuney = self._estimate_current_deltatune()
-            self.driver.setParam('DeltaTuneX-RB', delta_tunex)
-            self.driver.setParam('DeltaTuneY-RB', delta_tuney)
+            self.run_callbacks('DeltaTuneX-RB', delta_tunex)
+            self.run_callbacks('DeltaTuneY-RB', delta_tuney)
 
-            self.driver.setParam('Log-Mon', 'Updated KL references.')
-            self.driver.updatePVs()
+            self.run_callbacks('Log-Mon', 'Updated KL references.')
         else:
-            self.driver.setParam(
+            self.run_callbacks(
                 'Log-Mon', 'ERR:Some magnet family is disconnected.')
-            self.driver.updatePV('Log-Mon')
 
     def _estimate_current_deltatune(self):
         qfam_deltakl = len(self._QFAMS)*[0]
@@ -452,25 +449,23 @@ class App:
             return
         fam = _SiriusPVName(pvname).dev
         self._qfam_refkl[fam] = value
-        self.driver.setParam('RefKL'+fam+'-Mon', self._qfam_refkl[fam])
+        self.run_callbacks('RefKL'+fam+'-Mon', self._qfam_refkl[fam])
 
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
 
     def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_connection[fam_idx] = (1 if conn else 0)
 
         # Change the first bit of correction status
-        self._status = _siriuspy.util.update_bit(
+        self._status = _util.update_bit(
             v=self._status, bit_pos=0,
             bit_val=any(q == 0 for q in self._qfam_check_connection))
-        self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePV('Status-Mon')
+        self.run_callbacks('Status-Mon', self._status)
 
     def _callback_estimate_deltatune(self, pvname, value, **kws):
         if value is None:
@@ -480,29 +475,25 @@ class App:
 
         self._qfam_kl_rb[fam_idx] = value
         delta_tunex, delta_tuney = self._estimate_current_deltatune()
-        self.driver.setParam('DeltaTuneX-RB', delta_tunex)
-        self.driver.setParam('DeltaTuneY-RB', delta_tuney)
-        self.driver.updatePVs()
+        self.run_callbacks('DeltaTuneX-RB', delta_tunex)
+        self.run_callbacks('DeltaTuneY-RB', delta_tuney)
 
     def _callback_qfam_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSConst.PwrStateSts.On:
-            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not On.')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_pwrstate_sts[fam_idx] = value
 
         # Change the second bit of correction status
-        self._status = _siriuspy.util.update_bit(
+        self._status = _util.update_bit(
             v=self._status, bit_pos=1,
             bit_val=any(q != _PSConst.PwrStateSts.On
                         for q in self._qfam_check_pwrstate_sts))
-        self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePV('Status-Mon')
+        self.run_callbacks('Status-Mon', self._status)
 
     def _callback_qfam_opmode_sts(self, pvname, value, **kws):
-        self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
-        self.driver.updatePV('Log-Mon')
+        self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_opmode_sts[fam_idx] = value
@@ -510,27 +501,24 @@ class App:
         # Change the third bit of correction status
         opmode = _PSConst.States.SlowRefSync if self._sync_corr \
             else _PSConst.States.SlowRef
-        self._status = _siriuspy.util.update_bit(
+        self._status = _util.update_bit(
             v=self._status, bit_pos=2,
             bit_val=any(s != opmode for s in self._qfam_check_opmode_sts))
-        self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePV('Status-Mon')
+        self.run_callbacks('Status-Mon', self._status)
 
     def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
-            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
         fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
         self._qfam_check_ctrlmode_mon[fam_idx] = value
 
         # Change the fourth bit of correction status
-        self._status = _siriuspy.util.update_bit(
+        self._status = _util.update_bit(
             v=self._status, bit_pos=3,
             bit_val=any(q != _PSConst.Interface.Remote
                         for q in self._qfam_check_ctrlmode_mon))
-        self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePV('Status-Mon')
+        self.run_callbacks('Status-Mon', self._status)
 
     def _callback_timing_state(self, pvname, value, **kws):
         if 'Quads:State' in pvname:
@@ -563,10 +551,9 @@ class App:
             bit_val = any(idx == 0 for idx in self._timing_check_config)
 
         # Change the fifth bit of correction status
-        self._status = _siriuspy.util.update_bit(
+        self._status = _util.update_bit(
             v=self._status, bit_pos=4, bit_val=bit_val)
-        self.driver.setParam('Status-Mon', self._status)
-        self.driver.updatePV('Status-Mon')
+        self.run_callbacks('Status-Mon', self._status)
 
     def _config_ps(self):
         opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
@@ -576,12 +563,10 @@ class App:
                 self._qfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
                 self._qfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.driver.setParam(
+                self.run_callbacks(
                     'Log-Mon', 'ERR:'+fam+' is disconnected.')
-                self.driver.updatePV('Log-Mon')
                 return False
-        self.driver.setParam('Log-Mon', 'Configuration sent to quadrupoles.')
-        self.driver.updatePV('Log-Mon')
+        self.run_callbacks('Log-Mon', 'Configuration sent to quadrupoles.')
         return True
 
     def _config_timing(self):
@@ -606,10 +591,8 @@ class App:
             self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
             self._timing_evg_tunsidelay_sp.put(0)
 
-            self.driver.setParam('Log-Mon', 'Configuration sent to TI.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some TI PV is disconnected.')
-            self.driver.updatePV('Log-Mon')
+            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
             return False
