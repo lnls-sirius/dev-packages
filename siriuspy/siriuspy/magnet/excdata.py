@@ -16,7 +16,6 @@ class ExcitationData:
 
     def __init__(self, filename_web=None, filename=None, text=None):
         """Init method."""
-
         # define attributes
         self.label = None
         self._harmonics = None
