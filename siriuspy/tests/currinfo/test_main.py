@@ -26,13 +26,13 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
             SIApp, valid_interface, print_flag=True)
         self.assertTrue(valid)
 
-    def test_write_DCCTFltCheck(self):
+    def _test_write_DCCTFltCheck(self):
         """Test write DCCTFltCheck-Sel."""
         app = SIApp()
         app.write('DCCTFltCheck-Sel', Const.DCCTFltCheck.On)
         self.assertEqual(app._dcctfltcheck_mode, Const.DCCTFltCheck.On)
 
-    def test_write_DCCT_FltCheckOn(self):
+    def _test_write_DCCT_FltCheckOn(self):
         """Test write DCCT-Sel."""
         app = SIApp()
         app._dcctfltcheck_mode = Const.DCCTFltCheck.On
@@ -43,7 +43,7 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
         end_status = app._dcct_mode
         self.assertEqual(init_status, end_status)
 
-    def test_write_DCCT_FltCheckOff(self):
+    def _test_write_DCCT_FltCheckOff(self):
         """Test write DCCT-Sel."""
         app = SIApp()
         app.write('DCCTFltCheck-Sel', Const.DCCTFltCheck.Off)
