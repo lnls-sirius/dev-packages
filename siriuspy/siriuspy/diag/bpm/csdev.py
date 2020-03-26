@@ -88,7 +88,7 @@ class Const(_csdev.Const):
     def get_bpm_database(prefix=''):
         """Get the PV database of a single BPM."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        db = {
+        dbase = {
             'INFOFOFBRate-SP': {
                 'type': 'int', 'value': 1910, 'low': 0, 'high': 2**31-1},
             'INFOFOFBRate-RB': {
@@ -114,25 +114,25 @@ class Const(_csdev.Const):
         # PHYSICAL TRIGGERS
         for i in range(8):
             trig = 'TRIGGER{0:d}'.format(i)
-            db.update(Const.get_physical_trigger_database(trig))
+            dbase.update(Const.get_physical_trigger_database(trig))
 
         # LOGICAL TRIGGERS
         for trig_tp in ('', '_PM'):
             for i in range(24):
                 trig = 'TRIGGER' + trig_tp + '{0:d}'.format(i)
-                db.update(Const.get_logical_trigger_database(trig))
+                dbase.update(Const.get_logical_trigger_database(trig))
 
         # AMPLITUDES AND POSITION CHANNELS
         for amp_tp in ('', 'SP'):
-            db.update(Const.get_amplitudes_database(amp_tp))
+            dbase.update(Const.get_amplitudes_database(amp_tp))
 
         # SETTINGS AND STATUS
-        db.update(Const.get_offsets_database())
-        db.update(Const.get_gain_database())
-        db.update(Const.get_rffe_database())
-        db.update(Const.get_asyn_database())
-        db.update(Const.get_switch_database())
-        db.update(Const.get_monit_database())
+        dbase.update(Const.get_offsets_database())
+        dbase.update(Const.get_gain_database())
+        dbase.update(Const.get_rffe_database())
+        dbase.update(Const.get_asyn_database())
+        dbase.update(Const.get_switch_database())
+        dbase.update(Const.get_monit_database())
 
         data_names = {
             'GEN': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
@@ -146,16 +146,16 @@ class Const(_csdev.Const):
         for acq_tp in ('GEN', 'SP', 'PM'):
             for prop in data_names[acq_tp]:
                 nm = acq_tp + '_' + prop
-                db[nm + 'ArrayData'] = _dcopy(data_db)
-                db.update(Const.get_statistic_database(nm))
+                dbase[nm + 'ArrayData'] = _dcopy(data_db)
+                dbase.update(Const.get_statistic_database(nm))
                 if acq_tp == 'GEN':
-                    db.update(Const.get_fft_database(nm))
+                    dbase.update(Const.get_fft_database(nm))
 
         # TRIGGERED ACQUISITIONS CONFIGURATION
         for acq_md in ('ACQ', 'ACQ_PM'):
-            db.update(Const.get_config_database(acq_md))
+            dbase.update(Const.get_config_database(acq_md))
 
-        for _, v in db.items():
+        for _, v in dbase.items():
             if 'low' in v:
                 v['lolo'] = v['low']
                 v['lolim'] = v['low']
@@ -163,24 +163,24 @@ class Const(_csdev.Const):
                 v['hihi'] = v['high']
                 v['hilim'] = v['high']
 
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_asyn_database(prefix=''):
         """."""
-        db = {
+        dbase = {
             'asyn.ENBL': {
                 'type': 'enum', 'enums': Const.EnblTyp._fields, 'value': 0},
             'asyn.CNCT': {
                 'type': 'enum', 'enums': Const.ConnTyp._fields, 'value': 0},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_rffe_database(prefix=''):
         """."""
         prefix = prefix + 'RFFE'
-        db = {
+        dbase = {
             'Att-SP': {
                 'type': 'float', 'value': 0, 'unit': 'dB',
                 'low': 0, 'high': 100},
@@ -236,13 +236,13 @@ class Const(_csdev.Const):
             'PidBDTd-RB': {
                 'type': 'float', 'value': 0, 'low': 0, 'high': 100},
             }
-        db.update(Const.get_asyn_database())
-        return {prefix + k: v for k, v in db.items()}
+        dbase.update(Const.get_asyn_database())
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_switch_database(prefix=''):
         """."""
-        db = {
+        dbase = {
             'SwMode-Sel': {
                 'type': 'enum', 'enums': Const.SwModes._fields, 'value': 3},
             'SwMode-Sts': {
@@ -270,12 +270,12 @@ class Const(_csdev.Const):
             'SwDataMaskSamples-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_monit_database(prefix=''):
         """."""
-        db = {
+        dbase = {
             'MonitEnable-Sel': {
                 'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
             'MonitEnable-Sts': {
@@ -287,47 +287,47 @@ class Const(_csdev.Const):
                 'type': 'float', 'value': 0, 'low': 0.05, 'high': 1.0,
                 'unit': 's'},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_offsets_database(prefix=''):
         """."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        db = {
+        dbase = {
             'PosQOffset-SP': _dcopy(data_db), 'PosQOffset-RB': _dcopy(data_db),
             'PosXOffset-SP': _dcopy(data_db), 'PosXOffset-RB': _dcopy(data_db),
             'PosYOffset-SP': _dcopy(data_db), 'PosYOffset-RB': _dcopy(data_db),
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_gain_database(prefix=''):
         """."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        db = {
+        dbase = {
             'PosKq-SP': _dcopy(data_db), 'PosKq-RB': _dcopy(data_db),
             'PosKsum-SP': _dcopy(data_db), 'PosKsum-RB': _dcopy(data_db),
             'PosKx-SP': _dcopy(data_db), 'PosKx-RB': _dcopy(data_db),
             'PosKy-SP': _dcopy(data_db), 'PosKy-RB': _dcopy(data_db),
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_amplitudes_database(prefix=''):
         """."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        db = {
+        dbase = {
             'PosX-Mon': _dcopy(data_db), 'PosY-Mon': _dcopy(data_db),
             'Sum-Mon': _dcopy(data_db), 'PosQ-Mon': _dcopy(data_db),
             'AmplA-Mon': _dcopy(data_db), 'AmplB-Mon': _dcopy(data_db),
             'AmplC-Mon': _dcopy(data_db), 'AmplD-Mon': _dcopy(data_db),
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_physical_trigger_database(prefix=''):
         """."""
-        db = {
+        dbase = {
             'Dir-Sel': {
                 'type': 'enum', 'enums': Const.TrigDir._fields, 'value': 1},
             'Dir-Sts': {
@@ -353,12 +353,12 @@ class Const(_csdev.Const):
             'TrnLen-RB': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_logical_trigger_database(prefix=''):
         """."""
-        db = {
+        dbase = {
             'RcvSrc-Sel': {
                 'type': 'enum', 'enums': Const.TrigSrc._fields, 'value': 0},
             'RcvSrc-Sts': {
@@ -376,12 +376,12 @@ class Const(_csdev.Const):
             'TrnOutSel-RB': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_config_database(prefix=''):
         """Get the configuration PVs database."""
-        db = {
+        dbase = {
             'BPMMode-Sel': {
                 'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
             'BPMMode-Sts': {
@@ -484,7 +484,7 @@ class Const(_csdev.Const):
             'TbtDataMaskSamplesEnd-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             }
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_fft_database(prefix=''):
@@ -492,33 +492,33 @@ class Const(_csdev.Const):
         data_db = {
             'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
         acq_int_db = {'type': 'int', 'value': 1, 'low': 0, 'high': 100000}
-        db = dict()
-        db['FFTFreq-Mon'] = _dcopy(data_db)
-        db['FFTData.SPAN'] = _dcopy(acq_int_db)
-        db['FFTData.AMP'] = _dcopy(data_db)
-        db['FFTData.PHA'] = _dcopy(data_db)
-        db['FFTData.SIN'] = _dcopy(data_db)
-        db['FFTData.COS'] = _dcopy(data_db)
-        db['FFTData.WAVN'] = _dcopy(data_db)
-        db['FFTData.INDX'] = _dcopy(acq_int_db)
-        db['FFTData.MXIX'] = _dcopy(acq_int_db)
-        db['FFTData.WIND'] = {
+        dbase = dict()
+        dbase['FFTFreq-Mon'] = _dcopy(data_db)
+        dbase['FFTData.SPAN'] = _dcopy(acq_int_db)
+        dbase['FFTData.AMP'] = _dcopy(data_db)
+        dbase['FFTData.PHA'] = _dcopy(data_db)
+        dbase['FFTData.SIN'] = _dcopy(data_db)
+        dbase['FFTData.COS'] = _dcopy(data_db)
+        dbase['FFTData.WAVN'] = _dcopy(data_db)
+        dbase['FFTData.INDX'] = _dcopy(acq_int_db)
+        dbase['FFTData.MXIX'] = _dcopy(acq_int_db)
+        dbase['FFTData.WIND'] = {
             'type': 'enum', 'enums': Const.FFTWindowTyp._fields, 'value': 0}
-        db['FFTData.CDIR'] = {
+        dbase['FFTData.CDIR'] = {
             'type': 'enum', 'enums': Const.FFTConvDirection._fields,
             'value': 0}
-        db['FFTData.ASUB'] = {
+        dbase['FFTData.ASUB'] = {
             'type': 'enum', 'enums': Const.FFTAvgSubtract._fields, 'value': 0}
-        return {prefix + k: v for k, v in db.items()}
+        return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_statistic_database(prefix=''):
         """Get the PV database of the STAT plugin."""
         acq_data_stat_db = {
             'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        db = dict()
-        db['_STATSMaxValue_RBV'] = _dcopy(acq_data_stat_db)
-        db['_STATSMeanValue_RBV'] = _dcopy(acq_data_stat_db)
-        db['_STATSMinValue_RBV'] = _dcopy(acq_data_stat_db)
-        db['_STATSSigma_RBV'] = _dcopy(acq_data_stat_db)
-        return {prefix + k: v for k, v in db.items()}
+        dbase = dict()
+        dbase['_STATSMaxValue_RBV'] = _dcopy(acq_data_stat_db)
+        dbase['_STATSMeanValue_RBV'] = _dcopy(acq_data_stat_db)
+        dbase['_STATSMinValue_RBV'] = _dcopy(acq_data_stat_db)
+        dbase['_STATSSigma_RBV'] = _dcopy(acq_data_stat_db)
+        return {prefix + k: v for k, v in dbase.items()}

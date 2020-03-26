@@ -123,9 +123,9 @@ class SOFB(_BaseClass):
         t0 = _time.time()
         self.status
         tf = _time.time()
-        dt = INTERVAL - (tf-t0)
-        if dt > 0:
-            _time.sleep(dt)
+        _dt = INTERVAL - (tf-t0)
+        if _dt > 0:
+            _time.sleep(_dt)
         else:
             _log.debug('process took {0:f}ms.'.format((tf-t0)*1000))
 
@@ -485,17 +485,17 @@ class SOFB(_BaseClass):
             msg = 'kicks applied!'
             self._update_log(msg)
             _log.info(msg)
-            dt = (_time.time()-t0)
-            _log.debug(strn.format('total:', 1000*dt))
+            _dt = (_time.time()-t0)
+            _log.debug(strn.format('total:', 1000*_dt))
             _log.debug('TIMEIT: END')
             interval = 1/self._auto_corr_freq
-            if dt > interval:
-                msg = 'WARN: Loop took {0:6.2f}ms.'.format(dt*1000)
+            if _dt > interval:
+                msg = 'WARN: Loop took {0:6.2f}ms.'.format(_dt*1000)
                 self._update_log(msg)
                 _log.warning(msg[6:])
-            dt = interval - dt
-            if dt > 0:
-                _time.sleep(dt)
+            _dt = interval - _dt
+            if _dt > 0:
+                _time.sleep(_dt)
         msg = 'Loop is opened.'
         self._update_log(msg)
         _log.info(msg)

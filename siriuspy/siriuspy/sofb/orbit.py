@@ -630,19 +630,19 @@ class EpicsOrbit(BaseOrbit):
 
         # revolution period in s
         if channel == _csbpm.AcqChan.Monit1:
-            dt = self.bpms[0].monit1period
+            _dt = self.bpms[0].monit1period
         elif channel == _csbpm.AcqChan.FOFB:
-            dt = self.bpms[0].fofbperiod
+            _dt = self.bpms[0].fofbperiod
         else:
-            dt = self.bpms[0].tbtperiod
+            _dt = self.bpms[0].tbtperiod
         mult = self._mturndownsample * self._ring_extension
-        dt *= mult
+        _dt *= mult
         nrptpst = self.acqtrignrsamples // mult
         offset = self._acqtrignrsamplespre / mult
         nrst = self._acqtrignrshots
         a = _np.arange(nrst)
         b = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
-        vect = dl + dur/nrst*a[:, None] + dt*b[None, :]
+        vect = dl + dur/nrst*a[:, None] + _dt*b[None, :]
         self._timevector = vect.flatten()
         self.run_callbacks('MTurnTime-Mon', self._timevector)
         self.set_orbit_multiturn_idx(self._multiturnidx)

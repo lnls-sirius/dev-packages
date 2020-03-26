@@ -596,4 +596,4 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['CtrldChannels-Cte'] = {
         'type': 'char', 'count': 5000, 'value': channels}
 
-    return {prefix + pv: dt for pv, dt in db.items()}
+    return {prefix + pv: _dt for pv, _dt in db.items()}
