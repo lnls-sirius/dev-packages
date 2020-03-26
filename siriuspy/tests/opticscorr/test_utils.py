@@ -11,6 +11,7 @@ from siriuspy.opticscorr.utils import get_config_name, set_config_name
 valid_interface_functions = (
     'get_config_name',
     'set_config_name'
+    'get_default_config_name',
 )
 
 
