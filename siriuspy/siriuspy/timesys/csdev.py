@@ -84,6 +84,7 @@ class Const(_csdev.Const):
 
     @_classproperty
     def EvtHL2LLMap(cls):
+        """."""
         if cls.__EvtHL2LLMap is None:
             cls.__EvtHL2LLMap = _HLTimeSearch.get_hl_events()
             cls.__EvtLL2HLMap = {
@@ -92,6 +93,7 @@ class Const(_csdev.Const):
 
     @_classproperty
     def EvtLL2HLMap(cls):
+        """."""
         cls.EvtHL2LLMap
         return cls.__EvtLL2HLMap
 

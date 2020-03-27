@@ -278,7 +278,7 @@ class TimingConfig(_BaseTimingConfig):
         """Init method."""
         super().__init__(acc)
         evt = self._csorb.EVT_COR_NAME
-        pref_name = LL_PREF + self._csorb.EVG_NAME + ':' + evt
+        pref_name = LL_PREF + self._csorb.evg_name + ':' + evt
         trig = self._csorb.TRIGGER_COR_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)

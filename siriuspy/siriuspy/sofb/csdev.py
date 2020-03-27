@@ -53,7 +53,6 @@ _et = ETypes  # syntactic sugar
 class ConstTLines(_csdev.Const):
     """Const class defining transport lines orbitcorr constants."""
 
-    EVG_NAME = _TISearch.get_evg_name()
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
@@ -116,6 +115,7 @@ class SOFBTLines(ConstTLines):
     def __init__(self, acc):
         """Init1 method."""
         self.acc = acc.upper()
+        self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
         self.CH_NAMES = _PSSearch.get_psnames(
