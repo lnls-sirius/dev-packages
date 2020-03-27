@@ -143,7 +143,7 @@ class SOFB(_BaseClass):
         self._ring_extension = val
         self.run_callbacks('RingSize-RB', val)
         bpms = _np.array(self._csorb.bpm_pos)
-        bpm_pos = [bpms + i*self._csorb.C0 for i in range(val)]
+        bpm_pos = [bpms + i*self._csorb.circum for i in range(val)]
         bpm_pos = _np.hstack(bpm_pos)
         self.run_callbacks('BPMPosS-Mon', bpm_pos)
         return True
@@ -412,7 +412,7 @@ class SOFB(_BaseClass):
                 delta = self._meas_respmat_kick['ch']
             elif i < self._csorb.nr_ch + self._csorb.nr_cv:
                 delta = self._meas_respmat_kick['cv']
-            elif i < self._csorb.NR_CORRS:
+            elif i < self._csorb.nr_corrs:
                 delta = self._meas_respmat_kick['rf']
 
             kicks = [None, ] * nr_corrs

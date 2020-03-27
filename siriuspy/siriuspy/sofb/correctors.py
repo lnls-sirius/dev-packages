@@ -277,9 +277,9 @@ class TimingConfig(_BaseTimingConfig):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        evt = self._csorb.EVT_COR_NAME
+        evt = self._csorb.evt_cor_name
         pref_name = LL_PREF + self._csorb.evg_name + ':' + evt
-        trig = self._csorb.TRIGGER_COR_NAME
+        trig = self._csorb.trigger_cor_name
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
         src_val = self._csorb.CorrExtEvtSrc._fields.index(evt)
@@ -436,7 +436,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_strength(self):
         """Get the correctors strengths."""
-        corr_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
+        corr_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
                 corr_values[i] = corr.value

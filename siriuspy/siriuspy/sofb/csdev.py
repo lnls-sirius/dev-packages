@@ -137,26 +137,26 @@ class SOFBTLines(ConstTLines):
         self.nr_ch = len(self.ch_names)
         self.nr_cv = len(self.cv_names)
         self.nr_chcv = self.nr_ch + self.nr_cv
-        self.NR_BPMS = len(self.bpm_names)
+        self.nr_bpms = len(self.bpm_names)
         ext = acc.lower() + 'orb'
         ioc_fol = acc.lower() + '-ap-sofb'
         ioc_fol = _os.path.join('/home', 'sirius', 'iocs-log', ioc_fol, 'data')
-        self.REFORBFNAME = _os.path.join(ioc_fol, 'ref_orbit.'+ext)
+        self.ref_orb_fname = _os.path.join(ioc_fol, 'ref_orbit.'+ext)
         ext = acc.lower() + 'respmat'
-        self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
+        self.respmat_fname = _os.path.join(ioc_fol, 'respmat.'+ext)
 
-        self.NR_CORRS = self.nr_chcv + 1 if acc == 'SI' else self.nr_chcv
+        self.nr_corrs = self.nr_chcv + 1 if acc == 'SI' else self.nr_chcv
 
-        self.TRIGGER_ACQ_NAME = self.acc + '-Fam:TI-BPM'
+        self.trigger_acq_name = self.acc + '-Fam:TI-BPM'
         if self.acc == 'SI':
-            self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags-Corrs'
-            self.EVT_COR_NAME = 'Orb' + self.acc
+            self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
+            self.evt_cor_name = 'Orb' + self.acc
 
-        self.EVT_ACQ_NAME = 'Dig' + self.acc
-        self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
-        self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
-        self.C0 = 21.2477 if self.acc == 'TB' else 26.8933  # in meters
-        self.T0 = self.C0 / 299792458  # in seconds
+        self.evt_acq_name = 'Dig' + self.acc
+        self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
+        self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
+        self.circum = 21.2477 if self.acc == 'TB' else 26.8933  # in meters
+        self.rev_per = self.circum / 299792458  # in seconds
 
     @property
     def isring(self):
@@ -303,8 +303,8 @@ class SOFBTLines(ConstTLines):
 
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
-        nbpm = self.NR_BPMS
-        evt = self.EVT_ACQ_NAME
+        nbpm = self.nr_bpms
+        evt = self.evt_acq_name
         pvs = [
             'RefOrbX-SP', 'RefOrbX-RB',
             'RefOrbY-SP', 'RefOrbY-RB',
@@ -499,20 +499,20 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         dbase = {
             'RespMat-SP': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
-                'value': self.MTX_SZ*[0],
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'RespMat-RB': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
-                'value': self.MTX_SZ*[0],
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'SingValues-Mon': {
-                'type': 'float', 'count': self.NR_SING_VALS,
-                'value': self.NR_SING_VALS*[0],
+                'type': 'float', 'count': self.nr_svals,
+                'value': self.nr_svals*[0],
                 'unit': 'Singular values of the matrix in use'},
             'InvRespMat-Mon': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
-                'value': self.MTX_SZ*[0],
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
                 'type': 'int', 'count': self.nr_ch, 'value': self.nr_ch*[1],
@@ -527,28 +527,28 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'count': self.nr_cv, 'value': self.nr_cv*[1],
                 'unit': 'CVs used in correction'},
             'BPMXEnblList-SP': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
-                'value': self.NR_BPMS*[1],
+                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'value': self.nr_bpms*[1],
                 'unit': 'BPMX used in correction'},
             'BPMXEnblList-RB': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
-                'value': self.NR_BPMS*[1],
+                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'value': self.nr_bpms*[1],
                 'unit': 'BPMX used in correction'},
             'BPMYEnblList-SP': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
-                'value': self.NR_BPMS*[1],
+                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
             'BPMYEnblList-RB': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
-                'value': self.NR_BPMS*[1],
+                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
             'NrSingValues-SP': {
-                'type': 'int', 'value': self.NR_SING_VALS,
-                'lolim': 1, 'hilim': self.NR_SING_VALS,
+                'type': 'int', 'value': self.nr_svals,
+                'lolim': 1, 'hilim': self.nr_svals,
                 'unit': 'Maximum number of SV to use'},
             'NrSingValues-RB': {
-                'type': 'int', 'value': self.NR_SING_VALS,
-                'lolim': 1, 'hilim': self.NR_SING_VALS,
+                'type': 'int', 'value': self.nr_svals,
+                'lolim': 1, 'hilim': self.nr_svals,
                 'unit': 'Maximum number of SV to use'},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
@@ -571,8 +571,8 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        self.C0 = 496.8  # in meter
-        self.T0 = self.C0 / 299792458  # in seconds
+        self.circum = 496.8  # in meter
+        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -592,7 +592,7 @@ class SOFBRings(SOFBTLines, ConstRings):
 
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
-        nbpm = self.NR_BPMS
+        nbpm = self.nr_bpms
         pvs_ring = [
             'SlowOrbX-Mon', 'SlowOrbY-Mon',
             'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon',
@@ -665,12 +665,12 @@ class SOFBSI(SOFBRings, ConstSI):
     def __init__(self, acc):
         """Init method."""
         SOFBRings.__init__(self, acc)
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
-        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.trigger_cor_name)
+        vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
         self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
-        self.C0 = 518.396  # in meter
-        self.T0 = self.C0 / 299792458  # in seconds
+        self.circum = 518.396  # in meter
+        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""

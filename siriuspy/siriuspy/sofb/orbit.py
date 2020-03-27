@@ -30,8 +30,8 @@ class EpicsOrbit(BaseOrbit):
         self._mode = self._csorb.SOFBMode.Offline
         self._sync_with_inj = True
         self.ref_orbs = {
-            'X': _np.zeros(self._csorb.NR_BPMS),
-            'Y': _np.zeros(self._csorb.NR_BPMS)}
+            'X': _np.zeros(self._csorb.nr_bpms),
+            'Y': _np.zeros(self._csorb.nr_bpms)}
         self._load_ref_orbs()
         self.raw_orbs = {'X': [], 'Y': []}
         self.raw_sporbs = {'X': [], 'Y': [], 'Sum': []}
@@ -41,14 +41,14 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_sporb = {'X': None, 'Y': None, 'Sum': None}
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
         self.offline_orbit = {
-            'X': _np.zeros(self._csorb.NR_BPMS),
-            'Y': _np.zeros(self._csorb.NR_BPMS)}
+            'X': _np.zeros(self._csorb.nr_bpms),
+            'Y': _np.zeros(self._csorb.nr_bpms)}
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
         self._spass_mask = [0, 0]
         self._spass_average = 1
         self._spass_th_acqbg = None
-        self._spass_bgs = [dict() for _ in range(self._csorb.NR_BPMS)]
+        self._spass_bgs = [dict() for _ in range(self._csorb.nr_bpms)]
         self._spass_usebg = self._csorb.SPassUseBg.NotUsing
         self._acqrate = 10
         self._oldacqrate = self._acqrate
@@ -142,7 +142,7 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('MTurnDownSample-RB', 1)
             self._reset_orbs()
             self._ring_extension = val
-            nrb = val * self._csorb.NR_BPMS
+            nrb = val * self._csorb.nr_bpms
             for pln in self.offline_orbit:
                 orb = self.ref_orbs[pln]
                 if orb.size < nrb:
@@ -166,7 +166,7 @@ class EpicsOrbit(BaseOrbit):
 
     def get_orbit(self, reset=False):
         """Return the orbit distortion."""
-        nrb = self._ring_extension * self._csorb.NR_BPMS
+        nrb = self._ring_extension * self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
         if self._mode == self._csorb.SOFBMode.Offline:
@@ -225,8 +225,8 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        nrb = self._ring_extension * self._csorb.NR_BPMS
-        if orb.size % self._csorb.NR_BPMS:
+        nrb = self._ring_extension * self._csorb.nr_bpms
+        if orb.size % self._csorb.nr_bpms:
             msg = 'ERR: Wrong OfflineOrb Size.'
             self._update_log(msg)
             _log.error(msg[5:])
@@ -389,8 +389,8 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        nrb = self._csorb.NR_BPMS * self._ring_extension
-        if orb.size % self._csorb.NR_BPMS:
+        nrb = self._csorb.nr_bpms * self._ring_extension
+        if orb.size % self._csorb.nr_bpms:
             msg = 'ERR: Wrong RefOrb Size.'
             self._update_log(msg)
             _log.error(msg[5:])
@@ -698,9 +698,9 @@ class EpicsOrbit(BaseOrbit):
 
     def _load_ref_orbs(self):
         """."""
-        if _os.path.isfile(self._csorb.REFORBFNAME):
+        if _os.path.isfile(self._csorb.ref_orb_fname):
             self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
-                self._csorb.REFORBFNAME, unpack=True)
+                self._csorb.ref_orb_fname, unpack=True)
 
     def _save_ref_orbits(self):
         """."""
@@ -716,10 +716,10 @@ class EpicsOrbit(BaseOrbit):
             refy = ref
         orbs = _np.array([refx, refy]).T
         try:
-            path = _os.path.split(self._csorb.REFORBFNAME)[0]
+            path = _os.path.split(self._csorb.ref_orb_fname)[0]
             if not _os.path.isdir(path):
                 _os.mkdir(path)
-            _np.savetxt(self._csorb.REFORBFNAME, orbs)
+            _np.savetxt(self._csorb.ref_orb_fname, orbs)
         except FileNotFoundError:
             msg = 'WARN: Could not save reference orbit in file.'
             self._update_log(msg)
@@ -755,7 +755,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self):
         """."""
-        nrb = self._csorb.NR_BPMS
+        nrb = self._csorb.nr_bpms
         orbsz = nrb * self._ring_extension
         orb = _np.zeros(orbsz, dtype=float)
         orbs = {'X': orb, 'Y': orb.copy()}
@@ -799,7 +799,7 @@ class EpicsOrbit(BaseOrbit):
                 _log.error(msg[5:])
                 return
             samp *= self._acqtrignrshots
-            orbsz = self._csorb.NR_BPMS * ringsz
+            orbsz = self._csorb.nr_bpms * ringsz
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
                 pos = bpm.mtposx
@@ -936,7 +936,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_bpmoffsets(self):
         """."""
-        nrb = self._csorb.NR_BPMS
+        nrb = self._csorb.nr_bpms
         orbx = _np.zeros(nrb * self._ring_extension, dtype=float)
         orby = orbx.copy()
         for i, bpm in enumerate(self.bpms):
