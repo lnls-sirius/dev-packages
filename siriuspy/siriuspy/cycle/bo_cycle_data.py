@@ -2083,11 +2083,11 @@ def bo_generate_base_waveform(nrpoints, duration):
     if duration is None:
         duration = DEFAULT_RAMP_DURATION/1000
 
-    t0 = BASE_RAMP_CURVE_ORIG[:, 0]
-    w0 = BASE_RAMP_CURVE_ORIG[:, 1]
-    t = _np.linspace(0.0, duration, nrpoints)
-    w = _np.interp(t, t0, w0)
-    return w
+    time0 = BASE_RAMP_CURVE_ORIG[:, 0]
+    wfm0 = BASE_RAMP_CURVE_ORIG[:, 1]
+    time = _np.linspace(0.0, duration, nrpoints)
+    wfm = _np.interp(time, time0, wfm0)
+    return wfm
 
 
 def bo_get_default_waveform(psname, nrpoints=None, duration=None,
@@ -2100,7 +2100,7 @@ def bo_get_default_waveform(psname, nrpoints=None, duration=None,
                 nrpoints = _DEF_WFMSIZE_FBP
             else:
                 nrpoints = _DEF_WFMSIZE_OTHERS
-        w = bo_generate_base_waveform(nrpoints, duration)
+        wfm = bo_generate_base_waveform(nrpoints, duration)
         if psname in DEFAULT_RAMP_AMPLITUDE:
             # bypass upper_limit if psname in dictionary
             amp = DEFAULT_RAMP_AMPLITUDE[psname]
@@ -2108,7 +2108,7 @@ def bo_get_default_waveform(psname, nrpoints=None, duration=None,
             pstype = _PSSearch.conv_psname_2_pstype(psname)
             splims = _PSSearch.conv_pstype_2_splims(pstype)
             amp = splims['HIHI']
-        wfmdata = amp * w
+        wfmdata = amp * wfm
     else:
         # load waveform from config database
         errmsg = ('Creation of waveform from ramp config '

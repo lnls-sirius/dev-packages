@@ -51,7 +51,7 @@ class SOFB(_BaseClass):
 
     def get_map2write(self):
         """Get the database of the class."""
-        db = {
+        dbase = {
             'ClosedLoop-Sel': self.set_auto_corr,
             'ClosedLoopFreq-SP': self.set_auto_corr_frequency,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
@@ -72,15 +72,15 @@ class SOFB(_BaseClass):
             'ApplyDelta-Cmd': self.apply_corr,
             }
         if self.isring:
-            db['RingSize-SP'] = self.set_ring_extension
+            dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
-            db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
-            db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
-            db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
-            db['DeltaKickRF-SP'] = _part(
+            dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
+            dbase['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
+            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF),
-            db['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
-        return db
+            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
+        return dbase
 
     @property
     def orbit(self):
@@ -120,14 +120,14 @@ class SOFB(_BaseClass):
 
     def process(self):
         """Run continuously in the main thread."""
-        t0 = _time.time()
+        time0 = _time.time()
         self.status
         tf = _time.time()
-        dt = INTERVAL - (tf-t0)
-        if dt > 0:
-            _time.sleep(dt)
+        dtime = INTERVAL - (tf-time0)
+        if dtime > 0:
+            _time.sleep(dtime)
         else:
-            _log.debug('process took {0:f}ms.'.format((tf-t0)*1000))
+            _log.debug('process took {0:f}ms.'.format((tf-time0)*1000))
 
     def set_ring_extension(self, val):
         val = 1 if val < 1 else int(val)
@@ -449,23 +449,23 @@ class SOFB(_BaseClass):
                 _log.info(msg)
                 break
 
-            t0 = _time.time()
+            time0 = _time.time()
             _log.debug('TIMEIT: BEGIN')
             msg = 'Getting the orbit.'
             self._update_log(msg)
             _log.info(msg)
             orb = self.orbit.get_orbit()
-            t1 = _time.time()
-            _log.debug(strn.format('get orbit:', 1000*(t1-t0)))
+            time1 = _time.time()
+            _log.debug(strn.format('get orbit:', 1000*(time1-time0)))
             msg = 'Calculating kicks.'
             self._update_log(msg)
             _log.info(msg)
             dkicks = self.matrix.calc_kicks(orb)
-            t2 = _time.time()
-            _log.debug(strn.format('calc kicks:', 1000*(t2-t1)))
+            time2 = _time.time()
+            _log.debug(strn.format('calc kicks:', 1000*(time2-time1)))
             self._ref_corr_kicks = self.correctors.get_strength()
-            t3 = _time.time()
-            _log.debug(strn.format('get strength:', 1000*(t3-t2)))
+            time3 = _time.time()
+            _log.debug(strn.format('get strength:', 1000*(time3-time2)))
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
             if kicks is None:
                 self._auto_corr = self._csorb.ClosedLoop.Off
@@ -474,28 +474,28 @@ class SOFB(_BaseClass):
                 _log.error(msg[5:])
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 continue
-            t4 = _time.time()
-            _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
+            time4 = _time.time()
+            _log.debug(strn.format('process kicks:', 1000*(time4-time3)))
             msg = 'Applying kicks.'
             self._update_log(msg)
             _log.info(msg)
             self.correctors.apply_kicks(kicks)  # slowest part
-            t5 = _time.time()
-            _log.debug(strn.format('apply kicks:', 1000*(t5-t4)))
+            time5 = _time.time()
+            _log.debug(strn.format('apply kicks:', 1000*(time5-time4)))
             msg = 'kicks applied!'
             self._update_log(msg)
             _log.info(msg)
-            dt = (_time.time()-t0)
-            _log.debug(strn.format('total:', 1000*dt))
+            dtime = (_time.time()-time0)
+            _log.debug(strn.format('total:', 1000*dtime))
             _log.debug('TIMEIT: END')
             interval = 1/self._auto_corr_freq
-            if dt > interval:
-                msg = 'WARN: Loop took {0:6.2f}ms.'.format(dt*1000)
+            if dtime > interval:
+                msg = 'WARN: Loop took {0:6.2f}ms.'.format(dtime*1000)
                 self._update_log(msg)
                 _log.warning(msg[6:])
-            dt = interval - dt
-            if dt > 0:
-                _time.sleep(dt)
+            dtime = interval - dtime
+            if dtime > 0:
+                _time.sleep(dtime)
         msg = 'Loop is opened.'
         self._update_log(msg)
         _log.info(msg)

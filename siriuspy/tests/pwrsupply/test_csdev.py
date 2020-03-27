@@ -17,8 +17,9 @@ PUBLIC_INTERFACE = (
     'DEFAULT_WFM_FBP',
     'MAX_WFMSIZE_OTHERS',
     'DEF_WFMSIZE_OTHERS',
-    'DEFAULT_WFM',
     'DEFAULT_WFM_OTHERS',
+    'DEFAULT_WFM',
+    'MAX_NRDEV_PER_BBB',
     'DEFAULT_PS_CURRENT_PRECISION',
     'DEFAULT_PU_VOLTAGE_PRECISION',
     'ETypes',
@@ -26,6 +27,7 @@ PUBLIC_INTERFACE = (
     'get_ps_current_unit',
     'get_ps_basic_propty_database',
     'get_ps_common_propty_database',
+    'get_ps_sofbcurrent_propty_database',
     'get_pu_septum_propty_database',
     'get_pu_common_propty_database',
     'get_ps_propty_database',
@@ -83,9 +85,9 @@ class TestPwrSupplyCSDev(TestCase):
     def setUp(self):
         """Define setup method."""
         def get_splims(pstype, alarm):
-            db = {'lolo': 0.0, 'low': 1.0, 'lolim': 2.0, 'hilim': 3.0,
+            dbase = {'lolo': 0.0, 'low': 1.0, 'lolim': 2.0, 'hilim': 3.0,
                   'high': 4.0, 'hihi': 5.0}
-            return db[alarm]
+            return dbase[alarm]
 
         def get_splims_unit(psmodel):
             if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S', 'FAC_2P4S'):
@@ -148,36 +150,36 @@ class TestPwrSupplyCSDev(TestCase):
 
     def test_ps_basic_propty_database(self):
         """Test ps_basic_propty_database."""
-        db = csdev.get_ps_basic_propty_database()
-        self.assertIsInstance(db, dict)
-        for prop in db:
-            self.assertIsInstance(db[prop], dict)
+        dbase = csdev.get_ps_basic_propty_database()
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
 
     def test_ps_common_propty_database(self):
         """Test ps_common_propty_database."""
-        db = csdev.get_ps_common_propty_database()
-        self.assertIsInstance(db, dict)
-        for prop in db:
-            self.assertIsInstance(db[prop], dict)
+        dbase = csdev.get_ps_common_propty_database()
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
 
     def test_ps_FBP_propty_database(self):
         """Test ps_FBP_propty_database."""
-        db = csdev.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
-        self.assertIsInstance(db, dict)
-        for prop in db:
-            self.assertIsInstance(db[prop], dict)
+        dbase = csdev.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
         # test precision consistency
         proptys = TestPwrSupplyCSDev.ps_alarm
         for propty in proptys:
-            self.assertIn(propty, db)
+            self.assertIn(propty, dbase)
 
     def test_ps_propty_database(self):
         """Test ps_propty_database."""
         current_pvs = TestPwrSupplyCSDev.ps_alarm
         for pstype in TestPwrSupplyCSDev.pstypes:
-            db = csdev.get_ps_propty_database('FBP', pstype)
-            unit = db['Current-SP']['unit']
-            for propty, dbi in db.items():
+            dbase = csdev.get_ps_propty_database('FBP', pstype)
+            unit = dbase['Current-SP']['unit']
+            for propty, dbi in dbase.items():
                 # set setpoint limits in database
                 if propty in TestPwrSupplyCSDev.ps_alarm:
                     self.assertLessEqual(dbi['lolo'], dbi['low'])

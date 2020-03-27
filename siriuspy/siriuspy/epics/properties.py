@@ -107,11 +107,11 @@ class EpicsProperty:
         # setpoint
         self._pv_sp.value = value
         # check
-        t0 = _time.time()
+        time0 = _time.time()
         while True:
             if self._pv_rb.value == value:
                 return True
-            if _time.time() - t0 > timeout:
+            if _time.time() - time0 > timeout:
                 return False
             _time.sleep(min(0.1, timeout))
 
@@ -225,8 +225,8 @@ class EpicsPropertiesList:
         # check
         if not desired_readbacks:
             desired_readbacks = setpoints
-        t0 = _time.time()
-        while _time.time() - t0 < timeout:
+        time0 = _time.time()
+        while _time.time() - time0 < timeout:
             finished = True
             for pvname, value in desired_readbacks.items():
                 if value is None:

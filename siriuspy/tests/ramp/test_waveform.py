@@ -59,115 +59,115 @@ class TestWaveformParam(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                WaveformParam,
-                TestWaveformParam.PUBLIC_INTERFACE)
+            WaveformParam,
+            TestWaveformParam.PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_rampup1_start_time(self):
         """Test rampup1_start_time."""
-        w = WaveformParam()
-        v1 = 0.0
-        v2 = w.rampup1_start_time
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = 0.0
+        val2 = wfm.rampup1_start_time
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampup2_start_time(self):
         """Test rampup2_start_time."""
-        w = WaveformParam()
-        v1 = w.rampup1_start_time
-        v2 = w.rampup2_start_time
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampup1_start_time
+        val2 = wfm.rampup2_start_time
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampdown_start_time(self):
         """Test rampdown_start_time."""
-        w = WaveformParam()
-        v1 = w.rampup2_start_time
-        v2 = w.rampdown_start_time
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampup2_start_time
+        val2 = wfm.rampdown_start_time
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampdown_stop_time(self):
         """Test rampdown_stop_time."""
-        w = WaveformParam()
-        v1 = w.rampdown_start_time
-        v2 = w.rampdown_stop_time
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampdown_start_time
+        val2 = wfm.rampdown_stop_time
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_duration(self):
         """Test duration."""
-        w = WaveformParam()
-        v1 = w.rampdown_stop_time
-        v2 = w.duration
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampdown_stop_time
+        val2 = wfm.duration
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_start_value(self):
         """Test start_value."""
-        w = WaveformParam()
-        v1 = 0.0
-        v2 = w.start_value
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 >= v1)
+        wfm = WaveformParam()
+        val1 = 0.0
+        val2 = wfm.start_value
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 >= val1)
 
     def test_rampup1_start_value(self):
         """Test rampup1_start_value."""
-        w = WaveformParam()
-        v1 = w.start_value
-        v2 = w.rampup1_start_value
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.start_value
+        val2 = wfm.rampup1_start_value
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampup2_start_value(self):
         """Test rampup2_start_value."""
-        w = WaveformParam()
-        v1 = w.rampup1_start_value
-        v2 = w.rampup2_start_value
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampup1_start_value
+        val2 = wfm.rampup2_start_value
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampdown_start_value(self):
         """Test rampdown_start_value."""
-        w = WaveformParam()
-        v1 = w.rampup2_start_value
-        v2 = w.rampdown_start_value
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampup2_start_value
+        val2 = wfm.rampdown_start_value
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 > val1)
 
     def test_rampdown_stop_value(self):
         """Test rampdown_stop_value."""
-        w = WaveformParam()
-        v1 = w.rampdown_start_value
-        v2 = w.rampdown_stop_value
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 < v1)
+        wfm = WaveformParam()
+        val1 = wfm.rampdown_start_value
+        val2 = wfm.rampdown_stop_value
+        self.assertIsInstance(val2, float)
+        self.assertTrue(val2 < val1)
 
     def test_rampup_smooth_intvl(self):
         """Test rampup_smooth_intvl."""
-        w = WaveformParam()
-        v1 = w.rampup_smooth_intvl
-        self.assertIsInstance(v1, float)
-        self.assertTrue(v1 > 0)
+        wfm = WaveformParam()
+        val1 = wfm.rampup_smooth_intvl
+        self.assertIsInstance(val1, float)
+        self.assertTrue(val1 > 0)
 
     def test_rampup_smooth_value(self):
         """Test rampup_smooth_value."""
-        w = WaveformParam()
-        v1 = w.rampup_smooth_value
-        self.assertIsInstance(v1, float)
+        wfm = WaveformParam()
+        val1 = wfm.rampup_smooth_value
+        self.assertIsInstance(val1, float)
 
     def test_rampdown_smooth_intvl(self):
         """Test rampdown_smooth_intvl."""
-        w = WaveformParam()
-        v1 = w.rampdown_smooth_intvl
-        self.assertIsInstance(v1, float)
-        self.assertTrue(v1 > 0)
+        wfm = WaveformParam()
+        val1 = wfm.rampdown_smooth_intvl
+        self.assertIsInstance(val1, float)
+        self.assertTrue(val1 > 0)
 
     def test_rampdown_smooth_value(self):
         """Test rampdown_smooth_value."""
-        w = WaveformParam()
-        v1 = w.rampdown_smooth_value
-        self.assertIsInstance(v1, float)
+        wfm = WaveformParam()
+        val1 = wfm.rampdown_smooth_value
+        self.assertIsInstance(val1, float)
 
 
 class TestWaveformDipole(TestCase):
@@ -194,31 +194,29 @@ class TestWaveformDipole(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                WaveformDipole,
-                TestWaveformDipole.PUBLIC_INTERFACE)
+            WaveformDipole,
+            TestWaveformDipole.PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def _test_constructor(self):
         """Test class constructor."""
         # TODO: implement using mock to substitute server
         # default arguments
-        w = WaveformDipole()
-        c = w.currents
-        self.assertIsInstance(c, numpy.ndarray)
-        self.assertEqual(len(c), _DEF_WFMSIZE_OTHERS)
-        s = w.strengths
-        self.assertIsInstance(s, list)
-        self.assertEqual(len(s), _DEF_WFMSIZE_OTHERS)
+        wfm = WaveformDipole()
+        curr = wfm.currents
+        self.assertIsInstance(curr, numpy.ndarray)
+        self.assertEqual(len(curr), _DEF_WFMSIZE_OTHERS)
+        stren = wfm.strengths
+        self.assertIsInstance(stren, list)
+        self.assertEqual(len(stren), _DEF_WFMSIZE_OTHERS)
 
     def test_waveform(self):
         """Test waveform."""
         # TODO: implement it!
-        pass
 
     def test_update(self):
         """Test update."""
         # TODO: implement it!
-        pass
 
 
 class TestWaveform(TestCase):
@@ -239,14 +237,14 @@ class TestWaveform(TestCase):
     def test_duration(self):
         """Test duration."""
         # TODO: implement it!
-        pass
+
 
     def _test_update(self):
         """Test update."""
         # TODO: implement using mock to substitute server
         bo_b = WaveformDipole()
-        qd = Waveform(maname='BO-Fam:MA-QD', dipole=bo_b)
-        c1 = qd.currents
+        defoc = Waveform(maname='BO-Fam:MA-QD', dipole=bo_b)
+        curr1 = defoc.currents
         bo_b.rampup_start_energy *= 1.01
-        c2 = qd.currents
-        self.assertTrue((c1 != c2).any())
+        curr2 = defoc.currents
+        self.assertTrue((curr1 != curr2).any())

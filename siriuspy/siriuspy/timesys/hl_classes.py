@@ -103,9 +103,9 @@ class _BaseHL(_Callback):
 
     def get_map2writepvs(self):
         """Get the database."""
-        db = self.get_database()
+        dbase = self.get_database()
         map2write = dict()
-        for pvname in db:
+        for pvname in dbase:
             prop = self._get_prop_name(pvname)
             if _PVName.is_write_pv(pvname):
                 map2write[pvname] = _partial(self.write, prop)
@@ -113,9 +113,9 @@ class _BaseHL(_Callback):
 
     def get_map2readpvs(self):
         """Get the database."""
-        db = self.get_database()
+        dbase = self.get_database()
         map2readpvs = dict()
-        for pvname in db:
+        for pvname in dbase:
             if _PVName.is_cte_pv(pvname) or _PVName.is_cmd_pv(pvname):
                 continue
             prop = self._get_prop_name(pvname)
@@ -162,9 +162,9 @@ class _BaseHL(_Callback):
         return dict()
 
     def _get_properties_suffix(self):
-        db = self.get_database()
+        dbase = self.get_database()
         props = dict()
-        for pvname in db:
+        for pvname in dbase:
             if not _PVName.is_sp_pv(pvname) and not _PVName.is_cte_pv(pvname):
                 prop, suf = self._get_prop_name(pvname, with_suffix=True)
                 props[prop] = suf

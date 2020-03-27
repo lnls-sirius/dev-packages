@@ -55,8 +55,8 @@ class TestPSDataProperties(TestCase):
             'splims': {'lolo': 0, 'hihi': 1000},
             'splims_unit': 'FakePSUnit',
             'excdata': 'FakePSExcData'}
-        # Fake db
-        self.db = {
+        # Fake dbase
+        self.dbase = {
             'FakeField': 0,
             'FakeField2': {'FakeInnerField1': 'x', 'FakeInnerField2': 10},
             'FakeField3': "string"}
@@ -79,7 +79,7 @@ class TestPSDataProperties(TestCase):
             self.properties['excdata']
         # self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
 
-        self.db_mock.return_value = self.db
+        self.db_mock.return_value = self.dbase
 
         # Object to be tested
         self.data = PSData(self.properties['psname'])
@@ -137,7 +137,7 @@ class TestPSDataProperties(TestCase):
 
     def test_propty_database(self):
         """Test wether the database is set correctly."""
-        self.assertEqual(self.data.propty_database, self.db)
+        self.assertEqual(self.data.propty_database, self.dbase)
 
 
 class TestPSDataDb(TestCase):
@@ -170,7 +170,7 @@ class TestPSDataDb(TestCase):
         self.search_mock.conv_psname_2_psmodel.return_value = self.psmodel
 
     def _test_ps_db(self):
-        """Test ps db is called when a ps is passed."""
+        """Test ps dbase is called when a ps is passed."""
         self.search_mock.check_psname_ispulsed.return_value = False
         PSData(self.psname)
         self.pu_db_mock.assert_not_called()
@@ -178,7 +178,7 @@ class TestPSDataDb(TestCase):
         pass
 
     def _test_pu_db(self):
-        """Test pu db is called when a pu is passed."""
+        """Test pu dbase is called when a pu is passed."""
         self.search_mock.check_psname_ispulsed.return_value = True
         PSData(self.psname)
         self.pu_db_mock.assert_called_once_with(pstype=self.pstype)

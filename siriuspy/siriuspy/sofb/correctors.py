@@ -361,44 +361,44 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        db = {
+        dbase = {
             'CorrConfig-Cmd': self.configure_correctors,
             'KickAcqRate-SP': self.set_kick_acq_rate,
             }
         if self.acc == 'SI':
-            db['CorrSync-Sel'] = self.set_corrs_mode
-        return db
+            dbase['CorrSync-Sel'] = self.set_corrs_mode
+        return dbase
 
     def apply_kicks(self, values):
         """Apply kicks."""
         strn = '    TIMEIT: {0:20s} - {1:7.3f}'
         _log.debug('    TIMEIT: BEGIN')
-        t1 = _time.time()
+        time1 = _time.time()
 
         # Send correctors setpoint
         for i, corr in enumerate(self._corrs):
             if values[i] is not None:
                 self.put_value_in_corr(corr, values[i])
-        t2 = _time.time()
-        _log.debug(strn.format('send sp:', 1000*(t2-t1)))
+        time2 = _time.time()
+        _log.debug(strn.format('send sp:', 1000*(time2-time1)))
 
         # Wait for readbacks to be updated
         if self._timed_out(values, mode='ready'):
             return
-        t3 = _time.time()
-        _log.debug(strn.format('check ready:', 1000*(t3-t2)))
+        time3 = _time.time()
+        _log.debug(strn.format('check ready:', 1000*(time3-time2)))
 
         # Send trigger signal for implementation
         # _time.sleep(0.450)
         self.send_evt()
-        t4 = _time.time()
-        _log.debug(strn.format('send evt:', 1000*(t4-t3)))
+        time4 = _time.time()
+        _log.debug(strn.format('send evt:', 1000*(time4-time3)))
 
         # Wait for references to be updated
         if self._timed_out(values, mode='applied'):
             return
-        t5 = _time.time()
-        _log.debug(strn.format('check applied:', 1000*(t5-t4)))
+        time5 = _time.time()
+        _log.debug(strn.format('check applied:', 1000*(time5-time4)))
         _log.debug('    TIMEIT: END')
 
     def put_value_in_corr(self, corr, value):
