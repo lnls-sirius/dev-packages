@@ -49,7 +49,7 @@ rampdown_delta = 1*91.3
 rampdown_range = 60
 
 
-w1 = WaveformParam(
+wfm1 = WaveformParam(
     duration=duration,
     start_energy=start_energy,
     rampup1_start_time=rampup1_start_time,
@@ -70,21 +70,21 @@ w1 = WaveformParam(
 def waveform_info(nrpts):
     """Info."""
     time = _np.linspace(0, duration, nrpts)
-    wfm = w1.eval_at(time)
+    wfm = wfm1.eval_at(time)
     print('============= Waveform Info =============')
     print('waveform minimum value       : {:+10.4f}'.format(min(wfm)))
-    print('waveform start value         : {:+10.4f}'.format(w1.start_energy))
-    print('waveform rampdown start value: {:+10.4f}'.format(w1.rampdown_start_energy))
+    print('waveform start value         : {:+10.4f}'.format(wfm1.start_energy))
+    print('waveform rampdown start value: {:+10.4f}'.format(wfm1.rampdown_start_energy))
     print('waveform maximum value       : {:+10.4f}'.format(max(wfm)))
-    print('waveform rampup1_slope       : {:+10.4f}'.format(w1.rampup1_slope))
-    print('waveform rampup2_slope       : {:+10.4f}'.format(w1.rampup2_slope))
-    print('waveform ramdown_slope       : {:+10.4f}'.format(w1.rampdown_slope))
+    print('waveform rampup1_slope       : {:+10.4f}'.format(wfm1.rampup1_slope))
+    print('waveform rampup2_slope       : {:+10.4f}'.format(wfm1.rampup2_slope))
+    print('waveform ramdown_slope       : {:+10.4f}'.format(wfm1.rampdown_slope))
 
 
 def waveform_plot(nrpts, slope=False, selected_values=[]):
     """Plot waveform."""
     time = _np.linspace(0, duration, nrpts)
-    wfm = w1.eval_at(time)
+    wfm = wfm1.eval_at(time)
     if slope:
         dt = (time[-1] - time[0])/(len(time)-1)
         wfm = (wfm[2:] - wfm[:-2])/2/dt
@@ -92,12 +92,12 @@ def waveform_plot(nrpts, slope=False, selected_values=[]):
         wfm = _np.insert(wfm, 0, 0.0)
         wfm = 1000*wfm  # [ms -> s]
     minv, maxv = min(wfm), max(wfm)
-    time1 = w1.rampup1_start_time
-    dt1 = w1.rampup_range/2
-    dt2 = w1.rampdown_range/2
-    time2 = w1.rampup2_start_time
-    time3 = w1.rampdown_start_time
-    time4 = w1.rampdown_stop_time
+    time1 = wfm1.rampup1_start_time
+    dt1 = wfm1.rampup_range/2
+    dt2 = wfm1.rampdown_range/2
+    time2 = wfm1.rampup2_start_time
+    time3 = wfm1.rampdown_start_time
+    time4 = wfm1.rampdown_stop_time
     plt.plot([time1, time1], [minv, maxv], '-.', color='orange')
     plt.plot([time2-dt1, time2-dt1], [minv, maxv], '-.', color='orchid')
     plt.plot([time2, time2], [minv, maxv], '-.', color='orange')
@@ -124,7 +124,7 @@ def waveform_plot(nrpts, slope=False, selected_values=[]):
 def waveform_print(nrpts):
     """Print waveform."""
     time = _np.linspace(0, duration, nrpts)
-    wfm = w1.eval_at(time)
+    wfm = wfm1.eval_at(time)
     for _time, _wfm in zip(time, wfm):
         print('{:.16e} {:.16e}'.format(_time, _wfm))
 
