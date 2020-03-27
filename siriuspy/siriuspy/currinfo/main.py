@@ -5,11 +5,11 @@ from datetime import datetime as _datetime
 import numpy as _np
 from epics import PV as _PV
 
-from siriuspy.callbacks import Callback as _Callback
-from siriuspy.epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
-from siriuspy.envars import VACA_PREFIX as _vaca_prefix
-from siriuspy.clientarch import ClientArchiver as _ClientArch
-from siriuspy.pwrsupply.csdev import Const as _PSc
+from ..callbacks import Callback as _Callback
+from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..envars import VACA_PREFIX as _vaca_prefix
+from ..clientarch import ClientArchiver as _ClientArch
+from ..pwrsupply.csdev import Const as _PSc
 
 from .csdev import Const as _Const, \
     get_currinfo_database as _get_database

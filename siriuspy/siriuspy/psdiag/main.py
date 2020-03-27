@@ -4,12 +4,11 @@
 import time as _time
 from threading import Thread as _Thread
 
-from pcaspy import Alarm as _Alarm
-from pcaspy import Severity as _Severity
+from pcaspy import Alarm as _Alarm, Severity as _Severity
 
-from siriuspy.callbacks import Callback as _Callback
-from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics.pv_psdiag import \
+from ..callbacks import Callback as _Callback
+from ..thread import QueueThread as _QueueThread
+from ..epics.pv_psdiag import \
     ComputedPV as _ComputedPV, \
     PSStatusPV as _PSStatusPV, \
     PSDiffPV as _PSDiffPV

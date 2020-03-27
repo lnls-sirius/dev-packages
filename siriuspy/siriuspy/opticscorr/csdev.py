@@ -1,5 +1,5 @@
 """Define PVs, constants and properties of OpticsCorr SoftIOCs."""
-from siriuspy import csdev as _csdev
+from .. import csdev as _csdev
 
 
 # --- Enumeration Types ---
