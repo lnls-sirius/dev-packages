@@ -80,13 +80,13 @@ def _recursive_check(ref_value, value, checklength=True):
         if checklength and len(value) != len(ref_value):
             # print('h3')
             return False
-        for k, val in value.items():
-            if k not in ref_value and checklength:
+        for key, val in value.items():
+            if key not in ref_value and checklength:
                 # print('h4')
                 return False
-            if k in ref_value:
-                v_ref = ref_value[k]
-                if isinstance(k, str) and k.endswith('*'):
+            if key in ref_value:
+                v_ref = ref_value[key]
+                if isinstance(key, str) and key.endswith('*'):
                     checked = _recursive_check(v_ref, val, checklength=False)
                 else:
                     checked = _recursive_check(v_ref, val, checklength)
