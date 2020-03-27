@@ -102,8 +102,7 @@ class ConstSI(ConstRings):
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.OFF_ON)
 
-    # TODO: use correct name for the RF generator
-    RF_GEN_NAME = 'AS-Glob:RF-Gen'
+    RF_GEN_NAME = 'RF-Gen'
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 

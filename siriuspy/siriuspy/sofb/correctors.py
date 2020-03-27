@@ -94,7 +94,7 @@ class RFCtrl(Corrector):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        self._name = 'RF-Gen'  # self._csorb.RF_GEN_NAME
+        self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF+self._name+':GeneralFreq-SP', **opt)
         self._rb = _PV(LL_PREF+self._name+':GeneralFreq-RB', **opt)
