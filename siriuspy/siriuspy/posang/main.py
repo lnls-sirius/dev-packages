@@ -14,6 +14,8 @@ from siriuspy.pwrsupply.csdev import Const as _PSC
 
 from .csdev import Const as _PAConst, \
     get_posang_database as _get_database
+from .utils import get_config_name as _get_config_name, \
+    set_config_name as _set_config_name
 
 
 # Constants
@@ -189,7 +191,7 @@ class App(_Callback):
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                self._set_config_name(value)
+                _set_config_name(self._TL.lower(), value)
                 self._config_name = corrparams[0]
                 self.run_callbacks('ConfigName-RB', self._config_name)
                 self._respmat_x = corrparams[1]
@@ -212,7 +214,8 @@ class App(_Callback):
         """Get response matrix from configurations database."""
         try:
             if not config_name:
-                config_name = self._get_config_name()
+                config_name = _get_config_name(
+                    self._TL.lower(), self._CORRSTYPE)
             mats = self.cdb_client.get_config_value(config_name)
         except _ConfigDBException:
             return [False, []]
@@ -220,34 +223,6 @@ class App(_Callback):
         respmat_x = [item for sublist in mats['respm-x'] for item in sublist]
         respmat_y = [item for sublist in mats['respm-y'] for item in sublist]
         return [True, [config_name, respmat_x, respmat_y]]
-
-    def _get_config_name(self):
-        fname = './' + self._TL.lower() + '-posang.txt'
-        try:
-            f = open(fname, 'r')
-            config_name = f.read().strip('\n')
-            f.close()
-        except Exception:
-            f = open(fname, 'w+')
-            config_name = self._get_default_config_name()
-            f.write(config_name)
-            f.close()
-        return config_name
-
-    def _set_config_name(self, config_name):
-        f = open('/home/sirius/iocs-log/' + self._TL.lower() + '-ap-posang/' +
-                 self._TL.lower() + '-posang.txt', 'w+')
-        f.write(config_name)
-        f.close()
-
-    def _get_default_config_name(self):
-        if self._TL == 'TB':
-            return 'Default_CHSept'
-        else:
-            if self._CORRSTYPE == 'sept-sept':
-                return 'TS.V04.01-M1.SeptSept'
-            else:
-                return 'TS.V04.01-M1'
 
     def _update_delta(self, delta_pos, delta_ang, orbit):
         if orbit == 'x':
