@@ -60,7 +60,7 @@ class EpicsMatrix(BaseMatrix):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        db = {
+        dbase = {
             'RespMat-SP': self.set_respmat,
             'CHEnblList-SP': _part(self.set_enbllist, 'ch'),
             'CVEnblList-SP': _part(self.set_enbllist, 'cv'),
@@ -69,8 +69,8 @@ class EpicsMatrix(BaseMatrix):
             'NrSingValues-SP': self.set_num_sing_values,
             }
         if self.acc == 'SI':
-            db['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
-        return db
+            dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
+        return dbase
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""

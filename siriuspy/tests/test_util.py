@@ -108,20 +108,20 @@ class TestUtil(TestCase):
 
     def test_print_ioc_banner(self):
         """Test print_ioc_banner."""
-        db = {}
-        db.update({'PV01': None, 'PV02': None, 'PV03': None, 'PV04': None, })
-        db.update({'PV05': None, 'PV06': None, 'PV07': None, 'PV08': None, })
+        dbase = {}
+        dbase.update({'PV01': None, 'PV02': None, 'PV03': None, 'PV04': None, })
+        dbase.update({'PV05': None, 'PV06': None, 'PV07': None, 'PV08': None, })
         fi = StringIO()
         logging.root.handlers = []
         util.configure_log_file(stream=fi)
-        util.print_ioc_banner('test-ioc', db,
+        util.print_ioc_banner('test-ioc', dbase,
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX')
         text = fi.getvalue()
         self.assertEqual(len(text.splitlines()), 17)
-        db.update({'PV09': None, 'PV10': None, 'PV11': None, 'PV12': None, })
-        db.update({'PV13': None, 'PV14': None, 'PV15': None, 'PV16': None, })
-        util.print_ioc_banner('test-ioc', db,
+        dbase.update({'PV09': None, 'PV10': None, 'PV11': None, 'PV12': None, })
+        dbase.update({'PV13': None, 'PV14': None, 'PV15': None, 'PV16': None, })
+        util.print_ioc_banner('test-ioc', dbase,
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX')
         text = fi.getvalue()

@@ -51,7 +51,7 @@ class SOFB(_BaseClass):
 
     def get_map2write(self):
         """Get the database of the class."""
-        db = {
+        dbase = {
             'ClosedLoop-Sel': self.set_auto_corr,
             'ClosedLoopFreq-SP': self.set_auto_corr_frequency,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
@@ -72,15 +72,15 @@ class SOFB(_BaseClass):
             'ApplyDelta-Cmd': self.apply_corr,
             }
         if self.isring:
-            db['RingSize-SP'] = self.set_ring_extension
+            dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
-            db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
-            db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
-            db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
-            db['DeltaKickRF-SP'] = _part(
+            dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
+            dbase['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
+            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF),
-            db['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
-        return db
+            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
+        return dbase
 
     @property
     def orbit(self):

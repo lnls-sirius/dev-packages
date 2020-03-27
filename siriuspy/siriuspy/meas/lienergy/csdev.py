@@ -28,7 +28,7 @@ class Const(_csdev.Const):
     @classmethod
     def get_database(cls, prefix=''):
         """Return IOC database."""
-        db = {
+        dbase = {
             'Dispersion-SP': {
                 'type': 'float', 'prec': 4, 'unit': 'mm',
                 'value': cls.DEFAULT_DISP},
@@ -59,7 +59,7 @@ class Const(_csdev.Const):
                 'type': 'enum', 'value': cls.MeasureState.Stopped,
                 'enums': cls.MeasureState._fields},
             }
-        for val in db.values():
+        for val in dbase.values():
             low = val.get('lolim', None)
             hig = val.get('hilim', None)
             if low is not None:
@@ -69,6 +69,6 @@ class Const(_csdev.Const):
                 val['hihi'] = hig
                 val['high'] = hig
         if prefix:
-            db = {prefix + k: v for k, v in db.items()}
-        db.update(_csdev.Const.get_database(prefix=prefix))
-        return db
+            dbase = {prefix + k: v for k, v in dbase.items()}
+        dbase.update(_csdev.Const.get_database(prefix=prefix))
+        return dbase

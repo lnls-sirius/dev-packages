@@ -361,13 +361,13 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        db = {
+        dbase = {
             'CorrConfig-Cmd': self.configure_correctors,
             'KickAcqRate-SP': self.set_kick_acq_rate,
             }
         if self.acc == 'SI':
-            db['CorrSync-Sel'] = self.set_corrs_mode
-        return db
+            dbase['CorrSync-Sel'] = self.set_corrs_mode
+        return dbase
 
     def apply_kicks(self, values):
         """Apply kicks."""
