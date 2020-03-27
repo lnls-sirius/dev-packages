@@ -68,7 +68,7 @@ class EpicsOrbit(BaseOrbit):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        db = {
+        dbase = {
             'SOFBMode-Sel': self.set_orbit_mode,
             'SyncWithInjection-Sel': self.set_sync_with_injection,
             'TrigAcqConfig-Cmd': self.acq_config_bpms,
@@ -100,8 +100,8 @@ class EpicsOrbit(BaseOrbit):
             'PolyCalibration-Sel': self.set_poly_calibration,
             }
         if not self.isring:
-            return db
-        db.update({
+            return dbase
+        dbase.update({
             'MTurnIdx-SP': self.set_orbit_multiturn_idx,
             'MTurnDownSample-SP': self.set_mturndownsample,
             'MTurnSyncTim-Sel': self.set_mturn_sync,
@@ -109,7 +109,7 @@ class EpicsOrbit(BaseOrbit):
             'MTurnMaskSplBeg-SP': _part(self.set_mturnmask, beg=True),
             'MTurnMaskSplEnd-SP': _part(self.set_mturnmask, beg=False),
             })
-        return db
+        return dbase
 
     @property
     def mode(self):
@@ -143,7 +143,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
             self._ring_extension = val
             nrb = val * self._csorb.NR_BPMS
-            for pln in self.offline_orbit.keys():
+            for pln in self.offline_orbit:
                 orb = self.ref_orbs[pln]
                 if orb.size < nrb:
                     nrep = _ceil(nrb/orb.size)
@@ -341,11 +341,11 @@ class EpicsOrbit(BaseOrbit):
         # Make the smoothing
         try:
             for i, bpm in enumerate(self.bpms):
-                for k, v in bgs[i].items():
+                for k, val in bgs[i].items():
                     if self._smooth_meth == self._csorb.SmoothMeth.Average:
-                        bgs[i][k] = _np.mean(v, axis=0)
+                        bgs[i][k] = _np.mean(val, axis=0)
                     else:
-                        bgs[i][k] = _np.median(v, axis=0)
+                        bgs[i][k] = _np.median(val, axis=0)
                     if not _np.all(_np.isfinite(bgs[i][k])):
                         raise ValueError('there was some nans or infs.')
             self._spass_bgs = bgs
@@ -673,25 +673,25 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not self.isring:
             return
-        dl = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
+        dly = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
         dur = (duration or self.timing.duration or 0.0) * 1e-6  # from us to s
         channel = channel or self.bpms[0].acq_type or 0
 
         # revolution period in s
         if channel == _csbpm.AcqChan.Monit1:
-            dt = self.bpms[0].monit1period
+            dtim = self.bpms[0].monit1period
         elif channel == _csbpm.AcqChan.FOFB:
-            dt = self.bpms[0].fofbperiod
+            dtim = self.bpms[0].fofbperiod
         else:
-            dt = self.bpms[0].tbtperiod
+            dtim = self.bpms[0].tbtperiod
         mult = self._mturndownsample * self._ring_extension
-        dt *= mult
+        dtim *= mult
         nrptpst = self.acqtrignrsamples // mult
         offset = self._acqtrignrsamplespre / mult
         nrst = self._acqtrignrshots
-        a = _np.arange(nrst)
-        b = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
-        vect = dl + dur/nrst*a[:, None] + dt*b[None, :]
+        shots = _np.arange(nrst)
+        pts = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
+        vect = dly + dur/nrst*shots[:, None] + dtim*pts[None, :]
         self._timevector = vect.flatten()
         self.run_callbacks('MTurnTime-Mon', self._timevector)
         self.set_orbit_multiturn_idx(self._multiturnidx)
@@ -700,7 +700,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if _os.path.isfile(self._csorb.REFORBFNAME):
             self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
-                                        self._csorb.REFORBFNAME, unpack=True)
+                self._csorb.REFORBFNAME, unpack=True)
 
     def _save_ref_orbits(self):
         """."""
@@ -876,10 +876,10 @@ class EpicsOrbit(BaseOrbit):
                     'refx': self.ref_orbs['X'][i],
                     'refy': self.ref_orbs['Y'][i],
                     'bg': self._spass_bgs[i] if use_bg else dict()})
-                orbx, orby, Sum = bpm.calc_sp_multiturn_pos(**dic)
+                orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)
-                orbs['Sum'].append(Sum)
+                orbs['Sum'].append(summ)
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
@@ -944,17 +944,3 @@ class EpicsOrbit(BaseOrbit):
             orby[i::nrb] = bpm.offsety or 0.0
         self.run_callbacks('BPMOffsetX-Mon', orbx)
         self.run_callbacks('BPMOffsetY-Mon', orby)
-
-    @staticmethod
-    def _find_new_downsample(N, d, onlyup=False):
-        """."""
-        if d > N:
-            return N
-        if not N % d:
-            return d
-        lim = min(N-d+1, d) if not onlyup else N-d+1
-        for i in range(1, lim):
-            if not N % (d+i):
-                return d+i
-            elif not onlyup and not N % (d-i):
-                return d-i
