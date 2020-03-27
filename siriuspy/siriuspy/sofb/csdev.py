@@ -117,27 +117,27 @@ class SOFBTLines(ConstTLines):
         self.acc = acc.upper()
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
-        self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
-        self.CH_NAMES = _PSSearch.get_psnames(
+        self.bpm_names = _BPMSearch.get_names({'sec': acc})
+        self.ch_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         if self.acc == 'TS':
-            self.CH_NAMES = [_PVName('TS-01:PU-EjeSeptG'), ] + self.CH_NAMES
-        self.CV_NAMES = _PSSearch.get_psnames(
+            self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + self.ch_names
+        self.cv_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
-        self.BPM_NICKNAMES = _BPMSearch.get_nicknames(self.BPM_NAMES)
-        self.CH_NICKNAMES = _PSSearch.get_psnicknames(self.CH_NAMES)
+        self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
+        self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         if self.acc == 'TS':
-            self.CH_NICKNAMES[0] = 'EjeseptG'
-        self.CV_NICKNAMES = _PSSearch.get_psnicknames(self.CV_NAMES)
-        self.BPM_POS = _BPMSearch.get_positions(self.BPM_NAMES)
+            self.ch_nicknames[0] = 'EjeseptG'
+        self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
+        self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
 
-        func = lambda x: x.substitute(dis='MA' if x.dis=='PS' else 'PM')
-        self.CH_POS = _MASearch.get_mapositions(map(func, self.CH_NAMES))
-        self.CV_POS = _MASearch.get_mapositions(map(func, self.CV_NAMES))
-        self.NR_CH = len(self.CH_NAMES)
-        self.NR_CV = len(self.CV_NAMES)
+        func = lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM')
+        self.ch_pos = _MASearch.get_mapositions(map(func, self.ch_names))
+        self.cv_pos = _MASearch.get_mapositions(map(func, self.cv_names))
+        self.NR_CH = len(self.ch_names)
+        self.NR_CV = len(self.cv_names)
         self.NR_CHCV = self.NR_CH + self.NR_CV
-        self.NR_BPMS = len(self.BPM_NAMES)
+        self.NR_BPMS = len(self.bpm_names)
         ext = acc.lower() + 'orb'
         ioc_fol = acc.lower() + '-ap-sofb'
         ioc_fol = _os.path.join('/home', 'sirius', 'iocs-log', ioc_fol, 'data')
@@ -284,16 +284,16 @@ class SOFBTLines(ConstTLines):
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
             'CHPosS-Cte': {
                 'type': 'float', 'unit': 'm', 'count': self.NR_CH,
-                'value': self.CH_POS},
+                'value': self.ch_pos},
             'CVPosS-Cte': {
                 'type': 'float', 'unit': 'm', 'count': self.NR_CV,
-                'value': self.CV_POS},
+                'value': self.cv_pos},
             'CHNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the chs.',
-                'count': self.NR_CH, 'value': self.CH_NICKNAMES},
+                'count': self.NR_CH, 'value': self.ch_nicknames},
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
-                'count': self.NR_CV, 'value': self.CV_NICKNAMES},
+                'count': self.NR_CV, 'value': self.cv_nicknames},
             'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
@@ -484,10 +484,10 @@ class SOFBTLines(ConstTLines):
                 'enums': self.SPassUseBg._fields},
             'BPMPosS-Mon': {
                 'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
-                'value': self.BPM_POS, 'prec': 2},
+                'value': self.bpm_pos, 'prec': 2},
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
-                'count': self.MAX_RINGSZ*nbpm, 'value': self.BPM_NICKNAMES},
+                'count': self.MAX_RINGSZ*nbpm, 'value': self.bpm_nicknames},
             'OrbStatus-Mon': {'type': 'int', 'value': 0b00000},
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),

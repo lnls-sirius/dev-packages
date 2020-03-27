@@ -59,7 +59,7 @@ class EpicsOrbit(BaseOrbit):
         self._mturndownsample = 1
         self._timevector = None
         self._ring_extension = 1
-        self.bpms = [BPM(name, callback) for name in self._csorb.BPM_NAMES]
+        self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)

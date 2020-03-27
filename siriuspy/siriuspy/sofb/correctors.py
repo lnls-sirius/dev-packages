@@ -346,7 +346,7 @@ class EpicsCorrectors(BaseCorrectors):
         super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = False
         self._acq_rate = 2
-        self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
+        self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
         if self.acc == 'SI':
             self._corrs.append(RFCtrl(self.acc))
