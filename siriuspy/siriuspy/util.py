@@ -52,8 +52,8 @@ def conv_splims_labels(label):
         # epics -> pcaspy
         return labels_dict[label]
     else:
-        for k, v in labels_dict.items():
-            if v == label:
+        for k, value in labels_dict.items():
+            if value == label:
                 # pcaspy -> epics
                 return k
         raise KeyError('Invalid splims label "' + label + '"!')
@@ -223,7 +223,7 @@ def get_bit(v, bit_pos):
 
 
 def mode(lst):
-    """ Find statistical mode of iterable of hashable objects."""
+    """Find statistical mode of iterable of hashable objects."""
     counter = _Counter(lst)
     return counter.most_common(1)[0]
 
