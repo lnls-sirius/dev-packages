@@ -2,13 +2,17 @@
 
 import time as _time
 
+from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..epics import PV as _PV
+from ..epics import pv_fake as _pv_fake
 from ..namesys import SiriusPVName as _SiriusPVName
 
 
 class Device:
     """Epics Device."""
 
+    CONNECTION_TIMEOUT = _CONN_TIMEOUT
+    SIMULATED = False
     _properties = ()
 
     def __init__(self, devname, properties):
@@ -63,13 +67,18 @@ class Device:
         attributes = dict()
         for propty in self._properties:
             pvobj = self._pvs[propty]
-            attributes[propty] = getattr(pvobj, attribute)
+            attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
 
     @property
     def hosts(self):
         """Return dict of IOC hosts providing device properties."""
         return self.pv_attribute_values('host')
+
+    @property
+    def values(self):
+        """Return dict of property values."""
+        return self.pv_attribute_values('value')
 
     def __getitem__(self, propty):
         """Return value of property."""
@@ -89,13 +98,17 @@ class Device:
             devname = _SiriusPVName(devname)
         pvs = dict()
         for propty in self._properties:
-            if devname:
-                func = devname.substitute
-                pvname = func(propty=propty)
-            else:
-                pvname = propty
+            pvname = self._get_pvname(devname, propty)
             auto_monitor = not pvname.endswith('-Mon')
-            pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
+            if self.SIMULATED:
+                self._add_fake_pvs_to_database()
+                pvs[propty] = _pv_fake.PVFake(
+                    pvname, auto_monitor=auto_monitor,
+                    connection_timeout=Device.CONNECTION_TIMEOUT)
+            else:
+                pvs[propty] = _PV(
+                    pvname, auto_monitor=auto_monitor,
+                    connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
     def _wait(self, propty, value, timeout=10):
@@ -107,6 +120,22 @@ class Device:
             if self[propty] == value:
                 break
             _time.sleep(interval)
+
+    def _get_pvname(self, devname, propty):
+        if devname:
+            func = devname.substitute
+            pvname = func(propty=propty)
+        else:
+            pvname = propty
+        return pvname
+
+    def _add_fake_pvs_to_database(self):
+        dbase, prefix = self._get_fake_pvs_database()
+        _pv_fake.add_to_database(dbase, prefix)
+
+    def _get_fake_pvs_database(self):
+        print('NotImplementedError for {}'.format(self.devname))
+        return dict(), ''
 
 
 # NOTE: This class is temporary. It should become deprecated once all
@@ -198,18 +227,30 @@ class Devices:
         for dev in self._devices:
             dev.update()
 
+    def pv_attribute_values(self, attribute):
+        """Return property-value dict of a given attribute for all PVs."""
+        attributes = dict()
+        for dev in self._devices:
+            attrs = dev.pv_attribute_values(attribute)
+            print(dev)
+            print(attrs)
+            attributes.update(attrs)
+        return attributes
+
+    @property
+    def hosts(self):
+        """Return dict of IOC hosts providing device properties."""
+        return self.pv_attribute_values('host')
+
+    @property
+    def values(self):
+        """Return dict of property values."""
+        return self.pv_attribute_values('value')
+
     @property
     def devices(self):
         """Return devices."""
         return self._devices
-
-    def _prop_get(self, devidx, propty):
-        """Return value of a device property."""
-        return self._devices[devidx][propty]
-
-    def _prop_set(self, devidx, propty, value):
-        """Set value of device property."""
-        self._devices[devidx][propty] = value
 
     def __getitem__(self, devidx):
         """Return device."""

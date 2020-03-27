@@ -14,9 +14,9 @@ from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
 from ..thread import DequeThread as _DequeThread
-from ..pwrsupply.data import PSData as _PSData
 from ..devices import StrengthConv as _StrengthConv
 
+from .data import PSData as _PSData
 from .pru import PRU as _PRU
 from .prucontroller import PRUController as _PRUController
 from .fields import Constant as _Constant
