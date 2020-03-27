@@ -3,7 +3,7 @@
 
 import numpy as _np
 from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
-from ..csdevice.opticscorr import Const as _Const
+from ..opticscorr.csdev import Const as _Const
 
 
 class OpticsCorr:
