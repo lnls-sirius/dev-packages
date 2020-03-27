@@ -457,9 +457,9 @@ class EpicsCorrectors(BaseCorrectors):
     def _update_corrs_strength(self):
         try:
             corr_vals = self.get_strength()
-            self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
+            self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.nr_ch])
             self.run_callbacks(
-                'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
+                'KickCV-Mon', corr_vals[self._csorb.nr_ch:self._csorb.nr_chcv])
             if self.acc == 'SI':
                 self.run_callbacks('KickRF-Mon', corr_vals[-1])
         except Exception as err:
@@ -524,7 +524,7 @@ class EpicsCorrectors(BaseCorrectors):
         elif self.isring:
             status = 0b0011111
 
-        chcvs = self._corrs[:self._csorb.NR_CHCV]
+        chcvs = self._corrs[:self._csorb.nr_chcv]
         status = _util.update_bit(
             status, bit_pos=0,
             bit_val=not all(corr.connected for corr in chcvs))

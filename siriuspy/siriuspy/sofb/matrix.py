@@ -22,8 +22,8 @@ class EpicsMatrix(BaseMatrix):
         self.select_items = {
             'bpmx': _np.ones(self._csorb.NR_BPMS, dtype=bool),
             'bpmy': _np.ones(self._csorb.NR_BPMS, dtype=bool),
-            'ch': _np.ones(self._csorb.NR_CH, dtype=bool),
-            'cv': _np.ones(self._csorb.NR_CV, dtype=bool),
+            'ch': _np.ones(self._csorb.nr_ch, dtype=bool),
+            'cv': _np.ones(self._csorb.nr_cv, dtype=bool),
             }
         self.selection_pv_names = {
             'ch': 'CHEnblList-RB',
@@ -224,8 +224,8 @@ class EpicsMatrix(BaseMatrix):
             _log.error(msg[5:])
             return
         kicks = _np.dot(-self.inv_respmat, orbit)
-        nr_ch = self._csorb.NR_CH
-        nr_chcv = self._csorb.NR_CHCV
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
         self.run_callbacks('DeltaKickCH-Mon', list(kicks[:nr_ch]))
         self.run_callbacks('DeltaKickCV-Mon', list(kicks[nr_ch:nr_chcv]))
         if self.acc == 'SI':

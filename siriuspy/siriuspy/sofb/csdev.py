@@ -134,9 +134,9 @@ class SOFBTLines(ConstTLines):
         func = lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM')
         self.ch_pos = _MASearch.get_mapositions(map(func, self.ch_names))
         self.cv_pos = _MASearch.get_mapositions(map(func, self.cv_names))
-        self.NR_CH = len(self.ch_names)
-        self.NR_CV = len(self.cv_names)
-        self.NR_CHCV = self.NR_CH + self.NR_CV
+        self.nr_ch = len(self.ch_names)
+        self.nr_cv = len(self.cv_names)
+        self.nr_chcv = self.nr_ch + self.nr_cv
         self.NR_BPMS = len(self.bpm_names)
         ext = acc.lower() + 'orb'
         ioc_fol = acc.lower() + '-ap-sofb'
@@ -145,7 +145,7 @@ class SOFBTLines(ConstTLines):
         ext = acc.lower() + 'respmat'
         self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
 
-        self.NR_CORRS = self.NR_CHCV + 1 if acc == 'SI' else self.NR_CHCV
+        self.NR_CORRS = self.nr_chcv + 1 if acc == 'SI' else self.nr_chcv
 
         self.TRIGGER_ACQ_NAME = self.acc + '-Fam:TI-BPM'
         if self.acc == 'SI':
@@ -246,16 +246,16 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'DeltaKickCH-SP': {
-                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
             'DeltaKickCH-RB': {
-                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
             'DeltaKickCV-SP': {
-                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
                 'unit': 'urad'},
             'DeltaKickCV-RB': {
-                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
                 'unit': 'urad'},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
@@ -276,24 +276,24 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'unit': 'Hz', 'value': 2,
                 'hilim': 20, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
-                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
             'KickCV-Mon': {
-                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
                 'unit': 'urad'},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
             'CHPosS-Cte': {
-                'type': 'float', 'unit': 'm', 'count': self.NR_CH,
+                'type': 'float', 'unit': 'm', 'count': self.nr_ch,
                 'value': self.ch_pos},
             'CVPosS-Cte': {
-                'type': 'float', 'unit': 'm', 'count': self.NR_CV,
+                'type': 'float', 'unit': 'm', 'count': self.nr_cv,
                 'value': self.cv_pos},
             'CHNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the chs.',
-                'count': self.NR_CH, 'value': self.ch_nicknames},
+                'count': self.nr_ch, 'value': self.ch_nicknames},
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
-                'count': self.NR_CV, 'value': self.cv_nicknames},
+                'count': self.nr_cv, 'value': self.cv_nicknames},
             'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
@@ -515,16 +515,16 @@ class SOFBTLines(ConstTLines):
                 'value': self.MTX_SZ*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
-                'type': 'int', 'count': self.NR_CH, 'value': self.NR_CH*[1],
+                'type': 'int', 'count': self.nr_ch, 'value': self.nr_ch*[1],
                 'unit': 'CHs used in correction'},
             'CHEnblList-RB': {
-                'type': 'int', 'count': self.NR_CH, 'value': self.NR_CH*[1],
+                'type': 'int', 'count': self.nr_ch, 'value': self.nr_ch*[1],
                 'unit': 'CHs used in correction'},
             'CVEnblList-SP': {
-                'type': 'int', 'count': self.NR_CV, 'value': self.NR_CV*[1],
+                'type': 'int', 'count': self.nr_cv, 'value': self.nr_cv*[1],
                 'unit': 'CVs used in correction'},
             'CVEnblList-RB': {
-                'type': 'int', 'count': self.NR_CV, 'value': self.NR_CV*[1],
+                'type': 'int', 'count': self.nr_cv, 'value': self.nr_cv*[1],
                 'unit': 'CVs used in correction'},
             'BPMXEnblList-SP': {
                 'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
@@ -551,10 +551,10 @@ class SOFBTLines(ConstTLines):
                 'lolim': 1, 'hilim': self.NR_SING_VALS,
                 'unit': 'Maximum number of SV to use'},
             'DeltaKickCH-Mon': {
-                'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
             'DeltaKickCV-Mon': {
-                'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
                 'unit': 'urad'},
             }
         return self._add_prefix(dbase, prefix)
