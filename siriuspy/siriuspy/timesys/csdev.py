@@ -231,20 +231,20 @@ def get_evr_database(prefix=None):
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
     db[prefix+'Network-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.DISCONN_CONN}
+        'type': 'enum', 'value': 1,
+        'enums': _et.DISCONN_CONN}
 
     db[prefix+'LinkStatus-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.UNLINK_LINK}
+        'type': 'enum', 'value': 1,
+        'enums': _et.UNLINK_LINK}
 
     db[prefix+'IntlkStatus-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
+        'type': 'enum', 'value': 0,
+        'enums': _et.DSBL_ENBL}
 
     db[prefix+'IntlkEnbl-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
+        'type': 'enum', 'value': 0,
+        'enums': _et.DSBL_ENBL}
 
     for i in range(24):
         db2 = get_otp_database(otp_num=i)
@@ -277,20 +277,20 @@ def get_eve_database(eve_num=1, prefix=None):
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
     db[prefix+'Network-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.DISCONN_CONN}
+        'type': 'enum', 'value': 1,
+        'enums': _et.DISCONN_CONN}
 
     db[prefix+'LinkStatus-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.UNLINK_LINK}
+        'type': 'enum', 'value': 1,
+        'enums': _et.UNLINK_LINK}
 
     db[prefix+'IntlkStatus-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
+        'type': 'enum', 'value': 0,
+        'enums': _et.DSBL_ENBL}
 
     db[prefix+'IntlkEnbl-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
+        'type': 'enum', 'value': 0,
+        'enums': _et.DSBL_ENBL}
 
     for i in range(24):
         db2 = get_otp_database(otp_num=i)
@@ -596,4 +596,4 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['CtrldChannels-Cte'] = {
         'type': 'char', 'count': 5000, 'value': channels}
 
-    return {prefix + pv: _dt for pv, _dt in db.items()}
+    return {prefix + pv: dt for pv, dt in db.items()}

@@ -6,6 +6,7 @@ from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
 
 from .. import csdev as _csdev
 
+
 # check PRUserial485 package version
 __version_eth_required__ = '2.5.0'  # eth-PRUserial485
 __version_eth_implmntd__ = _PRUserial485.__version__
