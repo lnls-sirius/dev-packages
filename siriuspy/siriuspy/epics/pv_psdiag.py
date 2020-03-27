@@ -5,12 +5,11 @@ import numpy as _np
 
 from epics import PV as _PV
 
-from ..search import PSSearch as _PSSearch
+from . import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..namesys import SiriusPVName as _PVName
+from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.csdev import ETypes as _ETypes
-
-from . import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 
 
 class ComputedPV:
