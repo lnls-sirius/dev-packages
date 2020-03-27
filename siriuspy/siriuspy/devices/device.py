@@ -2,6 +2,7 @@
 
 import time as _time
 
+from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV
 from ..namesys import SiriusPVName as _SiriusPVName
 
@@ -94,6 +95,7 @@ class Device:
                 pvname = func(propty=propty)
             else:
                 pvname = propty
+            pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return devname, pvs
