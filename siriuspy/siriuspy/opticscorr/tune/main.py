@@ -4,18 +4,18 @@ import time as _time
 import numpy as _np
 from epics import PV as _PV
 
-from siriuspy import util as _util
-from siriuspy.callbacks import Callback as _Callback
-from siriuspy.envars import VACA_PREFIX as _vaca_prefix
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.search import LLTimeSearch as _LLTimeSearch
-from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
+from ... import util as _util
+from ...callbacks import Callback as _Callback
+from ...envars import VACA_PREFIX as _vaca_prefix
+from ...namesys import SiriusPVName as _SiriusPVName
+from ...search import LLTimeSearch as _LLTimeSearch
+from ...clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
-from siriuspy.pwrsupply.csdev import Const as _PSConst
-from siriuspy.timesys.csdev import Const as _TIConst, \
+from ...pwrsupply.csdev import Const as _PSConst
+from ...timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
-from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
+from ...optics.opticscorr import OpticsCorr as _OpticsCorr
 from ..csdev import Const as _Const, \
     get_tune_database as _get_database
 from ..utils import \
