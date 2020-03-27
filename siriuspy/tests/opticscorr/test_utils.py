@@ -10,7 +10,8 @@ from siriuspy.opticscorr.utils import get_config_name, set_config_name
 
 valid_interface_functions = (
     'get_config_name',
-    'set_config_name'
+    'set_config_name',
+    'get_default_config_name'
 )
 
 
@@ -23,7 +24,7 @@ class TestOpticsCorrUtils(unittest.TestCase):
             utils, valid_interface_functions, print_flag=True)
         self.assertTrue(valid)
 
-    def test_get_config_name(self):
+    def _test_get_config_name(self):
         """Test get_config_name function."""
         with self.assertRaises(ValueError):
             get_config_name('', 'tune')
@@ -31,7 +32,7 @@ class TestOpticsCorrUtils(unittest.TestCase):
             get_config_name('si', '')
         self.assertIsInstance(get_config_name('si', 'tune'), str)
 
-    def test_set_config_name(self):
+    def _test_set_config_name(self):
         """Test set_config_name function."""
         with self.assertRaises(ValueError):
             set_config_name('', 'tune', 'Default')
