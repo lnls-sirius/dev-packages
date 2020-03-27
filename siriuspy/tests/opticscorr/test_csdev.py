@@ -4,11 +4,10 @@
 
 from unittest import TestCase
 from siriuspy import util
-from siriuspy.csdevice import opticscorr
-from siriuspy.csdevice.opticscorr import (
-    get_chrom_database,
-    get_tune_database,
-)
+from siriuspy.opticscorr import csdev
+from siriuspy.opticscorr.csdev import \
+    get_chrom_database, \
+    get_tune_database
 
 
 PUBLIC_INTERFACE = (
@@ -20,12 +19,12 @@ PUBLIC_INTERFACE = (
 
 
 class TestOpticsCorrCSDevice(TestCase):
-    """Test siriuspy.csdevice.opticscorr module."""
+    """Test siriuspy.opticscorr.csdev module."""
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            opticscorr, PUBLIC_INTERFACE)
+            csdev, PUBLIC_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_chrom_database(self):
@@ -89,10 +88,10 @@ class TestOpticsCorrCSDevice(TestCase):
             self.assertTrue('StatusLabels-Cte' in dbase)
 
             for fam in qfams:
-                self.assertTrue('RefKL' + fam + '-Mon' in dbase)
-                self.assertEqual(dbase['RefKL' + fam + '-Mon']['unit'], '1/m')
-                self.assertTrue('DeltaKL' + fam + '-Mon' in dbase)
-                self.assertEqual(dbase['DeltaKL' + fam + '-Mon']['unit'], '1/m')
+                self.assertTrue('RefKL'+fam+'-Mon' in dbase)
+                self.assertEqual(dbase['RefKL'+fam+'-Mon']['unit'], '1/m')
+                self.assertTrue('DeltaKL'+fam+'-Mon' in dbase)
+                self.assertEqual(dbase['DeltaKL'+fam+'-Mon']['unit'], '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in dbase)
                 self.assertTrue('CorrMeth-Sts' in dbase)

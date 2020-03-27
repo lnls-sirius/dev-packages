@@ -6,7 +6,7 @@ import numpy as _np
 import importlib as _importlib
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
-if _importlib.find_loader('matplotlib') is not None:
+if _importlib.util.find_spec('matplotlib') is not None:
     import matplotlib.pyplot as _plt
     import matplotlib.gridspec as _gridspec
     import matplotlib.cm as _cmap
