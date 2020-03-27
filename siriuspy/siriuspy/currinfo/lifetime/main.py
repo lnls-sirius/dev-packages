@@ -151,16 +151,16 @@ class App(_Callback):
                 value = _np.log(value)
             except Exception:
                 return 0.0
-        n = len(timestamp)
-        x = _np.sum(timestamp)
-        y = _np.sum(value)
-        x2 = _np.sum(_np.power(timestamp, 2))
-        xy = _np.sum(timestamp*value)
-        a = (x2*y - xy*x)/(n*x2 - x*x)
-        b = (n*xy - x*y)/(n*x2 - x*x)
+        _ns = len(timestamp)
+        _x1 = _np.sum(timestamp)
+        _y1 = _np.sum(value)
+        _x2 = _np.sum(_np.power(timestamp, 2))
+        _xy = _np.sum(timestamp*value)
+        fit_a = (_x2*_y1 - _xy*_x1)/(_ns*_x2 - _x1*_x1)
+        fit_b = (_ns*_xy - _x1*_y1)/(_ns*_x2 - _x1*_x1)
 
         if fit == 'exp':
-            lt = - 1/b
+            lifetime = - 1/fit_b
         else:
-            lt = - a/b
-        return lt
+            lifetime = - fit_a/fit_b
+        return lifetime
