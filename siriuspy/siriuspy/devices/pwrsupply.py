@@ -41,7 +41,7 @@ class _PSDev(_Device):
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
          self._is_linac, self._is_pulsed, self._is_magps) = \
-            self._get_device_type(devname)
+            _PSDev.get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -127,9 +127,8 @@ class _PSDev(_Device):
         self.pwrstate = self.PWRSTATE.Off
         self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
 
-    # --- private methods ---
-
-    def _get_device_type(self, devname):
+    @staticmethod
+    def get_device_type(devname):
         """."""
         pstype = _PSSearch.conv_psname_2_pstype(devname)
         psmodel = _PSSearch.conv_psname_2_psmodel(devname)
@@ -142,6 +141,8 @@ class _PSDev(_Device):
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
                 is_linac, is_pulsed, is_magps)
+
+    # --- private methods ---
 
     def _set_attributes_properties(self):
 

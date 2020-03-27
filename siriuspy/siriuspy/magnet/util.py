@@ -102,7 +102,7 @@ def sum_magnetic_multipoles(*multipoles_list):
 def get_default_ramp_waveform(interval=500, nrpts=4000,
                               ti=None, fi=None, forms=None):
     """Generate normalized ramp."""
-    t = interval * _numpy.linspace(0, 1.0, nrpts)
+    time = interval * _numpy.linspace(0, 1.0, nrpts)
     if ti is None:
         ti = interval * _numpy.array([0, 13, 310,
                                       322, 330, 342, 480, 500])/500.0
@@ -115,11 +115,11 @@ def get_default_ramp_waveform(interval=500, nrpts=4000,
     # brho_3gev = 10.00692271077752  # [T.m]
     # brho_150mev = 0.5003432394479871  # [T.m]
 
-    ramp = _numpy.zeros(len(t))
+    ramp = _numpy.zeros(len(time))
     va1 = _numpy.zeros(len(ti))
     dti = _numpy.zeros(len(forms))
 
-    # findout the initial derivatives and delta ts from the straigth lines
+    # findout the initial derivatives and delta time from the straigth lines
     for i, wfm in enumerate(forms):
         dti[i] = (ti[i+1]-ti[i])
         if wfm.startswith(('l', 'i')) or wfm == 0:
@@ -133,8 +133,8 @@ def get_default_ramp_waveform(interval=500, nrpts=4000,
 
     # calculate the ramp:
     for i, wfm in enumerate(forms):
-        ind = _numpy.bitwise_and(ti[i] <= t, t <= ti[i+1])
-        dtime = t[ind] - ti[i]
+        ind = _numpy.bitwise_and(ti[i] <= time, time <= ti[i+1])
+        dtime = time[ind] - ti[i]
         va2, va3 = 0, 0
         if wfm.startswith(('c', 'i')):
             va2 = (-3*(fi[i]-fi[i+1]) - dti[i] * (2*va1[i]+va1[i+1]))/dti[i]**2

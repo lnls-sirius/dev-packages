@@ -8,5 +8,5 @@ class PV(_epics.pv.PV):
     """PV class."""
 
     def set_auto_monitor(self, value):
-        """ method to set auto_monitor property."""
+        """Set auto_monitor property."""
         self.auto_monitor = value

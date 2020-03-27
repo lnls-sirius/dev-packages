@@ -31,8 +31,8 @@ class TestCmdSetpoint(TestCase):
     def setUp(self):
         """Common setup."""
         self.field = 'Fake-Cmd'
-        self.db = {'type': 'int', 'value': 0}
-        self.setpoint = Setpoint(self.field, self.db)
+        self.dbase = {'type': 'int', 'value': 0}
+        self.setpoint = Setpoint(self.field, self.dbase)
 
     def test_apply_returns_false(self):
         """Test apply setpoint with value 0 returns false."""
@@ -59,17 +59,17 @@ class TestPSetpoint(TestCase):
     def setUp(self):
         """Common setup."""
         self.field = 'Fake-SP'
-        self.db = {'type': 'float',
+        self.dbase = {'type': 'float',
                    'value': 0.0,
                    'lolo': -10.0,
                    'hihi': 10.0}
-        self.setpoint = Setpoint(self.field, self.db)
+        self.setpoint = Setpoint(self.field, self.dbase)
 
     def test_init(self):
         """Test constructor."""
         self.assertEqual(self.setpoint.value, 0.0)
         self.assertEqual(self.setpoint.field, self.field)
-        self.assertEqual(self.setpoint.database, self.db)
+        self.assertEqual(self.setpoint.database, self.dbase)
         self.assertFalse(self.setpoint.is_cmd)
         self.assertEqual(self.setpoint.type, 'float')
         self.assertIsNone(self.setpoint.count)
@@ -102,16 +102,16 @@ class TestSelSetpoint(TestCase):
     def setUp(self):
         """Common setup."""
         self.field = 'Fake-Sel'
-        self.db = {'type': 'enum',
+        self.dbase = {'type': 'enum',
                    'value': 0,
                    'enums': ('StateA', 'StateB', 'StateC')}
-        self.setpoint = Setpoint(self.field, self.db)
+        self.setpoint = Setpoint(self.field, self.dbase)
 
     def test_init(self):
         """Test constructor."""
         self.assertEqual(self.setpoint.value, 0)
         self.assertEqual(self.setpoint.field, self.field)
-        self.assertEqual(self.setpoint.database, self.db)
+        self.assertEqual(self.setpoint.database, self.dbase)
         self.assertFalse(self.setpoint.is_cmd)
         self.assertEqual(self.setpoint.type, 'enum')
         self.assertIsNone(self.setpoint.count)

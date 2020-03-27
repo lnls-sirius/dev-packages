@@ -22,6 +22,9 @@ DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
 
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
+# --- SOFBCurrent ---
+MAX_NRDEV_PER_BBB = 8
+
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 
@@ -672,6 +675,29 @@ def get_ps_propty_database(psmodel, pstype):
     return database
 
 
+def get_ps_sofbcurrent_propty_database():
+    """Return SOFBCurrent properties."""
+    dbase = {
+        'SOFBCurrent-SP': {
+            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+        'SOFBCurrent-RB': {
+            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+        'SOFBCurrentRef-Mon': {
+            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+        'SOFBCurrent-Mon': {
+            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
+            'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+        }
+    return dbase
+
+
 # --- Auxiliary functions ---
 
 
@@ -769,7 +795,7 @@ def _get_ps_LINAC_propty_database():
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_ps_basic_propty_database()
-    db_ps = {
+    dbase = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FBP),
                                  'value': _et.SOFT_INTLCK_FBP},
@@ -785,10 +811,13 @@ def _get_ps_FBP_propty_database():
         'SwitchesTemperature-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': 2,
                                     'unit': 'C'},
-        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
-                             'prec': DEFAULT_PS_CURRENT_PRECISION},
-    }
-    propty_db.update(db_ps)
+        'PWMDutyCycle-Mon': {
+            'type': 'float', 'value': 0.0, 'unit': 'p.u.',
+            'prec': DEFAULT_PS_CURRENT_PRECISION},
+        }
+    propty_db.update(dbase)
+    dbase = get_ps_sofbcurrent_propty_database()
+    propty_db.update(dbase)
     return propty_db
 
 

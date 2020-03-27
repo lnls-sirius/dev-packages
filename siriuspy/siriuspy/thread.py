@@ -56,8 +56,7 @@ class QueueThread(_Thread):
 class RepeaterThread(_Thread):
     """Repeat execution of predefined function for a given number of times."""
 
-    def __init__(self, interval, function, args=tuple(),
-                 kwargs=dict(), niter=0):
+    def __init__(self, interval, function, args=None, kwargs=None, niter=0):
         """Init method.
 
         Inputs:
@@ -68,6 +67,10 @@ class RepeaterThread(_Thread):
         - niter: number of times to execute method. If niter is zero or None
             it will be executed indefinetly until stop is called.
         """
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = dict()
         super().__init__(daemon=True)
         self.interval = interval
         if not hasattr(function, '__call__'):
@@ -85,34 +88,39 @@ class RepeaterThread(_Thread):
         """Run method."""
         self._unpaused.wait()
         self.function(*self.args, **self.kwargs)
-        dt = 0.0
-        while ((not self._stopped.wait(self.interval - dt)) and
+        dtime = 0.0
+        while ((not self._stopped.wait(self.interval - dtime)) and
                (not self.niters or self.niters > self.cur_iter)):
             self._unpaused.wait()
             if self._stopped.is_set():
                 break
             self.cur_iter += 1
-            t0 = _time.time()
+            _t0 = _time.time()
             self.function(*self.args, **self.kwargs)
-            dt = _time.time() - t0
+            dtime = _time.time() - _t0
 
     def reset(self):
         """Reset count."""
         self.cur_iter = 0
 
     def pause(self):
+        """."""
         self._unpaused.clear()
 
     def resume(self):
+        """."""
         self._unpaused.set()
 
     def unpause(self):
+        """."""
         self.resume()
 
     def is_paused(self):
+        """."""
         return not self._unpaused.is_set()
 
     def isPaused(self):
+        """."""
         return self.is_paused()
 
     def stop(self):
@@ -132,6 +140,7 @@ class DequeThread(_deque):
     def __init__(self):
         """Init."""
         super().__init__()
+        self._last_operation = None
         self._thread = None
         self._ignore = False
         self._enabled = True
@@ -205,14 +214,14 @@ class DequeThread(_deque):
                 # there is nothing in the queue
                 return False
             # process operation taken from queue
-            args = tuple()
-            kws = dict()
+            args, kws = tuple(), dict()
             if len(operation) == 1:
                 func = operation[0]
             elif len(operation) == 2:
                 func, args = operation
             elif len(operation) >= 3:
                 func, args, kws = operation[:3]
-            self._thread = _Thread(target=func, args=args, kwargs=kws, daemon=True)
+            self._thread = _Thread(
+                target=func, args=args, kwargs=kws, daemon=True)
             self._thread.start()
             return True
