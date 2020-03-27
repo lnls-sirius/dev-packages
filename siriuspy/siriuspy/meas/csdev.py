@@ -42,7 +42,7 @@ class Const(_csdev.Const):
     @classmethod
     def get_database(cls, prefix=''):
         """Return IOC database."""
-        db = {
+        dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
             'Image-SP': {
                 'type': 'int',
@@ -243,7 +243,7 @@ class Const(_csdev.Const):
                 'type': 'float', 'value': 0, 'prec': 3,
                 'unit': 'mm', 'lolim': -20, 'hilim': 20},
             }
-        for val in db.values():
+        for val in dbase.values():
             low = val.get('lolim', None)
             hig = val.get('hilim', None)
             if low is not None:
@@ -253,5 +253,5 @@ class Const(_csdev.Const):
                 val['hihi'] = hig
                 val['high'] = hig
         if prefix:
-            return {prefix + k: v for k, v in db.items()}
-        return db
+            return {prefix + k: v for k, v in dbase.items()}
+        return dbase

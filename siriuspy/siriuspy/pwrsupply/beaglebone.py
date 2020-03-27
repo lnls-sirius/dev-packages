@@ -178,7 +178,7 @@ class BeagleBone:
         return streconvs, strec, strelims
 
     def _update_strengths(self, psname):
-        # t0 = _time.time()
+        # time0 = _time.time()
         if 'DCLink' in psname:
             return
         streconv = self._streconv[psname]
@@ -205,8 +205,8 @@ class BeagleBone:
             # update strength limits
             strelims[0] = strengths[4]
             strelims[1] = strengths[5]
-        # t1 = _time.time()
-        # print('update_strengths: {:.3f}'.format(1000*(t1-t0)))
+        # time1 = _time.time()
+        # print('update_strengths: {:.3f}'.format(1000*(time1-time0)))
 
 
 class BBBFactory:

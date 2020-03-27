@@ -223,8 +223,8 @@ class BONormListFactory:
 
             # sort and verify times
             times = sorted(times)
-            if _np.any([t > self._duration for t in times]) or \
-                    _np.any([t < 0 for t in times]):
+            if _np.any([time > self._duration for time in times]) or \
+                    _np.any([time < 0 for time in times]):
                 raise Exception(
                     'Could not generate normalized configurations!')
             if not times:

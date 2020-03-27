@@ -135,8 +135,8 @@ def crates_mapping(timeout=_TIMEOUT):
     files = pat.findall(text)
     txt = ''
     for fi in files:
-        for t in read_url(url + fi, timeout=timeout).splitlines():
-            txt += '{0:20s}'.format(fi[6:13]) + t + '\n'
+        for time in read_url(url + fi, timeout=timeout).splitlines():
+            txt += '{0:20s}'.format(fi[6:13]) + time + '\n'
         txt += '\n\n'
     return txt
 

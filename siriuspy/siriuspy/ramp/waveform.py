@@ -314,18 +314,18 @@ class WaveformParam:
         self._c[idx] = [coeff_a, coeff_b, coeff_c, coeff_d]
 
         # define regions
-        ts = self._rampup2_start_time
-        # t1 = ts - (ts - self._rampup1_start_time)/4
-        # t2 = ts + (self._rampdown_start_time - ts)/4
-        t1 = ts - self._rampup_smooth_intvl/2
-        t2 = ts + self._rampup_smooth_intvl/2
-        self._region12_t = [t1, ts, t2]
-        ts = self._rampdown_start_time
-        # t1 = ts - (ts - self._rampup2_start_time)/4
-        # t2 = ts + (self._rampdown_stop_time - ts)/4
-        t1 = ts - self._rampdown_smooth_intvl/2
-        t2 = ts + self._rampdown_smooth_intvl/2
-        self._region23_t = [t1, ts, t2]
+        stime = self._rampup2_start_time
+        # time1 = stime - (stime - self._rampup1_start_time)/4
+        # time2 = stime + (self._rampdown_start_time - stime)/4
+        time1 = stime - self._rampup_smooth_intvl/2
+        time2 = stime + self._rampup_smooth_intvl/2
+        self._region12_t = [time1, stime, time2]
+        stime = self._rampdown_start_time
+        # time1 = stime - (stime - self._rampup2_start_time)/4
+        # time2 = stime + (self._rampdown_stop_time - stime)/4
+        time1 = stime - self._rampdown_smooth_intvl/2
+        time2 = stime + self._rampdown_smooth_intvl/2
+        self._region23_t = [time1, stime, time2]
 
     def _func_region_12(self, time, delta=None):
         """Evaluate function in regions 1 and 2."""
@@ -342,20 +342,20 @@ class WaveformParam:
     def _func_region(self, time, delta, region_t, region_idx1, region_idx2):
         """Evaluate function in regions (1 and 2) or (2 and 3)."""
         v = _np.zeros(time.shape)
-        t1, ts, t2 = region_t
-        sel = (time <= t1)
+        time1, stime, time2 = region_t
+        sel = (time <= time1)
         v[sel] = self._func_polynom(region_idx1, time[sel])
-        sel = (time >= t2)
+        sel = (time >= time2)
         v[sel] = self._func_polynom(region_idx2, time[sel])
-        sel = (t1 < time) & (time < t2)
+        sel = (time1 < time) & (time < time2)
         if _np.any(sel):
             poly1 = self._func_polynom(region_idx1, time[sel])
             poly2 = self._func_polynom(region_idx2, time[sel])
             vm = (poly1 + poly2) / 2
             vd = poly1 - poly2
-            T1, T2 = ts - t1, t2 - ts
-            T = T1 + (T2 - T1)*(time[sel] - t1)/(t2 - t1)
-            f3 = (time[sel] - ts)/T
+            dt1, dt2 = stime - time1, time2 - stime
+            T = dt1 + (dt2 - dt1)*(time[sel] - time1)/(time2 - time1)
+            f3 = (time[sel] - stime)/T
             f4 = (1 + _np.cos(_np.pi*f3)) / 2
             vp = vm + 0.5 * _np.sqrt(vd**2 + (2*delta)**2*(f4**2)**0.5)
             vn = vm - 0.5 * _np.sqrt(vd**2 + (2*delta)**2*(f4**2)**0.5)
