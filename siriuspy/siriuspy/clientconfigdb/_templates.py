@@ -18,14 +18,14 @@ _INT_TYPES = {int}
 _FLOAT_TYPES = {float}
 
 
-for _k, tp in _np.typeDict.items():
-    if isinstance(_k, str) and _k.startswith('int'):
-        _INT_TYPES.add(tp)
+for key, typ in _np.typeDict.items():
+    if isinstance(key, str) and key.startswith('int'):
+        _INT_TYPES.add(typ)
 
 
-for _k, tp in _np.typeDict.items():
-    if isinstance(_k, str) and _k.startswith('float'):
-        _FLOAT_TYPES.add(tp)
+for key, typ in _np.typeDict.items():
+    if isinstance(key, str) and key.startswith('float'):
+        _FLOAT_TYPES.add(typ)
 
 
 def get_config_types():

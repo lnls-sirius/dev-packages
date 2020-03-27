@@ -92,20 +92,20 @@ def waveform_plot(nrpts, slope=False, selected_values=[]):
         wfm = _np.insert(wfm, 0, 0.0)
         wfm = 1000*wfm  # [ms -> s]
     minv, maxv = min(wfm), max(wfm)
-    t1 = w1.rampup1_start_time
+    time1 = w1.rampup1_start_time
     dt1 = w1.rampup_range/2
     dt2 = w1.rampdown_range/2
-    t2 = w1.rampup2_start_time
-    t3 = w1.rampdown_start_time
-    t4 = w1.rampdown_stop_time
-    plt.plot([t1, t1], [minv, maxv], '-.', color='orange')
-    plt.plot([t2-dt1, t2-dt1], [minv, maxv], '-.', color='orchid')
-    plt.plot([t2, t2], [minv, maxv], '-.', color='orange')
-    plt.plot([t2+dt1, t2+dt1], [minv, maxv], '-.', color='orchid')
-    plt.plot([t3-dt2, t3-dt2], [minv, maxv], '-.', color='orchid')
-    plt.plot([t3, t3], [minv, maxv], '-.', color='orange')
-    plt.plot([t3+dt2, t3+dt2], [minv, maxv], '-.', color='orchid')
-    plt.plot([t4, t4], [minv, maxv], '-.', color='orange')
+    time2 = w1.rampup2_start_time
+    time3 = w1.rampdown_start_time
+    time4 = w1.rampdown_stop_time
+    plt.plot([time1, time1], [minv, maxv], '-.', color='orange')
+    plt.plot([time2-dt1, time2-dt1], [minv, maxv], '-.', color='orchid')
+    plt.plot([time2, time2], [minv, maxv], '-.', color='orange')
+    plt.plot([time2+dt1, time2+dt1], [minv, maxv], '-.', color='orchid')
+    plt.plot([time3-dt2, time3-dt2], [minv, maxv], '-.', color='orchid')
+    plt.plot([time3, time3], [minv, maxv], '-.', color='orange')
+    plt.plot([time3+dt2, time3+dt2], [minv, maxv], '-.', color='orchid')
+    plt.plot([time4, time4], [minv, maxv], '-.', color='orange')
     for e in selected_values:
         plt.plot([min(time), max(time)], [e, e], '--', color='red')
     plt.plot(time, wfm, '-b')

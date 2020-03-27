@@ -49,9 +49,9 @@ class TestUtil(TestCase):
 
     def test_get_timestamp(self):
         """Test get_timestamp."""
-        ts = util.get_timestamp()
-        self.assertEqual(len(ts), 23)
-        date, minute, second = ts.split(':')
+        stime = util.get_timestamp()
+        self.assertEqual(len(stime), 23)
+        date, minute, second = stime.split(':')
         year, month, day, hour = date.split('-')
         second, msecond = second.split('.')
         self.assertTrue(year.isnumeric())

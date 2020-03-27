@@ -251,27 +251,28 @@ class CalcEmmitance(_BaseClass):
     @staticmethod
     def gettransmat(elem, L, K1=None, B=None):
         """."""
-        M = _np.eye(2)
+        matrix = _np.eye(2)
         if elem.lower().startswith('qu') and K1 is not None and K1 == 0:
             elem = 'drift'
         if elem.lower().startswith('dr'):
-            M = _np.array([[1, L], [0, 1], ])
+            matrix = _np.array([[1, L], [0, 1], ])
         elif elem.lower().startswith('qu') and K1 is not None:
-            kq = _np.sqrt(abs(K1))
+            vkq = _np.sqrt(abs(K1))
             if K1 > 0:
-                c = _np.cos(kq*L)
-                s = _np.sin(kq*L)
-                m11, m12, m21 = c, 1/kq*s, -kq*s
+                cos = _np.cos(vkq*L)
+                sin = _np.sin(vkq*L)
+                m11, m12, m21 = cos, 1/vkq*sin, -vkq*sin
             else:
-                ch = _np.cosh(kq*L)
-                sh = _np.sinh(kq*L)
-                m11, m12, m21 = ch, 1/kq*sh, kq*sh
-            M = _np.array([[m11, m12], [m21, m11], ])
-        return M
+                hcos = _np.cosh(vkq*L)
+                hsin = _np.sinh(vkq*L)
+                m11, m12, m21 = hcos, 1/vkq*hsin, vkq*hsin
+            matrix = _np.array([[m11, m12], [m21, m11], ])
+        return matrix
 
 
 class MeasEmmitance(_BaseClass):
     """."""
+
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')

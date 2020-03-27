@@ -88,8 +88,8 @@ class RepeaterThread(_Thread):
         """Run method."""
         self._unpaused.wait()
         self.function(*self.args, **self.kwargs)
-        _dt = 0.0
-        while ((not self._stopped.wait(self.interval - _dt)) and
+        dtime = 0.0
+        while ((not self._stopped.wait(self.interval - dtime)) and
                (not self.niters or self.niters > self.cur_iter)):
             self._unpaused.wait()
             if self._stopped.is_set():
@@ -97,7 +97,7 @@ class RepeaterThread(_Thread):
             self.cur_iter += 1
             _t0 = _time.time()
             self.function(*self.args, **self.kwargs)
-            _dt = _time.time() - _t0
+            dtime = _time.time() - _t0
 
     def reset(self):
         """Reset count."""
