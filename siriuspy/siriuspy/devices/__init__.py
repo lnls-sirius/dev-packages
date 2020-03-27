@@ -18,5 +18,5 @@ from .syncd import DevicesSync
 from .energy import Energy
 
 del device, bpm, dcct, egun, ict, llrf,
-del pwrsupply, psconv, sofbcorrs, rf,
+del pwrsupply, psconv, pssofb, rf,
 del screen, tune, sofb, timing, syncd, energy
