@@ -2,6 +2,7 @@
 
 import time as _time
 
+from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..epics import PV as _PV
 from ..epics import pv_fake as _pv_fake
@@ -99,16 +100,16 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
+            pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
             if self.SIMULATED:
+                PVClass = _pv_fake.PVFake
                 self._add_fake_pvs_to_database()
-                pvs[propty] = _pv_fake.PVFake(
-                    pvname, auto_monitor=auto_monitor,
-                    connection_timeout=Device.CONNECTION_TIMEOUT)
             else:
-                pvs[propty] = _PV(
-                    pvname, auto_monitor=auto_monitor,
-                    connection_timeout=Device.CONNECTION_TIMEOUT)
+                PVClass = _PV
+            pvs[propty] = PVClass(
+                pvname, auto_monitor=auto_monitor,
+                connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
     def _wait(self, propty, value, timeout=10):
@@ -232,8 +233,6 @@ class Devices:
         attributes = dict()
         for dev in self._devices:
             attrs = dev.pv_attribute_values(attribute)
-            print(dev)
-            print(attrs)
             attributes.update(attrs)
         return attributes
 
