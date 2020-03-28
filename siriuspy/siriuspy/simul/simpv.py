@@ -49,6 +49,10 @@ class PVSim(_PVFake):
         _ = self._simul.callback_set(self.pvname, value, **kwargs)
         return super().put(value, **kwargs)
 
+    def sim_get(self):
+        """Get PVSim value without invoking simulator callback."""
+        super().get()
+
     def sim_put(self, value):
-        """Set PVSim value withouf invoking simulator callback."""
+        """Set PVSim value without invoking simulator callback."""
         super().put(value)
