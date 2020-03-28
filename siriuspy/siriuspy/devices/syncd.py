@@ -6,7 +6,9 @@ from .device import DeviceApp as _DeviceApp
 class DevicesSync(_DeviceApp):
     """Synchronized devices."""
 
-    def __init__(self, devnames, propty_sync, propty_async=None, devname=None):
+    def __init__(
+            self, devnames, propty_sync, propty_async=None,
+            devname=None, simul=None):
         """."""
         self._devnames = devnames
         self._props_sync = list(propty_sync)
@@ -16,7 +18,7 @@ class DevicesSync(_DeviceApp):
         properties, self._prop2prop = self._get_properties()
 
         # call base class constructor
-        super().__init__(properties, devname)
+        super().__init__(properties, devname, simul=simul)
 
     @property
     def devnames(self):

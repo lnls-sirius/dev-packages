@@ -29,7 +29,7 @@ class _PSDev(_Device):
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
 
-    def __init__(self, devname):
+    def __init__(self, devname, simul=None):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -50,7 +50,7 @@ class _PSDev(_Device):
          properties) = self._set_attributes_properties()
 
         # call base class constructor
-        super().__init__(devname, properties=properties)
+        super().__init__(devname, properties=properties, simul=simul)
 
     @property
     def pstype(self):
@@ -243,14 +243,14 @@ class PowerSupplyPU(_PSDev):
 
     _properties_timing = ('Delay-SP', 'Delay-RB')
 
-    def __init__(self, devname):
+    def __init__(self, devname, simul=None):
         """."""
         # check if device exists
         if devname not in PowerSupplyPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname)
+        super().__init__(devname, simul=simul)
 
         # create timing device
         self._dev_timing = self._create_timing_device()
