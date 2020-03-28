@@ -597,7 +597,7 @@ class LinacPSCycler:
 
     def cycle_duration(self, mode):
         """Return the duration of the cycling in seconds."""
-        _ = mode  # throwaway inherited argument
+        _ = mode  # throwaway arguments
         if self._cycle_duration is None:
             self._get_duration_and_waveform()
         return self._cycle_duration
@@ -622,7 +622,7 @@ class LinacPSCycler:
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        _ = mode  # throwaway inherited argument
+        _ = mode  # throwaway arguments
         status = True
         if not self.check_current_zero(wait=0.5):
             status &= self.set_current_zero()
@@ -630,7 +630,7 @@ class LinacPSCycler:
 
     def is_prepared(self, mode):
         """Return wether power supply is ready."""
-        _ = mode  # throwaway inherited argument
+        _ = mode  # throwaway arguments
         status = self.check_current_zero()
         return status
 
@@ -643,7 +643,7 @@ class LinacPSCycler:
 
     def check_final_state(self, mode):
         """."""
-        _ = mode  # throwaway inherited argument
+        _ = mode  # throwaway arguments
         status = True
         status &= self.check_on()
         status &= self.check_intlks()
