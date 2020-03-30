@@ -25,7 +25,8 @@ public_interface = (
     'mode',
     'check_public_interface_namespace',
     'get_namedtuple',
-)
+    'ClassProperty',
+    )
 
 
 class TestUtil(TestCase):
