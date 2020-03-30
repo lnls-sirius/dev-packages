@@ -58,11 +58,11 @@ class SimPV(_PVFake):
         return super().get()
 
     @value.setter
-    def value(self, _value):
+    def value(self, value):
         """."""
-        status = self._simul.callback_set(self.pvname, _value)
+        status = self._simul.callback_set(self.pvname, value)
         if status:
-            super().put(_value)
+            super().put(value)
 
     def get(self, **kwargs):
         """."""
