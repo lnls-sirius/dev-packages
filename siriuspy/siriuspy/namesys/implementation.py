@@ -223,6 +223,9 @@ class SiriusPVName(str):
         dic_['prefix'] = self.prefix
         dic_['channel_type'] = self.channel_type
         dic_.update({k: v for k, v in kwargs.items() if isinstance(v, str)})
+        if 'propty' in kwargs:
+            dic_.pop('propty_name', None)
+            dic_.pop('propty_suffix', None)
         return join_name(**dic_)
 
     def get_nickname(self, sec=False, dev=False):
@@ -254,6 +257,14 @@ class SiriusPVName(str):
     def __ge__(self, other):
         """Greater-or-equal operator."""
         return self.__gt__(other) or self.__eq__(other)
+
+    def strip(self, *args, **kwargs):
+        """."""
+        return SiriusPVName(super().strip(*args, **kwargs))
+
+    def replace(self, *args, **kwargs):
+        """."""
+        return SiriusPVName(super().replace(*args, **kwargs))
 
     def _subsec_comp(self, other):
         """Subsection comparison."""
