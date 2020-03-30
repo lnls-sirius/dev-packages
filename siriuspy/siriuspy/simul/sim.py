@@ -1,11 +1,12 @@
 """Base Simulator."""
 
 import re as _re
+from abc import ABC, abstractmethod
 
-from .simpv import PVSim as _PVSim
+from .simpv import SimPV as _PVSim
 
 
-class Sim:
+class Sim(ABC):
     """Simulator.
 
     Independent and markovian PVs simulator,
@@ -23,6 +24,29 @@ class Sim:
         self._pvs = dict()
         self._dbase_regexp = list()
 
+    # --- abstract classes that subclasses MUST implement ---
+
+    @abstractmethod
+    def callback_get(self, pvname, **kwargs):
+        """Execute callback function prior to SimPV readout."""
+
+    @abstractmethod
+    def callback_set(self, pvname, value, **kwargs):
+        """Execute callback function prior to SimPV setpoint.
+
+        Return True if setpoint is acceptable, False otherwise.
+        """
+
+    @abstractmethod
+    def callback_add_pv(self, sim_pvobj):
+        """Execute callback method after a new SimPV is added to simulator."""
+
+    @abstractmethod
+    def callback_update(self, **kwargs):
+        """Execute callback to update/synchronize simulator."""
+
+    # --- general methods ---
+
     @property
     def pvnames(self):
         """Return name of SimPVs."""
@@ -36,32 +60,39 @@ class Sim:
             vals[pvname] = pvobj.value
         return vals
 
-    def pv_get(self, pvname):
-        """Return PVSim object."""
+    def pv_obj_get(self, pvname):
+        """Return SimPV object."""
         return self._pvs[pvname]
 
-    def pv_insert(self, sim_pvobj):
-        """Add PVSim to simulator."""
-        # check if pvobj is of type PVSim
+    def pv_obj_add(self, sim_pvobj):
+        """Add SimPV to simulator."""
+        # check if pvobj is of type SimPV
         if not isinstance(sim_pvobj, _PVSim):
             raise TypeError
 
-        # Add PVSim to internal dictionary.
+        # Add SimPV to internal dictionary.
         self._pvs[sim_pvobj.pvname] = sim_pvobj
 
+        # invoke callback
+        self.callback_add_pv(sim_pvobj)
+
+    def pv_value_get(self, pvname):
+        """Get SimPV value without invoking simulator callback."""
+        return self._pvs[pvname].sim_get()
+
     def pv_value_put(self, pvname, value):
-        """Set PVSim value without invoking simulator callback."""
+        """Set SimPV value without invoking simulator callback."""
         self._pvs[pvname].sim_put(value)
 
     def pv_database_get(self, pvname):
-        """Return epics database for a PVSim."""
+        """Return epics database for a SimPV."""
         for regexp, dbase in self._dbase_regexp:
             if regexp.match(pvname):
                 return dbase
         if self._dbase_default:
             return self._dbase_default
 
-        raise ValueError('No database defined for PVSim "{}" !'.format(pvname))
+        raise ValueError('No database defined for SimPV "{}" !'.format(pvname))
 
     def pv_database_regexp_add(self, pvname_regexp, dbase):
         """Add filter to be user to apply database to pvnames."""
@@ -72,22 +103,6 @@ class Sim:
         """Return filters to be user to apply database to pvnames."""
         return self._dbase_regexp
 
-    def callback_get(self, pvname, **kwargs):
-        """Execute callback function prior to PVSim readout."""
-        _, _ = pvname, kwargs  # throwaway away arguments
-        return True
-
-    def callback_set(self, pvname, value, **kwargs):
-        """Execute callback function prior to PVSim setpoint.
-
-        Return True if setpoint is acceptable, False otherwise.
-        """
-        _, _, _ = pvname, value, kwargs  # throwaway away arguments
-        return True
-
-    def callback_update(self, **kwargs):
-        """Execute callback update simulator."""
-
     def __contains__(self, pvname):
-        """Return True if PVSim is in simulator."""
+        """Return True if SimPV is in simulator."""
         return pvname in self._pvs
