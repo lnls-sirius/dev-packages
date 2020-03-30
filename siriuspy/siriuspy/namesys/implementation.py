@@ -31,51 +31,50 @@ def join_name(**kwargs):
     """Return SiriusPVName object.
 
     Parameters
-    ----------
+        channel_type [str] : PyDM channel type, ex: 'ca'
+        prefix [str] : Prefix, ex: 'fac-454lnls'
+        sec [str] : Section, ex: 'SI'
+        sub [str] : Subsection, ex: 'Glob'
+        dis [str] : Discipline, ex: 'PS'
+        dev [str] : Device, ex: 'B'
+        idx [str] : Device index, ex: '1'
+        propty_name [str] : Property name, ex: 'Properties'
+        propty_suffix [str] : Property suffix, ex: 'Cte'
+        propty [str] : Full property, ex: 'Properties-Cte'
+        field [str] : Field, ex: 'STATUS'
 
-    channel_type [str] : PyDM channel type, ex: 'ca'
-    prefix [str] : Prefix, ex: 'fac-454lnls'
-    sec [str] : Section, ex: 'SI'
-    sub [str] : Subsection, ex: 'Glob'
-    dis [str] : Discipline, ex: 'PS'
-    dev [str] : Device, ex: 'B'
-    idx [str] : Device index, ex: '1'
-    propty_name [str] : Property name, ex: 'Properties'
-    propty_suffix [str] : Property suffix, ex: 'Cte'
-    propty [str] : Full property, ex: 'Properties-Cte'
-    field [str] : Field, ex: 'STATUS'
     """
-    e = {k: v for k, v in kwargs.items() if v}  # get valid args
+    dic = {k: v for k, v in kwargs.items() if v}  # get valid args
     name = ''
-    if len(e.keys()) == 1:
-        if 'propty' in e.keys():
-            name = e['propty']
-        elif 'propty_name' in e.keys():
-            name = e['propty_name']
-    elif len(e.keys()) == 2:
-        if 'sec' in e.keys() and 'sub' in e.keys():
-            name = e['sec'].upper() + '-' + e['sub']
-        elif 'dis' in e.keys() and 'dev' in e.keys():
-            name = e['dis'].upper() + '-' + e['dev']
-        elif 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
-            name = e['propty_name'].upper() + '-' + e['propty_suffix']
-    elif len(e.keys()) == 3:
-        if 'dis' in e.keys() and 'dev' in e.keys() and 'idx' in e.keys():
-            name = e['dis'].upper() + '-' + e['dev'] + '-' + e['idx']
-    elif len(e.keys()) > 3:
-        name = e['channel_type'] + '://' if 'channel_type' in e.keys() else ''
-        name = e['prefix'] + '-' if 'prefix' in e.keys() else ''
-        name += (e['sec'].upper() + '-' + e['sub'] + ':' +
-                 e['dis'].upper() + '-' + e['dev'])
-        name += ('-' + e['idx']) if 'idx' in e.keys() else ''
-        if 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
-            name += ':' + e['propty_name'] + '-' + e['propty_suffix']
-            name += ('.' + e['field']) if 'field' in e.keys() else ''
-        elif 'propty' in e.keys():
-            name += ':' + e['propty']
-            name += ('.' + e['field']) if 'field' in e.keys() else ''
-        elif 'propty_name' in e.keys():
-            name += ':' + e['propty_name']
+    if len(dic.keys()) == 1:
+        if 'propty' in dic.keys():
+            name = dic['propty']
+        elif 'propty_name' in dic.keys():
+            name = dic['propty_name']
+    elif len(dic.keys()) == 2:
+        if 'sec' in dic.keys() and 'sub' in dic.keys():
+            name = dic['sec'].upper() + '-' + dic['sub']
+        elif 'dis' in dic.keys() and 'dev' in dic.keys():
+            name = dic['dis'].upper() + '-' + dic['dev']
+        elif 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
+            name = dic['propty_name'].upper() + '-' + dic['propty_suffix']
+    elif len(dic.keys()) == 3:
+        if 'dis' in dic.keys() and 'dev' in dic.keys() and 'idx' in dic.keys():
+            name = dic['dis'].upper() + '-' + dic['dev'] + '-' + dic['idx']
+    elif len(dic.keys()) > 3:
+        name = dic['channel_type'] + '://' if 'channel_type' in dic.keys() else ''
+        name = dic['prefix'] + '-' if 'prefix' in dic.keys() else ''
+        name += (dic['sec'].upper() + '-' + dic['sub'] + ':' +
+                 dic['dis'].upper() + '-' + dic['dev'])
+        name += ('-' + dic['idx']) if 'idx' in dic.keys() else ''
+        if 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
+            name += ':' + dic['propty_name'] + '-' + dic['propty_suffix']
+            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
+        elif 'propty' in dic.keys():
+            name += ':' + dic['propty']
+            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
+        elif 'propty_name' in dic.keys():
+            name += ':' + dic['propty_name']
 
     if not name:
         raise TypeError('Not a valid SiriusPVName elements set!')
@@ -86,16 +85,18 @@ def split_name(pvname, elements=None):
     """Return dict with PV name split into fields.
 
     Parameters
-    ----------
-    pvname [str] : a complete pvname or a valid part of it.
-    elements [None, 'propty', 'sec-sub', 'dis-dev'] : if pvname is not a
-        complete name, 'elements' says which part of pvname it corresponds to.
+        pvname [str] : a complete pvname or a valid part of it.
+        elements [None, 'propty', 'sec-sub', 'dis-dev'] : if pvname is not a
+            complete name, 'elements' says which part of pvname
+            it corresponds to.
+
     """
     if not elements:
         elements = 'propty'
 
     # empty dictionary
     dic_ = {attr: '' for attr in _ATTRS}
+
     # strip PV name
     pvname = pvname.strip()
     if not pvname:
@@ -327,6 +328,8 @@ class SiriusPVName(str):
 class Filter:
     """Filter class."""
 
+    # NOTE: Are these class constants really useful?
+
     # PVName regex filters
     patterns = _types.SimpleNamespace()
     patterns.FAM = 'Fam'
@@ -366,23 +369,26 @@ class Filter:
     filters.FAST_CH = {'dev': patterns.FAST_CH}
     filters.FAST_CV = {'dev': patterns.FAST_CV}
 
+    @staticmethod
     def add_filter(filters=None, sec=None, sub=None,
                    dis=None, dev=None):
+        """."""
         if filters is None:
             filters = []
-        f = {}
+        fil = {}
         if sec is not None:
-            f['sec'] = sec
+            fil['sec'] = sec
         if sub is not None:
-            f['sub'] = sub
+            fil['sub'] = sub
         if dis is not None:
-            f['dis'] = dis
+            fil['dis'] = dis
         if dev is not None:
-            f['dev'] = dev
-        if f:
-            filters.append(f)
+            fil['dev'] = dev
+        if fil:
+            filters.append(fil)
         return filters
 
+    @staticmethod
     def process_filters(pvnames, filters=None, sorting=None):
         """Return a sorted and filtered list of given pv name lists.
 
@@ -398,19 +404,19 @@ class Filter:
 
         # build filter regexp
         fs = []
-        for f in filters:
-            if 'sec' not in f or f['sec'] is None:
-                f['sec'] = '[A-Z]{2,4}'
-            if 'sub' not in f or f['sub'] is None:
-                f['sub'] = '\w{2,16}'
-            if 'dis' not in f or f['dis'] is None:
-                f['dis'] = '[A-Z]{2,6}'
-            if 'dev' not in f or f['dev'] is None:
-                f['dev'] = '.+'
-            pattern = (f['sec'] + '-' + f['sub'] + ':' +
-                       f['dis'] + '-' + f['dev'])
-            if 'idx' in f:
-                pattern += '-' + f['idx']
+        for fil in filters:
+            if 'sec' not in fil or fil['sec'] is None:
+                fil['sec'] = '[A-Z]{2,4}'
+            if 'sub' not in fil or fil['sub'] is None:
+                fil['sub'] = '\w{2,16}'
+            if 'dis' not in fil or fil['dis'] is None:
+                fil['dis'] = '[A-Z]{2,6}'
+            if 'dev' not in fil or fil['dev'] is None:
+                fil['dev'] = '.+'
+            pattern = (fil['sec'] + '-' + fil['sub'] + ':' +
+                       fil['dis'] + '-' + fil['dev'])
+            if 'idx' in fil:
+                pattern += '-' + fil['idx']
             regexp = _re.compile(pattern)
             fs.append(regexp)
 
