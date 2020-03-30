@@ -42,17 +42,24 @@ class App(_Callback):
         self._chrom_sp = [0, 0]
         self._chrom_rb = [0, 0]
 
-        self._status = _ALLSET
-        self._sfam_check_connection = len(self._SFAMS)*[0]
-        self._sfam_check_pwrstate_sts = len(self._SFAMS)*[0]
-        self._sfam_check_opmode_sts = len(self._SFAMS)*[-1]
-        self._sfam_check_ctrlmode_mon = len(self._SFAMS)*[1]
-
         self._apply_corr_cmd_count = 0
         self._config_ps_cmd_count = 0
-        self._lastcalc_sl = len(self._SFAMS)*[0]
 
-        self._sfam_sl_rb = len(self._SFAMS)*[0]
+        self._status = _ALLSET
+
+        self._sfam_check_connection = dict()
+        self._sfam_check_pwrstate_sts = dict()
+        self._sfam_check_opmode_sts = dict()
+        self._sfam_check_ctrlmode_mon = dict()
+        self._lastcalc_sl = dict()
+        self._sfam_sl_rb = dict()
+        for fam in self._SFAMS:
+            self._sfam_check_connection[fam] = 0
+            self._sfam_check_pwrstate_sts[fam] = 0
+            self._sfam_check_opmode_sts[fam] = -1
+            self._sfam_check_ctrlmode_mon[fam] = 1
+            self._lastcalc_sl[fam] = 0
+            self._sfam_sl_rb[fam] = 0
 
         if self._ACC == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
@@ -98,13 +105,13 @@ class App(_Callback):
                 "Could not read correction parameters from configdb.")
 
         # Connect to Sextupoles Families
-        self._sfam_sl_sp_pvs = {}
-        self._sfam_sl_rb_pvs = {}
-        self._sfam_pwrstate_sel_pvs = {}
-        self._sfam_pwrstate_sts_pvs = {}
-        self._sfam_opmode_sel_pvs = {}
-        self._sfam_opmode_sts_pvs = {}
-        self._sfam_ctrlmode_mon_pvs = {}
+        self._sfam_sl_sp_pvs = dict()
+        self._sfam_sl_rb_pvs = dict()
+        self._sfam_pwrstate_sel_pvs = dict()
+        self._sfam_pwrstate_sts_pvs = dict()
+        self._sfam_opmode_sel_pvs = dict()
+        self._sfam_opmode_sts_pvs = dict()
+        self._sfam_ctrlmode_mon_pvs = dict()
 
         for fam in self._SFAMS:
             pss = _SiriusPVName(_vaca_prefix+self._ACC+'-Fam:PS-'+fam)
@@ -317,14 +324,13 @@ class App(_Callback):
                 val = 1
                 if (self._status & 0x1) == 0:
                     for fam in self._SFAMS:
-                        fam_idx = self._SFAMS.index(fam)
-                        self._sfam_check_opmode_sts[fam_idx] = \
+                        self._sfam_check_opmode_sts[fam] = \
                             self._sfam_opmode_sts_pvs[fam].value
 
                     opmode = _PSConst.OpMode.SlowRefSync if value \
                         else _PSConst.OpMode.SlowRef
                     val = any(op != opmode
-                              for op in self._sfam_check_opmode_sts)
+                              for op in self._sfam_check_opmode_sts.values())
 
                 self._status = _util.update_bit(
                     v=self._status, bit_pos=2, bit_val=val)
@@ -380,8 +386,8 @@ class App(_Callback):
             sl_now = self._sfam_sl_rb_pvs[fam].get()
             if sl_now is None:
                 return
-            self._lastcalc_sl[fam_idx] = sl_now + lastcalc_deltasl[fam_idx]
-            self.run_callbacks('SL'+fam+'-Mon', self._lastcalc_sl[fam_idx])
+            self._lastcalc_sl[fam] = sl_now + lastcalc_deltasl[fam_idx]
+            self.run_callbacks('SL'+fam+'-Mon', self._lastcalc_sl[fam])
 
         self.run_callbacks('Log-Mon', 'Calculated SL values.')
 
@@ -391,8 +397,7 @@ class App(_Callback):
                 self._status == _ALLCLR_SYNCON):
             pvs = self._sfam_sl_sp_pvs
             for fam, pv in pvs.items():
-                fam_idx = self._SFAMS.index(fam)
-                pv.put(self._lastcalc_sl[fam_idx])
+                pv.put(self._lastcalc_sl[fam])
             self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
@@ -407,27 +412,26 @@ class App(_Callback):
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
-        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_connection[fam_idx] = (1 if conn else 0)
+        fam = _SiriusPVName(pvname).dev
+        self._sfam_check_connection[fam] = (1 if conn else 0)
 
         # Change the first bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=0,
-            bit_val=any(s == 0 for s in self._sfam_check_connection))
+            bit_val=any(s == 0 for s in self._sfam_check_connection.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_estimate_chrom(self, pvname, value, **kws):
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-        fam_idx = self._SFAMS.index(fam)
-        self._sfam_sl_rb[fam_idx] = value
+        self._sfam_sl_rb[fam] = value
 
         sfam_deltasl = len(self._SFAMS)*[0]
         for fam in self._SFAMS:
             fam_idx = self._SFAMS.index(fam)
             sfam_deltasl[fam_idx] = \
-                self._sfam_sl_rb[fam_idx] - self._sfam_nomsl[fam_idx]
+                self._sfam_sl_rb[fam] - self._sfam_nomsl[fam]
 
         self._chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
         self.run_callbacks('ChromX-RB', self._chrom_rb[0])
@@ -437,42 +441,43 @@ class App(_Callback):
         if value != _PSConst.PwrStateSts.On:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is Off.')
 
-        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_pwrstate_sts[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._sfam_check_pwrstate_sts[fam] = value
 
         # Change the second bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=1,
             bit_val=any(s != _PSConst.PwrStateSts.On
-                        for s in self._sfam_check_pwrstate_sts))
+                        for s in self._sfam_check_pwrstate_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_sfam_opmode_sts(self, pvname, value, **kws):
         self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
 
-        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_opmode_sts[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._sfam_check_opmode_sts[fam] = value
 
         # Change the third bit of correction status
         opmode = _PSConst.States.SlowRefSync if self._sync_corr \
             else _PSConst.States.SlowRef
         self._status = _util.update_bit(
             v=self._status, bit_pos=2,
-            bit_val=any(s != opmode for s in self._sfam_check_opmode_sts))
+            bit_val=any(s != opmode for s in
+                        self._sfam_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
-        fam_idx = self._SFAMS.index(_SiriusPVName(pvname).dev)
-        self._sfam_check_ctrlmode_mon[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._sfam_check_ctrlmode_mon[fam] = value
 
         # Change the fourth bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=3,
             bit_val=any(s != _PSConst.Interface.Remote
-                        for s in self._sfam_check_ctrlmode_mon))
+                        for s in self._sfam_check_ctrlmode_mon.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_timing_state(self, pvname, value, **kws):

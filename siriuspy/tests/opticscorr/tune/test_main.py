@@ -137,8 +137,8 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         self.assertFalse(self.app.write('SetNewRefKL-Cmd', 0))
         self.assertEqual(self.app._delta_tunex, 0)
         self.assertEqual(self.app._delta_tuney, 0)
-        for i in range(len(self.qfams)):
-            self.assertEqual(self.app._lastcalc_deltakl[i], 0)
+        for fam in self.qfams:
+            self.assertEqual(self.app._lastcalc_deltakl[fam], 0)
 
     def _test_write_connerror_SetNewRefKL(self):
         """Test write on SetNewRefKL-Cmd on connection error."""
