@@ -112,6 +112,8 @@ class TestSiriusPVName(TestCase):
         'is_rb_pv',
         'from_sp2rb',
         'from_rb2sp',
+        'strip',
+        'replace',
     )
 
     def test_public_interface(self):
