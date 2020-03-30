@@ -258,9 +258,13 @@ class SiriusPVName(str):
         """Greater-or-equal operator."""
         return self.__gt__(other) or self.__eq__(other)
 
-    def strip(self, chars=None):
+    def strip(self, *args, **kwargs):
         """."""
-        return SiriusPVName(super().strip(chars))
+        return SiriusPVName(super().strip(*args, **kwargs))
+
+    def replace(self, *args, **kwargs):
+        """."""
+        return SiriusPVName(super().replace(*args, **kwargs))
 
     def _subsec_comp(self, other):
         """Subsection comparison."""
