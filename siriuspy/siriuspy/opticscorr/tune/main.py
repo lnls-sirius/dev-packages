@@ -18,9 +18,7 @@ from ...timesys.csdev import Const as _TIConst, \
 from ...optics.opticscorr import OpticsCorr as _OpticsCorr
 from ..csdev import Const as _Const, \
     get_tune_database as _get_database
-from ..utils import \
-    get_config_name as _get_config_name, \
-    set_config_name as _set_config_name
+from ..utils import HandleConfigNameFile as _HandleConfigNameFile
 
 # Constants
 _ALLSET = 0x1f
@@ -82,6 +80,7 @@ class App(_Callback):
         qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
+        self.cn_handler = _HandleConfigNameFile(self._ACC, 'tune')
         self.cdb_client = _ConfigDBClient(
             config_type=self._ACC.lower()+'_tunecorr_params')
         [done, corrparams] = self._get_corrparams()
@@ -268,9 +267,7 @@ class App(_Callback):
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                _set_config_name(
-                    acc=self._ACC.lower(), opticsparam='tune',
-                    config_name=value)
+                self.cn_handler.set_config_name(value)
                 self._config_name = corrparams[0]
                 self.run_callbacks('ConfigName-RB', self._config_name)
                 self._nominal_matrix = corrparams[1]
@@ -359,8 +356,7 @@ class App(_Callback):
         """Get response matrix from configurations database."""
         try:
             if not config_name:
-                config_name = _get_config_name(
-                    acc=self._ACC.lower(), opticsparam='tune')
+                config_name = self.cn_handler.get_config_name()
             params = self.cdb_client.get_config_value(name=config_name)
         except _ConfigDBException:
             return [False, []]

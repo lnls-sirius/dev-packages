@@ -14,8 +14,7 @@ from ..pwrsupply.csdev import Const as _PSC
 
 from .csdev import Const as _PAConst, \
     get_posang_database as _get_database
-from .utils import get_config_name as _get_config_name, \
-    set_config_name as _set_config_name
+from .utils import HandleConfigNameFile as _HandleConfigNameFile
 
 
 # Constants
@@ -51,6 +50,7 @@ class App(_Callback):
         self._setnewrefkick_cmd_count = 0
         self._config_ps_cmd_count = 0
 
+        self.cn_handler = _HandleConfigNameFile(self._TL, self._CORRSTYPE)
         self.cdb_client = _ConfigDBClient(
             config_type=self._TL.lower()+'_posang_respm')
         [done, corrparams] = self._get_corrparams()
@@ -191,7 +191,7 @@ class App(_Callback):
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                _set_config_name(self._TL.lower(), value)
+                self.cn_handler.set_config_name(value)
                 self._config_name = corrparams[0]
                 self.run_callbacks('ConfigName-RB', self._config_name)
                 self._respmat_x = corrparams[1]
@@ -214,8 +214,7 @@ class App(_Callback):
         """Get response matrix from configurations database."""
         try:
             if not config_name:
-                config_name = _get_config_name(
-                    self._TL.lower(), self._CORRSTYPE)
+                config_name = self.cn_handler.get_config_name()
             mats = self.cdb_client.get_config_value(config_name)
         except _ConfigDBException:
             return [False, []]

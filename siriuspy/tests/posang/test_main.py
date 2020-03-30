@@ -30,15 +30,16 @@ class TestASAPPosAngMain(unittest.TestCase):
             "siriuspy.posang.main._ConfigDBClient", autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.mock_cs = cs_patcher.start()
-        self.mock_cs().get_config_value.return_value = self.q_ok
-        ps_patcher = mock.patch("siriuspy.posang.main._PV", autospec=True)
-        self.addCleanup(ps_patcher.stop)
-        self.mock_pv = ps_patcher.start()
-        gcn_patcher = mock.patch(
-            "siriuspy.posang.utils.get_config_name", autospec=True)
-        self.addCleanup(gcn_patcher.stop)
-        self.mock_gcn = gcn_patcher.start()
-        self.mock_gcn('tb', 'ch-sept').return_value = 'Default_CHSept'
+        self.mock_cs.return_value.get_config_value.return_value = self.q_ok
+        pv_patcher = mock.patch("siriuspy.posang.main._PV", autospec=True)
+        self.addCleanup(pv_patcher.stop)
+        self.mock_pv = pv_patcher.start()
+        cnh_patcher = mock.patch(
+            "siriuspy.posang.main._HandleConfigNameFile", autospec=True)
+        self.addCleanup(cnh_patcher.stop)
+        self.mock_cnh = cnh_patcher.start()
+        self.mock_cnh.return_value.get_config_name.return_value = \
+            'Default_CHSept'
         self.app = App('TB', 'ch-sept')
 
     def test_public_interface(self):
