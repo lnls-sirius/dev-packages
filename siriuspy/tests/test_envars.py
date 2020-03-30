@@ -29,8 +29,7 @@ SRVURLS = (
     'SRVURL_CONFIGDB',
     'SRVURL_CONFIGDB_2',
     'SRVURL_ARCHIVER')
-PUBLIC_INTERFACE = DIRS + SRVURLS + \
-                  ('VACA_PREFIX', )
+PUB_INTERFACE = DIRS + SRVURLS + ('VACA_PREFIX', )
 
 
 class TestEnvars(TestCase):
@@ -38,7 +37,7 @@ class TestEnvars(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(envars, PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(envars, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_dirs(self):

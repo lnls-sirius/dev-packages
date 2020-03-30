@@ -13,7 +13,7 @@ from siriuspy.ramp.waveform import WaveformDipole
 from siriuspy.ramp.waveform import Waveform
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
     'WaveformParam',
     'WaveformDipole',
     'Waveform',
@@ -25,16 +25,14 @@ class TestModule(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-                waveform,
-                PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(waveform, PUB_INTERFACE)
         self.assertTrue(valid)
 
 
 class TestWaveformParam(TestCase):
     """Test WaveformParam class."""
 
-    PUBLIC_INTERFACE = (
+    PUB_INTERFACE = (
         'N',
         'duration',
         'start_value',
@@ -59,8 +57,7 @@ class TestWaveformParam(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            WaveformParam,
-            TestWaveformParam.PUBLIC_INTERFACE)
+            WaveformParam, TestWaveformParam.PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_rampup1_start_time(self):
@@ -173,7 +170,7 @@ class TestWaveformParam(TestCase):
 class TestWaveformDipole(TestCase):
     """Test WaveformDipole class."""
 
-    PUBLIC_INTERFACE = (
+    PUB_INTERFACE = (
         'waveform',
         'start_energy',
         'rampup1_start_energy',
@@ -194,8 +191,7 @@ class TestWaveformDipole(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            WaveformDipole,
-            TestWaveformDipole.PUBLIC_INTERFACE)
+            WaveformDipole, TestWaveformDipole.PUB_INTERFACE)
         self.assertTrue(valid)
 
     def _test_constructor(self):
@@ -222,7 +218,7 @@ class TestWaveformDipole(TestCase):
 class TestWaveform(TestCase):
     """Test Waveform class."""
 
-    PUBLIC_INTERFACE = (
+    PUB_INTERFACE = (
         'duration',
         'update',
     )
@@ -230,21 +226,19 @@ class TestWaveform(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                Waveform,
-                TestWaveform.PUBLIC_INTERFACE)
+            Waveform, TestWaveform.PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_duration(self):
         """Test duration."""
         # TODO: implement it!
 
-
     def _test_update(self):
         """Test update."""
         # TODO: implement using mock to substitute server
         bo_b = WaveformDipole()
-        defoc = Waveform(maname='BO-Fam:MA-QD', dipole=bo_b)
+        defoc = Waveform(psname='BO-Fam:MA-QD', dipole=bo_b)
         curr1 = defoc.currents
-        bo_b.rampup_start_energy *= 1.01
+        bo_b.rampup1_start_energy *= 1.01
         curr2 = defoc.currents
         self.assertTrue((curr1 != curr2).any())

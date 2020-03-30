@@ -10,7 +10,7 @@ from siriuspy.opticscorr.csdev import \
     get_tune_database
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
         'ETypes',
         'Const',
         'get_chrom_database',
@@ -23,8 +23,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-            csdev, PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(csdev, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_chrom_database(self):

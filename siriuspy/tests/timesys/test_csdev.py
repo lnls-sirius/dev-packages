@@ -8,7 +8,7 @@ from siriuspy import util
 from siriuspy.timesys import csdev
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
     'get_otp_database',
     'get_out_database',
     'get_afc_out_database',
@@ -30,8 +30,7 @@ class TestModule(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-            csdev, PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(csdev, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_otp_database(self):
@@ -170,7 +169,7 @@ class TestModule(TestCase):
 class TestConst(TestCase):
     """Test Const class."""
 
-    PUBLIC_INTERFACE = (
+    PUB_INTERFACE = (
         'AC_FREQUENCY',
         'RF_DIVISION',
         'RF_FREQUENCY',
@@ -199,5 +198,5 @@ class TestConst(TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                        csdev.Const, TestConst.PUBLIC_INTERFACE)
+            csdev.Const, TestConst.PUB_INTERFACE)
         self.assertTrue(valid)
