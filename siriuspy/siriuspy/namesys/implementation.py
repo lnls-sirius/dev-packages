@@ -223,6 +223,9 @@ class SiriusPVName(str):
         dic_['prefix'] = self.prefix
         dic_['channel_type'] = self.channel_type
         dic_.update({k: v for k, v in kwargs.items() if isinstance(v, str)})
+        if 'propty' in kwargs:
+            dic_.pop('propty_name', None)
+            dic_.pop('propty_suffix', None)
         return join_name(**dic_)
 
     def get_nickname(self, sec=False, dev=False):
