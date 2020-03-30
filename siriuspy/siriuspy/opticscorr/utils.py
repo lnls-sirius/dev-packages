@@ -1,4 +1,5 @@
 """Optics correction utilities module."""
+import os as _os
 
 
 class HandleConfigNameFile:
@@ -19,25 +20,21 @@ class HandleConfigNameFile:
 
     def get_config_name(self):
         """Get the configuration name in file."""
-        try:
-            fil = open(self.fname, 'r')
-            config_name = fil.read().strip('\n')
-            fil.close()
-        except Exception:
-            fil = open(self.fname, 'w+')
+        if _os.path.isfile(self.fname):
+            with open(self.fname, 'r') as fil:
+                config_name = fil.read().strip('\n')
+        else:
             config_name = get_default_config_name(self.acc, self.opticsparam)
-            fil.write(config_name)
-            fil.close()
+            with open(self.fname, 'w+') as fil:
+                fil.write(config_name)
         return config_name
 
     def set_config_name(self, config_name):
         """Set the configuration name in file."""
         if not isinstance(config_name, str):
             raise TypeError("'config_name' must be a string.")
-
-        fil = open(self.fname, 'w+')
-        fil.write(config_name)
-        fil.close()
+        with open(self.fname, 'w+') as fil:
+            fil.write(config_name)
 
 
 def get_default_config_name(acc, opticsparam):
