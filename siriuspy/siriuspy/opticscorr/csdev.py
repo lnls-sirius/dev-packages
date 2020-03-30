@@ -1,5 +1,4 @@
 """Define PVs, constants and properties of OpticsCorr SoftIOCs."""
-
 from .. import csdev as _csdev
 
 
@@ -9,6 +8,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     PROP_ADD = ('Proportional', 'Additional')
+    INDIV_2KNOBS = ('Individual', 'TwoKnobs')
 
 
 _et = ETypes  # syntactic sugar
@@ -20,6 +20,7 @@ class Const(_csdev.Const):
     """Const class defining OpticsCorr constants and Enum types."""
 
     CorrMeth = _csdev.Const.register('CorrMeth', _et.PROP_ADD)
+    CorrGroup = _csdev.Const.register('CorrGroup', _et.INDIV_2KNOBS)
     SyncCorr = _csdev.Const.register('SyncCorr', _et.OFF_ON)
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
@@ -92,6 +93,12 @@ def get_chrom_database(acc):
         pvs_database['CorrMeth-Sts'] = {'type': 'enum',
                                         'enums': _et.PROP_ADD,
                                         'value': _c.CorrMeth.Proportional}
+        pvs_database['CorrGroup-Sel'] = {'type': 'enum',
+                                         'enums': _et.INDIV_2KNOBS,
+                                         'value': _c.CorrGroup.TwoKnobs}
+        pvs_database['CorrGroup-Sts'] = {'type': 'enum',
+                                         'enums': _et.INDIV_2KNOBS,
+                                         'value': _c.CorrGroup.TwoKnobs}
         # pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
         #                                 'value': _c.SyncCorr.Off}
         # pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
@@ -163,6 +170,12 @@ def get_tune_database(acc):
         pvs_database['CorrMeth-Sts'] = {'type': 'enum',
                                         'enums': _et.PROP_ADD,
                                         'value': _c.CorrMeth.Proportional}
+        pvs_database['CorrGroup-Sel'] = {'type': 'enum',
+                                         'enums': _et.INDIV_2KNOBS,
+                                         'value': _c.CorrGroup.TwoKnobs}
+        pvs_database['CorrGroup-Sts'] = {'type': 'enum',
+                                         'enums': _et.INDIV_2KNOBS,
+                                         'value': _c.CorrGroup.TwoKnobs}
         pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
                                         'value': _c.SyncCorr.Off}
         pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
