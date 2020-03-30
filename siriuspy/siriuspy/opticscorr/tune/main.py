@@ -18,9 +18,7 @@ from ...timesys.csdev import Const as _TIConst, \
 from ...optics.opticscorr import OpticsCorr as _OpticsCorr
 from ..csdev import Const as _Const, \
     get_tune_database as _get_database
-from ..utils import \
-    get_config_name as _get_config_name, \
-    set_config_name as _set_config_name
+from ..utils import HandleConfigNameFile as _HandleConfigNameFile
 
 # Constants
 _ALLSET = 0x1f
@@ -47,17 +45,24 @@ class App(_Callback):
         self._delta_tuney = 0.0
 
         self._status = _ALLSET
-        self._qfam_check_connection = len(self._QFAMS)*[0]
-        self._qfam_check_pwrstate_sts = len(self._QFAMS)*[0]
-        self._qfam_check_opmode_sts = len(self._QFAMS)*[-1]
-        self._qfam_check_ctrlmode_mon = len(self._QFAMS)*[1]
 
         self._set_new_refkl_cmd_count = 0
         self._apply_corr_cmd_count = 0
         self._config_ps_cmd_count = 0
-        self._lastcalc_deltakl = len(self._QFAMS)*[0]
 
-        self._qfam_kl_rb = len(self._QFAMS)*[0]
+        self._qfam_check_connection = dict()
+        self._qfam_check_pwrstate_sts = dict()
+        self._qfam_check_opmode_sts = dict()
+        self._qfam_check_ctrlmode_mon = dict()
+        self._lastcalc_deltakl = dict()
+        self._qfam_kl_rb = dict()
+        for fam in self._QFAMS:
+            self._qfam_check_connection[fam] = 0
+            self._qfam_check_pwrstate_sts[fam] = 0
+            self._qfam_check_opmode_sts[fam] = -1
+            self._qfam_check_ctrlmode_mon[fam] = 1
+            self._lastcalc_deltakl[fam] = 0
+            self._qfam_kl_rb[fam] = 0
 
         if self._ACC == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
@@ -82,6 +87,7 @@ class App(_Callback):
         qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
+        self.cn_handler = _HandleConfigNameFile(self._ACC, 'tune')
         self.cdb_client = _ConfigDBClient(
             config_type=self._ACC.lower()+'_tunecorr_params')
         [done, corrparams] = self._get_corrparams()
@@ -101,14 +107,14 @@ class App(_Callback):
                 "Could not read correction parameters from configdb.")
 
         # Connect to Quadrupoles Families
-        self._qfam_kl_sp_pvs = {}
-        self._qfam_kl_rb_pvs = {}
-        self._qfam_pwrstate_sel_pvs = {}
-        self._qfam_pwrstate_sts_pvs = {}
-        self._qfam_opmode_sel_pvs = {}
-        self._qfam_opmode_sts_pvs = {}
-        self._qfam_ctrlmode_mon_pvs = {}
-        self._qfam_refkl = {}
+        self._qfam_kl_sp_pvs = dict()
+        self._qfam_kl_rb_pvs = dict()
+        self._qfam_pwrstate_sel_pvs = dict()
+        self._qfam_pwrstate_sts_pvs = dict()
+        self._qfam_opmode_sel_pvs = dict()
+        self._qfam_opmode_sts_pvs = dict()
+        self._qfam_ctrlmode_mon_pvs = dict()
+        self._qfam_refkl = dict()
 
         for fam in self._QFAMS:
             pss = _SiriusPVName(_vaca_prefix+self._ACC+'-Fam:PS-'+fam)
@@ -149,8 +155,12 @@ class App(_Callback):
         # Connect to Timing
         if self._ACC == 'SI':
             QUADS_TRIG = 'SI-Glob:TI-Mags-Quads'
-            trig_db = _get_trig_db(QUADS_TRIG)
-            self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index('TunSI')
+            try:
+                trig_db = _get_trig_db(QUADS_TRIG)
+                self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index(
+                    'TunSI')
+            except Exception:
+                self._tunsi_src_idx = 1
 
             self._timing_quads_state_sel = _PV(
                 _vaca_prefix+QUADS_TRIG+':State-Sel',
@@ -268,9 +278,7 @@ class App(_Callback):
         elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                _set_config_name(
-                    acc=self._ACC.lower(), opticsparam='tune',
-                    config_name=value)
+                self.cn_handler.set_config_name(value)
                 self._config_name = corrparams[0]
                 self.run_callbacks('ConfigName-RB', self._config_name)
                 self._nominal_matrix = corrparams[1]
@@ -317,14 +325,13 @@ class App(_Callback):
                 val = 1
                 if (self._status & 0x1) == 0:
                     for fam in self._QFAMS:
-                        fam_idx = self._QFAMS.index(fam)
-                        self._qfam_check_opmode_sts[fam_idx] = \
+                        self._qfam_check_opmode_sts[fam] = \
                             self._qfam_opmode_sts_pvs[fam].value
 
                     opmode = _PSConst.OpMode.SlowRefSync if value \
                         else _PSConst.OpMode.SlowRef
-                    val = any(
-                        op != opmode for op in self._qfam_check_opmode_sts)
+                    val = any(op != opmode for op in
+                              self._qfam_check_opmode_sts.values())
 
                 self._status = _util.update_bit(
                     v=self._status, bit_pos=2, bit_val=val)
@@ -359,8 +366,7 @@ class App(_Callback):
         """Get response matrix from configurations database."""
         try:
             if not config_name:
-                config_name = _get_config_name(
-                    acc=self._ACC.lower(), opticsparam='tune')
+                config_name = self.cn_handler.get_config_name()
             params = self.cdb_client.get_config_value(name=config_name)
         except _ConfigDBException:
             return [False, []]
@@ -382,19 +388,18 @@ class App(_Callback):
 
         self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
-        self._lastcalc_deltakl = lastcalc_deltakl
         for fam in self._QFAMS:
             fam_idx = self._QFAMS.index(fam)
+            self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
             self.run_callbacks(
-                'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam_idx])
+                'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam])
 
     def _apply_corr(self):
         if ((self._status == _ALLCLR_SYNCOFF and
                 self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
             for fam, pv in self._qfam_kl_sp_pvs.items():
-                fam_idx = self._QFAMS.index(fam)
-                pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam_idx])
+                pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam])
             self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
@@ -416,8 +421,7 @@ class App(_Callback):
                 self.run_callbacks(
                     'RefKL' + fam + '-Mon', self._qfam_refkl[fam])
 
-                fam_idx = self._QFAMS.index(fam)
-                self._lastcalc_deltakl[fam_idx] = 0
+                self._lastcalc_deltakl[fam] = 0
                 self.run_callbacks('DeltaKL' + fam + '-Mon', 0)
 
             # the deltas from new kl references are zero
@@ -439,7 +443,7 @@ class App(_Callback):
         for fam in self._QFAMS:
             fam_idx = self._QFAMS.index(fam)
             qfam_deltakl[fam_idx] = \
-                self._qfam_kl_rb[fam_idx] - self._qfam_refkl[fam]
+                self._qfam_kl_rb[fam] - self._qfam_refkl[fam]
         return self._opticscorr.calculate_opticsparam(qfam_deltakl)
 
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
@@ -458,22 +462,21 @@ class App(_Callback):
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
-        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_connection[fam_idx] = (1 if conn else 0)
+        fam = _SiriusPVName(pvname).dev
+        self._qfam_check_connection[fam] = (1 if conn else 0)
 
         # Change the first bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=0,
-            bit_val=any(q == 0 for q in self._qfam_check_connection))
+            bit_val=any(q == 0 for q in self._qfam_check_connection.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_estimate_deltatune(self, pvname, value, **kws):
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-        fam_idx = self._QFAMS.index(fam)
 
-        self._qfam_kl_rb[fam_idx] = value
+        self._qfam_kl_rb[fam] = value
         delta_tunex, delta_tuney = self._estimate_current_deltatune()
         self.run_callbacks('DeltaTuneX-RB', delta_tunex)
         self.run_callbacks('DeltaTuneY-RB', delta_tuney)
@@ -482,42 +485,43 @@ class App(_Callback):
         if value != _PSConst.PwrStateSts.On:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not On.')
 
-        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_pwrstate_sts[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._qfam_check_pwrstate_sts[fam] = value
 
         # Change the second bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=1,
             bit_val=any(q != _PSConst.PwrStateSts.On
-                        for q in self._qfam_check_pwrstate_sts))
+                        for q in self._qfam_check_pwrstate_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_qfam_opmode_sts(self, pvname, value, **kws):
         self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
 
-        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_opmode_sts[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._qfam_check_opmode_sts[fam] = value
 
         # Change the third bit of correction status
         opmode = _PSConst.States.SlowRefSync if self._sync_corr \
             else _PSConst.States.SlowRef
         self._status = _util.update_bit(
             v=self._status, bit_pos=2,
-            bit_val=any(s != opmode for s in self._qfam_check_opmode_sts))
+            bit_val=any(s != opmode for s in
+                        self._qfam_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
-        fam_idx = self._QFAMS.index(_SiriusPVName(pvname).dev)
-        self._qfam_check_ctrlmode_mon[fam_idx] = value
+        fam = _SiriusPVName(pvname).dev
+        self._qfam_check_ctrlmode_mon[fam] = value
 
         # Change the fourth bit of correction status
         self._status = _util.update_bit(
             v=self._status, bit_pos=3,
             bit_val=any(q != _PSConst.Interface.Remote
-                        for q in self._qfam_check_ctrlmode_mon))
+                        for q in self._qfam_check_ctrlmode_mon.values()))
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_timing_state(self, pvname, value, **kws):
