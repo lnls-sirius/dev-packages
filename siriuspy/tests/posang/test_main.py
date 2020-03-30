@@ -19,7 +19,7 @@ valid_interface = (
 class TestASAPPosAngMain(unittest.TestCase):
     """Test AS-AP-PosAng Soft IOC."""
 
-    def _setUp(self):
+    def setUp(self):
         """Initialize Soft IOC."""
         self.q_ok = {
             'respm-x': [[4.3444644271865913, 0.28861438350278495],
@@ -48,7 +48,7 @@ class TestASAPPosAngMain(unittest.TestCase):
             App, valid_interface, print_flag=True)
         self.assertTrue(valid)
 
-    def _test_write_statuserror_DeltaPosAng(self):
+    def test_write_statuserror_DeltaPosAng(self):
         """Test write DeltaPosY-SP & DeltaAngY-SP on status error."""
         self.app._status = 0x1
         self.app.write('DeltaPosX-SP', 0.01)
@@ -57,7 +57,7 @@ class TestASAPPosAngMain(unittest.TestCase):
         self.app.write('DeltaAngY-SP', 0.01)
         self.mock_pv.return_value.put.assert_not_called()
 
-    def _test_write_ok_SetNewRefKick(self):
+    def test_write_ok_SetNewRefKick(self):
         """Test write SetNewRefKick-Cmd in normal operation."""
         self.app._status = 0
         self.app.write('SetNewRefKick-Cmd', 0)
@@ -66,31 +66,20 @@ class TestASAPPosAngMain(unittest.TestCase):
         self.assertEqual(self.app._orby_deltapos, 0)
         self.assertEqual(self.app._orby_deltaang, 0)
 
-    def _test_write_ok_ConfigPS(self):
+    def test_write_ok_ConfigPS(self):
         """Test write ConfigPS-Cmd in normal operation."""
         self.mock_pv.return_value.connected = True
         self.app.write('ConfigPS-Cmd', 0)
         count = self.mock_pv.return_value.put.call_count
         self.assertTrue(count, 2*2)
 
-    def _test_write_connerror_Cmds(self):
+    def test_write_connerror_Cmds(self):
         """Test write SetNewRefKick-Cmd/ConfigPS-Cmd on connection error."""
         self.mock_pv.return_value.connected = False
         self.app.write('SetNewRefKick-Cmd', 0)
         self.app.write('ConfigPS-Cmd', 0)
         self.mock_pv.return_value.get.assert_not_called()
         self.mock_pv.return_value.put.assert_not_called()
-
-    def _test_write_ok_ConfigName(self):
-        """Test write ConfigName-SP in normal operation."""
-        self.app._status = 0
-        self.app.write('ConfigName-SP', 'Default')
-        flat_mx = [item for sublist in self.q_ok['respm-x']
-                   for item in sublist]
-        flat_my = [item for sublist in self.q_ok['respm-y']
-                   for item in sublist]
-        self.assertEqual(self.app._respmat_x, flat_mx)
-        self.assertEqual(self.app._respmat_y, flat_my)
 
 
 if __name__ == "__main__":

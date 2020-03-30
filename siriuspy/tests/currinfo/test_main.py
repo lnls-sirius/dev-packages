@@ -3,11 +3,10 @@
 """Module to test AS-AP-CurrInfo Current Soft IOC main module."""
 
 import unittest
-from unittest.mock import MagicMock
+from unittest import mock
 import siriuspy.util as util
 from siriuspy.currinfo.csdev import Const
 from siriuspy.currinfo.main import SIApp
-from siriuspy.clientarch import ClientArchiver
 
 
 valid_interface = (
@@ -22,10 +21,13 @@ valid_interface = (
 class TestASAPCurrInfoCurrentMain(unittest.TestCase):
     """Test AS-AP-CurrInfo Soft IOC."""
 
-    def _setUp(self):
+    def setUp(self):
         """Set Up tests."""
-        self.class2mock = ClientArchiver()
-        self.class2mock.getData = MagicMock(return_value=None)
+        ca_patcher = mock.patch(
+            "siriuspy.currinfo.main._ClientArch", autospec=True)
+        self.addCleanup(ca_patcher.stop)
+        self.mock_ca = ca_patcher.start()
+        self.mock_ca.return_value.getData.return_value = None
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -33,13 +35,13 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
             SIApp, valid_interface, print_flag=True)
         self.assertTrue(valid)
 
-    def _test_write_DCCTFltCheck(self):
+    def test_write_DCCTFltCheck(self):
         """Test write DCCTFltCheck-Sel."""
         app = SIApp()
         app.write('DCCTFltCheck-Sel', Const.DCCTFltCheck.On)
         self.assertEqual(app._dcctfltcheck_mode, Const.DCCTFltCheck.On)
 
-    def _test_write_DCCT_FltCheckOn(self):
+    def test_write_DCCT_FltCheckOn(self):
         """Test write DCCT-Sel."""
         app = SIApp()
         app._dcctfltcheck_mode = Const.DCCTFltCheck.On
@@ -50,7 +52,7 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
         end_status = app._dcct_mode
         self.assertEqual(init_status, end_status)
 
-    def _test_write_DCCT_FltCheckOff(self):
+    def test_write_DCCT_FltCheckOff(self):
         """Test write DCCT-Sel."""
         app = SIApp()
         app.write('DCCTFltCheck-Sel', Const.DCCTFltCheck.Off)

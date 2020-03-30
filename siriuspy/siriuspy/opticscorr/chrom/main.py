@@ -168,8 +168,8 @@ class App(_Callback):
             self._timing_sexts_src_sts = _PV(
                 _vaca_prefix+SEXTS_TRIG+':Src-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
-            trig_db = _get_trig_db(SEXTS_TRIG)
             try:
+                trig_db = _get_trig_db(SEXTS_TRIG)
                 self._chromsi_src_idx = trig_db['Src-Sel']['enums'].index(
                     'ChromSI')
             except Exception:

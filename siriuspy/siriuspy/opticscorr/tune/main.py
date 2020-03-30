@@ -155,8 +155,12 @@ class App(_Callback):
         # Connect to Timing
         if self._ACC == 'SI':
             QUADS_TRIG = 'SI-Glob:TI-Mags-Quads'
-            trig_db = _get_trig_db(QUADS_TRIG)
-            self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index('TunSI')
+            try:
+                trig_db = _get_trig_db(QUADS_TRIG)
+                self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index(
+                    'TunSI')
+            except Exception:
+                self._tunsi_src_idx = 1
 
             self._timing_quads_state_sel = _PV(
                 _vaca_prefix+QUADS_TRIG+':State-Sel',
