@@ -25,6 +25,8 @@ class SimPV(_PVFake):
     def __init__(
             self, pvname, simul, **kwargs):
         """."""
+        pvname = _SiriusPVName(pvname)
+
         # if object already exists, no initialization needed.
         if pvname in SimPV.PVS:
             return

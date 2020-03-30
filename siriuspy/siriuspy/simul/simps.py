@@ -145,7 +145,7 @@ class SimPowerSupply(_Sim):
 
     def _update_sp(self, pvname, value):
         # -RB
-        pvn = pvname.replace('-SP', '-RB')
+        pvn = pvname.substitute(suffix='-RB')
         if pvn in self:
             self.pv_value_put(pvn, value)
 
@@ -154,12 +154,12 @@ class SimPowerSupply(_Sim):
             return True
 
         # Ref-Mon
-        pvn = pvname.replace('-SP', 'Ref-Mon')
+        pvn = pvname.substitute(suffix='Ref-Mon')
         if pvn in self:
             self.pv_value_put(pvn, value)
 
         # -Mon
-        pvn = pvname.replace('-SP', '-Mon')
+        pvn = pvname.substitute(suffix='-Mon')
         if pvn in self:
             if isinstance(value, _np.ndarray):
                 rnd = _np.random.uniform(
