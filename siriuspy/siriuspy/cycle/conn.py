@@ -595,9 +595,8 @@ class LinacPSCycler:
             self._get_duration_and_waveform()
         return self._waveform
 
-    def cycle_duration(self, mode):
+    def cycle_duration(self, _):
         """Return the duration of the cycling in seconds."""
-        _ = mode  # throwaway arguments
         if self._cycle_duration is None:
             self._get_duration_and_waveform()
         return self._cycle_duration
@@ -620,17 +619,15 @@ class LinacPSCycler:
         """Return wether power supply PS current is zero."""
         return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.1, wait=wait)
 
-    def prepare(self, mode):
+    def prepare(self, _):
         """Config power supply to cycling mode."""
-        _ = mode  # throwaway arguments
         status = True
         if not self.check_current_zero(wait=0.5):
             status &= self.set_current_zero()
         return status
 
-    def is_prepared(self, mode):
+    def is_prepared(self, _):
         """Return wether power supply is ready."""
-        _ = mode  # throwaway arguments
         status = self.check_current_zero()
         return status
 
@@ -641,9 +638,8 @@ class LinacPSCycler:
             _time.sleep(self._times[i+1] - self._times[i])
         self['Current-SP'].value = self._waveform[-1]
 
-    def check_final_state(self, mode):
+    def check_final_state(self, _):
         """."""
-        _ = mode  # throwaway arguments
         status = True
         status &= self.check_on()
         status &= self.check_intlks()
