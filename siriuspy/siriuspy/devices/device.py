@@ -6,6 +6,7 @@ from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..epics import PV as _PV
 from ..simul import SimPV as _PVSim
+from ..simul import Simulation as _Simulation
 from ..namesys import SiriusPVName as _SiriusPVName
 
 
@@ -15,9 +16,8 @@ class Device:
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     _properties = ()
 
-    def __init__(self, devname, properties, simul=None):
+    def __init__(self, devname, properties):
         """."""
-        self._simul = simul
         self._properties = properties[:]
         self._devname, self._pvs = self._create_pvs(devname)
 
@@ -32,9 +32,12 @@ class Device:
         return self._properties
 
     @property
-    def simulator(self):
+    def simulators(self):
         """Return simulator."""
-        return self._simul
+        simuls = set()
+        for pvname in self.pvnames:
+            simuls.update(_Simulation.simulator_find(pvname))
+        return simuls
 
     @property
     def pvnames(self):
@@ -108,16 +111,11 @@ class Device:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
-            if self._simul:
-                pvs[propty] = _PVSim(
-                    pvname, simul=self._simul,
-                    auto_monitor=auto_monitor,
-                    connection_timeout=Device.CONNECTION_TIMEOUT)
-                # self._add_fake_pvs_to_database()
-            else:
-                pvs[propty] = _PV(
-                    pvname, auto_monitor=auto_monitor,
-                    connection_timeout=Device.CONNECTION_TIMEOUT)
+            simul = _Simulation.simulator_find(pvname, unique=True)
+            pvclass = _PVSim if simul else _PV
+            pvs[propty] = pvclass(
+                pvname, auto_monitor=auto_monitor,
+                connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
     def _wait(self, propty, value, timeout=10):
@@ -164,12 +162,12 @@ class DeviceApp(Device):
     This kind of device groups properties of other devices.
     """
 
-    def __init__(self, properties, devname=None, simul=None):
+    def __init__(self, properties, devname=None):
         """."""
         self._devname_app = devname
 
         # call base class constructor
-        super().__init__(None, properties=properties, simul=simul)
+        super().__init__(None, properties=properties)
 
     @property
     def devname(self):

@@ -6,14 +6,14 @@ from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import get_ps_propty_database as _get_database
 from ..pwrsupply.csdev import Const as _Const
 
-from .sim import Sim as _Sim
+from .simulator import Simulator as _Simulator
 
 
 # NOTE: This is a toymodel PowerSupply simulator, just to test the
 # Simulator infrastructure. Other PVs such as PwrState-* and
 # OpMode-* should be added!
 
-class SimPowerSupply(_Sim):
+class SimPSTypeModel(_Simulator):
     """Power supply current simulator."""
 
     _absolute_fluctuation = 0.001  # [A]
@@ -32,13 +32,15 @@ class SimPowerSupply(_Sim):
         'SOFBCurrentRef-Mon', 'SOFBCurrent-Mon',
         )
 
+    _absolute_fluctuation = 0.010  # [A]
+
     def __init__(self, pstype, psmodel):
         """Initialize simulator.
 
         Static methd can be used to pass arguments.
         Ex.:
-            typemodel = SimPowerSupply.conv_psname2typemodel('BO-Fam:PS-QF')
-            simps = SimPowerSupply(*typemodel)
+            typemodel = SimPSTypeModel.conv_psname2typemodel('BO-Fam:PS-QF')
+            simps = SimPSTypeModel(*typemodel)
         """
         self._pstype = pstype
         self._psmodel = psmodel
@@ -46,17 +48,8 @@ class SimPowerSupply(_Sim):
         # call base class constructor
         super().__init__()
 
-        # using base class method, register regexps consulted to
-        # retrieve PV epics databases
-        self._register_dbase_regexp()
-
         # list with all setpoint PVs in use (incremented in callback execution)
         self._setpoint_pvs = list()
-
-    @property
-    def psname(self):
-        """Return psname."""
-        return self._psname
 
     @property
     def pstype(self):
@@ -83,15 +76,26 @@ class SimPowerSupply(_Sim):
         psmodel = _PSSearch.conv_psname_2_psmodel(psname)
         return pstype, psmodel
 
-    # --- Sim callback methods ---
+    # --- base class abstract methods ---
 
-    def callback_get(self, pvname, **kwargs):
+    def init_pvname_dbase(self):
+        """."""
+        regexp_dbase = dict()
+        dbpvs = _get_database(self._psmodel, self._pstype)
+        for propty in self._properties:
+            if propty in dbpvs:
+                dbase = dbpvs[propty]
+                regexp = '.*:' + propty
+                regexp_dbase[regexp] = dbase
+        return regexp_dbase
+
+    def callback_pv_get(self, pvname, **kwargs):
         """Execute callback function prior to SimPV readout."""
 
-    def callback_set(self, pvname, value, **kwargs):
+    def callback_pv_put(self, pvname, value, **kwargs):
         """Execute callback setpoint to synchronize SimPVs."""
         # if not -SP pv, does not accept write by returning False
-        if not SimPowerSupply._setpoint_regexp.match(pvname):
+        if not SimPSTypeModel._setpoint_regexp.match(pvname):
             return False
 
         # synchronize other PVs
@@ -101,11 +105,10 @@ class SimPowerSupply(_Sim):
         # was accepted and applied (True)
         return status
 
-    def callback_add_pv(self, sim_pvobj):
+    def callback_pv_add(self, pvname):
         """."""
-        pvname = sim_pvobj.pvname
         # if of setpoint type, add pvname to list.
-        if SimPowerSupply._setpoint_regexp.match(pvname):
+        if SimPSTypeModel._setpoint_regexp.match(pvname):
             self._setpoint_pvs.append(pvname)
 
     def callback_update(self, **kwargs):
@@ -134,15 +137,6 @@ class SimPowerSupply(_Sim):
 
     # --- private methods ---
 
-    def _register_dbase_regexp(self):
-        dbpvs = _get_database(self._psmodel, self._pstype)
-        for propty in self._properties:
-            if propty in dbpvs:
-                dbase = dbpvs[propty]
-                pvname_regexp = '.*:' + propty
-                # register regexp and associated dbase
-                super().pv_database_regexp_add(pvname_regexp, dbase)
-
     def _update_sp(self, pvname, value):
         # -RB
         pvn = pvname.replace('-SP', '-RB')
@@ -151,7 +145,7 @@ class SimPowerSupply(_Sim):
 
         setpoint = value
         if self.get_pwrstate(pvname) != _Const.PwrStateSts.On:
-            # if power supply is off zero setpoint
+            # if power supply is off, do not propagate further
             setpoint = 0 * setpoint
 
         # Ref-Mon
@@ -162,8 +156,9 @@ class SimPowerSupply(_Sim):
         # -Mon
         pvn = pvname.replace('-SP', '-Mon')
         if pvn in self:
-            setpoint = super().util_add_fluctuations(
-                setpoint, absolute=SimPowerSupply._absolute_fluctuation)
+            setpoint = super().Utils.add_fluctuations(
+                setpoint,
+                absolute=SimPSTypeModel._absolute_fluctuation)
             self.pv_value_put(pvn, setpoint)
 
         return True
