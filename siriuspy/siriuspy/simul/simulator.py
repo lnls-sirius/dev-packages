@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 import numpy as _np
 
 from .simulation import Simulation as _Simulation
-# from .simpv import SimPV as _PVSim
 
 
 class Simulator(ABC):
@@ -72,7 +71,6 @@ class Simulator(ABC):
     def callback_update(self, **kwargs):
         """Execute callback to update/synchronize simulator."""
 
-
     # --- general methods ---
 
     @property
@@ -87,22 +85,6 @@ class Simulator(ABC):
         for pvname, pvobj in self._pvs.items():
             vals[pvname] = pvobj.value
         return vals
-
-    # def pv_obj_get(self, pvname):
-    #     """Return SimPV object."""
-    #     return self._pvs[pvname]
-
-    # def pv_obj_add(self, sim_pvobj):
-    #     """Add SimPV to simulator."""
-    #     # check if pvobj is of type SimPV
-    #     if not isinstance(sim_pvobj, _PVSim):
-    #         raise TypeError
-
-    #     # Add SimPV to internal dictionary.
-    #     self._pvs[sim_pvobj.pvname] = sim_pvobj
-
-    #     # invoke callback
-    #     self.callback_add_pv(sim_pvobj)
 
     def pv_register(self, pvobj):
         """."""
@@ -140,5 +122,3 @@ class Simulator(ABC):
     def __contains__(self, pvname):
         """Return True if SimPV is in simulator."""
         return pvname in self._pvs
-
-    # --- utility methods ---
