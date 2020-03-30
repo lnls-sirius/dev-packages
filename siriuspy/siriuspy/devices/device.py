@@ -5,7 +5,7 @@ import time as _time
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..epics import PV as _PV
-from ..simul import PVSim as _PVSim
+from ..simul import SimPV as _PVSim
 from ..namesys import SiriusPVName as _SiriusPVName
 
 
