@@ -113,6 +113,7 @@ class TestSiriusPVName(TestCase):
         'from_sp2rb',
         'from_rb2sp',
         'strip',
+        'replace',
     )
 
     def test_public_interface(self):
