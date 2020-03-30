@@ -1,8 +1,6 @@
 """State Simulator."""
 
 import re as _re
-import random as _random
-import numpy as _np
 
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import get_ps_propty_database as _get_database
@@ -17,6 +15,8 @@ from .sim import Sim as _Sim
 
 class SimPowerSupply(_Sim):
     """Power supply current simulator."""
+
+    _absolute_fluctuation = 0.001  # [A]
 
     # regexp used to determine setpoint PVs
     _setpoint_regexp = _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
@@ -86,7 +86,7 @@ class SimPowerSupply(_Sim):
     # --- Sim callback methods ---
 
     def callback_get(self, pvname, **kwargs):
-        """Execute base class callback."""
+        """Execute callback function prior to SimPV readout."""
 
     def callback_set(self, pvname, value, **kwargs):
         """Execute callback setpoint to synchronize SimPVs."""
@@ -149,24 +149,22 @@ class SimPowerSupply(_Sim):
         if pvn in self:
             self.pv_value_put(pvn, value)
 
+        setpoint = value
         if self.get_pwrstate(pvname) != _Const.PwrStateSts.On:
-            # if power supply is off, do not propagate further
-            return True
+            # if power supply is off zero setpoint
+            setpoint = 0 * setpoint
 
         # Ref-Mon
         pvn = pvname.replace('-SP', 'Ref-Mon')
         if pvn in self:
-            self.pv_value_put(pvn, value)
+            self.pv_value_put(pvn, setpoint)
 
         # -Mon
         pvn = pvname.replace('-SP', '-Mon')
         if pvn in self:
-            if isinstance(value, _np.ndarray):
-                rnd = _np.random.uniform(
-                    1-0.001, 1+0.001, len(value))
-            else:
-                rnd = _random.uniform(1-0.001, 1+0.001)
-            self.pv_value_put(pvn, value * rnd)
+            setpoint = super().util_add_fluctuations(
+                setpoint, absolute=SimPowerSupply._absolute_fluctuation)
+            self.pv_value_put(pvn, setpoint)
 
         return True
 

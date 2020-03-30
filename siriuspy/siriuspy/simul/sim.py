@@ -1,7 +1,9 @@
 """Base Simulator."""
 
 import re as _re
+import random as _random
 from abc import ABC, abstractmethod
+import numpy as _np
 
 from .simpv import SimPV as _PVSim
 
@@ -106,3 +108,22 @@ class Sim(ABC):
     def __contains__(self, pvname):
         """Return True if SimPV is in simulator."""
         return pvname in self._pvs
+
+    # --- utility methods ---
+
+    @staticmethod
+    def util_add_fluctuations(value, relative=0, absolute=0):
+        """."""
+        if isinstance(value, _np.ndarray):
+            rnd_rel = _np.random.uniform(
+                1-relative, 1+relative, len(value)) if relative else 1
+            rnd_abs = _np.random.uniform(
+                -absolute, +absolute, len(value)) if absolute else 0
+        else:
+            rnd_rel = _random.uniform(
+                1-relative, 1+relative) if relative else 1
+            rnd_abs = _random.uniform(
+                -absolute, +absolute) if absolute else 0
+
+        value_new = value * rnd_rel + rnd_abs
+        return value_new
