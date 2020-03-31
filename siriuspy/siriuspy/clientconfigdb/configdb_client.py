@@ -17,6 +17,7 @@ from . import _templates
 class ConfigDBClient:
     """Perform operation on configuration database."""
 
+    _TIMEOUT_DEFAULT = 2.0
     _INVALID_CHARACTERS = '\\/:;,?!$'
 
     def __init__(self, url=None, config_type=None):
@@ -195,12 +196,14 @@ class ConfigDBClient:
         return config_type
 
     def _make_request(self, method='GET', data=None, **kwargs):
-
         try:
             return self._request(method, data, **kwargs)
-        except ConfigDBException:
-            self._rotate_server_url()
-            return self._request(method, data, **kwargs)
+        except ConfigDBException as err:
+            if err.server_code == -2:
+                self._rotate_server_url()
+                return self._request(method, data, **kwargs)
+            else:
+                raise err
 
     def _request(self, method='GET', data=None, **kwargs):
         url = self._create_url(**kwargs)
@@ -214,7 +217,9 @@ class ConfigDBClient:
                 data=_json.dumps(data, default=_jsonify_numpy).encode())
 
         try:
-            response = _json.loads(_urlopen(request).read().decode("utf-8"))
+            url_conn = _urlopen(
+                request, timeout=ConfigDBClient._TIMEOUT_DEFAULT)
+            response = _json.loads(url_conn.read().decode("utf-8"))
         except _json.JSONDecodeError:
             response = {"code": -1, "message": "JSON decode error"}
         except _URLError as err:
