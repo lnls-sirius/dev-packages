@@ -6,13 +6,10 @@ import re as _re
 class Simulation:
     """Simulation class."""
 
-    # lists of pvnames regexp, databases and corresponding simulators
-    _REGEXP = list()
-    _SIMULS = list()
-    _DBASES = list()
-
-    # simulated PVs
-    _SIMPVS = dict()
+    _REGEXP = list()  # pvname regular expression
+    _SIMULS = list()  # registered simulators
+    _DBASES = list()  # associated epics databases
+    _SIMPVS = dict()  # registered SimPVs
 
     @staticmethod
     def pvnames(simulator=None):
@@ -38,7 +35,7 @@ class Simulation:
         Simulation._SIMPVS[pvname] = (pvobj, simuls)
         # execute simulators callback
         for simul in simuls:
-            simul.pv_register(pvobj)
+            simul.simulation_pv_register(pvobj)
         return True
 
     @staticmethod
@@ -93,12 +90,17 @@ class Simulation:
     @staticmethod
     def simulator_unregister(simulator):
         """Unregister simulator."""
-        regexp, simuls = list(), list()
-        for rege, simu in zip(Simulation._REGEXP, Simulation._SIMULS):
+        regexp, simuls, dbases = list(), list(), list()
+        for rege, simu, dbas in zip(
+                Simulation._REGEXP,
+                Simulation._SIMULS,
+                Simulation._DBASES):
             if simu != simulator:
                 regexp.append(rege)
                 simuls.append(simu)
-        Simulation._REGEXP, Simulation._SIMULS = regexp, simuls
+                dbases.append(dbas)
+        Simulation._REGEXP, Simulation._SIMULS, Simulation._DBASES = \
+            regexp, simuls, dbases
 
     @staticmethod
     def simulator_find(pvname, unique=False):
@@ -109,6 +111,23 @@ class Simulation:
     def dbase_find(pvname, unique=False):
         """Return databases for a given psname."""
         return Simulation._find(pvname, Simulation._DBASES, unique)
+
+    @staticmethod
+    def reset():
+        """Reset simulation."""
+        for simul in Simulation._SIMULS:
+            simul.reset()
+        Simulation._init()
+
+    # --- private methods ---
+
+    @staticmethod
+    def _init():
+        """Init Simulation class structures."""
+        Simulation._REGEXP = list()
+        Simulation._SIMULS = list()
+        Simulation._DBASES = list()
+        Simulation._SIMPVS = dict()
 
     @staticmethod
     def _find(pvname, itemlist, unique):

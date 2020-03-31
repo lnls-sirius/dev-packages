@@ -42,7 +42,7 @@ class Device:
     @property
     def pvnames(self):
         """Return device PV names."""
-        pvnames = [pv.pvname for pv in self._pvs.values()]
+        pvnames = {pv.pvname for pv in self._pvs.values()}
         return pvnames
 
     @property
@@ -56,11 +56,11 @@ class Device:
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        dlist = list()
+        set_ = set()
         for pvname, pvobj in self._pvs.items():
             if not pvobj.connected:
-                dlist.append(pvname)
-        return dlist
+                set_.add(pvname)
+        return set_
 
     def update(self):
         """Update device properties."""
@@ -198,12 +198,20 @@ class Devices:
         return self._properties
 
     @property
+    def simulators(self):
+        """Return list of simulators."""
+        simuls = set()
+        for dev in self._devices:
+            simuls.update(dev.simulators)
+        return simuls
+
+    @property
     def pvnames(self):
         """Return device PV names."""
-        pvnames = []
+        set_ = set()
         for dev in self._devices:
-            pvnames += dev.pvnames
-        return pvnames
+            set_.update(dev.pvnames)
+        return set_
 
     @property
     def connected(self):
@@ -216,10 +224,10 @@ class Devices:
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        dlist = list()
+        set_ = set()
         for dev in self._devices:
-            dlist += dev.disconnected_pvnames
-        return dlist
+            set_.update(dev.disconnected_pvnames)
+        return set_
 
     def update(self):
         """Update device properties."""
