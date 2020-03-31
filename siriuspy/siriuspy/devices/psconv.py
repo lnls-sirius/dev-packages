@@ -204,7 +204,7 @@ class StrengthConv(_Devices):
             # trims need dipole and family connectors
             dev_dip = PSProperty(
                 'SI-Fam:PS-B1B2-1', 'Energy' + proptype)
-            devname = devname.replace(devname.sub, 'Fam')
+            devname = devname.substitute(sub='Fam')
             dev_fam = PSProperty(devname, 'KL' + proptype)
             return True, dev_dip, dev_fam
         return False, None, None
