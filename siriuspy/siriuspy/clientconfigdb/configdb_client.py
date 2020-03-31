@@ -203,7 +203,7 @@ class ConfigDBClient:
                 self._rotate_server_url()
                 return self._request(method, data, **kwargs)
             else:
-                raise ConfigDBException(err.server_response)
+                raise err
 
     def _request(self, method='GET', data=None, **kwargs):
         url = self._create_url(**kwargs)
@@ -261,7 +261,6 @@ class ConfigDBException(Exception):
     def __init__(self, response):
         """."""
         super().__init__('{code:d}: {message:s}.'.format(**response))
-        self.server_response = response
         self.server_code = response['code']
         self.server_message = response['message']
 
