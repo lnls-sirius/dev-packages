@@ -5,7 +5,8 @@ import time as _time
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..epics import PV as _PV
-from ..epics import pv_fake as _pv_fake
+from ..simul import SimPV as _PVSim
+from ..simul import Simulation as _Simulation
 from ..namesys import SiriusPVName as _SiriusPVName
 
 
@@ -13,7 +14,6 @@ class Device:
     """Epics Device."""
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
-    SIMULATED = False
     _properties = ()
 
     def __init__(self, devname, properties):
@@ -30,6 +30,14 @@ class Device:
     def properties(self):
         """Return device properties."""
         return self._properties
+
+    @property
+    def simulators(self):
+        """Return simulator."""
+        simuls = set()
+        for pvname in self.pvnames:
+            simuls.update(_Simulation.simulator_find(pvname))
+        return simuls
 
     @property
     def pvnames(self):
@@ -97,17 +105,15 @@ class Device:
     def _create_pvs(self, devname):
         if devname:
             devname = _SiriusPVName(devname)
+
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
-            if self.SIMULATED:
-                PVClass = _pv_fake.PVFake
-                self._add_fake_pvs_to_database()
-            else:
-                PVClass = _PV
-            pvs[propty] = PVClass(
+            simul = _Simulation.simulator_find(pvname, unique=True)
+            pvclass = _PVSim if simul else _PV
+            pvs[propty] = pvclass(
                 pvname, auto_monitor=auto_monitor,
                 connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
@@ -129,14 +135,6 @@ class Device:
         else:
             pvname = propty
         return pvname
-
-    def _add_fake_pvs_to_database(self):
-        dbase, prefix = self._get_fake_pvs_database()
-        _pv_fake.add_to_database(dbase, prefix)
-
-    def _get_fake_pvs_database(self):
-        print('NotImplementedError for {}'.format(self.devname))
-        return dict(), ''
 
 
 # NOTE: This class is temporary. It should become deprecated once all

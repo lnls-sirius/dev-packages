@@ -6,7 +6,9 @@ from .device import DeviceApp as _DeviceApp
 class DevicesSync(_DeviceApp):
     """Synchronized devices."""
 
-    def __init__(self, devnames, propty_sync, propty_async=None, devname=None):
+    def __init__(
+            self, devnames, propty_sync, propty_async=None,
+            devname=None):
         """."""
         self._devnames = devnames
         self._props_sync = list(propty_sync)
