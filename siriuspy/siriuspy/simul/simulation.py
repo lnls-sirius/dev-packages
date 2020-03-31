@@ -7,13 +7,14 @@ class Simulation:
     """Simulation class.
 
         This simulation class manages simulated epics control process
-    variables by registered Simulator objects. As a simulator is registered,
-    its 'callback_pb_dbase' is invoked to order to get a dictionary of
-    pvname regular expression to epics database objects. When a SimPV is
-    registered in the simulation, the existing set of regular expressions is
-    searched for matches. Simulators that registered mathcing regexps are
-    flaged so that callback methods are executed when that SimPV is registered
-    or when its state changes (register/get/put actions).
+    variables by registered simulator objects. As a simulator is registered,
+    its 'callback_pv_dbase' is executed in order to retrieve the simulator
+    dictionary of pvname regular and epics database objects.
+
+        When a SimPV is registered in the simulation, the existing set of
+    regular expressions is searched for matches. Simulators that registered
+    mathcing regexps are flaged so that callback methods are executed when that
+    SimPV is registered or when its state changes (register/get/put actions).
     """
 
     PV_DATABASE_UNIQUE = True
@@ -35,17 +36,17 @@ class Simulation:
     @staticmethod
     def simulator_unregister(simulator):
         """Unregister simulator."""
-        regexp, simuls, dbases = list(), list(), list()
-        for rege, simu, dbas in zip(
+        regexp, sims, dbases = list(), list(), list()
+        for rege, sim, dbas in zip(
                 Simulation._REGEXP,
                 Simulation._SIMULS,
                 Simulation._DBASES):
-            if simu != simulator:
+            if sim != simulator:
                 regexp.append(rege)
-                simuls.append(simu)
+                sims.append(sim)
                 dbases.append(dbas)
         Simulation._REGEXP, Simulation._SIMULS, Simulation._DBASES = \
-            regexp, simuls, dbases
+            regexp, sims, dbases
 
     # --- PV methods (used mainly in SimPV methods) ---
 
@@ -59,11 +60,11 @@ class Simulation:
         if pvname in Simulation._SIMPVS:
             # return False if SimPV already registered.
             return False
-        simuls = Simulation.find_simulators(pvname)
-        Simulation._SIMPVS[pvname] = (pvobj, simuls)
+        sims = Simulation.find_simulators(pvname)
+        Simulation._SIMPVS[pvname] = (pvobj, sims)
         # execute simulators callback
-        for simul in simuls:
-            simul.callback_pv_register(pvobj)
+        for sim in sims:
+            sim.callback_pv_register(pvobj)
         return True
 
     @staticmethod
@@ -72,9 +73,9 @@ class Simulation:
 
         Used in SimPV getter methods.
         """
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
-        for simul in simuls:
-            simul.callback_pv_get(pvname, **kwargs)
+        _, sims, *_ = Simulation._SIMPVS[pvname]
+        for sim in sims:
+            sim.callback_pv_get(pvname, **kwargs)
 
     @staticmethod
     def pv_put(pvname, value, **kwargs):
@@ -84,10 +85,10 @@ class Simulation:
         return True if setpoint is acceptable in all simulators,
         False otherwise.
         """
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
+        _, sims, *_ = Simulation._SIMPVS[pvname]
         state = True
-        for simul in simuls:
-            state &= simul.callback_pv_put(pvname, value, **kwargs)
+        for sim in sims:
+            state &= sim.callback_pv_put(pvname, value, **kwargs)
         return state
 
     @staticmethod
@@ -124,9 +125,9 @@ class Simulation:
         if simulator is None:
             return set(Simulation._SIMPVS.keys())
         pvnames = set()
-        for pvobj, simuls in Simulation._SIMPVS:
-            for simul in simuls:
-                if simul == simulator:
+        for pvobj, sims in Simulation._SIMPVS:
+            for sim in sims:
+                if sim == simulator:
                     pvnames.add(pvobj.pvname)
                     break
         return pvnames
@@ -134,8 +135,8 @@ class Simulation:
     @staticmethod
     def reset():
         """Reset simulation."""
-        for simul in Simulation._SIMULS:
-            simul.reset()
+        for sim in Simulation._SIMULS:
+            sim.reset()
         Simulation._init()
 
     @staticmethod
@@ -146,9 +147,9 @@ class Simulation:
     @staticmethod
     def update_simulators(pvname, **kwargs):
         """Execute callback to update/synchronize simulator for pvname."""
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
-        for simul in simuls:
-            simul.update(pvname, **kwargs)
+        _, sims, *_ = Simulation._SIMPVS[pvname]
+        for sim in sims:
+            sim.update(pvname, **kwargs)
 
     # --- private methods ---
 

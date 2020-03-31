@@ -34,10 +34,10 @@ class Device:
     @property
     def simulators(self):
         """Return simulator."""
-        simuls = set()
+        sims = set()
         for pvname in self.pvnames:
-            simuls.update(_Simulation.find_simulators(pvname))
-        return simuls
+            sims.update(_Simulation.find_simulators(pvname))
+        return sims
 
     @property
     def pvnames(self):
@@ -200,10 +200,10 @@ class Devices:
     @property
     def simulators(self):
         """Return list of simulators."""
-        simuls = set()
+        sims = set()
         for dev in self._devices:
-            simuls.update(dev.simulators)
-        return simuls
+            sims.update(dev.simulators)
+        return sims
 
     @property
     def pvnames(self):
