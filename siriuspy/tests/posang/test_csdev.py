@@ -8,7 +8,7 @@ from siriuspy.posang import csdev
 from siriuspy.posang.csdev import get_posang_database
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
         'Const',
         'get_posang_database',
     )
@@ -19,8 +19,7 @@ class TestPosAngCSDevice(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-            csdev, PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(csdev, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_get_posang_database(self):

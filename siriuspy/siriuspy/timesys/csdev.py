@@ -3,23 +3,10 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys import constants as _c
+from ..util import ClassProperty as _classproperty
 from .. import csdev as _csdev
-from siriuspy.optics import constants as _oc
-from siriuspy.search import HLTimeSearch as _HLTimeSearch
-
-
-# This is a way of defining a readable class property to fix the problem of
-# initialization of this module, where it used to make calls to timing static
-# tables during import time.
-# This solution was copied from:
-# https://stackoverflow.com/questions/5189699/how-to-make-a-class-property
-class _classproperty():
-
-    def __init__(self, f):
-        self.f = f
-
-    def __get__(self, obj, owner):
-        return self.f(owner)
+from ..optics import constants as _oc
+from ..search import HLTimeSearch as _HLTimeSearch
 
 
 # --- Enumeration Types ---
@@ -97,6 +84,7 @@ class Const(_csdev.Const):
 
     @_classproperty
     def EvtHL2LLMap(cls):
+        """."""
         if cls.__EvtHL2LLMap is None:
             cls.__EvtHL2LLMap = _HLTimeSearch.get_hl_events()
             cls.__EvtLL2HLMap = {
@@ -105,6 +93,7 @@ class Const(_csdev.Const):
 
     @_classproperty
     def EvtLL2HLMap(cls):
+        """."""
         cls.EvtHL2LLMap
         return cls.__EvtLL2HLMap
 

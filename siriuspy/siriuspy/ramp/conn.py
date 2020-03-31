@@ -693,10 +693,10 @@ class ConnSOFB(_EpicsPropsList):
         bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
         ch_dkicks = rb[ConnSOFB.IOC_PREFIX + ':DeltaKickCH-Mon']
-        ch_names = bo_sofb_db.CH_NAMES
+        ch_names = bo_sofb_db.ch_names
 
         cv_dkicks = rb[ConnSOFB.IOC_PREFIX + ':DeltaKickCV-Mon']
-        cv_names = bo_sofb_db.CV_NAMES
+        cv_names = bo_sofb_db.cv_names
 
         corrs2dkicks_dict = dict()
         for idx in range(len(ch_names)):

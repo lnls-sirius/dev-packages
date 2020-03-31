@@ -7,7 +7,7 @@ from siriuspy.devices import psconv
 from siriuspy.util import check_public_interface_namespace
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
     'PSProperty',
     'StrengthConv'
 )
@@ -18,5 +18,5 @@ class TestModule(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = check_public_interface_namespace(psconv, PUBLIC_INTERFACE)
+        valid = check_public_interface_namespace(psconv, PUB_INTERFACE)
         self.assertTrue(valid)

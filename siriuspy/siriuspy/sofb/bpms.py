@@ -798,8 +798,8 @@ class TimingConfig(_BaseTimingConfig):
     def __init__(self, acc, callback=None):
         """."""
         super().__init__(acc, callback=callback)
-        trig = self._csorb.TRIGGER_ACQ_NAME
-        evg = self._csorb.EVG_NAME
+        trig = self._csorb.trigger_acq_name
+        evg = self._csorb.evg_name
         opt = {'connection_timeout': TIMEOUT}
         self._config_ok_vals = {
             'NrPulses': 1,

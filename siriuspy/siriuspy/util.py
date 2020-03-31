@@ -271,3 +271,21 @@ def get_namedtuple(name, field_names, values=None):
         values = range(len(field_names))
     field_names = [f.replace(' ', '_') for f in field_names]
     return _namedtuple(name, field_names)(*values)
+
+
+# This solution was copied from:
+# https://stackoverflow.com/questions/5189699/how-to-make-a-class-property
+class ClassProperty:
+    """This is a way of defining a readable class property.
+
+    It is useful to delay the process of reading static tables during
+    modules initialization (import time)
+    """
+
+    def __init__(self, func):
+        """."""
+        self.func = func
+
+    def __get__(self, obj, owner):
+        """."""
+        return self.func(owner)

@@ -142,8 +142,8 @@ class SOFB(_BaseClass):
             return False
         self._ring_extension = val
         self.run_callbacks('RingSize-RB', val)
-        bpms = _np.array(self._csorb.BPM_POS)
-        bpm_pos = [bpms + i*self._csorb.C0 for i in range(val)]
+        bpms = _np.array(self._csorb.bpm_pos)
+        bpm_pos = [bpms + i*self._csorb.circum for i in range(val)]
         bpm_pos = _np.hstack(bpm_pos)
         self.run_callbacks('BPMPosS-Mon', bpm_pos)
         return True
@@ -271,8 +271,8 @@ class SOFB(_BaseClass):
         self.run_callbacks('Status-Mon', self._status)
 
     def _set_delta_kick(self, code, dkicks):
-        nr_ch = self._csorb.NR_CH
-        nr_chcv = self._csorb.NR_CHCV
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
         self._ref_corr_kicks = self.correctors.get_strength()
         if self._dtheta is None:
             self._dtheta = _np.zeros(self._ref_corr_kicks.size, dtype=float)
@@ -290,7 +290,7 @@ class SOFB(_BaseClass):
             self.run_callbacks('DeltaKickRF-Mon', float(dkicks))
 
     def _apply_corr(self, code):
-        nr_ch = self._csorb.NR_CH
+        nr_ch = self._csorb.nr_ch
         if self._dtheta is None:
             msg = 'Err: All kicks are zero.'
             self._update_log(msg)
@@ -408,11 +408,11 @@ class SOFB(_BaseClass):
             _log.info(msg)
             j += 1
 
-            if i < self._csorb.NR_CH:
+            if i < self._csorb.nr_ch:
                 delta = self._meas_respmat_kick['ch']
-            elif i < self._csorb.NR_CH + self._csorb.NR_CV:
+            elif i < self._csorb.nr_ch + self._csorb.nr_cv:
                 delta = self._meas_respmat_kick['cv']
-            elif i < self._csorb.NR_CORRS:
+            elif i < self._csorb.nr_corrs:
                 delta = self._meas_respmat_kick['rf']
 
             kicks = [None, ] * nr_corrs
@@ -528,7 +528,7 @@ class SOFB(_BaseClass):
         if not idcs_to_process.any():
             return newkicks
 
-        nr_ch = self._csorb.NR_CH
+        nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.acc == 'SI':
             slcs = {

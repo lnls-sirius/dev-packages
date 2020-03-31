@@ -94,7 +94,7 @@ class RFCtrl(Corrector):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        self._name = 'RF-Gen'  # self._csorb.RF_GEN_NAME
+        self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF+self._name+':GeneralFreq-SP', **opt)
         self._rb = _PV(LL_PREF+self._name+':GeneralFreq-RB', **opt)
@@ -277,9 +277,9 @@ class TimingConfig(_BaseTimingConfig):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        evt = self._csorb.EVT_COR_NAME
-        pref_name = LL_PREF + self._csorb.EVG_NAME + ':' + evt
-        trig = self._csorb.TRIGGER_COR_NAME
+        evt = self._csorb.evt_cor_name
+        pref_name = LL_PREF + self._csorb.evg_name + ':' + evt
+        trig = self._csorb.trigger_cor_name
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
         src_val = self._csorb.CorrExtEvtSrc._fields.index(evt)
@@ -346,7 +346,7 @@ class EpicsCorrectors(BaseCorrectors):
         super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = False
         self._acq_rate = 2
-        self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
+        self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
         if self.acc == 'SI':
             self._corrs.append(RFCtrl(self.acc))
@@ -436,7 +436,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_strength(self):
         """Get the correctors strengths."""
-        corr_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
+        corr_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
                 corr_values[i] = corr.value
@@ -457,9 +457,9 @@ class EpicsCorrectors(BaseCorrectors):
     def _update_corrs_strength(self):
         try:
             corr_vals = self.get_strength()
-            self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
+            self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.nr_ch])
             self.run_callbacks(
-                'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
+                'KickCV-Mon', corr_vals[self._csorb.nr_ch:self._csorb.nr_chcv])
             if self.acc == 'SI':
                 self.run_callbacks('KickRF-Mon', corr_vals[-1])
         except Exception as err:
@@ -524,7 +524,7 @@ class EpicsCorrectors(BaseCorrectors):
         elif self.isring:
             status = 0b0011111
 
-        chcvs = self._corrs[:self._csorb.NR_CHCV]
+        chcvs = self._corrs[:self._csorb.nr_chcv]
         status = _util.update_bit(
             status, bit_pos=0,
             bit_val=not all(corr.connected for corr in chcvs))

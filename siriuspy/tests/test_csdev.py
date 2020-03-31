@@ -6,7 +6,7 @@ from unittest import TestCase
 import siriuspy.util as util
 import siriuspy.csdev as csdev
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
     'ETypes',
     'Const',
     'add_pvslist_cte',
@@ -17,10 +17,10 @@ PUBLIC_INTERFACE = (
 class TestUtil(TestCase):
     """Test util module."""
 
-    def test_PUBLIC_INTERFACE(self):
+    def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            csdev, PUBLIC_INTERFACE)
+            csdev, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_adds_pvslist_cte(self):

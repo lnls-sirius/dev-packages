@@ -9,7 +9,7 @@ from siriuspy.pwrsupply.pru import PRUInterface
 from siriuspy.pwrsupply.pru import PRU
 
 
-PUBLIC_INTERFACE = (
+PUB_INTERFACE = (
     'PRUInterface',
     'PRU',
 )
@@ -20,16 +20,14 @@ class TestModule(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-                pru,
-                PUBLIC_INTERFACE)
+        valid = util.check_public_interface_namespace(pru, PUB_INTERFACE)
         self.assertTrue(valid)
 
 
 class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
-    PUBLIC_INTERFACE = (
+    PUB_INTERFACE = (
         'OK',
         'UART_write',
         'UART_read',
@@ -41,7 +39,7 @@ class TestPRUInterface(TestCase):
     def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(util.check_public_interface_namespace(
-            PRUInterface, TestPRUInterface.PUBLIC_INTERFACE))
+            PRUInterface, TestPRUInterface.PUB_INTERFACE))
 
     def test_simulated(self):
         """Test simulated."""
@@ -67,12 +65,12 @@ class TestPRUInterface(TestCase):
 class TestPRU(TestCase):
     """Test PRU API."""
 
-    PUBLIC_INTERFACE = ()
+    PUB_INTERFACE = ()
 
     def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(util.check_public_interface_namespace(
-            PRU, TestPRU.PUBLIC_INTERFACE))
+            PRU, TestPRU.PUB_INTERFACE))
 
     def test_UART_write(self):
         """Test UART_write."""

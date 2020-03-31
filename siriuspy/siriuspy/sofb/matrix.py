@@ -20,10 +20,10 @@ class EpicsMatrix(BaseMatrix):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self.select_items = {
-            'bpmx': _np.ones(self._csorb.NR_BPMS, dtype=bool),
-            'bpmy': _np.ones(self._csorb.NR_BPMS, dtype=bool),
-            'ch': _np.ones(self._csorb.NR_CH, dtype=bool),
-            'cv': _np.ones(self._csorb.NR_CV, dtype=bool),
+            'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
+            'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
+            'ch': _np.ones(self._csorb.nr_ch, dtype=bool),
+            'cv': _np.ones(self._csorb.nr_cv, dtype=bool),
             }
         self.selection_pv_names = {
             'ch': 'CHEnblList-RB',
@@ -34,10 +34,10 @@ class EpicsMatrix(BaseMatrix):
         if self.acc == 'SI':
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
-        self.num_sing_values = self._csorb.NR_SING_VALS
-        self.sing_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
+        self.num_sing_values = self._csorb.nr_svals
+        self.sing_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self.respmat = _np.zeros(
-            [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS], dtype=float)
+            [2*self._csorb.nr_bpms, self._csorb.nr_corrs], dtype=float)
         self.inv_respmat = self.respmat.copy().T
 
         self.ring_extension = 1
@@ -92,17 +92,17 @@ class EpicsMatrix(BaseMatrix):
 
     def _set_respmat(self, mat):
         mat = _np.array(mat, dtype=float)
-        nrc = self._csorb.NR_CORRS
-        nrb = self._csorb.NR_BPMS
+        nrc = self._csorb.nr_corrs
+        nrb = self._csorb.nr_bpms
         rext = self.ring_extension
-        mat_rext = (mat.size // self._csorb.MTX_SZ)
-        if mat.size % self._csorb.MTX_SZ:
+        mat_rext = (mat.size // self._csorb.matrix_size)
+        if mat.size % self._csorb.matrix_size:
             msg = 'ERR: Wrong RespMat Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return None, None
         elif mat_rext < rext:
-            mat2 = _np.zeros([2, rext*self._csorb.NR_BPMS, nrc], dtype=float)
+            mat2 = _np.zeros([2, rext*self._csorb.nr_bpms, nrc], dtype=float)
             mat = mat.reshape(2, -1, nrc)
             mat2[:, :(mat_rext*nrb), :] = mat
             mat = mat2.reshape(-1)
@@ -167,7 +167,7 @@ class EpicsMatrix(BaseMatrix):
             new2 = bkup.copy()
             new2[:new.size] = new
             new = new2
-        nrb = self._csorb.NR_BPMS
+        nrb = self._csorb.nr_bpms
         nrb *= self.ring_extension
         if new.size < nrb:
             new2 = _np.zeros(nrb, dtype=bool)
@@ -224,8 +224,8 @@ class EpicsMatrix(BaseMatrix):
             _log.error(msg[5:])
             return
         kicks = _np.dot(-self.inv_respmat, orbit)
-        nr_ch = self._csorb.NR_CH
-        nr_chcv = self._csorb.NR_CHCV
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
         self.run_callbacks('DeltaKickCH-Mon', list(kicks[:nr_ch]))
         self.run_callbacks('DeltaKickCV-Mon', list(kicks[nr_ch:nr_chcv]))
         if self.acc == 'SI':
@@ -319,7 +319,7 @@ class EpicsMatrix(BaseMatrix):
         return True
 
     def _load_respmat(self):
-        filename = self._csorb.RESPMAT_FILENAME
+        filename = self._csorb.respmat_fname
         boo = False
         if _os.path.isfile(filename):
             boo = self.set_respmat(_np.loadtxt(filename))
@@ -331,7 +331,7 @@ class EpicsMatrix(BaseMatrix):
             _log.info(msg)
 
     def _save_respmat(self, mat):
-        path = _os.path.split(self._csorb.RESPMAT_FILENAME)[0]
+        path = _os.path.split(self._csorb.respmat_fname)[0]
         if not _os.path.isdir(path):
             _os.mkdir(path)
-        _np.savetxt(self._csorb.RESPMAT_FILENAME, mat)
+        _np.savetxt(self._csorb.respmat_fname, mat)
