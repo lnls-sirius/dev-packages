@@ -34,15 +34,15 @@ class Device:
     @property
     def simulators(self):
         """Return simulator."""
-        simuls = set()
+        sims = set()
         for pvname in self.pvnames:
-            simuls.update(_Simulation.simulator_find(pvname))
-        return simuls
+            sims.update(_Simulation.find_simulators(pvname))
+        return sims
 
     @property
     def pvnames(self):
         """Return device PV names."""
-        pvnames = [pv.pvname for pv in self._pvs.values()]
+        pvnames = {pv.pvname for pv in self._pvs.values()}
         return pvnames
 
     @property
@@ -56,11 +56,11 @@ class Device:
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        dlist = list()
+        set_ = set()
         for pvname, pvobj in self._pvs.items():
             if not pvobj.connected:
-                dlist.append(pvname)
-        return dlist
+                set_.add(pvname)
+        return set_
 
     def update(self):
         """Update device properties."""
@@ -111,7 +111,7 @@ class Device:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
-            simul = _Simulation.simulator_find(pvname, unique=True)
+            simul = _Simulation.find_simulators(pvname, True)
             pvclass = _PVSim if simul else _PV
             pvs[propty] = pvclass(
                 pvname, auto_monitor=auto_monitor,
@@ -198,12 +198,20 @@ class Devices:
         return self._properties
 
     @property
+    def simulators(self):
+        """Return list of simulators."""
+        sims = set()
+        for dev in self._devices:
+            sims.update(dev.simulators)
+        return sims
+
+    @property
     def pvnames(self):
         """Return device PV names."""
-        pvnames = []
+        set_ = set()
         for dev in self._devices:
-            pvnames += dev.pvnames
-        return pvnames
+            set_.update(dev.pvnames)
+        return set_
 
     @property
     def connected(self):
@@ -216,10 +224,10 @@ class Devices:
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        dlist = list()
+        set_ = set()
         for dev in self._devices:
-            dlist += dev.disconnected_pvnames
-        return dlist
+            set_.update(dev.disconnected_pvnames)
+        return set_
 
     def update(self):
         """Update device properties."""
