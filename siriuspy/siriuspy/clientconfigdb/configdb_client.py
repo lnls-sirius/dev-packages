@@ -196,12 +196,14 @@ class ConfigDBClient:
         return config_type
 
     def _make_request(self, method='GET', data=None, **kwargs):
-
         try:
             return self._request(method, data, **kwargs)
-        except ConfigDBException:
-            self._rotate_server_url()
-            return self._request(method, data, **kwargs)
+        except ConfigDBException as err:
+            if err.server_code == -2:
+                self._rotate_server_url()
+                return self._request(method, data, **kwargs)
+            else:
+                raise ConfigDBException(err.server_response)
 
     def _request(self, method='GET', data=None, **kwargs):
         url = self._create_url(**kwargs)
@@ -259,6 +261,7 @@ class ConfigDBException(Exception):
     def __init__(self, response):
         """."""
         super().__init__('{code:d}: {message:s}.'.format(**response))
+        self.server_response = response
         self.server_code = response['code']
         self.server_message = response['message']
 
