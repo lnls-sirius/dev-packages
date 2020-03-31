@@ -78,7 +78,7 @@ class SimPSTypeModel(_Simulator):
 
     # --- base class abstract methods ---
 
-    def init_pvname_dbase(self):
+    def callback_pv_dbase(self):
         """."""
         regexp_dbase = dict()
         dbpvs = _get_database(self._psmodel, self._pstype)

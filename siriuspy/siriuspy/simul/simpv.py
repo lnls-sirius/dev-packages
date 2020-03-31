@@ -32,7 +32,7 @@ class SimPV(_PVFake):
 
         # get pv database
         dbase = dict()
-        dbase[pvname] = _Simulation.dbase_find(pvname, unique=True)
+        dbase[pvname] = _Simulation.pv_dbase_find(pvname, unique=True)
 
         # init pv database
         _add_to_database(dbase, '')
@@ -46,24 +46,24 @@ class SimPV(_PVFake):
     @property
     def value(self):
         """."""
-        _ = _Simulation.pv_callback_get(self.pvname)
+        _ = _Simulation.pv_get(self.pvname)
         return super().get()
 
     @value.setter
     def value(self, value):
         """."""
-        status = _Simulation.pv_callback_put(self.pvname, value)
+        status = _Simulation.pv_put(self.pvname, value)
         if status:
             super().put(value)
 
     def get(self, **kwargs):
         """."""
-        _ = _Simulation.pv_callback_get(self.pvname, **kwargs)
+        _ = _Simulation.pv_get(self.pvname, **kwargs)
         return super().get(**kwargs)
 
     def put(self, value, **kwargs):
         """."""
-        status = _Simulation.pv_callback_put(self.pvname, value, **kwargs)
+        status = _Simulation.pv_put(self.pvname, value, **kwargs)
         if status:
             super().put(value, **kwargs)
 

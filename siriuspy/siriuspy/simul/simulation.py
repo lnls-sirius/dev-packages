@@ -4,88 +4,33 @@ import re as _re
 
 
 class Simulation:
-    """Simulation class."""
+    """Simulation class.
+
+        This simulation class manages simulated epics control process
+    variables by registered Simulator objects. As a simulator is registered,
+    its 'callback_pb_dbase' is invoked to order to get a dictionary of
+    pvname regular expression to epics database objects. When a SimPV is
+    registered in the simulation, the existing set of regular expressions is
+    searched for matches. Simulators that registered mathcing regexps are
+    flaged so that callback methods are executed when that SimPV is registered
+    or when its state changes (register/get/put actions).
+    """
+
+    PV_DATABASE_UNIQUE = True
 
     _REGEXP = list()  # pvname regular expression
     _SIMULS = list()  # registered simulators
     _DBASES = list()  # associated epics databases
     _SIMPVS = dict()  # registered SimPVs
 
-    @staticmethod
-    def pvnames(simulator=None):
-        """Return pvnames of registered SimPVs of a given simulator."""
-        if simulator is None:
-            return list(Simulation._SIMPVS.keys())
-        pvnames = list()
-        for pvobj, simuls in Simulation._SIMPVS:
-            for simul in simuls:
-                if simul == simulator:
-                    pvnames.append(pvobj.pvname)
-                    break
-        return pvnames
-
-    @staticmethod
-    def pv_register(pvobj):
-        """Register SimPV object."""
-        pvname = pvobj.pvname
-        if pvname in Simulation._SIMPVS:
-            # return False if SimPV already registered.
-            return False
-        simuls = Simulation.simulator_find(pvname)
-        Simulation._SIMPVS[pvname] = (pvobj, simuls)
-        # execute simulators callback
-        for simul in simuls:
-            simul.simulation_pv_register(pvobj)
-        return True
-
-    @staticmethod
-    def pv_find(pvname):
-        """Return SimPV object."""
-        pv_item = Simulation._SIMPVS.get(pvname, None)
-        if not pv_item:
-            return None
-        pvobj, *_ = pv_item
-        return pvobj
-
-    @staticmethod
-    def pv_callback_get(pvname, **kwargs):
-        """Execute callback function prior to SimPV readout."""
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
-        for simul in simuls:
-            simul.callback_pv_get(pvname, **kwargs)
-
-    @staticmethod
-    def pv_callback_put(pvname, value, **kwargs):
-        """Execute callback function prior to SimPV setpoint.
-
-        Return True if setpoint is acceptable, False otherwise.
-        """
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
-        state = True
-        for simul in simuls:
-            state &= simul.callback_pv_put(pvname, value, **kwargs)
-        return state
-
-    @staticmethod
-    def pv_callback_update(pvname, **kwargs):
-        """Execute callback to update/synchronize simulator."""
-        _, simuls, *_ = Simulation._SIMPVS[pvname]
-        for simul in simuls:
-            simul.callback_update(pvname, **kwargs)
-
-    @staticmethod
-    def pvnames_register(simulator, pvnames_regexp, dbase):
-        """Register simulator pvnames regular expressions."""
-        Simulation._REGEXP.append(_re.compile(pvnames_regexp))
-        Simulation._SIMULS.append(simulator)
-        Simulation._DBASES.append(dbase)
+    # --- registration methods ---
 
     @staticmethod
     def simulator_register(simulator):
         """Register simulator in simulation."""
-        pvname_regexp = simulator.init_pvname_dbase()
+        pvname_regexp = simulator.callback_pv_dbase()
         for regexp, dbase in pvname_regexp.items():
-            Simulation.pvnames_register(simulator, regexp, dbase)
+            Simulation._pvnames_register(simulator, regexp, dbase)
 
     @staticmethod
     def simulator_unregister(simulator):
@@ -102,15 +47,89 @@ class Simulation:
         Simulation._REGEXP, Simulation._SIMULS, Simulation._DBASES = \
             regexp, simuls, dbases
 
-    @staticmethod
-    def simulator_find(pvname, unique=False):
-        """Return simulators for a given pvname."""
-        return Simulation._find(pvname, Simulation._SIMULS, unique)
+    # --- PV methods (used mainly in SimPV methods) ---
 
     @staticmethod
-    def dbase_find(pvname, unique=False):
-        """Return databases for a given psname."""
+    def pv_register(pvobj):
+        """Register SimPV object.
+
+        This is used by SimPV when a sim PV is created.
+        """
+        pvname = pvobj.pvname
+        if pvname in Simulation._SIMPVS:
+            # return False if SimPV already registered.
+            return False
+        simuls = Simulation.find_simulators(pvname)
+        Simulation._SIMPVS[pvname] = (pvobj, simuls)
+        # execute simulators callback
+        for simul in simuls:
+            simul.callback_pv_register(pvobj)
+        return True
+
+    @staticmethod
+    def pv_get(pvname, **kwargs):
+        """Execute simulators callback functions, prior to SimPV readout.
+
+        Used in SimPV getter methods.
+        """
+        _, simuls, *_ = Simulation._SIMPVS[pvname]
+        for simul in simuls:
+            simul.callback_pv_get(pvname, **kwargs)
+
+    @staticmethod
+    def pv_put(pvname, value, **kwargs):
+        """Execute simulators callback functions, prior to SimPV setpoint.
+
+        Used in SimPV setter methods. Simulator callback functions must
+        return True if setpoint is acceptable in all simulators,
+        False otherwise.
+        """
+        _, simuls, *_ = Simulation._SIMPVS[pvname]
+        state = True
+        for simul in simuls:
+            state &= simul.callback_pv_put(pvname, value, **kwargs)
+        return state
+
+    @staticmethod
+    def pv_find(pvname):
+        """Return SimPV object.
+
+        Used in SimPV to decide if a new SimPV is needed.
+        """
+        pv_item = Simulation._SIMPVS.get(pvname, None)
+        if not pv_item:
+            return None
+        pvobj, *_ = pv_item
+        return pvobj
+
+    @staticmethod
+    def pv_dbase_find(pvname, unique=False):
+        """Return databases for a given psname.
+
+        Used in SimPV with unique=True to get the first pvname matching
+        database.
+        """
+        dbases = Simulation._find(pvname, Simulation._DBASES, unique=False)
+        if Simulation.PV_DATABASE_UNIQUE and len(dbases) > 1:
+            raise ValueError(
+                'Database for PV "{}" is not unique!'.format(pvname))
+
         return Simulation._find(pvname, Simulation._DBASES, unique)
+
+    # --- utility methods (used mainly in Simulator implementations) ---
+
+    @staticmethod
+    def pvnames(simulator=None):
+        """Return pvnames of registered SimPVs of a given simulator."""
+        if simulator is None:
+            return set(Simulation._SIMPVS.keys())
+        pvnames = set()
+        for pvobj, simuls in Simulation._SIMPVS:
+            for simul in simuls:
+                if simul == simulator:
+                    pvnames.add(pvobj.pvname)
+                    break
+        return pvnames
 
     @staticmethod
     def reset():
@@ -118,6 +137,18 @@ class Simulation:
         for simul in Simulation._SIMULS:
             simul.reset()
         Simulation._init()
+
+    @staticmethod
+    def find_simulators(pvname, unique=False):
+        """Return simulators for a given pvname."""
+        return Simulation._find(pvname, Simulation._SIMULS, unique)
+
+    @staticmethod
+    def update_simulators(pvname, **kwargs):
+        """Execute callback to update/synchronize simulator for pvname."""
+        _, simuls, *_ = Simulation._SIMPVS[pvname]
+        for simul in simuls:
+            simul.update(pvname, **kwargs)
 
     # --- private methods ---
 
@@ -131,21 +162,28 @@ class Simulation:
 
     @staticmethod
     def _find(pvname, itemlist, unique):
-        itemset = list()
+        set_ = list()
         for rege, item in zip(Simulation._REGEXP, itemlist):
             if rege.match(pvname):
-                itemset.append(item)
+                set_.append(item)
         try:
-            itemset = set(itemset)
+            set_ = set(set_)
         except TypeError:
             pass
 
-        if unique and len(itemset) > 1:
+        if unique and len(set_) > 1:
             # if unique and more than one item, raise exception.
             raise ValueError(
                 'Conflicting items for pvname "{}"'.format(pvname))
         if unique:
             # if unique and non-empty return item object,
-            return itemset.pop() if itemset else itemset
+            return set_.pop() if set_ else set_
 
-        return itemset
+        return set_
+
+    @staticmethod
+    def _pvnames_register(simulator, pvnames_regexp, dbase):
+        """Register simulator pvnames regular expressions."""
+        Simulation._REGEXP.append(_re.compile(pvnames_regexp))
+        Simulation._SIMULS.append(simulator)
+        Simulation._DBASES.append(dbase)

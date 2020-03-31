@@ -52,7 +52,7 @@ class Simulator(ABC):
     # --- abstract classes that subclasses MUST implement ---
 
     @abstractmethod
-    def init_pvname_dbase(self):
+    def callback_pv_dbase(self):
         """Return dict of pvname regular expression and database.
 
         This method is called when simulator is registered in simulation.
@@ -98,8 +98,8 @@ class Simulator(ABC):
     def values(self):
         """Return dict with pvnames and associated values of simulator."""
         vals = dict()
-        for pvname, pvobj in self._pvs.items():
-            vals[pvname] = pvobj.value
+        for pvname in self._pvs:
+            vals[pvname] = self.pv_value_get(pvname)
         return vals
 
     def pv_value_get(self, pvname):
@@ -110,19 +110,23 @@ class Simulator(ABC):
         """Set SimPV value without invoking simulator callback."""
         self._pvs[pvname].put_sim(value)
 
-    def __contains__(self, pvname):
-        """Return True if SimPV is in simulator."""
-        return pvname in self._pvs
+    def update(self, **kwargs):
+        """Update simulator."""
+        self.callback_update(**kwargs)
 
     def reset(self):
         """Reset simulator."""
         self._pvs = dict()
 
+    def __contains__(self, pvname):
+        """Return True if SimPV is in simulator."""
+        return pvname in self._pvs
+
     # --- private methods ---
 
-    # NOTE: not a _-private method but its use should be,
+    # NOTE: not a _-private method, but its use should be,
     # accessable only by friend class Simulation.
-    def simulation_pv_register(self, pvobj):
+    def callback_pv_register(self, pvobj):
         """Register SimPB.
 
         This method is be used solenely by Simulation class methods.
