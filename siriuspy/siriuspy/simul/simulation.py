@@ -28,20 +28,25 @@ class Simulation:
 
     @staticmethod
     def simulator_register(simulator):
-        """Register simulator in simulation."""
-        pvname_regexp = simulator.callback_pv_dbase()
-        for regexp, dbase in pvname_regexp.items():
-            Simulation._pvnames_register(simulator, regexp, dbase)
+        """Register simulator(s) in simulation."""
+        if not isinstance(simulator, (tuple, list, set)):
+            simulator = (simulator, )
+        for sim in simulator:
+            pvname_regexp = sim.callback_pv_dbase()
+            for regexp, dbase in pvname_regexp.items():
+                Simulation._pvnames_register(sim, regexp, dbase)
 
     @staticmethod
     def simulator_unregister(simulator):
-        """Unregister simulator."""
+        """Unregister simulator(s)."""
+        if not isinstance(simulator, (tuple, list, set)):
+            simulator = (simulator, )
         regexp, sims, dbases = list(), list(), list()
         for rege, sim, dbas in zip(
                 Simulation._REGEXP,
                 Simulation._SIMULS,
                 Simulation._DBASES):
-            if sim != simulator:
+            if sim not in simulator:
                 regexp.append(rege)
                 sims.append(sim)
                 dbases.append(dbas)

@@ -1,11 +1,8 @@
 """Base Simulator."""
 
-import re as _re
 import random as _random
 from abc import ABC, abstractmethod
 import numpy as _np
-
-from .simulation import Simulation as _Simulation
 
 
 class Simulator(ABC):
