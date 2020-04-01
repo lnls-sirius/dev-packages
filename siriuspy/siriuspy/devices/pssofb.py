@@ -315,11 +315,11 @@ class PSApplySOFB(_Devices):
         return values
 
     def _get_kick(self, current):
-        strength = _np.array(len(current))
+        strength = _np.zeros(len(current))
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = current[index]
-            stren = sconv.conv_current_2_strength(current=value)
+            stren = sconv.conv_current_2_strength(currents=value)
             strength[index] = stren
         return strength
 
