@@ -4,6 +4,8 @@ import random as _random
 from abc import ABC, abstractmethod
 import numpy as _np
 
+from . import DBASE_DEFAULT as _DBASE_DEF
+
 
 class Simulator(ABC):
     """Simulator.
@@ -35,7 +37,7 @@ class Simulator(ABC):
             value_new = value * rnd_rel + rnd_abs
             return value_new
 
-    _DBASE_DEFAULT = {'type': 'float', 'value': 0}
+    _DBASE_DEFAULT = _DBASE_DEF
 
     def __init__(self, dbase_default=None):
         """."""
