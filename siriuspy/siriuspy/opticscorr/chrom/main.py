@@ -14,7 +14,7 @@ from ...pwrsupply.csdev import Const as _PSConst
 from ...timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
-from ...optics.opticscorr import OpticsCorr as _OpticsCorr
+from ..opticscorr import OpticsCorr as _OpticsCorr
 from ..csdev import Const as _Const, \
     get_chrom_database as _get_database
 from ..utils import HandleConfigNameFile as _HandleConfigNameFile
