@@ -51,6 +51,7 @@ class SimPSTypeModel(_Simulator):
         """
         self._pstype = pstype
         self._psmodel = psmodel
+        self._regexp_pv_check = _re.compile(self._regexp_pvname)
 
         # call base class constructor
         super().__init__()
@@ -82,6 +83,10 @@ class SimPSTypeModel(_Simulator):
         pstype = _PSSearch.conv_psname_2_pstype(psname)
         psmodel = _PSSearch.conv_psname_2_psmodel(psname)
         return pstype, psmodel
+
+    def pv_check(self, pvname):
+        """Check if SimPV belongs to simlutaor - overrides base method."""
+        return self._regexp_pv_check.match(pvname)
 
     # --- base class abstract methods ---
 

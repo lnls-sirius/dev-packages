@@ -21,18 +21,15 @@ class _SimFactoryData:
         }
 
     @staticmethod
-    def _simpstypemodel(simclass, pvname, check=False):
-        """Check/Create simulator for SimPSTypeModel."""
-        # Check branch
-        if check:
-            regexp = '.*:PS-.*' if simclass is _SimPSTypeModel else '.*:PU-.*'
-            return _re.compile(regexp).match(pvname)
+    def _simpstypemodel(simclass, pvname,):
+        """Create simulator for Sim(PS|PU)TypeModel and return check."""
         # Create branch
         kwargs = _split_name(pvname)
         devname = kwargs['device_name']
         typemodel = simclass.conv_psname2typemodel(devname)
         simulator = simclass(*typemodel)
-        return simulator
+        pv_in_sim = simulator.pv_check(pvname)
+        return simulator, pv_in_sim
 
 
 class SimFactory(_SimFactoryData):
@@ -40,7 +37,7 @@ class SimFactory(_SimFactoryData):
 
     @staticmethod
     def create(pvnames, sims=None):
-        """Add simulators to set of factories.
+        """Create or add simulators to the oringinal set.
 
         Parameters
         pvnames : iterable with devnames and/or pvnames.
@@ -64,12 +61,12 @@ class SimFactory(_SimFactoryData):
         simtypes = {type(sim) for sim in sims}
         for simclass, func in _SimFactoryData.SIMCLASS_2_CREATE.items():
             method = getattr(_SimFactoryData, func)
-            if method(simclass, pvname, True):
+            # create simulator
+            sim, pv_in_sim = method(simclass, pvname)
+            if pv_in_sim:
                 if simclass in simtypes:
                     # simulator type already in set
                     return True
-                # creation simulator
-                sim = method(simclass, pvname)
                 # add simulator to set
                 sims.add(sim)
                 simtypes.add(simclass)
