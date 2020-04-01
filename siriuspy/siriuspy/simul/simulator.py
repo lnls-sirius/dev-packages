@@ -101,6 +101,14 @@ class Simulator(ABC):
             vals[pvname] = self.pv_value_get(pvname)
         return vals
 
+    def pv_check(self, pvname):
+        """Check if SimPV belongs to simulator."""
+        dbases = self.callback_pv_dbase()
+        for regexp in dbases:
+            if regexp.match(pvname):
+                return True
+        return False
+
     def pv_value_get(self, pvname):
         """Get SimPV value without invoking simulator callback."""
         return self._pvs[pvname].get_sim()
