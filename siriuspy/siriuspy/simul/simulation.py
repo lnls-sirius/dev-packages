@@ -119,8 +119,11 @@ class Simulation:
         if Simulation.PV_DATABASE_UNIQUE and len(dbases) > 1:
             raise ValueError(
                 'Database for PV "{}" is not unique!'.format(pvname))
-
-        return Simulation._find(pvname, Simulation._DBASES, unique)
+        if not dbases:
+            return None
+        if unique:
+            return dbases.pop()
+        return dbases
 
     # --- utility methods (used mainly in Simulator implementations) ---
 
@@ -155,6 +158,15 @@ class Simulation:
         _, sims, *_ = Simulation._SIMPVS[pvname]
         for sim in sims:
             sim.update(pvname, **kwargs)
+
+    @staticmethod
+    def check_pvname(pvname):
+        """Return True of pvname is registered in simulation."""
+        if Simulation.find_simulators(pvname, True):
+            return True
+        if Simulation.pv_find(pvname):
+            return True
+        return False
 
     # --- private methods ---
 

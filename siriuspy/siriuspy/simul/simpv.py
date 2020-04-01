@@ -4,11 +4,15 @@
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..epics.pv_fake import add_to_database as _add_to_database
 from ..epics.pv_fake import PVFake as _PVFake
+
+from . import DBASE_DEFAULT as _DBASE_DEF
 from .simulation import Simulation as _Simulation
 
 
 class SimPV(_PVFake):
     """."""
+
+    DBASE_DEFAULT = _DBASE_DEF
 
     def __new__(cls, pvname, *args, **kwargs):
         """Return existing SimPV object or return a new one."""
@@ -31,8 +35,8 @@ class SimPV(_PVFake):
         pvname = _SiriusPVName(pvname)
 
         # get pv database
-        dbase = dict()
-        dbase[pvname] = _Simulation.pv_dbase_find(pvname, unique=True)
+        db_pv = _Simulation.pv_dbase_find(pvname, unique=True)
+        dbase = {pvname: db_pv if db_pv else SimPV.DBASE_DEFAULT}
 
         # init pv database
         _add_to_database(dbase, '')

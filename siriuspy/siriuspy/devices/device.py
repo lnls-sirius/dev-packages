@@ -111,8 +111,8 @@ class Device:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
-            simul = _Simulation.find_simulators(pvname, True)
-            pvclass = _PVSim if simul else _PV
+            in_sim = _Simulation.check_pvname(pvname)
+            pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
                 pvname, auto_monitor=auto_monitor,
                 connection_timeout=Device.CONNECTION_TIMEOUT)
