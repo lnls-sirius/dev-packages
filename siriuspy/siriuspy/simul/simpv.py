@@ -17,6 +17,8 @@ class SimPV(_PVFake):
     def __new__(cls, pvname, *args, **kwargs):
         """Return existing SimPV object or return a new one."""
         _, _ = args, kwargs  # throwaway arguments
+        if not _Simulation.register_state_get():
+            raise Exception('Simulation registration of SimPVs is Off!')
         instance = _Simulation.pv_find(pvname)
         if not instance:
             instance = super(SimPV, cls).__new__(cls)

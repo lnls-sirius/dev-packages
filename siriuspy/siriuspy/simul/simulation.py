@@ -19,7 +19,11 @@ class Simulation:
 
     # TODO: make class thread-safe!
 
+    # pvnames can math only one regexp/simulator?
     PV_DATABASE_UNIQUE = True
+
+    # stores register on/off state
+    _register_state = True
 
     _REGEXP = list()  # pvname regular expression
     _SIMULS = list()  # registered simulators
@@ -54,6 +58,21 @@ class Simulation:
                 dbases.append(dbas)
         Simulation._REGEXP, Simulation._SIMULS, Simulation._DBASES = \
             regexp, sims, dbases
+
+    @staticmethod
+    def register_state_get():
+        """Return registration state."""
+        return Simulation._register_state
+
+    @staticmethod
+    def register_state_set_on():
+        """Set simulation to accept registration of SimPVs."""
+        Simulation._register_state = True
+
+    @staticmethod
+    def register_state_set_off():
+        """Set simulation not to accept registration of SimPVs."""
+        Simulation._register_state = False
 
     # --- PV methods (used mainly in SimPV methods) ---
 
@@ -169,8 +188,9 @@ class Simulation:
     def pv_check(pvname):
         """Return True of SimPV is registered in simulation."""
         return \
-            Simulation.simulator_find(pvname, True) or \
-            Simulation.pv_find(pvname)
+            Simulation._register_state and (
+                Simulation.simulator_find(pvname, True) or
+                Simulation.pv_find(pvname))
 
     # --- private methods ---
 
