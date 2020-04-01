@@ -25,9 +25,6 @@ class PSProperty(_DevicesSync):
         # get devnames
         devnames = PSProperty._get_devnames(devname)
 
-        # # get properties
-        # properties = self._get_propties(devname)
-
         # call base class constructor
         super().__init__(
             devnames=devnames, propty_sync=[propty])
