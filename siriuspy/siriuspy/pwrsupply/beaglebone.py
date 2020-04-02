@@ -19,8 +19,8 @@ from ..devices import StrengthConv as _StrengthConv
 from .data import PSData as _PSData
 from .pru import PRU as _PRU
 from .prucontroller import PRUController as _PRUController
-from .fields import Constant as _Constant
-from .fields import Setpoint as _Setpoint
+from .pscreaders import Constant as _Constant
+from .pscreaders import Setpoint as _Setpoint
 from .psmodel import PSModelFactory as _PSModelFactory
 
 
@@ -246,10 +246,14 @@ class BBBFactory:
                                             psmodel, devices,
                                             processing=False,
                                             scanning=False,
-                                            freq=freq)
+                                            freq=freq,
+                                            init=False)
+
+            # init bsmp comunication and class attributes
+            pru_controller.bsmp_init_communication()
 
             psname2dev = dict()
-            fields, functions = dict(), dict()
+            readers, writers = dict(), dict()
 
             for device in devices:
 
@@ -266,12 +270,12 @@ class BBBFactory:
                 setpoints = BBBFactory._build_setpoints_dict(
                     (device, ), database)
 
-                # build fields and functions dicts
-                _fields, _functions = BBBFactory._build_fields_functions_dict(
+                # build readers and writers dicts
+                _readers, _writers = BBBFactory._build_fields_functions_dict(
                     dbase, psmodel, setpoints, (device, ), database,
                     pru_controller)
-                fields.update(_fields)
-                functions.update(_functions)
+                readers.update(_readers)
+                writers.update(_writers)
 
                 # build device_ids dict
                 psname2dev[psname] = dev_id
@@ -281,7 +285,7 @@ class BBBFactory:
 
             # build controller
             controller = psmodel.controller(
-                fields, functions, pru_controller, psname2dev)
+                readers, writers, pru_controller, psname2dev)
 
             # add controller to dictionary
             for device in devices:
@@ -351,29 +355,29 @@ class BBBFactory:
     @staticmethod
     def _build_fields_functions_dict(dbase, model, setpoints, devices,
                                      database, pru_controller):
-        functions = dict()
-        fields = dict()
+        writers = dict()
+        readers = dict()
         for field in database:
             if _Setpoint.match(field):
-                functions.update(BBBFactory._get_functions(
+                writers.update(BBBFactory._get_functions(
                     model, field, devices, setpoints, pru_controller))
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
-                    fields[pvname] = setpoints[pvname]
+                    readers[pvname] = setpoints[pvname]
             elif _Constant.match(field) and field != 'Version-Cte' and \
                     not field.startswith('Param'):
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
-                    fields[pvname] = _Constant(database[field]['value'])
+                    readers[pvname] = _Constant(database[field]['value'])
             else:
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
-                    fields[pvname] = model.field(
+                    readers[pvname] = model.field(
                         dev_id, field, pru_controller)
-        return fields, functions
+        return readers, writers
 
     @staticmethod
     def _get_functions(model, field, devices,

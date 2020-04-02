@@ -1,6 +1,8 @@
-"""Define fields that map epics PVs to bsmp entity ids or calculation methods.
+"""Reader Classes.
 
-These classes implement a common interface that exposes the `read` method.
+Define classes whose objects are mapped from epics PVs to
+power supply controllers properties or functions. These classes
+implement a common interface that exposes the `read` method.
 """
 import re as _re
 
@@ -108,7 +110,7 @@ class TimestampUpdate:
         return timestamp
 
 
-class PRUProperty:
+class PRUCProperty:
     """Read a PRU property."""
 
     def __init__(self, pru_controller, pru_property):

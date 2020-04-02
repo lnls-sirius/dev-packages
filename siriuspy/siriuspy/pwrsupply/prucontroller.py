@@ -46,7 +46,8 @@ class PRUController:
                  devices,
                  processing=False,
                  scanning=False,
-                 freq=None):
+                 freq=None,
+                 init=True):
         """Init."""
         # --- Init structures ---
 
@@ -106,7 +107,8 @@ class PRUController:
         self._scanning = scanning
 
         # starts communications
-        self._bsmp_init_communication()
+        if init:
+            self.bsmp_init_communication()
 
     # --- properties to read and set controller state and access functions ---
 
@@ -336,6 +338,43 @@ class PRUController:
         # process first operation in queue, if any.
         self._queue.process()
 
+    def bsmp_init_communication(self):
+        """."""
+        # --- BSMP communication ---
+
+        print()
+        print('PRUController: bsmp initialization')
+        # init time interval
+        time0 = _time()
+
+        # reset power supply controllers (contains first BSMP comm)
+        self._bsmp_reset_udc()
+
+        # update state of PRUController from ps controller
+        self._bsmp_init_update()
+
+        # time interval
+        time1 = _time()
+        print('TIMING bsmp init [{:.3f} ms]\n'.format(
+            1000*(time1 - time0)))
+
+        # --- Threads ---
+
+        print('PRUController: scan and process threads initialization')
+        print()
+
+        # define process thread
+        self._thread_process = _Thread(target=self._loop_process, daemon=True)
+
+        # define scan thread
+        self._dev_idx_last_scanned = \
+            len(self._device_ids)-1  # the next will be the first bsmp dev
+        self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
+
+        # after all initializations, threads are started
+        self._running = True
+        self._thread_process.start()
+        self._thread_scan.start()
     # --- private methods: initializations ---
 
     @staticmethod
@@ -438,44 +477,6 @@ class PRUController:
                                   'non-consecutive group ids!'))
 
     # --- private methods: BSMP UART communications ---
-
-    def _bsmp_init_communication(self):
-        """."""
-        # --- BSMP communication ---
-
-        print()
-        print('PRUController: bsmp initialization')
-        # init time interval
-        time0 = _time()
-
-        # reset power supply controllers (contains first BSMP comm)
-        self._bsmp_reset_udc()
-
-        # update state of PRUController from ps controller
-        self._bsmp_init_update()
-
-        # time interval
-        time1 = _time()
-        print('TIMING bsmp init [{:.3f} ms]\n'.format(
-            1000*(time1 - time0)))
-
-        # --- Threads ---
-
-        print('PRUController: scan and process threads initialization')
-        print()
-
-        # define process thread
-        self._thread_process = _Thread(target=self._loop_process, daemon=True)
-
-        # define scan thread
-        self._dev_idx_last_scanned = \
-            len(self._device_ids)-1  # the next will be the first bsmp dev
-        self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
-
-        # after all initializations, threads are started
-        self._running = True
-        self._thread_process.start()
-        self._thread_scan.start()
 
     def _bsmp_reset_udc(self):
 

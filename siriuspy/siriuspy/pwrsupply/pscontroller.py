@@ -10,6 +10,7 @@ class PSController:
     """
 
     _ignored_fields = {
+        # these are fields managed in BeagleBone class objects.
         'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
         'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
         'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
@@ -17,16 +18,19 @@ class PSController:
 
     def __init__(self, readers, functions,
                  pru_controller, psname2dev):
-        """Create class properties."""
+        """Initialize PS controller.
+
+        readers : objects from classes in fields module that are responsible
+                  for reading power supply parameters
+        functions : objects from classes in functions
+
+        """
         self._readers = readers
-        self._functions = functions
+        self._writers = functions
         self._pru_controller = pru_controller
         self._psname2dev = psname2dev
-
-        self._fields = set()
-        for name in self._readers:
-            split = name.split(':')
-            self._fields.add(split[-1])
+        self._fields = self._get_fields()
+        self._fields_not_ignored = self._fields - self._ignored_fields
         self._init_setpoints()
 
     @property
@@ -54,11 +58,9 @@ class PSController:
         raise AttributeError('Could not find reader for "{}"'.format(field))
 
     def read_all_fields(self, device_name):
-        """Read all fields value from device."""
+        """Read non-ignored-field values from device."""
         values = dict()
-        for field in self._fields:
-            if field in PSController._ignored_fields:
-                continue
+        for field in self._fields_not_ignored:
             pvname = device_name + ':' + field
             value = self.read(device_name, field)
             values[pvname] = value
@@ -67,8 +69,8 @@ class PSController:
     def write(self, device_name, field, value):
         """Write value to pv."""
         pvname = device_name + ':' + field
-        if pvname in self._functions:
-            self._functions[pvname].execute(value)
+        if pvname in self._writers:
+            self._writers[pvname].execute(value)
 
     def check_connected(self, device_name):
         """Check if device is connected."""
@@ -91,11 +93,19 @@ class PSController:
                 if rdr is None:
                     raise AttributeError(
                         'Could not find reader for "{}"'.format(rb_field))
-                value = rdr.read()
-                if key.endswith('OpMode-Sel'):
-                    if value is not None:
-                        value = 0 if value < 3 else value - 3
-                reader.apply(value)
+                # TODO: Uncomment !!!
+                # value = rdr.read()
+                # if key.endswith('OpMode-Sel'):
+                #     if value is not None:
+                #         value = 0 if value < 3 else value - 3
+                # reader.apply(value)
+
+    def _get_fields(self):
+        fields = set()
+        for name in self._readers:
+            split = name.split(':')
+            fields.add(split[-1])
+        return fields
 
     @staticmethod
     def _get_readback_field(field):
@@ -118,10 +128,10 @@ class StandardPSController(PSController):
     def write(self, device_name, field, value):
         """Override write method."""
         pvname = device_name + ':' + field
-        if pvname not in self._functions:
+        if pvname not in self._writers:
             return
         if field == 'OpMode-Sel':
-            writer = self._functions[pvname]
+            writer = self._writers[pvname]
             self._set_opmode(writer, value)
         elif field in StandardPSController._siggen_parms:
             idx = StandardPSController._siggen_parms.index(field)
@@ -130,16 +140,16 @@ class StandardPSController(PSController):
                 values[idx:] = value
             else:
                 values[idx] = value
-            self._functions[pvname].execute(values)
+            self._writers[pvname].execute(values)
         elif field == 'PwrState-Sel':
             # NOTE: Should we set Current-SP to zero at Power On ? This may be
             # generating inconsistent behaviour when loading configuration in
             # HLA...
             # if self._readers[device_name + ':PwrState-Sel'].value == 0:
             #     self._readers[device_name + ':Current-SP'].apply(0.0)
-            self._functions[pvname].execute(value)
+            self._writers[pvname].execute(value)
         else:
-            self._functions[pvname].execute(value)
+            self._writers[pvname].execute(value)
 
     def _set_opmode(self, writer, op_mode):
         writer.execute(op_mode)
