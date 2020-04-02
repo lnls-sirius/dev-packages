@@ -14,25 +14,32 @@ from .simulator import Simulator as _Simulator
 # OpMode-* should be added!
 
 class SimPSTypeModel(_Simulator):
-    """Power supply current simulator."""
+    """Power supply simulator."""
 
-    _absolute_fluctuation = 0.001  # [A]
-
-    # regexp used to determine setpoint PVs
-    _setpoint_regexp = _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+    # prefix for regexp used in pvname regexps
+    # NOTE: this can be overriden in subclasses.
+    _regexp_pvname = '.*:PS-.*'
 
     # these are PS properties whose correlations this simulator takes
     # into account.
-    _properties = (
+    # NOTE: this can be overriden in subclasses.
+    _properties_base = (
         'PwrState-Sel', 'PwrState-Sts',
         'OpMode-Sel', 'OpMode-Sts',
+        )
+
+    _properties = _properties_base + (
         'Current-SP', 'Current-RB',
         'CurrentRef-Mon', 'Current-Mon',
+        # FBP-specific (added only if PS is of FBP pstype!)
         'SOFBCurrent-SP', 'SOFBCurrent-RB',
         'SOFBCurrentRef-Mon', 'SOFBCurrent-Mon',
         )
 
-    _absolute_fluctuation = 0.010  # [A]
+    # regexp used to determine setpoint PVs
+    _setpoint_regexp = _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+
+    _absolute_fluctuation = 0.001  # [A] or other subclass units
 
     def __init__(self, pstype, psmodel):
         """Initialize simulator.
@@ -44,6 +51,7 @@ class SimPSTypeModel(_Simulator):
         """
         self._pstype = pstype
         self._psmodel = psmodel
+        self._regexp_pv_check = _re.compile(self._regexp_pvname)
 
         # call base class constructor
         super().__init__()
@@ -76,6 +84,10 @@ class SimPSTypeModel(_Simulator):
         psmodel = _PSSearch.conv_psname_2_psmodel(psname)
         return pstype, psmodel
 
+    def pv_check(self, pvname):
+        """Check if SimPV belongs to simlutaor - overrides base method."""
+        return self._regexp_pv_check.match(pvname)
+
     # --- base class abstract methods ---
 
     def callback_pv_dbase(self):
@@ -84,8 +96,9 @@ class SimPSTypeModel(_Simulator):
         dbpvs = _get_database(self._psmodel, self._pstype)
         for propty in self._properties:
             if propty in dbpvs:
+                # NOTE: property is considered only if it is in dbase
                 dbase = dbpvs[propty]
-                regexp = '.*:' + propty
+                regexp = self._regexp_pvname + ':' + propty
                 regexp_dbase[regexp] = dbase
         return regexp_dbase
 
@@ -169,3 +182,13 @@ class SimPSTypeModel(_Simulator):
             self.pv_value_put(pvn, value)
 
         return True
+
+
+class SimPUTypeModel(SimPSTypeModel):
+    """Pulsed power supply simulator."""
+
+    _regexp_pvname = '.*:PU-.*'
+
+    _properties = SimPSTypeModel._properties_base + (
+        'Current-SP', 'Current-RB', 'Current-Mon',
+        )

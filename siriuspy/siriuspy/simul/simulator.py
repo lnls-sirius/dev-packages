@@ -1,11 +1,10 @@
 """Base Simulator."""
 
-import re as _re
 import random as _random
 from abc import ABC, abstractmethod
 import numpy as _np
 
-from .simulation import Simulation as _Simulation
+from . import DBASE_DEFAULT as _DBASE_DEF
 
 
 class Simulator(ABC):
@@ -38,7 +37,7 @@ class Simulator(ABC):
             value_new = value * rnd_rel + rnd_abs
             return value_new
 
-    _DBASE_DEFAULT = {'type': 'float', 'value': 0}
+    _DBASE_DEFAULT = _DBASE_DEF
 
     def __init__(self, dbase_default=None):
         """."""
@@ -101,6 +100,14 @@ class Simulator(ABC):
         for pvname in self._pvs:
             vals[pvname] = self.pv_value_get(pvname)
         return vals
+
+    def pv_check(self, pvname):
+        """Check if SimPV belongs to simulator."""
+        dbases = self.callback_pv_dbase()
+        for regexp in dbases:
+            if regexp.match(pvname):
+                return True
+        return False
 
     def pv_value_get(self, pvname):
         """Get SimPV value without invoking simulator callback."""

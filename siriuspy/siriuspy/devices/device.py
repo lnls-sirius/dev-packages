@@ -36,7 +36,7 @@ class Device:
         """Return simulator."""
         sims = set()
         for pvname in self.pvnames:
-            sims.update(_Simulation.find_simulators(pvname))
+            sims.update(_Simulation.simulator_find(pvname))
         return sims
 
     @property
@@ -111,8 +111,8 @@ class Device:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
             auto_monitor = not pvname.endswith('-Mon')
-            simul = _Simulation.find_simulators(pvname, True)
-            pvclass = _PVSim if simul else _PV
+            in_sim = _Simulation.pv_check(pvname)
+            pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
                 pvname, auto_monitor=auto_monitor,
                 connection_timeout=Device.CONNECTION_TIMEOUT)

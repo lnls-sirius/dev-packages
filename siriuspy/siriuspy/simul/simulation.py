@@ -17,7 +17,13 @@ class Simulation:
     SimPV is registered or when its state changes (register/get/put actions).
     """
 
+    # TODO: make class thread-safe!
+
+    # pvnames can math only one regexp/simulator?
     PV_DATABASE_UNIQUE = True
+
+    # stores register on/off state
+    _register_state = True
 
     _REGEXP = list()  # pvname regular expression
     _SIMULS = list()  # registered simulators
@@ -28,25 +34,45 @@ class Simulation:
 
     @staticmethod
     def simulator_register(simulator):
-        """Register simulator in simulation."""
-        pvname_regexp = simulator.callback_pv_dbase()
-        for regexp, dbase in pvname_regexp.items():
-            Simulation._pvnames_register(simulator, regexp, dbase)
+        """Register simulator(s) in simulation."""
+        if not isinstance(simulator, (tuple, list, set)):
+            simulator = (simulator, )
+        for sim in simulator:
+            pvname_regexp = sim.callback_pv_dbase()
+            for regexp, dbase in pvname_regexp.items():
+                Simulation._pvnames_register(sim, regexp, dbase)
 
     @staticmethod
     def simulator_unregister(simulator):
-        """Unregister simulator."""
+        """Unregister simulator(s)."""
+        if not isinstance(simulator, (tuple, list, set)):
+            simulator = (simulator, )
         regexp, sims, dbases = list(), list(), list()
         for rege, sim, dbas in zip(
                 Simulation._REGEXP,
                 Simulation._SIMULS,
                 Simulation._DBASES):
-            if sim != simulator:
+            if sim not in simulator:
                 regexp.append(rege)
                 sims.append(sim)
                 dbases.append(dbas)
         Simulation._REGEXP, Simulation._SIMULS, Simulation._DBASES = \
             regexp, sims, dbases
+
+    @staticmethod
+    def register_state_get():
+        """Return registration state."""
+        return Simulation._register_state
+
+    @staticmethod
+    def register_state_set_on():
+        """Set simulation to accept registration of SimPVs."""
+        Simulation._register_state = True
+
+    @staticmethod
+    def register_state_set_off():
+        """Set simulation not to accept registration of SimPVs."""
+        Simulation._register_state = False
 
     # --- PV methods (used mainly in SimPV methods) ---
 
@@ -60,7 +86,7 @@ class Simulation:
         if pvname in Simulation._SIMPVS:
             # return False if SimPV already registered.
             return False
-        sims = Simulation.find_simulators(pvname)
+        sims = set(Simulation.simulator_find(pvname))
         Simulation._SIMPVS[pvname] = (pvobj, sims)
         # execute simulators callback
         for sim in sims:
@@ -114,13 +140,16 @@ class Simulation:
         if Simulation.PV_DATABASE_UNIQUE and len(dbases) > 1:
             raise ValueError(
                 'Database for PV "{}" is not unique!'.format(pvname))
-
-        return Simulation._find(pvname, Simulation._DBASES, unique)
+        if not dbases:
+            return None
+        if unique:
+            return dbases.pop()
+        return dbases
 
     # --- utility methods (used mainly in Simulator implementations) ---
 
     @staticmethod
-    def pvnames(simulator=None):
+    def get_pvnames(simulator=None):
         """Return pvnames of registered SimPVs of a given simulator."""
         if simulator is None:
             return set(Simulation._SIMPVS.keys())
@@ -140,16 +169,28 @@ class Simulation:
         Simulation._init()
 
     @staticmethod
-    def find_simulators(pvname, unique=False):
-        """Return simulators for a given pvname."""
-        return Simulation._find(pvname, Simulation._SIMULS, unique)
+    def simulator_find(pvname, unique=False):
+        """Return simulators set for a given pvname."""
+        set_ = set()
+        for sim in Simulation._SIMULS:
+            if sim.pv_check(pvname):
+                set_.add(sim)
+        return set_.pop() if unique and set_ else set_
 
     @staticmethod
-    def update_simulators(pvname, **kwargs):
+    def simulator_update(pvname, **kwargs):
         """Execute callback to update/synchronize simulator for pvname."""
         _, sims, *_ = Simulation._SIMPVS[pvname]
         for sim in sims:
             sim.update(pvname, **kwargs)
+
+    @staticmethod
+    def pv_check(pvname):
+        """Return True of SimPV is registered in simulation."""
+        return \
+            Simulation._register_state and (
+                Simulation.simulator_find(pvname, True) or
+                Simulation.pv_find(pvname))
 
     # --- private methods ---
 
@@ -163,24 +204,18 @@ class Simulation:
 
     @staticmethod
     def _find(pvname, itemlist, unique):
-        set_ = list()
+        list_ = list()
         for rege, item in zip(Simulation._REGEXP, itemlist):
             if rege.match(pvname):
-                set_.append(item)
-        try:
-            set_ = set(set_)
-        except TypeError:
-            pass
+                list_.append(item)
 
-        if unique and len(set_) > 1:
-            # if unique and more than one item, raise exception.
+        # if unique and more than one item, raise exception.
+        if unique and len(list_) > 1:
             raise ValueError(
                 'Conflicting items for pvname "{}"'.format(pvname))
-        if unique:
-            # if unique and non-empty return item object,
-            return set_.pop() if set_ else set_
 
-        return set_
+        # return list
+        return list_.pop() if unique and list_ else list_
 
     @staticmethod
     def _pvnames_register(simulator, pvnames_regexp, dbase):
