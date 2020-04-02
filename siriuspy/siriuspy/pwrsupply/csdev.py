@@ -54,7 +54,7 @@ class ETypes(_csdev.ETypes):
               'FAC_2S_ACDC', 'FAC_2S_DCDC',
               'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
               'FAP', 'FAP_4P', 'FAP_2P2S',
-              'FBP_SOFB',
+              'FBP_FOFB',
               'Commercial',
               'FP')
     PWRSTATE_SEL = _csdev.ETypes.OFF_ON

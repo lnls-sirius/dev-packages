@@ -3,55 +3,13 @@ import numpy as _np
 
 from ..search import PSSearch as _PSSearch
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..pwrsupply.csdev import get_ps_sofbcurrent_propty_database as \
-    _get_sofb_db
 
 from . import Device as _Device
 from . import Devices as _Devices
 from . psconv import StrengthConv as _StrengthConv
 
 
-class _PSCorrSOFBSim(_Device):
-    """Simulated SOFB Device."""
-
-    # NOTE: This class is transparent when SIMULATED = False
-
-    SIMULATED = True
-
-    def __init__(self, devname, properties):
-        """."""
-        # call base class constructor
-        super().__init__(devname, properties=properties)
-
-    @property
-    def devname_first_udc(self):
-        """."""
-        raise NotImplementedError
-
-    def _get_fake_pvs_database(self):
-        dbase = _get_sofb_db()
-        prefix = self.devname_first_udc + ':'
-        return dbase, prefix
-
-    def __setitem__(self, propty, value):
-        """Set value of property."""
-        if '-SP' not in propty:
-            return
-        if self.SIMULATED:
-            # NOTE: this takes most of the execution time
-            pvobj = self._pvs[propty]
-            pvobj.value = value
-            pvobj = self._pvs[propty.replace('-SP', '-RB')]
-            pvobj.value = value
-            pvobj = self._pvs[propty.replace('-SP', 'Ref-Mon')]
-            pvobj.value = value
-            pvobj = self._pvs[propty.replace('-SP', '-Mon')]
-            pvobj.value = value
-        else:
-            super().__setitem__(propty, value)
-
-
-class PSCorrSOFB(_PSCorrSOFBSim):
+class PSCorrSOFB(_Device):
     """SOFB corrector device.
 
     Group SOFB setpoints of all corrector power supplies in a BeagleBone.
@@ -68,7 +26,8 @@ class PSCorrSOFB(_PSCorrSOFBSim):
         _curr_refmon,
         _curr_mon)
 
-    def __init__(self, devname, psnames_ch=None, psnames_cv=None):
+    def __init__(self,
+                 devname, psnames_ch=None, psnames_cv=None):
         """."""
         self._devname_orig = _SiriusPVName(devname)
 
@@ -77,13 +36,14 @@ class PSCorrSOFB(_PSCorrSOFBSim):
         if devname not in _PSSearch.get_psnames(filt):
             raise NotImplementedError(devname)
 
-        # get bbname and linked devices
+        # get bbbname and linked bsmp devices
         self._bbbname = _PSSearch.conv_psname_2_bbbname(devname)
         self._bsmpdevs = _PSSearch.conv_bbbname_2_bsmps(self._bbbname)
 
         # call base class constructor
         devname = self._bsmpdevs[0][0]
-        super().__init__(devname, properties=PSCorrSOFB._properties)
+        super().__init__(
+            devname, properties=PSCorrSOFB._properties)
 
         # get psnames and apply indices
         if psnames_ch is None or psnames_cv is None:
@@ -132,9 +92,9 @@ class PSCorrSOFB(_PSCorrSOFBSim):
 
     @property
     def current(self):
-        """Return current readback in SOFB order."""
-        # get readback
-        values = self[self._curr_rb]
+        """Return current Ref-Mon in SOFB order."""
+        # get refmon
+        values = self[self._curr_refmon]
 
         # trim values
         values = _np.array(values)
@@ -143,7 +103,7 @@ class PSCorrSOFB(_PSCorrSOFBSim):
 
     @current.setter
     def current(self, value):
-        """Set current setpoints in SOFB order."""
+        """Set current -SP in SOFB order."""
         # trim set value
         value = _np.array(value)
         idx_val = _np.where((value == value) & _np.not_equal(value, None))[0]
@@ -158,7 +118,7 @@ class PSCorrSOFB(_PSCorrSOFBSim):
 
     @property
     def current_sp(self):
-        """Return current setpoint in SOFB order."""
+        """Return current -SP in SOFB order."""
         # get setpoints
         values = self[self._curr_sp]
 
@@ -168,10 +128,10 @@ class PSCorrSOFB(_PSCorrSOFBSim):
         return values
 
     @property
-    def current_ref_mon(self):
-        """Return current refmon in SOFB order."""
-        # get refmon
-        values = self[self._curr_refmon]
+    def current_rb(self):
+        """Return current -RB in SOFB order."""
+        # get rb
+        values = self[self._curr_rb]
 
         # trim values
         values = _np.array(values)
@@ -180,8 +140,8 @@ class PSCorrSOFB(_PSCorrSOFBSim):
 
     @property
     def current_mon(self):
-        """Return current monitor in SOFB order."""
-        # get rmon
+        """Return current -Mon in SOFB order."""
+        # get mon
         values = self[self._curr_mon]
 
         # trim values
@@ -240,14 +200,17 @@ class PSApplySOFB(_Devices):
 
         # get devices
         devices, self._psnames_ch, self._psnames_cv = \
-            PSApplySOFB._get_devices(devname)
+            PSApplySOFB._get_pscorrsofb_devices(devname)
+
+        # strengthconv dictionaries
+        self._pstype_2_index, self._pstype_2_sconv = \
+            self._get_strenconv()
+
+        # add StrengthConv devices
+        devices += self._pstype_2_sconv.values()
 
         # call base class constructor
         super().__init__(devname, devices=devices)
-
-        # psconv objects
-        self._psconvs, self._pstype2psconv = \
-            self._get_psconvs()
 
     @property
     def psnames_ch(self):
@@ -265,6 +228,16 @@ class PSApplySOFB(_Devices):
         return len(self._psnames_ch) + len(self._psnames_cv)
 
     @property
+    def indices_ch(self):
+        """Return selection indices for horizontal correctors."""
+        return _np.arange(len(self._psnames_ch))
+
+    @property
+    def indices_cv(self):
+        """Return selection indices for vertical correctors."""
+        return _np.arange(len(self._psnames_ch), self.nr_correctors)
+
+    @property
     def current(self):
         """Return CurrentRef-Mon vector in SOFB order."""
         currents = self._get_current('current')
@@ -272,50 +245,86 @@ class PSApplySOFB(_Devices):
 
     @current.setter
     def current(self, value):
-        """Set current setpoints in SOFB order."""
+        """Set Current-SP vector in SOFB order."""
         value = _np.array(value)
         for corr in self.devices:
-            inds = corr.sofb_indices
-            current = value[inds]
-            corr.current = current
+            if isinstance(corr, PSCorrSOFB):
+                inds = corr.sofb_indices
+                current = value[inds]
+                corr.current = current
 
     @property
-    def current_ref_mon(self):
-        """Return CurrentRef-Mon vector in SOFB order."""
-        currents = self._get_current('current_ref_mon')
+    def current_sp(self):
+        """Return Current-SP vector in SOFB order."""
+        currents = self._get_current('current_sp')
+        return currents
+
+    @property
+    def current_rb(self):
+        """Return Current-RB vector in SOFB order."""
+        currents = self._get_current('current_rb')
         return currents
 
     @property
     def current_mon(self):
-        """Return CurrentRef-Mon vector in SOFB order."""
+        """Return Current-Mon vector in SOFB order."""
         currents = self._get_current('current_mon')
         return currents
 
-    # --- private methods ---
+    @property
+    def kick(self):
+        """Return correctors Ref-Mon kicks in SOFB order."""
+        current = self.current
+        strength = self._get_kick(current)
+        return strength
 
-    def _get_psconvs(self):
-        pstype2psconv = dict()
-        psconvs = []
-        for psname in self._psnames_ch + self._psnames_cv:
-            pstype = _PSSearch.conv_psname_2_pstype(psname)
-            if pstype in pstype2psconv:
-                conv = pstype2psconv[pstype]
-            else:
-                conv = _StrengthConv(
-                    psname, PSApplySOFB._dipole_propty)
-            psconvs.append(conv)
-        return psconvs, pstype2psconv
+    @kick.setter
+    def kick(self, value):
+        """Set correctors -SP kicks in SOFB order."""
+
+    @property
+    def kick_sp(self):
+        """Return correctors -SP kicks in SOFB order."""
+        current = self.current_sp
+        strength = self._get_kick(current)
+        return strength
+
+    @property
+    def kick_rb(self):
+        """Return correctors -RB kicks in SOFB order."""
+        current = self.current_rb
+        strength = self._get_kick(current)
+        return strength
+
+    @property
+    def kick_mon(self):
+        """Return correctors -Mon kicks in SOFB order."""
+        current = self.current_mon
+        strength = self._get_kick(current)
+        return strength
+
+    # --- private methods ---
 
     def _get_current(self, propty):
         values = _np.zeros(len(self._psnames_ch) + len(self._psnames_cv))
         for corr in self.devices:
-            inds = corr.sofb_indices
-            vals = getattr(corr, propty)
-            values[inds] = vals
+            if isinstance(corr, PSCorrSOFB):
+                inds = corr.sofb_indices
+                vals = getattr(corr, propty)
+                values[inds] = vals
         return values
 
+    def _get_kick(self, current):
+        strength = _np.zeros(len(current))
+        for pstype, index in self._pstype_2_index.items():
+            sconv = self._pstype_2_sconv[pstype]
+            value = current[index]
+            stren = sconv.conv_current_2_strength(currents=value)
+            strength[index] = stren
+        return strength
+
     @staticmethod
-    def _get_devices(devname):
+    def _get_pscorrsofb_devices(devname):
         # get ps names
         if devname == PSApplySOFB.DEVICES.SI:
             sec = 'SI'
@@ -325,10 +334,35 @@ class PSApplySOFB(_Devices):
         psnames = _PSSearch.get_psnames(filt)
         devices = dict()
         psnames_ch, psnames_cv = None, None
+        all_devices = list()
         for psname in psnames:
+            if psname in all_devices:
+                continue
             sofb_corr = PSCorrSOFB(psname, psnames_ch, psnames_cv)
+            all_devices += [dev[0] for dev in sofb_corr.bsmpdevs]
             psnames_ch, psnames_cv = sofb_corr.psnames_ch, sofb_corr.psnames_cv
             devname = sofb_corr.devname_first_udc
             if devname not in devices:
                 devices[devname] = sofb_corr
         return list(devices.values()), psnames_ch, psnames_cv
+
+    def _get_strenconv(self):
+        # 1. create pstype to StrengthConv dictionary.
+        # 2. create pstype to corrector index dictionnary.
+        pstype_2_index = dict()
+        pstype_2_sconv = dict()
+        for i, psname in enumerate(self._psnames_ch + self._psnames_cv):
+            pstype = _PSSearch.conv_psname_2_pstype(psname)
+            if pstype not in pstype_2_index:
+                pstype_2_index[pstype] = []
+            pstype_2_index[pstype].append(i)
+            if pstype not in pstype_2_sconv:
+                sconv = _StrengthConv(
+                    psname, PSApplySOFB._dipole_propty)
+                pstype_2_sconv[pstype] = sconv
+
+        # convert index to numpy array
+        for pstype in pstype_2_index:
+            pstype_2_index[pstype] = _np.array(pstype_2_index[pstype])
+
+        return pstype_2_index, pstype_2_sconv
