@@ -57,10 +57,12 @@ def get_chrom_database(acc):
                       'hilim': 10, 'lolim': -10, 'high': 10,
                       'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromX-RB': {'type': 'float', 'value': 0, 'prec': 6},
+        'ChromX-Mon': {'type': 'float', 'value': 0, 'prec': 6},
         'ChromY-SP': {'type': 'float', 'value': 0, 'prec': 6,
                       'hilim': 10, 'lolim': -10, 'high': 10,
                       'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromY-RB': {'type': 'float', 'value': 0, 'prec': 6},
+        'ChromY-Mon': {'type': 'float', 'value': 0, 'prec': 6},
 
         'ApplyDelta-Cmd': {'type': 'int', 'value': 0},
 
@@ -130,12 +132,18 @@ def get_tune_database(acc):
         'DeltaTuneX-RB': {'type': 'float', 'value': 0, 'prec': 6,
                           'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
                           'hihi': 5, 'lolo': -5},
+        'DeltaTuneX-Mon': {'type': 'float', 'value': 0, 'prec': 6,
+                           'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                           'hihi': 5, 'lolo': -5},
         'DeltaTuneY-SP': {'type': 'float', 'value': 0, 'prec': 6,
                           'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
                           'hihi': 5, 'lolo': -5},
         'DeltaTuneY-RB': {'type': 'float', 'value': 0, 'prec': 6,
                           'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
                           'hihi': 5, 'lolo': -5},
+        'DeltaTuneY-Mon': {'type': 'float', 'value': 0, 'prec': 6,
+                           'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                           'hihi': 5, 'lolo': -5},
 
         'ApplyDelta-Cmd': {'type': 'int', 'value': 0},
 

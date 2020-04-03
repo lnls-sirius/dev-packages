@@ -39,7 +39,7 @@ class App(_Callback):
             self._sfams = _Const.SI_SFAMS_CHROMCORR
 
         self._chrom_sp = [0, 0]
-        self._chrom_rb = [0, 0]
+        self._chrom_mon = [0, 0]
 
         self._apply_corr_cmd_count = 0
         self._config_ps_cmd_count = 0
@@ -252,11 +252,13 @@ class App(_Callback):
         status = False
         if reason == 'ChromX-SP':
             self._chrom_sp[0] = value
+            self.run_callbacks('ChromX-RB', value)
             self._calc_sl()
             status = True
 
         elif reason == 'ChromY-SP':
             self._chrom_sp[1] = value
+            self.run_callbacks('ChromY-RB', value)
             self._calc_sl()
             status = True
 
@@ -366,8 +368,8 @@ class App(_Callback):
         return [True, [config_name, nom_matrix, nom_sl, nom_chrom]]
 
     def _calc_sl(self):
-        delta_chromx = self._chrom_sp[0]-self._chrom_rb[0]
-        delta_chromy = self._chrom_sp[1]-self._chrom_rb[1]
+        delta_chromx = self._chrom_sp[0]-self._chrom_mon[0]
+        delta_chromy = self._chrom_sp[1]-self._chrom_mon[1]
 
         method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional \
@@ -479,9 +481,9 @@ class App(_Callback):
             sfam_deltasl[fam_idx] = \
                 self._sfam_sl_rb[fam] - self._sfam_nomsl[fam]
 
-        self._chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
-        self.run_callbacks('ChromX-RB', self._chrom_rb[0])
-        self.run_callbacks('ChromY-RB', self._chrom_rb[1])
+        self._chrom_mon = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('ChromX-Mon', self._chrom_mon[0])
+        self.run_callbacks('ChromY-Mon', self._chrom_mon[1])
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSConst.PwrStateSts.On:

@@ -246,11 +246,13 @@ class App(_Callback):
         status = False
         if reason == 'DeltaTuneX-SP':
             self._delta_tunex = value
+            self.run_callbacks('DeltaTuneX-RB', value)
             self._calc_deltakl()
             status = True
 
         elif reason == 'DeltaTuneY-SP':
             self._delta_tuney = value
+            self.run_callbacks('DeltaTuneY-RB', value)
             self._calc_deltakl()
             status = True
 
@@ -425,10 +427,11 @@ class App(_Callback):
             self._delta_tunex = 0
             self._delta_tuney = 0
             self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
+            self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
             self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
-            delta_tunex, delta_tuney = self._estimate_current_deltatune()
-            self.run_callbacks('DeltaTuneX-RB', delta_tunex)
-            self.run_callbacks('DeltaTuneY-RB', delta_tuney)
+            self.run_callbacks('DeltaTuneY-RB', self._delta_tuney)
+
+            self._estimate_current_deltatune()
 
             self.run_callbacks('Log-Mon', 'Updated KL references.')
         else:
@@ -441,7 +444,10 @@ class App(_Callback):
             fam_idx = self._qfams.index(fam)
             qfam_deltakl[fam_idx] = \
                 self._qfam_kl_rb[fam] - self._qfam_refkl[fam]
-        return self._opticscorr.calculate_opticsparam(qfam_deltakl)
+        delta_tunex, delta_tuney = \
+            self._opticscorr.calculate_opticsparam(qfam_deltakl)
+        self.run_callbacks('DeltaTuneX-Mon', delta_tunex)
+        self.run_callbacks('DeltaTuneY-Mon', delta_tuney)
 
     def _config_ps(self):
         opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
@@ -515,11 +521,8 @@ class App(_Callback):
         if value is None:
             return
         fam = _SiriusPVName(pvname).dev
-
         self._qfam_kl_rb[fam] = value
-        delta_tunex, delta_tuney = self._estimate_current_deltatune()
-        self.run_callbacks('DeltaTuneX-RB', delta_tunex)
-        self.run_callbacks('DeltaTuneY-RB', delta_tuney)
+        self._estimate_current_deltatune()
 
     def _callback_qfam_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSConst.PwrStateSts.On:
