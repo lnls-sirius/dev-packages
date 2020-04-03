@@ -15,8 +15,7 @@ from ...timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from ..opticscorr import OpticsCorr as _OpticsCorr
-from ..csdev import Const as _Const, \
-    get_chrom_database as _get_database
+from ..csdev import Const as _Const, get_chrom_database as _get_database
 from ..utils import HandleConfigNameFile as _HandleConfigNameFile
 
 
@@ -33,11 +32,11 @@ class App(_Callback):
         """Class constructor."""
         super().__init__()
         self._pvs_database = _get_database(acc.upper())
-        self._ACC = acc.upper()
-        if self._ACC == 'BO':
-            self._SFAMS = _Const.BO_SFAMS_CHROMCORR
-        elif self._ACC == 'SI':
-            self._SFAMS = _Const.SI_SFAMS_CHROMCORR
+        self._acc = acc.upper()
+        if self._acc == 'BO':
+            self._sfams = _Const.BO_SFAMS_CHROMCORR
+        elif self._acc == 'SI':
+            self._sfams = _Const.SI_SFAMS_CHROMCORR
 
         self._chrom_sp = [0, 0]
         self._chrom_rb = [0, 0]
@@ -53,7 +52,7 @@ class App(_Callback):
         self._sfam_check_ctrlmode_mon = dict()
         self._lastcalc_sl = dict()
         self._sfam_sl_rb = dict()
-        for fam in self._SFAMS:
+        for fam in self._sfams:
             self._sfam_check_connection[fam] = 0
             self._sfam_check_pwrstate_sts[fam] = 0
             self._sfam_check_opmode_sts[fam] = -1
@@ -61,10 +60,11 @@ class App(_Callback):
             self._lastcalc_sl[fam] = 0
             self._sfam_sl_rb[fam] = 0
 
-        if self._ACC == 'SI':
+        if self._acc == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
             self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
+
             self._config_timing_cmd_count = 0
             self._timing_check_config = 9*[0]
         else:
@@ -75,7 +75,7 @@ class App(_Callback):
         # Get focusing and defocusing families
         sfam_focusing = []
         sfam_defocusing = []
-        for fam in self._SFAMS:
+        for fam in self._sfams:
             if 'SF' in fam:
                 sfam_focusing.append(fam)
             else:
@@ -84,9 +84,9 @@ class App(_Callback):
         sfam_defocusing = tuple(sfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
-        self.cn_handler = _HandleConfigNameFile(self._ACC, 'chrom')
+        self.cn_handler = _HandleConfigNameFile(self._acc, 'chrom')
         self.cdb_client = _ConfigDBClient(
-            config_type=self._ACC.lower()+'_chromcorr_params')
+            config_type=self._acc.lower()+'_chromcorr_params')
         [done, corrparams] = self._get_corrparams()
         if done:
             self._config_name = corrparams[0]
@@ -94,7 +94,7 @@ class App(_Callback):
             self._sfam_nomsl = corrparams[2]
             self._nomchrom = corrparams[3]
             self._opticscorr = _OpticsCorr(
-                magnetfams_ordering=self._SFAMS,
+                magnetfams_ordering=self._sfams,
                 nominal_matrix=self._nominal_matrix,
                 nominal_intstrengths=self._sfam_nomsl,
                 nominal_opticsparam=self._nomchrom,
@@ -113,15 +113,15 @@ class App(_Callback):
         self._sfam_opmode_sts_pvs = dict()
         self._sfam_ctrlmode_mon_pvs = dict()
 
-        for fam in self._SFAMS:
-            pss = _SiriusPVName(_vaca_prefix+self._ACC+'-Fam:PS-'+fam)
+        for fam in self._sfams:
+            pss = _SiriusPVName(_vaca_prefix+self._acc+'-Fam:PS-'+fam)
             self._sfam_sl_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name='SL', propty_suffix='SP'),
                 connection_timeout=0.05)
             self._sfam_sl_rb_pvs[fam] = _PV(
                 pss.substitute(propty_name='SL', propty_suffix='RB'),
                 callback=self._callback_estimate_chrom,
-                connection_callback=self._connection_callback_sfam_sl_rb,
+                connection_callback=self._callback_conn_sfam_sl_rb,
                 connection_timeout=0.05)
 
             self._sfam_pwrstate_sel_pvs[fam] = _PV(
@@ -146,80 +146,75 @@ class App(_Callback):
                 connection_timeout=0.05)
 
         # Connect to Timing
-        if self._ACC == 'SI':
-            SEXTS_TRIG = 'SI-Glob:TI-Mags-Sexts'
+        if self._acc == 'SI':
+            sexts_trig = 'SI-Glob:TI-Mags-Sexts'
             self._timing_sexts_state_sel = _PV(
-                _vaca_prefix+SEXTS_TRIG+':State-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+sexts_trig+':State-Sel', connection_timeout=0.05)
             self._timing_sexts_state_sts = _PV(
-                _vaca_prefix+SEXTS_TRIG+':State-Sts',
+                _vaca_prefix+sexts_trig+':State-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_sexts_polarity_sel = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Polarity-Sel',
+                _vaca_prefix+sexts_trig+':Polarity-Sel',
                 connection_timeout=0.05)
             self._timing_sexts_polarity_sts = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Polarity-Sts',
+                _vaca_prefix+sexts_trig+':Polarity-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_sexts_src_sel = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Src-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+sexts_trig+':Src-Sel', connection_timeout=0.05)
             self._timing_sexts_src_sts = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Src-Sts',
+                _vaca_prefix+sexts_trig+':Src-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
             try:
-                trig_db = _get_trig_db(SEXTS_TRIG)
+                trig_db = _get_trig_db(sexts_trig)
                 self._chromsi_src_idx = trig_db['Src-Sel']['enums'].index(
                     'ChromSI')
-            except Exception:
+            except (KeyError, ValueError):
                 self._chromsi_src_idx = 1
 
             self._timing_sexts_nrpulses_sp = _PV(
-                _vaca_prefix+SEXTS_TRIG+':NrPulses-SP',
+                _vaca_prefix+sexts_trig+':NrPulses-SP',
                 connection_timeout=0.05)
             self._timing_sexts_nrpulses_rb = _PV(
-                _vaca_prefix+SEXTS_TRIG+':NrPulses-RB',
+                _vaca_prefix+sexts_trig+':NrPulses-RB',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_sexts_duration_sp = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Duration-SP',
+                _vaca_prefix+sexts_trig+':Duration-SP',
                 connection_timeout=0.05)
             self._timing_sexts_duration_rb = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Duration-RB',
+                _vaca_prefix+sexts_trig+':Duration-RB',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_sexts_delay_sp = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Delay-SP',
-                connection_timeout=0.05)
+                _vaca_prefix+sexts_trig+':Delay-SP', connection_timeout=0.05)
             self._timing_sexts_delay_rb = _PV(
-                _vaca_prefix+SEXTS_TRIG+':Delay-RB',
+                _vaca_prefix+sexts_trig+':Delay-RB',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
-            EVG = _LLTimeSearch.get_evg_name()
+            evg = _LLTimeSearch.get_evg_name()
             self._timing_evg_chromsimode_sel = _PV(
-                _vaca_prefix+EVG+':ChromSIMode-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':ChromSIMode-Sel', connection_timeout=0.05)
             self._timing_evg_chromsimode_sts = _PV(
-                _vaca_prefix+EVG+':ChromSIMode-Sts',
+                _vaca_prefix+evg+':ChromSIMode-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_chromsidelaytype_sel = _PV(
-                _vaca_prefix+EVG+':ChromSIDelayType-Sel',
+                _vaca_prefix+evg+':ChromSIDelayType-Sel',
                 connection_timeout=0.05)
             self._timing_evg_chromsidelaytype_sts = _PV(
-                _vaca_prefix+EVG+':ChromSIDelayType-Sts',
+                _vaca_prefix+evg+':ChromSIDelayType-Sts',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_chromsidelay_sp = _PV(
-                _vaca_prefix+EVG+':ChromSIDelay-SP',
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':ChromSIDelay-SP', connection_timeout=0.05)
             self._timing_evg_chromsidelay_rb = _PV(
-                _vaca_prefix+EVG+':ChromSIDelay-RB',
+                _vaca_prefix+evg+':ChromSIDelay-RB',
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_chromsiexttrig_cmd = _PV(
-                _vaca_prefix+EVG+':ChromSIExtTrig-Cmd',
+                _vaca_prefix+evg+':ChromSIExtTrig-Cmd',
                 connection_timeout=0.05)
 
     def init_database(self):
@@ -233,23 +228,24 @@ class App(_Callback):
 
     @property
     def pvs_database(self):
+        """Return PVs database."""
         return self._pvs_database
 
     def process(self, interval):
         """Sleep."""
-        t0 = _time.time()
+        t_ini = _time.time()
         limit_names = {
             'hilim': 'upper_disp_limit', 'lolim': 'lower_disp_limit',
             'high': 'upper_alarm_limit', 'low': 'lower_alarm_limit',
             'hihi': 'upper_warning_limit', 'lolo': 'lower_warning_limit'}
         if (self._status & 0x1) == 0:  # Check connection
-            for fam in self._SFAMS:
+            for fam in self._sfams:
                 data = self._sfam_sl_rb_pvs[fam].get_ctrlvars()
                 if self._sfam_sl_rb_pvs[fam].upper_disp_limit is not None:
                     lis = {k: data[v] for k, v in limit_names.items()}
                     self.run_callbacks('SL'+fam+'-Mon', lis, field='info')
-        dt = interval - (_time.time() - t0)
-        _time.sleep(max(dt, 0))
+        dtime = interval - (_time.time() - t_ini)
+        _time.sleep(max(dtime, 0))
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
@@ -323,7 +319,7 @@ class App(_Callback):
 
                 val = 1
                 if (self._status & 0x1) == 0:
-                    for fam in self._SFAMS:
+                    for fam in self._sfams:
                         self._sfam_check_opmode_sts[fam] = \
                             self._sfam_opmode_sts_pvs[fam].value
 
@@ -353,6 +349,8 @@ class App(_Callback):
 
         return status  # return True to invoke super().write of PCASDriver
 
+    # ---------- auxiliar methods ----------
+
     def _get_corrparams(self, config_name=''):
         """Get response matrix from configurations database."""
         try:
@@ -381,8 +379,8 @@ class App(_Callback):
             method=method, grouping=grouping,
             delta_opticsparam=[delta_chromx, delta_chromy])
 
-        for fam in self._SFAMS:
-            fam_idx = self._SFAMS.index(fam)
+        for fam in self._sfams:
+            fam_idx = self._sfams.index(fam)
             sl_now = self._sfam_sl_rb_pvs[fam].get()
             if sl_now is None:
                 return
@@ -392,12 +390,8 @@ class App(_Callback):
         self.run_callbacks('Log-Mon', 'Calculated SL values.')
 
     def _apply_corr(self):
-        if ((self._status == _ALLCLR_SYNCOFF and
-                self._sync_corr == _Const.SyncCorr.Off) or
-                self._status == _ALLCLR_SYNCON):
-            pvs = self._sfam_sl_sp_pvs
-            for fam, pv in pvs.items():
-                pv.put(self._lastcalc_sl[fam])
+        if self._is_status_ok:
+            self._apply_sl(self._lastcalc_sl)
             self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
@@ -408,7 +402,59 @@ class App(_Callback):
             self.run_callbacks('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
         return False
 
-    def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
+    def _is_status_ok(self):
+        if self._sync_corr == _Const.SyncCorr.Off:
+            return self._status == _ALLCLR_SYNCOFF
+        else:
+            return self._status == _ALLCLR_SYNCON
+
+    def _apply_sl(self, sls):
+        for fam, pvobj in self._sfam_sl_sp_pvs.items():
+            pvobj.put(sls[fam])
+
+    def _config_ps(self):
+        opmode = self._sync_corr
+        for fam in self._sfams:
+            if self._sfam_pwrstate_sel_pvs[fam].connected:
+                self._sfam_pwrstate_sel_pvs[fam].put(1)
+                self._sfam_opmode_sel_pvs[fam].put(opmode)
+            else:
+                self.run_callbacks('Log-Mon', 'ERR:'+fam+' is disconnected.')
+                return False
+        self.run_callbacks('Log-Mon', 'Configuration sent to sextupoles.')
+        return True
+
+    def _config_timing(self):
+        conn = not any(pv.connected is False for pv in [
+            self._timing_sexts_state_sel,
+            self._timing_sexts_polarity_sel,
+            self._timing_sexts_src_sel,
+            self._timing_sexts_nrpulses_sp,
+            self._timing_sexts_duration_sp,
+            self._timing_sexts_delay_sp,
+            self._timing_evg_chromsimode_sel,
+            self._timing_evg_chromsidelaytype_sel,
+            self._timing_evg_chromsidelay_sp])
+        if conn:
+            self._timing_sexts_state_sel.put(_TIConst.DsblEnbl.Enbl)
+            self._timing_sexts_polarity_sel.put(_TIConst.TrigPol.Normal)
+            self._timing_sexts_src_sel.put(self._chromsi_src_idx)
+            self._timing_sexts_nrpulses_sp.put(1)
+            self._timing_sexts_duration_sp.put(0.15)
+            self._timing_sexts_delay_sp.put(0)
+            self._timing_evg_chromsimode_sel.put(_TIConst.EvtModes.External)
+            self._timing_evg_chromsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
+            self._timing_evg_chromsidelay_sp.put(0)
+
+            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
+            return True
+        else:
+            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
+            return False
+
+    # ---------- callbacks ----------
+
+    def _callback_conn_sfam_sl_rb(self, pvname, conn, **kws):
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
@@ -427,9 +473,9 @@ class App(_Callback):
         fam = _SiriusPVName(pvname).dev
         self._sfam_sl_rb[fam] = value
 
-        sfam_deltasl = len(self._SFAMS)*[0]
-        for fam in self._SFAMS:
-            fam_idx = self._SFAMS.index(fam)
+        sfam_deltasl = len(self._sfams)*[0]
+        for fam in self._sfams:
+            fam_idx = self._sfams.index(fam)
             sfam_deltasl[fam_idx] = \
                 self._sfam_sl_rb[fam] - self._sfam_nomsl[fam]
 
@@ -466,7 +512,7 @@ class App(_Callback):
                         self._sfam_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
-    def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
+    def _callback_sfam_ctrlmode_mon(self, pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
@@ -510,43 +556,3 @@ class App(_Callback):
         self._status = _util.update_bit(
             v=self._status, bit_pos=4, bit_val=bit_val)
         self.run_callbacks('Status-Mon', self._status)
-
-    def _config_ps(self):
-        opmode = self._sync_corr
-        for fam in self._SFAMS:
-            if self._sfam_pwrstate_sel_pvs[fam].connected:
-                self._sfam_pwrstate_sel_pvs[fam].put(1)
-                self._sfam_opmode_sel_pvs[fam].put(opmode)
-            else:
-                self.run_callbacks('Log-Mon', 'ERR:'+fam+' is disconnected.')
-                return False
-        self.run_callbacks('Log-Mon', 'Configuration sent to sextupoles.')
-        return True
-
-    def _config_timing(self):
-        conn = not any(pv.connected is False for pv in [
-            self._timing_sexts_state_sel,
-            self._timing_sexts_polarity_sel,
-            self._timing_sexts_src_sel,
-            self._timing_sexts_nrpulses_sp,
-            self._timing_sexts_duration_sp,
-            self._timing_sexts_delay_sp,
-            self._timing_evg_chromsimode_sel,
-            self._timing_evg_chromsidelaytype_sel,
-            self._timing_evg_chromsidelay_sp])
-        if conn:
-            self._timing_sexts_state_sel.put(_TIConst.DsblEnbl.Enbl)
-            self._timing_sexts_polarity_sel.put(_TIConst.TrigPol.Normal)
-            self._timing_sexts_src_sel.put(self._chromsi_src_idx)
-            self._timing_sexts_nrpulses_sp.put(1)
-            self._timing_sexts_duration_sp.put(0.15)
-            self._timing_sexts_delay_sp.put(0)
-            self._timing_evg_chromsimode_sel.put(_TIConst.EvtModes.External)
-            self._timing_evg_chromsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
-            self._timing_evg_chromsidelay_sp.put(0)
-
-            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
-            return True
-        else:
-            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
-            return False

@@ -16,8 +16,7 @@ from ...timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from ..opticscorr import OpticsCorr as _OpticsCorr
-from ..csdev import Const as _Const, \
-    get_tune_database as _get_database
+from ..csdev import Const as _Const, get_tune_database as _get_database
 from ..utils import HandleConfigNameFile as _HandleConfigNameFile
 
 # Constants
@@ -35,11 +34,11 @@ class App(_Callback):
         self._pvs_database = _get_database(acc.upper())
 
         # consts
-        self._ACC = acc.upper()
-        if self._ACC == 'BO':
-            self._QFAMS = _Const.BO_QFAMS_TUNECORR
-        elif self._ACC == 'SI':
-            self._QFAMS = _Const.SI_QFAMS_TUNECORR
+        self._acc = acc.upper()
+        if self._acc == 'BO':
+            self._qfams = _Const.BO_QFAMS_TUNECORR
+        elif self._acc == 'SI':
+            self._qfams = _Const.SI_QFAMS_TUNECORR
 
         self._delta_tunex = 0.0
         self._delta_tuney = 0.0
@@ -56,7 +55,7 @@ class App(_Callback):
         self._qfam_check_ctrlmode_mon = dict()
         self._lastcalc_deltakl = dict()
         self._qfam_kl_rb = dict()
-        for fam in self._QFAMS:
+        for fam in self._qfams:
             self._qfam_check_connection[fam] = 0
             self._qfam_check_pwrstate_sts[fam] = 0
             self._qfam_check_opmode_sts[fam] = -1
@@ -64,10 +63,11 @@ class App(_Callback):
             self._lastcalc_deltakl[fam] = 0
             self._qfam_kl_rb[fam] = 0
 
-        if self._ACC == 'SI':
+        if self._acc == 'SI':
             self._corr_method = _Const.CorrMeth.Proportional
             self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
+
             self._config_timing_cmd_count = 0
             self._timing_check_config = 9*[0]
         else:
@@ -78,7 +78,7 @@ class App(_Callback):
         # Get focusing and defocusing families
         qfam_focusing = []
         qfam_defocusing = []
-        for fam in self._QFAMS:
+        for fam in self._qfams:
             if 'QF' in fam:
                 qfam_focusing.append(fam)
             else:
@@ -87,16 +87,16 @@ class App(_Callback):
         qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
-        self.cn_handler = _HandleConfigNameFile(self._ACC, 'tune')
+        self.cn_handler = _HandleConfigNameFile(self._acc, 'tune')
         self.cdb_client = _ConfigDBClient(
-            config_type=self._ACC.lower()+'_tunecorr_params')
+            config_type=self._acc.lower()+'_tunecorr_params')
         [done, corrparams] = self._get_corrparams()
         if done:
             self._config_name = corrparams[0]
             self._nominal_matrix = corrparams[1]
             self._qfam_nomkl = corrparams[2]
             self._opticscorr = _OpticsCorr(
-                magnetfams_ordering=self._QFAMS,
+                magnetfams_ordering=self._qfams,
                 nominal_matrix=self._nominal_matrix,
                 nominal_intstrengths=self._qfam_nomkl,
                 nominal_opticsparam=[0.0, 0.0],
@@ -116,8 +116,8 @@ class App(_Callback):
         self._qfam_ctrlmode_mon_pvs = dict()
         self._qfam_refkl = dict()
 
-        for fam in self._QFAMS:
-            pss = _SiriusPVName(_vaca_prefix+self._ACC+'-Fam:PS-'+fam)
+        for fam in self._qfams:
+            pss = _SiriusPVName(_vaca_prefix+self._acc+'-Fam:PS-'+fam)
             self._qfam_kl_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name='KL', propty_suffix='SP'),
                 connection_timeout=0.05)
@@ -128,7 +128,7 @@ class App(_Callback):
                 callback=[
                     self._callback_init_refkl,
                     self._callback_estimate_deltatune],
-                connection_callback=self._connection_callback_qfam_kl_rb,
+                connection_callback=self._callback_conn_qfam_kl_rb,
                 connection_timeout=0.05)
 
             self._qfam_pwrstate_sel_pvs[fam] = _PV(
@@ -152,92 +152,77 @@ class App(_Callback):
                 callback=self._callback_qfam_ctrlmode_mon,
                 connection_timeout=0.05)
 
-        # Connect to Timing
-        if self._ACC == 'SI':
-            QUADS_TRIG = 'SI-Glob:TI-Mags-Quads'
+        if self._acc == 'SI':
+            # Connect to Timing
+            quads_trig = 'SI-Glob:TI-Mags-Quads'
             try:
-                trig_db = _get_trig_db(QUADS_TRIG)
+                trig_db = _get_trig_db(quads_trig)
                 self._tunsi_src_idx = trig_db['Src-Sel']['enums'].index(
                     'TunSI')
-            except Exception:
+            except (KeyError, ValueError):
                 self._tunsi_src_idx = 1
 
             self._timing_quads_state_sel = _PV(
-                _vaca_prefix+QUADS_TRIG+':State-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':State-Sel', connection_timeout=0.05)
             self._timing_quads_state_sts = _PV(
-                _vaca_prefix+QUADS_TRIG+':State-Sts',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':State-Sts',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_quads_polarity_sel = _PV(
-                _vaca_prefix+QUADS_TRIG+':Polarity-Sel',
+                _vaca_prefix+quads_trig+':Polarity-Sel',
                 connection_timeout=0.05)
             self._timing_quads_polarity_sts = _PV(
-                _vaca_prefix+QUADS_TRIG+':Polarity-Sts',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Polarity-Sts',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_quads_src_sel = _PV(
-                _vaca_prefix+QUADS_TRIG+':Src-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Src-Sel', connection_timeout=0.05)
             self._timing_quads_src_sts = _PV(
-                _vaca_prefix+QUADS_TRIG+':Src-Sts',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Src-Sts',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_quads_nrpulses_sp = _PV(
-                _vaca_prefix+QUADS_TRIG+':NrPulses-SP',
+                _vaca_prefix+quads_trig+':NrPulses-SP',
                 connection_timeout=0.05)
             self._timing_quads_nrpulses_rb = _PV(
-                _vaca_prefix+QUADS_TRIG+':NrPulses-RB',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':NrPulses-RB',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_quads_duration_sp = _PV(
-                _vaca_prefix+QUADS_TRIG+':Duration-SP',
+                _vaca_prefix+quads_trig+':Duration-SP',
                 connection_timeout=0.05)
             self._timing_quads_duration_rb = _PV(
-                _vaca_prefix+QUADS_TRIG+':Duration-RB',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Duration-RB',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_quads_delay_sp = _PV(
-                _vaca_prefix+QUADS_TRIG+':Delay-SP',
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Delay-SP', connection_timeout=0.05)
             self._timing_quads_delay_rb = _PV(
-                _vaca_prefix+QUADS_TRIG+':Delay-RB',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+quads_trig+':Delay-RB',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
-            EVG = _LLTimeSearch.get_evg_name()
+            evg = _LLTimeSearch.get_evg_name()
             self._timing_evg_tunsimode_sel = _PV(
-                _vaca_prefix+EVG+':TunSIMode-Sel',
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIMode-Sel', connection_timeout=0.05)
             self._timing_evg_tunsimode_sts = _PV(
-                _vaca_prefix+EVG+':TunSIMode-Sts',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIMode-Sts',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_tunsidelaytype_sel = _PV(
-                _vaca_prefix+EVG+':TunSIDelayType-Sel',
+                _vaca_prefix+evg+':TunSIDelayType-Sel',
                 connection_timeout=0.05)
             self._timing_evg_tunsidelaytype_sts = _PV(
-                _vaca_prefix+EVG+':TunSIDelayType-Sts',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIDelayType-Sts',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_tunsidelay_sp = _PV(
-                _vaca_prefix+EVG+':TunSIDelay-SP',
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIDelay-SP', connection_timeout=0.05)
             self._timing_evg_tunsidelay_rb = _PV(
-                _vaca_prefix+EVG+':TunSIDelay-RB',
-                callback=self._callback_timing_state,
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIDelay-RB',
+                callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._timing_evg_tunsiexttrig_cmd = _PV(
-                _vaca_prefix+EVG+':TunSIExtTrig-Cmd',
-                connection_timeout=0.05)
+                _vaca_prefix+evg+':TunSIExtTrig-Cmd', connection_timeout=0.05)
 
     def init_database(self):
         """Set initial PV values."""
@@ -249,6 +234,7 @@ class App(_Callback):
 
     @property
     def pvs_database(self):
+        """Return PVs database."""
         return self._pvs_database
 
     def process(self, interval):
@@ -324,7 +310,7 @@ class App(_Callback):
                             'ConfigTiming-Cmd', self._config_timing_cmd_count)
                 val = 1
                 if (self._status & 0x1) == 0:
-                    for fam in self._QFAMS:
+                    for fam in self._qfams:
                         self._qfam_check_opmode_sts[fam] = \
                             self._qfam_opmode_sts_pvs[fam].value
 
@@ -362,6 +348,8 @@ class App(_Callback):
 
         return status  # return True to invoke super().write of PCASDriver
 
+    # ---------- auxiliar methods ----------
+
     def _get_corrparams(self, config_name=''):
         """Get response matrix from configurations database."""
         try:
@@ -388,18 +376,17 @@ class App(_Callback):
 
         self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
-        for fam in self._QFAMS:
-            fam_idx = self._QFAMS.index(fam)
+        for fam in self._qfams:
+            fam_idx = self._qfams.index(fam)
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
             self.run_callbacks(
                 'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam])
 
     def _apply_corr(self):
-        if ((self._status == _ALLCLR_SYNCOFF and
-                self._sync_corr == _Const.SyncCorr.Off) or
-                self._status == _ALLCLR_SYNCON):
-            for fam, pv in self._qfam_kl_sp_pvs.items():
-                pv.put(self._qfam_refkl[fam]+self._lastcalc_deltakl[fam])
+        if self._is_status_ok:
+            kls = {fam: self._qfam_refkl[fam]+self._lastcalc_deltakl[fam]
+                   for fam in self._qfams}
+            self._apply_kl(kls)
             self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
@@ -410,10 +397,20 @@ class App(_Callback):
             self.run_callbacks('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
         return False
 
+    def _is_status_ok(self):
+        if self._sync_corr == _Const.SyncCorr.Off:
+            return self._status == _ALLCLR_SYNCOFF
+        else:
+            return self._status == _ALLCLR_SYNCON
+
+    def _apply_kl(self, kls):
+        for fam, pvobj in self._qfam_kl_sp_pvs.items():
+            pvobj.put(kls[fam])
+
     def _update_ref(self):
         if (self._status & 0x1) == 0:  # Check connection
             # updates reference
-            for fam in self._QFAMS:
+            for fam in self._qfams:
                 value = self._qfam_kl_rb_pvs[fam].get()
                 if value is None:
                     return
@@ -439,12 +436,55 @@ class App(_Callback):
                 'Log-Mon', 'ERR:Some magnet family is disconnected.')
 
     def _estimate_current_deltatune(self):
-        qfam_deltakl = len(self._QFAMS)*[0]
-        for fam in self._QFAMS:
-            fam_idx = self._QFAMS.index(fam)
+        qfam_deltakl = len(self._qfams)*[0]
+        for fam in self._qfams:
+            fam_idx = self._qfams.index(fam)
             qfam_deltakl[fam_idx] = \
                 self._qfam_kl_rb[fam] - self._qfam_refkl[fam]
         return self._opticscorr.calculate_opticsparam(qfam_deltakl)
+
+    def _config_ps(self):
+        opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
+            else _PSConst.OpMode.SlowRef
+        for fam in self._qfams:
+            if self._qfam_pwrstate_sel_pvs[fam].connected:
+                self._qfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
+                self._qfam_opmode_sel_pvs[fam].put(opmode)
+            else:
+                self.run_callbacks('Log-Mon', 'ERR:'+fam+' is disconnected.')
+                return False
+        self.run_callbacks('Log-Mon', 'Configuration sent to quadrupoles.')
+        return True
+
+    def _config_timing(self):
+        conn = not any(pv.connected is False for pv in [
+            self._timing_quads_state_sel,
+            self._timing_quads_polarity_sel,
+            self._timing_quads_src_sel,
+            self._timing_quads_nrpulses_sp,
+            self._timing_quads_duration_sp,
+            self._timing_quads_delay_sp,
+            self._timing_evg_tunsimode_sel,
+            self._timing_evg_tunsidelaytype_sel,
+            self._timing_evg_tunsidelay_sp])
+        if conn:
+            self._timing_quads_state_sel.put(_TIConst.DsblEnbl.Enbl)
+            self._timing_quads_polarity_sel.put(_TIConst.TrigPol.Normal)
+            self._timing_quads_src_sel.put(self._tunsi_src_idx)
+            self._timing_quads_nrpulses_sp.put(1)
+            self._timing_quads_duration_sp.put(150)
+            self._timing_quads_delay_sp.put(0)
+            self._timing_evg_tunsimode_sel.put(_TIConst.EvtModes.External)
+            self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
+            self._timing_evg_tunsidelay_sp.put(0)
+
+            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
+            return True
+        else:
+            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
+            return False
+
+    # ---------- callbacks ----------
 
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
         """Initialize RefKL-Mon pvs and remove this callback."""
@@ -458,7 +498,7 @@ class App(_Callback):
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
 
-    def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
+    def _callback_conn_qfam_kl_rb(self, pvname, conn, **kws):
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
@@ -510,7 +550,7 @@ class App(_Callback):
                         self._qfam_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
-    def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
+    def _callback_qfam_ctrlmode_mon(self, pvname, value, **kws):
         if value != _PSConst.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
@@ -558,45 +598,3 @@ class App(_Callback):
         self._status = _util.update_bit(
             v=self._status, bit_pos=4, bit_val=bit_val)
         self.run_callbacks('Status-Mon', self._status)
-
-    def _config_ps(self):
-        opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
-            else _PSConst.OpMode.SlowRef
-        for fam in self._QFAMS:
-            if self._qfam_pwrstate_sel_pvs[fam].connected:
-                self._qfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
-                self._qfam_opmode_sel_pvs[fam].put(opmode)
-            else:
-                self.run_callbacks(
-                    'Log-Mon', 'ERR:'+fam+' is disconnected.')
-                return False
-        self.run_callbacks('Log-Mon', 'Configuration sent to quadrupoles.')
-        return True
-
-    def _config_timing(self):
-        conn = not any(pv.connected is False for pv in [
-            self._timing_quads_state_sel,
-            self._timing_quads_polarity_sel,
-            self._timing_quads_src_sel,
-            self._timing_quads_nrpulses_sp,
-            self._timing_quads_duration_sp,
-            self._timing_quads_delay_sp,
-            self._timing_evg_tunsimode_sel,
-            self._timing_evg_tunsidelaytype_sel,
-            self._timing_evg_tunsidelay_sp])
-        if conn:
-            self._timing_quads_state_sel.put(_TIConst.DsblEnbl.Enbl)
-            self._timing_quads_polarity_sel.put(_TIConst.TrigPol.Normal)
-            self._timing_quads_src_sel.put(self._tunsi_src_idx)
-            self._timing_quads_nrpulses_sp.put(1)
-            self._timing_quads_duration_sp.put(150)
-            self._timing_quads_delay_sp.put(0)
-            self._timing_evg_tunsimode_sel.put(_TIConst.EvtModes.External)
-            self._timing_evg_tunsidelaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
-            self._timing_evg_tunsidelay_sp.put(0)
-
-            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
-            return True
-        else:
-            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
-            return False
