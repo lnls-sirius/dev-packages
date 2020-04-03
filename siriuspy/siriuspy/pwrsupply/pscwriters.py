@@ -321,4 +321,4 @@ class SOFBCurrent(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofbcurrrent_set(value)
+            self.pru_controller.sofb_current_set(value)

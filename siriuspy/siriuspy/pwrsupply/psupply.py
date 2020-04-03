@@ -2,8 +2,9 @@
 
 # import random as _random
 import time as _time
-import numpy as _np
 import math as _math
+import numpy as _np
+
 
 from ..bsmp import SerialError as _SerialError
 

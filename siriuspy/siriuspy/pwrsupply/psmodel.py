@@ -296,9 +296,9 @@ class PSModelFBP(_PSModel):
     }
 
     _pruc_properties = {
-        'SOFBCurrent-RB': 'sofbcurrent_get_rb',
-        'SOFBCurrentRef-Mon': 'sofbcurrent_get_refmon',
-        'SOFBCurrent-Mon': 'sofbcurrent_get_mon',
+        'SOFBCurrent-RB': 'sofb_current_rb',
+        'SOFBCurrentRef-Mon': 'sofb_current_refmon',
+        'SOFBCurrent-Mon': 'sofb_current_mon',
     }
 
     @property

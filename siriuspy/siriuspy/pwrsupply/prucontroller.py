@@ -10,6 +10,8 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
+import numpy as _np
+
 from ..bsmp import constants as _const_bsmp
 from ..bsmp import SerialError as _SerialError
 
@@ -79,6 +81,9 @@ class PRUController:
         # initialize UDC
         self._udc, self._parms, self._psupplies = PRUController._init_udc(
             pru, self._psmodel.name, self._device_ids, freq)
+
+        # TODO: implement
+        self._sofbcurrent = _np.zeros(8)
 
         # index of dev_id in self._device_ids for wfmref update
         self._wfm_update = False
@@ -261,8 +266,6 @@ class PRUController:
         psupply = self._psupplies[device_id]
         with self._lock:
             curve = psupply.wfmref_mon
-            # if device_id == 1:
-            #     print('update wfmref_mon ', curve[100])
             return _dcopy(curve)
 
     def wfm_mon_read(self, device_id):
@@ -317,6 +320,29 @@ class PRUController:
         operation = (self._bsmp_exec_function, args)
         self._queue.append(operation)
         return True
+
+    # --- SOFBCurrent parameters
+
+    def sofb_current_set(self, value):
+        """."""
+        operation = (self._bsmp_update_setpoint_sofb, (value, ))
+        self._queue.append(operation)
+        return True
+
+    @property
+    def sofb_current_rb(self):
+        """."""
+        return self._udc.sofb_current_rb_get()
+
+    @property
+    def sofb_current_refmon(self):
+        """."""
+        return self._udc.sofb_current_refmon_get()
+
+    @property
+    def sofb_current_mon(self):
+        """."""
+        return self._udc.sofb_current_mon_get()
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -488,50 +514,34 @@ class PRUController:
 
     def _bsmp_init_devices(self):
 
+        fmt = '  - {:<20s} ({:^20s}) [{:09.3f}] ms'
+
         # create vars groups list from dict
         groups = PRUController._dict2list_vargroups(self._parms.groups)
 
-        # init time interval
+        # reset group of bsmp variables for all devices
         time0 = _time()
-
-        # 1. reset group of bsmp variables for all devices
         for psupply in self._psupplies.values():
             psupply.reset_variables_groups(groups)
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_devices', 'reset groups', 1e3*dtime))
 
-        # time interval
-        time1 = _time()
-        print('  - bsmp_init_devices (reset groups) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
-
-        # init time interval
+        # update psupply groups
         time0 = _time()
-
-        # 2. update psupply groups
         for psupply in self._psupplies.values():
             psupply.update_groups(interval=0.0)
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_devices', 'update groups', 1e3*dtime))
 
-        # time interval
-        time1 = _time()
-        print('  - bsmp_init_devices (update groups) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
-
-        # init time interval
+        # disable DSP from writting to bufsample (uses first device)
         time0 = _time()
-
-        # 3. disable DSP from writting to bufsample (uses first device)
         self._udc.bufsample_disable()
-
-        # time interval
-        time1 = _time()
-        print('  - bsmp_init_devices (bufsample_disable) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_devices', 'bufsample_disable', 1e3*dtime))
 
     def _bsmp_update(self):
 
         # time0 = _time()
-
-        # update timestamp
-        self._timestamp_update = _time()
 
         # update variables
         self._bsmp_update_variables()
@@ -546,6 +556,9 @@ class PRUController:
         # time1 = _time()
         # print('{} devices, update total time {}'.format(
         #     len(self._device_ids), 1000*(time1 - time0)))
+
+        # update timestamp
+        self._timestamp_update = _time()
 
     def _bsmp_update_variables(self):
 
@@ -579,6 +592,15 @@ class PRUController:
 
         # time1 = _time()
         # print('TIMING _bsmp_update_wfm [{:.3f} ms]'.format(1000*(time1-time0)))
+
+    def _bsmp_update_setpoint_sofb(self, value):
+
+        t0 = _time()
+        self._udc.sofb_current_set(value)
+        self._udc.sofb_update()
+        self._bsmp_update()
+        t1 = _time()
+        print('{} ms'.format(1e3*(t1-t0)))
 
     def _bsmp_wfm_write(self, device_ids, curve):
         """Write curve to devices."""
@@ -641,26 +663,31 @@ class PRUController:
 
     def _bsmp_init_update(self):
 
+        fmt = '  - {:<20s} ({:^20s}) [{:09.3f}] ms'
+
         # initialize variables_values, a mirror state of BSMP devices
         time0 = _time()
         self._bsmp_init_variable_values()
-        time1 = _time()
-        print('  - bsmp_init_update (variable_values) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_update', 'variable_values', 1e3*dtime))
 
         # initialize ps curves
         time0 = _time()
         self._bsmp_init_wfm()
-        time1 = _time()
-        print('  - bsmp_init_update (waveform_values) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_update', 'waveform_values', 1e3*dtime))
+
+        # initialize sofb
+        time0 = _time()
+        self._bsmp_init_sofb_values()
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_update', 'sofb_values', 1e3*dtime))
 
         # initialize parameters
         time0 = _time()
         self._bsmp_init_parameter_values()
-        time1 = _time()
-        print('  - bsmp_init_update (parameter_values) [{:.3f} ms]'.format(
-            1000*(time1 - time0)))
+        dtime = _time() - time0
+        print(fmt.format('bsmp_init_update', 'parameter_values', 1e3*dtime))
 
     def _bsmp_init_wfm(self):
 
@@ -694,6 +721,10 @@ class PRUController:
         # init psupplies variables
         for psupply in self._psupplies.values():
             psupply.update_parameters(interval=0.0)
+
+    def _bsmp_init_sofb_values(self):
+
+        self._udc.sofb_update()
 
     @staticmethod
     def _dict2list_vargroups(groups_dict):

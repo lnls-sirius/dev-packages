@@ -8,6 +8,7 @@ from ..bsmp import BSMP as _BSMP
 
 from . import bsmp as _bsmp
 from .pru import PRU as _PRU
+from .csdev import MAX_NRDEV_PER_BBB as _MAX_NRDEV_PER_BBB
 
 
 # version of the BSMP implementation of power supplies that is compatible
@@ -539,6 +540,43 @@ class FBP(PSBSMP):
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP(), pru=pru)
+
+        # SOFB attributes
+        self._sofb_ps_value = None # temp
+        self._sofb_ps_reference = None
+        self._sofb_ps_iload = None
+
+    # --- SOFB methods ---
+
+    @property
+    def sofb_ps_setpoint(self):
+        """."""
+        return self._sofb_ps_value
+
+    @property
+    def sofb_ps_reference(self):
+        """."""
+        return self._sofb_ps_reference
+
+    @property
+    def sofb_ps_iload(self):
+        """."""
+        return self._sofb_ps_iload
+
+    def sofb_ps_setpoint_set(self, value):
+        """."""
+        # TODO: replace with real comm. code
+        self._sofb_ps_value = value
+
+    def sofb_update(self):
+        """."""
+        # TODO: temp
+        if self._sofb_ps_value is None:
+            self._sofb_ps_value = _np.ones(_MAX_NRDEV_PER_BBB // 2)
+
+        # TODO: replace with real comm. code
+        self._sofb_ps_reference = self._sofb_ps_value
+        self._sofb_ps_iload = self._sofb_ps_reference
 
 
 class FAC_DCDC(PSBSMP):

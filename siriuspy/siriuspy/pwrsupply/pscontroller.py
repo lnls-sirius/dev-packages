@@ -84,21 +84,20 @@ class PSController:
             if prop in PSController._ignored_fields:
                 continue
             if key.endswith(('-Sel', '-SP')):
+                # get corresponding readback property
                 rb_field = PSController._get_readback_field(key)
-
-                # NOTE: to be updated
-                # rb_field = _PVName.from_sp2rb(key)
-                rdr = self._readers[rb_field]
-
-                if rdr is None:
+                # check if reader exists
+                rb_reader = self._readers[rb_field]
+                if rb_reader is None:
                     raise AttributeError(
                         'Could not find reader for "{}"'.format(rb_field))
-                # TODO: Uncomment !!!
-                # value = rdr.read()
-                # if key.endswith('OpMode-Sel'):
-                #     if value is not None:
-                #         value = 0 if value < 3 else value - 3
-                # reader.apply(value)
+                # read value
+                value = rb_reader.read()
+                if key.endswith('OpMode-Sel'):
+                    # OpModel-Sel is shifted in 3 units relative OpMode-Sts
+                    if value is not None:
+                        value = 0 if value < 3 else value - 3
+                reader.apply(value)
 
     def _get_fields(self):
         fields = set()

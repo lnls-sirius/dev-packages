@@ -1,6 +1,7 @@
 """UDC class."""
 
 import time as _time
+import numpy as _np
 
 from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from . import prucparms as _prucparms
@@ -25,10 +26,18 @@ class UDC:
     def __init__(self, pru, psmodel, device_ids):
         """Init."""
         self._pru = pru
-        self._device_ids = device_ids
+        self._devs_ids = device_ids
         self._psmodel = psmodel
-        self._bsmp_devs = self._create_bsmp_connectors()
-        self._first_dev = self._bsmp_devs[min(self._device_ids)]
+        self._devs_bsmp = self._create_bsmp_connectors()
+        self._dev_first, self._dev_second = \
+            self._get_devs_first_second()
+        self._is_fbp = self._psmodel == 'FBP'
+
+    def _get_devs_first_second(self):
+        ids = sorted(self._devs_ids)
+        dev_first = self._devs_bsmp[ids[0]]
+        dev_second = self._devs_bsmp[ids[4]] if len(ids) > 4 else None
+        return dev_first, dev_second
 
     @property
     def pru(self):
@@ -43,7 +52,7 @@ class UDC:
     @property
     def device_ids(self):
         """."""
-        return self._device_ids
+        return self._devs_ids
 
     @property
     def prucparms(self):
@@ -54,7 +63,7 @@ class UDC:
     @property
     def CONST_BSMP(self):
         """Return PSBSMP constants."""
-        return self._first_dev.CONST_BSMP
+        return self._dev_first.CONST_BSMP
 
     @property
     def CONST_PSBSMP(self):
@@ -64,36 +73,36 @@ class UDC:
     def reset(self, **kwargs):
         """Reset UDC."""
         # turn off all power supplies (NOTE: or F_RESET_UDC does not work)
-        for bsmp in self._bsmp_devs.values():
-            ack, data = bsmp.execute_function(
+        for dev in self._devs_bsmp.values():
+            ack, data = dev.execute_function(
                 func_id=self.CONST_PSBSMP.F_TURN_OFF)
             if ack != self.CONST_BSMP.ACK_OK:
-                dev_id = bsmp.channel.address
+                dev_id = dev.channel.address
                 print(('UDC.reset: could not turn off '
                        'device id:{} !').format(dev_id))
                 return ack, data
 
         # reset UDC proper.
-        self._first_dev.execute_function(
+        self._dev_first.execute_function(
             func_id=self.CONST_PSBSMP.F_RESET_UDC, **kwargs, read_flag=False)
 
         return ack, data
 
     def bufsample_disable(self):
         """Disable DSP from writting to bufsample curve."""
-        for bsmp in self._bsmp_devs.values():
-            ack, data = bsmp.wfmref_mon_bufsample_disable()
+        for dev in self._devs_bsmp.values():
+            ack, data = dev.wfmref_mon_bufsample_disable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         # a single sleep for all devices
-        sleep_time = self._first_dev._sleep_disable_bufsample = 0.5  # [s]
+        sleep_time = self._dev_first._sleep_disable_bufsample = 0.5  # [s]
         _time.sleep(sleep_time)
         return ack, data
 
     def bufsample_enable(self):
         """Enable DSP from writting to bufsample curve."""
-        for bsmp in self._bsmp_devs.values():
-            ack, data = bsmp.wfmref_mon_bufsample_enable()
+        for dev in self._devs_bsmp.values():
+            ack, data = dev.wfmref_mon_bufsample_enable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         return ack, data
@@ -101,21 +110,67 @@ class UDC:
     def parse_firmware_version(self, version):
         """Process firmware version from BSMP device."""
         # uses first BSMP device
-        bsmp_dev = self._bsmp_devs[next(iter(self._bsmp_devs))]  # first bsmp
-        return bsmp_dev.parse_firmware_version(version)
+        dev = self._devs_bsmp[next(iter(self._devs_bsmp))]  # first dev
+        return dev.parse_firmware_version(version)
 
     def reset_groups_of_variables(self, groups):
         """Reset groups of variables."""
-        for bsmp_dev in self._bsmp_devs.values():
-            bsmp_dev.reset_groups_of_variables(groups=groups)
-
-    def _create_bsmp_connectors(self):
-        bsmp = dict()
-        for dev_id in self._device_ids:
-            bsmp[dev_id] = _PSBSMPFactory.create(
-                self._psmodel, dev_id, self._pru)
-        return bsmp
+        for dev in self._devs_bsmp.values():
+            dev.reset_groups_of_variables(groups=groups)
 
     def __getitem__(self, index):
         """Return BSMP."""
-        return self._bsmp_devs[index]
+        return self._devs_bsmp[index]
+
+    # --- SOFBCurrent methods
+
+    def sofb_current_rb_get(self):
+        """Return SOFBCurrent-RB."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_setpoint
+            val2 = dev2.sofb_ps_setpoint if dev2 else _np.array([])
+            return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_current_refmon_get(self):
+        """Return SOFBCurrentRef-Mon."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_reference
+            val2 = dev2.sofb_ps_reference if dev2 else _np.array([])
+            return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_current_mon_get(self):
+        """Return SOFBCurrent-Mon."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_iload
+            val2 = dev2.sofb_ps_iload if dev2 else _np.array([])
+            return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_current_set(self, value):
+        """Set SOFB Current."""
+        if self._is_fbp:
+            # set value
+            self._dev_first.sofb_ps_setpoint_set(value[:4])
+            if self._dev_second:
+                self._dev_first.sofb_ps_setpoint_set(value[4:])
+
+    def sofb_update(self):
+        """Update sofb."""
+        if self._is_fbp:
+            self._dev_first.sofb_update()
+            if self._dev_second:
+                self._dev_second.sofb_update()
+
+    # --- private methods
+
+    def _create_bsmp_connectors(self):
+        devices = dict()
+        for dev_id in self._devs_ids:
+            devices[dev_id] = _PSBSMPFactory.create(
+                self._psmodel, dev_id, self._pru)
+        return devices
