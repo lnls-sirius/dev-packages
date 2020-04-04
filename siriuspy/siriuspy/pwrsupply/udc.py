@@ -3,8 +3,9 @@
 import time as _time
 import numpy as _np
 
-from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 from . import prucparms as _prucparms
+from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+from .psbsmp import PSBSMPFactory as _PSBSMPFactory
 
 
 class UDC:
@@ -22,6 +23,9 @@ class UDC:
         'FAP_4P': _prucparms.PRUCParmsFAP_4P,
         'FAP_2P2S': _prucparms.PRUCParmsFAP_2P2S,
     }
+
+    _soft_def = _np.zeros(_UDC_MAX_NR_DEV)
+
 
     def __init__(self, pru, psmodel, device_ids):
         """Init."""
@@ -129,7 +133,7 @@ class UDC:
         if self._is_fbp:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_setpoint
-            val2 = dev2.sofb_ps_setpoint if dev2 else _np.array([])
+            val2 = dev2.sofb_ps_setpoint if dev2 else UDC._soft_def
             return _np.concatenate((val1, val2))
         return None
 
@@ -138,7 +142,7 @@ class UDC:
         if self._is_fbp:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_reference
-            val2 = dev2.sofb_ps_reference if dev2 else _np.array([])
+            val2 = dev2.sofb_ps_reference if dev2 else UDC._soft_def
             return _np.concatenate((val1, val2))
         return None
 
@@ -147,24 +151,36 @@ class UDC:
         if self._is_fbp:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_iload
-            val2 = dev2.sofb_ps_iload if dev2 else _np.array([])
+            val2 = dev2.sofb_ps_iload if dev2 else UDC._soft_def
             return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_set(self, value):
         """Set SOFB Current."""
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'UDC.sofb_current_set (beg)', 1e3*(_time.time() % 1)))
+
         if self._is_fbp:
             # set value
             self._dev_first.sofb_ps_setpoint_set(value[:4])
             if self._dev_second:
                 self._dev_first.sofb_ps_setpoint_set(value[4:])
 
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'UDC.sofb_current_set (end)', 1e3*(_time.time() % 1)))
+
     def sofb_update(self):
         """Update sofb."""
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'UDC.sofb_update (beg)', 1e3*(_time.time() % 1)))
+
         if self._is_fbp:
             self._dev_first.sofb_update()
             if self._dev_second:
                 self._dev_second.sofb_update()
+
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'UDC.sofb_update (end)', 1e3*(_time.time() % 1)))
 
     # --- private methods
 
