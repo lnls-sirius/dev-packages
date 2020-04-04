@@ -23,7 +23,9 @@ DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
 # --- SOFBCurrent ---
-MAX_NRDEV_PER_BBB = 8
+PSSOFB_MAX_NR_UDC = 2
+UDC_MAX_NR_DEV = 4
+
 
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
@@ -677,23 +679,24 @@ def get_ps_propty_database(psmodel, pstype):
 
 def get_ps_sofbcurrent_propty_database():
     """Return SOFBCurrent properties."""
+    count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
         'SOFBCurrent-SP': {
-            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
-            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+            'type': 'float', 'count': count,
+            'unit': 'A', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(count)},
         'SOFBCurrent-RB': {
-            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
-            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+            'type': 'float', 'count': count,
+            'unit': 'A', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(count)},
         'SOFBCurrentRef-Mon': {
-            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
-            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+            'type': 'float', 'count': count,
+            'unit': 'A', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(count)},
         'SOFBCurrent-Mon': {
-            'type': 'float', 'count': MAX_NRDEV_PER_BBB, 'unit': 'A',
-            'prec': DEFAULT_PS_CURRENT_PRECISION,
-            'value': _np.zeros(MAX_NRDEV_PER_BBB)},
+            'type': 'float', 'count': count,
+            'unit': 'A', 'prec': DEFAULT_PS_CURRENT_PRECISION,
+            'value': _np.zeros(count)},
         }
     return dbase
 
