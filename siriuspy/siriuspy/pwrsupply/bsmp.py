@@ -7,6 +7,7 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
+from ..bsmp import constants as _bsmp_constants
 from ..bsmp import Entity as _Entity
 from ..bsmp import Entities as _Entities
 from ..bsmp import Types as _Types
@@ -26,6 +27,14 @@ class ConstPSBSMP:
 
     # --- implemented protocol version ---
     # version = __bsmp_version__
+
+    # --- group of BSMP variables
+    G_ALL = _bsmp_constants.ID_STD_GROUP_ALL
+    G_READONLY = _bsmp_constants.ID_STD_GROUP_READONLY
+    G_WRITE = _bsmp_constants.ID_STD_GROUP_WRITE
+    G_ALLRELEVANT = 3
+    G_SCAN = 4
+    G_SOFB = 5
 
     # --- types ---
     T_STATUS = 0
