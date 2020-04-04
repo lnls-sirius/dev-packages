@@ -255,7 +255,7 @@ class ConstParameter:
 class Setpoint:
     """Setpoint."""
 
-    _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+    _regexp_setpoint = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     def __init__(self, epics_field, epics_database):
         """Init."""
@@ -322,7 +322,7 @@ class Setpoint:
     @staticmethod
     def match(field):
         """Check if field is a setpoint."""
-        return Setpoint._setpoint_regexp.match(field)
+        return Setpoint._regexp_setpoint.match(field)
 
 
 class Setpoints:

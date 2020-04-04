@@ -37,7 +37,7 @@ class SimPSTypeModel(_Simulator):
         )
 
     # regexp used to determine setpoint PVs
-    _setpoint_regexp = _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+    _regexp_setpoint = _regexp_setpoint = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     _absolute_fluctuation = 0.001  # [A] or other subclass units
 
@@ -108,7 +108,7 @@ class SimPSTypeModel(_Simulator):
     def callback_pv_put(self, pvname, value, **kwargs):
         """Execute callback setpoint to synchronize SimPVs."""
         # if not -SP pv, does not accept write by returning False
-        if not SimPSTypeModel._setpoint_regexp.match(pvname):
+        if not SimPSTypeModel._regexp_setpoint.match(pvname):
             return False
 
         # synchronize other PVs
@@ -121,7 +121,7 @@ class SimPSTypeModel(_Simulator):
     def callback_pv_add(self, pvname):
         """."""
         # if of setpoint type, add pvname to list.
-        if SimPSTypeModel._setpoint_regexp.match(pvname):
+        if SimPSTypeModel._regexp_setpoint.match(pvname):
             self._setpoint_pvs.append(pvname)
 
     def callback_update(self, **kwargs):
