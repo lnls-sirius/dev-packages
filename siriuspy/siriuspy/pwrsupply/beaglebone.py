@@ -104,7 +104,8 @@ class BeagleBone:
             self._controllers[device_name].write(
                 device_name, 'Current-SP', curr)
         else:
-            self._controllers[device_name].write(device_name, field, value)
+            self._controllers[device_name].write(
+                device_name, field, value)
 
     def check_connected(self, device_name):
         """Check wether device is connected."""
