@@ -180,6 +180,13 @@ class PSBSMP(_BSMP):
 
         return response
 
+    # --- pwrsupply functions ---
+
+    def ps_function_set_slowref_fbp(self, setpoints):
+        """Write FBP 4-valued setpoints."""
+        self.execute_function(
+            PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
+
     # --- pwrsupply parameters ---
 
     def parameter_read(self, eid, index=None):
@@ -563,19 +570,15 @@ class FBP(PSBSMP):
 
     def sofb_ps_setpoint_set(self, value):
         """."""
-        # TODO: replace with real comm. code
-        self._sofb_ps_setpoint = value
+        self.ps_function_set_slowref_fbp(value)
+
 
     def sofb_update(self):
         """."""
-        # if self._sofb_ps_setpoint is None:
-        #     self._sofb_ps_setpoint = _np.zeros(_UDC_MAX_NR_DEV)
         data = self._sofb_read_group_of_variables()
         (self._sofb_ps_setpoint,
          self._sofb_ps_reference,
          self._sofb_ps_iload) = data
-        # self._sofb_ps_reference = self._sofb_ps_setpoint
-        # self._sofb_ps_iload = self._sofb_ps_reference
 
     def _sofb_read_group_of_variables(self):
         # print('{:<30s} : {:>9.3f} ms'.format(
