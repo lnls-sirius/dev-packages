@@ -324,8 +324,20 @@ class PRUController:
         """."""
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'PRUC.sofb_current_set (beg)', 1e3*(_time.time() % 1)))
-        operation = (self._bsmp_update_sofb_setpoint, (value, ))
-        self._queue.append(operation)
+
+        # # schedule operation
+        # operation = (self._bsmp_update_sofb_setpoint, (value, ))
+        # self._queue.append(operation)
+        #
+        # return True
+
+        # wait until queue is empty
+        while self._queue:
+            pass
+
+        # execute SOFB setpoint
+        self._bsmp_update_sofb_setpoint(value)
+
         return True
 
     @property
