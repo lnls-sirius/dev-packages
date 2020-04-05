@@ -1,5 +1,7 @@
 """Controller classes."""
 
+from ..search import PSSearch as _PSSearch
+
 
 class PSController:
     """Power supply controller.
@@ -8,7 +10,7 @@ class PSController:
     by invoking properties and methods of the PRU controller.
     """
 
-    _ignored_fields = {
+    _FIELDS_IGNORED = {
         # these are fields managed in BeagleBone class objects.
         'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
         'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
@@ -34,7 +36,10 @@ class PSController:
         self._fields = self._get_fields()
 
         # shortcut to fields not to be ignored
-        self._fields_not_ignored = self._fields - self._ignored_fields
+        self._fields_not_ignored = self._fields - self._FIELDS_IGNORED
+
+        # get udc to dev dictionary
+        self._udc2dev = self._get_udc2dev()
 
     @property
     def pru_controller(self):
@@ -71,9 +76,14 @@ class PSController:
 
     def write(self, devname, field, value):
         """Write value to pv."""
+        priority_pvs = dict()
+
         pvname = devname + ':' + field
         if pvname in self._writers:
             self._writers[pvname].execute(value)
+
+        # return priority pvs
+        return priority_pvs
 
     def check_connected(self, devname):
         """Check if device is connected."""
@@ -90,7 +100,7 @@ class PSController:
 
             # ignore strength fields
             *_, prop = key.split(':')
-            if prop in PSController._ignored_fields:
+            if prop in PSController._FIELDS_IGNORED:
                 continue
 
             # initiliaze setpoint fields using corresponding readers
@@ -116,6 +126,15 @@ class PSController:
 
     # --- private methods ---
 
+    def _get_udc2dev(self):
+        udc2dev = dict()
+        for devname in self._devname2devid:
+            udc = _PSSearch.conv_psname_2_udc(devname)
+            if udc not in udc2dev:
+                udc2dev[udc] = set()
+            udc2dev[udc].add(devname)
+        return udc2dev
+
     def _get_fields(self):
         fields = set()
         for name in self._readers:
@@ -132,7 +151,7 @@ class PSController:
 class StandardPSController(PSController):
     """Standard behaviour for a PSController."""
 
-    _siggen_parms = [
+    _SIGGEN_PARMS = [
         'CycleType-Sel',
         'CycleNrCycles-SP',
         'CycleFreq-SP',
@@ -143,40 +162,60 @@ class StandardPSController(PSController):
 
     def write(self, devname, field, value):
         """Override write method."""
+        priority_pvs = dict()
+
         pvname = devname + ':' + field
         if pvname not in self._writers:
-            return
-        if field == 'OpMode-Sel':
-            writer = self._writers[pvname]
-            StandardPSController._set_opmode(writer, value)
-        elif field in StandardPSController._siggen_parms:
-            idx = StandardPSController._siggen_parms.index(field)
-            values = self._get_siggen_arg_values(devname)
-            if field == 'CycleAuxParam-SP':
-                values[idx:] = value
-            else:
-                values[idx] = value
-            self._writers[pvname].execute(values)
-        elif field == 'PwrState-Sel':
-            # NOTE: Should we set Current-SP to zero at Power On ? This may be
-            # generating inconsistent behaviour when loading configuration in
-            # HLA...
-            # if self._readers[devname + ':PwrState-Sel'].value == 0:
-            #     self._readers[devname + ':Current-SP'].apply(0.0)
-            self._writers[pvname].execute(value)
+            return priority_pvs
+
+        if field == 'SOFBCurrent-SP':
+            self._set_sofb(pvname, value, devname, field, priority_pvs)
+        elif field in StandardPSController._SIGGEN_PARMS:
+            self._set_siggen(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
 
+        # return priority pvs
+        return priority_pvs
+
     # --- private methods ---
 
-    @staticmethod
-    def _set_opmode(writer, op_mode):
-        writer.execute(op_mode)
+    def _set_siggen(self, pvname, value, devname, field, priority_pvs):
+        _ = priority_pvs
+        idx = StandardPSController._SIGGEN_PARMS.index(field)
+        values = self._get_siggen_arg_values(devname)
+        if field == 'CycleAuxParam-SP':
+            values[idx:] = value
+        else:
+            values[idx] = value
+        self._writers[pvname].execute(values)
+
+    def _set_sofb(self, pvname, value, devname, field, priority_pvs):
+        _ = field
+
+        # set actual SOFBCurrent-SP
+        self._writers[pvname].execute(value)
+
+        # add readback SOFBCurrent PVs (same device)
+        for suffix in ('-RB', 'Ref-Mon', '-Mon'):
+            pvn = pvname.replace('-SP', suffix)
+            reader = self._readers[pvn]
+            priority_pvs[pvn] = reader.read()
+
+        # add priority SOFBCurrent-SP for other
+        # devices in the same UDC.
+        for udc_devnames in self._udc2dev.values():
+            if devname in udc_devnames:
+                # loop over other UDC devices
+                for devname_ in udc_devnames:
+                    if devname_ != devname:
+                        pvn = devname_ + ':SOFBCurrent-SP'
+                        priority_pvs[pvn] = value
 
     def _get_siggen_arg_values(self, devname):
-        """Get cfg_siggen args and execute it."""
+        """Get cfg_siggen args."""
         args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController._siggen_parms[:-1]]
-        aux = StandardPSController._siggen_parms[-1]
+                for arg in StandardPSController._SIGGEN_PARMS[:-1]]
+        aux = StandardPSController._SIGGEN_PARMS[-1]
         args.extend(self._readers[devname + ':' + aux].read())
         return args
