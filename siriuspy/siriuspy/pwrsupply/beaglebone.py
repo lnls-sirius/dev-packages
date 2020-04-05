@@ -123,12 +123,12 @@ class BeagleBone:
         if field in {'Energy-SP', 'Kick-SP', 'KL-SP', 'SL-SP'}:
             streconv = self._streconv[devname]
             curr = streconv.conv_strength_2_current(value)
-            pvs = self._controllers[devname].write(
+            priority_pvs = self._controllers[devname].write(
                 devname, 'Current-SP', curr)
         else:
-            pvs = self._controllers[devname].write(
+            priority_pvs = self._controllers[devname].write(
                 devname, field, value)
-        return pvs
+        return priority_pvs
 
     def get_strength_limits(self, devname):
         """Return strength lower and upper limits."""

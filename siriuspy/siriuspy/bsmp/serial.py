@@ -207,7 +207,6 @@ class Channel:
 
     def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
-
         # if message.cmd == 0x50:
         # print('[request]')
         # print('address : {}'.format(self.address))
@@ -219,8 +218,8 @@ class Channel:
         #     while True:
         #         pass
 
-        # This lock is important in order to avoid threads in the same process
-        # space to read each other's responses.
+        # NOTE: this lock is very important in order to avoid threads in
+        # the same process space to read each other's responses.
         with Channel._lock:
             self.write(message, timeout)
             if read_flag:

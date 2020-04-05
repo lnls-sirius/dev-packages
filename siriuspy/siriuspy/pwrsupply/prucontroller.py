@@ -593,12 +593,17 @@ class PRUController:
 
     def _bsmp_update_sofb_setpoint(self, value):
 
+        # execute sofb current setpoint
         self._udc.sofb_current_set(value)
-        # self._udc.sofb_update()
-        self._bsmp_update()
 
-        print('{:<30s} : {:>9.3f} ms'.format(
-            'PRUC._bsmp_update_sofb_setpoint (end)', 1e3*(_time.time() % 1)))
+        # update sofb state
+        self._udc.sofb_update()
+
+        # # update all other device parameters
+        # self._bsmp_update()
+
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'PRUC._bsmp_update_sofb_setpoint (end)', 1e3*(_time.time() % 1)))
 
     def _bsmp_wfm_write(self, device_ids, curve):
         """Write curve to devices."""
