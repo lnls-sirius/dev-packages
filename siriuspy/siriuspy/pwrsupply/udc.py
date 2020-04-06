@@ -164,7 +164,7 @@ class UDC:
             # set value
             self._dev_first.sofb_ps_setpoint_set(value[:4])
             if self._dev_second:
-                self._dev_first.sofb_ps_setpoint_set(value[4:])
+                self._dev_second.sofb_ps_setpoint_set(value[4:])
 
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'UDC.sofb_current_set (end)', 1e3*(_time.time() % 1)))
