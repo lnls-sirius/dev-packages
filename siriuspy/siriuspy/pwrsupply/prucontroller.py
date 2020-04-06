@@ -37,6 +37,11 @@ class PRUController:
 
     _sleep_process_loop = 0.020  # [s]
 
+
+    # After a sofb current setpoint the controller does not insert
+    # scan operations for a given time interval
+    _sofb_interval = 1.0  # [s]
+
     # --- public interface ---
 
     def __init__(self,
@@ -60,6 +65,9 @@ class PRUController:
 
         # init time interval
         t0_ = _time.time()
+
+        # init timestamp of last SOFB setpoint execution
+        self._sofb_timestamp = t0_
 
         # create lock
         self._lock = _Lock()
@@ -331,12 +339,16 @@ class PRUController:
         #
         # return True
 
+        # set sofb timestamp to avoid insertions of scan operations
+        self._sofb_timestamp = _time.time()
+
         # wait until queue is empty
         while self._queue:
             pass
 
         # execute SOFB setpoint
         self._bsmp_update_sofb_setpoint(value)
+
 
         return True
 
@@ -476,7 +488,9 @@ class PRUController:
             t0_ = _time.time()
 
             # run scan method once
-            if self.scanning and self._scan_interval != 0:
+            if self.scanning and \
+               self._scan_interval != 0 and \
+               t0_ - self._sofb_timestamp > PRUController._sofb_interval:
                 self.bsmp_scan()
 
             # update scan interval
