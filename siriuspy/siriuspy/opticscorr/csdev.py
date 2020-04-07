@@ -9,6 +9,8 @@ class ETypes(_csdev.ETypes):
 
     PROP_ADD = ('Proportional', 'Additional')
     INDIV_2KNOBS = ('Individual', 'TwoKnobs')
+    MEAS_CMD = ('Reset', 'Start', 'Stop')
+    MEAS_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
 
 
 _et = ETypes  # syntactic sugar
@@ -22,6 +24,8 @@ class Const(_csdev.Const):
     CorrMeth = _csdev.Const.register('CorrMeth', _et.PROP_ADD)
     CorrGroup = _csdev.Const.register('CorrGroup', _et.INDIV_2KNOBS)
     SyncCorr = _csdev.Const.register('SyncCorr', _et.OFF_ON)
+    MeasCmd = _csdev.Const.register('MeasCmd', _et.MEAS_CMD)
+    MeasMon = _csdev.Const.register('MeasMon', _et.MEAS_MON)
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                           'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
@@ -108,6 +112,62 @@ def get_chrom_database(acc):
         #     'type': 'enum', 'enums': _et.OFF_ON, 'value': _ct.SyncCorr.Off}
         # pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
+        pvs_database['MeasChromDeltaFreqRF-SP'] = {
+            'type': 'float', 'value': 200.0, 'unit': 'Hz',
+            'prec': 4, 'lolim': 0.1, 'hilim': 1000.0}
+        pvs_database['MeasChromDeltaFreqRF-RB'] = {
+            'type': 'float', 'value': 200.0, 'unit': 'Hz',
+            'prec': 4, 'lolim': 0.1, 'hilim': 1000.0}
+        pvs_database['MeasChromWaitTune-SP'] = {
+            'type': 'float', 'value': 5, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasChromWaitTune-RB'] = {
+            'type': 'float', 'value': 5, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasChromNrSteps-SP'] = {
+            'type': 'int', 'value': 8, 'unit': 'nr pts',
+            'prec': 3, 'lolim': 2, 'hilim': 10}
+        pvs_database['MeasChromNrSteps-RB'] = {
+            'type': 'int', 'value': 8, 'unit': 'nr pts',
+            'prec': 3, 'lolim': 2, 'hilim': 10}
+        pvs_database['MeasChrom-Cmd'] = {
+            'type': 'enum', 'enums': _et.MEAS_CMD, 'value': _ct.MeasCmd.Reset}
+        pvs_database['MeasChromStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
+        pvs_database['MeasChromX-Mon'] = {
+            'type': 'float', 'value': 0, 'prec': 6}
+        pvs_database['MeasChromY-Mon'] = {
+            'type': 'float', 'value': 0, 'prec': 6}
+
+        pvs_database['MeasConfigDeltaSLSF-SP'] = {
+            'type': 'float', 'value': 0.1000, 'unit': '1/m2',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 1.0000}
+        pvs_database['MeasConfigDeltaSLSF-RB'] = {
+            'type': 'float', 'value': 0.1000, 'unit': '1/m2',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 1.0000}
+        pvs_database['MeasConfigDeltaSLSD-SP'] = {
+            'type': 'float', 'value': 0.1000, 'unit': '1/m2',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 1.0000}
+        pvs_database['MeasConfigDeltaSLSD-RB'] = {
+            'type': 'float', 'value': 0.1000, 'unit': '1/m2',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 1.0000}
+        pvs_database['MeasConfigWait-SP'] = {
+            'type': 'float', 'value': 1, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasConfigWait-RB'] = {
+            'type': 'float', 'value': 1, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasConfigName-SP'] = {
+            'type': 'string', 'value': 'UNDEF'}
+        pvs_database['MeasConfigName-RB'] = {
+            'type': 'string', 'value': 'UNDEF'}
+        pvs_database['MeasConfigSave-Cmd'] = {
+            'type': 'int', 'value': 0}
+        pvs_database['MeasConfig-Cmd'] = {
+            'type': 'enum', 'enums': _et.MEAS_CMD, 'value': _ct.MeasCmd.Reset}
+        pvs_database['MeasConfigStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
+
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
 
@@ -191,6 +251,35 @@ def get_tune_database(acc):
         pvs_database['SyncCorr-Sts'] = {
             'type': 'enum', 'enums': _et.OFF_ON, 'value': _ct.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
+
+        pvs_database['MeasConfigDeltaKLQF-SP'] = {
+            'type': 'float', 'value': 0.0500, 'unit': '1/m',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 0.5000}
+        pvs_database['MeasConfigDeltaKLQF-RB'] = {
+            'type': 'float', 'value': 0.0500, 'unit': '1/m',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 0.5000}
+        pvs_database['MeasConfigDeltaKLQD-SP'] = {
+            'type': 'float', 'value': 0.0500, 'unit': '1/m',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 0.5000}
+        pvs_database['MeasConfigDeltaKLQD-RB'] = {
+            'type': 'float', 'value': 0.0500, 'unit': '1/m',
+            'prec': 4, 'lolim': 0.0020, 'hilim': 0.5000}
+        pvs_database['MeasConfigWait-SP'] = {
+            'type': 'float', 'value': 1, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasConfigWait-RB'] = {
+            'type': 'float', 'value': 1, 'unit': 's',
+            'prec': 3, 'lolim': 0.005, 'hilim': 100}
+        pvs_database['MeasConfigName-SP'] = {
+            'type': 'string', 'value': 'UNDEF'}
+        pvs_database['MeasConfigName-RB'] = {
+            'type': 'string', 'value': 'UNDEF'}
+        pvs_database['MeasConfigSave-Cmd'] = {
+            'type': 'int', 'value': 0}
+        pvs_database['MeasConfig-Cmd'] = {
+            'type': 'enum', 'enums': _et.MEAS_CMD, 'value': _ct.MeasCmd.Reset}
+        pvs_database['MeasConfigStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
