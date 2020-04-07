@@ -8,7 +8,7 @@ from siriuspy.opticscorr import utils
 from siriuspy.opticscorr.utils import HandleConfigNameFile
 
 
-valid_interface_functions = (
+PUB_INTERFACE = (
     'HandleConfigNameFile',
     'get_default_config_name'
 )
@@ -20,7 +20,7 @@ class TestOpticsCorrUtils(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            utils, valid_interface_functions, print_flag=True)
+            utils, PUB_INTERFACE, print_flag=True)
         self.assertTrue(valid)
 
     def test_HandleConfigNameFile(self):

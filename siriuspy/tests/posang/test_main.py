@@ -8,7 +8,7 @@ import siriuspy.util as util
 from siriuspy.posang.main import App
 
 
-valid_interface = (
+PUB_INTERFACE = (
     'init_database',
     'pvs_database',
     'process',
@@ -45,12 +45,12 @@ class TestASAPPosAngMain(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            App, valid_interface, print_flag=True)
+            App, PUB_INTERFACE, print_flag=True)
         self.assertTrue(valid)
 
-    def test_write_statuserror_DeltaPosAng(self):
+    def test_write_statuserror_Delta(self):
         """Test write DeltaPosY-SP & DeltaAngY-SP on status error."""
-        self.app._status = 0x1
+        self.mock_pv.return_value.connected = False
         self.app.write('DeltaPosX-SP', 0.01)
         self.app.write('DeltaAngX-SP', 0.01)
         self.app.write('DeltaPosY-SP', 0.01)
@@ -59,7 +59,6 @@ class TestASAPPosAngMain(unittest.TestCase):
 
     def test_write_ok_SetNewRefKick(self):
         """Test write SetNewRefKick-Cmd in normal operation."""
-        self.app._status = 0
         self.app.write('SetNewRefKick-Cmd', 0)
         self.assertEqual(self.app._orbx_deltapos, 0)
         self.assertEqual(self.app._orbx_deltaang, 0)
