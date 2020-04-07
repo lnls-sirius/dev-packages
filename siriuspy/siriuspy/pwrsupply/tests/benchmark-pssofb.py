@@ -79,7 +79,7 @@ def test_pvs(acc, psnames):
     print('min: {:08.3f} ms'.format(np.min(stats)))
     print('max: {:08.3f} ms'.format(np.max(stats)))
 
-    plt.hist(stats, 100)
+    plt.hist(stats, 100, log=True)
     plt.title(
         acc + ' - SOFB setpoint benchmark ({} operations)'.format(len(stats)))
     plt.xlabel('Excetution time [ms]')
@@ -112,5 +112,5 @@ def test_si_pvs():
     test_pvs('SI', psnames)
 
 
-# test_bo_pvs()
-test_si_pvs()
+test_bo_pvs()
+# test_si_pvs()
