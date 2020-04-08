@@ -171,11 +171,11 @@ class ExcitationData:
             xvals, xtab, ytab, left=float('nan'), right=float('inf'))
         nan = _np.isnan(interp)
         inf = _np.isinf(interp)
-        vec = _util.linear_extrapolation(xvals[nan],
-                                       xtab[0], xtab[1], ytab[0], ytab[1])
+        vec = _util.linear_extrapolation(
+            xvals[nan], xtab[0], xtab[1], ytab[0], ytab[1])
         interp[nan] = vec
-        vec = _util.linear_extrapolation(xvals[inf],
-                                       xtab[-1], xtab[-2], ytab[-1], ytab[-2])
+        vec = _util.linear_extrapolation(
+            xvals[inf], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
         interp[inf] = vec
         return interp
 
