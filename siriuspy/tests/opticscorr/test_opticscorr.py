@@ -5,7 +5,7 @@
 import unittest
 import numpy as np
 from siriuspy import util
-from siriuspy.optics.opticscorr import OpticsCorr
+from siriuspy.opticscorr.opticscorr import OpticsCorr
 
 valid_interface_opticscorrclass = (
     'magnetfams_ordering',

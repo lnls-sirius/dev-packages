@@ -2,8 +2,8 @@
 
 
 import numpy as _np
-from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
-from siriuspy.opticscorr.csdev import Const as _Const
+from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
+from .csdev import Const as _Const
 
 
 class OpticsCorr:
