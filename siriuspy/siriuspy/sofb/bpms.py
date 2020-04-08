@@ -21,28 +21,29 @@ class BPM(_BaseTimingConfig):
         super().__init__(name[:2], callback)
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
+        pvpref = LL_PREF + self._name + ':'
         opt = {'connection_timeout': TIMEOUT}
-        self._poskx = _PV(LL_PREF + self._name + ':PosKx-RB', **opt)
-        self._posky = _PV(LL_PREF + self._name + ':PosKy-RB', **opt)
-        self._ksum = _PV(LL_PREF + self._name + ':PosKsum-RB', **opt)
-        self._posx = _PV(LL_PREF + self._name + ':PosX-Mon', **opt)
-        self._posy = _PV(LL_PREF + self._name + ':PosY-Mon', **opt)
-        self._spposx = _PV(LL_PREF + self._name + ':SPPosX-Mon', **opt)
-        self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
-        self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
-        self._polyx = _PV(LL_PREF + self._name + ':GEN_PolyXArrayCoeff', **opt)
-        self._polyy = _PV(LL_PREF + self._name + ':GEN_PolyYArrayCoeff', **opt)
+        self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
+        self._posky = _PV(pvpref + 'PosKy-RB', **opt)
+        self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
+        self._posx = _PV(pvpref + 'PosX-Mon', **opt)
+        self._posy = _PV(pvpref + 'PosY-Mon', **opt)
+        self._spposx = _PV(pvpref + 'SPPosX-Mon', **opt)
+        self._spposy = _PV(pvpref + 'SPPosY-Mon', **opt)
+        self._spsum = _PV(pvpref + 'SPSum-Mon', **opt)
+        self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
+        self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
         opt['auto_monitor'] = False
-        self._arraya = _PV(LL_PREF + self._name + ':GEN_AArrayData', **opt)
-        self._arrayb = _PV(LL_PREF + self._name + ':GEN_BArrayData', **opt)
-        self._arrayc = _PV(LL_PREF + self._name + ':GEN_CArrayData', **opt)
-        self._arrayd = _PV(LL_PREF + self._name + ':GEN_DArrayData', **opt)
-        self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
-        self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
-        self._arrays = _PV(LL_PREF + self._name + ':GEN_SUMArrayData', **opt)
+        self._arraya = _PV(pvpref + 'GEN_AArrayData', **opt)
+        self._arrayb = _PV(pvpref + 'GEN_BArrayData', **opt)
+        self._arrayc = _PV(pvpref + 'GEN_CArrayData', **opt)
+        self._arrayd = _PV(pvpref + 'GEN_DArrayData', **opt)
+        self._arrayx = _PV(pvpref + 'GEN_XArrayData', **opt)
+        self._arrayy = _PV(pvpref + 'GEN_YArrayData', **opt)
+        self._arrays = _PV(pvpref + 'GEN_SUMArrayData', **opt)
         opt.pop('auto_monitor')
-        self._offsetx = _PV(LL_PREF + self._name + ':PosXOffset-RB', **opt)
-        self._offsety = _PV(LL_PREF + self._name + ':PosYOffset-RB', **opt)
+        self._offsetx = _PV(pvpref + 'PosXOffset-RB', **opt)
+        self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
@@ -104,7 +105,7 @@ class BPM(_BaseTimingConfig):
             'SUMPosCal': 'SUMPosCal-Sel'}
 
         self._config_pvs_sp = {
-            k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
+            k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'asyn.CNCT': 'asyn.CNCT',
@@ -145,7 +146,7 @@ class BPM(_BaseTimingConfig):
             'XYPosCal': 'XYPosCal-Sts',
             'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
-            k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
+            k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
 
     def set_auto_monitor(self, boo):
         """."""
