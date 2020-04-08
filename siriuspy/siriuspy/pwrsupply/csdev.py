@@ -816,8 +816,8 @@ def _get_ps_FBP_propty_database():
             'prec': DEFAULT_PS_CURRENT_PRECISION},
         }
     propty_db.update(dbase)
-    dbase = get_ps_sofbcurrent_propty_database()
-    propty_db.update(dbase)
+    # dbase = get_ps_sofbcurrent_propty_database()
+    # propty_db.update(dbase)
     return propty_db
 
 
