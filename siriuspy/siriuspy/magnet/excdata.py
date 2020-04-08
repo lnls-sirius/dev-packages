@@ -21,6 +21,7 @@ class ExcitationData:
         self._harmonics = None
         self._main_multipole_harmonic = None
         self._main_multipole_type = None
+        self.rescaling_factor = None
         self.column_units = None
         self.currents = None
         self.multipoles = None
@@ -28,9 +29,9 @@ class ExcitationData:
         # init attributes
         self._init()
 
-        if int(filename is not None) + \
-           int(text is not None) + \
-           int(filename_web is not None) > 1:
+        # check arguments
+        args = (filename, text, filename_web)
+        if sum((arg is not None for arg in args)) != 1:
             raise Exception('ambiguous constructor arguments')
 
         if text:
@@ -43,12 +44,13 @@ class ExcitationData:
     def _init(self):
 
         self.label = ''
-        self._harmonics = []
+        self._harmonics = list()
         self._main_multipole_harmonic = None
         self._main_multipole_type = None
+        self.rescaling_factor = 1.0
         self.column_units = ''
-        self.currents = []
-        self.multipoles = {}
+        self.currents = list()
+        self.multipoles = dict()
 
     # --- properties ---
 
@@ -80,7 +82,7 @@ class ExcitationData:
 
     def check_valid_mult(self, value, harmonic, multipole_type):
         """Check if multipole is within limits of excitation data."""
-        multipoles = self.multipoles[multipole_type.lower()][harmonic]
+        multipoles = self.multipoles[multipole_type][harmonic]
         return min(multipoles) <= value <= max(multipoles)
 
     def interp_curr2mult(self, currents):
@@ -92,42 +94,41 @@ class ExcitationData:
             for harm in self.harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
-                interp = ExcitationData._calc_interp(curr, mpole, currents)
+                interp = ExcitationData._calc_interp(currents, curr, mpole)
                 multipoles['normal'][harm] = interp[0]
                 # skew component
                 mpole = self.multipoles['skew'][harm]
-                interp = ExcitationData._calc_interp(curr, mpole, currents)
+                interp = ExcitationData._calc_interp(currents, curr, mpole)
                 multipoles['skew'][harm] = interp[0]
         else:
             currents = _np.array(currents)
             for harm in self.harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
-                interp = ExcitationData._calc_interp(curr, mpole, currents)
+                interp = ExcitationData._calc_interp(currents, curr, mpole)
                 multipoles['normal'][harm] = interp
                 # skew component
                 mpole = self.multipoles['skew'][harm]
-                interp = ExcitationData._calc_interp(curr, mpole, currents)
+                interp = ExcitationData._calc_interp(currents, curr, mpole)
                 multipoles['skew'][harm] = interp
         return multipoles
 
     def interp_mult2curr(self, multipoles, harmonic, multipole_type):
         """Interpolate current from a specific multipole value."""
         # sort correctly tabulated lists
-        mpole = self.multipoles[multipole_type.lower()][harmonic]
+        mpole = self.multipoles[multipole_type][harmonic]
+        curr = self.currents
         if mpole[-1] <= mpole[0]:
-            mpole = mpole[::-1]
-            curr = self.currents[::-1]
-        else:
-            curr = self.currents
+            mpole, curr = mpole[::-1], self.currents[::-1]
+
         # do conversion
         if _np.isscalar(multipoles):
             multipoles = _np.array([multipoles])
-            interp = ExcitationData._calc_interp(mpole, curr, multipoles)
+            interp = ExcitationData._calc_interp(multipoles, mpole, curr)
             currents = interp[0]
         else:
             multipoles = _np.array(multipoles)
-            interp = ExcitationData._calc_interp(mpole, curr, multipoles)
+            interp = ExcitationData._calc_interp(multipoles, mpole, curr)
             currents = interp
         return currents
 
@@ -165,17 +166,17 @@ class ExcitationData:
     # --- private methods ---
 
     @staticmethod
-    def _calc_interp(xt, yt, x):
-        interp = _np.interp(x, xt, yt,
-                            left=float('nan'), right=float('inf'))
+    def _calc_interp(xvals, xtab, ytab):
+        interp = _np.interp(
+            xvals, xtab, ytab, left=float('nan'), right=float('inf'))
         nan = _np.isnan(interp)
         inf = _np.isinf(interp)
-        v = _util.linear_extrapolation(x[nan],
-                                       xt[0], xt[1], yt[0], yt[1])
-        interp[nan] = v
-        v = _util.linear_extrapolation(x[inf],
-                                       xt[-1], xt[-2], yt[-1], yt[-2])
-        interp[inf] = v
+        vec = _util.linear_extrapolation(xvals[nan],
+                                       xtab[0], xtab[1], ytab[0], ytab[1])
+        interp[nan] = vec
+        vec = _util.linear_extrapolation(xvals[inf],
+                                       xtab[-1], xtab[-2], ytab[-1], ytab[-2])
+        interp[inf] = vec
         return interp
 
     def _process_comment_line(self, line):
@@ -183,19 +184,21 @@ class ExcitationData:
             token, *words = line[1:].split()
             if token.lower() == 'label':
                 self.label = words[0]
-            if token.lower() == 'harmonics':
-                self._harmonics = [int(v) for v in words]
-            if token.lower() == 'main_harmonic':
+            elif token.lower() == 'harmonics':
+                self._harmonics = [int(vec) for vec in words]
+            elif token.lower() == 'main_harmonic':
                 self._main_multipole_harmonic = int(words[0])
                 self._main_multipole_type = words[1].lower()
-            if token.lower() == 'main_multipole_harmonic':
+            elif token.lower() == 'main_multipole_harmonic':
                 self._main_multipole_harmonic = int(words[0])
-            if token.lower() == 'main_multipole_type':
+            elif token.lower() == 'main_multipole_type':
                 self._main_multipole_type = words[0]
-            if token.lower() == 'units':
+            elif token.lower() == 'units':
                 self.column_units = ' '.join(words)
-            if token.lower() == 'column_units':
+            elif token.lower() == 'column_units':
                 self.column_units = ' '.join(words)
+            elif token.lower() == 'rescaling_factor':
+                self.rescaling_factor = float(words[0])
 
     def _process_data(self, line):
         if not self.multipoles:
@@ -206,8 +209,10 @@ class ExcitationData:
         self.currents.append(float(cur))
         for j in range(len(self._harmonics)):
             harm = self._harmonics[j]
-            self.multipoles['normal'][harm].append(float(exc[j*2+0]))
-            self.multipoles['skew'][harm].append(float(exc[j*2+1]))
+            nmpole = self.rescaling_factor * float(exc[j*2+0])
+            smpole = self.rescaling_factor * float(exc[j*2+1])
+            self.multipoles['normal'][harm].append(nmpole)
+            self.multipoles['skew'][harm].append(smpole)
 
     def _read_text(self, text):
         self._init()
