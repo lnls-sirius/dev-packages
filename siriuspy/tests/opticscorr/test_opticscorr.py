@@ -5,9 +5,9 @@
 import unittest
 import numpy as np
 from siriuspy import util
-from siriuspy.optics.opticscorr import OpticsCorr
+from siriuspy.opticscorr.opticscorr import OpticsCorr
 
-valid_interface_opticscorrclass = (
+PUB_INTERFACE = (
     'magnetfams_ordering',
     'nominal_matrix',
     'nominal_intstrengths',
@@ -81,7 +81,7 @@ class TestOpticsCorr(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            OpticsCorr, valid_interface_opticscorrclass, print_flag=True)
+            OpticsCorr, PUB_INTERFACE, print_flag=True)
         self.assertTrue(valid)
 
     def test_type_errors(self):
@@ -346,7 +346,7 @@ class TestOpticsCorr(unittest.TestCase):
         self.assertEqual(propty.shape[0], 2)
         self.assertEqual(propty.shape[1], 2)
 
-    def test_inverse_matrix_add_svd(self):
+    def test_inv_matrix_add_svd(self):
         """Test inverse_matrix_add_svd property."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -361,13 +361,13 @@ class TestOpticsCorr(unittest.TestCase):
                          len(self.opticscorr.magnetfams_focusing) +
                          len(self.opticscorr.magnetfams_defocusing))
         self.assertEqual(propty.shape[1], 2)
-        U, S, V = np.linalg.svd(self.opticscorr.matrix_add_svd,
-                                full_matrices=False)
+        umat, smat, vmat = np.linalg.svd(self.opticscorr.matrix_add_svd,
+                                         full_matrices=False)
         self.assertListEqual(
             list(propty.flatten()),
-            list(np.dot(np.dot(V.T, np.diag(1/S)), U.T).flatten()))
+            list(np.dot(np.dot(vmat.T, np.diag(1/smat)), umat.T).flatten()))
 
-    def test_inverse_matrix_prop_svd(self):
+    def test_inv_matrix_prop_svd(self):
         """Test inverse_matrix_prop_svd property."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -382,13 +382,13 @@ class TestOpticsCorr(unittest.TestCase):
                          len(self.opticscorr.magnetfams_focusing) +
                          len(self.opticscorr.magnetfams_defocusing))
         self.assertEqual(propty.shape[1], 2)
-        U, S, V = np.linalg.svd(self.opticscorr.matrix_prop_svd,
-                                full_matrices=False)
+        umat, smat, vmat = np.linalg.svd(self.opticscorr.matrix_prop_svd,
+                                         full_matrices=False)
         self.assertListEqual(
             list(propty.flatten()),
-            list(np.dot(np.dot(V.T, np.diag(1/S)), U.T).flatten()))
+            list(np.dot(np.dot(vmat.T, np.diag(1/smat)), umat.T).flatten()))
 
-    def test_inverse_matrix_add_2knobs(self):
+    def test_inv_matrix_add_2knobs(self):
         """Test inverse_matrix_add_2knobs property."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -401,13 +401,13 @@ class TestOpticsCorr(unittest.TestCase):
         self.assertIsInstance(propty, np.ndarray)
         self.assertEqual(propty.shape[0], 2)
         self.assertEqual(propty.shape[1], 2)
-        U, S, V = np.linalg.svd(self.opticscorr.matrix_add_2knobs,
-                                full_matrices=False)
+        umat, smat, vmat = np.linalg.svd(self.opticscorr.matrix_add_2knobs,
+                                         full_matrices=False)
         self.assertListEqual(
             list(propty.flatten()),
-            list(np.dot(np.dot(V.T, np.diag(1/S)), U.T).flatten()))
+            list(np.dot(np.dot(vmat.T, np.diag(1/smat)), umat.T).flatten()))
 
-    def test_inverse_matrix_prop_2knobs(self):
+    def test_inv_matrix_prop_2knobs(self):
         """Test inverse_matrix_prop_2knobs property."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -420,13 +420,13 @@ class TestOpticsCorr(unittest.TestCase):
         self.assertIsInstance(propty, np.ndarray)
         self.assertEqual(propty.shape[0], 2)
         self.assertEqual(propty.shape[1], 2)
-        U, S, V = np.linalg.svd(self.opticscorr.matrix_prop_2knobs,
-                                full_matrices=False)
+        umat, smat, vmat = np.linalg.svd(self.opticscorr.matrix_prop_2knobs,
+                                         full_matrices=False)
         self.assertListEqual(
             list(propty.flatten()),
-            list(np.dot(np.dot(V.T, np.diag(1/S)), U.T).flatten()))
+            list(np.dot(np.dot(vmat.T, np.diag(1/smat)), umat.T).flatten()))
 
-    def test_calculate_delta_intstrengths_allfams(self):
+    def test_calc_dintstr_allfams(self):
         """Test calculate_delta_intstrengths function (all families)."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -442,32 +442,32 @@ class TestOpticsCorr(unittest.TestCase):
             method=1, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [0.00027307, 0.00125755, 0.00063636, -0.00106541,
                     -0.00213666, -0.00032148, -0.00105963, -0.00015762]
-        for i in range(len(delta_intstrengths)):
-            self.assertAlmostEqual(delta_intstrengths[i], expected[i])
+        for idx, data in enumerate(delta_intstrengths):
+            self.assertAlmostEqual(data, expected[idx])
 
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
             method=1, grouping='2knobs', delta_opticsparam=delta_opticsparam)
         expected = [0.00110325, 0.00110325, 0.00110325, -0.00139674,
                     -0.00139674, -0.00139674, -0.00139674, -0.00139674]
-        for i in range(len(delta_intstrengths)):
-            self.assertAlmostEqual(delta_intstrengths[i], expected[i])
+        for idx, data in enumerate(delta_intstrengths):
+            self.assertAlmostEqual(data, expected[idx])
 
         # proportional method
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
             method=0, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [-0.00052788, 0.00164248, 0.00093635, -0.0006387,
                     -0.00196284, -0.00147348, -0.00097403, -0.00072931]
-        for i in range(len(delta_intstrengths)):
-            self.assertAlmostEqual(delta_intstrengths[i], expected[i])
+        for idx, data in enumerate(delta_intstrengths):
+            self.assertAlmostEqual(data, expected[idx])
 
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
             method=0, grouping='2knobs', delta_opticsparam=delta_opticsparam)
         expected = [0.00077053, 0.00133102, 0.00133102, -0.00104162,
                     -0.00128895, -0.00219475, -0.00128895, -0.00219475]
-        for i in range(len(delta_intstrengths)):
-            self.assertAlmostEqual(delta_intstrengths[i], expected[i])
+        for idx, data in enumerate(delta_intstrengths):
+            self.assertAlmostEqual(data, expected[idx])
 
-    def test_calculate_delta_intstrengths_somefams(self):
+    def test_calc_dintstr_somefams(self):
         """Test calculate_delta_intstrengths function (5 families)."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -482,10 +482,10 @@ class TestOpticsCorr(unittest.TestCase):
             method=1, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [0.00034033, 0.0015503, 0.,
                     -0.00127996, -0.00256688, -0.00037835, 0., 0.]
-        for i in range(len(delta_intstrengths)):
-            self.assertAlmostEqual(delta_intstrengths[i], expected[i])
+        for idx, data in enumerate(delta_intstrengths):
+            self.assertAlmostEqual(data, expected[idx])
 
-    def test_calculate_opticsparam(self):
+    def test_calc_opticsparam(self):
         """Test calculate_opticsparam function."""
         self.opticscorr = OpticsCorr(self.magnetfams_ordering_ok,
                                      self.nominal_matrix_ok,
@@ -500,8 +500,8 @@ class TestOpticsCorr(unittest.TestCase):
                               -6.49807134e-04, 1.76177711e-05]
         opticsparam = self.opticscorr.calculate_opticsparam(delta_intstrengths)
         expected = [0.02, 0]
-        for i in range(len(opticsparam)):
-            self.assertAlmostEqual(opticsparam[i], expected[i])
+        for idx, data in enumerate(opticsparam):
+            self.assertAlmostEqual(data, expected[idx])
 
 
 if __name__ == "__main__":

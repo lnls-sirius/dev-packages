@@ -154,7 +154,7 @@ class SiriusPVTimeSerie:
                 pv_timestamp, pv_value = timestamp, self._pvobj.value
 
             # check if it is a new datapoint
-            if tdeque or pv_timestamp != tdeque[-1]:
+            if not tdeque or pv_timestamp != tdeque[-1]:
                 # check if there is a limiting time_window
                 if self._time_window is None:
                     # check if there is a limiting time_min_interval
