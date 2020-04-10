@@ -85,13 +85,15 @@ class ExcitationData:
         multipoles = self.multipoles[multipole_type][harmonic]
         return min(multipoles) <= value <= max(multipoles)
 
-    def interp_curr2mult(self, currents):
+    def interp_curr2mult(self, currents, only_main_harmonic=False):
         """Interpolate multipoles for current values."""
         curr = self.currents
         multipoles = {'normal': {}, 'skew': {}}
+        harmonics = (self.main_multipole_harmonic, ) if \
+            only_main_harmonic else self.harmonics
         if _np.isscalar(currents):
             currents = _np.array([currents])
-            for harm in self.harmonics:
+            for harm in harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
                 interp = ExcitationData._calc_interp(currents, curr, mpole)
@@ -102,7 +104,7 @@ class ExcitationData:
                 multipoles['skew'][harm] = interp[0]
         else:
             currents = _np.array(currents)
-            for harm in self.harmonics:
+            for harm in harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
                 interp = ExcitationData._calc_interp(currents, curr, mpole)
