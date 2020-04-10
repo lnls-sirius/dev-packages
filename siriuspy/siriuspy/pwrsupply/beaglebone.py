@@ -161,6 +161,7 @@ class BeagleBone:
 
         # initialize controller communication and setpoint fields
         pruc_initialized = set()
+        psc_initialized = set()
         for controller in self._controllers.values():
             pruc = controller.pru_controller
             if pruc not in pruc_initialized:
@@ -168,6 +169,9 @@ class BeagleBone:
                 pruc.processing = True
                 pruc.scanning = True
                 pruc_initialized.add(pruc)
+            if controller not in psc_initialized:
+                controller.init_setpoints()
+                psc_initialized.add(controller)
         self._initialized = True
 
     # --- private methods ---
