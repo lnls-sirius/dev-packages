@@ -158,6 +158,7 @@ class BeagleBone:
     def init(self):
         """Initialize controllers."""
         # return  # allow for IOC initialization without HW comm.
+
         # initialize controller communication and setpoint fields
         pruc_initialized = set()
         for controller in self._controllers.values():
@@ -248,6 +249,7 @@ class BeagleBone:
 class BBBFactory:
     """BeagleBone factory."""
 
+    # regexp of constant PVs whose initializations require bsmp communications.
     _regexp_constant_bsmp_init = _re.compile('^(Param|Version).*-Cte$')
 
     @staticmethod
@@ -313,16 +315,13 @@ class BBBFactory:
                 pstype = _PSSearch.conv_psname_2_pstype(psname)
                 database = _get_ps_propty_database(psmodel_name, pstype)
 
-                # update bootime in epics database with timestamp
-                database['TimestampBoot-Cte']['value'] = timestamp
-
                 # build setpoints
                 setpoints = BBBFactory._build_setpoints(
                     (device, ), database)
 
                 # build readers and writers and add them to dicts
                 _readers, _writers = BBBFactory._build_readers_writers(
-                    dbase, psmodel, setpoints, (device, ), database,
+                    timestamp, dbase, psmodel, setpoints, (device, ), database,
                     pru_controller)
                 _ = readers.update(_readers), writers.update(_writers)
 
@@ -394,7 +393,9 @@ class BBBFactory:
 
     @staticmethod
     def _build_readers_writers(
-            dbase, model, setpoints, devices, database, pru_controller):
+            timestamp, dbase, model, setpoints, devices, database,
+            pru_controller):
+
         readers, writers = dict(), dict()
 
         for field in database:
@@ -414,9 +415,12 @@ class BBBFactory:
                 # readers for const fields whose initializations
                 # do not require bsmp communication
                 for devname, devid in devices:
+                    if field == 'TimestampBoot-Cte':
+                        # update bootime in epics database with timestamp
+                        database[field]['value'] = timestamp
                     pvname = devname + ':' + field
-                    dbase[pvname] = _deepcopy(database[field])
                     readers[pvname] = _Constant(database[field]['value'])
+                    dbase[pvname] = _deepcopy(database[field])
             else:
                 # readers for other fields
                 for devname, devid in devices:
