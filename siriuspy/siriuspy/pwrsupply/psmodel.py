@@ -211,7 +211,7 @@ class _PSModel:
     @staticmethod
     def _function_common_sp(
             device_ids, epics_field, pru_controller, setpoints):
-        _c = _psbsmp.ConstFBP
+        _c = _psbsmp.ConstPSBSMP
         if epics_field == 'PwrState-Sel':
             return _writers.PSPwrState(device_ids, pru_controller, setpoints)
         if epics_field == 'OpMode-Sel':
@@ -228,7 +228,7 @@ class _PSModel:
     @staticmethod
     def _function_common_cmd(
             device_ids, epics_field, pru_controller, setpoints):
-        _c = _psbsmp.ConstFBP
+        _c = _psbsmp.ConstPSBSMP
         if epics_field == 'Reset-Cmd':
             return _writers.Command(
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
@@ -250,7 +250,7 @@ class _PSModel:
             'CycleOffset-SP': 4,
             'CycleAuxParam-SP': 5,
             }
-        _c = _psbsmp.ConstFBP
+        _c = _psbsmp.ConstPSBSMP
         if epics_field in p2i:
             idx = p2i[epics_field]
             return _writers.CfgSiggen(

@@ -10,6 +10,7 @@
 #     (see identical note in PRUController)
 
 import time as _time
+import re as _re
 from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
@@ -156,6 +157,7 @@ class BeagleBone:
 
     def init(self):
         """Initialize controllers."""
+        # return  # allow for IOC initialization without HW comm.
         # initialize controller communication and setpoint fields
         pruc_initialized = set()
         for controller in self._controllers.values():
@@ -246,6 +248,8 @@ class BeagleBone:
 class BBBFactory:
     """BeagleBone factory."""
 
+    _regexp_constant_bsmp_init = _re.compile('^(Param|Version).*-Cte$')
+
     @staticmethod
     def create(bbbname=None):
         """Return BBB object."""
@@ -316,7 +320,7 @@ class BBBFactory:
                 setpoints = BBBFactory._build_setpoints(
                     (device, ), database)
 
-                # build readers and writers dicts
+                # build readers and writers and add them to dicts
                 _readers, _writers = BBBFactory._build_readers_writers(
                     dbase, psmodel, setpoints, (device, ), database,
                     pru_controller)
@@ -389,24 +393,32 @@ class BBBFactory:
         return setpoints
 
     @staticmethod
-    def _build_readers_writers(dbase, model, setpoints, devices,
-                                     database, pru_controller):
+    def _build_readers_writers(
+            dbase, model, setpoints, devices, database, pru_controller):
         readers, writers = dict(), dict()
+
         for field in database:
             if _Setpoint.match(field):
-                writers.update(BBBFactory._get_functions(
-                    model, field, devices, setpoints, pru_controller))
+                # writers for setpoint field
+                field_writers = \
+                    BBBFactory._get_writers(
+                        model, field, devices, setpoints, pru_controller)
+                writers.update(field_writers)
+                # corresponding readers
                 for devname, devid in devices:
                     pvname = devname + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
                     readers[pvname] = setpoints[pvname]
-            elif _Constant.match(field) and field != 'Version-Cte' and \
-                    not field.startswith('Param'):
+            elif _Constant.match(field) and \
+                    not BBBFactory._regexp_constant_bsmp_init.match(field):
+                # readers for const fields whose initializations
+                # do not require bsmp communication
                 for devname, devid in devices:
                     pvname = devname + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
                     readers[pvname] = _Constant(database[field]['value'])
             else:
+                # readers for other fields
                 for devname, devid in devices:
                     pvname = devname + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
@@ -428,8 +440,8 @@ class BBBFactory:
         return psmodels.pop()
 
     @staticmethod
-    def _get_functions(model, field, devices,
-                       setpoints, pru_controller):
+    def _get_writers(
+            model, field, devices, setpoints, pru_controller):
         # NOTE: Each pwrsupply should have all variables independent
         #       in the near future.
         # if field in ('CycleType-Sel', 'CycleNrCycles-SP',
@@ -445,9 +457,9 @@ class BBBFactory:
         #         ids, field, pru_controller, _Setpoints(sps))
         #     return {device[0] + ':' + field: function
         #             for device in devices}
-        funcs = dict()
+        writers = dict()
         for devname, devid in devices:
             setpoint = setpoints[devname + ':' + field]
-            funcs[devname + ':' + field] = model.function(
+            writers[devname + ':' + field] = model.function(
                 [devid], field, pru_controller, setpoint)
-        return funcs
+        return writers

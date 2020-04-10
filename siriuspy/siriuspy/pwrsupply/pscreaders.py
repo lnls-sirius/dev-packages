@@ -214,7 +214,7 @@ class Version:
 class Constant:
     """Constant."""
 
-    _constant_regexp = _re.compile('^.*-Cte$')
+    _regexp_constant = _re.compile('^.*-Cte$')
 
     def __init__(self, value):
         """Constant value."""
@@ -227,7 +227,7 @@ class Constant:
     @staticmethod
     def match(field):
         """Check if field is a constant."""
-        return Constant._constant_regexp.match(field)
+        return Constant._regexp_constant.match(field)
 
 
 class ConstParameter:
