@@ -255,7 +255,7 @@ class BBBFactory:
     @staticmethod
     def create(bbbname=None):
         """Return BBB object."""
-        # create timestamp used in TimestampBoot-Cte
+        # create timestamp used in all TimestampBoot-Cte PVs
         timestamp = _time.time()
 
         # create PRU used for low-level communication
@@ -269,8 +269,9 @@ class BBBFactory:
             BBBFactory._build_udcgrouped(bbbname)
 
         # power supply controllers and databases
-        # dbase is a pvname-epicsdbase dictionary containing all
-        # beaglebone PVs.
+        # dbase: a pvname-epicsdbase dictionary containing all
+        # beaglebone PVs. the epics server database is initialized
+        # using this dictionary.
         controllers, databases, dbase = \
             BBBFactory._build_controllers(
                 timestamp, pru, prucqueue, psmodels, devices, freqs)
@@ -282,7 +283,7 @@ class BBBFactory:
     @staticmethod
     def _build_controllers(
             timestamp, pru, prucqueue, psmodels, devices, freqs):
-        """."""
+
         # dbase is a pvname to epics dbase dictionary will all PVs
         dbase = dict()
         controllers = dict()  # one controller per psmodel
