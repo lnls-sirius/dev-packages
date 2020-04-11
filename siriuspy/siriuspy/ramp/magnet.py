@@ -2,9 +2,10 @@
 
 from .. import util as _util
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..magnet import util as _mutil
-from ..factory import NormalizerFactory as _NormalizerFactory
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch
+from ..magnet import util as _mutil
+from ..magnet.factory import NormalizerFactory as _NormalizerFactory
+
 
 from .exceptions import RampInvalidDipoleWfmParms as \
     _RampInvalidDipoleWfmParms
