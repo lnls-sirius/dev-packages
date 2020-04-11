@@ -7,7 +7,7 @@ from epics import PV as _PV
 
 import mathphys.constants as _consts
 
-from ...factory import NormalizerFactory as _NormFact
+from ...magnet.factory import NormalizerFactory as _NormFact
 
 from ..util import BaseClass as _BaseClass, ProcessImage as _ProcessImage
 
@@ -16,6 +16,8 @@ E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-6  # in MeV
 
 
 class CalcEmmitance(_BaseClass):
+    """."""
+
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
