@@ -1,7 +1,7 @@
 """Define Power Supply Property and Strength Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..factory import NormalizerFactory as _NormalizerFactory
+from ..magnet.factory import NormalizerFactory as _NormalizerFactory
 
 from .device import Devices as _Devices
 from .syncd import DevicesSync as _DevicesSync

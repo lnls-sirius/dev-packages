@@ -3,10 +3,12 @@
 NormalizerFactory
     used to create magnet normalizers
 """
-from .search import PSSearch as _PSSearch
-from .search import MASearch as _MASearch
-from .magnet import util as _mutil
-from .magnet import normalizer as _norm
+
+from ..search import PSSearch as _PSSearch
+from ..search import MASearch as _MASearch
+
+from . import util as _mutil
+from . import normalizer as _norm
 
 
 class NormalizerFactory:
