@@ -1,6 +1,6 @@
 """."""
 
-from ..pwrsupply.status import PSCStatus as _PSCStatus
+from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
 

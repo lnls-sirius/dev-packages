@@ -6,7 +6,7 @@ implement a common interface that exposes the `read` method.
 """
 import re as _re
 
-from .status import PSCStatus as _PSCStatus
+from .pscstatus import PSCStatus as _PSCStatus
 
 
 class Variable:

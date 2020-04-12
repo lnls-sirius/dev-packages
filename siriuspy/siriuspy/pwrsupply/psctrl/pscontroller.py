@@ -1,6 +1,6 @@
 """Controller classes."""
 
-from ..search import PSSearch as _PSSearch
+from ...search import PSSearch as _PSSearch
 
 
 class PSController:

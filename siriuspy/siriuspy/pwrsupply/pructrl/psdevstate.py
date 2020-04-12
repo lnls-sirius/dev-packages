@@ -6,11 +6,11 @@ import math as _math
 import numpy as _np
 
 
-from ..bsmp import SerialError as _SerialError
+from ...bsmp import SerialError as _SerialError
 
 
 def _psupply_update_connected(func):
-    # This functions decorates PSupply methods to keep track of
+    # This functions decorates PSDevState methods to keep track of
     # connected status.
     def new_update_func(obj, *args, **kwargs):
         try:
@@ -23,10 +23,11 @@ def _psupply_update_connected(func):
     return new_update_func
 
 
-class PSupply:
-    """Power Supply.
+class PSDevState:
+    """Power supply device state.
 
-    Contains the state of a BSMP power supply.
+        Objects of this class are used to store power supply device
+    states.
     """
 
     DEFAULT_UPDATE_INTERVAL_WFM = 2.0  # [s]
@@ -37,9 +38,9 @@ class PSupply:
         """Init."""
         self._psbsmp = psbsmp
         self._connected = None
-        self._groups = PSupply._init_groups()
-        self._variables = PSupply._init_variables()
-        self._curves = PSupply._init_curves()
+        self._groups = PSDevState._init_groups()
+        self._variables = PSDevState._init_variables()
+        self._curves = PSDevState._init_curves()
         self._parameters = self._init_parameters()
         self._wfm_rb = None
         self._wfmref_mon = None
@@ -178,7 +179,7 @@ class PSupply:
     def update_variables(self, interval=None):
         """Update all variables."""
         if interval is None:
-            interval = PSupply.DEFAULT_UPDATE_INTERVAL_VARIABLES
+            interval = PSDevState.DEFAULT_UPDATE_INTERVAL_VARIABLES
         now = _time.time()
         tstamp = self._timestamp_update_variables
         if tstamp is None or (now - tstamp) >= interval:
@@ -206,7 +207,7 @@ class PSupply:
         if self._psbsmp.IS_DCLINK:
             return True
         if interval is None:
-            interval = PSupply.DEFAULT_UPDATE_INTERVAL_WFM
+            interval = PSDevState.DEFAULT_UPDATE_INTERVAL_WFM
         now = _time.time()
         tstamp = self._timestamp_update_wfm
         if tstamp is None or (now - tstamp) >= interval:
@@ -231,7 +232,7 @@ class PSupply:
     def update_parameters(self, interval=None):
         """Update power supply parameters."""
         if interval is None:
-            interval = PSupply.DEFAULT_UPDATE_INTERVAL_PARAMETERS
+            interval = PSDevState.DEFAULT_UPDATE_INTERVAL_PARAMETERS
         now = _time.time()
         tstamp = self._timestamp_update_parameters
         if tstamp is None or (now - tstamp) >= interval:
@@ -268,6 +269,8 @@ class PSupply:
         if ack != self.psbsmp.CONST_BSMP.ACK_OK:
             ValueError('Could not reset groups of variables!')
         return True
+
+    # --- private methods ---
 
     @staticmethod
     def _init_groups():

@@ -4,8 +4,8 @@ import time as _time
 import numpy as _np
 
 from . import prucparms as _prucparms
-from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
-from .psbsmp import PSBSMPFactory as _PSBSMPFactory
+from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+from ..bsmp.factory import PSBSMPFactory as _PSBSMPFactory
 
 
 class UDC:
@@ -25,7 +25,6 @@ class UDC:
     }
 
     _soft_def = _np.zeros(_UDC_MAX_NR_DEV)
-
 
     def __init__(self, pru, psmodel, device_ids):
         """Init."""

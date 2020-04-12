@@ -5,9 +5,9 @@ import math as _math
 
 
 DEFAULT_SIGGEN_CONFIG = (
-    0,      # type  [0:Sine]
-    100,      # num_cycles
-    2.0,  # freq [Hz]
+    0,      # sigtype  [0:Sine]
+    100,    # num_cycles
+    2.0,    # freq [Hz]
     0.0,    # amplitude [A] (Maximum amplitude)
     0.0,    # offset [A]
     0.0,    # aux_param[0]
@@ -20,14 +20,14 @@ DEFAULT_SIGGEN_CONFIG = (
             #   (DampedSine|DampedSquaredSine: decay time [s])
     0.0     # aux_param[3]
             #   (reserved)
-)
+    )
 
 
 class Signal:
     """Signal from SigGen."""
 
     def __init__(self,
-                 type,
+                 sigtype,
                  num_cycles,  # Sine, DampedSine, DampedSqrdSin, Trapezoidal
                  freq,  # [Hz] Sine, DampedSine, DampedSqrdSin
                  amplitude,  # [A] Sine, DampedSine, DampedSqrdSin, Trapezoidal
@@ -36,7 +36,8 @@ class Signal:
                  **kwargs
                  ):
         """Init method."""
-        self.type = type
+        _ = kwargs  # throwaway arguments
+        self.sigtype = sigtype
         self.num_cycles = num_cycles
         self.freq = freq
         self.amplitude = amplitude
@@ -171,10 +172,6 @@ class Signal:
 class SignalSine(Signal):
     """Sine signal."""
 
-    def __init__(self, **kwargs):
-        """Init method."""
-        super().__init__(**kwargs)
-
     def _get_duration(self):
         return self.num_cycles / self.freq
 
@@ -243,10 +240,6 @@ class SignalDampedSquaredSine(SignalDampedNSine):
 class SignalTrapezoidal(Signal):
     """Trapezoidal signal."""
 
-    def __init__(self, **kwargs):
-        """Init method."""
-        super().__init__(**kwargs)
-
     def _get_duration(self):
         return self.cycle_time * self.num_cycles
 
@@ -283,7 +276,7 @@ class SignalTrapezoidal(Signal):
         pass
 
 
-class SignalFactory:
+class SigGenFactory:
     """Signal Generator Factory."""
 
     TYPES = {
@@ -297,7 +290,7 @@ class SignalFactory:
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
         'DampedSquaredSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-    }
+        }
 
     @staticmethod
     def create(data=None, **kwargs):
@@ -308,7 +301,7 @@ class SignalFactory:
 
         Valid arguments:
 
-        type -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
+        sigtype -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
         num_cycles -- Number of cycles, int, (Sine, DampedSine, Trapezoidal)
         freq -- Frequency [Hz], float, (Sine|DampedSine)
         amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
@@ -322,20 +315,37 @@ class SignalFactory:
         decay_time -- Decay time [s] (DampedSine) - aux_param[2]
         """
         # set signal type
-        if 'type' in kwargs:
-            typ = kwargs['type']
+        if 'sigtype' in kwargs:
+            sigtype = kwargs['sigtype']
         elif data is not None:
-            typ = data[0]
+            sigtype = data[0]
         else:
-            typ = SignalFactory.TYPES['Sine']
-        if isinstance(typ, str):
-            typ = SignalFactory.TYPES[typ]
+            sigtype = SigGenFactory.TYPES['Sine']
+        if isinstance(sigtype, str):
+            sigtype = SigGenFactory.TYPES[sigtype]
 
+        # set ps controller initial values
+        kwa = SigGenFactory._set_kwa(kwargs, sigtype, data)
+
+        if sigtype == SigGenFactory.TYPES['Trapezoidal']:
+            return SignalTrapezoidal(**kwa)
+        elif sigtype == SigGenFactory.TYPES['Sine']:
+            return SignalSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['DampedSine']:
+            return SignalDampedSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['DampedSquaredSine']:
+            return SignalDampedSine(**kwa)
+
+        # NOTE: this point should not be reached!
+        return None
+
+    @staticmethod
+    def _set_kwa(kwargs, sigtype, data):
         # set ps controller initial values
         kwa = dict()
         kwa.update(kwargs)
-        kwa['type'] = typ
-        parms = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
+        kwa['sigtype'] = sigtype
+        parms = SigGenFactory.DEFAULT_CONFIGS[SigGenFactory.TYPES_IND[sigtype]]
 
         kwa['num_cycles'] = parms[1]
         kwa['freq'] = parms[2]  # [A]
@@ -346,7 +356,7 @@ class SignalFactory:
         # process data argument
         # kwa = dict()
         if data is not None:
-            kwa['type'] = data[0]
+            kwa['sigtype'] = data[0]
             kwa['num_cycles'] = int(data[1])
             kwa['freq'] = float(data[2])
             kwa['amplitude'] = float(data[3])
@@ -368,11 +378,4 @@ class SignalFactory:
         if 'decay_time' in kwa:
             kwa['aux_param'][2] = float(kwa['decay_time'])
 
-        if typ == SignalFactory.TYPES['Trapezoidal']:
-            return SignalTrapezoidal(**kwa)
-        elif typ == SignalFactory.TYPES['Sine']:
-            return SignalSine(**kwa)
-        elif typ == SignalFactory.TYPES['DampedSine']:
-            return SignalDampedSine(**kwa)
-        elif typ == SignalFactory.TYPES['DampedSquaredSine']:
-            return SignalDampedSine(**kwa)
+        return kwa

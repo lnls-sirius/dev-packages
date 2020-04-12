@@ -1,7 +1,11 @@
-"""Model abstract factory."""
+"""PRU Controller Parameters.
 
-from .bsmp import ConstPSBSMP as _c
-from .psmodel import PSModelFactory as _PSModelFactory
+These parameters are used in PRUController class to
+interact with BSMP devices.
+"""
+
+from ..bsmp.constants import ConstPSBSMP as _const
+from ..psctrl.psmodel import PSModelFactory as _PSModelFactory
 
 
 class PRUCParmsFBP:
@@ -16,11 +20,11 @@ class PRUCParmsFBP:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -54,7 +58,7 @@ class PRUCParmsFBP:
         CONST_PSBSMP.V_V_DCLINK,
         CONST_PSBSMP.V_TEMP_SWITCHES,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -87,7 +91,7 @@ class PRUCParmsFBP:
         CONST_PSBSMP.V_V_LOAD,
         CONST_PSBSMP.V_V_DCLINK,
         CONST_PSBSMP.V_TEMP_SWITCHES,)
-    groups[_c.G_SOFB] = (
+    groups[_const.G_SOFB] = (
         CONST_PSBSMP.V_PS_SETPOINT1,
         CONST_PSBSMP.V_PS_SETPOINT2,
         CONST_PSBSMP.V_PS_SETPOINT3,
@@ -114,11 +118,11 @@ class PRUCParmsFBP_DCLink:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -143,7 +147,7 @@ class PRUCParmsFBP_DCLink:
         CONST_PSBSMP.V_V_OUT_2,
         CONST_PSBSMP.V_V_OUT_3,
         CONST_PSBSMP.V_DIG_POT_TAP,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -184,11 +188,11 @@ class PRUCParmsFAC_2S_DCDC:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -244,7 +248,7 @@ class PRUCParmsFAC_2S_DCDC:
         CONST_PSBSMP.V_DRIVER_ERROR_2_IIB_2,
         CONST_PSBSMP.V_IIB_INTERLOCKS_1,
         CONST_PSBSMP.V_IIB_INTERLOCKS_2)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -317,11 +321,11 @@ class PRUCParmsFAC_2P4S_DCDC:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -444,7 +448,7 @@ class PRUCParmsFAC_2P4S_DCDC:
         CONST_PSBSMP.V_IIB_INTERLOCKS_6,
         CONST_PSBSMP.V_IIB_INTERLOCKS_7,
         CONST_PSBSMP.V_IIB_INTERLOCKS_8,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -583,11 +587,11 @@ class PRUCParmsFAC_DCDC:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -624,7 +628,7 @@ class PRUCParmsFAC_DCDC:
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_TEMP_IGBTS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -674,11 +678,11 @@ class PRUCParmsFAC_2S_ACDC:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -713,7 +717,7 @@ class PRUCParmsFAC_2S_ACDC:
         CONST_PSBSMP.V_TEMP_HEATSINK,
         CONST_PSBSMP.V_TEMP_INDUCTORS,
         CONST_PSBSMP.V_DUTY_CYCLE,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -761,11 +765,11 @@ class PRUCParmsFAC_2P4S_ACDC:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups usefull for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -801,7 +805,7 @@ class PRUCParmsFAC_2P4S_ACDC:
         CONST_PSBSMP.V_I_LEAKAGE_CMD_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS_IS,
         CONST_PSBSMP.V_IIB_INTERLOCKS_CMD,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -853,11 +857,11 @@ class PRUCParmsFAP:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -908,7 +912,7 @@ class PRUCParmsFAP:
         CONST_PSBSMP.V_TEMP_HEATSINK_IIB,
         CONST_PSBSMP.V_I_LEAKAGE_IIB,
         CONST_PSBSMP.V_IIB_INTERLOCKS,)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -975,11 +979,11 @@ class PRUCParmsFAP_4P:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups useful for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
         CONST_PSBSMP.V_PS_REFERENCE,
@@ -1088,7 +1092,7 @@ class PRUCParmsFAP_4P:
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
         CONST_PSBSMP.V_PS_REFERENCE,
@@ -1214,11 +1218,11 @@ class PRUCParmsFAP_2P2S:
 
     groups = dict()
     # reserved variable groups (not to be used)
-    groups[_c.G_ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_c.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_c.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
     # new variable groups usefull for PRUController.
-    groups[_c.G_ALLRELEVANT] = (
+    groups[_const.G_ALLRELEVANT] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,
@@ -1326,7 +1330,7 @@ class PRUCParmsFAP_2P2S:
         CONST_PSBSMP.V_I_MOD_2,
         CONST_PSBSMP.V_I_MOD_3,
         CONST_PSBSMP.V_I_MOD_4)
-    groups[_c.G_SCAN] = (
+    groups[_const.G_SCAN] = (
         # --- common variables
         CONST_PSBSMP.V_PS_STATUS,
         CONST_PSBSMP.V_PS_SETPOINT,

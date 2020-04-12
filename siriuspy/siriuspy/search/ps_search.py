@@ -2,12 +2,13 @@
 
 import copy as _copy
 from threading import Lock as _Lock
-from siriuspy import util as _util
-from siriuspy.namesys import Filter as _Filter
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy import clientweb as _web
-from siriuspy.pwrsupply.siggen import SignalFactory as _SignalFactory
-from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
+
+from .. import util as _util
+from .. import clientweb as _web
+from ..namesys import Filter as _Filter
+from ..namesys import SiriusPVName as _SiriusPVName
+from ..pwrsupply.siggen import SigGenFactory as _SigGenFactory
+from ..magnet.excdata import ExcitationData as _ExcitationData
 
 
 class PSSearch:
@@ -347,7 +348,7 @@ class PSSearch:
         if not _web.server_online():
             raise Exception('could not read pstypes from web server!')
         text = _web.ps_pstypes_names_read()
-        data, params_dict = _util.read_text_data(text)
+        data, _ = _util.read_text_data(text)
         pstype_dict = dict()
         for datum in data:
             name, polarity, magfunc = datum[0], datum[1], datum[2]
@@ -366,7 +367,7 @@ class PSSearch:
             psnames_list = list()
             for pstype in pstypes:
                 text = _web.ps_pstype_data_read(pstype + '.txt')
-                data, param_dict = _util.read_text_data(text)
+                data, _ = _util.read_text_data(text)
                 psnames = [_SiriusPVName(datum[0]) for datum in data]
                 pstype_2_psnames_dict[pstype] = psnames
                 psnames_list += psnames
@@ -452,7 +453,7 @@ class PSSearch:
             psname_2_siggen_dict = dict()
             for datum in data:
                 psname, *siggen_data = datum
-                signal = _SignalFactory.create(data=siggen_data)
+                signal = _SigGenFactory.create(data=siggen_data)
                 psname_2_siggen_dict[psname] = signal
             PSSearch._psname_2_siggen_dict = psname_2_siggen_dict
 
