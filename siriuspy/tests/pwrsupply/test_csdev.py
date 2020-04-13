@@ -11,7 +11,6 @@ _MOCK_FLAG = True
 
 
 PUB_INTERFACE = (
-    'DEFAULT_SIGGEN_CONFIG',
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
     'DEFAULT_WFM_FBP',
@@ -21,16 +20,13 @@ PUB_INTERFACE = (
     'DEFAULT_WFM',
     'PSSOFB_MAX_NR_UDC',
     'UDC_MAX_NR_DEV',
-    'DEFAULT_PS_CURRENT_PRECISION',
-    'DEFAULT_PU_VOLTAGE_PRECISION',
+    'DEFAULT_SIGGEN_CONFIG',
+    'PS_CURRENT_PRECISION',
+    'PU_VOLTAGE_PRECISION',
+    'PS_CURRENT_UNIT',
+    'PU_VOLTAGE_UNIT',
     'ETypes',
     'Const',
-    'get_ps_current_unit',
-    'get_ps_basic_propty_database',
-    'get_ps_common_propty_database',
-    'get_ps_sofbcurrent_propty_database',
-    'get_pu_septum_propty_database',
-    'get_pu_common_propty_database',
     'get_ps_propty_database',
     'get_conv_propty_database',
 )
@@ -141,38 +137,6 @@ class TestPwrSupplyCSDev(TestCase):
         self.assertIsInstance(csdev.DEFAULT_SIGGEN_CONFIG, tuple)
         self.assertTrue(len(csdev.DEFAULT_SIGGEN_CONFIG), 9)
 
-    def test_ps_current_unit(self):
-        """Test  ps_current_unit."""
-        unit = csdev.get_ps_current_unit()
-        self.assertIsInstance(unit, (list, tuple))
-        self.assertEqual(unit[0], 'A')
-        self.assertEqual(unit[1], 'Ampere')
-
-    def test_ps_basic_propty_database(self):
-        """Test ps_basic_propty_database."""
-        dbase = csdev.get_ps_basic_propty_database()
-        self.assertIsInstance(dbase, dict)
-        for prop in dbase:
-            self.assertIsInstance(dbase[prop], dict)
-
-    def test_ps_common_propty_database(self):
-        """Test ps_common_propty_database."""
-        dbase = csdev.get_ps_common_propty_database()
-        self.assertIsInstance(dbase, dict)
-        for prop in dbase:
-            self.assertIsInstance(dbase[prop], dict)
-
-    def test_ps_FBP_propty_database(self):
-        """Test ps_FBP_propty_database."""
-        dbase = csdev.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
-        self.assertIsInstance(dbase, dict)
-        for prop in dbase:
-            self.assertIsInstance(dbase[prop], dict)
-        # test precision consistency
-        proptys = TestPwrSupplyCSDev.ps_alarm
-        for propty in proptys:
-            self.assertIn(propty, dbase)
-
     def test_ps_propty_database(self):
         """Test ps_propty_database."""
         current_pvs = TestPwrSupplyCSDev.ps_alarm
@@ -189,3 +153,28 @@ class TestPwrSupplyCSDev(TestCase):
                     self.assertLessEqual(dbi['high'], dbi['hihi'])
                 if propty in current_pvs:
                     self.assertEqual(dbi['unit'], unit)
+
+    def test_ps_FBP_propty_database(self):
+        """Test ps_FBP_propty_database."""
+        dbase = csdev.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
+        # test precision consistency
+        proptys = TestPwrSupplyCSDev.ps_alarm
+        for propty in proptys:
+            self.assertIn(propty, dbase)
+
+    def test_ps_basic_propty_database(self):
+        """Test ps_basic_propty_database."""
+        dbase = csdev._get_ps_basic_propty_database()
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
+
+    def test_ps_common_propty_database(self):
+        """Test ps_common_propty_database."""
+        dbase = csdev._get_ps_common_propty_database()
+        self.assertIsInstance(dbase, dict)
+        for prop in dbase:
+            self.assertIsInstance(dbase[prop], dict)
