@@ -146,7 +146,7 @@ class BeagleBone:
 
     def init(self):
         """Initialize controllers."""
-        return  # allow for IOC initialization without HW comm.
+        # return  # allow for IOC initialization without HW comm.
 
         # initialize controller communication and setpoint fields
         pruc_initialized = set()
