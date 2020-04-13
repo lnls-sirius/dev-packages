@@ -53,7 +53,7 @@ class _MagnetNormalizer:
         if currents is None:
             return None
         intfields = self._conv_current_2_intfield(currents)
-        # TODO: really necessary? ---
+        # NOTE: really necessary? ---
         if intfields is None:
             if isinstance(currents, (int, float)):
                 return 0.0
@@ -78,15 +78,16 @@ class _MagnetNormalizer:
     # --- normalizer aux. methods ---
 
     def _conv_current_2_intfield(self, currents):
-        mpoles = self._conv_current_2_multipoles(currents)
+        mpoles = self._conv_current_2_multipoles(
+            currents, only_main_harmonic=True)
         if mpoles is None:
             return None
-        mf = self._mfmult
-        intfield = mpoles[mf['type']][mf['harmonic']]
+        mfm = self._mfmult
+        intfield = mpoles[mfm['type']][mfm['harmonic']]
         return intfield
 
-    def _conv_current_2_multipoles(self, currents):
-        # TODO: think about implementation of this function: magnets with
+    def _conv_current_2_multipoles(self, currents, only_main_harmonic=False):
+        # NOTE: think about implementation of this function for magnets with
         # multiple functions...
         if currents is None:
             return None
@@ -94,11 +95,11 @@ class _MagnetNormalizer:
         if self._magfunc != 'dipole':
             # for psname in self._madata.psnames:
             excdata = self._madata.excdata(self._psname)
-            mpoles = excdata.interp_curr2mult(currents)
+            mpoles = excdata.interp_curr2mult(currents, only_main_harmonic)
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         else:
             excdata = self._madata.excdata(self._psname)
-            mpoles = excdata.interp_curr2mult(currents)
+            mpoles = excdata.interp_curr2mult(currents, only_main_harmonic)
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         return msum
 
