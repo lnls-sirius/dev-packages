@@ -1,7 +1,7 @@
 """PRU Controller subpackage.
 
-This subpackage contains lower level modules and classes that are responsible to
-communicate ultimately with power supplies using BSMP protocol.
+This subpackage contains lower level modules and classes that are responsible
+for communicating ultimately with power supplies using BSMP protocol.
 
 Modules:
 

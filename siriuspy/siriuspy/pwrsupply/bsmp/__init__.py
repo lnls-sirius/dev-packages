@@ -1,1 +1,1 @@
-"""Power Supply BSMP."""
+"""Subpackage with PS-specific BSMP objects."""

@@ -6,7 +6,7 @@ from ...search import PSSearch as _PSSearch
 class PSController:
     """Power supply controller.
 
-        Objects of this class are used to communicate with power supply devices
+    Objects of this class are used to communicate with power supply devices
     by invoking properties and methods of the PRU controller.
     """
 
@@ -149,7 +149,10 @@ class PSController:
 
 
 class StandardPSController(PSController):
-    """Standard behaviour for a PSController."""
+    """Standard PSController.
+
+    This is used in DCDC-type power supply models.
+    """
 
     _SIGGEN_PARMS = [
         'CycleType-Sel',
@@ -161,7 +164,7 @@ class StandardPSController(PSController):
     ]
 
     def write(self, devname, field, value):
-        """Override write method."""
+        """Write value to pv."""
         priority_pvs = dict()
 
         pvname = devname + ':' + field

@@ -1,4 +1,4 @@
-"""."""
+"""Power Supply factory classes."""
 
 import time as _time
 import re as _re

@@ -1,4 +1,4 @@
-"""PS Data module."""
+"""Ppower Supply Data."""
 
 import copy as _copy
 

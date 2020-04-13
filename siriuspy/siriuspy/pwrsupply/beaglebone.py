@@ -1,4 +1,5 @@
-"""BeagleBone Implementation Module."""
+"""BeagleBone class."""
+
 # NOTE on current behaviour of BeagleBone:
 #
 # 01. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
@@ -15,10 +16,11 @@ from ..devices import StrengthConv as _StrengthConv
 
 
 class BeagleBone:
-    """BeagleBone is a set of PSControllers.
+    """BeagleBone class.
 
-    This class simply redirects read, write connected requests to the
-    aproppriate controller.
+    Through objects of this class power supply controllers can be accessed
+    in order to redirect read, write connected requests to the
+    aproppriate device.
     """
 
     def __init__(self, controllers, databases):
