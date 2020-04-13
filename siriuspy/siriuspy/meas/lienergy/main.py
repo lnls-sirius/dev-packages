@@ -153,7 +153,8 @@ class CalcEnergy(_BaseClass, _Const):
         """."""
         if self._currents.size == 0:
             return
-        mult = self._excdata.interp_curr2mult(currents=self._currents)
+        mult = self._excdata.interp_curr2mult(
+            currents=self._currents, only_main_harmonic=True)
         self._intdipole = mult['normal'][0]
 
     def _perform_analysis(self):
