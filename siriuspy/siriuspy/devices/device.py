@@ -91,14 +91,15 @@ class Device:
 
     def __getitem__(self, propty):
         """Return value of property."""
-        pvobj = self._pvs[propty]
-        value = pvobj.get()
-        return value
+        pvobj = self._pvs.get(propty)
+        if pvobj is not None:
+            return pvobj.get()
 
     def __setitem__(self, propty, value):
         """Set value of property."""
-        pvobj = self._pvs[propty]
-        pvobj.value = value
+        pvobj = self._pvs.get(propty)
+        if pvobj is not None:
+            pvobj.value = value
 
     # --- private methods ---
 
