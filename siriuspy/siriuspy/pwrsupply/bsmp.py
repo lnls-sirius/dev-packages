@@ -7,6 +7,7 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
+from ..bsmp import constants as _bsmp_constants
 from ..bsmp import Entity as _Entity
 from ..bsmp import Entities as _Entities
 from ..bsmp import Types as _Types
@@ -26,6 +27,14 @@ class ConstPSBSMP:
 
     # --- implemented protocol version ---
     # version = __bsmp_version__
+
+    # --- group of BSMP variables
+    G_ALL = _bsmp_constants.ID_STD_GROUP_ALL
+    G_READONLY = _bsmp_constants.ID_STD_GROUP_READONLY
+    G_WRITE = _bsmp_constants.ID_STD_GROUP_WRITE
+    G_ALLRELEVANT = 3
+    G_SCAN = 4
+    G_SOFB = 5
 
     # --- types ---
     T_STATUS = 0
@@ -211,6 +220,31 @@ class ConstFBP(ConstPSBSMP):
     V_V_DCLINK = 29
     V_TEMP_SWITCHES = 30
     V_DUTY_CYCLE = 31  # (float)
+    # --- FBP mirror variables ----
+    V_PS_STATUS1 = 40
+    V_PS_STATUS2 = 41
+    V_PS_STATUS3 = 42
+    V_PS_STATUS4 = 43
+    V_PS_SETPOINT1 = 44
+    V_PS_SETPOINT2 = 45
+    V_PS_SETPOINT3 = 46
+    V_PS_SETPOINT4 = 47
+    V_PS_REFERENCE1 = 48
+    V_PS_REFERENCE2 = 49
+    V_PS_REFERENCE3 = 50
+    V_PS_REFERENCE4 = 51
+    V_PS_SOFT_INTERLOCK1 = 52
+    V_PS_SOFT_INTERLOCK2 = 53
+    V_PS_SOFT_INTERLOCK3 = 54
+    V_PS_SOFT_INTERLOCK4 = 55
+    V_PS_SOFT_INTERLOCK1 = 56
+    V_PS_HARD_INTERLOCK2 = 57
+    V_PS_HARD_INTERLOCK3 = 58
+    V_PS_HARD_INTERLOCK4 = 59
+    V_I_LOAD1 = 60
+    V_I_LOAD2 = 61
+    V_I_LOAD3 = 62
+    V_I_LOAD4 = 63
 
 
 class ConstFAC_DCDC(ConstPSBSMP):

@@ -295,7 +295,8 @@ class BSMP:
     def recalculate_curve_checksum(self, curve_id, timeout):
         """Recalculate curve checksum."""
         # command and expected response
-        cmd, ack = _consts.CMD_RECALCULATE_CURVE_CHECKSUM, _consts.CMD_CURVE_CHECKSUM
+        cmd, ack = \
+            _consts.CMD_RECALCULATE_CURVE_CHECKSUM, _consts.CMD_CURVE_CHECKSUM
 
         # build payload
         payload = [chr(curve_id)]
@@ -355,6 +356,7 @@ class BSMP:
 
     @staticmethod
     def anomalous_response(cmd, ack, **kwargs):
+        """Print information about anomalous response."""
         # response with error
         if _consts.ACK_OK < ack <= _consts.ACK_RESOURCE_BUSY:
             if 'print_error' not in kwargs or kwargs['print_error']:

@@ -2,8 +2,9 @@
 
 # import random as _random
 import time as _time
-import numpy as _np
 import math as _math
+import numpy as _np
+
 
 from ..bsmp import SerialError as _SerialError
 
@@ -181,7 +182,7 @@ class PSupply:
         now = _time.time()
         tstamp = self._timestamp_update_variables
         if tstamp is None or (now - tstamp) >= interval:
-            group_id = self._psbsmp.CONST_BSMP.ID_STD_GROUP_ALL
+            group_id = self._psbsmp.CONST.G_ALL
             ack, values = self._psbsmp.read_group_of_variables(
                 group_id=group_id)
             if ack == self.psbsmp.CONST_BSMP.ACK_OK:

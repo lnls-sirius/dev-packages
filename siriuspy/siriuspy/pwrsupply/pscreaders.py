@@ -1,6 +1,8 @@
-"""Define fields that map epics PVs to bsmp entity ids or calculation methods.
+"""Reader Classes.
 
-These classes implement a common interface that exposes the `read` method.
+Define classes whose objects are mapped from epics PVs to
+power supply controllers properties or functions. These classes
+implement a common interface that exposes the `read` method.
 """
 import re as _re
 
@@ -108,7 +110,7 @@ class TimestampUpdate:
         return timestamp
 
 
-class PRUProperty:
+class PRUCProperty:
     """Read a PRU property."""
 
     def __init__(self, pru_controller, pru_property):
@@ -212,7 +214,7 @@ class Version:
 class Constant:
     """Constant."""
 
-    _constant_regexp = _re.compile('^.*-Cte$')
+    _regexp_constant = _re.compile('^.*-Cte$')
 
     def __init__(self, value):
         """Constant value."""
@@ -225,7 +227,7 @@ class Constant:
     @staticmethod
     def match(field):
         """Check if field is a constant."""
-        return Constant._constant_regexp.match(field)
+        return Constant._regexp_constant.match(field)
 
 
 class ConstParameter:
@@ -253,7 +255,7 @@ class ConstParameter:
 class Setpoint:
     """Setpoint."""
 
-    _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+    _regexp_setpoint = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     def __init__(self, epics_field, epics_database):
         """Init."""
@@ -320,7 +322,7 @@ class Setpoint:
     @staticmethod
     def match(field):
         """Check if field is a setpoint."""
-        return Setpoint._setpoint_regexp.match(field)
+        return Setpoint._regexp_setpoint.match(field)
 
 
 class Setpoints:

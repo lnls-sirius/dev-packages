@@ -8,6 +8,8 @@ from ..bsmp import BSMP as _BSMP
 
 from . import bsmp as _bsmp
 from .pru import PRU as _PRU
+from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
+from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 
 
 # version of the BSMP implementation of power supplies that is compatible
@@ -65,10 +67,7 @@ class PSBSMP(_BSMP):
 
     def __init__(self, slave_address, entities, pru=None):
         """Init BSMP."""
-        if pru is None:
-            self.pru = _PRU()
-        else:
-            self.pru = pru
+        self.pru = pru
         super().__init__(self.pru, slave_address, entities)
         self._wfmref_mon_check_entities_consistency()
         self._wfmref_vars_group_id = None
@@ -180,6 +179,13 @@ class PSBSMP(_BSMP):
             group_id=group_id, timeout=timeout)
 
         return response
+
+    # --- pwrsupply functions ---
+
+    def ps_function_set_slowref_fbp(self, setpoints):
+        """Write FBP 4-valued setpoints."""
+        self.execute_function(
+            PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
 
     # --- pwrsupply parameters ---
 
@@ -539,6 +545,57 @@ class FBP(PSBSMP):
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
         PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP(), pru=pru)
+
+        # SOFB attributes
+        self._sofb_ps_setpoint = None
+        self._sofb_ps_reference = None
+        self._sofb_ps_iload = None
+
+    # --- SOFB methods ---
+
+    @property
+    def sofb_ps_setpoint(self):
+        """."""
+        return self._sofb_ps_setpoint
+
+    @property
+    def sofb_ps_reference(self):
+        """."""
+        return self._sofb_ps_reference
+
+    @property
+    def sofb_ps_iload(self):
+        """."""
+        return self._sofb_ps_iload
+
+    def sofb_ps_setpoint_set(self, value):
+        """."""
+        self.ps_function_set_slowref_fbp(value)
+
+
+    def sofb_update(self):
+        """."""
+        data = self._sofb_read_group_of_variables()
+        (self._sofb_ps_setpoint,
+         self._sofb_ps_reference,
+         self._sofb_ps_iload) = data
+
+    def _sofb_read_group_of_variables(self):
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'PSBSMP._sofb_read_group_of_variables (beg)', 1e3*(_time.time() % 1)))
+
+        group_id = self.CONST.G_SOFB
+        ack, values = self.read_group_of_variables(
+            group_id=group_id)
+        if ack == self.CONST_BSMP.ACK_OK:
+            setpoints, references, iload = _np.array(values).reshape((3, -1))
+        else:
+            print('Anomalous bsmp communication if sofb read group: ', ack)
+
+        # print('{:<30s} : {:>9.3f} ms'.format(
+        #     'PSBSMP._sofb_read_group_of_variables (end)', 1e3*(_time.time() % 1)))
+
+        return setpoints, references, iload
 
 
 class FAC_DCDC(PSBSMP):

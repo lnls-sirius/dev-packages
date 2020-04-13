@@ -133,8 +133,8 @@ class WfmUpdateAutoSel(Function):
                 self.pru_controller.wfm_update_auto_disable()
 
 
-class PRUProperty(Function):
-    """Executes a PRUProperty command."""
+class PRUCProperty(Function):
+    """Executes a PRUCProperty command."""
 
     def __init__(self, pru_controller, property_name, setpoints=()):
         """Get pru controller."""
@@ -306,3 +306,19 @@ class CfgSiggen(Function):
                     (self._setpoints and
                      self._setpoints.apply(value[self._idx])):
                 self._cfg.execute(value)
+
+
+class SOFBCurrent(Function):
+    """."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """Create command to set SOFBCurrent."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.sofb_current_set(value)
