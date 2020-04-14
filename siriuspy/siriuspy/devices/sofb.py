@@ -100,32 +100,32 @@ class SOFB(_Device):
     @property
     def mt_trajx(self):
         """."""
-        return self['MTurnOrbX-Mon']
+        return self['MTurnOrbX-Mon'] if self.data.isring else None
 
     @property
     def mt_trajy(self):
         """."""
-        return self['MTurnOrbY-Mon']
+        return self['MTurnOrbY-Mon'] if self.data.isring else None
 
     @property
     def mt_sum(self):
         """."""
-        return self['MTurnSum-Mon']
+        return self['MTurnSum-Mon'] if self.data.isring else None
 
     @property
     def mt_trajx_idx(self):
         """."""
-        return self['MTurnIdxOrbX-Mon']
+        return self['MTurnIdxOrbX-Mon'] if self.data.isring else None
 
     @property
     def mt_trajy_idx(self):
         """."""
-        return self['MTurnIdxOrbY-Mon']
+        return self['MTurnIdxOrbY-Mon'] if self.data.isring else None
 
     @property
     def mt_sum_idx(self):
         """."""
-        return self['MTurnIdxSum-Mon']
+        return self['MTurnIdxSum-Mon'] if self.data.isring else None
 
     @property
     def trajx(self):
@@ -151,12 +151,12 @@ class SOFB(_Device):
     @property
     def orbx(self):
         """."""
-        return self['SlowOrbX-Mon']
+        return self['SlowOrbX-Mon'] if self.data.isring else None
 
     @property
     def orby(self):
         """."""
-        return self['SlowOrbY-Mon']
+        return self['SlowOrbY-Mon'] if self.data.isring else None
 
     @property
     def kickch(self):
@@ -271,12 +271,14 @@ class SOFB(_Device):
     @property
     def rfenbl(self):
         """."""
-        return self['RFEnbl-Sts']
+        dta = self.data
+        return self['RFEnbl-Sts'] if dta.acc_idx == dta.Rings.SI else None
 
     @rfenbl.setter
     def rfenbl(self, value):
         """."""
-        self['RFEnbl-Sel'] = value
+        if self.data.acc_idx == self.data.Rings.SI:
+            self['RFEnbl-Sel'] = value
 
     @property
     def buffer_count(self):
