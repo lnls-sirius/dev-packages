@@ -19,7 +19,7 @@ class SOFB(_Device):
         ALL = (TB, BO, TS, SI)
 
     _propty_tmpl = (
-        'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'SOFBMode-Sel', 'SOFBMode-Sts',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
@@ -38,13 +38,11 @@ class SOFB(_Device):
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
         'ClosedLoop-Sts', 'ClosedLoop-Sel',
-        # ring-type dependent properties
-        '<ORBTP>' + 'Sum-Mon',
-        '<ORBTP>' + 'OrbX-Mon',
-        '<ORBTP>' + 'OrbY-Mon',
-        # properties used only for ring-type accelerators
-        '<ORBTP>' + 'Idx' + 'OrbX-Mon',
-        '<ORBTP>' + 'Idx' + 'OrbY-Mon')
+        'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
+        # properties used only for ring-type accelerators:
+        'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
+        'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon')
 
     _default_timeout = 10  # [s]
     _off, _on = 0, 1
@@ -58,61 +56,107 @@ class SOFB(_Device):
         # SOFB object
         self.data = SOFBFactory.create(devname[:2])
 
-        # define device properties
-        self._orbtp, properties = \
-            self._set_attributes_properties()
+        propts = SOFB._propty_tmpl
+        if not self.data.isring:
+            propts = [p for p in propts if not p.startswith(('MTurn', 'Slow'))]
 
         # call base class constructor
-        super().__init__(devname, properties=properties)
-
-        # shortcut attributes to property names
-        self._trajx = self._orbtp + 'OrbX-Mon'
-        self._trajy = self._orbtp + 'OrbY-Mon'
-        self._sum = self._orbtp + 'Sum-Mon'
-        self._trajx_idx = self._orbtp + 'Idx' + 'OrbX-Mon'
-        self._trajy_idx = self._orbtp + 'Idx' + 'OrbY-Mon'
+        super().__init__(devname, properties=propts)
 
     @property
-    def orbit_type(self):
+    def opmode(self):
         """."""
-        return self._orbtp
+        return self['SOFBMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        if value is None:
+            return
+        if isinstance(value, str) and value in self.data.SOFBMode._fields:
+            self['SOFBMode-Sel'] = self.data.SOFBMode._fields.index(value)
+        elif int(value) in self.data.SOFBMode:
+            self['SOFBMode-Sel'] = int(value)
+
+    @property
+    def opmode_str(self):
+        """."""
+        return self.data.SOFBMode._fields[self['SOFBMode-Sts']]
+
+    @property
+    def sp_trajx(self):
+        """."""
+        return self['SPassOrbX-Mon']
+
+    @property
+    def sp_trajy(self):
+        """."""
+        return self['SPassOrbY-Mon']
+
+    @property
+    def sp_sum(self):
+        """."""
+        return self['SPassSum-Mon']
+
+    @property
+    def mt_trajx(self):
+        """."""
+        return self['MTurnOrbX-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajy(self):
+        """."""
+        return self['MTurnOrbY-Mon'] if self.data.isring else None
+
+    @property
+    def mt_sum(self):
+        """."""
+        return self['MTurnSum-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajx_idx(self):
+        """."""
+        return self['MTurnIdxOrbX-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajy_idx(self):
+        """."""
+        return self['MTurnIdxOrbY-Mon'] if self.data.isring else None
+
+    @property
+    def mt_sum_idx(self):
+        """."""
+        return self['MTurnIdxSum-Mon'] if self.data.isring else None
 
     @property
     def trajx(self):
         """."""
-        return self[self._trajx]
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_trajx_idx
+        return self.sp_trajx
 
     @property
     def trajy(self):
         """."""
-        return self[self._trajy]
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_trajy_idx
+        return self.sp_trajy
 
     @property
     def sum(self):
         """."""
-        return self[self._sum]
-
-    @property
-    def trajx_idx(self):
-        """."""
-        return self[self._trajx_idx] if self.data.isring \
-            else self.trajx
-
-    @property
-    def trajy_idx(self):
-        """."""
-        return self[self._trajy_idx] if self.data.isring \
-            else self.trajy
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_sum_idx
+        return self.sp_sum
 
     @property
     def orbx(self):
         """."""
-        return self['SlowOrbX-Mon']
+        return self['SlowOrbX-Mon'] if self.data.isring else None
 
     @property
     def orby(self):
         """."""
-        return self['SlowOrbY-Mon']
+        return self['SlowOrbY-Mon'] if self.data.isring else None
 
     @property
     def kickch(self):
@@ -227,12 +271,14 @@ class SOFB(_Device):
     @property
     def rfenbl(self):
         """."""
-        return self['RFEnbl-Sts']
+        dta = self.data
+        return self['RFEnbl-Sts'] if dta.acc_idx == dta.Rings.SI else None
 
     @rfenbl.setter
     def rfenbl(self, value):
         """."""
-        self['RFEnbl-Sel'] = value
+        if self.data.acc_idx == self.data.Rings.SI:
+            self['RFEnbl-Sel'] = value
 
     @property
     def buffer_count(self):
@@ -304,16 +350,3 @@ class SOFB(_Device):
             _time.sleep(interval)
         else:
             print('WARN: Timed out waiting orbit.')
-
-    # --- private methods ---
-
-    def _set_attributes_properties(self):
-        orbtp = 'MTurn' if self.data.isring else 'SPass'
-        properties = []
-        for propty in SOFB._propty_tmpl:
-            propty = propty.replace('<ORBTP>', orbtp)
-            if self.data.isring or \
-                    ('IdxOrbX-Mon' not in propty and
-                     'IdxOrbY-Mon' not in propty):
-                properties.append(propty)
-        return orbtp, properties
