@@ -4,9 +4,9 @@
 from unittest import TestCase
 
 from siriuspy import util
-from siriuspy.pwrsupply import pru
-from siriuspy.pwrsupply.pru import PRUInterface
-from siriuspy.pwrsupply.pru import PRU
+from siriuspy.pwrsupply.pructrl import pru
+from siriuspy.pwrsupply.pructrl.pru import PRUInterface
+from siriuspy.pwrsupply.pructrl.pru import PRU
 
 
 PUB_INTERFACE = (

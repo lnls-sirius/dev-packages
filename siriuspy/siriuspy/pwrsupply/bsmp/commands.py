@@ -1,16 +1,22 @@
-"""Power Supply BSMP."""
+"""Power Supply BSMP Commands.
+
+Documentation:
+
+https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
+"""
 
 import time as _time
 import numpy as _np
 
-from ..bsmp import constants as _const_bsmp
-from ..bsmp import BSMP as _BSMP
+from ...bsmp import constants as _const_bsmp
+from ...bsmp import BSMP as _BSMP
 
-from . import bsmp as _bsmp
-from .pru import PRU as _PRU
-from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+from ..csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
+from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+from ..pructrl.pru import PRU as _PRU
 
+from . import constants as _const_psbsmp
+from . import entities as _etity_psbsmp
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
@@ -24,7 +30,7 @@ class PSBSMP(_BSMP):
     """
 
     CONST_BSMP = _const_bsmp
-    CONST = _bsmp.ConstPSBSMP
+    CONST = _const_psbsmp.ConstPSBSMP
 
     _timeout_read_variable = 100  # [ms]
     _timeout_execute_function = 100  # [ms]
@@ -540,11 +546,11 @@ class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFBP
+    CONST = _const_psbsmp.ConstFBP
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
 
         # SOFB attributes
         self._sofb_ps_setpoint = None
@@ -602,66 +608,66 @@ class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAC_DCDC
+    CONST = _const_psbsmp.ConstFAC_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
 
 
 class FAC_2P4S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_DCDC."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAC_2P4S_DCDC
+    CONST = _const_psbsmp.ConstFAC_2P4S_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2P4S_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(), pru=pru)
 
 
 class FAC_2S_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_DCDC."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAC_2S_DCDC
+    CONST = _const_psbsmp.ConstFAC_2S_DCDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2S_DCDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
 
 
 class FAP(PSBSMP):
     """BSMP with EntitiesFAP."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAP
+    CONST = _const_psbsmp.ConstFAP
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
 
 
 class FAP_4P(PSBSMP):
     """BSMP with EntitiesFAP_4P."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAP_4P
+    CONST = _const_psbsmp.ConstFAP_4P
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP_4P(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
 
 
 class FAP_2P2S(PSBSMP):
     """BSMP with EntitiesFAP_2P2S."""
 
     IS_DCLINK = False
-    CONST = _bsmp.ConstFAP_2P2S
+    CONST = _const_psbsmp.ConstFAP_2P2S
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAP_2P2S(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
 # --- ACDC ---
@@ -671,58 +677,30 @@ class FBP_DCLink(PSBSMP):
     """BSMP with EntitiesFBP_DCLink."""
 
     IS_DCLINK = True
-    CONST = _bsmp.ConstFBP_DCLink
+    CONST = _const_psbsmp.ConstFBP_DCLink
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFBP_DCLink(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
 
 
 class FAC_2P4S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2P4S_ACDC."""
 
     IS_DCLINK = True
-    CONST = _bsmp.ConstFAC_2P4S_ACDC
+    CONST = _const_psbsmp.ConstFAC_2P4S_ACDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2P4S_ACDC(), pru=pru)
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(), pru=pru)
 
 
 class FAC_2S_ACDC(PSBSMP):
     """BSMP with EntitiesFAC_2S_ACDC."""
 
     IS_DCLINK = True
-    CONST = _bsmp.ConstFAC_2S_ACDC
+    CONST = _const_psbsmp.ConstFAC_2S_ACDC
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _bsmp.EntitiesFAC_2S_ACDC(), pru=pru)
-
-
-class PSBSMPFactory:
-    """."""
-
-    psname_2_psbsmp = {
-        'FBP': FBP,
-        'FBP_DCLink': FBP_DCLink,
-        'FBP_FOFB': FBP,
-        'FAC_DCDC': FAC_DCDC,
-        'FAC_2S_DCDC': FAC_2S_DCDC,
-        'FAC_2S_ACDC': FAC_2S_ACDC,
-        'FAC_2P4S_DCDC': FAC_2P4S_DCDC,
-        'FAC_2P4S_ACDC': FAC_2P4S_ACDC,
-        'FAP': FAP,
-        'FAP_2P2S': FAP_2P2S,
-        'FAP_4P': FAP_4P,
-    }
-
-    @staticmethod
-    def create(psmodel, *args, **kwargs):
-        """Return PSModel object."""
-
-        if psmodel in PSBSMPFactory.psname_2_psbsmp:
-            factory = PSBSMPFactory.psname_2_psbsmp[psmodel]
-            return factory(*args, **kwargs)
-        else:
-            raise ValueError('PS Model "{}" not defined'.format(psmodel))
+        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)

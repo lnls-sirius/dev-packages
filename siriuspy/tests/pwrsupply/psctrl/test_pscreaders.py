@@ -1,7 +1,7 @@
 """Test fields module."""
 from unittest import TestCase
 
-from siriuspy.pwrsupply.pscreaders import Setpoint
+from siriuspy.pwrsupply.psctrl.pscreaders import Setpoint
 
 
 class TestSetpointMatch(TestCase):
@@ -29,7 +29,7 @@ class TestCmdSetpoint(TestCase):
     """Test setpoint class."""
 
     def setUp(self):
-        """Common setup."""
+        """Define common setup."""
         self.field = 'Fake-Cmd'
         self.dbase = {'type': 'int', 'value': 0}
         self.setpoint = Setpoint(self.field, self.dbase)

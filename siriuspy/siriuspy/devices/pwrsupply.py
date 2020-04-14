@@ -4,7 +4,7 @@ from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
-from ..pwrsupply.status import PSCStatus as _PSCStatus
+from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
 

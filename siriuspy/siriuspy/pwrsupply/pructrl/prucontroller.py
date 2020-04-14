@@ -10,12 +10,13 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
-from ..bsmp import constants as _const_bsmp
-from ..bsmp import SerialError as _SerialError
+from ...bsmp import SerialError as _SerialError
 
-from .bsmp import __version__ as _firmware_version_siriuspy
+from ..bsmp.constants import _const_bsmp
+from ..bsmp.constants import __version__ as _firmware_version_siriuspy
+
 from .udc import UDC as _UDC
-from .psupply import PSupply as _PSupply
+from .psdevstate import PSDevState as _PSDevState
 
 
 # NOTE: On current behaviour of PRUC and Power Supplies:
@@ -440,10 +441,10 @@ class PRUController:
         udc = _UDC(pru, psmodel_name, device_ids)
         parms = udc.prucparms
 
-        # create PSupply objects
+        # create PSDevState objects
         psupplies = dict()
         for dev_id in device_ids:
-            psupplies[dev_id] = _PSupply(psbsmp=udc[dev_id])
+            psupplies[dev_id] = _PSDevState(psbsmp=udc[dev_id])
 
         # bypass psmodel default frequencies
         if freq is not None:

@@ -4,7 +4,7 @@ import time as _time
 import PRUserial485 as _PRUserial485
 from PRUserial485 import EthBrigdeClient as _EthBrigdeClient
 
-from .. import csdev as _csdev
+from ... import csdev as _csdev
 
 
 # check PRUserial485 package version

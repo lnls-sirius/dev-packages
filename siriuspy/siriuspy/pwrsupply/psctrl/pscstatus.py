@@ -1,7 +1,7 @@
 """Translate `ps_state` bits to values exposed in EPICS."""
 
-from .csdev import ETypes as _et
-from .csdev import Const as _c
+from ..csdev import ETypes as _et
+from ..csdev import Const as _c
 
 
 class PSCStatus:

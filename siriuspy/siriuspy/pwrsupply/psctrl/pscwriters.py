@@ -4,8 +4,8 @@ These classes implement a command interface, that is, they have
 an `execute` method.
 """
 
-from .bsmp import ConstPSBSMP as _consts_psbsmp
-from .csdev import Const as _consts_ps
+from ..csdev import Const as _const_psdev
+from ..bsmp.constants import ConstPSBSMP as _const_psbsmp
 
 
 class Function:
@@ -66,9 +66,9 @@ class WfmMonAcq(Function):
         """Define CurveAcq."""
         self._device_ids = device_ids
         self.enable = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_ENABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_ENABLE_BUF_SAMPLES)
         self.disable = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_DISABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_DISABLE_BUF_SAMPLES)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -156,11 +156,11 @@ class PSPwrState(Function):
         """Define function."""
         self._device_ids = device_ids
         self.turn_on = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_TURN_ON)
+            device_ids, pru_controller, _const_psbsmp.F_TURN_ON)
         self.close_loop = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_CLOSE_LOOP)
+            device_ids, pru_controller, _const_psbsmp.F_CLOSE_LOOP)
         self.turn_off = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_TURN_OFF)
+            device_ids, pru_controller, _const_psbsmp.F_TURN_OFF)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -181,19 +181,19 @@ class PSPwrStateFBP_DCLink(Function):
         """Define function."""
         self.setpoints = setpoints
         self.turn_on = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_TURN_ON)
+            device_ids, pru_controller, _const_psbsmp.F_TURN_ON)
         self.turn_off = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_TURN_OFF)
+            device_ids, pru_controller, _const_psbsmp.F_TURN_OFF)
         self.open_loop = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_OPEN_LOOP)
+            device_ids, pru_controller, _const_psbsmp.F_OPEN_LOOP)
 
     def execute(self, value=None):
         """Execute Command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            if value == _consts_ps.PwrStateSel.On:
+            if value == _const_psdev.PwrStateSel.On:
                 self.turn_on.execute()
-            elif value == _consts_ps.PwrStateSel.Off:
+            elif value == _const_psdev.PwrStateSel.Off:
                 self.turn_off.execute()
 
 
@@ -205,9 +205,9 @@ class CtrlLoop(Function):
         self.pru_controller = pru_controller
         self.setpoints = setpoints
         self.open_loop = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_OPEN_LOOP)
+            device_ids, pru_controller, _const_psbsmp.F_OPEN_LOOP)
         self.close_loop = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_CLOSE_LOOP)
+            device_ids, pru_controller, _const_psbsmp.F_CLOSE_LOOP)
 
     def execute(self, value=None):
         """Execute Command."""
@@ -232,16 +232,16 @@ class PSOpMode(Function):
         """Parse before executing."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            if value == _consts_ps.OpMode.SlowRef:
-                op_mode = _consts_ps.States.SlowRef
-            elif value == _consts_ps.OpMode.SlowRefSync:
-                op_mode = _consts_ps.States.SlowRefSync
-            elif value == _consts_ps.OpMode.Cycle:
-                op_mode = _consts_ps.States.Cycle
-            elif value == _consts_ps.OpMode.RmpWfm:
-                op_mode = _consts_ps.States.RmpWfm
-            elif value == _consts_ps.OpMode.MigWfm:
-                op_mode = _consts_ps.States.MigWfm
+            if value == _const_psdev.OpMode.SlowRef:
+                op_mode = _const_psdev.States.SlowRef
+            elif value == _const_psdev.OpMode.SlowRefSync:
+                op_mode = _const_psdev.States.SlowRefSync
+            elif value == _const_psdev.OpMode.Cycle:
+                op_mode = _const_psdev.States.Cycle
+            elif value == _const_psdev.OpMode.RmpWfm:
+                op_mode = _const_psdev.States.RmpWfm
+            elif value == _const_psdev.OpMode.MigWfm:
+                op_mode = _const_psdev.States.MigWfm
             else:
                 op_mode = value
             # execute opmode change
@@ -257,7 +257,7 @@ class Current(Function):
         self._device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_current = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_SET_SLOWREF)
+            device_ids, pru_controller, _const_psbsmp.F_SET_SLOWREF)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -273,7 +273,7 @@ class Voltage(Function):
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set voltage."""
         self.device_ids = device_ids
-        func_id = _consts_psbsmp.F_SET_SLOWREF
+        func_id = _const_psbsmp.F_SET_SLOWREF
         self.set_voltage = BSMPFunction(device_ids, pru_controller, func_id)
         self.setpoints = setpoints
 
@@ -292,7 +292,7 @@ class CfgSiggen(Function):
         self._idx = idx
         self._setpoints = setpoints
         self._cfg = BSMPFunction(
-            device_ids, pru_controller, _consts_psbsmp.F_CFG_SIGGEN)
+            device_ids, pru_controller, _const_psbsmp.F_CFG_SIGGEN)
 
     def execute(self, value=None):
         """Execute command."""
