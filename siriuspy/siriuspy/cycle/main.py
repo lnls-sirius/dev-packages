@@ -132,6 +132,15 @@ class CycleController:
             self._update_log('Connecting to '+psn+'...')
             self._aux_cyclers[psn] = PSCycler(psn)
 
+        all_si_psnames = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
+        missing_ps = list(all_si_psnames -
+                          set(self.trims_psnames) -
+                          set(self.psnames))
+        for psn in missing_ps:
+            self._update_log('Connecting to '+psn+'...')
+            self._aux_cyclers[psn] = PSCycler(psn)
+
         # wait for connections
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection()
