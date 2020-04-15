@@ -90,7 +90,7 @@ class CycleController:
             12 +  # check final
             5)   # reset subsystems
 
-        if 'SI' in self._sections:
+        if self.has_si_fams:
             # trims psnames
             trims = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
@@ -106,6 +106,9 @@ class CycleController:
             # set and check currents to zero
             self.prepare_ps_size += 2*len(self.psnames)
             self.prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
+            # set and check trims cycle params
+            self.prepare_ps_size += len(self.psnames)
+            self.prepare_ps_max_duration += TIMEOUT_CHECK
 
         # logger
         self._logger = logger
@@ -119,6 +122,14 @@ class CycleController:
     def psnames(self):
         """Power supplies to cycle."""
         return list(self.cyclers.keys())
+
+    @property
+    def has_si_fams(self):
+        """Return if is cycling any SI Fam PS."""
+        psn = set(self.cyclers.keys())
+        fam_psn = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS'}))
+        return psn & fam_psn
 
     @property
     def mode(self):
@@ -144,6 +155,29 @@ class CycleController:
         # wait for connections
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection()
+
+        # calculate trims cycle duration
+        duration = 0
+        for psname in self.trims_psnames:
+            duration = max(
+                duration, self._aux_cyclers[psname].cycle_duration(self._mode))
+        self._cycle_trims_duration = duration
+
+        self.cycle_trims_size = 2*(
+            2*2 +  # check timing
+            2*len(self.trims_psnames) +  # check params
+            2*2*len(self.trims_psnames) +  # set and check opmode
+            2*2 +  # set and check triggers enable
+            2*(3+round(duration)) +  # cycle
+            2*len(self.trims_psnames))  # check final
+        self.cycle_trims_max_duration = (
+            2*5 +  # check timing
+            2*TIMEOUT_CHECK +  # check params
+            2*TIMEOUT_CHECK +  # check opmode
+            2*6 +  # set and check triggers enable
+            2*60 +  # wait for timing trigger
+            2*round(duration) +  # cycle
+            2*12)  # check final
 
     def set_pwrsupplies_currents_zero(self):
         """Zero currents of all SI power supplies."""
@@ -313,6 +347,69 @@ class CycleController:
         self._timing.trigger(self.mode)
         self._update_log(done=True)
 
+    def init_trims(self, trims):
+        """Initialize trims cycling process."""
+        # initialize dict to check which trim is cycling
+        self._is_trim_cycling_dict = {ps: True for ps in trims}
+
+        # trigger
+        self.trigger_timing()
+
+    def wait_trims(self):
+        """Wait Trims to cycle."""
+        self._update_log('Waiting for trims to cycle...')
+        time0 = _time.time()
+        keep_waiting = True
+        while keep_waiting:
+            # update remaining time
+            _time.sleep(1)
+            time = round(self._cycle_trims_duration - (_time.time()-time0))
+            self._update_log('Remaining time: {}s...'.format(time))
+
+            # verify if trims started to cycle
+            if 5 < _time.time() - time0 < 6:
+                for psname in self._is_trim_cycling_dict:
+                    if not self._aux_cyclers[psname].get_cycle_enable():
+                        self._update_log(
+                            psname + ' is not cycling!', warning=True)
+                        self._is_trim_cycling_dict[psname] = False
+                if sum(self._is_trim_cycling_dict.values()) == 0:
+                    self._update_log(
+                        'All trims failed. Stopping.', error=True)
+                    return False
+
+            # update keep_waiting
+            keep_waiting = _time.time() - time0 < self._cycle_trims_duration
+
+        self._update_log(done=True)
+        return True
+
+    def cycle_trims(self, filt):
+        """Cycle trims."""
+        pslabel = 'CVs' if 'CV' in filt else 'CHs, QSs and QTrims'
+        self._update_log('Preparing to cycle '+pslabel+'...')
+        filters = {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS'}
+        filters.update({'dev': filt})
+        trims = _PSSearch.get_psnames(filters)
+
+        if not self.check_pwrsupplies('parameters', trims):
+            return False
+        self.config_pwrsupplies('opmode', trims)
+        if not self.check_pwrsupplies('opmode', trims):
+            return False
+
+        triggers = _get_trigger_by_psname(trims)
+        if not self.enable_triggers(triggers):
+            return False
+        self.init_trims(trims)
+        if not self.wait_trims():
+            return False
+        self.disable_triggers(triggers)
+
+        if not self.check_pwrsupplies_finalsts(trims):
+            return False
+        return True
+
     def init(self):
         """Initialize cycling process."""
         # initialize dict to check which ps is cycling
@@ -434,9 +531,10 @@ class CycleController:
     def prepare_pwrsupplies_parameters(self):
         """Prepare parameters to cycle."""
         psnames = self.psnames
-        if 'SI' in self._sections:
+        if self.has_si_fams:
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
+            psnames.extend(self.trims_psnames)
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames):
@@ -456,6 +554,27 @@ class CycleController:
             return
         self._update_log('Power supplies OpMode preparation finished!')
 
+    def cycle_all_trims(self):
+        """Cycle all trims."""
+        if not self.has_si_fams:
+            return
+
+        if not self.check_timing():
+            return
+
+        if not self.cycle_trims(filt='(CH|QS|QD.*|QF.*|Q[1-4])'):
+            self._update_log(
+                'There was problems in trims cycling. Stoping.', error=True)
+            return
+
+        if not self.cycle_trims(filt='CV'):
+            self._update_log(
+                'There was problems in trims cycling. Stoping.', error=True)
+            return
+
+        if 'SI-Glob:TI-Mags-Corrs' in self._triggers:
+            self._triggers.remove('SI-Glob:TI-Mags-Corrs')
+
     def cycle(self):
         """Cycle."""
         # check
@@ -463,12 +582,21 @@ class CycleController:
             return
         if not self.check_timing():
             return
-        if not self.check_pwrsupplies('parameters', self.psnames):
+
+        psnames = self.psnames
+        if self.has_si_fams:
+            psnames = set(self.psnames)
+            ps2remove = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'CV', 'idx': '2'}))
+            psnames = list(psnames - ps2remove)
+        psnames_wo_li = [ps for ps in self.psnames if 'LI' not in ps]
+
+        if not self.check_pwrsupplies('parameters', psnames):
             self._update_log(
                 'There are power supplies not configured to cycle. Stopping.',
                 error=True)
             return
-        psnames_wo_li = [ps for ps in self.psnames if 'LI' not in ps]
         if not self.check_pwrsupplies('opmode', psnames_wo_li):
             self._update_log(
                 'There are power supplies with wrong opmode. Stopping.',
@@ -481,7 +609,7 @@ class CycleController:
         if not self.wait():
             return
 
-        self.check_pwrsupplies_finalsts(self.psnames)
+        self.check_pwrsupplies_finalsts(psnames)
         self.restore_timing_initial_state()
 
         # Indicate cycle end
