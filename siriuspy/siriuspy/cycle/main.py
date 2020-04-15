@@ -51,7 +51,7 @@ class CycleController:
         self._only_linac = self._sections == ['LI', ]
         if not self._only_linac:
             self._timing = timing if timing is not None else Timing()
-            self._triggers = _get_trigger_by_psname(self.psnames)
+        self._triggers = _get_trigger_by_psname(self.psnames)
 
         # egun pv
         if 'LI-01:PS-Spect' in self.psnames:
