@@ -52,9 +52,9 @@ class PSProperty(_DevicesSync):
             pvname = self.pvnames[0]
         except TypeError:
             # is a set
-            for pvname in self.pvnames:
-                if pvname.endswith('-SP'):
-                    pvname = self.pvnames
+            for pvn in self.pvnames:
+                if pvn.endswith('-SP'):
+                    pvname = pvn
         pvobj = self.pv_object(pvname)
         limits = (
             pvobj.lower_alarm_limit,
