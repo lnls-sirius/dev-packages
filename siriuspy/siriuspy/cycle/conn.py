@@ -434,7 +434,7 @@ class PSCycler:
         """Set params to cycle."""
         status = True
         if mode == 'Cycle':
-            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.type)
+            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
             _time.sleep(TIMEOUT_SLEEP)
             status &= _pv_conn_put(self['CycleFreq-SP'], self.siggen.freq)
             _time.sleep(TIMEOUT_SLEEP)
