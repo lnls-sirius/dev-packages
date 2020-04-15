@@ -31,8 +31,8 @@ class CycleController:
 
         # cyclers
         self.cyclers = cyclers
-        ps2cycle = self._psnames_2_cycle()
-        ps2ramp = self._psnames_2_ramp()
+        ps2cycle = self._filter_psnames({'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
+        ps2ramp = self._filter_psnames({'sec': 'BO', 'dis': 'PS'})
         if cyclers and (ps2cycle and ps2ramp):
             raise Exception('Can not cycle Booster with other accelerators!')
         self._mode = 'Ramp' if ps2ramp else 'Cycle'
@@ -47,8 +47,7 @@ class CycleController:
 
         # timing connector
         self._sections = _get_sections(self.psnames)
-        self._only_linac = (len(self._sections) == 1) and \
-                           (self._sections[0] == 'LI')
+        self._only_linac = self._sections == ['LI', ]
         if not self._only_linac:
             self._timing = timing if timing is not None else Timing()
             self._triggers = _get_trigger_by_psname(self.psnames)
@@ -58,7 +57,7 @@ class CycleController:
             self._pv_egun = _PV('LI-01:EG-TriggerPS:enablereal',
                                 connection_timeout=0.05)
 
-        # duration
+        # cycle duration
         duration = 0
         for psname in self.psnames:
             duration = max(
@@ -206,10 +205,10 @@ class CycleController:
                     continue
                 cycler = self.cyclers[psname]
                 if ppty == 'parameters':
-                    r = cycler.is_prepared(self.mode)
+                    ret = cycler.is_prepared(self.mode)
                 elif ppty == 'opmode':
-                    r = cycler.check_opmode_cycle(self.mode)
-                if r:
+                    ret = cycler.check_opmode_cycle(self.mode)
+                if ret:
                     need_check.remove(psname)
                     self._checks_result[psname] = True
             if not need_check:
@@ -238,16 +237,14 @@ class CycleController:
         while _time.time()-time0 < TIMEOUT_CHECK/2:
             status = self._timing.check(self.mode, self._triggers)
             if status:
-                break
+                self._update_log(done=True)
+                return True
             _time.sleep(TIMEOUT_SLEEP)
-        if not status:
-            self._update_log('Timing is not configured.', error=True)
-            return False
-        else:
-            self._update_log(done=True)
-            return True
+        self._update_log('Timing is not configured.', error=True)
+        return False
 
     def check_egun_off(self):
+        """Check egun off."""
         if 'LI-01:PS-Spect' in self.psnames:
             status = (self._pv_egun.value == 0)
             if not status:
@@ -255,8 +252,7 @@ class CycleController:
                     'Linac EGun pulse is enabled! '
                     'Please disable it.', error=True)
             return status
-        else:
-            return True
+        return True
 
     def pulse_si_pwrsupplies(self):
         """Send sync pulse to power supplies. Not being used."""
@@ -272,13 +268,13 @@ class CycleController:
             thread.join()
 
     def init(self):
-        """Trigger timing according to mode to init cycling."""
+        """Initialize cycling process."""
         # initialize dict to check which ps is cycling
-        self._is_cycling_dict = dict()
-        for psname in self.psnames:
-            self._is_cycling_dict[psname] = True
+        self._is_cycling_dict = {ps: True for ps in self.psnames}
+
         self._li_threads = list()
-        for psname in self.psnames_li:
+        psnames_li = [psn for psn in self.psnames if 'LI' in psn]
+        for psname in psnames_li:
             cycler = self.cyclers[psname]
             thread = _thread.Thread(target=cycler.cycle, daemon=True)
             self._li_threads.append(thread)
@@ -317,10 +313,10 @@ class CycleController:
                         self._update_log(psname + ' is not cycling!',
                                          warning=True)
                         self._is_cycling_dict[psname] = False
-            if all([v is False for v in self._is_cycling_dict.values()]):
-                self._update_log(
-                    'All power supplies failed. Stopping.', error=True)
-                return False
+                if sum(self._is_cycling_dict.values()) == 0:
+                    self._update_log(
+                        'All power supplies failed. Stopping.', error=True)
+                    return False
 
             # update keep_waiting
             if self.mode == 'Cycle':
@@ -331,7 +327,7 @@ class CycleController:
         self._update_log(done=True)
         return True
 
-    def check_all_pwrsupplies_final_state(self):
+    def check_pwrsupplies_finalsts(self):
         """Check all power supplies final state according to mode."""
         need_check = _dcopy(self.psnames)
 
@@ -351,6 +347,7 @@ class CycleController:
         for psname in need_check:
             self._checks_final_result[psname] = False
 
+        all_ok = True
         for psname in self.psnames:
             self._update_log('Checking '+psname+' state...')
             has_prob = self._checks_final_result[psname]
@@ -360,6 +357,7 @@ class CycleController:
                 self._update_log(
                     'Verify the number of pulses '+psname+' received!',
                     error=True)
+                all_ok = False
             elif has_prob == 2 and self._is_cycling_dict[psname]:
                 self._update_log(
                     'Verify '+psname+' OpMode! SlowRef command was sent...',
@@ -370,7 +368,8 @@ class CycleController:
             elif has_prob == 4:
                 self._update_log(psname+' has interlock problems.',
                                  error=True)
-        return True
+                all_ok = False
+        return all_ok
 
     def restore_timing_initial_state(self):
         """Reset all subsystems."""
@@ -431,7 +430,7 @@ class CycleController:
         self.init()
         if not self.wait():
             return
-        self.check_all_pwrsupplies_final_state()
+        self.check_pwrsupplies_finalsts()
         self.restore_timing_initial_state()
 
         # Indicate cycle end
@@ -439,29 +438,12 @@ class CycleController:
 
     # --- private methods ---
 
-    def _psnames_2_cycle(self):
-        """Return psnames to cycle."""
+    def _filter_psnames(self, filt):
         if self.cyclers:
             psnames = _Filter.process_filters(
-                self.cyclers.keys(),
-                filters={'sec': '(TB|TS|SI)', 'dis': 'PS'})
-            lipsnames = _Filter.process_filters(
-                self.cyclers.keys(),
-                filters={'sec': 'LI', 'dis': 'PS'})
+                self.cyclers.keys(), filters=filt)
         else:
-            psnames = _PSSearch.get_psnames({'sec': '(TB|TS|SI)', 'dis': 'PS'})
-            lipsnames = _PSSearch.get_psnames({'sec': 'LI', 'dis': 'PS'})
-        psnames.extend(lipsnames)
-        self.psnames_li = lipsnames
-        return psnames
-
-    def _psnames_2_ramp(self):
-        """Return psnames to ramp."""
-        if self.cyclers:
-            psnames = _Filter.process_filters(
-                self.cyclers.keys(), filters={'sec': 'BO', 'dis': 'PS'})
-        else:
-            psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
+            psnames = _PSSearch.get_psnames(filt)
         return psnames
 
     def _update_log(self, message='', done=False, warning=False, error=False):
