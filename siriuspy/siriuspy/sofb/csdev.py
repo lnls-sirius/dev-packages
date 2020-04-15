@@ -4,7 +4,6 @@ from copy import deepcopy as _dcopy
 
 from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
-from ..util import get_namedtuple as _get_namedtuple
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
@@ -667,7 +666,7 @@ class SOFBSI(SOFBRings, ConstSI):
         evts = _HLTISearch.get_hl_trigger_allowed_evts(self.trigger_cor_name)
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
+        self.CorrExtEvtSrc = self.register('CorrExtEvtSrc', evts, vals)
         self.circum = 518.396  # in meter
         self.rev_per = self.circum / 299792458  # in seconds
 

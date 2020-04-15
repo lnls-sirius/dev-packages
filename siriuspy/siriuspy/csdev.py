@@ -1,6 +1,9 @@
 """Control system Device Util Module."""
 
 import copy as _copy
+
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
 from . import util as _util
 from .clientweb import beaglebone_ip_list as _bbb_ip_list
 from .search import PSSearch as _PSSearch
@@ -28,15 +31,15 @@ _et = ETypes  # syntactic sugar
 class Const:
     """Const class defining power supply constants."""
 
-    DsblEnbl = _util.get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
-    OffOn = _util.get_namedtuple('OffOn', _et.OFF_ON)
-    CloseOpen = _util.get_namedtuple('CloseOpen', _et.CLOSE_OPEN)
-    DisconnConn = _util.get_namedtuple('DisconnConn', _et.DISCONN_CONN)
+    DsblEnbl = _get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
+    OffOn = _get_namedtuple('OffOn', _et.OFF_ON)
+    CloseOpen = _get_namedtuple('CloseOpen', _et.CLOSE_OPEN)
+    DisconnConn = _get_namedtuple('DisconnConn', _et.DISCONN_CONN)
 
     @staticmethod
     def register(name, field_names, values=None):
         """Register namedtuple."""
-        return _util.get_namedtuple(name, field_names, values)
+        return _get_namedtuple(name, field_names, values)
 
 
 def add_pvslist_cte(database, prefix=''):
