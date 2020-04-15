@@ -159,12 +159,11 @@ class CycleController:
                 status &= False
         return status
 
-    def config_all_pwrsupplies(self, ppty):
+    def config_pwrsupplies(self, ppty, psnames=None):
         """Prepare power supplies to cycle according to mode."""
-        if ppty == 'opmode':
-            psnames = [ps for ps in self.psnames if 'LI' not in ps]
-        else:
-            psnames = self.psnames
+        if not psnames:
+            psnames = self._get_psnames_2_control(ppty)
+
         threads = list()
         for psname in psnames:
             cycler = self._get_cycler(psname)
@@ -189,12 +188,10 @@ class CycleController:
         self._timing.prepare(self.mode, self._triggers)
         self._update_log(done=True)
 
-    def check_all_pwrsupplies(self, ppty):
+    def check_pwrsupplies(self, ppty, psnames=None):
         """Check all power supplies according to mode."""
-        if ppty == 'opmode':
-            psnames = [ps for ps in self.psnames if 'LI' not in ps]
-        else:
-            psnames = self.psnames
+        if not psnames:
+            psnames = self._get_psnames_2_control(ppty)
         need_check = _dcopy(psnames)
 
         self._checks_result = dict()
@@ -328,9 +325,9 @@ class CycleController:
         self._update_log(done=True)
         return True
 
-    def check_pwrsupplies_finalsts(self):
+    def check_pwrsupplies_finalsts(self, psnames):
         """Check all power supplies final state according to mode."""
-        need_check = _dcopy(self.psnames)
+        need_check = _dcopy(psnames)
 
         self._checks_final_result = dict()
         time = _time.time()
@@ -349,7 +346,7 @@ class CycleController:
             self._checks_final_result[psname] = False
 
         all_ok = True
-        for psname in self.psnames:
+        for psname in psnames:
             self._update_log('Checking '+psname+' state...')
             has_prob = self._checks_final_result[psname]
             if has_prob == 0:
@@ -391,11 +388,15 @@ class CycleController:
 
     def prepare_pwrsupplies_parameters(self):
         """Prepare parameters to cycle."""
+        ppty = 'parameters'
+        psnames = self._get_psnames_2_control(ppty)
+
         if 'SI' in self._sections:
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
-        self.config_all_pwrsupplies('parameters')
-        if not self.check_all_pwrsupplies('parameters'):
+
+        self.config_pwrsupplies(ppty, psnames)
+        if not self.check_pwrsupplies(ppty, psnames):
             self._update_log(
                 'There are power supplies not configured to cycle.',
                 error=True)
@@ -404,8 +405,8 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode(self):
         """Prepare OpMode to cycle."""
-        self.config_all_pwrsupplies('opmode')
-        if not self.check_all_pwrsupplies('opmode'):
+        self.config_pwrsupplies('opmode')
+        if not self.check_pwrsupplies('opmode'):
             self._update_log(
                 'There are power supplies with wrong opmode.',
                 error=True)
@@ -419,12 +420,12 @@ class CycleController:
             return
         if not self.check_timing():
             return
-        if not self.check_all_pwrsupplies('parameters'):
+        if not self.check_pwrsupplies('parameters'):
             self._update_log(
                 'There are power supplies not configured to cycle. Stopping.',
                 error=True)
             return
-        if not self.check_all_pwrsupplies('opmode'):
+        if not self.check_pwrsupplies('opmode'):
             self._update_log(
                 'There are power supplies with wrong opmode. Stopping.',
                 error=True)
@@ -433,7 +434,8 @@ class CycleController:
         self.init()
         if not self.wait():
             return
-        self.check_pwrsupplies_finalsts()
+
+        self.check_pwrsupplies_finalsts(self.psnames)
         self.restore_timing_initial_state()
 
         # Indicate cycle end
@@ -447,6 +449,14 @@ class CycleController:
                 self.cyclers.keys(), filters=filt)
         else:
             psnames = _PSSearch.get_psnames(filt)
+        return psnames
+
+    def _get_psnames_2_control(self, ppty):
+        """Return psnames to control."""
+        if ppty == 'opmode':
+            psnames = [ps for ps in self.psnames if 'LI' not in ps]
+        else:
+            psnames = self.psnames
         return psnames
 
     def _get_cycler(self, psname):
