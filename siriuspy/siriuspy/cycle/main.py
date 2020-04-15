@@ -67,7 +67,7 @@ class CycleController:
 
         # task sizes
         self.prepare_timing_size = 3
-        self.prepare_timing_max_duration = 15
+        self.prepare_timing_max_duration = 10
 
         self.prepare_ps_size = 2*len(self.psnames)+1
         self.prepare_ps_max_duration = 20
@@ -77,17 +77,22 @@ class CycleController:
             self.prepare_ps_max_duration += \
                 TIMEOUT_CHECK + TIMEOUT_CHECK_SI_CURRENTS
 
-        self.cycle_size = (len(self.psnames)+3 +  # check params
-                           len(self.psnames) +    # check opmode
-                           1+round(self._cycle_duration) +  # cycle
-                           len(self.psnames) +  # check final
-                           len(self.psnames)+2)  # reset subsystems
+        self.cycle_size = (
+            2 +  # check timing
+            len(self.psnames)+3 +  # check params
+            len(self.psnames) +    # check opmode
+            2 +  # set and check triggers enable
+            3+round(self._cycle_duration) +  # cycle
+            len(self.psnames) +  # check final
+            len(self.psnames)+2)  # reset subsystems
         self.cycle_max_duration = (
-            5 +  # check params
-            5 +  # check opmode
-            TIMEOUT_CHECK*3 +  # wait for timing trigger
+            5 +  # check timing
+            TIMEOUT_CHECK +  # check params
+            TIMEOUT_CHECK +  # check opmode
+            6 +  # set and check triggers enable
+            60 +  # wait for timing trigger
             round(self._cycle_duration) +  # cycle
-            5 +  # check final
+            12 +  # check final
             5)   # reset subsystems
 
         # logger
@@ -231,7 +236,7 @@ class CycleController:
 
         self._update_log('Checking Timing...')
         time0 = _time.time()
-        while _time.time()-time0 < TIMEOUT_CHECK/2:
+        while _time.time() - time0 < 5:
             status = self._timing.check(self.mode, self._triggers)
             if status:
                 self._update_log(done=True)
@@ -331,8 +336,8 @@ class CycleController:
 
         self._checks_final_result = dict()
         time = _time.time()
-        while _time.time() - time < TIMEOUT_CHECK:
-            for psname in self.psnames:
+        while _time.time() - time < 10:
+            for psname in psnames:
                 if psname not in need_check:
                     continue
                 cycler = self._get_cycler(psname)
