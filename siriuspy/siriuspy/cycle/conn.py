@@ -130,6 +130,14 @@ class Timing:
                     break
                 _time.sleep(TIMEOUT_SLEEP)
 
+    def enable_triggers(self, triggers):
+        """Enable triggers."""
+        return self.set_triggers_state(_TIConst.DsblEnbl.Enbl, triggers)
+
+    def disable_triggers(self, triggers):
+        """Disable triggers."""
+        return self.set_triggers_state(_TIConst.DsblEnbl.Dsbl, triggers)
+
     def enable_evg(self):
         """Enable EVG."""
         pvobj = Timing._pvs[Timing.evg_name+':DevEnbl-Sts']
@@ -142,6 +150,28 @@ class Timing:
         """Turn on/off InjectionEvt-Sel."""
         pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
         pvobj.value = state
+
+    def set_triggers_state(self, state, triggers, timeout=5):
+        """Set triggers state."""
+        for trig in triggers:
+            pvobj = Timing._pvs[trig+':State-Sel']
+            pvobj.value = state
+            _time.sleep(1.5*TIMEOUT_SLEEP)
+
+        triggers_2_check = set(triggers)
+        _t0 = _time.time()
+        while _time.time() - _t0 < timeout:
+            for trig in triggers:
+                if trig not in triggers_2_check:
+                    continue
+                if Timing._pvs[trig+':State-Sts'].value == state:
+                    triggers_2_check.remove(trig)
+            if not triggers_2_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        if triggers_2_check:
+            return False
+        return True
 
     def update_events(self):
         """Update events."""
@@ -285,7 +315,7 @@ class Timing:
                 props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
                 props[mode][trig+':Delay-SP'] = cls.DEFAULT_DELAY
                 props[mode][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
-                props[mode][trig+':State-Sel'] = _TIConst.DsblEnbl.Enbl
+                props[mode][trig+':State-Sel'] = None
 
             _trig_db = _get_trig_db(trig)
             cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')

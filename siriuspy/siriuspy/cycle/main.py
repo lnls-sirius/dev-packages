@@ -269,6 +269,34 @@ class CycleController:
         for thread in threads:
             thread.join()
 
+    def enable_triggers(self, triggers):
+        """Enable triggers."""
+        if self._only_linac:
+            return True
+        self._update_log('Enabling triggers...')
+        if self._timing.enable_triggers(triggers):
+            self._update_log(done=True)
+            return True
+        self._update_log('Could not enable triggers!', error=True)
+        return False
+
+    def disable_triggers(self, triggers):
+        """Disable triggers."""
+        self._update_log('Disabling triggers...')
+        if self._timing.disable_triggers(triggers):
+            self._update_log(done=True)
+            return True
+        self._update_log('Could not disable triggers!', error=True)
+        return False
+
+    def trigger_timing(self):
+        """Trigger timing according to mode."""
+        if self._only_linac:
+            return
+        self._update_log('Triggering timing...')
+        self._timing.trigger(self.mode)
+        self._update_log(done=True)
+
     def init(self):
         """Initialize cycling process."""
         # initialize dict to check which ps is cycling
@@ -282,12 +310,8 @@ class CycleController:
             self._li_threads.append(thread)
             thread.start()
 
-        psnames = [ps for ps in self.psnames if 'LI' not in ps]
-        if not psnames:
-            return
-        self._update_log('Triggering timing...')
-        self._timing.trigger(self.mode)
-        self._update_log(done=True)
+        # trigger
+        self.trigger_timing()
 
     def wait(self):
         """Wait/Sleep while cycling according to mode."""
@@ -436,6 +460,8 @@ class CycleController:
                 error=True)
             return
 
+        if not self.enable_triggers(self._triggers):
+            return
         self.init()
         if not self.wait():
             return
