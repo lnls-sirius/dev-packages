@@ -9,7 +9,7 @@ from .clientweb import beaglebone_ip_list as _bbb_ip_list
 from .search import PSSearch as _PSSearch
 
 
-_DEV_2_IOC_IP_DICT = None
+_DEV_2_IOC_IP_DICT = dict()
 
 
 class ETypes:
@@ -58,30 +58,28 @@ def add_pvslist_cte(database, prefix=''):
 
 def get_device_2_ioc_ip(reload=False):
     """Return a dict of ioc IP numbers for csdevices."""
-    if _DEV_2_IOC_IP_DICT is None or reload is True:
+    if not _DEV_2_IOC_IP_DICT or reload:
         _reload_device_2_ioc_ip()
     return _copy.deepcopy(_DEV_2_IOC_IP_DICT)
 
 
 def _reload_device_2_ioc_ip():
-    global _DEV_2_IOC_IP_DICT
-    _DEV_2_IOC_IP_DICT = dict()
 
     # beaglebone IPs
     text, _ = _util.read_text_data(_bbb_ip_list())
     for item in text:
         if len(item) == 2:
-            bbbname, ip = item
-            _DEV_2_IOC_IP_DICT[bbbname] = ip
+            bbbname, ipm = item
+            _DEV_2_IOC_IP_DICT[bbbname] = ipm
 
     # power supplies
     dic = dict()
-    for bbbname, ip in _DEV_2_IOC_IP_DICT.items():
+    for bbbname, ipm in _DEV_2_IOC_IP_DICT.items():
         try:
             bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
             for bsmp in bsmps:
                 psname, _ = bsmp
-                dic[psname] = ip
+                dic[psname] = ipm
         except KeyError:
             pass
     _DEV_2_IOC_IP_DICT.update(dic)
