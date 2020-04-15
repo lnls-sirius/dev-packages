@@ -457,7 +457,7 @@ class PSCycler:
         """Return wether power supply cycling parameters are set."""
         status = True
         if mode == 'Cycle':
-            type_idx = _PSet.CYCLE_TYPES.index(self.siggen.type)
+            type_idx = _PSet.CYCLE_TYPES.index(self.siggen.sigtype)
             status &= _pv_timed_get(self['CycleType-Sts'], type_idx, wait=wait)
             status &= _pv_timed_get(
                 self['CycleFreq-RB'], self.siggen.freq, wait=wait)
