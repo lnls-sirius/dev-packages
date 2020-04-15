@@ -185,7 +185,8 @@ class Devices:
 
         self._properties = []
         for dev in self._devices:
-            self._properties += dev.properties
+            if dev is not None:
+                self._properties += dev.properties
 
     @property
     def devname(self):
