@@ -28,6 +28,7 @@ class CycleController:
                  is_bo=False, ramp_config=None, logger=None):
         """Initialize."""
         self._checks_result = dict()
+        self._aux_cyclers = dict()
 
         # cyclers
         self.cyclers = cyclers
@@ -107,33 +108,30 @@ class CycleController:
         """Mode."""
         return self._mode
 
-    def set_check_si_pwrsupplies_currents_zero(self):
-        """Zero currents of all SI power supplies."""
-        if 'SI' not in self._sections:
-            return
+    def create_aux_cyclers(self):
+        """Create auxiliar cyclers."""
+        # create cyclers, if needed
+        for psn in self.trims_psnames:
+            self._update_log('Connecting to '+psn+'...')
+            self._aux_cyclers[psn] = PSCycler(psn)
 
+        # wait for connections
+        for cycler in self._aux_cyclers.values():
+            cycler.wait_for_connection()
+
+    def set_pwrsupplies_currents_zero(self):
+        """Zero currents of all SI power supplies."""
         psnames = _PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'})
 
-        # create cyclers, if needed
-        cyclers = dict()
-        for psname in psnames:
-            if psname in self.cyclers:
-                cyclers[psname] = self.cyclers[psname]
-            else:
-                self._update_log('Connecting to '+psname+'...')
-                cyclers[psname] = PSCycler(psname)
-
-        # wait for connections
-        for cycler in cyclers.values():
-            cycler.wait_for_connection()
-
         # set currents to zero
-        for psname, cycler in cyclers.items():
-            self._update_log('Setting '+psname+' current to zero...')
+        for psn in psnames:
+            cycler = self._get_cycler(psn)
+            self._update_log('Setting '+psn+' current to zero...')
             cycler.set_current_zero()
 
         # check currents zero
+        self._update_log('Waiting power supplies...')
         need_check = _dcopy(psnames)
         self._checks_result = dict()
         time = _time.time()
@@ -141,7 +139,8 @@ class CycleController:
             for psname in psnames:
                 if psname not in need_check:
                     continue
-                if cyclers[psname].check_current_zero():
+                cycler = self._get_cycler(psname)
+                if cycler.check_current_zero():
                     need_check.remove(psname)
                     self._checks_result[psname] = True
             if not need_check:
@@ -168,10 +167,11 @@ class CycleController:
             psnames = self.psnames
         threads = list()
         for psname in psnames:
+            cycler = self._get_cycler(psname)
             if ppty == 'parameters':
-                target = self.cyclers[psname].prepare
-            elif ppty == 'opmode' and 'LI' not in psname:
-                target = self.cyclers[psname].set_opmode_cycle
+                target = cycler.prepare
+            elif ppty == 'opmode':
+                target = cycler.set_opmode_cycle
             thread = _thread.Thread(
                 target=target, args=(self.mode, ), daemon=True)
             self._update_log('Preparing '+psname+' '+ppty+'...')
@@ -203,7 +203,7 @@ class CycleController:
             for psname in psnames:
                 if psname not in need_check:
                     continue
-                cycler = self.cyclers[psname]
+                cycler = self._get_cycler(psname)
                 if ppty == 'parameters':
                     ret = cycler.is_prepared(self.mode)
                 elif ppty == 'opmode':
@@ -259,8 +259,8 @@ class CycleController:
         psnames = []
         threads = list()
         for psname in psnames:
-            thread = _thread.Thread(
-                target=self.cyclers[psname].pulse, daemon=True)
+            cycler = self._get_cycler(psname)
+            thread = _thread.Thread(target=cycler.pulse, daemon=True)
             self._update_log('Pulsing '+psname+'...')
             threads.append(thread)
             thread.start()
@@ -275,7 +275,7 @@ class CycleController:
         self._li_threads = list()
         psnames_li = [psn for psn in self.psnames if 'LI' in psn]
         for psname in psnames_li:
-            cycler = self.cyclers[psname]
+            cycler = self._get_cycler(psname)
             thread = _thread.Thread(target=cycler.cycle, daemon=True)
             self._li_threads.append(thread)
             thread.start()
@@ -309,9 +309,10 @@ class CycleController:
                 for psname in self.psnames:
                     if _PVName(psname).sec == 'LI':
                         continue
-                    if not self.cyclers[psname].get_cycle_enable():
-                        self._update_log(psname + ' is not cycling!',
-                                         warning=True)
+                    cycler = self._get_cycler(psname)
+                    if not cycler.get_cycle_enable():
+                        self._update_log(
+                            psname + ' is not cycling!', warning=True)
                         self._is_cycling_dict[psname] = False
                 if sum(self._is_cycling_dict.values()) == 0:
                     self._update_log(
@@ -337,7 +338,7 @@ class CycleController:
             for psname in self.psnames:
                 if psname not in need_check:
                     continue
-                cycler = self.cyclers[psname]
+                cycler = self._get_cycler(psname)
                 if cycler.check_final_state(self.mode):
                     need_check.remove(psname)
                     self._checks_final_result[psname] = True
@@ -382,15 +383,17 @@ class CycleController:
     # --- main commands ---
 
     def prepare_timing(self):
-        """."""
+        """Prepare Timing."""
         self.config_timing()
         if not self.check_timing():
             return
         self._update_log('Timing preparation finished!')
 
     def prepare_pwrsupplies_parameters(self):
-        """Prepare to cycle."""
-        self.set_check_si_pwrsupplies_currents_zero()
+        """Prepare parameters to cycle."""
+        if 'SI' in self._sections:
+            self.create_aux_cyclers()
+            self.set_pwrsupplies_currents_zero()
         self.config_all_pwrsupplies('parameters')
         if not self.check_all_pwrsupplies('parameters'):
             self._update_log(
@@ -400,7 +403,7 @@ class CycleController:
         self._update_log('Power supplies parameters preparation finished!')
 
     def prepare_pwrsupplies_opmode(self):
-        """Prepare to cycle."""
+        """Prepare OpMode to cycle."""
         self.config_all_pwrsupplies('opmode')
         if not self.check_all_pwrsupplies('opmode'):
             self._update_log(
@@ -445,6 +448,13 @@ class CycleController:
         else:
             psnames = _PSSearch.get_psnames(filt)
         return psnames
+
+    def _get_cycler(self, psname):
+        if psname in self.cyclers:
+            return self.cyclers[psname]
+        if psname in self._aux_cyclers:
+            return self._aux_cyclers[psname]
+        raise ValueError('There is no cycler defined to '+psname+'!')
 
     def _update_log(self, message='', done=False, warning=False, error=False):
         self._logger_message = message
