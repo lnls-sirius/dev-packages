@@ -47,7 +47,14 @@ class PSProperty(_DevicesSync):
     @property
     def limits(self):
         """Return Property limits."""
-        pvname = self.pvnames[0]
+        # NOTE: improve code.
+        try:
+            pvname = self.pvnames[0]
+        except TypeError:
+            # is a set
+            for pvname in self.pvnames:
+                if pvname.endswith('-SP'):
+                    pvname = self.pvnames
         pvobj = self.pv_object(pvname)
         limits = (
             pvobj.lower_alarm_limit,
