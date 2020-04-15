@@ -100,6 +100,9 @@ class CycleController:
                  'dev': 'CV', 'idx': '2'}))
             self.trims_psnames = list(trims - ps2remove)
 
+            if 'SI-Glob:TI-Mags-Corrs' in self._triggers:
+                self._triggers.remove('SI-Glob:TI-Mags-Corrs')
+
             # connect to trims
             self.prepare_ps_size += len(self.psnames)
             self.prepare_ps_max_duration += 2*TIMEOUT_CHECK
@@ -571,9 +574,6 @@ class CycleController:
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
-
-        if 'SI-Glob:TI-Mags-Corrs' in self._triggers:
-            self._triggers.remove('SI-Glob:TI-Mags-Corrs')
 
     def cycle(self):
         """Cycle."""
