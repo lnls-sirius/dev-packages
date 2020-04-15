@@ -71,11 +71,6 @@ class CycleController:
 
         self.prepare_ps_size = 2*len(self.psnames)+1
         self.prepare_ps_max_duration = 20
-        if 'SI' in self._sections:
-            # set and check currents to zero
-            self.prepare_ps_size += 3*len(self.psnames)
-            self.prepare_ps_max_duration += \
-                TIMEOUT_CHECK + TIMEOUT_CHECK_SI_CURRENTS
 
         self.cycle_size = (
             2 +  # check timing
@@ -94,6 +89,23 @@ class CycleController:
             round(self._cycle_duration) +  # cycle
             12 +  # check final
             5)   # reset subsystems
+
+        if 'SI' in self._sections:
+            # trims psnames
+            trims = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
+            ps2remove = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'CV', 'idx': '2'}))
+            self.trims_psnames = list(trims - ps2remove)
+
+            # connect to trims
+            self.prepare_ps_size += len(self.psnames)
+            self.prepare_ps_max_duration += 2*TIMEOUT_CHECK
+            # set and check currents to zero
+            self.prepare_ps_size += 2*len(self.psnames)
+            self.prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
 
         # logger
         self._logger = logger
