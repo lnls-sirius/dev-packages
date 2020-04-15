@@ -105,11 +105,11 @@ class Timing:
                 if not _isclose(pvobj.value, defval, abs_tol=tol):
                     # print(pvobj.pvname, pvobj.value, defval)
                     return False
-            if isinstance(defval, (_np.ndarray, list, tuple)):
+            elif isinstance(defval, (_np.ndarray, list, tuple)):
                 if _np.any(pvobj.value[0:len(defval)] != defval):
                     # print(pvobj.pvname, pvobj.value, defval)
                     return False
-            if pvobj.value != defval:
+            elif pvobj.value != defval:
                 # print(pvobj.pvname, pvobj.value, defval)
                 return False
         return True
