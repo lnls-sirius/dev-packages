@@ -4,7 +4,6 @@ from copy import deepcopy as _dcopy
 
 from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
-from ..util import get_namedtuple as _get_namedtuple
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
     PSSearch as _PSSearch
@@ -130,9 +129,12 @@ class SOFBTLines(ConstTLines):
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
 
-        func = lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM')
-        self.ch_pos = _MASearch.get_mapositions(map(func, self.ch_names))
-        self.cv_pos = _MASearch.get_mapositions(map(func, self.cv_names))
+        self.ch_pos = _MASearch.get_mapositions(map(
+            lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM'),
+            self.ch_names))
+        self.cv_pos = _MASearch.get_mapositions(map(
+            lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM'),
+            self.cv_names))
         self.nr_ch = len(self.ch_names)
         self.nr_cv = len(self.cv_names)
         self.nr_chcv = self.nr_ch + self.nr_cv
@@ -303,7 +305,6 @@ class SOFBTLines(ConstTLines):
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
         nbpm = self.nr_bpms
-        evt = self.evt_acq_name
         pvs = [
             'RefOrbX-SP', 'RefOrbX-RB',
             'RefOrbY-SP', 'RefOrbY-RB',
@@ -667,7 +668,7 @@ class SOFBSI(SOFBRings, ConstSI):
         evts = _HLTISearch.get_hl_trigger_allowed_evts(self.trigger_cor_name)
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.CorrExtEvtSrc = _get_namedtuple('CorrExtEvtSrc', evts, vals)
+        self.CorrExtEvtSrc = self.register('CorrExtEvtSrc', evts, vals)
         self.circum = 518.396  # in meter
         self.rev_per = self.circum / 299792458  # in seconds
 
