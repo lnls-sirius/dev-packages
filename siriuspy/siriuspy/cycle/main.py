@@ -395,7 +395,7 @@ class CycleController:
         filters.update({'dev': filt})
         trims = _PSSearch.get_psnames(filters)
 
-        self.config_pwrsupplies('parameters', psnames)
+        self.config_pwrsupplies('parameters', trims)
         if not self.check_pwrsupplies('parameters', trims):
             return False
         self.config_pwrsupplies('opmode', trims)
