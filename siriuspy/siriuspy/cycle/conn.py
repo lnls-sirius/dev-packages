@@ -412,7 +412,7 @@ class PSCycler:
         """Set params to cycle."""
         status = True
         if mode == 'Cycle':
-            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.type)
+            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
             _time.sleep(SLEEP_CAPUT)
             status &= _pv_conn_put(self['CycleFreq-SP'], self.siggen.freq)
             _time.sleep(SLEEP_CAPUT)
@@ -435,7 +435,7 @@ class PSCycler:
         """Return wether power supply cycling parameters are set."""
         status = True
         if mode == 'Cycle':
-            type_idx = _PSet.CYCLE_TYPES.index(self.siggen.type)
+            type_idx = _PSet.CYCLE_TYPES.index(self.siggen.sigtype)
             status &= _pv_timed_get(self['CycleType-Sts'], type_idx, wait=wait)
             status &= _pv_timed_get(
                 self['CycleFreq-RB'], self.siggen.freq, wait=wait)
