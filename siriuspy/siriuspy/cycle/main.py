@@ -420,9 +420,14 @@ class CycleController:
         self.init_trims(trims)
         if not self.wait_trims():
             return False
-        self.disable_triggers(triggers)
+        if not self.disable_triggers(triggers):
+            return False
 
         if not self.check_pwrsupplies_finalsts(trims):
+            return False
+
+        self.set_pwrsupplies_slowref(trims)
+        if not self.check_pwrsupplies_slowref(trims):
             return False
         return True
 
@@ -487,6 +492,7 @@ class CycleController:
         """Check all power supplies final state according to mode."""
         need_check = _dcopy(psnames)
 
+        self._update_log('Checking power supplies final state...')
         self._checks_final_result = dict()
         time = _time.time()
         while _time.time() - time < 10:
@@ -515,17 +521,56 @@ class CycleController:
                     error=True)
                 all_ok = False
             elif has_prob == 2 and self._is_cycling_dict[psname]:
-                self._update_log(
-                    'Verify '+psname+' OpMode! SlowRef command was sent...',
-                    warning=True)
-            elif has_prob == 3 and self._is_cycling_dict[psname]:
                 self._update_log(psname+' is finishing cycling...',
                                  warning=True)
-            elif has_prob == 4:
+            elif has_prob == 3:
                 self._update_log(psname+' has interlock problems.',
                                  error=True)
                 all_ok = False
         return all_ok
+
+    def set_pwrsupplies_slowref(self, psnames):
+        """Set power supplies OpMode to SlowRef."""
+        self._update_log('Setting power supplies to SlowRef...')
+        threads = list()
+        for psname in psnames:
+            cycler = self._get_cycler(psname)
+            target = cycler.set_opmode_slowref
+            thread = _thread.Thread(target=target, daemon=True)
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    def check_pwrsupplies_slowref(self, psnames):
+        """Check power supplies OpMode."""
+        need_check = _dcopy(psnames)
+
+        self._checks_result = dict()
+        time = _time.time()
+        while _time.time() - time < TIMEOUT_CHECK:
+            for psname in psnames:
+                if psname not in need_check:
+                    continue
+                cycler = self._get_cycler(psname)
+                if cycler.check_opmode_slowref():
+                    need_check.remove(psname)
+                    self._checks_result[psname] = True
+            if not need_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        for psname in need_check:
+            self._checks_result[psname] = False
+
+        status = True
+        for psname in psnames:
+            self._update_log('Checking '+psname+' OpMode...')
+            if self._checks_result[psname]:
+                self._update_log(done=True)
+            else:
+                self._update_log(psname+' is not in SlowRef.', error=True)
+                status &= False
+        return status
 
     def restore_timing_initial_state(self):
         """Reset all subsystems."""
@@ -623,6 +668,10 @@ class CycleController:
             return
 
         self.check_pwrsupplies_finalsts(psnames)
+        self.set_pwrsupplies_slowref(psnames)
+        if not self.check_pwrsupplies_slowref(psnames):
+            return False
+
         self.restore_timing_initial_state()
 
         # Indicate cycle end

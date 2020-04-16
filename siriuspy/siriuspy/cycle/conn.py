@@ -550,16 +550,11 @@ class PSCycler:
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 3  # indicate cycling not finished yet
+                return 2  # indicate cycling not finished yet
 
         status = self.check_intlks()
         if not status:
-            return 4  # indicate interlock problems
-
-        status = self.set_opmode_slowref()
-        status &= self.check_opmode_slowref()
-        if not status:
-            return 2  # indicate opmode is not in slowref yet
+            return 3  # indicate interlock problems
 
         return 0
 
