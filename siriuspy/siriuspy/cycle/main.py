@@ -166,7 +166,7 @@ class CycleController:
                 duration, self._aux_cyclers[psname].cycle_duration(self._mode))
         self._cycle_trims_duration = duration
 
-        self.cycle_trims_size = 2*(
+        self.cycle_trims_size = (
             2*2 +  # check timing
             2*len(self.trims_psnames) +  # check params
             2*2*len(self.trims_psnames) +  # set and check opmode
