@@ -252,9 +252,15 @@ class CycleController:
         """Prepare timing to cycle according to mode."""
         if self._only_linac:
             return
+        triggers = self._triggers
+        if self.has_si_fams:
+            triggers.extend([
+                'SI-Glob:TI-Mags-Skews',
+                'SI-Glob:TI-Mags-Corrs',
+                'SI-Glob:TI-Mags-QTrims'])
         self._timing.turnoff()
         self._update_log('Preparing Timing...')
-        self._timing.prepare(self.mode, self._triggers)
+        self._timing.prepare(self.mode, triggers)
         self._update_log(done=True)
 
     def check_pwrsupplies(self, ppty, psnames):
