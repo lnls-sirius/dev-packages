@@ -617,7 +617,12 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode(self):
         """Prepare OpMode to cycle."""
-        psnames = [ps for ps in self.psnames if 'LI' not in ps]
+        all_ps = {ps for ps in self.psnames if 'LI' not in ps}
+        if 'SI' in self._sections:
+            cv2_c2 = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'CV', 'idx': '2'}))
+            psnames = list(all_ps - cv2_c2)
         self.config_pwrsupplies('opmode', psnames)
         if not self.check_pwrsupplies('opmode', psnames):
             self._update_log(
@@ -645,14 +650,17 @@ class CycleController:
         self._update_log('Preparing to cycle CVs...')
         all_cvs = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS', 'dev': 'CV'}))
-        cvs2remove = set(_PSSearch.get_psnames(
+        cv2_c2 = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'CV', 'idx': '2'}))
-        trims = list(all_cvs - cvs2remove)
+        trims = list(all_cvs - cv2_c2)
         if not self.cycle_trims(trims):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
+
+        self._update_log('Configuring CVs OpMode to cycle...')
+        self.config_pwrsupplies('opmode', cv2_c2)
 
     def cycle(self):
         """Cycle."""
