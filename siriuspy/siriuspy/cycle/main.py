@@ -431,11 +431,14 @@ class CycleController:
             return False
         self.init_trims(trims)
         if not self.wait_trims():
+            self.set_pwrsupplies_slowref(trims)
             return False
         if not self.disable_triggers(triggers):
+            self.set_pwrsupplies_slowref(trims)
             return False
 
         if not self.check_pwrsupplies_finalsts(trims):
+            self.set_pwrsupplies_slowref(trims)
             return False
 
         self.set_pwrsupplies_slowref(trims)
