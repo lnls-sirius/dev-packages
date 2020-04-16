@@ -85,13 +85,13 @@ class CycleController:
             trims = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
                  'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
-            ps2remove = set(_PSSearch.get_psnames(
+            cv2_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'}))
-            ps2remove = set(_PSSearch.get_psnames(
+            qs_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'QS'}))
-            self.trims_psnames = list(trims - ps2remove)
+            self.trims_psnames = list(trims - cv2_c2 - qs_c2)
 
             # connect to trims
             self.prepare_ps_size += len(self.psnames)
