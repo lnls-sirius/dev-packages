@@ -399,7 +399,7 @@ class CycleController:
             self._update_log('Remaining time: {}s...'.format(time))
 
             # verify if trims started to cycle
-            if 9 < _time.time() - time0 < 10:
+            if 14 < _time.time() - time0 < 15:
                 for psname in self._is_trim_cycling_dict:
                     cycler = self._get_cycler(psname)
                     if not cycler.get_cycle_enable():
