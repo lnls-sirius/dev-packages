@@ -662,6 +662,8 @@ class CycleController:
         self._update_log('Configuring CVs OpMode to cycle...')
         self.config_pwrsupplies('opmode', cv2_c2)
 
+        self._update_log('Trims cycle finished!')
+
     def cycle(self):
         """Cycle."""
         # check
