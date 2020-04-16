@@ -27,30 +27,20 @@ class CycleController:
     def __init__(self, cyclers=dict(), timing=None,
                  is_bo=False, ramp_config=None, logger=None):
         """Initialize."""
+        self._mode = None
+        self._is_bo = is_bo
+        self._ramp_config = ramp_config
         self._checks_result = dict()
         self._aux_cyclers = dict()
 
         # cyclers
         self.cyclers = cyclers
-        ps2cycle = self._filter_psnames({'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
-        ps2ramp = self._filter_psnames({'sec': 'BO', 'dis': 'PS'})
-        if cyclers and (ps2cycle and ps2ramp):
-            raise Exception('Can not cycle Booster with other accelerators!')
-        self._mode = 'Ramp' if ps2ramp else 'Cycle'
 
-        if not cyclers:
-            psnames = ps2ramp if is_bo else ps2cycle
-            for name in psnames:
-                if 'LI' in name:
-                    self.cyclers[name] = LinacPSCycler(name)
-                else:
-                    self.cyclers[name] = PSCycler(name, ramp_config)
-
-        # timing connector
         self._sections = _get_sections(self.psnames)
         self._only_linac = self._sections == ['LI', ]
-        if not self._only_linac:
-            self._timing = timing if timing is not None else Timing()
+
+        # timing connector
+        self._timing = timing if timing is not None else Timing()
         self._triggers = _get_trigger_by_psname(self.psnames)
 
         # egun pv
@@ -62,7 +52,7 @@ class CycleController:
         duration = 0
         for psname in self.psnames:
             duration = max(
-                duration, self.cyclers[psname].cycle_duration(self._mode))
+                duration, self._cyclers[psname].cycle_duration(self._mode))
         self._cycle_duration = duration
 
         # task sizes
@@ -121,12 +111,12 @@ class CycleController:
     @property
     def psnames(self):
         """Power supplies to cycle."""
-        return list(self.cyclers.keys())
+        return list(self._cyclers.keys())
 
     @property
     def has_si_fams(self):
         """Return if is cycling any SI Fam PS."""
-        psn = set(self.cyclers.keys())
+        psn = set(self._cyclers.keys())
         fam_psn = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS'}))
         return psn & fam_psn
@@ -135,6 +125,41 @@ class CycleController:
     def mode(self):
         """Mode."""
         return self._mode
+
+    @property
+    def cyclers(self):
+        """Return current cyclers."""
+        return self._cyclers
+
+    @cyclers.setter
+    def cyclers(self, new_cyclers):
+        psnames2filt = list(new_cyclers.keys())
+        ps2cycle = self._filter_psnames(
+            psnames2filt, {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
+        ps2ramp = self._filter_psnames(
+            psnames2filt, {'sec': 'BO', 'dis': 'PS'})
+        if new_cyclers and (ps2cycle and ps2ramp):
+            raise Exception('Can not cycle Booster with other accelerators!')
+        self._mode = 'Ramp' if ps2ramp else 'Cycle'
+
+        if not new_cyclers:
+            psnames = ps2ramp if self._is_bo else ps2cycle
+            new_cyclers = dict()
+            for name in psnames:
+                if 'LI' in name:
+                    new_cyclers[name] = LinacPSCycler(name)
+                else:
+                    new_cyclers[name] = PSCycler(name, self._ramp_config)
+        self._cyclers = new_cyclers
+
+    @property
+    def timing(self):
+        """Return timing connector."""
+        return self._timing
+
+    @timing.setter
+    def timing(self, new_timing):
+        self._timing = new_timing
 
     @property
     def logger(self):
@@ -679,17 +704,17 @@ class CycleController:
 
     # --- private methods ---
 
-    def _filter_psnames(self, filt):
-        if self.cyclers:
+    def _filter_psnames(self, psnames2filt, filt):
+        if psnames2filt:
             psnames = _Filter.process_filters(
-                self.cyclers.keys(), filters=filt)
+                psnames2filt, filters=filt)
         else:
             psnames = _PSSearch.get_psnames(filt)
         return psnames
 
     def _get_cycler(self, psname):
-        if psname in self.cyclers:
-            return self.cyclers[psname]
+        if psname in self._cyclers:
+            return self._cyclers[psname]
         if psname in self._aux_cyclers:
             return self._aux_cyclers[psname]
         raise ValueError('There is no cycler defined to '+psname+'!')
