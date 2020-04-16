@@ -139,6 +139,15 @@ class CycleController:
         """Mode."""
         return self._mode
 
+    @property
+    def logger(self):
+        """Return current logger."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, new_log):
+        self._logger = new_log
+
     def create_aux_cyclers(self):
         """Create auxiliar cyclers."""
         # create cyclers, if needed
