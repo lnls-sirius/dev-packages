@@ -109,9 +109,6 @@ class CycleController:
             # set and check currents to zero
             self.prepare_ps_size += 2*len(self.psnames)
             self.prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
-            # set and check trims cycle params
-            self.prepare_ps_size += len(self.psnames)
-            self.prepare_ps_max_duration += TIMEOUT_CHECK
 
         # logger
         self._logger = logger
@@ -177,15 +174,15 @@ class CycleController:
 
         self.cycle_trims_size = (
             2*2 +  # check timing
-            2*len(self.trims_psnames) +  # check params
+            2*2*len(self.trims_psnames) +  # set and check params
             2*2*len(self.trims_psnames) +  # set and check opmode
             2*2 +  # set and check triggers enable
             2*(3+round(duration)) +  # cycle
             2*len(self.trims_psnames))  # check final
         self.cycle_trims_max_duration = (
             2*5 +  # check timing
-            2*TIMEOUT_CHECK +  # check params
-            2*TIMEOUT_CHECK +  # check opmode
+            2*2*TIMEOUT_CHECK +  # set and check params
+            2*TIMEOUT_CHECK +  # set and check opmode
             2*6 +  # set and check triggers enable
             2*60 +  # wait for timing trigger
             2*round(duration) +  # cycle
