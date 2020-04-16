@@ -80,7 +80,7 @@ class CycleController:
             12 +  # check final
             5)   # reset subsystems
 
-        if self.has_si_fams:
+        if 'SI' in self._sections:
             # trims psnames
             trims = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
@@ -88,10 +88,10 @@ class CycleController:
             ps2remove = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'}))
+            ps2remove = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'QS'}))
             self.trims_psnames = list(trims - ps2remove)
-
-            if 'SI-Glob:TI-Mags-Corrs' in self._triggers:
-                self._triggers.remove('SI-Glob:TI-Mags-Corrs')
 
             # connect to trims
             self.prepare_ps_size += len(self.psnames)
@@ -112,14 +112,6 @@ class CycleController:
     def psnames(self):
         """Power supplies to cycle."""
         return list(self._cyclers.keys())
-
-    @property
-    def has_si_fams(self):
-        """Return if is cycling any SI Fam PS."""
-        psn = set(self._cyclers.keys())
-        fam_psn = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS'}))
-        return psn & fam_psn
 
     @property
     def mode(self):
@@ -275,7 +267,7 @@ class CycleController:
         if self._only_linac:
             return
         triggers = self._triggers
-        if self.has_si_fams:
+        if 'SI' in self._sections:
             triggers.update([
                 'SI-Glob:TI-Mags-Skews',
                 'SI-Glob:TI-Mags-Corrs',
@@ -424,14 +416,8 @@ class CycleController:
         self._update_log(done=True)
         return True
 
-    def cycle_trims(self, filt):
+    def cycle_trims(self, trims):
         """Cycle trims."""
-        pslabel = 'CVs' if 'CV' in filt else 'CHs, QSs and QTrims'
-        self._update_log('Preparing to cycle '+pslabel+'...')
-        filters = {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS'}
-        filters.update({'dev': filt})
-        trims = _PSSearch.get_psnames(filters)
-
         self.config_pwrsupplies('parameters', trims)
         if not self.check_pwrsupplies('parameters', trims):
             return False
@@ -617,10 +603,9 @@ class CycleController:
     def prepare_pwrsupplies_parameters(self):
         """Prepare parameters to cycle."""
         psnames = self.psnames
-        if self.has_si_fams:
+        if 'SI' in self._sections:
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
-            # psnames.extend(self.trims_psnames)
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames):
@@ -642,18 +627,29 @@ class CycleController:
 
     def cycle_all_trims(self):
         """Cycle all trims."""
-        if not self.has_si_fams:
+        if 'SI' not in self._sections:
             return
 
         if not self.check_timing():
             return
 
-        if not self.cycle_trims(filt='(CH|QS|QD.*|QF.*|Q[1-4])'):
+        self._update_log('Preparing to cycle CHs, QSs and QTrims...')
+        trims = _PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
+        if not self.cycle_trims(trims):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
 
-        if not self.cycle_trims(filt='CV'):
+        self._update_log('Preparing to cycle CVs...')
+        all_cvs = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS', 'dev': 'CV'}))
+        cvs2remove = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+             'dev': 'CV', 'idx': '2'}))
+        trims = list(all_cvs - cvs2remove)
+        if not self.cycle_trims(trims):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
@@ -666,20 +662,12 @@ class CycleController:
         if not self.check_timing():
             return
 
-        psnames = self.psnames
-        if self.has_si_fams:
-            psnames = set(self.psnames)
-            ps2remove = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'CV', 'idx': '2'}))
-            psnames = list(psnames - ps2remove)
-        psnames_wo_li = [ps for ps in self.psnames if 'LI' not in ps]
-
-        if not self.check_pwrsupplies('parameters', psnames):
+        if not self.check_pwrsupplies('parameters', self.psnames):
             self._update_log(
                 'There are power supplies not configured to cycle. Stopping.',
                 error=True)
             return
+        psnames_wo_li = [ps for ps in self.psnames if 'LI' not in ps]
         if not self.check_pwrsupplies('opmode', psnames_wo_li):
             self._update_log(
                 'There are power supplies with wrong opmode. Stopping.',
@@ -692,9 +680,9 @@ class CycleController:
         if not self.wait():
             return
 
-        self.check_pwrsupplies_finalsts(psnames)
-        self.set_pwrsupplies_slowref(psnames)
-        if not self.check_pwrsupplies_slowref(psnames):
+        self.check_pwrsupplies_finalsts(self.psnames)
+        self.set_pwrsupplies_slowref(self.psnames)
+        if not self.check_pwrsupplies_slowref(self.psnames):
             return False
 
         self.restore_timing_initial_state()
