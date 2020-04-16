@@ -622,12 +622,12 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode(self):
         """Prepare OpMode to cycle."""
-        all_ps = {ps for ps in self.psnames if 'LI' not in ps}
+        psnames = {ps for ps in self.psnames if 'LI' not in ps}
         if 'SI' in self._sections:
             cv2_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'}))
-            psnames = list(all_ps - cv2_c2)
+            psnames = list(psnames - cv2_c2)
         self.config_pwrsupplies('opmode', psnames)
         if not self.check_pwrsupplies('opmode', psnames):
             self._update_log(
