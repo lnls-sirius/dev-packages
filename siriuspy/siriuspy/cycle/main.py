@@ -251,7 +251,7 @@ class CycleController:
             return
         triggers = self._triggers
         if self.has_si_fams:
-            triggers.extend([
+            triggers.update([
                 'SI-Glob:TI-Mags-Skews',
                 'SI-Glob:TI-Mags-Corrs',
                 'SI-Glob:TI-Mags-QTrims'])
