@@ -660,8 +660,8 @@ class CycleController:
             return
 
         self._update_log('Configuring CVs OpMode to cycle...')
-        self.config_pwrsupplies('parameters', trims)
-        if not self.check_pwrsupplies('parameters', trims):
+        self.config_pwrsupplies('parameters', cv2_c2)
+        if not self.check_pwrsupplies('parameters', cv2_c2):
             return
         self.config_pwrsupplies('opmode', cv2_c2)
 
