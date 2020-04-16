@@ -71,7 +71,7 @@ class CycleController:
             len(self.psnames) +  # check final
             len(self.psnames)+2)  # reset subsystems
         self.cycle_max_duration = (
-            5 +  # check timing
+            8 +  # check timing
             TIMEOUT_CHECK +  # check params
             TIMEOUT_CHECK +  # check opmode
             6 +  # set and check triggers enable
@@ -197,7 +197,7 @@ class CycleController:
             2*(3+round(duration)) +  # cycle
             2*len(self.trims_psnames))  # check final
         self.cycle_trims_max_duration = (
-            2*5 +  # check timing
+            2*8 +  # check timing
             2*2*TIMEOUT_CHECK +  # set and check params
             2*TIMEOUT_CHECK +  # set and check opmode
             2*6 +  # set and check triggers enable

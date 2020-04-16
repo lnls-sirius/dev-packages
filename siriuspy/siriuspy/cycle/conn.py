@@ -151,7 +151,7 @@ class Timing:
         pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
         pvobj.value = state
 
-    def set_triggers_state(self, state, triggers, timeout=5):
+    def set_triggers_state(self, state, triggers, timeout=8):
         """Set triggers state."""
         for trig in triggers:
             pvobj = Timing._pvs[trig+':State-Sel']
