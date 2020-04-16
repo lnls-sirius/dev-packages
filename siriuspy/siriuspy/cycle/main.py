@@ -401,7 +401,8 @@ class CycleController:
             # verify if trims started to cycle
             if 9 < _time.time() - time0 < 10:
                 for psname in self._is_trim_cycling_dict:
-                    if not self._aux_cyclers[psname].get_cycle_enable():
+                    cycler = self._get_cycler(psname)
+                    if not cycler.get_cycle_enable():
                         self._update_log(
                             psname + ' is not cycling!', warning=True)
                         self._is_trim_cycling_dict[psname] = False
