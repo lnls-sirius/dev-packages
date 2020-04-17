@@ -81,16 +81,17 @@ class App(_Callback):
                     if not pv.connected:
                         if connected[pv]:
                             self.run_callbacks(
-                                pv.pvname, _Alarm.TIMEOUT_ALARM,
-                                _Severity.INVALID_ALARM, field='status')
+                                pv.pvname, alarm=_Alarm.TIMEOUT_ALARM,
+                                severity=_Severity.INVALID_ALARM,
+                                field='status')
                         connected[pv] = False
                         if 'DiagStatus' in pv.pvname:
-                            self.run_callbacks(pv.pvname, pv.value)
+                            self.run_callbacks(pv.pvname, value=pv.value)
                     else:
                         if not connected[pv]:
                             self.run_callbacks(
-                                pv.pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM,
-                                field='status')
+                                pv.pvname, alarm=_Alarm.NO_ALARM,
+                                severity=_Severity.NO_ALARM, field='status')
                         connected[pv] = True
-                        self.run_callbacks(pv.pvname, pv.value)
+                        self.run_callbacks(pv.pvname, value=pv.value)
             _time.sleep(1.0/SCAN_FREQUENCY)
