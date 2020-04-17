@@ -135,9 +135,14 @@ class App(_Callback):
         self.run_callbacks('RespMatX-Mon', self._respmat_x)
         self.run_callbacks('RespMatY-Mon', self._respmat_y)
         self.run_callbacks('Log-Mon', 'Started.')
+        self.run_callbacks('Status-Mon', self._status)
+        for corr_id, corr in self._correctors.items():
+            self.run_callbacks(
+                'RefKick' + corr_id + '-Mon', self._corr_refkick[corr])
 
     @property
     def pvs_database(self):
+        """Return pvs_database."""
         return self._pvs_database
 
     def process(self, interval):
@@ -368,7 +373,7 @@ class App(_Callback):
                         for s in self._corr_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
-    def _callback_corr_ctrlmode_mon(self,  pvname, value, **kws):
+    def _callback_corr_ctrlmode_mon(self, pvname, value, **kws):
         if value != _PSC.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
