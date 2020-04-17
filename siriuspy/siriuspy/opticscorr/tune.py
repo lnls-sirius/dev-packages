@@ -161,6 +161,7 @@ class TuneCorrApp(_BaseApp):
                         'Log-Mon',
                         'ERR: Received a None value from {}.'.format(fam))
                     return False
+                self._psfam_intstr_rb[fam] = value
                 self._psfam_refkl[fam] = value
                 self.run_callbacks(
                     'RefKL' + fam + '-Mon', self._psfam_refkl[fam])
