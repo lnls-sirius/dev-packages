@@ -119,8 +119,7 @@ class TuneCorrApp(_BaseApp):
 
         self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
             self.run_callbacks(
                 'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam])
@@ -188,8 +187,7 @@ class TuneCorrApp(_BaseApp):
 
     def _estimate_current_deltatune(self):
         psfam_deltakl = len(self._psfams)*[0]
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             psfam_deltakl[fam_idx] = \
                 self._psfam_intstr_rb[fam] - self._psfam_refkl[fam]
         self._optprm_est = self._opticscorr.calculate_opticsparam(

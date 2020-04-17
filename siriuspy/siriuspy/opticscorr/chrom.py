@@ -185,8 +185,7 @@ class ChromCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[delta_chromx, delta_chromy])
 
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sl_now = self._psfam_intstr_rb_pvs[fam].get()
             if sl_now is None:
                 self.run_callbacks(
@@ -385,8 +384,7 @@ class ChromCorrApp(_BaseApp):
         self._psfam_intstr_rb[fam] = value
 
         sfam_deltasl = len(self._psfams)*[0]
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sfam_deltasl[fam_idx] = \
                 self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam_idx]
 
