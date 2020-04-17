@@ -13,18 +13,29 @@ class SiriusPVTimeSerie:
                  nr_max_points=None,
                  time_min_interval=0.0,
                  mode=0,
+                 timestamp_init_data=None,
+                 value_init_data=None,
                  use_pv_timestamp=True):
         """Class constructor."""
         if (use_pv_timestamp is False) and (mode == 1):
             raise ValueError(
-                'Can not create an auto-fill serie without using PV timestamp!')
-        self._pv = pv
+                "Can not create an auto-fill serie without using "
+                "PV timestamp!")
+        self._pvobj = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
         self._nr_max_points = nr_max_points
         self._use_pv_timestamp = use_pv_timestamp
-        self._timestamp_deque = _collections.deque(maxlen=self._nr_max_points)
-        self._value_deque = _collections.deque(maxlen=self._nr_max_points)
+        if timestamp_init_data:
+            if not value_init_data:
+                raise ValueError("Provide 'value_init_data' input!")
+            self._timestamp_deque = _collections.deque(
+                timestamp_init_data, maxlen=nr_max_points)
+            self._value_deque = _collections.deque(
+                value_init_data, maxlen=nr_max_points)
+        else:
+            self._timestamp_deque = _collections.deque(maxlen=nr_max_points)
+            self._value_deque = _collections.deque(maxlen=nr_max_points)
         self._mode = mode
         if self._mode == 1:
             self._th_auto_acquire = _threading.Thread(
@@ -54,7 +65,7 @@ class SiriusPVTimeSerie:
     def time_min_interval(self, value):
         self._time_min_interval = value
 
-        if len(self._timestamp_deque) > 0:
+        if self._timestamp_deque:
             old_timestamp_deque = _collections.deque(
                 self._timestamp_deque, maxlen=self._nr_max_points)
             old_value_deque = _collections.deque(
@@ -69,7 +80,7 @@ class SiriusPVTimeSerie:
             aux = old_value_deque.pop()
             self._value_deque.appendleft(aux)
 
-            while len(old_timestamp_deque) > 0:
+            while old_timestamp_deque:
                 if self._time_min_interval < (
                         self._timestamp_deque[0] - old_timestamp_deque[-1]):
                     aux = old_timestamp_deque.pop()
@@ -113,9 +124,16 @@ class SiriusPVTimeSerie:
     @property
     def serie(self):
         """PV time series, as two separate lists: timestamp and value."""
+        return self.get_serie()
+
+    def get_serie(self, time_absolute=False):
+        """Return series, as two separate lists: timestamp and value."""
         timestamp = _time.time()
         self._update(timestamp)
-        timestamp_list = [item-timestamp for item in self._timestamp_deque]
+        if not time_absolute:
+            timestamp_list = [item-timestamp for item in self._timestamp_deque]
+        else:
+            timestamp_list = [item for item in self._timestamp_deque]
         value_list = [item for item in self._value_deque]
         return timestamp_list, value_list
 
@@ -124,25 +142,25 @@ class SiriusPVTimeSerie:
 
         Returns True if datapoint was acquired and False otherwise.
         """
+        tdeque, vdeque = self._timestamp_deque, self._value_deque
+        min_interv = self._time_min_interval
         # check if pv is connected
         if self.connected():
             timestamp = _time.time()
             if self._use_pv_timestamp:
-                pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
+                pv_timestamp, pv_value = \
+                    self._pvobj.timestamp, self._pvobj.value
             else:
-                pv_timestamp, pv_value = timestamp, self._pv.value
+                pv_timestamp, pv_value = timestamp, self._pvobj.value
 
             # check if it is a new datapoint
-            if len(self._timestamp_deque) == 0 or \
-                    pv_timestamp != self._timestamp_deque[-1]:
+            if not tdeque or pv_timestamp != tdeque[-1]:
                 # check if there is a limiting time_window
                 if self._time_window is None:
                     # check if there is a limiting time_min_interval
-                    if len(self._timestamp_deque) == 0 or \
-                            self._time_min_interval <= \
-                            timestamp-self._timestamp_deque[-1]:
-                        self._timestamp_deque.append(pv_timestamp), \
-                            self._value_deque.append(pv_value)
+                    if not tdeque or min_interv <= timestamp - tdeque[-1]:
+                        _ = tdeque.append(pv_timestamp), \
+                            vdeque.append(pv_value)
                         return True
                     else:
                         # print('not acquired: time interval not sufficient')
@@ -153,11 +171,9 @@ class SiriusPVTimeSerie:
                     self._update(timestamp)
                     # check if the new point is within the limiting time_window
                     if pv_timestamp >= timestamp - self._time_window:
-                        if len(self._timestamp_deque) == 0 or \
-                                self._time_min_interval <= \
-                                timestamp-self._timestamp_deque[-1]:
-                            self._timestamp_deque.append(pv_timestamp), \
-                                self._value_deque.append(pv_value)
+                        if not tdeque or min_interv <= timestamp - tdeque[-1]:
+                            _ = tdeque.append(pv_timestamp), \
+                                vdeque.append(pv_value)
                             return True
                         else:
                             # print('not acquired: not enough time interval')
@@ -179,7 +195,7 @@ class SiriusPVTimeSerie:
 
     def _update(self, timestamp):
         """Update time serie according to current timestamp."""
-        if len(self._timestamp_deque) == 0 or self._time_window is None:
+        if not self._timestamp_deque or self._time_window is None:
             return
 
         min_timestamp = timestamp - self._time_window
@@ -195,17 +211,18 @@ class SiriusPVTimeSerie:
             while low_interval_end != search_index:
                 if self._timestamp_deque[search_index] <= min_timestamp:
                     low_interval_end = search_index
-                    search_index = ((
-                        high_interval_end - low_interval_end)//2 +
+                    search_index = (
+                        (high_interval_end - low_interval_end)//2 +
                         low_interval_end)
                 else:
                     high_interval_end = search_index
-                    search_index = ((
-                        high_interval_end - low_interval_end)//2 +
+                    search_index = (
+                        (high_interval_end - low_interval_end)//2 +
                         low_interval_end)
 
-            for item in range(search_index + 1):
-                self._timestamp_deque.popleft(), self._value_deque.popleft()
+            for _ in range(search_index + 1):
+                _ = \
+                    self._timestamp_deque.popleft(), self._value_deque.poplef()
 
     def clearserie(self):
         """Clear time serie."""
@@ -214,7 +231,7 @@ class SiriusPVTimeSerie:
 
     def connected(self):
         """Check PV connection."""
-        return self._pv.connected
+        return self._pvobj.connected
 
     def __str__(self):
         """Return string representation of time series."""

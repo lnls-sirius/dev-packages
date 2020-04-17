@@ -1,7 +1,9 @@
 """Implementation of web server data retrieval functions."""
 import re as _re
 import urllib.request as _urllib_request
-import siriuspy.envars as _envars
+
+from .. import envars as _envars
+
 
 _TIMEOUT = 1.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'
@@ -133,8 +135,8 @@ def crates_mapping(timeout=_TIMEOUT):
     files = pat.findall(text)
     txt = ''
     for fi in files:
-        for t in read_url(url + fi, timeout=timeout).splitlines():
-            txt += '{0:20s}'.format(fi[6:13]) + t + '\n'
+        for time in read_url(url + fi, timeout=timeout).splitlines():
+            txt += '{0:20s}'.format(fi[6:13]) + time + '\n'
         txt += '\n\n'
     return txt
 

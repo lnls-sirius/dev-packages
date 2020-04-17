@@ -6,8 +6,10 @@ import time as _time
 import logging as _log
 import threading as _thread
 from epics import PV as _PV
-from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
-from siriuspy.search import PSSearch as _PSSearch
+
+from ..namesys import Filter as _Filter, SiriusPVName as _PVName
+from ..search import PSSearch as _PSSearch
+
 from .conn import Timing, PSCycler, LinacPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
 from .util import get_sections as _get_sections, \
@@ -25,6 +27,8 @@ class CycleController:
     def __init__(self, cyclers=dict(), timing=None,
                  is_bo=False, ramp_config=None, logger=None):
         """Initialize."""
+        self._checks_result = dict()
+
         # cyclers
         self.cyclers = cyclers
         ps2cycle = self._psnames_2_cycle()
@@ -55,10 +59,11 @@ class CycleController:
                                 connection_timeout=0.05)
 
         # duration
-        d = 0
-        for ps in self.psnames:
-            d = max(d, self.cyclers[ps].cycle_duration(self._mode))
-        self._cycle_duration = d
+        duration = 0
+        for psname in self.psnames:
+            duration = max(
+                duration, self.cyclers[psname].cycle_duration(self._mode))
+        self._cycle_duration = duration
 
         # task sizes
         self.prepare_timing_size = 3
@@ -78,12 +83,12 @@ class CycleController:
                            len(self.psnames) +  # check final
                            len(self.psnames)+2)  # reset subsystems
         self.cycle_max_duration = (
-                           5 +  # check params
-                           5 +  # check opmode
-                           TIMEOUT_CHECK*3 +  # wait for timing trigger
-                           round(self._cycle_duration) +  # cycle
-                           5 +  # check final
-                           5)   # reset subsystems
+            5 +  # check params
+            5 +  # check opmode
+            TIMEOUT_CHECK*3 +  # wait for timing trigger
+            round(self._cycle_duration) +  # cycle
+            5 +  # check final
+            5)   # reset subsystems
 
         # logger
         self._logger = logger
@@ -132,8 +137,8 @@ class CycleController:
         # check currents zero
         need_check = _dcopy(psnames)
         self._checks_result = dict()
-        t = _time.time()
-        while _time.time() - t < TIMEOUT_CHECK_SI_CURRENTS:
+        time = _time.time()
+        while _time.time() - time < TIMEOUT_CHECK_SI_CURRENTS:
             for psname in psnames:
                 if psname not in need_check:
                     continue
@@ -168,12 +173,13 @@ class CycleController:
                 target = self.cyclers[psname].prepare
             elif ppty == 'opmode' and 'LI' not in psname:
                 target = self.cyclers[psname].set_opmode_cycle
-            t = _thread.Thread(target=target, args=(self.mode, ), daemon=True)
+            thread = _thread.Thread(
+                target=target, args=(self.mode, ), daemon=True)
             self._update_log('Preparing '+psname+' '+ppty+'...')
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
 
     def config_timing(self):
         """Prepare timing to cycle according to mode."""
@@ -193,8 +199,8 @@ class CycleController:
         need_check = _dcopy(psnames)
 
         self._checks_result = dict()
-        t = _time.time()
-        while _time.time() - t < TIMEOUT_CHECK:
+        time = _time.time()
+        while _time.time() - time < TIMEOUT_CHECK:
             for psname in psnames:
                 if psname not in need_check:
                     continue
@@ -228,8 +234,8 @@ class CycleController:
             return True
 
         self._update_log('Checking Timing...')
-        t0 = _time.time()
-        while _time.time()-t0 < TIMEOUT_CHECK/2:
+        time0 = _time.time()
+        while _time.time()-time0 < TIMEOUT_CHECK/2:
             status = self._timing.check(self.mode, self._triggers)
             if status:
                 break
@@ -257,12 +263,13 @@ class CycleController:
         psnames = []
         threads = list()
         for psname in psnames:
-            t = _thread.Thread(target=self.cyclers[psname].pulse, daemon=True)
+            thread = _thread.Thread(
+                target=self.cyclers[psname].pulse, daemon=True)
             self._update_log('Pulsing '+psname+'...')
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
 
     def init(self):
         """Trigger timing according to mode to init cycling."""
@@ -273,9 +280,9 @@ class CycleController:
         self._li_threads = list()
         for psname in self.psnames_li:
             cycler = self.cyclers[psname]
-            t = _thread.Thread(target=cycler.cycle, daemon=True)
-            self._li_threads.append(t)
-            t.start()
+            thread = _thread.Thread(target=cycler.cycle, daemon=True)
+            self._li_threads.append(thread)
+            thread.start()
 
         psnames = [ps for ps in self.psnames if 'LI' not in ps]
         if not psnames:
@@ -287,21 +294,22 @@ class CycleController:
     def wait(self):
         """Wait/Sleep while cycling according to mode."""
         self._update_log('Waiting for cycling...')
-        t0 = _time.time()
+        time0 = _time.time()
         keep_waiting = True
         while keep_waiting:
             # update remaining time
             _time.sleep(1)
             if self.mode == 'Cycle':
-                t = round(self._cycle_duration - (_time.time()-t0))
+                time = round(self._cycle_duration - (_time.time()-time0))
             else:
-                t = round(self._cycle_duration -
-                          self._timing.get_cycle_count() *
-                          DEFAULT_RAMP_DURATION/1000000)
-            self._update_log('Remaining time: {}s...'.format(t))
+                time = round(
+                    self._cycle_duration -
+                    self._timing.get_cycle_count() *
+                    DEFAULT_RAMP_DURATION/1000000)
+            self._update_log('Remaining time: {}s...'.format(time))
 
             # verify if power supplies started to cycle
-            if (self.mode == 'Cycle') and (5 < _time.time() - t0 < 6):
+            if (self.mode == 'Cycle') and (5 < _time.time() - time0 < 6):
                 for psname in self.psnames:
                     if _PVName(psname).sec == 'LI':
                         continue
@@ -316,7 +324,7 @@ class CycleController:
 
             # update keep_waiting
             if self.mode == 'Cycle':
-                keep_waiting = _time.time() - t0 < self._cycle_duration
+                keep_waiting = _time.time() - time0 < self._cycle_duration
             else:
                 keep_waiting = not self._timing.check_ramp_end()
 
@@ -328,8 +336,8 @@ class CycleController:
         need_check = _dcopy(self.psnames)
 
         self._checks_final_result = dict()
-        t = _time.time()
-        while _time.time() - t < TIMEOUT_CHECK:
+        time = _time.time()
+        while _time.time() - time < TIMEOUT_CHECK:
             for psname in self.psnames:
                 if psname not in need_check:
                     continue
@@ -375,6 +383,7 @@ class CycleController:
     # --- main commands ---
 
     def prepare_timing(self):
+        """."""
         self.config_timing()
         if not self.check_timing():
             return

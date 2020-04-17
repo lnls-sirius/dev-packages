@@ -1,5 +1,5 @@
 """BSMP protocol implementation."""
-from . import constants as _consts
+from . import constants as _const
 from .serial import Channel as _Channel
 from .serial import Message as _Message
 from .exceptions import SerialAnomResp as _SerialAnomResp
@@ -39,8 +39,8 @@ class BSMP:
     def query_list_of_group_of_variables(self, timeout):
         """Consult groups list. Command 0x04."""
         # command and expected response
-        cmd, ack = _consts.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
-            _consts.CMD_LIST_OF_GROUP_OF_VARIABLES
+        cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
+            _const.CMD_LIST_OF_GROUP_OF_VARIABLES
 
         # build payload
         payload = []
@@ -57,7 +57,7 @@ class BSMP:
                 waccess = (byte & 0b10000000) > 0
                 nrvars = (byte & 0b01111111)
                 groupdata.append((waccess, nrvars))
-            return _consts.ACK_OK, groupdata
+            return _const.ACK_OK, groupdata
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
@@ -65,8 +65,8 @@ class BSMP:
     def query_group_of_variables(self, group_id, timeout):
         """Return id of the variables in the given group."""
         # command and expected response
-        cmd, ack = _consts.CMD_QUERY_GROUP_OF_VARIABLES, \
-            _consts.CMD_GROUP_OF_VARIABLES
+        cmd, ack = _const.CMD_QUERY_GROUP_OF_VARIABLES, \
+            _const.CMD_GROUP_OF_VARIABLES
 
         # build payload
         payload = [chr(group_id)]
@@ -77,7 +77,7 @@ class BSMP:
 
         # expected response
         if res.cmd == ack:
-            return _consts.ACK_OK, list(map(ord, res.payload))
+            return _const.ACK_OK, list(map(ord, res.payload))
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
@@ -98,7 +98,7 @@ class BSMP:
     def read_variable(self, var_id, timeout):
         """Read variable."""
         # command and expected response
-        cmd, ack = _consts.CMD_READ_VARIABLE, _consts.CMD_VARIABLE_VALUE
+        cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
 
         # build payload
         payload = [chr(var_id)]
@@ -111,7 +111,7 @@ class BSMP:
             variable = self.entities.variables[var_id]
             if len(res.payload) == variable.size:
                 # expected response
-                return _consts.ACK_OK, variable.load_to_value(res.payload)
+                return _const.ACK_OK, variable.load_to_value(res.payload)
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
             print(fmts.format(cmd, res.cmd))
@@ -125,8 +125,8 @@ class BSMP:
         """Read variable group."""
         # command and expected response
         cmd, ack = \
-            _consts.CMD_READ_GROUP_OF_VARIABLES, \
-            _consts.CMD_GROUP_OF_VARIABLES_VALUE
+            _const.CMD_READ_GROUP_OF_VARIABLES, \
+            _const.CMD_GROUP_OF_VARIABLES_VALUE
 
         # build payload
         payload = [chr(group_id)]
@@ -139,7 +139,7 @@ class BSMP:
             # expected response
             group = self.entities.groups[group_id]
             if len(res.payload) == group.variables_size():
-                return _consts.ACK_OK, group.load_to_value(res.payload)
+                return _const.ACK_OK, group.load_to_value(res.payload)
             # unexpected group variables size
             return BSMP.anomalous_response(
                 cmd, res.cmd,
@@ -181,7 +181,7 @@ class BSMP:
     def create_group_of_variables(self, var_ids, timeout):
         """Create new group with given variable ids."""
         cmd, ack = \
-            _consts.CMD_CREATE_GROUP_OF_VARIABLES, _consts.ACK_OK
+            _const.CMD_CREATE_GROUP_OF_VARIABLES, _const.ACK_OK
 
         # build payload
         var_ids = sorted(var_ids)
@@ -197,7 +197,7 @@ class BSMP:
                 # TODO: revise this. do we need to change entities?!
                 # if so, should we make a local copy instead?
                 self.entities.add_group(var_ids)
-                return _consts.ACK_OK, None
+                return _const.ACK_OK, None
             # unexpected non-empty response payload
             fmts = ('Unexpected BSMP non-empty resp payload '
                     'for command 0x{:02X}: {}!')
@@ -210,7 +210,7 @@ class BSMP:
     def remove_all_groups_of_variables(self, timeout):
         """Remove all groups."""
         cmd, ack = \
-            _consts.CMD_REMOVE_ALL_GROUPS_OF_VARIABLES, _consts.ACK_OK
+            _const.CMD_REMOVE_ALL_GROUPS_OF_VARIABLES, _const.ACK_OK
 
         # build payload
         payload = []
@@ -224,7 +224,7 @@ class BSMP:
             # TODO: revise this. do we need to change entities?!
             # if so, should we make a local copy instead?
             self.entities.remove_all_groups_of_variables()
-            return _consts.ACK_OK, None
+            return _const.ACK_OK, None
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd, payload=res.payload)
@@ -233,7 +233,7 @@ class BSMP:
     def request_curve_block(self, curve_id, block, timeout, print_error=True):
         """Read curve block."""
         # command and expected response
-        cmd, ack = _consts.CMD_REQUEST_CURVE_BLOCK, _consts.CMD_CURVE_BLOCK
+        cmd, ack = _const.CMD_REQUEST_CURVE_BLOCK, _const.CMD_CURVE_BLOCK
 
         # build payload
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8
@@ -265,7 +265,7 @@ class BSMP:
 
             # expected result
             data_float = curve.load_to_value(data)
-            return _consts.ACK_OK, data_float
+            return _const.ACK_OK, data_float
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd, print_error=print_error)
@@ -273,7 +273,7 @@ class BSMP:
     def curve_block(self, curve_id, block, value, timeout):
         """Write to curve block."""
         # command and expected response
-        cmd, ack = _consts.CMD_CURVE_BLOCK, _consts.ACK_OK
+        cmd, ack = _const.CMD_CURVE_BLOCK, _const.ACK_OK
 
         # build payload
         curve = self.entities.curves[curve_id]
@@ -295,7 +295,8 @@ class BSMP:
     def recalculate_curve_checksum(self, curve_id, timeout):
         """Recalculate curve checksum."""
         # command and expected response
-        cmd, ack = _consts.CMD_RECALCULATE_CURVE_CHECKSUM, _consts.CMD_CURVE_CHECKSUM
+        cmd, ack = \
+            _const.CMD_RECALCULATE_CURVE_CHECKSUM, _const.CMD_CURVE_CHECKSUM
 
         # build payload
         payload = [chr(curve_id)]
@@ -321,7 +322,7 @@ class BSMP:
             read_flag: whether to execute a read after a write.
         """
         # command and expected response
-        cmd, ack = _consts.CMD_EXECUTE_FUNCTION, _consts.CMD_FUNCTION_RETURN
+        cmd, ack = _const.CMD_EXECUTE_FUNCTION, _const.CMD_FUNCTION_RETURN
 
         # build payload
         function = self.entities.functions[func_id]
@@ -342,8 +343,8 @@ class BSMP:
             # print(res.payload)
             if len(res.payload) == function.o_size:
                 # expected response
-                return _consts.ACK_OK, function.load_to_value(res.payload)
-        if res.cmd == _consts.CMD_FUNCTION_ERROR:
+                return _const.ACK_OK, function.load_to_value(res.payload)
+        if res.cmd == _const.CMD_FUNCTION_ERROR:
             # function error
             if len(res.payload) == 1:
                 # return error code
@@ -355,8 +356,9 @@ class BSMP:
 
     @staticmethod
     def anomalous_response(cmd, ack, **kwargs):
+        """Print information about anomalous response."""
         # response with error
-        if _consts.ACK_OK < ack <= _consts.ACK_RESOURCE_BUSY:
+        if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
             if 'print_error' not in kwargs or kwargs['print_error']:
                 fmts = 'BSMP response (error) for command 0x{:02X}: 0x{:02X}!'
                 print(fmts.format(cmd, ack))

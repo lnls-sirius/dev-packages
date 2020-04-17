@@ -97,25 +97,31 @@ DEFAULT_RF_RAMP_BOTTOM_DURATION = 0.0  # [ms]
 DEFAULT_RF_RAMP_RAMPUP_DURATION = 340.0  # [ms]
 DEFAULT_RF_RAMP_TOP_DURATION = 10.0  # [ms]
 DEFAULT_RF_RAMP_RAMPDOWN_DURATION = 55.0  # [ms]
-_duration = DEFAULT_RF_RAMP_BOTTOM_DURATION + \
+_DURATION = DEFAULT_RF_RAMP_BOTTOM_DURATION + \
             DEFAULT_RF_RAMP_RAMPUP_DURATION + \
             DEFAULT_RF_RAMP_TOP_DURATION + \
             DEFAULT_RF_RAMP_RAMPDOWN_DURATION
-if _duration > MAX_RF_RAMP_DURATION:
+if _DURATION > MAX_RF_RAMP_DURATION:
     raise ValueError('Invalid RF ramp default durations.')
-del(_duration)
+del _DURATION
 
-# # Linear extrapolation to start and stop rf gap voltages
-_t1 = DEFAULT_TI_PARAMS_INJECTION_TIME
-_t2 = DEFAULT_TI_PARAMS_EJECTION_TIME
-_v1 = BO_INJECTION_RF_GAPVOLT
-_v2 = BO_EJECTION_RF_GAPVOLT
-_m = (_v2 - _v1)/(_t2 - _t1)
-_t = DEFAULT_TI_PARAMS_RF_RAMP_DELAY + DEFAULT_RF_RAMP_BOTTOM_DURATION
-DEFAULT_RF_RAMP_BOTTOM_VOLTAGE = _v1 + _m*(_t - _t1)  # [kV]
-_t = _t + DEFAULT_RF_RAMP_RAMPUP_DURATION
-DEFAULT_RF_RAMP_TOP_VOLTAGE = _v1 + _m*(_t - _t1)  # [kV]
-del(_t1, _t2, _v1, _v2, _m, _t)
+
+def _calc_bot_top_voltage():
+    # # Linear extrapolation to start and stop rf gap voltages
+    _vt1 = DEFAULT_TI_PARAMS_INJECTION_TIME
+    _vt2 = DEFAULT_TI_PARAMS_EJECTION_TIME
+    _vv1 = BO_INJECTION_RF_GAPVOLT
+    _vv2 = BO_EJECTION_RF_GAPVOLT
+    _vmm = (_vv2 - _vv1)/(_vt2 - _vt1)
+    _vtt = DEFAULT_TI_PARAMS_RF_RAMP_DELAY + DEFAULT_RF_RAMP_BOTTOM_DURATION
+    def_bottom = _vv1 + _vmm*(_vtt - _vt1)  # [kV]
+    _vtt = _vtt + DEFAULT_RF_RAMP_RAMPUP_DURATION
+    def_top = _vv1 + _vmm*(_vtt - _vt1)  # [kV]
+    return def_bottom, def_top
+
+
+DEFAULT_RF_RAMP_BOTTOM_VOLTAGE, DEFAULT_RF_RAMP_TOP_VOLTAGE = \
+    _calc_bot_top_voltage()
 
 DEFAULT_RF_RAMP_BOTTOM_PHASE = 0.0  # [°]
 DEFAULT_RF_RAMP_TOP_PHASE = 0.0  # [°]
@@ -123,6 +129,6 @@ DEFAULT_RF_RAMP_TOP_PHASE = 0.0  # [°]
 
 def update_nominal_strengths(dic):
     """Update dictionary with nominal values."""
-    for k, v in NOMINAL_STRENGTHS.items():
+    for k, value in NOMINAL_STRENGTHS.items():
         if k in dic:
-            dic[k] = v
+            dic[k] = value

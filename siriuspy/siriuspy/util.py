@@ -52,8 +52,8 @@ def conv_splims_labels(label):
         # epics -> pcaspy
         return labels_dict[label]
     else:
-        for k, v in labels_dict.items():
-            if v == label:
+        for k, value in labels_dict.items():
+            if value == label:
                 # pcaspy -> epics
                 return k
         raise KeyError('Invalid splims label "' + label + '"!')
@@ -143,8 +143,8 @@ def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
         pvname = _envars.VACA_PREFIX + pvname
-    pv = _epics.PV(pvname=pvname, connection_timeout=timeout)
-    status = pv.wait_for_connection(timeout=timeout)
+    pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
+    status = pvobj.wait_for_connection(timeout=timeout)
     return status
 
 
@@ -223,7 +223,7 @@ def get_bit(v, bit_pos):
 
 
 def mode(lst):
-    """ Find statistical mode of iterable of hashable objects."""
+    """Find statistical mode of iterable of hashable objects."""
     counter = _Counter(lst)
     return counter.most_common(1)[0]
 
@@ -255,19 +255,19 @@ def check_public_interface_namespace(namespace, valid_interface,
     return True
 
 
-def get_namedtuple(name, field_names, values=None):
-    """Return an instance of a namedtuple Class.
+# This solution was copied from:
+# https://stackoverflow.com/questions/5189699/how-to-make-a-class-property
+class ClassProperty:
+    """This is a way of defining a readable class property.
 
-    Inputs:
-        - name:  Defines the name of the Class (str).
-        - field_names:  Defines the field names of the Class (iterable).
-        - values (optional): Defines field values . If not given, the value of
-            each field will be its index in 'field_names' (iterable).
-
-    Raises ValueError if at least one of the field names are invalid.
-    Raises TypeError when len(values) != len(field_names)
+    It is useful to delay the process of reading static tables during
+    modules initialization (import time)
     """
-    if values is None:
-        values = range(len(field_names))
-    field_names = [f.replace(' ', '_') for f in field_names]
-    return _namedtuple(name, field_names)(*values)
+
+    def __init__(self, func):
+        """."""
+        self.func = func
+
+    def __get__(self, obj, owner):
+        """."""
+        return self.func(owner)

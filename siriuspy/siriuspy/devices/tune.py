@@ -70,11 +70,14 @@ class Tune(_Devices):
 
     def __init__(self, devname):
         """."""
-        if devname == Tune.DEVICES.ALL:
-            tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H)
-            tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V)
-            tune_proc_h = TuneFrac(TuneProc.DEVICES.SI_H)
-            tune_proc_v = TuneFrac(TuneProc.DEVICES.SI_V)
+        # check if device exists
+        if devname not in Tune.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H)
+        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V)
+        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H)
+        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V)
 
         devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
 

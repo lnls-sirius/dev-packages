@@ -27,9 +27,8 @@ class DipoleNormalizerTest(TestCase):
                "strength": 2.9377924330512246},
         "SI": {"name": "SI-Fam:MA-B1B2",
                "current": 394.1,
-            #    "strength": 3.0000383740663543}
-               "strength": 2.9340661454870647}
-    }
+               "strength": 2.9340661454870647},
+        }
 
     def setUp(self):
         """Create strength object."""

@@ -1,12 +1,12 @@
 """Epics PV derived classes."""
 
 import time as _time
+import numpy as _np
+
 import epics as _epics
 
-
-import numpy as _np
-from siriuspy.envars import VACA_PREFIX as _prefix
-from siriuspy.namesys.implementation import \
+from ..envars import VACA_PREFIX as _prefix
+from ..namesys import \
     SiriusPVName as _SiriusPVName, \
     get_pair_sprb as _get_pair_sprb
 
@@ -107,11 +107,11 @@ class EpicsProperty:
         # setpoint
         self._pv_sp.value = value
         # check
-        t0 = _time.time()
+        time0 = _time.time()
         while True:
             if self._pv_rb.value == value:
                 return True
-            if _time.time() - t0 > timeout:
+            if _time.time() - time0 > timeout:
                 return False
             _time.sleep(min(0.1, timeout))
 
@@ -204,9 +204,11 @@ class EpicsPropertiesList:
         ppty = self._properties[name]
         return ppty.setpoint
 
-    def set_setpoints_check(self, setpoints, desired_readbacks=dict(),
+    def set_setpoints_check(self, setpoints, desired_readbacks=None,
                             timeout=5, order=None, rel_tol=1e-6, abs_tol=0.0):
         """Set setpoints of properties."""
+        if desired_readbacks is None:
+            desired_readbacks = dict()
         if order is None:
             order = list(setpoints.keys())
         # setpoints
@@ -223,8 +225,8 @@ class EpicsPropertiesList:
         # check
         if not desired_readbacks:
             desired_readbacks = setpoints
-        t0 = _time.time()
-        while _time.time() - t0 < timeout:
+        time0 = _time.time()
+        while _time.time() - time0 < timeout:
             finished = True
             for pvname, value in desired_readbacks.items():
                 if value is None:

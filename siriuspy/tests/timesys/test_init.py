@@ -11,6 +11,7 @@ public_interface = (
     'read_data_from_local_excel_file',
     'HLTrigger',
     'get_ll_trigger',
+    'csdev',
     )
 
 

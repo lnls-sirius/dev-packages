@@ -7,11 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from siriuspy.search import PSSearch
-from siriuspy.pwrsupply.udc import UDC
-from siriuspy.pwrsupply.pru import PRU
-# from siriuspy.pwrsupply.bsmp import FBP
-from siriuspy.pwrsupply.status import PSCStatus
-from siriuspy.pwrsupply.psupply import PSupply
+from siriuspy.pwrsupply.pructrl.udc import UDC
+from siriuspy.pwrsupply.pructrl.pru import PRU
+from siriuspy.pwrsupply.pructrl.psdevstate import PSDevState
+from siriuspy.pwrsupply.psctrl.pscstatus import PSCStatus
 
 
 # BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI5'

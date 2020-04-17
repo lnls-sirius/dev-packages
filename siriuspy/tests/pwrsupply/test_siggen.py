@@ -15,7 +15,7 @@ public_interface = (
     'SignalDampedSine',
     'SignalDampedSquaredSine',
     'SignalTrapezoidal',
-    'SignalFactory',
+    'SigGenFactory',
 )
 
 

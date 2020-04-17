@@ -5,9 +5,9 @@ import math as _math
 
 
 DEFAULT_SIGGEN_CONFIG = (
-    0,      # type  [0:Sine]
-    100,      # num_cycles
-    2.0,  # freq [Hz]
+    0,      # sigtype  [0:Sine]
+    100,    # num_cycles
+    2.0,    # freq [Hz]
     0.0,    # amplitude [A] (Maximum amplitude)
     0.0,    # offset [A]
     0.0,    # aux_param[0]
@@ -20,14 +20,14 @@ DEFAULT_SIGGEN_CONFIG = (
             #   (DampedSine|DampedSquaredSine: decay time [s])
     0.0     # aux_param[3]
             #   (reserved)
-)
+    )
 
 
 class Signal:
     """Signal from SigGen."""
 
     def __init__(self,
-                 type,
+                 sigtype,
                  num_cycles,  # Sine, DampedSine, DampedSqrdSin, Trapezoidal
                  freq,  # [Hz] Sine, DampedSine, DampedSqrdSin
                  amplitude,  # [A] Sine, DampedSine, DampedSqrdSin, Trapezoidal
@@ -36,7 +36,8 @@ class Signal:
                  **kwargs
                  ):
         """Init method."""
-        self.type = type
+        _ = kwargs  # throwaway arguments
+        self.sigtype = sigtype
         self.num_cycles = num_cycles
         self.freq = freq
         self.amplitude = amplitude
@@ -143,15 +144,15 @@ class Signal:
         """."""
         tmax = self.duration
         tstep = tmax/(nrpts-1) if nrpts > 1 else tmax
-        tv, wv = [], []
-        t = 0
+        tval, wval = [], []
+        time = 0
         while True:
-            w = self._get_value(t)
-            tv.append(t), wv.append(w)
-            if len(tv) == nrpts:
+            wvalue = self._get_value(time)
+            _ = tval.append(time), wval.append(wvalue)
+            if len(tval) == nrpts:
                 break
-            t += tstep
-        return wv, tv
+            time += tstep
+        return wval, tval
 
     # --- virtual methods ---
 
@@ -170,10 +171,6 @@ class Signal:
 
 class SignalSine(Signal):
     """Sine signal."""
-
-    def __init__(self, **kwargs):
-        """Init method."""
-        super().__init__(**kwargs)
 
     def _get_duration(self):
         return self.num_cycles / self.freq
@@ -243,10 +240,6 @@ class SignalDampedSquaredSine(SignalDampedNSine):
 class SignalTrapezoidal(Signal):
     """Trapezoidal signal."""
 
-    def __init__(self, **kwargs):
-        """Init method."""
-        super().__init__(**kwargs)
-
     def _get_duration(self):
         return self.cycle_time * self.num_cycles
 
@@ -283,7 +276,7 @@ class SignalTrapezoidal(Signal):
         pass
 
 
-class SignalFactory:
+class SigGenFactory:
     """Signal Generator Factory."""
 
     TYPES = {
@@ -297,18 +290,18 @@ class SignalFactory:
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
         'DampedSquaredSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-    }
+        }
 
     @staticmethod
     def create(data=None, **kwargs):
-        """Factory method.
+        """Implement factory method.
 
             This methods returns a Signal object corresponding to the
         selected type.
 
         Valid arguments:
 
-        type -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
+        sigtype -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
         num_cycles -- Number of cycles, int, (Sine, DampedSine, Trapezoidal)
         freq -- Frequency [Hz], float, (Sine|DampedSine)
         amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
@@ -322,57 +315,67 @@ class SignalFactory:
         decay_time -- Decay time [s] (DampedSine) - aux_param[2]
         """
         # set signal type
-        if 'type' in kwargs:
-            typ = kwargs['type']
+        if 'sigtype' in kwargs:
+            sigtype = kwargs['sigtype']
         elif data is not None:
-            typ = data[0]
+            sigtype = data[0]
         else:
-            typ = SignalFactory.TYPES['Sine']
-        if isinstance(typ, str):
-            typ = SignalFactory.TYPES[typ]
+            sigtype = SigGenFactory.TYPES['Sine']
+        if isinstance(sigtype, str):
+            sigtype = SigGenFactory.TYPES[sigtype]
 
         # set ps controller initial values
-        kw = dict()
-        kw.update(kwargs)
-        kw['type'] = typ
-        p = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
+        kwa = SigGenFactory._set_kwa(kwargs, sigtype, data)
 
-        kw['num_cycles'] = p[1]
-        kw['freq'] = p[2]  # [A]
-        kw['amplitude'] = p[3]
-        kw['offset'] = p[4]  # [A]
-        kw['aux_param'] = p[5:9]
+        if sigtype == SigGenFactory.TYPES['Trapezoidal']:
+            return SignalTrapezoidal(**kwa)
+        elif sigtype == SigGenFactory.TYPES['Sine']:
+            return SignalSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['DampedSine']:
+            return SignalDampedSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['DampedSquaredSine']:
+            return SignalDampedSine(**kwa)
+
+        # NOTE: this point should not be reached!
+        return None
+
+    @staticmethod
+    def _set_kwa(kwargs, sigtype, data):
+        # set ps controller initial values
+        kwa = dict()
+        kwa.update(kwargs)
+        kwa['sigtype'] = sigtype
+        parms = SigGenFactory.DEFAULT_CONFIGS[SigGenFactory.TYPES_IND[sigtype]]
+
+        kwa['num_cycles'] = parms[1]
+        kwa['freq'] = parms[2]  # [A]
+        kwa['amplitude'] = parms[3]
+        kwa['offset'] = parms[4]  # [A]
+        kwa['aux_param'] = parms[5:9]
 
         # process data argument
-        # kw = dict()
+        # kwa = dict()
         if data is not None:
-            kw['type'] = data[0]
-            kw['num_cycles'] = int(data[1])
-            kw['freq'] = float(data[2])
-            kw['amplitude'] = float(data[3])
-            kw['offset'] = float(data[4])
-            kw['aux_param'] = [float(d) for d in data[5:9]]
+            kwa['sigtype'] = data[0]
+            kwa['num_cycles'] = int(data[1])
+            kwa['freq'] = float(data[2])
+            kwa['amplitude'] = float(data[3])
+            kwa['offset'] = float(data[4])
+            kwa['aux_param'] = [float(d) for d in data[5:9]]
 
         # process type argument
-        kw.update(kwargs)
-        if 'rampup_time' in kw:
-            kw['aux_param'][0] = float(kw['rampup_time'])
-        if 'rampdown_time' in kw:
-            kw['aux_param'][1] = float(kw['rampdown_time'])
-        if 'plateau_time' in kw:
-            kw['aux_param'][2] = float(kw['plateau_time'])
-        if 'theta_begin' in kw:
-            kw['aux_param'][0] = float(kw['theta_begin'])
-        if 'theta_end' in kw:
-            kw['aux_param'][1] = float(kw['theta_end'])
-        if 'decay_time' in kw:
-            kw['aux_param'][2] = float(kw['decay_time'])
+        kwa.update(kwargs)
+        if 'rampup_time' in kwa:
+            kwa['aux_param'][0] = float(kwa['rampup_time'])
+        if 'rampdown_time' in kwa:
+            kwa['aux_param'][1] = float(kwa['rampdown_time'])
+        if 'plateau_time' in kwa:
+            kwa['aux_param'][2] = float(kwa['plateau_time'])
+        if 'theta_begin' in kwa:
+            kwa['aux_param'][0] = float(kwa['theta_begin'])
+        if 'theta_end' in kwa:
+            kwa['aux_param'][1] = float(kwa['theta_end'])
+        if 'decay_time' in kwa:
+            kwa['aux_param'][2] = float(kwa['decay_time'])
 
-        if typ == SignalFactory.TYPES['Trapezoidal']:
-            return SignalTrapezoidal(**kw)
-        elif typ == SignalFactory.TYPES['Sine']:
-            return SignalSine(**kw)
-        elif typ == SignalFactory.TYPES['DampedSine']:
-            return SignalDampedSine(**kw)
-        elif typ == SignalFactory.TYPES['DampedSquaredSine']:
-            return SignalDampedSine(**kw)
+        return kwa

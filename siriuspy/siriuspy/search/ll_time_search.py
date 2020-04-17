@@ -4,12 +4,13 @@ import re as _re
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
 
-from siriuspy import clientweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
+from .. import clientweb as _web
+from ..namesys import SiriusPVName as _PVName, Filter as _Filter
+
 from .bpms_search import BPMSearch as _BPMSearch
 from .ps_search import PSSearch as _PSSearch
 
-_timeout = 1.0
+_TIMEOUT = 1.0
 
 
 class LLTimeSearch:
@@ -303,7 +304,8 @@ class LLTimeSearch:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
 
-    # ############ Auxiliar methods ###########
+    # --- private methods ---
+
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
         if which_map.lower().startswith('from'):
@@ -325,11 +327,12 @@ class LLTimeSearch:
                 return
             if not _web.server_online():
                 raise Exception('Could not connect with Consts Server!!')
-            text = _web.timing_devices_mapping(timeout=_timeout)
+            text = _web.timing_devices_mapping(timeout=_TIMEOUT)
             cls._parse_text_and_build_connection_mappings(text)
             cls._update_related_maps()
 
-    # Methods auxiliar to _get_timedata
+    # --- methods auxiliar to _get_timedata ---
+
     @classmethod
     def _parse_text_and_build_connection_mappings(cls, text):
         from_evg = dict()

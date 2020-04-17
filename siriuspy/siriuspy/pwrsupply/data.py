@@ -1,10 +1,11 @@
-"""PS Data module."""
+"""Power Supply Data."""
 
 import copy as _copy
 
-from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
-    _get_ps_propty_database
+
+from ..search import PSSearch as _PSSearch
+
+from .csdev import get_ps_propty_database as _get_ps_propty_database
 
 
 class PSData:
@@ -85,34 +86,29 @@ class PSData:
         """Excitation data associated with the power supply."""
         return self._excdata
 
-    @property
-    def bbbname(self):
-        """Name of the BBB that controls this power supply."""
-        return self._bbbname
-
     def __str__(self):
         """__str__ method."""
-        st = ''
-        st += 'psname      : ' + str(self.psname)
-        st += '\n' + 'pstype      : ' + str(self.pstype)
-        st += '\n' + 'polarity    : ' + str(self.polarity)
-        st += '\n' + 'magfunc     : ' + str(self.magfunc)
-        st += '\n' + 'splims_unit : ' + str(self.splims_unit)
+        rst = ''
+        rst += 'psname      : ' + str(self.psname)
+        rst += '\n' + 'pstype      : ' + str(self.pstype)
+        rst += '\n' + 'polarity    : ' + str(self.polarity)
+        rst += '\n' + 'magfunc     : ' + str(self.magfunc)
+        rst += '\n' + 'splims_unit : ' + str(self.splims_unit)
 
         if self.splims is None:
-            st += '\n' + 'splims      : ' + str(None)
+            rst += '\n' + 'splims      : ' + str(None)
         else:
-            st += '\n' + 'splims      : ' + \
+            rst += '\n' + 'splims      : ' + \
                 'DRVH:{0:+09.3f} DRVL:{1:+09.3f}'.format(
                     self.splims['DRVH'], self.splims['DRVL'])
-            st += '\n' + '              ' + \
+            rst += '\n' + '              ' + \
                 'HIHI:{0:+09.3f} LOLO:{1:+09.3f}'.format(
                     self.splims['HIHI'],    self.splims['LOLO'])
-            st += '\n' + '              ' + \
+            rst += '\n' + '              ' + \
                 'HIGH:{0:+09.3f} LOW :{1:+09.3f}'.format(
                     self.splims['HIGH'], self.splims['LOW'])
-            st += '\n' + '              ' + \
+            rst += '\n' + '              ' + \
                 'HOPR:{0:+09.3f} LOPR:{1:+09.3f}'.format(
                     self.splims['HOPR'], self.splims['LOPR'])
 
-        return st
+        return rst

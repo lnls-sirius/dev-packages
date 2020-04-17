@@ -9,13 +9,15 @@ from urllib.error import URLError as _URLError
 import dateutil.parser
 import numpy as _np
 
-import siriuspy.envars as _envars
+from .. import envars as _envars
+
 from . import _templates
 
 
 class ConfigDBClient:
     """Perform operation on configuration database."""
 
+    _TIMEOUT_DEFAULT = 2.0
     _INVALID_CHARACTERS = '\\/:;,?!$'
 
     def __init__(self, url=None, config_type=None):
@@ -64,8 +66,13 @@ class ConfigDBClient:
         return self._make_request(stats=True)['count']
 
     def get_config_types(self):
-        """Get all configuration types."""
+        """Get configuration types existing as database entries."""
         return self._make_request()
+
+    @staticmethod
+    def get_config_types_from_templates():
+        """Return list of configuration types as defined in templates."""
+        return list(_templates.get_config_types())
 
     def find_configs(self,
                      name=None,
@@ -153,7 +160,7 @@ class ConfigDBClient:
         return self._make_request(
             config_type=config_type, name=name, discarded=True, method='POST')
 
-    def get_value_template(self, config_type=None):
+    def get_value_from_template(self, config_type=None):
         """Return value of a configuration type."""
         config_type = self._process_config_type(config_type)
         return _templates.get_template(config_type)
@@ -162,11 +169,6 @@ class ConfigDBClient:
         """Check whether values data corresponds to a configuration type."""
         config_type = self._process_config_type(config_type)
         return _templates.check_value(config_type, value)
-
-    @staticmethod
-    def get_config_types_from_templates():
-        """Return list of configuration types."""
-        return _templates.get_config_types()
 
     @classmethod
     def check_valid_configname(cls, name):
@@ -194,12 +196,14 @@ class ConfigDBClient:
         return config_type
 
     def _make_request(self, method='GET', data=None, **kwargs):
-
         try:
             return self._request(method, data, **kwargs)
-        except ConfigDBException:
-            self._rotate_server_url()
-            return self._request(method, data, **kwargs)
+        except ConfigDBException as err:
+            if err.server_code == -2:
+                self._rotate_server_url()
+                return self._request(method, data, **kwargs)
+            else:
+                raise err
 
     def _request(self, method='GET', data=None, **kwargs):
         url = self._create_url(**kwargs)
@@ -213,7 +217,9 @@ class ConfigDBClient:
                 data=_json.dumps(data, default=_jsonify_numpy).encode())
 
         try:
-            response = _json.loads(_urlopen(request).read().decode("utf-8"))
+            url_conn = _urlopen(
+                request, timeout=ConfigDBClient._TIMEOUT_DEFAULT)
+            response = _json.loads(url_conn.read().decode("utf-8"))
         except _json.JSONDecodeError:
             response = {"code": -1, "message": "JSON decode error"}
         except _URLError as err:
@@ -253,6 +259,7 @@ class ConfigDBException(Exception):
     """Default exception raised for configDB server errors."""
 
     def __init__(self, response):
+        """."""
         super().__init__('{code:d}: {message:s}.'.format(**response))
         self.server_code = response['code']
         self.server_message = response['message']
