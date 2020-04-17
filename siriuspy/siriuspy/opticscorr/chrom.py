@@ -82,7 +82,7 @@ class ChromCorrApp(_BaseApp):
                 data = self._psfam_intstr_rb_pvs[fam].get_ctrlvars()
                 if self._psfam_intstr_rb_pvs[fam].upper_disp_limit is not None:
                     lis = {k: data[v] for k, v in limit_names.items()}
-                    self.run_callbacks('SL'+fam+'-Mon', lis, field='info')
+                    self.run_callbacks('SL'+fam+'-Mon', info=lis, field='info')
         dtime = interval - (_time.time() - t_ini)
         _time.sleep(max(dtime, 0))
 
