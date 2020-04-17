@@ -389,7 +389,7 @@ class ChromCorrApp(_BaseApp):
         for fam in self._psfams:
             fam_idx = self._psfams.index(fam)
             sfam_deltasl[fam_idx] = \
-                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam]
+                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam_idx]
 
         self._chrom_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
         self.run_callbacks('ChromX-Mon', self._chrom_est[0])
