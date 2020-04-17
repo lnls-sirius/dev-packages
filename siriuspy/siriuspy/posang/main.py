@@ -256,7 +256,7 @@ class App(_Callback):
             delta_ang_rad = delta_ang*1e-3
             c1_refkick_rad = c1_refkick*c1_unit_factor
             c2_refkick_rad = c2_refkick*c2_unit_factor
-            if 'CH3' in self._correctors.keys():
+            if orbit == 'x' and 'CH3' in self._correctors.keys():
                 c3_refkick_rad = c3_refkick*c3_unit_factor
 
             [[c1_deltakick_rad], [c2_deltakick_rad]] = _np.dot(
@@ -266,7 +266,7 @@ class App(_Callback):
             # Convert kicks from rad to correctors units
             vl1 = (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor
             c1_kick_sp_pv.put(vl1)
-            if 'CH3' in self._correctors.keys():
+            if orbit == 'x' and 'CH3' in self._correctors.keys():
                 vl2 = (c2_refkick_rad + c1_deltakick_rad)/c2_unit_factor
                 c2_kick_sp_pv.put(vl2)
                 vl3 = (c3_refkick_rad + c2_deltakick_rad)/c3_unit_factor
