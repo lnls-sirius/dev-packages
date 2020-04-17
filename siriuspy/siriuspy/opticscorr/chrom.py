@@ -27,7 +27,6 @@ class ChromCorrApp(_BaseApp):
         # consts
         self._chrom_sp = 2*[0.0]
         self._chrom_mon = 2*[0.0]
-        self._chrom_est = 2*[0.0]
 
         if self._acc == 'SI':
             self._measuring_chrom = False
@@ -173,8 +172,8 @@ class ChromCorrApp(_BaseApp):
         return value
 
     def _calc_intstrength(self):
-        delta_chromx = self._chrom_sp[0]-self._chrom_est[0]
-        delta_chromy = self._chrom_sp[1]-self._chrom_est[1]
+        delta_chromx = self._chrom_sp[0]-self._optprm_est[0]
+        delta_chromy = self._chrom_sp[1]-self._optprm_est[1]
 
         method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional \
@@ -391,6 +390,6 @@ class ChromCorrApp(_BaseApp):
             sfam_deltasl[fam_idx] = \
                 self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam_idx]
 
-        self._chrom_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
-        self.run_callbacks('ChromX-Mon', self._chrom_est[0])
-        self.run_callbacks('ChromY-Mon', self._chrom_est[1])
+        self._optprm_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('ChromX-Mon', self._optprm_est[0])
+        self.run_callbacks('ChromY-Mon', self._optprm_est[1])

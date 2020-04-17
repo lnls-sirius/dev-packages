@@ -192,10 +192,10 @@ class TuneCorrApp(_BaseApp):
             fam_idx = self._psfams.index(fam)
             psfam_deltakl[fam_idx] = \
                 self._psfam_intstr_rb[fam] - self._psfam_refkl[fam]
-        delta_tunex, delta_tuney = \
-            self._opticscorr.calculate_opticsparam(psfam_deltakl)
-        self.run_callbacks('DeltaTuneX-Mon', delta_tunex)
-        self.run_callbacks('DeltaTuneY-Mon', delta_tuney)
+        self._optprm_est = self._opticscorr.calculate_opticsparam(
+            psfam_deltakl)
+        self.run_callbacks('DeltaTuneX-Mon', self._optprm_est[0])
+        self.run_callbacks('DeltaTuneY-Mon', self._optprm_est[1])
 
     # ---------- callbacks ----------
 
