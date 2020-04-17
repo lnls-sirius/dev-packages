@@ -16,6 +16,7 @@ class ETypes(_csdev.ETypes):
     CROPIDX = ('Low', 'High')
     FLIP = ('Off', 'On')
     FITPARAMS = ('Amp', 'Cen', 'Sig', 'Off')
+    PLANES = ('Y', 'X')
 
 
 _et = ETypes  # syntactic sugar
@@ -38,6 +39,7 @@ class Const(_csdev.Const):
     CropIdx = _csdev.Const.register('CropIdx', _et.CROPIDX)
     ImgFlip = _csdev.Const.register('ImgFlip', _et.FLIP)
     FitParams = _csdev.Const.register('FitParams', _et.FITPARAMS)
+    Plane = _csdev.Const.register('Plane', _et.PLANES)
 
     @classmethod
     def get_database(cls, prefix=''):

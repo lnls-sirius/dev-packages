@@ -661,8 +661,8 @@ class ProcessImage(BaseClass):
         endy = min(endy, image.shape[self.Plane.Y])
 
         image = image[strty:endy, strtx:endx]
-        self._roi_proj[self.Plane.X] = image.sum(axis=0)
-        self._roi_proj[self.Plane.Y] = image.sum(axis=1)
+        self._roi_proj[self.Plane.X] = image.sum(axis=self.Plane.Y)
+        self._roi_proj[self.Plane.Y] = image.sum(axis=self.Plane.X)
         self._roi_axis[self.Plane.X] = axis_x[strtx:endx]
         self._roi_axis[self.Plane.Y] = axis_y[strty:endy]
         self._roi_start[self.Plane.X] = strtx
