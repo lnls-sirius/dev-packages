@@ -273,6 +273,11 @@ class BaseApp(_Callback):
         self.run_callbacks('ConfigName-RB', self._config_name)
         self.update_corrparams()
         self.run_callbacks('Log-Mon', 'Started.')
+        self.run_callbacks('Status-Mon', self._status)
+        if self._optics_param == 'tune':
+            for fam in self._psfams:
+                self.run_callbacks(
+                    'RefKL'+fam+'-Mon', self._psfam_refkl[fam])
 
     def update_corrparams(self):
         """Set initial correction parameters PVs values."""
