@@ -59,6 +59,8 @@ class BaseApp(_Callback):
 
         self._status = ALLSET
 
+        self._optprm_est = [0.0, 0.0]
+
         self._apply_corr_cmd_count = 0
         self._config_ps_cmd_count = 0
 
@@ -273,6 +275,16 @@ class BaseApp(_Callback):
         self.run_callbacks('ConfigName-RB', self._config_name)
         self.update_corrparams()
         self.run_callbacks('Log-Mon', 'Started.')
+        self.run_callbacks('Status-Mon', self._status)
+        if self._optics_param == 'tune':
+            for fam in self._psfams:
+                self.run_callbacks(
+                    'RefKL'+fam+'-Mon', self._psfam_refkl[fam])
+            self.run_callbacks('DeltaTuneX-Mon', self._optprm_est[0])
+            self.run_callbacks('DeltaTuneY-Mon', self._optprm_est[1])
+        else:
+            self.run_callbacks('ChromX-Mon', self._optprm_est[0])
+            self.run_callbacks('ChromY-Mon', self._optprm_est[1])
 
     def update_corrparams(self):
         """Set initial correction parameters PVs values."""

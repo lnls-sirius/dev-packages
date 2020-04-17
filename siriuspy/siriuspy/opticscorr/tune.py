@@ -119,8 +119,7 @@ class TuneCorrApp(_BaseApp):
 
         self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
             self.run_callbacks(
                 'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam])
@@ -162,6 +161,7 @@ class TuneCorrApp(_BaseApp):
                         'Log-Mon',
                         'ERR: Received a None value from {}.'.format(fam))
                     return False
+                self._psfam_intstr_rb[fam] = value
                 self._psfam_refkl[fam] = value
                 self.run_callbacks(
                     'RefKL' + fam + '-Mon', self._psfam_refkl[fam])
@@ -188,14 +188,13 @@ class TuneCorrApp(_BaseApp):
 
     def _estimate_current_deltatune(self):
         psfam_deltakl = len(self._psfams)*[0]
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             psfam_deltakl[fam_idx] = \
                 self._psfam_intstr_rb[fam] - self._psfam_refkl[fam]
-        delta_tunex, delta_tuney = \
-            self._opticscorr.calculate_opticsparam(psfam_deltakl)
-        self.run_callbacks('DeltaTuneX-Mon', delta_tunex)
-        self.run_callbacks('DeltaTuneY-Mon', delta_tuney)
+        self._optprm_est = self._opticscorr.calculate_opticsparam(
+            psfam_deltakl)
+        self.run_callbacks('DeltaTuneX-Mon', self._optprm_est[0])
+        self.run_callbacks('DeltaTuneY-Mon', self._optprm_est[1])
 
     # ---------- callbacks ----------
 

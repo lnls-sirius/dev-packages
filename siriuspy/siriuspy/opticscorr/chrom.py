@@ -27,7 +27,6 @@ class ChromCorrApp(_BaseApp):
         # consts
         self._chrom_sp = 2*[0.0]
         self._chrom_mon = 2*[0.0]
-        self._chrom_est = 2*[0.0]
 
         if self._acc == 'SI':
             self._measuring_chrom = False
@@ -82,7 +81,7 @@ class ChromCorrApp(_BaseApp):
                 data = self._psfam_intstr_rb_pvs[fam].get_ctrlvars()
                 if self._psfam_intstr_rb_pvs[fam].upper_disp_limit is not None:
                     lis = {k: data[v] for k, v in limit_names.items()}
-                    self.run_callbacks('SL'+fam+'-Mon', lis, field='info')
+                    self.run_callbacks('SL'+fam+'-Mon', info=lis, field='info')
         dtime = interval - (_time.time() - t_ini)
         _time.sleep(max(dtime, 0))
 
@@ -173,8 +172,8 @@ class ChromCorrApp(_BaseApp):
         return value
 
     def _calc_intstrength(self):
-        delta_chromx = self._chrom_sp[0]-self._chrom_est[0]
-        delta_chromy = self._chrom_sp[1]-self._chrom_est[1]
+        delta_chromx = self._chrom_sp[0]-self._optprm_est[0]
+        delta_chromy = self._chrom_sp[1]-self._optprm_est[1]
 
         method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional \
@@ -186,8 +185,7 @@ class ChromCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[delta_chromx, delta_chromy])
 
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sl_now = self._psfam_intstr_rb_pvs[fam].get()
             if sl_now is None:
                 self.run_callbacks(
@@ -386,11 +384,10 @@ class ChromCorrApp(_BaseApp):
         self._psfam_intstr_rb[fam] = value
 
         sfam_deltasl = len(self._psfams)*[0]
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sfam_deltasl[fam_idx] = \
-                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam]
+                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam_idx]
 
-        self._chrom_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
-        self.run_callbacks('ChromX-Mon', self._chrom_est[0])
-        self.run_callbacks('ChromY-Mon', self._chrom_est[1])
+        self._optprm_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('ChromX-Mon', self._optprm_est[0])
+        self.run_callbacks('ChromY-Mon', self._optprm_est[1])
