@@ -1,4 +1,4 @@
-"""AS Global configuration."""
+"""AS RF configuration."""
 from copy import deepcopy as _dcopy
 
 from .global_config import _pvs_as_rf
