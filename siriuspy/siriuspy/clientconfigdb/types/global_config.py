@@ -29,11 +29,6 @@ def get_dict():
 # delay [s] the client should wait before setting the next PV.
 
 
-_pvs_as = [
-    ['RF-Gen:GeneralFreq-SP', 0.0, 0.0],  # [Hz]
-    ]
-
-
 _pvs_li_egunmod = [
     ['LI-01:EG-BiasPS:switch', 0, 0],
     ['LI-01:EG-BiasPS:voltoutsoft', -60.0, 0.0],  # [V]
@@ -1005,6 +1000,11 @@ _pvs_as_pu = [
     ['TS-04:PU-InjSeptF:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-01:PU-EjeSeptG:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-01:PU-EjeSeptF:Voltage-SP', 0.0, 0.0],  # [V]
+    ]
+
+
+_pvs_as_rf = [
+    ['RF-Gen:GeneralFreq-SP', 0.0, 0.0],  # [Hz]
     ]
 
 
@@ -3139,10 +3139,10 @@ _pvs_si_ps_qn = [
 
 _template_dict = {
     'pvs':
-    _pvs_as + _pvs_as_ti +
+    _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_bo_rf + _pvs_si_rf +
+    _pvs_as_rf + _pvs_bo_rf + _pvs_si_rf +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
     _pvs_si_ps_ch + _pvs_si_ps_cv +
