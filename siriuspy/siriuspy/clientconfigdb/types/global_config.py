@@ -31,7 +31,8 @@ def get_dict():
 
 _pvs_as = [
     ['RF-Gen:GeneralFreq-SP', 0.0, 0.0],  # [Hz]
-]
+    ]
+
 
 _pvs_li_egunmod = [
     ['LI-01:EG-BiasPS:switch', 0, 0],
@@ -49,6 +50,7 @@ _pvs_li_egunmod = [
     ['LI-01:PU-Modltr-1:WRITE_V', 0.0, 0.0],  # [kV]
     ['LI-01:PU-Modltr-2:WRITE_V', 0.0, 0.0],  # [kV]
     ]
+
 
 _pvs_li_llrf = [
     ['LA-RF:LLRF:BUN1:SET_STREAM', 0, 0.0],
@@ -170,7 +172,8 @@ _pvs_li_llrf = [
     ['LA-RF:LLRF:KLY2:SET_CH9_ATT', 0.0, 0.0],
     ]
 
-_pvs_timing = [
+
+_pvs_as_ti = [
     # Clocks
     ['AS-RaMO:TI-EVG:Clk0MuxDiv-SP', 0, 0.0],
     ['AS-RaMO:TI-EVG:Clk0MuxEnbl-Sel', 0, 0.0],
@@ -920,6 +923,7 @@ _pvs_timing = [
 
     ]
 
+
 _pvs_li_ps = [
     ['LI-01:PS-LensRev:Current-SP', 0.0, 0.0],  # [A]
     ['LI-01:PS-Lens-1:Current-SP', 0.0, 0.0],  # [A]
@@ -969,7 +973,8 @@ _pvs_li_ps = [
     ['LI-01:PS-Spect:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_pu = [
+
+_pvs_as_pu = [
     ['TB-04:PU-InjSept:PwrState-Sel', _OFF, 0.0],
     ['BO-01D:PU-InjKckr:PwrState-Sel', _OFF, 0.0],
     ['BO-48D:PU-EjeKckr:PwrState-Sel', _OFF, 0.0],
@@ -1002,7 +1007,8 @@ _pvs_pu = [
     ['TS-01:PU-EjeSeptF:Voltage-SP', 0.0, 0.0],  # [V]
     ]
 
-_rf_bo_pvs = [
+
+_pvs_bo_rf = [
     ['BR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA2:S', 0.0, 0.0],
     ['BR-RF-DLLRF-01:LIMIT:REVSSA3:S', 0.0, 0.0],
@@ -1226,7 +1232,8 @@ _rf_bo_pvs = [
     ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0.0, 0.0],
     ]
 
-_rf_si_pvs = [
+
+_pvs_si_rf = [
     ['SR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:LIMIT:REVSSA2:S', 0.0, 0.0],
     ['SR-RF-DLLRF-01:LIMIT:REVSSA3:S', 0.0, 0.0],
@@ -1455,6 +1462,7 @@ _rf_si_pvs = [
     ['SR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0.0, 0.0],
     ]
 
+
 _pvs_tb_ps = [
     ['TB-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
     ['TB-01:PS-QD1:OpMode-Sel', _SLOWREF, 0.0],
@@ -1504,6 +1512,7 @@ _pvs_tb_ps = [
     ['TB-04:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
     ['TB-04:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
     ]
+
 
 _pvs_bo_ps = [
     ['BO-Fam:PS-B-1:OpMode-Sel', _SLOWREF, 0.0],
@@ -1681,6 +1690,7 @@ _pvs_bo_ps = [
     ['BO-49U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ]
 
+
 _pvs_ts_ps = [
     ['TS-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
     ['TS-01:PS-QF1A:OpMode-Sel', _SLOWREF, 0.0],
@@ -1731,7 +1741,8 @@ _pvs_ts_ps = [
     ['TS-04:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_si_fam_ps = [
+
+_pvs_si_ps_fam = [
     ['SI-Fam:PS-B1B2-1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-B1B2-2:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-Fam:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
@@ -1805,7 +1816,8 @@ _pvs_si_fam_ps = [
     ['SI-Fam:PS-SDP3:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_si_ch_ps = [
+
+_pvs_si_ps_ch = [
     ['SI-01M2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C1:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C2:PS-CH:OpMode-Sel', _SLOWREF, 0.0],
@@ -2049,7 +2061,8 @@ _pvs_si_ch_ps = [
     ['SI-01M1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_si_cv_ps = [
+
+_pvs_si_ps_cv = [
     ['SI-01M2:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C1:PS-CV:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C2:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
@@ -2373,7 +2386,8 @@ _pvs_si_cv_ps = [
     ['SI-01M1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_si_qs_ps = [
+
+_pvs_si_ps_qs = [
     ['SI-01M2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C1:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C2:PS-QS:OpMode-Sel', _SLOWREF, 0.0],
@@ -2577,7 +2591,8 @@ _pvs_si_qs_ps = [
     ['SI-01M1:PS-QS:Current-SP', 0.0, 0.0],  # [A]
     ]
 
-_pvs_si_qn_ps = [
+
+_pvs_si_ps_qn = [
     ['SI-01M2:PS-QDA:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01M2:PS-QFA:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-01C1:PS-Q1:OpMode-Sel', _SLOWREF, 0.0],
@@ -3121,14 +3136,15 @@ _pvs_si_qn_ps = [
     ['SI-01M1:PS-QFA:Current-SP', 0.0, 0.0],  # [A]
     ]
 
+
 _template_dict = {
     'pvs':
-        _pvs_as + _pvs_timing +
-        _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
-        _pvs_pu +
-        _rf_bo_pvs + _rf_si_pvs +
-        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
-        _pvs_si_fam_ps +
-        _pvs_si_ch_ps + _pvs_si_cv_ps +
-        _pvs_si_qs_ps + _pvs_si_qn_ps
+    _pvs_as + _pvs_as_ti +
+    _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
+    _pvs_as_pu +
+    _pvs_bo_rf + _pvs_si_rf +
+    _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
+    _pvs_si_ps_fam +
+    _pvs_si_ps_ch + _pvs_si_ps_cv +
+    _pvs_si_ps_qs + _pvs_si_ps_qn
     }
