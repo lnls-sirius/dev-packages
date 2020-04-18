@@ -1,9 +1,11 @@
 """AS RF configuration."""
 from copy import deepcopy as _dcopy
 
-from .global_config import _pvs_as_rf
-from .global_config import _pvs_bo_rf
-from .global_config import _pvs_si_rf
+# NOTE: absolute imports are necessary here due to how
+# CONFIG_TYPES in __init__.py is built.
+from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf
+from siriuspy.clientconfigdb.types.global_config import _pvs_bo_rf
+from siriuspy.clientconfigdb.types.global_config import _pvs_si_rf
 
 
 def get_dict():
