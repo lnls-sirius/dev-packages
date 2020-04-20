@@ -54,6 +54,8 @@ class DevicesSync(_DeviceApp):
         if None in values:
             # NOTE: None values sometimes are being returned
             # even after connected check!
+            # This is happening with 'TS-01:PU-EjeSeptG:Voltage-Mon'
+            # of sirius-ioc-as-pu-conv, in particular.
             return
         return sum(values) / len(values)
 
