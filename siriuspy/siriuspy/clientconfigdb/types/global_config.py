@@ -1004,6 +1004,7 @@ _pvs_as_pu = [
 
 
 _pvs_as_rf = [
+    ['RF-Gen:FreqPhsCont-Sel', 0, 0.0],
     ['RF-Gen:GeneralFreq-SP', 0.0, 0.0],  # [Hz]
     ]
 
