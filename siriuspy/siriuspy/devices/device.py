@@ -92,6 +92,11 @@ class Device:
     def __getitem__(self, propty):
         """Return value of property."""
         pvobj = self._pvs[propty]
+        # NOTE: should pvobj.value be used instead of get()?
+        # since we started using Device strange behaviour
+        # has been observed, like, None values with ca.get
+        # timeouts right afet a successful connected check!
+        # value = pvobj.value
         value = pvobj.get()
         return value
 

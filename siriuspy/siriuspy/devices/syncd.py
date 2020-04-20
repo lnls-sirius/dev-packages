@@ -51,6 +51,10 @@ class DevicesSync(_DeviceApp):
             return
         props = self._prop2prop[propty]
         values = [self[prop] for prop in props]
+        if None in values:
+            # NOTE: None values sometimes are being returned
+            # even after connected check!
+            return
         return sum(values) / len(values)
 
     def value_set(self, propty, value):
