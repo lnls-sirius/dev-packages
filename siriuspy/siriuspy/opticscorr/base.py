@@ -593,7 +593,7 @@ class BaseApp(_Callback):
         elif self._meas_config_name == 'UNDEF':
             log_msg = 'ERR: Define a conf.name to save the measure!'
             cont = False
-        elif self._status != ALLCLR_SYNCOFF:
+        elif self._status != 0:
             log_msg = 'ERR: Verify power supplies status!'
             cont = False
         elif self._measuring_config:
@@ -663,7 +663,7 @@ class BaseApp(_Callback):
             elif not self._is_storedebeam:
                 log_msg = 'ERR: Stoping measurement, there is no stored beam!'
                 aborted = True
-            elif self._status != ALLCLR_SYNCOFF:
+            elif self._status != 0:
                 log_msg = 'ERR: Stoping measurement, verify power supplies!'
                 aborted = True
             elif not self._tune_x_pv.connected or \
