@@ -273,7 +273,7 @@ class BaseApp(_Callback):
         """Set initial PV values."""
         self.run_callbacks('ConfigName-SP', self._config_name)
         self.run_callbacks('ConfigName-RB', self._config_name)
-        self.update_corrparams()
+        self.update_corrparams_pvs()
         self.run_callbacks('Log-Mon', 'Started.')
         self.run_callbacks('Status-Mon', self._status)
         if self._optics_param == 'tune':
@@ -286,7 +286,7 @@ class BaseApp(_Callback):
             self.run_callbacks('ChromX-Mon', self._optprm_est[0])
             self.run_callbacks('ChromY-Mon', self._optprm_est[1])
 
-    def update_corrparams(self):
+    def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         raise NotImplementedError
 
@@ -337,7 +337,7 @@ class BaseApp(_Callback):
                 self._nominal_matrix = corrparams[1]
                 self._psfam_nom_intstr = corrparams[2]
                 self._nominal_opticsparam = corrparams[3]
-                self.update_corrparams()
+                self.update_corrparams_pvs()
                 self.run_callbacks('Log-Mon', 'Updated correction parameters.')
                 return True
         self.run_callbacks('Log-Mon', 'ERR: Config not found in configdb.')
@@ -732,7 +732,7 @@ class BaseApp(_Callback):
         self._nominal_matrix = respm.flatten().tolist()
         self._psfam_nom_intstr = [fams_intstr0[fam] for fam in self._psfams]
         self._nominal_opticsparam = optparam0
-        self.update_corrparams()
+        self.update_corrparams_pvs()
 
         try:
             self._opticscorr.nominal_matrix = self._nominal_matrix

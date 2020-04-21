@@ -63,7 +63,7 @@ class ChromCorrApp(_BaseApp):
             'MeasConfigDeltaSLSD-SP': self.set_meas_config_dsl_sd,
         })
 
-    def update_corrparams(self):
+    def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         self.run_callbacks('RespMat-Mon', self._nominal_matrix)
         self.run_callbacks('NominalSL-Mon', self._psfam_nom_intstr)

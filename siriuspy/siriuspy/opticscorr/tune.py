@@ -44,7 +44,7 @@ class TuneCorrApp(_BaseApp):
             'MeasConfigDeltaKLQD-SP': self.set_meas_config_dkl_qd,
         })
 
-    def update_corrparams(self):
+    def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         self.run_callbacks('RespMat-Mon', self._nominal_matrix)
         self.run_callbacks('NominalKL-Mon', self._psfam_nom_intstr)
