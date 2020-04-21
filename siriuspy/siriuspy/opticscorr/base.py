@@ -483,7 +483,7 @@ class BaseApp(_Callback):
 
     def _save_corrparams(self, config_name):
         """Save correction parameters in configdb."""
-        value = self._handle_config_value_2_save()
+        value = self._handle_corrparams_2_save()
         try:
             self.cdb_client.insert_config(name=config_name, value=value)
         except _ConfigDBException as err:
