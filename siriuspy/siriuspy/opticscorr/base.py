@@ -320,21 +320,27 @@ class BaseApp(_Callback):
         """Set configuration name."""
         [done, corrparams] = self._get_corrparams(value)
         if done:
-            self.cn_handler.set_config_name(corrparams[0])
-            self._config_name = corrparams[0]
-            self._nominal_matrix = corrparams[1]
-            self._psfam_nom_intstr = corrparams[2]
-            self._nominal_opticsparam = corrparams[3]
-            self._opticscorr.nominal_matrix = self._nominal_matrix
-            self._opticscorr.nominal_intstrengths = self._psfam_nom_intstr
-            self._opticscorr.nominal_opticsparam = self._nominal_opticsparam
-            self._calc_intstrength()
-            self.run_callbacks('ConfigName-RB', self._config_name)
-            self.update_corrparams()
-            self.run_callbacks('Log-Mon', 'Updated correction parameters.')
-            return True
-        self.run_callbacks(
-            'Log-Mon', 'ERR: Config not found in configdb.')
+            try:
+                self._opticscorr.nominal_matrix = corrparams[1]
+                self._opticscorr.nominal_intstrengths = corrparams[2]
+                self._opticscorr.nominal_opticsparam = corrparams[3]
+                self._calc_intstrength()
+            except Exception:
+                self.run_callbacks(
+                    'Log-Mon', 'Could not update correction parameters.')
+                return False
+            else:
+                self._config_name = corrparams[0]
+                self.cn_handler.set_config_name(self._config_name)
+                self.run_callbacks('ConfigName-RB', self._config_name)
+
+                self._nominal_matrix = corrparams[1]
+                self._psfam_nom_intstr = corrparams[2]
+                self._nominal_opticsparam = corrparams[3]
+                self.update_corrparams()
+                self.run_callbacks('Log-Mon', 'Updated correction parameters.')
+                return True
+        self.run_callbacks('Log-Mon', 'ERR: Config not found in configdb.')
         return False
 
     def set_corr_meth(self, value):
@@ -454,9 +460,8 @@ class BaseApp(_Callback):
             self.run_callbacks('ConfigName-RB', self._config_name)
 
             self._meas_config_name = 'UNDEF'
-            self.run_callbacks('MeasConfigName-SP', 'UNDEF')
-            self.run_callbacks('MeasConfigName-RB', 'UNDEF')
-            self._meas_config_2_save = None
+            self.run_callbacks('MeasConfigName-SP', self._meas_config_name)
+            self.run_callbacks('MeasConfigName-RB', self._meas_config_name)
 
             self.run_callbacks('Log-Mon', 'Updated config. name.')
         return False
@@ -493,6 +498,7 @@ class BaseApp(_Callback):
             else:
                 log_msg = 'ERR: Could not save configuration in configdb!'
         else:
+            self._meas_config_2_save = None
             log_msg = "Saved config. '{}' in configdb!".format(config_name)
         self.run_callbacks('Log-Mon', log_msg)
         return 'ERR' in log_msg
@@ -646,12 +652,10 @@ class BaseApp(_Callback):
             fam: self._psfam_intstr_rb[fam] for fam in self._psfams}
         fams_intstr = _dcopy(fams_intstr0)
 
-        self._psfam_nom_intstr = \
-            [self._psfam_intstr_rb[fam] for fam in self._psfams]
         if self._optics_param == 'chrom':
             sts, data = self._get_optics_param()
             if sts:
-                self._nominal_opticsparam = data
+                optparam0 = data
                 aborted = False
             else:
                 log_msg = 'ERR: Could not measure chrom!'
@@ -726,23 +730,30 @@ class BaseApp(_Callback):
 
         # update corrparams
         self._nominal_matrix = respm.flatten().tolist()
+        self._psfam_nom_intstr = [fams_intstr0[fam] for fam in self._psfams]
+        self._nominal_opticsparam = optparam0
         self.update_corrparams()
 
-        # update configname
-        self.run_callbacks('ConfigName-RB', self._meas_config_name)
+        try:
+            self._opticscorr.nominal_matrix = self._nominal_matrix
+            self._opticscorr.nominal_intstrengths = self._psfam_nom_intstr
+            self._opticscorr.nominal_opticsparam = self._nominal_opticsparam
+            self._calc_intstrength()
+            self.run_callbacks('Log-Mon', 'New correction parameters in use.')
+        except Exception:
+            self._meas_config_2_save = self._handle_corrparams_2_save()
+            self.run_callbacks('Log-Mon', 'ERR: Could not use new parameters.')
+            self.run_callbacks('Log-Mon', 'ERR: Will not save new parameters.')
+        else:
+            if self._save_corrparams(self._meas_config_name):
+                # update configname
+                self._config_name = _dcopy(self._meas_config_name)
+                self.cn_handler.set_config_name(self._config_name)
+                self.run_callbacks('ConfigName-RB', self._config_name)
 
-        self._opticscorr.nominal_matrix = self._nominal_matrix
-        self._opticscorr.nominal_intstrengths = self._psfam_nom_intstr
-        self._opticscorr.nominal_opticsparam = self._nominal_opticsparam
-        self._calc_intstrength()
-        self.run_callbacks('Log-Mon', 'Updated correction parameters.')
-
-        if self._save_corrparams(self._meas_config_name):
-            self._config_name = _dcopy(self._meas_config_name)
-            self.cn_handler.set_config_name(self._meas_config_name)
-            self._meas_config_name = 'UNDEF'
-            self.run_callbacks('MeasConfigName-SP', 'UNDEF')
-            self.run_callbacks('MeasConfigName-RB', 'UNDEF')
+                self._meas_config_name = 'UNDEF'
+                self.run_callbacks('MeasConfigName-SP', self._meas_config_name)
+                self.run_callbacks('MeasConfigName-RB', self._meas_config_name)
 
     # ---------- callbacks ----------
 
