@@ -92,6 +92,14 @@ class Device:
     def __getitem__(self, propty):
         """Return value of property."""
         pvobj = self._pvs[propty]
+        # NOTE: should pvobj.value be used instead of pvobj.get()?
+        # since we started using Device strange behaviour
+        # has been observed, whereas before, using pvobj.value in
+        # ps and pu-conv IOCs it was not. In pu-conv, for example,
+        # None values, with ca.get timeouts, show up right after a
+        # successful connected-check!
+        #
+        # value = pvobj.value
         value = pvobj.get()
         return value
 
