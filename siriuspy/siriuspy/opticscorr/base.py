@@ -609,7 +609,8 @@ class BaseApp(_Callback):
             self.run_callbacks('Log-Mon', log_msg)
             return False
 
-        self.run_callbacks('Starting correction config measurement!')
+        self.run_callbacks(
+            'Log-Mon', 'Starting correction config measurement!')
         self._measuring_config = True
         thread = _Thread(target=self._meas_config_thread, daemon=True)
         thread.start()
