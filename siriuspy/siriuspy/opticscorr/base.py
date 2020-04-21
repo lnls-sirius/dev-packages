@@ -586,6 +586,7 @@ class BaseApp(_Callback):
 
     def _start_meas_config(self):
         """Start configuration measurement."""
+        cont = True
         if self._sync_corr == _Const.SyncCorr.On:
             log_msg = 'ERR: Turn off syncronized correction!'
             cont = False
