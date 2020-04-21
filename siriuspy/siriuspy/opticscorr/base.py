@@ -57,7 +57,7 @@ class BaseApp(_Callback):
                 self._trigger_name = 'SI-Glob:TI-Mags-Sexts'
                 self._event_name = 'ChromSI'
 
-        self._status = ALLSET
+        self._status = ALLSET if self._acc == 'SI' else 0x0f
 
         self._optprm_est = [0.0, 0.0]
 
