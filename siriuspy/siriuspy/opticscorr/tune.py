@@ -1,7 +1,9 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import numpy as _np
+from epics import PV as _PV
 
+from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _SiriusPVName
 
 from .csdev import Const as _Const
@@ -31,10 +33,11 @@ class TuneCorrApp(_BaseApp):
         self._psfam_refkl = {fam: 0 for fam in self._psfams}
         self._lastcalc_deltakl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
-            self._psfam_intstr_rb_pvs[fam].add_callback(
-                self._callback_init_refkl)
-            self._psfam_intstr_rb_pvs[fam].add_callback(
-                self._callback_estimate_deltatune)
+            self._psfam_intstr_rb_pvs[fam] = _PV(
+                _vaca_prefix+self._acc+'-Fam:PS-'+fam+':KL-RB',
+                callback=[self._callback_init_refkl,
+                          self._callback_estimate_deltatune],
+                connection_timeout=0.05)
 
         self.map_pv2write.update({
             'DeltaTuneX-SP': self.set_dtune_x,

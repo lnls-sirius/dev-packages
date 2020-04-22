@@ -138,10 +138,7 @@ class BaseApp(_Callback):
             intstr = 'KL' if self._optics_param == 'tune' else 'SL'
             self._psfam_intstr_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name=intstr, propty_suffix='SP'),
-                connection_timeout=0.05)
-            self._psfam_intstr_rb_pvs[fam] = _PV(
-                pss.substitute(propty_name=intstr, propty_suffix='RB'),
-                connection_callback=self._callback_conn_psfam_intstr_rb,
+                connection_callback=self._callback_conn_psfam,
                 connection_timeout=0.05)
 
             self._psfam_pwrstate_sel_pvs[fam] = _PV(
@@ -757,7 +754,7 @@ class BaseApp(_Callback):
 
     # ---------- callbacks ----------
 
-    def _callback_conn_psfam_intstr_rb(self, pvname, conn, **kws):
+    def _callback_conn_psfam(self, pvname, conn, **kws):
         """Connection callback."""
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')

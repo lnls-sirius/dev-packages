@@ -42,8 +42,10 @@ class ChromCorrApp(_BaseApp):
         # Connect to Sextupoles Families
         self._lastcalc_sl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
-            self._psfam_intstr_rb_pvs[fam].add_callback(
-                self._callback_estimate_chrom)
+            self._psfam_intstr_rb_pvs[fam] = _PV(
+                _vaca_prefix+self._acc+'-Fam:PS-'+fam+':SL-RB',
+                callback=self._callback_estimate_chrom,
+                connection_timeout=0.05)
 
         if self._acc == 'SI':
             # Connect to SI RF
