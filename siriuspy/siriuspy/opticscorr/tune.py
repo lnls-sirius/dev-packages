@@ -43,8 +43,8 @@ class TuneCorrApp(_BaseApp):
             'DeltaTuneX-SP': self.set_dtune_x,
             'DeltaTuneY-SP': self.set_dtune_y,
             'SetNewRefKL-Cmd': self.cmd_set_newref,
-            'MeasConfigDeltaKLQF-SP': self.set_meas_config_dkl_qf,
-            'MeasConfigDeltaKLQD-SP': self.set_meas_config_dkl_qd,
+            'MeasConfigDeltaKLFamQF-SP': self.set_meas_config_dkl_qf,
+            'MeasConfigDeltaKLFamQD-SP': self.set_meas_config_dkl_qd,
         })
 
     def update_corrparams_pvs(self):
@@ -77,19 +77,19 @@ class TuneCorrApp(_BaseApp):
         return False
 
     def set_meas_config_dkl_qf(self, value):
-        """Set MeasConfigDeltaKLQF."""
+        """Set MeasConfigDeltaKLFamQF."""
         if value == self._meas_config_dkl_qf:
             return False
         self._meas_config_dkl_qf = value
-        self.run_callbacks('MeasConfigDeltaKLQF-RB', value)
+        self.run_callbacks('MeasConfigDeltaKLFamQF-RB', value)
         return True
 
     def set_meas_config_dkl_qd(self, value):
-        """Set MeasConfigDeltaKLQD."""
+        """Set MeasConfigDeltaKLFamQD."""
         if value == self._meas_config_dkl_qd:
             return False
         self._meas_config_dkl_qd = value
-        self.run_callbacks('MeasConfigDeltaKLQD-RB', value)
+        self.run_callbacks('MeasConfigDeltaKLFamQD-RB', value)
         return True
 
     # ---------- auxiliar methods ----------
@@ -152,7 +152,9 @@ class TuneCorrApp(_BaseApp):
             deltakl = self._meas_config_dkl_qf
         else:
             deltakl = self._meas_config_dkl_qd
-        return deltakl
+        fam_idx = self._psfams.index(fam)
+        nelm = self._psfam_nelm[fam_idx]
+        return deltakl/nelm
 
     def _update_ref(self):
         if (self._status & 0x1) == 0:  # Check connection

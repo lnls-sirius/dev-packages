@@ -44,16 +44,20 @@ class BaseApp(_Callback):
             self._pvs_database = _get_tune_database(self._acc)
             if self._acc == 'BO':
                 self._psfams = _Const.BO_QFAMS_TUNECORR
+                self._psfam_nelm = _Const.BO_QFAMS_NELM
             else:
                 self._psfams = _Const.SI_QFAMS_TUNECORR
+                self._psfam_nelm = _Const.SI_QFAMS_NELM
                 self._trigger_name = 'SI-Glob:TI-Mags-Quads'
                 self._event_name = 'TunSI'
         else:
             self._pvs_database = _get_chrom_database(self._acc)
             if self._acc == 'BO':
                 self._psfams = _Const.BO_SFAMS_CHROMCORR
+                self._psfam_nelm = _Const.BO_SFAMS_NELM
             else:
                 self._psfams = _Const.SI_SFAMS_CHROMCORR
+                self._psfam_nelm = _Const.SI_SFAMS_NELM
                 self._trigger_name = 'SI-Glob:TI-Mags-Sexts'
                 self._event_name = 'ChromSI'
 

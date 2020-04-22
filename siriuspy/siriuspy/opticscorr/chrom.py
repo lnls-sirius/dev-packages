@@ -61,8 +61,8 @@ class ChromCorrApp(_BaseApp):
             'MeasChromWaitTune-SP': self.set_meas_chrom_wait_tune,
             'MeasChromNrSteps-SP': self.set_meas_chrom_nrsteps,
             'MeasChrom-Cmd': self.cmd_meas_chrom,
-            'MeasConfigDeltaSLSF-SP': self.set_meas_config_dsl_sf,
-            'MeasConfigDeltaSLSD-SP': self.set_meas_config_dsl_sd,
+            'MeasConfigDeltaSLFamSF-SP': self.set_meas_config_dsl_sf,
+            'MeasConfigDeltaSLFamSD-SP': self.set_meas_config_dsl_sd,
         })
 
     def update_corrparams_pvs(self):
@@ -140,19 +140,19 @@ class ChromCorrApp(_BaseApp):
         return status
 
     def set_meas_config_dsl_sf(self, value):
-        """Set MeasConfigDeltaSLSF."""
+        """Set MeasConfigDeltaSLFamSF."""
         if value == self._meas_config_dsl_sf:
             return False
         self._meas_config_dsl_sf = value
-        self.run_callbacks('MeasConfigDeltaSLSF-RB', value)
+        self.run_callbacks('MeasConfigDeltaSLFamSF-RB', value)
         return True
 
     def set_meas_config_dsl_sd(self, value):
-        """Set MeasConfigDeltaSLSD."""
+        """Set MeasConfigDeltaSLFamSD."""
         if value == self._meas_config_dsl_sd:
             return False
         self._meas_config_dsl_sd = value
-        self.run_callbacks('MeasConfigDeltaSLSD-RB', value)
+        self.run_callbacks('MeasConfigDeltaSLFamSD-RB', value)
         return True
 
     # ---------- auxiliar methods ----------
@@ -223,7 +223,9 @@ class ChromCorrApp(_BaseApp):
             deltasl = self._meas_config_dsl_sf
         else:
             deltasl = self._meas_config_dsl_sd
-        return deltasl
+        fam_idx = self._psfams.index(fam)
+        nelm = self._psfam_nelm[fam_idx]
+        return deltasl/nelm
 
     def _set_rf_freq(self, value):
         freq_curr = self._get_rf_freq()
