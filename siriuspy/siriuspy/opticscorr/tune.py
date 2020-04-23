@@ -26,8 +26,8 @@ class TuneCorrApp(_BaseApp):
         self._set_new_refkl_cmd_count = 0
 
         if self._acc == 'SI':
-            self._meas_config_dkl_qf = 0.0500
-            self._meas_config_dkl_qd = 0.0500
+            self._meas_config_dkl_qf = 0.020
+            self._meas_config_dkl_qd = 0.020
 
         # Connect to Quadrupoles Families
         self._psfam_refkl = {fam: 0 for fam in self._psfams}

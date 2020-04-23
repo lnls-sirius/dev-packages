@@ -36,8 +36,8 @@ class ChromCorrApp(_BaseApp):
             self._meas_chrom_wait_tune = 5.0
             self._meas_chrom_nrsteps = 8
 
-            self._meas_config_dsl_sf = 0.1000
-            self._meas_config_dsl_sd = 0.1000
+            self._meas_config_dsl_sf = 10.000
+            self._meas_config_dsl_sd = 10.000
 
         # Connect to Sextupoles Families
         self._lastcalc_sl = {fam: 0 for fam in self._psfams}
