@@ -682,8 +682,8 @@ class BaseApp(_Callback):
 
             fam_idx = self._psfams.index(fam)
             self.run_callbacks(
-                'Log-Mon', '{0:d}/{1:d} --> {2:s}'.format(
-                    fam_idx, len(self._psfams), fam))
+                'Log-Mon', 'Step: {0:d}/{1:d} --> {2:s}'.format(
+                    fam_idx+1, len(self._psfams), fam))
 
             delta = self._get_delta_intstrength(fam)
 
