@@ -502,7 +502,7 @@ class BaseApp(_Callback):
             self._meas_config_2_save = None
             log_msg = "Saved config. '{}' in configdb!".format(config_name)
         self.run_callbacks('Log-Mon', log_msg)
-        return 'ERR' in log_msg
+        return 'ERR' not in log_msg
 
     def _handle_corrparams_2_save(self):
         """Handle configuration value to save."""
@@ -653,11 +653,11 @@ class BaseApp(_Callback):
             fam: self._psfam_intstr_rb[fam] for fam in self._psfams}
         fams_intstr = _dcopy(fams_intstr0)
 
+        aborted = False
         if self._optics_param == 'chrom':
             sts, data = self._get_optics_param()
             if sts:
-                optparam0 = data
-                aborted = False
+                self._nominal_opticsparam = data
             else:
                 log_msg = 'ERR: Could not measure chrom!'
                 aborted = True
@@ -732,7 +732,6 @@ class BaseApp(_Callback):
         # update corrparams
         self._nominal_matrix = respm.flatten().tolist()
         self._psfam_nom_intstr = [fams_intstr0[fam] for fam in self._psfams]
-        self._nominal_opticsparam = optparam0
         self.update_corrparams_pvs()
 
         try:
