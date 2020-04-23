@@ -7,12 +7,12 @@ from epics import PV as _PV
 
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..devices import RFGen
 
 from .csdev import Const as _Const
 from .base import BaseApp as _BaseApp
 
 _MOM_COMPACT = 1.68e-4
-_MAX_DELTA_RF_FREQ = 20.0
 
 
 class ChromCorrApp(_BaseApp):
@@ -49,10 +49,7 @@ class ChromCorrApp(_BaseApp):
 
         if self._acc == 'SI':
             # Connect to SI RF
-            self._rf_freq_sp_pv = _PV(
-                _vaca_prefix+'RF-Gen:GeneralFreq-SP', connection_timeout=0.05)
-            self._rf_freq_rb_pv = _PV(
-                _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
+            self._rf_conn = RFGen()
 
         self.map_pv2write.update({
             'ChromX-SP': self.set_chrom_x,
@@ -227,23 +224,11 @@ class ChromCorrApp(_BaseApp):
         nelm = self._psfam_nelm[fam_idx]
         return deltasl/nelm
 
-    def _set_rf_freq(self, value):
-        freq_curr = self._get_rf_freq()
-        delta = abs(freq_curr - value)
-
-        npoints = int(round(delta/_MAX_DELTA_RF_FREQ)) + 2
-        freq_span = _np.linspace(freq_curr, value, npoints)[1:]
-
-        for freq in freq_span:
-            self._rf_freq_sp_pv.put(freq, wait=False)
-            _time.sleep(1.0)
-        self._rf_freq_sp_pv.value = value
-
     def _get_rf_freq(self):
         """Get RF Frequnecy."""
-        if not self._rf_freq_rb_pv.connected:
+        if not self._rf_conn.connected:
             return 0.0
-        return self._rf_freq_rb_pv.value
+        return self._rf_conn.frequency
 
     def _start_meas_chrom(self):
         """Start chromaticity measurement."""
@@ -253,7 +238,7 @@ class ChromCorrApp(_BaseApp):
         elif not self._tune_x_pv.connected or not self._tune_y_pv.connected:
             log_msg = 'ERR: Cannot measure, tune PVs not connected!'
             cont = False
-        elif not self._rf_freq_sp_pv.connected:
+        elif not self._rf_conn.connected:
             log_msg = 'ERR: Cannot measure, RF PVs not connected!'
             cont = False
         elif not self._is_storedebeam:
@@ -322,14 +307,14 @@ class ChromCorrApp(_BaseApp):
                 log_msg = 'ERR: Stoping chrom measurement, '\
                           'tune PVs not connected!'
                 aborted = True
-            elif not self._rf_freq_sp_pv.connected:
+            elif not self._rf_conn.connected:
                 log_msg = 'ERR: Stoping chrom measurement, '\
                           'RF PVs not connected!'
                 aborted = True
             if aborted:
                 break
 
-            self._set_rf_freq(value)
+            self._rf_conn.frequency = value
             freq = self._get_rf_freq()
             freq_list.append(freq)
             self.run_callbacks(
@@ -353,7 +338,7 @@ class ChromCorrApp(_BaseApp):
                 break
 
         self.run_callbacks('Log-Mon', 'Restoring RF frequency...')
-        self._set_rf_freq(freq0)
+        self._rf_conn.frequency = freq0
         self.run_callbacks('Log-Mon', 'RF frequency restored!')
 
         if aborted:
