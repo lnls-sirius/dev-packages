@@ -100,7 +100,12 @@ class Device:
         # successful connected-check!
         #
         # value = pvobj.value
-        value = pvobj.get()
+        try:
+            value = pvobj.get()
+        except:
+            # NOTE: Investigate!
+            print('Could not get value of {}'.format(pvobj.pvname))
+            value = None
         return value
 
     def __setitem__(self, propty, value):
