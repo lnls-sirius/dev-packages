@@ -95,7 +95,6 @@ class Device:
         """Return value of property."""
         pvobj = self._pvs[propty]
         try:
-            # NOTE:
             value = pvobj.get()
         except _ChannelAccessGetFailure:
             # This is raised in a Virtual Circuit Disconnect (192)
