@@ -7,12 +7,12 @@ from epics import PV as _PV
 
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..devices import RFGen
 
 from .csdev import Const as _Const
 from .base import BaseApp as _BaseApp
 
 _MOM_COMPACT = 1.68e-4
-_MAX_DELTA_RF_FREQ = 20.0
 
 
 class ChromCorrApp(_BaseApp):
@@ -27,7 +27,6 @@ class ChromCorrApp(_BaseApp):
         # consts
         self._chrom_sp = 2*[0.0]
         self._chrom_mon = 2*[0.0]
-        self._chrom_est = 2*[0.0]
 
         if self._acc == 'SI':
             self._measuring_chrom = False
@@ -37,21 +36,20 @@ class ChromCorrApp(_BaseApp):
             self._meas_chrom_wait_tune = 5.0
             self._meas_chrom_nrsteps = 8
 
-            self._meas_config_dsl_sf = 0.1000
-            self._meas_config_dsl_sd = 0.1000
+            self._meas_config_dsl_sf = 10.000
+            self._meas_config_dsl_sd = 10.000
 
         # Connect to Sextupoles Families
         self._lastcalc_sl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
-            self._psfam_intstr_rb_pvs[fam].add_callback(
-                self._callback_estimate_chrom)
+            self._psfam_intstr_rb_pvs[fam] = _PV(
+                _vaca_prefix+self._acc+'-Fam:PS-'+fam+':SL-RB',
+                callback=self._callback_estimate_chrom,
+                connection_timeout=0.05)
 
         if self._acc == 'SI':
             # Connect to SI RF
-            self._rf_freq_sp_pv = _PV(
-                _vaca_prefix+'RF-Gen:GeneralFreq-SP', connection_timeout=0.05)
-            self._rf_freq_rb_pv = _PV(
-                _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
+            self._rf_conn = RFGen()
 
         self.map_pv2write.update({
             'ChromX-SP': self.set_chrom_x,
@@ -60,11 +58,11 @@ class ChromCorrApp(_BaseApp):
             'MeasChromWaitTune-SP': self.set_meas_chrom_wait_tune,
             'MeasChromNrSteps-SP': self.set_meas_chrom_nrsteps,
             'MeasChrom-Cmd': self.cmd_meas_chrom,
-            'MeasConfigDeltaSLSF-SP': self.set_meas_config_dsl_sf,
-            'MeasConfigDeltaSLSD-SP': self.set_meas_config_dsl_sd,
+            'MeasConfigDeltaSLFamSF-SP': self.set_meas_config_dsl_sf,
+            'MeasConfigDeltaSLFamSD-SP': self.set_meas_config_dsl_sd,
         })
 
-    def update_corrparams(self):
+    def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         self.run_callbacks('RespMat-Mon', self._nominal_matrix)
         self.run_callbacks('NominalSL-Mon', self._psfam_nom_intstr)
@@ -82,7 +80,7 @@ class ChromCorrApp(_BaseApp):
                 data = self._psfam_intstr_rb_pvs[fam].get_ctrlvars()
                 if self._psfam_intstr_rb_pvs[fam].upper_disp_limit is not None:
                     lis = {k: data[v] for k, v in limit_names.items()}
-                    self.run_callbacks('SL'+fam+'-Mon', lis, field='info')
+                    self.run_callbacks('SL'+fam+'-Mon', info=lis, field='info')
         dtime = interval - (_time.time() - t_ini)
         _time.sleep(max(dtime, 0))
 
@@ -139,19 +137,19 @@ class ChromCorrApp(_BaseApp):
         return status
 
     def set_meas_config_dsl_sf(self, value):
-        """Set MeasConfigDeltaSLSF."""
+        """Set MeasConfigDeltaSLFamSF."""
         if value == self._meas_config_dsl_sf:
             return False
         self._meas_config_dsl_sf = value
-        self.run_callbacks('MeasConfigDeltaSLSF-RB', value)
+        self.run_callbacks('MeasConfigDeltaSLFamSF-RB', value)
         return True
 
     def set_meas_config_dsl_sd(self, value):
-        """Set MeasConfigDeltaSLSD."""
+        """Set MeasConfigDeltaSLFamSD."""
         if value == self._meas_config_dsl_sd:
             return False
         self._meas_config_dsl_sd = value
-        self.run_callbacks('MeasConfigDeltaSLSD-RB', value)
+        self.run_callbacks('MeasConfigDeltaSLFamSD-RB', value)
         return True
 
     # ---------- auxiliar methods ----------
@@ -173,8 +171,8 @@ class ChromCorrApp(_BaseApp):
         return value
 
     def _calc_intstrength(self):
-        delta_chromx = self._chrom_sp[0]-self._chrom_est[0]
-        delta_chromy = self._chrom_sp[1]-self._chrom_est[1]
+        delta_chromx = self._chrom_sp[0]-self._optprm_est[0]
+        delta_chromy = self._chrom_sp[1]-self._optprm_est[1]
 
         method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional \
@@ -186,8 +184,7 @@ class ChromCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[delta_chromx, delta_chromy])
 
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sl_now = self._psfam_intstr_rb_pvs[fam].get()
             if sl_now is None:
                 self.run_callbacks(
@@ -223,25 +220,15 @@ class ChromCorrApp(_BaseApp):
             deltasl = self._meas_config_dsl_sf
         else:
             deltasl = self._meas_config_dsl_sd
-        return deltasl
-
-    def _set_rf_freq(self, value):
-        freq_curr = self._get_rf_freq()
-        delta = abs(freq_curr - value)
-
-        npoints = int(round(delta/_MAX_DELTA_RF_FREQ)) + 2
-        freq_span = _np.linspace(freq_curr, value, npoints)[1:]
-
-        for freq in freq_span:
-            self._rf_freq_sp_pv.put(freq, wait=False)
-            _time.sleep(1.0)
-        self._rf_freq_sp_pv.value = value
+        fam_idx = self._psfams.index(fam)
+        nelm = self._psfam_nelm[fam_idx]
+        return deltasl/nelm
 
     def _get_rf_freq(self):
         """Get RF Frequnecy."""
-        if not self._rf_freq_rb_pv.connected:
+        if not self._rf_conn.connected:
             return 0.0
-        return self._rf_freq_rb_pv.value
+        return self._rf_conn.frequency
 
     def _start_meas_chrom(self):
         """Start chromaticity measurement."""
@@ -251,7 +238,7 @@ class ChromCorrApp(_BaseApp):
         elif not self._tune_x_pv.connected or not self._tune_y_pv.connected:
             log_msg = 'ERR: Cannot measure, tune PVs not connected!'
             cont = False
-        elif not self._rf_freq_sp_pv.connected:
+        elif not self._rf_conn.connected:
             log_msg = 'ERR: Cannot measure, RF PVs not connected!'
             cont = False
         elif not self._is_storedebeam:
@@ -320,14 +307,14 @@ class ChromCorrApp(_BaseApp):
                 log_msg = 'ERR: Stoping chrom measurement, '\
                           'tune PVs not connected!'
                 aborted = True
-            elif not self._rf_freq_sp_pv.connected:
+            elif not self._rf_conn.connected:
                 log_msg = 'ERR: Stoping chrom measurement, '\
                           'RF PVs not connected!'
                 aborted = True
             if aborted:
                 break
 
-            self._set_rf_freq(value)
+            self._rf_conn.frequency = value
             freq = self._get_rf_freq()
             freq_list.append(freq)
             self.run_callbacks(
@@ -351,7 +338,7 @@ class ChromCorrApp(_BaseApp):
                 break
 
         self.run_callbacks('Log-Mon', 'Restoring RF frequency...')
-        self._set_rf_freq(freq0)
+        self._rf_conn.frequency = freq0
         self.run_callbacks('Log-Mon', 'RF frequency restored!')
 
         if aborted:
@@ -386,11 +373,10 @@ class ChromCorrApp(_BaseApp):
         self._psfam_intstr_rb[fam] = value
 
         sfam_deltasl = len(self._psfams)*[0]
-        for fam in self._psfams:
-            fam_idx = self._psfams.index(fam)
+        for fam_idx, fam in enumerate(self._psfams):
             sfam_deltasl[fam_idx] = \
-                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam]
+                self._psfam_intstr_rb[fam] - self._psfam_nom_intstr[fam_idx]
 
-        self._chrom_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
-        self.run_callbacks('ChromX-Mon', self._chrom_est[0])
-        self.run_callbacks('ChromY-Mon', self._chrom_est[1])
+        self._optprm_est = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('ChromX-Mon', self._optprm_est[0])
+        self.run_callbacks('ChromY-Mon', self._optprm_est[1])
