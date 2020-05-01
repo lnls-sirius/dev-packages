@@ -101,9 +101,13 @@ class BOApp(_Callback):
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
 
     def init_database(self):
-        for k in BO_ENERGY2TIME.keys():
+        """Set initial PV values."""
+        for k in BO_ENERGY2TIME:
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
+            ppty = 'Current'+k+'-Mon'
+            self.run_callbacks(ppty, self._currents[k])
+        self.run_callbacks('RawReadings-Mon', self._last_raw_reading)
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
     @property
@@ -224,6 +228,7 @@ class SIApp(_Callback):
         self._storedebeam_13c4_value = 0
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
+        self._injeff = 0.0
         data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
@@ -271,6 +276,9 @@ class SIApp(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
+        self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
+        self.run_callbacks('Current-Mon', self._current_value)
+        self.run_callbacks('InjEff-Mon', self._injeff)
         self.run_callbacks('Charge-Mon', self._charge)
 
     @property
