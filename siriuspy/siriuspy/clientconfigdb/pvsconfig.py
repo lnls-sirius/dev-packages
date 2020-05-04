@@ -9,8 +9,6 @@ from . import ConfigDBDocument as _ConfigDBDocument
 
 _TIMEOUT = 0.5
 
-# NOTE: this module has become deprecated
-
 
 class PVsConfig(_ConfigDBDocument):
     """Class to handle PVs configurations."""
