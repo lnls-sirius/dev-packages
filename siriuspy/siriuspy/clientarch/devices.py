@@ -332,7 +332,7 @@ class Orbit:
         timestamp_start -- ISO9601 str or Time object with starting instant.
                            Example: '2019-05-23T13:32:27.570Z'
         timestamp_stop -- ISO9601 str or Time object with stopping instant.
-        dtime_avg -- averaging time window [s]. If None, no retrived average
+        dtime_avg -- averaging time window [s]. If None, no retrieved average
                      is performed.
 
         """
