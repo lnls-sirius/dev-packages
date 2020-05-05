@@ -653,9 +653,13 @@ class CycleController:
             return
 
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
-        trims = _PSSearch.get_psnames(
+        trims = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
-             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
+             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'}))
+        qs_c2 = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+             'dev': 'QS'}))
+        trims = list(trims - qs_c2)
         if not self.cycle_trims(trims):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
