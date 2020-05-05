@@ -117,7 +117,8 @@ class ClientArchiver:
         req = self._make_request(url)
         if not req.ok:
             return None
-        data = req.json()[0]['data']
+        ans = req.json()
+        data = ans[0]['data']
         value = [v['val'] for v in data]
         timestamp = [v['secs'] + v['nanos']/1.0e9 for v in data]
         status = [v['status'] for v in data]

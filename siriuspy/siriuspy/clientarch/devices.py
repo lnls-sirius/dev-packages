@@ -8,27 +8,8 @@ from .pvarch import PVData as _PVData
 from .time import Time as _Time
 
 
-class Orbit:
+class Consts:
     """."""
-
-    _CONV = 0.001  # [nm -> um]
-
-    class DEVICES:
-        """."""
-
-        TB_X = 'TB_X'
-        TB_Y = 'TB_Y'
-        BO_X = 'BO_X'
-        BO_Y = 'BO_Y'
-        TS_X = 'TS_X'
-        TS_Y = 'TS_Y'
-        SI_X = 'SI_X'
-        SI_Y = 'SI_Y'
-
-    Time = _Time
-
-    # NOTE: The bpm ordering should come from another location,
-    # from a primary source! SOFB?
 
     BPMS_TB = (
         'TB-01:DI-BPM-1',
@@ -263,6 +244,29 @@ class Orbit:
         'SI-01M1:DI-BPM',
         )
 
+
+class OrbitBPM(Consts):
+    """."""
+
+    _CONV = 0.001  # [nm -> um]
+
+    class DEVICES:
+        """."""
+
+        TB_X = 'TB_X'
+        TB_Y = 'TB_Y'
+        BO_X = 'BO_X'
+        BO_Y = 'BO_Y'
+        TS_X = 'TS_X'
+        TS_Y = 'TS_Y'
+        SI_X = 'SI_X'
+        SI_Y = 'SI_Y'
+
+    Time = _Time
+
+    # NOTE: The bpm ordering should come from another location,
+    # from a primary source! SOFB?
+
     def __init__(self, devname, connector=None):
         """."""
         self._devname = devname
@@ -326,7 +330,7 @@ class Orbit:
 
     def update(self,
                timestamp_start=None, timestamp_stop=None, avg_dtime=None):
-        """Update state by retrieveing data.
+        """Update state by retrieving data.
 
         Parameters:
         timestamp_start -- ISO9601 str or Time object with starting instant.
@@ -369,19 +373,19 @@ class Orbit:
             else:
                 raise IndexError
         pvdata = self._pvdata[pvname]
-        return pvdata.timestamp, pvdata.value * Orbit._CONV
+        return pvdata.timestamp, pvdata.value * OrbitBPM._CONV
 
     # --- private methods ---
 
     def _get_pvnames(self):
         if self._devname.startswith('TB'):
-            bpmnames = Orbit.BPMS_TB
+            bpmnames = OrbitBPM.BPMS_TB
         elif self._devname.startswith('BO'):
-            bpmnames = Orbit.BPMS_BO
+            bpmnames = OrbitBPM.BPMS_BO
         elif self._devname.startswith('TS'):
-            bpmnames = Orbit.BPMS_TS
+            bpmnames = OrbitBPM.BPMS_TS
         elif self._devname.startswith('SI'):
-            bpmnames = Orbit.BPMS_SI
+            bpmnames = OrbitBPM.BPMS_SI
         else:
             raise ValueError('Device not defined!')
         if self._devname.endswith('X'):
@@ -428,7 +432,140 @@ class Orbit:
             pvdata = self._pvdata[pvname]
             values = \
                 _np.interp(times, pvdata.timestamp, pvdata.value)
-            orbit[i, :] = Orbit._CONV * values
+            orbit[i, :] = OrbitBPM._CONV * values
 
         # return data
         return times, orbit
+
+
+class OrbitSOFB(Consts):
+    """."""
+
+    class DEVICES:
+        """."""
+
+        TB_X = 'TB_X'
+        TB_Y = 'TB_Y'
+        BO_X = 'BO_X'
+        BO_Y = 'BO_Y'
+        TS_X = 'TS_X'
+        TS_Y = 'TS_Y'
+        SI_X = 'SI_X'
+        SI_Y = 'SI_Y'
+
+    Time = _Time
+
+    def __init__(self, devname, connector=None):
+        """."""
+        self._devname = devname
+        self._connector = connector
+        self._bpmnames, self._pvname = self._get_pvname()
+        self._pvdetails, self._pvdata = self._init_connectors()
+        self._timestamp_start = None
+        self._timestamp_stop = None
+        self._times = None
+        self._orbit = None
+
+    @property
+    def request_url(self):
+        """."""
+        for pvdata in self._pvdata.values():
+            print(pvdata.request_url)
+
+    @property
+    def pvname(self):
+        """."""
+        return self._pvname
+
+    @property
+    def timestamp_start(self):
+        """."""
+        return self._timestamp_start
+
+    @timestamp_start.setter
+    def timestamp_start(self, value):
+        """."""
+        if isinstance(value, _Time):
+            value = value.get_iso8601()
+        self._timestamp_start = value
+
+    @property
+    def timestamp_stop(self):
+        """."""
+        return self._timestamp_stop
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, value):
+        """."""
+        if isinstance(value, _Time):
+            value = value.get_iso8601()
+        self._timestamp_stop = value
+
+    @property
+    def timestamp(self):
+        """Return retrieved orbit generated timestamps."""
+        return self._pvdata.timestamp
+
+    @property
+    def value(self):
+        """Return retrieved orbit interpolated values."""
+        return self._orbit
+
+    def update(self,
+               timestamp_start=None, timestamp_stop=None, avg_dtime=None):
+        """Update state by retrieving data.
+
+        Parameters:
+        timestamp_start -- ISO9601 str or Time object with starting instant.
+                           Example: '2019-05-23T13:32:27.570Z'
+        timestamp_stop -- ISO9601 str or Time object with stopping instant.
+        dtime_avg -- averaging time window [s]. If None, no retrieved average
+                     is performed.
+
+        """
+        # NOTE: understand and fix this!
+        if avg_dtime is not None:
+            raise ValueError(
+                'Retrieval of waveforms with averaging is bogous.')
+
+        if timestamp_start:
+            self._timestamp_start = timestamp_start
+        if timestamp_stop:
+            self._timestamp_stop = timestamp_stop
+        if None in (self._timestamp_start, self._timestamp_stop):
+            raise Exception('Undefined timestamps!')
+
+        self._pvdata.timestamp_start = self._timestamp_start
+        self._pvdata.timestamp_stop = self._timestamp_stop
+        self._pvdata.update(avg_dtime)
+
+        nrbpms = len(self._bpmnames)
+        self._orbit = _np.array(self._pvdata.value)
+        self._orbit = self._orbit.T[:nrbpms, :]
+
+    # --- private methods ---
+
+    def _get_pvname(self):
+        if self._devname.startswith('TB'):
+            bpmnames, dev = self.BPMS_TB, 'TB-Glob:AP-SOFB'
+        elif self._devname.startswith('BO'):
+            bpmnames, dev = self.BPMS_BO, 'BO-Glob:AP-SOFB'
+        elif self._devname.startswith('TS'):
+            bpmnames, dev = self.BPMS_TS, 'TS-Glob:AP-SOFB'
+        elif self._devname.startswith('SI'):
+            bpmnames, dev = self.BPMS_SI, 'SI-Glob:AP-SOFB'
+        else:
+            raise ValueError('Device not defined!')
+        if self._devname.endswith('X'):
+            propty = ':SlowOrbX-Mon'
+        elif self._devname.endswith('Y'):
+            propty = ':SlowOrbY-Mon'
+        else:
+            raise ValueError('Device not defined!')
+        pvname = dev + propty
+        return bpmnames, pvname
+
+    def _init_connectors(self):
+        pvdetails = None
+        pvdata = _PVData(self._pvname, self._connector)
+        return pvdetails, pvdata
