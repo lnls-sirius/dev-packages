@@ -257,7 +257,7 @@ class Timing:
                 Timing._pvs[pvname] = _PV(
                     VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
 
-                if pvname.propty_suffix == 'Cmd':
+                if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
 
                 self._initial_state[pvname] = Timing._pvs[pvname].value
@@ -316,6 +316,7 @@ class Timing:
                 props[mode][trig+':Delay-SP'] = cls.DEFAULT_DELAY
                 props[mode][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
                 props[mode][trig+':State-Sel'] = None
+                props[mode][trig+':Status-Mon'] = 0
 
             _trig_db = _get_trig_db(trig)
             cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
