@@ -73,7 +73,7 @@ class CycleController:
         self.cycle_max_duration = (
             8 +  # check timing
             TIMEOUT_CHECK +  # check params
-            TIMEOUT_CHECK +  # check opmode
+            2*TIMEOUT_CHECK +  # check opmode
             6 +  # set and check triggers enable
             60 +  # wait for timing trigger
             round(self._cycle_duration) +  # cycle
@@ -199,7 +199,7 @@ class CycleController:
         self.cycle_trims_max_duration = (
             2*8 +  # check timing
             2*2*TIMEOUT_CHECK +  # set and check params
-            2*TIMEOUT_CHECK +  # set and check opmode
+            2*2*TIMEOUT_CHECK +  # set and check opmode
             2*6 +  # set and check triggers enable
             2*60 +  # wait for timing trigger
             2*round(duration) +  # cycle
@@ -283,7 +283,7 @@ class CycleController:
 
         self._checks_result = dict()
         time = _time.time()
-        while _time.time() - time < TIMEOUT_CHECK:
+        while _time.time() - time < 2*TIMEOUT_CHECK:
             for psname in psnames:
                 if psname not in need_check:
                     continue
