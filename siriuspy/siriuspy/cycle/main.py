@@ -551,6 +551,7 @@ class CycleController:
 
         self._update_log('Setting power supplies to SlowRef...')
         threads = list()
+        psnames = {ps for ps in psnames if 'LI' not in ps}
         for psname in psnames:
             cycler = self._get_cycler(psname)
             target = cycler.set_opmode_slowref
@@ -564,7 +565,7 @@ class CycleController:
         """Check power supplies OpMode."""
         if self._only_linac:
             return True
-
+        psnames = {ps for ps in psnames if 'LI' not in ps}
         need_check = _dcopy(psnames)
 
         self._checks_result = dict()
