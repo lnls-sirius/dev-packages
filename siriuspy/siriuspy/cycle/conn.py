@@ -79,6 +79,8 @@ class Timing:
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             pvobj = Timing._pvs[prop]
+            if prop.endswith(('Mon', )):
+                continue
             if pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 pvobj.value = defval
                 _time.sleep(1.5*TIMEOUT_SLEEP)
