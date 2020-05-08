@@ -407,7 +407,7 @@ class SIApp(_Callback):
             return
 
         # calculate efficiency
-        delta_curr = max(value_dq[-1] - value_dq[0], 0)
+        delta_curr = max(value_dq[-1] - min(value_dq), 0)
         self._injeff = 100*(delta_curr/value)*(SI_HARMNUM/BO_HARMNUM)
 
         # update pvs
