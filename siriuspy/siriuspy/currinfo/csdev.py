@@ -147,32 +147,71 @@ def get_lifetime_database():
     """Return CurrentInfo-Lifetime Soft IOC database."""
     pvs_db = {
         'VersionLifetime-Cte': {'type': 'string', 'value': 'UNDEF'},
+
         'LtFitMode-Sel': {
-            'type': 'enum', 'enums': _et.FITTYP, 'value': _c.Fit.Exponential},
+            'type': 'enum', 'enums': _et.FITTYP, 'value': _c.Fit.Linear},
         'LtFitMode-Sts': {
-            'type': 'enum', 'enums': _et.FITTYP, 'value': _c.Fit.Exponential},
-        'SplIntvl-SP': {
-            'type': 'float', 'unit': 's', 'lolim': 0, 'value': 2000,
-            'hilim': 360000, 'low': 0, 'high': 360000,
-            'lolo': 0, 'hihi': 360000, 'prec': 2},
-        'SplIntvl-RB': {
-            'type': 'float', 'unit': 's', 'lolim': 0, 'value': 2000,
-            'hilim': 360000, 'low': 0, 'high': 360000,
-            'lolo': 0, 'hihi': 360000, 'prec': 2},
+            'type': 'enum', 'enums': _et.FITTYP, 'value': _c.Fit.Linear},
+        'MaxSplIntvl-SP': {
+            'type': 'float', 'unit': 's', 'prec': 2, 'value': 500,
+            'lolim': -1, 'hilim': 360000},
+        'MaxSplIntvl-RB': {
+            'type': 'float', 'unit': 's', 'prec': 2, 'value': 500,
+            'lolim': -1, 'hilim': 360000},
+        'SplIntvl-Mon': {
+            'type': 'float', 'unit': 's', 'prec': 2, 'value': 0.0},
+        'SplIntvlBPM-Mon': {
+            'type': 'float', 'unit': 's', 'prec': 2, 'value': 0.0},
         'MinIntvlBtwSpl-SP': {
-            'type': 'float', 'unit': 's', 'lolim': 0, 'value': 0,
-            'hilim': 1200, 'low': 0, 'high': 1200,
-            'lolo': 0, 'hihi': 1200, 'prec': 2},
+            'type': 'float', 'unit': 's', 'prec': 2, 'value': 0,
+            'lolim': 0, 'low': 0, 'lolo': 0,
+            'hilim': 1200, 'high': 1200, 'hihi': 1200},
         'MinIntvlBtwSpl-RB': {
             'type': 'float', 'value': 0, 'prec': 2, 'unit': 's'},
         'CurrOffset-SP': {
             'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mA',
-            'lolim': -10.0, 'hilim': 10.0, 'low': -10.0,
-            'high': 10.0, 'lolo': -10.0, 'hihi': 10.0},
+            'lolim': -10.0, 'low': -10.0, 'lolo': -10.0,
+            'hilim': 10.0, 'high': 10.0, 'hihi': 10.0},
         'CurrOffset-RB': {
             'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mA',
             'lolim': -10.0, 'low': -10.0, 'lolo': -10.0,
             'hilim': 10.0, 'high': 10.0, 'hihi': 10.0},
+
+        'BuffRst-Cmd': {'type': 'int', 'value': 0},
+        'BuffAutoRst-Sel': {
+            'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
+            'value': _c.BuffAutoRst.Off},
+        'BuffAutoRst-Sts': {
+            'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
+            'value': _c.BuffAutoRst.Off},
+        'BuffAutoRstDCurr-SP': {
+            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
+            'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
+        'BuffAutoRstDCurr-RB': {
+            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'lolim': -300.0, 'low': -300.0,  'lolo': -300.0,
+            'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
+
+        'FrstSplTime-SP': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+        'FrstSplTime-RB': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+        'LastSplTime-SP': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+        'LastSplTime-RB': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+        'FrstSplTimeBPM-RB': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+        'LastSplTimeBPM-RB': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
+            'lolim': -1.0, 'hilim': 2e10},
+
         'Lifetime-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
@@ -183,6 +222,7 @@ def get_lifetime_database():
         'BufferTimestamp-Mon': {
             'type': 'float', 'prec': 3, 'count': 100000,
             'value': [0.0, ] * 100000},
+
         'LifetimeBPM-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
