@@ -67,12 +67,12 @@ def li_get_default_waveform(psname):
     nrpts = nr_periods * int(period / dtime)
     vec = list(range(0, nrpts))
     time = dtime * _np.array(vec)
-    exp = 2 if square else 1
-    time0 = _np.arctan(2*_np.pi*tau*exp)/wfm
+    nexp = 2 if square else 1
+    time0 = _np.arctan(2*_np.pi*tau*nexp)/wfm
     sin = _np.sin(2*_np.pi*time/period)
     exp = _np.exp(- (time - time0)/tau)
-    amp = ampl/(_np.sin(wfm*time0))**exp
-    func = amp * exp * sin**exp
+    amp = ampl/(_np.sin(wfm*time0))**nexp
+    func = amp * exp * sin**nexp
     time = _np.append(time, time[-1] + dtime)
     func = _np.append(func, 0.0)
     func *= ampl/max(func)  # makes sure max point is 'ampl'

@@ -2,9 +2,11 @@
 
 import time as _time
 
+from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+
 from ..envars import VACA_PREFIX as _VACA_PREFIX
-from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
+    GET_TIMEOUT as _GET_TIMEOUT
 from ..simul import SimPV as _PVSim
 from ..simul import Simulation as _Simulation
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -14,6 +16,7 @@ class Device:
     """Epics Device."""
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
+    GET_TIMEOUT = _GET_TIMEOUT
     _properties = ()
 
     def __init__(self, devname, properties):
@@ -92,7 +95,13 @@ class Device:
     def __getitem__(self, propty):
         """Return value of property."""
         pvobj = self._pvs[propty]
-        value = pvobj.get()
+        try:
+            value = pvobj.get(timeout=Device.GET_TIMEOUT)
+        except _ChannelAccessGetFailure:
+            # This is raised in a Virtual Circuit Disconnect (192)
+            # event. If the PV IOC goes down, for example.
+            print('Could not get value of {}'.format(pvobj.pvname))
+            value = None
         return value
 
     def __setitem__(self, propty, value):

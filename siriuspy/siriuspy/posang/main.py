@@ -135,9 +135,14 @@ class App(_Callback):
         self.run_callbacks('RespMatX-Mon', self._respmat_x)
         self.run_callbacks('RespMatY-Mon', self._respmat_y)
         self.run_callbacks('Log-Mon', 'Started.')
+        self.run_callbacks('Status-Mon', self._status)
+        for corr_id, corr in self._correctors.items():
+            self.run_callbacks(
+                'RefKick' + corr_id + '-Mon', self._corr_refkick[corr])
 
     @property
     def pvs_database(self):
+        """Return pvs_database."""
         return self._pvs_database
 
     def process(self, interval):
@@ -256,7 +261,7 @@ class App(_Callback):
             delta_ang_rad = delta_ang*1e-3
             c1_refkick_rad = c1_refkick*c1_unit_factor
             c2_refkick_rad = c2_refkick*c2_unit_factor
-            if 'CH3' in self._correctors.keys():
+            if orbit == 'x' and 'CH3' in self._correctors.keys():
                 c3_refkick_rad = c3_refkick*c3_unit_factor
 
             [[c1_deltakick_rad], [c2_deltakick_rad]] = _np.dot(
@@ -266,7 +271,7 @@ class App(_Callback):
             # Convert kicks from rad to correctors units
             vl1 = (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor
             c1_kick_sp_pv.put(vl1)
-            if 'CH3' in self._correctors.keys():
+            if orbit == 'x' and 'CH3' in self._correctors.keys():
                 vl2 = (c2_refkick_rad + c1_deltakick_rad)/c2_unit_factor
                 c2_kick_sp_pv.put(vl2)
                 vl3 = (c3_refkick_rad + c2_deltakick_rad)/c3_unit_factor
@@ -368,7 +373,7 @@ class App(_Callback):
                         for s in self._corr_check_opmode_sts.values()))
         self.run_callbacks('Status-Mon', self._status)
 
-    def _callback_corr_ctrlmode_mon(self,  pvname, value, **kws):
+    def _callback_corr_ctrlmode_mon(self, pvname, value, **kws):
         if value != _PSC.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
