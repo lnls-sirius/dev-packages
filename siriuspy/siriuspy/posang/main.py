@@ -268,7 +268,7 @@ class App(_Callback):
                 _np.linalg.inv(_np.reshape(respmat, (2, 2), order='C')),
                 _np.array([[delta_pos_meters], [delta_ang_rad]]))
 
-            # Convert kicks from rad to correctors units
+            # Convert kicks from rad to correctors units and send values
             vl1 = (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor
             c1_kick_sp_pv.put(vl1)
             if orbit == 'x' and 'CH3' in self._correctors.keys():
@@ -280,12 +280,29 @@ class App(_Callback):
                 vl2 = (c2_refkick_rad + c2_deltakick_rad)/c2_unit_factor
                 c2_kick_sp_pv.put(vl2)
 
+            # check if SP were accepted
+            _time.sleep(0.5)
+            sp_diff = False
+            if c1_kick_sp_pv.value != vl1:
+                self.run_callbacks(
+                    'Log-Mon', 'ERR: Delta not applied to '+corr1+'.')
+                sp_diff = True
+            if c2_kick_sp_pv.value != vl2:
+                self.run_callbacks(
+                    'Log-Mon', 'ERR: Delta not applied to '+corr2+'.')
+                sp_diff = True
+            if orbit == 'x' and 'CH3' in self._correctors.keys():
+                if c3_kick_sp_pv.value != vl3:
+                    self.run_callbacks(
+                        'Log-Mon', 'ERR: Delta not applied to '+corr3+'.')
+                    sp_diff = True
+            if sp_diff:
+                return False
             self.run_callbacks('Log-Mon', 'Applied new delta.')
             return True
-        else:
-            self.run_callbacks(
-                'Log-Mon', 'ERR:Failed on applying new delta.')
-            return False
+
+        self.run_callbacks('Log-Mon', 'ERR:Failed on applying new delta.')
+        return False
 
     def _update_ref(self):
         if (self._status & 0x1) == 0:  # Check connection
@@ -294,8 +311,7 @@ class App(_Callback):
                 value = self._corr_kick_rb_pvs[corr].get()
                 # Get correctors kick in urad (PS) or mrad (PU).
                 self._corr_refkick[corr] = value
-                self.run_callbacks(
-                    'RefKick' + corr_id + '-Mon', value)
+                self.run_callbacks('RefKick' + corr_id + '-Mon', value)
 
             # the deltas from new kick references are zero
             self._orbx_deltapos = 0
