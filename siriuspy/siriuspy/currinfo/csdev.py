@@ -158,7 +158,7 @@ def get_lifetime_database():
                               'unit': 's', 'lolim': -1.0, 'hilim': 2e10},
 
         'Lifetime-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
-                         'unit': 's'},
+                         'unit': 's', 'scan': 0.2},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTot-Mon': {'type': 'int', 'value': 0},
         'BufferValue-Mon': {'type': 'float', 'prec': 3, 'count': 100000,
@@ -167,7 +167,7 @@ def get_lifetime_database():
                                 'value': [0.0, ] * 100000},
 
         'LifetimeBPM-Mon': {'type': 'float', 'value': 0.0, 'prec': 2,
-                            'unit': 's'},
+                            'unit': 's', 'scan': 0.2},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTotBPM-Mon': {'type': 'int', 'value': 0},
         'BufferValueBPM-Mon': {'type': 'float', 'prec': 3, 'count': 100000,
