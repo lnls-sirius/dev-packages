@@ -180,8 +180,8 @@ class App(_Callback):
         intvl_smpl = getattr(self, intvl_name)
 
         # calculate lifetime
-        [ts_abs_dqorg, _] = buffer_dt.get_serie(time_absolute=True)
-        [ts_dqorg, val_dqorg] = buffer_dt.get_serie()
+        ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
+        ts_dqorg = ts_abs_dqorg - now
         ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
             ts_dqorg, val_dqorg, ts_abs_dqorg, now, first_smpl, last_smpl)
 
@@ -255,35 +255,36 @@ class App(_Callback):
 
     def _filter_buffer(self, timestamp, value, abs_timestamp,
                        now, first, last):
-        ts_arrayorg = _np.array(timestamp)
-        val_arrayorg = _np.array(value)
-        ts_abs_arrayorg = _np.array(abs_timestamp)
+        ts_arrayorg = _np.asarray(timestamp)
+        val_arrayorg = _np.asarray(value)
+        ts_abs_arrayorg = _np.asarray(abs_timestamp)
 
-        ind1 = _np.where(ts_abs_arrayorg >= first)
-        ind2 = _np.where(ts_abs_arrayorg <= last)
-        indices = _np.intersect1d(ind1, ind2)
+        ind1 = ts_abs_arrayorg >= first
+        ind2 = ts_abs_arrayorg <= last
+        indices = _np.logical_and(ind1, ind2).nonzero()
+        slc = slice(indices[0][0], indices[0][-1]+1)
 
-        ts_aux_array = ts_arrayorg[indices]
-        val_aux_array = val_arrayorg[indices]
-        ts_aux_abs_array = ts_abs_arrayorg[indices]
+        ts_aux_array = ts_arrayorg[slc]
+        val_aux_array = val_arrayorg[slc]
+        ts_aux_abs_array = ts_abs_arrayorg[slc]
 
         min_intvl = self._min_intvl_btw_spl
-        if min_intvl > 0.0:
-            ts_array, val_array, ts_abs_array = list(), list(), list()
-            ts_array.append(ts_aux_array[0])
-            val_array.append(val_aux_array[0])
-            ts_abs_array.append(ts_aux_abs_array[0])
-            for i, _ in enumerate(ts_aux_array):
-                if abs(ts_array[-1] - ts_aux_array[i]) > min_intvl:
-                    ts_array.append(ts_aux_array[i])
-                    val_array.append(val_aux_array[i])
-                    ts_abs_array.append(ts_aux_abs_array[i])
-            ts_array = _np.array(ts_array)
-            val_array = _np.array(val_array)
-            ts_abs_array = _np.array(ts_abs_array)
-            return ts_array, val_array, ts_abs_array
+        if min_intvl <= 0.0:
+            return ts_aux_array, val_aux_array, ts_aux_abs_array
 
-        return ts_aux_array, val_aux_array, ts_aux_abs_array
+        indices = _np.zeros(len(ts_aux_array), dtype=bool)
+        indices[0] = _np.True_
+        last_idx = 0
+        for i, _ in enumerate(ts_aux_array):
+            if abs(ts_aux_array[last_idx] - ts_aux_array[i]) > min_intvl:
+                indices[i] = _np.True_
+                last_idx = i
+
+        indices = indices.nonzero()
+        ts_array = ts_aux_array[indices]
+        val_array = val_aux_array[indices]
+        ts_abs_array = ts_aux_abs_array[indices]
+        return ts_array, val_array, ts_abs_array
 
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
@@ -295,8 +296,8 @@ class App(_Callback):
         _ns = len(timestamp)
         _x1 = _np.sum(timestamp)
         _y1 = _np.sum(value)
-        _x2 = _np.sum(_np.power(timestamp, 2))
-        _xy = _np.sum(timestamp*value)
+        _x2 = _np.dot(timestamp, timestamp)
+        _xy = _np.dot(timestamp, value)
         fit_a = (_x2*_y1 - _xy*_x1)/(_ns*_x2 - _x1*_x1)
         fit_b = (_ns*_xy - _x1*_y1)/(_ns*_x2 - _x1*_x1)
 
