@@ -88,6 +88,56 @@ class SILifetimeApp(_Callback):
     def read(self, reason):
         """Read from IOC database."""
         value = None
+        if reason in ['Lifetime-Mon', 'LifetimeBPM-Mon']:
+            is_bpm = 'BPM' in reason
+            lt_type = 'BPM' if is_bpm else ''
+            lt_name = '_lifetime'+('_bpm' if is_bpm else '')
+            buffer_dt = self._bpmsum_buffer if is_bpm else self._current_buffer
+
+            # get first and last sample
+            now = _time.time()
+            self._update_times(now)
+            first_name = '_frst_smpl_ts'+('_bpm' if is_bpm else '_dcct')
+            first_smpl = getattr(self, first_name)
+            last_name = '_last_smpl_ts'+('_bpm' if is_bpm else '_dcct')
+            last_smpl = getattr(self, last_name)
+            last_smpl = now if last_smpl == -1 else min(last_smpl, now)
+            intvl_name = '_smpl_intvl_mon'+('_bpm' if is_bpm else '_dcct')
+            intvl_smpl = getattr(self, intvl_name)
+
+            # calculate lifetime
+            ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
+            ts_dqorg = ts_abs_dqorg - now
+            ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
+                ts_dqorg, val_dqorg, ts_abs_dqorg, now, first_smpl, last_smpl)
+
+            if ts_dq.size == 0:
+                setattr(self, lt_name, 0)
+            else:
+                if first_smpl != ts_abs_dq[0]:
+                    setattr(self, first_name, ts_abs_dq[0])
+                    self.run_callbacks(
+                        'FrstSplTime'+lt_type+'-RB', getattr(self, first_name))
+                intvl_smpl = last_smpl - first_smpl
+                setattr(self, intvl_name, intvl_smpl)
+                self.run_callbacks(
+                    'SplIntvl'+lt_type+'-Mon', getattr(self, intvl_name))
+
+                val_dq -= self._current_offset
+
+                # check min number of points in buffer
+                if len(val_dq) > 100:
+                    fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
+                    value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
+                else:
+                    value = 0
+                setattr(self, lt_name, value)
+
+            # update pvs
+            self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
+            self.run_callbacks('BufferTimestamp'+lt_type+'-Mon', ts_dq)
+            self.run_callbacks('BuffSize'+lt_type+'-Mon', len(val_dq))
+            self.run_callbacks('BuffSizeTot'+lt_type+'-Mon', len(val_dqorg))
         return value
 
     def write(self, reason, value):
@@ -157,8 +207,6 @@ class SILifetimeApp(_Callback):
             return
 
         is_bpm = 'BPM' in pvname
-        lt_type = 'BPM' if is_bpm else ''
-        lt_name = '_lifetime'+('_bpm' if is_bpm else '')
         buffer_dt = self._bpmsum_buffer if is_bpm else self._current_buffer
 
         # try to add a new point to buffer
@@ -167,52 +215,6 @@ class SILifetimeApp(_Callback):
 
         # check whether the buffer must be reset
         self._buffautorst_check()
-
-        # get first and last sample
-        now = _time.time()
-        self._update_times(now)
-        first_name = '_frst_smpl_ts'+('_bpm' if is_bpm else '_dcct')
-        first_smpl = getattr(self, first_name)
-        last_name = '_last_smpl_ts'+('_bpm' if is_bpm else '_dcct')
-        last_smpl = getattr(self, last_name)
-        last_smpl = now if last_smpl == -1 else min(last_smpl, now)
-        intvl_name = '_smpl_intvl_mon'+('_bpm' if is_bpm else '_dcct')
-        intvl_smpl = getattr(self, intvl_name)
-
-        # calculate lifetime
-        ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
-        ts_dqorg = ts_abs_dqorg - now
-        ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
-            ts_dqorg, val_dqorg, ts_abs_dqorg, now, first_smpl, last_smpl)
-
-        if ts_dq.size == 0:
-            setattr(self, lt_name, 0)
-        else:
-            if first_smpl != ts_abs_dq[0]:
-                setattr(self, first_name, ts_abs_dq[0])
-                self.run_callbacks(
-                    'FrstSplTime'+lt_type+'-RB', getattr(self, first_name))
-            intvl_smpl = last_smpl - first_smpl
-            setattr(self, intvl_name, intvl_smpl)
-            self.run_callbacks(
-                'SplIntvl'+lt_type+'-Mon', getattr(self, intvl_name))
-
-            val_dq -= self._current_offset
-
-            # check min number of points in buffer
-            if len(val_dq) > 100:
-                fit = 'exp' if self._mode == _Const.Fit.Exponential else 'lin'
-                lifetime = self._least_squares_fit(ts_dq, val_dq, fit=fit)
-            else:
-                lifetime = 0
-            setattr(self, lt_name, lifetime)
-
-        # update pvs
-        self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
-        self.run_callbacks('BufferTimestamp'+lt_type+'-Mon', ts_dq)
-        self.run_callbacks('Lifetime'+lt_type+'-Mon', getattr(self, lt_name))
-        self.run_callbacks('BuffSize'+lt_type+'-Mon', len(val_dq))
-        self.run_callbacks('BuffSizeTot'+lt_type+'-Mon', len(val_dqorg))
 
     # ---------- auxiliar methods ----------
 
