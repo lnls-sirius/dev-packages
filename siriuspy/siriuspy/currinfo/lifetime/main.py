@@ -323,10 +323,10 @@ class SILifetimeApp(_Callback):
                 first = value - self._sampling_interval
                 if self._frst_smpl_ts_dcct < first or force_min_first:
                     self._frst_smpl_ts_dcct = first
+                if self._frst_smpl_ts_bpm < first or force_min_first:
                     self._frst_smpl_ts_bpm = first
 
         self.run_callbacks('FrstSplTime-RB', self._frst_smpl_ts_dcct)
         self.run_callbacks('FrstSplTimeBPM-RB', self._frst_smpl_ts_bpm)
         self.run_callbacks('LastSplTime-RB', self._last_smpl_ts_dcct)
         self.run_callbacks('LastSplTimeBPM-RB', self._last_smpl_ts_bpm)
-        self.run_callbacks('MaxSplIntvl-RB', self._sampling_interval)
