@@ -2,8 +2,14 @@
 
 import time as _time
 from datetime import datetime as _datetime
+import logging as _log
+from copy import deepcopy as _dcopy
+
 import numpy as _np
 from epics import PV as _PV
+import visa
+
+from mathphys.functions import get_namedtuple
 
 from ..callbacks import Callback as _Callback
 from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
@@ -38,6 +44,130 @@ def _get_value_from_arch(pvname):
     data = carch.getData(pvname, datetime, datetime)
     return data
 
+
+class _ASCurrInfoApp(_Callback):
+    """."""
+
+    INDICES = get_namedtuple(
+        'Indices',
+        ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = ''
+    ICT1 = ''
+    ICT2 = ''
+
+    def __init__(self):
+        super().__init__()
+        self._pvs_database = _get_database(self.ACC)
+        rmm = visa.ResourceManager('@py')
+        # open communication with Oscilloscope
+        self.osc_socket = rmm.open_resource(
+            'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
+
+    def init_database(self):
+        """."""
+
+    @property
+    def pvs_database(self):
+        """."""
+        return _dcopy(self._pvs_database)
+
+    def read(self, reason):
+        """."""
+        _ = reason
+        return None
+
+    def write(self, reason, value):
+        """."""
+        _, _ = reason, value
+        return True
+
+    def process(self, interval):
+        """."""
+        tini = _time.time()
+        try:
+            self._update_pvs()
+        except Exception as err:
+            _log.error('Problem reading data: {:s}'.format(str(err)))
+
+        dtim = _time.time() - tini
+        if dtim <= interval:
+            _time.sleep(interval - dtim)
+        else:
+            _log.warning(
+                'IOC took {0:.3f} ms in update loop.'.format(dtim*1000))
+
+    def _update_pvs(self):
+        """."""
+        meas = self.osc_socket.query(":MEASure:RESults?")
+        meas = meas.split(',')
+
+        name = self.ACC+'-ICT1'
+        idxict1 = [i for i, val in enumerate(meas) if name in val].pop()
+        chg1 = float(meas[idxict1 + self.INDICES.CURR]) * 1e9
+        ave1 = float(meas[idxict1 + self.INDICES.AVG]) * 1e9
+        min1 = float(meas[idxict1 + self.INDICES.MIN]) * 1e9
+        max1 = float(meas[idxict1 + self.INDICES.MAX]) * 1e9
+        std1 = float(meas[idxict1 + self.INDICES.STD]) * 1e9
+        cnt1 = int(float(meas[idxict1 + self.INDICES.COUNT]))
+
+        name = self.ACC+'-ICT2'
+        idxict2 = [i for i, val in enumerate(meas) if name in val].pop()
+        chg2 = float(meas[idxict2 + self.INDICES.CURR]) * 1e9
+        ave2 = float(meas[idxict2 + self.INDICES.AVG]) * 1e9
+        min2 = float(meas[idxict2 + self.INDICES.MIN]) * 1e9
+        max2 = float(meas[idxict2 + self.INDICES.MAX]) * 1e9
+        std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
+        cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
+
+        eff = 100 * chg2/chg1
+        effave = 100 * ave2/ave1
+
+        self.run_callbacks(self.ICT1 + ':Charge-Mon', chg1)
+        self.run_callbacks(self.ICT1 + ':ChargeAvg-Mon', ave1)
+        self.run_callbacks(self.ICT1 + ':ChargeMin-Mon', min1)
+        self.run_callbacks(self.ICT1 + ':ChargeMax-Mon', max1)
+        self.run_callbacks(self.ICT1 + ':ChargeStd-Mon', std1)
+        self.run_callbacks(self.ICT1 + ':PulseCount-Mon', cnt1)
+        self.run_callbacks(self.ICT2 + ':Charge-Mon', chg2)
+        self.run_callbacks(self.ICT2 + ':ChargeAvg-Mon', ave2)
+        self.run_callbacks(self.ICT2 + ':ChargeMin-Mon', min2)
+        self.run_callbacks(self.ICT2 + ':ChargeMax-Mon', max2)
+        self.run_callbacks(self.ICT2 + ':ChargeStd-Mon', std2)
+        self.run_callbacks(self.ICT2 + ':PulseCount-Mon', cnt2)
+        if chg1 <= 0.05:
+            return
+        name = self.ACC + '-Glob:AP-CurrInfo:'
+        self.run_callbacks(name + 'TranspEff-Mon', eff)
+        self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
+
+
+class LICurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = 'LI'
+    ICT1 = 'LI-01:DI-ICT-1'
+    ICT2 = 'LI-01:DI-ICT-2'
+
+
+class TBCurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = 'TB'
+    ICT1 = 'TB-02:DI-ICT'
+    ICT2 = 'TB-04:DI-ICT'
+
+
+class TSCurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-fctdig'
+    ACC = 'TS'
+    ICT1 = 'TS-01:DI-ICT'
+    ICT2 = 'TS-04:DI-ICT'
 
 
 class BOCurrInfoApp(_Callback):
