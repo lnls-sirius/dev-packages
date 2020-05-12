@@ -259,6 +259,8 @@ class SILifetimeApp(_Callback):
         ts_arrayorg = _np.asarray(timestamp)
         val_arrayorg = _np.asarray(value)
         ts_abs_arrayorg = _np.asarray(abs_timestamp)
+        if ts_abs_arrayorg.size == 0:
+            return ts_arrayorg, val_arrayorg, ts_abs_arrayorg
 
         ind1 = ts_abs_arrayorg >= first
         ind2 = ts_abs_arrayorg <= last
