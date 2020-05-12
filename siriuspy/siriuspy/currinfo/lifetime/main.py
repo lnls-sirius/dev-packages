@@ -109,7 +109,7 @@ class App(_Callback):
             ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
             ts_dqorg = ts_abs_dqorg - now
             ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
-                ts_dqorg, val_dqorg, ts_abs_dqorg, now, first_smpl, last_smpl)
+                ts_dqorg, val_dqorg, ts_abs_dqorg, first_smpl, last_smpl)
 
             if ts_dq.size == 0:
                 setattr(self, lt_name, 0)
@@ -255,8 +255,7 @@ class App(_Callback):
         self.run_callbacks('Lifetime-Mon', self._lifetime)
         self.run_callbacks('LifetimeBPM-Mon', self._lifetime_bpm)
 
-    def _filter_buffer(self, timestamp, value, abs_timestamp,
-                       now, first, last):
+    def _filter_buffer(self, timestamp, value, abs_timestamp, first, last):
         ts_arrayorg = _np.asarray(timestamp)
         val_arrayorg = _np.asarray(value)
         ts_abs_arrayorg = _np.asarray(abs_timestamp)
