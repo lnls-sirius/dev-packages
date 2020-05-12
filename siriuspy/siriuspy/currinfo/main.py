@@ -16,7 +16,6 @@ from .csdev import Const as _Const, \
 
 
 # BO Constants
-
 BO_HarmNum = 828
 BO_REV_PERIOD = 1.6571334792998411  # [us]
 BO_ENERGY2TIME = {  # energy: time[s]
@@ -29,7 +28,6 @@ INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
 BO_CURR_THRESHOLD = 0.06
 
 # SI Constants
-
 SI_HarmNum = 864
 SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
 
@@ -41,7 +39,8 @@ def _get_value_from_arch(pvname):
     return data
 
 
-class BOApp(_Callback):
+
+class BOCurrInfoApp(_Callback):
     """Main Class."""
 
     def __init__(self):
@@ -101,6 +100,7 @@ class BOApp(_Callback):
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
 
     def init_database(self):
+        """."""
         for k in BO_ENERGY2TIME.keys():
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
@@ -108,6 +108,7 @@ class BOApp(_Callback):
 
     @property
     def pvs_database(self):
+        """."""
         return self._pvs_database
 
     def process(self, interval):
@@ -116,8 +117,8 @@ class BOApp(_Callback):
 
     def read(self, reason):
         """Read from IOC database."""
-        value = None
-        return value
+        _ = reason
+        return None
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
@@ -202,7 +203,7 @@ class BOApp(_Callback):
             self.run_callbacks('RampEff-Mon', self._rampeff)
 
 
-class SIApp(_Callback):
+class SICurrInfoApp(_Callback):
     """Main Class."""
 
     def __init__(self):
@@ -274,6 +275,7 @@ class SIApp(_Callback):
 
     @property
     def pvs_database(self):
+        """."""
         return self._pvs_database
 
     def process(self, interval):
