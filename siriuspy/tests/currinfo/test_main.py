@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 import siriuspy.util as util
 from siriuspy.currinfo.csdev import Const
-from siriuspy.currinfo.main import SIApp
+from siriuspy.currinfo import SICurrInfoApp
 
 
 PUB_INTERFACE = (
@@ -33,12 +33,12 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
         self.mock_pv.return_value.connected = False
-        self.app = SIApp()
+        self.app = SICurrInfoApp()
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            SIApp, PUB_INTERFACE, print_flag=True)
+            SICurrInfoApp, PUB_INTERFACE, print_flag=True)
         self.assertTrue(valid)
 
     def test_write_DCCTFltCheck(self):
