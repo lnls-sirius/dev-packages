@@ -299,8 +299,12 @@ class SILifetimeApp(_Callback):
         _ns = len(timestamp)
         _x1 = _np.sum(timestamp)
         _y1 = _np.sum(value)
-        _x2 = _np.dot(timestamp, timestamp)
-        _xy = _np.dot(timestamp, value)
+        if timestamp.size > 10000:
+            _x2 = _np.sum(timestamp*timestamp)
+            _xy = _np.sum(timestamp*value)
+        else:
+            _x2 = _np.dot(timestamp, timestamp)
+            _xy = _np.dot(timestamp, value)
         fit_a = (_x2*_y1 - _xy*_x1)/(_ns*_x2 - _x1*_x1)
         fit_b = (_ns*_xy - _x1*_y1)/(_ns*_x2 - _x1*_x1)
 
