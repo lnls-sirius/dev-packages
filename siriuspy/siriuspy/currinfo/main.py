@@ -7,9 +7,8 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 from epics import PV as _PV
-import visa
 
-from mathphys.functions import get_namedtuple
+from mathphys.functions import _get_namedtuple
 
 from ..callbacks import Callback as _Callback
 from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
@@ -22,7 +21,7 @@ from .csdev import Const as _Const, \
 
 
 # BO Constants
-BO_HarmNum = 828
+BO_HARMNUM = 828
 BO_REV_PERIOD = 1.6571334792998411  # [us]
 BO_ENERGY2TIME = {  # energy: time[s]
     '150MeV': 0.0000,
@@ -34,7 +33,7 @@ INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
 BO_CURR_THRESHOLD = 0.06
 
 # SI Constants
-SI_HarmNum = 864
+SI_HARMNUM = 864
 SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
 
 
@@ -48,7 +47,7 @@ def _get_value_from_arch(pvname):
 class _ASCurrInfoApp(_Callback):
     """."""
 
-    INDICES = get_namedtuple(
+    INDICES = _get_namedtuple(
         'Indices',
         ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
 
@@ -57,12 +56,12 @@ class _ASCurrInfoApp(_Callback):
     ICT1 = ''
     ICT2 = ''
 
-    def __init__(self):
+    def __init__(self, resource_manager):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
-        rmm = visa.ResourceManager('@py')
+        self.resource_manager = resource_manager
         # open communication with Oscilloscope
-        self.osc_socket = rmm.open_resource(
+        self.osc_socket = resource_manager.open_resource(
             'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
 
     def init_database(self):
@@ -540,7 +539,7 @@ class SICurrInfoApp(_Callback):
 
         # calculate efficiency
         delta_curr = max(value_dq[-1] - value_dq[0], 0)
-        self._injeff = 100*(delta_curr/value)*(SI_HarmNum/BO_HarmNum)
+        self._injeff = 100*(delta_curr/value)*(SI_HARMNUM/BO_HARMNUM)
 
         # update pvs
         self.run_callbacks('InjEff-Mon', self._injeff)
