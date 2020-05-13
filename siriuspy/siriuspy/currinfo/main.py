@@ -83,6 +83,10 @@ class _ASCurrInfoApp(_Callback):
         _, _ = reason, value
         return True
 
+    def close(self):
+        """."""
+        self.osc_socket.close()
+
     def process(self, interval):
         """."""
         tini = _time.time()
@@ -259,6 +263,9 @@ class BOCurrInfoApp(_Callback):
                 self.run_callbacks('CurrThold-RB', value)
                 status = True
         return status
+
+    def close(self):
+        """."""
 
     # ----- callbacks -----
 
@@ -439,6 +446,9 @@ class SICurrInfoApp(_Callback):
             self.run_callbacks('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
             status = True
         return status
+
+    def close(self):
+        """."""
 
     # ----- handle writes -----
 
