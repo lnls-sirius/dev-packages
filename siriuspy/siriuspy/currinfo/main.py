@@ -20,31 +20,47 @@ from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
 
 
-# BO Constants
-BO_HARMNUM = 828
-BO_REV_PERIOD = 1.6571334792998411  # [us]
-BO_ENERGY2TIME = {  # energy: time[s]
-    '150MeV': 0.0000,
-    '1GeV': 0.0859,
-    '2GeV': 0.1863,
-    '3GeV': 0.2750,
-}
-INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
-BO_CURR_THRESHOLD = 0.06
+class _CurrInfoApp(_Callback):
+    """."""
 
-# SI Constants
-SI_HARMNUM = 864
-SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
+    def __init__(self):
+        """."""
+        super().__init__()
+        self._pvs_database = None
+
+    def init_database(self):
+        """."""
+
+    @property
+    def pvs_database(self):
+        """."""
+        return _dcopy(self._pvs_database)
+
+    def process(self, interval):
+        """."""
+        _time.sleep(interval)
+
+    def read(self, reason):
+        """."""
+        _ = reason
+        return None
+
+    def write(self, reason, value):
+        """."""
+        _, _ = reason, value
+        return True
+
+    def close(self):
+        """."""
+
+    @staticmethod
+    def _get_value_from_arch(pvname):
+        carch = _ClientArch()
+        datetime = _datetime.now().isoformat() + '-03:00'
+        return carch.getData(pvname, datetime, datetime)
 
 
-def _get_value_from_arch(pvname):
-    carch = _ClientArch()
-    datetime = _datetime.now().isoformat() + '-03:00'
-    data = carch.getData(pvname, datetime, datetime)
-    return data
-
-
-class _ASCurrInfoApp(_Callback):
+class _ASCurrInfoApp(_CurrInfoApp):
     """."""
 
     INDICES = _get_namedtuple(
@@ -63,24 +79,6 @@ class _ASCurrInfoApp(_Callback):
         # open communication with Oscilloscope
         self.osc_socket = resource_manager.open_resource(
             'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
-
-    def init_database(self):
-        """."""
-
-    @property
-    def pvs_database(self):
-        """."""
-        return _dcopy(self._pvs_database)
-
-    def read(self, reason):
-        """."""
-        _ = reason
-        return None
-
-    def write(self, reason, value):
-        """."""
-        _, _ = reason, value
-        return True
 
     def close(self):
         """."""
@@ -184,8 +182,16 @@ class TSCurrInfoApp(_ASCurrInfoApp):
     ICT2 = 'TS-04:DI-ICT'
 
 
-class BOCurrInfoApp(_Callback):
+class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
+
+    REV_PERIOD = 1.6571334792998411  # [us]
+    INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+    ENERGY2TIME = {  # energy: time[s]
+        '150MeV': 0.0000,
+        '1GeV': 0.0859,
+        '2GeV': 0.1863,
+        '3GeV': 0.2750}
 
     def __init__(self):
         """Class constructor."""
@@ -209,19 +215,19 @@ class BOCurrInfoApp(_Callback):
         self._rampeff = None
         self._currents = dict()
         self._charges = dict()
-        for k in BO_ENERGY2TIME.keys():
+        for k in self.ENERGY2TIME:
             # currents
             self._currents[k] = 0.0
             # charges
             ppty = 'Charge'+k+'-Mon'
-            data = _get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
+            data = self._get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
             if data is None:
                 charge = 0.0
             else:
                 charge = data[1][0]
             self._charges[k] = charge
 
-        data = _get_value_from_arch(
+        data = self._get_value_from_arch(
             'BO-Glob:AP-CurrInfo:IntCurrent3GeV-Mon')
         if data is None:
             self._intcurrent3gev = 0.0
@@ -245,26 +251,13 @@ class BOCurrInfoApp(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
+        for k in self.ENERGY2TIME:
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
             ppty = 'Current'+k+'-Mon'
             self.run_callbacks(ppty, self._currents[k])
         self.run_callbacks('RawReadings-Mon', self._last_raw_reading)
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
-
-    @property
-    def pvs_database(self):
-        """."""
-        return _dcopy(self._pvs_database)
-
-    def process(self, interval):
-        """Sleep."""
-        _time.sleep(interval)
-
-    def read(self, reason):
-        """Read from IOC database."""
-        _ = reason
-        return None
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
@@ -275,9 +268,6 @@ class BOCurrInfoApp(_Callback):
                 self.run_callbacks('CurrThold-RB', value)
                 status = True
         return status
-
-    def close(self):
-        """."""
 
     # ----- callbacks -----
 
@@ -319,7 +309,7 @@ class BOCurrInfoApp(_Callback):
         times = _np.linspace(0.0, self._measperiod, self._samplecnt)  # [ms]
 
         # calculate offset
-        time_offset = BO_ENERGY2TIME['3GeV'] + 0.0250
+        time_offset = self.ENERGY2TIME['3GeV'] + 0.0250
         idx_offset = _np.where(_np.isclose(times, time_offset, atol=0.0005))[0]
         try:
             samples_offset = self._last_raw_reading[idx_offset[0]:]
@@ -328,7 +318,7 @@ class BOCurrInfoApp(_Callback):
             offset = 0.0
 
         # update pvs
-        for energy, time in BO_ENERGY2TIME.items():
+        for energy, time in self.ENERGY2TIME.items():
             idx = _np.where(_np.isclose(times, time, atol=0.0005))[0]
             if idx.size:
                 # currents
@@ -339,7 +329,7 @@ class BOCurrInfoApp(_Callback):
                 self.run_callbacks('Current'+str(energy)+'-Mon',
                                    self._currents[energy])
                 # charges
-                self._charges[energy] += current * BO_REV_PERIOD
+                self._charges[energy] += current * self.REV_PERIOD
                 self.run_callbacks('Charge'+str(energy)+'-Mon',
                                    self._charges[energy])
 
@@ -347,7 +337,7 @@ class BOCurrInfoApp(_Callback):
         c3gev = self._currents['3GeV']
 
         # integrated current in 3GeV
-        self._intcurrent3gev += c3gev * INTCURR_INTVL  # [mA.h]
+        self._intcurrent3gev += c3gev * self.INTCURR_INTVL  # [mA.h]
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
         # ramp efficiency
@@ -356,8 +346,11 @@ class BOCurrInfoApp(_Callback):
             self.run_callbacks('RampEff-Mon', self._rampeff)
 
 
-class SICurrInfoApp(_Callback):
+class SICurrInfoApp(_CurrInfoApp):
     """Main Class."""
+
+    HARMNUM_RATIO = 864 / 828
+    CURR_THRESHOLD = 0.06  # [mA]
 
     def __init__(self):
         """Class constructor."""
@@ -378,7 +371,7 @@ class SICurrInfoApp(_Callback):
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
         self._injeff = 0.0
-        data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
+        data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
         else:
@@ -430,15 +423,6 @@ class SICurrInfoApp(_Callback):
         self.run_callbacks('InjEff-Mon', self._injeff)
         self.run_callbacks('Charge-Mon', self._charge)
 
-    @property
-    def pvs_database(self):
-        """."""
-        return _dcopy(self._pvs_database)
-
-    def process(self, interval):
-        """Sleep."""
-        _time.sleep(interval)
-
     def read(self, reason):
         """Read from IOC database."""
         value = None
@@ -467,11 +451,7 @@ class SICurrInfoApp(_Callback):
             status = True
         return status
 
-    def close(self):
-        """."""
-
     # ----- handle writes -----
-
     def _update_dcct_mode(self, value):
         if self._dcct_mode != value:
             self._dcct_mode = value
@@ -562,12 +542,12 @@ class SICurrInfoApp(_Callback):
             return
 
         # check if there is valid current in Booster
-        if value < BO_CURR_THRESHOLD:
+        if value < self.CURR_THRESHOLD:
             return
 
         # calculate efficiency
         delta_curr = value_dq[-1] - _np.min(value_dq)
-        self._injeff = 100*(delta_curr/value)*(SI_HARMNUM/BO_HARMNUM)
+        self._injeff = 100*(delta_curr/value) * self.HARMNUM_RATIO
 
         # update pvs
         self.run_callbacks('InjEff-Mon', self._injeff)
