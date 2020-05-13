@@ -89,11 +89,7 @@ class _ASCurrInfoApp(_Callback):
     def process(self, interval):
         """."""
         tini = _time.time()
-        try:
-            self._update_pvs()
-        except Exception as err:
-            _log.error('Problem reading data: {:s}'.format(str(err)))
-
+        self._update_pvs()
         dtim = _time.time() - tini
         if dtim <= interval:
             _time.sleep(interval - dtim)
@@ -103,7 +99,22 @@ class _ASCurrInfoApp(_Callback):
 
     def _update_pvs(self):
         """."""
-        meas = self.osc_socket.query(":MEASure:RESults?")
+        try:
+            meas = self.osc_socket.query(":MEASure:RESults?")
+        except Exception as err:
+            errst = str(err)
+            _log.error('Problem reading data: {:s}'.format(errst))
+            if 'wrong xid in reply' in errst:
+                # NOTE: this is a workaround suggested in
+                # https://github.com/pyvisa/pyvisa-py/issues/172
+                # for a similar problem.
+                _log.info('Trying to fix error, reseting lastxid...')
+                xid = int(errst.split()[4])
+                rsman = self.resource_manager
+                soc = self.osc_socket
+                rsman.visalib.sessions[soc.session].interface.lastxid = xid
+            return
+
         meas = meas.split(',')
 
         name = self.ACC+'-ICT1'
