@@ -8,7 +8,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from epics import PV as _PV
 
-from mathphys.functions import _get_namedtuple
+from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
 from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
@@ -247,6 +247,9 @@ class BOCurrInfoApp(_Callback):
         """Set initial PV values."""
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
+            ppty = 'Current'+k+'-Mon'
+            self.run_callbacks(ppty, self._currents[k])
+        self.run_callbacks('RawReadings-Mon', self._last_raw_reading)
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
     @property
@@ -321,13 +324,13 @@ class BOCurrInfoApp(_Callback):
         try:
             samples_offset = self._last_raw_reading[idx_offset[0]:]
             offset = _np.mean(samples_offset)
-        except Exception:
+        except (IndexError, TypeError):
             offset = 0.0
 
         # update pvs
         for energy, time in BO_ENERGY2TIME.items():
             idx = _np.where(_np.isclose(times, time, atol=0.0005))[0]
-            if len(idx):
+            if idx.size:
                 # currents
                 current = self._last_raw_reading[idx[0]] - offset
                 if current < self._currthold:
@@ -374,6 +377,7 @@ class SICurrInfoApp(_Callback):
         self._storedebeam_13c4_value = 0
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
+        self._injeff = 0.0
         data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
@@ -421,6 +425,9 @@ class SICurrInfoApp(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
+        self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
+        self.run_callbacks('Current-Mon', self._current_value)
+        self.run_callbacks('InjEff-Mon', self._injeff)
         self.run_callbacks('Charge-Mon', self._charge)
 
     @property
@@ -547,9 +554,11 @@ class SICurrInfoApp(_Callback):
             if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
             else self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
+        timestamp_dq = _np.asarray(timestamp_dq)
+        value_dq = _np.asarray(value_dq)
 
         # check buffer not empty
-        if not len(timestamp_dq):
+        if not timestamp_dq.size:
             return
 
         # check if there is valid current in Booster
@@ -557,7 +566,7 @@ class SICurrInfoApp(_Callback):
             return
 
         # calculate efficiency
-        delta_curr = max(value_dq[-1] - value_dq[0], 0)
+        delta_curr = value_dq[-1] - _np.min(value_dq)
         self._injeff = 100*(delta_curr/value)*(SI_HARMNUM/BO_HARMNUM)
 
         # update pvs
