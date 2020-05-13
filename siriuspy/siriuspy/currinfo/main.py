@@ -71,6 +71,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
     ACC = ''
     ICT1 = ''
     ICT2 = ''
+    CHARGE_THRESHOLD = 0.05  # [nC]
 
     def __init__(self, resource_manager):
         super().__init__()
@@ -148,7 +149,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self.run_callbacks(self.ICT2 + ':ChargeMax-Mon', max2)
         self.run_callbacks(self.ICT2 + ':ChargeStd-Mon', std2)
         self.run_callbacks(self.ICT2 + ':PulseCount-Mon', cnt2)
-        if chg1 <= 0.05:
+        if chg1 <= self.CHARGE_THRESHOLD:
             return
         name = self.ACC + '-Glob:AP-CurrInfo:'
         self.run_callbacks(name + 'TranspEff-Mon', eff)
