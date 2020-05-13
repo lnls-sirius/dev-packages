@@ -193,7 +193,7 @@ class BOCurrInfoApp(_Callback):
 
         # consts
         self._pvs_database = _get_database('BO')
-        self._DCCT = 'BO-35D:DI-DCCT'
+        self._dcct = 'BO-35D:DI-DCCT'
 
         # initialize vars
         self._samplecnt = None
@@ -230,22 +230,21 @@ class BOCurrInfoApp(_Callback):
 
         # PVs
         self._rawreadings_pv = _PV(
-            _vaca_prefix+self._DCCT+':RawReadings-Mon',
+            _vaca_prefix+self._dcct+':RawReadings-Mon',
             connection_timeout=0.05, callback=self._callback_get_rawreadings,
             auto_monitor=True)
         self._samplecnt_pv = _PV(
-            _vaca_prefix+self._DCCT+':FastSampleCnt-RB',
+            _vaca_prefix+self._dcct+':FastSampleCnt-RB',
             connection_timeout=0.05, callback=self._callback_get_samplecnt)
         self._measperiod_pv = _PV(
-            _vaca_prefix+self._DCCT+':FastMeasPeriod-RB',
+            _vaca_prefix+self._dcct+':FastMeasPeriod-RB',
             connection_timeout=0.05, callback=self._callback_get_measperiod)
         self._reliablemeas_pv = _PV(
-            _vaca_prefix+self._DCCT+':ReliableMeas-Mon',
+            _vaca_prefix+self._dcct+':ReliableMeas-Mon',
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
 
     def init_database(self):
-        """."""
-        for k in BO_ENERGY2TIME.keys():
+        """Set initial PV values."""
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
@@ -281,17 +280,21 @@ class BOCurrInfoApp(_Callback):
 
     def _callback_get_samplecnt(self, value, **kws):
         """Get SampleCnt-RB value."""
+        _ = kws
         self._samplecnt = value
 
     def _callback_get_measperiod(self, value, **kws):
         """Get MeasPeriod-RB value."""
+        _ = kws
         self._measperiod = value
 
     def _callback_get_reliablemeas(self, value, **kws):
         """Get ReliableMeas-Mon value."""
+        _ = kws
         self._reliablemeas = value
 
     def _callback_get_rawreadings(self, value, **kws):
+        _ = kws
         self._last_raw_reading = value
         self._update_pvs()
         self.run_callbacks('RawReadings-Mon', value)
@@ -361,15 +364,15 @@ class SICurrInfoApp(_Callback):
         # initialize vars
         self._time0 = _time.time()
         self._current_value = None
-        self._current_13C4_value = None
-        self._current_14C4_value = None
+        self._current_13c4_value = None
+        self._current_14c4_value = None
         self._dcct_mode = _Const.DCCT.DCCT13C4
         self._dcctfltcheck_mode = _Const.DCCTFltCheck.Off
-        self._reliablemeas_13C4_value = 0
-        self._reliablemeas_14C4_value = 0
+        self._reliablemeas_13c4_value = 0
+        self._reliablemeas_14c4_value = 0
         self._storedebeam_value = 0
-        self._storedebeam_13C4_value = 0
-        self._storedebeam_14C4_value = 0
+        self._storedebeam_13c4_value = 0
+        self._storedebeam_14c4_value = 0
         self._is_cycling = False
         data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
@@ -378,27 +381,27 @@ class SICurrInfoApp(_Callback):
             self._charge = data[1][0]
 
         # pvs
-        self._current_13C4_pv = _PV(
+        self._current_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:Current-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_dcct_current)
-        self._current_14C4_pv = _PV(
+        self._current_14c4_pv = _PV(
             _vaca_prefix+'SI-14C4:DI-DCCT:Current-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_dcct_current)
-        self._storedebeam_13C4_pv = _PV(
+        self._storedebeam_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
-        self._storedebeam_14C4_pv = _PV(
+        self._storedebeam_14c4_pv = _PV(
             _vaca_prefix+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
-        self._reliablemeas_13C4_pv = _PV(
+        self._reliablemeas_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
-        self._reliablemeas_14C4_pv = _PV(
+        self._reliablemeas_14c4_pv = _PV(
             _vaca_prefix+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
@@ -411,10 +414,10 @@ class SICurrInfoApp(_Callback):
             connection_timeout=0.05,
             callback=self._callback_get_bo_curr3gev)
 
-        self._current_13C4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_13C4_pv, time_window=0.4, use_pv_timestamp=False)
-        self._current_14C4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_14C4_pv, time_window=0.4, use_pv_timestamp=False)
+        self._current_13c4_buffer = _SiriusPVTimeSerie(
+            pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
+        self._current_14c4_buffer = _SiriusPVTimeSerie(
+            pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
 
     def init_database(self):
         """Set initial PV values."""
@@ -435,8 +438,8 @@ class SICurrInfoApp(_Callback):
         if 'Charge' in reason:
             timestamp = _time.time()
             if self._storedebeam_value and not self._is_cycling:
-                dt = (timestamp - self._time0)  # Delta t [s]
-                inc_charge = self._current_value/1000 * dt/3600  # Charge [A.h]
+                dtm = (timestamp - self._time0)  # Delta t [s]
+                inc_charge = self._current_value/1000*dtm/3600  # Charge [A.h]
                 self._charge += inc_charge
                 self.run_callbacks('Charge-Mon', self._charge)
                 value = self._charge
@@ -466,13 +469,13 @@ class SICurrInfoApp(_Callback):
         if self._dcct_mode != value:
             self._dcct_mode = value
 
-    def _update_dcct_mode_from_reliablemeas(self):
-        if (self._reliablemeas_13C4_value == 0 and
-                self._reliablemeas_14C4_value == 0):
+    def _update_dcct_mode_by_relblmeas(self):
+        if (self._reliablemeas_13c4_value == 0 and
+                self._reliablemeas_14c4_value == 0):
             mode = _Const.DCCT.Avg
-        elif self._reliablemeas_13C4_value == 0:
+        elif self._reliablemeas_13c4_value == 0:
             mode = _Const.DCCT.DCCT13C4
-        elif self._reliablemeas_14C4_value == 0:
+        elif self._reliablemeas_14c4_value == 0:
             mode = _Const.DCCT.DCCT14C4
         else:
             mode = self._dcct_mode
@@ -483,18 +486,18 @@ class SICurrInfoApp(_Callback):
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
             if value == _Const.DCCTFltCheck.On:
-                self._update_dcct_mode_from_reliablemeas()
+                self._update_dcct_mode_by_relblmeas()
             self._dcctfltcheck_mode = value
 
     # ----- callbacks -----
-
     def _callback_get_dcct_current(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
-            self._current_13C4_value = value
-            self._current_13C4_buffer.acquire()
+            self._current_13c4_value = value
+            self._current_13c4_buffer.acquire()
         elif '14C4' in pvname:
-            self._current_14C4_value = value
-            self._current_14C4_buffer.acquire()
+            self._current_14c4_value = value
+            self._current_14c4_buffer.acquire()
 
         # update current and charge
         current = self._get_current()
@@ -506,38 +509,43 @@ class SICurrInfoApp(_Callback):
         self.run_callbacks('Current-Mon', self._current_value)
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
-            self._storedebeam_13C4_value = value
+            self._storedebeam_13c4_value = value
         elif '14C4' in pvname:
-            self._storedebeam_14C4_value = value
+            self._storedebeam_14c4_value = value
 
         if self._dcct_mode == _Const.DCCT.Avg:
-            self._storedebeam_value = (self._storedebeam_13C4_value and
-                                       self._storedebeam_14C4_value)
+            self._storedebeam_value = (self._storedebeam_13c4_value and
+                                       self._storedebeam_14c4_value)
         elif self._dcct_mode == _Const.DCCT.DCCT13C4:
-            self._storedebeam_value = self._storedebeam_13C4_value
+            self._storedebeam_value = self._storedebeam_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
-            self._storedebeam_value = self._storedebeam_14C4_value
+            self._storedebeam_value = self._storedebeam_14c4_value
         self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
-            self._reliablemeas_13C4_value = value
+            self._reliablemeas_13c4_value = value
         elif '14C4' in pvname:
-            self._reliablemeas_14C4_value = value
+            self._reliablemeas_14c4_value = value
 
         if self._dcctfltcheck_mode == _Const.DCCTFltCheck.On:
-            self._update_dcct_mode_from_reliablemeas()
+            self._update_dcct_mode_by_relblmeas()
 
     def _callback_get_dipole_opmode(self, value, **kws):
+        _ = kws
         self._is_cycling = bool(value == _PSc.States.Cycle)
 
     def _callback_get_bo_curr3gev(self, value, timestamp, **kws):
         """Get BO Current3GeV-Mon and update InjEff PV."""
+        _ = kws
+        _ = timestamp
         # choose current PV
-        buffer = self._current_13C4_buffer \
+        buffer = self._current_13c4_buffer \
             if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
-            else self._current_14C4_buffer
+            else self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
 
         # check buffer not empty
@@ -559,13 +567,13 @@ class SICurrInfoApp(_Callback):
 
     def _get_current(self):
         if self._dcct_mode == _Const.DCCT.Avg:
-            if (self._current_13C4_value is not None and
-                    self._current_14C4_value is not None):
-                current = (self._current_13C4_value+self._current_14C4_value)/2
+            if (self._current_13c4_value is not None and
+                    self._current_14c4_value is not None):
+                current = (self._current_13c4_value+self._current_14c4_value)/2
             else:
                 current = None
         elif self._dcct_mode == _Const.DCCT.DCCT13C4:
-            current = self._current_13C4_value
+            current = self._current_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
-            current = self._current_14C4_value
+            current = self._current_14c4_value
         return current
