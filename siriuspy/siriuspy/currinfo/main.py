@@ -243,7 +243,7 @@ class BOCurrInfoApp(_Callback):
     @property
     def pvs_database(self):
         """."""
-        return self._pvs_database
+        return _dcopy(self._pvs_database)
 
     def process(self, interval):
         """Sleep."""
@@ -413,7 +413,7 @@ class SICurrInfoApp(_Callback):
     @property
     def pvs_database(self):
         """."""
-        return self._pvs_database
+        return _dcopy(self._pvs_database)
 
     def process(self, interval):
         """Sleep."""
