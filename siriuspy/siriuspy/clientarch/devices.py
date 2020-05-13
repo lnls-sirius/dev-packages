@@ -6,19 +6,19 @@ import numpy as _np
 
 from .pvarch import PVData as _PVData
 from .time import Time as _Time
-from ..search import BPMSearch
+from ..search import BPMSearch as _BPMSearch
 
 
 class Consts:
     """."""
 
-    BPMS_TB = BPMSearch.get_names({'sec': 'TB'})
+    BPMS_TB = _BPMSearch.get_names({'sec': 'TB'})
 
-    BPMS_BO = BPMSearch.get_names({'sec': 'BO'})
+    BPMS_BO = _BPMSearch.get_names({'sec': 'BO'})
 
-    BPMS_TS = BPMSearch.get_names({'sec': 'TS'})
+    BPMS_TS = _BPMSearch.get_names({'sec': 'TS'})
 
-    BPMS_SI = BPMSearch.get_names({'sec': 'SI'})
+    BPMS_SI = _BPMSearch.get_names({'sec': 'SI'})
 
 
 class OrbitBPM(Consts):
