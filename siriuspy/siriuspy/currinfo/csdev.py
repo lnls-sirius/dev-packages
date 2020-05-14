@@ -190,7 +190,7 @@ def get_lifetime_database():
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
         'BuffAutoRstDCurr-RB': {
             'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
-            'lolim': -300.0, 'low': -300.0,  'lolo': -300.0,
+            'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
 
         'FrstSplTime-SP': {
