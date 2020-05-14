@@ -10,9 +10,9 @@ from siriuspy.currinfo import SICurrInfoApp
 
 
 PUB_INTERFACE = (
-    'pvs_database',
+    'HARMNUM_RATIO',
+    'CURR_THRESHOLD',
     'init_database',
-    'process',
     'read',
     'write',
 )
