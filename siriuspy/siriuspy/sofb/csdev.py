@@ -331,11 +331,11 @@ class SOFBTLines(ConstTLines):
                 'enums': self.SOFBMode._fields},
             'SyncWithInjection-Sel': {
                 'type': 'enum', 'unit': 'Sync orbit acq. with injection',
-                'value': self.SyncWithInj.On,
+                'value': self.SyncWithInj.Off,
                 'enums': self.SyncWithInj._fields},
             'SyncWithInjection-Sts': {
                 'type': 'enum', 'unit': 'Sync orbit acq. with injection',
-                'value': self.SyncWithInj.On,
+                'value': self.SyncWithInj.Off,
                 'enums': self.SyncWithInj._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
