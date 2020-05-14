@@ -60,7 +60,7 @@ class PRUInterface:
 class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
-    def __init__(self, ethbridgeclient, bbbname=None, ip_address=None):
+    def __init__(self, ethbridgeclnt_class, bbbname=None, ip_address=None):
         """Init method."""
         # if ip address was not given, get it from bbbname
         if ip_address is None:
@@ -70,7 +70,7 @@ class PRU(PRUInterface):
         print('IP_ADDRESS: ', ip_address)
 
         # start communication threads
-        self._ethbrigde = ethbridgeclient(
+        self._ethbrigde = ethbridgeclnt_class(
             ip_address=ip_address, use_general=False)
         self._ethbrigde.threads_start()
 
