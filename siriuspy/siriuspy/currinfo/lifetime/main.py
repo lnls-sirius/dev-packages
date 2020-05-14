@@ -16,7 +16,7 @@ warnings.filterwarnings('error')
 _MAX_BUFFER_SIZE = 36000
 
 
-class App(_Callback):
+class SILifetimeApp(_Callback):
     """Main Class of the IOC Logic."""
 
     def __init__(self):

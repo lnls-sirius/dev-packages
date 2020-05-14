@@ -5,7 +5,7 @@
 import unittest
 from unittest import mock
 import siriuspy.util as util
-from siriuspy.currinfo.lifetime.main import App
+from siriuspy.currinfo import SILifetimeApp
 
 
 PUB_INTERFACE = (
@@ -25,12 +25,12 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
         self.mock_pv.return_value.connected = False
-        self.app = App()
+        self.app = SILifetimeApp()
 
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            App, PUB_INTERFACE, print_flag=True)
+            SILifetimeApp, PUB_INTERFACE, print_flag=True)
         self.assertTrue(valid)
 
     def test_write_MinIntvlBtwSpl(self):

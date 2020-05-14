@@ -2,8 +2,13 @@
 
 import time as _time
 from datetime import datetime as _datetime
+import logging as _log
+from copy import deepcopy as _dcopy
+
 import numpy as _np
 from epics import PV as _PV
+
+from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
 from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
@@ -15,34 +20,179 @@ from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
 
 
-# BO Constants
+class _CurrInfoApp(_Callback):
+    """."""
 
-BO_HARMNUM = 828
-BO_REV_PERIOD = 1.6571334792998411  # [us]
-BO_ENERGY2TIME = {  # energy: time[s]
-    '150MeV': 0.0000,
-    '1GeV': 0.0859,
-    '2GeV': 0.1863,
-    '3GeV': 0.2750,
-}
-INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
-BO_CURR_THRESHOLD = 0.06
+    def __init__(self):
+        """."""
+        super().__init__()
+        self._pvs_database = None
 
-# SI Constants
+    def init_database(self):
+        """."""
 
-SI_HARMNUM = 864
-SI_CHARGE_CALC_INTVL = 1 / 60.0  # 1 min [h]
+    @property
+    def pvs_database(self):
+        """."""
+        return _dcopy(self._pvs_database)
+
+    def process(self, interval):
+        """."""
+        _time.sleep(interval)
+
+    def read(self, reason):
+        """."""
+        _ = reason
+        return None
+
+    def write(self, reason, value):
+        """."""
+        _, _ = reason, value
+        return True
+
+    def close(self):
+        """."""
+
+    @staticmethod
+    def _get_value_from_arch(pvname):
+        carch = _ClientArch()
+        datetime = _datetime.now().isoformat() + '-03:00'
+        return carch.getData(pvname, datetime, datetime)
 
 
-def _get_value_from_arch(pvname):
-    carch = _ClientArch()
-    datetime = _datetime.now().isoformat() + '-03:00'
-    data = carch.getData(pvname, datetime, datetime)
-    return data
+class _ASCurrInfoApp(_CurrInfoApp):
+    """."""
+
+    INDICES = _get_namedtuple(
+        'Indices',
+        ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = ''
+    ICT1 = ''
+    ICT2 = ''
+    CHARGE_THRESHOLD = 0.05  # [nC]
+
+    def __init__(self, resource_manager):
+        super().__init__()
+        self._pvs_database = _get_database(self.ACC)
+        self.resource_manager = resource_manager
+        # open communication with Oscilloscope
+        self.osc_socket = resource_manager.open_resource(
+            'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
+
+    def close(self):
+        """."""
+        self.osc_socket.close()
+
+    def process(self, interval):
+        """."""
+        tini = _time.time()
+        self._update_pvs()
+        dtim = _time.time() - tini
+        if dtim <= interval:
+            _time.sleep(interval - dtim)
+        else:
+            _log.warning(
+                'IOC took {0:.3f} ms in update loop.'.format(dtim*1000))
+
+    def _update_pvs(self):
+        """."""
+        try:
+            meas = self.osc_socket.query(":MEASure:RESults?")
+        except Exception as err:
+            errst = str(err)
+            _log.error('Problem reading data: {:s}'.format(errst))
+            if 'wrong xid in reply' in errst:
+                # NOTE: this is a workaround suggested in
+                # https://github.com/pyvisa/pyvisa-py/issues/172
+                # for a similar problem.
+                _log.info('Trying to fix error, reseting lastxid...')
+                xid = int(errst.split()[4])
+                rsman = self.resource_manager
+                soc = self.osc_socket
+                rsman.visalib.sessions[soc.session].interface.lastxid = xid
+            return
+
+        meas = meas.split(',')
+
+        name = self.ACC+'-ICT1'
+        idxict1 = [i for i, val in enumerate(meas) if name in val].pop()
+        chg1 = float(meas[idxict1 + self.INDICES.CURR]) * 1e9
+        ave1 = float(meas[idxict1 + self.INDICES.AVG]) * 1e9
+        min1 = float(meas[idxict1 + self.INDICES.MIN]) * 1e9
+        max1 = float(meas[idxict1 + self.INDICES.MAX]) * 1e9
+        std1 = float(meas[idxict1 + self.INDICES.STD]) * 1e9
+        cnt1 = int(float(meas[idxict1 + self.INDICES.COUNT]))
+
+        name = self.ACC+'-ICT2'
+        idxict2 = [i for i, val in enumerate(meas) if name in val].pop()
+        chg2 = float(meas[idxict2 + self.INDICES.CURR]) * 1e9
+        ave2 = float(meas[idxict2 + self.INDICES.AVG]) * 1e9
+        min2 = float(meas[idxict2 + self.INDICES.MIN]) * 1e9
+        max2 = float(meas[idxict2 + self.INDICES.MAX]) * 1e9
+        std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
+        cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
+
+        eff = 100 * chg2/chg1
+        effave = 100 * ave2/ave1
+
+        self.run_callbacks(self.ICT1 + ':Charge-Mon', chg1)
+        self.run_callbacks(self.ICT1 + ':ChargeAvg-Mon', ave1)
+        self.run_callbacks(self.ICT1 + ':ChargeMin-Mon', min1)
+        self.run_callbacks(self.ICT1 + ':ChargeMax-Mon', max1)
+        self.run_callbacks(self.ICT1 + ':ChargeStd-Mon', std1)
+        self.run_callbacks(self.ICT1 + ':PulseCount-Mon', cnt1)
+        self.run_callbacks(self.ICT2 + ':Charge-Mon', chg2)
+        self.run_callbacks(self.ICT2 + ':ChargeAvg-Mon', ave2)
+        self.run_callbacks(self.ICT2 + ':ChargeMin-Mon', min2)
+        self.run_callbacks(self.ICT2 + ':ChargeMax-Mon', max2)
+        self.run_callbacks(self.ICT2 + ':ChargeStd-Mon', std2)
+        self.run_callbacks(self.ICT2 + ':PulseCount-Mon', cnt2)
+        if chg1 <= self.CHARGE_THRESHOLD:
+            return
+        name = self.ACC + '-Glob:AP-CurrInfo:'
+        self.run_callbacks(name + 'TranspEff-Mon', eff)
+        self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
 
 
-class BOApp(_Callback):
+class LICurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = 'LI'
+    ICT1 = 'LI-01:DI-ICT-1'
+    ICT2 = 'LI-01:DI-ICT-2'
+
+
+class TBCurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = 'TB'
+    ICT1 = 'TB-02:DI-ICT'
+    ICT2 = 'TB-04:DI-ICT'
+
+
+class TSCurrInfoApp(_ASCurrInfoApp):
+    """."""
+
+    OSC_IP = 'scope-dig-fctdig'
+    ACC = 'TS'
+    ICT1 = 'TS-01:DI-ICT'
+    ICT2 = 'TS-04:DI-ICT'
+
+
+class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
+
+    REV_PERIOD = 1.6571334792998411  # [us]
+    INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+    ENERGY2TIME = {  # energy: time[s]
+        '150MeV': 0.0000,
+        '1GeV': 0.0859,
+        '2GeV': 0.1863,
+        '3GeV': 0.2750}
 
     def __init__(self):
         """Class constructor."""
@@ -66,19 +216,19 @@ class BOApp(_Callback):
         self._rampeff = None
         self._currents = dict()
         self._charges = dict()
-        for k in BO_ENERGY2TIME:
+        for k in self.ENERGY2TIME:
             # currents
             self._currents[k] = 0.0
             # charges
             ppty = 'Charge'+k+'-Mon'
-            data = _get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
+            data = self._get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
             if data is None:
                 charge = 0.0
             else:
                 charge = data[1][0]
             self._charges[k] = charge
 
-        data = _get_value_from_arch(
+        data = self._get_value_from_arch(
             'BO-Glob:AP-CurrInfo:IntCurrent3GeV-Mon')
         if data is None:
             self._intcurrent3gev = 0.0
@@ -102,7 +252,7 @@ class BOApp(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
-        for k in BO_ENERGY2TIME:
+        for k in self.ENERGY2TIME:
             ppty = 'Charge'+k+'-Mon'
             self.run_callbacks(ppty, self._charges[k])
             ppty = 'Current'+k+'-Mon'
@@ -138,17 +288,21 @@ class BOApp(_Callback):
 
     def _callback_get_samplecnt(self, value, **kws):
         """Get SampleCnt-RB value."""
+        _ = kws
         self._samplecnt = value
 
     def _callback_get_measperiod(self, value, **kws):
         """Get MeasPeriod-RB value."""
+        _ = kws
         self._measperiod = value
 
     def _callback_get_reliablemeas(self, value, **kws):
         """Get ReliableMeas-Mon value."""
+        _ = kws
         self._reliablemeas = value
 
     def _callback_get_rawreadings(self, value, **kws):
+        _ = kws
         self._last_raw_reading = value
         self._update_pvs()
         self.run_callbacks('RawReadings-Mon', value)
@@ -170,7 +324,7 @@ class BOApp(_Callback):
         times = _np.linspace(0.0, self._measperiod, self._samplecnt)  # [ms]
 
         # calculate offset
-        time_offset = BO_ENERGY2TIME['3GeV'] + 0.0250
+        time_offset = self.ENERGY2TIME['3GeV'] + 0.0250
         idx_offset = _np.where(_np.isclose(times, time_offset, atol=0.0005))[0]
         try:
             samples_offset = self._last_raw_reading[idx_offset[0]:]
@@ -179,9 +333,9 @@ class BOApp(_Callback):
             offset = 0.0
 
         # update pvs
-        for energy, time in BO_ENERGY2TIME.items():
+        for energy, time in self.ENERGY2TIME.items():
             idx = _np.where(_np.isclose(times, time, atol=0.0005))[0]
-            if idx:
+            if idx.size:
                 # currents
                 current = self._last_raw_reading[idx[0]] - offset
                 if current < self._currthold:
@@ -190,7 +344,7 @@ class BOApp(_Callback):
                 self.run_callbacks('Current'+str(energy)+'-Mon',
                                    self._currents[energy])
                 # charges
-                self._charges[energy] += current * BO_REV_PERIOD
+                self._charges[energy] += current * self.REV_PERIOD
                 self.run_callbacks('Charge'+str(energy)+'-Mon',
                                    self._charges[energy])
 
@@ -198,7 +352,7 @@ class BOApp(_Callback):
         c3gev = self._currents['3GeV']
 
         # integrated current in 3GeV
-        self._intcurrent3gev += c3gev * INTCURR_INTVL  # [mA.h]
+        self._intcurrent3gev += c3gev * self.INTCURR_INTVL  # [mA.h]
         self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
         # ramp efficiency
@@ -207,8 +361,11 @@ class BOApp(_Callback):
             self.run_callbacks('RampEff-Mon', self._rampeff)
 
 
-class SIApp(_Callback):
+class SICurrInfoApp(_CurrInfoApp):
     """Main Class."""
+
+    HARMNUM_RATIO = 864 / 828
+    CURR_THRESHOLD = 0.06  # [mA]
 
     def __init__(self):
         """Class constructor."""
@@ -229,7 +386,7 @@ class SIApp(_Callback):
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
         self._injeff = 0.0
-        data = _get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
+        data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
         else:
@@ -281,23 +438,14 @@ class SIApp(_Callback):
         self.run_callbacks('InjEff-Mon', self._injeff)
         self.run_callbacks('Charge-Mon', self._charge)
 
-    @property
-    def pvs_database(self):
-        """Return PVs database."""
-        return self._pvs_database
-
-    def process(self, interval):
-        """Sleep."""
-        _time.sleep(interval)
-
     def read(self, reason):
         """Read from IOC database."""
         value = None
         if 'Charge' in reason:
             timestamp = _time.time()
             if self._storedebeam_value and not self._is_cycling:
-                dtm = (timestamp - self._time0)  # Delta t[s]
-                inc_charge = self._current_value/1000 * dtm/3600  # Charge[A.h]
+                dtm = (timestamp - self._time0)  # Delta t [s]
+                inc_charge = self._current_value/1000*dtm/3600  # Charge [A.h]
                 self._charge += inc_charge
                 self.run_callbacks('Charge-Mon', self._charge)
                 value = self._charge
@@ -319,7 +467,6 @@ class SIApp(_Callback):
         return status
 
     # ----- handle writes -----
-
     def _update_dcct_mode(self, value):
         if self._dcct_mode != value:
             self._dcct_mode = value
@@ -345,8 +492,8 @@ class SIApp(_Callback):
             self._dcctfltcheck_mode = value
 
     # ----- callbacks -----
-
     def _callback_get_dcct_current(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
             self._current_13c4_value = value
             self._current_13c4_buffer.acquire()
@@ -364,6 +511,7 @@ class SIApp(_Callback):
         self.run_callbacks('Current-Mon', self._current_value)
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
             self._storedebeam_13c4_value = value
         elif '14C4' in pvname:
@@ -379,6 +527,7 @@ class SIApp(_Callback):
         self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
+        _ = kws
         if '13C4' in pvname:
             self._reliablemeas_13c4_value = value
         elif '14C4' in pvname:
@@ -388,27 +537,32 @@ class SIApp(_Callback):
             self._update_dcct_mode_by_relblmeas()
 
     def _callback_get_dipole_opmode(self, value, **kws):
+        _ = kws
         self._is_cycling = bool(value == _PSc.States.Cycle)
 
     def _callback_get_bo_curr3gev(self, value, timestamp, **kws):
         """Get BO Current3GeV-Mon and update InjEff PV."""
+        _ = kws
+        _ = timestamp
         # choose current PV
         buffer = self._current_13c4_buffer \
             if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
             else self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
+        timestamp_dq = _np.asarray(timestamp_dq)
+        value_dq = _np.asarray(value_dq)
 
         # check buffer not empty
-        if not timestamp_dq:
+        if not timestamp_dq.size:
             return
 
         # check if there is valid current in Booster
-        if value < BO_CURR_THRESHOLD:
+        if value < self.CURR_THRESHOLD:
             return
 
         # calculate efficiency
-        delta_curr = max(value_dq[-1] - min(value_dq), 0)
-        self._injeff = 100*(delta_curr/value)*(SI_HARMNUM/BO_HARMNUM)
+        delta_curr = value_dq[-1] - _np.min(value_dq)
+        self._injeff = 100*(delta_curr/value) * self.HARMNUM_RATIO
 
         # update pvs
         self.run_callbacks('InjEff-Mon', self._injeff)
