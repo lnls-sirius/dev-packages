@@ -10,6 +10,7 @@ from siriuspy.currinfo import SILifetimeApp
 
 PUB_INTERFACE = (
     'pvs_database',
+    'init_database',
     'process',
     'read',
     'write',
@@ -45,8 +46,8 @@ class TestASAPCurrInfoLifetimeMain(unittest.TestCase):
         self.assertEqual(self.app._min_intvl_btw_spl, 1)
 
     def test_write_SplIntvl(self):
-        """Test write SplIntvl-SP."""
-        self.app.write('SplIntvl-SP', 100)
+        """Test write MaxSplIntvl-SP."""
+        self.app.write('MaxSplIntvl-SP', 100)
         self.assertEqual(self.app._sampling_interval, 100)
 
     def test_write_LtFitMode(self):
