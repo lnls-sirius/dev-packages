@@ -2,23 +2,46 @@
 
 import threading as _threading
 import dateutil as _dateutil
+from copy import deepcopy as _dcopy
 import numpy as _np
 
 from .pvarch import PVData as _PVData
 from .time import Time as _Time
 from ..search import BPMSearch as _BPMSearch
+from ..util import ClassProperty as _classproperty
 
 
 class Consts:
     """."""
 
-    BPMS_TB = _BPMSearch.get_names({'sec': 'TB'})
+    _BPMS_TB = None
+    _BPMS_BO = None
+    _BPMS_TS = None
+    _BPMS_SI = None
 
-    BPMS_BO = _BPMSearch.get_names({'sec': 'BO'})
+    @_classproperty
+    def BPMS_TB(cls):
+        if cls._BPMS_TB is None:
+            cls._BPMS_TB = _BPMSearch.get_names({'sec': 'TB'})
+        return _dcopy(cls._BPMS_TB)
 
-    BPMS_TS = _BPMSearch.get_names({'sec': 'TS'})
+    @_classproperty
+    def BPMS_BO(cls):
+        if cls._BPMS_BO is None:
+            cls._BPMS_BO = _BPMSearch.get_names({'sec': 'BO'})
+        return _dcopy(cls._BPMS_BO)
 
-    BPMS_SI = _BPMSearch.get_names({'sec': 'SI'})
+    @_classproperty
+    def BPMS_TS(cls):
+        if cls._BPMS_TS is None:
+            cls._BPMS_TS = _BPMSearch.get_names({'sec': 'TS'})
+        return _dcopy(cls._BPMS_TS)
+
+    @_classproperty
+    def BPMS_SI(cls):
+        if cls._BPMS_SI is None:
+            cls._BPMS_SI = _BPMSearch.get_names({'sec': 'SI'})
+        return _dcopy(cls._BPMS_SI)
 
 
 class OrbitBPM(Consts):

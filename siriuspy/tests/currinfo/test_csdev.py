@@ -13,6 +13,9 @@ PUB_INTERFACE = (
         'ETypes',
         'Const',
         'get_currinfo_database',
+        'get_litbts_currinfo_database',
+        'get_bo_currinfo_database',
+        'get_si_currinfo_database',
         'get_lifetime_database'
     )
 
