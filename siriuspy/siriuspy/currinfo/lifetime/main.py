@@ -265,6 +265,8 @@ class SILifetimeApp(_Callback):
         ind1 = ts_abs_arrayorg >= first
         ind2 = ts_abs_arrayorg <= last
         indices = _np.logical_and(ind1, ind2).nonzero()
+        if not indices[0].size:
+            return _np.array([]), _np.array([]), _np.array([])
         slc = slice(indices[0][0], indices[0][-1]+1)
 
         ts_aux_array = ts_arrayorg[slc]
