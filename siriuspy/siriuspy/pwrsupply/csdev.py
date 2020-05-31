@@ -657,8 +657,8 @@ def _get_ps_sofbcurrent_propty_database():
     return dbase
 
 
-def _get_id_apu22_propty_database():
-    """Return database of APU22 ID."""
+def _get_id_apu_propty_database():
+    """Return database of APU ID."""
     dbase = {
         'Phase-SP': {'type': 'float', 'value': 0.0,
                      'prec': 4, 'unit': 'mm'},
@@ -666,6 +666,7 @@ def _get_id_apu22_propty_database():
                       'prec': 4, 'unit': 'mm'},
     }
     return dbase
+
 
 def _get_pu_septum_propty_database():
     """Return database of common to all septa pulsed pwrsupply PVs."""
@@ -1610,7 +1611,7 @@ def _get_model_db(psmodel):
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
-        'APU22': _get_id_apu22_propty_database,
+        'APU': _get_id_apu_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]
