@@ -1626,12 +1626,14 @@ def _insert_strengths(database, pstype):
     prec_energy = 5
     prec_kl = 5
     prec_sl = 5
+    prec_id_k = 4
     pulsed_pstypes = (
         'tb-injseptum',
         'bo-injkicker', 'bo-ejekicker',
         'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
         'ts-injseptum-thin', 'ts-injseptum-thick',
         'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
+
     # pulsed
     if pstype in pulsed_pstypes:
         database['Kick-SP'] = {
@@ -1641,6 +1643,7 @@ def _insert_strengths(database, pstype):
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
         return database
+
     # linac spectrometer
     if pstype.startswith('li-spect'):
         database['Kick-SP'] = {
@@ -1650,6 +1653,16 @@ def _insert_strengths(database, pstype):
         database['Kick-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
         return database
+
+    # insertion devices
+    if pstype.startswith('si-id-apu'):
+        database['Kx-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
+        database['Kx-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
+        return database
+
+    print(pstype)
 
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     if magfunc in {'quadrupole', 'quadrupole-skew'}:

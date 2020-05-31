@@ -182,7 +182,7 @@ def magnet_class(maname):
     """Return class of a magnet: Dipole, Normal, Trim, Pulsed."""
     maname = _SiriusPVName(maname)
     if maname.dis == 'ID':
-        if maname.dev in ('APU', ):
+        if maname.dev in ('APU22', ):
             return 'id-apu'
     if maname.dis != 'MA' and maname.dis != 'PM':
         raise ValueError("Cannot classify {}".format(maname))
