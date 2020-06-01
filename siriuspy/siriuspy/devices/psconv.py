@@ -205,7 +205,7 @@ class StrengthConv(_Devices):
 
     @staticmethod
     def _get_dev_if_dipole(devname):
-        if devname.dis in {'B', 'B1B2'}:
+        if devname.dev in {'B', 'B1B2'}:
             # dipoles need no connectors
             return True
         return False
