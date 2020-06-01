@@ -89,7 +89,7 @@ class StrengthConv(_Devices):
         if self._dev_fam:
             devices = (self._dev_dip, self._dev_fam)
         elif self._dev_dip:
-            devices = (self._dev_dip)
+            devices = (self._dev_dip, )
         else:
             devices = ()
 
