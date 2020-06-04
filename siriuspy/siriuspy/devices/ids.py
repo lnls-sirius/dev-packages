@@ -1,6 +1,7 @@
 """Define Insertion Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..search import IDSearch as _IDSearch
 from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
 
 from .device import Device as _Device
@@ -25,12 +26,10 @@ class IDCorrectors(_DeviceApp):
         if devname not in IDCorrectors.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._ffwdcalc = _APUFFWDCalc(devname)
-
         # get deviceapp properties
         properties, \
             self._orb_sp, self._orb_rb, self._orb_refmon, self._orb_mon = \
-            self._get_properties()
+            self._get_properties(devname)
 
         # call base class constructor
         super().__init__(properties=properties, devname=devname)
@@ -60,8 +59,9 @@ class IDCorrectors(_DeviceApp):
         """Return orbit SOFBCurrent monitor."""
         return self[self._orb_mon]
 
-    def _get_properties(self):
-        corrname = self._psnames_orb[0]
+    def _get_properties(self, devname):
+        psnames_orb = _IDSearch.conv_idname_2_orbitcorr(devname)
+        corrname = psnames_orb[0]
         orb_sp = corrname + ':SOFBCurrent-SP'
         orb_rb = corrname + ':SOFBCurrent-RB'
         orb_refmon = corrname + ':SOFBCurrentRef-Mon'
@@ -138,6 +138,10 @@ class APUFeedForward(_Devices):
         devices = (self._apu, self._idcorrs)
         super().__init__(devname, devices)
 
+        # bumps
+        self._posx, self._angx, self._posy, self._angy = \
+            self._init_posang()
+
     @property
     def apu(self):
         """Return APU device."""
@@ -153,6 +157,57 @@ class APUFeedForward(_Devices):
         """."""
         return self._ffwdcalc
 
+    @property
+    def posx(self):
+        """Return posx bump value."""
+        return self._posx
+
+    @posx.setter
+    def posx(self, value):
+        """Return posx bump value."""
+        self._posx = value
+
+    @property
+    def angx(self):
+        """Return angx bump value."""
+        return self._angx
+
+    @angx.setter
+    def angx(self, value):
+        """Return angx bump value."""
+        self._angx = value
+
+    @property
+    def posy(self):
+        """Return posy bump value."""
+        return self._posy
+
+    @posy.setter
+    def posy(self, value):
+        """Return posy bump value."""
+        self._posy = value
+
+    @property
+    def angy(self):
+        """Return angy bump value."""
+        return self._angy
+
+    @angy.setter
+    def angy(self, value):
+        """Return angy bump value."""
+        self._angy = value
+
+    def bump_get_orbitcorr_current(self):
+        """Return bump orbit correctors currents."""
+        kicks = self.ffwdcalc.conv_posang2kick(
+            self.posx, self.angx, self.posy, self.angy)
+
+        # TODO: yet to be implemented!
+        # currents = self.conv_kick2curr(kicks)
+        currents = 0 * kicks
+
+        return currents
+
     def ffwd_get_orbitcorr_current(self):
         """Return feedforward orbit correctors currents."""
         phase = self.apu.phase
@@ -161,9 +216,19 @@ class APUFeedForward(_Devices):
 
     def ffwd_update_orbitcorr(self):
         """Update orbit feedforward."""
-        currents = self.ffwd_get_orbitcorr_current()
-        self.correctors.orbitcorr_current = currents
+        currents_ffwd = self.ffwd_get_orbitcorr_current()
+        currents_bump = self.bump_get_orbitcorr_current()
+        self.correctors.orbitcorr_current = currents_ffwd + currents_bump
 
-    def update_ffwd(self):
-        """Update feedforward."""
+    def update(self):
+        """Update feedforward with bump."""
         self.ffwd_update_orbitcorr()
+
+    # --- private methods ---
+
+    def _init_posang(self):
+        _ = self  # throaway arguments (temporary)
+        posx, angx = 0.0, 0.0
+        posy, angy = 0.0, 0.0
+        # NOTE: we could initialize posang with corrector values.
+        return posx, angx, posy, angy

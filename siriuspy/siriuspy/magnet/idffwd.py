@@ -46,7 +46,7 @@ class APUFFWDCalc:
         currents = _np.array(chs + cvs)
         return currents
 
-    def conv_posang_2_orbcorr_kicks(
+    def conv_posang2kick(
             self, posx=0, angx=0, posy=0, angy=0):
         """Return orbit correctors currents for bumps and angles."""
         spos = self._orbcorr_spos
