@@ -25,7 +25,7 @@ class IDCorrectors(_DeviceApp):
         if devname not in IDCorrectors.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._ffwdcalc = APUFFWDCalc(devname)
+        self._ffwdcalc = _APUFFWDCalc(devname)
 
         # get deviceapp properties
         properties, \
