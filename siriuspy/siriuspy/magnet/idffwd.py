@@ -58,10 +58,10 @@ class APUFFWDCalc:
 
         """
         def calc_kicks(pos, ang):
-            # angle bump
+            # ang bump
             theta = _np.atan(len2/len1 * _np.tan(ang/1e6)) * 1e6
             corrs = [-theta, theta + ang, -theta - ang, theta]
-            # offset bump
+            # pos bump
             theta = _np.atan(pos / 1e6 / len1) * 1e6
             corrs[0] += theta
             corrs[1] -= theta
@@ -74,8 +74,6 @@ class APUFFWDCalc:
         len2 = 0.5*(spos[2] - spos[1])
         kicks = calc_kicks(posx, angx) + calc_kicks(posy, angy)
         return _np.asarray(kicks)
-
-
 
     # --- private methods ---
 
