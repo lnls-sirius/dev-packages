@@ -21,10 +21,6 @@ class Device:
 
     def __init__(self, devname, properties, auto_mon=False):
         """."""
-        # TODO: It takes ~ 20ms to get an -Mon PV update when auto_mon=False
-        # We should test switching default to True.
-        # This might have a positive impact in StrengthConv!
-
         self._properties = properties[:]
         self._auto_mon = auto_mon
         self._devname, self._pvs = self._create_pvs(devname)
@@ -184,12 +180,12 @@ class DeviceApp(Device):
     This kind of device groups properties of other devices.
     """
 
-    def __init__(self, properties, devname=None):
+    def __init__(self, properties, devname=None, auto_mon=False):
         """."""
         self._devname_app = devname
 
         # call base class constructor
-        super().__init__(None, properties=properties)
+        super().__init__(None, properties=properties, auto_mon=auto_mon)
 
     @property
     def devname(self):
