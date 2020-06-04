@@ -48,34 +48,35 @@ class APUFFWDCalc:
 
     def conv_posang_2_orbcorr_kicks(
             self, posx=0, angx=0, posy=0, angy=0):
-        """Return orbit correctors currents for bumps and angles.
+        """Return orbit correctors currents for bumps and angles."""
+        spos = self._orbcorr_spos
+        len1 = spos[1] - spos[0]
+        len2 = 0.5*(spos[2] - spos[1])
+        kickx = APUFFWDCalc._calc_kicks(len1, len2, posx, angx)
+        kicky = APUFFWDCalc._calc_kicks(len1, len2, posy, angy)
+        return _np.asarray(kickx + kicky)
 
-        Geometry (a courtesy of F. de Sá):
+    # --- private methods ---
+
+    @staticmethod
+    def _calc_kicks(len1, len2, pos, ang):
+        """Geometry (a courtesy of F. de Sá).
 
         >----------------> ebeam direction >---------------->
         C1|C1      C2|C2                     C3|C3      C4|C4
           |---len1---|----len2----|----len2----|---len1---|
 
         """
-        def calc_kicks(pos, ang):
-            # ang bump
-            theta = _np.atan(len2/len1 * _np.tan(ang/1e6)) * 1e6
-            corrs = [-theta, theta + ang, -theta - ang, theta]
-            # pos bump
-            theta = _np.atan(pos / 1e6 / len1) * 1e6
-            corrs[0] += theta
-            corrs[1] -= theta
-            corrs[2] -= theta
-            corrs[3] += theta
-            return corrs
-
-        spos = self._orbcorr_spos
-        len1 = spos[1] - spos[0]
-        len2 = 0.5*(spos[2] - spos[1])
-        kicks = calc_kicks(posx, angx) + calc_kicks(posy, angy)
-        return _np.asarray(kicks)
-
-    # --- private methods ---
+        # ang bump
+        theta = _np.atan(len2/len1 * _np.tan(ang/1e6)) * 1e6
+        kicks = [-theta, theta + ang, -theta - ang, theta]
+        # pos bump
+        theta = _np.atan(pos / 1e6 / len1) * 1e6
+        kicks[0] += theta
+        kicks[1] -= theta
+        kicks[2] -= theta
+        kicks[3] += theta
+        return kicks
 
     def _get_corr_spos(self):
         manames = [psname.replace(':PS-', ':MA-') for
