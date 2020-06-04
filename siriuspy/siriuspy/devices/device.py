@@ -19,9 +19,14 @@ class Device:
     GET_TIMEOUT = _GET_TIMEOUT
     _properties = ()
 
-    def __init__(self, devname, properties):
+    def __init__(self, devname, properties, auto_mon=False):
         """."""
+        # TODO: It takes ~ 20ms to get an -Mon PV update when auto_mon=False
+        # We should test switching default to True.
+        # This might have a positive impact in StrengthConv!
+
         self._properties = properties[:]
+        self._auto_mon = auto_mon
         self._devname, self._pvs = self._create_pvs(devname)
 
     @property
@@ -127,7 +132,7 @@ class Device:
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
             pvname = _VACA_PREFIX + pvname
-            auto_monitor = not pvname.endswith('-Mon')
+            auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
@@ -269,6 +274,13 @@ class Devices:
     def values(self):
         """Return dict of property values."""
         return self.pv_attribute_values('value')
+
+    def wait_for_connection(self, timeout=None):
+        """Wait for connection."""
+        for dev in self._devices:
+            if not dev.wait_for_connection(timeout=timeout):
+                return False
+        return True
 
     @property
     def devices(self):
