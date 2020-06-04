@@ -43,7 +43,7 @@ class IDCorrectors(_DeviceApp):
     @orbitcorr_current.setter
     def orbitcorr_current(self, value):
         """Set orbit SOFBCurrent SP."""
-        # self[self._orb_sp] = value
+        self[self._orb_sp] = value
 
     @property
     def orbitcorr_current_sp(self):
@@ -166,4 +166,4 @@ class APUFeedForward(_Devices):
 
     def update_ffwd(self):
         """Update feedforward."""
-        self.ffwd_update_orbit()
+        self.ffwd_update_orbitcorr()
