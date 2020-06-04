@@ -62,7 +62,7 @@ class IDFeedForward(_DeviceApp):
         return self[self._orb_sp]
 
     @property
-    def orbitcorr_currentrb(self):
+    def orbitcorr_current_rb(self):
         """Return orbit SOFBCurrent readback."""
         return self[self._orb_rb]
 
