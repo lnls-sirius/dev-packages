@@ -90,7 +90,7 @@ class EpicsMatrix(BaseMatrix):
             return False
         self.respmat_extended = matb
         self._save_respmat(matb)
-        self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
+        self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
         return True
 
     def _set_respmat(self, mat):
@@ -212,7 +212,7 @@ class EpicsMatrix(BaseMatrix):
 
         self.respmat_extended = matb
         self.select_items_extended.update(selbs)
-        self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
+        self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
         for k in sellist:
             val = self.select_items[k]
             pvname = self.selection_pv_names[k]
@@ -303,8 +303,7 @@ class EpicsMatrix(BaseMatrix):
             self._update_log(msg)
             _log.warning(msg[6:])
         inv_s[self.num_sing_values:] = 0
-        invs = _np.diag(inv_s)
-        inv_mat = _np.dot(_np.dot(vvv.T, invs), vvv.T)
+        inv_mat = _np.dot(vvv.T*inv_s, uuu.T)
         is_nan = _np.any(_np.isnan(inv_mat))
         is_inf = _np.any(_np.isinf(inv_mat))
         if is_nan or is_inf:
@@ -317,9 +316,8 @@ class EpicsMatrix(BaseMatrix):
         self.sing_values[:len(sing)] = sing
         self.run_callbacks('SingValues-Mon', list(self.sing_values))
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
-        self.inv_respmat[sel_mat.T] = inv_mat.flatten()
-        self.run_callbacks(
-                'InvRespMat-Mon', list(self.inv_respmat.flatten()))
+        self.inv_respmat[sel_mat.T] = inv_mat.ravel()
+        self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)

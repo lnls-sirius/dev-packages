@@ -447,7 +447,7 @@ class SOFB(_BaseClass):
             self.correctors.apply_kicks(kicks)
 
         mat = _np.array(mat).T
-        self.matrix.set_respmat(list(mat.flatten()))
+        self.matrix.set_respmat(list(mat.ravel()))
         self.run_callbacks(
             'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Completed)
         self._measuring_respmat = False
