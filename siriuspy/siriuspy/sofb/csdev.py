@@ -695,12 +695,6 @@ class SOFBSI(SOFBRings, ConstSI):
                 'lolim': -1000, 'hilim': 1000},
             'DeltaFactorRF-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'MaxKickRF-SP': {
-                'type': 'float', 'value': 499663000, 'unit': 'Hz', 'prec': 2,
-                'lolim': 499660000, 'hilim': 499665000},
-            'MaxKickRF-RB': {
-                'type': 'float', 'value': 499663000, 'unit': 'Hz', 'prec': 2,
-                'lolim': 499660000, 'hilim': 499665000},
             'MaxDeltaKickRF-SP': {
                 'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 2,
                 'lolim': 0, 'hilim': 10000},

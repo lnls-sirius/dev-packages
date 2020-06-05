@@ -75,7 +75,6 @@ class SOFB(_BaseClass):
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
             dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
-            dbase['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
             dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
             dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF),
