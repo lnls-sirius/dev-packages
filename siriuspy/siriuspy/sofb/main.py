@@ -513,6 +513,9 @@ class SOFB(_BaseClass):
         dkicks = self.matrix.calc_kicks(orb)
         if dkicks is not None:
             self._dtheta = dkicks
+        msg = 'Kicks calculated!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def _process_kicks(self, kicks, dkicks):
         if dkicks is None:
