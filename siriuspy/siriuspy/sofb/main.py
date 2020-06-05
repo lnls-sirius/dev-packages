@@ -33,12 +33,12 @@ class SOFB(_BaseClass):
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 300, 'cv': 300}
-        self._meas_respmat_kick = {'ch': 80, 'cv': 80}
+        self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
             self._corr_factor['rf'] = 1.00
-            self._max_kick['rf'] = 499663000
+            self._max_kick['rf'] = 1e12  # a very large value
             self._max_delta_kick['rf'] = 500
-            self._meas_respmat_kick['rf'] = 50
+            self._meas_respmat_kick['rf'] = 80
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
