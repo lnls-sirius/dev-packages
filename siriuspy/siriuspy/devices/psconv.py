@@ -10,9 +10,6 @@ from .syncd import DevicesSync as _DevicesSync
 class PSProperty(_DevicesSync):
     """Power Supply Epics Connector."""
 
-    # TODO: Test changing default value of auto_mon to see if conversion
-    # IOCs are improved.
-
     _ps2devs = {
         # devices which are mapped to more than one device
         'BO-Fam:PS-B-1': ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'),
@@ -78,6 +75,9 @@ class PSProperty(_DevicesSync):
 
 class StrengthConv(_Devices):
     """Strength Converter."""
+
+    # TODO: Test changing default value of auto_mon to see if conversion
+    # IOCs are improved.
 
     def __init__(self, devname, proptype, auto_mon=False):
         """."""
