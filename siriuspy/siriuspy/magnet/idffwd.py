@@ -1,5 +1,6 @@
 """Insertion Device Feedforward Correction Classes."""
 
+import math as _math
 import numpy as _np
 
 from ..search import IDSearch as _IDSearch
@@ -34,7 +35,7 @@ class APUFFWDCalc:
         return self._nr_cvs
 
     @property
-    def psnames_orbitcorr(self):
+    def orbitcorr_psnames(self):
         """Return orbit corrector names."""
         return self._psnames_orb
 
@@ -49,6 +50,7 @@ class APUFFWDCalc:
     def conv_posang2kick(
             self, posx=0, angx=0, posy=0, angy=0):
         """Return orbit correctors currents for bumps and angles."""
+        # 3.34 µs ± 49.1 ns per loop
         spos = self._orbcorr_spos
         len1 = spos[1] - spos[0]
         len2 = 0.5*(spos[2] - spos[1])
@@ -68,10 +70,10 @@ class APUFFWDCalc:
 
         """
         # ang bump
-        theta = _np.atan(len2/len1 * _np.tan(ang/1e6)) * 1e6
+        theta = _math.atan(len2/len1 * _math.tan(ang/1e6)) * 1e6
         kicks = [-theta, theta + ang, -theta - ang, theta]
         # pos bump
-        theta = _np.atan(pos / 1e6 / len1) * 1e6
+        theta = _math.atan(pos / 1e6 / len1) * 1e6
         kicks[0] += theta
         kicks[1] -= theta
         kicks[2] -= theta
