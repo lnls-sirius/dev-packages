@@ -12,14 +12,61 @@ from .device import DeviceApp as _DeviceApp
 from .psconv import StrengthConv as _StrengthConv
 
 
-class IDCorrectors(_DeviceApp):
-    """."""
+class APU(_Device):
+    """Insertion Device APU."""
 
     class DEVICES:
         """."""
 
         APU22_09SA = 'SI-09SA:ID-APU22'
         ALL = (APU22_09SA, )
+
+    _properties = (
+        'Phase-SP', 'Phase-Mon',
+        'Kx-SP', 'Kx-Mon',
+    )
+
+    def __init__(self, devname):
+        """."""
+        devname = _SiriusPVName(devname)
+
+        # check if device exists
+        if devname not in APU.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=APU._properties, auto_mon=True)
+
+    @property
+    def phase(self):
+        """Return APU phase [mm]."""
+        return self['Phase-Mon']
+
+    @phase.setter
+    def phase(self, value):
+        """Set APU phase [mm]."""
+        self['Phase-SP'] = value
+
+    @property
+    def phase_sp(self):
+        """Return APU phase SP [mm]."""
+        return self['Phase-SP']
+
+    @property
+    def idkx(self):
+        """Return APU Kx."""
+        return self['Kx-SP']
+
+    @idkx.setter
+    def idkx(self, value):
+        """Set APU Kx."""
+        self['Kx-SP'] = value
+
+
+class IDCorrectors(_DeviceApp):
+    """."""
+
+    DEVICES = APU.DEVICES
 
     def __init__(self, devname):
         """."""
@@ -80,52 +127,6 @@ class IDCorrectors(_DeviceApp):
             orb_sp, orb_rb, orb_refmon, orb_mon
         )
         return properties, orb_sp, orb_rb, orb_refmon, orb_mon
-
-
-class APU(_Device):
-    """Insertion Device APU."""
-
-    class DEVICES:
-        """."""
-
-        APU22_09SA = 'SI-09SA:ID-APU22'
-        ALL = (APU22_09SA, )
-
-    _properties = (
-        'Phase-SP', 'Phase-Mon',
-        'Kx-SP', 'Kx-Mon',
-    )
-
-    def __init__(self, devname):
-        """."""
-        devname = _SiriusPVName(devname)
-
-        # check if device exists
-        if devname not in APU.DEVICES.ALL:
-            raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=APU._properties, auto_mon=True)
-
-    @property
-    def phase(self):
-        """Return APU phase [mm]."""
-        return self['Phase-Mon']
-
-    @phase.setter
-    def phase(self, value):
-        """Set APU phase [mm]."""
-        self['Phase-SP'] = value
-
-    @property
-    def phase_sp(self):
-        """Return APU phase SP [mm]."""
-        return self['Phase-SP']
-
-    @property
-    def idkx(self):
-        """Return APU Kx."""
-        return self['Kx-SP']
 
 
 class APUFeedForward(_Devices):
