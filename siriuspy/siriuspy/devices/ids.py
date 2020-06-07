@@ -158,7 +158,6 @@ class APUFeedForward(_Devices):
         self._posx, self._angx, self._posy, self._angy = \
             self._init_posang()
 
-
     @property
     def apu(self):
         """Return APU device."""
