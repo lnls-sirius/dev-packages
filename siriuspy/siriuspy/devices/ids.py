@@ -23,6 +23,7 @@ class APU(_Device):
 
     _properties = (
         'DevCtrl-Cmd', 'Moving-Mon',
+        'PhaseSpeed-SP', 'PhaseSpeed-Mon'
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
     )
@@ -54,6 +55,21 @@ class APU(_Device):
     def phase_sp(self):
         """Return APU phase SP [mm]."""
         return self['Phase-SP']
+
+    @property
+    def phase_speed(self):
+        """Return APU phase speed [mm/s]."""
+        return self['PhaseSpeed-Mon']
+
+    @phase_speed.setter
+    def phase_speed(self, value):
+        """Set APU phase_speed [mm/s]."""
+        self['PhaseSpeed-SP'] = value
+
+    @property
+    def phase_speed_sp(self):
+        """Return APU phase speed SP [mm/s]."""
+        return self['PhaseSpeed-SP']
 
     @property
     def idkx(self):
