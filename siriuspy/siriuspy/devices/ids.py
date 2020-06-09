@@ -23,7 +23,7 @@ class APU(_Device):
 
     _properties = (
         'DevCtrl-Cmd', 'Moving-Mon',
-        'PhaseSpeed-SP', 'PhaseSpeed-Mon'
+        'PhaseSpeed-SP', 'PhaseSpeed-Mon',
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
     )
