@@ -1,5 +1,6 @@
 """Define Insertion Devices."""
 
+import time as _time
 import numpy as _np
 
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -29,6 +30,7 @@ class APU(_Device):
     )
 
     _CMD_MOVE = 3
+    _MOVECHECK_SLEEP = 0.1  # [s]
 
     def __init__(self, devname):
         """."""
@@ -90,7 +92,10 @@ class APU(_Device):
         """."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE
 
-
+    def wait_move(self):
+        """Wait for phase movement to complete."""
+        while self.is_moving:
+            _time.sleep(APU._MOVECHECK_SLEEP)
 
 
 class IDCorrectors(_DeviceApp):
