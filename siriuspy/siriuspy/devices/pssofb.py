@@ -287,32 +287,34 @@ class PSApplySOFB(_Devices):
     def kick(self):
         """Return correctors Ref-Mon kicks in SOFB order."""
         current = self.current
-        strength = self._get_kick(current)
+        strength = self._conv_curr2stren(current)
         return strength
 
     @kick.setter
     def kick(self, value):
         """Set correctors -SP kicks in SOFB order."""
+        current = self._conv_stren2curr(value)
+        self.current = current
 
     @property
     def kick_sp(self):
         """Return correctors -SP kicks in SOFB order."""
         current = self.current_sp
-        strength = self._get_kick(current)
+        strength = self._conv_curr2stren(current)
         return strength
 
     @property
     def kick_rb(self):
         """Return correctors -RB kicks in SOFB order."""
         current = self.current_rb
-        strength = self._get_kick(current)
+        strength = self._conv_curr2stren(current)
         return strength
 
     @property
     def kick_mon(self):
         """Return correctors -Mon kicks in SOFB order."""
         current = self.current_mon
-        strength = self._get_kick(current)
+        strength = self._conv_curr2stren(current)
         return strength
 
     # --- private methods ---
@@ -326,7 +328,7 @@ class PSApplySOFB(_Devices):
                 values[inds] = vals
         return values
 
-    def _get_kick(self, current):
+    def _conv_curr2stren(self, current):
         strength = _np.zeros(len(current))
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
@@ -334,6 +336,16 @@ class PSApplySOFB(_Devices):
             stren = sconv.conv_current_2_strength(currents=value)
             strength[index] = stren
         return strength
+
+    def _conv_stren2curr(self, strength):
+        current = _np.zeros(len(strength))
+        for pstype, index in self._pstype_2_index.items():
+            sconv = self._pstype_2_sconv[pstype]
+            value = strength[index]
+            curr = sconv.conv_strength_2_current_2(strengths=value)
+            current[index] = curr
+        return current
+
 
     @staticmethod
     def _get_pscorrsofb_devices(devname):
