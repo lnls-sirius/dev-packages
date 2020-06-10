@@ -342,7 +342,7 @@ class PSApplySOFB(_Devices):
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = strength[index]
-            curr = sconv.conv_strength_2_current_2(strengths=value)
+            curr = sconv.conv_strength_2_current(strengths=value)
             current[index] = curr
         return current
 
