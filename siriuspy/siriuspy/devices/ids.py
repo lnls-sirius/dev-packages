@@ -94,6 +94,7 @@ class APU(_Device):
 
     def wait_move(self):
         """Wait for phase movement to complete."""
+        _time.sleep(APU._MOVECHECK_SLEEP)
         while self.is_moving:
             _time.sleep(APU._MOVECHECK_SLEEP)
 
