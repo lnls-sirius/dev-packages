@@ -202,10 +202,6 @@ class PSApplySOFB(_Devices):
         if devname not in PSApplySOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        # number of correctors
-        self._nr_chs = len(self.psnames_ch)
-        self._nr_cvs = len(self.psnames_cv)
-
         # get devices
         devices = PSApplySOFB._get_pscorrsofb_devices(devname)
 
@@ -218,6 +214,10 @@ class PSApplySOFB(_Devices):
 
         # call base class constructor
         super().__init__(devname, devices=devices)
+
+        # number of correctors
+        self._nr_chs = len(self.psnames_ch)
+        self._nr_cvs = len(self.psnames_cv)
 
     @property
     def psnames_ch(self):
@@ -340,7 +340,6 @@ class PSApplySOFB(_Devices):
             curr = sconv.conv_strength_2_current(strengths=value)
             current[index] = curr
         return current
-
 
     @staticmethod
     def _get_pscorrsofb_devices(devname):
