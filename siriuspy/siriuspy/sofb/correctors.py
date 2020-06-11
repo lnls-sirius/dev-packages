@@ -323,9 +323,9 @@ class TimingConfig(_BaseTimingConfig):
             }
         if _HLTimesearch.has_delay_type(trig):
             self._config_pvs_rb['RFDelayType'] = _PV(
-                            pref_trig + 'RFDelayType-Sts', **opt)
+                pref_trig + 'RFDelayType-Sts', **opt)
             self._config_pvs_sp['RFDelayType'] = _PV(
-                            pref_trig + 'RFDelayType-Sel', **opt)
+                pref_trig + 'RFDelayType-Sel', **opt)
 
     def send_evt(self):
         """Send event method."""
@@ -362,7 +362,7 @@ class EpicsCorrectors(BaseCorrectors):
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
-                1/self._acq_rate, self._update_corrs_strength, niter=0)
+            1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
 
     @property
@@ -400,7 +400,6 @@ class EpicsCorrectors(BaseCorrectors):
         _log.info(strn.format('check ready:', 1000*(time3-time2)))
 
         # Send trigger signal for implementation
-        # _time.sleep(0.450)
         self.send_evt()
         time4 = _time.time()
         _log.info(strn.format('send evt:', 1000*(time4-time3)))
