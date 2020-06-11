@@ -562,9 +562,8 @@ class EpicsCorrectors(BaseCorrectors):
         self._status = status
         self.run_callbacks('CorrStatus-Mon', status)
 
-    def _timed_out(self, values, mode='ready'):
+        okg = [False, ] * len(self._corrs)
         for _ in range(self.NUM_TIMEOUT):
-            okg = [False, ] * len(self._corrs)
             for i, corr in enumerate(self._corrs):
                 if not okg[i]:
                     if values[i] is None:
