@@ -464,6 +464,8 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
+            interval = 1/self._auto_corr_freq
+            use_pssofb = self.acc == 'SI' and interval < 1
 
             time0 = _time.time()
             _log.info('TIMEIT: BEGIN')
@@ -479,6 +481,8 @@ class SOFB(_BaseClass):
             dkicks = self.matrix.calc_kicks(orb)
             time2 = _time.time()
             _log.info(strn.format('calc kicks:', 1000*(time2-time1)))
+            self._ref_corr_kicks = self.correctors.get_strength(
+                use_pssofb=use_pssofb)
             time3 = _time.time()
             _log.info(strn.format('get strength:', 1000*(time3-time2)))
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
@@ -494,7 +498,8 @@ class SOFB(_BaseClass):
             msg = 'Applying kicks.'
             self._update_log(msg)
             _log.info(msg)
-            self.correctors.apply_kicks(kicks)  # slowest part
+            # slowest part:
+            self.correctors.apply_kicks(kicks, use_pssofb=use_pssofb)
             time5 = _time.time()
             _log.info(strn.format('apply kicks:', 1000*(time5-time4)))
             msg = 'kicks applied!'
@@ -504,7 +509,6 @@ class SOFB(_BaseClass):
             dtime = (_time.time()-time0)
             _log.info(strn.format('total:', 1000*dtime))
             _log.info('TIMEIT: END')
-            interval = 1/self._auto_corr_freq
             if dtime > interval:
                 msg = 'WARN: Loop took {0:6.2f}ms.'.format(dtime*1000)
                 self._update_log(msg)
