@@ -207,7 +207,7 @@ class PSApplySOFB(_Devices):
 
         # strengthconv dictionaries
         self._pstype_2_index, self._pstype_2_sconv = \
-            self._get_strenconv()
+            self._get_strenconv(devname)
 
         # add StrengthConv devices
         devices += self._pstype_2_sconv.values()
@@ -357,13 +357,13 @@ class PSApplySOFB(_Devices):
                 devices[devname] = sofb_corr
         return list(devices.values())
 
-    def _get_strenconv(self):
+    def _get_strenconv(self, devname):
         # 1. create pstype to StrengthConv dictionary.
         # 2. create pstype to corrector index dictionnary.
         pstype_2_index = dict()
         pstype_2_sconv = dict()
-        psnames = CorrSOFBConst.get_psnames_ch(self.devname) + \
-            CorrSOFBConst.get_psnames_cv(self.devname)
+        psnames = CorrSOFBConst.get_psnames_ch(devname) + \
+            CorrSOFBConst.get_psnames_cv(devname)
         for i, psname in enumerate(psnames):
             pstype = _PSSearch.conv_psname_2_pstype(psname)
             if pstype not in pstype_2_index:
