@@ -418,9 +418,9 @@ class App(_Callback):
     def _config_ps(self):
         for corr in self._correctors.values():
             if self._corr_pwrstate_sel_pvs[corr].connected:
-                self._corr_pwrstate_sel_pvs[corr].put(1)
+                self._corr_pwrstate_sel_pvs[corr].put(_PSC.PwrStateSel.On)
                 if 'Sept' not in corr:
-                    self._corr_opmode_sel_pvs[corr].put(0)
+                    self._corr_opmode_sel_pvs[corr].put(_PSC.OpMode.SlowRef)
             else:
                 self.run_callbacks(
                     'Log-Mon', 'ERR:' + corr + ' is disconnected.')
