@@ -360,7 +360,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
         if self.acc == 'SI':
-            self._pssofb = _PSSOFB(self.acc)
+            self._pssofb = _PSSOFB(self.acc, auto_mon=True)
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
