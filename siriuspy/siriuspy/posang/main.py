@@ -67,6 +67,9 @@ class App(_Callback):
             self._correctors['CH3'] = _SiriusPVName(corrh[2])
         self._correctors['CV1'] = _SiriusPVName(corrv[0])
         self._correctors['CV2'] = _SiriusPVName(corrv[1])
+        if len(corrv) == 4:
+            self._correctors['CV3'] = _SiriusPVName(corrv[2])
+            self._correctors['CV4'] = _SiriusPVName(corrv[3])
         self._corrs2id = {v: k for k, v in self._correctors.items()}
 
         self._corr_check_connection = dict()
@@ -248,6 +251,9 @@ class App(_Callback):
             respmat = self._respmat_y
             corrs2delta.append((self._correctors['CV1'], 0))
             corrs2delta.append((self._correctors['CV2'], 1))
+            if 'CV3' in self._correctors.keys():
+                corrs2delta.append((self._correctors['CV3'], 2))
+                corrs2delta.append((self._correctors['CV4'], 3))
 
         if self._status != _ALLCLR:
             self.run_callbacks('Log-Mon', 'ERR:Failed on applying new delta.')

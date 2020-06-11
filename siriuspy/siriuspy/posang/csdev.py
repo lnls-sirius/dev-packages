@@ -12,7 +12,8 @@ class Const:
     TS_CORRH_POSANG_CHSEPT = ('TS-04:PS-CH', 'TS-04:PU-InjSeptF')
     TS_CORRH_POSANG_SEPTSEPT = \
         ('TS-04:PU-InjSeptG-1', 'TS-04:PU-InjSeptG-2', 'TS-04:PU-InjSeptF')
-    TS_CORRV_POSANG = ('TS-04:PS-CV-1', 'TS-04:PS-CV-2')
+    TS_CORRV_POSANG = \
+        ('TS-04:PS-CV-0', 'TS-04:PS-CV-1', 'TS-04:PS-CV-1E2', 'TS-04:PS-CV-2')
 
     STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
 
@@ -85,5 +86,12 @@ def get_posang_database(tl, corrs_type='ch-sept'):
         pvs_database['CH3-Cte'] = {'type': 'string', 'value': corrh[2]}
         pvs_database['RefKickCH3-Mon'] = {'type': 'float', 'value': 0,
                                           'prec': 4, 'unit': 'mrad'}
+    if len(corrv) == 4:
+        pvs_database['CV3-Cte'] = {'type': 'string', 'value': corrv[2]}
+        pvs_database['RefKickCV3-Mon'] = {'type': 'float', 'value': 0,
+                                          'prec': 4, 'unit': 'urad'}
+        pvs_database['CV4-Cte'] = {'type': 'string', 'value': corrv[3]}
+        pvs_database['RefKickCV4-Mon'] = {'type': 'float', 'value': 0,
+                                          'prec': 4, 'unit': 'urad'}
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
