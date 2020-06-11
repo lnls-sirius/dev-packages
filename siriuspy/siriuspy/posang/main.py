@@ -35,13 +35,13 @@ class App(_Callback):
         self._TL = tl.upper()
         self._CORRSTYPE = corrs_type
         if self._TL == 'TS':
-            CORRH = (_PAConst.TS_CORRH_POSANG_CHSEPT
+            corrh = (_PAConst.TS_CORRH_POSANG_CHSEPT
                      if self._CORRSTYPE == 'ch-sept'
                      else _PAConst.TS_CORRH_POSANG_SEPTSEPT)
-            CORRV = _PAConst.TS_CORRV_POSANG
+            corrv = _PAConst.TS_CORRV_POSANG
         elif self._TL == 'TB':
-            CORRH = _PAConst.TB_CORRH_POSANG
-            CORRV = _PAConst.TB_CORRV_POSANG
+            corrh = _PAConst.TB_CORRH_POSANG
+            corrv = _PAConst.TB_CORRV_POSANG
 
         self._status = _ALLSET
         self._orbx_deltapos = 0
@@ -61,12 +61,12 @@ class App(_Callback):
             self._respmat_y = corrparams[2]
 
         self._correctors = dict()
-        self._correctors['CH1'] = _SiriusPVName(CORRH[0])
-        self._correctors['CH2'] = _SiriusPVName(CORRH[1])
-        if len(CORRH) == 3:
-            self._correctors['CH3'] = _SiriusPVName(CORRH[2])
-        self._correctors['CV1'] = _SiriusPVName(CORRV[0])
-        self._correctors['CV2'] = _SiriusPVName(CORRV[1])
+        self._correctors['CH1'] = _SiriusPVName(corrh[0])
+        self._correctors['CH2'] = _SiriusPVName(corrh[1])
+        if len(corrh) == 3:
+            self._correctors['CH3'] = _SiriusPVName(corrh[2])
+        self._correctors['CV1'] = _SiriusPVName(corrv[0])
+        self._correctors['CV2'] = _SiriusPVName(corrv[1])
         self._corrs2id = {v: k for k, v in self._correctors.items()}
 
         self._corr_check_connection = dict()
@@ -85,14 +85,14 @@ class App(_Callback):
                 self._corr_check_ctrlmode_mon[corr_id] = 1
 
         # Connect to correctors
-        self._corr_kick_sp_pvs = {}
-        self._corr_kick_rb_pvs = {}
-        self._corr_pwrstate_sel_pvs = {}
-        self._corr_pwrstate_sts_pvs = {}
-        self._corr_opmode_sel_pvs = {}
-        self._corr_opmode_sts_pvs = {}
-        self._corr_ctrlmode_mon_pvs = {}
-        self._corr_refkick = {}
+        self._corr_kick_sp_pvs = dict()
+        self._corr_kick_rb_pvs = dict()
+        self._corr_pwrstate_sel_pvs = dict()
+        self._corr_pwrstate_sts_pvs = dict()
+        self._corr_opmode_sel_pvs = dict()
+        self._corr_opmode_sts_pvs = dict()
+        self._corr_ctrlmode_mon_pvs = dict()
+        self._corr_refkick = dict()
 
         for corr in self._correctors.values():
             pss = corr.substitute(prefix=_vaca_prefix)
@@ -114,6 +114,7 @@ class App(_Callback):
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_corr_pwrstate_sts,
                 connection_timeout=0.05)
+
             if 'Sept' not in corr.dev:
                 self._corr_opmode_sel_pvs[corr] = _PV(
                     pss.substitute(propty_name='OpMode', propty_suffix='Sel'),
