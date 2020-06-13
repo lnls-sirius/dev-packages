@@ -3,6 +3,7 @@ import numpy as _np
 
 from ..search import PSSearch as _PSSearch
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..sofb.csdev import SOFBFactory as _SOFBFactory
 
 from . import Device as _Device
 from . import Devices as _Devices
@@ -12,30 +13,21 @@ from . psconv import StrengthConv as _StrengthConv
 class CorrSOFBConst:
     """."""
 
-    _psnames_ch = dict()
-    _psnames_cv = dict()
+    _sofb = dict()
 
     @staticmethod
     def get_psnames_ch(acc):
         """Return horizontal corrector psnames of a given sector."""
-        return CorrSOFBConst._get_psnames(acc, 'CH')
+        if acc not in CorrSOFBConst._sofb:
+            CorrSOFBConst._sofb[acc] = _SOFBFactory.create(acc)
+        return CorrSOFBConst._sofb[acc].ch_names
 
     @staticmethod
     def get_psnames_cv(acc):
         """Return vertical corrector psnames of a given sector."""
-        return CorrSOFBConst._get_psnames(acc, 'CV')
-
-    @staticmethod
-    def _get_psnames(acc, corr_type):
-        psnames_dict = CorrSOFBConst._psnames_ch if corr_type == 'CH' \
-            else CorrSOFBConst._psnames_cv
-        if acc not in psnames_dict:
-            filt = {'sec': acc, 'dis': 'PS', 'dev': corr_type}
-            if acc == 'SI':
-                filt.update({'sub': '..(M|C).'})
-            psnames = _PSSearch.get_psnames(filt)
-            psnames_dict[acc] = tuple(psnames)
-        return psnames_dict[acc]
+        if acc not in CorrSOFBConst._sofb:
+            CorrSOFBConst._sofb[acc] = _SOFBFactory.create(acc)
+        return CorrSOFBConst._sofb[acc].cv_names
 
 
 class PSCorrSOFB(_Device):
