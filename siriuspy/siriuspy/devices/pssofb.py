@@ -3,31 +3,53 @@ import numpy as _np
 
 from ..search import PSSearch as _PSSearch
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..sofb.csdev import SOFBFactory as _SOFBFactory
 
 from . import Device as _Device
 from . import Devices as _Devices
 from . psconv import StrengthConv as _StrengthConv
 
 
-class CorrSOFBConst:
+class PSNamesSOFB:
     """."""
 
-    _sofb = dict()
+    # NOTE: SOFBFactory cannot be imported because it would
+    # generate circular import due to PSApplySOFB being imported
+    # in sofb.correctors.
+
+    _id_subs = ('SA', 'SB', 'SP')
+    _psnames_ch = dict()
+    _psnames_cv = dict()
 
     @staticmethod
     def get_psnames_ch(acc):
         """Return horizontal corrector psnames of a given sector."""
-        if acc not in CorrSOFBConst._sofb:
-            CorrSOFBConst._sofb[acc] = _SOFBFactory.create(acc)
-        return CorrSOFBConst._sofb[acc].ch_names
+        if acc not in PSNamesSOFB._psnames_ch:
+            PSNamesSOFB._create_psnames(acc)
+        return PSNamesSOFB._psnames_ch[acc]
 
     @staticmethod
     def get_psnames_cv(acc):
         """Return vertical corrector psnames of a given sector."""
-        if acc not in CorrSOFBConst._sofb:
-            CorrSOFBConst._sofb[acc] = _SOFBFactory.create(acc)
-        return CorrSOFBConst._sofb[acc].cv_names
+        if acc not in PSNamesSOFB._psnames_cv:
+            PSNamesSOFB._create_psnames(acc)
+        return PSNamesSOFB._psnames_cv[acc]
+
+    @staticmethod
+    def _create_psnames(acc):
+        gpsnames = _PSSearch.get_psnames
+        psnames_ch = gpsnames({'sec': acc, 'dis': 'PS', 'dev': 'CH'})
+        psnames_cv = gpsnames({'sec': acc, 'dis': 'PS', 'dev': 'CV'})
+        if acc == 'TS':
+            psnames_ch = [_SiriusPVName('TS-01:PU-EjeSeptG'), ] + psnames_ch
+        elif acc == 'SI':
+            psnames_ch = list(filter(
+                lambda x: not x.sub.endswith(PSNamesSOFB._id_subs),
+                psnames_ch))
+            psnames_cv = list(filter(
+                lambda x: not x.sub.endswith(PSNamesSOFB._id_subs),
+                psnames_cv))
+        PSNamesSOFB._psnames_ch[acc] = psnames_ch
+        PSNamesSOFB._psnames_cv[acc] = psnames_cv
 
 
 class PSCorrSOFB(_Device):
@@ -54,8 +76,8 @@ class PSCorrSOFB(_Device):
         self._sec = self._devname_orig.sec
 
         # check if device exists and is a SOFB corrector
-        if devname not in CorrSOFBConst.get_psnames_ch(self._sec) and \
-                devname not in CorrSOFBConst.get_psnames_cv(self._sec):
+        if devname not in PSNamesSOFB.get_psnames_ch(self._sec) and \
+                devname not in PSNamesSOFB.get_psnames_cv(self._sec):
             raise NotImplementedError(devname)
 
         # get bbbname and linked bsmp devices
@@ -158,8 +180,8 @@ class PSCorrSOFB(_Device):
 
     def _get_sofb_indices(self):
         devids = sorted([dev[1] for dev in self._bsmpdevs])
-        psnames = CorrSOFBConst.get_psnames_ch(self._sec) + \
-            CorrSOFBConst.get_psnames_cv(self._sec)
+        psnames = PSNamesSOFB.get_psnames_ch(self._sec) + \
+            PSNamesSOFB.get_psnames_cv(self._sec)
         indices = list()
         idx_corr = list()
         for devname, dev_id in self._bsmpdevs:
@@ -214,12 +236,12 @@ class PSApplySOFB(_Devices):
     @property
     def psnames_ch(self):
         """."""
-        return CorrSOFBConst.get_psnames_ch(self.devname)
+        return PSNamesSOFB.get_psnames_ch(self.devname)
 
     @property
     def psnames_cv(self):
         """."""
-        return CorrSOFBConst.get_psnames_cv(self.devname)
+        return PSNamesSOFB.get_psnames_cv(self.devname)
 
     @property
     def nr_correctors(self):
@@ -335,8 +357,8 @@ class PSApplySOFB(_Devices):
 
     @staticmethod
     def _get_pscorrsofb_devices(devname, auto_mon):
-        psnames = CorrSOFBConst.get_psnames_ch(devname) + \
-            CorrSOFBConst.get_psnames_cv(devname)
+        psnames = PSNamesSOFB.get_psnames_ch(devname) + \
+            PSNamesSOFB.get_psnames_cv(devname)
         devices = dict()
         all_devices = list()
         for psname in psnames:
@@ -354,8 +376,8 @@ class PSApplySOFB(_Devices):
         # 2. create pstype to corrector index dictionnary.
         pstype_2_index = dict()
         pstype_2_sconv = dict()
-        psnames = CorrSOFBConst.get_psnames_ch(devname) + \
-            CorrSOFBConst.get_psnames_cv(devname)
+        psnames = PSNamesSOFB.get_psnames_ch(devname) + \
+            PSNamesSOFB.get_psnames_cv(devname)
         for i, psname in enumerate(psnames):
             pstype = _PSSearch.conv_psname_2_pstype(psname)
             if pstype not in pstype_2_index:
