@@ -391,7 +391,8 @@ class EpicsCorrectors(BaseCorrectors):
         # Send correctors setpoint
         if self.acc == 'SI' and use_pssofb:
             self._pssofb.kick = values[:-1]
-            self.put_value_in_corr(self._corrs[-1], values[-1])
+            if values[-1] is not None:
+                self.put_value_in_corr(self._corrs[-1], values[-1])
         else:
             for i, corr in enumerate(self._corrs):
                 if values[i] is not None:
