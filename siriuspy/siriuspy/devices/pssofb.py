@@ -12,44 +12,28 @@ from . psconv import StrengthConv as _StrengthConv
 class PSNamesSOFB:
     """."""
 
-    # NOTE: SOFBFactory cannot be imported because it would
-    # generate circular import due to PSApplySOFB being imported
-    # in sofb.correctors.
-
-    _id_subs = ('SA', 'SB', 'SP')
-    _psnames_ch = dict()
-    _psnames_cv = dict()
+    _sofb = dict()
+    _sofb_factory = None
 
     @staticmethod
     def get_psnames_ch(acc):
         """Return horizontal corrector psnames of a given sector."""
-        if acc not in PSNamesSOFB._psnames_ch:
-            PSNamesSOFB._create_psnames(acc)
-        return PSNamesSOFB._psnames_ch[acc]
+        if PSNamesSOFB._sofb_factory is None:
+            from ..sofb.csdev import SOFBFactory
+            PSNamesSOFB._sofb_factory = SOFBFactory
+        if acc not in PSNamesSOFB._sofb:
+            PSNamesSOFB._sofb[acc] = PSNamesSOFB._sofb_factory.create(acc)
+        return PSNamesSOFB._sofb[acc].ch_names
 
     @staticmethod
     def get_psnames_cv(acc):
         """Return vertical corrector psnames of a given sector."""
-        if acc not in PSNamesSOFB._psnames_cv:
-            PSNamesSOFB._create_psnames(acc)
-        return PSNamesSOFB._psnames_cv[acc]
-
-    @staticmethod
-    def _create_psnames(acc):
-        gpsnames = _PSSearch.get_psnames
-        psnames_ch = gpsnames({'sec': acc, 'dis': 'PS', 'dev': 'CH'})
-        psnames_cv = gpsnames({'sec': acc, 'dis': 'PS', 'dev': 'CV'})
-        if acc == 'TS':
-            psnames_ch = [_SiriusPVName('TS-01:PU-EjeSeptG'), ] + psnames_ch
-        elif acc == 'SI':
-            psnames_ch = list(filter(
-                lambda x: not x.sub.endswith(PSNamesSOFB._id_subs),
-                psnames_ch))
-            psnames_cv = list(filter(
-                lambda x: not x.sub.endswith(PSNamesSOFB._id_subs),
-                psnames_cv))
-        PSNamesSOFB._psnames_ch[acc] = psnames_ch
-        PSNamesSOFB._psnames_cv[acc] = psnames_cv
+        if PSNamesSOFB._sofb_factory is None:
+            from ..sofb.csdev import SOFBFactory
+            PSNamesSOFB._sofb_factory = SOFBFactory
+        if acc not in PSNamesSOFB._sofb:
+            PSNamesSOFB._sofb[acc] = PSNamesSOFB._sofb_factory.create(acc)
+        return PSNamesSOFB._sofb[acc].cv_names
 
 
 class PSCorrSOFB(_Device):
