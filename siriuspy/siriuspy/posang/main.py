@@ -278,7 +278,7 @@ class App(_Callback):
         sp_check = dict()
         for cid, idx in corrs2delta:
             # delta from rad to urad or mrad
-            dlt = deltas[idx]/self._corr_unit_factor[cid]
+            dlt = deltas[idx][0]/self._corr_unit_factor[cid]
             val = self._corr_refkick[cid] + dlt
             self._corr_kick_sp_pvs[cid].put(val)
             sp_check.update({cid: [False, val]})
