@@ -133,7 +133,7 @@ def test_pscorrsofb(acc, psnames, save_flag=False):
     plt.hist(stats, 100, log=True)
     plt.title(
         psnames[0] + ' - SOFB setpoint ({} operations)'.format(len(stats)))
-    plt.xlabel('Excetution time [ms]')
+    plt.xlabel('Execution time [ms]')
     plt.ylabel('Number of realizations')
     if save_flag:
         fname = psnames[0].replace(':', '--') + '.png'
