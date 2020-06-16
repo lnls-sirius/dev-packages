@@ -50,6 +50,18 @@ def turn_on_pwrsupplies(psnames):
         print('{} : {}'.format(psupply.devname, psupply.pwrstate))
 
 
+def turn_on_pwrsupplies_all(acc):
+    """."""
+    from siriuspy.devices import PSApplySOFB
+
+    pssofb = PSApplySOFB(acc, auto_mon=True)
+    pssofb.wait_for_connection()
+
+    # configure power supplies
+    psnames = pssofb.psnames_ch + pssofb.psnames_cv
+    turn_on_pwrsupplies(psnames)
+
+
 def turn_off_pwrsupplies(psnames):
     """."""
 
@@ -63,10 +75,29 @@ def turn_off_pwrsupplies(psnames):
         psupply.cmd_turn_off()
 
 
-def test_pscorrsofb(acc, psnames):
+def test_pscorrsofb(acc, psnames, save_flag=False):
     """."""
     from siriuspy.devices import PSCorrSOFB
     import matplotlib.pyplot as plt
+
+    if psnames is None:
+        if acc == 'SI':
+            psnames = (
+                'SI-01M1:PS-CH',
+                'SI-01M1:PS-CV',
+                'SI-01M2:PS-CH',
+                'SI-01M2:PS-CV',
+                'SI-01C2:PS-CH',
+                'SI-01C2:PS-CV-1',
+                'SI-01C2:PS-CV-2',
+                )
+        if acc == 'BO':
+            psnames = (
+                'BO-03U:PS-CH',
+                'BO-03U:PS-CV',
+                'BO-05U:PS-CH',
+                'BO-05U:PS-CV',
+                )
 
     # prepare power supplies
     turn_on_pwrsupplies(psnames)
@@ -91,7 +122,7 @@ def test_pscorrsofb(acc, psnames):
     stats = np.array(stats)
 
     # turn power supplies off
-    turn_off_pwrsupplies(psnames)
+    # turn_off_pwrsupplies(psnames)
 
     print('--- benchmarks ---')
     print('avg: {:08.3f} ms'.format(np.mean(stats)))
@@ -104,37 +135,14 @@ def test_pscorrsofb(acc, psnames):
         psnames[0] + ' - SOFB setpoint ({} operations)'.format(len(stats)))
     plt.xlabel('Excetution time [ms]')
     plt.ylabel('Number of realizations')
-    plt.show()
+    if save_flag:
+        fname = psnames[0].replace(':', '--') + '.png'
+        plt.savefig(fname)
+    else:
+        plt.show()
 
 
-def test_bo_pscorrsofb(psnames=None):
-    """."""
-    if psnames is None:
-        psnames = (
-            'BO-03U:PS-CH',
-            'BO-03U:PS-CV',
-            'BO-05U:PS-CH',
-            'BO-05U:PS-CV',
-        )
-    test_pscorrsofb('BO', psnames)
-
-
-def test_si_pscorrsofb(psnames=None):
-    """."""
-    if psnames is None:
-        psnames = (
-            'SI-01M1:PS-CH',
-            'SI-01M1:PS-CV',
-            'SI-01M2:PS-CH',
-            'SI-01M2:PS-CV',
-            'SI-01C2:PS-CH',
-            'SI-01C2:PS-CV-1',
-            'SI-01C2:PS-CV-2',
-            )
-    test_pscorrsofb('SI', psnames)
-
-
-def test_si_pscorrsofb_all():
+def test_pscorrsofb_all(acc):
     """."""
     from siriuspy.devices import PSCorrSOFB
     from siriuspy.devices import PSApplySOFB
@@ -149,21 +157,18 @@ def test_si_pscorrsofb_all():
     del pssofb
 
     for psn in psnames.values():
-        test_si_pscorrsofb(psn)
+        print(psn)
+        test_pscorrsofb(acc, psn, True)
+        print()
 
 
-def test_si_psapplysofb():
+def test_si_psapplysofb(fname=None):
     """."""
-    from siriuspy.devices import PowerSupply
     from siriuspy.devices import PSApplySOFB
     import matplotlib.pyplot as plt
 
     pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
     pssofb.wait_for_connection()
-
-    # configure power supplies
-    # psnames = pssofb.psnames_ch + pssofb.psnames_cv
-    # turn_on_pwrsupplies(psnames)
 
     # check why PVs are connected but values are being returned None
     time.sleep(1.0)
@@ -191,10 +196,13 @@ def test_si_psapplysofb():
     plt.title('SOFB setpoint ({} operations)'.format(len(stats)))
     plt.xlabel('Excetution time [ms]')
     plt.ylabel('Number of realizations')
+    if fname:
+        plt.savefig(fname)
     plt.show()
 
 
 # test_bo_pscorrsofb()
 # test_si_pscorrsofb()
-# test_si_pscorrsofb_all()
-test_si_psapplysofb()
+# test_pscorrsofb_all('SI')
+turn_on_pwrsupplies_all('SI')
+# test_si_psapplysofb('sofb-two-hosts.png')
