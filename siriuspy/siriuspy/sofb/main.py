@@ -431,7 +431,7 @@ class SOFB(_BaseClass):
             elif i < self._csorb.nr_corrs:
                 delta = self._meas_respmat_kick['rf']
 
-            kicks = [None, ] * nr_corrs
+            kicks = _np.array([None, ] * nr_corrs, dtype=float)
             kicks[i] = orig_kicks[i] + delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
@@ -542,12 +542,11 @@ class SOFB(_BaseClass):
             return
 
         # keep track of which dkicks were originally different from zero:
-        newkicks = _np.array([None, ] * len(dkicks))
+        newkicks = _np.array([None, ] * len(dkicks), dtype=float)
         for i, dkick in enumerate(dkicks):
             if not _compare_kicks(dkick, 0):
                 newkicks[i] = 0.0
-        idcs_to_process = _np.array(
-            list(map(lambda x: x is not None, newkicks)))
+        idcs_to_process = ~_np.isnan(newkicks)
         if not idcs_to_process.any():
             return newkicks
 
@@ -612,6 +611,6 @@ class SOFB(_BaseClass):
             dkicks[slc][idcs_pln] = dk_slc
 
         for i, dkick in enumerate(dkicks):
-            if newkicks[i] is not None:
+            if idcs_to_process[i]:
                 newkicks[i] = kicks[i] + dkick
         return newkicks
