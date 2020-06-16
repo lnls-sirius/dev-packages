@@ -230,6 +230,7 @@ class ChromCorrApp(_BaseApp):
                 return False
             self._lastcalc_sl[fam] = sl_now + lastcalc_deltasl[fam_idx]
             self.run_callbacks('SL'+fam+'-Mon', self._lastcalc_sl[fam])
+        self._estimate_calc_chrom()
 
         self.run_callbacks('Log-Mon', 'Calculated SL values.')
         return True
@@ -400,6 +401,16 @@ class ChromCorrApp(_BaseApp):
         self._measuring_config = False
         self.run_callbacks('Log-Mon', log_msg)
         return not aborted
+
+    def _estimate_calc_chrom(self):
+        sfam_deltasl = len(self._psfams)*[0]
+        for fam_idx, fam in enumerate(self._psfams):
+            sfam_deltasl[fam_idx] = \
+                self._lastcalc_sl[fam] - self._psfam_nom_intstr[fam_idx]
+
+        calc_estim = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('CalcChromX-Mon', calc_estim[0])
+        self.run_callbacks('CalcChromY-Mon', calc_estim[1])
 
     # ---------- callbacks ----------
 

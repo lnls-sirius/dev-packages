@@ -89,6 +89,8 @@ def get_chrom_database(acc):
 
         'ChromX-Mon': {'type': 'float', 'value': 0, 'prec': 6},
         'ChromY-Mon': {'type': 'float', 'value': 0, 'prec': 6},
+        'CalcChromX-Mon': {'type': 'float', 'value': 0, 'prec': 6},
+        'CalcChromY-Mon': {'type': 'float', 'value': 0, 'prec': 6},
 
         'ApplyDelta-Cmd': {'type': 'int', 'value': 0},
 
