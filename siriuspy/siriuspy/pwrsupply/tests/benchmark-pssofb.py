@@ -156,6 +156,17 @@ def test_pscorrsofb(acc, psnames=None, save_flag=False):
     else:
         plt.show()
 
+    plt.plot(stats)
+    plt.title(
+        psnames[0] + ' - SOFB setpoint ({} operations)'.format(len(stats)))
+    plt.xlabel('Measuremunt Index')
+    plt.ylabel('Execution time [ms]')
+    if save_flag:
+        fname = 'time_' + psnames[0].replace(':', '--') + '.png'
+        plt.savefig(fname)
+    else:
+        plt.show()
+
 
 def test_pscorrsofb_all(acc):
     """."""
@@ -190,7 +201,7 @@ def test_si_psapplysofb(fname=None):
 
     # neglect first setppoint in stats
     for _ in range(10):
-        benchmark(pssofb, print_flag=False)
+        benchmark_kick(pssofb, print_flag=False)
 
     # do benchmark
     stats = list()
@@ -214,6 +225,14 @@ def test_si_psapplysofb(fname=None):
     plt.ylabel('Number of realizations')
     if fname:
         plt.savefig(fname)
+    plt.show()
+
+    plt.plot(stats)
+    plt.title('SOFB setpoint ({} operations)'.format(len(stats)))
+    plt.ylabel('Measurement Index')
+    plt.ylabel('Excetution time [ms]')
+    if fname:
+        plt.savefig('time_' + fname)
     plt.show()
 
 
