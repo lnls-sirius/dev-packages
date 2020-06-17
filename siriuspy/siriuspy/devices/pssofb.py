@@ -117,7 +117,7 @@ class PSCorrSOFB(_Device):
         """Set current -SP in SOFB order."""
         # trim set value
         value = _np.array(value)
-        idx_val = _np.where(_np.isnan(value))[0]
+        idx_val = _np.where(~_np.isnan(value))[0]
 
         # combine refmon and  setpoint values
         values = self[self._curr_sp]
