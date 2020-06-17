@@ -27,8 +27,8 @@ def benchmark_kick(pssofb, print_flag=False):
     """."""
     value = pssofb.kick
     setpoint = np.random.randint(0, 10, len(value))
-    pssofb.kick = setpoint
     t0_ = time.time()
+    pssofb.kick = setpoint
     while not np.allclose(pssofb.kick, setpoint, TINY_CURRENT):
         pass
     t1_ = time.time()
@@ -221,4 +221,4 @@ def test_si_psapplysofb(fname=None):
 # test_pscorrsofb('SI', save_flag=False)
 # test_pscorrsofb_all('SI')
 # turn_on_pwrsupplies_all('SI')
-test_si_psapplysofb('sofb-two-hosts.png')
+test_si_psapplysofb('sofb-include-setpoint.png')
