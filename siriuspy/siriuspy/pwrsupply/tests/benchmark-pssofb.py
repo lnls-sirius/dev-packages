@@ -8,13 +8,13 @@ import numpy as np
 TINY_CURRENT = (1e-3/400)*10
 
 
-def benchmark(sofb, print_flag=False):
+def benchmark(pssofb, print_flag=False):
     """."""
-    value = sofb.current
+    value = pssofb.current
     setpoint = np.random.randint(0, 100, len(value))/1000
-    sofb.current = setpoint
+    pssofb.current = setpoint
     t0_ = time.time()
-    while not np.allclose(sofb.current, setpoint, TINY_CURRENT):
+    while not np.allclose(pssofb.current, setpoint, TINY_CURRENT):
         pass
     t1_ = time.time()
     dt_ = 1e3*(t1_ - t0_)
@@ -41,14 +41,13 @@ def benchmark_kick(pssofb, print_flag=False):
 def turn_on_pwrsupplies(psnames):
     """."""
     from siriuspy.devices import PowerSupply
-    from siriuspy.devices import PSCorrSOFB
-    import matplotlib.pyplot as plt
 
     psupplies = [PowerSupply(psname) for psname in psnames]
 
     # set slowref
     print('--- psupplies slowref')
     for psupply in psupplies:
+        print('psupply slowref: ', psupply.devname)
         psupply.cmd_slowref()
     time.sleep(1.0)
     for psupply in psupplies:
@@ -59,6 +58,7 @@ def turn_on_pwrsupplies(psnames):
     # turn power supplies on
     print('--- psupplies on')
     for psupply in psupplies:
+        print('psupply on: ', psupply.devname)
         psupply.cmd_turn_on()
     time.sleep(1.0)
     for psupply in psupplies:
@@ -119,8 +119,8 @@ def test_pscorrsofb(acc, psnames=None, save_flag=False):
 
     # wait for connection
     print('--- create device and wait for connection')
-    sofb = PSCorrSOFB(psnames[0])
-    while not sofb.connected:
+    pssofb = PSCorrSOFB(psnames[0])
+    while not pssofb.connected:
         time.sleep(0.1)
 
     # check why PVs are connected but values are being returned None
@@ -128,18 +128,16 @@ def test_pscorrsofb(acc, psnames=None, save_flag=False):
 
     # neglect first setppoint in stats
     for _ in range(10):
-        benchmark(sofb, print_flag=False)
+        benchmark(pssofb, print_flag=False)
 
     # do benchmark
     stats = list()
     for _ in range(5000):
-        stats.append(benchmark(sofb, print_flag=True))
+        stats.append(benchmark(pssofb, print_flag=True))
     stats = np.array(stats)
 
     # turn power supplies off
-    print('--- psupplies off')
-    for psupply in psupplies:
-        psupply.cmd_turn_off()
+    # turn_off_pwrsupplies(psnames)
 
     print('--- benchmarks ---')
     print('avg: {:08.3f} ms'.format(np.mean(stats)))
@@ -149,24 +147,37 @@ def test_pscorrsofb(acc, psnames=None, save_flag=False):
 
     plt.hist(stats, 100, log=True)
     plt.title(
-        acc + ' - SOFB setpoint benchmark ({} operations)'.format(len(stats)))
-    plt.xlabel('Excetution time [ms]')
+        psnames[0] + ' - SOFB setpoint ({} operations)'.format(len(stats)))
+    plt.xlabel('Execution time [ms]')
     plt.ylabel('Number of realizations')
-    plt.show()
+    if save_flag:
+        fname = psnames[0].replace(':', '--') + '.png'
+        plt.savefig(fname)
+    else:
+        plt.show()
 
 
-def test_bo_pvs():
+def test_pscorrsofb_all(acc):
     """."""
-    psnames = (
-        'BO-03U:PS-CH',
-        'BO-03U:PS-CV',
-        'BO-05U:PS-CH',
-        'BO-05U:PS-CV',
-    )
-    test_pvs('BO', psnames)
+    from siriuspy.devices import PSCorrSOFB
+    from siriuspy.devices import PSApplySOFB
+
+    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
+
+    psnames = dict()
+    for dev in pssofb.devices:
+        if isinstance(dev, PSCorrSOFB):
+            psn = [v[0] for v in dev.bsmpdevs]
+            psnames[dev.devname] = psn
+    del pssofb
+
+    for psn in psnames.values():
+        print(psn)
+        test_pscorrsofb(acc, psn, True)
+        print()
 
 
-def test_si_pvs():
+def test_si_psapplysofb(fname=None):
     """."""
     from siriuspy.devices import PSApplySOFB
     import matplotlib.pyplot as plt
@@ -210,4 +221,4 @@ def test_si_pvs():
 # test_pscorrsofb('SI', save_flag=False)
 # test_pscorrsofb_all('SI')
 # turn_on_pwrsupplies_all('SI')
-test_si_psapplysofb()
+test_si_psapplysofb('sofb-two-hosts.png')
