@@ -388,14 +388,15 @@ class EpicsCorrectors(BaseCorrectors):
         _log.info('    TIMEIT: BEGIN')
         time1 = _time.time()
 
+        not_nan_idcs = ~_np.isnan(values)
         # Send correctors setpoint
         if self.acc == 'SI' and use_pssofb:
             self._pssofb.kick = values[:-1]
-            if values[-1] is not None:
+            if not_nan_idcs[-1]:
                 self.put_value_in_corr(self._corrs[-1], values[-1])
         else:
             for i, corr in enumerate(self._corrs):
-                if values[i] is not None:
+                if not_nan_idcs[i]:
                     self.put_value_in_corr(corr, values[i])
         time2 = _time.time()
         _log.info(strn.format('send sp:', 1000*(time2-time1)))
@@ -581,7 +582,7 @@ class EpicsCorrectors(BaseCorrectors):
         for _ in range(self.NUM_TIMEOUT):
             for i, corr in enumerate(self._corrs):
                 if not okg[i]:
-                    if values[i] is None:
+                    if _np.isnan(values[i]):
                         okg[i] = True
                         continue
                     val = corr.value if mode == 'ready' else corr.refvalue
@@ -605,11 +606,11 @@ class EpicsCorrectors(BaseCorrectors):
             val4comp = pss.kick_rb if mode == 'ready' else pss.kick
             for i, val in enumerate(val4comp):
                 if not okg[i]:
-                    if values[i] is None:
+                    if _np.isnan(values[i]):
                         okg[i] = True
                         continue
                     okg[i] = val is not None and _compare_kicks(values[i], val)
-            if values[-1] is None:
+            if _np.isnan(values[-1]):
                 okg[-1] = True
             if all(okg):
                 return False
