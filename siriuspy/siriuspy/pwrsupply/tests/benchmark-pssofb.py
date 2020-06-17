@@ -236,8 +236,38 @@ def test_si_psapplysofb(fname=None):
     plt.show()
 
 
+def test_si_psapplysofb_order():
+    """."""
+    import numpy as np
+    from siriuspy.devices import PSApplySOFB
+
+    pssofb = PSApplySOFB('SI')
+    pssofb.wait_for_connection()
+
+    indices = []
+    psnames = []
+    for i in range(40):
+        """."""
+        corrs = pssofb[i]
+        indcs = corrs.sofb_indices
+        for i, dev in enumerate(corrs.bsmpdevs):
+            psname, bsmpid = dev
+            indices.append(indcs[i])
+            psnames.append(psname)
+    indices = np.array(indices)
+    psnames = np.array(psnames)
+
+    sindcs = np.argsort(indices)
+    indices = indices[sindcs]
+    psnames = psnames[sindcs]
+
+    for i in range(len(indices)):
+        print('{1:<20s} {0:03d}'.format(indices[i], psnames[i]))
+
+
 # test_pscorrsofb('BO')
-# test_pscorrsofb('SI', save_flag=False)
+test_pscorrsofb('SI', save_flag=False)
 # test_pscorrsofb_all('SI')
 # turn_on_pwrsupplies_all('SI')
-test_si_psapplysofb('sofb-include-setpoint.png')
+# test_si_psapplysofb('sofb-include-setpoint.png')
+# test_si_psapplysofb_order()
