@@ -266,8 +266,8 @@ def test_si_psapplysofb_order():
 
 
 # test_pscorrsofb('BO')
-test_pscorrsofb('SI', save_flag=False)
+# test_pscorrsofb('SI', save_flag=False)
 # test_pscorrsofb_all('SI')
 # turn_on_pwrsupplies_all('SI')
-# test_si_psapplysofb('sofb-include-setpoint.png')
+test_si_psapplysofb('sofb-include-setpoint.png')
 # test_si_psapplysofb_order()
