@@ -581,45 +581,47 @@ class EpicsCorrectors(BaseCorrectors):
         okg = [False, ] * len(self._corrs)
         for _ in range(self.NUM_TIMEOUT):
             for i, corr in enumerate(self._corrs):
-                if not okg[i]:
-                    if _np.isnan(values[i]):
-                        okg[i] = True
-                        continue
-                    val = corr.value if mode == 'ready' else corr.refvalue
-                    okg[i] = val is not None and _compare_kicks(values[i], val)
+                if okg[i]:
+                    continue
+                if _np.isnan(values[i]):
+                    okg[i] = True
+                    continue
+                val = corr.value if mode == 'ready' else corr.refvalue
+                okg[i] = val is not None and _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
 
-        mde = 'RB' if mode == 'ready' else 'Ref'
-        for oki, corr in zip(okg, self._corrs):
-            if not oki:
-                msg = 'ERR: timeout {0:3s}: {1:s}'.format(mde, corr.name)
-                self._update_log(msg)
-                _log.error(msg[5:])
+        self._print_guilty(okg, mode=mode)
         return True
 
     def _timed_out_pssofb(self, values, mode='ready'):
         pss = self._pssofb
+        rfc = self._corrs[-1]
+
         okg = [False, ] * len(self._corrs)
+        val4comp = _np.zeros(len(okg), dtype=float)
         for _ in range(self.NUM_TIMEOUT):
-            val4comp = pss.kick_rb if mode == 'ready' else pss.kick
+            val4comp[:-1] = pss.kick_rb if mode == 'ready' else pss.kick
+            val4comp[-1] = rfc.value if mode == 'ready' else rfc.refvalue
             for i, val in enumerate(val4comp):
-                if not okg[i]:
-                    if _np.isnan(values[i]):
-                        okg[i] = True
-                        continue
-                    okg[i] = val is not None and _compare_kicks(values[i], val)
-            if _np.isnan(values[-1]):
-                okg[-1] = True
+                if okg[i]:
+                    continue
+                if _np.isnan(values[i]):
+                    okg[i] = True
+                    continue
+                okg[i] = ~_np.isnan(val) and _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
 
+        self._print_guilty(okg, mode=mode)
+        return True
+
+    def _print_guilty(self, okg, mode='ready'):
         mde = 'RB' if mode == 'ready' else 'Ref'
         for oki, corr in zip(okg, self._corrs):
             if not oki:
                 msg = 'ERR: timeout {0:3s}: {1:s}'.format(mde, corr.name)
                 self._update_log(msg)
                 _log.error(msg[5:])
-        return True
