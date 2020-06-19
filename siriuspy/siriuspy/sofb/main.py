@@ -458,6 +458,7 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
+        use_pssofb = False
         while self._auto_corr == self._csorb.ClosedLoop.On:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -465,6 +466,7 @@ class SOFB(_BaseClass):
                 _log.info(msg)
                 break
             interval = 1/self._auto_corr_freq
+            old_use_pssofb = use_pssofb
             use_pssofb = self.acc == 'SI' and interval < 1
 
             time0 = _time.time()
@@ -482,7 +484,7 @@ class SOFB(_BaseClass):
             time2 = _time.time()
             _log.info(strn.format('calc kicks:', 1000*(time2-time1)))
             self._ref_corr_kicks = self.correctors.get_strength(
-                use_pssofb=use_pssofb)
+                use_pssofb=old_use_pssofb)
             time3 = _time.time()
             _log.info(strn.format('get strength:', 1000*(time3-time2)))
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
