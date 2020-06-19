@@ -438,10 +438,10 @@ class SOFBTLines(ConstTLines):
                 'value': self.TrigAcqDataPol.Positive,
                 'enums': self.TrigAcqDataPol._fields},
             'PolyCalibration-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'PolyCalibration-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
