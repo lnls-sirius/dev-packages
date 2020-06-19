@@ -116,8 +116,8 @@ class PSCorrSOFB(_Device):
     def current(self, value):
         """Set current -SP in SOFB order."""
         # trim set value
-        value = _np.array(value)
-        idx_val = _np.where((value == value) & _np.not_equal(value, None))[0]
+        value = _np.asarray(value)
+        idx_val = _np.where(~_np.isnan(value))[0]
 
         # combine refmon and  setpoint values
         values = self[self._curr_sp]
@@ -251,7 +251,7 @@ class PSApplySOFB(_Devices):
     @current.setter
     def current(self, value):
         """Set Current-SP vector in SOFB order."""
-        value = _np.array(value)
+        value = _np.asarray(value)
         for corr in self.devices:
             if isinstance(corr, PSCorrSOFB):
                 inds = corr.sofb_indices
@@ -331,12 +331,13 @@ class PSApplySOFB(_Devices):
         return strength
 
     def _conv_stren2curr(self, strength):
-        current = _np.zeros(len(strength))
+        current = _np.full(len(strength), _np.nan, dtype=float)
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = strength[index]
-            curr = sconv.conv_strength_2_current(strengths=value)
-            current[index] = curr
+            idcs = ~_np.isnan(value)
+            curr = sconv.conv_strength_2_current(strengths=value[idcs])
+            current[index[idcs]] = curr
         return current
 
     @staticmethod

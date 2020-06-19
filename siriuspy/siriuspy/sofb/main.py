@@ -431,7 +431,7 @@ class SOFB(_BaseClass):
             elif i < self._csorb.nr_corrs:
                 delta = self._meas_respmat_kick['rf']
 
-            kicks = [None, ] * nr_corrs
+            kicks = _np.array([None, ] * nr_corrs, dtype=float)
             kicks[i] = orig_kicks[i] + delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
@@ -458,6 +458,7 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
+        use_pssofb = False
         while self._auto_corr == self._csorb.ClosedLoop.On:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -465,6 +466,7 @@ class SOFB(_BaseClass):
                 _log.info(msg)
                 break
             interval = 1/self._auto_corr_freq
+            old_use_pssofb = use_pssofb
             use_pssofb = self.acc == 'SI' and interval < 1
 
             time0 = _time.time()
@@ -482,7 +484,7 @@ class SOFB(_BaseClass):
             time2 = _time.time()
             _log.info(strn.format('calc kicks:', 1000*(time2-time1)))
             self._ref_corr_kicks = self.correctors.get_strength(
-                use_pssofb=use_pssofb)
+                use_pssofb=old_use_pssofb)
             time3 = _time.time()
             _log.info(strn.format('get strength:', 1000*(time3-time2)))
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
@@ -542,12 +544,11 @@ class SOFB(_BaseClass):
             return
 
         # keep track of which dkicks were originally different from zero:
-        newkicks = _np.array([None, ] * len(dkicks))
+        newkicks = _np.array([None, ] * len(dkicks), dtype=float)
         for i, dkick in enumerate(dkicks):
             if not _compare_kicks(dkick, 0):
                 newkicks[i] = 0.0
-        idcs_to_process = _np.array(
-            list(map(lambda x: x is not None, newkicks)))
+        idcs_to_process = ~_np.isnan(newkicks)
         if not idcs_to_process.any():
             return newkicks
 
@@ -612,6 +613,6 @@ class SOFB(_BaseClass):
             dkicks[slc][idcs_pln] = dk_slc
 
         for i, dkick in enumerate(dkicks):
-            if newkicks[i] is not None:
+            if idcs_to_process[i]:
                 newkicks[i] = kicks[i] + dkick
         return newkicks
