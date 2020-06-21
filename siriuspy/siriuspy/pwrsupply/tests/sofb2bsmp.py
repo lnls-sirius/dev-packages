@@ -183,9 +183,14 @@ def run_test():
         print(exectime)
 
 
-def plot_result(fname):
+def plot_result_histogram(fname):
     """."""
     data = _np.loadtxt(fname, skiprows=77)
+    avg = data.mean()
+    std = data.std()
+    minv = data.min()
+    maxv = data.max()
+
     fig = _plt.figure(figsize=(8, 10))
     gs = _mgs.GridSpec(1, 1)
     gs.update(
@@ -195,10 +200,6 @@ def plot_result(fname):
     asp = _plt.subplot(gs[0, 0])
     asp.hist(data, bins=100)
 
-    avg = data.mean()
-    std = data.std()
-    minv = data.min()
-    maxv = data.max()
     stg = f'avg = {avg:05.1f} ms\n'
     stg += f'std = {std:05.1f} ms\n'
     stg += f'min = {minv:05.1f} ms\n'
@@ -211,6 +212,30 @@ def plot_result(fname):
     asp.set_xlabel('time [ms]')
     asp.set_ylabel('# total apply')
     asp.set_title('SOFB2BSMP @ lnls561-linux ({} points)'.format(len(data)))
+    _plt.show()
+
+
+def plot_result_time(fname):
+    """."""
+    data = _np.loadtxt(fname, skiprows=77)
+    _plt.plot(data, 'o')
+    _plt.xlabel('apply index')
+    _plt.ylabel('Time [ms]')
+    _plt.title('SOFB2BSMP @ lnls561-linux ({} points)'.format(len(data)))
+    _plt.grid()
+    _plt.show()
+
+
+def plot_result_perc(fname):
+    """."""
+    data = sorted(_np.loadtxt(fname, skiprows=77))
+    time = _np.linspace(min(data), max(data), 500)
+    perc = [100*sum(data <= tim)/len(data) for tim in time]
+    _plt.plot(time, perc)
+    _plt.xlabel('Execution time [ms]')
+    _plt.ylabel('Events bellow a given execution time [%]')
+    _plt.title('SOFB2BSMP @ lnls561-linux ({} points)'.format(len(data)))
+    _plt.grid()
     _plt.show()
 
 
