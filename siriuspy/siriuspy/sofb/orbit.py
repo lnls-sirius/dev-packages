@@ -187,7 +187,7 @@ class EpicsOrbit(BaseOrbit):
             orbs = self.smooth_sporb
             raw_orbs = self.raw_sporbs
             getorb = self._get_orbit_singlepass
-        elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
+        elif self.acc == 'SI' and self._mode == self._csorb.SOFBMode.SlowOrb:
             orbs = self.smooth_orb
             raw_orbs = self.raw_orbs
             getorb = self._get_orbit_online
@@ -745,7 +745,8 @@ class EpicsOrbit(BaseOrbit):
             elif self._mode == self._csorb.SOFBMode.SinglePass:
                 self._update_singlepass_orbits()
                 count = len(self.raw_sporbs['X'])
-            elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
+            elif self.acc == 'SI' and \
+                    self._mode == self._csorb.SOFBMode.SlowOrb:
                 self._update_online_orbits()
                 count = len(self.raw_orbs['X'])
             self.run_callbacks('BufferCount-Mon', count)
