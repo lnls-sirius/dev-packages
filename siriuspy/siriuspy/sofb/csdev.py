@@ -98,6 +98,7 @@ class ConstRings(ConstTLines):
 class ConstSI(ConstRings):
     """Const class defining rings orbitcorr constants."""
 
+    SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.OFF_ON)
