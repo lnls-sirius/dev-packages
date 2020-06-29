@@ -90,6 +90,10 @@ class EpicsOrbit(BaseOrbit):
         self._orbit_thread.start()
         self._update_time_vector()
 
+    def __del__(self):
+        self.shutdown()
+        super().__del__(self)
+
     def _create_processes(self, nrprocs=8):
         pvs = []
         for bpm in self._csorb.bpm_names:
@@ -113,7 +117,14 @@ class EpicsOrbit(BaseOrbit):
                 daemon=True))
         for proc in self._processes:
             proc.start()
-
+    
+    def shutdown(self):
+        if self.acc = 'SI':
+            for pipe in self._mypipes:
+                pipe.send(False)
+            for proc in self._processes:
+                proc.join()
+            
     def get_map2write(self):
         """Get the write methods of the class."""
         dbase = {
