@@ -100,7 +100,7 @@ class EpicsOrbit(BaseOrbit):
         # subdivide the pv list for the processes
         div = len(pvs) // nrprocs
         rem = len(pvs) % nrprocs
-        sub = [div*i + (i if i < rem else rem) for i in range(nrprocs+1)]
+        sub = [div*i + min(i, rem) for i in range(nrprocs+1)]
 
         # create processes
         for i in range(nrprocs):
