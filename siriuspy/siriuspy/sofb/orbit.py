@@ -36,7 +36,7 @@ def run_subprocess(pvs, pipe):
     while pipe.recv():
         out = []
         for pv in pvsobj:
-            out.append(pv.value)
+            out.append(pv.value if pv.connected else None)
         pipe.send(out)
 
 
@@ -807,9 +807,9 @@ class EpicsOrbit(BaseOrbit):
         ref = self.ref_orbs
         posx, posy = self._get_orbit_from_processes()
         for i, pos in enumerate(posx):
-            orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos
+            orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos/1000
         for i, pos in enumerate(posy):
-            orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos
+            orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos/1000
 
         planes = ('X', 'Y')
         smooth = self.smooth_orb
