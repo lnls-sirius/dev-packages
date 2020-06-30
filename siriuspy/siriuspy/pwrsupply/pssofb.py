@@ -458,7 +458,6 @@ class PSSOFB:
         return values
 
     def _sofb_pscstatus_get(self, attr):
-        attr = 'ioc_pwrstate'
         status = self._sofb_state_variable(
             var_id=_const_fbp.V_PS_STATUS, dtype=int)
         values = _np.zeros(len(self._sofb_psnames), dtype=int)
