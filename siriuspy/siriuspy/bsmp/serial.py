@@ -158,7 +158,8 @@ class Channel:
     """
 
     # TODO: should we remove use of default timeout values. It is dangerous!
-    # TODO: See if this lock can be removed and and for all!
+    # TODO: Test if this lock can be removed for all topologies, including
+    # those process using more than one PRUController.
     LOCK = _Lock()
 
     def __init__(self, pru, address):
