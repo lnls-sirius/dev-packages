@@ -1,12 +1,12 @@
 """Module to deal with orbit acquisition."""
 import os as _os
 import time as _time
-from math import ceil as _ceil
+from math import ceil as _ceil, isnan as _isnan
 import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread
-from multiprocessing import Pipe
+from multiprocessing import Pipe, Array
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -24,20 +24,19 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, pipe):
+def run_subprocess(pvs, pipe, array):
     """Run subprocesses."""
     pvsobj = []
-    for pv in pvs:
-        pvsobj.append(_PV(pv, connection_timeout=TIMEOUT))
+    for pvn in pvs:
+        pvsobj.append(_PV(pvn, connection_timeout=TIMEOUT))
 
-    for pv in pvsobj:
-        pv.wait_for_connection()
+    for pvo in pvsobj:
+        pvo.wait_for_connection()
 
     while pipe.recv():
-        out = []
-        for pv in pvsobj:
-            out.append(pv.value if pv.connected else None)
-        pipe.send(out)
+        for i, pvo in enumerate(pvsobj):
+            array[i] = pvo.value if pvo.connected else float('nan')
+        pipe.send(True)
 
 
 class EpicsOrbit(BaseOrbit):
@@ -84,6 +83,7 @@ class EpicsOrbit(BaseOrbit):
         if self.acc == 'SI':
             self._processes = []
             self._mypipes = []
+            self._arrays = []
             self._create_processes(nrprocs=8)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
@@ -108,23 +108,25 @@ class EpicsOrbit(BaseOrbit):
 
         # create processes
         for i in range(nrprocs):
-            mine, theirs = Pipe()
-            self._mypipes.append(mine)
             pvsn = pvs[sub[i]:sub[i+1]]
+            mine, theirs = Pipe()
+            array = Array('d', range(len(pvsn)))
+            self._mypipes.append(mine)
+            self._arrays.append(array)
             self._processes.append(_Process(
                 target=run_subprocess,
-                args=(pvsn, theirs),
+                args=(pvsn, theirs, array),
                 daemon=True))
         for proc in self._processes:
             proc.start()
-    
+
     def shutdown(self):
         if self.acc == 'SI':
             for pipe in self._mypipes:
                 pipe.send(False)
             for proc in self._processes:
                 proc.join()
-            
+
     def get_map2write(self):
         """Get the write methods of the class."""
         dbase = {
@@ -818,9 +820,9 @@ class EpicsOrbit(BaseOrbit):
         ref = self.ref_orbs
         posx, posy = self._get_orbit_from_processes()
         for i, pos in enumerate(posx):
-            orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos/1000
+            orbs['X'][i::nrb] = ref['X'][i] if _isnan(pos) else pos/1000
         for i, pos in enumerate(posy):
-            orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos/1000
+            orbs['Y'][i::nrb] = ref['Y'][i] if _isnan(pos) else pos/1000
 
         planes = ('X', 'Y')
         smooth = self.smooth_orb
@@ -843,8 +845,9 @@ class EpicsOrbit(BaseOrbit):
         for pipe in self._mypipes:
             pipe.send(True)
         out = []
-        for pipe in self._mypipes:
-            out.extend(pipe.recv())
+        for pipe, array in zip(self._mypipes, self._arrays):
+            pipe.recv()
+            out.extend(array)
         return out[:len(out)//2], out[len(out)//2:]
 
     def _update_multiturn_orbits(self):
