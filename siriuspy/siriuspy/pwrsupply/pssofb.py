@@ -238,16 +238,16 @@ class PSSOFB:
         threads = dict()
         # run threads
         for bbbname in PSSOFB.BBBNAMES:
-            args_ = (bbbname, args)
+            # args_ = (bbbname, args)
+            args_ = (bbbname, ) + args if args is not None else (bbbname, )
             threads[bbbname] = _Thread(target=target, args=args_, daemon=True)
             threads[bbbname].start()
         # join threads
         for thread in threads.values():
             thread.join()
 
-    def _bsmp_current_update(self, bbbname, args):
+    def _bsmp_current_update(self, bbbname):
         """Update SOFB parameters of a single beaglebone."""
-        _ = args  # throwaway arguments
         udc = self.udc[bbbname]
 
         # --- bsmp communication ---
@@ -256,7 +256,7 @@ class PSSOFB:
         # update currents
         self._update_currents(bbbname)
 
-    def _bsmp_current_setpoint(self, bbbname, args):
+    def _bsmp_current_setpoint(self, bbbname, curr_sp):
         """.
 
         benchmarks:
@@ -269,7 +269,7 @@ class PSSOFB:
         indcs_bsmp = self.indcs_bsmp[bbbname]
 
         # get valid current setpoints from sofb array
-        current = args[indcs_sofb]
+        current = curr_sp[indcs_sofb]
         notnan = ~_np.isnan(current)
         current = current[notnan]
 
@@ -286,13 +286,12 @@ class PSSOFB:
         # --- bsmp communication ---
         udc.sofb_current_set(tuple(setpoint))
 
-    def _bsmp_current_setpoint_update(self, bbbname, args):
+    def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
-        self._bsmp_current_setpoint(bbbname, args)
-        self._bsmp_current_update(bbbname, args)
+        self._bsmp_current_setpoint(bbbname, curr_sp)
+        self._bsmp_current_update(bbbname)
 
-    def _bsmp_state_update(self, bbbname, args):
-        _ = args  # throwaway arguments
+    def _bsmp_state_update(self, bbbname):
         udc = self.udc[bbbname]
         devices = PSSOFB.BBB2DEVS[bbbname]
         group_id = _const_fbp.G_ALL
@@ -317,12 +316,16 @@ class PSSOFB:
                     dev_ack[dev_id] = True
         except _SerialError:
             # no communication
-            return None
+            pass
 
-    def _bsmp_execute_function(self, bbbname, function_id, args):
+    def _bsmp_execute_function(self, bbbname, *args):
         """."""
         udc = self.udc[bbbname]
         devices = PSSOFB.BBB2DEVS[bbbname]
+        function_id, *args = args
+
+        # transform empty tuple in None
+        args = args if args else None
 
         # set dev_ack to False to all devices
         dev_ack = self._dev_ack[bbbname]
@@ -346,7 +349,6 @@ class PSSOFB:
                         data=data[dev_id])
                 else:
                     dev_ack[dev_id] = True
-                    raise NotImplementedError
         except _SerialError:
             # no communication
             return None
@@ -450,6 +452,11 @@ class PSSOFB:
             bbbvalues = _np.zeros(PSSOFB._MAX_NR_DEVS, dtype=dtype)
             for _, dev_id in self.BBB2DEVS[bbbname]:
                 devstate = bbbstate[dev_id]
+                if not devstate:
+                    print(
+                        'Empty device state! "bsmp_state_update"'
+                        ' should be invoked first')
+                    return None
                 bbbvalues[dev_id-1] = devstate[var_id]
             # get indices
             indcs_sofb = self.indcs_sofb[bbbname]
@@ -460,6 +467,8 @@ class PSSOFB:
     def _sofb_pscstatus_get(self, attr):
         status = self._sofb_state_variable(
             var_id=_const_fbp.V_PS_STATUS, dtype=int)
+        if status is None:
+            return None
         values = _np.zeros(len(self._sofb_psnames), dtype=int)
         for i in range(len(self._sofb_psnames)):
             self._pscstatus[i].ps_status = status[i]
