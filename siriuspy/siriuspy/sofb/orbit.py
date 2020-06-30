@@ -90,10 +90,6 @@ class EpicsOrbit(BaseOrbit):
         self._orbit_thread.start()
         self._update_time_vector()
 
-    def __del__(self):
-        self.shutdown()
-        super().__del__(self)
-
     def _create_processes(self, nrprocs=8):
         pvs = []
         for bpm in self._csorb.bpm_names:
