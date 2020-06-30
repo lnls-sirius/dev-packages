@@ -616,10 +616,10 @@ class SOFBRings(SOFBTLines, ConstRings):
             db_ring[k] = _dcopy(prop)
         db_ring.update({
             'MTurnSyncTim-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
             'MTurnSyncTim-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
             'MTurnUseMask-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
