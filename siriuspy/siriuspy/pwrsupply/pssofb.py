@@ -94,7 +94,7 @@ class PSSOFB:
     _MAX_NR_DEVS = _PSSOFB_MAX_NR_UDC * _UDC_MAX_NR_DEV
 
     PS_PWRSTATE = _PSCStatus.PWRSTATE
-    PS_STATES = _PSCStatus.STATES
+    PS_OPMODE = _PSCStatus.OPMODE
 
     def __init__(self, ethbridgeclnt_class):
         """."""
@@ -156,12 +156,12 @@ class PSSOFB:
 
     def bsmp_slowref(self):
         """Turn all correctors ro SlowRef mode."""
-        args = (_const_fbp.F_SELECT_OP_MODE, PSSOFB.PS_STATES.SlowRef)
+        args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRef)
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
     def bsmp_slowrefsync(self):
         """Turn all correctors ro SlowRef mode."""
-        args = (_const_fbp.F_SELECT_OP_MODE, PSSOFB.PS_STATES.SlowRefSync)
+        args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRefSync)
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
     def bsmp_state_update(self):
@@ -198,7 +198,7 @@ class PSSOFB:
 
         benchmark: 458 us
         """
-        return self._sofb_pscstatus_get('ps_status')
+        return self._sofb_pscstatus_get('ioc_opmode')
 
     @property
     def sofb_pwrstate(self):
