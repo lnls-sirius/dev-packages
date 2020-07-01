@@ -26,8 +26,6 @@ class BPM(_BaseTimingConfig):
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
         self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
-        self._posx = _PV(pvpref + 'PosX-Mon', **opt)
-        self._posy = _PV(pvpref + 'PosY-Mon', **opt)
         self._spposx = _PV(pvpref + 'SPPosX-Mon', **opt)
         self._spposy = _PV(pvpref + 'SPPosY-Mon', **opt)
         self._spsum = _PV(pvpref + 'SPSum-Mon', **opt)
@@ -67,7 +65,7 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 0,
-            'TbtTagEn': _csbpm.EnbldDsbld.enabled,  # Enable TbT sync Timing
+            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
             'TbtDataMaskSamplesBeg': 0,
             'TbtDataMaskSamplesEnd': 0,
@@ -148,11 +146,6 @@ class BPM(_BaseTimingConfig):
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
 
-    def set_auto_monitor(self, boo):
-        """."""
-        self._posx.set_auto_monitor(boo)
-        self._posy.set_auto_monitor(boo)
-
     @property
     def name(self):
         """."""
@@ -163,7 +156,6 @@ class BPM(_BaseTimingConfig):
         """."""
         conn = super().connected
         pvs = (
-            self._posx, self._posy,
             self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
@@ -338,22 +330,6 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals['ACQBPMMode'] = mode
         if pvobj.connected:
             pvobj.value = mode
-
-    @property
-    def posx(self):
-        """."""
-        pvobj = self._posx
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def posy(self):
-        """."""
-        pvobj = self._posy
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
 
     @property
     def spposx(self):
