@@ -8,6 +8,8 @@ from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..bsmp.serial import Channel as _Channel
+from ..devices import StrengthConv as _StrengthConv
+from ..magnet.factory import NormalizerFactory as _NormFact
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
@@ -89,9 +91,10 @@ class PSSOFB:
         'IA-19RaCtrl:CO-PSCtrl-SI4',
         'IA-20RaCtrl:CO-PSCtrl-SI4',
     )
-
     BBB2DEVS = dict()
+
     _MAX_NR_DEVS = _PSSOFB_MAX_NR_UDC * _UDC_MAX_NR_DEV
+    _dipole_propty = 'Ref-Mon'
 
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
@@ -127,22 +130,37 @@ class PSSOFB:
         # power supply status objects
         self._pscstatus = [_PSCStatus() for _ in self._sofb_psnames]
 
+        # strength to current converters
+        self._strengths_dipole = 3.0  # [GeV]
+        self._pstype_2_index, self._pstype_2_sconv = self._get_strenconv()
+
     # --- bsmp methods: invoke communications with correctors ---
 
-    def bsmp_sofb_current_update(self):
-        """Interact with power supplies and update local current values.
-
-        Update UDC values for current -RB, Ref-Mon and -Mon values.
-        """
-        PSSOFB._parallel_execution(self._bsmp_current_update)
-
-    def bsmp_sofb_current_setpoint(self, current):
-        """Send new current setpoint to power supplies."""
+    def bsmp_sofb_current_set(self, current):
+        """Send current sofb setpoint to power supplies."""
         PSSOFB._parallel_execution(self._bsmp_current_setpoint, current)
 
-    def bsmp_sofb_current_setpoint_update(self, current):
-        """."""
+    def bsmp_sofb_kick_set(self, kick):
+        """Send kick sofb setpoint to power supplies."""
+        current = self._conv_stren2curr(kick)
+        self.bsmp_sofb_current_set(current)
+
+    def bsmp_sofb_kick_setbsmp_sofb_current_set_update(self, current):
+        """Send current sofb setpoint to power supplies and update."""
         PSSOFB._parallel_execution(self._bsmp_current_setpoint_update, current)
+
+    def bsmp_sofb_kick_set_update(self, kick):
+        """Send kick sofb setpoint to power supplies and update."""
+        current = self._conv_stren2curr(kick)
+        self.bsmp_sofb_kick_setbsmp_sofb_current_set_update(current)
+
+    def bsmp_sofb_update(self):
+        """Receive from correctors currents and update object attributes."""
+        PSSOFB._parallel_execution(self._bsmp_current_update)
+
+    def bsmp_state_update(self):
+        """Receive from correctors variables and update object attributes."""
+        PSSOFB._parallel_execution(self._bsmp_state_update)
 
     def bsmp_pwrstate_on(self):
         """Turn all correctors on."""
@@ -150,78 +168,77 @@ class PSSOFB:
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
     def bsmp_pwrstate_off(self):
-        """Turn all correctors on."""
+        """Turn all correctors off."""
         args = (_const_fbp.F_TURN_OFF, )
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
     def bsmp_slowref(self):
-        """Turn all correctors ro SlowRef mode."""
+        """Set all correctors to SlowRef opmode."""
         args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRef)
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
     def bsmp_slowrefsync(self):
-        """Turn all correctors ro SlowRef mode."""
+        """Turn all correctors ro SlowRefSync opmode."""
         args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRefSync)
         PSSOFB._parallel_execution(self._bsmp_execute_function, args)
 
-    def bsmp_state_update(self):
-        """Update device state copy of all correctors."""
-        PSSOFB._parallel_execution(self._bsmp_state_update)
+    # --- sofb-vector object attribute methods ---
 
     @property
     def sofb_psnames(self):
-        """Return SOFB power supply names."""
+        """Return corrector names in SOFB order."""
         return self._sofb_psnames
 
     @property
+    def sofb_kick_refmon(self):
+        """Return SOFB kick Ref-Mon vector, as last updated."""
+        current = self.sofb_current_refmon
+        strength = self._conv_curr2stren(current)
+        return strength
+
+    @property
     def sofb_current_rb(self):
-        """Return SOFB current RB vector."""
+        """Return SOFB current RB vector, as last updated."""
         return self._sofb_current_rb
 
     @property
     def sofb_current_refmon(self):
-        """Return SOFB current Ref-Mon vector."""
+        """Return SOFB current Ref-Mon vector, as last updated."""
         return self._sofb_current_refmon
 
     @property
     def sofb_current_mon(self):
-        """Return SOFB current -Mon vector."""
+        """Return SOFB current -Mon vector, as last updated."""
         return self._sofb_current_mon
 
     def sofb_state_variable_get(self, var_id, dtype=float):
-        """Return sofb vector with corrector bsmp variable."""
+        """Return SOFB vector with bsmp variable values, as last updated."""
         return self._sofb_state_variable(var_id=var_id, dtype=dtype)
 
     @property
     def sofb_opmode(self):
-        """Return sofb vector with corrector OpMode-Sts.
-
-        benchmark: 458 us
-        """
+        """Return SOFB vector with OpMode-Sts values, as last updated."""
         return self._sofb_pscstatus_get('ioc_opmode')
 
     @property
     def sofb_pwrstate(self):
-        """Return sofb vector with corrector PwrState-Sts.
-
-        benchmark: 458 us
-        """
+        """Return SOFB vector with PwrState-Sts values, as last updated."""
         return self._sofb_pscstatus_get('ioc_pwrstate')
 
     @property
     def sofb_interlock_hard(self):
-        """."""
+        """Return SOFB vector with IntlkHard-Sts values, as last updated."""
         return self._sofb_state_variable(
             _const_fbp.V_PS_HARD_INTERLOCKS, dtype=int)
 
     @property
     def sofb_interlock_soft(self):
-        """."""
+        """Return SOFB vector with IntlkSoft-Sts values, as last updated."""
         return self._sofb_state_variable(
             _const_fbp.V_PS_SOFT_INTERLOCKS, dtype=int)
 
     @staticmethod
-    def sofb_issame_float32(vector1, vector2):
+    def sofb_vector_issame(vector1, vector2):
         """Check if two sofb vectors are identical within float32 precision."""
         if len(vector1) != len(vector2):
             return False
@@ -229,6 +246,10 @@ class PSSOFB:
         vec1 = _np.asarray(vector1, dtype=_np.float32)
         vec2 = _np.asarray(vector2, dtype=_np.float32)
         return vec1 == vec2
+
+    def conv_psname_2_sofb_index(self, psname):
+        """."""
+        return self._sofb_psnames.index(psname)
 
     # --- private methods ---
 
@@ -474,3 +495,62 @@ class PSSOFB:
             self._pscstatus[i].ps_status = status[i]
             values[i] = getattr(self._pscstatus[i], attr)
         return values
+
+    def _get_strenconv(self):
+        # 1. create pstype to StrengthConv dictionary.
+        # 2. create pstype to corrector index dictionnary.
+        pstype_2_index = dict()
+        pstype_2_sconv = dict()
+        psnames = self._sofb_psnames
+        for i, psname in enumerate(psnames):
+            pstype = _PSSearch.conv_psname_2_pstype(psname)
+            if pstype not in pstype_2_index:
+                pstype_2_index[pstype] = []
+            pstype_2_index[pstype].append(i)
+            if pstype not in pstype_2_sconv:
+                # sconv = _NormFact.create(psname.replace(':PS', ':MA'))
+                sconv = _StrengthConv(
+                    psname, PSSOFB._dipole_propty, auto_mon=True)
+                pstype_2_sconv[pstype] = sconv
+
+        # convert index to numpy array
+        for pstype in pstype_2_index:
+            pstype_2_index[pstype] = _np.asarray(pstype_2_index[pstype])
+
+        # wait for connection
+        for sconv in pstype_2_sconv.values():
+            sconv.wait_for_connection()
+
+        return pstype_2_index, pstype_2_sconv
+
+    def _conv_curr2stren(self, current):
+        # benchmarks:
+        # 0.163 ms (normalizer)
+        # 0.277 ms (sconv)
+        strength = _np.zeros(len(current))
+        for pstype, index in self._pstype_2_index.items():
+            sconv = self._pstype_2_sconv[pstype]
+            value = current[index]
+            # stren = sconv.conv_current_2_strength(
+            #     currents=value, strengths_dipole=self._strengths_dipole)
+            stren = sconv.conv_current_2_strength(currents=value)
+            strength[index] = stren
+        return strength
+
+    def _conv_stren2curr(self, strength):
+        # benchmarks:
+        # 0.112 ms (normalizer)
+        # 0.189 ms (sconv)
+        current = _np.full(len(strength), _np.nan, dtype=float)
+        for pstype, index in self._pstype_2_index.items():
+            sconv = self._pstype_2_sconv[pstype]
+            value = strength[index]
+            # idcs = ~_np.isnan(value)
+            # curr = sconv.conv_strength_2_current(
+            #     strengths=value[idcs],
+            #     strengths_dipole=self._strengths_dipole)
+            # curr = sconv.conv_strength_2_current(strengths=value[idcs])
+            # current[index[idcs]] = curr
+            curr = sconv.conv_strength_2_current(strengths=value)
+            current[index] = curr
+        return current

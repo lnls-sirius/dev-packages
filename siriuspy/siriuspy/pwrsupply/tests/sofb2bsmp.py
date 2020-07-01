@@ -95,7 +95,7 @@ def benchmark_bsmp_sofb_current_setpoint_update():
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
-        issame = pssofb.sofb_issame_float32(curr_sp, curr_rb)
+        issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
 
         # stop clock
         time1 = _time.time()
@@ -126,7 +126,7 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
-        issame = pssofb.sofb_issame_float32(curr_sp, curr_rb)
+        issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
 
         # stop clock
         time1 = _time.time()
