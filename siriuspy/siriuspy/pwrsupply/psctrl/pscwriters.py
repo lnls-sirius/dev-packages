@@ -66,9 +66,9 @@ class WfmMonAcq(Function):
         """Define CurveAcq."""
         self._device_ids = device_ids
         self.enable = BSMPFunction(
-            device_ids, pru_controller, _const_psbsmp.F_ENABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_ENABLE_SCOPE)
         self.disable = BSMPFunction(
-            device_ids, pru_controller, _const_psbsmp.F_DISABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_DISABLE_SCOPE)
         self.setpoints = setpoints
 
     def execute(self, value=None):

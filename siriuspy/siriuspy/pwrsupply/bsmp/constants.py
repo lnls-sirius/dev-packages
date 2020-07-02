@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V0.36w2019-10-07V0.36w2019-10-07'
+__version__ = 'V1.25 - FRWR0.40 - 21/05/2020'
 
 
 # --- Const DCDC ---
@@ -74,16 +74,16 @@ class ConstPSBSMP:
     F_OPEN_LOOP = 2
     F_CLOSE_LOOP = 3
     F_SELECT_OP_MODE = 4
-    F_SELECT_PS_MODEL = 5
-    F_RESET_INTERLOCKS = 6
-    F_REMOTE_INTERFACE = 7
-    F_SET_SERIAL_ADDRESS = 8
-    F_SET_SERIAL_TERMINATION = 9
-    F_UNLOCK_UDC = 10
-    F_LOCK_UDC = 11
-    F_CFG_BUF_SAMPLES = 12
-    F_ENABLE_BUF_SAMPLES = 13
-    F_DISABLE_BUF_SAMPLES = 14
+    F_RESET_INTERLOCKS = 5
+    F_SET_COMMAND_INTERFACE = 6
+    F_SET_SERIAL_TERMINATION = 7
+    F_UNLOCK_UDC = 8
+    F_LOCK_UDC = 9
+    F_CFG_SOURCE_SCOPE = 10
+    F_CFG_FREQ_SCOPE = 11
+    F_CFG_DURATION_SCOPE = 12
+    F_ENABLE_SCOPE = 13
+    F_DISABLE_SCOPE = 14
     F_SYNC_PULSE = 15
     F_SET_SLOWREF = 16
     F_SET_SLOWREF_FBP = 17

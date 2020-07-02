@@ -141,7 +141,7 @@ class PSBSMP(_BSMP):
         # TODO: check with ELP if these numbers can be optimized further!
         if func_id == PSBSMP.CONST.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
-        elif func_id == PSBSMP.CONST.F_DISABLE_BUF_SAMPLES:
+        elif func_id == PSBSMP.CONST.F_DISABLE_SCOPE:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
             # _time.sleep(PSBSMP._sleep_disable_bufsample)
@@ -336,7 +336,7 @@ class PSBSMP(_BSMP):
     def wfmref_mon_bufsample_enable(self):
         """Enable buffer samples."""
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_ENABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_ENABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
@@ -344,7 +344,7 @@ class PSBSMP(_BSMP):
         """Disable buffer samples."""
         # print('disabling bufsample.')
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_DISABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_DISABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
