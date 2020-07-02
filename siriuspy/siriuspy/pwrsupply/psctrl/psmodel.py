@@ -71,55 +71,52 @@ class _PSModel:
         # --- Control ---
         'ParamCtrlFreqCtrlISR-Cte': _c.P_CTRL_FREQ_CONTROL_ISR,  # 11
         'ParamCtrlFreqTimeSlicer-Cte': _c.P_CTRL_FREQ_TIME_SLICER,  # 12
-
+        # 'ParamCtrlLoopState-Cte': _c.P_CTRL_LOOP_STATE,  # 13
         'ParamCtrlMaxRef-Cte': _c.P_CTRL_MAX_REF,  # 14
         'ParamCtrlMinRef-Cte': _c.P_CTRL_MIN_REF,  # 15
         'ParamCtrlMaxRefOpenLoop-Cte': _c.P_CTRL_MAX_REF_OPEN_LOOP,  # 16
         'ParamCtrlMinRefOpenLoop-Cte': _c.P_CTRL_MIN_REF_OPEN_LOOP,  # 17
-        'ParamCtrlSlewRateSlowRef-Cte': _c.P_CTRL_SLEW_RATE_SLOWREF,  # 18
-        'ParamCtrlSlewRateSigGenAmp-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_AMP,  # 19
-        'ParamCtrlSlewRateSigGenOffset-Cte': _c.P_CTRL_SLEW_RATE_SIGGEN_OFFSET,
-        'ParamCtrlSlewRateWfmRef-Cte': _c.P_CTRL_SLEW_RATE_WFMREF,  # 21
         # --- PWM ---
-        'ParamPWMFreq-Cte': _c.P_PWM_FREQ,  # 22
-        'ParamPWMDeadTime-Cte': _c.P_PWM_DEAD_TIME,  # 23
-        'ParamPWMMaxDuty-Cte': _c.P_PWM_MAX_DUTY,  # 24
-        'ParamPWMMinDuty-Cte': _c.P_PWM_MIN_DUTY,  # 25
-        'ParamPWMMaxDutyOpenLoop-Cte': _c.P_PWM_MAX_DUTY_OPEN_LOOP,  # 26
-        'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 27
-        'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 28
+        'ParamPWMFreq-Cte': _c.P_PWM_FREQ,  # 18
+        'ParamPWMDeadTime-Cte': _c.P_PWM_DEAD_TIME,  # 19
+        'ParamPWMMaxDuty-Cte': _c.P_PWM_MAX_DUTY,  # 20
+        'ParamPWMMinDuty-Cte': _c.P_PWM_MIN_DUTY,  # 21
+        'ParamPWMMaxDutyOpenLoop-Cte': _c.P_PWM_MAX_DUTY_OPEN_LOOP,  # 22
+        'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 23
+        'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 24
         # ----- class HRADC -----
-        # P_HRADC_NR_BOARDS = 29
-        # P_HRADC_SPI_CLK = 30
-        # P_HRADC_FREQ_SAMPLING = 31
-        # P_HRADC_ENABLE_HEATER = 32
-        # P_HRADC_ENABLE_RAILS_MON = 33
-        # P_HRADC_TRANSDUCER_OUTPUT = 34
-        # P_HRADC_TRANSDUCER_GAIN = 35
-        # P_HRADC_TRANSDUCER_OFFSET = 36
+        # P_HRADC_NR_BOARDS = 25
+        # P_HRADC_SPI_CLK = 26
+        # P_HRADC_FREQ_SAMPLING = 27
+        # P_HRADC_ENABLE_HEATER = 28
+        # P_HRADC_ENABLE_RAILS_MON = 29
+        # P_HRADC_TRANSDUCER_OUTPUT = 30
+        # P_HRADC_TRANSDUCER_GAIN = 31
+        # P_HRADC_TRANSDUCER_OFFSET = 32
         # # ----- class SigGen -----
-        # P_SIGGEN_TYPE = 37
-        # P_SIGGEN_NUM_CYCLES = 38
-        # P_SIGGEN_FREQ = 39
-        # P_SIGGEN_AMPLITUDE = 40
-        # P_SIGGEN_OFFSET = 41
-        # P_SIGGEN_AUX_PARAM = 42
+        # P_SIGGEN_TYPE = 33
+        # P_SIGGEN_NUM_CYCLES = 34
+        # P_SIGGEN_FREQ = 35
+        # P_SIGGEN_AMPLITUDE = 36
+        # P_SIGGEN_OFFSET = 37
+        # P_SIGGEN_AUX_PARAM = 38
         # # ----- class WfmRef -----
-        # P_WFMREF_ID = 43
-        # P_WFMREF_SYNC_MODE = 44
-        # P_WFMREF_GAIN = 45
-        # P_WFMREF_OFFSET = 46
+        # P_WFMREF_ID = 39
+        # P_WFMREF_SYNC_MODE = 40
+        # P_WFMREF_FREQ = 41
+        # P_WFMREF_GAIN = 42
+        # P_WFMREF_OFFSET = 43
         # --- Analog Variables ---
-        'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 47
-        'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 48
+        'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 44
+        'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 45
         # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime-Cte': _c.P_HARD_INTLK_DEBOUNCE_TIME,  # 49
-        'ParamHardIntlkResetTime-Cte': _c.P_HARD_INTLK_RESET_TIME,  # 50
-        'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 51
-        'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 52
+        'ParamHardIntlkDebounceTime-Cte': _c.P_HARD_INTLK_DEBOUNCE_TIME,  # 46
+        'ParamHardIntlkResetTime-Cte': _c.P_HARD_INTLK_RESET_TIME,  # 47
+        'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 48
+        'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 49
         # ---- Scope -----
-        # P_SCOPE_SAMPLING_FREQUENCY = 53
-        # P_SCOPE_DATA_SOURCE = 54
+        # P_SCOPE_SAMPLING_FREQUENCY = 50
+        # P_SCOPE_DATA_SOURCE = 51
         }
 
     @property
