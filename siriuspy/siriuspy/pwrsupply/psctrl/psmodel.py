@@ -122,7 +122,6 @@ class _PSModel:
         # P_SCOPE_DATA_SOURCE = 54
         }
 
-
     @property
     def name(self):
         """Model name."""
