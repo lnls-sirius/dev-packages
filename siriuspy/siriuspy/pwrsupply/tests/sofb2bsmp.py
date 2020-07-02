@@ -119,10 +119,10 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
         time0 = _time.time()
 
         # set current values
-        pssofb.bsmp_sofb_current_setpoint(curr_sp)
+        pssofb.bsmp_sofb_current_set(curr_sp)
 
         # read from power supplies
-        pssofb.bsmp_sofb_current_update()
+        pssofb.bsmp_sofb_update()
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
