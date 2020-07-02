@@ -112,13 +112,17 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
     exectimes = [0] * NRPTS
-    curr_sp = 0.1 * _np.random.randn(280)
+
+    pssofb.bsmp_sofb_update()
+    curr_refmon = pssofb.sofb_current_refmon
+
     for i, _ in enumerate(exectimes):
 
         # start clock
         time0 = _time.time()
 
         # set current values
+        curr_sp = curr_refmon + 1 * 0.005 * _np.random.randn(len(curr_refmon))
         pssofb.bsmp_sofb_current_set(curr_sp)
 
         # read from power supplies
@@ -134,6 +138,47 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
 
         if not issame:
             print('SP<>RB in event {}'.format(i))
+
+    # restore state
+    pssofb.bsmp_sofb_current_set(curr_refmon)
+
+    for exectime in exectimes:
+        print(exectime)
+
+
+def benchmark_bsmp_sofb_kick_setpoint_then_update():
+    """."""
+    pssofb = PSSOFB(EthBrigdeClient)
+    exectimes = [0] * NRPTS
+
+    pssofb.bsmp_sofb_update()
+    kick_refmon = pssofb.sofb_kick_refmon
+
+    for i, _ in enumerate(exectimes):
+
+        # start clock
+        time0 = _time.time()
+
+        # set kick values
+        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
+        curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
+
+        # read from power supplies
+        pssofb.bsmp_sofb_update()
+        curr_rb = pssofb.sofb_current_rb
+
+        # comparison
+        issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
+        if not issame:
+            print('SP<>RB in event {}'.format(i))
+
+    # restore state
+    pssofb.bsmp_sofb_kick_set(kick_refmon)
 
     for exectime in exectimes:
         print(exectime)
@@ -219,5 +264,6 @@ if __name__ == '__main__':
     # benchmark_bsmp_sofb_current_update()
     # benchmark_bsmp_sofb_current_setpoint()
     # benchmark_bsmp_sofb_current_setpoint_update()
-    benchmark_bsmp_sofb_current_setpoint_then_update()
+    # benchmark_bsmp_sofb_current_setpoint_then_update()
+    benchmark_bsmp_sofb_kick_setpoint_then_update()
     # test_methods()
