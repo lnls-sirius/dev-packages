@@ -585,14 +585,6 @@ def _get_ps_basic_propty_database():
             {'type': 'float', 'value': 0.0},
         'ParamCtrlMinRefOpenLoop-Cte':
             {'type': 'float', 'value': 0.0},
-        'ParamCtrlSlewRateSlowRef-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
-        'ParamCtrlSlewRateSigGenAmp-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
-        'ParamCtrlSlewRateSigGenOffset-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
-        'ParamCtrlSlewRateWfmRef-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Ref/s'},
         # --- PWM ---
         'ParamPWMFreq-Cte':
             {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
