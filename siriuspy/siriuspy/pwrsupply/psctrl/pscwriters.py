@@ -169,7 +169,8 @@ class PSPwrState(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.turn_on.execute()
-                self.close_loop.execute()
+                # Not necessary anymore from firmware v1.25 onwards
+                # self.close_loop.execute()
             elif value == 0:
                 self.turn_off.execute()
 
