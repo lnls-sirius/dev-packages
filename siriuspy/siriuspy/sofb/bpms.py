@@ -695,9 +695,12 @@ class BPM(_BaseTimingConfig):
         maskend = min(maskend, wsize - maskbeg - 2)
         mask = slice(maskbeg, wsize - maskend)
 
+        # NOTE: I have to invert array B with C here because of the way
+        # the ADCSWAP rate works. Fixed in 2020/07/01 after talking to
+        # Daniel Tavares.
         vals = {
-            'A': self.arraya, 'B': self.arrayb,
-            'C': self.arrayc, 'D': self.arrayd}
+            'A': self.arraya, 'C': self.arrayb,
+            'B': self.arrayc, 'D': self.arrayd}
         siz = None
         for key, val in vals.items():
             if val is None or val.size == 0:
