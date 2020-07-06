@@ -208,6 +208,9 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
         # set kick values
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
+        # sleep for a while
+        _time.sleep(delay)
+
         # send trigger
         trigger.value = 1
 
@@ -215,12 +218,12 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
 
-        # sleep for a while
-        _time.sleep(delay)
+        # make sure trigger signal gets to power supplies.
+        _time.sleep(0.100)
 
         # read from power supplies
         pssofb.bsmp_sofb_update()
-        curr_rb = pssofb.sofb_current_rb
+        curr_rb = pssofb.sofb_current_refmon
 
         # comparison
         issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
