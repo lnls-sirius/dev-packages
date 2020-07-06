@@ -44,11 +44,6 @@ class Device:
         return sims
 
     @property
-    def pvs(self):
-        """Return device PVs."""
-        return self._pvs
-
-    @property
     def pvnames(self):
         """Return device PV names."""
         pvnames = {pv.pvname for pv in self._pvs.values()}
@@ -76,9 +71,9 @@ class Device:
         for pvobj in self._pvs.values():
             pvobj.get()
 
-    def pv_object(self, propty):
+    def pv_object(self, propty=None):
         """Return PV object for a given device property."""
-        return self._pvs[propty]
+        return self._pvs[propty] if propty else self._pvs
 
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
