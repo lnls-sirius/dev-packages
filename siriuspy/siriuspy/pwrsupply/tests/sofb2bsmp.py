@@ -186,7 +186,7 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         print(exectime)
 
 
-def benchmark_bsmp_sofb_kick_setpoint_new(delay):
+def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
     """."""
     trigger = _epics.PV('AS-RaMO:TI-EVG:OrbSIExtTrig-Cmd')
     trigger.wait_for_connection()
@@ -199,15 +199,21 @@ def benchmark_bsmp_sofb_kick_setpoint_new(delay):
 
     for i, _ in enumerate(exectimes):
 
+        # calc new kick
+        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
+
         # start clock
         time0 = _time.time()
 
         # set kick values
-        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
         # send trigger
         trigger.value = 1
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
 
         # sleep for a while
         _time.sleep(delay)
@@ -218,10 +224,6 @@ def benchmark_bsmp_sofb_kick_setpoint_new(delay):
 
         # comparison
         issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
-
-        # stop clock
-        time1 = _time.time()
-        exectimes[i] = 1000*(time1 - time0)
 
         if not issame:
             print('SP<>RB in event {}'.format(i))
@@ -316,5 +318,5 @@ if __name__ == '__main__':
     # benchmark_bsmp_sofb_current_setpoint_then_update()
     # benchmark_bsmp_sofb_kick_setpoint_then_update()
     sleep_after_trigger = 0.030  # [s]
-    benchmark_bsmp_sofb_kick_setpoint_new(sleep_after_trigger)
+    benchmark_bsmp_sofb_kick_setpoint_delay(sleep_after_trigger)
     # test_methods()
