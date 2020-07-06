@@ -636,7 +636,7 @@ def _get_ps_basic_propty_database():
 
 
 def _get_ps_sofbcurrent_propty_database():
-    """Return SOFBCurrent properties."""
+    """Return PSSOFB properties."""
     count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
         'SOFBMode-Sel': {
