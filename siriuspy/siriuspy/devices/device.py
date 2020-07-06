@@ -44,6 +44,11 @@ class Device:
         return sims
 
     @property
+    def pvs(self):
+        """Return device PVs."""
+        return self._pvs
+
+    @property
     def pvnames(self):
         """Return device PV names."""
         pvnames = {pv.pvname for pv in self._pvs.values()}
