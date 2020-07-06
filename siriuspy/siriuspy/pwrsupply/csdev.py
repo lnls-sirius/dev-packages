@@ -65,6 +65,7 @@ class ETypes(_csdev.ETypes):
               'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
     OPMODES = ('SlowRef', 'SlowRefSync', 'Cycle',
                'RmpWfm', 'MigWfm', 'FastRef')
+    SOFBMODE = _csdev.ETypes.OFF_ON
     CMD_ACK = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
                'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
     SOFT_INTLCK_FBP = (
@@ -402,6 +403,7 @@ class Const(_csdev.Const):
     PwrStateSel = _csdev.Const.register('PwrStateSel', _et.PWRSTATE_SEL)
     PwrStateSts = _csdev.Const.register('PwrStateSts', _et.PWRSTATE_STS)
     OpMode = _csdev.Const.register('OpMode', _et.OPMODES)
+    SOFBMode = _csdev.Const.register('SOFBMode', _et.SOFBMODE)
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
     SyncMode = _csdev.Const.register('SyncMode', _et.SYNC_MODES)
@@ -637,6 +639,12 @@ def _get_ps_sofbcurrent_propty_database():
     """Return SOFBCurrent properties."""
     count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
+        'SOFBMode-Sel': {
+            'type': 'enum', 'enums': _et.SOFBMODE,
+            'value': Const.SOFBMode.Off},
+        'SOFBMode-Sts': {
+            'type': 'enum', 'enums': _et.SOFBMODE,
+            'value': Const.SOFBMode.Off},
         'SOFBCurrent-SP': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
