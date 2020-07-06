@@ -38,6 +38,20 @@ def benchmark_kick(pssofb, print_flag=False):
     return dt_
 
 
+def benchmark_kick_init(pssofb, kick0, print_flag=False):
+    """."""
+    setpoint = kick0 + 1 * 0.01 * np.random.randn(len(kick0))
+    t0_ = time.time()
+    pssofb.kick = setpoint
+    while not np.allclose(pssofb.kick, setpoint, TINY_CURRENT):
+        pass
+    t1_ = time.time()
+    dt_ = 1e3*(t1_ - t0_)
+    if print_flag:
+        print('elapsed time: {:.3f} ms'.format(dt_))
+    return dt_
+
+
 def turn_on_pwrsupplies(psnames):
     """."""
     from siriuspy.devices import PowerSupply
@@ -209,6 +223,61 @@ def test_si_psapplysofb(fname=None):
         # stats.append(benchmark(pssofb, print_flag=True))
         stats.append(benchmark_kick(pssofb, print_flag=True))
     stats = np.array(stats)
+
+    # # turn power supplies off
+    # turn_off_pwrsupplies(psnames)
+
+    print('--- benchmarks ---')
+    print('avg: {:08.3f} ms'.format(np.mean(stats)))
+    print('std: {:08.3f} ms'.format(np.std(stats)))
+    print('min: {:08.3f} ms'.format(np.min(stats)))
+    print('max: {:08.3f} ms'.format(np.max(stats)))
+
+    plt.hist(stats, 100, log=True)
+    plt.title('SOFB setpoint ({} operations)'.format(len(stats)))
+    plt.xlabel('Excetution time [ms]')
+    plt.ylabel('Number of realizations')
+    if fname:
+        plt.savefig(fname)
+    plt.show()
+
+    plt.plot(stats)
+    plt.title('SOFB setpoint ({} operations)'.format(len(stats)))
+    plt.ylabel('Measurement Index')
+    plt.ylabel('Excetution time [ms]')
+    if fname:
+        plt.savefig('time_' + fname)
+    plt.show()
+
+
+def test_si_psapplysofb_init(fname=None):
+    """."""
+    from siriuspy.devices import PSApplySOFB
+    import matplotlib.pyplot as plt
+
+    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
+    pssofb.wait_for_connection()
+
+    # check why PVs are connected but values are being returned None
+    time.sleep(1.0)
+
+    # get original kick
+    kick0 = pssofb.kick
+
+    # neglect first setppoint in stats
+    for _ in range(10):
+        benchmark_kick_init(pssofb, kick0, print_flag=False)
+
+    # do benchmark
+    stats = list()
+    for _ in range(5000):
+        # stats.append(benchmark(pssofb, print_flag=True))
+        timeexec = benchmark_kick_init(pssofb, kick0, print_flag=True)
+        stats.append(timeexec)
+    stats = np.array(stats)
+
+    # restore original kick
+    pssofb.kick = kick0
 
     # # turn power supplies off
     # turn_off_pwrsupplies(psnames)

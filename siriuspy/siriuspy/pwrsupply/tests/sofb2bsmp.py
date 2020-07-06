@@ -1,6 +1,7 @@
 #!/usr/bin/env python-sirius
 """."""
 
+import sys as _sys
 import time as _time
 
 import numpy as _np
@@ -314,12 +315,17 @@ def plot_result_perc(fname, title):
     _plt.show()
 
 
-if __name__ == '__main__':
+def run():
+    """."""
     # benchmark_bsmp_sofb_current_update()
     # benchmark_bsmp_sofb_current_setpoint()
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
     # benchmark_bsmp_sofb_kick_setpoint_then_update()
-    sleep_after_trigger = 0.030  # [s]
-    benchmark_bsmp_sofb_kick_setpoint_delay(sleep_after_trigger)
+    sleep_trigger = float(_sys.argv[1])
+    benchmark_bsmp_sofb_kick_setpoint_delay(sleep_trigger)
     # test_methods()
+
+
+if __name__ == '__main__':
+    run()
