@@ -34,7 +34,7 @@ def run_subprocess(pvs, pipe):
     for pvn in pvs:
         pvo = _PV(pvn, connection_timeout=TIMEOUT)
         pvo.event = Event()
-        pvsobj.append()
+        pvsobj.append(pvo)
 
     for pvo in pvsobj:
         pvo.wait_for_connection()
