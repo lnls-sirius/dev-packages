@@ -152,6 +152,7 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
 def benchmark_bsmp_sofb_kick_setpoint_then_update():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
     pssofb.bsmp_sofb_update()
@@ -187,13 +188,15 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         print(exectime)
 
 
-def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
+def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
     """."""
     trigger = _epics.PV('AS-RaMO:TI-EVG:OrbSIExtTrig-Cmd')
     trigger.wait_for_connection()
 
     pssofb = PSSOFB(EthBrigdeClient)
-    exectimes = [0] * 100
+    pssofb.bsmp_slowrefsync()
+
+    exectimes = [0] * 150
 
     pssofb.bsmp_sofb_update()
     kick_refmon = pssofb.sofb_kick_refmon
@@ -210,7 +213,7 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
         # sleep for a while
-        _time.sleep(delay)
+        _time.sleep(delay_before)
 
         # send trigger
         trigger.value = 1
@@ -220,7 +223,7 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay):
         exectimes[i] = 1000*(time1 - time0)
 
         # make sure trigger signal gets to power supplies.
-        _time.sleep(0.100)
+        _time.sleep(delay_after)
 
         # read from power supplies
         pssofb.bsmp_sofb_update()
@@ -322,8 +325,10 @@ def run():
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
     # benchmark_bsmp_sofb_kick_setpoint_then_update()
-    sleep_trigger = float(_sys.argv[1])
-    benchmark_bsmp_sofb_kick_setpoint_delay(sleep_trigger)
+    sleep_trigger_before = float(_sys.argv[1])
+    sleep_trigger_after = float(_sys.argv[2])
+    benchmark_bsmp_sofb_kick_setpoint_delay(
+        sleep_trigger_before, sleep_trigger_after)
     # test_methods()
 
 

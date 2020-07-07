@@ -40,7 +40,7 @@ def benchmark_kick(pssofb, print_flag=False):
 
 def benchmark_kick_init(pssofb, kick0, print_flag=False):
     """."""
-    setpoint = kick0 + 1 * 0.01 * np.random.randn(len(kick0))
+    setpoint = kick0 + 0 * 0.01 * np.random.randn(len(kick0))
     t0_ = time.time()
     pssofb.kick = setpoint
     while not np.allclose(pssofb.kick, setpoint, TINY_CURRENT):
@@ -264,6 +264,9 @@ def test_si_psapplysofb_init(fname=None):
     # get original kick
     kick0 = pssofb.kick
 
+    print(kick0)
+    return
+
     # neglect first setppoint in stats
     for _ in range(10):
         benchmark_kick_init(pssofb, kick0, print_flag=False)
@@ -338,5 +341,5 @@ def test_si_psapplysofb_order():
 # test_pscorrsofb('SI', save_flag=False)
 # test_pscorrsofb_all('SI')
 # turn_on_pwrsupplies_all('SI')
-test_si_psapplysofb('sofb-include-setpoint.png')
+test_si_psapplysofb_init('sofb-include-setpoint.png')
 # test_si_psapplysofb_order()
