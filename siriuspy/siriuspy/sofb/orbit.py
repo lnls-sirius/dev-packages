@@ -5,7 +5,7 @@ from math import ceil as _ceil
 import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
-from threading import Lock, Thread
+from threading import Lock, Thread, Event
 from multiprocessing import Pipe
 
 from epics import CAProcess as _Process
@@ -26,17 +26,28 @@ class BaseOrbit(_BaseClass):
 
 def run_subprocess(pvs, pipe):
     """Run subprocesses."""
+    def callback(pvname, value, **kwargs):
+        pvo = kwargs['cb_info'][1]
+        pvo.event.set()
+
     pvsobj = []
     for pvn in pvs:
-        pvsobj.append(_PV(pvn, connection_timeout=TIMEOUT))
+        pvo = _PV(pvn, connection_timeout=TIMEOUT)
+        pvo.event = Event()
+        pvsobj.append()
 
     for pvo in pvsobj:
         pvo.wait_for_connection()
+        pvo.add_callback(callback)
 
     while pipe.recv():
         out = []
         for pvo in pvsobj:
-            out.append(pvo.value if pvo.connected else None)
+            if pvo.connected and pvo.event.wait():
+                pvo.event.clear()
+                out.append(pvo.value)
+            else:
+                out.append(None)
         pipe.send(out)
 
 
@@ -81,6 +92,7 @@ class EpicsOrbit(BaseOrbit):
         self._ring_extension = 1
         self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
+        self.new_orbit = Event()
         if self.acc == 'SI':
             self._processes = []
             self._mypipes = []
@@ -219,7 +231,7 @@ class EpicsOrbit(BaseOrbit):
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
-    def get_orbit(self, reset=False):
+    def get_orbit(self, reset=False, synced=False, timeout=1/10):
         """Return the orbit distortion."""
         nrb = self._ring_extension * self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
@@ -243,6 +255,9 @@ class EpicsOrbit(BaseOrbit):
             raw_orbs = self.raw_sporbs
             getorb = self._get_orbit_singlepass
         elif self.acc == 'SI' and self._mode == self._csorb.SOFBMode.SlowOrb:
+            if synced:
+                self.new_orbit.wait(timeout=timeout)
+                self.new_orbit.clear()
             orbs = self.smooth_orb
             raw_orbs = self.raw_orbs
             getorb = self._get_orbit_online
@@ -808,11 +823,11 @@ class EpicsOrbit(BaseOrbit):
     def _update_online_orbits(self):
         """."""
         nrb = self._csorb.nr_bpms
+        posx, posy = self._get_orbit_from_processes()
         orbsz = nrb * self._ring_extension
         orb = _np.zeros(orbsz, dtype=float)
         orbs = {'X': orb, 'Y': orb.copy()}
         ref = self.ref_orbs
-        posx, posy = self._get_orbit_from_processes()
         for i, pos in enumerate(posx):
             orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos/1000
         for i, pos in enumerate(posy):
@@ -834,6 +849,7 @@ class EpicsOrbit(BaseOrbit):
             smooth[plane] = orb
             name = ('Orb' if plane != 'Sum' else '') + plane
             self.run_callbacks('Slow' + name + '-Mon', list(orb))
+        self.new_orbit.set()
 
     def _get_orbit_from_processes(self):
         for pipe in self._mypipes:
