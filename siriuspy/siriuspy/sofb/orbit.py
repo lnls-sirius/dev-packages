@@ -44,10 +44,11 @@ def run_subprocess(pvs, pipe):
         out = []
         for pvo in pvsobj:
             if pvo.connected and pvo.event.wait():
-                pvo.event.clear()
                 out.append(pvo.value)
             else:
                 out.append(None)
+        for pvo in pvsobj:
+            pvo.event.clear()
         pipe.send(out)
 
 
