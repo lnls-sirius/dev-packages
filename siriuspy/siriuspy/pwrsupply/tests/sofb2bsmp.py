@@ -149,6 +149,35 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
         print(exectime)
 
 
+def benchmark_bsmp_sofb_kick_setpoint():
+    """."""
+    pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
+    exectimes = [0] * NRPTS
+
+    pssofb.bsmp_sofb_update()
+    kick_refmon = pssofb.sofb_kick_refmon
+
+    for i, _ in enumerate(exectimes):
+
+        # start clock
+        time0 = _time.time()
+
+        # set kick values
+        kick_sp = kick_refmon + 0 * 0.01 * _np.random.randn(len(kick_refmon))
+        pssofb.bsmp_sofb_kick_set(kick_sp)
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
+    # restore state
+    pssofb.bsmp_sofb_kick_set(kick_refmon)
+
+    for exectime in exectimes:
+        print(exectime)
+
+
 def benchmark_bsmp_sofb_kick_setpoint_then_update():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
@@ -164,7 +193,7 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         time0 = _time.time()
 
         # set kick values
-        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
+        kick_sp = kick_refmon + 0 * 0.01 * _np.random.randn(len(kick_refmon))
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
         # read from power supplies
@@ -324,11 +353,12 @@ def run():
     # benchmark_bsmp_sofb_current_setpoint()
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
-    # benchmark_bsmp_sofb_kick_setpoint_then_update()
-    sleep_trigger_before = float(_sys.argv[1])
-    sleep_trigger_after = float(_sys.argv[2])
-    benchmark_bsmp_sofb_kick_setpoint_delay(
-        sleep_trigger_before, sleep_trigger_after)
+    # benchmark_bsmp_sofb_kick_setpoint()
+    benchmark_bsmp_sofb_kick_setpoint_then_update()
+    # sleep_trigger_before = float(_sys.argv[1])
+    # sleep_trigger_after = float(_sys.argv[2])
+    # benchmark_bsmp_sofb_kick_setpoint_delay(
+    #     sleep_trigger_before, sleep_trigger_after)
     # test_methods()
 
 
