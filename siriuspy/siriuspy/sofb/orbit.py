@@ -82,7 +82,7 @@ class EpicsOrbit(BaseOrbit):
         self._spass_th_acqbg = None
         self._spass_bgs = [dict() for _ in range(self._csorb.nr_bpms)]
         self._spass_usebg = self._csorb.SPassUseBg.NotUsing
-        self._acqrate = 10
+        self._acqrate = self._csorb.MIN_SLOWORB_RATE
         self._oldacqrate = self._acqrate
         self._acqtrignrsamplespre = 0
         self._acqtrignrsamplespost = 360
@@ -485,8 +485,16 @@ class EpicsOrbit(BaseOrbit):
         trigmds = [self._csorb.SOFBMode.SinglePass, ]
         if self.isring:
             trigmds.append(self._csorb.SOFBMode.MultiTurn)
-        if self._mode in trigmds and value > 2:
-            msg = 'ERR: In triggered mode cannot set rate > 2.'
+        if self._mode in trigmds and value > self._csorb.MAX_TRIGMODE_RATE:
+            msg = 'ERR: In triggered mode cannot set rate > {:d}.'.format(
+                self._csorb.MAX_TRIGMODE_RATE)
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        elif self._mode == self._csorb.SOFBMode.SlowOrb and \
+                value < self._csorb.MIN_SLOWORB_RATE:
+            msg = 'ERR: In SlowOrb cannot set rate < {:d}.'.format(
+                self._csorb.MIN_SLOWORB_RATE)
             self._update_log(msg)
             _log.error(msg[5:])
             return False
@@ -503,12 +511,18 @@ class EpicsOrbit(BaseOrbit):
         bo1 = self._mode in trigmds
         bo2 = value not in trigmds
         omode = self._mode
+        if not bo2:
+            acqrate = self._csorb.MAX_TRIGMODE_RATE
+            dic = {'lolim': 0.01, 'hilim': acqrate}
+        else:
+            acqrate = self._oldacqrate
+            dic = {'lolim': self._csorb.MIN_SLOWORB_RATE, 'hilim': 100}
+
         with self._lock_raw_orbs:
             self._mode = value
             if bo1 == bo2:
-                acqrate = 2 if not bo2 else self._oldacqrate
                 self._oldacqrate = self._acqrate
-                self.run_callbacks('OrbAcqRate-SP', acqrate)
+                self.run_callbacks('OrbAcqRate-SP', acqrate, **dic)
                 self.set_orbit_acq_rate(acqrate)
             self._reset_orbs()
         Thread(
