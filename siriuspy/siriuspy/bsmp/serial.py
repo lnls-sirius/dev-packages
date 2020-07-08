@@ -202,6 +202,19 @@ class Channel:
         self._size_counter += len(stream)
         return response
 
+    def write_then_read(self, message, timeout=100):
+        """."""
+        stream = Package.package(self._address, message).stream
+        # print('write query : ', [hex(ord(c)) for c in stream])
+        response = self.pru.UART_write_then_read(stream, timeout=timeout)
+        self._size_counter += len(stream)
+
+        if not response:
+            raise _SerialErrEmpty("Serial read returned empty!")
+        package = Package(response)
+        self._size_counter += len(package.stream)
+        return package.message
+
     def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
         # if message.cmd == 0x50:
@@ -215,7 +228,7 @@ class Channel:
         #     while True:
         #         pass
         if read_flag:
-            response = self.write_and_read(message, timeout)
+            response = self.write_then_read(message, timeout)
         else:
             self.write(message, timeout)
             response = None
