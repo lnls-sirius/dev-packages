@@ -291,9 +291,11 @@ def bsmp_communication_test():
     return pssofb
 
 
-def plot_result_hist(fname, title):
+def plot_result_hist(fname, title, cutoff=float('Inf')):
     """."""
     data = _np.loadtxt(fname, skiprows=80)
+    data = data[data < cutoff]
+    print('selected data size: {}'.format(len(data)))
     avg = data.mean()
     std = data.std()
     minv = data.min()
