@@ -185,7 +185,7 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
     exectimes = [0] * NRPTS
 
     pssofb.bsmp_sofb_update()
-    kick_refmon = pssofb.sofb_kick_refmon
+    kick_refmon = pssofb.sofb_kick_refmon.copy()
 
     for i, _ in enumerate(exectimes):
 
