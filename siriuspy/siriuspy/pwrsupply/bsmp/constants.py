@@ -444,30 +444,33 @@ class ConstFAP(ConstPSBSMP):
     """Namespace for organizing power supply FAP BSMP constants."""
 
     # --- FAP variables ---
-    V_PS_SOFT_INTERLOCKS = 25
-    V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD_MEAN = 27  # corresponds to IOC Current-Mon
-    V_I_LOAD1 = 28  # corresponds to IOC Current1-Mon
-    V_I_LOAD2 = 29  # corresponds to IOC Current2-Mon
-    V_V_DCLINK = 30
-    V_I_IGBT_1 = 31
-    V_I_IGBT_2 = 32
-    V_DUTY_CYCLE_1 = 33
-    V_DUTY_CYCLE_2 = 34
-    V_DUTY_DIFF = 35
-    V_V_INPUT_IIB = 36
-    V_V_OUTPUT_IIB = 37
-    V_I_IGBT_1_IIB = 38
-    V_I_IGBT_2_IIB = 39
-    V_TEMP_IGBT_1_IIB = 40
-    V_TEMP_IGBT_2_IIB = 41
-    V_V_DRIVER_IIB = 42
-    V_I_DRIVER_1_IIB = 43
-    V_I_DRIVER_2_IIB = 44
-    V_TEMP_INDUCTOR_IIB = 45
-    V_TEMP_HEATSINK_IIB = 46
-    V_I_LEAKAGE_IIB = 47
-    V_IIB_INTERLOCKS = 48
+    V_PS_SOFT_INTERLOCKS = 31
+    V_PS_HARD_INTERLOCKS = 32
+    V_I_LOAD_MEAN = 33  # corresponds to IOC Current-Mon
+    V_I_LOAD1 = 34  # corresponds to IOC Current1-Mon
+    V_I_LOAD2 = 35  # corresponds to IOC Current2-Mon
+    V_V_DCLINK = 36
+    V_I_IGBT_1 = 37
+    V_I_IGBT_2 = 38
+    V_DUTY_CYCLE_1 = 39
+    V_DUTY_CYCLE_2 = 40
+    V_DUTY_DIFF = 41
+    V_V_INPUT_IIB = 42
+    V_V_OUTPUT_IIB = 43
+    V_I_IGBT_1_IIB = 44
+    V_I_IGBT_2_IIB = 45
+    V_TEMP_IGBT_1_IIB = 46
+    V_TEMP_IGBT_2_IIB = 47
+    V_V_DRIVER_IIB = 48
+    V_I_DRIVER_1_IIB = 49
+    V_I_DRIVER_2_IIB = 50
+    V_TEMP_INDUCTOR_IIB = 51
+    V_TEMP_HEATSINK_IIB = 52
+    V_I_LEAKAGE_IIB = 53
+    V_TEMP_BOARD_IIB = 54
+    V_RH_IIB = 55
+    V_IIB_INTERLOCKS = 56
+    V_IIB_ALARMS = 57
 
 
 class ConstFAP_4P(ConstFAP):

@@ -473,6 +473,7 @@ class PSModelFAP(_PSModel):
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
+        'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
         'Current-RB': _c.V_PS_SETPOINT,
         'CurrentRef-Mon': _c.V_PS_REFERENCE,
         'Current-Mon': _c.V_I_LOAD_MEAN,
