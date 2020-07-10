@@ -193,6 +193,12 @@ class PSBSMP(_BSMP):
         self.execute_function(
             PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
 
+    def ps_function_set_slowref_fbp_readnack_ref(self, setpoints):
+        """Write FBP 4-valued setpoints and get reference values."""
+        ack, data = self.execute_function(
+            PSBSMP.CONST.F_SET_SLOWREF_FBP_READBACK_REF, setpoints)
+        return ack, data
+
     # --- pwrsupply parameters ---
 
     def parameter_read(self, eid, index=None):
@@ -550,7 +556,8 @@ class FBP(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
 
         # SOFB attributes
         self._sofb_ps_setpoint = None
@@ -578,6 +585,10 @@ class FBP(PSBSMP):
         """."""
         self.ps_function_set_slowref_fbp(value)
 
+        # NOTE: making use of new bsmp function. TEST IT!
+        # ack, self._sofb_ps_reference = self.ps_function_set_slowref_fbp_readback_ref(value)
+        # if ack != self.CONST_BSMP.ACK_OK:
+        #     print('Anomalous bsmp communication in sofb_ps_setpoint_set: ', ack)
 
     def sofb_update(self):
         """."""
@@ -596,7 +607,7 @@ class FBP(PSBSMP):
         if ack == self.CONST_BSMP.ACK_OK:
             setpoints, references, iload = _np.array(values).reshape((3, -1))
         else:
-            print('Anomalous bsmp communication if sofb read group: ', ack)
+            print('Anomalous bsmp communication in sofb read group: ', ack)
             setpoints, references, iload = None, None, None
 
         # print('{:<30s} : {:>9.3f} ms'.format(
