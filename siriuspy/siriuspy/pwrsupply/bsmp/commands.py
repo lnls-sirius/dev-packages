@@ -193,7 +193,7 @@ class PSBSMP(_BSMP):
         self.execute_function(
             PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
 
-    def ps_function_set_slowref_fbp_readnack_ref(self, setpoints):
+    def ps_function_set_slowref_fbp_readback_ref(self, setpoints):
         """Write FBP 4-valued setpoints and get reference values."""
         ack, data = self.execute_function(
             PSBSMP.CONST.F_SET_SLOWREF_FBP_READBACK_REF, setpoints)
