@@ -105,7 +105,7 @@ class PSBSMP(_BSMP):
         if not add_wfmref_group:
             return ack, data
 
-        # add group fro wfmref vars
+        # add group for wfmref vars
         ack, data = self.create_group_of_variables(
             PSBSMP._wfmref_vars_ids,
             timeout=PSBSMP._timeout_create_vars_groups)
@@ -192,6 +192,12 @@ class PSBSMP(_BSMP):
         """Write FBP 4-valued setpoints."""
         self.execute_function(
             PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
+
+    def ps_function_set_slowref_fbp_readback_ref(self, setpoints):
+        """Write FBP 4-valued setpoints and get reference values."""
+        ack, data = self.execute_function(
+            PSBSMP.CONST.F_SET_SLOWREF_FBP_READBACK_REF, setpoints)
+        return ack, data
 
     # --- pwrsupply parameters ---
 
@@ -550,12 +556,14 @@ class FBP(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
 
         # SOFB attributes
         self._sofb_ps_setpoint = None
         self._sofb_ps_reference = None
         self._sofb_ps_iload = None
+        self._sofb_ps_readback_ref = None
 
     # --- SOFB methods ---
 
@@ -574,10 +582,18 @@ class FBP(PSBSMP):
         """."""
         return self._sofb_ps_iload
 
+    @property
+    def sofb_ps_readback_ref(self):
+        """Return mirror powersupply currents read after last setpoint."""
+        return self._sofb_ps_readback_ref
+
     def sofb_ps_setpoint_set(self, value):
         """."""
-        self.ps_function_set_slowref_fbp(value)
-
+        ack, readback_ref = self.ps_function_set_slowref_fbp_readback_ref(value)
+        if ack != self.CONST_BSMP.ACK_OK:
+            print('Anomalous bsmp communication in sofb_ps_setpoint_set: ', ack)
+        else:
+            self._sofb_ps_readback_ref = readback_ref
 
     def sofb_update(self):
         """."""
@@ -587,20 +603,14 @@ class FBP(PSBSMP):
          self._sofb_ps_iload) = data
 
     def _sofb_read_group_of_variables(self):
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PSBSMP._sofb_read_group_of_variables (beg)', 1e3*(_time.time() % 1)))
-
         group_id = self.CONST.G_SOFB
         ack, values = self.read_group_of_variables(
             group_id=group_id)
         if ack == self.CONST_BSMP.ACK_OK:
             setpoints, references, iload = _np.array(values).reshape((3, -1))
         else:
-            print('Anomalous bsmp communication if sofb read group: ', ack)
+            print('Anomalous bsmp communication in sofb read group: ', ack)
             setpoints, references, iload = None, None, None
-
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PSBSMP._sofb_read_group_of_variables (end)', 1e3*(_time.time() % 1)))
 
         return setpoints, references, iload
 

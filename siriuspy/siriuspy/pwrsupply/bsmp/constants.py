@@ -12,11 +12,10 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V1.25 - FRWR0.40 - 21/05/2020'
+__version__ = 'V1.25 - FRWR0.42 - 7/8/2020'
 
 
 # --- Const DCDC ---
-
 
 class ConstPSBSMP:
     """Namespace for organizing power supply BSMP constants."""
@@ -102,30 +101,32 @@ class ConstPSBSMP:
     F_SYNC_PULSE = 15
     F_SET_SLOWREF = 16
     F_SET_SLOWREF_FBP = 17
-    F_RESET_COUNTERS = 18
-    F_SCALE_WFMREF = 19
-    F_SELECT_WFMREF = 20
-    F_GET_WFMREF_SIZE = 21
-    F_RESET_WFMREF = 22
-    F_CFG_SIGGEN = 23
-    F_SET_SIGGEN = 24
-    F_ENABLE_SIGGEN = 25
-    F_DISABLE_SIGGEN = 26
-    F_SET_SLOWREF_READBACK = 27
-    F_SET_SLOWREF_FBP_READBACK = 28
-    F_SET_PARAM = 29
-    F_GET_PARAM = 30
-    F_SAVE_PARAM_EEPROM = 31
-    F_LOAD_PARAM_EEPROM = 32
-    F_SAVE_PARAM_BANK = 33
-    F_LOAD_PARAM_BANK = 34
-    F_SET_DSP_COEFFS = 35
-    F_GET_DSP_COEFF = 36
-    F_SAVE_DSP_COEFFS_EEPROM = 37
-    F_LOAD_DSP_COEFFS_EEPROM = 38
-    F_SAVE_DSP_MODULES_EEPROM = 39
-    F_LOAD_DSP_MODULES_EEPROM = 40
-    F_RESET_UDC = 41
+    F_SET_SLOWREF_READBACK_MON = 18
+    F_SET_SLOWREF_FBP_READBACK_MON = 19
+    F_SET_SLOWREF_READBACK_REF = 20
+    F_SET_SLOWREF_FBP_READBACK_REF = 21
+    F_RESET_COUNTERS = 22
+    F_CFG_WFMREF = 23
+    F_SELECT_WFMREF = 24
+    F_GET_WFMREF_SIZE = 25
+    F_RESET_WFMREF = 26
+    F_CFG_SIGGEN = 27
+    F_SET_SIGGEN = 28
+    F_ENABLE_SIGGEN = 29
+    F_DISABLE_SIGGEN = 30
+    F_SET_PARAM = 31
+    F_GET_PARAM = 32
+    F_SAVE_PARAM_EEPROM = 33
+    F_LOAD_PARAM_EEPROM = 34
+    F_SAVE_PARAM_BANK = 35
+    F_LOAD_PARAM_BANK = 36
+    F_SET_DSP_COEFFS = 37
+    F_GET_DSP_COEFF = 38
+    F_SAVE_DSP_COEFFS_EEPROM = 39
+    F_LOAD_DSP_COEFFS_EEPROM = 40
+    F_SAVE_DSP_MODULES_EEPROM = 41
+    F_LOAD_DSP_MODULES_EEPROM = 42
+    F_RESET_UDC = 43
 
     # --- common variables ---
     V_PS_STATUS = 0
@@ -144,17 +145,23 @@ class ConstPSBSMP:
     V_SIGGEN_AUX_PARAM = 13
     V_WFMREF_SELECTED = 14
     V_WFMREF_SYNC_MODE = 15
-    V_WFMREF_GAIN = 16
-    V_WFMREF_OFFSET = 17
-    V_WFMREF0_START = 18
-    V_WFMREF0_END = 19
-    V_WFMREF0_IDX = 20
-    V_WFMREF1_START = 21
-    V_WFMREF1_END = 22
-    V_WFMREF1_IDX = 23
+    V_WFMREF_FREQUENCY = 16
+    V_WFMREF_GAIN = 17
+    V_WFMREF_OFFSET = 18
+    V_WFMREF0_START = 19
+    V_WFMREF0_END = 20
+    V_WFMREF0_IDX = 21
+    V_WFMREF1_START = 22
+    V_WFMREF1_END = 23
+    V_WFMREF1_IDX = 24
+    V_SCOPE_FREQUENCY = 25
+    V_SCOPE_DURATION = 26
+    V_SCOPE_SRC_DATA = 27
 
     # --- undefined variables
-    V_UNDEF24 = 24
+    V_UNDEF28 = 28
+    V_UNDEF29 = 29
+    V_UNDEF30 = 30
 
     # --- power supply parameters ---
     # ----- class PS -----
@@ -225,38 +232,38 @@ class ConstFBP(ConstPSBSMP):
     """Namespace for organizing power supply FBP BSMP constants."""
 
     # --- FSB variables ---
-    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
-    V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD = 27  # corresponds to IOC Current-Mon
-    V_V_LOAD = 28
-    V_V_DCLINK = 29
-    V_TEMP_SWITCHES = 30
-    V_DUTY_CYCLE = 31  # (float)
+    V_PS_SOFT_INTERLOCKS = 31  # BSMP doc says ID numb. should be continous!
+    V_PS_HARD_INTERLOCKS = 32
+    V_I_LOAD = 33  # corresponds to IOC Current-Mon
+    V_V_LOAD = 34
+    V_V_DCLINK = 35
+    V_TEMP_SWITCHES = 36
+    V_DUTY_CYCLE = 37  # (float)
     # --- FBP mirror variables ----
-    V_PS_STATUS1 = 40
-    V_PS_STATUS2 = 41
-    V_PS_STATUS3 = 42
-    V_PS_STATUS4 = 43
-    V_PS_SETPOINT1 = 44
-    V_PS_SETPOINT2 = 45
-    V_PS_SETPOINT3 = 46
-    V_PS_SETPOINT4 = 47
-    V_PS_REFERENCE1 = 48
-    V_PS_REFERENCE2 = 49
-    V_PS_REFERENCE3 = 50
-    V_PS_REFERENCE4 = 51
-    V_PS_SOFT_INTERLOCK1 = 52
-    V_PS_SOFT_INTERLOCK2 = 53
-    V_PS_SOFT_INTERLOCK3 = 54
-    V_PS_SOFT_INTERLOCK4 = 55
-    V_PS_HARD_INTERLOCK1 = 56
-    V_PS_HARD_INTERLOCK2 = 57
-    V_PS_HARD_INTERLOCK3 = 58
-    V_PS_HARD_INTERLOCK4 = 59
-    V_I_LOAD1 = 60
-    V_I_LOAD2 = 61
-    V_I_LOAD3 = 62
-    V_I_LOAD4 = 63
+    V_PS_STATUS1 = 46
+    V_PS_STATUS2 = 47
+    V_PS_STATUS3 = 48
+    V_PS_STATUS4 = 49
+    V_PS_SETPOINT1 = 50
+    V_PS_SETPOINT2 = 51
+    V_PS_SETPOINT3 = 52
+    V_PS_SETPOINT4 = 53
+    V_PS_REFERENCE1 = 54
+    V_PS_REFERENCE2 = 55
+    V_PS_REFERENCE3 = 56
+    V_PS_REFERENCE4 = 57
+    V_PS_SOFT_INTERLOCK1 = 58
+    V_PS_SOFT_INTERLOCK2 = 59
+    V_PS_SOFT_INTERLOCK3 = 60
+    V_PS_SOFT_INTERLOCK4 = 61
+    V_PS_HARD_INTERLOCK1 = 62
+    V_PS_HARD_INTERLOCK2 = 63
+    V_PS_HARD_INTERLOCK3 = 64
+    V_PS_HARD_INTERLOCK4 = 65
+    V_I_LOAD1 = 66
+    V_I_LOAD2 = 67
+    V_I_LOAD3 = 68
+    V_I_LOAD4 = 69
 
 
 class ConstFAC_DCDC(ConstPSBSMP):
