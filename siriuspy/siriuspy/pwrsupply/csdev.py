@@ -618,6 +618,8 @@ def _get_ps_basic_propty_database():
             {'type': 'float', 'count': 4,
              'value': _np.array([0.0, ] * 4),
              'unit': 'Hz'},
+        'ParamCtrlLoopState-Cte':
+            {'type': 'float', 'value': 0.0, 'unit': ''},
         'ParamCtrlMaxRef-Cte':
             {'type': 'float', 'count': 4,
              'value': _np.array([0.0, ] * 4),

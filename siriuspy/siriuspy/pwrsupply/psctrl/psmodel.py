@@ -71,7 +71,7 @@ class _PSModel:
         # --- Control ---
         'ParamCtrlFreqCtrlISR-Cte': _c.P_CTRL_FREQ_CONTROL_ISR,  # 11
         'ParamCtrlFreqTimeSlicer-Cte': _c.P_CTRL_FREQ_TIME_SLICER,  # 12
-        # 'ParamCtrlLoopState-Cte': _c.P_CTRL_LOOP_STATE,  # 13
+        'ParamCtrlLoopState-Cte': _c.P_CTRL_CONTROL_LOOP_STATE,  # 13
         'ParamCtrlMaxRef-Cte': _c.P_CTRL_MAX_REF,  # 14
         'ParamCtrlMinRef-Cte': _c.P_CTRL_MIN_REF,  # 15
         'ParamCtrlMaxRefOpenLoop-Cte': _c.P_CTRL_MAX_REF_OPEN_LOOP,  # 16
