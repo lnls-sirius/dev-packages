@@ -337,4 +337,4 @@ class SOFBMode(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_opmode(value)
+            self.pru_controller.sofb_mode_set(value)

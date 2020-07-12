@@ -506,6 +506,9 @@ class PRUController:
             if dt_ < self._scan_interval:
                 _time.sleep(self._scan_interval - dt_)
 
+            # update timestamp
+            self._timestamp_update = _time.time()
+
     def _loop_process(self):
         while self._running:
             if self.processing:
@@ -592,9 +595,6 @@ class PRUController:
                 (self._wfm_update_dev_idx + 1) % len(self._device_ids)
             dev_id = self._device_ids[self._wfm_update_dev_idx]
             self._bsmp_update_wfm(dev_id)
-
-        # update timestamp
-        self._timestamp_update = _time.time()
 
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'PRUC._bsmp_update (end)', 1e3*(_time.time() % 1)))
