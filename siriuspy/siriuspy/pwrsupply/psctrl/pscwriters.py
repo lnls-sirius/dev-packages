@@ -95,7 +95,7 @@ class WfmSP(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             for dev_id in self._device_ids:
-                self.pru_controller.wfm_write(dev_id, value)
+                self.pru_controller.wfmref_write(dev_id, value)
 
 
 class WfmUpdate(Function):

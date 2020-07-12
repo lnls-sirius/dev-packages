@@ -47,18 +47,23 @@ class PSBSMP(_BSMP):
     _sleep_disable_bufsample = 0.5  # [s]
     _sleep_select_op_mode = 0.030  # [s]
 
-    _wfmref_mon_pointers_var_ids = {
-        0: (CONST.V_WFMREF0_START,
+    # --- BSMP PS curves ---
+    CURVE_ID_WFMREF_DATA0 = 0
+    CURVE_ID_WFMREF_DATA0 = 1
+    CURVE_ID_SCOPE = 2
+
+    _WFMREF_POINTERS_VAR_IDS = {
+        CURVE_ID_WFMREF_DATA0: (
+            CONST.V_WFMREF0_START,
             CONST.V_WFMREF0_END,
             CONST.V_WFMREF0_IDX),
-        1: (CONST.V_WFMREF1_START,
+        CURVE_ID_WFMREF_DATA1: (
+            CONST.V_WFMREF1_START,
             CONST.V_WFMREF1_END,
             CONST.V_WFMREF1_IDX),
     }
 
-    ID_CURVE_BUFSAMPLE = 2
-
-    _wfmref_vars_ids = (
+    _WFMREF_VAR_IDS = (
         CONST.V_WFMREF_SELECTED,
         CONST.V_WFMREF_SYNC_MODE,
         CONST.V_WFMREF_GAIN,
@@ -107,7 +112,7 @@ class PSBSMP(_BSMP):
 
         # add group for wfmref vars
         ack, data = self.create_group_of_variables(
-            PSBSMP._wfmref_vars_ids,
+            PSBSMP._WFMREF_VAR_IDS,
             timeout=PSBSMP._timeout_create_vars_groups)
         self._wfmref_vars_group_id = 1 + len(varids_groups)
 
@@ -252,18 +257,18 @@ class PSBSMP(_BSMP):
                 func_id=PSBSMP.CONST.F_SET_PARAM,
                 input_val=(eid, index, value))
 
-    # --- wfmref methods ---
+    # --- wfmref and scope methods ---
 
     @property
-    def wfmref_mon_select(self):
+    def wfmref_select(self):
         """Return ID of curve currently in use by DSP."""
         _, curve_id = self.read_variable(
             var_id=PSBSMP.CONST.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
         return curve_id
 
-    @wfmref_mon_select.setter
-    def wfmref_mon_select(self, curve_id):
+    @wfmref_select.setter
+    def wfmref_select(self, curve_id):
         """Select ID of curve to be used by DSP."""
         ack, data = self.execute_function(
             func_id=PSBSMP.CONST.F_SELECT_WFMREF,
@@ -272,7 +277,7 @@ class PSBSMP(_BSMP):
         return ack, data
 
     @property
-    def wfmref_mon_size(self):
+    def wfmref_size(self):
         """Return WfmRef size in t_float units.
 
             This is the waveform size as last registered by the
@@ -285,7 +290,7 @@ class PSBSMP(_BSMP):
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
-    def wfmref_mon_index(self):
+    def wfmref_index(self):
         """Return WfmRef Index
 
             This index refers to the current waveform in use by the
@@ -298,29 +303,29 @@ class PSBSMP(_BSMP):
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
-    def wfmref_mon_maxsize(self):
+    def wfmref_maxsize(self):
         """."""
         # curve with ids 0 and 1 should have same sizes.
         maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
 
     @ property
-    def wfmref_mon_pointer_values(self):
+    def wfmref_pointer_values(self):
         """Return pointer values of currently selected wfmref curve."""
         pointer_ids = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
         pointer_values = self._bsmp_get_variable_values(*pointer_ids)
         return pointer_values
 
-    def wfmref_mon_read(self):
+    def wfmref_read(self):
         """Return data of curve currently in use by DSP."""
         # get curve ID
-        curve_id = self.wfmref_mon_select
+        curve_id = self.wfmref_select
 
         # get curve data
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
-    def wfmref_mon_write(self, curve):
+    def wfmref_write(self, curve):
         """Write WfmRef to currently ."""
         # get id of writable wfmref curve
         curve_id = self._wfmref_mon_bsmp_select_writable_curve_id()
@@ -329,26 +334,25 @@ class PSBSMP(_BSMP):
         curve = self.curve_write(curve_id, curve, read_curve=True)
 
         # execute selection of WfmRef to be used
-        self.wfmref_mon_select = curve_id
+        self.wfmref_select = curve_id
 
         return curve
 
-    def wfm_mon_read(self):
-        """Update wfm_mon."""
-        curve_id = PSBSMP.ID_CURVE_BUFSAMPLE
+    def scope_read(self):
+        """Read scope."""
+        curve_id = PSBSMP.CURVE_ID_SCOPE
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
-    def wfmref_mon_bufsample_enable(self):
-        """Enable buffer samples."""
+    def scope_enable(self):
+        """Enable scope update."""
         ack, data = self.execute_function(
             func_id=PSBSMP.CONST.F_ENABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
-    def wfmref_mon_bufsample_disable(self):
-        """Disable buffer samples."""
-        # print('disabling bufsample.')
+    def scope_disable(self):
+        """Disable scope update."""
         ack, data = self.execute_function(
             func_id=PSBSMP.CONST.F_DISABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
@@ -390,8 +394,8 @@ class PSBSMP(_BSMP):
     # --- private methods ---
 
     def _wfmref_mon_bsmp_get_pointers_ids_of_selected(self):
-        curve_id = self.wfmref_mon_select
-        return PSBSMP._wfmref_mon_pointers_var_ids[curve_id]
+        curve_id = self.wfmref_select
+        return PSBSMP._WFMREF_POINTERS_VAR_IDS[curve_id]
 
     def _wfmref_mon_check_entities_consistency(self):
         # check consistency of curves with ids 0 and 1
@@ -432,16 +436,16 @@ class PSBSMP(_BSMP):
 
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
-        wfmref_mon_size = self.wfmref_mon_size
-        wfmref_mon_size_min = self._curve_get_implementable_size(
-            curve_id, wfmref_mon_size)
+        wfmref_size = self.wfmref_size
+        wfmref_size_min = self._curve_get_implementable_size(
+            curve_id, wfmref_size)
 
         # create initial output data
-        curve = _np.zeros(wfmref_mon_size_min)
+        curve = _np.zeros(wfmref_size_min)
 
         # read curve blocks
         curve_entity = self.entities.curves[curve_id]
-        indices = curve_entity.get_indices(wfmref_mon_size_min)
+        indices = curve_entity.get_indices(wfmref_size_min)
         # print('reading - curve id: ', curve_id)
         # print('reading - indices: ', indices)
         for block, idx in enumerate(indices):
@@ -456,7 +460,7 @@ class PSBSMP(_BSMP):
             # print('psbsmp.curve_read-1')
             if ack != self.CONST_BSMP.ACK_OK:
                 # print('psbsmp.curve_read-2')
-                if curve_id == PSBSMP.ID_CURVE_BUFSAMPLE and \
+                if curve_id == PSBSMP.CURVE_ID_SCOPE and \
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
                     # print('sit1, add:{}, curve_id:{}, block:{}'.format(
                     #     add, curve_id, block))
@@ -482,12 +486,12 @@ class PSBSMP(_BSMP):
 
     def _curve_bsmp_write(self, curve_id, curve):
         # select minimum curve size between spec and firmware.
-        wfmref_mon_size_min = self._curve_get_implementable_size(
+        wfmref_size_min = self._curve_get_implementable_size(
             curve_id, len(curve))
 
         # send curve blocks
         curve_entity = self.entities.curves[curve_id]
-        indices = curve_entity.get_indices(wfmref_mon_size_min)
+        indices = curve_entity.get_indices(wfmref_size_min)
         # print('writing - curve id: ', curve_id)
         # print('writing - indices: ', indices)
 
