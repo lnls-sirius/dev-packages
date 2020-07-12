@@ -38,11 +38,6 @@ class PRUController:
 
     _sleep_process_loop = 0.020  # [s]
 
-
-    # After a sofb current setpoint the controller does not insert
-    # scan operations for a given time interval
-    _sofb_interval = 1.0  # [s]
-
     # --- public interface ---
 
     def __init__(self,
@@ -68,7 +63,7 @@ class PRUController:
         t0_ = _time.time()
 
         # init timestamp of last SOFB setpoint execution
-        self._sofb_timestamp = t0_
+        self._sofb_mode = False
 
         # create lock
         self._lock = _Lock()
@@ -329,6 +324,19 @@ class PRUController:
 
     # --- SOFBCurrent parameters
 
+    def sofb_mode_set(self, state):
+        """Change SOFB mode: True or False."""
+        self._sofb_mode = state
+        if state:
+            # wait until queue is empty
+            while self._queue:
+                pass
+
+    @property
+    def sofb_mode(self):
+        """Return SOFB mode."""
+        return self._sofb_mode
+
     def sofb_current_set(self, value):
         """."""
         # print('{:<30s} : {:>9.3f} ms'.format(
@@ -340,16 +348,12 @@ class PRUController:
         #
         # return True
 
-        # set sofb timestamp to avoid insertions of scan operations
-        self._sofb_timestamp = _time.time()
-
         # wait until queue is empty
         while self._queue:
             pass
 
         # execute SOFB setpoint
         self._bsmp_update_sofb_setpoint(value)
-
 
         return True
 
@@ -491,7 +495,7 @@ class PRUController:
             # run scan method once
             if self.scanning and \
                self._scan_interval != 0 and \
-               t0_ - self._sofb_timestamp > PRUController._sofb_interval:
+               not self._sofb_mode:
                 self.bsmp_scan()
 
             # update scan interval
@@ -501,6 +505,9 @@ class PRUController:
             dt_ = _time.time() - t0_
             if dt_ < self._scan_interval:
                 _time.sleep(self._scan_interval - dt_)
+
+            # update timestamp
+            self._timestamp_update = _time.time()
 
     def _loop_process(self):
         while self._running:
@@ -588,9 +595,6 @@ class PRUController:
                 (self._wfm_update_dev_idx + 1) % len(self._device_ids)
             dev_id = self._device_ids[self._wfm_update_dev_idx]
             self._bsmp_update_wfm(dev_id)
-
-        # update timestamp
-        self._timestamp_update = _time.time()
 
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'PRUC._bsmp_update (end)', 1e3*(_time.time() % 1)))
