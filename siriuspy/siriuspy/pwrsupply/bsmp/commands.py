@@ -80,7 +80,7 @@ class PSBSMP(_BSMP):
         """Init BSMP."""
         self.pru = pru
         super().__init__(self.pru, slave_address, entities)
-        self._wfmref_mon_check_entities_consistency()
+        self._wfmref_check_entities_consistency()
         self._wfmref_vars_group_id = None
 
     @staticmethod
@@ -261,7 +261,7 @@ class PSBSMP(_BSMP):
 
     @property
     def wfmref_select(self):
-        """Return ID of curve currently in use by DSP."""
+        """Return wfmref curve ID currently in use by DSP."""
         _, curve_id = self.read_variable(
             var_id=PSBSMP.CONST.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
@@ -269,7 +269,7 @@ class PSBSMP(_BSMP):
 
     @wfmref_select.setter
     def wfmref_select(self, curve_id):
-        """Select ID of curve to be used by DSP."""
+        """Select wfmref curve ID to be used by DSP."""
         ack, data = self.execute_function(
             func_id=PSBSMP.CONST.F_SELECT_WFMREF,
             input_val=curve_id,
@@ -278,33 +278,33 @@ class PSBSMP(_BSMP):
 
     @property
     def wfmref_size(self):
-        """Return WfmRef size in t_float units.
+        """Return wfmref curve size in t_float units.
 
             This is the waveform size as last registered by the
         ARM controller.
         """
         # calculate wfmref size from buffer pointer values used by
         # ARM controller
-        i_beg, i_end, _ = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        i_beg, i_end, _ = self._wfmref_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_end)
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
     def wfmref_index(self):
-        """Return WfmRef Index
+        """Return wfmref curve index.
 
             This index refers to the current waveform in use by the
         DSP controller.
         """
         # calculate wfmref index from buffer pointer values used by
         # ARM controller
-        i_beg, _, i_idx = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        i_beg, _, i_idx = self._wfmref_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_idx)
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
     def wfmref_maxsize(self):
-        """."""
+        """Return max size of bsmp curves 0 and 1."""
         # curve with ids 0 and 1 should have same sizes.
         maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
@@ -312,12 +312,12 @@ class PSBSMP(_BSMP):
     @ property
     def wfmref_pointer_values(self):
         """Return pointer values of currently selected wfmref curve."""
-        pointer_ids = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        pointer_ids = self._wfmref_get_pointers_ids_of_selected()
         pointer_values = self._bsmp_get_variable_values(*pointer_ids)
         return pointer_values
 
     def wfmref_read(self):
-        """Return data of curve currently in use by DSP."""
+        """Return data of wfmref curve currently in use by DSP."""
         # get curve ID
         curve_id = self.wfmref_select
 
@@ -326,9 +326,9 @@ class PSBSMP(_BSMP):
         return curve
 
     def wfmref_write(self, curve):
-        """Write WfmRef to currently ."""
+        """Write a new wfmref curve to the available buffer not in use."""
         # get id of writable wfmref curve
-        curve_id = self._wfmref_mon_bsmp_select_writable_curve_id()
+        curve_id = self._wfmref_bsmp_select_writable_curve_id()
 
         # write curve
         curve = self.curve_write(curve_id, curve, read_curve=True)
@@ -393,11 +393,11 @@ class PSBSMP(_BSMP):
 
     # --- private methods ---
 
-    def _wfmref_mon_bsmp_get_pointers_ids_of_selected(self):
+    def _wfmref_get_pointers_ids_of_selected(self):
         curve_id = self.wfmref_select
         return PSBSMP._WFMREF_POINTERS_VAR_IDS[curve_id]
 
-    def _wfmref_mon_check_entities_consistency(self):
+    def _wfmref_check_entities_consistency(self):
         # check consistency of curves with ids 0 and 1
         curves = self.entities.curves
         if 0 in curves and 1 in curves:
@@ -407,7 +407,7 @@ class PSBSMP(_BSMP):
                curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
-    def _wfmref_mon_bsmp_select_writable_curve_id(self):
+    def _wfmref_bsmp_select_writable_curve_id(self):
 
         # get current curve id
         _, curve_id = self.read_variable(
