@@ -63,17 +63,21 @@ class PSDevState:
 
     @property
     def wfmref_rb(self):
-        """Return wfmref_rb."""
+        """Return wfmref_rb (Wfm-RB)."""
         return self._wfmref_rb
 
     @wfmref_rb.setter
     def wfmref_rb(self, value):
-        """Set wfmref_rb."""
+        """Set wfmref_rb.
+
+        This is invoked for the object to store wfmref that has been read
+        from power supply right after writting a new wfmref curve.
+        """
         self._wfmref_rb = _np.array(value)
 
     @property
     def wfmref(self):
-        """Return wfmref."""
+        """Return wfmref (WfmRef-Mon)."""
         return self._wfmref
 
     @property
@@ -96,7 +100,7 @@ class PSDevState:
 
     @property
     def scope(self):
-        """Return wfmref."""
+        """Return scope (Wfm-Mon)."""
         return self._scope
 
     @property

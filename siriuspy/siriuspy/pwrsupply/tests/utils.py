@@ -178,7 +178,7 @@ def print_wfmref(ps_list):
         st2 += ' {:6d}'
         va2.append(ps.wfmref_maxsize)
         st3 += ' {:6d}'
-        va3.append(ps.wfmref_size)
+        va3.append(ps.wfmref_size())
         st4 += ' {:6d}'
         va4.append(ps.wfmref_index)
         st5 += ' {:6d}'

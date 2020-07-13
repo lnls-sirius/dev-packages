@@ -49,7 +49,7 @@ class PSBSMP(_BSMP):
 
     # --- BSMP PS curves ---
     CURVE_ID_WFMREF_DATA0 = 0
-    CURVE_ID_WFMREF_DATA0 = 1
+    CURVE_ID_WFMREF_DATA1 = 1
     CURVE_ID_SCOPE = 2
 
     _WFMREF_POINTERS_VAR_IDS = {
@@ -276,8 +276,7 @@ class PSBSMP(_BSMP):
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
-    @property
-    def wfmref_size(self):
+    def wfmref_size(self, curve_id=None):
         """Return wfmref curve size in t_float units.
 
             This is the waveform size as last registered by the
@@ -285,7 +284,7 @@ class PSBSMP(_BSMP):
         """
         # calculate wfmref size from buffer pointer values used by
         # ARM controller
-        i_beg, i_end, _ = self._wfmref_get_pointers_ids_of_selected()
+        i_beg, i_end, _ = self._wfmref_get_pointers_ids_of_selected(curve_id)
         values = self._bsmp_get_variable_values(i_beg, i_end)
         return PSBSMP.curve_index_calc(values[0], values[1])
 
@@ -393,8 +392,9 @@ class PSBSMP(_BSMP):
 
     # --- private methods ---
 
-    def _wfmref_get_pointers_ids_of_selected(self):
-        curve_id = self.wfmref_select
+    def _wfmref_get_pointers_ids_of_selected(self, curve_id=None):
+        if curve_id is None:
+            curve_id = self.wfmref_select
         return PSBSMP._WFMREF_POINTERS_VAR_IDS[curve_id]
 
     def _wfmref_check_entities_consistency(self):
@@ -415,28 +415,21 @@ class PSBSMP(_BSMP):
             timeout=PSBSMP._timeout_read_variable)
 
         # select the other buffer and send curve blocks
-        curve_id = 0 if curve_id == 1 else 1
+        if curve_id == PSBSMP.CURVE_ID_WFMREF_DATA1:
+            curve_id = PSBSMP.CURVE_ID_WFMREF_DATA0
+        else:
+            curve_id = PSBSMP.CURVE_ID_WFMREF_DATA1
 
         return curve_id
 
-        # # read status
-        # var_ids = (
-        #     PSBSMP.CONST.V_PS_STATUS,
-        #     PSBSMP.CONST.V_WFMREF_SELECTED,
-        #   )
-        # data = self._bsmp_get_variable_values(*var_ids)
-        # state = data[0] & 0b1111
-        # curve_id = data[1]
-        # if state in (PSBSMP.CONST.E_STATE_RMPWFM,
-        #              PSBSMP.CONST.E_STATE_MIGWFM):
-        #     # select the other buffer and send curve blocks
-        #     curve_id = 0 if curve_id == 1 else 1
-
-        # return curve_id
-
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
-        wfmref_size = self.wfmref_size
+        if curve_id == PSBSMP.CURVE_ID_SCOPE:
+            # for scope, we have to assume the size as the same as selected buffer
+            # since there are no bsmp variables indicating its size.
+            wfmref_size = self.wfmref_size()
+        else:
+            wfmref_size = self.wfmref_size(curve_id)
         wfmref_size_min = self._curve_get_implementable_size(
             curve_id, wfmref_size)
 
