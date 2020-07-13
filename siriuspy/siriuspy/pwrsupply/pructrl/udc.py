@@ -94,7 +94,7 @@ class UDC:
     def bufsample_disable(self):
         """Disable DSP from writting to bufsample curve."""
         for dev in self._devs_bsmp.values():
-            ack, data = dev.wfmref_mon_bufsample_disable()
+            ack, data = dev.scope_disable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         # a single sleep for all devices
@@ -105,7 +105,7 @@ class UDC:
     def bufsample_enable(self):
         """Enable DSP from writting to bufsample curve."""
         for dev in self._devs_bsmp.values():
-            ack, data = dev.wfmref_mon_bufsample_enable()
+            ack, data = dev.scope_enable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         return ack, data
