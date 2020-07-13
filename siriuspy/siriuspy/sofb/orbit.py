@@ -26,6 +26,7 @@ class BaseOrbit(_BaseClass):
 
 def run_subprocess(pvs, pipe):
     """Run subprocesses."""
+    timeout = 15/1000  # in [s]
     def callback(pvname, value, **kwargs):
         pvo = kwargs['cb_info'][1]
         pvo.event.set()
@@ -43,7 +44,7 @@ def run_subprocess(pvs, pipe):
     while pipe.recv():
         out = []
         for pvo in pvsobj:
-            if pvo.connected and pvo.event.wait():
+            if pvo.connected and pvo.event.wait(timeout=timeout):
                 out.append(pvo.value)
             else:
                 out.append(None)
