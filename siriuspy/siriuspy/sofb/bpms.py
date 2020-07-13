@@ -66,6 +66,8 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 0,
             'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
+            'MonitTagEn': _csbpm.EnbldDsbld.disabled,
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
             'TbtDataMaskSamplesBeg': 0,
             'TbtDataMaskSamplesEnd': 0,
