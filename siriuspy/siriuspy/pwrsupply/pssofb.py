@@ -380,12 +380,12 @@ class PSSOFB:
                 if ack != _const_bsmp.ACK_OK:
                     print('PSSOFB: anomalous response !')
                     udc[dev_id].anomalous_response(
-                        _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
+                        _const_bsmp.CMD_EXECUTE_FUNCTION, ack,
                         device_id=dev_id,
                         function_id=function_id,
-                        data_len=len(data[dev_id]),
-                        data_type=type(data[dev_id]),
-                        data=data[dev_id])
+                        data_len=len(data),
+                        data_type=type(data),
+                        data=data)
                 else:
                     dev_ack[dev_id] = True
         except _SerialError:

@@ -1,11 +1,14 @@
 #!/usr/bin/env python-sirius
 """."""
 
+import sys as _sys
 import time as _time
 
 import numpy as _np
 import matplotlib.pyplot as _plt
 import matplotlib.gridspec as _mgs
+
+import epics as _epics
 
 from PRUserial485 import EthBrigdeClient
 
@@ -146,9 +149,10 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
         print(exectime)
 
 
-def benchmark_bsmp_sofb_kick_setpoint_then_update():
+def benchmark_bsmp_sofb_kick_setpoint():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
     pssofb.bsmp_sofb_update()
@@ -160,7 +164,36 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         time0 = _time.time()
 
         # set kick values
-        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
+        kick_sp = kick_refmon + 0 * 0.01 * _np.random.randn(len(kick_refmon))
+        pssofb.bsmp_sofb_kick_set(kick_sp)
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
+    # restore state
+    pssofb.bsmp_sofb_kick_set(kick_refmon)
+
+    for exectime in exectimes:
+        print(exectime)
+
+
+def benchmark_bsmp_sofb_kick_setpoint_then_update():
+    """."""
+    pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
+    exectimes = [0] * NRPTS
+
+    pssofb.bsmp_sofb_update()
+    kick_refmon = pssofb.sofb_kick_refmon.copy()
+
+    for i, _ in enumerate(exectimes):
+
+        # start clock
+        time0 = _time.time()
+
+        # set kick values
+        kick_sp = kick_refmon + 0 * 0.01 * _np.random.randn(len(kick_refmon))
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
         # read from power supplies
@@ -173,6 +206,60 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         # stop clock
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
+
+        if not issame:
+            print('SP<>RB in event {}'.format(i))
+
+    # restore state
+    pssofb.bsmp_sofb_kick_set(kick_refmon)
+
+    for exectime in exectimes:
+        print(exectime)
+
+
+def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
+    """."""
+    trigger = _epics.PV('AS-RaMO:TI-EVG:OrbSIExtTrig-Cmd')
+    trigger.wait_for_connection()
+
+    pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowrefsync()
+
+    exectimes = [0] * 150
+
+    pssofb.bsmp_sofb_update()
+    kick_refmon = pssofb.sofb_kick_refmon
+
+    for i, _ in enumerate(exectimes):
+
+        # calc new kick
+        kick_sp = kick_refmon + 1 * 0.01 * _np.random.randn(len(kick_refmon))
+
+        # start clock
+        time0 = _time.time()
+
+        # set kick values
+        curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
+
+        # sleep for a while
+        _time.sleep(delay_before)
+
+        # send trigger
+        trigger.value = 1
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
+        # make sure trigger signal gets to power supplies.
+        _time.sleep(delay_after)
+
+        # read from power supplies
+        pssofb.bsmp_sofb_update()
+        curr_rb = pssofb.sofb_current_refmon
+
+        # comparison
+        issame = pssofb.sofb_vector_issame(curr_sp, curr_rb)
 
         if not issame:
             print('SP<>RB in event {}'.format(i))
@@ -260,10 +347,20 @@ def plot_result_perc(fname, title):
     _plt.show()
 
 
-if __name__ == '__main__':
+def run():
+    """."""
     # benchmark_bsmp_sofb_current_update()
     # benchmark_bsmp_sofb_current_setpoint()
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
+    # benchmark_bsmp_sofb_kick_setpoint()
     benchmark_bsmp_sofb_kick_setpoint_then_update()
+    # sleep_trigger_before = float(_sys.argv[1])
+    # sleep_trigger_after = float(_sys.argv[2])
+    # benchmark_bsmp_sofb_kick_setpoint_delay(
+    #     sleep_trigger_before, sleep_trigger_after)
     # test_methods()
+
+
+if __name__ == '__main__':
+    run()
