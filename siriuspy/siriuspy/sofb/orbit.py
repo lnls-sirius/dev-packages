@@ -43,8 +43,10 @@ def run_subprocess(pvs, pipe):
 
     while pipe.recv():
         out = []
+        tout = None
         for pvo in pvsobj:
-            if pvo.connected and pvo.event.wait(timeout=timeout):
+            if pvo.connected and pvo.event.wait(timeout=tout):
+                tout = timeout
                 out.append(pvo.value)
             else:
                 out.append(None)
