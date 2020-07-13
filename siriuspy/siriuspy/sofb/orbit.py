@@ -523,12 +523,13 @@ class EpicsOrbit(BaseOrbit):
         else:
             acqrate = self._oldacqrate
             dic = {'lolim': self._csorb.MIN_SLOWORB_RATE, 'hilim': 100}
+        self.run_callbacks('OrbAcqRate-SP', acqrate, **dic)
+        self.run_callbacks('OrbAcqRate-RB', acqrate, **dic)
 
         with self._lock_raw_orbs:
             self._mode = value
             if bo1 == bo2:
                 self._oldacqrate = self._acqrate
-                self.run_callbacks('OrbAcqRate-SP', acqrate, **dic)
                 self.set_orbit_acq_rate(acqrate)
             self._reset_orbs()
         Thread(
