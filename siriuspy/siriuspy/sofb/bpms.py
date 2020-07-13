@@ -96,6 +96,8 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP',
             'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'Monit1TagEn': 'Monit1TagEn-Sel',  # Enable Monit1 sync with timing
+            'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
             'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
             'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP',
@@ -138,6 +140,8 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB',
             'TbtTagEn': 'TbtTagEn-Sts',
+            'Monit1TagEn': 'Monit1TagEn-Sts',
+            'MonitTagEn': 'MonitTagEn-Sts',
             'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
             'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB',
@@ -565,6 +569,32 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['TbtTagEn']
         self._config_ok_vals['TbtTagEn'] = val
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def monit1_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['Monit1TagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @monit1_sync_enbl.setter
+    def monit1_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['Monit1TagEn']
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def monit_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['MonitTagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @monit_sync_enbl.setter
+    def monit_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['MonitTagEn']
         if pvobj.connected:
             pvobj.put(val, wait=False)
 

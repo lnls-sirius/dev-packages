@@ -608,7 +608,17 @@ class EpicsOrbit(BaseOrbit):
                 bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.configure()
                 self.timing.configure()
+        Thread(target=self._synchronize_bpms, daemon=True).start()
         return True
+
+    def _synchronize_bpms(self):
+        for bpm in self.bpms:
+            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
+        _time.sleep(0.1)
+        for bpm in self.bpms:
+            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
 
     def set_trig_acq_control(self, value):
         """."""
