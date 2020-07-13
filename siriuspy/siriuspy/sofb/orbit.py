@@ -26,8 +26,11 @@ class BaseOrbit(_BaseClass):
 
 def run_subprocess(pvs, pipe):
     """Run subprocesses."""
+    # this timeout is needed to slip the orbit acquisition in case the
+    # loop starts in the middle of the BPMs updates
     timeout = 15/1000  # in [s]
-    def callback(pvname, value, **kwargs):
+
+    def callback(*_, **kwargs):
         pvo = kwargs['cb_info'][1]
         pvo.event.set()
 
