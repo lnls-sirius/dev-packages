@@ -615,10 +615,10 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
-        _time.sleep(0.1)
+        _time.sleep(0.5)
         for bpm in self.bpms:
-            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
 
     def set_trig_acq_control(self, value):
         """."""
