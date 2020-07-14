@@ -146,7 +146,7 @@ class PSBSMP(_BSMP):
         # TODO: check with ELP if these numbers can be optimized further!
         if func_id == PSBSMP.CONST.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
-        elif func_id == PSBSMP.CONST.F_DISABLE_SCOPE:
+        elif func_id == PSBSMP.CONST.F_DISABLE_BUF_SAMPLES:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
             # _time.sleep(PSBSMP._sleep_disable_bufsample)
@@ -346,14 +346,14 @@ class PSBSMP(_BSMP):
     def scope_enable(self):
         """Enable scope update."""
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_ENABLE_SCOPE,
+            func_id=PSBSMP.CONST.F_ENABLE_BUF_SAMPLES,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
     def scope_disable(self):
         """Disable scope update."""
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_DISABLE_SCOPE,
+            func_id=PSBSMP.CONST.F_DISABLE_BUF_SAMPLES,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
