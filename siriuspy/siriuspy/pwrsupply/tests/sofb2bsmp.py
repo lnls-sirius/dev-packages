@@ -30,7 +30,6 @@ def benchmark_bsmp_sofb_current_update():
     for exectime in exectimes:
         print(exectime)
 
-    pssofb = PSSOFB(EthBrigdeClient)
     exectimes = [0] * NRPTS
     for i, _ in enumerate(exectimes):
 
@@ -52,6 +51,8 @@ def benchmark_bsmp_sofb_current_update():
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_current_setpoint():
@@ -79,6 +80,8 @@ def benchmark_bsmp_sofb_current_setpoint():
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_current_setpoint_update():
@@ -109,6 +112,8 @@ def benchmark_bsmp_sofb_current_setpoint_update():
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_current_setpoint_then_update():
@@ -147,6 +152,8 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_kick_setpoint():
@@ -197,6 +204,8 @@ def benchmark_bsmp_sofb_kick_setpoint():
     for exectime in exectimes:
         print(exectime)
 
+    pssofb.stop_threads()
+
 
 def benchmark_bsmp_sofb_kick_setpoint_then_update():
     """."""
@@ -235,6 +244,8 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
@@ -289,6 +300,8 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
 
     for exectime in exectimes:
         print(exectime)
+
+    pssofb.stop_threads()
 
 
 def bsmp_communication_test():
