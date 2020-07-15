@@ -81,7 +81,7 @@ class ETypes(_csdev.ETypes):
         'Sobre-tensao no DC-Link', 'Sub-tensao no DC-Link',
         'Falha no rele de entrada do DC-Link',
         'Falha no fusivel de entrada do DC-Link',
-        'Falha nos drivers do modulo', 'Bit7',
+        'Falha nos drivers do modulo', 'Contato do rele de entrada do DC-Link colado',
         'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
