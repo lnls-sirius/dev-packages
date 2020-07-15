@@ -27,6 +27,7 @@ class ETypes(_csdev.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
+    SI_CORR_SYNC = ('Off', 'Event', 'Clock')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
@@ -56,9 +57,10 @@ class ConstTLines(_csdev.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
-    TINY_KICK = 1e-3  # urad
-    MAX_TRIGMODE_RATE = 2  # Hz
-    MIN_SLOWORB_RATE = 30  # Hz
+    TINY_KICK = 1e-3  # [urad]
+    MAX_TRIGMODE_RATE = 2  # [Hz]
+    MIN_SLOWORB_RATE = 30  # [Hz]
+    BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
@@ -103,9 +105,11 @@ class ConstSI(ConstRings):
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
-    CorrSync = _csdev.Const.register('CorrSync', _et.OFF_ON)
+    CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
+    CorrUsePSSOFB = _csdev.Const.register('CorrUsePSSOFB', _et.DSBLD_ENBLD)
 
     RF_GEN_NAME = 'RF-Gen'
+    CORR_MIN_DELAY = 20  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -722,6 +726,18 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
+            'CorrDelay-SP': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'ms',
+                'lolim': 0, 'hilim': 100000},
+            'CorrDelay-RB': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'ms',
+                'lolim': 0, 'hilim': 100000},
+            'CorrUsePSSOFB-Sel': {
+                'type': 'enum', 'enums': self.CorrUsePSSOFB._fields,
+                'value': self.CorrUsePSSOFB.Off},
+            'CorrUsePSSOFB-Sts': {
+                'type': 'enum', 'enums': self.CorrUsePSSOFB._fields,
+                'value': self.CorrUsePSSOFB.Off},
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
             }

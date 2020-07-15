@@ -244,6 +244,8 @@ class SOFB(_BaseClass):
 
     def set_auto_corr_frequency(self, value):
         """."""
+        bpmfreq = self._csorb.BPMsFreq
+        value = bpmfreq / min(int(bpmfreq/value), 1)
         self._auto_corr_freq = value
         self.run_callbacks('ClosedLoopFreq-RB', value)
         return True
@@ -328,10 +330,19 @@ class SOFB(_BaseClass):
         kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if kicks is None:
             return
-        self.correctors.apply_kicks(kicks)
-        msg = 'kicks applied!'
-        self._update_log(msg)
-        _log.info(msg)
+        ret = self.correctors.apply_kicks(kicks)
+        if ret is None:
+            msg = 'ERR: There is some problem with a corrector!'
+            self._update_log(msg)
+            _log.error(msg[:5])
+        elif ret:
+            msg = 'kicks applied!'
+            self._update_log(msg)
+            _log.info(msg)
+        else:
+            msg = 'WARN: Not all kicks were applied previously!'
+            self._update_log(msg)
+            _log.warning(msg[:6])
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
@@ -458,7 +469,6 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
-        use_pssofb = False
         while self._auto_corr == self._csorb.ClosedLoop.On:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -466,27 +476,32 @@ class SOFB(_BaseClass):
                 _log.info(msg)
                 break
             interval = 1/self._auto_corr_freq
-            old_use_pssofb = use_pssofb
-            use_pssofb = self.acc == 'SI' and interval < 1
+            use_pssofb = self.correctors.use_pssofb
+            norbs = 1
+            if use_pssofb:
+                norbs = min(int(self._csorb.BPMsFreq*interval), 1)
 
             time0 = _time.time()
             _log.info('TIMEIT: BEGIN')
             msg = 'Getting the orbit.'
             self._update_log(msg)
             _log.info(msg)
-            orb = self.orbit.get_orbit()
+            for _ in range(norbs):
+                orb = self.orbit.get_orbit()
             time1 = _time.time()
             _log.info(strn.format('get orbit:', 1000*(time1-time0)))
+
             msg = 'Calculating kicks.'
             self._update_log(msg)
             _log.info(msg)
             dkicks = self.matrix.calc_kicks(orb)
             time2 = _time.time()
             _log.info(strn.format('calc kicks:', 1000*(time2-time1)))
-            self._ref_corr_kicks = self.correctors.get_strength(
-                use_pssofb=old_use_pssofb)
+
+            self._ref_corr_kicks = self.correctors.get_strength()
             time3 = _time.time()
             _log.info(strn.format('get strength:', 1000*(time3-time2)))
+
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
             if kicks is None:
                 self._auto_corr = self._csorb.ClosedLoop.Off
@@ -497,11 +512,31 @@ class SOFB(_BaseClass):
                 continue
             time4 = _time.time()
             _log.info(strn.format('process kicks:', 1000*(time4-time3)))
+
             msg = 'Applying kicks.'
             self._update_log(msg)
             _log.info(msg)
             # slowest part:
-            self.correctors.apply_kicks(kicks, use_pssofb=use_pssofb)
+            ret = self.correctors.apply_kicks(kicks)
+            if ret is None:
+                msg = 'ERR: There is some problem with a corrector!'
+                self._update_log(msg)
+                _log.error(msg[:5])
+                self._auto_corr = self._csorb.ClosedLoop.Off
+                msg = 'ERR: Opening the Loop'
+                self._update_log(msg)
+                _log.error(msg[5:])
+                self.run_callbacks('ClosedLoop-Sel', 0)
+                continue
+            elif ret:
+                msg = 'kicks applied!'
+                self._update_log(msg)
+                _log.info(msg)
+            else:
+                msg = 'WARN: Not all kicks were applied previously!'
+                self._update_log(msg)
+                _log.warning(msg[:6])
+
             time5 = _time.time()
             _log.info(strn.format('apply kicks:', 1000*(time5-time4)))
             msg = 'kicks applied!'
@@ -515,8 +550,9 @@ class SOFB(_BaseClass):
                 msg = 'WARN: Loop took {0:6.2f}ms.'.format(dtime*1000)
                 self._update_log(msg)
                 _log.warning(msg[6:])
+
             dtime = interval - dtime
-            if dtime > 0:
+            if not use_pssofb and dtime > 0:
                 _time.sleep(dtime)
         msg = 'Loop is opened.'
         self._update_log(msg)
