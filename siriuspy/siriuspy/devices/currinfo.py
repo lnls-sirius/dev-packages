@@ -13,7 +13,6 @@ class CurrInfo(_Device):
         BO = 'BO-Glob:AP-CurrInfo'
         TS = 'TS-Glob:AP-CurrInfo'
         SI = 'SI-Glob:AP-CurrInfo'
-        ALL = (LI, TB, BO, TS, SI)
 
     _properties = (
         # linac and transport lines
