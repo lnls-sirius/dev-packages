@@ -840,8 +840,8 @@ def _get_ps_FBP_propty_database():
                             'prec': PS_CURRENT_PRECISION,
                             'unit': 'V'},
         'DCLinkVoltage-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'V'},
+                              'prec': PS_CURRENT_PRECISION,
+                              'unit': 'V'},
         'SwitchesTemperature-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': 2,
                                     'unit': 'C'},
@@ -896,10 +896,10 @@ def _get_ps_FAC_DCDC_propty_database():
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAC_DCDC),
                                  'value': _et.HARD_INTLCK_FAC_DCDC},
-        'Current1-Mon': {'type': 'float',  'value': 0.0,
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
-        'Current2-Mon': {'type': 'float',  'value': 0.0,
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
@@ -978,10 +978,10 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
-        'Current1-Mon': {'type': 'float',  'value': 0.0,
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
-        'Current2-Mon': {'type': 'float',  'value': 0.0,
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -1171,7 +1171,7 @@ def _get_ps_FAC_2S_ACDC_propty_database():
                                      'prec': 2,
                                      'unit': 'C'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
-                                     'prec': PS_CURRENT_PRECISION},
+                             'prec': PS_CURRENT_PRECISION},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1213,7 +1213,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                      'prec': 2,
                                      'unit': 'C'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
-                                     'prec': PS_CURRENT_PRECISION},
+                             'prec': PS_CURRENT_PRECISION},
         'IIBISInductorTemperature-Mon': {'type': 'float', 'value': 0.0,
                                          'prec': 2,
                                          'unit': 'C'},
@@ -1353,8 +1353,8 @@ def _get_ps_FAP_4P_propty_database():
                                         'prec': 2,
                                         'unit': 'C'},
         'IIB4HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                       'prec': 2,
-                                       'unit': 'C'},
+                                        'prec': 2,
+                                        'unit': 'C'},
 
     }
     propty_db.update(db_ps)
@@ -1365,10 +1365,10 @@ def _get_ps_FAP_2P2S_propty_database():
     """Return database with FAP_2P2S pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
-        'Current1-Mon': {'type': 'float',  'value': 0.0,
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
-        'Current2-Mon': {'type': 'float',  'value': 0.0,
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
         'Arm1Current-Mon': {'type': 'float', 'value': 0.0,
