@@ -13,7 +13,7 @@ class CurrInfo(_Device):
         BO = 'BO-Glob:AP-CurrInfo'
         TS = 'TS-Glob:AP-CurrInfo'
         SI = 'SI-Glob:AP-CurrInfo'
-        ALL = (LI, TB, BO, TS, SI, )
+        ALL = (LI, TB, BO, TS, SI)
 
     _properties = (
         # linac and transport lines
@@ -23,10 +23,10 @@ class CurrInfo(_Device):
         'Charge1GeV-Mon', 'Current1GeV-Mon',
         'Charge2GeV-Mon', 'Current2GeV-Mon',
         'Charge3GeV-Mon', 'Current3GeV-Mon',
-        'IntCurrent3GeV-Mon', 'RampEff-Mon'
+        'IntCurrent3GeV-Mon', 'RampEff-Mon',
         # storage ring
         'Charge-Mon', 'Current-Mon',
-        'InjEff-Mon', 'Lifetime-Mon', 'LifetimeBPM-Mon'
+        'InjEff-Mon', 'Lifetime-Mon', 'LifetimeBPM-Mon',
         'StoredEBeam-Mon'
     )
 
