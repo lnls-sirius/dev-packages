@@ -969,6 +969,12 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                                         'unit': 'C'},
         'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
+        'IntlkIIB1Labels-Cte': {'type': 'string',
+                                'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
+                                'value': _et.SOFT_INTLCK_FAC_2S_DCDC},
+        'IntlkIIB2Labels-Cte': {'type': 'string',
+                                'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
+                                'value': _et.HARD_INTLCK_FAC_2S_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
