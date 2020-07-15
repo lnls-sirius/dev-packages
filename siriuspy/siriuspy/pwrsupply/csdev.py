@@ -1228,12 +1228,12 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                           'unit': 'C'},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBIS-Cte':  {'type': 'string',
-                            'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
-                            'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
-        'IntlkIIBCmd-Cte':  {'type': 'string',
-                             'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-                             'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}, }
+        'IntlkIIBISLabels-Cte':  {'type': 'string',
+                                  'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
+                                  'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
+        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
+                                   'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
+                                   'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}, }
     propty_db.update(db_ps)
     return propty_db
 
@@ -1257,9 +1257,9 @@ def _get_ps_FAP_propty_database():
         'IntlkHardLabels-Cte': {'type': 'string',
                                 'count': len(_et.HARD_INTLCK_FAP),
                                 'value': _et.HARD_INTLCK_FAP},
-        'IntlkIIB-Cte': {'type': 'string',
-                         'count': len(_et.IIB_INTLCK_FAP),
-                         'value': _et.IIB_INTLCK_FAP},
+        'IntlkIIBLabels-Cte': {'type': 'string',
+                               'count': len(_et.IIB_INTLCK_FAP),
+                               'value': _et.IIB_INTLCK_FAP},
         'IIBLeakCurrent-Mon': {'type': 'float', 'value': 0.0,
                                'prec': PS_CURRENT_PRECISION,
                                'unit': 'A'},
