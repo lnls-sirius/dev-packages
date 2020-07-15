@@ -25,7 +25,7 @@ class CurrInfo(_Device):
         'Charge3GeV-Mon', 'Current3GeV-Mon',
         'IntCurrent3GeV-Mon', 'RampEff-Mon'
         # storage ring
-        'Change-Mon', 'Current-Mon',
+        'Charge-Mon', 'Current-Mon',
         'InjEff-Mon', 'Lifetime-Mon', 'LifetimeBPM-Mon'
         'StoredEBeam-Mon'
     )
