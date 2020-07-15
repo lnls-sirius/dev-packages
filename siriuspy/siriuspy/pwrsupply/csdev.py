@@ -914,9 +914,9 @@ def _get_ps_FAC_DCDC_propty_database():
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
                              'prec': PS_CURRENT_PRECISION},
         'IntlkIIB-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBLabels-Cte': {'type': 'string',
-                               'count': len(_et.SOFT_INTLCK_FAC_DCDC),
-                               'value': _et.SOFT_INTLCK_FAC_DCDC},
+        # 'IntlkIIBLabels-Cte': {'type': 'string',
+        #                        'count': len(_et.SOFT_INTLCK_FAC_DCDC),
+        #                        'value': _et.SOFT_INTLCK_FAC_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -973,12 +973,12 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                                         'unit': 'C'},
         'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIB1Labels-Cte': {'type': 'string',
-                                'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
-                                'value': _et.SOFT_INTLCK_FAC_2S_DCDC},
-        'IntlkIIB2Labels-Cte': {'type': 'string',
-                                'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
-                                'value': _et.HARD_INTLCK_FAC_2S_DCDC},
+        # 'IntlkIIB1Labels-Cte': {'type': 'string',
+        #                         'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
+        #                         'value': _et.SOFT_INTLCK_FAC_2S_DCDC},
+        # 'IntlkIIB2Labels-Cte': {'type': 'string',
+        #                         'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
+        #                         'value': _et.HARD_INTLCK_FAC_2S_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1184,12 +1184,12 @@ def _get_ps_FAC_2S_ACDC_propty_database():
                              'prec': PS_CURRENT_PRECISION},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBISLabels-Cte':  {'type': 'string',
-                                  'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
-                                  'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
-        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
-                                   'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
-                                   'value': _et.HARD_INTLCK_FAC_2S_ACDC},
+        # 'IntlkIIBISLabels-Cte':  {'type': 'string',
+        #                           'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
+        #                           'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
+        # 'IntlkIIBCmdLabels-Cte':  {'type': 'string',
+        #                            'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
+        #                            'value': _et.HARD_INTLCK_FAC_2S_ACDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1246,12 +1246,13 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                           'unit': 'C'},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBISLabels-Cte':  {'type': 'string',
-                                  'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
-                                  'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
-        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
-                                   'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-                                   'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}, }
+        # 'IntlkIIBISLabels-Cte':  {'type': 'string',
+        #                           'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
+        #                           'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
+        # 'IntlkIIBCmdLabels-Cte':  {'type': 'string',
+        #                            'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
+        #                            'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}
+    }
     propty_db.update(db_ps)
     return propty_db
 
