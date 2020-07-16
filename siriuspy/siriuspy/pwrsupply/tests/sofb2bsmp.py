@@ -15,7 +15,7 @@ from PRUserial485 import EthBrigdeClient
 from siriuspy.pwrsupply.pssofb import PSSOFB
 
 
-NRPTS = 10
+NRPTS = 5000
 
 
 def benchmark_bsmp_sofb_current_update():
