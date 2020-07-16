@@ -487,6 +487,7 @@ class EpicsCorrectors(BaseCorrectors):
                 self._pssofb_process = _Process(
                     target=run_subprocess_pssofb, args=(theirs, ),
                     daemon=True)
+            self._pssofb_process.start()
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
@@ -506,6 +507,14 @@ class EpicsCorrectors(BaseCorrectors):
     @use_pssofb.setter
     def use_pssofb(self, value):
         self.set_use_pssofb(value)
+
+    def shutdown(self):
+        """Shutdown Process."""
+        if self._mypipe.poll():
+            self._mypipe.recv()
+        self._mypipe.send(None)
+        self._mypipe.close()
+        self._pssofb_process.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
