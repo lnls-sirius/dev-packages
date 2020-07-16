@@ -76,6 +76,10 @@ def benchmark_bsmp_sofb_current_setpoint(fname='test'):
         curr_sp = curr_refmon + 1 * 0.01 * _np.random.randn(curr_refmon.size)
         pssofb.bsmp_sofb_current_set(curr_sp)
 
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
         # compare readback_ref read with previous value set
         if curr_sp_prev is not None:
             curr_read = pssofb.sofb_current_readback_ref.copy()
@@ -85,10 +89,6 @@ def benchmark_bsmp_sofb_current_setpoint(fname='test'):
 
         # update curr_sp_prev for comparison in the next iteration
         curr_sp_prev = curr_sp
-
-        # stop clock
-        time1 = _time.time()
-        exectimes[i] = 1000*(time1 - time0)
 
         if not issame:
             print('SP<>RB in event {}'.format(i))
@@ -385,12 +385,14 @@ def plot_results(fname, title):
         verticalalignment='bottom', transform=apc.transAxes,
         bbox=dict(edgecolor='k', facecolor='w', alpha=1.0))
 
+    fig.savefig(title + '.png')
+
     _plt.show()
 
 
 def run():
     """."""
-    fname = 'test'
+    fname = 'test.txt'
 
     # benchmark_bsmp_sofb_current_update()
     benchmark_bsmp_sofb_current_setpoint(fname)
@@ -405,6 +407,7 @@ def run():
     #     sleep_trigger_before, sleep_trigger_after)
     # test_methods()
     plot_results(fname, fname.split('.')[0])
+
 
 if __name__ == '__main__':
     run()
