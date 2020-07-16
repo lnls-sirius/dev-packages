@@ -7,14 +7,16 @@ import time as _time
 import numpy as _np
 import matplotlib.pyplot as _plt
 import matplotlib.gridspec as _mgs
+from matplotlib import rcParams
 
 import epics as _epics
-
 from PRUserial485 import EthBrigdeClient
 
 from siriuspy.pwrsupply.pssofb import PSSOFB
 
 
+rcParams.update({
+    'font.size': 14, 'lines.linewidth': 2, 'axes.grid': True})
 NRPTS = 5000
 
 
@@ -324,7 +326,7 @@ def bsmp_communication_test():
     return pssofb
 
 
-def plot_result_hist(fname, title):
+def plot_results(fname, title):
     """."""
     data = _np.loadtxt(fname, skiprows=80)
     avg = data.mean()
@@ -332,51 +334,45 @@ def plot_result_hist(fname, title):
     minv = data.min()
     maxv = data.max()
 
-    fig = _plt.figure(figsize=(8, 10))
-    gs = _mgs.GridSpec(1, 1)
+    fig = _plt.figure(figsize=(7, 8))
+    gs = _mgs.GridSpec(3, 1)
     gs.update(
-        left=0.12, right=0.97, top=0.95, bottom=0.10,
-        hspace=0.2, wspace=0.25)
+        left=0.12, right=0.97, top=0.95, bottom=0.08,
+        hspace=0.3, wspace=0.25)
+    adt = _plt.subplot(gs[0, 0])
+    asp = _plt.subplot(gs[1, 0])
+    apc = _plt.subplot(gs[2, 0], sharex=asp)
 
-    asp = _plt.subplot(gs[0, 0])
-    asp.hist(data, bins=100)
+    fig.suptitle(title)
+
+    adt.plot(data, '.')
+    adt.set_xlabel('apply index')
+    adt.set_ylabel('Time [ms]')
+    adt.grid(True)
+
+    dist, bins, _ = asp.hist(data, bins=int(maxv/1))
+    asp.set_xlabel('Execution time [ms]')
+    asp.set_ylabel('# total apply')
+    asp.grid(True)
+
+    bins += (bins[1]-bins[0])/2
+    perc = _np.cumsum(dist, )
+    perc *= 100/perc[-1]
+    apc.plot(bins[:-1], perc)
+    apc.set_xlabel('Execution time [ms]')
+    apc.set_ylabel('Int. distribution [%]')
+    apc.grid(True)
 
     stg = f'avg = {avg:05.1f} ms\n'
     stg += f'std = {std:05.1f} ms\n'
     stg += f'min = {minv:05.1f} ms\n'
     stg += f'max = {maxv:05.1f} ms'
-    asp.text(
-        0.8, 0.8, stg, horizontalalignment='center',
-        fontsize='xx-small',
-        verticalalignment='center', transform=asp.transAxes,
+    apc.text(
+        0.98, 0.05, stg, horizontalalignment='right',
+        fontsize='x-small',
+        verticalalignment='bottom', transform=apc.transAxes,
         bbox=dict(edgecolor='k', facecolor='w', alpha=1.0))
-    asp.set_xlabel('time [ms]')
-    asp.set_ylabel('# total apply')
-    asp.set_title(title)
-    _plt.show()
 
-
-def plot_result_time(fname, title):
-    """."""
-    data = _np.loadtxt(fname, skiprows=80)
-    _plt.plot(data, '.')
-    _plt.xlabel('apply index')
-    _plt.ylabel('Time [ms]')
-    _plt.title(title)
-    _plt.grid()
-    _plt.show()
-
-
-def plot_result_perc(fname, title):
-    """."""
-    data = sorted(_np.loadtxt(fname, skiprows=80))
-    time = _np.linspace(min(data), max(data), 500)
-    perc = [100*sum(data <= tim)/len(data) for tim in time]
-    _plt.plot(time, perc)
-    _plt.xlabel('Execution time [ms]')
-    _plt.ylabel('Events bellow a given execution time [%]')
-    _plt.title(title)
-    _plt.grid()
     _plt.show()
 
 
