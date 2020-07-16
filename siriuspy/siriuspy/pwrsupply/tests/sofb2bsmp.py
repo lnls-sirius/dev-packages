@@ -60,18 +60,31 @@ def benchmark_bsmp_sofb_current_update():
 def benchmark_bsmp_sofb_current_setpoint():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
-    curr_sp = 0.1 * _np.random.randn(280)
+
+    pssofb.bsmp_sofb_update()
+    curr_refmon = pssofb.sofb_current_refmon
+
+    curr_sp_prev = None
     for i, _ in enumerate(exectimes):
 
         # start clock
         time0 = _time.time()
 
         # set current values
-        pssofb.bsmp_sofb_current_setpoint(curr_sp)
+        curr_sp = curr_refmon + 1 * 0.01 * _np.random.randn(curr_refmon.size)
+        pssofb.bsmp_sofb_current_set(curr_sp)
 
-        # comparison
-        issame = True
+        # compare readback_ref read with previous value set
+        if curr_sp_prev is not None:
+            curr_read = pssofb.sofb_current_readback_ref.copy()
+            issame = pssofb.sofb_vector_issame(curr_read, curr_sp_prev)
+        else:
+            issame = True
+
+        # update curr_sp_prev for comparison in the next iteration
+        curr_sp_prev = curr_sp
 
         # stop clock
         time1 = _time.time()
@@ -97,7 +110,7 @@ def benchmark_bsmp_sofb_current_setpoint_update():
         time0 = _time.time()
 
         # set current values
-        pssofb.bsmp_sofb_current_setpoint_update(curr_sp)
+        pssofb.bsmp_sofb_current_set_update(curr_sp)
 
         # read from power supplies
         curr_rb = pssofb.sofb_current_rb
@@ -379,10 +392,11 @@ def plot_results(fname, title):
 def run():
     """."""
     # benchmark_bsmp_sofb_current_update()
-    # benchmark_bsmp_sofb_current_setpoint()
+    benchmark_bsmp_sofb_current_setpoint()
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
-    benchmark_bsmp_sofb_kick_setpoint()
+
+    # benchmark_bsmp_sofb_kick_setpoint()
     # benchmark_bsmp_sofb_kick_setpoint_then_update()
     # sleep_trigger_before = float(_sys.argv[1])
     # sleep_trigger_after = float(_sys.argv[2])
