@@ -9,6 +9,7 @@ from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..bsmp.serial import Channel as _Channel
 from ..devices import StrengthConv as _StrengthConv
+from ..thread import AsynchronousWorker as _AsynWorker
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
@@ -18,50 +19,13 @@ from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
 
 
-class _BBBThread(_Thread):
+class _BBBThread(_AsynWorker):
     """Class to run methods from a given BBB."""
-
-    def __init__(self, name=None):
-        """."""
-        super().__init__(name=name, daemon=True)
-        self._receivedevt = _Event()
-        self._readyevt = _Event()
-        self._readyevt.set()
-        self._stopevt = _Event()
-        self.target = None
-        self.args = tuple()
 
     def configure_new_run(self, target, args=None):
         """Configure a new run of the thread."""
-        if self._receivedevt.is_set():
-            return False
-        self.target = target
-        self.args = args or tuple()
-        self._receivedevt.set()
-        self._readyevt.clear()
-        return True
-
-    def wait_ready(self):
-        """Wait until last run is finished."""
-        while not self._readyevt.wait(1):
-            continue
-
-    def is_ready(self):
-        """Check if last run has finished."""
-        return not self._receivedevt.is_set()
-
-    def stop(self):
-        """Stop thread."""
-        self._stopevt.set()
-
-    def run(self):
-        """."""
-        while not self._stopevt.is_set():
-            while not self._receivedevt.wait(1):
-                continue
-            self.target(self.name, *self.args)
-            self._receivedevt.clear()
-            self._readyevt.set()
+        args = (self.name, ) + args
+        return super().configure_new_run(target, args)
 
 
 class PSNamesSOFB:
