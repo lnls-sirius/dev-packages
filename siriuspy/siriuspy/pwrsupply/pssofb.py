@@ -38,6 +38,7 @@ class _BBBThread(_Thread):
         self.target = target
         self.args = args or tuple()
         self._receivedevt.set()
+        self._readyevt.clear()
         return True
 
     def wait_ready(self):
@@ -58,7 +59,6 @@ class _BBBThread(_Thread):
         while not self._stopevt.is_set():
             while not self._receivedevt.wait(1):
                 continue
-            self._readyevt.clear()
             self.target(self.name, *self.args)
             self._receivedevt.clear()
             self._readyevt.set()
@@ -344,7 +344,8 @@ class PSSOFB:
         """Execute 'method' in parallel."""
         # run threads
         for thr in self._threads:
-            thr.configure_new_run(target, args=args)
+            if not thr.configure_new_run(target, args=args):
+                raise RuntimeError('Thread is not ready for job!')
         # wait for run to finish
         for thr in self._threads:
             thr.wait_ready()
