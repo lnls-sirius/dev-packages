@@ -427,9 +427,12 @@ class BaseCorrectors(_BaseClass):
     """Base correctors class."""
 
 
-def run_subprocess_pssofb(pipe):
+def run_subprocess_pssofb(pipe, use_ioc):
     """."""
-    pssofb = _PSSOFB(EthBrigdeClient)
+    if use_ioc:
+        pssofb = _PSSOFBIOC('SI', auto_mon=True)
+    else:
+        pssofb = _PSSOFB(EthBrigdeClient)
 
     while True:
         kicks = pipe.recv()
@@ -437,26 +440,17 @@ def run_subprocess_pssofb(pipe):
             break
 
         # set kick values
-        pssofb.bsmp_sofb_kick_set(kicks)
-        ref_kick = pssofb.sofb_kick_readback_ref
+        if use_ioc:
+            ref_kick = pssofb.kick
+            pssofb.kick = kicks
+        else:
+            pssofb.bsmp_sofb_kick_set(kicks)
+            ref_kick = pssofb.sofb_kick_readback_ref
 
         pipe.send(ref_kick)
 
-
-def run_subprocess_pssofb_ioc(pipe):
-    """."""
-    pssofb = _PSSOFBIOC('SI', auto_mon=True)
-
-    while True:
-        kicks = pipe.recv()
-        if kicks is None:
-            break
-
-        # set kick values
-        ref_kick = pssofb.kick
-        pssofb.kick = kicks
-
-        pipe.send(ref_kick)
+    # if not use_ioc:
+        # pssofb.stop_threads()
 
 
 class EpicsCorrectors(BaseCorrectors):
@@ -479,14 +473,10 @@ class EpicsCorrectors(BaseCorrectors):
             self._ref_kicks = None
             self._ref_kicks_old = None
             self._mypipe = mine
-            if EpicsCorrectors.PSSOFB_USE_IOC:
-                self._pssofb_process = _Process(
-                    target=run_subprocess_pssofb_ioc, args=(theirs, ),
-                    daemon=True)
-            else:
-                self._pssofb_process = _Process(
-                    target=run_subprocess_pssofb, args=(theirs, ),
-                    daemon=True)
+            self._pssofb_process = _Process(
+                target=run_subprocess_pssofb,
+                args=(theirs, EpicsCorrectors.PSSOFB_USE_IOC),
+                daemon=True)
             self._pssofb_process.start()
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
