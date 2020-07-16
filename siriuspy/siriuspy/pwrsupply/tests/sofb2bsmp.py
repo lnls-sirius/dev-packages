@@ -69,7 +69,7 @@ def _run_subprocess_pssofb(pipe, bbbnames):
 
     pssofb.bsmp_sofb_update()
     curr_refmon = pssofb.sofb_current_refmon
-    idcs = pssofb.indcs_sofb
+    idcs = _np.sort(_np.hstack(list(pssofb.indcs_sofb.values())))
     pipe.send((idcs, curr_refmon[idcs]))
 
     while True:
@@ -99,9 +99,11 @@ def benchmark_bsmp_sofb_current_setpoint_mp(fname='test'):
         slc = slice(slc_sz*i, slc_sz*(i+1))
         mine, theirs = Pipe()
         pipes.append(mine)
-        procs.append(CAProcess(
+        proc = CAProcess(
             target=_run_subprocess_pssofb, args=(theirs, bbbnames[slc]),
-            daemon=True))
+            daemon=True)
+        procs.append(proc)
+        proc.start()
 
     indcs = list()
     curr_refmon = _np.zeros(280, dtype=float)
