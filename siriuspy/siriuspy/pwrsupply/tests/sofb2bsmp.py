@@ -61,7 +61,7 @@ def benchmark_bsmp_sofb_current_update():
     pssofb.stop_threads()
 
 
-def run_subprocess_pssofb(pipe, bbbnames):
+def _run_subprocess_pssofb(pipe, bbbnames):
     """."""
     PSSOFB.BBBNAMES = bbbnames
     pssofb = PSSOFB(EthBrigdeClient)
@@ -85,7 +85,7 @@ def run_subprocess_pssofb(pipe, bbbnames):
     # restore state
     pssofb.bsmp_sofb_current_set(curr_refmon)
 
-    pssofb.stop_threads()
+    # pssofb.stop_threads()
 
 
 def benchmark_bsmp_sofb_current_setpoint_mp(fname='test'):
@@ -100,7 +100,7 @@ def benchmark_bsmp_sofb_current_setpoint_mp(fname='test'):
         mine, theirs = Pipe()
         pipes.append(mine)
         procs.append(CAProcess(
-            target=run_subprocess_pssofb, args=(theirs, bbbnames[slc]),
+            target=_run_subprocess_pssofb, args=(theirs, bbbnames[slc]),
             daemon=True))
 
     indcs = list()
