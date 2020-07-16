@@ -362,7 +362,7 @@ def plot_results(fname, title):
     adt.set_ylabel('Time [ms]')
     adt.grid(True)
 
-    dist, bins, _ = asp.hist(data, bins=int(maxv/1))
+    dist, bins, _ = asp.hist(data, bins=max(int(maxv/1), 50))
     asp.set_xlabel('Execution time [ms]')
     asp.set_ylabel('# total apply')
     asp.grid(True)
