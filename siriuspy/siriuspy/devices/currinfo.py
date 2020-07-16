@@ -1,9 +1,10 @@
 """."""
 from .device import Device as _Device
 from .device import Devices as _Devices
+from .ict import ICT
 
 
-class CurrInfoLinear(_Device):
+class CurrInfoTransp(_Device):
     """."""
 
     class DEVICES:
@@ -19,16 +20,119 @@ class CurrInfoLinear(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in CurrInfoLinear.DEVICES.ALL:
+        if devname not in CurrInfoTransp.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=CurrInfoLinear._properties)
+        super().__init__(devname, properties=CurrInfoTransp._properties)
 
     @property
     def transpeff(self):
         """."""
         return self['TranspEff-Mon']
+
+
+class CurrInfoLinear(_Devices):
+    """."""
+
+    class DEVICES:
+        """Devices names."""
+
+        LI = CurrInfoTransp.DEVICES.LI
+        TB = CurrInfoTransp.DEVICES.TB
+        TS = CurrInfoTransp.DEVICES.TS
+        ALL = (LI, TB, TS, )
+
+    def __init__(self, devname):
+        """."""
+        # check if device exists
+        if devname not in CurrInfo.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        if devname == CurrInfoLinear.DEVICES.LI:
+            transp = CurrInfoTransp(CurrInfo.DEVICES.LI)
+            ict1 = ICT(ICT.DEVICES.LI_1)
+            ict2 = ICT(ICT.DEVICES.LI_2)
+        elif devname == CurrInfoLinear.DEVICES.TB:
+            transp = CurrInfoTransp(CurrInfo.DEVICES.TB)
+            ict1 = ICT(ICT.DEVICES.TB_02)
+            ict2 = ICT(ICT.DEVICES.TB_04)
+        elif devname == CurrInfoLinear.DEVICES.TS:
+            transp = CurrInfoTransp(CurrInfo.DEVICES.TS)
+            ict1 = ICT(ICT.DEVICES.TS_01)
+            ict2 = ICT(ICT.DEVICES.TS_04)
+
+        devices = (
+            transp, ict1, ict2,
+        )
+
+        # call base class constructor
+        super().__init__(devname, devices)
+
+    @property
+    def transpeff(self):
+        """."""
+        return self.devices[0].transpeff
+
+    @property
+    def charge_ict1(self):
+        """."""
+        return self.devices[1].charge
+
+    @property
+    def charge_ict2(self):
+        """."""
+        return self.devices[2].charge
+
+    @property
+    def charge_avg_ict1(self):
+        """."""
+        return self.devices[1].charge_avg
+
+    @property
+    def charge_avg_ict2(self):
+        """."""
+        return self.devices[2].charge_avg
+
+    @property
+    def charge_max_ict1(self):
+        """."""
+        return self.devices[1].charge_max
+
+    @property
+    def charge_max_ict2(self):
+        """."""
+        return self.devices[2].charge_max
+
+    @property
+    def charge_min_ict1(self):
+        """."""
+        return self.devices[1].charge_min
+
+    @property
+    def charge_min_ict2(self):
+        """."""
+        return self.devices[2].charge_min
+
+    @property
+    def charge_std_ict1(self):
+        """."""
+        return self.devices[1].charge_std
+
+    @property
+    def charge_std_ict2(self):
+        """."""
+        return self.devices[2].charge_std
+
+    @property
+    def pulse_count_ict1(self):
+        """."""
+        return self.devices[1].pulse_count
+
+    @property
+    def pulse_count_ict2(self):
+        """."""
+        return self.devices[2].pulse_count
 
 
 class CurrInfoBO(_Device):
