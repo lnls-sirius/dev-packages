@@ -1,7 +1,6 @@
 """BSMP serial communications classes."""
 
 import struct as _struct
-from threading import Lock as _Lock
 
 from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
@@ -158,9 +157,6 @@ class Channel:
     """
 
     # TODO: should we remove use of default timeout values. It is dangerous!
-    # TODO: Test if this lock can be removed for all topologies, including
-    # those process using more than one PRUController.
-    LOCK = _Lock()
 
     def __init__(self, pru, address):
         """Set channel."""
@@ -206,6 +202,19 @@ class Channel:
         self._size_counter += len(stream)
         return response
 
+    def write_then_read(self, message, timeout=100):
+        """."""
+        stream = Package.package(self._address, message).stream
+        # print('write query : ', [hex(ord(c)) for c in stream])
+        response = self.pru.UART_write_then_read(stream, timeout=timeout)
+        self._size_counter += len(stream)
+
+        if not response:
+            raise _SerialErrEmpty("Serial read returned empty!")
+        package = Package(response)
+        self._size_counter += len(package.stream)
+        return package.message
+
     def request(self, message, timeout=100, read_flag=True):
         """Write and wait for response."""
         # if message.cmd == 0x50:
@@ -218,24 +227,9 @@ class Channel:
         # if message.cmd not in (0x32, 0x30):
         #     while True:
         #         pass
-
-        if Channel.LOCK is None:
-            return self._request(message, timeout, read_flag)
-
-        # NOTE: this lock is very important in order to avoid threads in
-        # the same process space to read each other's responses.
-        with Channel.LOCK:
-            return self._request(message, timeout, read_flag)
-
-    def _request(self, message, timeout=100, read_flag=True):
-        self.write(message, timeout)
         if read_flag:
-            response = self.read()
-            # print(response.cmd)
-            # print(response.payload)
+            response = self.write_then_read(message, timeout)
         else:
-            # NOTE: for functions with no return (F_RESET_UDC, for example)
-            # artificially return 0xE0 (OK)
-            # response = Message([chr(0xE0), chr(0), chr(0)])
+            self.write(message, timeout)
             response = None
         return response
