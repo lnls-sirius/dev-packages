@@ -192,6 +192,10 @@ def benchmark_bsmp_sofb_kick_setpoint(fname='test'):
         kick_sp = kick_refmon + 0 * 0.01 * _np.random.randn(len(kick_refmon))
         curr_sp_this = pssofb.bsmp_sofb_kick_set(kick_sp)
 
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
         # NOTE:
         # curr_sp_this is kick_sp converted to current units. It should be
         # used for comparisons instead of kick_sp, since the mapping
@@ -206,10 +210,6 @@ def benchmark_bsmp_sofb_kick_setpoint(fname='test'):
 
         # update curr_sp_prev for comparison in the next iteration
         curr_sp_prev = curr_sp_this
-
-        # stop clock
-        time1 = _time.time()
-        exectimes[i] = 1000*(time1 - time0)
 
         if not issame:
             print('SP<>RB in event {}'.format(i))
