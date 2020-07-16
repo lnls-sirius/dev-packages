@@ -3,6 +3,10 @@
 
 import sys as _sys
 import time as _time
+from multiprocessing import Pipe
+from copy import deepcopy as _dcopy
+
+from epics import CAProcess
 
 import numpy as _np
 import matplotlib.pyplot as _plt
@@ -55,6 +59,97 @@ def benchmark_bsmp_sofb_current_update():
         print(exectime)
 
     pssofb.stop_threads()
+
+
+def run_subprocess_pssofb(pipe, bbbnames):
+    """."""
+    PSSOFB.BBBNAMES = bbbnames
+    pssofb = PSSOFB(EthBrigdeClient)
+    pssofb.bsmp_slowref()
+
+    pssofb.bsmp_sofb_update()
+    curr_refmon = pssofb.sofb_current_refmon
+    idcs = pssofb.indcs_sofb
+    pipe.send((idcs, curr_refmon[idcs]))
+
+    while True:
+        curr_sp = pipe.recv()
+        if curr_sp is None:
+            break
+
+        # set kick values
+        pssofb.bsmp_sofb_current_set(curr_sp)
+        ref_curr = pssofb.sofb_current_readback_ref
+        pipe.send(ref_curr[idcs])
+
+    # restore state
+    pssofb.bsmp_sofb_current_set(curr_refmon)
+
+    pssofb.stop_threads()
+
+
+def benchmark_bsmp_sofb_current_setpoint_mp(fname='test'):
+    """."""
+    bbbnames = _dcopy(PSSOFB.BBBNAMES)
+    pipes = list()
+    procs = list()
+    nprocs = 2
+    slc_sz = int(len(bbbnames)/nprocs)
+    for i in range(nprocs):
+        slc = slice(slc_sz*i, slc_sz*(i+1))
+        mine, theirs = Pipe()
+        pipes.append(mine)
+        procs.append(CAProcess(
+            target=run_subprocess_pssofb, args=(theirs, bbbnames[slc]),
+            daemon=True))
+
+    indcs = list()
+    curr_refmon = _np.zeros(280, dtype=float)
+    for pipe in pipes:
+        idcs, refmon = pipe.recv()
+        indcs.append(idcs)
+        curr_refmon[idcs] = refmon
+
+    exectimes = [0] * NRPTS
+
+    curr_sp_prev = None
+    for i, _ in enumerate(exectimes):
+
+        # start clock
+        time0 = _time.time()
+
+        # set current values
+        curr_sp = curr_refmon + 1 * 0.01 * _np.random.randn(curr_refmon.size)
+        for pipe in pipes:
+            pipe.send(curr_sp)
+
+        curr_read = _np.zeros(280, dtype=float)
+        for pipe, idcs in zip(pipes, indcs):
+            curr_read[idcs] = pipe.recv()
+
+        # stop clock
+        time1 = _time.time()
+        exectimes[i] = 1000*(time1 - time0)
+
+        # compare readback_ref read with previous value set
+        if curr_sp_prev is not None:
+            issame = PSSOFB.sofb_vector_issame(curr_read, curr_sp_prev)
+        else:
+            issame = True
+
+        # update curr_sp_prev for comparison in the next iteration
+        curr_sp_prev = curr_sp
+
+        if not issame:
+            print('SP<>RB in event {}'.format(i))
+
+    for pipe in pipes:
+        pipe.send(None)
+
+    for proc in procs:
+        proc.join()
+
+    _np.savetxt(fname, exectimes)
 
 
 def benchmark_bsmp_sofb_current_setpoint(fname='test'):
@@ -395,7 +490,8 @@ def run():
     fname = 'test.txt'
 
     # benchmark_bsmp_sofb_current_update()
-    benchmark_bsmp_sofb_current_setpoint(fname)
+    # benchmark_bsmp_sofb_current_setpoint(fname)
+    benchmark_bsmp_sofb_current_setpoint_mp(fname)
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
 
