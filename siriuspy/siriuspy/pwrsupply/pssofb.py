@@ -24,7 +24,9 @@ class _BBBThread(_AsynWorker):
 
     def configure_new_run(self, target, args=None):
         """Configure a new run of the thread."""
-        args = (self.name, ) + args
+        args_ = (self.name, )
+        if isinstance(args, tuple):
+            args_ = args_ + args
         return super().configure_new_run(target, args)
 
 
