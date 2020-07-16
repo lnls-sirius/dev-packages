@@ -67,6 +67,15 @@ class ETypes(_csdev.ETypes):
                'RmpWfm', 'MigWfm', 'FastRef')
     CMD_ACK = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
                'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
+    _UNDEF_INTLCK = (
+        'Bit0', 'Bit1', 'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FBP = (
         'Sobre-temperatura no modulo', 'Bit1', 'Bit2', 'Bit3',
         'Bit4', 'Bit5', 'Bit6', 'Bit7',
@@ -88,15 +97,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    SOFT_INTLCK_FBP_DCLINK = (
-        'Bit0', 'Bit1', 'Bit2', 'Bit3',
-        'Bit4', 'Bit5', 'Bit6', 'Bit7',
-        'Bit8', 'Bit9', 'Bit10', 'Bit11',
-        'Bit12', 'Bit13', 'Bit14', 'Bit15',
-        'Bit16', 'Bit17', 'Bit18', 'Bit19',
-        'Bit20', 'Bit21', 'Bit22', 'Bit23',
-        'Bit24', 'Bit25', 'Bit26', 'Bit27',
-        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    SOFT_INTLCK_FBP_DCLINK = _UNDEF_INTLCK
     HARD_INTLCK_FBP_DCLINK = (
         'Falha na fonte 1', 'Falha na fonte 2', 'Falha na fonte 3',
         'Sobre-tensao da saida do bastidor DC-Link',
@@ -133,6 +134,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB_INTLCK_FAC_DCDC = _UNDEF_INTLCK
     SOFT_INTLCK_FAC_2S_DCDC = (
         'Falha no DCCT1', 'Falha no DCCT2',
         'Alta diferenca entre DCCT\'s',
@@ -161,6 +163,8 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB1_INTLCK_FAC_2S_DCDC = _UNDEF_INTLCK
+    IIB2_INTLCK_FAC_2S_DCDC = _UNDEF_INTLCK
     SOFT_INTLCK_FAC_2S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Bit2', 'Bit3',
@@ -183,6 +187,8 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIBIS_INTLCK_FAC_2S_ACDC = _UNDEF_INTLCK
+    IIBCMD_INTLCK_FAC_2S_ACDC = _UNDEF_INTLCK
     SOFT_INTLCK_FAC_2P4S_DCDC = (
         'Sobre-temperatura nos indutores', 'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
@@ -252,6 +258,8 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIBIS_INTLCK_FAC_2P4S_ACDC = _UNDEF_INTLCK
+    IIBCMD_INTLCK_FAC_2P4S_ACDC = _UNDEF_INTLCK
     SOFT_INTLCK_FAP = (
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferenca entre DCCTs',
@@ -914,9 +922,9 @@ def _get_ps_FAC_DCDC_propty_database():
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
                              'prec': PS_CURRENT_PRECISION},
         'IntlkIIB-Mon': {'type': 'int', 'value': 0},
-        # 'IntlkIIBLabels-Cte': {'type': 'string',
-        #                        'count': len(_et.SOFT_INTLCK_FAC_DCDC),
-        #                        'value': _et.SOFT_INTLCK_FAC_DCDC},
+        'IntlkIIBLabels-Cte': {'type': 'string',
+                               'count': len(_et.IIB_INTLCK_FAC_DCDC),
+                               'value': _et.IIB_INTLCK_FAC_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -973,12 +981,12 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                                         'unit': 'C'},
         'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
-        # 'IntlkIIB1Labels-Cte': {'type': 'string',
-        #                         'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
-        #                         'value': _et.SOFT_INTLCK_FAC_2S_DCDC},
-        # 'IntlkIIB2Labels-Cte': {'type': 'string',
-        #                         'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
-        #                         'value': _et.HARD_INTLCK_FAC_2S_DCDC},
+        'IntlkIIB1Labels-Cte': {'type': 'string',
+                                'count': len(_et.IIB1_INTLCK_FAC_2S_DCDC),
+                                'value': _et.IIB1_INTLCK_FAC_2S_DCDC},
+        'IntlkIIB2Labels-Cte': {'type': 'string',
+                                'count': len(_et.IIB2_INTLCK_FAC_2S_DCDC),
+                                'value': _et.IIB2_INTLCK_FAC_2S_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1184,12 +1192,12 @@ def _get_ps_FAC_2S_ACDC_propty_database():
                              'prec': PS_CURRENT_PRECISION},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        # 'IntlkIIBISLabels-Cte':  {'type': 'string',
-        #                           'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
-        #                           'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
-        # 'IntlkIIBCmdLabels-Cte':  {'type': 'string',
-        #                            'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
-        #                            'value': _et.HARD_INTLCK_FAC_2S_ACDC},
+        'IntlkIIBISLabels-Cte':  {'type': 'string',
+                                  'count': len(_et.IIBIS_INTLCK_FAC_2S_ACDC),
+                                  'value': _et.IIBIS_INTLCK_FAC_2S_ACDC},
+        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
+                                   'count': len(_et.IIBCMD_INTLCK_FAC_2S_ACDC),
+                                   'value': _et.IIBCMD_INTLCK_FAC_2S_ACDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1246,12 +1254,12 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                           'unit': 'C'},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        # 'IntlkIIBISLabels-Cte':  {'type': 'string',
-        #                           'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
-        #                           'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
-        # 'IntlkIIBCmdLabels-Cte':  {'type': 'string',
-        #                            'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-        #                            'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}
+        'IntlkIIBISLabels-Cte':  {'type': 'string',
+                                  'count': len(_et.IIBIS_INTLCK_FAC_2P4S_ACDC),
+                                  'value': _et.IIBIS_INTLCK_FAC_2P4S_ACDC},
+        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
+                                   'count': len(_et.IIBCMD_INTLCK_FAC_2P4S_ACDC),
+                                   'value': _et.IIBCMD_INTLCK_FAC_2P4S_ACDC}
     }
     propty_db.update(db_ps)
     return propty_db
