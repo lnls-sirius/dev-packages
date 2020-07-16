@@ -27,7 +27,7 @@ class _BBBThread(_AsynWorker):
         args_ = (self.name, )
         if isinstance(args, tuple):
             args_ = args_ + args
-        return super().configure_new_run(target, args)
+        return super().configure_new_run(target, args_)
 
 
 class PSNamesSOFB:
