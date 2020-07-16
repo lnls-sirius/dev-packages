@@ -57,7 +57,7 @@ def benchmark_bsmp_sofb_current_update():
     pssofb.stop_threads()
 
 
-def benchmark_bsmp_sofb_current_setpoint():
+def benchmark_bsmp_sofb_current_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
     pssofb.bsmp_slowref()
@@ -93,9 +93,10 @@ def benchmark_bsmp_sofb_current_setpoint():
         if not issame:
             print('SP<>RB in event {}'.format(i))
 
-    for exectime in exectimes:
-        print(exectime)
+    # restore state
+    pssofb.bsmp_sofb_current_set(curr_refmon)
 
+    _np.savetxt(fname, exectimes)
     pssofb.stop_threads()
 
 
@@ -171,7 +172,7 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
     pssofb.stop_threads()
 
 
-def benchmark_bsmp_sofb_kick_setpoint():
+def benchmark_bsmp_sofb_kick_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
     pssofb.bsmp_slowref()
@@ -216,9 +217,7 @@ def benchmark_bsmp_sofb_kick_setpoint():
     # restore state
     pssofb.bsmp_sofb_kick_set(kick_refmon)
 
-    for exectime in exectimes:
-        print(exectime)
-
+    _np.savetxt(fname, exectimes)
     pssofb.stop_threads()
 
 
@@ -341,7 +340,7 @@ def bsmp_communication_test():
 
 def plot_results(fname, title):
     """."""
-    data = _np.loadtxt(fname, skiprows=80)
+    data = _np.loadtxt(fname)
     avg = data.mean()
     std = data.std()
     minv = data.min()
@@ -391,8 +390,10 @@ def plot_results(fname, title):
 
 def run():
     """."""
+    fname = 'test'
+
     # benchmark_bsmp_sofb_current_update()
-    benchmark_bsmp_sofb_current_setpoint()
+    benchmark_bsmp_sofb_current_setpoint(fname)
     # benchmark_bsmp_sofb_current_setpoint_update()
     # benchmark_bsmp_sofb_current_setpoint_then_update()
 
@@ -403,7 +404,7 @@ def run():
     # benchmark_bsmp_sofb_kick_setpoint_delay(
     #     sleep_trigger_before, sleep_trigger_after)
     # test_methods()
-
+    plot_results(fname, fname.split('.')[0])
 
 if __name__ == '__main__':
     run()
