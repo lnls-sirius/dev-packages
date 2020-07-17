@@ -49,7 +49,7 @@ class AsynchronousWorker(_Thread):
         """."""
         while not self._stopevt.is_set():
             while not self._receivedevt.wait(1):
-                continue
+                break
             self.target(*self.args)
             self._receivedevt.clear()
             self._readyevt.set()
