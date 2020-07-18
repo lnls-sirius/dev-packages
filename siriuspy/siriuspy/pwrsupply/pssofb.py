@@ -130,9 +130,8 @@ class PSSOFB:
         # initialize connector objects for bsmp communications.
         self._pru, self._udc = self._init_connectors(ethbridgeclnt_class)
 
-        # dictionaries with comm. ack and state snapshot of all correctors
-        self._dev_state_initialized = False
-
+        # dictionaries with comm. ack, state snapshot of all correctors
+        # states and threads
         self._dev_ack, self._dev_state, self._threads = \
             PSSOFB._init_threads_dev_state()
 
@@ -173,40 +172,39 @@ class PSSOFB:
         self.bsmp_sofb_current_set_update(current)
         return current
 
-    def bsmp_sofb_update(self):
-        """Receive from correctors currents and update object attributes."""
-        self._parallel_execution(self._bsmp_current_update)
+    def bsmp_update_sofb(self):
+        """Update SOFB currents by sending correctors bsmp requests."""
+        self._parallel_execution(self._bsmp_update_current)
 
-    def bsmp_state_update(self):
+    def bsmp_update_state(self):
         """Receive from correctors variables and update object attributes."""
-        self._parallel_execution(self._bsmp_state_update)
-        self._dev_state_initialized = True
+        self._parallel_execution(self._bsmp_update_state)
 
     def bsmp_pwrstate_on(self):
-        """Turn all correctors on and update state."""
+        """Turn all correctors on and then update state."""
         args = (_const_fbp.F_TURN_ON, )
         self._parallel_execution(self._bsmp_execute_function, args)
-        self._parallel_execution(self._bsmp_state_update)
+        self._parallel_execution(self._bsmp_update_state)
 
     def bsmp_pwrstate_off(self):
-        """Turn all correctors off and update state."""
+        """Turn all correctors off and then update state."""
         args = (_const_fbp.F_TURN_OFF, )
         self._parallel_execution(self._bsmp_execute_function, args)
-        self._parallel_execution(self._bsmp_state_update)
+        self._parallel_execution(self._bsmp_update_state)
 
     def bsmp_slowref(self):
-        """Set all correctors to SlowRef opmode and update state."""
+        """Set all correctors to SlowRef opmode and then update state."""
         args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRef)
         self._parallel_execution(self._bsmp_execute_function, args)
-        self._parallel_execution(self._bsmp_state_update)
+        self._parallel_execution(self._bsmp_update_state)
 
     def bsmp_slowrefsync(self):
-        """Turn all correctors ro SlowRefSync opmode and update state."""
+        """Turn all correctors ro SlowRefSync opmode and then update state."""
         args = (_const_fbp.F_SELECT_OP_MODE, _PSCStatus.STATES.SlowRefSync)
         self._parallel_execution(self._bsmp_execute_function, args)
-        self._parallel_execution(self._bsmp_state_update)
+        self._parallel_execution(self._bsmp_update_state)
 
-    # --- sofb-vector object attribute methods ---
+    # --- sofb-vector object attribute methods (no comm.) ---
 
     @property
     def sofb_psnames(self):
@@ -222,7 +220,7 @@ class PSSOFB:
 
     @property
     def sofb_kick_readback_ref(self):
-        """Return SOFB kick calculated from current readback after last setpoint."""
+        """Return SOFB kick calc from current_readback_ref from last setpoint."""
         current = self.sofb_current_readback_ref
         strength = self._conv_curr2stren(current)
         return strength
@@ -249,37 +247,27 @@ class PSSOFB:
 
     def sofb_state_variable_get(self, var_id, dtype=float):
         """Return SOFB vector with bsmp variable values, as last updated."""
-        if not self._dev_state_initialized:
-            self.bsmp_state_update()
         return self._sofb_state_variable(var_id=var_id, dtype=dtype)
 
     @property
     def sofb_opmode(self):
         """Return SOFB vector with OpMode-Sts values, as last updated."""
-        if not self._dev_state_initialized:
-            self.bsmp_state_update()
         return self._sofb_pscstatus_get('ioc_opmode')
 
     @property
     def sofb_pwrstate(self):
         """Return SOFB vector with PwrState-Sts values, as last updated."""
-        if not self._dev_state_initialized:
-            self.bsmp_state_update()
         return self._sofb_pscstatus_get('ioc_pwrstate')
 
     @property
     def sofb_interlock_hard(self):
         """Return SOFB vector with IntlkHard-Sts values, as last updated."""
-        if not self._dev_state_initialized:
-            self.bsmp_state_update()
         return self._sofb_state_variable(
             _const_fbp.V_PS_HARD_INTERLOCKS, dtype=int)
 
     @property
     def sofb_interlock_soft(self):
         """Return SOFB vector with IntlkSoft-Sts values, as last updated."""
-        if not self._dev_state_initialized:
-            self.bsmp_state_update()
         return self._sofb_state_variable(
             _const_fbp.V_PS_SOFT_INTERLOCKS, dtype=int)
 
@@ -316,7 +304,7 @@ class PSSOFB:
         for thr in self._threads:
             thr.wait_ready()
 
-    def _bsmp_current_update(self, bbbname):
+    def _bsmp_update_current(self, bbbname):
         """Update SOFB parameters of a single beaglebone."""
         udc = self._udc[bbbname]
 
@@ -365,9 +353,9 @@ class PSSOFB:
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
         self._bsmp_current_setpoint(bbbname, curr_sp)
-        self._bsmp_current_update(bbbname)
+        self._bsmp_update_current(bbbname)
 
-    def _bsmp_state_update(self, bbbname):
+    def _bsmp_update_state(self, bbbname):
         udc = self._udc[bbbname]
         devices = PSSOFB.BBB2DEVS[bbbname]
         group_id = _const_fbp.G_ALL
@@ -505,6 +493,8 @@ class PSSOFB:
         for bbbname in PSSOFB.BBBNAMES:
             # beaglebone dev state
             bbbstate = self._dev_state[bbbname]
+            if not bbbstate:
+                raise KeyError('PSSOFB.bsmp_state_update not invoked first!')
             # get state values
             bbbvalues = _np.zeros(PSSOFB._MAX_NR_DEVS, dtype=dtype)
             for _, dev_id in self.BBB2DEVS[bbbname]:

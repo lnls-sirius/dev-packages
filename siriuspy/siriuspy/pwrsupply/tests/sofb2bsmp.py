@@ -1,12 +1,9 @@
 #!/usr/bin/env python-sirius
 """."""
 
-import sys as _sys
 import time as _time
 from multiprocessing import Pipe
 from copy import deepcopy as _dcopy
-
-from epics import CAProcess
 
 import numpy as _np
 import matplotlib.pyplot as _plt
@@ -14,6 +11,8 @@ import matplotlib.gridspec as _mgs
 from matplotlib import rcParams
 
 import epics as _epics
+from epics import CAProcess
+
 from PRUserial485 import EthBrigdeClient
 
 from siriuspy.pwrsupply.pssofb import PSSOFB
@@ -30,7 +29,7 @@ def benchmark_bsmp_sofb_current_update():
     exectimes = [0] * NRPTS
     for i, _ in enumerate(exectimes):
         time0 = _time.time()
-        pssofb.bsmp_sofb_current_update()
+        pssofb.bsmp_update_sofb()
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
     for exectime in exectimes:
@@ -43,7 +42,7 @@ def benchmark_bsmp_sofb_current_update():
         time0 = _time.time()
 
         # read from power supplies
-        pssofb.bsmp_sofb_current_update()
+        pssofb.bsmp_update_sofb()
 
         # comparison
         issame = True
@@ -67,7 +66,7 @@ def _run_subprocess_pssofb(pipe, bbbnames):
     pssofb = PSSOFB(EthBrigdeClient)
     pssofb.bsmp_slowref()
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     curr_refmon = pssofb.sofb_current_refmon
     idcs = _np.sort(_np.hstack(list(pssofb.indcs_sofb.values())))
     pipe.send((idcs, curr_refmon[idcs]))
@@ -160,7 +159,7 @@ def benchmark_bsmp_sofb_current_setpoint(fname='test'):
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     curr_refmon = pssofb.sofb_current_refmon
 
     curr_sp_prev = None
@@ -234,7 +233,7 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
     pssofb = PSSOFB(EthBrigdeClient)
     exectimes = [0] * NRPTS
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     curr_refmon = pssofb.sofb_current_refmon
 
     for i, _ in enumerate(exectimes):
@@ -247,7 +246,7 @@ def benchmark_bsmp_sofb_current_setpoint_then_update():
         pssofb.bsmp_sofb_current_set(curr_sp)
 
         # read from power supplies
-        pssofb.bsmp_sofb_update()
+        pssofb.bsmp_update_sofb()
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
@@ -275,7 +274,7 @@ def benchmark_bsmp_sofb_kick_setpoint(fname='test'):
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     kick_refmon = pssofb.sofb_kick_refmon
 
     curr_sp_prev = None
@@ -324,7 +323,7 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     kick_refmon = pssofb.sofb_kick_refmon.copy()
 
     for i, _ in enumerate(exectimes):
@@ -337,7 +336,7 @@ def benchmark_bsmp_sofb_kick_setpoint_then_update():
         curr_sp = pssofb.bsmp_sofb_kick_set(kick_sp)
 
         # read from power supplies
-        pssofb.bsmp_sofb_update()
+        pssofb.bsmp_update_sofb()
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
@@ -369,7 +368,7 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
 
     exectimes = [0] * 150
 
-    pssofb.bsmp_sofb_update()
+    pssofb.bsmp_update_sofb()
     kick_refmon = pssofb.sofb_kick_refmon
 
     for i, _ in enumerate(exectimes):
@@ -397,7 +396,7 @@ def benchmark_bsmp_sofb_kick_setpoint_delay(delay_before, delay_after):
         _time.sleep(delay_after)
 
         # read from power supplies
-        pssofb.bsmp_sofb_update()
+        pssofb.bsmp_update_sofb()
         curr_rb = pssofb.sofb_current_refmon
 
         # comparison
