@@ -70,9 +70,7 @@ class PRU(PRUInterface):
         print('IP_ADDRESS: ', ip_address)
 
         # start communication threads
-        self._ethbrigde = ethbridgeclnt_class(
-            ip_address=ip_address, use_general=False)
-        self._ethbrigde.threads_start()
+        self._ethbridge = ethbridgeclnt_class(ip_address=ip_address)
 
         # print prulib version
         # fmtstr = 'PRUserial485 lib version_{}: {}'
@@ -83,27 +81,27 @@ class PRU(PRUInterface):
         # init PRUserial485 interface
         PRUInterface.__init__(self)
 
-        # NOTE: open is done automatically by eth-brigde server
+        # NOTE: open is done automatically by eth-bridge server
         # and cannot be used when use_general = False
         #
         # start PRU library and set PRU to sync off
         # baud_rate = 6
         # mode = b"M"  # "S": slave | "M": master
-        # ret = self._ethbrigde.open(baud_rate, mode)
+        # ret = self._ethbridge.open(baud_rate, mode)
         # if ret != PRUInterface.OK:
         #     raise ValueError(('Error {} returned in '
         #                       'PRUserial485_open').format(ret))
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = self._ethbrigde.write(stream, timeout)
+        ret = self._ethbridge.write(stream, timeout)
         return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        value = self._ethbrigde.read()
+        value = self._ethbridge.read()
         return value
 
     def _close(self):
-        # self._ethbrigde.close()
+        # self._ethbridge.close()
         return None
