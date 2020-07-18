@@ -143,7 +143,7 @@ class PSSOFB:
         self._pstype_2_index, self._pstype_2_sconv = self._init_strenconv()
 
     def pru(self):
-        """Return Beagle-name to PRU object dictionary."""
+        """Return Beagle-name to PRU-object dictionary."""
         return self._pru
 
     def udc(self):
