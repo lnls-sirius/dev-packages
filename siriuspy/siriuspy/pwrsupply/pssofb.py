@@ -607,7 +607,7 @@ class PSSOFB:
             # for a given beagle, gather devices ids
             device_ids = [bsmp[1] for bsmp in bsmpdevs]
 
-            # create UDC object to acess power supply bsmp comm. methods
+            # create UDC object to access power supply bsmp comm. methods
             udc_ = _UDC(pru=pru_, psmodel='FBP', device_ids=device_ids)
 
             # add PRU and UDC objects to disctionaries.
