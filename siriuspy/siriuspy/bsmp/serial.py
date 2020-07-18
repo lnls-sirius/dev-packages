@@ -202,11 +202,11 @@ class Channel:
         self._size_counter += len(stream)
         return response
 
-    def write_then_read(self, message, timeout=100):
+    def request_(self, message, timeout=100):
         """."""
         stream = Package.package(self._address, message).stream
         # print('write query : ', [hex(ord(c)) for c in stream])
-        response = self.pru.UART_write_then_read(stream, timeout=timeout)
+        response = self.pru.UART_request(stream, timeout=timeout)
         self._size_counter += len(stream)
 
         if not response:
@@ -228,7 +228,7 @@ class Channel:
         #     while True:
         #         pass
         if read_flag:
-            response = self.write_then_read(message, timeout)
+            response = self.request_(message, timeout)
         else:
             self.write(message, timeout)
             response = None

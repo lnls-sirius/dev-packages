@@ -459,7 +459,7 @@ class PSSOFB:
         """."""
         # NOTE: Setting Channel.LOCK is necessary for the threads to interact with
         # corresponding beaglebones in parallel. It should be dropped once
-        # write_then_read in eth-bridge is adopted!
+        # request in eth-bridge is adopted!
         _Channel.LOCK = None
 
         self.pru = PSSOFB._create_pru(ethbridgeclnt_class)
