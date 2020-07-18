@@ -32,10 +32,9 @@ class AsynchronousWorker(_Thread):
         self._readyevt.clear()
         return True
 
-    def wait_ready(self):
+    def wait_ready(self, timeout=None):
         """Wait until last run is finished."""
-        while not self._readyevt.wait(1):
-            continue
+        self._readyevt.wait(timeout=timeout)
 
     def is_ready(self):
         """Check if last run has finished."""
@@ -48,11 +47,10 @@ class AsynchronousWorker(_Thread):
     def run(self):
         """."""
         while not self._stopevt.is_set():
-            while not self._receivedevt.wait(1):
-                continue
-            self.target(*self.args)
-            self._receivedevt.clear()
-            self._readyevt.set()
+            if self._receivedevt.wait(0.5):
+                self.target(*self.args)
+                self._receivedevt.clear()
+                self._readyevt.set()
 
 
 class QueueThread(_Thread):
