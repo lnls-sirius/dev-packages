@@ -353,6 +353,7 @@ class PSModelFAC_DCDC(_PSModel):
         'InductorsTemperature-Mon': _c.V_TEMP_INDUCTORS,
         'IGBTSTemperature-Mon': _c.V_TEMP_IGBTS,
         'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         }
 
 
@@ -689,6 +690,8 @@ class PSModelFAC_2S_ACDC(_PSModel):
         'HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK,
         'InductorsTemperature-Mon': _c.V_TEMP_INDUCTORS,
         'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'IntlkIIBIS-Mon': _c.V_IIB_INTERLOCKS_IS,
+        'IntlkIIBCmd-Mon': _c.V_IIB_INTERLOCKS_CMD,
         }
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
