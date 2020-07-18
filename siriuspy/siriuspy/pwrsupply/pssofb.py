@@ -9,7 +9,7 @@ from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..bsmp.serial import Channel as _Channel
 from ..devices import StrengthConv as _StrengthConv
-from ..thread import AsynchronousWorker as _AsynWorker
+from ..thread import AsyncWorker as _AsyncWorker
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
@@ -19,7 +19,7 @@ from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
 
 
-class _BBBThread(_AsynWorker):
+class _BBBThread(_AsyncWorker):
     """Class to run methods from a given BBB."""
 
     def configure_new_run(self, target, args=None):
