@@ -194,13 +194,13 @@ def benchmark_bsmp_sofb_current_setpoint(fname='test'):
 
     _np.savetxt(fname, exectimes)
     pssofb.stop_threads()
+>>>>>>> master
 
 
 def benchmark_bsmp_sofb_current_setpoint_update():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
     exectimes = [0] * NRPTS
-    curr_sp = 0.1 * _np.random.randn(280)
     for i, _ in enumerate(exectimes):
 
         # start clock
@@ -209,7 +209,6 @@ def benchmark_bsmp_sofb_current_setpoint_update():
         # set current values
         pssofb.bsmp_sofb_current_set_update(curr_sp)
 
-        # read from power supplies
         curr_rb = pssofb.sofb_current_rb
 
         # comparison
