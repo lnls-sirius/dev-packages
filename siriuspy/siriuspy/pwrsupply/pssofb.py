@@ -1,15 +1,13 @@
 """PSSOFB class."""
 
-from threading import Thread as _Thread, Event as _Event
-
 import numpy as _np
 
+from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..bsmp.serial import Channel as _Channel
 from ..devices import StrengthConv as _StrengthConv
-from ..thread import AsyncWorker as _AsyncWorker
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
@@ -113,8 +111,8 @@ class PSSOFB:
     def __init__(self, ethbridgeclnt_class):
         """."""
         self._acc = 'SI'
-        self.pru = None
-        self.udc = None
+        self._pru = None
+        self._udc = None
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -130,26 +128,28 @@ class PSSOFB:
         self.indcs_bsmp, self.indcs_sofb = self._create_indices()
 
         # initialize connector objects for bsmp communications.
-        self._init_connectors(ethbridgeclnt_class)
+        self._pru, self._udc = self._init_connectors(ethbridgeclnt_class)
 
         # dictionaries with comm. ack and state snapshot of all correctors
         self._dev_state_initialized = False
-        self._dev_ack = dict()  # last ack state of bsmp comm.
-        self._dev_state = dict()  # snapshot of device variable values
-        self._threads = list()  # threads to run BBB methods
-        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
-            self._dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
-            self._dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
-            thread = _BBBThread(name=bbbname)
-            thread.start()
-            self._threads.append(thread)
+
+        self._dev_ack, self._dev_state, self._threads = \
+            PSSOFB._init_threads_dev_state()
 
         # power supply status objects
         self._pscstatus = [_PSCStatus() for _ in self._sofb_psnames]
 
         # strength to current converters
         self._strengths_dipole = 3.0  # [GeV]
-        self._pstype_2_index, self._pstype_2_sconv = self._get_strenconv()
+        self._pstype_2_index, self._pstype_2_sconv = self._init_strenconv()
+
+    def pru(self):
+        """Return Beagle-name to PRU object dictionary."""
+        return self._pru
+
+    def udc(self):
+        """Return Beagle-name to UDC-object dictionary."""
+        return self._udc
 
     # --- bsmp methods: invoke communications with correctors ---
 
@@ -304,7 +304,7 @@ class PSSOFB:
         for thr in self._threads:
             thr.join()
 
-    # --- private methods ---
+    # --- private methods: bsmp comm in parallel ---
 
     def _parallel_execution(self, target, args=None):
         """Execute 'method' in parallel."""
@@ -318,7 +318,7 @@ class PSSOFB:
 
     def _bsmp_current_update(self, bbbname):
         """Update SOFB parameters of a single beaglebone."""
-        udc = self.udc[bbbname]
+        udc = self._udc[bbbname]
 
         # --- bsmp communication ---
         udc.sofb_update()
@@ -332,7 +332,7 @@ class PSSOFB:
         benchmarks:
             - lnls560-linux, no comm.  :   4.56 us +/- 98.4 ns
         """
-        udc = self.udc[bbbname]
+        udc = self._udc[bbbname]
 
         # get indices
         indcs_sofb = self.indcs_sofb[bbbname]
@@ -368,7 +368,7 @@ class PSSOFB:
         self._bsmp_current_update(bbbname)
 
     def _bsmp_state_update(self, bbbname):
-        udc = self.udc[bbbname]
+        udc = self._udc[bbbname]
         devices = PSSOFB.BBB2DEVS[bbbname]
         group_id = _const_fbp.G_ALL
         self._dev_state[bbbname] = dict()
@@ -396,7 +396,7 @@ class PSSOFB:
 
     def _bsmp_execute_function(self, bbbname, *args):
         """."""
-        udc = self.udc[bbbname]
+        udc = self._udc[bbbname]
         devices = PSSOFB.BBB2DEVS[bbbname]
         function_id, *args = args
 
@@ -438,47 +438,7 @@ class PSSOFB:
             print('data        : ', data)
             raise
 
-    @staticmethod
-    def _create_pru(ethbridgeclnt_class):
-        """."""
-        pru = dict()
-        for bbbname in PSSOFB.BBBNAMES:
-            pru[bbbname] = _PRU(ethbridgeclnt_class, bbbname)
-        return pru
-
-    def _create_udc(self):
-        """."""
-        udc = dict()
-        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
-            pru = self.pru[bbbname]
-            devids = [bsmp[1] for bsmp in bsmpdevs]
-            udc[bbbname] = _UDC(pru=pru, psmodel='FBP', device_ids=devids)
-        return udc
-
-    def _init_connectors(self, ethbridgeclnt_class):
-        """."""
-        # NOTE: Setting Channel.LOCK is necessary for the threads to interact with
-        # corresponding beaglebones in parallel. It should be dropped once
-        # write_then_read in eth-bridge is adopted!
-        _Channel.LOCK = None
-
-        self.pru = PSSOFB._create_pru(ethbridgeclnt_class)
-        self.udc = self._create_udc()
-        self._add_groups_of_variables()
-
-    @staticmethod
-    def _update_bbb2devs():
-        """."""
-        for bbbname in PSSOFB.BBBNAMES:
-            devs = _PSSearch.conv_bbbname_2_bsmps(bbbname)
-            PSSOFB.BBB2DEVS[bbbname] = devs
-
-    def _add_groups_of_variables(self):
-        # add groups of variaable with id>2 to entities class, as
-        # required for message-processing verification class objects
-        # to work.
-        for udc in self.udc.values():
-            udc.add_groups_of_variables()
+    # --- private methods: class initializations. ---
 
     def _create_indices(self):
         """."""
@@ -499,9 +459,28 @@ class PSSOFB:
 
         return indcs_bsmp, indcs_sofb
 
+    def _init_connectors(self, ethbridgeclnt_class):
+        """."""
+        # NOTE: Setting Channel.LOCK is necessary for the threads to interact
+        # with corresponding beaglebones in parallel. It should be dropped
+        # once write_then_read in eth-bridge is adopted!
+        _Channel.LOCK = None
+
+        pru, udc = PSSOFB._create_pru_udc(ethbridgeclnt_class)
+        self._add_groups_of_variables()
+
+        return pru, udc
+
+    def _add_groups_of_variables(self):
+        # add groups of variaable with id>2 to entities class, as
+        # required for message-processing verification class objects
+        # to work.
+        for udc in self._udc.values():
+            udc.add_groups_of_variables()
+
     def _update_currents(self, bbbname):
         """."""
-        udc = self.udc[bbbname]
+        udc = self._udc[bbbname]
 
         # get indices
         indcs_sofb = self.indcs_sofb[bbbname]
@@ -546,7 +525,7 @@ class PSSOFB:
             values[i] = getattr(self._pscstatus[i], attr)
         return values
 
-    def _get_strenconv(self):
+    def _init_strenconv(self):
         # 1. create pstype to StrengthConv dictionary.
         # 2. create pstype to corrector index dictionnary.
         pstype_2_index = dict()
@@ -604,3 +583,45 @@ class PSSOFB:
             curr = sconv.conv_strength_2_current(strengths=value)
             current[index] = curr
         return current
+
+    @staticmethod
+    def _init_threads_dev_state():
+        dev_ack = dict()  # last ack state of bsmp comm.
+        dev_state = dict()  # snapshot of device variable values
+        threads = list()  # threads to run BBB methods
+        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
+            dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
+            dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
+            thread = _BBBThread(name=bbbname)
+            thread.start()
+            threads.append(thread)
+        return dev_ack, dev_state, threads
+
+    @staticmethod
+    def _update_bbb2devs():
+        """."""
+        for bbbname in PSSOFB.BBBNAMES:
+            devs = _PSSearch.conv_bbbname_2_bsmps(bbbname)
+            PSSOFB.BBB2DEVS[bbbname] = devs
+
+    @staticmethod
+    def _create_pru_udc(ethbridgeclnt_class):
+        """."""
+        pru, udc = dict(), dict()
+
+        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
+
+            # create PRU object for bsmp communication
+            pru_ = _PRU(ethbridgeclnt_class, bbbname)
+
+            # for a given beagle, gather devices ids
+            device_ids = [bsmp[1] for bsmp in bsmpdevs]
+
+            # create UDC object to acess power supply bsmp comm. methods
+            udc_ = _UDC(pru=pru_, psmodel='FBP', device_ids=device_ids)
+
+            # add PRU and UDC objects to disctionaries.
+            pru[bbbname] = pru_
+            udc[bbbname] = udc_
+
+        return pru, udc
