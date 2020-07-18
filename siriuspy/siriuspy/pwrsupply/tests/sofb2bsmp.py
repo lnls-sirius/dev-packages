@@ -418,7 +418,7 @@ def bsmp_communication_test():
     """."""
     pssofb = PSSOFB(EthBrigdeClient)
     time0 = _time.time()
-    pssofb.bsmp_state_update()
+    pssofb.bsmp_update_state()
     time1 = _time.time()
     print(1e3*(time1 - time0))
 
