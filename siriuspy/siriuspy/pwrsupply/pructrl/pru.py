@@ -40,6 +40,12 @@ class PRUInterface:
         self._wr_duration += self._timestamp_read - self._timestamp_write
         return value
 
+    def UART_request(self, stream, timeout):
+        """Write stream to serial port then read."""
+        self._timestamp_write = _time.time()
+        ret = self._UART_request(stream, timeout=timeout)
+        return ret
+
     def close(self):
         """Close PRU session."""
         self._close()
@@ -51,6 +57,9 @@ class PRUInterface:
         raise NotImplementedError
 
     def _UART_read(self):
+        raise NotImplementedError
+
+    def _UART_request(self, stream, timeout):
         raise NotImplementedError
 
     def _close(self):
@@ -103,6 +112,11 @@ class PRU(PRUInterface):
         # this method send streams through UART to the RS-485 line.
         value = self._ethbrigde.read()
         return value
+
+    def _UART_request(self, stream, timeout):
+        # this method send streams through UART to the RS-485 line.
+        ret = self._ethbrigde.request(stream, timeout)
+        return ret
 
     def _close(self):
         # self._ethbrigde.close()
