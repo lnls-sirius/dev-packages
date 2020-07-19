@@ -8,8 +8,6 @@ from ... import csdev as _csdev
 class PRUInterface:
     """Interface class for programmable real-time units."""
 
-    OK = 0
-
     def __init__(self):
         """Init method."""
         self._timestamp_write = _time.time()
@@ -72,25 +70,8 @@ class PRU(PRUInterface):
         # start communication threads
         self._ethbridge = ethbridgeclnt_class(ip_address=ip_address)
 
-        # print prulib version
-        # fmtstr = 'PRUserial485 lib version_{}: {}'
-        # print(fmtstr.format('client', self.version))
-        # print(fmtstr.format('server', self.version_server))
-        # print()
-
         # init PRUserial485 interface
         PRUInterface.__init__(self)
-
-        # NOTE: open is done automatically by eth-bridge server
-        # and cannot be used when use_general = False
-        #
-        # start PRU library and set PRU to sync off
-        # baud_rate = 6
-        # mode = b"M"  # "S": slave | "M": master
-        # ret = self._ethbridge.open(baud_rate, mode)
-        # if ret != PRUInterface.OK:
-        #     raise ValueError(('Error {} returned in '
-        #                       'PRUserial485_open').format(ret))
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
