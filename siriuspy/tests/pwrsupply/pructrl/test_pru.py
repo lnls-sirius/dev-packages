@@ -28,7 +28,6 @@ class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
     PUB_INTERFACE = (
-        'OK',
         'UART_write',
         'UART_read',
         'close',
