@@ -1,13 +1,10 @@
 """PSSOFB class."""
 
-from threading import Thread as _Thread, Event as _Event
-
 import numpy as _np
 
 from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
-from ..bsmp.serial import Channel as _Channel
 from ..devices import StrengthConv as _StrengthConv
 from ..thread import AsynchronousWorker as _AsynWorker
 
@@ -457,11 +454,6 @@ class PSSOFB:
 
     def _init_connectors(self, ethbridgeclnt_class):
         """."""
-        # NOTE: Setting Channel.LOCK is necessary for the threads to interact with
-        # corresponding beaglebones in parallel. It should be dropped once
-        # write_then_read in eth-bridge is adopted!
-        _Channel.LOCK = None
-
         self.pru = PSSOFB._create_pru(ethbridgeclnt_class)
         self.udc = self._create_udc()
         self._add_groups_of_variables()
