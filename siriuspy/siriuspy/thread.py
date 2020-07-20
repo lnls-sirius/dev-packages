@@ -25,7 +25,7 @@ class AsyncWorker(_Thread):
 
     def configure_new_run(self, target, args=None):
         """Configure a new run of the thread."""
-        if self._evt_ready.is_set():
+        if not self._evt_ready.is_set():
             return False
         self.target = target
         self.args = args or tuple()
