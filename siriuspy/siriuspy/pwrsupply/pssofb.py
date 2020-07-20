@@ -449,16 +449,16 @@ class PSSOFB:
     def _init_connectors(self, ethbridgeclnt_class):
         """."""
         pru, udc = PSSOFB._create_pru_udc(ethbridgeclnt_class)
-        self._add_groups_of_variables()
+        self._add_groups_of_variables(udc)
 
         return pru, udc
 
-    def _add_groups_of_variables(self):
+    def _add_groups_of_variables(self, udc):
         # add groups of variaable with id>2 to entities class, as
         # required for message-processing verification class objects
         # to work.
-        for udc in self._udc.values():
-            udc.add_groups_of_variables()
+        for udc_ in udc.values():
+            udc_.add_groups_of_variables()
 
     def _update_currents(self, bbbname):
         """."""
