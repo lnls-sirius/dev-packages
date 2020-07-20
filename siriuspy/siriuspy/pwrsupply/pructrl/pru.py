@@ -94,7 +94,7 @@ class PRU(PRUInterface):
 
     def _UART_request(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = self._ethbrigde.request(stream, timeout)
+        ret = self._ethbridge.request(stream, timeout)
         return ret
 
     def _close(self):
