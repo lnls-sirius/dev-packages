@@ -39,7 +39,7 @@ class AsyncWorker(_Thread):
 
     def is_ready(self):
         """Check if last run has finished."""
-        return not self._evt_ready.is_set()
+        return self._evt_ready.is_set()
 
     def stop(self):
         """Stop thread."""
