@@ -54,52 +54,8 @@ class PSNamesSOFB:
         return PSNamesSOFB._sofb[acc].cv_names
 
 
-class PSSOFB:
+class PSSOFBPartial:
     """."""
-
-    BBBNAMES = (
-        'IA-01RaCtrl:CO-PSCtrl-SI2',
-        'IA-02RaCtrl:CO-PSCtrl-SI2',
-        'IA-03RaCtrl:CO-PSCtrl-SI2',
-        'IA-04RaCtrl:CO-PSCtrl-SI2',
-        'IA-05RaCtrl:CO-PSCtrl-SI2',
-        'IA-06RaCtrl:CO-PSCtrl-SI2',
-        'IA-07RaCtrl:CO-PSCtrl-SI2',
-        'IA-08RaCtrl:CO-PSCtrl-SI2',
-        'IA-09RaCtrl:CO-PSCtrl-SI2',
-        'IA-10RaCtrl:CO-PSCtrl-SI2',
-        'IA-11RaCtrl:CO-PSCtrl-SI2',
-        'IA-12RaCtrl:CO-PSCtrl-SI2',
-        'IA-13RaCtrl:CO-PSCtrl-SI2',
-        'IA-14RaCtrl:CO-PSCtrl-SI2',
-        'IA-15RaCtrl:CO-PSCtrl-SI2',
-        'IA-16RaCtrl:CO-PSCtrl-SI2',
-        'IA-17RaCtrl:CO-PSCtrl-SI2',
-        'IA-18RaCtrl:CO-PSCtrl-SI2',
-        'IA-19RaCtrl:CO-PSCtrl-SI2',
-        'IA-20RaCtrl:CO-PSCtrl-SI2',
-        'IA-01RaCtrl:CO-PSCtrl-SI4',
-        'IA-02RaCtrl:CO-PSCtrl-SI4',
-        'IA-03RaCtrl:CO-PSCtrl-SI4',
-        'IA-04RaCtrl:CO-PSCtrl-SI4',
-        'IA-05RaCtrl:CO-PSCtrl-SI4',
-        'IA-06RaCtrl:CO-PSCtrl-SI4',
-        'IA-07RaCtrl:CO-PSCtrl-SI4',
-        'IA-08RaCtrl:CO-PSCtrl-SI4',
-        'IA-09RaCtrl:CO-PSCtrl-SI4',
-        'IA-10RaCtrl:CO-PSCtrl-SI4',
-        'IA-11RaCtrl:CO-PSCtrl-SI4',
-        'IA-12RaCtrl:CO-PSCtrl-SI4',
-        'IA-13RaCtrl:CO-PSCtrl-SI4',
-        'IA-14RaCtrl:CO-PSCtrl-SI4',
-        'IA-15RaCtrl:CO-PSCtrl-SI4',
-        'IA-16RaCtrl:CO-PSCtrl-SI4',
-        'IA-17RaCtrl:CO-PSCtrl-SI4',
-        'IA-18RaCtrl:CO-PSCtrl-SI4',
-        'IA-19RaCtrl:CO-PSCtrl-SI4',
-        'IA-20RaCtrl:CO-PSCtrl-SI4',
-    )
-    BBB2DEVS = dict()
 
     _MAX_NR_DEVS = _PSSOFB_MAX_NR_UDC * _UDC_MAX_NR_DEV
     _dipole_propty = 'Ref-Mon'
@@ -107,11 +63,13 @@ class PSSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
 
-    def __init__(self, ethbridgeclnt_class):
+    def __init__(self, ethbridgeclnt_class, bbbnames):
         """."""
         self._acc = 'SI'
         self._pru = None
         self._udc = None
+        self.bbbnames = bbbnames
+        self.bbb2devs = dict()
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -132,7 +90,7 @@ class PSSOFB:
         # dictionaries with comm. ack, state snapshot of all correctors
         # states and threads
         self._dev_ack, self._dev_state, self._threads = \
-            PSSOFB._init_threads_dev_state()
+            self._init_threads_dev_state()
 
         # power supply status objects
         self._pscstatus = [_PSCStatus() for _ in self._sofb_psnames]
@@ -219,7 +177,7 @@ class PSSOFB:
 
     @property
     def sofb_kick_readback_ref(self):
-        """Return SOFB kick calc from current_readback_ref from last setpoint."""
+        """Return SOFB kick from current_readback_ref from last setpoint."""
         current = self.sofb_current_readback_ref
         strength = self._conv_curr2stren(current)
         return strength
@@ -333,7 +291,7 @@ class PSSOFB:
         # initialize setpoint
         readback = udc.sofb_current_rb_get()  # stores last setpoint
         if readback is None:
-            setpoint = _np.zeros(PSSOFB._MAX_NR_DEVS)
+            setpoint = _np.zeros(PSSOFBPartial._MAX_NR_DEVS)
         else:
             setpoint = _np.asarray(readback)
 
@@ -356,7 +314,7 @@ class PSSOFB:
 
     def _bsmp_update_state(self, bbbname):
         udc = self._udc[bbbname]
-        devices = PSSOFB.BBB2DEVS[bbbname]
+        devices = self.bbb2devs[bbbname]
         group_id = _const_fbp.G_ALL
         self._dev_state[bbbname] = dict()
 
@@ -384,7 +342,7 @@ class PSSOFB:
     def _bsmp_execute_function(self, bbbname, *args):
         """."""
         udc = self._udc[bbbname]
-        devices = PSSOFB.BBB2DEVS[bbbname]
+        devices = self.bbb2devs[bbbname]
         function_id, *args = args
 
         # transform empty tuple in None
@@ -429,11 +387,11 @@ class PSSOFB:
 
     def _create_indices(self):
         """."""
-        PSSOFB._update_bbb2devs()
+        self._update_bbb2devs()
         indcs_bsmp = dict()
         indcs_sofb = dict()
-        for bbbname in PSSOFB.BBBNAMES:
-            devs = PSSOFB.BBB2DEVS[bbbname]
+        for bbbname in self.bbbnames:
+            devs = self.bbb2devs[bbbname]
             # add indcs_udc to dictionary
             indcs_bsmp_ = list()
             indcs_sofb_ = list()
@@ -448,7 +406,7 @@ class PSSOFB:
 
     def _init_connectors(self, ethbridgeclnt_class):
         """."""
-        pru, udc = PSSOFB._create_pru_udc(ethbridgeclnt_class)
+        pru, udc = self._create_pru_udc(ethbridgeclnt_class)
         self._add_groups_of_variables(udc)
 
         return pru, udc
@@ -484,14 +442,14 @@ class PSSOFB:
 
     def _sofb_state_variable(self, var_id, dtype=int):
         values = _np.zeros(len(self._sofb_psnames), dtype=dtype)
-        for bbbname in PSSOFB.BBBNAMES:
+        for bbbname in self.bbbnames:
             # beaglebone dev state
             bbbstate = self._dev_state[bbbname]
             if not bbbstate:
                 raise KeyError('PSSOFB.bsmp_state_update not invoked first!')
             # get state values
-            bbbvalues = _np.zeros(PSSOFB._MAX_NR_DEVS, dtype=dtype)
-            for _, dev_id in self.BBB2DEVS[bbbname]:
+            bbbvalues = _np.zeros(PSSOFBPartial._MAX_NR_DEVS, dtype=dtype)
+            for _, dev_id in self.bbb2devs[bbbname]:
                 devstate = bbbstate[dev_id]
                 bbbvalues[dev_id-1] = devstate[var_id]
             # get indices
@@ -523,7 +481,7 @@ class PSSOFB:
             if pstype not in pstype_2_sconv:
                 # sconv = _NormFact.create(psname.replace(':PS', ':MA'))
                 sconv = _StrengthConv(
-                    psname, PSSOFB._dipole_propty, auto_mon=True)
+                    psname, PSSOFBPartial._dipole_propty, auto_mon=True)
                 pstype_2_sconv[pstype] = sconv
 
         # convert index to numpy array
@@ -568,12 +526,11 @@ class PSSOFB:
             current[index] = curr
         return current
 
-    @staticmethod
-    def _init_threads_dev_state():
+    def _init_threads_dev_state(self):
         dev_ack = dict()  # last ack state of bsmp comm.
         dev_state = dict()  # snapshot of device variable values
         threads = list()  # threads to run BBB methods
-        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
+        for bbbname, bsmpdevs in self.bbb2devs.items():
             dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
             thread = _BBBThread(name=bbbname)
@@ -581,19 +538,17 @@ class PSSOFB:
             threads.append(thread)
         return dev_ack, dev_state, threads
 
-    @staticmethod
-    def _update_bbb2devs():
+    def _update_bbb2devs(self):
         """."""
-        for bbbname in PSSOFB.BBBNAMES:
+        for bbbname in self.bbbnames:
             devs = _PSSearch.conv_bbbname_2_bsmps(bbbname)
-            PSSOFB.BBB2DEVS[bbbname] = devs
+            self.bbb2devs[bbbname] = devs
 
-    @staticmethod
-    def _create_pru_udc(ethbridgeclnt_class):
+    def _create_pru_udc(self, ethbridgeclnt_class):
         """."""
         pru, udc = dict(), dict()
 
-        for bbbname, bsmpdevs in PSSOFB.BBB2DEVS.items():
+        for bbbname, bsmpdevs in self.bbb2devs.items():
 
             # create PRU object for bsmp communication
             pru_ = _PRU(ethbridgeclnt_class, bbbname)
@@ -609,3 +564,80 @@ class PSSOFB:
             udc[bbbname] = udc_
 
         return pru, udc
+
+
+class PSSOFBP:
+    """."""
+
+    BBBNAMES = (
+        'IA-01RaCtrl:CO-PSCtrl-SI2',
+        'IA-02RaCtrl:CO-PSCtrl-SI2',
+        'IA-03RaCtrl:CO-PSCtrl-SI2',
+        'IA-04RaCtrl:CO-PSCtrl-SI2',
+        'IA-05RaCtrl:CO-PSCtrl-SI2',
+        'IA-06RaCtrl:CO-PSCtrl-SI2',
+        'IA-07RaCtrl:CO-PSCtrl-SI2',
+        'IA-08RaCtrl:CO-PSCtrl-SI2',
+        'IA-09RaCtrl:CO-PSCtrl-SI2',
+        'IA-10RaCtrl:CO-PSCtrl-SI2',
+        'IA-11RaCtrl:CO-PSCtrl-SI2',
+        'IA-12RaCtrl:CO-PSCtrl-SI2',
+        'IA-13RaCtrl:CO-PSCtrl-SI2',
+        'IA-14RaCtrl:CO-PSCtrl-SI2',
+        'IA-15RaCtrl:CO-PSCtrl-SI2',
+        'IA-16RaCtrl:CO-PSCtrl-SI2',
+        'IA-17RaCtrl:CO-PSCtrl-SI2',
+        'IA-18RaCtrl:CO-PSCtrl-SI2',
+        'IA-19RaCtrl:CO-PSCtrl-SI2',
+        'IA-20RaCtrl:CO-PSCtrl-SI2',
+        'IA-01RaCtrl:CO-PSCtrl-SI4',
+        'IA-02RaCtrl:CO-PSCtrl-SI4',
+        'IA-03RaCtrl:CO-PSCtrl-SI4',
+        'IA-04RaCtrl:CO-PSCtrl-SI4',
+        'IA-05RaCtrl:CO-PSCtrl-SI4',
+        'IA-06RaCtrl:CO-PSCtrl-SI4',
+        'IA-07RaCtrl:CO-PSCtrl-SI4',
+        'IA-08RaCtrl:CO-PSCtrl-SI4',
+        'IA-09RaCtrl:CO-PSCtrl-SI4',
+        'IA-10RaCtrl:CO-PSCtrl-SI4',
+        'IA-11RaCtrl:CO-PSCtrl-SI4',
+        'IA-12RaCtrl:CO-PSCtrl-SI4',
+        'IA-13RaCtrl:CO-PSCtrl-SI4',
+        'IA-14RaCtrl:CO-PSCtrl-SI4',
+        'IA-15RaCtrl:CO-PSCtrl-SI4',
+        'IA-16RaCtrl:CO-PSCtrl-SI4',
+        'IA-17RaCtrl:CO-PSCtrl-SI4',
+        'IA-18RaCtrl:CO-PSCtrl-SI4',
+        'IA-19RaCtrl:CO-PSCtrl-SI4',
+        'IA-20RaCtrl:CO-PSCtrl-SI4',
+    )
+    BBB2DEVS = dict()
+
+    def __init__(self, ethbridgeclnt_class):
+        """."""
+        self._acc = 'SI'
+
+        self._sofb_psnames = \
+            PSNamesSOFB.get_psnames_ch(self._acc) + \
+            PSNamesSOFB.get_psnames_cv(self._acc)
+
+        # snapshot of sofb current values
+        self._sofb_current_rb = _np.zeros(len(self._sofb_psnames))
+        self._sofb_current_refmon = _np.zeros(len(self._sofb_psnames))
+        self._sofb_current_mon = _np.zeros(len(self._sofb_psnames))
+        self._sofb_current_readback_ref = _np.zeros(len(self._sofb_psnames))
+
+        # create sofb and bsmp indices
+        self.indcs_bsmp, self.indcs_sofb = self._create_indices()
+
+    # --- private methods: bsmp comm in parallel ---
+
+    def _parallel_execution(self, target, args=None):
+        """Execute 'method' in parallel."""
+        # run threads
+        for thr in self._threads:
+            if not thr.configure_new_run(target, args=args):
+                raise RuntimeError('Thread is not ready for job!')
+        # wait for run to finish
+        for thr in self._threads:
+            thr.wait_ready()
