@@ -194,7 +194,6 @@ def benchmark_bsmp_sofb_current_setpoint(fname='test'):
 
     _np.savetxt(fname, exectimes)
     pssofb.stop_threads()
->>>>>>> master
 
 
 def benchmark_bsmp_sofb_current_setpoint_update():

@@ -1,6 +1,7 @@
 """BSMP serial communications classes."""
 
 import struct as _struct
+from threading import Lock as _Lock
 
 from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
@@ -157,6 +158,9 @@ class Channel:
     """
 
     # TODO: should we remove use of default timeout values. It is dangerous!
+    # TODO: Test if this lock can be removed for all topologies, including
+    # those process using more than one PRUController.
+    LOCK = _Lock()
 
     def __init__(self, pru, address):
         """Set channel."""
@@ -206,7 +210,11 @@ class Channel:
         """."""
         stream = Package.package(self._address, message).stream
         # print('write query : ', [hex(ord(c)) for c in stream])
-        response = self.pru.UART_request(stream, timeout=timeout)
+        if Channel.LOCK is None:
+            response = self.pru.UART_request(stream, timeout=timeout)
+        else:
+            with Channel.LOCK:
+                response = self.pru.UART_request(stream, timeout=timeout)
         self._size_counter += len(stream)
 
         if not response:
