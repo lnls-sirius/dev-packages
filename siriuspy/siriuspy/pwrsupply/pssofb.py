@@ -183,6 +183,15 @@ class PSConnSOFB:
         """Return Beagle-name to UDC-object dictionary."""
         return self._udc
 
+    # --- threads manipulation methods ---
+
+    def threads_shutdown(self):
+        """Stop BBB threads."""
+        for thr in self._threads:
+            thr.stop()
+        for thr in self._threads:
+            thr.join()
+
     # --- bsmp methods: invoke communications with correctors ---
 
     def bsmp_sofb_current_set(self, current):
@@ -314,16 +323,9 @@ class PSConnSOFB:
         vec2 = _np.asarray(vector2, dtype=_np.float32)
         return _np.all(vec1 == vec2)
 
-    def conv_psname_2_sofb_index(self, psname):
+    def sofb_conv_psname_2_index(self, psname):
         """."""
         return self._sofb_psnames.index(psname)
-
-    def shutdown(self):
-        """Stop BBB threads."""
-        for thr in self._threads:
-            thr.stop()
-        for thr in self._threads:
-            thr.join()
 
     # --- private methods: bsmp comm in parallel ---
 
@@ -653,7 +655,9 @@ class PSSOFB:
         self._procs = []
         self._pipes = []
 
-    def create_processes(self):
+    # --- processes manipulation methods ---
+
+    def processes_start(self):
         """."""
         # Create shared memory objects to be shared with worker processes.
         arr = self._sofb_current_readback_ref
@@ -686,6 +690,16 @@ class PSSOFB:
             self._procs.append(proc)
             self._doneevts.append(evt)
             self._pipes.append(mine)
+
+    def processes_shutdown(self):
+        """."""
+        for pipe in self._pipes:
+            pipe.send(None)
+            pipe.close()
+        for proc in self._procs:
+            proc.join()
+
+    # --- bspm communication methods ---
 
     def bsmp_sofb_current_set(self, current):
         """Send current sofb setpoint to power supplies."""
@@ -766,17 +780,9 @@ class PSSOFB:
         vec2 = _np.asarray(vector2, dtype=_np.float32)
         return _np.all(vec1 == vec2)
 
-    def conv_psname_2_sofb_index(self, psname):
+    def sofb_conv_psname_2_index(self, psname):
         """."""
         return self._sofb_psnames.index(psname)
-
-    def shutdown(self):
-        """."""
-        for pipe in self._pipes:
-            pipe.send(None)
-            pipe.close()
-        for proc in self._procs:
-            proc.join()
 
     @staticmethod
     def _run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, rbref, ref):
@@ -796,7 +802,7 @@ class PSSOFB:
             if isinstance(meth, str):
                 getattr(pssofb, meth)(*args)
                 doneevt.set()
-        pssofb.shutdown()
+        pssofb.threads_shutdown()
         pipe.close()
 
     # --- private methods: get properties ---

@@ -57,7 +57,7 @@ def benchmark_psconnsofb_current_update():
     for exectime in exectimes:
         print(exectime)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def _run_subprocess_psconnsofb(pipe, bbbnames):
@@ -83,7 +83,7 @@ def _run_subprocess_psconnsofb(pipe, bbbnames):
     # restore state
     pssofb.bsmp_sofb_current_set(curr_refmon)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_psconnsofb_current_setpoint_mp(fname='test'):
@@ -192,13 +192,13 @@ def benchmark_psconnsofb_current_setpoint(fname='test'):
     pssofb.bsmp_sofb_current_set(curr_refmon)
 
     _np.savetxt(fname, exectimes)
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_pssofb_current_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBridgeClient)
-    pssofb.create_processes()
+    pssofb.processes_start()
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
@@ -236,7 +236,7 @@ def benchmark_pssofb_current_setpoint(fname='test'):
     pssofb.bsmp_sofb_current_set(curr_refmon)
 
     _np.savetxt(fname, exectimes)
-    pssofb.shutdown()
+    pssofb.processes_shutdown()
 
 
 def benchmark_psconnsofb_current_setpoint_update():
@@ -266,7 +266,7 @@ def benchmark_psconnsofb_current_setpoint_update():
     for exectime in exectimes:
         print(exectime)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_psconnsofb_current_setpoint_then_update():
@@ -306,7 +306,7 @@ def benchmark_psconnsofb_current_setpoint_then_update():
     for exectime in exectimes:
         print(exectime)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_psconnsofb_kick_setpoint(fname='test'):
@@ -355,13 +355,13 @@ def benchmark_psconnsofb_kick_setpoint(fname='test'):
     pssofb.bsmp_sofb_kick_set(kick_refmon)
 
     _np.savetxt(fname, exectimes)
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_pssofb_kick_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBridgeClient)
-    pssofb.create_processes()
+    pssofb.processes_start()
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
@@ -400,7 +400,7 @@ def benchmark_pssofb_kick_setpoint(fname='test'):
     pssofb.bsmp_sofb_kick_set(kick_refmon)
 
     _np.savetxt(fname, exectimes)
-    pssofb.shutdown()
+    pssofb.processes_shutdown()
 
 
 def benchmark_psconnsofb_kick_setpoint_then_update():
@@ -441,7 +441,7 @@ def benchmark_psconnsofb_kick_setpoint_then_update():
     for exectime in exectimes:
         print(exectime)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def benchmark_psconnsofb_kick_setpoint_delay(delay_before, delay_after):
@@ -497,7 +497,7 @@ def benchmark_psconnsofb_kick_setpoint_delay(delay_before, delay_after):
     for exectime in exectimes:
         print(exectime)
 
-    pssofb.shutdown()
+    pssofb.threads_shutdown()
 
 
 def bsmp_communication_test():
