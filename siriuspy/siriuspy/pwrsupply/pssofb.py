@@ -640,6 +640,23 @@ class PSSOFB:
 
         # snapshot of sofb current values
         arr = _np.zeros(len(self._sofb_psnames), dtype=float)
+        self._sofb_current_readback_ref = arr.copy()
+        self._sofb_current_refmon = arr.copy()
+
+        # Unit converter.
+        self.converter = UnitConverter(self._sofb_psnames)
+
+        # Worker Processes control and synchronization
+        self._ethbridge_cls = ethbridgeclnt_class
+        self._nr_procs = nr_procs
+        self._doneevts = []
+        self._procs = []
+        self._pipes = []
+
+    def create_processes(self):
+        """."""
+        # Create shared memory objects to be shared with worker processes.
+        arr = self._sofb_current_readback_ref
         rbref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_readback_ref = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(rbref))
@@ -653,20 +670,17 @@ class PSSOFB:
 
         # subdivide the pv list for the processes
         nr_bbbs = len(PSSOFB.BBBNAMES)
-        div = nr_bbbs // nr_procs
-        rem = nr_bbbs % nr_procs
-        sub = [div*i + min(i, rem) for i in range(nr_procs+1)]
-        self._doneevts = []
-        self._procs = []
-        self._pipes = []
-        for i in range(nr_procs):
+        div = nr_bbbs // self._nr_procs
+        rem = nr_bbbs % self._nr_procs
+        sub = [div*i + min(i, rem) for i in range(self._nr_procs+1)]
+        for i in range(self._nr_procs):
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
             evt = _Event()
             evt.set()
             mine, theirs = _Pipe(duplex=False)
             proc = _Process(
-                target=PSSOFB.run_process,
-                args=(ethbridgeclnt_class, bbbnames, theirs, evt, rbref, ref),
+                target=PSSOFB._run_process,
+                args=(self._ethbridge_cls, bbbnames, theirs, evt, rbref, ref),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
@@ -765,7 +779,7 @@ class PSSOFB:
             proc.join()
 
     @staticmethod
-    def run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, rbref, ref):
+    def _run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, rbref, ref):
         """."""
         pssofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=True)
         curr = pssofb._sofb_current_readback_ref

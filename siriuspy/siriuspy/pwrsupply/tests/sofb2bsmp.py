@@ -198,6 +198,7 @@ def benchmark_psconnsofb_current_setpoint(fname='test'):
 def benchmark_pssofb_current_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBridgeClient)
+    pssofb.create_processes()
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
@@ -360,6 +361,7 @@ def benchmark_psconnsofb_kick_setpoint(fname='test'):
 def benchmark_pssofb_kick_setpoint(fname='test'):
     """."""
     pssofb = PSSOFB(EthBridgeClient)
+    pssofb.create_processes()
     pssofb.bsmp_slowref()
     exectimes = [0] * NRPTS
 
