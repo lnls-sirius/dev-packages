@@ -640,10 +640,15 @@ class PSSOFB:
 
         # snapshot of sofb current values
         arr = _np.zeros(len(self._sofb_psnames), dtype=float)
-        shm = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
+        rbref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_readback_ref = _np.ndarray(
-            arr.shape, dtype=arr.dtype, buffer=memoryview(shm))
+            arr.shape, dtype=arr.dtype, buffer=memoryview(rbref))
 
+        ref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
+        self._sofb_current_refmon = _np.ndarray(
+            arr.shape, dtype=arr.dtype, buffer=memoryview(ref))
+
+        # Unit converter.
         self.converter = UnitConverter(self._sofb_psnames)
 
         # subdivide the pv list for the processes
@@ -661,7 +666,7 @@ class PSSOFB:
             mine, theirs = _Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB.run_process,
-                args=(ethbridgeclnt_class, bbbnames, theirs, evt, shm),
+                args=(ethbridgeclnt_class, bbbnames, theirs, evt, rbref, ref),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
@@ -718,14 +723,24 @@ class PSSOFB:
         return self._sofb_psnames
 
     @property
-    def sofb_kick_readback_ref(self):
-        """Return SOFB kick from current_readback_ref from last setpoint."""
-        return self.converter.conv_curr2stren(self.sofb_current_readback_ref)
+    def sofb_current_refmon(self):
+        """Return SOFB current readback after last setpoint."""
+        return self._sofb_current_refmon.copy()
 
     @property
     def sofb_current_readback_ref(self):
         """Return SOFB current readback after last setpoint."""
         return self._sofb_current_readback_ref.copy()
+
+    @property
+    def sofb_kick_refmon(self):
+        """Return SOFB kick from current_readback_ref from last setpoint."""
+        return self.converter.conv_curr2stren(self.sofb_current_refmon)
+
+    @property
+    def sofb_kick_readback_ref(self):
+        """Return SOFB kick from current_readback_ref from last setpoint."""
+        return self.converter.conv_curr2stren(self.sofb_current_readback_ref)
 
     @staticmethod
     def sofb_vector_issame(vector1, vector2):
@@ -750,12 +765,14 @@ class PSSOFB:
             proc.join()
 
     @staticmethod
-    def run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, shared_arr):
+    def run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, rbref, ref):
         """."""
         pssofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=True)
         curr = pssofb._sofb_current_readback_ref
         pssofb._sofb_current_readback_ref = _np.ndarray(
-            curr.shape, dtype=float, buffer=memoryview(shared_arr))
+            curr.shape, dtype=float, buffer=memoryview(rbref))
+        pssofb._sofb_current_refmon = _np.ndarray(
+            curr.shape, dtype=float, buffer=memoryview(ref))
 
         while True:
             rec = pipe.recv()
