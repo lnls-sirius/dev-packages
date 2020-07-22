@@ -681,7 +681,7 @@ class PSSOFB:
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
             evt = _Event()
             evt.set()
-            mine, theirs = _Pipe(duplex=False)
+            theirs, mine = _Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB._run_process,
                 args=(self._ethbridge_cls, bbbnames, theirs, evt, rbref, ref),

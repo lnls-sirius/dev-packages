@@ -237,11 +237,11 @@ def benchmark_pssofb_current_setpoint(fname='test'):
         curr_sp = curr_refmon + 1 * 0.01 * _np.random.randn(curr_refmon.size)
         pssofb.bsmp_sofb_current_set(curr_sp)
 
-        _time.sleep(0.005)
-
         # stop clock
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
+
+        _time.sleep(0.005)
 
         # compare readback_ref read with previous value set
         if curr_sp_prev is not None:
