@@ -443,6 +443,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._wait_pssofb = False
         if self.acc == 'SI':
             self._ref_kicks = None
+            self._ret_kicks = None
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
                     EthBridgeClient, nr_procs=8, asynchronous=True)
@@ -542,6 +543,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         # Send correctors setpoint
         ret_kicks = self._pssofb.sofb_kick_readback_ref
+        self._ret_kicks = ret_kicks
 
         if self._pssofb.is_ready():
             self._set_ref_kicks(values)
