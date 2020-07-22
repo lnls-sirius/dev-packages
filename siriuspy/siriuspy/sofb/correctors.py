@@ -777,7 +777,7 @@ class EpicsCorrectors(BaseCorrectors):
         status = _util.update_bit(
             status, bit_pos=2,
             bit_val=not all(corr.state for corr in chcvs))
-        if self.acc == 'SI' and self._sync_kicks == self._csorb.CorrSync.On:
+        if self.acc == 'SI' and self._sync_kicks != self._csorb.CorrSync.Off:
             tim_conn = self.timing.connected
             tim_conf = self.timing.is_ok
         else:
