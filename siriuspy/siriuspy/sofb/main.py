@@ -485,24 +485,22 @@ class SOFB(_BaseClass):
             if use_pssofb:
                 norbs = max(int(self._csorb.BPMsFreq*interval), 1)
 
-            time0 = _time.time()
-            _log.info('TIMEIT: BEGIN')
             msg = 'Getting the orbit.'
             _log.info(msg)
             for _ in range(norbs):
                 orb = self.orbit.get_orbit(synced=True)
-            time1 = _time.time()
-            _log.info(strn.format('get orbit:', 1000*(time1-time0)))
+            _log.info('TIMEIT: BEGIN')
+            time0 = _time.time()
 
             msg = 'Calculating kicks.'
             _log.info(msg)
             dkicks = self.matrix.calc_kicks(orb)
-            time2 = _time.time()
-            _log.info(strn.format('calc kicks:', 1000*(time2-time1)))
+            time1 = _time.time()
+            _log.info(strn.format('calc kicks:', 1000*(time1-time0)))
 
             self._ref_corr_kicks = self.correctors.get_strength()
-            time3 = _time.time()
-            _log.info(strn.format('get strength:', 1000*(time3-time2)))
+            time2 = _time.time()
+            _log.info(strn.format('get strength:', 1000*(time2-time1)))
 
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
             if kicks is None:
@@ -512,8 +510,8 @@ class SOFB(_BaseClass):
                 _log.error(msg[5:])
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 continue
-            time4 = _time.time()
-            _log.info(strn.format('process kicks:', 1000*(time4-time3)))
+            time3 = _time.time()
+            _log.info(strn.format('process kicks:', 1000*(time3-time2)))
 
             msg = 'Applying kicks.'
             _log.info(msg)
@@ -541,13 +539,13 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.warning(msg[:6])
 
-            time5 = _time.time()
-            _log.info(strn.format('apply kicks:', 1000*(time5-time4)))
+            time4 = _time.time()
+            _log.info(strn.format('apply kicks:', 1000*(time4-time3)))
 
             dtime = (_time.time()-time0)
             _log.info(strn.format('total:', 1000*dtime))
             _log.info('TIMEIT: END')
-            if dtime > interval:
+            if dtime > 1/self._csorb.BPMsFreq:
                 msg = 'WARN: Loop took {0:6.2f}ms.'.format(dtime*1000)
                 self._update_log(msg)
                 _log.warning(msg[6:])
