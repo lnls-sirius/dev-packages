@@ -815,7 +815,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._print_guilty(okg, mode=mode)
         return True
 
-    def _compare_kicks_pssofb(self, values, mode='ready'):
+    def _compare_kicks_pssofb(self, values):
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
 
@@ -835,7 +835,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         okg = _np.isclose(curr_vals, ref_vals, atol=self._csorb.TINY_KICK)
 
-        self._print_guilty(okg, mode=mode)
+        self._print_guilty(okg, mode='diff')
         return _np.sum(~okg)
 
     def _print_guilty(self, okg, mode='ready'):
@@ -843,6 +843,8 @@ class EpicsCorrectors(BaseCorrectors):
         mde = 'RB' if mode == 'ready' else 'Ref'
         if mode == 'prob':
             msg_tmpl = 'ERR: Corrector {1:s} with problem!'
+        elif mode == 'diff':
+            msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
         for oki, corr in zip(okg, self._corrs):
             if not oki:
                 msg = msg_tmpl.format(mde, corr.name)
