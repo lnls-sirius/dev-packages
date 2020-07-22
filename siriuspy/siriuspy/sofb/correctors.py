@@ -617,7 +617,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
-                corr_values[i] = corr.value
+                corr_values[i] = corr.refvalue
             else:
                 msg = 'ERR: Failed to get value from '
                 msg += corr.name
