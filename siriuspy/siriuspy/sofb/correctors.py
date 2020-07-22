@@ -828,7 +828,7 @@ class EpicsCorrectors(BaseCorrectors):
         iszero_ref = _np.isclose(ref_vals, 0, atol=self._csorb.TINY_KICK)
         prob = iszero & ~(iszero_ref)
         if _np.any(prob):
-            self._print_guilty(prob, mode='prob')
+            self._print_guilty(~prob, mode='prob')
             return None
 
         okg = _np.isclose(curr_vals, ref_vals, atol=self._csorb.TINY_KICK)
