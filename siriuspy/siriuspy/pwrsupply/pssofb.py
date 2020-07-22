@@ -675,6 +675,13 @@ class PSSOFB:
                 return False
         return True
 
+    def is_ready(self):
+        """."""
+        for doneevt in self._doneevts:
+            if not doneevt.is_set():
+                return False
+        return True
+
     # --- processes manipulation methods ---
 
     def processes_start(self):
