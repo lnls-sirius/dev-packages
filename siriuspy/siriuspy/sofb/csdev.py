@@ -170,6 +170,7 @@ class SOFBTLines(ConstTLines):
         if self.acc == 'SI':
             self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
             self.evt_cor_name = 'Orb' + self.acc
+            self.clk_cor_name = 'Clock3'
 
         self.evt_acq_name = 'Dig' + self.acc
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
