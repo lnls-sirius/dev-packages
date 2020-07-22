@@ -245,7 +245,7 @@ class SOFB(_BaseClass):
     def set_auto_corr_frequency(self, value):
         """."""
         bpmfreq = self._csorb.BPMsFreq
-        value = bpmfreq / min(int(bpmfreq/value), 1)
+        value = bpmfreq / max(int(bpmfreq/value), 1)
         self._auto_corr_freq = value
         self.run_callbacks('ClosedLoopFreq-RB', value)
         return True
@@ -483,7 +483,7 @@ class SOFB(_BaseClass):
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
-                norbs = min(int(self._csorb.BPMsFreq*interval), 1)
+                norbs = max(int(self._csorb.BPMsFreq*interval), 1)
 
             time0 = _time.time()
             _log.info('TIMEIT: BEGIN')
