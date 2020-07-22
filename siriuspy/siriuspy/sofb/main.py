@@ -543,9 +543,6 @@ class SOFB(_BaseClass):
 
             time5 = _time.time()
             _log.info(strn.format('apply kicks:', 1000*(time5-time4)))
-            msg = 'kicks applied!'
-            self._update_log(msg)
-            _log.info(msg)
 
             dtime = (_time.time()-time0)
             _log.info(strn.format('total:', 1000*dtime))
