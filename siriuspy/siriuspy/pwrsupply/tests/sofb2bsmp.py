@@ -1,6 +1,7 @@
 #!/usr/bin/env python-sirius
 """."""
 
+import os as _os
 import time as _time
 from multiprocessing import Pipe
 from copy import deepcopy as _dcopy
@@ -21,6 +22,19 @@ from siriuspy.pwrsupply.pssofb import PSSOFB, PSConnSOFB
 rcParams.update({
     'font.size': 14, 'lines.linewidth': 2, 'axes.grid': True})
 NRPTS = 5000
+
+
+def define_priority():
+    """."""
+    # sched = _os.SCHED_FIFO
+    sched = _os.SCHED_RR
+    prio = _os.sched_get_priority_max(sched)
+    param = _os.sched_param(prio)
+    try:
+        _os.sched_setscheduler(0, sched, param)
+        print('High priority set!')
+    except PermissionError:
+        print('Could not set priority')
 
 
 def benchmark_psconnsofb_current_update():
@@ -131,9 +145,12 @@ def benchmark_psconnsofb_current_setpoint_mp(fname='test'):
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
 
+        _time.sleep(0.005)
+
         # compare readback_ref read with previous value set
         if curr_sp_prev is not None:
             issame = PSSOFB.sofb_vector_issame(curr_read, curr_sp_prev)
+            diff = curr_read - curr_sp_prev
         else:
             issame = True
 
@@ -141,7 +158,8 @@ def benchmark_psconnsofb_current_setpoint_mp(fname='test'):
         curr_sp_prev = curr_sp
 
         if not issame:
-            print('SP<>RB in event {}'.format(i))
+            sel = (~_np.isclose(diff, 0, atol=1e-4)).nonzero()[0]
+            print('SP<>RB in event {} {}'.format(i, sel))
 
     for pipe in pipes:
         pipe.send(None)
@@ -175,10 +193,13 @@ def benchmark_psconnsofb_current_setpoint(fname='test'):
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
 
+        _time.sleep(0.005)
+
         # compare readback_ref read with previous value set
         if curr_sp_prev is not None:
             curr_read = pssofb.sofb_current_readback_ref
             issame = pssofb.sofb_vector_issame(curr_read, curr_sp_prev)
+            diff = curr_read - curr_sp_prev
         else:
             issame = True
 
@@ -186,7 +207,8 @@ def benchmark_psconnsofb_current_setpoint(fname='test'):
         curr_sp_prev = curr_sp
 
         if not issame:
-            print('SP<>RB in event {}'.format(i))
+            sel = (~_np.isclose(diff, 0, atol=1e-4)).nonzero()[0]
+            print('SP<>RB in event {} {}'.format(i, sel))
 
     # restore state
     pssofb.bsmp_sofb_current_set(curr_refmon)
@@ -215,6 +237,8 @@ def benchmark_pssofb_current_setpoint(fname='test'):
         curr_sp = curr_refmon + 1 * 0.01 * _np.random.randn(curr_refmon.size)
         pssofb.bsmp_sofb_current_set(curr_sp)
 
+        _time.sleep(0.005)
+
         # stop clock
         time1 = _time.time()
         exectimes[i] = 1000*(time1 - time0)
@@ -223,6 +247,7 @@ def benchmark_pssofb_current_setpoint(fname='test'):
         if curr_sp_prev is not None:
             curr_read = pssofb.sofb_current_readback_ref
             issame = pssofb.sofb_vector_issame(curr_read, curr_sp_prev)
+            diff = curr_read - curr_sp_prev
         else:
             issame = True
 
@@ -230,7 +255,8 @@ def benchmark_pssofb_current_setpoint(fname='test'):
         curr_sp_prev = curr_sp
 
         if not issame:
-            print('SP<>RB in event {}'.format(i))
+            sel = (~_np.isclose(diff, 0, atol=1e-4)).nonzero()[0]
+            print('SP<>RB in event {} {}'.format(i, sel))
 
     # restore state
     pssofb.bsmp_sofb_current_set(curr_refmon)
@@ -243,6 +269,7 @@ def benchmark_psconnsofb_current_setpoint_update():
     """."""
     pssofb = PSConnSOFB(EthBridgeClient)
     exectimes = [0] * NRPTS
+    curr_sp = 0.1 * _np.random.randn(280)
     for i, _ in enumerate(exectimes):
 
         # start clock
@@ -596,4 +623,5 @@ def run():
 
 
 if __name__ == '__main__':
+    # define_priority()
     run()
