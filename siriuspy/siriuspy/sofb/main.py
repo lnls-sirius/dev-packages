@@ -528,12 +528,17 @@ class SOFB(_BaseClass):
                 _log.error(msg[5:])
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 continue
-            elif ret:
+            elif ret == -1:
+                msg = 'WARN: Last was not applied yet'
+                self._update_log(msg)
+                _log.error(msg[:5])
+                continue
+            elif ret == 0:
                 msg = 'kicks applied!'
                 self._update_log(msg)
                 _log.info(msg)
             else:
-                msg = 'WARN: Not all kicks were applied previously!'
+                msg = f'WARN: {ret:03d} kicks were not applied previously!'
                 self._update_log(msg)
                 _log.warning(msg[:6])
 

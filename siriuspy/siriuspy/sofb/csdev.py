@@ -106,7 +106,8 @@ class ConstSI(ConstRings):
     ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
-    CorrUsePSSOFB = _csdev.Const.register('CorrUsePSSOFB', _et.DSBLD_ENBLD)
+    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
+    CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
 
     RF_GEN_NAME = 'RF-Gen'
     CORR_MIN_DELAY = 20  # [ms]
@@ -732,12 +733,18 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrDelay-RB': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'ms',
                 'lolim': 0, 'hilim': 100000},
-            'CorrUsePSSOFB-Sel': {
-                'type': 'enum', 'enums': self.CorrUsePSSOFB._fields,
-                'value': self.CorrUsePSSOFB.Off},
-            'CorrUsePSSOFB-Sts': {
-                'type': 'enum', 'enums': self.CorrUsePSSOFB._fields,
-                'value': self.CorrUsePSSOFB.Off},
+            'CorrPSSOFBEnbl-Sel': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBEnbl-Sts': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBWait-Sel': {
+                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
+                'value': self.CorrPSSOFBWait.Off},
+            'CorrPSSOFBWait-Sts': {
+                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
+                'value': self.CorrPSSOFBWait.Off},
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
             }

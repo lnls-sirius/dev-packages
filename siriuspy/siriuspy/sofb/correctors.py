@@ -2,11 +2,9 @@
 
 import time as _time
 import logging as _log
-from multiprocessing import Pipe as _Pipe
 
 import numpy as _np
-from PRUserial485 import EthBrigdeClient
-from epics import CAProcess as _Process
+from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
@@ -427,32 +425,6 @@ class BaseCorrectors(_BaseClass):
     """Base correctors class."""
 
 
-def run_subprocess_pssofb(pipe, use_ioc):
-    """."""
-    if use_ioc:
-        pssofb = _PSSOFBIOC('SI', auto_mon=True)
-    else:
-        pssofb = _PSSOFB(EthBrigdeClient)
-
-    while True:
-        kicks = pipe.recv()
-        if kicks is None:
-            break
-
-        # set kick values
-        if use_ioc:
-            ref_kick = pssofb.kick
-            pssofb.kick = kicks
-        else:
-            pssofb.bsmp_sofb_kick_set(kicks)
-            ref_kick = pssofb.sofb_kick_readback_ref
-
-        pipe.send(ref_kick)
-
-    # if not use_ioc:
-        # pssofb.stop_threads()
-
-
 class EpicsCorrectors(BaseCorrectors):
     """Class to deal with correctors."""
 
@@ -468,16 +440,15 @@ class EpicsCorrectors(BaseCorrectors):
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
         self._use_pssofb = False
+        self._wait_pssofb = False
         if self.acc == 'SI':
-            mine, theirs = _Pipe()
             self._ref_kicks = None
-            self._ref_kicks_old = None
-            self._mypipe = mine
-            self._pssofb_process = _Process(
-                target=run_subprocess_pssofb,
-                args=(theirs, EpicsCorrectors.PSSOFB_USE_IOC),
-                daemon=True)
-            self._pssofb_process.start()
+            if not EpicsCorrectors.PSSOFB_USE_IOC:
+                self._pssofb = _PSSOFB(
+                    EthBridgeClient, nr_procs=8, asynchronous=True)
+                self._pssofb.processes_start()
+            else:
+                self._pssofb = _PSSOFBIOC('SI', auto_mon=True)
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
@@ -500,11 +471,8 @@ class EpicsCorrectors(BaseCorrectors):
 
     def shutdown(self):
         """Shutdown Process."""
-        if self._mypipe.poll():
-            self._mypipe.recv()
-        self._mypipe.send(None)
-        self._mypipe.close()
-        self._pssofb_process.join()
+        if self.acc == 'SI':
+            self._pssofb.processes_shutdown()
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -514,12 +482,19 @@ class EpicsCorrectors(BaseCorrectors):
             }
         if self.acc == 'SI':
             dbase['CorrDelay-SP'] = self.set_timing_delay
-            dbase['CorrUsePSSOFB-Sel'] = self.set_use_pssofb
+            dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
+            dbase['CorrPSSOFBWait-Sel'] = self.set_wait_pssofb
             dbase['CorrSync-Sel'] = self.set_corrs_mode
         return dbase
 
     def apply_kicks(self, values):
-        """Apply kicks."""
+        """Apply kicks.
+
+        Will return None if there is a problem with some PS.
+        Will return -1 if PS did not finish applying last kick.
+        Will return 0 if all previous kick were implemented.
+        Will return >0 indicating how many previous kicks were not implemented.
+        """
         if self.acc == 'SI' and self._use_pssofb:
             return self.apply_kicks_pssofb(values)
 
@@ -537,7 +512,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         # Wait for readbacks to be updated
         if self._timed_out(values, mode='ready'):
-            return
+            return -1
         time3 = _time.time()
         _log.info(strn.format('check ready:', 1000*(time3-time2)))
 
@@ -551,21 +526,34 @@ class EpicsCorrectors(BaseCorrectors):
         time5 = _time.time()
         _log.info(strn.format('check applied:', 1000*(time5-time4)))
         _log.info('    TIMEIT: END')
-        return True
+        return 0
 
     def apply_kicks_pssofb(self, values):
-        """Apply kicks."""
+        """Apply kicks with PSSOFB.
+
+        Will return None if there is a problem with some PS.
+        Will return -1 if PS did not finish applying last kick.
+        Will return 0 if all previous kick were implemented.
+        Will return >0 indicating how many previous kicks were not implemented.
+        """
         strn = '    TIMEIT: {0:20s} - {1:7.3f}'
         _log.info('    TIMEIT: BEGIN')
         time1 = _time.time()
 
         # Send correctors setpoint
-        self._set_ref_kicks(values)
+        ret_kicks = self._pssofb.sofb_kick_readback_ref
 
-        ret_kicks = self._mypipe.recv()
-        self._mypipe.send(values[:-1])
+        if self._pssofb.is_ready():
+            self._set_ref_kicks(values)
+            self._pssofb.bsmp_sofb_kick_set(values[:-1])
+        else:
+            return -1
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
+
+        if self._wait_pssofb:
+            self._pssofb.wait()
+
         time2 = _time.time()
         _log.info(strn.format('send sp:', 1000*(time2-time1)))
 
@@ -582,10 +570,11 @@ class EpicsCorrectors(BaseCorrectors):
         return ret
 
     def _set_ref_kicks(self, values):
-        new_ref = _np.array(self._ref_kicks)
+        new_ref = _np.array(self._ref_kicks[-1])
         not_nan = ~_np.isnan(values)
         new_ref[not_nan] = values[not_nan]
-        self._ref_kicks, self._ref_kicks_old = new_ref, self._ref_kicks
+        self._ref_kicks.append(new_ref)
+        del self._ref_kicks[0]
 
     def put_value_in_corr(self, corr, value):
         """Put value in corrector method."""
@@ -624,7 +613,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Get the correctors strengths."""
         corr_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
         if self.acc == 'SI' and self._use_pssofb:
-            return self._ref_kicks.copy()
+            return self._ref_kicks[-1].copy()
 
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
@@ -704,12 +693,11 @@ class EpicsCorrectors(BaseCorrectors):
         """."""
         if self.acc != 'SI':
             return False
-        if val not in self._csorb.CorrUsePSSOFB:
+        if val not in self._csorb.CorrPSSOFBEnbl:
             return False
-        if val != self._use_pssofb and val == self._csorb.CorrUsePSSOFB.Enbld:
+        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbld:
             kicks = self.get_strength()
-            self._ref_kicks = kicks.copy()
-            self._ref_kicks_old = kicks
+            self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
         self._use_pssofb = val
 
         for corr in self._corrs[:-1]:
@@ -721,7 +709,27 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.sofbmode = val
 
-        self.run_callbacks('CorrUsePSSOFB-Sts', val)
+        self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
+        return True
+
+    def set_wait_pssofb(self, val):
+        """."""
+        if self.acc != 'SI':
+            return False
+        if val not in self._csorb.CorrPSSOFBWait:
+            return False
+        self._wait_pssofb = val
+
+        for corr in self._corrs[:-1]:
+            if not corr.connected:
+                msg = 'ERR: Failed to configure '
+                msg += corr.name
+                self._update_log(msg)
+                _log.error(msg[5:])
+                continue
+            corr.sofbmode = val
+
+        self.run_callbacks('CorrPSSOFBWait-Sts', val)
         return True
 
     def configure_correctors(self, _):
@@ -805,7 +813,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def _compare_kicks_pssofb(self, values, mode='ready'):
         rfc = self._corrs[-1]
-        ref_vals = self._ref_kicks_old
+        ref_vals = self._ref_kicks[0]
 
         curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
         curr_vals[:-1] = values
@@ -824,7 +832,7 @@ class EpicsCorrectors(BaseCorrectors):
         okg = _np.isclose(curr_vals, ref_vals, atol=self._csorb.TINY_KICK)
 
         self._print_guilty(okg, mode=mode)
-        return _np.any(~okg)
+        return _np.sum(~okg)
 
     def _print_guilty(self, okg, mode='ready'):
         msg_tmpl = 'ERR: timeout {0:3s}: {1:s}'
