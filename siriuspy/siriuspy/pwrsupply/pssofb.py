@@ -633,9 +633,10 @@ class PSSOFB:
     )
     BBB2DEVS = dict()
 
-    def __init__(self, ethbridgeclnt_class, nr_procs=8):
+    def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False):
         """."""
         self._acc = 'SI'
+        self._async = asynchronous
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -655,6 +656,24 @@ class PSSOFB:
         self._doneevts = []
         self._procs = []
         self._pipes = []
+
+    # --- General class properties ---
+
+    @property
+    def asynchronous(self):
+        """."""
+        return self._async
+
+    @asynchronous.setter
+    def asynchronous(self, val):
+        self._async = bool(val)
+
+    def wait(self, timeout=None):
+        """."""
+        for doneevt in self._doneevts:
+            if not doneevt.wait(timeout=timeout):
+                return False
+        return True
 
     # --- processes manipulation methods ---
 
@@ -817,5 +836,5 @@ class PSSOFB:
             doneevt.clear()
             pipe.send((target_name, args))
 
-        for doneevt in self._doneevts:
-            doneevt.wait()
+        if not self._async:
+            self.wait()
