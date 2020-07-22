@@ -450,12 +450,12 @@ class SOFB(_BaseClass):
             kicks[i] = orig_kicks[i] + delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
-            orbp = self.orbit.get_orbit(True)
+            orbp = self.orbit.get_orbit(reset=True)
 
             kicks[i] = orig_kicks[i] - delta/2
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
-            orbn = self.orbit.get_orbit(True)
+            orbn = self.orbit.get_orbit(reset=True)
             mat.append((orbp-orbn)/delta)
 
             kicks[i] = orig_kicks[i]
@@ -491,7 +491,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.info(msg)
             for _ in range(norbs):
-                orb = self.orbit.get_orbit()
+                orb = self.orbit.get_orbit(synced=True)
             time1 = _time.time()
             _log.info(strn.format('get orbit:', 1000*(time1-time0)))
 
