@@ -488,7 +488,6 @@ class SOFB(_BaseClass):
             time0 = _time.time()
             _log.info('TIMEIT: BEGIN')
             msg = 'Getting the orbit.'
-            self._update_log(msg)
             _log.info(msg)
             for _ in range(norbs):
                 orb = self.orbit.get_orbit(synced=True)
@@ -496,7 +495,6 @@ class SOFB(_BaseClass):
             _log.info(strn.format('get orbit:', 1000*(time1-time0)))
 
             msg = 'Calculating kicks.'
-            self._update_log(msg)
             _log.info(msg)
             dkicks = self.matrix.calc_kicks(orb)
             time2 = _time.time()
@@ -518,9 +516,7 @@ class SOFB(_BaseClass):
             _log.info(strn.format('process kicks:', 1000*(time4-time3)))
 
             msg = 'Applying kicks.'
-            self._update_log(msg)
             _log.info(msg)
-            # slowest part:
             ret = self.correctors.apply_kicks(kicks)
             if ret is None:
                 msg = 'ERR: There is some problem with a corrector!'
@@ -539,7 +535,6 @@ class SOFB(_BaseClass):
                 continue
             elif ret == 0:
                 msg = 'kicks applied!'
-                self._update_log(msg)
                 _log.info(msg)
             else:
                 msg = f'WARN: {ret:03d} kicks were not applied previously!'
