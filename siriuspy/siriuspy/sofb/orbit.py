@@ -137,6 +137,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if self.acc == 'SI':
             for pipe in self._mypipes:
+                pipe.send(False)
                 pipe.close()
             for proc in self._processes:
                 proc.join()
