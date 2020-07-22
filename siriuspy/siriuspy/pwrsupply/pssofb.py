@@ -1,5 +1,6 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
+from collections.abc import Iterable
 from multiprocessing import Event as _Event, Pipe as _Pipe, \
     Process as _Process, sharedctypes as _shm
 
@@ -800,7 +801,10 @@ class PSSOFB:
                 break
             meth, args = rec
             if isinstance(meth, str):
-                getattr(pssofb, meth)(*args)
+                if isinstance(args, Iterable):
+                    getattr(pssofb, meth)(*args)
+                else:
+                    getattr(pssofb, meth)()
                 doneevt.set()
         pssofb.threads_shutdown()
         pipe.close()
