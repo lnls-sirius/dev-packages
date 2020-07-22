@@ -586,6 +586,7 @@ class FBP(PSBSMP):
 
     def sofb_ps_setpoint_set(self, value):
         """."""
+        self._sofb_ps_setpoint = value
         ack, readback_ref = self.ps_function_set_slowref_fbp_readback_ref(value)
         if ack != self.CONST_BSMP.ACK_OK:
             sfmt = 'Anomalous bsmp communication in sofb_ps_setpoint_set: ack:{}, data:{}'
