@@ -700,6 +700,8 @@ class EpicsCorrectors(BaseCorrectors):
         if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbld:
             kicks = self.get_strength()
             self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
+            # initialize PSSOFB State
+            self._pssofb.bsmp_sofb_kick_set(kicks[:-1])
         self._use_pssofb = val
 
         for corr in self._corrs[:-1]:
