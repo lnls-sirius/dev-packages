@@ -547,7 +547,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         if self._pssofb.is_ready():
             self._set_ref_kicks(values)
-            self._pssofb.bsmp_sofb_kick_set(values[:-1])
+            self._pssofb.bsmp_sofb_kick_set(self._ref_kicks[-1][:-1])
         else:
             return -1
         if not _np.isnan(values[-1]):
