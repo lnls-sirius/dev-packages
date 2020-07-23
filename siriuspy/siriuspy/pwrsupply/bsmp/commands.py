@@ -588,8 +588,8 @@ class FBP(PSBSMP):
         """."""
         ack, readback_ref = self.ps_function_set_slowref_fbp_readback_ref(value)
         if ack != self.CONST_BSMP.ACK_OK:
-            sfmt = 'Anomalous bsmp communication in sofb_ps_setpoint_set: ack:{}, data:{}'
-            print(sfmt.format(hex(ack), readback_ref))
+            sfmt = 'Anomalous response in sofb_ps_setpoint_set: ack:0x{:02X}, data:0x{:02X}'
+            print(sfmt.format(ack, readback_ref))
         else:
             self._sofb_ps_readback_ref = readback_ref
 
@@ -607,8 +607,8 @@ class FBP(PSBSMP):
         if ack == self.CONST_BSMP.ACK_OK:
             setpoints, references, iload = _np.array(values).reshape((3, -1))
         else:
-            sfmt = 'Anomalous bsmp communication in sofb_ps_setpoint_set: ack:{}, data:{}'
-            print(sfmt.format(hec(ack), values))
+            sfmt = 'Anomalous response in sofb_ps_setpoint_set: ack:0x{:02X}, data:0x{:02X}'
+            print(sfmt.format(ack, values))
             setpoints, references, iload = None, None, None
 
         return setpoints, references, iload
