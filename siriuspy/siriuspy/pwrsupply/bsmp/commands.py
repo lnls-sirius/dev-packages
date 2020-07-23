@@ -590,9 +590,9 @@ class FBP(PSBSMP):
         ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
         if ack != self.CONST_BSMP.ACK_OK:
             sfmt = ('FBP: Anomalous response sofb_ps_setpoint_set:'
-                    ' ack:0x{:02X}, func_resp:{}')
+                    ' ack:0x{:02X}, func_resp:0x{:02X}')
             if isinstance(func_resp, str):
-                func_resp = '0x{:02X}'.format(func_resp)
+                func_resp = ord(func_resp)
             print(sfmt.format(ack, func_resp))
         else:
             self._sofb_ps_readback_ref = func_resp
