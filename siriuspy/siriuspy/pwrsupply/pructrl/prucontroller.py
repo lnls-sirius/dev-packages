@@ -670,7 +670,7 @@ class PRUController:
                     print('PRUController: anomalous response !')
                     datum = data[dev_id]
                     if isinstance(datum, str):
-                        datum = '0x{:02X}'.format(ord(datum))
+                        datum = ord(datum)
                     self._udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
                         device_id=dev_id, function_id=function_id,
