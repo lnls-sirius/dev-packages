@@ -678,7 +678,7 @@ class PRUController:
         except _SerialError:
             return None
         except TypeError:
-            print('--- PRUController debug ----')
+            print('--- PRUController debug ---')
             print('device_ids  : ', device_ids)
             print('dev_id      : ', dev_id)
             print('function_id : ', function_id)

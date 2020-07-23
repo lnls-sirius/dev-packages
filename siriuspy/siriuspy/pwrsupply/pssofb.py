@@ -439,6 +439,8 @@ class PSConnSOFB:
                 ack, data = resp
                 # check anomalous response
                 if ack != _const_bsmp.ACK_OK:
+                    if isinstance(data, str):
+                        data = ord(data)
                     print('PSSOFB: anomalous response !')
                     udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack,
