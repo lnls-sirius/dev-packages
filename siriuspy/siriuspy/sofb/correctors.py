@@ -537,38 +537,27 @@ class EpicsCorrectors(BaseCorrectors):
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
         """
-        strn = '    TIMEIT: {0:20s} - {1:7.3f}'
-        _log.info('    TIMEIT: BEGIN')
-        time1 = _time.time()
-
         # Send correctors setpoint
         ret_kicks = self._pssofb.sofb_kick_readback_ref
         self._ret_kicks = ret_kicks
 
-        if self._pssofb.is_ready():
-            self._set_ref_kicks(values)
-            self._pssofb.bsmp_sofb_kick_set(self._ref_kicks[-1][:-1])
-        else:
+        if not self._pssofb.is_ready():
             return -1
+
+        self._set_ref_kicks(values)
+        self._pssofb.bsmp_sofb_kick_set(self._ref_kicks[-1][:-1])
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 
         if self._wait_pssofb:
             self._pssofb.wait()
 
-        time2 = _time.time()
-        _log.info(strn.format('send sp:', 1000*(time2-time1)))
-
         # compare kicks to check if there is something wrong
         ret = self._compare_kicks_pssofb(ret_kicks)
-        time3 = _time.time()
-        _log.info(strn.format('compare kicks:', 1000*(time3-time2)))
 
         # Send trigger signal for implementation
         self.send_evt()
-        time4 = _time.time()
-        _log.info(strn.format('send evt:', 1000*(time4-time3)))
-        _log.info('    TIMEIT: END')
+
         return ret
 
     def _set_ref_kicks(self, values):
@@ -826,16 +815,16 @@ class EpicsCorrectors(BaseCorrectors):
         # NOTE: If the return value is zero, it might mean the corrector had a
         # problem. In this case we return None so the main correction loop can
         # exit and give back the control to the IOC.
-        iszero = _np.isclose(curr_vals, 0, atol=self._csorb.TINY_KICK)
-        iszero_ref = _np.isclose(ref_vals, 0, atol=self._csorb.TINY_KICK)
+        iszero = _compare_kicks(curr_vals, 0)
+        iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
         if _np.any(prob):
-            self._print_guilty(~prob, mode='prob')
-            return None
+            # self._print_guilty(~prob, mode='prob')
+            return -2
 
-        okg = _np.isclose(curr_vals, ref_vals, atol=self._csorb.TINY_KICK)
+        okg = _compare_kicks(curr_vals, ref_vals)
 
-        self._print_guilty(okg, mode='diff')
+        # self._print_guilty(okg, mode='diff')
         return _np.sum(~okg)
 
     def _print_guilty(self, okg, mode='ready'):

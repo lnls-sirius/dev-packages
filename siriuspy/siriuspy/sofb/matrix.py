@@ -4,6 +4,7 @@ import os as _os
 from copy import deepcopy as _dcopy
 import logging as _log
 from functools import partial as _part
+from threading import Thread as _Thread
 
 import numpy as _np
 
@@ -223,19 +224,24 @@ class EpicsMatrix(BaseMatrix):
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
-        if len(orbit) != self.inv_respmat.shape[1]:
+        if orbit.size != self.inv_respmat.shape[1]:
             msg = 'ERR: Orbit and matrix size not compatible.'
             self._update_log(msg)
             _log.error(msg[5:])
-            return
-        kicks = _np.dot(-self.inv_respmat, orbit)
+            return None
+        kicks = _np.dot(self.inv_respmat, orbit)
+        kicks *= -1
+        _Thread(self._update_dkicks, args=kicks).start()
+        return kicks
+
+    def _update_dkicks(self, kicks):
+        kicks = kicks.copy()
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
-        self.run_callbacks('DeltaKickCH-Mon', list(kicks[:nr_ch]))
-        self.run_callbacks('DeltaKickCV-Mon', list(kicks[nr_ch:nr_chcv]))
+        self.run_callbacks('DeltaKickCH-Mon', kicks[:nr_ch])
+        self.run_callbacks('DeltaKickCV-Mon', kicks[nr_ch:nr_chcv])
         if self.acc == 'SI':
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
-        return kicks
 
     def set_num_sing_values(self, num):
         """."""

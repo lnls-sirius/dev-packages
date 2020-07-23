@@ -1,6 +1,6 @@
 """Main Module of the program."""
 
-import time as _time
+from time import time as _time, sleep as _sleep
 import logging as _log
 from functools import partial as _part
 from threading import Thread as _Thread
@@ -127,12 +127,12 @@ class SOFB(_BaseClass):
 
     def process(self):
         """Run continuously in the main thread."""
-        time0 = _time.time()
+        time0 = _time()
         self.status
-        tfin = _time.time()
+        tfin = _time()
         dtime = INTERVAL - (tfin-time0)
         if dtime > 0:
-            _time.sleep(dtime)
+            _sleep(dtime)
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
 
@@ -449,12 +449,12 @@ class SOFB(_BaseClass):
             kicks = _np.array([None, ] * nr_corrs, dtype=float)
             kicks[i] = orig_kicks[i] + delta/2
             self.correctors.apply_kicks(kicks)
-            _time.sleep(self._meas_respmat_wait)
+            _sleep(self._meas_respmat_wait)
             orbp = self.orbit.get_orbit(reset=True)
 
             kicks[i] = orig_kicks[i] - delta/2
             self.correctors.apply_kicks(kicks)
-            _time.sleep(self._meas_respmat_wait)
+            _sleep(self._meas_respmat_wait)
             orbn = self.orbit.get_orbit(reset=True)
             mat.append((orbp-orbn)/delta)
 
@@ -472,91 +472,98 @@ class SOFB(_BaseClass):
 
     def _do_auto_corr(self):
         self.run_callbacks('ClosedLoop-Sts', 1)
-        strn = 'TIMEIT: {0:20s} - {1:7.3f}'
+        times, rets = [], []
+        count = 0
+        bpmsfreq = self._csorb.BPMsFreq
         while self._auto_corr == self._csorb.ClosedLoop.On:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
                 break
+            if count >= 50:
+                _Thread(
+                    self._print_auto_corr_info,
+                    args=(times, rets)).start()
+                times, rets = [], []
+                count = 0
+            count += 1
+            tims = []
+
             interval = 1/self._auto_corr_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
-                norbs = max(int(self._csorb.BPMsFreq*interval), 1)
+                norbs = max(int(bpmsfreq*interval), 1)
 
-            msg = 'Getting the orbit.'
-            _log.info(msg)
             for _ in range(norbs):
                 orb = self.orbit.get_orbit(synced=True)
-            _log.info('TIMEIT: BEGIN')
-            time0 = _time.time()
 
-            msg = 'Calculating kicks.'
-            _log.info(msg)
+            tims.append(_time())
             dkicks = self.matrix.calc_kicks(orb)
-            time1 = _time.time()
-            _log.info(strn.format('calc kicks:', 1000*(time1-time0)))
+            tims.append(_time())
 
             self._ref_corr_kicks = self.correctors.get_strength()
-            time2 = _time.time()
-            _log.info(strn.format('get strength:', 1000*(time2-time1)))
+            tims.append(_time())
 
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+            tims.append(_time())
             if kicks is None:
                 self._auto_corr = self._csorb.ClosedLoop.Off
-                msg = 'ERR: Opening the Loop'
-                self._update_log(msg)
-                _log.error(msg[5:])
                 self.run_callbacks('ClosedLoop-Sel', 0)
-                continue
-            time3 = _time.time()
-            _log.info(strn.format('process kicks:', 1000*(time3-time2)))
+                break
 
-            msg = 'Applying kicks.'
-            _log.info(msg)
             ret = self.correctors.apply_kicks(kicks)
-            if ret is None:
-                msg = 'ERR: There is some problem with a corrector!'
-                self._update_log(msg)
-                _log.error(msg[:5])
+            rets.append(ret)
+            tims.append(_time())
+            tims.append(tims[0])  # to compute total time
+            times.append(tims)
+            if ret == -2:
                 self._auto_corr = self._csorb.ClosedLoop.Off
-                msg = 'ERR: Opening the Loop'
-                self._update_log(msg)
-                _log.error(msg[5:])
-                self.run_callbacks('ClosedLoop-Sel', 0)
-                continue
-            elif ret == -1:
-                msg = 'WARN: Last was not applied yet'
+                msg = 'ERR: Problem with Corrector!'
                 self._update_log(msg)
                 _log.error(msg[:5])
+                self.run_callbacks('ClosedLoop-Sel', 0)
+                break
+            elif ret == -1:
+                # means that correctors are not ready yet
+                # skip this iteration
                 continue
-            elif ret == 0:
-                msg = 'kicks applied!'
-                _log.info(msg)
-            else:
-                msg = f'WARN: {ret:03d} kicks were not applied previously!'
-                self._update_log(msg)
-                _log.warning(msg[:6])
 
-            time4 = _time.time()
-            _log.info(strn.format('apply kicks:', 1000*(time4-time3)))
-
-            dtime = (_time.time()-time0)
-            _log.info(strn.format('total:', 1000*dtime))
-            _log.info('TIMEIT: END')
-            if dtime > 1/self._csorb.BPMsFreq:
-                msg = 'WARN: Loop took {0:6.2f}ms.'.format(dtime*1000)
-                self._update_log(msg)
-                _log.warning(msg[6:])
-
-            dtime = interval - dtime
+            dtime = tims[0] - tims[-1]
+            dtime += interval
             if not use_pssofb and dtime > 0:
-                _time.sleep(dtime)
-        msg = 'Loop is opened.'
+                _sleep(dtime)
+        msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
         self.run_callbacks('ClosedLoop-Sts', 0)
+
+    def _print_auto_corr_info(self, times, rets):
+        """."""
+        dtimes = _np.diff(times, axis=1).T * 1000
+        dtimes[-1] *= -1
+        max_ = dtimes.max(axis=1)
+        min_ = dtimes.min(axis=1)
+        avg_ = dtimes.mean(axis=1)
+        std_ = dtimes.std(axis=1)
+        msg = '{:s}: calc={:7.2f}, get={:7.2f}, proc={:7.2f}, '
+        msg += 'apply={:7.2f}, tot={:7.2f}'
+        _log.info('TIME:')
+        _log.info(msg.format('  MAX', *max_))
+        _log.info(msg.format('  MIN', *min_))
+        _log.info(msg.format('  AVG', *avg_))
+        _log.info(msg.format('  STD', *std_))
+
+        rets = _np.array(rets)
+        ok_ = _np.sum(rets == 0)
+        tout = _np.sum(rets == -1)
+        diff = _np.sum(rets > 0)
+        _log.info('PERFORMANCE:')
+        _log.info(f'  # iterations = {rets.size:03d}')
+        _log.info(f'  # Ok = {ok_:03d}')
+        _log.info(f'  # Timeout = {tout:03d}')
+        _log.info(f'  # Diff = {diff:03d}')
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
@@ -576,15 +583,12 @@ class SOFB(_BaseClass):
 
     def _process_kicks(self, kicks, dkicks):
         if dkicks is None:
-            return
+            return None
 
         # keep track of which dkicks were originally different from zero:
-        newkicks = _np.array([None, ] * len(dkicks), dtype=float)
-        for i, dkick in enumerate(dkicks):
-            if not _compare_kicks(dkick, 0):
-                newkicks[i] = 0.0
-        idcs_to_process = ~_np.isnan(newkicks)
-        if not idcs_to_process.any():
+        newkicks = _np.full(dkicks.shape, _np.nan, dtype=float)
+        apply_idcs = ~_compare_kicks(dkicks, 0)
+        if not apply_idcs.any():
             return newkicks
 
         nr_ch = self._csorb.nr_ch
@@ -596,7 +600,7 @@ class SOFB(_BaseClass):
                 'rf': slice(-1, None)}
         for pln in sorted(slcs.keys()):
             slc = slcs[pln]
-            idcs_pln = idcs_to_process[slc]
+            idcs_pln = apply_idcs[slc]
             if not idcs_pln.any():
                 continue
             dk_slc = dkicks[slc][idcs_pln]
@@ -604,12 +608,12 @@ class SOFB(_BaseClass):
             dk_slc *= self._corr_factor[pln]
 
             # Check if any kick is larger than the maximum allowed:
-            ind, *_ = _np.where(_np.abs(k_slc) > self._max_kick[pln])
+            ind = (_np.abs(k_slc) > self._max_kick[pln]).nonzero()[0]
             if ind.size:
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
-                return
+                return None
 
             # Check if any delta kick is larger the maximum allowed
             max_delta_kick = _np.max(_np.abs(dk_slc))
@@ -647,7 +651,5 @@ class SOFB(_BaseClass):
 
             dkicks[slc][idcs_pln] = dk_slc
 
-        for i, dkick in enumerate(dkicks):
-            if idcs_to_process[i]:
-                newkicks[i] = kicks[i] + dkick
+        newkicks[apply_idcs] = kicks[apply_idcs] + dkicks[apply_idcs]
         return newkicks
