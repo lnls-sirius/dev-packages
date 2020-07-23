@@ -153,4 +153,6 @@ class BaseTimingConfig(_Callback):
 
 def compare_kicks(val1, val2):
     """."""
+    if isinstance(val1, _np.ndarray) or isinstance(val2, _np.ndarray):
+        return _np.isclose(val1, val2, atol=_ConstTLines.TINY_KICK)
     return _math.isclose(val1, val2, abs_tol=_ConstTLines.TINY_KICK)
