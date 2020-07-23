@@ -44,7 +44,7 @@ class PSBSMP(_BSMP):
 
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
-    _sleep_disable_bufsample = 0.5  # [s]
+    _sleep_disable_scope = 0.5  # [s]
     _sleep_select_op_mode = 0.030  # [s]
 
     # --- BSMP PS curves ---
@@ -149,7 +149,7 @@ class PSBSMP(_BSMP):
         elif func_id == PSBSMP.CONST.F_DISABLE_SCOPE:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
-            # _time.sleep(PSBSMP._sleep_disable_bufsample)
+            # _time.sleep(PSBSMP._sleep_disable_scope)
             pass
         elif func_id == PSBSMP.CONST.F_SELECT_OP_MODE:
             # _time.sleep(PSBSMP._sleep_select_op_mode)
@@ -586,12 +586,15 @@ class FBP(PSBSMP):
 
     def sofb_ps_setpoint_set(self, value):
         """."""
-        ack, readback_ref = self.ps_function_set_slowref_fbp_readback_ref(value)
+        ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
         if ack != self.CONST_BSMP.ACK_OK:
-            sfmt = 'Anomalous response in sofb_ps_setpoint_set: ack:0x{:02X}, data:0x{:02X}'
-            print(sfmt.format(ack, readback_ref))
+            sfmt = ('FBP: Anomalous response sofb_ps_setpoint_set:'
+                    ' ack:0x{:02X}, func_resp:{}')
+            if isinstance(func_resp, str):
+                func_resp = '0x{:02X}'.format(func_resp)
+            print(sfmt.format(ack, func_resp))
         else:
-            self._sofb_ps_readback_ref = readback_ref
+            self._sofb_ps_readback_ref = func_resp
 
     def sofb_update(self):
         """."""
@@ -607,12 +610,12 @@ class FBP(PSBSMP):
         if ack == self.CONST_BSMP.ACK_OK:
             setpoints, references, iload = _np.array(values).reshape((3, -1))
         else:
-            sfmt = 'Anomalous response in sofb_ps_setpoint_set: ack:0x{:02X}, data:0x{:02X}'
+            sfmt = ('FBP: Anomalous response _sofb_read_group_of_variables:'
+                    ' ack:0x{:02X}, func_resp:{}')
             print(sfmt.format(ack, values))
             setpoints, references, iload = None, None, None
 
         return setpoints, references, iload
-
 
 class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
