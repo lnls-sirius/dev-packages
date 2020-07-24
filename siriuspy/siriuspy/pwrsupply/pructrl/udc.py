@@ -191,8 +191,7 @@ class UDC:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_func_return
             val2 = dev2.sofb_ps_func_return if dev2 else UDC._soft_def_int
-            if val1 is not None and val2 is not None:
-                return _np.concatenate((val1, val2))
+            return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_set(self, value):

@@ -401,7 +401,8 @@ class PSConnSOFB:
         udc.sofb_current_set(tuple(setpoint))
 
         # update sofb_func_return
-        self._sofb_func_return[indcs_sofb] = udc.sofb_func_return_get()
+        func_return = udc.sofb_func_return_get()
+        self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
