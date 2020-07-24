@@ -412,9 +412,6 @@ class CycleController:
 
     def cycle_trims(self, trims):
         """Cycle trims."""
-        self.config_pwrsupplies('parameters', trims)
-        if not self.check_pwrsupplies('parameters', trims):
-            return False
         self.config_pwrsupplies('opmode', trims)
         if not self.check_pwrsupplies('opmode', trims):
             return False
@@ -610,10 +607,15 @@ class CycleController:
         if 'SI' in self._sections:
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
-            cv2_c2 = set(_PSSearch.get_psnames(
+
+            trims = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+                 'dev': '(CV|CH|QS|QD.*|QF.*|Q[1-4])'}))
+            qs_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'CV', 'idx': '2'}))
-            psnames = list(set(psnames) - cv2_c2)
+                 'dev': 'QS'}))
+            psnames = set(psnames)
+            psnames = list(psnames.update(trims - qs_c2))
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames):
