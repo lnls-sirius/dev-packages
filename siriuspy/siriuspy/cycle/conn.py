@@ -6,8 +6,7 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
-from ..namesys import SiriusPVName as _PVName, \
-    get_pair_sprb as _get_pair_sprb
+from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
 from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
@@ -97,10 +96,7 @@ class Timing:
 
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
-            try:
-                prop_sts = _get_pair_sprb(prop)[1]
-            except TypeError:
-                continue
+            prop_sts = prop.replace('SP', 'RB').replace('Sel', 'Sts')
             pvobj = Timing._pvs[prop_sts]
 
             if not pvobj.wait_for_connection(TIMEOUT_CONNECTION):
