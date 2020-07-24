@@ -351,24 +351,17 @@ class CycleController:
         for thread in threads:
             thread.join()
 
-    def enable_triggers(self, triggers):
-        """Enable triggers."""
+    def set_triggers_state(self, triggers, state):
+        """Set triggers state."""
         if self._only_linac:
             return True
-        self._update_log('Enabling triggers...')
-        if self._timing.enable_triggers(triggers):
-            self._update_log(done=True)
-            return True
-        self._update_log('Could not enable triggers!', error=True)
-        return False
 
-    def disable_triggers(self, triggers):
-        """Disable triggers."""
-        self._update_log('Disabling triggers...')
-        if self._timing.disable_triggers(triggers):
+        label = 'enabl' if state == 'enbl' else 'disabl'
+        self._update_log(label.capitalize()+'ing triggers...')
+        if self._timing.set_triggers_state(state, triggers):
             self._update_log(done=True)
             return True
-        self._update_log('Could not disable triggers!', error=True)
+        self._update_log('Could not '+label+'e triggers!', error=True)
         return False
 
     def trigger_timing(self):
@@ -427,13 +420,13 @@ class CycleController:
             return False
 
         triggers = _get_trigger_by_psname(trims)
-        if not self.enable_triggers(triggers):
+        if not self.set_triggers_state(triggers, 'enbl'):
             return False
         self.init_trims(trims)
         if not self.wait_trims():
             self.set_pwrsupplies_slowref(trims)
             return False
-        if not self.disable_triggers(triggers):
+        if not self.set_triggers_state(triggers, 'dsbl'):
             self.set_pwrsupplies_slowref(trims)
             return False
 
@@ -706,7 +699,7 @@ class CycleController:
                 error=True)
             return
 
-        if not self.enable_triggers(self._triggers):
+        if not self.set_triggers_state(self._triggers, 'enbl'):
             return
         self.init()
         if not self.wait():

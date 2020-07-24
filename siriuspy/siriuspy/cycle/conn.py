@@ -132,14 +132,6 @@ class Timing:
                     break
                 _time.sleep(TIMEOUT_SLEEP)
 
-    def enable_triggers(self, triggers):
-        """Enable triggers."""
-        return self.set_triggers_state(_TIConst.DsblEnbl.Enbl, triggers)
-
-    def disable_triggers(self, triggers):
-        """Disable triggers."""
-        return self.set_triggers_state(_TIConst.DsblEnbl.Dsbl, triggers)
-
     def enable_evg(self):
         """Enable EVG."""
         pvobj = Timing._pvs[Timing.evg_name+':DevEnbl-Sts']
@@ -153,8 +145,12 @@ class Timing:
         pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
         pvobj.value = state
 
-    def set_triggers_state(self, state, triggers, timeout=8):
+    def set_triggers_state(self, state, triggers, timeout=TIMEOUT_CHECK):
         """Set triggers state."""
+        if isinstance(state, str):
+            state = _TIConst.DsblEnbl.Enbl if state == 'enbl' \
+                else _TIConst.DsblEnbl.Dsbl
+
         for trig in triggers:
             pvobj = Timing._pvs[trig+':State-Sel']
             pvobj.value = state
