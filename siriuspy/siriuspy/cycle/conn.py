@@ -41,7 +41,6 @@ class Timing:
 
     _pvs = dict()
     properties = dict()
-    cycle_idx = dict()
     evg_name = ''
 
     def __init__(self):
@@ -100,8 +99,7 @@ class Timing:
             pvobj = Timing._pvs[prop_sts]
             if not pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 return False
-            if prop_sts.propty_name == 'Src':
-                defval = Timing.cycle_idx[prop_sts.device_name]
+
             if prop_sts.propty_name.endswith(('Duration', 'Delay')):
                 tol = 0.008 * 15
                 if not _isclose(pvobj.value, defval, abs_tol=tol):
@@ -311,8 +309,10 @@ class Timing:
         }
 
         for trig in _TRIGGER_NAMES:
+            _trig_db = _get_trig_db(trig)
+            _evt_index = _trig_db['Src-Sel']['enums'].index(cls.EVTNAME_CYCLE)
             for mode in ('Cycle', 'Ramp'):
-                props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
+                props[mode][trig+':Src-Sel'] = _evt_index
                 props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION
                 props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
                 props[mode][trig+':Delay-SP'] = cls.DEFAULT_DELAY
@@ -320,8 +320,6 @@ class Timing:
                 props[mode][trig+':State-Sel'] = None
                 props[mode][trig+':Status-Mon'] = 0
 
-            _trig_db = _get_trig_db(trig)
-            cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
         cls.properties = props
 
 
