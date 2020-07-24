@@ -110,6 +110,12 @@ class CycleController:
                  'dev': 'CV', 'idx': '2'}))
             self.trimnames = list(trims - qs_c2 - cv2_c2)
 
+            # trims triggers
+            self._si_aux_triggers = [
+                'SI-Glob:TI-Mags-Skews', 'SI-Glob:TI-Mags-Corrs',
+                'SI-Glob:TI-Mags-QTrims']
+            self._triggers.update(self._si_aux_triggers)
+
         # define cycle duration
         duration = 0
         for psname in self._cyclers.keys():
@@ -344,15 +350,9 @@ class CycleController:
         """Prepare timing to cycle according to mode."""
         if self._only_linac:
             return
-        triggers = self._triggers
-        if 'SI' in self._sections:
-            triggers.update([
-                'SI-Glob:TI-Mags-Skews',
-                'SI-Glob:TI-Mags-Corrs',
-                'SI-Glob:TI-Mags-QTrims'])
         self._timing.turnoff()
         self._update_log('Preparing Timing...')
-        self._timing.prepare(self.mode, triggers)
+        self._timing.prepare(self.mode, self._triggers)
         self._update_log(done=True)
 
     def check_pwrsupplies(self, ppty, psnames):
@@ -402,7 +402,9 @@ class CycleController:
                 self._update_log(done=True)
                 return True
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log('Timing is not configured.', error=True)
+        self._update_log(
+            'Timing is not configured or has problems. Please verify.',
+            error=True)
         return False
 
     def check_egun_off(self):
@@ -779,7 +781,9 @@ class CycleController:
                 error=True)
             return
 
-        if not self.set_triggers_state(self._triggers, 'enbl'):
+        triggers = self._triggers.copy()
+        triggers.difference_update(self._si_aux_triggers)
+        if not self.set_triggers_state(triggers, 'enbl'):
             return
         self.init()
         if not self.wait():
