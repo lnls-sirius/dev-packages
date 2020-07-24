@@ -24,99 +24,38 @@ TIMEOUT_CHECK_SI_CURRENTS = 41
 class CycleController:
     """Class to perform automated cycle procedure."""
 
-    def __init__(self, cyclers=dict(), timing=None,
+    def __init__(self, cyclers=None, timing=None,
                  is_bo=False, ramp_config=None, logger=None):
         """Initialize."""
+        # initialize auxiliar variables
         self._mode = None
-        self._is_bo = is_bo
-        self._ramp_config = ramp_config
-        self._checks_result = dict()
+        self._sections = list()
+        self._only_linac = None
+        self._cycle_duration = 0
         self._aux_cyclers = dict()
+        self._cycle_trims_duration = 0
+        self._checks_result = dict()
 
         # cyclers
         self.cyclers = cyclers
 
-        self._sections = _get_sections(self.psnames)
-        self._only_linac = self._sections == ['LI', ]
-
         # timing connector
-        self._timing = timing if timing is not None else Timing()
-        self._triggers = _get_trigger_by_psname(self.psnames)
+        self.timing = timing
+
+        # in case cyclers are not set and user wants to cycle bo
+        self._is_bo = is_bo
+        self._ramp_config = ramp_config
+
+        # logger
+        self._logger_message = ''
+        self.logger = logger
 
         # egun pv
         if 'LI-01:PS-Spect' in self.psnames:
             self._pv_egun = _PV('LI-01:EG-TriggerPS:enablereal',
                                 connection_timeout=0.05)
 
-        # cycle duration
-        duration = 0
-        for psname in self.psnames:
-            duration = max(
-                duration, self._cyclers[psname].cycle_duration(self._mode))
-        self._cycle_duration = duration
-
-        # task sizes
-        self.prepare_timing_size = 3
-        self.prepare_timing_max_duration = 10
-
-        self.prepare_ps_size = 2*len(self.psnames)+1
-        self.prepare_ps_max_duration = 20
-
-        self.cycle_size = (
-            2 +  # check timing
-            len(self.psnames)+3 +  # check params
-            len(self.psnames) +    # check opmode
-            2 +  # set and check triggers enable
-            3+round(self._cycle_duration) +  # cycle
-            len(self.psnames) +  # check final
-            len(self.psnames)+2)  # reset subsystems
-        self.cycle_max_duration = (
-            8 +  # check timing
-            TIMEOUT_CHECK +  # check params
-            2*TIMEOUT_CHECK +  # check opmode
-            6 +  # set and check triggers enable
-            60 +  # wait for timing trigger
-            round(self._cycle_duration) +  # cycle
-            12 +  # check final
-            5)   # reset subsystems
-
-        if 'SI' in self._sections:
-            # trims psnames
-            trims = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
-                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
-            cv2_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'CV', 'idx': '2'}))
-            qs_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'QS'}))
-            self.trims_psnames = list(trims - cv2_c2 - qs_c2)
-
-            # connect to trims
-            self.prepare_ps_size += len(self.psnames)
-            self.prepare_ps_max_duration += 2*TIMEOUT_CHECK
-            # set and check currents to zero
-            self.prepare_ps_size += 2*len(self.psnames)
-            self.prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
-
-        # logger
-        self._logger = logger
-        self._logger_message = ''
-        if not logger:
-            _log.basicConfig(format='%(asctime)s | %(message)s',
-                             datefmt='%F %T', level=_log.INFO,
-                             stream=_sys.stdout)
-
-    @property
-    def psnames(self):
-        """Power supplies to cycle."""
-        return list(self._cyclers.keys())
-
-    @property
-    def mode(self):
-        """Mode."""
-        return self._mode
+    # --- main parameter setters ---
 
     @property
     def cyclers(self):
@@ -125,6 +64,10 @@ class CycleController:
 
     @cyclers.setter
     def cyclers(self, new_cyclers):
+        if not isinstance(new_cyclers, dict):
+            raise TypeError("Input 'new_cyclers' has to be a dict!")
+
+        # define mode
         psnames2filt = list(new_cyclers.keys())
         ps2cycle = self._filter_psnames(
             psnames2filt, {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
@@ -134,6 +77,7 @@ class CycleController:
             raise Exception('Can not cycle Booster with other accelerators!')
         self._mode = 'Ramp' if ps2ramp else 'Cycle'
 
+        # create cyclers, if needed
         if not new_cyclers:
             psnames = ps2ramp if self._is_bo else ps2cycle
             new_cyclers = dict()
@@ -144,6 +88,35 @@ class CycleController:
                     new_cyclers[name] = PSCycler(name, self._ramp_config)
         self._cyclers = new_cyclers
 
+        # define section
+        self._sections = _get_sections(self._cyclers.keys())
+
+        # define only_linac variable
+        self._only_linac = self._sections == ['LI', ]
+
+        # define triggers
+        self._triggers = _get_trigger_by_psname(self._cyclers.keys())
+
+        if 'SI' in self._sections:
+            # trims psnames
+            trims = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
+            qs_c2 = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'QS'}))
+            cv2_c2 = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'CV', 'idx': '2'}))
+            self.trimnames = list(trims - qs_c2 - cv2_c2)
+
+        # define cycle duration
+        duration = 0
+        for psname in self._cyclers.keys():
+            duration = max(
+                duration, self._cyclers[psname].cycle_duration(self._mode))
+        self._cycle_duration = duration
+
     @property
     def timing(self):
         """Return timing connector."""
@@ -151,7 +124,7 @@ class CycleController:
 
     @timing.setter
     def timing(self, new_timing):
-        self._timing = new_timing
+        self._timing = new_timing if new_timing is not None else Timing()
 
     @property
     def logger(self):
@@ -161,6 +134,10 @@ class CycleController:
     @logger.setter
     def logger(self, new_log):
         self._logger = new_log
+        if not new_log:
+            _log.basicConfig(format='%(asctime)s | %(message)s',
+                             datefmt='%F %T', level=_log.INFO,
+                             stream=_sys.stdout)
 
     def create_aux_cyclers(self):
         """Create auxiliar cyclers."""
@@ -204,6 +181,107 @@ class CycleController:
             2*60 +  # wait for timing trigger
             2*round(duration) +  # cycle
             2*12)  # check final
+
+    # --- properties ---
+
+    @property
+    def psnames(self):
+        """Power supplies to cycle."""
+        return list(self._cyclers.keys())
+
+    @property
+    def mode(self):
+        """Mode."""
+        return self._mode
+
+    @property
+    def sections(self):
+        """Mode."""
+        return self._sections
+
+    @property
+    def prepare_timing_size(self):
+        """Prepare timing task size."""
+        return 3
+
+    @property
+    def prepare_ps_size(self):
+        """Prepare PS task size."""
+        prepare_ps_size = 2*len(self.psnames)+1
+        if 'SI' in self._sections:
+            # connect to trims
+            prepare_ps_size += len(self.trimnames)
+            # set and check currents to zero
+            prepare_ps_size += 2*(len(self.psnames)+len(self.trimnames))
+
+    @property
+    def cycle_size(self):
+        """Cycle task size."""
+        cycle_size = (
+            2 +  # check timing
+            len(self.psnames)+3 +  # check params
+            len(self.psnames) +    # check opmode
+            2 +  # set and check triggers enable
+            3+round(self._cycle_duration) +  # cycle
+            len(self.psnames) +  # check final
+            len(self.psnames)+2)  # reset subsystems
+        return cycle_size
+
+    @property
+    def cycle_trims_size(self):
+        """Cycle trims task size."""
+        cycle_trims_size = (
+            2*2 +  # check timing
+            2*2*len(self.trimnames) +  # set and check params
+            2*2*len(self.trimnames) +  # set and check opmode
+            2*2 +  # set and check triggers enable
+            2*(3+round(self._cycle_trims_duration)) +  # cycle
+            2*len(self.trimnames))  # check final
+        return cycle_trims_size
+
+    @property
+    def prepare_timing_max_duration(self):
+        """Prepare timing task maximum duration."""
+        return 10
+
+    @property
+    def prepare_ps_max_duration(self):
+        """Prepare PS task maximum duration."""
+        prepare_ps_size = 20
+        if 'SI' in self._sections:
+            # connect to trims
+            prepare_ps_size += 2*TIMEOUT_CHECK
+            # set and check currents to zero
+            prepare_ps_size += TIMEOUT_CHECK_SI_CURRENTS
+
+    @property
+    def cycle_max_duration(self):
+        """Cycle task maximum duration."""
+        cycle_max_duration = (
+            8 +  # check timing
+            TIMEOUT_CHECK +  # check params
+            2*TIMEOUT_CHECK +  # check opmode
+            6 +  # set and check triggers enable
+            60 +  # wait for timing trigger
+            round(self._cycle_duration) +  # cycle
+            12 +  # check final
+            5)   # reset subsystems
+        return cycle_max_duration
+
+    @property
+    def cycle_trims_max_duration(self):
+        """Cycle trims task maximum duration."""
+        cycle_trims_max_duration = (
+            2*8 +  # check timing
+            2*2*TIMEOUT_CHECK +  # set and check params
+            2*2*TIMEOUT_CHECK +  # set and check opmode
+            2*6 +  # set and check triggers enable
+            2*60 +  # wait for timing trigger
+            2*round(self._cycle_trims_duration) +  # cycle
+            2*12)  # check final
+        return cycle_trims_max_duration
+
+    # --- auxiliary commands ---
 
     def set_pwrsupplies_currents_zero(self):
         """Zero currents of all SI power supplies."""
