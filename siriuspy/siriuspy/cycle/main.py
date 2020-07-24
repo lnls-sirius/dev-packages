@@ -123,6 +123,41 @@ class CycleController:
                 duration, self._cyclers[psname].cycle_duration(self._mode))
         self._cycle_duration = duration
 
+    def create_trims_cyclers(self):
+        """Create trims cyclers."""
+        for psn in self.trimnames:
+            if psn in self._aux_cyclers.keys():
+                continue
+            self._update_log('Connecting to '+psn+'...')
+            self._aux_cyclers[psn] = PSCycler(psn)
+
+        # wait for connections
+        for cycler in self._aux_cyclers.values():
+            cycler.wait_for_connection()
+
+        # calculate trims cycle duration
+        duration = 0
+        for psname in self.trimnames:
+            duration = max(
+                duration, self._aux_cyclers[psname].cycle_duration(self._mode))
+        self._cycle_trims_duration = duration
+
+    def create_aux_cyclers(self):
+        """Create auxiliar cyclers."""
+        # create cyclers, if needed
+        all_si_psnames = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
+        missing_ps = list(all_si_psnames -
+                          set(self.trimnames) -
+                          set(self.psnames))
+        for psn in missing_ps:
+            self._update_log('Connecting to '+psn+'...')
+            self._aux_cyclers[psn] = PSCycler(psn)
+
+        # wait for connections
+        for cycler in self._aux_cyclers.values():
+            cycler.wait_for_connection()
+
     @property
     def timing(self):
         """Return timing connector."""
@@ -144,49 +179,6 @@ class CycleController:
             _log.basicConfig(format='%(asctime)s | %(message)s',
                              datefmt='%F %T', level=_log.INFO,
                              stream=_sys.stdout)
-
-    def create_aux_cyclers(self):
-        """Create auxiliar cyclers."""
-        # create cyclers, if needed
-        for psn in self.trims_psnames:
-            self._update_log('Connecting to '+psn+'...')
-            self._aux_cyclers[psn] = PSCycler(psn)
-
-        all_si_psnames = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
-        missing_ps = list(all_si_psnames -
-                          set(self.trims_psnames) -
-                          set(self.psnames))
-        for psn in missing_ps:
-            self._update_log('Connecting to '+psn+'...')
-            self._aux_cyclers[psn] = PSCycler(psn)
-
-        # wait for connections
-        for cycler in self._aux_cyclers.values():
-            cycler.wait_for_connection()
-
-        # calculate trims cycle duration
-        duration = 0
-        for psname in self.trims_psnames:
-            duration = max(
-                duration, self._aux_cyclers[psname].cycle_duration(self._mode))
-        self._cycle_trims_duration = duration
-
-        self.cycle_trims_size = (
-            2*2 +  # check timing
-            2*2*len(self.trims_psnames) +  # set and check params
-            2*2*len(self.trims_psnames) +  # set and check opmode
-            2*2 +  # set and check triggers enable
-            2*(3+round(duration)) +  # cycle
-            2*len(self.trims_psnames))  # check final
-        self.cycle_trims_max_duration = (
-            2*8 +  # check timing
-            2*2*TIMEOUT_CHECK +  # set and check params
-            2*2*TIMEOUT_CHECK +  # set and check opmode
-            2*6 +  # set and check triggers enable
-            2*60 +  # wait for timing trigger
-            2*round(duration) +  # cycle
-            2*12)  # check final
 
     # --- properties ---
 
@@ -685,6 +677,7 @@ class CycleController:
         """Prepare parameters to cycle."""
         psnames = self.psnames
         if 'SI' in self._sections:
+            self.create_trims_cyclers()
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
 
