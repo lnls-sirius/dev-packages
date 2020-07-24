@@ -100,7 +100,7 @@ class CycleController:
         if 'SI' in self._sections:
             # trims psnames
             trims = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+                {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
                  'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
             qs_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
@@ -728,7 +728,7 @@ class CycleController:
 
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
         trims = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
+            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
              'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'}))
         qs_c2 = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
@@ -741,7 +741,7 @@ class CycleController:
 
         self._update_log('Preparing to cycle CVs...')
         all_cvs = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS', 'dev': 'CV'}))
+            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS', 'dev': 'CV'}))
         cv2_c2 = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'CV', 'idx': '2'}))
