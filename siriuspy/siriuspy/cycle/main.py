@@ -105,16 +105,22 @@ class CycleController:
             qs_c2 = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'QS'}))
-            cv2_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'CV', 'idx': '2'}))
-            self.trimnames = list(trims - qs_c2 - cv2_c2)
+            self.trimnames = list(trims - qs_c2)
 
             # trims triggers
             self._si_aux_triggers = [
                 'SI-Glob:TI-Mags-Skews', 'SI-Glob:TI-Mags-Corrs',
                 'SI-Glob:TI-Mags-QTrims']
             self._triggers.update(self._si_aux_triggers)
+
+            # move CV-2 of .*C2 subsectors to trims group,
+            # if they are in cyclers
+            cv2_c2 = _PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'CV', 'idx': '2'})
+            for psn in cv2_c2:
+                if psn in self._cyclers.keys():
+                    self._aux_cyclers[psn] = self._cyclers.pop(psn)
 
         # define cycle duration
         duration = 0
@@ -700,12 +706,7 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode(self):
         """Prepare OpMode to cycle."""
-        psnames = {ps for ps in self.psnames if 'LI' not in ps}
-        if 'SI' in self._sections:
-            cv2_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'CV', 'idx': '2'}))
-            psnames = list(psnames - cv2_c2)
+        psnames = [ps for ps in self.psnames if 'LI' not in ps]
         self.config_pwrsupplies('opmode', psnames)
         if not self.check_pwrsupplies('opmode', psnames):
             self._update_log(
@@ -735,22 +736,13 @@ class CycleController:
             return
 
         self._update_log('Preparing to cycle CVs...')
-        all_cvs = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS', 'dev': 'CV'}))
-        cv2_c2 = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-             'dev': 'CV', 'idx': '2'}))
-        trims = list(all_cvs - cv2_c2)
+        trims = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
+             'dev': 'CV'}))
         if not self.cycle_trims(trims):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
-
-        self._update_log('Configuring CVs OpMode to cycle...')
-        self.config_pwrsupplies('parameters', cv2_c2)
-        if not self.check_pwrsupplies('parameters', cv2_c2):
-            return
-        self.config_pwrsupplies('opmode', cv2_c2)
 
         self._update_log('Trims cycle finished!')
 
