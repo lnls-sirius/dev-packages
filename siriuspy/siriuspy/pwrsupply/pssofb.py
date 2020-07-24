@@ -730,7 +730,7 @@ class PSSOFB:
 
         fret = _shm.Array(_shm.ctypes.c_int, arr.size, lock=False)
         self._sofb_func_return = _np.ndarray(
-            arr.shape, dtype=int, buffer=memoryview(fret))
+            arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
         # Unit converter.
         self.converter = UnitConverter(self._sofb_psnames)
@@ -861,7 +861,7 @@ class PSSOFB:
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=int, buffer=memoryview(fret)),
+            'fret': _np.ndarray(shape, dtype=_np.int32, buffer=memoryview(fret)),
             }
         psconnsofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=mproc)
 
