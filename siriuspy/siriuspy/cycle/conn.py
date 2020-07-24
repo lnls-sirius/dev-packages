@@ -70,10 +70,13 @@ class Timing:
         """Initialize properties."""
         if triggers is None:
             triggers = list()
+
         # Enable EVG
         self.enable_evg()
+
         # Disable Injection
         self.set_injection_state(_TIConst.DsblEnbl.Dsbl)
+
         # Config. triggers and events
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
@@ -83,6 +86,7 @@ class Timing:
             if pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 pvobj.value = defval
                 _time.sleep(1.5*TIMEOUT_SLEEP)
+
         # Update events
         self.update_events()
 
@@ -90,6 +94,7 @@ class Timing:
         """Check if timing is configured."""
         if triggers is None:
             triggers = list()
+
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
             try:
@@ -97,6 +102,7 @@ class Timing:
             except TypeError:
                 continue
             pvobj = Timing._pvs[prop_sts]
+
             if not pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 return False
 
@@ -201,8 +207,10 @@ class Timing:
                 init_val = [init_val, ]
             Timing._pvs[pvname].put(init_val)
             _time.sleep(1.5*TIMEOUT_SLEEP)
+
         # Update events
         self.update_events()
+
         # Set initial injection state
         self.set_injection_state(inj_state)
 
@@ -214,7 +222,7 @@ class Timing:
         pv_bktlist.value = 0
         for trig in _TRIGGER_NAMES:
             pvobj = Timing._pvs[trig+':Src-Sel']
-            pvobj.value = _TIConst.DsblEnbl.Dsbl
+            pvobj.value = 0  # Dsbl has always index 0
             pvobj = Timing._pvs[trig+':State-Sel']
             pvobj.value = _TIConst.DsblEnbl.Dsbl
 
