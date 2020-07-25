@@ -630,6 +630,7 @@ class FBP(PSBSMP):
             sfmt = 'FBP: Anomalous response ' + methodname + ': ack:0x{:02X}, func_resp:0x{:02X}'
             print(sfmt.format(ack, func_resp))
 
+
 class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
 
