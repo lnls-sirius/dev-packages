@@ -392,7 +392,7 @@ class PSConnSOFB:
         setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(tuple(setpoint))
+        udc.sofb_current_set(setpoint)
 
         # update sofb_func_return
         func_return = udc.sofb_func_return_get()
