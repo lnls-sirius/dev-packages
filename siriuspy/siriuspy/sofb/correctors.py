@@ -10,6 +10,7 @@ from .. import util as _util
 from ..epics import PV as _PV
 from ..thread import RepeaterThread as _Repeat
 from ..pwrsupply.csdev import Const as _PSConst
+from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
@@ -444,6 +445,7 @@ class EpicsCorrectors(BaseCorrectors):
         if self.acc == 'SI':
             self._ref_kicks = None
             self._ret_kicks = None
+            self._func_ret = None
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
                     EthBridgeClient, nr_procs=8, asynchronous=True)
@@ -491,7 +493,7 @@ class EpicsCorrectors(BaseCorrectors):
     def apply_kicks(self, values):
         """Apply kicks.
 
-        Will return None if there is a problem with some PS.
+        Will return -2 if there is a problem with some PS.
         Will return -1 if PS did not finish applying last kick.
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
@@ -532,17 +534,20 @@ class EpicsCorrectors(BaseCorrectors):
     def apply_kicks_pssofb(self, values):
         """Apply kicks with PSSOFB.
 
-        Will return None if there is a problem with some PS.
+        Will return -2 if there is a problem with some PS.
         Will return -1 if PS did not finish applying last kick.
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
         """
-        # Send correctors setpoint
-        ret_kicks = self._pssofb.sofb_kick_readback_ref
-        self._ret_kicks = ret_kicks
 
         if not self._pssofb.is_ready():
             return -1
+
+        # Send correctors setpoint
+        ret_kicks = self._pssofb.sofb_kick_readback_ref
+        func_ret = self._pssofb.sofb_func_return
+        self._ret_kicks = ret_kicks
+        self._func_ret = func_ret
 
         self._set_ref_kicks(values)
         self._pssofb.bsmp_sofb_kick_set(self._ref_kicks[-1][:-1])
@@ -553,7 +558,7 @@ class EpicsCorrectors(BaseCorrectors):
             self._pssofb.wait()
 
         # compare kicks to check if there is something wrong
-        ret = self._compare_kicks_pssofb(ret_kicks)
+        ret = self._compare_kicks_pssofb(ret_kicks, func_ret)
 
         # Send trigger signal for implementation
         self.send_evt()
@@ -804,9 +809,14 @@ class EpicsCorrectors(BaseCorrectors):
         self._print_guilty(okg, mode=mode)
         return True
 
-    def _compare_kicks_pssofb(self, values):
+    def _compare_kicks_pssofb(self, values, fret):
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
+
+        res = fret != _ConstPSBSMP.ACK_OK
+        res |= fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
+        if _np.any(res):
+            return -2
 
         curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
         curr_vals[:-1] = values
