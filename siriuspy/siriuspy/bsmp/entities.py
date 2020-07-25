@@ -39,9 +39,9 @@ class Entity:
             self._check_type(var_types[0], values[0])
             return self._conv_value(var_types[0].fmt, values[0])
 
-    def _conv_load_to_value(self, var_types, size, load):
+    def _conv_load_to_value(self, var_types, load):
         # NOTE: optimize this critical function!
-        load = [ord(c) for c in load]
+        load = list(map(ord, load))
         if len(var_types) > 1:
             values = []
             offset = 0
@@ -50,8 +50,7 @@ class Entity:
                 values.append(_struct.unpack(var_type.fmt, bytes(datum))[0])
                 offset += var_type.size
             return values
-        else:
-            return _struct.unpack(var_types[0].fmt, bytes(load))[0]
+        return _struct.unpack(var_types[0].fmt, bytes(load))[0]
 
 
 class Variable(Entity):
@@ -64,7 +63,7 @@ class Variable(Entity):
                       'vtype_size:{}, count:{}').format(eid, var_type.size,
                                                         count)
             raise ValueError(errstr)
-        super().__init__()  # TODO: is it necessary?
+        super().__init__()  # NOTE: is it necessary?
         self.eid = eid
         self.waccess = waccess
         self.size = (var_type.size * count)  # 1..128 bytes
@@ -74,11 +73,11 @@ class Variable(Entity):
 
     def load_to_value(self, load):
         """Parse value from load."""
-        return self._conv_load_to_value(self._var_types, self.size, load)
+        return self._conv_load_to_value(self._var_types, load)
 
     def value_to_load(self, value):
         """Convert value to load."""
-        if not isinstance(value, (list, tuple)):
+        if not isinstance(value, (list, tuple, _np.array)):
             value = [value, ]
         return self._conv_value_to_load(self._var_types, self.size, value)
 
@@ -200,7 +199,7 @@ class Function(Entity):
         # print(self.o_type)
         # print(self.o_size)
         # print(load)
-        return self._conv_load_to_value(self.o_type, self.o_size, load)
+        return self._conv_load_to_value(self.o_type, load)
 
     def value_to_load(self, value):
         """Convert value to load."""
