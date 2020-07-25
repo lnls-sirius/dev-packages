@@ -522,7 +522,7 @@ class SOFB(_BaseClass):
                 self._auto_corr = self._csorb.ClosedLoop.Off
                 msg = 'ERR: Problem with Corrector!'
                 self._update_log(msg)
-                _log.error(msg[:5])
+                _log.error(msg[5:])
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 break
             elif ret == -1:
