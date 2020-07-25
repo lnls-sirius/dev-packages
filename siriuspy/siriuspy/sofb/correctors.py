@@ -650,7 +650,7 @@ class EpicsCorrectors(BaseCorrectors):
             self.set_timing_delay(0)
             val = _PSConst.OpMode.SlowRef
         elif value == self._csorb.CorrSync.Event:
-            self.set_timing_delay(self._csorb.CORR_MIN_DELAY)
+            self.set_timing_delay(0)
             self.timing.sync_type = self.timing.EVT
         else:
             self.set_timing_delay(self._csorb.CORR_MIN_DELAY)
@@ -675,11 +675,11 @@ class EpicsCorrectors(BaseCorrectors):
 
     def set_timing_delay(self, value):
         """."""
-        frf = 499664  # [kHz]
+        frf = 499664 / 4  # [kHz]
         raw = int(value * frf)
         self.timing.delayraw = raw
         dic = {'lolim': 0}
-        if self._sync_kicks:
+        if self._sync_kicks == self._csorb.CorrSync.Clock:
             dic['lolim'] = self._csorb.CORR_MIN_DELAY
         self.run_callbacks('CorrDelay-SP', raw / frf, **dic)
         self.run_callbacks('CorrDelay-RB', raw / frf, **dic)
