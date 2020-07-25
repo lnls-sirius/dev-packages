@@ -204,6 +204,17 @@ class ConstPSBSMP:
     P_SOFT_INTLK_DEBOUNCE_TIME = 50
     P_SOFT_INTLK_RESET_TIME = 51
 
+    # --- acknowledgement return ---
+    ACK_OK = 0
+    ACK_PS_LOCAL_STATE = 1
+    ACK_PS_PCHOST_STATE = 2
+    ACK_PS_INTERLOCK = 3
+    ACK_UDC_LOCKED = 4
+    ACK_DSP_TIMEOUT = 5
+    ACK_DSP_BUSY = 6
+    ACK_RESOURCE_BUSY = 7
+    ACK_INVALID_CMD = 8
+
 
 class ConstFBP(ConstPSBSMP):
     """Namespace for organizing power supply FBP BSMP constants."""

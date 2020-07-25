@@ -256,7 +256,7 @@ def benchmark_pssofb_current_setpoint(fname='test'):
 
         if not issame:
             sel = (~_np.isclose(diff, 0, atol=1e-4)).nonzero()[0]
-            print('SP<>RB in event {} {}'.format(i, sel))
+            print('SP<>RB in event {} {} {}'.format(i, sel, pssofb.sofb_func_return[sel]))
 
     # restore state
     pssofb.bsmp_sofb_current_set(curr_refmon)
@@ -603,9 +603,9 @@ def run():
     """."""
     fname = 'test.txt'
 
-    benchmark_psconnsofb_current_setpoint_mp(fname)
+    # benchmark_psconnsofb_current_setpoint_mp(fname)
     # benchmark_psconnsofb_current_setpoint(fname)
-    # benchmark_pssofb_current_setpoint(fname)
+    benchmark_pssofb_current_setpoint(fname)
 
     # benchmark_psconnsofb_kick_setpoint()
     # benchmark_pssofb_kick_setpoint()

@@ -44,7 +44,7 @@ class PSBSMP(_BSMP):
 
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
-    _sleep_disable_bufsample = 0.5  # [s]
+    _sleep_disable_scope = 0.5  # [s]
     _sleep_select_op_mode = 0.030  # [s]
 
     # --- BSMP PS curves ---
@@ -149,7 +149,7 @@ class PSBSMP(_BSMP):
         elif func_id == PSBSMP.CONST.F_DISABLE_BUF_SAMPLES:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
-            # _time.sleep(PSBSMP._sleep_disable_bufsample)
+            # _time.sleep(PSBSMP._sleep_disable_scope)
             pass
         elif func_id == PSBSMP.CONST.F_SELECT_OP_MODE:
             # _time.sleep(PSBSMP._sleep_select_op_mode)
@@ -548,8 +548,11 @@ class PSBSMP(_BSMP):
 class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
+    SOFB_PRINT_COMM_ERRORS = True
+
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFBP
+    _ACK_OK = _np.zeros(_UDC_MAX_NR_DEV, dtype=int)
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
@@ -561,6 +564,7 @@ class FBP(PSBSMP):
         self._sofb_ps_reference = None
         self._sofb_ps_iload = None
         self._sofb_ps_readback_ref = None
+        self._sofb_ps_func_return = None
 
     # --- SOFB methods ---
 
@@ -584,14 +588,20 @@ class FBP(PSBSMP):
         """Return mirror powersupply currents read after last setpoint."""
         return self._sofb_ps_readback_ref
 
+    @property
+    def sofb_ps_func_return(self):
+        """Return ack code of last function execution."""
+        return self._sofb_ps_func_return
+
     def sofb_ps_setpoint_set(self, value):
         """."""
-        ack, readback_ref = self.ps_function_set_slowref_fbp_readback_ref(value)
-        if ack != self.CONST_BSMP.ACK_OK:
-            sfmt = 'Anomalous bsmp communication in sofb_ps_setpoint_set: ack:{}, data:{}'
-            print(sfmt.format(hex(ack), readback_ref))
+        self._sofb_ps_setpoint = value
+        ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
+        if ack == self.CONST_BSMP.ACK_OK:
+            self._sofb_ps_readback_ref = func_resp
+            self._sofb_ps_func_return = FBP._ACK_OK
         else:
-            self._sofb_ps_readback_ref = readback_ref
+            self._sofb_func_error(ack, func_resp, 'sofb_ps_setpoint_set')
 
     def sofb_update(self):
         """."""
@@ -602,17 +612,23 @@ class FBP(PSBSMP):
 
     def _sofb_read_group_of_variables(self):
         group_id = self.CONST.G_SOFB
-        ack, values = self.read_group_of_variables(
+        ack, func_resp = self.read_group_of_variables(
             group_id=group_id)
         if ack == self.CONST_BSMP.ACK_OK:
-            setpoints, references, iload = _np.array(values).reshape((3, -1))
+            self._sofb_ps_func_return = FBP._ACK_OK
+            setpoints, references, iload = _np.array(func_resp).reshape((3, -1))
         else:
-            sfmt = 'Anomalous bsmp communication in sofb_ps_setpoint_set: ack:{}, data:{}'
-            print(sfmt.format(hec(ack), values))
             setpoints, references, iload = None, None, None
+            self._sofb_func_error(ack, func_resp, '_sofb_read_group_of_variables')
 
         return setpoints, references, iload
 
+    def _sofb_func_error(self, ack, func_resp, methodname):
+        func_resp = ord(func_resp)
+        self._sofb_ps_func_return = FBP._ACK_OK + func_resp
+        if self.SOFB_PRINT_COMM_ERRORS:
+            sfmt = 'FBP: Anomalous response ' + methodname + ': ack:0x{:02X}, func_resp:0x{:02X}'
+            print(sfmt.format(ack, func_resp))
 
 class FAC_DCDC(PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
