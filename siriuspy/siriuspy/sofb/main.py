@@ -483,8 +483,8 @@ class SOFB(_BaseClass):
                 break
             if count >= 50:
                 _Thread(
-                    self._print_auto_corr_info,
-                    args=(times, rets)).start()
+                    target=self._print_auto_corr_info,
+                    args=(times, rets), daemon=True).start()
                 times, rets = [], []
                 count = 0
             count += 1
