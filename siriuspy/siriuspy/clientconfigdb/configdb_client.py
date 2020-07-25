@@ -106,13 +106,13 @@ class ConfigDBClient:
             config_type=config_type, discarded=discarded, data=find_dict)
 
     def get_config_value(self, name, config_type=None, discarded=False):
-        """Mark a valid configuration as discarded."""
+        """Get value field of a given configuration."""
         config_type = self._process_config_type(config_type)
         return self._make_request(
             config_type=config_type, name=name, discarded=discarded)['value']
 
     def get_config_info(self, name, config_type=None, discarded=False):
-        """Mark a valid configuration as discarded."""
+        """Get information of a given configuration."""
         config_type = self._process_config_type(config_type)
         res = self.find_configs(
             name=name, config_type=config_type, discarded=discarded)
