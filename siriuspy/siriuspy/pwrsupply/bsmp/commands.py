@@ -598,6 +598,7 @@ class FBP(PSBSMP):
         self._sofb_ps_setpoint = value
         ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
         if ack == self.CONST_BSMP.ACK_OK:
+            self._sofb_ps_readback_ref = func_resp
             self._sofb_ps_func_return = FBP._ACK_OK
         else:
             self._sofb_func_error(ack, func_resp, 'sofb_ps_setpoint_set')
