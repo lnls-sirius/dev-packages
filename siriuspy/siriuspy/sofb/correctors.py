@@ -814,7 +814,7 @@ class EpicsCorrectors(BaseCorrectors):
         ref_vals = self._ref_kicks[0]
 
         res = fret != _ConstPSBSMP.ACK_OK
-        res |= fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
+        res &= fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
         if _np.any(res):
             return -2
 
