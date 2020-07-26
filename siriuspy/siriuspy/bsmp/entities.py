@@ -77,7 +77,7 @@ class Variable(Entity):
 
     def value_to_load(self, value):
         """Convert value to load."""
-        if not isinstance(value, (list, tuple, _np.array)):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
             value = [value, ]
         return self._conv_value_to_load(self._var_types, self.size, value)
 
