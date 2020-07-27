@@ -250,8 +250,8 @@ class Timing:
         """Create PVs."""
         Timing._pvs = dict()
         for dict_ in Timing.properties.values():
-            for pvname in dict_.keys():
-                if pvname in Timing._pvs.keys():
+            for pvname in dict_:
+                if pvname in Timing._pvs:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
