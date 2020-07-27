@@ -806,9 +806,10 @@ class EpicsCorrectors(BaseCorrectors):
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
 
-        res_tim = fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
+        res_tim = _np.ones(ref_vals.size, dtype=bool)
+        res_tim[:-1] = fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
         res = fret != _ConstPSBSMP.ACK_OK
-        res &= res_tim
+        res &= res_tim[:-1]
         if _np.any(res):
             return -2
 
