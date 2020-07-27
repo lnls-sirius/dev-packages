@@ -806,8 +806,9 @@ class EpicsCorrectors(BaseCorrectors):
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
 
+        res_tim = fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
         res = fret != _ConstPSBSMP.ACK_OK
-        res &= fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
+        res &= res_tim
         if _np.any(res):
             return -2
 
@@ -825,7 +826,7 @@ class EpicsCorrectors(BaseCorrectors):
             # self._print_guilty(~prob, mode='prob')
             return -2
 
-        okg = _compare_kicks(curr_vals, ref_vals)
+        okg = _compare_kicks(curr_vals[res_tim], ref_vals[res_tim])
 
         # self._print_guilty(okg, mode='diff')
         return _np.sum(~okg)
