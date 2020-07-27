@@ -484,7 +484,6 @@ class EpicsCorrectors(BaseCorrectors):
             'KickAcqRate-SP': self.set_kick_acq_rate,
             }
         if self.acc == 'SI':
-            dbase['CorrDelay-SP'] = self.set_timing_delay
             dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
             dbase['CorrPSSOFBWait-Sel'] = self.set_wait_pssofb
             dbase['CorrSync-Sel'] = self.set_corrs_mode
@@ -653,7 +652,7 @@ class EpicsCorrectors(BaseCorrectors):
             self.set_timing_delay(0)
             self.timing.sync_type = self.timing.EVT
         else:
-            self.set_timing_delay(self._csorb.CORR_MIN_DELAY)
+            self.set_timing_delay(self._csorb.CORR_DEF_DELAY)
             self.timing.sync_type = self.timing.CLK
 
         for corr in self._corrs:
@@ -678,11 +677,6 @@ class EpicsCorrectors(BaseCorrectors):
         frf = 499664 / 4  # [kHz]
         raw = int(value * frf)
         self.timing.delayraw = raw
-        dic = {'lolim': 0}
-        if self._sync_kicks == self._csorb.CorrSync.Clock:
-            dic['lolim'] = self._csorb.CORR_MIN_DELAY
-        self.run_callbacks('CorrDelay-SP', raw / frf, **dic)
-        self.run_callbacks('CorrDelay-RB', raw / frf, **dic)
         return True
 
     def set_use_pssofb(self, val):

@@ -109,7 +109,7 @@ class ConstSI(ConstRings):
     CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_MIN_DELAY = 20  # [ms]
+    CORR_DEF_DELAY = 0  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -726,12 +726,6 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
-            'CorrDelay-SP': {
-                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'ms',
-                'lolim': 0, 'hilim': 100000},
-            'CorrDelay-RB': {
-                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'ms',
-                'lolim': 0, 'hilim': 100000},
             'CorrPSSOFBEnbl-Sel': {
                 'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
                 'value': self.CorrPSSOFBEnbl.Dsbld},
