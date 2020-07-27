@@ -347,8 +347,8 @@ class TimingConfig(_BaseTimingConfig):
         self.CLK = src_val
         self._config_ok_vals = {
             'Mode': _TIConst.EvtModes.External,
-            'Src': src_val, 'DelayRaw': 0,
-            'NrPulses': 1, 'Duration': 150.0, 'State': 1, 'Polarity': 0,
+            'Src': src_val, 'NrPulses': 1, 'Duration': 150.0, 'State': 1,
+            'Polarity': 0,
             }
         if _HLTimesearch.has_delay_type(trig):
             self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
@@ -407,7 +407,6 @@ class TimingConfig(_BaseTimingConfig):
     @delayraw.setter
     def delayraw(self, value):
         """."""
-        self._config_ok_vals['DelayRaw'] = int(value)
         pvobj = self._config_pvs_sp['DelayRaw']
         if pvobj.connected:
             pvobj.value = int(value)

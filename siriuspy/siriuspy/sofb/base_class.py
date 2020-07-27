@@ -147,7 +147,8 @@ class BaseTimingConfig(_Callback):
         if not self.connected:
             return False
         for k, pvo in self._config_pvs_sp.items():
-            pvo.put(self._config_ok_vals[k], wait=False)
+            if k in self._config_ok_vals:
+                pvo.put(self._config_ok_vals[k], wait=False)
         return True
 
 

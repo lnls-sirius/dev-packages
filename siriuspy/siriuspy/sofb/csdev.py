@@ -109,7 +109,7 @@ class ConstSI(ConstRings):
     CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 0  # [ms]
+    CORR_DEF_DELAY = 20  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
