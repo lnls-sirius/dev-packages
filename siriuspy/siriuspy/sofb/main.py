@@ -497,7 +497,12 @@ class SOFB(_BaseClass):
                 norbs = max(int(bpmsfreq*interval), 1)
 
             tims.append(_time())
-            for _ in range(norbs):
+            orb = self.orbit.get_orbit(synced=True)
+            for i in range(1, norbs):
+                interval = 1/self._auto_corr_freq
+                norbs = max(int(bpmsfreq/interval), 1)
+                if i >= norbs:
+                    break
                 orb = self.orbit.get_orbit(synced=True)
 
             tims.append(_time())
