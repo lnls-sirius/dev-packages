@@ -824,7 +824,7 @@ class EpicsCorrectors(BaseCorrectors):
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
         if _np.any(prob):
-            # self._print_guilty(~prob, mode='prob')
+            self._print_guilty(~prob, mode='prob', fret=fret)
             return -2
 
         okg = _compare_kicks(curr_vals[res_tim], ref_vals[res_tim])
@@ -832,11 +832,17 @@ class EpicsCorrectors(BaseCorrectors):
         # self._print_guilty(okg, mode='diff')
         return _np.sum(~okg)
 
-    def _print_guilty(self, okg, mode='ready'):
+    def _print_guilty(self, okg, mode='ready', fret=None):
         msg_tmpl = 'ERR: timeout {0:3s}: {1:s}'
         mde = 'RB' if mode == 'ready' else 'Ref'
         if mode == 'prob':
-            msg_tmpl = 'ERR: Corrector {1:s} with problem!'
+            msg_tmpl = 'ERR: Corrector {1:s} with problem. code={2:d}!'
+            for oki, corr, ret in zip(okg, self._corrs, fret):
+                if not oki:
+                    msg = msg_tmpl.format(mde, corr.name, ret)
+                    self._update_log(msg)
+                    _log.error(msg[5:])
+            return
         elif mode == 'diff':
             msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
         for oki, corr in zip(okg, self._corrs):
