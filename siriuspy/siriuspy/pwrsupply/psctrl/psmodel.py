@@ -728,6 +728,7 @@ class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
         'IIBISHeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IS_IIB,
         'IIBCmdInductorTemperature-Mon': _c.V_TEMP_INDUCTOR_CMD_IIB,
         'IIBCmdHeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_CMD_IIB,
+        'IntlkIIBIS-Mon': _c.V_IIB_INTERLOCKS_IS,
         'IntlkIIBCmd-Mon': _c.V_IIB_INTERLOCKS_CMD,
         }
 
