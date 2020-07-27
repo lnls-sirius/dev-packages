@@ -481,7 +481,7 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if count >= 50:
+            if count >= 100:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
@@ -496,6 +496,7 @@ class SOFB(_BaseClass):
             if use_pssofb:
                 norbs = max(int(bpmsfreq*interval), 1)
 
+            tims.append(_time())
             for _ in range(norbs):
                 orb = self.orbit.get_orbit(synced=True)
 
@@ -516,7 +517,7 @@ class SOFB(_BaseClass):
             ret = self.correctors.apply_kicks(kicks)
             rets.append(ret)
             tims.append(_time())
-            tims.append(tims[0])  # to compute total time
+            tims.append(tims[1])  # to compute total time - get_orbit
             times.append(tims)
             if ret == -2:
                 self._auto_corr = self._csorb.ClosedLoop.Off
@@ -541,20 +542,6 @@ class SOFB(_BaseClass):
 
     def _print_auto_corr_info(self, times, rets):
         """."""
-        dtimes = _np.diff(times, axis=1).T * 1000
-        dtimes[-1] *= -1
-        max_ = dtimes.max(axis=1)
-        min_ = dtimes.min(axis=1)
-        avg_ = dtimes.mean(axis=1)
-        std_ = dtimes.std(axis=1)
-        msg = '{:s}: calc={:7.2f}, get={:7.2f}, proc={:7.2f}, '
-        msg += 'apply={:7.2f}, tot={:7.2f}'
-        _log.info('TIME:')
-        _log.info(msg.format('  MAX', *max_))
-        _log.info(msg.format('  MIN', *min_))
-        _log.info(msg.format('  AVG', *avg_))
-        _log.info(msg.format('  STD', *std_))
-
         rets = _np.array(rets)
         ok_ = _np.sum(rets == 0)
         tout = _np.sum(rets == -1)
@@ -564,6 +551,20 @@ class SOFB(_BaseClass):
         _log.info(f'  # Ok = {ok_:03d}')
         _log.info(f'  # Timeout = {tout:03d}')
         _log.info(f'  # Diff = {diff:03d}')
+
+        dtimes = _np.diff(times, axis=1).T * 1000
+        dtimes[-1] *= -1
+        max_ = dtimes.max(axis=1)
+        min_ = dtimes.min(axis=1)
+        avg_ = dtimes.mean(axis=1)
+        std_ = dtimes.std(axis=1)
+        msg = '{:s}: geto={:7.2f}, calc={:7.2f}, getk={:7.2f}, proc={:7.2f}, '
+        msg += 'apply={:7.2f}, tot={:7.2f}'
+        _log.info('TIME:')
+        _log.info(msg.format('  MAX', *max_))
+        _log.info(msg.format('  MIN', *min_))
+        _log.info(msg.format('  AVG', *avg_))
+        _log.info(msg.format('  STD', *std_))
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
