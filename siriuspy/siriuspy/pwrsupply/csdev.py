@@ -1254,12 +1254,14 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                           'unit': 'C'},
         'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBISLabels-Cte':  {'type': 'string',
-                                  'count': len(_et.IIBIS_INTLCK_FAC_2P4S_ACDC),
-                                  'value': _et.IIBIS_INTLCK_FAC_2P4S_ACDC},
-        'IntlkIIBCmdLabels-Cte':  {'type': 'string',
-                                   'count': len(_et.IIBCMD_INTLCK_FAC_2P4S_ACDC),
-                                   'value': _et.IIBCMD_INTLCK_FAC_2P4S_ACDC}
+        'IntlkIIBISLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.IIBIS_INTLCK_FAC_2P4S_ACDC),
+            'value': _et.IIBIS_INTLCK_FAC_2P4S_ACDC},
+        'IntlkIIBCmdLabels-Cte':  {
+            'type': 'string',
+            'count': len(_et.IIBCMD_INTLCK_FAC_2P4S_ACDC),
+            'value': _et.IIBCMD_INTLCK_FAC_2P4S_ACDC}
     }
     propty_db.update(db_ps)
     return propty_db
