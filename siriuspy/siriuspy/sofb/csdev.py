@@ -109,7 +109,7 @@ class ConstSI(ConstRings):
     CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 20  # [ms]
+    CORR_DEF_DELAY = 35  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -201,9 +201,10 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
             'ClosedLoopFreq-SP': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 20},
+                'lolim': 1e-3, 'hilim': 60},
             'ClosedLoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
+                'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
+                'lolim': 1e-3, 'hilim': 60},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},
