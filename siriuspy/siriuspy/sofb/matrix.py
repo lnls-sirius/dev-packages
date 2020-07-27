@@ -229,10 +229,12 @@ class EpicsMatrix(BaseMatrix):
             self._update_log(msg)
             _log.error(msg[5:])
             return None
-        kicks = _np.dot(self.inv_respmat, orbit)
+        # kicks = _np.dot(self.inv_respmat, orbit)
+        kicks = _np.einsum('ij,j', self.inv_respmat, orbit)
         kicks *= -1
-        # _Thread(
-        #     target=self._update_dkicks, args=(kicks, ), daemon=True).start()
+        _Thread(
+            target=self._update_dkicks, args=(kicks, ), daemon=True).start()
+        # self._update_dkicks(kicks)
         return kicks
 
     def _update_dkicks(self, kicks):
