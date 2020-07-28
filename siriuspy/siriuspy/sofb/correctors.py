@@ -827,7 +827,7 @@ class EpicsCorrectors(BaseCorrectors):
         iszero = _compare_kicks(curr_vals, 0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
-        # Only acuse problem if it repeats for 3 consecutive times:
+        # Only acuse problem if it repeats for MAX_PROB consecutive times:
         self._prob[prob] += 1
         self._prob[~prob] = 0
         if _np.any(self._prob >= self.MAX_PROB):
