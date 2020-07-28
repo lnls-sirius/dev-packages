@@ -65,12 +65,25 @@ class TestPRUInterface(TestCase):
 class TestPRU(TestCase):
     """Test PRU API."""
 
-    PUB_INTERFACE = ()
+    PUB_INTERFACE = (
+        'bbbname',
+        'ip_address',
+    )
 
     def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(util.check_public_interface_namespace(
             PRU, TestPRU.PUB_INTERFACE))
+
+    def test_bbbname(self):
+        """Test bbbname."""
+        # TODO: implement test!
+        pass
+
+    def test_ip_address(self):
+        """Test bbbname."""
+        # TODO: implement test!
+        pass
 
     def test_UART_write(self):
         """Test UART_write."""

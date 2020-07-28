@@ -371,11 +371,7 @@ class PSConnSOFB:
         self._update_currents(bbbname)
 
     def _bsmp_current_setpoint(self, bbbname, curr_sp):
-        """.
-
-        benchmarks:
-            - lnls560-linux, no comm.  :   4.56 us +/- 98.4 ns
-        """
+        """Set currents for a single beaglebone."""
         udc = self._udc[bbbname]
 
         # get indices
@@ -384,8 +380,6 @@ class PSConnSOFB:
 
         # get valid current setpoints from sofb array
         current = curr_sp[indcs_sofb]
-        notnan = ~_np.isnan(current)
-        current = current[notnan]
 
         # initialize setpoint
         readback = udc.sofb_current_rb_get()  # stores last setpoint
@@ -395,10 +389,10 @@ class PSConnSOFB:
             setpoint = _np.asarray(readback)
 
         # update setpoint
-        setpoint[indcs_bsmp[notnan]] = current
+        setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(tuple(setpoint))
+        udc.sofb_current_set(setpoint)
 
         # update sofb_func_return
         func_return = udc.sofb_func_return_get()
