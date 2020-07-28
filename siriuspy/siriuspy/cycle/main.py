@@ -662,15 +662,15 @@ class CycleController:
                 status &= False
         return status
 
-    def restore_timing_initial_state(self):
-        """Reset all subsystems."""
+    # --- main commands ---
+
+    def save_timing_initial_state(self):
+        """Save timing initial state."""
         if self._only_linac:
             return
-        self._update_log('Restoring Timing initial state...')
-        self._timing.restore_initial_state()
+        self._update_log('Save Timing initial state...')
+        self._timing.save_initial_state()
         self._update_log(done=True)
-
-    # --- main commands ---
 
     def prepare_timing(self):
         """Prepare Timing."""
@@ -779,10 +779,16 @@ class CycleController:
         if not self.check_pwrsupplies_slowref(self.psnames):
             return False
 
-        self.restore_timing_initial_state()
-
         # Indicate cycle end
         self._update_log('Cycle finished!')
+
+    def restore_timing_initial_state(self):
+        """Restore timing initial state."""
+        if self._only_linac:
+            return
+        self._update_log('Restoring Timing initial state...')
+        self._timing.restore_initial_state()
+        self._update_log(done=True)
 
     # --- private methods ---
 

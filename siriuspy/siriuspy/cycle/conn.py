@@ -186,6 +186,13 @@ class Timing:
         pvobj = Timing._pvs[Timing.evg_name+':InjCount-Mon']
         return pvobj.value == DEFAULT_RAMP_NRCYCLES
 
+    def save_initial_state(self):
+        """Save initial state."""
+        for pvname in Timing._pvs:
+            if pvname.propty_suffix in ('Cmd', 'Mon', 'Sts', 'RB'):
+                continue
+            self._initial_state[pvname] = Timing._pvs[pvname].value
+
     def restore_initial_state(self):
         """Restore initial state."""
         # Config. triggers and events to initial state
