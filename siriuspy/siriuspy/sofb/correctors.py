@@ -431,6 +431,7 @@ class EpicsCorrectors(BaseCorrectors):
     TINY_INTERVAL = 0.005
     NUM_TIMEOUT = 1000
     PSSOFB_USE_IOC = False
+    MAX_PROB = 5
 
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
@@ -445,7 +446,7 @@ class EpicsCorrectors(BaseCorrectors):
             self._ref_kicks = None
             self._ret_kicks = None
             self._func_ret = None
-            self._isequal = None
+            self._prob = None
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
                     EthBridgeClient, nr_procs=8, asynchronous=True)
@@ -687,7 +688,7 @@ class EpicsCorrectors(BaseCorrectors):
         if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbld:
             kicks = self.get_strength()
             self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
-            self._isequal = _np.ones(kicks.size, dtype=bool)
+            self._prob = _np.zeros(kicks.size, dtype=_np.int8)
             # initialize PSSOFB State
             self._pssofb.bsmp_sofb_kick_set(kicks[:-1])
         self._use_pssofb = val
@@ -812,6 +813,8 @@ class EpicsCorrectors(BaseCorrectors):
         res = fret != _ConstPSBSMP.ACK_OK
         res &= res_tim[:-1]
         if _np.any(res):
+            self._print_guilty(
+                ~res, mode='prob_code', fret=fret)
             return -2
 
         curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
@@ -823,27 +826,30 @@ class EpicsCorrectors(BaseCorrectors):
         # exit and give back the control to the IOC.
         iszero = _compare_kicks(curr_vals, 0)
         iszero_ref = _compare_kicks(ref_vals, 0)
-        probr = iszero & ~(iszero_ref)
-        # Only acuse problem if in last loop the correction was ok:
-        prob = probr & self._isequal
-        if _np.any(prob):
+        prob = iszero & ~(iszero_ref)
+        # Only acuse problem if it repeats for 3 consecutive times:
+        self._prob[prob] += 1
+        self._prob[~prob] = 0
+        if _np.any(self._prob >= self.MAX_PROB):
             self._print_guilty(
-                ~prob, mode='prob', fret=fret, currs=curr_vals, refs=ref_vals)
+                ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
             return -2
 
-        self._isequal = _compare_kicks(curr_vals, ref_vals)
-        self._isequal &= ~probr
-        okg = self._isequal | res_tim
-        return _np.sum(okg)
+        equl = _compare_kicks(curr_vals, ref_vals)
+        equl |= res_tim
+        return _np.sum(~equl)
 
     def _print_guilty(
             self, okg, mode='ready', fret=None, currs=None, refs=None):
         msg_tmpl = 'ERR: timeout {0:3s}: {1:s}'
         mde = 'RB' if mode == 'ready' else 'Ref'
         data = zip(self._corrs)
-        if mode == 'prob':
-            msg_tmpl = 'ERR: {1:s}. code={2:d}, curr={3:.4g}, ref={4:.4g}'
-            data = zip(self._corrs, fret, currs, refs)
+        if mode == 'prob_code':
+            msg_tmpl = 'ERR: {0:s} --> {1:s}: code={2:d}'
+            data = zip(self._corrs, fret)
+        elif mode == 'prob_curr':
+            msg_tmpl = 'ERR: {0:s} --> {1:s}: curr={2:.4g}, ref={3:.4g}'
+            data = zip(self._corrs, currs, refs)
         elif mode == 'diff':
             msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
         for oki, args in zip(okg, data):
