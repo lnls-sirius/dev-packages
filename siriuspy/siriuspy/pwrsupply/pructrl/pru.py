@@ -76,11 +76,25 @@ class PRU(PRUInterface):
         print('BEAGLEBONE: ', bbbname)
         print('IP_ADDRESS: ', ip_address)
 
+        # stores bbbname and ip address
+        self._bbbname = bbbname
+        self._ip_address = ip_address
+
         # start communication threads
         self._ethbridge = ethbridgeclnt_class(ip_address=ip_address)
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
+
+    @property
+    def bbbname(self):
+        """Return beaglebone name."""
+        return self._bbbname
+
+    @property
+    def ip_address(self):
+        """Return beaglebone IP address."""
+        return self._ip_address
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
