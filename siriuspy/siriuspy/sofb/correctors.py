@@ -836,7 +836,7 @@ class EpicsCorrectors(BaseCorrectors):
             return -2
 
         equl = _compare_kicks(curr_vals, ref_vals)
-        equl |= res_tim
+        equl |= ~res_tim
         return _np.sum(~equl)
 
     def _print_guilty(
