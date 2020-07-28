@@ -205,7 +205,7 @@ class Function(Entity):
         """Convert value to load."""
         if value is None:
             return []
-        if not isinstance(value, (list, tuple)):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
             value = [value, ]
         return self._conv_value_to_load(self.i_type, self.i_size, value)
 
