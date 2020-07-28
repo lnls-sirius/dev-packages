@@ -846,7 +846,7 @@ class EpicsCorrectors(BaseCorrectors):
             self, okg, mode='ready', fret=None, currs=None, refs=None):
         msg_tmpl = 'ERR: timeout {0:3s}: {1:s}'
         mde = 'RB' if mode == 'ready' else 'Ref'
-        data = zip(self._corrs)
+        data = None
         if mode == 'prob_code':
             msg_tmpl = 'ERR: {0:s} --> {1:s}: code={2:d}'
             data = zip(self._corrs, fret)
@@ -855,8 +855,15 @@ class EpicsCorrectors(BaseCorrectors):
             data = zip(self._corrs, currs, refs)
         elif mode == 'diff':
             msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
-        for oki, args in zip(okg, data):
-            if not oki:
-                msg = msg_tmpl.format(mde, *args)
-                self._update_log(msg)
-                _log.error(msg[5:])
+        if data:
+            for oki, corr, args in zip(okg, self._corrs, data):
+                if not oki:
+                    msg = msg_tmpl.format(mde, corr.name, *args)
+                    self._update_log(msg)
+                    _log.error(msg[5:])
+        else:
+            for oki, corr in zip(okg, self._corrs):
+                if not oki:
+                    msg = msg_tmpl.format(mde, corr.name)
+                    self._update_log(msg)
+                    _log.error(msg[5:])
