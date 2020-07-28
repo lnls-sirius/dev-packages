@@ -416,19 +416,6 @@ class CycleController:
             return status
         return True
 
-    def pulse_si_pwrsupplies(self):
-        """Send sync pulse to power supplies. Not being used."""
-        psnames = []
-        threads = list()
-        for psname in psnames:
-            cycler = self._get_cycler(psname)
-            thread = _thread.Thread(target=cycler.pulse, daemon=True)
-            self._update_log('Pulsing '+psname+'...')
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
-
     def set_triggers_state(self, triggers, state):
         """Set triggers state."""
         if self._only_linac:
