@@ -827,6 +827,9 @@ class EpicsCorrectors(BaseCorrectors):
         iszero = _compare_kicks(curr_vals, 0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
+        if _np.any(prob):
+            self._print_guilty(
+                ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
         # Only acuse problem if it repeats for MAX_PROB consecutive times:
         self._prob[prob] += 1
         self._prob[~prob] = 0
