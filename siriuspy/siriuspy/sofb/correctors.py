@@ -849,10 +849,10 @@ class EpicsCorrectors(BaseCorrectors):
         data = None
         if mode == 'prob_code':
             msg_tmpl = 'ERR: {0:s} --> {1:s}: code={2:d}'
-            data = zip(self._corrs, fret)
+            data = zip(fret)
         elif mode == 'prob_curr':
             msg_tmpl = 'ERR: {0:s} --> {1:s}: curr={2:.4g}, ref={3:.4g}'
-            data = zip(self._corrs, currs, refs)
+            data = zip(currs, refs)
         elif mode == 'diff':
             msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
         if data:
