@@ -425,8 +425,8 @@ class PSBSMP(_BSMP):
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
         if curve_id == PSBSMP.CURVE_ID_SCOPE:
-            # for scope, we have to assume the size as the same as selected buffer
-            # since there are no bsmp variables indicating its size.
+            # for scope, we have to assume the size as the same as selected
+            # buffer since there are no bsmp variables indicating its size.
             wfmref_size = self.wfmref_size()
         else:
             wfmref_size = self.wfmref_size(curve_id)
@@ -457,7 +457,8 @@ class PSBSMP(_BSMP):
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
                     # print('sit1, add:{}, curve_id:{}, block:{}'.format(
                     #     add, curve_id, block))
-                    # This is the expected behaviour when DSP is writting to buffer sample
+                    # This is the expected behaviour when DSP is writting to
+                    # buffer sample
                     return None
                 # anomalous response!
                 PSBSMP.anomalous_response(
@@ -467,7 +468,7 @@ class PSBSMP(_BSMP):
                     block=block,
                     index=idx)
                 # print('sit2, add:{}, curve_id:{}, block:{}'.format(
-                    # add, curve_id, block))
+                #     add, curve_id, block))
                 return None
             else:
                 # print('sit3, add:{}, curve_id:{}, block:{}'.format(
@@ -616,10 +617,12 @@ class FBP(PSBSMP):
             group_id=group_id)
         if ack == self.CONST_BSMP.ACK_OK:
             self._sofb_ps_func_return = FBP._ACK_OK
-            setpoints, references, iload = _np.array(func_resp).reshape((3, -1))
+            setpoints, references, iload = \
+                _np.array(func_resp).reshape((3, -1))
         else:
             setpoints, references, iload = None, None, None
-            self._sofb_func_error(ack, func_resp, '_sofb_read_group_of_variables')
+            self._sofb_func_error(
+                ack, func_resp, '_sofb_read_group_of_variables')
 
         return setpoints, references, iload
 
@@ -627,7 +630,8 @@ class FBP(PSBSMP):
         func_resp = ord(func_resp)
         self._sofb_ps_func_return = FBP._ACK_OK + func_resp
         if self.SOFB_PRINT_COMM_ERRORS:
-            sfmt = 'FBP: Anomalous response ' + methodname + ': ack:0x{:02X}, func_resp:0x{:02X}'
+            sfmt = 'FBP: Anomalous response ' + methodname + \
+                ': ack:0x{:02X}, func_resp:0x{:02X}'
             print(sfmt.format(ack, func_resp))
 
 
@@ -639,7 +643,8 @@ class FAC_DCDC(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
 
 
 class FAC_2P4S_DCDC(PSBSMP):
@@ -650,7 +655,9 @@ class FAC_2P4S_DCDC(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(),
+            pru=pru)
 
 
 class FAC_2S_DCDC(PSBSMP):
@@ -661,7 +668,8 @@ class FAC_2S_DCDC(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
 
 
 class FAP(PSBSMP):
@@ -672,7 +680,8 @@ class FAP(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
 
 
 class FAP_4P(PSBSMP):
@@ -683,7 +692,8 @@ class FAP_4P(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
 
 
 class FAP_2P2S(PSBSMP):
@@ -694,7 +704,8 @@ class FAP_2P2S(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
 # --- ACDC ---
@@ -708,7 +719,8 @@ class FBP_DCLink(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
 
 
 class FAC_2P4S_ACDC(PSBSMP):
@@ -719,7 +731,9 @@ class FAC_2P4S_ACDC(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(),
+            pru=pru)
 
 
 class FAC_2S_ACDC(PSBSMP):
@@ -730,4 +744,5 @@ class FAC_2S_ACDC(PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)
