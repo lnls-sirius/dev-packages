@@ -681,14 +681,7 @@ class CycleController:
             self.create_aux_cyclers()
             self.set_pwrsupplies_currents_zero()
 
-            trims = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9].*', 'dis': 'PS',
-                 'dev': '(CV|CH|QS|QD.*|QF.*|Q[1-4])'}))
-            qs_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'QS'}))
-            psnames = set(psnames)
-            psnames = list(psnames.update(trims - qs_c2))
+            psnames.extend(self.trimnames)
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames):
