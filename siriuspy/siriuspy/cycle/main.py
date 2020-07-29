@@ -162,6 +162,8 @@ class CycleController:
                           set(self.trimnames) -
                           set(self.psnames))
         for psn in missing_ps:
+            if psn in self._aux_cyclers.keys():
+                continue
             self._update_log('Connecting to '+psn+'...')
             self._aux_cyclers[psn] = PSCycler(psn)
 
