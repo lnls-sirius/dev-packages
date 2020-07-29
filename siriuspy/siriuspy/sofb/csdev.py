@@ -56,6 +56,8 @@ class ConstTLines(_csdev.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
+    MIN_SING_VAL = 1e-4
+    TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
@@ -534,6 +536,10 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'SingValuesRaw-Mon': {
+                'type': 'float', 'count': self.nr_svals,
+                'value': self.nr_svals*[0],
+                'unit': 'Singular values of the matrix'},
             'SingValues-Mon': {
                 'type': 'float', 'count': self.nr_svals,
                 'value': self.nr_svals*[0],
@@ -570,14 +576,26 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
-            'NrSingValues-SP': {
+            'MinSingValue-SP': {
+                'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Maximum value of SV to use'},
+            'MinSingValue-RB': {
+                'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Maximum value of SV to use'},
+            'TikhonovRegConst-SP': {
+                'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Tikhonov regularization constant'},
+            'TikhonovRegConst-RB': {
+                'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Tikhonov regularization constant'},
+            'NrSingValues-Mon': {
                 'type': 'int', 'value': self.nr_svals,
                 'lolim': 1, 'hilim': self.nr_svals,
-                'unit': 'Maximum number of SV to use'},
-            'NrSingValues-RB': {
-                'type': 'int', 'value': self.nr_svals,
-                'lolim': 1, 'hilim': self.nr_svals,
-                'unit': 'Maximum number of SV to use'},
+                'unit': 'Number of used SVs'},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
