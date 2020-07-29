@@ -224,6 +224,7 @@ class CycleController:
             prepare_ps_size += len(self.trimnames)
             # set and check currents to zero
             prepare_ps_size += 2*(len(self.psnames)+len(self.trimnames))
+        return prepare_ps_size
 
     @property
     def cycle_size(self):
@@ -258,12 +259,13 @@ class CycleController:
     @property
     def prepare_ps_max_duration(self):
         """Prepare PS task maximum duration."""
-        prepare_ps_size = 20
+        prepare_ps_max_duration = 20
         if 'SI' in self._sections:
             # connect to trims
-            prepare_ps_size += 2*TIMEOUT_CHECK
+            prepare_ps_max_duration += 2*TIMEOUT_CHECK
             # set and check currents to zero
-            prepare_ps_size += TIMEOUT_CHECK_SI_CURRENTS
+            prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
+        return prepare_ps_max_duration
 
     @property
     def cycle_max_duration(self):
