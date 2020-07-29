@@ -5,8 +5,7 @@ from copy import deepcopy as _dcopy
 from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
-    LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch, \
-    PSSearch as _PSSearch
+    LLTimeSearch as _TISearch, PSSearch as _PSSearch
 from ..diag.bpm.csdev import Const as _csbpm
 from ..timesys import csdev as _cstiming
 
@@ -27,6 +26,7 @@ class ETypes(_csdev.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
+    SI_CORR_SYNC = ('Off', 'Event', 'Clock')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
@@ -56,9 +56,10 @@ class ConstTLines(_csdev.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
-    TINY_KICK = 1e-3  # urad
-    MAX_TRIGMODE_RATE = 2  # Hz
-    MIN_SLOWORB_RATE = 30  # Hz
+    TINY_KICK = 1e-3  # [urad]
+    MAX_TRIGMODE_RATE = 2  # [Hz]
+    MIN_SLOWORB_RATE = 30  # [Hz]
+    BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
@@ -103,9 +104,12 @@ class ConstSI(ConstRings):
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
-    CorrSync = _csdev.Const.register('CorrSync', _et.OFF_ON)
+    CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
+    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
+    CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
 
     RF_GEN_NAME = 'RF-Gen'
+    CORR_DEF_DELAY = 35  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -165,6 +169,7 @@ class SOFBTLines(ConstTLines):
         if self.acc == 'SI':
             self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
             self.evt_cor_name = 'Orb' + self.acc
+            self.clk_cor_name = 'Clock3'
 
         self.evt_acq_name = 'Dig' + self.acc
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
@@ -196,9 +201,10 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
             'ClosedLoopFreq-SP': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 20},
+                'lolim': 1e-3, 'hilim': 60},
             'ClosedLoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
+                'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
+                'lolim': 1e-3, 'hilim': 60},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},
@@ -677,10 +683,9 @@ class SOFBSI(SOFBRings, ConstSI):
     def __init__(self, acc):
         """Init method."""
         SOFBRings.__init__(self, acc)
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.trigger_cor_name)
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
-        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.CorrExtEvtSrc = self.register('CorrExtEvtSrc', evts, vals)
+        evts = vals['Src-Sel']['enums']
+        self.CorrExtEvtSrc = self.register('CorrExtEvtSrc', evts)
         self.circum = 518.396  # in meter
         self.rev_per = self.circum / 299792458  # in seconds
 
@@ -722,6 +727,18 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
+            'CorrPSSOFBEnbl-Sel': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBEnbl-Sts': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBWait-Sel': {
+                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
+                'value': self.CorrPSSOFBWait.Off},
+            'CorrPSSOFBWait-Sts': {
+                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
+                'value': self.CorrPSSOFBWait.Off},
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
             }

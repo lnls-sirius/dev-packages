@@ -8,8 +8,6 @@ from ... import csdev as _csdev
 class PRUInterface:
     """Interface class for programmable real-time units."""
 
-    OK = 0
-
     def __init__(self):
         """Init method."""
         self._timestamp_write = _time.time()
@@ -78,46 +76,41 @@ class PRU(PRUInterface):
         print('BEAGLEBONE: ', bbbname)
         print('IP_ADDRESS: ', ip_address)
 
-        # start communication threads
-        self._ethbrigde = ethbridgeclnt_class(
-            ip_address=ip_address, use_general=False)
-        self._ethbrigde.threads_start()
+        # stores bbbname and ip address
+        self._bbbname = bbbname
+        self._ip_address = ip_address
 
-        # print prulib version
-        # fmtstr = 'PRUserial485 lib version_{}: {}'
-        # print(fmtstr.format('client', self.version))
-        # print(fmtstr.format('server', self.version_server))
-        # print()
+        # start communication threads
+        self._ethbridge = ethbridgeclnt_class(ip_address=ip_address)
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
 
-        # NOTE: open is done automatically by eth-brigde server
-        # and cannot be used when use_general = False
-        #
-        # start PRU library and set PRU to sync off
-        # baud_rate = 6
-        # mode = b"M"  # "S": slave | "M": master
-        # ret = self._ethbrigde.open(baud_rate, mode)
-        # if ret != PRUInterface.OK:
-        #     raise ValueError(('Error {} returned in '
-        #                       'PRUserial485_open').format(ret))
+    @property
+    def bbbname(self):
+        """Return beaglebone name."""
+        return self._bbbname
+
+    @property
+    def ip_address(self):
+        """Return beaglebone IP address."""
+        return self._ip_address
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = self._ethbrigde.write(stream, timeout)
+        ret = self._ethbridge.write(stream, timeout)
         return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        value = self._ethbrigde.read()
+        value = self._ethbridge.read()
         return value
 
     def _UART_request(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        ret = self._ethbrigde.request(stream, timeout)
+        ret = self._ethbridge.request(stream, timeout)
         return ret
 
     def _close(self):
-        # self._ethbrigde.close()
+        # self._ethbridge.close()
         return None

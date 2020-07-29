@@ -71,9 +71,9 @@ def get_timestamp(now=None):
     """Get formatted timestamp ."""
     if now is None:
         now = _time.time()
-    st = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
-    st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
-    return st
+    rst = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
+    rst = rst + '.{0:03d}'.format(int(1000*(now-int(now))))
+    return rst
 
 
 def read_text_data(text):
