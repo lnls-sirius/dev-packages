@@ -148,7 +148,7 @@ class Parameters(_Entity):
         """."""
         size = Parameters._parameters[eid]['count']
         var_types = [Parameters._parameters[eid]['var_type']] * size
-        value = self._conv_load_to_value(var_types, size, load)
+        value = self._conv_load_to_value(var_types, load)
         if eid == 0:
             # power supply name
             value = [chr(int(v)) for v in value]
