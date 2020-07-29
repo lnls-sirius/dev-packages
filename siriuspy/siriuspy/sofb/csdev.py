@@ -57,6 +57,7 @@ class ConstTLines(_csdev.Const):
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
     TINY_KICK = 1e-3  # [urad]
+    DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
     MIN_SLOWORB_RATE = 30  # [Hz]
     BPMsFreq = 25.14  # [Hz]
@@ -205,6 +206,14 @@ class SOFBTLines(ConstTLines):
             'ClosedLoopFreq-RB': {
                 'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
                 'lolim': 1e-3, 'hilim': 60},
+            'LoopMaxOrbDistortion-SP': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortion-RB': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},

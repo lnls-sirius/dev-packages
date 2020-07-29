@@ -29,6 +29,7 @@ class SOFB(_BaseClass):
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.ClosedLoop.Off
         self._loop_freq = 1
+        self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -55,6 +56,7 @@ class SOFB(_BaseClass):
         dbase = {
             'ClosedLoop-Sel': self.set_auto_corr,
             'ClosedLoopFreq-SP': self.set_auto_corr_frequency,
+            'LoopMaxOrbDistortion-SP': self.set_max_orbit_dist,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
             'CalcDelta-Cmd': self.calc_correction,
             'DeltaFactorCH-SP': _part(self.set_corr_factor, 'ch'),
@@ -283,6 +285,12 @@ class SOFB(_BaseClass):
         self.run_callbacks('MeasRespMatWait-RB', value)
         return True
 
+    def set_max_orbit_dist(self, value):
+        """."""
+        self._loop_max_orb_distortion = value
+        self.run_callbacks('LoopMaxOrbDistortion-RB', value)
+        return True
+
     def _update_status(self):
         self._status = bool(
             self._correctors.status | self._matrix.status | self._orbit.status)
@@ -504,6 +512,10 @@ class SOFB(_BaseClass):
                 if i >= norbs:
                     break
                 orb = self.orbit.get_orbit(synced=True)
+            if not self._check_valid_orbit(orb):
+                self._loop_state = self._csorb.ClosedLoop.Off
+                self.run_callbacks('ClosedLoop-Sel', 0)
+                break
 
             tims.append(_time())
             dkicks = self.matrix.calc_kicks(orb)
@@ -567,6 +579,24 @@ class SOFB(_BaseClass):
         _log.info(msg.format('  MIN', *min_))
         _log.info(msg.format('  AVG', *avg_))
         _log.info(msg.format('  STD', *std_))
+
+    def _check_valid_orbit(self, orbit):
+        conn = _np.array([bpm.connected for bpm in self._orbit.bpms])
+        conn = _np.tile(conn, [2, ])
+        enbl = self._matrix.bpm_enbllist
+        if _np.any(~conn & enbl):
+            msg = 'ERR: BPM Not Connected!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+
+        maxo = _np.abs(orbit[enbl]).max()
+        if maxo > self._loop_max_orb_distortion:
+            msg = 'ERR: Orbit distortion above threshold!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        return True
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
