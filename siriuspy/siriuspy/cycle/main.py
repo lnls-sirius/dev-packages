@@ -36,15 +36,15 @@ class CycleController:
         self._cycle_trims_duration = 0
         self._checks_result = dict()
 
+        # in case cyclers are not set and user wants to cycle bo
+        self._is_bo = is_bo
+        self._ramp_config = ramp_config
+
         # cyclers
         self.cyclers = cyclers
 
         # timing connector
         self.timing = timing
-
-        # in case cyclers are not set and user wants to cycle bo
-        self._is_bo = is_bo
-        self._ramp_config = ramp_config
 
         # logger
         self._logger_message = ''
@@ -64,28 +64,33 @@ class CycleController:
 
     @cyclers.setter
     def cyclers(self, new_cyclers):
-        if not isinstance(new_cyclers, dict):
-            raise TypeError("Input 'new_cyclers' has to be a dict!")
-
-        # define mode
-        psnames2filt = list(new_cyclers.keys())
-        ps2cycle = self._filter_psnames(
-            psnames2filt, {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
-        ps2ramp = self._filter_psnames(
-            psnames2filt, {'sec': 'BO', 'dis': 'PS'})
-        if new_cyclers and (ps2cycle and ps2ramp):
-            raise Exception('Can not cycle Booster with other accelerators!')
-        self._mode = 'Ramp' if ps2ramp else 'Cycle'
-
-        # create cyclers, if needed
-        if not new_cyclers:
-            psnames = ps2ramp if self._is_bo else ps2cycle
+        if new_cyclers:
+            if not isinstance(new_cyclers, dict):
+                raise TypeError("Input 'new_cyclers' has to be a dict!")
+            psnames2filt = list(new_cyclers.keys())
+            ps2cycle = self._filter_psnames(
+                psnames2filt, {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
+            ps2ramp = self._filter_psnames(
+                psnames2filt, {'sec': 'BO', 'dis': 'PS'})
+            if ps2cycle and ps2ramp:
+                raise Exception('Can not cycle Booster with other sectors!')
+            self._mode = 'Ramp' if ps2ramp else 'Cycle'
+        else:
+            # create cyclers, if needed
+            if self._is_bo:
+                psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
+                self._mode = 'Ramp'
+            else:
+                psnames = _PSSearch.get_psnames(
+                    {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
+                self._mode = 'Cycle'
             new_cyclers = dict()
             for name in psnames:
                 if 'LI' in name:
                     new_cyclers[name] = LinacPSCycler(name)
                 else:
                     new_cyclers[name] = PSCycler(name, self._ramp_config)
+
         self._cyclers = new_cyclers
 
         # define section
