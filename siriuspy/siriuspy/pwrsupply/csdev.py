@@ -376,7 +376,10 @@ class ETypes(_csdev.ETypes):
         'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
-    CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
+    CYCLE_TYPES = (
+        'Sine', 'DampedSine', 'Trapezoidal',
+        'DampedSquaredSine', 'Square'
+        )
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
     LINAC_INTLCK_WARN = (
         'LoadI 0C Shutdown', 'LoadI 0C Interlock',
