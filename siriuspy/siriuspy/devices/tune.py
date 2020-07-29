@@ -103,3 +103,56 @@ class Tune(_Devices):
     def tuney_wfm(self):
         """."""
         return self.devices[3].tune_wfm
+
+
+class TuneCorr(_Device):
+    """."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SI = 'SI-Glob:AP-TuneCorr'
+        ALL = (SI, )
+
+    _properties = (
+        'DeltaTuneX-SP', 'DeltaTuneX-RB',
+        'DeltaTuneY-SP', 'DeltaTuneY-RB',
+        'SetNewRefKL-Cmd', 'ApplyDelta-Cmd',
+    )
+
+    def __init__(self, devname):
+        """."""
+        # check if device exists
+        if devname not in TuneCorr.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=TuneCorr._properties)
+
+    @property
+    def delta_tunex(self):
+        """."""
+        return self['DeltaTuneX-RB']
+
+    @delta_tunex.setter
+    def delta_tunex(self, value):
+        """."""
+        self['DeltaTuneX-SP'] = value
+
+    @property
+    def delta_tuney(self):
+        """."""
+        return self['DeltaTuneY-RB']
+
+    @delta_tuney.setter
+    def delta_tuney(self, value):
+        """."""
+        self['DeltaTuneY-SP'] = value
+
+    def cmd_update_reference(self):
+        """."""
+        self['SetNewRefKL-Cmd'] = 1
+
+    def cmd_apply_delta(self):
+        """."""
+        self['ApplyDelta-Cmd'] = 1

@@ -979,7 +979,7 @@ _pvs_as_pu = [
     ['TS-04:PU-InjSeptG-2:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-04:PU-InjSeptF:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-01:PU-EjeSeptG:Voltage-SP', 0.0, 0.0],  # [V]
-    ['TS-01:PU-EjeSeptF:Voltage-SP', 0.0, 0.0],  # [V]
+    ['TS-01:PU-EjeSeptF:Voltage-SP', 0.0, 0.1],  # [V]
     ['TB-04:PU-InjSept:Pulse-Sel', 0, 0.0],
     ['BO-01D:PU-InjKckr:Pulse-Sel', 0, 0.0],
     ['BO-48D:PU-EjeKckr:Pulse-Sel', 0, 0.0],
@@ -989,7 +989,7 @@ _pvs_as_pu = [
     ['TS-04:PU-InjSeptG-2:Pulse-Sel', 0, 0.0],
     ['TS-04:PU-InjSeptF:Pulse-Sel', 0, 0.0],
     ['TS-01:PU-EjeSeptG:Pulse-Sel', 0, 0.0],
-    ['TS-01:PU-EjeSeptF:Pulse-Sel', 0, 0.0],
+    ['TS-01:PU-EjeSeptF:Pulse-Sel', 0, 0.1],
     ['TB-04:PU-InjSept:PwrState-Sel', _OFF, 0.0],
     ['BO-01D:PU-InjKckr:PwrState-Sel', _OFF, 0.0],
     ['BO-48D:PU-EjeKckr:PwrState-Sel', _OFF, 0.0],

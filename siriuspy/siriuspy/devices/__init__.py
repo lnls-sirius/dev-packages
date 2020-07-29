@@ -11,7 +11,7 @@ from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
 from .rf import RFGen, RFLL, RFPowMon, RFCav
 from .screen import Screen
-from .tune import TuneFrac, TuneProc, Tune
+from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .sofb import SOFB
 from .timing import EVG
 from .syncd import DevicesSync

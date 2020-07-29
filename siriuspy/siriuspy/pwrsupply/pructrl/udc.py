@@ -25,6 +25,7 @@ class UDC:
     }
 
     _soft_def = _np.zeros(_UDC_MAX_NR_DEV)
+    _soft_def_int = _np.zeros(_UDC_MAX_NR_DEV, dtype=int)
 
     def __init__(self, pru, psmodel, device_ids):
         """Init."""
@@ -182,6 +183,15 @@ class UDC:
             val2 = dev2.sofb_ps_readback_ref if dev2 else UDC._soft_def
             if val1 is not None and val2 is not None:
                 return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_func_return_get(self):
+        """Return function return from last SOFB communication."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_func_return
+            val2 = dev2.sofb_ps_func_return if dev2 else UDC._soft_def_int
+            return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_set(self, value):
