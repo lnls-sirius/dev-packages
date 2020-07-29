@@ -27,8 +27,8 @@ class SOFB(_BaseClass):
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
         self._orbit = self._correctors = self._matrix = None
-        self._auto_corr = self._csorb.ClosedLoop.Off
-        self._auto_corr_freq = 1
+        self._loop_state = self._csorb.ClosedLoop.Off
+        self._loop_freq = 1
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -213,7 +213,7 @@ class SOFB(_BaseClass):
     def set_auto_corr(self, value):
         """."""
         if value == self._csorb.ClosedLoop.On:
-            if self._auto_corr == self._csorb.ClosedLoop.On:
+            if self._loop_state == self._csorb.ClosedLoop.On:
                 msg = 'ERR: ClosedLoop is Already On.'
                 self._update_log(msg)
                 _log.error(msg[5:])
@@ -231,7 +231,7 @@ class SOFB(_BaseClass):
             msg = 'Closing the Loop.'
             self._update_log(msg)
             _log.info(msg)
-            self._auto_corr = value
+            self._loop_state = value
             self._thread = _Thread(
                 target=self._do_auto_corr, daemon=True)
             self._thread.start()
@@ -239,14 +239,14 @@ class SOFB(_BaseClass):
             msg = 'Opening the Loop.'
             self._update_log(msg)
             _log.info(msg)
-            self._auto_corr = value
+            self._loop_state = value
         return True
 
     def set_auto_corr_frequency(self, value):
         """."""
         bpmfreq = self._csorb.BPMsFreq
         value = bpmfreq / max(int(bpmfreq/value), 1)
-        self._auto_corr_freq = value
+        self._loop_freq = value
         self.run_callbacks('ClosedLoopFreq-RB', value)
         return True
 
@@ -475,7 +475,7 @@ class SOFB(_BaseClass):
         times, rets = [], []
         count = 0
         bpmsfreq = self._csorb.BPMsFreq
-        while self._auto_corr == self._csorb.ClosedLoop.On:
+        while self._loop_state == self._csorb.ClosedLoop.On:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
@@ -490,7 +490,7 @@ class SOFB(_BaseClass):
             count += 1
             tims = []
 
-            interval = 1/self._auto_corr_freq
+            interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
@@ -499,7 +499,7 @@ class SOFB(_BaseClass):
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
-                interval = 1/self._auto_corr_freq
+                interval = 1/self._loop_freq
                 norbs = max(int(bpmsfreq/interval), 1)
                 if i >= norbs:
                     break
@@ -515,7 +515,7 @@ class SOFB(_BaseClass):
             kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
             tims.append(_time())
             if kicks is None:
-                self._auto_corr = self._csorb.ClosedLoop.Off
+                self._loop_state = self._csorb.ClosedLoop.Off
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 break
 
@@ -525,10 +525,7 @@ class SOFB(_BaseClass):
             tims.append(tims[1])  # to compute total time - get_orbit
             times.append(tims)
             if ret == -2:
-                self._auto_corr = self._csorb.ClosedLoop.Off
-                msg = 'ERR: Problem with Corrector!'
-                self._update_log(msg)
-                _log.error(msg[5:])
+                self._loop_state = self._csorb.ClosedLoop.Off
                 self.run_callbacks('ClosedLoop-Sel', 0)
                 break
             elif ret == -1:
