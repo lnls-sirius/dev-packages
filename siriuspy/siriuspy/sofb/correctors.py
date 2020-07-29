@@ -827,10 +827,14 @@ class EpicsCorrectors(BaseCorrectors):
         iszero = _compare_kicks(curr_vals, 0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
-        if _np.any(prob):
-            self._print_guilty(
-                ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
+        # For debugging:
+        # if _np.any(prob):
+        #     self._print_guilty(
+        #         ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
+
         # Only acuse problem if it repeats for MAX_PROB consecutive times:
+        # Because in some cases of previous unsuccessful applications, the
+        # current value will be different from this reference.
         self._prob[prob] += 1
         self._prob[~prob] = 0
         if _np.any(self._prob >= self.MAX_PROB):
@@ -845,8 +849,7 @@ class EpicsCorrectors(BaseCorrectors):
     def _print_guilty(
             self, okg, mode='ready', fret=None, currs=None, refs=None):
         msg_tmpl = 'ERR: timeout {0:3s}: {1:s}'
-        mde = 'RB' if mode == 'ready' else 'Ref'
-        data = None
+        data = [tuple(), ] * len(self._corrs)
         if mode == 'prob_code':
             msg_tmpl = 'ERR: {0:s} --> {1:s}: code={2:d}'
             data = zip(fret)
@@ -855,15 +858,8 @@ class EpicsCorrectors(BaseCorrectors):
             data = zip(currs, refs)
         elif mode == 'diff':
             msg_tmpl = 'ERR: Corrector {1:s} diff from setpoint!'
-        if data:
-            for oki, corr, args in zip(okg, self._corrs, data):
-                if not oki:
-                    msg = msg_tmpl.format(mde, corr.name, *args)
-                    self._update_log(msg)
-                    _log.error(msg[5:])
-        else:
-            for oki, corr in zip(okg, self._corrs):
-                if not oki:
-                    msg = msg_tmpl.format(mde, corr.name)
-                    self._update_log(msg)
-                    _log.error(msg[5:])
+        for oki, corr, args in zip(okg, self._corrs, data):
+            if not oki:
+                msg = msg_tmpl.format(mode, corr.name, *args)
+                self._update_log(msg)
+                _log.error(msg[5:])
