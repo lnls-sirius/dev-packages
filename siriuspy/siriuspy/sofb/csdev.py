@@ -93,6 +93,7 @@ class ConstTLines(_csdev.Const):
     StsLblsGlob = _csdev.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
+    LoopUsePID = _csdev.Const.register('LoopUsePID', _et.OFF_ON)
 
 
 class ConstRings(ConstTLines):
@@ -209,6 +210,48 @@ class SOFBTLines(ConstTLines):
             'LoopFreq-RB': {
                 'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
                 'lolim': 1e-3, 'hilim': 60},
+            'LoopUsePID-Sel': {
+                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
+            'LoopUsePID-Sts': {
+                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
+            'LoopPIDRstRef-Cmd': {
+                'type': 'int', 'value': 0, 'unit': 'Reset PID reference'},
+            'LoopPIDKpX-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpX-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpY-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpY-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiX-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiX-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiY-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiY-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdX-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdX-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdY-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdY-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
             'LoopMaxOrbDistortion-SP': {
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',
