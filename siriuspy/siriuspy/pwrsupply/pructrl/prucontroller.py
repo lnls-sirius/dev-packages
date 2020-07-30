@@ -242,7 +242,7 @@ class PRUController:
             because of the SOFBMode state.
 
         """
-        # if in SOFBMode on, does not accept exec functions
+        # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
             return False
 
