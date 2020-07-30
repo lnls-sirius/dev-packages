@@ -121,7 +121,7 @@ class Timing:
         if mode == 'Cycle':
             pvobj = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
             pvobj.value = 1
-        else:
+        elif mode == 'Ramp':
             pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
             pvobj.value = _TIConst.DsblEnbl.Enbl
 
@@ -131,6 +131,9 @@ class Timing:
                 if pvobj.value == _TIConst.DsblEnbl.Enbl:
                     break
                 _time.sleep(TIMEOUT_SLEEP)
+        else:
+            raise NotImplementedError(
+                "Trigger control is not defined for '{}' mode!".format(mode))
 
     def enable_evg(self):
         """Enable EVG."""
@@ -416,7 +419,10 @@ class PSCycler:
         """Return the duration of the cycling in seconds."""
         if mode == 'Cycle':
             return self.siggen.num_cycles/self.siggen.freq
-        return DEFAULT_RAMP_TOTDURATION
+        if mode == 'Ramp':
+            return DEFAULT_RAMP_TOTDURATION
+        raise NotImplementedError(
+            "Cycle duration is not defined for '{}' mode!".format(mode))
 
     def check_intlks(self):
         """Check Interlocks."""
@@ -440,9 +446,8 @@ class PSCycler:
 
     def set_params(self, mode):
         """Set params to cycle."""
-        status = True
         if mode == 'Cycle':
-            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
+            status = _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
             _time.sleep(TIMEOUT_SLEEP)
             status &= _pv_conn_put(self['CycleFreq-SP'], self.siggen.freq)
             _time.sleep(TIMEOUT_SLEEP)
@@ -456,17 +461,21 @@ class PSCycler:
             status &= _pv_conn_put(self['CycleNrCycles-SP'],
                                    self.siggen.num_cycles)
             _time.sleep(TIMEOUT_SLEEP)
-        else:
-            status &= _pv_conn_put(self['Wfm-SP'], self.waveform)
+        elif mode == 'Ramp':
+            status = _pv_conn_put(self['Wfm-SP'], self.waveform)
             _time.sleep(TIMEOUT_SLEEP)
+        else:
+            raise NotImplementedError(
+                "Parameters are not defined for mode '{}'!".format(mode))
         return status
 
     def check_params(self, mode, wait=5):
         """Return wether power supply cycling parameters are set."""
-        status = True
         if mode == 'Cycle':
+            wait = wait/6
             type_idx = _PSet.CYCLE_TYPES.index(self.siggen.sigtype)
-            status &= _pv_timed_get(self['CycleType-Sts'], type_idx, wait=wait)
+            status = _pv_timed_get(
+                self['CycleType-Sts'], type_idx, wait=wait)
             status &= _pv_timed_get(
                 self['CycleFreq-RB'], self.siggen.freq, wait=wait)
             status &= _pv_timed_get(
@@ -477,8 +486,11 @@ class PSCycler:
                 self['CycleAuxParam-RB'], self.siggen.aux_param, wait=wait)
             status &= _pv_timed_get(
                 self['CycleNrCycles-RB'], self.siggen.num_cycles, wait=wait)
+        elif mode == 'Ramp':
+            status = _pv_timed_get(self['Wfm-RB'], self.waveform, wait=wait)
         else:
-            status &= _pv_timed_get(self['Wfm-RB'], self.waveform, wait=wait)
+            raise NotImplementedError(
+                "Parameters are not defined for mode '{}'!".format(mode))
         return status
 
     def prepare(self, mode):
@@ -665,8 +677,7 @@ class LinacPSCycler:
 
     def check_final_state(self, _):
         """Check state after Cycle."""
-        status = True
-        status &= self.check_on()
+        status = self.check_on()
         status &= self.check_intlks()
         if not status:
             return 4  # indicate interlock problems
