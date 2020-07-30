@@ -431,7 +431,7 @@ class PSCycler:
         return status
 
     def check_on(self):
-        """Return wether power supply PS is on."""
+        """Return whether power supply PS is on."""
         return _pv_timed_get(self['PwrState-Sts'], _PSConst.PwrStateSts.On)
 
     def set_current_zero(self):
@@ -440,7 +440,7 @@ class PSCycler:
         return status
 
     def check_current_zero(self, wait=5):
-        """Return wether power supply PS current is zero."""
+        """Return whether power supply PS current is zero."""
         return _pv_timed_get(
             self['CurrentRef-Mon'], 0, abs_tol=0.05, wait=wait)
 
@@ -470,7 +470,7 @@ class PSCycler:
         return status
 
     def check_params(self, mode, wait=5):
-        """Return wether power supply cycling parameters are set."""
+        """Return whether power supply cycling parameters are set."""
         if mode == 'Cycle':
             wait = wait/6
             type_idx = _PSet.CYCLE_TYPES.index(self.siggen.sigtype)
@@ -512,7 +512,7 @@ class PSCycler:
         return True
 
     def is_prepared(self, mode):
-        """Return wether power supply is ready."""
+        """Return whether power supply is ready."""
         if not self.check_current_zero():
             return False
         if not self.check_params(mode):
@@ -541,7 +541,7 @@ class PSCycler:
         return self.set_opmode(opmode)
 
     def check_opmode_cycle(self, mode, wait=5):
-        """Return wether power supply is in mode."""
+        """Return whether power supply is in mode."""
         opmode = _PSConst.States.Cycle if mode == 'Cycle'\
             else _PSConst.States.RmpWfm
         return _pv_timed_get(self['OpMode-Sts'], opmode, wait=wait)
@@ -645,7 +645,7 @@ class LinacPSCycler:
         return self['StatusIntlk-Mon'].value < 55
 
     def check_on(self):
-        """Return wether power supply PS is on."""
+        """Return whether power supply PS is on."""
         return _pv_timed_get(self['PwrState-Sel'], 1)
 
     def set_current_zero(self):
@@ -653,7 +653,7 @@ class LinacPSCycler:
         return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self, wait=5):
-        """Return wether power supply PS current is zero."""
+        """Return whether power supply PS current is zero."""
         return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.1, wait=wait)
 
     def prepare(self, _):
@@ -664,7 +664,7 @@ class LinacPSCycler:
         return status
 
     def is_prepared(self, _):
-        """Return wether power supply is ready."""
+        """Return whether power supply is ready."""
         status = self.check_current_zero()
         return status
 
