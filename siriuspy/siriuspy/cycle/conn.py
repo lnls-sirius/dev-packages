@@ -495,18 +495,13 @@ class PSCycler:
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        if not self.check_opmode_slowref(wait=0.5):
-            self.set_opmode_slowref()
-            if not self.check_opmode_slowref():
-                return False
+        if not self.check_opmode_slowref(wait=1):
+            return False
 
-        if not self.check_current_zero(wait=0.5):
-            self.set_current_zero()
-            if not self.check_current_zero():
-                return False
+        if not self.check_current_zero(wait=1):
+            return False
 
-        if not self.check_params(mode, wait=0.5):
-            self.set_params(mode)
+        self.set_params(mode)
 
         self.update_wfm_pulsecnt()
         return True

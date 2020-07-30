@@ -171,6 +171,8 @@ class CycleController:
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection()
 
+        return missing_ps
+
     @property
     def timing(self):
         """Return timing connector."""
@@ -211,19 +213,43 @@ class CycleController:
         return self._sections
 
     @property
+    def save_timing_size(self):
+        """Save timing initial state task size."""
+        return 2
+
+    @property
     def prepare_timing_size(self):
         """Prepare timing task size."""
         return 3
 
     @property
-    def prepare_ps_size(self):
-        """Prepare PS task size."""
-        prepare_ps_size = 2*len(self.psnames)+1
+    def prepare_ps_opmode_slowref_size(self):
+        """Prepare PS OpMode SlowRef task size."""
+        prepare_ps_size = 2*(len(self.psnames)+1)
         if 'SI' in self._sections:
-            # connect to trims
-            prepare_ps_size += len(self.trimnames)
-            # set and check currents to zero
-            prepare_ps_size += 2*(len(self.psnames)+len(self.trimnames))
+            prepare_ps_size += 3*len(self.trimnames)
+        return prepare_ps_size
+
+    @property
+    def prepare_ps_current_zero_size(self):
+        """Prepare PS current zero task size."""
+        prepare_ps_size = 2*(len(self.psnames)+1)
+        if 'SI' in self._sections:
+            prepare_ps_size += 3*len(self.trimnames)
+        return prepare_ps_size
+
+    @property
+    def prepare_ps_params_size(self):
+        """Prepare PS parameters task size."""
+        prepare_ps_size = 2*(len(self.psnames)+1)
+        if 'SI' in self._sections:
+            prepare_ps_size += 3*len(self.trimnames)
+        return prepare_ps_size
+
+    @property
+    def prepare_ps_opmode_cycle_size(self):
+        """Prepare PS task size."""
+        prepare_ps_size = 2*(len(self.psnames)+1)
         return prepare_ps_size
 
     @property
@@ -252,19 +278,49 @@ class CycleController:
         return cycle_trims_size
 
     @property
+    def restore_timing_size(self):
+        """Restore timing initial state task size."""
+        return 2
+
+    @property
+    def save_timing_max_duration(self):
+        """Save timing initial state task maximum duration."""
+        return 10
+
+    @property
     def prepare_timing_max_duration(self):
         """Prepare timing task maximum duration."""
         return 10
 
     @property
-    def prepare_ps_max_duration(self):
-        """Prepare PS task maximum duration."""
+    def prepare_ps_opmode_slowref_max_duration(self):
+        """Prepare PS OpMode SlowRef task maximum duration."""
         prepare_ps_max_duration = 20
         if 'SI' in self._sections:
-            # connect to trims
             prepare_ps_max_duration += 2*TIMEOUT_CHECK
-            # set and check currents to zero
+        return prepare_ps_max_duration
+
+    @property
+    def prepare_ps_current_zero_max_duration(self):
+        """Prepare PS current zero task maximum duration."""
+        prepare_ps_max_duration = 20
+        if 'SI' in self._sections:
+            prepare_ps_max_duration += 2*TIMEOUT_CHECK
             prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
+        return prepare_ps_max_duration
+
+    @property
+    def prepare_ps_params_max_duration(self):
+        """Prepare PS parameters task maximum duration."""
+        prepare_ps_max_duration = 20
+        if 'SI' in self._sections:
+            prepare_ps_max_duration += 2*TIMEOUT_CHECK
+        return prepare_ps_max_duration
+
+    @property
+    def prepare_ps_opmode_cycle_max_duration(self):
+        """Prepare PS task maximum duration."""
+        prepare_ps_max_duration = 20
         return prepare_ps_max_duration
 
     @property
@@ -294,47 +350,12 @@ class CycleController:
             2*12)  # check final
         return cycle_trims_max_duration
 
+    @property
+    def restore_timing_max_duration(self):
+        """Restore timing initial state task maximum duration."""
+        return 10
+
     # --- auxiliary commands ---
-
-    def set_pwrsupplies_currents_zero(self):
-        """Zero currents of all SI power supplies."""
-        psnames = _PSSearch.get_psnames(
-            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'})
-
-        # set currents to zero
-        for psn in psnames:
-            cycler = self._get_cycler(psn)
-            self._update_log('Setting '+psn+' current to zero...')
-            cycler.set_current_zero()
-
-        # check currents zero
-        self._update_log('Waiting power supplies...')
-        need_check = _dcopy(psnames)
-        self._checks_result = dict()
-        time = _time.time()
-        while _time.time() - time < TIMEOUT_CHECK_SI_CURRENTS:
-            for psname in psnames:
-                if psname not in need_check:
-                    continue
-                cycler = self._get_cycler(psname)
-                if cycler.check_current_zero():
-                    need_check.remove(psname)
-                    self._checks_result[psname] = True
-            if not need_check:
-                break
-            _time.sleep(TIMEOUT_SLEEP)
-        for psname in need_check:
-            self._checks_result[psname] = False
-
-        status = True
-        for psname in psnames:
-            self._update_log('Checking '+psname+' currents...')
-            if self._checks_result[psname]:
-                self._update_log(done=True)
-            else:
-                self._update_log(psname+' current is not zero.', error=True)
-                status &= False
-        return status
 
     def config_pwrsupplies(self, ppty, psnames):
         """Prepare power supplies to cycle according to mode."""
@@ -658,6 +679,50 @@ class CycleController:
                 status &= False
         return status
 
+    def set_pwrsupplies_current_zero(self, psnames):
+        """Set power supplies current to zero."""
+
+        self._update_log('Setting power supplies current to zero...')
+        threads = list()
+        for psname in psnames:
+            cycler = self._get_cycler(psname)
+            target = cycler.set_current_zero
+            thread = _thread.Thread(target=target, daemon=True)
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    def check_pwrsupplies_current_zero(self, psnames):
+        """Check power supplies current."""
+        need_check = _dcopy(psnames)
+
+        self._checks_result = dict()
+        time = _time.time()
+        while _time.time() - time < TIMEOUT_CHECK_SI_CURRENTS:
+            for psname in psnames:
+                if psname not in need_check:
+                    continue
+                cycler = self._get_cycler(psname)
+                if cycler.check_current_zero():
+                    need_check.remove(psname)
+                    self._checks_result[psname] = True
+            if not need_check:
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+        for psname in need_check:
+            self._checks_result[psname] = False
+
+        status = True
+        for psname in psnames:
+            self._update_log('Checking '+psname+' current...')
+            if self._checks_result[psname]:
+                self._update_log(done=True)
+            else:
+                self._update_log(psname+' current is not zero.', error=True)
+                status &= False
+        return status
+
     # --- main commands ---
 
     def save_timing_initial_state(self):
@@ -675,14 +740,43 @@ class CycleController:
             return
         self._update_log('Timing preparation finished!')
 
+    def prepare_pwrsupplies_opmode_slowref(self):
+        """Prepare OpMode to slowref."""
+        psnames = [ps for ps in self.psnames if 'LI' not in ps]
+        if 'SI' in self._sections:
+            self.create_trims_cyclers()
+            psnames.extend(self.trimnames)
+            aux_ps = self.create_aux_cyclers()
+            psnames.extend(aux_ps)
+
+        self.set_pwrsupplies_slowref(psnames)
+        if not self.check_pwrsupplies_slowref(psnames):
+            self._update_log(
+                'There are power supplies not in OpMode SlowRef.', error=True)
+            return
+        self._update_log('Power supplies OpMode preparation finished!')
+
+    def prepare_pwrsupplies_current_zero(self):
+        """Prepare current to cycle."""
+        psnames = self.psnames
+        if 'SI' in self._sections:
+            self.create_trims_cyclers()
+            psnames.extend(self.trimnames)
+            aux_ps = self.create_aux_cyclers()
+            psnames.extend(aux_ps)
+
+        self.set_pwrsupplies_current_zero(psnames)
+        if not self.check_pwrsupplies_current_zero(psnames):
+            self._update_log(
+                'There are power supplies with current not zero.', error=True)
+            return
+        self._update_log('Power supplies current preparation finished!')
+
     def prepare_pwrsupplies_parameters(self):
         """Prepare parameters to cycle."""
         psnames = self.psnames
         if 'SI' in self._sections:
             self.create_trims_cyclers()
-            self.create_aux_cyclers()
-            self.set_pwrsupplies_currents_zero()
-
             psnames.extend(self.trimnames)
 
         self.config_pwrsupplies('parameters', psnames)
@@ -693,7 +787,7 @@ class CycleController:
             return
         self._update_log('Power supplies parameters preparation finished!')
 
-    def prepare_pwrsupplies_opmode(self):
+    def prepare_pwrsupplies_opmode_cycle(self):
         """Prepare OpMode to cycle."""
         psnames = [ps for ps in self.psnames if 'LI' not in ps]
         self.config_pwrsupplies('opmode', psnames)
