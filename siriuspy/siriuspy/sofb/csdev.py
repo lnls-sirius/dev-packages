@@ -216,40 +216,40 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
             'LoopPIDRstRef-Cmd': {
                 'type': 'int', 'value': 0, 'unit': 'Reset PID reference'},
-            'LoopPIDKpX-SP': {
+            'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKpX-RB': {
+            'LoopPIDKpCH-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKpY-SP': {
+            'LoopPIDKpCV-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKpY-RB': {
+            'LoopPIDKpCV-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiX-SP': {
+            'LoopPIDKiCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiX-RB': {
+            'LoopPIDKiCH-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiY-SP': {
+            'LoopPIDKiCV-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiY-RB': {
+            'LoopPIDKiCV-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdX-SP': {
+            'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdX-RB': {
+            'LoopPIDKdCH-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdY-SP': {
+            'LoopPIDKdCV-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdY-RB': {
+            'LoopPIDKdCV-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopMaxOrbDistortion-SP': {
@@ -769,6 +769,24 @@ class SOFBSI(SOFBRings, ConstSI):
             'MeasRespMatKickRF-RB': {
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
+            'LoopPIDKpRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
             'DeltaFactorRF-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -1000, 'hilim': 1000},

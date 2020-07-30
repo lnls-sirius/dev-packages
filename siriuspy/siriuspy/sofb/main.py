@@ -36,9 +36,9 @@ class SOFB(_BaseClass):
         self._pid_lasterr = None
         self._pid_reset_ref = False
         self._pid_gains = dict(
-            kp=dict(x=0.0, y=0.0),
-            ki=dict(x=0.0, y=0.0),
-            kd=dict(x=0.0, y=0.0))
+            kp=dict(ch=0.0, cv=0.0, rf=0.0),
+            ki=dict(ch=0.0, cv=0.0, rf=0.0),
+            kd=dict(ch=0.0, cv=0.0, rf=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -67,12 +67,12 @@ class SOFB(_BaseClass):
             'LoopFreq-SP': self.set_auto_corr_frequency,
             'LoopUsePID-Sel': self.set_use_pid,
             'LoopPIDRstRef-Cmd': self.cmd_pid_reset_ref,
-            'LoopPIDKpX-SP': _part(self.set_pid_gain, 'kp', 'x'),
-            'LoopPIDKpY-SP': _part(self.set_pid_gain, 'kp', 'y'),
-            'LoopPIDKiX-SP': _part(self.set_pid_gain, 'ki', 'x'),
-            'LoopPIDKiY-SP': _part(self.set_pid_gain, 'ki', 'y'),
-            'LoopPIDKdX-SP': _part(self.set_pid_gain, 'kd', 'x'),
-            'LoopPIDKdY-SP': _part(self.set_pid_gain, 'kd', 'y'),
+            'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
+            'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
+            'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
+            'LoopPIDKiCV-SP': _part(self.set_pid_gain, 'ki', 'cv'),
+            'LoopPIDKdCH-SP': _part(self.set_pid_gain, 'kd', 'ch'),
+            'LoopPIDKdCV-SP': _part(self.set_pid_gain, 'kd', 'cv'),
             'LoopMaxOrbDistortion-SP': self.set_max_orbit_dist,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
             'CalcDelta-Cmd': self.calc_correction,
@@ -94,6 +94,9 @@ class SOFB(_BaseClass):
         if self.isring:
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
+            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
+            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
             dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
             dbase['DeltaKickRF-SP'] = _part(
@@ -560,29 +563,12 @@ class SOFB(_BaseClass):
             self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
 
+            dkicks = self.matrix.calc_kicks(orb)
             if self._use_pid == self._csorb.LoopUsePID.On:
-                if self._pid_ref_kick is None or self._pid_reset_ref:
-                    self._pid_ref_kick = self.correctors.get_strength()
-                    self._pid_interr = _np.zeros(orb.size, dtype=float)
-                    self._pid_lasterr = orb.copy()
-                    self._pid_reset_ref = False
-                self._pid_interr += orb * interval
-                derr = orb - self._pid_lasterr
-                derr /= interval
-                self._pid_lasterr[:] = orb
-                siz = orb.size//2
-                gains = self._pid_gains
-                orb[:siz] *= gains['kp']['x']
-                orb[siz:] *= gains['kp']['y']
-                orb[:siz] += self._pid_interr[:siz] * gains['ki']['x']
-                orb[siz:] += self._pid_interr[siz:] * gains['ki']['y']
-                orb[:siz] += derr[:siz] * gains['kd']['x']
-                orb[siz:] += derr[siz:] * gains['kd']['y']
+                dkicks = self._process_pid(dkicks, interval)
                 ref_kicks = self._pid_ref_kick
             else:
                 ref_kicks = self._ref_corr_kicks
-
-            dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
             kicks = self._process_kicks(ref_kicks, dkicks)
@@ -614,6 +600,37 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         self.run_callbacks('LoopState-Sts', 0)
+
+    def _process_pid(self, dkicks, interval):
+        if dkicks is None:
+            return None
+
+        if self._pid_ref_kick is None or self._pid_reset_ref:
+            self._pid_ref_kick = self.correctors.get_strength()
+            self._pid_interr = _np.zeros(
+                self._pid_ref_kick.size, dtype=float)
+            self._pid_lasterr = dkicks.copy()
+            self._pid_reset_ref = False
+
+        self._pid_interr += dkicks * interval
+        derr = dkicks - self._pid_lasterr
+        derr /= interval
+        self._pid_lasterr[:] = dkicks
+
+        gains = self._pid_gains
+        nr_ch = self._csorb.nr_ch
+        slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
+        if self.acc == 'SI':
+            slcs = {
+                'ch': slice(None, nr_ch),
+                'cv': slice(nr_ch, -1),
+                'rf': slice(-1, None)}
+        for pln in sorted(slcs.keys()):
+            slc = slcs[pln]
+            dkicks[slc] *= gains['kp'][pln]
+            dkicks[slc] += self._pid_interr[slc] * gains['ki'][pln]
+            dkicks[slc] += derr[slc] * gains['kd'][pln]
+        return dkicks
 
     def _print_auto_corr_info(self, times, rets):
         """."""
