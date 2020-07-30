@@ -729,9 +729,9 @@ class CycleController:
         """Save timing initial state."""
         if self._only_linac:
             return
-        self._update_log('Save Timing initial state...')
+        self._update_log('Saving Timing initial state...')
         self._timing.save_initial_state()
-        self._update_log(done=True)
+        self._update_log('...finished!')
 
     def prepare_timing(self):
         """Prepare Timing."""
@@ -871,7 +871,7 @@ class CycleController:
             return
         self._update_log('Restoring Timing initial state...')
         self._timing.restore_initial_state()
-        self._update_log(done=True)
+        self._update_log('...finished!')
 
     # --- private methods ---
 
