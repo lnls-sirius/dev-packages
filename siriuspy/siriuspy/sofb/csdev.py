@@ -16,6 +16,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     ENBL_RF = _csdev.ETypes.OFF_ON
+    OPEN_CLOSED = ('OPEN', 'CLOSED')
     ORB_MODE_SI = ('Offline', 'SlowOrb', 'MultiTurn', 'SinglePass')
     ORB_MODE_RINGS = ('Offline', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
@@ -91,7 +92,7 @@ class ConstTLines(_csdev.Const):
     StsLblsOrb = _csdev.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
     StsLblsGlob = _csdev.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
-    ClosedLoop = _csdev.Const.register('ClosedLoop', _et.OFF_ON)
+    LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
 
 
 class ConstRings(ConstTLines):
@@ -198,14 +199,14 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
-            'ClosedLoop-Sel': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoop-Sts': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoopFreq-SP': {
+            'LoopState-Sel': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopState-Sts': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopFreq-SP': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
                 'lolim': 1e-3, 'hilim': 60},
-            'ClosedLoopFreq-RB': {
+            'LoopFreq-RB': {
                 'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
                 'lolim': 1e-3, 'hilim': 60},
             'LoopMaxOrbDistortion-SP': {
