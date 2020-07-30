@@ -376,6 +376,10 @@ class PRUController:
 
     def sofb_update_variables_state(self):
         """Update variables state mirror."""
+        # do sofb update only if in SOFBMode On
+        if not self._sofb_mode:
+            return
+
         # wait until queue is empty
         while self._queue:
             pass
