@@ -16,7 +16,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     ENBL_RF = _csdev.ETypes.OFF_ON
-    OPEN_CLOSED = ('OPEN', 'CLOSED')
+    OPEN_CLOSED = ('Open', 'Closed')
     ORB_MODE_SI = ('Offline', 'SlowOrb', 'MultiTurn', 'SinglePass')
     ORB_MODE_RINGS = ('Offline', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')

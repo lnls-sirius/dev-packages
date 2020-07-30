@@ -27,7 +27,7 @@ class SOFB(_BaseClass):
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
         self._orbit = self._correctors = self._matrix = None
-        self._loop_state = self._csorb.LoopState.Off
+        self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = 1
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         self._use_pid = False
