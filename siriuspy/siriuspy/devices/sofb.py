@@ -353,9 +353,9 @@ class SOFB(_Device):
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['LoopState-Sel'] = self.data.LoopState.Open
+        self['LoopState-Sel'] = self.data.LoopState.Closed
         self._wait(
-            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
+            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
