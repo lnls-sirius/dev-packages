@@ -284,7 +284,7 @@ class PRUController:
 
     def wfmref_write(self, device_ids, data):
         """Write wfm curves."""
-        # if in SOFBMode on, does not accept exec functions
+        # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
             return False
 
@@ -374,7 +374,7 @@ class PRUController:
         if not self._queue or operation != self._queue.last_operation:
             self._queue.append(operation)
         else:
-            # does not append if last operation is the same as last one
+            # do not append if last operation is the same as last one
             # operation appended to queue
             pass
 
