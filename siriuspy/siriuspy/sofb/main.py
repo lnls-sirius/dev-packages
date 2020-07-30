@@ -571,7 +571,8 @@ class SOFB(_BaseClass):
                 ref_kicks = self._ref_corr_kicks
             tims.append(_time())
 
-            kicks = self._process_kicks(ref_kicks, dkicks)
+            kicks = self._process_kicks(
+                ref_kicks, dkicks, apply_factor=not self._use_pid)
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
@@ -692,7 +693,7 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
 
-    def _process_kicks(self, kicks, dkicks):
+    def _process_kicks(self, kicks, dkicks, apply_factor=True):
         if dkicks is None:
             return None
 
@@ -716,7 +717,8 @@ class SOFB(_BaseClass):
                 continue
             dk_slc = dkicks[slc][idcs_pln]
             k_slc = kicks[slc][idcs_pln]
-            dk_slc *= self._corr_factor[pln]
+            fac1 = self._corr_factor[pln] if apply_factor else 1
+            dk_slc *= fac1
 
             # Check if any kick is larger than the maximum allowed:
             ind = (_np.abs(k_slc) > self._max_kick[pln]).nonzero()[0]
@@ -728,11 +730,11 @@ class SOFB(_BaseClass):
 
             # Check if any delta kick is larger the maximum allowed
             max_delta_kick = _np.max(_np.abs(dk_slc))
-            factor1 = 1.0
+            fac2 = 1.0
             if max_delta_kick > self._max_delta_kick[pln]:
-                factor1 = self._max_delta_kick[pln]/max_delta_kick
-                dk_slc *= factor1
-                percent = self._corr_factor[pln] * factor1 * 100
+                fac2 = self._max_delta_kick[pln]/max_delta_kick
+                dk_slc *= fac2
+                percent = fac1 * fac2 * 100
                 msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
                     pln.upper(), percent)
                 self._update_log(msg)
@@ -740,7 +742,7 @@ class SOFB(_BaseClass):
 
             # Check if any kick + delta kick is larger than the maximum allowed
             max_kick = _np.max(_np.abs(k_slc + dk_slc))
-            factor2 = 1.0
+            fac3 = 1.0
             if max_kick > self._max_kick[pln]:
                 que = _np.ones((2, k_slc.size), dtype=float)
                 # perform the modulus inequality:
@@ -752,9 +754,9 @@ class SOFB(_BaseClass):
                 # the positive one and take the minimum value along the columns
                 # to be the multiplicative factor:
                 que = _np.max(que, axis=0)
-                factor2 = min(_np.min(que), 1.0)
-                dk_slc *= factor2
-                percent = self._corr_factor[pln] * factor1 * factor2 * 100
+                fac3 = min(_np.min(que), 1.0)
+                dk_slc *= fac3
+                percent = fac1 * fac2 * fac3 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
                     pln.upper(), percent)
                 self._update_log(msg)
