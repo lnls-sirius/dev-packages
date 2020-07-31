@@ -59,6 +59,9 @@ class PRUController:
         # init timestamp of last SOFB setpoint execution
         self._sofb_mode = False
 
+        # index of device in self._device_ids for next update in SOFB mode
+        self._sofb_update_dev_idx = 0  # cyclical updates!
+
         # create lock
         self._lock = _Lock()
 
@@ -78,7 +81,7 @@ class PRUController:
         self._udc, self._parms, self._psupplies = PRUController._init_udc(
             pru, self._psmodel.name, self._device_ids, freq)
 
-        # index of dev_id in self._device_ids for wfmref update
+        # index of device in self._device_ids for wfmref update
         self._wfm_update = False
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
@@ -89,16 +92,7 @@ class PRUController:
         t1_ = _time.time()
         print('TIMING struct init [{:.3f} ms]'.format(1000*(t1_ - t0_)))
 
-        # PRUCQueue is of class DequeThread which invoke BSMP communications
-        # using an append-right, pop-left queue. It also processes the next
-        # operation in a way as to circumvent the blocking character of UART
-        # writes when PRU sync mode is on.
-        # Each operation processing is a method invoked as a separate thread
-        # since it run write PRU functions that might block code execution,
-        # depending on the PRU sync mode. The serial read called and the
-        # preceeding write function are supposed to be in a locked scope in
-        # order to avoid other write executations to read the respond of
-        # previous write executions.
+        # attributes that control processing flow
         self._queue = prucqueue
         self._processing = processing
         self._scanning = scanning
@@ -248,16 +242,22 @@ class PRUController:
         -------
         status : bool
             True is operation was queued or False, if operation was rejected
-            because of the PRU sync state.
+            because of the SOFBMode state.
 
         """
-        # in PRU sync off mode, append BSM function exec operation to queue
+        # if in SOFBMode on, do not accept exec functions
+        if self._sofb_mode:
+            return False
+
+        # prepare arguments
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
         if args is None:
             args = (device_ids, function_id)
         else:
             args = (device_ids, function_id, args)
+
+        # append bsmp function exec operation to queue
         operation = (self._bsmp_exec_function, args)
         self._queue.append(operation)
         return True
@@ -287,9 +287,15 @@ class PRUController:
 
     def wfmref_write(self, device_ids, data):
         """Write wfm curves."""
-        # in PRU sync off mode, append BSM function exec operation to queue
+        # if in SOFBMode on, do not accept exec functions
+        if self._sofb_mode:
+            return False
+
+        # prepare arguments
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
+
+        # append bsmp function exec operation to queue
         operation = (self._bsmp_wfmref_write, (device_ids, data))
         self._queue.append(operation)
         return True
@@ -327,8 +333,7 @@ class PRUController:
         """Change SOFB mode: True or False."""
         self._sofb_mode = state
         if state:
-            # wait until queue is empty
-            while self._queue:
+            while self._queue:  # wait until queue is empty
                 pass
 
     @property
@@ -338,15 +343,6 @@ class PRUController:
 
     def sofb_current_set(self, value):
         """."""
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PRUC.sofb_current_set (beg)', 1e3*(_time.time() % 1)))
-
-        # # schedule operation
-        # operation = (self._bsmp_update_sofb_setpoint, (value, ))
-        # self._queue.append(operation)
-        #
-        # return True
-
         # wait until queue is empty
         while self._queue:
             pass
@@ -371,6 +367,24 @@ class PRUController:
         """."""
         return self._udc.sofb_current_mon_get()
 
+    def sofb_update_variables_state(self):
+        """Update variables state mirror."""
+        # do sofb update only if in SOFBMode On
+        if not self._sofb_mode:
+            return
+
+        # wait until queue is empty
+        while self._queue:
+            pass
+
+        # select power supply dev_id for updating
+        self._sofb_update_dev_idx = \
+            (self._sofb_update_dev_idx + 1) % len(self._device_ids)
+        dev_id = self._device_ids[self._sofb_update_dev_idx]
+
+        # update variables state mirror for selected power supply
+        self._bsmp_update_variables(dev_id)
+
     # --- scan and process loop methods ---
 
     def bsmp_scan(self):
@@ -380,9 +394,8 @@ class PRUController:
         operation = (self._bsmp_update, ())
         if not self._queue or operation != self._queue.last_operation:
             self._queue.append(operation)
-            # self._queue.append(operation, unique=True)
         else:
-            # does not append if last operation is the same as last one
+            # do not append if last operation is the same as last one
             # operation appended to queue
             pass
 
@@ -598,9 +611,13 @@ class PRUController:
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'PRUC._bsmp_update (end)', 1e3*(_time.time() % 1)))
 
-    def _bsmp_update_variables(self):
-        # update variables
-        for psupply in self._psupplies.values():
+    def _bsmp_update_variables(self, dev_id=None):
+        if dev_id is None:
+            psupplies = self._psupplies.values()
+        else:
+            psupplies = (self._psupplies[dev_id], )
+
+        for psupply in psupplies:
             try:
                 psupply.update_variables(interval=0.0)
             except _SerialError:

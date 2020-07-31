@@ -376,7 +376,10 @@ class ETypes(_csdev.ETypes):
         'Bit27', 'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     IIB_INTLCK_FAC_2P4S_DCDC = IIB_INTLCK_FAP
-    CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
+    CYCLE_TYPES = (
+        'Sine', 'DampedSine', 'Trapezoidal',
+        'DampedSquaredSine', 'Square'
+        )
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
     LINAC_INTLCK_WARN = (
         'LoadI 0C Shutdown', 'LoadI 0C Interlock',
@@ -641,7 +644,7 @@ def _get_ps_basic_propty_database():
     return dbase
 
 
-def _get_ps_sofbcurrent_propty_database():
+def _get_ps_sofb_propty_database():
     """Return PSSOFB properties."""
     count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
@@ -655,6 +658,7 @@ def _get_ps_sofbcurrent_propty_database():
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
             'value': _np.zeros(count)},
+        'SOFBUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         'SOFBCurrent-RB': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
@@ -856,7 +860,7 @@ def _get_ps_FBP_propty_database():
             'prec': PS_CURRENT_PRECISION},
         }
     propty_db.update(dbase)
-    dbase = _get_ps_sofbcurrent_propty_database()
+    dbase = _get_ps_sofb_propty_database()
     propty_db.update(dbase)
     return propty_db
 
