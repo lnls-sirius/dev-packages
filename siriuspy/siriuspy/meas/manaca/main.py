@@ -69,8 +69,9 @@ class MeasParameters(_BaseClass, _Const):
     @rate.setter
     def rate(self, val):
         """."""
-        if isinstance(val, (float, int)) and 0 < val < 4:
+        if isinstance(val, (float, int)) and 0 < val < 30:
             self._thread.interval = 1/val
+        self.run_callbacks('MeasureRate-RB', val)
 
     @property
     def measuring(self):
