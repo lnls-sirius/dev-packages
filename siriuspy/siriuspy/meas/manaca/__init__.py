@@ -1,4 +1,4 @@
-from .main import CalcEnergy, MeasEnergy
+from .main import MeasParameters
 
 del main
 

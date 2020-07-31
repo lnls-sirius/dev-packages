@@ -3,16 +3,9 @@
 from functools import partial as _part
 from epics import PV as _PV
 
-import mathphys.constants as _consts
-
 from ...thread import RepeaterThread as _Repeater
-
 from ..util import BaseClass as _BaseClass, ProcessImage as _ProcessImage
-
 from .csdev import Const as _Const
-
-C = _consts.light_speed
-E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-6  # in MeV
 
 
 class MeasParameters(_BaseClass, _Const):
