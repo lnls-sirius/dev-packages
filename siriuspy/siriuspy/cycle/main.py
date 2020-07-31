@@ -303,24 +303,23 @@ class CycleController:
     @property
     def prepare_ps_current_zero_max_duration(self):
         """Prepare PS current zero task maximum duration."""
-        prepare_ps_max_duration = 20
+        prepare_ps_max_duration = 5
         if 'SI' in self._sections:
-            prepare_ps_max_duration += 2*TIMEOUT_CHECK
             prepare_ps_max_duration += TIMEOUT_CHECK_SI_CURRENTS
+        else:
+            prepare_ps_max_duration += TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
     def prepare_ps_params_max_duration(self):
         """Prepare PS parameters task maximum duration."""
-        prepare_ps_max_duration = 20
-        if 'SI' in self._sections:
-            prepare_ps_max_duration += 2*TIMEOUT_CHECK
+        prepare_ps_max_duration = 5 + 2*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
     def prepare_ps_opmode_cycle_max_duration(self):
         """Prepare PS task maximum duration."""
-        prepare_ps_max_duration = 20
+        prepare_ps_max_duration = 5 + 2*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
@@ -697,9 +696,12 @@ class CycleController:
         """Check power supplies current."""
         need_check = _dcopy(psnames)
 
+        timeout = TIMEOUT_CHECK_SI_CURRENTS if 'SI' in self._sections \
+            else TIMEOUT_CHECK
+
         self._checks_result = dict()
         time = _time.time()
-        while _time.time() - time < TIMEOUT_CHECK_SI_CURRENTS:
+        while _time.time() - time < timeout:
             for psname in psnames:
                 if psname not in need_check:
                     continue
