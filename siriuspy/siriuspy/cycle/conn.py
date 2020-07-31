@@ -519,7 +519,9 @@ class PSCycler:
         return _pv_conn_put(self['OpMode-Sel'], opmode)
 
     def set_opmode_slowref(self):
-        """Set OpMode to SlowRef."""
+        """Set OpMode to SlowRef, if needed."""
+        if self.check_opmode_slowref(wait=1):
+            return True
         status = self.set_opmode(_PSConst.OpMode.SlowRef)
         _time.sleep(TIMEOUT_SLEEP)
         return status
