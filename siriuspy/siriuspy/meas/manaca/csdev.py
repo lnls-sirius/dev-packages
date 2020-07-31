@@ -1,4 +1,4 @@
-"""Define PVs, constants and properties of LIEnergyMeas IOC."""
+"""Define PVs, constants and properties of SI AP Manaca IOC."""
 from .. import csdev as _csdev
 
 
