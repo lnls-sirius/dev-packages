@@ -59,6 +59,9 @@ class PRUController:
         # init timestamp of last SOFB setpoint execution
         self._sofb_mode = False
 
+        # index of device in self._device_ids for next update in SOFB mode
+        self._sofb_update_dev_idx = 0  # cyclical updates!
+
         # create lock
         self._lock = _Lock()
 
@@ -78,7 +81,7 @@ class PRUController:
         self._udc, self._parms, self._psupplies = PRUController._init_udc(
             pru, self._psmodel.name, self._device_ids, freq)
 
-        # index of dev_id in self._device_ids for wfmref update
+        # index of device in self._device_ids for wfmref update
         self._wfm_update = False
         self._wfm_update_dev_idx = 0  # cyclical updates!
 
@@ -364,6 +367,24 @@ class PRUController:
         """."""
         return self._udc.sofb_current_mon_get()
 
+    def sofb_update_variables_state(self):
+        """Update variables state mirror."""
+        # do sofb update only if in SOFBMode On
+        if not self._sofb_mode:
+            return
+
+        # wait until queue is empty
+        while self._queue:
+            pass
+
+        # select power supply dev_id for updating
+        self._sofb_update_dev_idx = \
+            (self._sofb_update_dev_idx + 1) % len(self._device_ids)
+        dev_id = self._device_ids[self._sofb_update_dev_idx]
+
+        # update variables state mirror for selected power supply
+        self._bsmp_update_variables(dev_id)
+
     # --- scan and process loop methods ---
 
     def bsmp_scan(self):
@@ -590,9 +611,13 @@ class PRUController:
         # print('{:<30s} : {:>9.3f} ms'.format(
         #     'PRUC._bsmp_update (end)', 1e3*(_time.time() % 1)))
 
-    def _bsmp_update_variables(self):
-        # update variables
-        for psupply in self._psupplies.values():
+    def _bsmp_update_variables(self, dev_id=None):
+        if dev_id is None:
+            psupplies = self._psupplies.values()
+        else:
+            psupplies = (self._psupplies[dev_id], )
+
+        for psupply in psupplies:
             try:
                 psupply.update_variables(interval=0.0)
             except _SerialError:
