@@ -525,7 +525,7 @@ class SOFB(_BaseClass):
         count = 0
         bpmsfreq = self._csorb.BPMsFreq
         self._pid_ref_kick = None  # force reset of PID params.
-        while self._loop_state == self._csorb.Loop.Closed:
+        while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
