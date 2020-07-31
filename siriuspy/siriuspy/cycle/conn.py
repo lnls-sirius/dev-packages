@@ -501,10 +501,10 @@ class PSCycler:
         if not self.check_current_zero(wait=1):
             return False
 
-        self.set_params(mode)
+        status = self.set_params(mode)
 
         self.update_wfm_pulsecnt()
-        return True
+        return status
 
     def is_prepared(self, mode):
         """Return whether power supply is ready."""
