@@ -305,7 +305,7 @@ class EpicsMatrix(BaseMatrix):
 
         # calculate processed singular values
         singp = _np.zeros(sing.size, dtype=float)
-        singp[idcs] = 1/inv_s
+        singp[idcs] = 1/inv_s[idcs]
         inv_mat = _np.dot(vvv.T*inv_s, uuu.T)
         is_nan = _np.any(_np.isnan(inv_mat))
         is_inf = _np.any(_np.isinf(inv_mat))
@@ -318,7 +318,7 @@ class EpicsMatrix(BaseMatrix):
         sing_vals = _np.zeros(self._csorb.nr_svals, dtype=float)
         sing_vals[:sing.size] = sing
         self.run_callbacks('SingValuesRaw-Mon', sing_vals)
-        sing_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        sing_vals = _np.zeros(self._csorb.nr_svals, dtype=float)
         sing_vals[:singp.size] = singp
         self.run_callbacks('SingValues-Mon', sing_vals)
         self.run_callbacks('NrSingValues-Mon', nr_sv)
