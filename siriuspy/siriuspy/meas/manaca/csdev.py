@@ -21,6 +21,7 @@ class Const(_csdev.Const):
     DEF_PROFILE = 'MNC:A:BASLER02:'
     DEF_RATE = 2  # [Hz]
     IP_IOC = '10.31.74.45'
+    PREFIX_IOC = 'SI-09SABL:AP-Manaca-MVS2:'
 
     MeasureState = _csdev.Const.register('MeasureState', _et.MEASURESTATE)
 
