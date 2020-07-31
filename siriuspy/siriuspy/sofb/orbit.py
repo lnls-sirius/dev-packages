@@ -5,8 +5,9 @@ from math import ceil as _ceil
 import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
-from threading import Lock, Thread, Event
-from multiprocessing import Pipe
+from threading import Lock, Thread
+from multiprocessing import Event as _Event, Pipe as _Pipe, \
+    sharedctypes as _shm
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -24,7 +25,7 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, pipe):
+def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
     """Run subprocesses."""
     # this timeout is needed to slip the orbit acquisition in case the
     # loop starts in the middle of the BPMs updates
@@ -34,10 +35,13 @@ def run_subprocess(pvs, pipe):
         pvo = kwargs['cb_info'][1]
         pvo.event.set()
 
+    orbit = _np.ndarray(
+        (siz, ), dtype=_np.float64, buffer=memoryview(new_orb))
+
     pvsobj = []
     for pvn in pvs:
         pvo = _PV(pvn, connection_timeout=TIMEOUT)
-        pvo.event = Event()
+        pvo.event = _Event()
         pvsobj.append(pvo)
 
     for pvo in pvsobj:
@@ -47,15 +51,15 @@ def run_subprocess(pvs, pipe):
     while pipe.recv():
         out = []
         tout = None
-        for pvo in pvsobj:
+        for i, pvo in enumerate(pvsobj):
             if pvo.connected and pvo.event.wait(timeout=tout):
                 tout = timeout
-                out.append(pvo.value)
+                orbit[offset + i] = pvo.value
             else:
-                out.append(None)
+                orbit[offset + i] = _np.nan
         for pvo in pvsobj:
             pvo.event.clear()
-        pipe.send(out)
+        evt.set(out)
 
 
 class EpicsOrbit(BaseOrbit):
@@ -99,10 +103,12 @@ class EpicsOrbit(BaseOrbit):
         self._ring_extension = 1
         self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
-        self.new_orbit = Event()
+        self.new_orbit = _Event()
         if self.acc == 'SI':
             self._processes = []
             self._mypipes = []
+            self._evts = []
+            self._orbit_new = None
             self._create_processes(nrprocs=8)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
@@ -121,14 +127,21 @@ class EpicsOrbit(BaseOrbit):
         rem = len(pvs) % nrprocs
         sub = [div*i + min(i, rem) for i in range(nrprocs+1)]
 
+        siz = self._csorb.nr_bpms * 2
+        new_orb = _shm.Array(_shm.ctypes.c_double, siz, lock=False)
+        self._orbit_new = _np.ndarray(
+            (siz, ), dtype=_np.float64, buffer=memoryview(new_orb))
+
         # create processes
         for i in range(nrprocs):
-            mine, theirs = Pipe()
+            theirs, mine = _Pipe(duplex=False)
+            evt = _Event()
             self._mypipes.append(mine)
+            self._evts.append(evt)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
                 target=run_subprocess,
-                args=(pvsn, theirs),
+                args=(pvsn, theirs, evt, new_orb, siz, sub[i]),
                 daemon=True))
         for proc in self._processes:
             proc.start()
@@ -856,16 +869,16 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self):
         """."""
-        nrb = self._csorb.nr_bpms
         posx, posy = self._get_orbit_from_processes()
-        orbsz = nrb * self._ring_extension
-        orb = _np.zeros(orbsz, dtype=float)
-        orbs = {'X': orb, 'Y': orb.copy()}
-        ref = self.ref_orbs
-        for i, pos in enumerate(posx):
-            orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos/1000
-        for i, pos in enumerate(posy):
-            orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos/1000
+        posx /= 1000
+        posy /= 1000
+        nanx = _np.isnan(posx)
+        nany = _np.isnan(posy)
+        posx[nanx] = self.ref_orbs['X'][nanx]
+        posy[nany] = self.ref_orbs['Y'][nany]
+        posx = _np.tile(posx, (self._ring_extension, ))
+        posy = _np.tile(posy, (self._ring_extension, ))
+        orbs = {'X': posx, 'Y': posy}
 
         for plane in ('X', 'Y'):
             with self._lock_raw_orbs:
@@ -879,7 +892,7 @@ class EpicsOrbit(BaseOrbit):
                 else:
                     orb = _np.median(raws[plane], axis=0)
             self.smooth_orb[plane] = orb
-            dorb = orb - ref[plane]
+            dorb = orb - self.ref_orbs[plane]
             self.run_callbacks(f'SlowOrb{plane:s}-Mon', list(orb))
             self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', dorb.mean())
             self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', dorb.std())
@@ -888,12 +901,15 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit.set()
 
     def _get_orbit_from_processes(self):
+        nr_bpms = self._csorb.nr_bpms
         for pipe in self._mypipes:
             pipe.send(True)
-        out = []
-        for pipe in self._mypipes:
-            out.extend(pipe.recv())
-        return out[:len(out)//2], out[len(out)//2:]
+        for evt in self._evts:
+            evt.wait()
+            evt.clear()
+        orbx = self._orbit_new[:nr_bpms].copy()
+        orby = self._orbit_new[nr_bpms:].copy()
+        return orbx, orby
 
     def _update_multiturn_orbits(self):
         """."""
