@@ -729,8 +729,6 @@ class CycleController:
 
     def save_timing_initial_state(self):
         """Save timing initial state."""
-        if self._only_linac:
-            return
         self._update_log('Saving Timing initial state...')
         self._timing.save_initial_state()
         self._update_log('...finished!')
@@ -869,8 +867,6 @@ class CycleController:
 
     def restore_timing_initial_state(self):
         """Restore timing initial state."""
-        if self._only_linac:
-            return
         self._update_log('Restoring Timing initial state...')
         self._timing.restore_initial_state()
         self._update_log('...finished!')
