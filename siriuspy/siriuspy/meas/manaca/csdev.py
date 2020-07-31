@@ -54,4 +54,14 @@ class Const(_csdev.Const):
         if prefix:
             dbase = {prefix + k: v for k, v in dbase.items()}
         dbase.update(_csdev.Const.get_database(prefix=prefix))
+
+        dbase.pop(prefix + 'Px2mmScaleX-SP')
+        info = dbase.pop(prefix + 'Px2mmScaleX-RB')
+        info['value'] = cls.DEF_COEFX
+        dbase[prefix + 'Px2mmScaleX-Cte'] = info
+
+        dbase.pop(prefix + 'Px2mmScaleY-SP')
+        info = dbase.pop(prefix + 'Px2mmScaleY-RB')
+        info['value'] = cls.DEF_COEFY
+        dbase[prefix + 'Px2mmScaleX-Cte'] = info
         return dbase
