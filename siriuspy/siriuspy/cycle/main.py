@@ -850,7 +850,8 @@ class CycleController:
             return
 
         triggers = self._triggers.copy()
-        triggers.difference_update(self._si_aux_triggers)
+        if 'SI' in self._sections:
+            triggers.difference_update(self._si_aux_triggers)
         if not self.set_triggers_state(triggers, 'enbl'):
             return
         self.init()
