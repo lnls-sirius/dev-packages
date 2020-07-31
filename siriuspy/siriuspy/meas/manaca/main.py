@@ -20,7 +20,7 @@ class MeasParameters(_BaseClass, _Const):
 
         self._width_source = _PV(self._profile + 'cam1:ArraySizeX_RBV')
         self._image_source = _PV(
-            self._profile+'image1:ArrayData', auto_monitor=False)
+            self._profile+'image1:ArrayData', auto_monitor=True)
         super().__init__(callback=callback)
         self._thread = _Repeater(1/self.DEF_RATE, self.process_image, niter=0)
         self._thread.pause()
