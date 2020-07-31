@@ -63,5 +63,5 @@ class Const(_csdev.Const):
         dbase.pop(prefix + 'Px2mmScaleY-SP')
         info = dbase.pop(prefix + 'Px2mmScaleY-RB')
         info['value'] = cls.DEF_COEFY
-        dbase[prefix + 'Px2mmScaleX-Cte'] = info
+        dbase[prefix + 'Px2mmScaleY-Cte'] = info
         return dbase
