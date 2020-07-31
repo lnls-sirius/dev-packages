@@ -867,9 +867,7 @@ class EpicsOrbit(BaseOrbit):
         for i, pos in enumerate(posy):
             orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos/1000
 
-        planes = ('X', 'Y')
-        smooth = self.smooth_orb
-        for plane in planes:
+        for plane in ('X', 'Y'):
             with self._lock_raw_orbs:
                 raws = self.raw_orbs
                 raws[plane].append(orbs[plane])
@@ -880,9 +878,13 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(raws[plane], axis=0)
                 else:
                     orb = _np.median(raws[plane], axis=0)
-            smooth[plane] = orb
-            name = ('Orb' if plane != 'Sum' else '') + plane
-            self.run_callbacks('Slow' + name + '-Mon', list(orb))
+            self.smooth_orb[plane] = orb
+            dorb = orb - ref[plane]
+            self.run_callbacks(f'SlowOrb{plane:s}-Mon', list(orb))
+            self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', dorb.mean())
+            self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', dorb.std())
+            self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', dorb.min())
+            self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', dorb.max())
         self.new_orbit.set()
 
     def _get_orbit_from_processes(self):

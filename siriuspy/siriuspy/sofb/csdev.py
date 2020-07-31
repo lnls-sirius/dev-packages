@@ -394,6 +394,17 @@ class SOFBTLines(ConstTLines):
             'value': nbpm*[0]}
         for k in pvs:
             dbase[k] = _dcopy(prop)
+
+        # Orbit statistics
+        pvs = [
+            'DeltaOrbXAvg-Mon', 'DeltaOrbYAvg-Mon',
+            'DeltaOrbXStd-Mon', 'DeltaOrbYStd-Mon',
+            'DeltaOrbXMin-Mon', 'DeltaOrbYMin-Mon',
+            'DeltaOrbXMax-Mon', 'DeltaOrbYMax-Mon']
+        prop = {'type': 'float', 'value': 0, 'prec': 3, 'unit': 'um'}
+        for k in pvs:
+            dbase[k] = _dcopy(prop)
+
         dbase.update({
             'SOFBMode-Sel': {
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
