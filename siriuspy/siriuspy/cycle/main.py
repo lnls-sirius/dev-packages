@@ -158,9 +158,11 @@ class CycleController:
         # create cyclers, if needed
         all_si_psnames = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
-        missing_ps = list(all_si_psnames -
-                          set(self.trimnames) -
-                          set(self.psnames))
+        qs_c2 = set(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+             'dev': 'QS'}))
+        missing_ps = list(all_si_psnames - set(self.trimnames) -
+                          set(self.psnames) - qs_c2)
         for psn in missing_ps:
             if psn in self._aux_cyclers.keys():
                 continue
