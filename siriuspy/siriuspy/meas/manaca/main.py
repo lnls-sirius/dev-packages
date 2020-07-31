@@ -88,7 +88,7 @@ class MeasParameters(_BaseClass, _Const):
 
     def process_image(self):
         """."""
-        self.image_processor.imageflipx = self.image_processor.ImgFlip.On
+        self.image_processor.imageflipx = self.image_processor.ImgFlip.Off
         self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         value = self._width_source.value
         if isinstance(value, (float, int)):
