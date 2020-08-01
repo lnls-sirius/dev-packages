@@ -48,7 +48,7 @@ def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
         pvo.wait_for_connection()
         pvo.add_callback(callback)
 
-    while pipe.recv():
+    while pipe.wait():
         tout = None
         for i, pvo in enumerate(pvsobj):
             if pvo.connected and pvo.event.wait(timeout=tout):
@@ -106,6 +106,7 @@ class EpicsOrbit(BaseOrbit):
         if self.acc == 'SI':
             self._processes = []
             self._mypipes = []
+            self._get_evt = None
             self._evts = []
             self._orbit_new = None
             self._create_processes(nrprocs=8)
@@ -132,27 +133,28 @@ class EpicsOrbit(BaseOrbit):
             (siz, ), dtype=_np.float64, buffer=memoryview(new_orb))
 
         # create processes
+        self._get_evt = _Event()
         for i in range(nrprocs):
-            theirs, mine = _Pipe(duplex=False)
+            # theirs, mine = _Pipe(duplex=False)
             evt = _Event()
-            self._mypipes.append(mine)
+            # self._mypipes.append(mine)
             self._evts.append(evt)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
                 target=run_subprocess,
-                args=(pvsn, theirs, evt, new_orb, siz, sub[i]),
+                args=(pvsn, self._get_evt, evt, new_orb, siz, sub[i]),
                 daemon=True))
         for proc in self._processes:
             proc.start()
 
     def shutdown(self):
         """."""
-        if self.acc == 'SI':
-            for pipe in self._mypipes:
-                pipe.send(False)
-                pipe.close()
-            for proc in self._processes:
-                proc.join()
+        # if self.acc == 'SI':
+        #     for pipe in self._mypipes:
+        #         pipe.send(False)
+        #         pipe.close()
+        #     for proc in self._processes:
+        #         proc.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -901,13 +903,15 @@ class EpicsOrbit(BaseOrbit):
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
-        for pipe in self._mypipes:
-            pipe.send(True)
+        self._get_evt.set()
+        # for pipe in self._mypipes:
+        #     pipe.send(True)
         for evt in self._evts:
             evt.wait()
             evt.clear()
         orbx = self._orbit_new[:nr_bpms].copy()
         orby = self._orbit_new[nr_bpms:].copy()
+        self._get_evt.clear()
         return orbx, orby
 
     def _update_multiturn_orbits(self):
