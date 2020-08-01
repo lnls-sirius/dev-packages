@@ -47,16 +47,19 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
         pvo.wait_for_connection()
         pvo.add_callback(callback)
 
+    end = offset + len(pvsobj)
     while get.wait():
+        out = []
         tout = None
         for i, pvo in enumerate(pvsobj):
             if pvo.connected and pvo.event.wait(timeout=tout):
                 tout = timeout
-                orbit[offset + i] = pvo.value
+                out.append(pvo.value)
             else:
-                orbit[offset + i] = _np.nan
+                out.append(_np.nan)
         for pvo in pvsobj:
             pvo.event.clear()
+        orbit[offset:end] = out
         evt.set()
         get.clear()
 
