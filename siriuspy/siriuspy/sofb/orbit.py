@@ -59,7 +59,7 @@ def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
                 orbit[offset + i] = _np.nan
         for pvo in pvsobj:
             pvo.event.clear()
-        evt.set(out)
+        evt.set()
 
 
 class EpicsOrbit(BaseOrbit):
