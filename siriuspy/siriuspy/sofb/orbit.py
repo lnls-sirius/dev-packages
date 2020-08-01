@@ -5,8 +5,8 @@ from math import ceil as _ceil
 import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
-from threading import Lock, Thread
-from multiprocessing import Event as _Event, sharedctypes as _shm
+from threading import Lock, Thread, Event as _Event
+from multiprocessing import Pipe as _Pipe
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, get, evt, new_orb, siz, offset):
+def run_subprocess(pvs, pipe):
     """Run subprocesses."""
     # this timeout is needed to slip the orbit acquisition in case the
     # loop starts in the middle of the BPMs updates
@@ -33,9 +33,6 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
     def callback(*_, **kwargs):
         pvo = kwargs['cb_info'][1]
         pvo.event.set()
-
-    orbit = _np.ndarray(
-        (siz, ), dtype=_np.float64, buffer=memoryview(new_orb))
 
     pvsobj = []
     for pvn in pvs:
@@ -47,8 +44,7 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
         pvo.wait_for_connection()
         pvo.add_callback(callback)
 
-    end = offset + len(pvsobj)
-    while get.wait():
+    while pipe.recv():
         out = []
         tout = None
         for pvo in pvsobj:
@@ -59,9 +55,7 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
                 out.append(_np.nan)
         for pvo in pvsobj:
             pvo.event.clear()
-        orbit[offset:end] = out
-        evt.set()
-        get.clear()
+        pipe.send(out)
 
 
 class EpicsOrbit(BaseOrbit):
@@ -108,9 +102,7 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         if self.acc == 'SI':
             self._processes = []
-            self._get_evt = None
-            self._evts = []
-            self._orbit_new = None
+            self._mypipes = []
             self._create_processes(nrprocs=4)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
@@ -129,26 +121,27 @@ class EpicsOrbit(BaseOrbit):
         rem = len(pvs) % nrprocs
         sub = [div*i + min(i, rem) for i in range(nrprocs+1)]
 
-        siz = self._csorb.nr_bpms * 2
-        new_orb = _shm.Array(_shm.ctypes.c_double, siz, lock=False)
-        self._orbit_new = _np.ndarray(
-            (siz, ), dtype=_np.float64, buffer=memoryview(new_orb))
-
         # create processes
         self._get_evt = _Event()
         for i in range(nrprocs):
-            evt = _Event()
-            self._evts.append(evt)
+            mine, theirs = _Pipe()
+            self._mypipes.append(mine)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
                 target=run_subprocess,
-                args=(pvsn, self._get_evt, evt, new_orb, siz, sub[i]),
+                args=(pvsn, theirs),
                 daemon=True))
         for proc in self._processes:
             proc.start()
 
     def shutdown(self):
         """."""
+        if self.acc == 'SI':
+            for pipe in self._mypipes:
+                pipe.send(False)
+                pipe.close()
+            for proc in self._processes:
+                proc.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -897,12 +890,13 @@ class EpicsOrbit(BaseOrbit):
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
-        self._get_evt.set()
-        for evt in self._evts:
-            evt.wait()
-            evt.clear()
-        orbx = self._orbit_new[:nr_bpms].copy()
-        orby = self._orbit_new[nr_bpms:].copy()
+        for pipe in self._mypipes:
+            pipe.send(True)
+        out = []
+        for pipe in self._mypipes:
+            out.extend(pipe.recv())
+        orbx = _np.array(out[:nr_bpms], dtype=float)
+        orby = _np.array(out[nr_bpms:], dtype=float)
         return orbx, orby
 
     def _update_multiturn_orbits(self):
