@@ -894,12 +894,12 @@ class EpicsOrbit(BaseOrbit):
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
         self._get_evt.set()
+        self._get_evt.clear()
         for evt in self._evts:
             evt.wait()
             evt.clear()
         orbx = self._orbit_new[:nr_bpms].copy()
         orby = self._orbit_new[nr_bpms:].copy()
-        self._get_evt.clear()
         return orbx, orby
 
     def _update_multiturn_orbits(self):
