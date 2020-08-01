@@ -214,8 +214,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
             'LoopUsePID-Sts': {
                 'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
-            'LoopPIDRstRef-Cmd': {
-                'type': 'int', 'value': 0, 'unit': 'Reset PID reference'},
             'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},

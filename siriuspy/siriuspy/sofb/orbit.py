@@ -49,7 +49,6 @@ def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
         pvo.add_callback(callback)
 
     while pipe.recv():
-        out = []
         tout = None
         for i, pvo in enumerate(pvsobj):
             if pvo.connected and pvo.event.wait(timeout=tout):

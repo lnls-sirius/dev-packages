@@ -31,14 +31,12 @@ class SOFB(_BaseClass):
         self._loop_freq = 1
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         self._use_pid = False
-        self._pid_ref_kick = None
-        self._pid_interr = None
-        self._pid_lasterr = None
-        self._pid_reset_ref = False
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            kp=dict(ch=0.0, cv=0.0, rf=0.0),
-            ki=dict(ch=0.0, cv=0.0, rf=0.0),
-            kd=dict(ch=0.0, cv=0.0, rf=0.0))
+            ch=dict(kp=0.0, ki=0.0, kd=0.0),
+            cv=dict(kp=0.0, ki=0.0, kd=0.0),
+            rf=dict(kp=0.0, ki=0.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -66,7 +64,6 @@ class SOFB(_BaseClass):
             'LoopState-Sel': self.set_auto_corr,
             'LoopFreq-SP': self.set_auto_corr_frequency,
             'LoopUsePID-Sel': self.set_use_pid,
-            'LoopPIDRstRef-Cmd': self.cmd_pid_reset_ref,
             'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
             'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
             'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
@@ -280,16 +277,11 @@ class SOFB(_BaseClass):
         self.run_callbacks('LoopUsePID-Sts', int(value))
         return True
 
-    def cmd_pid_reset_ref(self, value):
-        """."""
-        self._pid_reset_ref = int(value)
-        return True
-
     def set_pid_gain(self, ctrlr, plane, value):
         """."""
         ctrlr = ctrlr.lower()
         plane = plane.lower()
-        self._pid_gains[ctrlr][plane] = float(value)
+        self._pid_gains[plane][ctrlr] = float(value)
         self.run_callbacks(
             'LoopPID'+ctrlr.title()+plane.upper()+'-RB', float(value))
 
@@ -524,7 +516,8 @@ class SOFB(_BaseClass):
         times, rets = [], []
         count = 0
         bpmsfreq = self._csorb.BPMsFreq
-        self._pid_ref_kick = None  # force reset of PID params.
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -566,9 +559,7 @@ class SOFB(_BaseClass):
             dkicks = self.matrix.calc_kicks(orb)
             if self._use_pid == self._csorb.LoopUsePID.On:
                 dkicks = self._process_pid(dkicks, interval)
-                ref_kicks = self._pid_ref_kick
-            else:
-                ref_kicks = self._ref_corr_kicks
+            ref_kicks = self._ref_corr_kicks
             tims.append(_time())
 
             kicks = self._process_kicks(
@@ -603,22 +594,15 @@ class SOFB(_BaseClass):
         self.run_callbacks('LoopState-Sts', 0)
 
     def _process_pid(self, dkicks, interval):
+        """ This is a velocity algorithm of PID."""
         if dkicks is None:
             return None
 
-        if self._pid_ref_kick is None or self._pid_reset_ref:
-            self._pid_ref_kick = self.correctors.get_strength()
-            self._pid_interr = _np.zeros(
-                self._pid_ref_kick.size, dtype=float)
-            self._pid_lasterr = dkicks.copy()
-            self._pid_reset_ref = False
-
-        self._pid_interr += dkicks * interval
-        derr = dkicks - self._pid_lasterr
-        derr /= interval
-        self._pid_lasterr[:] = dkicks
+        self._pid_errs.append(dkicks.copy())
+        del self._pid_errs[0]
 
         gains = self._pid_gains
+        errs = self._pid_errs
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.acc == 'SI':
@@ -628,9 +612,17 @@ class SOFB(_BaseClass):
                 'rf': slice(-1, None)}
         for pln in sorted(slcs.keys()):
             slc = slcs[pln]
-            dkicks[slc] *= gains['kp'][pln]
-            dkicks[slc] += self._pid_interr[slc] * gains['ki'][pln]
-            dkicks[slc] += derr[slc] * gains['kd'][pln]
+            gin = gains[pln]
+            kpt = gin['kp']
+            kdt = gin['kd']/interval
+            kit = gin['ki']*interval
+
+            qq0 = kpt + kdt
+            qq1 = -kpt - 2*kdt + kit
+            qq2 = kdt
+            dkicks[slc] *= qq0
+            dkicks[slc] += qq1*errs[-2]  # previous error
+            dkicks[slc] += qq2*errs[-3]  # pre-previous error
         return dkicks
 
     def _print_auto_corr_info(self, times, rets):
