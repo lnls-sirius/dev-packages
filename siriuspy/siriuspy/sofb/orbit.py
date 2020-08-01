@@ -58,6 +58,7 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
         for pvo in pvsobj:
             pvo.event.clear()
         evt.set()
+        get.clear()
 
 
 class EpicsOrbit(BaseOrbit):
@@ -894,7 +895,6 @@ class EpicsOrbit(BaseOrbit):
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
         self._get_evt.set()
-        self._get_evt.clear()
         for evt in self._evts:
             evt.wait()
             evt.clear()
