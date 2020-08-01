@@ -273,6 +273,8 @@ class SOFB(_BaseClass):
         """."""
         if int(value) not in self._csorb.LoopUsePID:
             return False
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._use_pid = int(value)
         self.run_callbacks('LoopUsePID-Sts', int(value))
         return True
@@ -557,13 +559,13 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             dkicks = self.matrix.calc_kicks(orb)
-            if self._use_pid == self._csorb.LoopUsePID.On:
+            use_pid = self._use_pid
+            if use_pid == self._csorb.LoopUsePID.On:
                 dkicks = self._process_pid(dkicks, interval)
-            ref_kicks = self._ref_corr_kicks
             tims.append(_time())
 
             kicks = self._process_kicks(
-                ref_kicks, dkicks, apply_factor=not self._use_pid)
+                self._ref_corr_kicks, dkicks, apply_factor=not use_pid)
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
