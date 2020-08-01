@@ -646,7 +646,7 @@ def _get_ps_basic_propty_database():
     return dbase
 
 
-def _get_ps_sofbcurrent_propty_database():
+def _get_ps_sofb_propty_database():
     """Return PSSOFB properties."""
     count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
@@ -660,6 +660,7 @@ def _get_ps_sofbcurrent_propty_database():
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
             'value': _np.zeros(count)},
+        'SOFBUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         'SOFBCurrent-RB': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
@@ -861,7 +862,7 @@ def _get_ps_FBP_propty_database():
             'prec': PS_CURRENT_PRECISION},
         }
     propty_db.update(dbase)
-    dbase = _get_ps_sofbcurrent_propty_database()
+    dbase = _get_ps_sofb_propty_database()
     propty_db.update(dbase)
     return propty_db
 
