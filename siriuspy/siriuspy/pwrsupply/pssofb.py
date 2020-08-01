@@ -13,6 +13,7 @@ from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
 
 from .bsmp.constants import ConstFBP as _const_fbp
+from .bsmp.commands import FBP as _FBP
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
 from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
@@ -138,8 +139,14 @@ class PSConnSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
 
-    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=False):
+    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None):
         """."""
+        # check arguments
+        if mproc is not None and \
+                (not isinstance(mproc, dict) or
+                 set(mproc.keys()) != {'rbref', 'ref', 'fret'}):
+            raise ValueError('Invalid mproc dictionary!')
+
         self._acc = 'SI'
         self._pru = None
         self._udc = None
@@ -151,11 +158,19 @@ class PSConnSOFB:
             PSNamesSOFB.get_psnames_cv(self._acc)
 
         # snapshot of sofb current values
-        arr = _np.zeros(len(self._sofb_psnames), dtype=float)
+        ncorrs = len(self._sofb_psnames)
+        arr = _np.zeros(ncorrs, dtype=float)
         self._sofb_current_rb = arr.copy()
-        self._sofb_current_refmon = arr.copy()
         self._sofb_current_mon = arr.copy()
-        self._sofb_current_readback_ref = arr.copy()
+
+        if mproc:
+            self._sofb_current_readback_ref = mproc['rbref']
+            self._sofb_current_refmon = mproc['ref']
+            self._sofb_func_return = mproc['fret']
+        else:
+            self._sofb_current_readback_ref = arr.copy()
+            self._sofb_current_refmon = arr.copy()
+            self._sofb_func_return = _np.zeros(ncorrs, dtype=int)
 
         # create sofb and bsmp indices
         self.indcs_bsmp, self.indcs_sofb = self._create_indices()
@@ -173,7 +188,7 @@ class PSConnSOFB:
 
         # strength to current converters
         self._strengths_dipole = 3.0  # [GeV]
-        if not mproc:
+        if mproc is None:
             self.converter = UnitConverter(self._sofb_psnames)
 
     def pru(self):
@@ -288,6 +303,11 @@ class PSConnSOFB:
         """Return SOFB current readback after last setpoint."""
         return self._sofb_current_readback_ref.copy()
 
+    @property
+    def sofb_func_return(self):
+        """Return function return from last SOFB communication."""
+        return self._sofb_func_return.copy()
+
     def sofb_state_variable_get(self, var_id, dtype=float):
         """Return SOFB vector with bsmp variable values, as last updated."""
         return self._sofb_state_variable(var_id=var_id, dtype=dtype)
@@ -351,11 +371,7 @@ class PSConnSOFB:
         self._update_currents(bbbname)
 
     def _bsmp_current_setpoint(self, bbbname, curr_sp):
-        """.
-
-        benchmarks:
-            - lnls560-linux, no comm.  :   4.56 us +/- 98.4 ns
-        """
+        """Set currents for a single beaglebone."""
         udc = self._udc[bbbname]
 
         # get indices
@@ -364,8 +380,6 @@ class PSConnSOFB:
 
         # get valid current setpoints from sofb array
         current = curr_sp[indcs_sofb]
-        notnan = ~_np.isnan(current)
-        current = current[notnan]
 
         # initialize setpoint
         readback = udc.sofb_current_rb_get()  # stores last setpoint
@@ -375,10 +389,14 @@ class PSConnSOFB:
             setpoint = _np.asarray(readback)
 
         # update setpoint
-        setpoint[indcs_bsmp[notnan]] = current
+        setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(tuple(setpoint))
+        udc.sofb_current_set(setpoint)
+
+        # update sofb_func_return
+        func_return = udc.sofb_func_return_get()
+        self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -439,6 +457,8 @@ class PSConnSOFB:
                 ack, data = resp
                 # check anomalous response
                 if ack != _const_bsmp.ACK_OK:
+                    if isinstance(data, str):
+                        data = ord(data)
                     print('PSSOFB: anomalous response !')
                     udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack,
@@ -568,6 +588,9 @@ class PSConnSOFB:
         """."""
         pru, udc = dict(), dict()
 
+        # signal FBP comm class not to print comm. error statements
+        _FBP.SOFB_PRINT_COMM_ERRORS = False
+
         for bbbname, bsmpdevs in self.bbb2devs.items():
 
             # create PRU object for bsmp communication
@@ -630,7 +653,7 @@ class PSSOFB:
         'IA-18RaCtrl:CO-PSCtrl-SI4',
         'IA-19RaCtrl:CO-PSCtrl-SI4',
         'IA-20RaCtrl:CO-PSCtrl-SI4',
-    )
+        )
     BBB2DEVS = dict()
 
     def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False):
@@ -643,9 +666,11 @@ class PSSOFB:
             PSNamesSOFB.get_psnames_cv(self._acc)
 
         # snapshot of sofb current values
-        arr = _np.zeros(len(self._sofb_psnames), dtype=float)
+        ncorrs = len(self._sofb_psnames)
+        arr = _np.zeros(ncorrs, dtype=float)
         self._sofb_current_readback_ref = arr.copy()
         self._sofb_current_refmon = arr.copy()
+        self._sofb_func_return = _np.zeros(ncorrs, dtype=int)
 
         # Unit converter.
         self.converter = UnitConverter(self._sofb_psnames)
@@ -688,6 +713,7 @@ class PSSOFB:
         """."""
         # Create shared memory objects to be shared with worker processes.
         arr = self._sofb_current_readback_ref
+
         rbref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_readback_ref = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(rbref))
@@ -695,6 +721,10 @@ class PSSOFB:
         ref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_refmon = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(ref))
+
+        fret = _shm.Array(_shm.ctypes.c_int, arr.size, lock=False)
+        self._sofb_func_return = _np.ndarray(
+            arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
         # Unit converter.
         self.converter = UnitConverter(self._sofb_psnames)
@@ -711,7 +741,8 @@ class PSSOFB:
             theirs, mine = _Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB._run_process,
-                args=(self._ethbridge_cls, bbbnames, theirs, evt, rbref, ref),
+                args=(self._ethbridge_cls, bbbnames, theirs, evt,
+                      arr.shape, rbref, ref, fret),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
@@ -797,6 +828,11 @@ class PSSOFB:
         """Return SOFB kick from current_readback_ref from last setpoint."""
         return self.converter.conv_curr2stren(self.sofb_current_readback_ref)
 
+    @property
+    def sofb_func_return(self):
+        """Return SOFB function return from last communication."""
+        return self._sofb_func_return.copy()
+
     @staticmethod
     def sofb_vector_issame(vector1, vector2):
         """Check if two sofb vectors are identical within float32 precision."""
@@ -812,14 +848,16 @@ class PSSOFB:
         return self._sofb_psnames.index(psname)
 
     @staticmethod
-    def _run_process(ethbridgeclnt_class, bbbnames, pipe, doneevt, rbref, ref):
+    def _run_process(
+            ethbridgeclnt_class, bbbnames, pipe, doneevt,
+            shape, rbref, ref, fret):
         """."""
-        pssofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=True)
-        curr = pssofb._sofb_current_readback_ref
-        pssofb._sofb_current_readback_ref = _np.ndarray(
-            curr.shape, dtype=float, buffer=memoryview(rbref))
-        pssofb._sofb_current_refmon = _np.ndarray(
-            curr.shape, dtype=float, buffer=memoryview(ref))
+        mproc = {
+            'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
+            'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
+            'fret': _np.ndarray(shape, dtype=_np.int32, buffer=memoryview(fret)),
+            }
+        psconnsofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=mproc)
 
         while True:
             rec = pipe.recv()
@@ -828,11 +866,11 @@ class PSSOFB:
             meth, args = rec
             if isinstance(meth, str):
                 if isinstance(args, Iterable):
-                    getattr(pssofb, meth)(*args)
+                    getattr(psconnsofb, meth)(*args)
                 else:
-                    getattr(pssofb, meth)()
+                    getattr(psconnsofb, meth)()
                 doneevt.set()
-        pssofb.threads_shutdown()
+        psconnsofb.threads_shutdown()
         pipe.close()
 
     # --- private methods: get properties ---
