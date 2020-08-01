@@ -107,7 +107,7 @@ class EpicsOrbit(BaseOrbit):
             self._get_evt = None
             self._evts = []
             self._orbit_new = None
-            self._create_processes(nrprocs=8)
+            self._create_processes(nrprocs=4)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
