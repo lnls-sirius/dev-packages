@@ -6,8 +6,7 @@ import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread
-from multiprocessing import Event as _Event, Pipe as _Pipe, \
-    sharedctypes as _shm
+from multiprocessing import Event as _Event, sharedctypes as _shm
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -25,7 +24,7 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
+def run_subprocess(pvs, get, evt, new_orb, siz, offset):
     """Run subprocesses."""
     # this timeout is needed to slip the orbit acquisition in case the
     # loop starts in the middle of the BPMs updates
@@ -48,7 +47,7 @@ def run_subprocess(pvs, pipe, evt, new_orb, siz, offset):
         pvo.wait_for_connection()
         pvo.add_callback(callback)
 
-    while pipe.wait():
+    while get.wait():
         tout = None
         for i, pvo in enumerate(pvsobj):
             if pvo.connected and pvo.event.wait(timeout=tout):
@@ -105,7 +104,6 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         if self.acc == 'SI':
             self._processes = []
-            self._mypipes = []
             self._get_evt = None
             self._evts = []
             self._orbit_new = None
@@ -135,9 +133,7 @@ class EpicsOrbit(BaseOrbit):
         # create processes
         self._get_evt = _Event()
         for i in range(nrprocs):
-            # theirs, mine = _Pipe(duplex=False)
             evt = _Event()
-            # self._mypipes.append(mine)
             self._evts.append(evt)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
@@ -149,12 +145,6 @@ class EpicsOrbit(BaseOrbit):
 
     def shutdown(self):
         """."""
-        # if self.acc == 'SI':
-        #     for pipe in self._mypipes:
-        #         pipe.send(False)
-        #         pipe.close()
-        #     for proc in self._processes:
-        #         proc.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -904,8 +894,6 @@ class EpicsOrbit(BaseOrbit):
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
         self._get_evt.set()
-        # for pipe in self._mypipes:
-        #     pipe.send(True)
         for evt in self._evts:
             evt.wait()
             evt.clear()
