@@ -51,7 +51,7 @@ def run_subprocess(pvs, get, evt, new_orb, siz, offset):
     while get.wait():
         out = []
         tout = None
-        for i, pvo in enumerate(pvsobj):
+        for pvo in pvsobj:
             if pvo.connected and pvo.event.wait(timeout=tout):
                 tout = timeout
                 out.append(pvo.value)
