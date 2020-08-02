@@ -623,8 +623,8 @@ class SOFB(_BaseClass):
             qq1 = -kpt - 2*kdt + kit
             qq2 = kdt
             dkicks[slc] *= qq0
-            dkicks[slc] += qq1*errs[-2]  # previous error
-            dkicks[slc] += qq2*errs[-3]  # pre-previous error
+            dkicks[slc] += qq1*errs[-2][slc]  # previous error
+            dkicks[slc] += qq2*errs[-3][slc]  # pre-previous error
         return dkicks
 
     def _print_auto_corr_info(self, times, rets):
