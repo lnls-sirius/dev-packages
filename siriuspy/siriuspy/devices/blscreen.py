@@ -59,11 +59,11 @@ class BeamlineScreen(_Device):
         return self['BeamSizemmX-Mon']
 
     @property
-    def centery_pxl(self):
+    def sizey_pxl(self):
         """."""
         return self['BeamSizeY-Mon']
 
     @property
-    def centery_mm(self):
+    def sizey_mm(self):
         """."""
         return self['BeamSizemmY-Mon']
