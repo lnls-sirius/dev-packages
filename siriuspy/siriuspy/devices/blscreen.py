@@ -3,7 +3,7 @@
 from .device import Device as _Device
 
 
-class BeamLineScreen(_Device):
+class BeamlineScreen(_Device):
     """."""
 
     class DEVICES:
