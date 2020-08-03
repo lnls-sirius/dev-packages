@@ -2,9 +2,10 @@
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
 from multiprocessing import Event as _Event, Pipe as _Pipe, \
-    Process as _Process, sharedctypes as _shm
+    sharedctypes as _shm
 
 import numpy as _np
+import epics as _epics
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
@@ -139,7 +140,8 @@ class PSConnSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
 
-    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None):
+    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None,
+                 sofb_update_iocs=False):
         """."""
         # check arguments
         if mproc is not None and \
@@ -152,6 +154,9 @@ class PSConnSOFB:
         self._udc = None
         self.bbbnames = bbbnames or _dcopy(PSSOFB.BBBNAMES)
         self.bbb2devs = dict()
+
+        # flag that controls sending sofbupdate signal to IOCs
+        self._sofb_update_iocs = sofb_update_iocs
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -180,7 +185,7 @@ class PSConnSOFB:
 
         # dictionaries with comm. ack, state snapshot of all correctors
         # states and threads
-        self._dev_ack, self._dev_state, self._threads = \
+        self._dev_ack, self._dev_state, self._threads, self._sofbupdate = \
             self._init_threads_dev_state()
 
         # power supply status objects
@@ -404,6 +409,12 @@ class PSConnSOFB:
             return
         self._sofb_current_readback_ref[indcs_sofb] = current[indcs_bsmp]
 
+        # send signal to IOC to update one power supply state
+        if self._sofb_update_iocs:
+            pvname = self._sofbupdate[bbbname]
+            pvobj = _epics.get_pv(pvname)
+            pvobj.put(1, wait=False)  # send signal to IOC
+
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
         self._bsmp_current_setpoint(bbbname, curr_sp)
@@ -570,13 +581,15 @@ class PSConnSOFB:
         dev_ack = dict()  # last ack state of bsmp comm.
         dev_state = dict()  # snapshot of device variable values
         threads = list()  # threads to run BBB methods
+        sofbupdate = dict()  # SOFBUpdate PVs
         for bbbname, bsmpdevs in self.bbb2devs.items():
+            sofbupdate[bbbname] = bsmpdevs[0] + ':SOFBUpdate-Cmd'
             dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
             thread = _BBBThread(name=bbbname)
             thread.start()
             threads.append(thread)
-        return dev_ack, dev_state, threads
+        return dev_ack, dev_state, threads, sofbupdate
 
     def _update_bbb2devs(self):
         """."""
@@ -656,10 +669,12 @@ class PSSOFB:
         )
     BBB2DEVS = dict()
 
-    def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False):
+    def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False,
+                 sofb_update_iocs=False):
         """."""
         self._acc = 'SI'
         self._async = asynchronous
+        self._sofb_update_iocs = sofb_update_iocs
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -739,10 +754,10 @@ class PSSOFB:
             evt = _Event()
             evt.set()
             theirs, mine = _Pipe(duplex=False)
-            proc = _Process(
+            proc = _epics.CAProcess(
                 target=PSSOFB._run_process,
                 args=(self._ethbridge_cls, bbbnames, theirs, evt,
-                      arr.shape, rbref, ref, fret),
+                      arr.shape, rbref, ref, fret, self._sofb_update_iocs),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
@@ -850,14 +865,17 @@ class PSSOFB:
     @staticmethod
     def _run_process(
             ethbridgeclnt_class, bbbnames, pipe, doneevt,
-            shape, rbref, ref, fret):
+            shape, rbref, ref, fret, sofb_update_iocs):
         """."""
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=_np.int32, buffer=memoryview(fret)),
+            'fret': _np.ndarray(shape, dtype=_np.int32,
+                                buffer=memoryview(fret)),
             }
-        psconnsofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=mproc)
+        psconnsofb = PSConnSOFB(
+            ethbridgeclnt_class, bbbnames, mproc=mproc,
+            sofb_update_iocs=sofb_update_iocs)
 
         while True:
             rec = pipe.recv()
