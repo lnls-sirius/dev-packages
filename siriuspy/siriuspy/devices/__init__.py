@@ -19,7 +19,7 @@ from .energy import Energy
 from .ids import IDCorrectors, APU, APUFeedForward
 from .currinfo import CurrInfoTransp, CurrInfoLinear, \
                       CurrInfoBO, CurrInfoSI, CurrInfo
-from .blscreen import BeamLineScreen
+from .blscreen import BeamlineScreen
 
 del device, bpm, dcct, egun, ict, llrf,
 del pwrsupply, psconv, pssofb, rf,
