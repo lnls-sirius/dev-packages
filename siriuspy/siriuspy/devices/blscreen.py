@@ -29,41 +29,41 @@ class BeamlineScreen(_Device):
         super().__init__(devname, properties=BeamlineScreen._properties)
 
     @property
-    def centerx(self):
+    def centerx_pxl(self):
         """."""
         return self['BeamCenterX-Mon']
 
     @property
-    def centermmx(self):
+    def centerx_mm(self):
         """."""
         return self['BeamCentermmX-Mon']
 
     @property
-    def centery(self):
+    def centery_pxl(self):
         """."""
         return self['BeamCenterY-Mon']
 
     @property
-    def centermmy(self):
+    def centery_mm(self):
         """."""
         return self['BeamCentermmY-Mon']
 
     @property
-    def sizex(self):
+    def sizex_pxl(self):
         """."""
         return self['BeamSizeX-Mon']
 
     @property
-    def sizemmx(self):
+    def sizex_mm(self):
         """."""
         return self['BeamSizemmX-Mon']
 
     @property
-    def centery(self):
+    def centery_pxl(self):
         """."""
         return self['BeamSizeY-Mon']
 
     @property
-    def centermmy(self):
+    def centery_mm(self):
         """."""
         return self['BeamSizemmY-Mon']
