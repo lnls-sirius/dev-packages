@@ -22,12 +22,11 @@ class BeamlineScreen(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in BeamLineScreen.DEVICES.ALL:
+        if devname not in BeamlineScreen.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=BeamLineScreen._properties)
-
+        super().__init__(devname, properties=BeamlineScreen._properties)
 
     @property
     def centerx(self):
