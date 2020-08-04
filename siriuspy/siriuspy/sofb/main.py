@@ -619,8 +619,8 @@ class SOFB(_BaseClass):
             kdt = gin['kd']/interval
             kit = gin['ki']*interval
 
-            qq0 = kpt + kdt
-            qq1 = -kpt - 2*kdt + kit
+            qq0 = kpt + kdt + kit
+            qq1 = -kpt - 2*kdt
             qq2 = kdt
             dkicks[slc] *= qq0
             dkicks[slc] += qq1*errs[-2][slc]  # previous error
