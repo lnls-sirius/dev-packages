@@ -597,32 +597,20 @@ class CycleController:
 
     def check_pwrsupplies_finalsts(self, psnames):
         """Check all power supplies final state according to mode."""
-        need_check = _dcopy(psnames)
 
         self._update_log('Checking power supplies final state...')
         self._checks_final_result = dict()
-        time = _time.time()
-        while _time.time() - time < 10:
-            for psname in psnames:
-                if psname not in need_check:
-                    continue
-                cycler = self._get_cycler(psname)
-                if cycler.check_final_state(self.mode):
-                    need_check.remove(psname)
-                    self._checks_final_result[psname] = True
-            if not need_check:
-                break
-            _time.sleep(TIMEOUT_SLEEP)
-        for psname in need_check:
-            self._checks_final_result[psname] = False
-
-        all_ok = True
         for psname in psnames:
             self._update_log('Checking '+psname+' state...')
-            has_prob = self._checks_final_result[psname]
-            if has_prob == 0:
+            cycler = self._get_cycler(psname)
+            status = cycler.check_final_state(self.mode)
+            if status == 0:
                 self._update_log(done=True)
-            elif has_prob == 1:
+            self._checks_final_result[psname] = status
+
+        all_ok = True
+        for psname, has_prob in self._checks_final_result.items():
+            if has_prob == 1:
                 self._update_log(
                     'Verify the number of pulses '+psname+' received!',
                     error=True)
