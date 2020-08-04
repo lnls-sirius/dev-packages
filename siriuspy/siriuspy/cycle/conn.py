@@ -424,10 +424,11 @@ class PSCycler:
         raise NotImplementedError(
             "Cycle duration is not defined for '{}' mode!".format(mode))
 
-    def check_intlks(self):
+    def check_intlks(self, wait=2):
         """Check Interlocks."""
-        status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
-        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
+        wait = wait/2
+        status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=wait)
+        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=wait)
         return status
 
     def check_on(self):
@@ -569,7 +570,7 @@ class PSCycler:
             if not status:
                 return 2  # indicate cycling not finished yet
 
-        status = self.check_intlks()
+        status = self.check_intlks(wait=1.0)
         if not status:
             return 3  # indicate interlock problems
 
