@@ -141,6 +141,7 @@ class CycleController:
             self._aux_cyclers[psn] = PSCycler(psn)
 
         # wait for connections
+        self._update_log('Waiting for connections...')
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection()
 
@@ -168,6 +169,7 @@ class CycleController:
             self._aux_cyclers[psn] = PSCycler(psn)
 
         # wait for connections
+        self._update_log('Waiting for connections...')
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection()
 
@@ -361,6 +363,7 @@ class CycleController:
 
     def config_pwrsupplies(self, ppty, psnames):
         """Prepare power supplies to cycle according to mode."""
+        self._update_log('Preparing power supplies '+ppty+'...')
         threads = list()
         for psname in psnames:
             cycler = self._get_cycler(psname)
@@ -392,6 +395,7 @@ class CycleController:
                 return True
             psnames = {ps for ps in psnames if 'LI' not in ps}
 
+        self._update_log('Checking power supplies '+ppty+'...')
         self._checks_result = {psn: False for psn in psnames}
         time = _time.time()
         while _time.time() - time < timeout:
