@@ -387,6 +387,11 @@ class CycleController:
 
     def check_pwrsupplies(self, ppty, psnames, timeout=TIMEOUT_CHECK):
         """Check all power supplies according to mode."""
+        if ppty == 'opmode':
+            if self._only_linac:
+                return True
+            psnames = {ps for ps in psnames if 'LI' not in ps}
+
         self._checks_result = {psn: False for psn in psnames}
         time = _time.time()
         while _time.time() - time < timeout:
@@ -635,10 +640,10 @@ class CycleController:
         """Set power supplies OpMode to SlowRef."""
         if self._only_linac:
             return True
+        psnames = {ps for ps in psnames if 'LI' not in ps}
 
         self._update_log('Setting power supplies to SlowRef...')
         threads = list()
-        psnames = {ps for ps in psnames if 'LI' not in ps}
         for psname in psnames:
             cycler = self._get_cycler(psname)
             target = cycler.set_opmode_slowref
@@ -738,7 +743,7 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode_slowref(self):
         """Prepare OpMode to slowref."""
-        psnames = [ps for ps in self.psnames if 'LI' not in ps]
+        psnames = self.psnames
         timeout = TIMEOUT_CHECK
         if 'SI' in self._sections:
             self.create_trims_cyclers()
@@ -791,7 +796,7 @@ class CycleController:
 
     def prepare_pwrsupplies_opmode_cycle(self):
         """Prepare OpMode to cycle."""
-        psnames = [ps for ps in self.psnames if 'LI' not in ps]
+        psnames = self.psnames
         self.config_pwrsupplies('opmode', psnames)
         if not self.check_pwrsupplies('opmode', psnames):
             self._update_log(
@@ -844,8 +849,7 @@ class CycleController:
                 'There are power supplies not configured to cycle. Stopping.',
                 error=True)
             return
-        psnames_wo_li = [ps for ps in self.psnames if 'LI' not in ps]
-        if not self.check_pwrsupplies('opmode', psnames_wo_li):
+        if not self.check_pwrsupplies('opmode', self.psnames):
             self._update_log(
                 'There are power supplies with wrong opmode. Stopping.',
                 error=True)
