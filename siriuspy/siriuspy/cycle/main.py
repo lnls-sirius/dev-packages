@@ -143,7 +143,7 @@ class CycleController:
         # wait for connections
         self._update_log('Waiting for connections...')
         for cycler in self._aux_cyclers.values():
-            cycler.wait_for_connection()
+            cycler.wait_for_connection(0.1)
 
         # calculate trims cycle duration
         duration = 0
