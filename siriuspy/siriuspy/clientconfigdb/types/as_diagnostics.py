@@ -65814,9 +65814,6 @@ _tune_pvs = [
     ['SI-Glob:DI-TuneProc-H:TrigSrc-Sel', 0, 0],
     ['SI-Glob:DI-TuneProc-H:DispRange-SP', 0.0, 0],
     ['SI-Glob:DI-TuneProc-H:FiltType-Sel', 0, 0],
-    ['SI-Glob:DI-TuneProc-H:AutoFreq-Cmd', 0, 0],
-    ['SI-Glob:DI-TuneProc-H:AutoLvl-Cmd', 0, 0],
-    ['SI-Glob:DI-TuneProc-H:AutoAll-Cmd', 0, 0],
 
     ['SI-Glob:DI-Tune-V:FreqOff-SP', 0.0, 0],
     ['SI-Glob:DI-Tune-V:RevN-SP', 0.0, 0],
@@ -65844,9 +65841,6 @@ _tune_pvs = [
     ['SI-Glob:DI-TuneProc-V:TrigSrc-Sel', 0, 0],
     ['SI-Glob:DI-TuneProc-V:DispRange-SP', 0.0, 0],
     ['SI-Glob:DI-TuneProc-V:FiltType-Sel', 0, 0],
-    ['SI-Glob:DI-TuneProc-V:AutoFreq-Cmd', 0, 0],
-    ['SI-Glob:DI-TuneProc-V:AutoLvl-Cmd', 0, 0],
-    ['SI-Glob:DI-TuneProc-V:AutoAll-Cmd', 0, 0],
     ]
 
 # When using this type of configuration to set the machine,
