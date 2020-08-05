@@ -663,7 +663,7 @@ class CycleController:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
-                if cycler.check_opmode_slowref(0.1):
+                if cycler.check_opmode_slowref(0.05):
                     self._update_log('Checking '+psname+' OpMode...')
                     self._checks_result[psname] = True
                     self._update_log(done=True)
@@ -705,7 +705,7 @@ class CycleController:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
-                if cycler.check_current_zero(0.1):
+                if cycler.check_current_zero(0.05):
                     self._update_log('Checking '+psname+' current...')
                     self._checks_result[psname] = True
                     self._update_log(done=True)
