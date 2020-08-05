@@ -715,7 +715,7 @@ class SOFB(_BaseClass):
             dk_slc *= fac1
 
             # Check if any kick is larger than the maximum allowed:
-            ind = (_np.abs(k_slc) > self._max_kick[pln]).nonzero()[0]
+            ind = (_np.abs(k_slc) >= self._max_kick[pln]).nonzero()[0]
             if ind.size:
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
@@ -749,6 +749,11 @@ class SOFB(_BaseClass):
                 # to be the multiplicative factor:
                 que = _np.max(que, axis=0)
                 fac3 = min(_np.min(que), 1.0)
+                if fac3 < 1e-4:
+                    msg = f'ERR: Some {pln.upper():s} Corr is saturated.'
+                    self._update_log(msg)
+                    _log.error(msg[5:])
+                    return None
                 dk_slc *= fac3
                 percent = fac1 * fac2 * fac3 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
