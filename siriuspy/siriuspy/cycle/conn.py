@@ -636,7 +636,7 @@ class LinacPSCycler:
             self._get_duration_and_waveform()
         return self._cycle_duration
 
-    def check_intlks(self):
+    def check_intlks(self, wait=2):
         """Check interlocks."""
         if not self.connected:
             return False
@@ -661,9 +661,9 @@ class LinacPSCycler:
             status &= self.set_current_zero()
         return status
 
-    def is_prepared(self, _):
+    def is_prepared(self, mode, wait=5):
         """Return whether power supply is ready."""
-        status = self.check_current_zero()
+        status = self.check_current_zero(wait)
         return status
 
     def cycle(self):
