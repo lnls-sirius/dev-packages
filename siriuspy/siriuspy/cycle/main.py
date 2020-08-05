@@ -363,6 +363,11 @@ class CycleController:
 
     def config_pwrsupplies(self, ppty, psnames):
         """Prepare power supplies to cycle according to mode."""
+        if ppty == 'opmode':
+            if self._only_linac:
+                return True
+            psnames = {ps for ps in psnames if 'LI' not in ps}
+
         self._update_log('Preparing power supplies '+ppty+'...')
         threads = list()
         for psname in psnames:
