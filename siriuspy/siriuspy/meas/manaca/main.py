@@ -26,8 +26,8 @@ class MeasParameters(_BaseClass, _Const):
         self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         self.image_processor.roisizex = self.DEF_ROISIZE
         self.image_processor.roisizey = self.DEF_ROISIZE
-        self.image_processor.roicenterx = self.DEF_ROICENTERX
-        self.image_processor.roicentery = self.DEF_ROICENTERY
+        self.image_processor.roicenterx = self.TARGETX
+        self.image_processor.roicentery = self.TARGETY
         self.image_processor.method = self.Method.Moments
 
         self._width_source = _PV(self._profile + 'cam1:ArraySizeX_RBV')
@@ -145,13 +145,13 @@ class MeasParameters(_BaseClass, _Const):
             self.image_processor.imagewidth = int(value)
 
         self.image_processor.image = self._image_source.value
-        targx = self._target_posx * self.image_processor.px2mmscalex
-        targy = self._target_posy * self.image_processor.px2mmscaley
-        dltx = self.image_processor.beamcenterx - targx
-        dlty = self.image_processor.beamcentery - targy
+        dltx = self.image_processor.beamcenterx - self._target_posx
+        dlty = self.image_processor.beamcentery - self._target_posy
+        dltx *= self.image_processor.px2mmscalex * 1e-3  # mm --> m
+        dlty *= self.image_processor.px2mmscaley * 1e-3  # mm --> m
 
-        self._sofb_bumpx = -dltx / self.DIST_FROM_SRC * 1e3  # from mm to um
-        self._sofb_bumpy = -dlty / self.DIST_FROM_SRC * 1e3  # from mm to um
+        self._sofb_bumpx = -dltx / self.DIST_FROM_SRC * 1e6  # rad --> urad
+        self._sofb_bumpy = -dlty / self.DIST_FROM_SRC * 1e6  # rad --> urad
 
         self.run_callbacks('SOFBBumpX-Mon', self._sofb_bumpx)
         self.run_callbacks('SOFBBumpY-Mon', self._sofb_bumpy)

@@ -19,8 +19,6 @@ class Const(_csdev.Const):
     DEF_COEFX = 10.00 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_COEFY = 10.04 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_ROISIZE = 150
-    DEF_ROICENTERX = 850
-    DEF_ROICENTERY = 750
     TARGETX = 372  # [px] source: Lucas Sanfelici via email
     TARGETY = 720  # [px] source: Lucas Sanfelici via email
     DIST_FROM_SRC = 30.160  # [m] source: Sergio Lordano from OPT
@@ -87,10 +85,10 @@ class Const(_csdev.Const):
         dbase[prefix+'ROISizeX-RB']['value'] = cls.DEF_ROISIZE
         dbase[prefix+'ROISizeY-SP']['value'] = cls.DEF_ROISIZE
         dbase[prefix+'ROISizeY-RB']['value'] = cls.DEF_ROISIZE
-        dbase[prefix+'ROICenterX-SP']['value'] = cls.DEF_ROICENTERX
-        dbase[prefix+'ROICenterX-RB']['value'] = cls.DEF_ROICENTERX
-        dbase[prefix+'ROICenterY-SP']['value'] = cls.DEF_ROICENTERY
-        dbase[prefix+'ROICenterY-RB']['value'] = cls.DEF_ROICENTERY
+        dbase[prefix+'ROICenterX-SP']['value'] = cls.TARGETX
+        dbase[prefix+'ROICenterX-RB']['value'] = cls.TARGETX
+        dbase[prefix+'ROICenterY-SP']['value'] = cls.TARGETY
+        dbase[prefix+'ROICenterY-RB']['value'] = cls.TARGETY
         dbase[prefix+'ROIAutoCenter-Sel']['value'] = cls.AutoCenter.Manual
         dbase[prefix+'ROIAutoCenter-Sts']['value'] = cls.AutoCenter.Manual
         dbase[prefix+'CalcMethod-Sel']['value'] = cls.Method.Moments
