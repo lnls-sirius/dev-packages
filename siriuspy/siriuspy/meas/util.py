@@ -71,7 +71,7 @@ class ProcessImage(BaseClass):
         self._background = _np.zeros(
             (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
         self._background_use = False
-        self._crop = [0, 255]
+        self._crop = [0, 2**16]
         self._crop_use = False
         self._width = 0
         self._reading_order = self.ReadingOrder.CLike
@@ -82,7 +82,7 @@ class ProcessImage(BaseClass):
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._flip = [False, False]
-        self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
+        self._beam_params = [None, None]
 
     def get_map2write(self):
         """."""
@@ -161,7 +161,7 @@ class ProcessImage(BaseClass):
     @property
     def image(self):
         """."""
-        return self._image.copy().flatten()
+        return self._image.copy().ravel()
 
     @image.setter
     def image(self, val):
@@ -561,7 +561,7 @@ class ProcessImage(BaseClass):
 
     def _process_image(self, image):
         """."""
-        image = self._adjust_image_dimensions(image.copy())
+        image = self._adjust_image_dimensions(image)
         if image is None:
             _log.error('Image is None')
             return
@@ -583,7 +583,7 @@ class ProcessImage(BaseClass):
         if self._flip[self.Plane.Y]:
             image = _np.flip(image, axis=self.Plane.Y)
 
-        self._image = _np.array(image, dtype=_np.int16)
+        self._image = image
         self.run_callbacks('Image-RB', self.image)
         self._update_roi()
         axisx = self._roi_axis[self.Plane.X]
@@ -594,8 +594,10 @@ class ProcessImage(BaseClass):
             parx = self._calc_moments(axisx, projx)
             pary = self._calc_moments(axisy, projy)
         else:
-            parx = self._fit_gaussian(axisx, projx)
-            pary = self._fit_gaussian(axisy, projy)
+            parx = self._fit_gaussian(
+                axisx, projx, self._beam_params[self.Plane.X])
+            pary = self._fit_gaussian(
+                axisy, projy, self._beam_params[self.Plane.Y])
         self._roi_gauss[self.Plane.X] = self._gaussian(axisx, *parx)
         self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.Plane.X] = parx
@@ -686,9 +688,10 @@ class ProcessImage(BaseClass):
         proj = proj - y0
         amp = _np.amax(proj)
         dx = axis[1]-axis[0]
-        Norm = _np.trapz(proj, dx=dx)
-        cen = _np.trapz(proj*axis, dx=dx)/Norm
-        sec = _np.trapz(proj*axis*axis, dx=dx)/Norm
+        norm = _np.trapz(proj, dx=dx)
+        praxis = proj*axis
+        cen = _np.trapz(praxis, dx=dx)/norm
+        sec = _np.trapz(praxis*axis, dx=dx)/norm
         std = _np.sqrt(sec - cen*cen)
         ret[cls.FitParams.Amp] = amp
         ret[cls.FitParams.Cen] = cen
@@ -707,13 +710,10 @@ class ProcessImage(BaseClass):
         return amp*_np.exp(-x*x/(2.0*sigma*sigma))+y0
 
     @classmethod
-    def _fit_gaussian(cls, x, y, amp=None, mu=None, sigma=None, y0=None):
+    def _fit_gaussian(cls, x, y, par=None):
         """."""
-        par = cls._calc_moments(x, y)
-        par[cls.FitParams.Cen] = mu or par[cls.FitParams.Cen]
-        par[cls.FitParams.Sig] = sigma or par[cls.FitParams.Sig]
-        par[cls.FitParams.Off] = y0 or par[cls.FitParams.Off]
-        par[cls.FitParams.Amp] = amp or par[cls.FitParams.Amp]
+        if par is None:
+            par = cls._calc_moments(x, y)
         try:
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:

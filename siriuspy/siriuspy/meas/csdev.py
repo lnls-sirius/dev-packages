@@ -62,42 +62,42 @@ class Const(_csdev.Const):
             'Width-RB': {
                 'type': 'int', 'value': cls.DEFAULT_WIDTH, 'unit': 'px',
                 'lolim': 0, 'hilim': cls.MAX_WIDTH},
-            # 'ReadingOrder-Sel': {
-            #     'type': 'enum', 'value': cls.ReadingOrder.CLike,
-            #     'enums': cls.ReadingOrder._fields},
-            # 'ReadingOrder-Sel': {
-            #     'type': 'enum', 'value': cls.ReadingOrder.CLike,
-            #     'enums': cls.ReadingOrder._fields},
+            'ReadingOrder-Sel': {
+                'type': 'enum', 'value': cls.ReadingOrder.CLike,
+                'enums': cls.ReadingOrder._fields},
+            'ReadingOrder-Sel': {
+                'type': 'enum', 'value': cls.ReadingOrder.CLike,
+                'enums': cls.ReadingOrder._fields},
             'ImgCropLow-SP': {
                 'type': 'int', 'value': 0, 'unit': '',
-                'lolim': 0, 'hilim': 255},
+                'lolim': 0, 'hilim': 2**16},
             'ImgCropLow-RB': {
                 'type': 'int', 'value': 0, 'unit': '',
-                'lolim': 0, 'hilim': 255},
+                'lolim': 0, 'hilim': 2**16},
             'ImgCropHigh-SP': {
-                'type': 'int', 'value': 255, 'unit': '',
-                'lolim': 0, 'hilim': 255},
+                'type': 'int', 'value': 2**16, 'unit': '',
+                'lolim': 0, 'hilim': 2**16},
             'ImgCropHigh-RB': {
-                'type': 'int', 'value': 255, 'unit': '',
-                'lolim': 0, 'hilim': 255},
+                'type': 'int', 'value': 2**16, 'unit': '',
+                'lolim': 0, 'hilim': 2**16},
             'ImgCropUse-Sel': {
                 'type': 'enum', 'value': cls.BgUsage.NotUsing,
                 'enums': cls.BgUsage._fields},
             'ImgCropUse-Sts': {
                 'type': 'enum', 'value': cls.BgUsage.NotUsing,
                 'enums': cls.BgUsage._fields},
-            # 'ImgFlipX-Sel': {
-            #     'type': 'enum', 'value': cls.ImgFlip.Off,
-            #     'enums': cls.ImgFlip._fields},
-            # 'ImgFlipX-Sts': {
-            #     'type': 'enum', 'value': cls.ImgFlip.Off,
-            #     'enums': cls.ImgFlip._fields},
-            # 'ImgFlipY-Sel': {
-            #     'type': 'enum', 'value': cls.ImgFlip.Off,
-            #     'enums': cls.ImgFlip._fields},
-            # 'ImgFlipY-Sts': {
-            #     'type': 'enum', 'value': cls.ImgFlip.Off,
-            #     'enums': cls.ImgFlip._fields},
+            'ImgFlipX-Sel': {
+                'type': 'enum', 'value': cls.ImgFlip.Off,
+                'enums': cls.ImgFlip._fields},
+            'ImgFlipX-Sts': {
+                'type': 'enum', 'value': cls.ImgFlip.Off,
+                'enums': cls.ImgFlip._fields},
+            'ImgFlipY-Sel': {
+                'type': 'enum', 'value': cls.ImgFlip.Off,
+                'enums': cls.ImgFlip._fields},
+            'ImgFlipY-Sts': {
+                'type': 'enum', 'value': cls.ImgFlip.Off,
+                'enums': cls.ImgFlip._fields},
             'CalcMethod-Sel': {
                 'type': 'enum', 'value': cls.Method.GaussFit,
                 'enums': cls.Method._fields},

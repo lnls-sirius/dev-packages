@@ -70,5 +70,12 @@ class Const(_csdev.Const):
                 val['high'] = hig
         if prefix:
             dbase = {prefix + k: v for k, v in dbase.items()}
-        dbase.update(_csdev.Const.get_database(prefix=prefix))
+        dbase2 = _csdev.Const.get_database(prefix=prefix)
+        pvs2pop = [
+            'ReadingOrder-Sel', 'ReadingOrder-Sts',
+            'ImgFlipX-Sel', 'ImgFlipX-Sts',
+            'ImgFlipY-Sel', 'ImgFlipY-Sts']
+        for pvn in pvs2pop:
+            dbase2.pop(prefix+pvn)
+        dbase.update(dbase2)
         return dbase
