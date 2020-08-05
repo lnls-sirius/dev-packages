@@ -185,7 +185,7 @@ class PSConnSOFB:
 
         # dictionaries with comm. ack, state snapshot of all correctors
         # states and threads
-        self._dev_ack, self._dev_state, self._threads, self._sofbupdate = \
+        self._dev_ack, self._dev_state, self._threads, self._pvobjs = \
             self._init_threads_dev_state()
 
         # power supply status objects
@@ -411,8 +411,7 @@ class PSConnSOFB:
 
         # send signal to IOC to update one power supply state
         if self._sofb_update_iocs:
-            pvname = self._sofbupdate[bbbname]
-            pvobj = _epics.get_pv(pvname)
+            pvobj = self._pvobjs[bbbname]
             pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
@@ -581,15 +580,17 @@ class PSConnSOFB:
         dev_ack = dict()  # last ack state of bsmp comm.
         dev_state = dict()  # snapshot of device variable values
         threads = list()  # threads to run BBB methods
-        sofbupdate = dict()  # SOFBUpdate PVs
+        pvobjs = dict()  # SOFBUpdate PVs
         for bbbname, bsmpdevs in self.bbb2devs.items():
-            sofbupdate[bbbname] = bsmpdevs[0] + ':SOFBUpdate-Cmd'
             dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
+            if self._sofb_update_iocs:
+                pvname = bsmpdevs[0] + ':SOFBUpdate-Cmd'
+                pvobjs[bbbname] = _epics.get_pv(pvname)
             thread = _BBBThread(name=bbbname)
             thread.start()
             threads.append(thread)
-        return dev_ack, dev_state, threads, sofbupdate
+        return dev_ack, dev_state, threads, pvobjs
 
     def _update_bbb2devs(self):
         """."""
