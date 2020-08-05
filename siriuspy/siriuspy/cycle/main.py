@@ -409,9 +409,9 @@ class CycleController:
                     continue
                 cycler = self._get_cycler(psname)
                 if ppty == 'parameters':
-                    ret = cycler.is_prepared(self.mode, 0.1)
+                    ret = cycler.is_prepared(self.mode, 0.05)
                 elif ppty == 'opmode':
-                    ret = cycler.check_opmode_cycle(self.mode, 0.1)
+                    ret = cycler.check_opmode_cycle(self.mode, 0.05)
                 if ret:
                     self._update_log('Checking '+psname+' '+ppty+'...')
                     self._checks_result[psname] = True
