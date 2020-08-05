@@ -65,7 +65,7 @@ class Const(_csdev.Const):
             'ReadingOrder-Sel': {
                 'type': 'enum', 'value': cls.ReadingOrder.CLike,
                 'enums': cls.ReadingOrder._fields},
-            'ReadingOrder-Sel': {
+            'ReadingOrder-Sts': {
                 'type': 'enum', 'value': cls.ReadingOrder.CLike,
                 'enums': cls.ReadingOrder._fields},
             'ImgCropLow-SP': {
