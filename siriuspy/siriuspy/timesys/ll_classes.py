@@ -76,10 +76,10 @@ class _BaseLL(_Callback):
 
         for prop, pv in self._writepvs.items():
             if not pv.wait_for_connection():
-                _log.info(pv.pvname + 'not connected.')
+                _log.info(pv.pvname + ' not connected.')
         for prop, pv in self._readpvs.items():
             if not pv.wait_for_connection():
-                _log.info(pv.pvname + 'not connected.')
+                _log.info(pv.pvname + ' not connected.')
 
         for prop, pv in self._writepvs.items():
             if _PVName.is_cmd_pv(pv.pvname):
