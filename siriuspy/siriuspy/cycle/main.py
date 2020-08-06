@@ -413,15 +413,17 @@ class CycleController:
                 elif ppty == 'opmode':
                     ret = cycler.check_opmode_cycle(self.mode, 0.05)
                 if ret:
-                    self._update_log('Checking '+psname+' '+ppty+'...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
                 if _time.time() - time < timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
 
+        for psname, sts in self._checks_result.items():
+            if sts:
+                self._update_log('Checking '+psname+' '+ppty+'...')
+                self._update_log(done=True)
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
@@ -664,15 +666,17 @@ class CycleController:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_opmode_slowref(0.05):
-                    self._update_log('Checking '+psname+' OpMode...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
                 if _time.time() - time < timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
 
+        for psname, sts in self._checks_result.items():
+            if sts:
+                self._update_log('Checking '+psname+' OpMode...')
+                self._update_log(done=True)
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
@@ -706,15 +710,17 @@ class CycleController:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_current_zero(0.05):
-                    self._update_log('Checking '+psname+' current...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
                 if _time.time() - time < timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
 
+        for psname, sts in self._checks_result.items():
+            if sts:
+                self._update_log('Checking '+psname+' current...')
+                self._update_log(done=True)
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
