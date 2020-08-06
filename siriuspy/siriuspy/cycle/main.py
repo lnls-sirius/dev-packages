@@ -299,7 +299,7 @@ class CycleController:
         """Prepare PS OpMode SlowRef task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
         if 'SI' in self._sections:
-            prepare_ps_max_duration += 3*TIMEOUT_CHECK
+            prepare_ps_max_duration += 4*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
@@ -307,7 +307,7 @@ class CycleController:
         """Prepare PS current zero task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
         if 'SI' in self._sections:
-            prepare_ps_max_duration += 3*TIMEOUT_CHECK
+            prepare_ps_max_duration += 4*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
@@ -315,7 +315,7 @@ class CycleController:
         """Prepare PS parameters task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
         if 'SI' in self._sections:
-            prepare_ps_max_duration += 3*TIMEOUT_CHECK
+            prepare_ps_max_duration += 4*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
@@ -323,7 +323,7 @@ class CycleController:
         """Prepare PS task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
         if 'SI' in self._sections:
-            prepare_ps_max_duration += 3*TIMEOUT_CHECK
+            prepare_ps_max_duration += 4*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
     @property
@@ -747,7 +747,7 @@ class CycleController:
             psnames.extend(self.trimnames)
             aux_ps = self.create_aux_cyclers()
             psnames.extend(aux_ps)
-            timeout += 3*TIMEOUT_CHECK
+            timeout += 4*TIMEOUT_CHECK
 
         self.set_pwrsupplies_slowref(psnames)
         if not self.check_pwrsupplies_slowref(psnames, timeout):
@@ -765,7 +765,7 @@ class CycleController:
             psnames.extend(self.trimnames)
             aux_ps = self.create_aux_cyclers()
             psnames.extend(aux_ps)
-            timeout += 3*TIMEOUT_CHECK
+            timeout += 4*TIMEOUT_CHECK
 
         self.set_pwrsupplies_current_zero(psnames)
         if not self.check_pwrsupplies_current_zero(psnames, timeout):
@@ -781,7 +781,7 @@ class CycleController:
         if 'SI' in self._sections:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
-            timeout += 3*TIMEOUT_CHECK
+            timeout += 4*TIMEOUT_CHECK
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames, timeout):
