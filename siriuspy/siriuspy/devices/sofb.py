@@ -38,7 +38,7 @@ class SOFB(_Device):
         'BufferCount-Mon',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'ClosedLoop-Sts', 'ClosedLoop-Sel',
+        'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
         # properties used only for ring-type accelerators:
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
@@ -47,7 +47,6 @@ class SOFB(_Device):
         'MTurnTime-Mon')
 
     _default_timeout = 10  # [s]
-    _off, _on = 0, 1
 
     def __init__(self, devname):
         """."""
@@ -334,11 +333,11 @@ class SOFB(_Device):
 
     def cmd_reset(self):
         """."""
-        self['SmoothReset-Cmd'] = SOFB._on
+        self['SmoothReset-Cmd'] = 1
 
     def cmd_calccorr(self):
         """."""
-        self['CalcDelta-Cmd'] = SOFB._on
+        self['CalcDelta-Cmd'] = 1
 
     def cmd_applycorr(self):
         """."""
@@ -349,21 +348,21 @@ class SOFB(_Device):
     @property
     def autocorrsts(self):
         """."""
-        return self['ClosedLoop-Sts']
+        return self['LoopState-Sts']
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._on
+        self['LoopState-Sel'] = self.data.LoopState.Closed
         self._wait(
-            'ClosedLoop-Sts', SOFB._on, timeout=timeout)
+            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._off
+        self['LoopState-Sel'] = self.data.LoopState.Open
         self._wait(
-            'ClosedLoop-Sts', SOFB._off, timeout=timeout)
+            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
 
     def wait_buffer(self, timeout=None):
         """."""
