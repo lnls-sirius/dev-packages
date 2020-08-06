@@ -55,11 +55,9 @@ class _BaseLL(_Callback):
 
         evg_name = _LLTimeSearch.get_evg_name()
         self._base_freq_pv = _PV(
-            LL_PREFIX + evg_name + ':FPGAClk-Cte',
-            connection_timeout=_CONN_TIMEOUT)
+            LL_PREFIX + evg_name + ':FPGAClk-Cte')
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
-
 
         _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
@@ -68,16 +66,20 @@ class _BaseLL(_Callback):
                 pvnamerb = pvname
                 pvnamesp = _PVName.from_rb2sp(pvname)
             elif _PVName.is_cmd_pv(pvname):  # -Cmd is different!!
-                self._writepvs[prop] = _PV(
-                                pvname, connection_timeout=_CONN_TIMEOUT)
+                self._writepvs[prop] = _PV(pvname)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _PV(
-                    pvnamerb, connection_timeout=_CONN_TIMEOUT)
+                self._readpvs[prop] = _PV(pvnamerb)
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
-                self._writepvs[prop] = _PV(
-                    pvnamesp, connection_timeout=_CONN_TIMEOUT)
+                self._writepvs[prop] = _PV(pvnamesp)
                 self._writepvs[prop]._initialized = False
+
+        for prop, pv in self._writepvs.values():
+            if not pv.wait_for_connection():
+                _log.info(pv.pvname + 'not connected.')
+        for prop, pv in self._readpvs.values():
+            if not pv.wait_for_connection():
+                _log.info(pv.pvname + 'not connected.')
 
         for prop, pv in self._writepvs.items():
             if _PVName.is_cmd_pv(pv.pvname):
