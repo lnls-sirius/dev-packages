@@ -57,7 +57,7 @@ def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
         return False
     time0 = _time.time()
     while _time.time() - time0 < wait:
-        pvvalue = pvobj.get()
+        pvvalue = pvobj.value
         status = False
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
