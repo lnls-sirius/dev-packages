@@ -685,15 +685,9 @@ class CycleController:
         """Set power supplies current to zero."""
 
         self._update_log('Setting power supplies current to zero...')
-        threads = list()
         for psname in psnames:
             cycler = self._get_cycler(psname)
-            target = cycler.set_current_zero
-            thread = _thread.Thread(target=target, daemon=True)
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+            cycler.set_current_zero()
 
     def check_pwrsupplies_current_zero(self, psnames, timeout=TIMEOUT_CHECK):
         """Check power supplies current."""
