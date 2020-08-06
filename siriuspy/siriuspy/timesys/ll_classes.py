@@ -77,7 +77,7 @@ class _BaseLL(_Callback):
         for prop, pv in self._writepvs.items():
             if not pv.wait_for_connection():
                 _log.info(pv.pvname + 'not connected.')
-        for prop, pv in self._readpvs.values():
+        for prop, pv in self._readpvs.items():
             if not pv.wait_for_connection():
                 _log.info(pv.pvname + 'not connected.')
 
