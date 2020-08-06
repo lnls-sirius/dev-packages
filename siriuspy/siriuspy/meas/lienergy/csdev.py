@@ -71,11 +71,9 @@ class Const(_csdev.Const):
         if prefix:
             dbase = {prefix + k: v for k, v in dbase.items()}
         dbase2 = _csdev.Const.get_database(prefix=prefix)
-        pvs2pop = [
-            'ReadingOrder-Sel', 'ReadingOrder-Sts',
-            'ImgFlipX-Sel', 'ImgFlipX-Sts',
-            'ImgFlipY-Sel', 'ImgFlipY-Sts']
-        for pvn in pvs2pop:
-            dbase2.pop(prefix+pvn)
+        dbase2[prefix+'ImgFlipY-Sel']['value'] = cls.ImgFlip.Off
+        dbase2[prefix+'ImgFlipY-Sts']['value'] = cls.ImgFlip.Off
+        dbase2[prefix+'ImgFlipX-Sel']['value'] = cls.ImgFlip.On
+        dbase2[prefix+'ImgFlipX-Sts']['value'] = cls.ImgFlip.On
         dbase.update(dbase2)
         return dbase
