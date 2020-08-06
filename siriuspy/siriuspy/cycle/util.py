@@ -61,8 +61,10 @@ def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
         pvvalue = pvobj.value
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
+                _time.sleep(wait/10.0)
                 continue
             elif len(value) != len(pvvalue):
+                _time.sleep(wait/10.0)
                 continue
             else:
                 if _np.allclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
@@ -70,7 +72,6 @@ def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
         else:
             if _math.isclose(pvvalue, value, abs_tol=abs_tol, rel_tol=rel_tol):
                 return True
-        _time.sleep(wait/10.0)
     return False
 
 
