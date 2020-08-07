@@ -13,7 +13,7 @@ import numpy as _np
 import bottleneck as _bn
 
 from .. import util as _util
-from ..diag.bpm.csdev import Const as _csbpm
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
 from ..epics import PV as _PV
 
