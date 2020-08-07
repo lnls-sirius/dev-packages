@@ -657,10 +657,15 @@ class SOFB(_BaseClass):
         conn = _np.array([bpm.connected for bpm in self._orbit.bpms])
         conn = _np.tile(conn, [2, ])
         enbl = self._matrix.bpm_enbllist
-        if _np.any(~conn & enbl):
-            msg = 'ERR: BPM Not Connected!'
-            self._update_log(msg)
-            _log.error(msg[5:])
+        nconn = ~conn & enbl
+        if _np.any(nconn):
+            names = self._csorb.bpm_names
+            leng = len(names)
+            for i, nco in enumerate(nconn):
+                if nco:
+                    msg = f'ERR: {names[i%leng]} not connected!'
+                    self._update_log(msg)
+                    _log.error(msg[5:])
             return False
 
         maxo = _np.abs(orbit[enbl]).max()
