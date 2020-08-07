@@ -2406,7 +2406,7 @@ _template_dict = {
     _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_as_rf + _pvs_bo_rf + _pvs_si_rf +
+    _pvs_as_rf +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
     _pvs_si_ps_ch + _pvs_si_ps_cv +
