@@ -691,7 +691,7 @@ class PRUController:
                     self._udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack[dev_id],
                         device_id=dev_id, function_id=function_id,
-                        data_len=len(datum), data_type=type(datum), data=datum)
+                        data_type=type(datum), data=datum)
         except _SerialError:
             return None
         except TypeError:

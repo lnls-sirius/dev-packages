@@ -2,6 +2,7 @@
 """Utilities for cycle."""
 
 import time as _time
+import math as _math
 import numpy as _np
 
 from ..namesys import Filter as _Filter
@@ -57,24 +58,21 @@ def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
         return False
     time0 = _time.time()
     while _time.time() - time0 < wait:
-        pvvalue = pvobj.get()
-        status = False
+        pvvalue = pvobj.value
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             elif len(value) != len(pvvalue):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             else:
-                if all(_np.isclose(pvvalue, value,
-                                   atol=abs_tol, rtol=rel_tol)):
-                    status = True
-                    break
+                if _np.allclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
+                    return True
         else:
-            if _np.isclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
-                status = True
-                break
-        _time.sleep(wait/10.0)
-    return status
+            if _math.isclose(pvvalue, value, abs_tol=abs_tol, rel_tol=rel_tol):
+                return True
+    return False
 
 
 def pv_conn_put(pvobj, value):

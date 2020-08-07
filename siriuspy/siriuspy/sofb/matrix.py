@@ -36,8 +36,8 @@ class EpicsMatrix(BaseMatrix):
         if self.acc == 'SI':
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
-        self.num_sing_values = self._csorb.nr_svals
-        self.sing_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self.min_sing_val = self._csorb.MIN_SING_VAL
+        self.tikhonov_reg_const = self._csorb.TIKHONOV_REG_CONST
         self.respmat = _np.zeros(
             [2*self._csorb.nr_bpms, self._csorb.nr_corrs], dtype=float)
         self.inv_respmat = self.respmat.copy().T
@@ -70,7 +70,8 @@ class EpicsMatrix(BaseMatrix):
             'CVEnblList-SP': _part(self.set_enbllist, 'cv'),
             'BPMXEnblList-SP': _part(self.set_enbllist, 'bpmx'),
             'BPMYEnblList-SP': _part(self.set_enbllist, 'bpmy'),
-            'NrSingValues-SP': self.set_num_sing_values,
+            'MinSingValue-SP': self.set_min_sing_value,
+            'TikhonovRegConst-SP': self.set_tikhonov_reg_const,
             }
         if self.acc == 'SI':
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
@@ -135,13 +136,7 @@ class EpicsMatrix(BaseMatrix):
         bkup = self.select_items[key]
         self.select_items[key] = new
 
-        max_num = self.get_max_num_sing_values()
-        num = self.num_sing_values
-        num = num if num < max_num else max_num
-        nrbkup = self.num_sing_values
-        self.num_sing_values = num
         if not self._calc_matrices():
-            self.num_sing_values = nrbkup
             self.select_items[key] = bkup
             return False
         self.select_items_extended[key] = newb
@@ -149,7 +144,6 @@ class EpicsMatrix(BaseMatrix):
             self.run_callbacks(self.selection_pv_names[key], bool(new))
         else:
             self.run_callbacks(self.selection_pv_names[key], new)
-        self.run_callbacks('NrSingValues-RB', self.num_sing_values)
         return True
 
     def _set_enbllist(self, key, val):
@@ -246,28 +240,25 @@ class EpicsMatrix(BaseMatrix):
         if self.acc == 'SI':
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
 
-    def set_num_sing_values(self, num):
+    def set_min_sing_value(self, num):
         """."""
-        num = int(num) if int(num) > 0 else 1
-        max_num = self.get_max_num_sing_values()
-        num = num if num < max_num else max_num
-        bkup = self.num_sing_values
-        self.num_sing_values = num
+        bkup = self.min_sing_val
+        self.min_sing_val = float(num)
         if not self._calc_matrices():
-            self.num_sing_values = bkup
+            self.min_sing_val = bkup
             return False
-        self.run_callbacks('NrSingValues-RB', self.num_sing_values)
+        self.run_callbacks('MinSingValue-RB', self.min_sing_val)
         return True
 
-    def get_max_num_sing_values(self):
+    def set_tikhonov_reg_const(self, num):
         """."""
-        ncorr = _np.sum(self.select_items['ch'])
-        ncorr += _np.sum(self.select_items['cv'])
-        if self.acc == 'SI':
-            ncorr += _np.sum(self.select_items['rf'])
-        nbpm = _np.sum(self.select_items['bpmx'])
-        nbpm += _np.sum(self.select_items['bpmy'])
-        return min(ncorr, nbpm)
+        bkup = self.tikhonov_reg_const
+        self.tikhonov_reg_const = float(num)
+        if not self._calc_matrices():
+            self.tikhonov_reg_const = bkup
+            return False
+        self.run_callbacks('TikhonovRegConst-RB', self.tikhonov_reg_const)
+        return True
 
     def _calc_matrices(self):
         msg = 'Calculating Inverse Matrix.'
@@ -297,21 +288,24 @@ class EpicsMatrix(BaseMatrix):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        inv_s = 1/sing
-        nsv = _np.isfinite(inv_s).sum()
-        if not nsv:
-            msg = 'ERR: All Singular Values are zero.'
+        idcs = sing > self.min_sing_val
+        singr = sing[idcs]
+        nr_sv = _np.sum(idcs)
+        if not nr_sv:
+            msg = 'ERR: All Singular Values below minimum.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        elif nsv < self.num_sing_values:
-            self.num_sing_values = nsv
-            self.run_callbacks('NrSingValues-SP', nsv)
-            self.run_callbacks('NrSingValues-RB', nsv)
-            msg = 'WARN: NrSingValues had to be set to {0:d}.'.format(nsv)
-            self._update_log(msg)
-            _log.warning(msg[6:])
-        inv_s[self.num_sing_values:] = 0
+
+        # Apply Tikhonov regularization:
+        regc = self.tikhonov_reg_const
+        regc *= regc
+        inv_s = _np.zeros(sing.size, dtype=float)
+        inv_s[idcs] = singr/(singr*singr + regc)
+
+        # calculate processed singular values
+        singp = _np.zeros(sing.size, dtype=float)
+        singp[idcs] = 1/inv_s[idcs]
         inv_mat = _np.dot(vvv.T*inv_s, uuu.T)
         is_nan = _np.any(_np.isnan(inv_mat))
         is_inf = _np.any(_np.isinf(inv_mat))
@@ -321,9 +315,13 @@ class EpicsMatrix(BaseMatrix):
             _log.error(msg[5:])
             return False
 
-        self.sing_values[:] = 0
-        self.sing_values[:len(sing)] = sing
-        self.run_callbacks('SingValues-Mon', list(self.sing_values))
+        sing_vals = _np.zeros(self._csorb.nr_svals, dtype=float)
+        sing_vals[:sing.size] = sing
+        self.run_callbacks('SingValuesRaw-Mon', sing_vals)
+        sing_vals = _np.zeros(self._csorb.nr_svals, dtype=float)
+        sing_vals[:singp.size] = singp
+        self.run_callbacks('SingValues-Mon', sing_vals)
+        self.run_callbacks('NrSingValues-Mon', nr_sv)
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
