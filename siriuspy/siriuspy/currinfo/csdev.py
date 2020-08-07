@@ -38,8 +38,11 @@ _c = Const  # syntactic sugar
 def get_currinfo_database(acc):
     """Return CurrentInfo Soft IOC database."""
     acc = acc.upper()
-    if acc in {'LI', 'TB', 'TS'}:
+    if acc == 'TS':
         pvs_db = get_litbts_currinfo_database(acc)
+    elif acc == 'LI':
+        pvs_db = get_litbts_currinfo_database('LI')
+        pvs_db.update(get_litbts_currinfo_database('TB'))
     elif acc == 'SI':
         pvs_db = get_si_currinfo_database()
     elif acc == 'BO':
