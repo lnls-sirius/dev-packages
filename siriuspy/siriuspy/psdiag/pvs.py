@@ -3,9 +3,7 @@
 
 import numpy as _np
 
-from epics import PV as _PV
-
-from . import CONNECTION_TIMEOUT as _CONN_TIMEOUT
+from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT
 from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSConst
@@ -210,7 +208,6 @@ class PSDiffPV:
 
     CURRT_SP = 0
     CURRT_MON = 1
-
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute difference between SP and Mon current values."""
