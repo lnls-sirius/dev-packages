@@ -758,25 +758,26 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Skews:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Skews:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
-    ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
-    ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
-    ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
+# NOTE: This trigger is not present yet in timing IOC:
+#     ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
+#     ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
+#     ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
-    ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
-    ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
-    ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
+#     ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
+#     ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+#     ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-04:TI-InjSept:DelayRaw-SP', 0, 0],
     ['TB-04:TI-InjSept:Duration-SP', 0, 0.0],  # [us]
