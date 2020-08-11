@@ -651,14 +651,14 @@ class ConstFBP_DCLink(ConstPSBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
     # --- FBP_DCLink variables ---
-    V_PS_SOFT_INTERLOCKS = 25
-    V_PS_HARD_INTERLOCKS = 26
-    V_MODULES_STATUS = 27
-    V_V_OUT = 28
-    V_V_OUT_1 = 29
-    V_V_OUT_2 = 30
-    V_V_OUT_3 = 31
-    V_DIG_POT_TAP = 32
+    V_PS_SOFT_INTERLOCKS = 31
+    V_PS_HARD_INTERLOCKS = 32
+    V_MODULES_STATUS = 33
+    V_V_OUT = 34
+    V_V_OUT_1 = 35
+    V_V_OUT_2 = 36
+    V_V_OUT_3 = 37
+    V_DIG_POT_TAP = 38
 
 
 class ConstFAC_2S_ACDC(ConstPSBSMP):
