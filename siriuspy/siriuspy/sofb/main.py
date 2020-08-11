@@ -619,12 +619,20 @@ class SOFB(_BaseClass):
         rets = _np.array(rets)
         ok_ = _np.sum(rets == 0)
         tout = _np.sum(rets == -1)
-        diff = _np.sum(rets > 0)
+        bo_diff = rets > 0
+        diff = _np.sum(bo_diff)
         _log.info('PERFORMANCE:')
         _log.info(f'  # iterations = {rets.size:03d}')
         _log.info(f'  # Ok = {ok_:03d}')
         _log.info(f'  # Timeout = {tout:03d}')
-        _log.info(f'  # Diff = {diff:03d}')
+        strng = f'  # Diff = {diff:03d}'
+        if diff:
+            drets = rets[bo_diff]
+            strng += ' (NR_PSs: ' +\
+                f'max={drets.max():03.0f}, ' +\
+                f'avg={drets.mean():03.0f}, ' +\
+                f'std={drets.std():03.0f})'
+        _log.info(strng)
 
         dtimes = _np.diff(times, axis=1).T * 1000
         dtimes[-1] *= -1
