@@ -30,13 +30,12 @@ class SOFB(_BaseClass):
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = 1
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
-        self._use_pid = False
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.0, ki=0.0, kd=0.0),
-            cv=dict(kp=0.0, ki=0.0, kd=0.0),
-            rf=dict(kp=0.0, ki=0.0, kd=0.0))
+            ch=dict(kp=0.0, ki=5.0, kd=0.0),
+            cv=dict(kp=0.0, ki=3.75, kd=0.0),
+            rf=dict(kp=0.0, ki=5.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -63,7 +62,6 @@ class SOFB(_BaseClass):
         dbase = {
             'LoopState-Sel': self.set_auto_corr,
             'LoopFreq-SP': self.set_auto_corr_frequency,
-            'LoopUsePID-Sel': self.set_use_pid,
             'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
             'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
             'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
@@ -267,16 +265,6 @@ class SOFB(_BaseClass):
         value = bpmfreq / max(int(bpmfreq/value), 1)
         self._loop_freq = value
         self.run_callbacks('LoopFreq-RB', value)
-        return True
-
-    def set_use_pid(self, value):
-        """."""
-        if int(value) not in self._csorb.LoopUsePID:
-            return False
-        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
-        self._pid_errs = [zer, zer.copy(), zer.copy()]
-        self._use_pid = int(value)
-        self.run_callbacks('LoopUsePID-Sts', int(value))
         return True
 
     def set_pid_gain(self, ctrlr, plane, value):
@@ -560,13 +548,11 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             dkicks = self.matrix.calc_kicks(orb)
-            use_pid = self._use_pid
-            if use_pid == self._csorb.LoopUsePID.On:
-                dkicks = self._process_pid(dkicks, interval)
             tims.append(_time())
 
+            dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_factor=not use_pid)
+                self._ref_corr_kicks, dkicks, apply_factor=False)
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
