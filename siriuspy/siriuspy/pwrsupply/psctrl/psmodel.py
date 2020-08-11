@@ -342,20 +342,32 @@ class PSModelFAC_DCDC(_PSModel):
     _e = _etity_psbsmp.EntitiesFAC_DCDC
 
     _bsmp_variables = {
+        'Current-RB': _c.V_PS_SETPOINT,
+        'CurrentRef-Mon': _c.V_PS_REFERENCE,
         'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
-        'Current-RB': _c.V_PS_SETPOINT,
-        'CurrentRef-Mon': _c.V_PS_REFERENCE,
         'Current-Mon': _c.V_I_LOAD_MEAN,
         'Current1-Mon': _c.V_I_LOAD1,
         'Current2-Mon': _c.V_I_LOAD2,
-        'LoadVoltage-Mon': _c.V_V_LOAD,
-        'InductorsTemperature-Mon': _c.V_TEMP_INDUCTORS,
-        'IGBTSTemperature-Mon': _c.V_TEMP_IGBTS,
+        'CapacitorBankVoltage-Mon': _c.V_V_CAPBANK,
         'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'VoltageInput-Mon': _c.V_V_INPUT_IIB,
+        'CurrentInput-Mon': _c.V_I_INPUT_IIB,
+        'CurrentOutput-Mon': _c.V_I_OUTPUT_IIB,
+        'IGBT1TemperatureIIB-Mon': _c.V_TEMP_IGBT_1_IIB,
+        'IGBT2TemperatureIIB-Mon': _c.V_TEMP_IGBT_2_IIB,
+        'InductorsTemperatureIIB-Mon': _c.V_TEMP_INDUCTOR_IIB,
+        'HeatSinkTemperatureIIB-Mon': _c.V_TEMP_HEATSINK_IIB,
+        'IGBTDriverVoltageIIB-Mon': _c.V_V_DRIVER_IIB,
+        'IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB,
+        'IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB,
+        'LeakCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB,
+        'BoardTemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB,
+        'RHIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
-        }
+        'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+    }
 
 
 class PSModelFAC_2S_DCDC(_PSModel):
