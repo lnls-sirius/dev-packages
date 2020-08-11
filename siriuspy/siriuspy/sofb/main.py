@@ -38,12 +38,12 @@ class SOFB(_BaseClass):
             rf=dict(kp=0.0, ki=5.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
-        self._corr_factor = {'ch': 1.00, 'cv': 1.00}
+        self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 300, 'cv': 300}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
-            self._corr_factor['rf'] = 1.00
+            self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
             self._max_delta_kick['rf'] = 500
             self._meas_respmat_kick['rf'] = 80
@@ -71,8 +71,8 @@ class SOFB(_BaseClass):
             'LoopMaxOrbDistortion-SP': self.set_max_orbit_dist,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
             'CalcDelta-Cmd': self.calc_correction,
-            'DeltaFactorCH-SP': _part(self.set_corr_factor, 'ch'),
-            'DeltaFactorCV-SP': _part(self.set_corr_factor, 'cv'),
+            'ManCorrGainCH-SP': _part(self.set_mancorr_gain, 'ch'),
+            'ManCorrGainCV-SP': _part(self.set_mancorr_gain, 'cv'),
             'MaxKickCH-SP': _part(self.set_max_kick, 'ch'),
             'MaxKickCV-SP': _part(self.set_max_kick, 'cv'),
             'MaxDeltaKickCH-SP': _part(self.set_max_delta_kick, 'ch'),
@@ -92,7 +92,7 @@ class SOFB(_BaseClass):
             dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
             dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
             dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
-            dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
+            dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
             dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
             dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF),
@@ -288,13 +288,13 @@ class SOFB(_BaseClass):
         self.run_callbacks('MaxDeltaKick'+plane.upper()+'-RB', float(value))
         return True
 
-    def set_corr_factor(self, plane, value):
+    def set_mancorr_gain(self, plane, value):
         """."""
-        self._corr_factor[plane] = value/100
-        msg = '{0:s} DeltaFactor set to {1:6.2f}'.format(plane.upper(), value)
+        self._mancorr_gain[plane] = value/100
+        msg = 'ManCorrGain{0:s} set to {1:6.2f}'.format(plane.upper(), value)
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('DeltaFactor'+plane.upper()+'-RB', value)
+        self.run_callbacks('ManCorrGain'+plane.upper()+'-RB', value)
         return True
 
     def set_respmat_kick(self, plane, value):
@@ -552,7 +552,7 @@ class SOFB(_BaseClass):
 
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_factor=False)
+                self._ref_corr_kicks, dkicks, apply_gain=False)
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
@@ -679,7 +679,7 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
 
-    def _process_kicks(self, kicks, dkicks, apply_factor=True):
+    def _process_kicks(self, kicks, dkicks, apply_gain=True):
         if dkicks is None:
             return None
 
@@ -703,7 +703,7 @@ class SOFB(_BaseClass):
                 continue
             dk_slc = dkicks[slc][idcs_pln]
             k_slc = kicks[slc][idcs_pln]
-            fac1 = self._corr_factor[pln] if apply_factor else 1
+            fac1 = self._mancorr_gain[pln] if apply_gain else 1
             dk_slc *= fac1
 
             # Check if any kick is larger than the maximum allowed:

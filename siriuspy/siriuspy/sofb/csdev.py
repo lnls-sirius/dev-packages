@@ -279,15 +279,15 @@ class SOFBTLines(ConstTLines):
                 'lolim': 0.005, 'hilim': 100},
             'CalcDelta-Cmd': {
                 'type': 'int', 'value': 0, 'unit': 'Calculate kicks'},
-            'DeltaFactorCH-SP': {
+            'ManCorrGainCH-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -10000, 'hilim': 10000},
-            'DeltaFactorCH-RB': {
+            'ManCorrGainCH-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'DeltaFactorCV-SP': {
+            'ManCorrGainCV-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -10000, 'hilim': 10000},
-            'DeltaFactorCV-RB': {
+            'ManCorrGainCV-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
@@ -791,10 +791,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'LoopPIDKdRF-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'DeltaFactorRF-SP': {
+            'ManCorrGainRF-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -1000, 'hilim': 1000},
-            'DeltaFactorRF-RB': {
+            'ManCorrGainRF-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxDeltaKickRF-SP': {
                 'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 2,
