@@ -1,7 +1,7 @@
 """Power Supply Diag Control System App."""
 
-from .. import csdev as _csdev
-from ..search import PSSearch as _PSSearch
+from ... import csdev as _csdev
+from ...search import PSSearch as _PSSearch
 
 
 class ETypes(_csdev.ETypes):

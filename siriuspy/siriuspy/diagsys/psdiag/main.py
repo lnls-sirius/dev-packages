@@ -6,8 +6,8 @@ from threading import Thread as _Thread
 
 from pcaspy import Alarm as _Alarm, Severity as _Severity
 
-from ..callbacks import Callback as _Callback
-from ..thread import QueueThread as _QueueThread
+from ...callbacks import Callback as _Callback
+from ...thread import QueueThread as _QueueThread
 from .pvs import \
     ComputedPV as _ComputedPV, \
     PSStatusPV as _PSStatusPV, \
