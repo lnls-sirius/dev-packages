@@ -172,7 +172,7 @@ class StandardPSController(PSController):
             return priority_pvs
 
         if field == 'SOFBCurrent-SP':
-            self._set_sofb(pvname, value, devname, field, priority_pvs)
+            self._set_sofb_current(pvname, value, devname, field, priority_pvs)
         elif field in StandardPSController._SIGGEN_PARMS:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
         else:
@@ -193,7 +193,7 @@ class StandardPSController(PSController):
             values[idx] = value
         self._writers[pvname].execute(values)
 
-    def _set_sofb(self, pvname, value, devname, field, priority_pvs):
+    def _set_sofb_current(self, pvname, value, devname, field, priority_pvs):
         _ = field
 
         # set actual SOFBCurrent-SP

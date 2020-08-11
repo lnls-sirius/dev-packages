@@ -27,8 +27,16 @@ class SOFB(_BaseClass):
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
         self._orbit = self._correctors = self._matrix = None
-        self._auto_corr = self._csorb.ClosedLoop.Off
-        self._auto_corr_freq = 1
+        self._loop_state = self._csorb.LoopState.Open
+        self._loop_freq = 1
+        self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
+        self._use_pid = False
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
+        self._pid_gains = dict(
+            ch=dict(kp=0.0, ki=0.0, kd=0.0),
+            cv=dict(kp=0.0, ki=0.0, kd=0.0),
+            rf=dict(kp=0.0, ki=0.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -53,8 +61,16 @@ class SOFB(_BaseClass):
     def get_map2write(self):
         """Get the database of the class."""
         dbase = {
-            'ClosedLoop-Sel': self.set_auto_corr,
-            'ClosedLoopFreq-SP': self.set_auto_corr_frequency,
+            'LoopState-Sel': self.set_auto_corr,
+            'LoopFreq-SP': self.set_auto_corr_frequency,
+            'LoopUsePID-Sel': self.set_use_pid,
+            'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
+            'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
+            'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
+            'LoopPIDKiCV-SP': _part(self.set_pid_gain, 'ki', 'cv'),
+            'LoopPIDKdCH-SP': _part(self.set_pid_gain, 'kd', 'ch'),
+            'LoopPIDKdCV-SP': _part(self.set_pid_gain, 'kd', 'cv'),
+            'LoopMaxOrbDistortion-SP': self.set_max_orbit_dist,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
             'CalcDelta-Cmd': self.calc_correction,
             'DeltaFactorCH-SP': _part(self.set_corr_factor, 'ch'),
@@ -75,6 +91,9 @@ class SOFB(_BaseClass):
         if self.isring:
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
+            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
+            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
             dbase['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
             dbase['DeltaKickRF-SP'] = _part(
@@ -212,9 +231,9 @@ class SOFB(_BaseClass):
 
     def set_auto_corr(self, value):
         """."""
-        if value == self._csorb.ClosedLoop.On:
-            if self._auto_corr == self._csorb.ClosedLoop.On:
-                msg = 'ERR: ClosedLoop is Already On.'
+        if value == self._csorb.LoopState.Closed:
+            if self._loop_state == self._csorb.LoopState.Closed:
+                msg = 'ERR: Loop is Already closed.'
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
@@ -231,24 +250,42 @@ class SOFB(_BaseClass):
             msg = 'Closing the Loop.'
             self._update_log(msg)
             _log.info(msg)
-            self._auto_corr = value
+            self._loop_state = value
             self._thread = _Thread(
                 target=self._do_auto_corr, daemon=True)
             self._thread.start()
-        elif value == self._csorb.ClosedLoop.Off:
+        elif value == self._csorb.LoopState.Open:
             msg = 'Opening the Loop.'
             self._update_log(msg)
             _log.info(msg)
-            self._auto_corr = value
+            self._loop_state = value
         return True
 
     def set_auto_corr_frequency(self, value):
         """."""
         bpmfreq = self._csorb.BPMsFreq
         value = bpmfreq / max(int(bpmfreq/value), 1)
-        self._auto_corr_freq = value
-        self.run_callbacks('ClosedLoopFreq-RB', value)
+        self._loop_freq = value
+        self.run_callbacks('LoopFreq-RB', value)
         return True
+
+    def set_use_pid(self, value):
+        """."""
+        if int(value) not in self._csorb.LoopUsePID:
+            return False
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
+        self._use_pid = int(value)
+        self.run_callbacks('LoopUsePID-Sts', int(value))
+        return True
+
+    def set_pid_gain(self, ctrlr, plane, value):
+        """."""
+        ctrlr = ctrlr.lower()
+        plane = plane.lower()
+        self._pid_gains[plane][ctrlr] = float(value)
+        self.run_callbacks(
+            'LoopPID'+ctrlr.title()+plane.upper()+'-RB', float(value))
 
     def set_max_kick(self, plane, value):
         """."""
@@ -281,6 +318,12 @@ class SOFB(_BaseClass):
         """."""
         self._meas_respmat_wait = value
         self.run_callbacks('MeasRespMatWait-RB', value)
+        return True
+
+    def set_max_orbit_dist(self, value):
+        """."""
+        self._loop_max_orb_distortion = value
+        self.run_callbacks('LoopMaxOrbDistortion-RB', value)
         return True
 
     def _update_status(self):
@@ -471,11 +514,13 @@ class SOFB(_BaseClass):
         _log.info(msg)
 
     def _do_auto_corr(self):
-        self.run_callbacks('ClosedLoop-Sts', 1)
+        self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
         count = 0
         bpmsfreq = self._csorb.BPMsFreq
-        while self._auto_corr == self._csorb.ClosedLoop.On:
+        zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
+        self._pid_errs = [zer, zer.copy(), zer.copy()]
+        while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
@@ -490,7 +535,7 @@ class SOFB(_BaseClass):
             count += 1
             tims = []
 
-            interval = 1/self._auto_corr_freq
+            interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
@@ -499,24 +544,32 @@ class SOFB(_BaseClass):
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
-                interval = 1/self._auto_corr_freq
+                interval = 1/self._loop_freq
                 norbs = max(int(bpmsfreq/interval), 1)
                 if i >= norbs:
                     break
                 orb = self.orbit.get_orbit(synced=True)
+            if not self._check_valid_orbit(orb):
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
+                break
 
             tims.append(_time())
-            dkicks = self.matrix.calc_kicks(orb)
-            tims.append(_time())
-
             self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
 
-            kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+            dkicks = self.matrix.calc_kicks(orb)
+            use_pid = self._use_pid
+            if use_pid == self._csorb.LoopUsePID.On:
+                dkicks = self._process_pid(dkicks, interval)
+            tims.append(_time())
+
+            kicks = self._process_kicks(
+                self._ref_corr_kicks, dkicks, apply_factor=not use_pid)
             tims.append(_time())
             if kicks is None:
-                self._auto_corr = self._csorb.ClosedLoop.Off
-                self.run_callbacks('ClosedLoop-Sel', 0)
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             ret = self.correctors.apply_kicks(kicks)
@@ -525,11 +578,8 @@ class SOFB(_BaseClass):
             tims.append(tims[1])  # to compute total time - get_orbit
             times.append(tims)
             if ret == -2:
-                self._auto_corr = self._csorb.ClosedLoop.Off
-                msg = 'ERR: Problem with Corrector!'
-                self._update_log(msg)
-                _log.error(msg[5:])
-                self.run_callbacks('ClosedLoop-Sel', 0)
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
                 break
             elif ret == -1:
                 # means that correctors are not ready yet
@@ -543,7 +593,39 @@ class SOFB(_BaseClass):
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('ClosedLoop-Sts', 0)
+        self.run_callbacks('LoopState-Sts', 0)
+
+    def _process_pid(self, dkicks, interval):
+        """ This is a velocity algorithm of PID."""
+        if dkicks is None:
+            return None
+
+        self._pid_errs.append(dkicks.copy())
+        del self._pid_errs[0]
+
+        gains = self._pid_gains
+        errs = self._pid_errs
+        nr_ch = self._csorb.nr_ch
+        slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
+        if self.acc == 'SI':
+            slcs = {
+                'ch': slice(None, nr_ch),
+                'cv': slice(nr_ch, -1),
+                'rf': slice(-1, None)}
+        for pln in sorted(slcs.keys()):
+            slc = slcs[pln]
+            gin = gains[pln]
+            kpt = gin['kp']
+            kdt = gin['kd']/interval
+            kit = gin['ki']*interval
+
+            qq0 = kpt + kdt + kit
+            qq1 = -kpt - 2*kdt
+            qq2 = kdt
+            dkicks[slc] *= qq0
+            dkicks[slc] += qq1*errs[-2][slc]  # previous error
+            dkicks[slc] += qq2*errs[-3][slc]  # pre-previous error
+        return dkicks
 
     def _print_auto_corr_info(self, times, rets):
         """."""
@@ -563,13 +645,36 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        msg = '{:s}: geto={:7.2f}, calc={:7.2f}, getk={:7.2f}, proc={:7.2f}, '
+        msg = '{:s}: geto={:7.2f}, getk={:7.2f}, calc={:7.2f}, proc={:7.2f}, '
         msg += 'apply={:7.2f}, tot={:7.2f}'
         _log.info('TIME:')
         _log.info(msg.format('  MAX', *max_))
         _log.info(msg.format('  MIN', *min_))
         _log.info(msg.format('  AVG', *avg_))
         _log.info(msg.format('  STD', *std_))
+
+    def _check_valid_orbit(self, orbit):
+        conn = _np.array([bpm.connected for bpm in self._orbit.bpms])
+        conn = _np.tile(conn, [2, ])
+        enbl = self._matrix.bpm_enbllist
+        nconn = ~conn & enbl
+        if _np.any(nconn):
+            names = self._csorb.bpm_names
+            leng = len(names)
+            for i, nco in enumerate(nconn):
+                if nco:
+                    msg = f'ERR: {names[i%leng]} not connected!'
+                    self._update_log(msg)
+                    _log.error(msg[5:])
+            return False
+
+        maxo = _np.abs(orbit[enbl]).max()
+        if maxo > self._loop_max_orb_distortion:
+            msg = 'ERR: Orbit distortion above threshold!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        return True
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
@@ -587,7 +692,7 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
 
-    def _process_kicks(self, kicks, dkicks):
+    def _process_kicks(self, kicks, dkicks, apply_factor=True):
         if dkicks is None:
             return None
 
@@ -611,10 +716,11 @@ class SOFB(_BaseClass):
                 continue
             dk_slc = dkicks[slc][idcs_pln]
             k_slc = kicks[slc][idcs_pln]
-            dk_slc *= self._corr_factor[pln]
+            fac1 = self._corr_factor[pln] if apply_factor else 1
+            dk_slc *= fac1
 
             # Check if any kick is larger than the maximum allowed:
-            ind = (_np.abs(k_slc) > self._max_kick[pln]).nonzero()[0]
+            ind = (_np.abs(k_slc) >= self._max_kick[pln]).nonzero()[0]
             if ind.size:
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
@@ -623,11 +729,11 @@ class SOFB(_BaseClass):
 
             # Check if any delta kick is larger the maximum allowed
             max_delta_kick = _np.max(_np.abs(dk_slc))
-            factor1 = 1.0
+            fac2 = 1.0
             if max_delta_kick > self._max_delta_kick[pln]:
-                factor1 = self._max_delta_kick[pln]/max_delta_kick
-                dk_slc *= factor1
-                percent = self._corr_factor[pln] * factor1 * 100
+                fac2 = self._max_delta_kick[pln]/max_delta_kick
+                dk_slc *= fac2
+                percent = fac1 * fac2 * 100
                 msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
                     pln.upper(), percent)
                 self._update_log(msg)
@@ -635,7 +741,7 @@ class SOFB(_BaseClass):
 
             # Check if any kick + delta kick is larger than the maximum allowed
             max_kick = _np.max(_np.abs(k_slc + dk_slc))
-            factor2 = 1.0
+            fac3 = 1.0
             if max_kick > self._max_kick[pln]:
                 que = _np.ones((2, k_slc.size), dtype=float)
                 # perform the modulus inequality:
@@ -647,9 +753,14 @@ class SOFB(_BaseClass):
                 # the positive one and take the minimum value along the columns
                 # to be the multiplicative factor:
                 que = _np.max(que, axis=0)
-                factor2 = min(_np.min(que), 1.0)
-                dk_slc *= factor2
-                percent = self._corr_factor[pln] * factor1 * factor2 * 100
+                fac3 = min(_np.min(que), 1.0)
+                if fac3 < 1e-4:
+                    msg = f'ERR: Some {pln.upper():s} Corr is saturated.'
+                    self._update_log(msg)
+                    _log.error(msg[5:])
+                    return None
+                dk_slc *= fac3
+                percent = fac1 * fac2 * fac3 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
                     pln.upper(), percent)
                 self._update_log(msg)

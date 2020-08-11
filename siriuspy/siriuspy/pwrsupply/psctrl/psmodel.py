@@ -319,8 +319,9 @@ class PSModelFBP(_PSModel):
             return _writers.SOFBCurrent(
                 device_ids, pru_controller, setpoints)
         if epics_field == 'SOFBMode-Sel':
-            return _writers.SOFBMode(
-                device_ids, pru_controller, setpoints)
+            return _writers.SOFBMode(pru_controller, setpoints)
+        if epics_field == 'SOFBUpdate-Cmd':
+            return _writers.SOFBUpdate(pru_controller, setpoints)
         return super().function(
             device_ids, epics_field, pru_controller, setpoints)
 

@@ -16,6 +16,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     ENBL_RF = _csdev.ETypes.OFF_ON
+    OPEN_CLOSED = ('Open', 'Closed')
     ORB_MODE_SI = ('Offline', 'SlowOrb', 'MultiTurn', 'SinglePass')
     ORB_MODE_RINGS = ('Offline', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
@@ -56,7 +57,10 @@ class ConstTLines(_csdev.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
+    MIN_SING_VAL = 1e-4
+    TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
+    DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
     MIN_SLOWORB_RATE = 30  # [Hz]
     BPMsFreq = 25.14  # [Hz]
@@ -88,7 +92,8 @@ class ConstTLines(_csdev.Const):
     StsLblsOrb = _csdev.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
     StsLblsGlob = _csdev.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
-    ClosedLoop = _csdev.Const.register('ClosedLoop', _et.OFF_ON)
+    LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
+    LoopUsePID = _csdev.Const.register('LoopUsePID', _et.OFF_ON)
 
 
 class ConstRings(ConstTLines):
@@ -195,16 +200,64 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
-            'ClosedLoop-Sel': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoop-Sts': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoopFreq-SP': {
+            'LoopState-Sel': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopState-Sts': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopFreq-SP': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
                 'lolim': 1e-3, 'hilim': 60},
-            'ClosedLoopFreq-RB': {
+            'LoopFreq-RB': {
                 'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
                 'lolim': 1e-3, 'hilim': 60},
+            'LoopUsePID-Sel': {
+                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
+            'LoopUsePID-Sts': {
+                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
+            'LoopPIDKpCH-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCH-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCV-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCV-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCH-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCH-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCV-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCV-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCH-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCH-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCV-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCV-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopMaxOrbDistortion-SP': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortion-RB': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},
@@ -339,6 +392,17 @@ class SOFBTLines(ConstTLines):
             'value': nbpm*[0]}
         for k in pvs:
             dbase[k] = _dcopy(prop)
+
+        # Orbit statistics
+        pvs = [
+            'DeltaOrbXAvg-Mon', 'DeltaOrbYAvg-Mon',
+            'DeltaOrbXStd-Mon', 'DeltaOrbYStd-Mon',
+            'DeltaOrbXMin-Mon', 'DeltaOrbYMin-Mon',
+            'DeltaOrbXMax-Mon', 'DeltaOrbYMax-Mon']
+        prop = {'type': 'float', 'value': 0, 'prec': 3, 'unit': 'um'}
+        for k in pvs:
+            dbase[k] = _dcopy(prop)
+
         dbase.update({
             'SOFBMode-Sel': {
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
@@ -525,6 +589,10 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'SingValuesRaw-Mon': {
+                'type': 'float', 'count': self.nr_svals,
+                'value': self.nr_svals*[0],
+                'unit': 'Singular values of the matrix'},
             'SingValues-Mon': {
                 'type': 'float', 'count': self.nr_svals,
                 'value': self.nr_svals*[0],
@@ -561,14 +629,26 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
-            'NrSingValues-SP': {
+            'MinSingValue-SP': {
+                'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Maximum value of SV to use'},
+            'MinSingValue-RB': {
+                'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Maximum value of SV to use'},
+            'TikhonovRegConst-SP': {
+                'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Tikhonov regularization constant'},
+            'TikhonovRegConst-RB': {
+                'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
+                'lolim': 0, 'hilim': 1e9,
+                'unit': 'Tikhonov regularization constant'},
+            'NrSingValues-Mon': {
                 'type': 'int', 'value': self.nr_svals,
                 'lolim': 1, 'hilim': self.nr_svals,
-                'unit': 'Maximum number of SV to use'},
-            'NrSingValues-RB': {
-                'type': 'int', 'value': self.nr_svals,
-                'lolim': 1, 'hilim': self.nr_svals,
-                'unit': 'Maximum number of SV to use'},
+                'unit': 'Number of used SVs'},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
@@ -698,6 +778,24 @@ class SOFBSI(SOFBRings, ConstSI):
             'MeasRespMatKickRF-RB': {
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
+            'LoopPIDKpRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
             'DeltaFactorRF-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -1000, 'hilim': 1000},
