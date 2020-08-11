@@ -286,6 +286,7 @@ class SOFB(_BaseClass):
         self._pid_gains[plane][ctrlr] = float(value)
         self.run_callbacks(
             'LoopPID'+ctrlr.title()+plane.upper()+'-RB', float(value))
+        return True
 
     def set_max_kick(self, plane, value):
         """."""
