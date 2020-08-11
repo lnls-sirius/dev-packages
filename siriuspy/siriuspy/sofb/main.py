@@ -538,18 +538,18 @@ class SOFB(_BaseClass):
                 if i >= norbs:
                     break
                 orb = self.orbit.get_orbit(synced=True)
-            if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
-                break
-
             tims.append(_time())
+
             self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
 
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
+            if not self._check_valid_orbit(orb):
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
+                break
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
                 self._ref_corr_kicks, dkicks, apply_gain=False)
