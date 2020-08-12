@@ -864,8 +864,9 @@ class EpicsOrbit(BaseOrbit):
         nany = _np.isnan(posy)
         posx[nanx] = self.ref_orbs['X'][nanx]
         posy[nany] = self.ref_orbs['Y'][nany]
-        posx = _np.tile(posx, (self._ring_extension, ))
-        posy = _np.tile(posy, (self._ring_extension, ))
+        if self._ring_extension > 1:
+            posx = _np.tile(posx, (self._ring_extension, ))
+            posy = _np.tile(posy, (self._ring_extension, ))
         orbs = {'X': posx, 'Y': posy}
 
         for plane in ('X', 'Y'):
@@ -880,13 +881,16 @@ class EpicsOrbit(BaseOrbit):
                 else:
                     orb = _np.median(raws[plane], axis=0)
             self.smooth_orb[plane] = orb
+        self.new_orbit.set()
+
+        for plane in ('X', 'Y'):
+            orb = self.smooth_orb[plane]
             dorb = orb - self.ref_orbs[plane]
-            self.run_callbacks(f'SlowOrb{plane:s}-Mon', list(orb))
+            self.run_callbacks(f'SlowOrb{plane:s}-Mon', _np.array(orb))
             self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', dorb.mean())
             self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', dorb.std())
             self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', dorb.min())
             self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', dorb.max())
-        self.new_orbit.set()
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms

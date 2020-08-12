@@ -24,8 +24,8 @@ class SOFB(_Device):
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
-        'DeltaFactorCH-SP', 'DeltaFactorCV-SP',
-        'DeltaFactorCH-RB', 'DeltaFactorCV-RB',
+        'ManCorrGainCH-SP', 'ManCorrGainCV-SP',
+        'ManCorrGainCH-RB', 'ManCorrGainCV-RB',
         'RefOrbX-SP', 'RefOrbY-SP',
         'RefOrbX-RB', 'RefOrbY-RB',
         'BPMXEnblList-SP', 'BPMYEnblList-SP',
@@ -215,24 +215,24 @@ class SOFB(_Device):
         self['DeltaKickCV-SP'] = value
 
     @property
-    def deltafactorch(self):
+    def mancorrgainch(self):
         """."""
-        return self['DeltaFactorCH-RB']
+        return self['ManCorrGainCH-RB']
 
-    @deltafactorch.setter
-    def deltafactorch(self, value):
+    @mancorrgainch.setter
+    def mancorrgainch(self, value):
         """."""
-        self['DeltaFactorCH-SP'] = value
+        self['ManCorrGainCH-SP'] = value
 
     @property
-    def deltafactorcv(self):
+    def mancorrgaincv(self):
         """."""
-        return self['DeltaFactorCV-RB']
+        return self['ManCorrGainCV-RB']
 
-    @deltafactorcv.setter
-    def deltafactorcv(self, value):
+    @mancorrgaincv.setter
+    def mancorrgaincv(self, value):
         """."""
-        self['DeltaFactorCV-SP'] = value
+        self['ManCorrGainCV-SP'] = value
 
     @property
     def refx(self):
