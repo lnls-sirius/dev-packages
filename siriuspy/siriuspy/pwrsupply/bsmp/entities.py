@@ -546,14 +546,8 @@ class EntitiesFAC_2S_DCDC(EntitiesPS):
 
     _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_2S_DCDC-specific variables
-        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -573,8 +567,24 @@ class EntitiesFAC_2S_DCDC(EntitiesPS):
         {'eid': 49, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 50, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 51, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+        {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 58, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 59, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 60, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 61, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 62, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 64, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 65, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 66, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 67, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 68, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 69, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
 
 
 class EntitiesFAP(EntitiesPS):
