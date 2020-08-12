@@ -531,11 +531,11 @@ class PSModelFAP_2P2S(_PSModel):
     _e = _etity_psbsmp.EntitiesFAP_2P2S
 
     _bsmp_variables = {
+        'Current-RB':  _c.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _c.V_PS_REFERENCE,
         'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon':  _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon':  _c.V_PS_HARD_INTERLOCKS,
-        'Current-RB':  _c.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _c.V_PS_REFERENCE,
         'Current-Mon':  _c.V_I_LOAD_MEAN,
         'Current1-Mon': _c.V_I_LOAD1,
         'Current2-Mon': _c.V_I_LOAD2,
@@ -549,11 +549,16 @@ class PSModelFAP_2P2S(_PSModel):
         'Mod3IGBT2Current-Mon': _c.V_I_IGBT_2_3,
         'Mod4IGBT1Current-Mon': _c.V_I_IGBT_1_4,
         'Mod4IGBT2Current-Mon': _c.V_I_IGBT_2_4,
-        'DCLink1Voltage-Mon': _c.V_V_DCLINK_1,
-        'DCLink2Voltage-Mon': _c.V_V_DCLINK_2,
-        'DCLink3Voltage-Mon': _c.V_V_DCLINK_3,
-        'DCLink4Voltage-Mon': _c.V_V_DCLINK_4,
+        'Mod1Current-Mon': _c.V_I_MOD_1,
+        'Mod2Current-Mon': _c.V_I_MOD_2,
+        'Mod3Current-Mon': _c.V_I_MOD_3,
+        'Mod4Current-Mon': _c.V_I_MOD_4,
+        'DCLink1Voltage-Mon': _c.V_V_DCLINK_1,  # NOTE: Should it be 'Mod1DCLinkVoltage-Mon'?
+        'DCLink2Voltage-Mon': _c.V_V_DCLINK_2,  # NOTE: Should it be 'Mod2DCLinkVoltage-Mon'?
+        'DCLink3Voltage-Mon': _c.V_V_DCLINK_3,  # NOTE: Should it be 'Mod3DCLinkVoltage-Mon'?
+        'DCLink4Voltage-Mon': _c.V_V_DCLINK_4,  # NOTE: Should it be 'Mod4DCLinkVoltage-Mon'?
         'PWMDutyCycle-Mon': _c.V_DUTY_MEAN,
+        'PWMDutyCycleArmsDiff-Mon': _c.V_DUTY_ARMS_DIFF,
         'Mod1IGBT1PWMDutyCycle-Mon': _c.V_DUTY_CYCLE_1_1,
         'Mod1IGBT2PWMDutyCycle-Mon': _c.V_DUTY_CYCLE_2_1,
         'Mod2IGBT1PWMDutyCycle-Mon': _c.V_DUTY_CYCLE_1_2,
@@ -564,36 +569,68 @@ class PSModelFAP_2P2S(_PSModel):
         'Mod4IGBT2PWMDutyCycle-Mon': _c.V_DUTY_CYCLE_2_4,
         'Mod1VoltageInput-Mon': _c.V_V_INPUT_IIB_1,
         'Mod1VoltageOutput-Mon': _c.V_V_OUTPUT_IIB_1,
-        'Mod1IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_1,
-        'Mod1IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_1,
-        'IIB1InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_1,
-        'IIB1HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_1,
+        'Mod1IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_1,  # NOTE: Mod1IGBT1CurrentIIB-Mon ?
+        'Mod1IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_1,  # NOTE: Mod1IGBT2CurrentIIB-Mon ?
+        'Mod1IGBT1TemperatureIIB-Mon': _c.V_TEMP_IGBT_1_IIB_1,
+        'Mod1IGBT2TemperatureIIB-Mon': _c.V_TEMP_IGBT_2_IIB_1,
+        'Mod1IGBTDriverTemperatureIIB-Mon': _c.V_V_DRIVER_IIB_1,
+        'Mod1IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB_1,
+        'Mod1IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB_1,
+        'IIB1InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_1,  # NOTE: Should it be 'Mod1InductorTemperatureIIB-Mon'?
+        'IIB1HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_1,  # NOTE: Should it be 'Mod1HeatSinkTemperatureIIB-Mon'?
+        'Mod1LeakageCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB_1,
+        'Mod1TemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB_1,
+        'Mod1RelativeHumidityIIB-Mon': _c.V_RH_IIB_1,
+        'IntlkIIB1-Mon': _c.V_IIB_INTERLOCKS_1,  # NOTE: Should it be 'Mod1IntlkIIB-Mon'?
+        'Mod1AlarmsIIB-Mon': _c.V_IIB_ALARMS_1,
         'Mod2VoltageInput-Mon': _c.V_V_INPUT_IIB_2,
         'Mod2VoltageOutput-Mon': _c.V_V_OUTPUT_IIB_2,
-        'Mod2IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_2,
-        'Mod2IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_2,
-        'IIB2InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
-        'IIB2HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_2,
+        'Mod2IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_2,  # NOTE: Mod2IGBT1CurrentIIB-Mon ?
+        'Mod2IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_2,  # NOTE: Mod2IGBT2CurrentIIB-Mon ?
+        'Mod2IGBT1TemperatureIIB-Mon': _c.V_TEMP_IGBT_1_IIB_2,
+        'Mod2IGBT2TemperatureIIB-Mon': _c.V_TEMP_IGBT_2_IIB_2,
+        'Mod2IGBTDriverTemperatureIIB-Mon': _c.V_V_DRIVER_IIB_2,
+        'Mod2IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB_2,
+        'Mod2IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB_2,
+        'IIB2InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_2,  # NOTE: Should it be 'Mod2InductorTemperatureIIB-Mon'?
+        'IIB2HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_2,  # NOTE: Should it be 'Mod2HeatSinkTemperatureIIB-Mon'?
+        'Mod2LeakageCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB_2,
+        'Mod2TemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB_2,
+        'Mod2RelativeHumidityIIB-Mon': _c.V_RH_IIB_2,
+        'IntlkIIB2-Mon': _c.V_IIB_INTERLOCKS_2,  # NOTE: Should it be 'Mod2IntlkIIB-Mon'?
+        'Mod2AlarmsIIB-Mon': _c.V_IIB_ALARMS_2,
         'Mod3VoltageInput-Mon': _c.V_V_INPUT_IIB_3,
         'Mod3VoltageOutput-Mon': _c.V_V_OUTPUT_IIB_3,
-        'Mod3IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_3,
-        'Mod3IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_3,
-        'IIB3InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_3,
-        'IIB3HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_3,
+        'Mod3IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_3,  # NOTE: Mod3IGBT1CurrentIIB-Mon ?
+        'Mod3IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_3,  # NOTE: Mod3IGBT2CurrentIIB-Mon ?
+        'Mod3IGBT1TemperatureIIB-Mon': _c.V_TEMP_IGBT_1_IIB_3,
+        'Mod3IGBT2TemperatureIIB-Mon': _c.V_TEMP_IGBT_2_IIB_3,
+        'Mod3IGBTDriverTemperatureIIB-Mon': _c.V_V_DRIVER_IIB_3,
+        'Mod3IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB_3,
+        'Mod3IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB_3,
+        'IIB3InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_3,  # NOTE: Should it be 'Mod3InductorTemperatureIIB-Mon'?
+        'IIB3HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_3,  # NOTE: Should it be 'Mod3HeatSinkTemperatureIIB-Mon'?
+        'Mod3LeakageCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB_3,
+        'Mod3TemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB_3,
+        'Mod3RelativeHumidityIIB-Mon': _c.V_RH_IIB_3,
+        'IntlkIIB3-Mon': _c.V_IIB_INTERLOCKS_3,  # NOTE: Should it be 'Mod3IntlkIIB-Mon'?
+        'Mod3AlarmsIIB-Mon': _c.V_IIB_ALARMS_3,
         'Mod4VoltageInput-Mon': _c.V_V_INPUT_IIB_4,
         'Mod4VoltageOutput-Mon': _c.V_V_OUTPUT_IIB_4,
-        'Mod4IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_4,
-        'Mod4IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_4,
-        'IIB4InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_4,
-        'IIB4HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_4,
-        'IntlkIIB1-Mon': _c.V_IIB_INTERLOCKS_1,
-        'IntlkIIB2-Mon': _c.V_IIB_INTERLOCKS_2,
-        'IntlkIIB3-Mon': _c.V_IIB_INTERLOCKS_3,
-        'IntlkIIB4-Mon': _c.V_IIB_INTERLOCKS_4,
-        'Mod1Current-Mon': _c.V_I_MOD_1,
-        'Mod2Current-Mon': _c.V_I_MOD_2,
-        'Mod3Current-Mon': _c.V_I_MOD_3,
-        'Mod4Current-Mon': _c.V_I_MOD_4,
+        'Mod4IGBT1IIBCurrent-Mon': _c.V_I_IGBT_1_IIB_4,  # NOTE: Mod4IGBT1CurrentIIB-Mon ?
+        'Mod4IGBT2IIBCurrent-Mon': _c.V_I_IGBT_2_IIB_4,  # NOTE: Mod4IGBT2CurrentIIB-Mon ?
+        'Mod4IGBT1TemperatureIIB-Mon': _c.V_TEMP_IGBT_1_IIB_4,
+        'Mod4IGBT2TemperatureIIB-Mon': _c.V_TEMP_IGBT_2_IIB_4,
+        'Mod4IGBTDriverTemperatureIIB-Mon': _c.V_V_DRIVER_IIB_4,
+        'Mod4IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB_4,
+        'Mod4IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB_4,
+        'IIB4InductorTemperature-Mon': _c.V_TEMP_INDUCTOR_IIB_4,  # NOTE: Should it be 'Mod4InductorTemperatureIIB-Mon'?
+        'IIB4HeatSinkTemperature-Mon': _c.V_TEMP_HEATSINK_IIB_4,  # NOTE: Should it be 'Mod4HeatSinkTemperatureIIB-Mon'?
+        'Mod4LeakageCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB_4,
+        'Mod4TemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB_4,
+        'Mod4RelativeHumidityIIB-Mon': _c.V_RH_IIB_4,
+        'IntlkIIB4-Mon': _c.V_IIB_INTERLOCKS_4,  # NOTE: Should it be 'Mod4IntlkIIB-Mon'?
+        'Mod4AlarmsIIB-Mon': _c.V_IIB_ALARMS_4,
         }
 
 
