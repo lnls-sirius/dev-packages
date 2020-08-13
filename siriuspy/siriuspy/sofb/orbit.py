@@ -194,6 +194,9 @@ class EpicsOrbit(BaseOrbit):
 
     def shutdown(self):
         """."""
+        self._orbit_thread.resume()
+        self._orbit_thread.stop()
+        self._orbit_thread.join()
         if self.acc == 'SI':
             for pipe in self._mypipes_send:
                 pipe.send(False)
