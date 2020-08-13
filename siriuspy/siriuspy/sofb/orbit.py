@@ -102,8 +102,7 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         if self.acc == 'SI':
             self._processes = []
-            self._mypipes = []
-            self._create_processes(nrprocs=4)
+            self._create_processes(nrprocs=16)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
