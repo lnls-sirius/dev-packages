@@ -62,7 +62,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
-    MIN_SLOWORB_RATE = 30  # [Hz]
+    MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
