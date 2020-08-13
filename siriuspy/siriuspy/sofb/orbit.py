@@ -32,6 +32,7 @@ def run_subprocess_old(pvs, send_pipe, recv_pipe):
 
     def callback(*_, **kwargs):
         pvo = kwargs['cb_info'][1]
+        # pvo._args['timestamp'] = _time.time()
         pvo.event.set()
 
     pvsobj = []
@@ -50,6 +51,7 @@ def run_subprocess_old(pvs, send_pipe, recv_pipe):
         for pvo in pvsobj:
             if pvo.connected and pvo.event.wait(timeout=tout):
                 tout = timeout
+                # out.append(pvo.timestamp)
                 out.append(pvo.value)
             else:
                 out.append(_np.nan)
@@ -69,6 +71,7 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
 
     def callback(*_, **kwargs):
         pvo = kwargs['cb_info'][1]
+        # pvo._args['timestamp'] = _time.time()
         tstamps[pvo.index] = pvo.timestamp
         maxi = _np.nanmax(tstamps)
         mini = _np.nanmin(tstamps)
@@ -105,6 +108,7 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
             if not pvo.connected:
                 out.append(_np.nan)
                 continue
+            # out.append(pvo.timestamp)
             out.append(pvo.value)
         out.append(nok)
         send_pipe.send(out)
@@ -338,6 +342,9 @@ class EpicsOrbit(BaseOrbit):
             self._update_log(msg)
             _log.error(msg[5:])
             orbx, orby = refx, refy
+        # # for tests:
+        # orbx -= _time.time()
+        # orby -= _time.time()
         return _np.hstack([orbx-refx, orby-refy])
 
     def _get_orbit_online(self, orbs):
