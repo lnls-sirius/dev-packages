@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, pipe):
+def run_subprocess(pvs, send_pipe, recv_pipe):
     """Run subprocesses."""
     # this timeout is needed to slip the orbit acquisition in case the
     # loop starts in the middle of the BPMs updates
@@ -44,7 +44,7 @@ def run_subprocess(pvs, pipe):
         pvo.wait_for_connection()
         pvo.add_callback(callback)
 
-    while pipe.recv():
+    while recv_pipe.recv():
         out = []
         tout = None
         for pvo in pvsobj:
@@ -55,7 +55,7 @@ def run_subprocess(pvs, pipe):
                 out.append(_np.nan)
         for pvo in pvsobj:
             pvo.event.clear()
-        pipe.send(out)
+        send_pipe.send(out)
 
 
 class EpicsOrbit(BaseOrbit):
@@ -102,6 +102,8 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         if self.acc == 'SI':
             self._processes = []
+            self._mypipes_recv = []
+            self._mypipes_send = []
             self._create_processes(nrprocs=16)
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
@@ -121,14 +123,15 @@ class EpicsOrbit(BaseOrbit):
         sub = [div*i + min(i, rem) for i in range(nrprocs+1)]
 
         # create processes
-        self._get_evt = _Event()
         for i in range(nrprocs):
-            mine, theirs = _Pipe()
-            self._mypipes.append(mine)
+            mine, send_pipe = _Pipe(duplex=False)
+            self._mypipes_recv.append(mine)
+            recv_pipe, mine = _Pipe(duplex=False)
+            self._mypipes_send.append(mine)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
                 target=run_subprocess,
-                args=(pvsn, theirs),
+                args=(pvsn, send_pipe, recv_pipe),
                 daemon=True))
         for proc in self._processes:
             proc.start()
@@ -136,7 +139,7 @@ class EpicsOrbit(BaseOrbit):
     def shutdown(self):
         """."""
         if self.acc == 'SI':
-            for pipe in self._mypipes:
+            for pipe in self._mypipes_send:
                 pipe.send(False)
                 pipe.close()
             for proc in self._processes:
@@ -893,10 +896,10 @@ class EpicsOrbit(BaseOrbit):
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
-        for pipe in self._mypipes:
+        for pipe in self._mypipes_send:
             pipe.send(True)
         out = []
-        for pipe in self._mypipes:
+        for pipe in self._mypipes_recv:
             out.extend(pipe.recv())
         orbx = _np.array(out[:nr_bpms], dtype=float)
         orby = _np.array(out[nr_bpms:], dtype=float)
