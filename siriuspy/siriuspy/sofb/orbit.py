@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, send_pipe, recv_pipe):
+def run_subprocess_old(pvs, send_pipe, recv_pipe):
     """Run subprocesses."""
     # this timeout is needed to slip the orbit acquisition in case the
     # loop starts in the middle of the BPMs updates
@@ -55,6 +55,58 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
                 out.append(_np.nan)
         for pvo in pvsobj:
             pvo.event.clear()
+        send_pipe.send(out)
+
+
+def run_subprocess(pvs, send_pipe, recv_pipe):
+    """Run subprocesses."""
+    max_spread = 25/1000  # in [s]
+    timeout = 50/1000  # in [s]
+
+    ready_evt = _Event()
+
+    tstamps = _np.full(len(pvs), _np.nan)
+
+    def callback(*_, **kwargs):
+        pvo = kwargs['cb_info'][1]
+        tstamps[pvo.index] = pvo.timestamp
+        maxi = _np.nanmax(tstamps)
+        mini = _np.nanmin(tstamps)
+        if (maxi-mini) < max_spread:
+            ready_evt.set()
+
+    def conn_callback(pvname=None, conn=None, pv=None):
+        if not conn:
+            _log.warning(pvname + 'Disconnected')
+            tstamps[pv.index] = _np.nan
+
+    pvsobj = []
+    for i, pvn in enumerate(pvs):
+        pvo = _PV(pvn, connection_timeout=TIMEOUT)
+        pvo.index = i
+        pvsobj.append(pvo)
+
+    for pvo in pvsobj:
+        pvo.wait_for_connection()
+
+    for pvo in pvsobj:
+        pvo.add_callback(callback)
+        pvo.connection_callbacks.append(conn_callback)
+
+    boo = True
+    while boo or recv_pipe.recv():
+        boo = False
+        ready_evt.clear()
+        nok = 0.0
+        if not ready_evt.wait(timeout=timeout):
+            nok = 1.0
+        out = []
+        for pvo in pvsobj:
+            if not pvo.connected:
+                out.append(_np.nan)
+                continue
+            out.append(pvo.value)
+        out.append(nok)
         send_pipe.send(out)
 
 
@@ -894,13 +946,29 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', dorb.min())
             self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', dorb.max())
 
-    def _get_orbit_from_processes(self):
+    def _get_orbit_from_processes_old(self):
         nr_bpms = self._csorb.nr_bpms
         for pipe in self._mypipes_send:
             pipe.send(True)
         out = []
         for pipe in self._mypipes_recv:
             out.extend(pipe.recv())
+        orbx = _np.array(out[:nr_bpms], dtype=float)
+        orby = _np.array(out[nr_bpms:], dtype=float)
+        return orbx, orby
+
+    def _get_orbit_from_processes(self):
+        nr_bpms = self._csorb.nr_bpms
+        out = []
+        nok = []
+        for pipe in self._mypipes_recv:
+            res = pipe.recv()
+            out.extend(res[:-1])
+            nok.append(res[-1])
+        for pipe in self._mypipes_send:
+            pipe.send(True)
+        if any(nok):
+            _log.warning('orbit formation timed out.')
         orbx = _np.array(out[:nr_bpms], dtype=float)
         orby = _np.array(out[nr_bpms:], dtype=float)
         return orbx, orby
