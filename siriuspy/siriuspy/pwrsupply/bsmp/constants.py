@@ -470,10 +470,10 @@ class ConstFAP(ConstPSBSMP):
     V_IIB_INTERLOCKS = 48
 
 
-class ConstFAP_4P(ConstFAP):
+class ConstFAP_4P(ConstPSBSMP):
     """Namespace for organizing power supply FAP_4P BSMP constants."""
 
-    # --- FAP variables ---
+    # --- FAP_4P variables ---
     V_PS_SOFT_INTERLOCKS = 31
     V_PS_HARD_INTERLOCKS = 32
     V_I_LOAD1 = 33
