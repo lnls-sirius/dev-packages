@@ -65373,7 +65373,6 @@ _vlightcam_pvs = [
 _dcct_pvs = [
     ['BO-35D:DI-DCCT:MeasMode-Sel', 0, 0.0],
     ['BO-35D:DI-DCCT:MeasTrg-Sel', 0, 0.0],
-    ['BO-35D:DI-DCCT:TrgDelay-SP', 8.0e-6, 0.0],
     ['BO-35D:DI-DCCT:SampleCnt-SP', 1, 0.0],
     ['BO-35D:DI-DCCT:MeasPeriod-SP', 0.016667, 0.0],
     ['BO-35D:DI-DCCT:Imped-Sel', 0, 0.0],
@@ -65394,9 +65393,9 @@ _dcct_pvs = [
     ['BO-35D:DI-DCCT:LowLimEnbl-Sel', 0, 0.0],
     ['BO-35D:DI-DCCT:CurrThold-SP', 0, 0.0],
     ['BO-35D:DI-DCCT:HFReject-Sel', 1, 0.0],
+    ['BO-35D:DI-DCCT:Enbl-Sel', 1, 0.0],
     ['SI-13C4:DI-DCCT:MeasMode-Sel', 0, 0.0],
     ['SI-13C4:DI-DCCT:MeasTrg-Sel', 0, 0.0],
-    ['SI-13C4:DI-DCCT:TrgDelay-SP', 8.0e-6, 0.0],
     ['SI-13C4:DI-DCCT:SampleCnt-SP', 1, 0.0],
     ['SI-13C4:DI-DCCT:MeasPeriod-SP', 0.016667, 0.0],
     ['SI-13C4:DI-DCCT:Imped-Sel', 0, 0.0],
@@ -65417,9 +65416,9 @@ _dcct_pvs = [
     ['SI-13C4:DI-DCCT:LowLimEnbl-Sel', 0, 0.0],
     ['SI-13C4:DI-DCCT:CurrThold-SP', 0, 0.0],
     ['SI-13C4:DI-DCCT:HFReject-Sel', 1, 0.0],
+    ['SI-13C4:DI-DCCT:Enbl-Sel', 1, 0.0],
     ['SI-14C4:DI-DCCT:MeasMode-Sel', 0, 0.0],
     ['SI-14C4:DI-DCCT:MeasTrg-Sel', 0, 0.0],
-    ['SI-14C4:DI-DCCT:TrgDelay-SP', 8.0e-6, 0.0],
     ['SI-14C4:DI-DCCT:SampleCnt-SP', 1, 0.0],
     ['SI-14C4:DI-DCCT:MeasPeriod-SP', 0.016667, 0.0],
     ['SI-14C4:DI-DCCT:Imped-Sel', 0, 0.0],
@@ -65440,6 +65439,7 @@ _dcct_pvs = [
     ['SI-14C4:DI-DCCT:LowLimEnbl-Sel', 0, 0.0],
     ['SI-14C4:DI-DCCT:CurrThold-SP', 0, 0.0],
     ['SI-14C4:DI-DCCT:HFReject-Sel', 1, 0.0],
+    ['SI-14C4:DI-DCCT:Enbl-Sel', 1, 0.0],
 ]
 
 _ict_pvs = [
