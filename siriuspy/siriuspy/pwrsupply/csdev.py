@@ -1557,7 +1557,7 @@ def _get_ps_FAP_2P2S_propty_database():
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
                                  'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod1-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBLabelsMod1-Mon': {
+        'AlarmsIIBMod1Labels-Cte': {
             'type': 'string',
             'count': len(_et.IIB_ALARMS_FAP_2P2S),
             'value': _et.IIB_ALARMS_FAP_2P2S},
@@ -1613,7 +1613,7 @@ def _get_ps_FAP_2P2S_propty_database():
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
                                  'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod2-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBLabelsMod2-Mon': {
+        'AlarmsIIBMod2Labels-Cte': {
             'type': 'string',
             'count': len(_et.IIB_ALARMS_FAP_2P2S),
             'value': _et.IIB_ALARMS_FAP_2P2S},
@@ -1669,7 +1669,7 @@ def _get_ps_FAP_2P2S_propty_database():
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
                                  'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod3-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBLabelsMod3-Mon': {
+        'AlarmsIIBMod3Labels-Cte': {
             'type': 'string',
             'count': len(_et.IIB_ALARMS_FAP_2P2S),
             'value': _et.IIB_ALARMS_FAP_2P2S},
@@ -1725,7 +1725,7 @@ def _get_ps_FAP_2P2S_propty_database():
                                  'count': len(_et.IIB_INTLCK_FAP_2P2S),
                                  'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod4-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBLabelsMod4-Mon': {
+        'AlarmsIIBMod4Labels-Cte': {
             'type': 'string',
             'count': len(_et.IIB_ALARMS_FAP_2P2S),
             'value': _et.IIB_ALARMS_FAP_2P2S},
