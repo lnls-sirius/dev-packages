@@ -10,6 +10,7 @@ from multiprocessing import Pipe as _Pipe
 
 from epics import CAProcess as _Process
 import numpy as _np
+import bottleneck as _bn
 
 from .. import util as _util
 from ..diag.bpm.csdev import Const as _csbpm
@@ -73,8 +74,8 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
         pvo = kwargs['cb_info'][1]
         # pvo._args['timestamp'] = _time.time()
         tstamps[pvo.index] = pvo.timestamp
-        maxi = _np.nanmax(tstamps)
-        mini = _np.nanmin(tstamps)
+        maxi = _bn.nanmax(tstamps)
+        mini = _bn.nanmin(tstamps)
         if (maxi-mini) < max_spread:
             ready_evt.set()
 
@@ -951,10 +952,10 @@ class EpicsOrbit(BaseOrbit):
             orb = self.smooth_orb[plane]
             dorb = orb - self.ref_orbs[plane]
             self.run_callbacks(f'SlowOrb{plane:s}-Mon', _np.array(orb))
-            self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', dorb.mean())
-            self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', dorb.std())
-            self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', dorb.min())
-            self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', dorb.max())
+            self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', _bn.nanmean(dorb))
+            self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', _bn.nanstd(dorb))
+            self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', _bn.nanmin(dorb))
+            self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', _bn.nanmax(dorb))
 
     def _get_orbit_from_processes_old(self):
         nr_bpms = self._csorb.nr_bpms
