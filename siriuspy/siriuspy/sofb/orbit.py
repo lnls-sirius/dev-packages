@@ -240,6 +240,7 @@ class EpicsOrbit(BaseOrbit):
         if not self.isring:
             return dbase
         dbase.update({
+            'MTurnAcquire-Cmd': self.acquire_mturn_orbit,
             'MTurnIdx-SP': self.set_orbit_multiturn_idx,
             'MTurnDownSample-SP': self.set_mturndownsample,
             'MTurnSyncTim-Sel': self.set_mturn_sync,
@@ -824,6 +825,10 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('MTurnDownSample-RB', val)
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
+
+    def acquire_mturn_orbit(self):
+        """Acquire Multiturn data from BPMs"""
+        Thread(target=self._update_multiturn_orbits, daemon=True).start()
 
     def _wait_bpms(self):
         """."""

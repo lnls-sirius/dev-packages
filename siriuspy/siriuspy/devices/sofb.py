@@ -41,6 +41,7 @@ class SOFB(_Device):
         'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
         # properties used only for ring-type accelerators:
+        'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
@@ -330,6 +331,10 @@ class SOFB(_Device):
     def trigsample(self, value):
         """."""
         self['TrigNrSamplesPost-SP'] = int(value)
+
+    def cmd_mturn_acquire(self):
+        """."""
+        self['MTurnAcquire-Cmd'] = 1
 
     def cmd_reset(self):
         """."""
