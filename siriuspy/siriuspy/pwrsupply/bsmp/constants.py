@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V1.25 - FRWR0.42 - 7/8/2020'
+__version__ = 'FRWM - V1.31 V0.41u - 8/11/2020'
 
 
 # --- Const DCDC ---
@@ -476,9 +476,9 @@ class ConstFAP_4P(ConstPSBSMP):
     # --- FAP_4P variables ---
     V_PS_SOFT_INTERLOCKS = 31
     V_PS_HARD_INTERLOCKS = 32
-    V_I_LOAD1 = 33
-    V_I_LOAD2 = 34
-    V_I_LOAD_MEAN = 35
+    V_I_LOAD_MEAN = 33
+    V_I_LOAD1 = 34
+    V_I_LOAD2 = 35
     V_V_LOAD = 36
     V_I_IGBT_1_1 = 37
     V_I_IGBT_2_1 = 38
