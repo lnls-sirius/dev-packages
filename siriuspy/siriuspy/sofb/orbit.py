@@ -241,6 +241,7 @@ class EpicsOrbit(BaseOrbit):
         if not self.isring:
             return dbase
         dbase.update({
+            'MTurnAcquire-Cmd': self.acquire_mturn_orbit,
             'MTurnIdx-SP': self.set_orbit_multiturn_idx,
             'MTurnDownSample-SP': self.set_mturndownsample,
             'MTurnSyncTim-Sel': self.set_mturn_sync,
@@ -826,6 +827,10 @@ class EpicsOrbit(BaseOrbit):
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
+    def acquire_mturn_orbit(self):
+        """Acquire Multiturn data from BPMs"""
+        Thread(target=self._update_multiturn_orbits, daemon=True).start()
+
     def _wait_bpms(self):
         """."""
         for _ in range(40):
@@ -864,9 +869,12 @@ class EpicsOrbit(BaseOrbit):
 
     def _load_ref_orbs(self):
         """."""
-        if _os.path.isfile(self._csorb.ref_orb_fname):
-            self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
-                self._csorb.ref_orb_fname, unpack=True)
+        if not _os.path.isfile(self._csorb.ref_orb_fname):
+            return
+        self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
+            self._csorb.ref_orb_fname, unpack=True)
+        self.run_callbacks('RefOrbX-RB', self.ref_orbs['X'].copy())
+        self.run_callbacks('RefOrbY-RB', self.ref_orbs['Y'].copy())
 
     def _save_ref_orbits(self):
         """."""
