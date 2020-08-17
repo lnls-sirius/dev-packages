@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.31 V0.41u - 8/11/2020'
+__version__ = 'FRWM - V1.31 V0.41u - 8/14/2020'
 
 
 # --- Const DCDC ---
