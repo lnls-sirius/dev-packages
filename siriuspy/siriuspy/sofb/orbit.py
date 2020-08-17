@@ -863,9 +863,12 @@ class EpicsOrbit(BaseOrbit):
 
     def _load_ref_orbs(self):
         """."""
-        if _os.path.isfile(self._csorb.ref_orb_fname):
-            self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
-                self._csorb.ref_orb_fname, unpack=True)
+        if not _os.path.isfile(self._csorb.ref_orb_fname):
+            return
+        self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
+            self._csorb.ref_orb_fname, unpack=True)
+        self.run_callbacks('RefOrbX-RB', self.ref_orbs['X'].copy())
+        self.run_callbacks('RefOrbY-RB', self.ref_orbs['Y'].copy())
 
     def _save_ref_orbits(self):
         """."""
