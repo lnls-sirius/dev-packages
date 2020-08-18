@@ -91,8 +91,8 @@ class BPM(_Device):
             stg += f'{_csbpm.ACQDataTyp(self.acq_trig_datasel):s}\n'
             stg += '        - Polarity: '
             stg += f'{_csbpm.Polarity(self.acq_trig_datapol):s}\n'
-            stg += f'        - Threshold: {self.acq_trig_datathres):.1f}\n'
-            stg += f'        - Hysteresis: {self.acq_trig_datahyst):d}\n'
+            stg += f'        - Threshold: {self.acq_trig_datathres:.1f}\n'
+            stg += f'        - Hysteresis: {self.acq_trig_datahyst:d}\n'
         stg += '\n'
         return stg
 
