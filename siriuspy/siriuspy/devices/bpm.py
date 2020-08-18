@@ -4,6 +4,7 @@ import numpy as _np
 
 from .device import Device as _Device
 from ..diag.bpm.csdev import Const as _csbpm
+from ..search import BPMSearch as _BPMSearch
 
 
 class BPM(_Device):
@@ -64,7 +65,10 @@ class BPM(_Device):
     def __init__(self, devname):
         """."""
         # call base class constructor
+        if not _BPMSearch.is_valid_devname(devname):
+            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
         super().__init__(devname, properties=BPM._properties)
+        self.csdata = _csbpm
 
     def __str__(self):
         """."""
