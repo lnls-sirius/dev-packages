@@ -66,53 +66,58 @@ class BPM(_Device):
         # call base class constructor
         super().__init__(devname, properties=BPM._properties)
 
-        self._config_ok_vals = {
-            'asyn.ENBL': _csbpm.EnblTyp.Enable,
-            'ACQBPMMode': _csbpm.OpModes.MultiBunch,
-            'ACQChannel': _csbpm.AcqChan.ADC,
-            'ACQShots': 1,
-            # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
-            'ACQUpdateTime': 0.001,
-            'ACQSamplesPre': 0,
-            'ACQSamplesPost': 360,
-            'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
-            'ACQTrigger': _csbpm.AcqTrigTyp.External,
-            'ACQTriggerRep': _csbpm.AcqRepeat.Normal,
-            'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
-            'ACQTriggerDataThres': 1,
-            'ACQTriggerDataPol': _csbpm.Polarity.Positive,
-            'ACQTriggerDataHyst': 0,
-            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
-            'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
-            'MonitTagEn': _csbpm.EnbldDsbld.disabled,
-            'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
-            'TbtDataMaskSamplesBeg': 0,
-            'TbtDataMaskSamplesEnd': 0,
-            'XYPosCal': _csbpm.EnbldDsbld.enabled,
-            'SUMPosCal': _csbpm.EnbldDsbld.enabled}
+    def __str__(self):
+        """."""
+        stg = '################### Summary Status ###################\n'
+        stg += 'asyn:\n'
+        stg += f'    Enabled: {_csbpm.EnblTyp(self.asyn_state):s}\n'
+        stg += f'    Connected: {_csbpm.ConnTyp(self.asyn_connected):s}\n'
+        stg += '\nAcquisition Parameters:\n'
+        stg += f'    - Status: {_csbpm.AcqStates(self.acq_status):s}\n'
+        stg += f'    - Mode: {_csbpm.OpModes(self.acq_mode):s}\n'
+        stg += f'    - Channel: {_csbpm.AcqChan(self.acq_channel):s}\n'
+        stg += f'    - Nr Shots: {self.acq_nrshots:d}\n'
+        stg += f'    - Update Time: {self.acq_update_time:.1f} ms\n'
+        stg += f'    - Repeat: {_csbpm.AcqRepeat(self.acq_repeat):s}\n'
+        stg += f'    - Trigger Type: {_csbpm.AcqTrigTyp(self.acq_trigger):s}\n'
+        if self.acq_trigger == _csbpm.AcqTrigTyp.Data:
+            stg += '        - Channel: '
+            stg += f'{_csbpm.ACQChan(self.acq_trig_datachan):s}\n'
+            stg += '        - Source: '
+            stg += f'{_csbpm.ACQDataTyp(self.acq_trig_datasel):s}\n'
+            stg += '        - Polarity: '
+            stg += f'{_csbpm.Polarity(self.acq_trig_datapol):s}\n'
+            stg += f'        - Threshold: {self.acq_trig_datathres):.1f}\n'
+            stg += f'        - Hysteresis: {self.acq_trig_datahyst):d}\n'
+        stg += '\n'
+        return stg
 
     @property
     def is_ok(self):
         """."""
         stts = _csbpm.AcqStates
-        okay = self['ACQStatus-Sts'] not in {
+        okay = self.acq_status not in {
             stts.Error, stts.No_Memory, stts.Too_Few_Samples,
             stts.Too_Many_Samples, stts.Acq_Overflow}
-        okay &= self['asyn.CNCT'] == _csbpm.ConnTyp.Connected
-        okay &= self.state == _csbpm.EnblTyp.Enable
+        okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
+        okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
 
     @property
-    def state(self):
+    def asyn_state(self):
         """."""
         return self['asyn.ENBL']
 
-    @state.setter
-    def state(self, boo):
+    @asyn_state.setter
+    def asyn_state(self, boo):
         """."""
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         self['asyn.ENBL'] = val
+
+    @property
+    def asyn_connected(self):
+        """."""
+        return self['asyn.CNCT']
 
     @property
     def adcfreq(self):
@@ -522,12 +527,16 @@ class BPM(_Device):
         self['ACQTriggerEvent-Sel'] = val
 
     @property
-    def acq_type(self):
+    def acq_status(self):
+        return['ACQStatus-Sts']
+
+    @property
+    def acq_channel(self):
         """."""
         return self['ACQChannel-Sts']
 
-    @acq_type.setter
-    def acq_type(self, val):
+    @acq_channel.setter
+    def acq_channel(self, val):
         """."""
         self['ACQChannel-Sel'] = val
 
@@ -552,12 +561,22 @@ class BPM(_Device):
         self['ACQTriggerRep-Sel'] = val
 
     @property
-    def acq_trig_datatype(self):
+    def acq_update_time(self):
+        """."""
+        return self['ACQUpdateTime-RB'] / 1e3
+
+    @acq_update_time.setter
+    def acq_update_time(self, val):
+        """."""
+        self['ACQUpdateTime-SP'] = val * 1e3
+
+    @property
+    def acq_trig_datachan(self):
         """."""
         return self['ACQDataTrigChan-Sts']
 
-    @acq_trig_datatype.setter
-    def acq_trig_datatype(self, val):
+    @acq_trig_datachan.setter
+    def acq_trig_datachan(self, val):
         """."""
         self['ACQDataTrigChan-Sel'] = val
 
@@ -630,3 +649,12 @@ class BPM(_Device):
     def acq_nrshots(self, val):
         """."""
         self['ACQShots-SP'] = val
+
+    def cmd_acq_start(self):
+        self.acq_ctrl = _csbpm.AcqEvents.Start
+
+    def cmd_acq_stop(self):
+        self.acq_ctrl = _csbpm.AcqEvents.Stop
+
+    def cmd_acq_abort(self):
+        self.acq_ctrl = _csbpm.AcqEvents.Abort
