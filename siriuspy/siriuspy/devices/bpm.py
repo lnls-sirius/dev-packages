@@ -41,7 +41,7 @@ class BPM(_Device):
         'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
         'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
         'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-        'ACQStatus-Sel', 'ACQStatus-Sts',
+        'ACQStatus-Sts',
         'ACQTrigger-Sel', 'ACQTrigger-Sts',
         'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
         'ACQDataTrigChan-Sel', 'ACQDataTrigChan-Sts',
@@ -74,23 +74,25 @@ class BPM(_Device):
         """."""
         stg = '################### Summary Status ###################\n'
         stg += 'asyn:\n'
-        stg += f'    Enabled: {_csbpm.EnblTyp[self.asyn_state]:s}\n'
-        stg += f'    Connected: {_csbpm.ConnTyp[self.asyn_connected]:s}\n'
+        stg += f'    Enabled: {_csbpm.EnblTyp._fields[self.asyn_state]:s}\n'
+        stg += '    Connected: '
+        stg += f'{_csbpm.ConnTyp._fields[self.asyn_connected]:s}\n'
         stg += '\nAcquisition Parameters:\n'
-        stg += f'    - Status: {_csbpm.AcqStates[self.acq_status]:s}\n'
-        stg += f'    - Mode: {_csbpm.OpModes[self.acq_mode]:s}\n'
-        stg += f'    - Channel: {_csbpm.AcqChan[self.acq_channel]:s}\n'
+        stg += f'    - Status: {_csbpm.AcqStates._fields[self.acq_status]:s}\n'
+        stg += f'    - Mode: {_csbpm.OpModes._fields[self.acq_mode]:s}\n'
+        stg += f'    - Channel: {_csbpm.AcqChan._fields[self.acq_channel]:s}\n'
         stg += f'    - Nr Shots: {self.acq_nrshots:d}\n'
         stg += f'    - Update Time: {self.acq_update_time:.1f} ms\n'
-        stg += f'    - Repeat: {_csbpm.AcqRepeat[self.acq_repeat]:s}\n'
-        stg += f'    - Trigger Type: {_csbpm.AcqTrigTyp[self.acq_trigger]:s}\n'
+        stg += f'    - Repeat: {_csbpm.AcqRepeat._fields[self.acq_repeat]:s}\n'
+        stg += '    - Trigger Type: '
+        stg += f'{_csbpm.AcqTrigTyp._fields[self.acq_trigger]:s}\n'
         if self.acq_trigger == _csbpm.AcqTrigTyp.Data:
             stg += '        - Channel: '
-            stg += f'{_csbpm.ACQChan[self.acq_trig_datachan]:s}\n'
+            stg += f'{_csbpm.AcqChan._fields[self.acq_trig_datachan]:s}\n'
             stg += '        - Source: '
-            stg += f'{_csbpm.ACQDataTyp[self.acq_trig_datasel]:s}\n'
+            stg += f'{_csbpm.AcqDataTyp._fields[self.acq_trig_datasel]:s}\n'
             stg += '        - Polarity: '
-            stg += f'{_csbpm.Polarity[self.acq_trig_datapol]:s}\n'
+            stg += f'{_csbpm.Polarity._fields[self.acq_trig_datapol]:s}\n'
             stg += f'        - Threshold: {self.acq_trig_datathres:.1f}\n'
             stg += f'        - Hysteresis: {self.acq_trig_datahyst:d}\n'
         stg += '\n'
@@ -532,7 +534,8 @@ class BPM(_Device):
 
     @property
     def acq_status(self):
-        return['ACQStatus-Sts']
+        """."""
+        return self['ACQStatus-Sts']
 
     @property
     def acq_channel(self):
