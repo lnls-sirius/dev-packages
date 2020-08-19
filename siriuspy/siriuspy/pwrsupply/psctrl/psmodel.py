@@ -493,6 +493,7 @@ class PSModelFAP_4P(_PSModel):
 
     _bsmp_variables = {
         'Current-RB': _c.V_PS_SETPOINT,
+        'CurrentRef-Mon': _c.V_PS_REFERENCE,
         'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
