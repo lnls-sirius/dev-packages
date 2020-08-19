@@ -201,7 +201,11 @@ class CHCV(Corrector):
     @property
     def opmode_ok(self):
         """Opmode ok status."""
-        return self.opmode == self._config_ok_vals['OpMode']
+        isok = self.opmode == self._config_ok_vals['OpMode']
+        if not isok:
+            msg = 'OpMode not Ok {0:s}'.format(self.name)
+            _log.warning(msg)
+        return isok
 
     @property
     def opmode(self):
@@ -226,7 +230,11 @@ class CHCV(Corrector):
     @property
     def sofbmode_ok(self):
         """Opmode ok status."""
-        return self.sofbmode == self._config_ok_vals['SOFBMode']
+        isok = self.sofbmode == self._config_ok_vals['SOFBMode']
+        if not isok:
+            msg = 'SOFBMode not Ok {0:s}'.format(self.name)
+            _log.warning(msg)
+        return isok
 
     @property
     def sofbmode(self):
