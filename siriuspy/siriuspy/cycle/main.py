@@ -4,6 +4,7 @@ import sys as _sys
 import time as _time
 import logging as _log
 import threading as _thread
+from concurrent.futures import ThreadPoolExecutor
 from epics import PV as _PV
 
 from ..namesys import Filter as _Filter, SiriusPVName as _PVName
@@ -327,7 +328,7 @@ class CycleController:
     @property
     def prepare_ps_opmode_slowref_max_duration(self):
         """Prepare PS OpMode SlowRef task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -335,7 +336,7 @@ class CycleController:
     @property
     def prepare_ps_current_zero_max_duration(self):
         """Prepare PS current zero task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -343,7 +344,7 @@ class CycleController:
     @property
     def prepare_ps_params_max_duration(self):
         """Prepare PS parameters task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -351,7 +352,7 @@ class CycleController:
     @property
     def prepare_ps_opmode_cycle_max_duration(self):
         """Prepare PS task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -399,23 +400,18 @@ class CycleController:
             psnames = {ps for ps in psnames if 'LI' not in ps}
 
         self._update_log('Preparing power supplies '+ppty+'...')
-        threads = list()
-        for idx, psname in enumerate(psnames):
-            cycler = self._get_cycler(psname)
-            if ppty == 'parameters':
-                target = cycler.prepare
-            elif ppty == 'opmode':
-                target = cycler.set_opmode_cycle
-            thread = _thread.Thread(
-                target=target, args=(self.mode, ), daemon=True)
-            if idx % 5 == 4 or idx == len(psnames)-1:
-                self._update_log(
-                    'Sent '+ppty+' preparation to {0}/{1}'.format(
-                        str(idx+1), str(len(psnames))))
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            for idx, psname in enumerate(psnames):
+                cycler = self._get_cycler(psname)
+                if ppty == 'parameters':
+                    target = cycler.prepare
+                elif ppty == 'opmode':
+                    target = cycler.set_opmode_cycle
+                executor.submit(target, self.mode)
+                if idx % 5 == 4 or idx == len(psnames)-1:
+                    self._update_log(
+                        'Sent '+ppty+' preparation to {0}/{1}'.format(
+                            str(idx+1), str(len(psnames))))
 
     def config_timing(self):
         """Prepare timing to cycle according to mode."""
@@ -732,19 +728,15 @@ class CycleController:
         psnames = {ps for ps in psnames if 'LI' not in ps}
 
         self._update_log('Setting power supplies to SlowRef...')
-        threads = list()
-        for idx, psname in enumerate(psnames):
-            cycler = self._get_cycler(psname)
-            target = cycler.set_opmode_slowref
-            thread = _thread.Thread(target=target, daemon=True)
-            threads.append(thread)
-            thread.start()
-            if idx % 5 == 4 or idx == len(psnames)-1:
-                self._update_log(
-                    'Sent opmode preparation to {0}/{1}'.format(
-                        str(idx+1), str(len(psnames))))
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            for idx, psname in enumerate(psnames):
+                cycler = self._get_cycler(psname)
+                target = cycler.set_opmode_slowref
+                executor.submit(target)
+                if idx % 5 == 4 or idx == len(psnames)-1:
+                    self._update_log(
+                        'Sent opmode preparation to {0}/{1}'.format(
+                            str(idx+1), str(len(psnames))))
 
     def check_pwrsupplies_slowref(self, psnames, timeout=TIMEOUT_CHECK):
         """Check power supplies OpMode."""
