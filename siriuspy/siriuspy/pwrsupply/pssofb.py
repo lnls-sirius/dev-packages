@@ -585,7 +585,7 @@ class PSConnSOFB:
             dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
             if self._sofb_update_iocs:
-                pvname = bsmpdevs[0] + ':SOFBUpdate-Cmd'
+                pvname = bsmpdevs[0][0] + ':SOFBUpdate-Cmd'
                 pvobjs[bbbname] = _epics.get_pv(pvname)
             thread = _BBBThread(name=bbbname)
             thread.start()

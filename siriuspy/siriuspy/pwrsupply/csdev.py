@@ -652,10 +652,10 @@ def _get_ps_sofb_propty_database():
     dbase = {
         'SOFBMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         'SOFBMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         'SOFBCurrent-SP': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,

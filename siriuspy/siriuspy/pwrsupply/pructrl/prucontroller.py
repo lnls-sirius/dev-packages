@@ -56,7 +56,7 @@ class PRUController:
         # init time interval
         t0_ = _time.time()
 
-        # init timestamp of last SOFB setpoint execution
+        # init sofb mode to false
         self._sofb_mode = False
 
         # index of device in self._device_ids for next update in SOFB mode
