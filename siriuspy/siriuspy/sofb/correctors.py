@@ -449,7 +449,8 @@ class EpicsCorrectors(BaseCorrectors):
             self._prob = None
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
-                    EthBridgeClient, nr_procs=8, asynchronous=True)
+                    EthBridgeClient, nr_procs=8, asynchronous=True,
+                    sofb_update_iocs=True)
                 self._pssofb.processes_start()
             else:
                 self._pssofb = _PSSOFBIOC('SI', auto_mon=True)
