@@ -492,6 +492,7 @@ class PSModelFAP_4P(_PSModel):
     _e = _etity_psbsmp.EntitiesFAP_4P
 
     _bsmp_variables = {
+        'Current-RB': _c.V_PS_SETPOINT,
         'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
