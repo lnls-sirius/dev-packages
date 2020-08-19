@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'V1.25 - FRWR0.42 - 7/8/2020'
+__version__ = 'FRWM - V1.31 V0.41u - 8/14/2020'
 
 
 # --- Const DCDC ---
@@ -651,14 +651,14 @@ class ConstFBP_DCLink(ConstPSBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
     # --- FBP_DCLink variables ---
-    V_PS_SOFT_INTERLOCKS = 25
-    V_PS_HARD_INTERLOCKS = 26
-    V_MODULES_STATUS = 27
-    V_V_OUT = 28
-    V_V_OUT_1 = 29
-    V_V_OUT_2 = 30
-    V_V_OUT_3 = 31
-    V_DIG_POT_TAP = 32
+    V_PS_SOFT_INTERLOCKS = 31
+    V_PS_HARD_INTERLOCKS = 32
+    V_MODULES_STATUS = 33
+    V_V_OUT = 34
+    V_V_OUT_1 = 35
+    V_V_OUT_2 = 36
+    V_V_OUT_3 = 37
+    V_DIG_POT_TAP = 38
 
 
 class ConstFAC_2S_ACDC(ConstPSBSMP):
