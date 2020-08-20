@@ -172,8 +172,9 @@ class MeasParameters(_BaseClass, _Const):
         """."""
         return self._applied_bumpy
 
-    def cmd_apply_bump(self):
+    def cmd_apply_bump(self, *args):
         """Apply Bump to SOFB."""
+        _ = args
         if not self.connected:
             self._apply_status = self.ApplyStatus.ConnectionError
             self.run_callbacks('ApplyStatus-Mon', self._apply_status)

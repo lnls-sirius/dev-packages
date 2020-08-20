@@ -581,8 +581,9 @@ class ProcessImage(BaseClass):
         """."""
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
-    def cmd_reset_buffer(self):
+    def cmd_reset_buffer(self, *args):
         """Schedule reset Buffer in next update."""
+        _ = args
         self._reset_buffer = True
         self.run_callbacks('BufferSize-Mon', 0)
 
