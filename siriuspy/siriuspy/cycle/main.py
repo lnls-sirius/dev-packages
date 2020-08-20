@@ -417,7 +417,7 @@ class CycleController:
         """Prepare timing to cycle according to mode."""
         if self._only_linac:
             return
-        self._timing.turnoff()
+        self._timing.turnoff(self._triggers)
         self._update_log('Preparing Timing...')
         self._timing.prepare(self.mode, self._triggers)
         self._update_log(done=True)
