@@ -4,6 +4,7 @@ from functools import partial as _part
 from epics import PV as _PV
 
 from ...thread import RepeaterThread as _Repeater
+from ...clientconfigdb import ConfigDBClient as _ConfigDBClient
 from ..util import BaseClass as _BaseClass, ProcessImage as _ProcessImage
 from .csdev import Const as _Const
 
@@ -14,11 +15,6 @@ class MeasParameters(_BaseClass, _Const):
     def __init__(self, callback=None):
         """."""
         self.image_processor = _ProcessImage(callback=callback)
-        self._profile = self.DEF_PROFILE
-        self._target_posx = self.TARGETX
-        self._target_posy = self.TARGETY
-        self._sofb_bumpx = 0.0
-        self._sofb_bumpy = 0.0
         self.image_processor.px2mmscalex = self.DEF_COEFX
         self.image_processor.px2mmscaley = self.DEF_COEFY
         self.image_processor.roiautocenter = self.AutoCenter.Manual
@@ -29,6 +25,24 @@ class MeasParameters(_BaseClass, _Const):
         self.image_processor.roicenterx = self.TARGETX
         self.image_processor.roicentery = self.TARGETY
         self.image_processor.method = self.Method.Moments
+        self._profile = self.DEF_PROFILE
+        self._target_posx = self.TARGETX
+        self._target_posy = self.TARGETY
+        self._needed_dbumpx = 0.0
+        self._needed_dbumpy = 0.0
+        self._applied_bumpx = 0.0
+        self._applied_bumpy = 0.0
+        self._need_update = True
+        self._apply_status = self.ApplyStatus.Idle
+        conf = _ConfigDBClient(config_type='si_orbit')
+        self._refs = conf.get_config_value('ref_orb')
+        self._sofb_pvs = dict(
+            refx_sp=_PV('SI-Glob:AP-SOFB:RefOrbX-SP'),
+            refy_sp=_PV('SI-Glob:AP-SOFB:RefOrbY-SP'),
+            refx_rb=_PV(
+                'SI-Glob:AP-SOFB:RefOrbX-RB', callback=self._set_need_update),
+            refy_rb=_PV(
+                'SI-Glob:AP-SOFB:RefOrbY-RB', callback=self._set_need_update))
 
         self._width_source = _PV(self._profile + 'cam1:ArraySizeX_RBV')
         self._image_source = _PV(
@@ -42,6 +56,7 @@ class MeasParameters(_BaseClass, _Const):
         """."""
         dic_ = self.image_processor.get_map2write()
         dic_.update({
+            'ApplyBump-Cmd': self.cmd_apply_bump,
             'MeasureCtrl-Sel': _part(self.write, 'measuring'),
             'MeasureRate-SP': _part(self.write, 'rate'),
             'TargetPosX-SP': _part(self.write, 'target_posx'),
@@ -57,8 +72,11 @@ class MeasParameters(_BaseClass, _Const):
             'MeasureRate-RB': _part(self.read, 'rate'),
             'TargetPosX-RB': _part(self.read, 'target_posx'),
             'TargetPosY-RB': _part(self.read, 'target_posy'),
-            'SOFBBumpX-RB': _part(self.read, 'sofb_bumpx'),
-            'SOFBBumpY-RB': _part(self.read, 'sofb_bumpy'),
+            'NeededDeltaBumpX-Mon': _part(self.read, 'needed_dbumpx'),
+            'NeededDeltaBumpY-Mon': _part(self.read, 'needed_dbumpy'),
+            'AppliedBumpX-Mon': _part(self.read, 'applied_bumpx'),
+            'AppliedBumpY-Mon': _part(self.read, 'applied_bumpy'),
+            'ApplyStatus-Mon': _part(self.read, 'apply_status'),
             })
         return dic_
 
@@ -77,6 +95,7 @@ class MeasParameters(_BaseClass, _Const):
         """."""
         conn = self._width_source.connected
         conn &= self._image_source.connected
+        conn &= all(map(lambda x: x.connected, self._sofb_pvs.values()))
         return conn
 
     @property
@@ -90,6 +109,11 @@ class MeasParameters(_BaseClass, _Const):
         if isinstance(val, (float, int)) and 0 < val < 30:
             self._thread.interval = 1/val
             self.run_callbacks('MeasureRate-RB', val)
+
+    @property
+    def apply_status(self):
+        """Return status of last apply attempt."""
+        return self._apply_status
 
     @property
     def measuring(self):
@@ -129,17 +153,40 @@ class MeasParameters(_BaseClass, _Const):
             self.run_callbacks('TargetPosY-RB', val)
 
     @property
-    def sofb_bumpx(self):
+    def needed_dbumpx(self):
         """."""
-        return self._sofb_bumpx
+        return self._needed_dbumpx
 
     @property
-    def sofb_bumpy(self):
+    def needed_dbumpy(self):
         """."""
-        return self._sofb_bumpy
+        return self._needed_dbumpy
+
+    @property
+    def applied_bumpx(self):
+        """."""
+        return self._applied_bumpx
+
+    @property
+    def applied_bumpy(self):
+        """."""
+        return self._applied_bumpy
+
+    def cmd_apply_bump(self):
+        """Apply Bump to SOFB."""
+        if not self.connected:
+            self._apply_status = self.ApplyStatus.ConnectionError
+            self.run_callbacks('ApplyStatus-Mon', self._apply_status)
+            return
+        self._update_applied_bumps()
+        self._apply_status = self._calc_and_apply_bumps()
+        self.run_callbacks('ApplyStatus-Mon', self._apply_status)
 
     def process_image(self):
         """."""
+        if self._need_update:
+            self._update_applied_bumps()
+
         value = self._width_source.value
         if isinstance(value, (float, int)):
             self.image_processor.imagewidth = int(value)
@@ -150,10 +197,55 @@ class MeasParameters(_BaseClass, _Const):
         dltx *= self.image_processor.px2mmscalex * 1e-3  # mm --> m
         dlty *= self.image_processor.px2mmscaley * 1e-3  # mm --> m
 
-        self._sofb_bumpx = -dltx / self.DIST_FROM_SRC * 1e6  # rad --> urad
+        self._needed_dbumpx = -dltx / self.DIST_FROM_SRC * 1e6  # rad --> urad
         # NOTE: this signal asymmetry is due to the x-flip of the image and
         # the beamline optics.
-        self._sofb_bumpy = dlty / self.DIST_FROM_SRC * 1e6  # rad --> urad
+        self._needed_dbumpy = dlty / self.DIST_FROM_SRC * 1e6  # rad --> urad
 
-        self.run_callbacks('SOFBBumpX-Mon', self._sofb_bumpx)
-        self.run_callbacks('SOFBBumpY-Mon', self._sofb_bumpy)
+        self.run_callbacks('NeededDeltaBumpX-Mon', self._needed_dbumpx)
+        self.run_callbacks('NeededDeltaBumpY-Mon', self._needed_dbumpy)
+
+    def _update_applied_bumps(self):
+        orbx = self._sofb_pvs['refx_rb'].value
+        orby = self._sofb_pvs['refy_rb'].value
+        if orbx is None or orby is None:
+            return
+
+        dx1 = orbx[self.BPM1_INDEX] - self._refs['x'][self.BPM1_INDEX]
+        dx2 = orbx[self.BPM2_INDEX] - self._refs['x'][self.BPM2_INDEX]
+        dy1 = orby[self.BPM1_INDEX] - self._refs['y'][self.BPM1_INDEX]
+        dy2 = orby[self.BPM2_INDEX] - self._refs['y'][self.BPM2_INDEX]
+
+        self._applied_bumpx = (dx2 - dx1) / self.SS_SIZE  # already in [urad]
+        self._applied_bumpy = (dy2 - dy1) / self.SS_SIZE
+
+        self.run_callbacks('AppliedBumpX-Mon', self._applied_bumpx)
+        self.run_callbacks('AppliedBumpY-Mon', self._applied_bumpy)
+        self._need_update = False
+
+    def _calc_and_apply_bumps(self):
+        total_bumpx = self._needed_dbumpx + self._applied_bumpx
+        total_bumpy = self._needed_dbumpy + self._applied_bumpy
+
+        maxb = max(abs(total_bumpx), abs(total_bumpy))
+        if maxb > self.MAX_BUMP:
+            return self.ApplyStatus.LimitExceeded
+
+        dax = total_bumpx * self.SS_SIZE / 2
+        day = total_bumpy * self.SS_SIZE / 2
+
+        orbx = self._refs['x'].copy()
+        orby = self._refs['y'].copy()
+        orbx[self.BPM1_INDEX] -= dax
+        orby[self.BPM1_INDEX] -= day
+        orbx[self.BPM2_INDEX] += dax
+        orby[self.BPM2_INDEX] += day
+
+        self._sofb_pvs['refx_sp'].value = orbx
+        self._sofb_pvs['refy_sp'].value = orby
+        return self.ApplyStatus.Applied
+
+    def _set_need_update(self, *args, **kwargs):
+        _ = args
+        _ = kwargs
+        self._need_update = True
