@@ -600,6 +600,7 @@ class ProcessImage(BaseClass):
         self._reset_buffer |= bool(imgs) and (imgs[-1].shape != image.shape)
         if self._reset_buffer:
             self._images = [image, ]
+            self._reset_buffer = False
         else:
             self._images.append(image)
             self._images = self._images[-self._nr_averages:]
