@@ -595,7 +595,7 @@ class ProcessImage(BaseClass):
 
         # check whether to reset or not the buffer
         imgs = self._images
-        self._reset_buffer |= imgs and imgs[-1].shape != image.shape
+        self._reset_buffer |= bool(imgs) and (imgs[-1].shape != image.shape)
         if self._reset_buffer:
             self._images = [image, ]
         else:
