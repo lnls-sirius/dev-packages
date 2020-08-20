@@ -207,6 +207,8 @@ class MeasParameters(_BaseClass, _Const):
         self.run_callbacks('NeededDeltaBumpY-Mon', self._needed_dbumpy)
 
     def _update_applied_bumps(self):
+        if not self.connected:
+            return
         orbx = self._sofb_pvs['refx_rb'].value
         orby = self._sofb_pvs['refy_rb'].value
         if orbx is None or orby is None:
