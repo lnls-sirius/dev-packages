@@ -63,13 +63,13 @@ class ProcessImage(BaseClass):
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int),
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int)]
         self._roi_proj = [
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int),
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int)]
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._roi_gauss = [
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._background = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._background_use = False
         self._crop = [0, 2**16]
         self._crop_use = False
@@ -80,7 +80,7 @@ class ProcessImage(BaseClass):
         self._images = []
         self._reset_buffer = False
         self._image = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
@@ -429,7 +429,7 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
-        img = self._adjust_image_dimensions(val.copy())
+        img = self._adjust_image_dimensions(np.array(val, dtype=float))
         if img is None:
             _log.error('Could not set background')
             return
@@ -590,6 +590,7 @@ class ProcessImage(BaseClass):
     def _process_image(self, image):
         """."""
         image = self._adjust_image_dimensions(image)
+        image = _np.array(image, dtype=float)
         if image is None:
             _log.error('Image is None')
             return
