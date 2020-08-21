@@ -130,7 +130,7 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         # Define the BPMs and correctors:
-        self.bpm_names = _BPMSearch.get_names({'sec': acc})
+        self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
         self.ch_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         self.cv_names = _PSSearch.get_psnames(

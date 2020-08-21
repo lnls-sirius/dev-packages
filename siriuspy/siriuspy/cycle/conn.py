@@ -216,13 +216,17 @@ class Timing:
         # Set initial injection state
         self.set_injection_state(inj_state)
 
-    def turnoff(self):
+    def turnoff(self, triggers):
         """Turn timing off."""
+        if triggers is None:
+            triggers = list()
+
+        # disable triggers
         pv_event = Timing._pvs[Timing.evg_name+':CycleMode-Sel']
         pv_event.value = _TIConst.EvtModes.Disabled
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
-        for trig in _TRIGGER_NAMES:
+        for trig in triggers:
             pvobj = Timing._pvs[trig+':Src-Sel']
             pvobj.value = 0  # Dsbl has always index 0
             pvobj = Timing._pvs[trig+':State-Sel']
@@ -363,7 +367,7 @@ class PSCycler:
         self._siggen = None
         self._init_wfm_pulsecnt = None
         self._pvs = dict()
-        for prop in PSCycler.properties:
+        for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
                     VACA_PREFIX + self._psname + ':' + prop,
@@ -579,6 +583,54 @@ class PSCycler:
     def __getitem__(self, prop):
         """Return item."""
         return self._pvs[prop]
+
+
+class PSCyclerFBP(PSCycler):
+    """Handle PS FBP properties related to Cycle and RmpWfm modes."""
+
+    properties = [
+        'Current-SP', 'Current-RB', 'CurrentRef-Mon',
+        'PwrState-Sel', 'PwrState-Sts',
+        'OpMode-Sel', 'OpMode-Sts',
+        'SOFBMode-Sel', 'SOFBMode-Sts',
+        'CycleType-Sel', 'CycleType-Sts',
+        'CycleFreq-SP', 'CycleFreq-RB',
+        'CycleAmpl-SP', 'CycleAmpl-RB',
+        'CycleOffset-SP', 'CycleOffset-RB',
+        'CycleNrCycles-SP', 'CycleNrCycles-RB',
+        'CycleAuxParam-SP', 'CycleAuxParam-RB',
+        'CycleEnbl-Mon',
+        'Wfm-SP', 'Wfm-RB',
+        'WfmIndex-Mon', 'WfmSyncPulseCount-Mon',
+        'IntlkSoft-Mon', 'IntlkHard-Mon',
+        'SyncPulse-Cmd'
+    ]
+
+    def set_sofbmode(self, state):
+        """Set SOFBMode."""
+        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        return _pv_conn_put(self['SOFBMode-Sel'], state)
+
+    def check_sofbmode(self, state, wait=1):
+        """Check if SOFBMode."""
+        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        return _pv_timed_get(self['SOFBMode-Sts'], state, wait=wait)
+
+    def prepare(self, mode):
+        """Config power supply to cycling mode."""
+        if not self.check_sofbmode('off', wait=1):
+            return False
+
+        if not self.check_opmode_slowref(wait=1):
+            return False
+
+        if not self.check_current_zero(wait=1):
+            return False
+
+        status = self.set_params(mode)
+
+        self.update_wfm_pulsecnt()
+        return status
 
 
 class LinacPSCycler:
