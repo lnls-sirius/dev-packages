@@ -102,8 +102,10 @@ def generate_bpm_static_table():
         f.write('#-----------')
 
     crates = _get_crates_mapping()
+
     model = pymodels.si
     acc = model.create_accelerator()
+    _append_bpm_data_bl(filename, acc, crates, 'Beam Lines (BL)')
     _append_bpm_data(filename, model, acc, crates, 'Storage Ring (SR)', 'SI')
 
     model = pymodels.bo
@@ -126,21 +128,40 @@ def _append_bpm_data(filename, model, acc, crates, label, section):
     inds = [i[0] for i in fam_data['BPM']['index']]
     subs = fam_data['BPM']['subsection']
     insts = fam_data['BPM']['instance']
-    bpm_data = dict()
+    bpms, tims, bpos = [], [], []
     for ind, inst, sub in zip(inds, insts, subs):
         name = _join_name(sec=section, dis='DI', dev='BPM', sub=sub, idx=inst)
-        bpm_data[name] = {'pos': pos[ind], 'timing': crates[name]}
+        bpms.append(name)
+        tims.append(crates[name])
+        bpos.append(pos[ind])
+    _write_to_file(filename, bpms, bpos, tims, label)
 
-    bpms = sorted(bpm_data.keys())
-    with open('bpms-data.txt', 'a') as f:
-        f.write('\n\n\n# '+label+'\n')
-        f.write('#'+57*'-' + '\n')
-        f.write("#{bpm:20s} {pos:^15s} {timing:20s}\n".format(
-            bpm='Name', pos='Position [m]', timing='Timing'))
-        f.write('#'+57*'-' + '\n')
-        for bpm in bpms:
-            f.write("{bpm:20s} {pos:^15.4f} {timing:20s}\n".format(
-                bpm=bpm, **bpm_data[bpm]))
+
+def _append_bpm_data_bl(filename, acc, crates, label):
+    pos = pyaccel.lattice.find_spos(acc)
+
+    mcs = pyaccel.lattice.find_indices(acc, 'fam_name', 'mc')
+
+    bpms_bc = [bpm for bpm in crates if bpm.sub.endswith('BCFE')]
+    secs = [int(bpm.sub[:2]) for bpm in bpms_bc]
+    bpos_bc = [pos[mcs[ss-1]] for ss in secs]
+
+    mia = pyaccel.lattice.find_indices(acc, 'fam_name', 'mia')
+    mib = pyaccel.lattice.find_indices(acc, 'fam_name', 'mib')
+    mip = pyaccel.lattice.find_indices(acc, 'fam_name', 'mip')
+    mis = sorted(mia + mib + mip)
+
+    end = ('SAFE', 'SBFE', 'SPFE')
+    bpms_mi = sorted([bpm for bpm in crates if bpm.sub.endswith(end)])
+    secs = [int(bpm.sub[:2]) for bpm in bpms_mi]
+    bpos_mi = [pos[mis[ss-1]] for ss in secs]
+
+    bpms = bpms_mi + bpms_bc
+    bpos = bpos_mi + bpos_bc
+    data = sorted(zip(bpos, bpms))
+    bpos, bpms = list(zip(*data))
+    tims = [crates[b] for b in bpms]
+    _write_to_file(filename, bpms, bpos, tims, label)
 
 
 def _get_crates_mapping():
@@ -164,3 +185,14 @@ def _get_crates_mapping():
         for value in values:
             inv_mapping[value] = k
     return inv_mapping
+
+
+def _write_to_file(fname, bpms, pos, tims, label):
+    with open(fname, 'a') as fil:
+        fil.write('\n\n\n# '+label+'\n')
+        fil.write('#'+57*'-' + '\n')
+        fil.write("#{bpm:20s} {pos:^15s} {timing:20s}\n".format(
+            bpm='Name', pos='Position [m]', timing='Timing'))
+        fil.write('#'+57*'-' + '\n')
+        for bpm, p, t in zip(bpms, pos, tims):
+            fil.write(f"{bpm:20s} {p:^15.4f} {t:20s}\n")

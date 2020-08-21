@@ -151,7 +151,9 @@ class MeasParameters(_BaseClass, _Const):
         dlty *= self.image_processor.px2mmscaley * 1e-3  # mm --> m
 
         self._sofb_bumpx = -dltx / self.DIST_FROM_SRC * 1e6  # rad --> urad
-        self._sofb_bumpy = -dlty / self.DIST_FROM_SRC * 1e6  # rad --> urad
+        # NOTE: this signal asymmetry is due to the x-flip of the image and
+        # the beamline optics.
+        self._sofb_bumpy = dlty / self.DIST_FROM_SRC * 1e6  # rad --> urad
 
         self.run_callbacks('SOFBBumpX-Mon', self._sofb_bumpx)
         self.run_callbacks('SOFBBumpY-Mon', self._sofb_bumpy)

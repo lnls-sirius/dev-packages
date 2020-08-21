@@ -4,12 +4,13 @@ import sys as _sys
 import time as _time
 import logging as _log
 import threading as _thread
+from concurrent.futures import ThreadPoolExecutor
 from epics import PV as _PV
 
 from ..namesys import Filter as _Filter, SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 
-from .conn import Timing, PSCycler, LinacPSCycler
+from .conn import Timing, PSCycler, PSCyclerFBP, LinacPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
 from .util import get_sections as _get_sections, \
     get_trigger_by_psname as _get_trigger_by_psname
@@ -86,9 +87,10 @@ class CycleController:
             for name in psnames:
                 if 'LI' in name:
                     new_cyclers[name] = LinacPSCycler(name)
+                elif _PSSearch.conv_psname_2_psmodel(name) == 'FBP':
+                    new_cyclers[name] = PSCyclerFBP(name, self._ramp_config)
                 else:
                     new_cyclers[name] = PSCycler(name, self._ramp_config)
-
         self._cyclers = new_cyclers
 
         # define section
@@ -116,8 +118,7 @@ class CycleController:
                 'SI-Glob:TI-Mags-QTrims']
             self._triggers.update(self._si_aux_triggers)
 
-            # move CV-2 of .*C2 subsectors to trims group,
-            # if they are in cyclers
+            # move CV-2 of C2 to trims group, if they are in cyclers
             cv2_c2 = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'})
@@ -134,11 +135,18 @@ class CycleController:
 
     def create_trims_cyclers(self):
         """Create trims cyclers."""
-        for psn in self.trimnames:
+        self._update_log('Creating trims connections...')
+        for idx, psn in enumerate(self.trimnames):
+            if idx % 5 == 4 or idx == len(self.trimnames)-1:
+                self._update_log(
+                    'Created connections of {0}/{1} trims'.format(
+                        str(idx+1), str(len(self.trimnames))))
             if psn in self._aux_cyclers.keys():
                 continue
-            self._update_log('Connecting to '+psn+'...')
-            self._aux_cyclers[psn] = PSCycler(psn)
+            if _PSSearch.conv_psname_2_psmodel(psn) == 'FBP':
+                self._aux_cyclers[psn] = PSCyclerFBP(psn, self._ramp_config)
+            else:
+                self._aux_cyclers[psn] = PSCycler(psn, self._ramp_config)
 
         # wait for connections
         self._update_log('Waiting for connections...')
@@ -162,11 +170,18 @@ class CycleController:
              'dev': 'QS'}))
         missing_ps = list(all_si_psnames - set(self.trimnames) -
                           set(self.psnames) - qs_c2)
-        for psn in missing_ps:
+        self._update_log('Creating auxiliary PS connections...')
+        for idx, psn in enumerate(missing_ps):
+            if idx % 5 == 4 or idx == len(missing_ps)-1:
+                self._update_log(
+                    'Created connections of {0}/{1} auxiliary PS'.format(
+                        str(idx+1), str(len(missing_ps))))
             if psn in self._aux_cyclers.keys():
                 continue
-            self._update_log('Connecting to '+psn+'...')
-            self._aux_cyclers[psn] = PSCycler(psn)
+            if _PSSearch.conv_psname_2_psmodel(psn) == 'FBP':
+                self._aux_cyclers[psn] = PSCyclerFBP(psn, self._ramp_config)
+            else:
+                self._aux_cyclers[psn] = PSCycler(psn, self._ramp_config)
 
         # wait for connections
         self._update_log('Waiting for connections...')
@@ -223,6 +238,14 @@ class CycleController:
     def prepare_timing_size(self):
         """Prepare timing task size."""
         return 3
+
+    @property
+    def prepare_ps_sofbmode_size(self):
+        """Prepare PS SOFBMode task size."""
+        prepare_ps_size = 2*(len(self.psnames)+1)
+        if 'SI' in self._sections:
+            prepare_ps_size += 2*len(self.trimnames)
+        return prepare_ps_size
 
     @property
     def prepare_ps_opmode_slowref_size(self):
@@ -295,9 +318,17 @@ class CycleController:
         return 10
 
     @property
+    def prepare_ps_sofbmode_max_duration(self):
+        """Prepare PS SOFBMode task maximum duration."""
+        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        if 'SI' in self._sections:
+            prepare_ps_max_duration += TIMEOUT_CHECK
+        return prepare_ps_max_duration
+
+    @property
     def prepare_ps_opmode_slowref_max_duration(self):
         """Prepare PS OpMode SlowRef task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -305,7 +336,7 @@ class CycleController:
     @property
     def prepare_ps_current_zero_max_duration(self):
         """Prepare PS current zero task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -313,7 +344,7 @@ class CycleController:
     @property
     def prepare_ps_params_max_duration(self):
         """Prepare PS parameters task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -321,7 +352,7 @@ class CycleController:
     @property
     def prepare_ps_opmode_cycle_max_duration(self):
         """Prepare PS task maximum duration."""
-        prepare_ps_max_duration = 5 + TIMEOUT_CHECK
+        prepare_ps_max_duration = 10 + TIMEOUT_CHECK
         if 'SI' in self._sections:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
@@ -369,26 +400,24 @@ class CycleController:
             psnames = {ps for ps in psnames if 'LI' not in ps}
 
         self._update_log('Preparing power supplies '+ppty+'...')
-        threads = list()
-        for psname in psnames:
-            cycler = self._get_cycler(psname)
-            if ppty == 'parameters':
-                target = cycler.prepare
-            elif ppty == 'opmode':
-                target = cycler.set_opmode_cycle
-            thread = _thread.Thread(
-                target=target, args=(self.mode, ), daemon=True)
-            self._update_log('Preparing '+psname+' '+ppty+'...')
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            for idx, psname in enumerate(psnames):
+                cycler = self._get_cycler(psname)
+                if ppty == 'parameters':
+                    target = cycler.prepare
+                elif ppty == 'opmode':
+                    target = cycler.set_opmode_cycle
+                executor.submit(target, self.mode)
+                if idx % 5 == 4 or idx == len(psnames)-1:
+                    self._update_log(
+                        'Sent '+ppty+' preparation to {0}/{1}'.format(
+                            str(idx+1), str(len(psnames))))
 
     def config_timing(self):
         """Prepare timing to cycle according to mode."""
         if self._only_linac:
             return
-        self._timing.turnoff()
+        self._timing.turnoff(self._triggers)
         self._update_log('Preparing Timing...')
         self._timing.prepare(self.mode, self._triggers)
         self._update_log(done=True)
@@ -404,7 +433,7 @@ class CycleController:
         self._checks_result = {psn: False for psn in psnames}
         time = _time.time()
         while _time.time() - time < timeout:
-            for psname in psnames:
+            for idx, psname in enumerate(psnames):
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
@@ -413,9 +442,12 @@ class CycleController:
                 elif ppty == 'opmode':
                     ret = cycler.check_opmode_cycle(self.mode, 0.05)
                 if ret:
-                    self._update_log('Checking '+psname+' '+ppty+'...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
+                    checked = sum(self._checks_result.values())
+                    if checked % 5 == 0 or idx == len(psnames)-1:
+                        self._update_log(
+                            'Successfully checked '+ppty+' preparation for ' +
+                            '{0}/{1}'.format(str(checked), str(len(psnames))))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
@@ -606,15 +638,19 @@ class CycleController:
 
     def check_pwrsupplies_finalsts(self, psnames):
         """Check all power supplies final state according to mode."""
-
         self._update_log('Checking power supplies final state...')
         self._checks_final_result = dict()
-        for psname in psnames:
-            self._update_log('Checking '+psname+' state...')
+        sucess_cnt = 0
+        for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             status = cycler.check_final_state(self.mode)
             if status == 0:
-                self._update_log(done=True)
+                sucess_cnt += 1
+                if sucess_cnt % 5 == 0 or idx == len(psnames)-1:
+                    self._update_log(
+                        'Successfully checked final state for '
+                        '{0}/{1}'.format(
+                            str(sucess_cnt), str(len(psnames))))
             self._checks_final_result[psname] = status
 
         all_ok = True
@@ -633,6 +669,58 @@ class CycleController:
                 all_ok = False
         return all_ok
 
+    def set_pwrsupplies_sofbmode(self, psnames):
+        """Set power supplies SOFBMode."""
+        if self._only_linac:
+            return True
+        psnames = {ps for ps in psnames
+                   if _PSSearch.conv_psname_2_psmodel(ps) == 'FBP'}
+
+        self._update_log('Turning off power supplies SOFBMode...')
+        for idx, psname in enumerate(psnames):
+            cycler = self._get_cycler(psname)
+            cycler.set_sofbmode('off')
+            if idx % 5 == 4 or idx == len(psnames)-1:
+                self._update_log(
+                    'Sent SOFBMode preparation to {0}/{1}'.format(
+                        str(idx+1), str(len(psnames))))
+
+    def check_pwrsupplies_sofbmode(self, psnames, timeout=TIMEOUT_CHECK):
+        """Check power supplies SOFBMode."""
+        if self._only_linac:
+            return True
+        psnames = {ps for ps in psnames
+                   if _PSSearch.conv_psname_2_psmodel(ps) == 'FBP'}
+
+        self._update_log('Checking power supplies SOFBMode...')
+        self._checks_result = {psn: False for psn in psnames}
+        time = _time.time()
+        while _time.time() - time < timeout:
+            for idx, psname in enumerate(psnames):
+                if self._checks_result[psname]:
+                    continue
+                cycler = self._get_cycler(psname)
+                if cycler.check_sofbmode('off', 0.05):
+                    self._checks_result[psname] = True
+                    checked = sum(self._checks_result.values())
+                    if checked % 5 == 0 or idx == len(psnames)-1:
+                        self._update_log(
+                            'Successfully checked SOFBMode preparation for ' +
+                            '{0}/{1}'.format(str(checked), str(len(psnames))))
+                if _time.time() - time > timeout:
+                    break
+            if all(self._checks_result.values()):
+                break
+            _time.sleep(TIMEOUT_SLEEP)
+
+        status = True
+        for psname, sts in self._checks_result.items():
+            if sts:
+                continue
+            self._update_log(psname+' is in SOFBMode.', error=True)
+            status &= False
+        return status
+
     def set_pwrsupplies_slowref(self, psnames):
         """Set power supplies OpMode to SlowRef."""
         if self._only_linac:
@@ -640,15 +728,15 @@ class CycleController:
         psnames = {ps for ps in psnames if 'LI' not in ps}
 
         self._update_log('Setting power supplies to SlowRef...')
-        threads = list()
-        for psname in psnames:
-            cycler = self._get_cycler(psname)
-            target = cycler.set_opmode_slowref
-            thread = _thread.Thread(target=target, daemon=True)
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            for idx, psname in enumerate(psnames):
+                cycler = self._get_cycler(psname)
+                target = cycler.set_opmode_slowref
+                executor.submit(target)
+                if idx % 5 == 4 or idx == len(psnames)-1:
+                    self._update_log(
+                        'Sent opmode preparation to {0}/{1}'.format(
+                            str(idx+1), str(len(psnames))))
 
     def check_pwrsupplies_slowref(self, psnames, timeout=TIMEOUT_CHECK):
         """Check power supplies OpMode."""
@@ -656,17 +744,21 @@ class CycleController:
             return True
         psnames = {ps for ps in psnames if 'LI' not in ps}
 
+        self._update_log('Checking power supplies opmode...')
         self._checks_result = {psn: False for psn in psnames}
         time = _time.time()
         while _time.time() - time < timeout:
-            for psname in psnames:
+            for idx, psname in enumerate(psnames):
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_opmode_slowref(0.05):
-                    self._update_log('Checking '+psname+' OpMode...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
+                    checked = sum(self._checks_result.values())
+                    if checked % 5 == 0 or idx == len(psnames)-1:
+                        self._update_log(
+                            'Successfully checked opmode preparation for ' +
+                            '{0}/{1}'.format(str(checked), str(len(psnames))))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
@@ -683,26 +775,32 @@ class CycleController:
 
     def set_pwrsupplies_current_zero(self, psnames):
         """Set power supplies current to zero."""
-
         self._update_log('Setting power supplies current to zero...')
-        for psname in psnames:
+        for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             cycler.set_current_zero()
+            if idx % 5 == 4 or idx == len(psnames)-1:
+                self._update_log(
+                    'Sent current preparation to {0}/{1}'.format(
+                        str(idx+1), str(len(psnames))))
 
     def check_pwrsupplies_current_zero(self, psnames, timeout=TIMEOUT_CHECK):
         """Check power supplies current."""
-
+        self._update_log('Checking power supplies current...')
         self._checks_result = {psn: False for psn in psnames}
         time = _time.time()
         while _time.time() - time < timeout:
-            for psname in psnames:
+            for idx, psname in enumerate(psnames):
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_current_zero(0.05):
-                    self._update_log('Checking '+psname+' current...')
                     self._checks_result[psname] = True
-                    self._update_log(done=True)
+                    checked = sum(self._checks_result.values())
+                    if checked % 5 == 0 or idx == len(psnames)-1:
+                        self._update_log(
+                            'Successfully checked current preparation for ' +
+                            '{0}/{1}'.format(str(checked), str(len(psnames))))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
@@ -731,6 +829,24 @@ class CycleController:
         if not self.check_timing():
             return
         self._update_log('Timing preparation finished!')
+
+    def prepare_pwrsupplies_sofbmode(self):
+        """Prepare SOFBMode."""
+        psnames = self.psnames
+        timeout = TIMEOUT_CHECK
+        if 'SI' in self._sections:
+            self.create_trims_cyclers()
+            psnames.extend(self.trimnames)
+            aux_ps = self.create_aux_cyclers()
+            psnames.extend(aux_ps)
+            timeout += TIMEOUT_CHECK
+
+        self.set_pwrsupplies_sofbmode(psnames)
+        if not self.check_pwrsupplies_sofbmode(psnames, timeout):
+            self._update_log(
+                'There are power supplies in SOFBMode.', error=True)
+            return
+        self._update_log('Power supplies SOFBMode preparation finished!')
 
     def prepare_pwrsupplies_opmode_slowref(self):
         """Prepare OpMode to slowref."""
