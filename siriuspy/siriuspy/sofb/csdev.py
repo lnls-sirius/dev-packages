@@ -25,6 +25,7 @@ class ETypes(_csdev.ETypes):
     SPASS_BG_CTRL = ('Acquire', 'Reset')
     SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
     SPASS_USE_BG = ('NotUsing', 'Using')
+    MTURN_ACQUIRE = ('Idle', 'Acquire')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
     SI_CORR_SYNC = ('Off', 'Event', 'Clock')
@@ -62,7 +63,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
-    MIN_SLOWORB_RATE = 30  # [Hz]
+    MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
@@ -93,7 +94,6 @@ class ConstTLines(_csdev.Const):
     StsLblsGlob = _csdev.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
-    LoopUsePID = _csdev.Const.register('LoopUsePID', _et.OFF_ON)
 
 
 class ConstRings(ConstTLines):
@@ -101,6 +101,7 @@ class ConstRings(ConstTLines):
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
+    MTurnAcquire = _csdev.Const.register('MTurnAcquire', _et.MTURN_ACQUIRE)
 
 
 class ConstSI(ConstRings):
@@ -129,7 +130,7 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         # Define the BPMs and correctors:
-        self.bpm_names = _BPMSearch.get_names({'sec': acc})
+        self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
         self.ch_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         self.cv_names = _PSSearch.get_psnames(
@@ -210,10 +211,6 @@ class SOFBTLines(ConstTLines):
             'LoopFreq-RB': {
                 'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
                 'lolim': 1e-3, 'hilim': 60},
-            'LoopUsePID-Sel': {
-                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
-            'LoopUsePID-Sts': {
-                'type': 'enum', 'enums': self.LoopUsePID._fields, 'value': 0},
             'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
@@ -227,16 +224,16 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -284,15 +281,15 @@ class SOFBTLines(ConstTLines):
                 'lolim': 0.005, 'hilim': 100},
             'CalcDelta-Cmd': {
                 'type': 'int', 'value': 0, 'unit': 'Calculate kicks'},
-            'DeltaFactorCH-SP': {
+            'ManCorrGainCH-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -10000, 'hilim': 10000},
-            'DeltaFactorCH-RB': {
+            'ManCorrGainCH-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'DeltaFactorCV-SP': {
+            'ManCorrGainCV-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -10000, 'hilim': 10000},
-            'DeltaFactorCV-RB': {
+            'ManCorrGainCV-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
@@ -703,6 +700,9 @@ class SOFBRings(SOFBTLines, ConstRings):
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
+            'MTurnAcquire-Cmd': {
+                'type': 'enum', 'value': 0,
+                'enums': self.MTurnAcquire._fields},
             'MTurnSyncTim-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
@@ -785,10 +785,10 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdRF-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -796,10 +796,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'LoopPIDKdRF-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
-            'DeltaFactorRF-SP': {
+            'ManCorrGainRF-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -1000, 'hilim': 1000},
-            'DeltaFactorRF-RB': {
+            'ManCorrGainRF-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxDeltaKickRF-SP': {
                 'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 2,

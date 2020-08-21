@@ -19,11 +19,11 @@ class Const(_csdev.Const):
     DEF_COEFX = 10.00 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_COEFY = 10.04 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_ROISIZE = 150
-    TARGETX = 372  # [px] source: Lucas Sanfelici via email
+    TARGETX = 375  # [px] source: Lucas Sanfelici via email (was 372)
     TARGETY = 720  # [px] source: Lucas Sanfelici via email
     DIST_FROM_SRC = 30.160  # [m] source: Sergio Lordano from OPT
     DEF_PROFILE = 'MNC:A:BASLER02:'
-    DEF_RATE = 2  # [Hz]
+    DEF_RATE = 5  # [Hz]
     IP_IOC = '10.31.74.45'
     PREFIX_IOC = 'SI-09SABL:AP-Manaca-MVS2:'
 

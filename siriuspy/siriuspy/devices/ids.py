@@ -20,8 +20,9 @@ class APU(_Device):
         """."""
 
         APU22_07SP = 'SI-07SP:ID-APU22'
+        APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
-        ALL = (APU22_07SP, APU22_09SA, )
+        ALL = (APU22_07SP, APU22_08SB, APU22_09SA, )
 
     _properties = (
         'DevCtrl-Cmd', 'Moving-Mon',
