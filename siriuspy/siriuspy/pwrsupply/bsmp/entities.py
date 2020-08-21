@@ -416,14 +416,8 @@ class EntitiesFAC_DCDC(EntitiesPS):
 
     _ps_variables = EntitiesPS._ps_variables + (
         # --- FAC_DCDC-specific variables
-        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -435,7 +429,15 @@ class EntitiesFAC_DCDC(EntitiesPS):
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 48, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 49, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 50, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 51, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 class EntitiesFAC_2P4S_DCDC(EntitiesPS):
