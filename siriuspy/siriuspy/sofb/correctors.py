@@ -224,7 +224,7 @@ class CHCV(Corrector):
         """."""
         pvobj = self._config_pvs_sp['OpMode']
         self._config_ok_vals['OpMode'] = val
-        if pvobj.connected and pvobj.value != val:
+        if pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -249,7 +249,7 @@ class CHCV(Corrector):
         """."""
         pvobj = self._config_pvs_sp['SOFBMode']
         self._config_ok_vals['SOFBMode'] = val
-        if pvobj.connected and pvobj.value != val:
+        if pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -266,6 +266,18 @@ class CHCV(Corrector):
         """."""
         if self._ref.connected:
             return self._ref.value
+
+    def configure(self):
+        """Configure method."""
+        if not self.connected:
+            return False
+        val = self._config_ok_vals['SOFBMode']
+        self.sofbmode = 0
+        for k, pvo in self._config_pvs_sp.items():
+            if k in self._config_ok_vals and k != 'SOFBMode':
+                pvo.put(self._config_ok_vals[k], wait=False)
+        self.sofbmode = val
+        return True
 
 
 class Septum(Corrector):
@@ -721,16 +733,6 @@ class EpicsCorrectors(BaseCorrectors):
         if val not in self._csorb.CorrPSSOFBWait:
             return False
         self._wait_pssofb = val
-
-        for corr in self._corrs[:-1]:
-            if not corr.connected:
-                msg = 'ERR: Failed to configure '
-                msg += corr.name
-                self._update_log(msg)
-                _log.error(msg[5:])
-                continue
-            corr.sofbmode = val
-
         self.run_callbacks('CorrPSSOFBWait-Sts', val)
         return True
 
@@ -743,9 +745,9 @@ class EpicsCorrectors(BaseCorrectors):
                 self._update_log(msg)
                 _log.error(msg[5:])
                 continue
-            corr.state = True
             # Do not configure opmode in BO corrs because they are ramping.
             if self.acc == 'BO':
+                corr.state = True
                 continue
             corr.configure()
         if not self.isring:
