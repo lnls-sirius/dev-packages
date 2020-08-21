@@ -68,6 +68,14 @@ class Const(_csdev.Const):
             'ReadingOrder-Sts': {
                 'type': 'enum', 'value': cls.ReadingOrder.CLike,
                 'enums': cls.ReadingOrder._fields},
+            'NrAverages-SP': {
+                'type': 'int', 'unit': '#', 'value': 1,
+                'lolim': 1, 'hilim': 999},
+            'NrAverages-RB': {
+                'type': 'int', 'unit': '#', 'value': 1,
+                'lolim': 1, 'hilim': 999},
+            'ResetBuffer-Cmd': {'type': 'int', 'value': 0},
+            'BufferSize-Mon': {'type': 'int', 'value': 0},
             'ImgCropLow-SP': {
                 'type': 'int', 'value': 0, 'unit': '',
                 'lolim': 0, 'hilim': 2**16},
