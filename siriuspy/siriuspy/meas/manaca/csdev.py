@@ -7,6 +7,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     MEASURESTATE = ('Stopped', 'Measuring')
+    APPLY_STATUS = ('Idle', 'Applied', 'ConnectionError', 'LimitExceeded')
 
 
 _et = ETypes  # syntactic sugar
@@ -19,20 +20,27 @@ class Const(_csdev.Const):
     DEF_COEFX = 10.00 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_COEFY = 10.04 * 1e-3  # [mm/px] (source: Sergio Lordano from OPT)
     DEF_ROISIZE = 150
-    TARGETX = 372  # [px] source: Lucas Sanfelici via email
+    TARGETX = 375  # [px] source: Lucas Sanfelici via email (was 372)
     TARGETY = 720  # [px] source: Lucas Sanfelici via email
+    MAX_BUMP = 10  # [urad]
     DIST_FROM_SRC = 30.160  # [m] source: Sergio Lordano from OPT
     DEF_PROFILE = 'MNC:A:BASLER02:'
-    DEF_RATE = 2  # [Hz]
+    DEF_RATE = 5  # [Hz]
     IP_IOC = '10.31.74.45'
     PREFIX_IOC = 'SI-09SABL:AP-Manaca-MVS2:'
+    SS_INDEX = 9
+    SS_SIZE = 7.0358  # [m]
+    BPM1_INDEX = (SS_INDEX-1) * 8 - 1  # 63
+    BPM2_INDEX = (SS_INDEX-1) * 8  # 64
 
     MeasureState = _csdev.Const.register('MeasureState', _et.MEASURESTATE)
+    ApplyStatus = _csdev.Const.register('ApplyStatus', _et.APPLY_STATUS)
 
     @classmethod
     def get_database(cls, prefix=''):
         """Return IOC database."""
         dbase = {
+            'ApplyBump-Cmd': {'type': 'int', 'value': 0},
             'MeasureCtrl-Sel': {
                 'type': 'enum', 'value': cls.MeasureState.Stopped,
                 'enums': cls.MeasureState._fields},
@@ -57,12 +65,22 @@ class Const(_csdev.Const):
             'TargetPosY-RB': {
                 'type': 'int', 'value': cls.TARGETY, 'unit': 'px',
                 'lolim': 0, 'hilim': cls.MAX_WIDTH},
-            'SOFBBumpX-Mon': {
+            'NeededDeltaBumpX-Mon': {
                 'type': 'float', 'prec': 3, 'unit': 'urad',
-                'value': 0.0, 'lolim': -100, 'hilim': 100},
-            'SOFBBumpY-Mon': {
+                'value': 0.0, 'lolim': -10, 'hilim': 10},
+            'NeededDeltaBumpY-Mon': {
                 'type': 'float', 'prec': 3, 'unit': 'urad',
-                'value': 0.0, 'lolim': -100, 'hilim': 100},
+                'value': 0.0, 'lolim': -10, 'hilim': 10},
+            'AppliedBumpX-Mon': {
+                'type': 'float', 'prec': 3, 'unit': 'urad',
+                'value': 0.0, 'lolim': -10, 'hilim': 10},
+            'AppliedBumpY-Mon': {
+                'type': 'float', 'prec': 3, 'unit': 'urad',
+                'value': 0.0, 'lolim': -10, 'hilim': 10},
+            'ApplyStatus-Mon': {
+                'type': 'enum', 'value': cls.ApplyStatus.Idle,
+                'enums': cls.ApplyStatus._fields,
+                'states': (0, 0, 2, 2)},
             }
         for val in dbase.values():
             low = val.get('lolim', None)
