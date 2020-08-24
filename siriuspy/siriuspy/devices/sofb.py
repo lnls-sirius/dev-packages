@@ -40,6 +40,11 @@ class SOFB(_Device):
         'TrigNrSamplesPost-RB',
         'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
+        'MeasRespMat-Cmd', 'MeasRespMat-Mon',
+        'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
+        'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         # properties used only for ring-type accelerators:
         'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
@@ -349,6 +354,51 @@ class SOFB(_Device):
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
         _time.sleep(0.3)
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+
+    def cmd_measrespmat(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 1
+
+    @property
+    def measrespmat_mon(self):
+        """."""
+        return self['MeasRespMat-Mon']
+
+    @property
+    def measrespmat_kickch(self):
+        """."""
+        return self['MeasRespMatKickCH-RB']
+
+    @measrespmat_kickch.setter
+    def measrespmat_kickch(self, value):
+        self['MeasRespMatKickCH-SP'] = value
+
+    @property
+    def measrespmat_kickcv(self):
+        """."""
+        return self['MeasRespMatKickCV-RB']
+
+    @measrespmat_kickcv.setter
+    def measrespmat_kickcv(self, value):
+        self['MeasRespMatKickCV-SP'] = value
+
+    @property
+    def measrespmat_kickrf(self):
+        """."""
+        return self['MeasRespMatKickRF-RB']
+
+    @measrespmat_kickrf.setter
+    def measrespmat_kickrf(self, value):
+        self['MeasRespMatKickRF-SP'] = value
+
+    @property
+    def measrespmat_wait(self):
+        """."""
+        return self['MeasRespMatWait-RB']
+
+    @measrespmat_wait.setter
+    def measrespmat_wait(self, value):
+        self['MeasRespMatWait-SP'] = value
 
     @property
     def autocorrsts(self):
