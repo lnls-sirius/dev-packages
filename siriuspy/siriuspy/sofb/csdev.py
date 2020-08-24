@@ -25,6 +25,7 @@ class ETypes(_csdev.ETypes):
     SPASS_BG_CTRL = ('Acquire', 'Reset')
     SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
     SPASS_USE_BG = ('NotUsing', 'Using')
+    MTURN_ACQUIRE = ('Idle', 'Acquire')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
     SI_CORR_SYNC = ('Off', 'Event', 'Clock')
@@ -62,7 +63,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 200  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
-    MIN_SLOWORB_RATE = 30  # [Hz]
+    MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
@@ -100,6 +101,7 @@ class ConstRings(ConstTLines):
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
+    MTurnAcquire = _csdev.Const.register('MTurnAcquire', _et.MTURN_ACQUIRE)
 
 
 class ConstSI(ConstRings):
@@ -128,7 +130,7 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         # Define the BPMs and correctors:
-        self.bpm_names = _BPMSearch.get_names({'sec': acc})
+        self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
         self.ch_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         self.cv_names = _PSSearch.get_psnames(
@@ -698,6 +700,9 @@ class SOFBRings(SOFBTLines, ConstRings):
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
+            'MTurnAcquire-Cmd': {
+                'type': 'enum', 'value': 0,
+                'enums': self.MTurnAcquire._fields},
             'MTurnSyncTim-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},

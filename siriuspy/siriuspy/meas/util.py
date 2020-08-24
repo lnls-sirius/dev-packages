@@ -63,21 +63,24 @@ class ProcessImage(BaseClass):
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int),
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int)]
         self._roi_proj = [
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int),
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int)]
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._roi_gauss = [
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._background = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._background_use = False
         self._crop = [0, 2**16]
         self._crop_use = False
         self._width = 0
         self._reading_order = self.ReadingOrder.CLike
         self._method = self.Method.GaussFit
+        self._nr_averages = 1
+        self._images = []
+        self._reset_buffer = False
         self._image = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
@@ -87,9 +90,11 @@ class ProcessImage(BaseClass):
     def get_map2write(self):
         """."""
         return {
+            'ResetBuffer-Cmd': self.cmd_reset_buffer,
             'Image-SP': _part(self.write, 'image'),
             'Width-SP': _part(self.write, 'imagewidth'),
             'ReadingOrder-Sel': _part(self.write, 'readingorder'),
+            'NrAverages-SP': _part(self.write, 'nr_averages'),
             'ImgCropLow-SP': _part(self.write, 'imagecroplow'),
             'ImgCropHigh-SP': _part(self.write, 'imagecrophigh'),
             'ImgCropUse-Sel': _part(self.write, 'useimagecrop'),
@@ -116,6 +121,8 @@ class ProcessImage(BaseClass):
             'Image-RB': _part(self.read, 'image'),
             'Width-RB': _part(self.read, 'imagewidth'),
             'ReadingOrder-Sts': _part(self.read, 'readingorder'),
+            'NrAverages-RB': _part(self.read, 'nr_averages'),
+            'BufferSize-Mon': _part(self.read, 'buffer_size'),
             'ImgCropLow-RB': _part(self.read, 'imagecroplow'),
             'ImgCropHigh-RB': _part(self.read, 'imagecrophigh'),
             'ImgCropUse-Sts': _part(self.read, 'useimagecrop'),
@@ -201,6 +208,21 @@ class ProcessImage(BaseClass):
         if int(val) in self.ReadingOrder:
             self._reading_order = int(val)
             self.run_callbacks('ReadingOrder-Sts', int(val))
+
+    @property
+    def nr_averages(self):
+        """Return the number of averages to be used."""
+        return self._nr_averages
+
+    @nr_averages.setter
+    def nr_averages(self, val):
+        self._nr_averages = int(val)
+        self.run_callbacks('NrAverages-RB', val)
+
+    @property
+    def buffer_size(self):
+        """Return the current buffer size."""
+        return len(self._images)
 
     @property
     def imagecroplow(self):
@@ -399,7 +421,7 @@ class ProcessImage(BaseClass):
     @property
     def background(self):
         """."""
-        return self._background.copy().flatten()
+        return self._background.copy().ravel()
 
     @background.setter
     def background(self, val):
@@ -407,7 +429,7 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
-        img = self._adjust_image_dimensions(val.copy())
+        img = self._adjust_image_dimensions(np.array(val, dtype=float))
         if img is None:
             _log.error('Could not set background')
             return
@@ -559,12 +581,39 @@ class ProcessImage(BaseClass):
         """."""
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
+    def cmd_reset_buffer(self, *args):
+        """Schedule reset Buffer in next update."""
+        _ = args
+        self._reset_buffer = True
+        self.run_callbacks('BufferSize-Mon', 0)
+
     def _process_image(self, image):
         """."""
         image = self._adjust_image_dimensions(image)
+        image = _np.array(image, dtype=float)
         if image is None:
             _log.error('Image is None')
             return
+
+        # check whether to reset or not the buffer
+        imgs = self._images
+        self._reset_buffer |= bool(imgs) and (imgs[-1].shape != image.shape)
+        if self._reset_buffer:
+            self._images = [image, ]
+            self._reset_buffer = False
+        else:
+            self._images.append(image)
+            self._images = self._images[-self._nr_averages:]
+        buf_size = self.buffer_size
+        self.run_callbacks('BufferSize-Mon', buf_size)
+
+        # calculate average of the images
+        if buf_size > 1:
+            image = self._images[0].copy()
+            for img in self._images[1:]:  # faster than using numpy.mean
+                image += img
+            image /= len(self._images)
+
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
             b = _np.where(image < 0)
