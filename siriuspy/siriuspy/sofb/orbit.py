@@ -671,12 +671,16 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
                 bpm.mode = _csbpm.OpModes.MultiBunch
+                bpm.switching_mode = _csbpm.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
             elif self._mode == self._csorb.SOFBMode.SinglePass:
                 bpm.mode = _csbpm.OpModes.MultiBunch
+                bpm.switching_mode = _csbpm.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
+            elif self._mode == self._csorb.SOFBMode.SlowOrb:
+                bpm.switching_mode = _csbpm.SwModes.switching
         Thread(target=self._synchronize_bpms, daemon=True).start()
         return True
 
@@ -1133,10 +1137,13 @@ class EpicsOrbit(BaseOrbit):
         status = _util.update_bit(v=status, bit_pos=2, bit_val=not bpm_conn)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
 
+        isok = True
         if self._mode in trig_modes:
-            isok = all(bpm.is_ok for bpm in self.bpms)
-        else:
-            isok = True
+            isok = all(map(lambda x: x.is_ok, self.bpms))
+        elif self._mode == self._csorb.SOFBMode.SlowOrb:
+            isok = all(map(
+                lambda x: x.switching_mode == _csbpm.SwModes.switching,
+                self.bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         self._status = status
