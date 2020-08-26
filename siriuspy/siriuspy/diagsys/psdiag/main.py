@@ -3,6 +3,7 @@
 
 from pcaspy import Alarm as _Alarm, Severity as _Severity
 
+from ...namesys import SiriusPVName
 from ..app import App as _App
 from ..pvs import ComputedPV as _ComputedPV
 from .pvs import PSStatusPV as _PSStatusPV, PSDiffPV as _PSDiffPV
@@ -14,7 +15,8 @@ class PSDiagApp(_App):
     def _create_computed_pvs(self, psnames):
         self._psnames = psnames
         for psname in self._psnames:
-            devname = self._prefix + psname
+            devname = SiriusPVName(self._prefix + psname)
+
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
@@ -23,16 +25,23 @@ class PSDiagApp(_App):
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)
             self.pvs.append(pv)
+
             # DiagStatus-Mon
-            pvs = [None]*7
-            pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
-            pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
-            pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
-            pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
-            pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
-            pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
-            pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
-            # TODO: Add other interlocks for PS types that have them
+            if devname.sec != 'LI':
+                pvs = [None]*7
+                pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
+                pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
+                pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
+                pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
+                pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
+                pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
+                pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
+                # TODO: Add other interlocks for PS types that have them
+            else:
+                pvs = [None]*3
+                pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
+                pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
+                pvs[_PSStatusPV.INTRLCK_LI] = devname + ':StatusIntlk-Mon'
             pv = _ComputedPV(
                 psname + ':DiagStatus-Mon', _PSStatusPV(), self._queue,
                 pvs, monitor=False)

@@ -1,4 +1,4 @@
-"""Power Supply Diag Control System App."""
+"""Power Supply Diag App."""
 
 from ... import csdev as _csdev
 from ...namesys import SiriusPVName as _PVName
@@ -11,17 +11,25 @@ class ETypes(_csdev.ETypes):
     DIAG_STATUS_LABELS_AS = (
         'PS Disconnected',
         'PwrState-Sts Off',
-        'OpMode-(Sel|Sts) are different',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'OpMode-(Sel|Sts) are different',
+        'Reserved')
+
+    DIAG_STATUS_LABELS_LI = (
+        'PS Disconnected',
+        'PwrState-Sts Off',
+        'Current-(SP|Mon) are different',
+        'Interlocks',
+        'Reserved',
         'Reserved')
 
     DIAG_STATUS_LABELS_BO = (
         'PS Disconnected',
         'PwrState-Sts Off',
-        'OpMode-(Sel|Sts) are different',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'OpMode-(Sel|Sts) are different',
         'Wfm error exceeded tolerance')
 
 
@@ -33,6 +41,8 @@ def get_ps_diag_status_labels(psname):
     psname = _PVName(psname)
     if psname.sec == 'BO':
         return _et.DIAG_STATUS_LABELS_BO
+    if psname.sec == 'LI':
+        return _et.DIAG_STATUS_LABELS_LI
     return _et.DIAG_STATUS_LABELS_AS
 
 

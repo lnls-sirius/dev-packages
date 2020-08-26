@@ -35,17 +35,18 @@ class PSStatusPV:
 
     BIT_PSCONNECT = 0b000001
     BIT_PWRSTATON = 0b000010
-    BIT_OPMODEDIF = 0b000100
-    BIT_CURRTDIFF = 0b001000
-    BIT_INTERLKOK = 0b010000
+    BIT_CURRTDIFF = 0b000100
+    BIT_INTERLOCK = 0b001000
+    BIT_OPMODEDIF = 0b010000
     BIT_BOWFMDIFF = 0b100000
 
     PWRSTE_STS = 0
-    INTLK_SOFT = 1
-    INTLK_HARD = 2
-    OPMODE_SEL = 3
-    OPMODE_STS = 4
-    CURRT_DIFF = 5
+    CURRT_DIFF = 1
+    INTRLCK_LI = 2
+    INTLK_SOFT = 2
+    INTLK_HARD = 3
+    OPMODE_SEL = 4
+    OPMODE_STS = 5
     WAVFRM_MON = 6
 
     DTOLWFM_DICT = dict()
@@ -55,19 +56,26 @@ class PSStatusPV:
         psname = _PVName(computed_pv.pvs[0].pvname).device_name
         value = 0
         # ps connected?
-        disconnected = \
-            not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
-            not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
-            not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
-            not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
-            not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
-            not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected
+        if psname.sec != 'LI':
+            disconnected = \
+                not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
+                not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
+                not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
+                not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
+                not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
+                not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
+                not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
+        else:
+            disconnected = \
+                not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
+                not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
+                not computed_pv.pvs[PSStatusPV.INTRLCK_LI].connected
         if disconnected:
             value |= PSStatusPV.BIT_PSCONNECT
             value |= PSStatusPV.BIT_PWRSTATON
-            value |= PSStatusPV.BIT_INTERLKOK
-            value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_CURRTDIFF
+            value |= PSStatusPV.BIT_INTERLOCK
+            value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_BOWFMDIFF
             return {'value': value}
 
@@ -76,36 +84,49 @@ class PSStatusPV:
         if pwrsts != _PSConst.PwrStateSts.On or pwrsts is None:
             value |= PSStatusPV.BIT_PWRSTATON
 
-        # opmode?
-        sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
-        sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
-        if sel is not None and sts is not None:
-            opmode_sel = _ETypes.OPMODES[sel]
-            opmode_sts = _ETypes.STATES[sts]
-            if opmode_sel != opmode_sts:
+        if psname.sec != 'LI':
+            # opmode?
+            sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
+            sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
+            if sel is not None and sts is not None:
+                opmode_sel = _ETypes.OPMODES[sel]
+                opmode_sts = _ETypes.STATES[sts]
+                if opmode_sel != opmode_sts:
+                    value |= PSStatusPV.BIT_OPMODEDIF
+                # current-diff?
+                if sts == _PSConst.States.SlowRef:
+                    severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+                    if severity != 0:
+                        value |= PSStatusPV.BIT_CURRTDIFF
+                # waveform diff?
+                elif (psname.sec == 'BO') and (sts == _PSConst.States.RmpWfm):
+                    mon = computed_pv.pvs[PSStatusPV.WAVFRM_MON].value
+                    if psname not in PSStatusPV.DTOLWFM_DICT.keys():
+                        pstype = _PSSearch.conv_psname_2_pstype(psname)
+                        PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
+                            pstype, 'DTOL_WFM')
+                    if not _np.allclose(mon, 0.0,
+                                        atol=PSStatusPV.DTOLWFM_DICT[psname]):
+                        value |= PSStatusPV.BIT_BOWFMDIFF
+            else:
                 value |= PSStatusPV.BIT_OPMODEDIF
-            # current-diff?
-            if sts == _PSConst.States.SlowRef:
-                severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
-                if severity != 0:
-                    value |= PSStatusPV.BIT_CURRTDIFF
-            # waveform diff?
-            elif (psname.sec == 'BO') and (sts == _PSConst.States.RmpWfm):
-                mon = computed_pv.pvs[PSStatusPV.WAVFRM_MON].value
-                if psname not in PSStatusPV.DTOLWFM_DICT.keys():
-                    pstype = _PSSearch.conv_psname_2_pstype(psname)
-                    PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
-                        pstype, 'DTOL_WFM')
-                if not _np.allclose(mon, 0.0,
-                                    atol=PSStatusPV.DTOLWFM_DICT[psname]):
-                    value |= PSStatusPV.BIT_BOWFMDIFF
-        else:
-            value |= PSStatusPV.BIT_OPMODEDIF
 
-        # interlocks?
-        intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
-        intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
-        if intlksoft != 0 or intlksoft is None or \
-                intlkhard != 0 or intlkhard is None:
-            value |= PSStatusPV.BIT_INTERLKOK
+            # interlocks?
+            intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
+            intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
+            if intlksoft != 0 or intlksoft is None or \
+                    intlkhard != 0 or intlkhard is None:
+                value |= PSStatusPV.BIT_INTERLOCK
+
+        else:
+            # current-diff?
+            severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+            if severity != 0:
+                value |= PSStatusPV.BIT_CURRTDIFF
+
+            # interlocks?
+            intlk = computed_pv.pvs[PSStatusPV.INTRLCK_LI].value
+            if intlk > 55 or intlk is None:
+                value |= PSStatusPV.BIT_INTERLOCK
+
         return {'value': value}
