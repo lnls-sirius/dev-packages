@@ -1,18 +1,39 @@
 """Power Supply Diag Control System App."""
 
 from ... import csdev as _csdev
+from ...namesys import SiriusPVName as _PVName
 from ...search import PSSearch as _PSSearch
 
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    DIAG_STATUS = (
-        'PS Connected', 'PwrState-Sts On', 'OpMode-Sts SlowRef',
-        'Current-(SP|Mon) differ', 'Interlocks', 'Wfm error')
+    DIAG_STATUS_LABELS_AS = (
+        'PS Disconnected',
+        'PwrState-Sts Off',
+        'OpMode-(Sel|Sts) are different',
+        'Current-(SP|Mon) are different',
+        'Interlocks',
+        'Reserved')
+
+    DIAG_STATUS_LABELS_BO = (
+        'PS Disconnected',
+        'PwrState-Sts Off',
+        'OpMode-(Sel|Sts) are different',
+        'Current-(SP|Mon) are different',
+        'Interlocks',
+        'Wfm error exceeded tolerance')
 
 
 _et = ETypes  # syntactic sugar
+
+
+def get_ps_diag_status_labels(psname):
+    """Return Diag Status Labels enum."""
+    psname = _PVName(psname)
+    if psname.sec == 'BO':
+        return _et.DIAG_STATUS_LABELS_BO
+    return _et.DIAG_STATUS_LABELS_AS
 
 
 def get_ps_diag_propty_database(psname):
@@ -20,6 +41,7 @@ def get_ps_diag_propty_database(psname):
     pstype = _PSSearch.conv_psname_2_pstype(psname)
     splims = _PSSearch.conv_pstype_2_splims(pstype)
     dtol = splims['DTOL_CUR']
+    enums = get_ps_diag_status_labels(psname)
     dbase = {
         'DiagVersion-Cte': {'type': 'str', 'value': 'UNDEF'},
         'DiagCurrentDiff-Mon': {'type': 'float', 'value': 0.0,
@@ -29,8 +51,8 @@ def get_ps_diag_propty_database(psname):
                            'hilim': 1, 'hihi': 1, 'high': 1,
                            'low': -1, 'lolo': -1, 'lolim': -1
                            },
-        'DiagStatusLabels-Cte': {'type': 'string',
-                                 'count': len(_et.DIAG_STATUS),
-                                 'value': _et.DIAG_STATUS}}
+        'DiagStatusLabels-Cte': {'type': 'string', 'count': len(enums),
+                                 'value': enums}
+    }
     dbase = _csdev.add_pvslist_cte(dbase, 'Diag')
     return dbase
