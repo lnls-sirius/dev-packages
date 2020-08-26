@@ -1,52 +1,18 @@
 #!/usr/local/bin/python-sirius
 """Driver module."""
 
-import time as _time
-from threading import Thread as _Thread
-
 from pcaspy import Alarm as _Alarm, Severity as _Severity
 
-from ...callbacks import Callback as _Callback
-from ...thread import QueueThread as _QueueThread
-from .pvs import \
-    ComputedPV as _ComputedPV, \
-    PSStatusPV as _PSStatusPV, \
-    PSDiffPV as _PSDiffPV
-
-SCAN_FREQUENCY = 2
+from ..app import App as _App
+from ..pvs import ComputedPV as _ComputedPV
+from .pvs import PSStatusPV as _PSStatusPV, PSDiffPV as _PSDiffPV
 
 
-class App(_Callback):
+class PSDiagApp(_App):
     """Main application responsible for updating DB."""
 
-    def __init__(self, prefix, psnames):
-        """Create Computed PVs."""
-        super().__init__()
-        self._prefix = prefix
+    def _create_computed_pvs(self, psnames):
         self._psnames = psnames
-        self._queue = _QueueThread()
-        self.pvs = list()
-        self.scanning = False
-        self.quit = False
-        self._create_computed_pvs()
-
-        self.t = _Thread(target=self.scan, daemon=True)
-        self.t.start()
-
-    def process(self, interval):
-        """Sleep."""
-        _time.sleep(interval)
-
-    def read(self, reason):
-        """Read from IOC database."""
-        return None
-
-    def write(self, reason, value):
-        """Write value to reason and let callback update PV database."""
-        status = False
-        return status  # return True to invoke super().write of PCASDriver
-
-    def _create_computed_pvs(self):
         for psname in self._psnames:
             devname = self._prefix + psname
             # DiagCurrentDiff-Mon
@@ -71,27 +37,23 @@ class App(_Callback):
                 psname + ':DiagStatus-Mon', _PSStatusPV(), self._queue,
                 pvs, monitor=False)
             self.pvs.append(pv)
+        self._pvs_connected = {pv: False for pv in self.pvs}
 
-    def scan(self):
-        """Run as a thread scanning PVs."""
-        connected = {pv: False for pv in self.pvs}
-        while not self.quit:
-            if self.scanning:
-                for pv in self.pvs:
-                    if not pv.connected:
-                        if connected[pv]:
-                            self.run_callbacks(
-                                pv.pvname, alarm=_Alarm.TIMEOUT_ALARM,
-                                severity=_Severity.INVALID_ALARM,
-                                field='status')
-                        connected[pv] = False
-                        if 'DiagStatus' in pv.pvname:
-                            self.run_callbacks(pv.pvname, value=pv.value)
-                    else:
-                        if not connected[pv]:
-                            self.run_callbacks(
-                                pv.pvname, alarm=_Alarm.NO_ALARM,
-                                severity=_Severity.NO_ALARM, field='status')
-                        connected[pv] = True
-                        self.run_callbacks(pv.pvname, value=pv.value)
-            _time.sleep(1.0/SCAN_FREQUENCY)
+    def _update_pvs(self):
+        for pvo in self.pvs:
+            if not pvo.connected:
+                if self._pvs_connected[pvo]:
+                    self.run_callbacks(
+                        pvo.pvname, alarm=_Alarm.TIMEOUT_ALARM,
+                        severity=_Severity.INVALID_ALARM,
+                        field='status')
+                self._pvs_connected[pvo] = False
+                if 'DiagStatus' in pvo.pvname:
+                    self.run_callbacks(pvo.pvname, value=pvo.value)
+            else:
+                if not self._pvs_connected[pvo]:
+                    self.run_callbacks(
+                        pvo.pvname, alarm=_Alarm.NO_ALARM,
+                        severity=_Severity.NO_ALARM, field='status')
+                self._pvs_connected[pvo] = True
+                self.run_callbacks(pvo.pvname, value=pvo.value)
