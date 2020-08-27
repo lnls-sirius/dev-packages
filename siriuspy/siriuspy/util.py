@@ -144,6 +144,8 @@ def check_pv_online(pvname, timeout=1.0, use_prefix=True):
         pvname = _envars.VACA_PREFIX + pvname
     pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pvobj.wait_for_connection(timeout=timeout)
+    # invoke pv disconnect and explicitly signal to GC that PV object may be collected.
+    del pvobj  
     return status
 
 
