@@ -11,7 +11,7 @@ class BPM(_Device):
     """BPM Device"""
 
     _properties = (
-        'asyn.ENBL', 'asyn.CNCT',
+        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
@@ -76,6 +76,8 @@ class BPM(_Device):
         stg += 'asyn:\n'
         stg += f'    Enabled: {_csbpm.EnblTyp._fields[self.asyn_state]:s}\n'
         stg += '    Connected: '
+        stg += '    Switching Mode: '
+        stg += f'{_csbpm.SwModes._fields[self.switching_mode]:s}\n'
         stg += f'{_csbpm.ConnTyp._fields[self.asyn_connected]:s}\n'
         stg += '\nAcquisition Parameters:\n'
         stg += f'    - Status: {_csbpm.AcqStates._fields[self.acq_status]:s}\n'
@@ -124,6 +126,16 @@ class BPM(_Device):
     def asyn_connected(self):
         """."""
         return self['asyn.CNCT']
+
+    @property
+    def switching_mode(self):
+        """."""
+        return self['SwMode-Sts']
+
+    @switching_mode.setter
+    def switching_mode(self, val):
+        """."""
+        self['SwMode-Sel'] = val
 
     @property
     def adcfreq(self):
