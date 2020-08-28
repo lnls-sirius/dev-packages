@@ -15,7 +15,7 @@ class IDSearch:
     # static tables in our cs-constants server.
 
     _beamline2idname = {
-        'CARNAUBA': 'SI-06SB:ID-Delta21',
+        'CARNAUBA': 'SI-06SB:ID-APU22',
         'CATERETE': 'SI-07SP:ID-APU22',
         'EMA':      'SI-08SB:ID-APU22',
         'MANACA':   'SI-09SA:ID-APU22',
