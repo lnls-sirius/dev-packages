@@ -53,6 +53,7 @@ class SOFB(_Device):
         'MTurnTime-Mon')
 
     _default_timeout = 10  # [s]
+    _default_timeout_respm = 2 * 60 * 60  # [s]
 
     def __init__(self, devname):
         """."""
@@ -431,3 +432,15 @@ class SOFB(_Device):
             _time.sleep(interval)
         else:
             print('WARN: Timed out waiting orbit.')
+
+    def wait_respm_meas(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout_respm
+        interval = 1  # [s]
+        ntrials = int(timeout/interval)
+        for _ in range(ntrials):
+            if not self.measrespmat_mon:
+                break
+            _time.sleep(interval)
+        else:
+            print('WARN: Timed out waiting respm measurement.')
