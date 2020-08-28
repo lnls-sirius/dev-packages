@@ -654,7 +654,10 @@ class EpicsCorrectors(BaseCorrectors):
             self.run_callbacks(
                 'KickCV-Mon', corr_vals[self._csorb.nr_ch:self._csorb.nr_chcv])
             if self.acc == 'SI':
-                self.run_callbacks('KickRF-Mon', corr_vals[-1])
+                rfv = corr_vals[-1]
+                circ = 1/rfv * self._csorb.harm_number * 299792458
+                self.run_callbacks('KickRF-Mon', rfv)
+                self.run_callbacks('OrbLength-Mon', circ)
         except Exception as err:
             self._update_log('ERR: ' + str(err))
             _log.error(str(err))
