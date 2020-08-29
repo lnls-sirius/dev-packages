@@ -363,15 +363,33 @@ class SOFB(_Device):
         """."""
         self['CalcDelta-Cmd'] = 1
 
-    def cmd_applycorr(self):
+    def cmd_applycorr_ch(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
-        _time.sleep(0.3)
+
+    def cmd_applycorr_cv(self):
+        """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
 
-    def cmd_measrespmat(self):
+    def cmd_applycorr_rf(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
+
+    def cmd_applycorr_all(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
+
+    def cmd_measrespmat_start(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 0
+
+    def cmd_measrespmat_stop(self):
         """."""
         self['MeasRespMat-Cmd'] = 1
+
+    def cmd_measrespmat_reset(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 2
 
     @property
     def measrespmat_mon(self):
@@ -418,6 +436,18 @@ class SOFB(_Device):
     def autocorrsts(self):
         """."""
         return self['LoopState-Sts']
+
+    def correct_orbit_manually(self, nr_iters=10):
+        """."""
+        self.cmd_turn_off_autocorr()
+
+        for i in range(nr_iters):
+            self.cmd_calccorr()
+            _time.sleep(0.5)
+            self.cmd_applycorr_all()
+            _time.sleep(0.5)
+            self.cmd_reset()
+            self.wait_buffer()
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
