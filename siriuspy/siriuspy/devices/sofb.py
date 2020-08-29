@@ -2,6 +2,8 @@
 
 import time as _time
 
+import numpy as _np
+
 from ..sofb.csdev import SOFBFactory
 from .device import Device as _Device
 
@@ -21,6 +23,7 @@ class SOFB(_Device):
     _propty_tmpl = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
+        'RespMat-SP', 'RespMat-RB',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
@@ -104,6 +107,16 @@ class SOFB(_Device):
                 self.data.TrigAcqChan._fields.index(value)
         elif int(value) in self.data.TrigAcqChan:
             self['TrigAcqChan-Sel'] = int(value)
+
+    @property
+    def respmat(self):
+        """."""
+        return self['RespMat-RB']
+
+    @respmat.setter
+    def respmat(self, mat):
+        """."""
+        self['RespMat-SP'] = _np.array(mat)
 
     @property
     def trigchannel_str(self):
@@ -439,7 +452,7 @@ class SOFB(_Device):
         interval = 1  # [s]
         ntrials = int(timeout/interval)
         for _ in range(ntrials):
-            if not self.measrespmat_mon:
+            if not self.measrespmat_mon == self.data.MeasRespMatMon.Measuring:
                 break
             _time.sleep(interval)
         else:
