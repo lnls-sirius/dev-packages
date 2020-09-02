@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.31 V0.41u - 8/19/2020'
+__version__ = 'FRWM - V1.33 V0.41u - 31/09/2020'
 
 
 # --- Const DCDC ---
@@ -416,40 +416,39 @@ class ConstFAC_2S_DCDC(ConstPSBSMP):
     V_I_LOAD_MEAN = 33
     V_I_LOAD1 = 34
     V_I_LOAD2 = 35
-    V_V_LOAD = 36
-    V_V_CAPBANK_1 = 37
-    V_V_CAPBANK_2 = 38
-    V_DUTY_CYCLE_1 = 39
-    V_DUTY_CYCLE_2 = 40
-    V_DUTY_DIFF = 41
-    V_V_INPUT_IIB_1 = 42
-    V_I_INPUT_IIB_1 = 43
-    V_I_OUTPUT_IIB_1 = 44
-    V_TEMP_IGBTS_1_IIB_1 = 45
-    V_TEMP_IGBTS_2_IIB_1 = 46
-    V_TEMP_INDUCTOR_IIB_1 = 47
-    V_TEMP_HEATSINK_IIB_1 = 48
-    V_V_DRIVER_IIB_1 = 49
-    V_I_DRIVER_1_IIB_1 = 50
-    V_I_DRIVER_2_IIB_1 = 51
-    V_TEMP_BOARD_IIB_1 = 52
-    V_RH_IIB_1 = 53
-    V_IIB_INTERLOCKS_1 = 54
-    V_IIB_ALARMS_1 = 55
-    V_V_INPUT_IIB_2 = 56
-    V_I_INPUT_IIB_2 = 57
-    V_I_OUTPUT_IIB_2 = 58
-    V_TEMP_IGBTS_1_IIB_2 = 59
-    V_TEMP_IGBTS_2_IIB_2 = 60
-    V_TEMP_INDUCTOR_IIB_2 = 61
-    V_TEMP_HEATSINK_IIB_2 = 62
-    V_V_DRIVER_IIB_2 = 63
-    V_I_DRIVER_1_IIB_2 = 64
-    V_I_DRIVER_2_IIB_2 = 65
-    V_TEMP_BOARD_IIB_2 = 66
-    V_RH_IIB_2 = 67
-    V_IIB_INTERLOCKS_2 = 68
-    V_IIB_ALARMS_2 = 69
+    V_V_CAPBANK_1 = 36
+    V_V_CAPBANK_2 = 37
+    V_DUTY_CYCLE_1 = 38
+    V_DUTY_CYCLE_2 = 39
+    V_DUTY_DIFF = 40
+    V_V_INPUT_IIB_1 = 41
+    V_I_INPUT_IIB_1 = 42
+    V_I_OUTPUT_IIB_1 = 43
+    V_TEMP_IGBTS_1_IIB_1 = 44
+    V_TEMP_IGBTS_2_IIB_1 = 45
+    V_TEMP_INDUCTOR_IIB_1 = 46
+    V_TEMP_HEATSINK_IIB_1 = 47
+    V_V_DRIVER_IIB_1 = 48
+    V_I_DRIVER_1_IIB_1 = 49
+    V_I_DRIVER_2_IIB_1 = 50
+    V_TEMP_BOARD_IIB_1 = 51
+    V_RH_IIB_1 = 52
+    V_IIB_INTERLOCKS_1 = 53
+    V_IIB_ALARMS_1 = 54
+    V_V_INPUT_IIB_2 = 55
+    V_I_INPUT_IIB_2 = 56
+    V_I_OUTPUT_IIB_2 = 57
+    V_TEMP_IGBTS_1_IIB_2 = 58
+    V_TEMP_IGBTS_2_IIB_2 = 59
+    V_TEMP_INDUCTOR_IIB_2 = 60
+    V_TEMP_HEATSINK_IIB_2 = 61
+    V_V_DRIVER_IIB_2 = 62
+    V_I_DRIVER_1_IIB_2 = 63
+    V_I_DRIVER_2_IIB_2 = 64
+    V_TEMP_BOARD_IIB_2 = 65
+    V_RH_IIB_2 = 66
+    V_IIB_INTERLOCKS_2 = 67
+    V_IIB_ALARMS_2 = 68
 
 
 class ConstFAP(ConstPSBSMP):

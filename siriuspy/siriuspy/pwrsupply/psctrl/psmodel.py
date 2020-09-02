@@ -386,7 +386,6 @@ class PSModelFAC_2S_DCDC(_PSModel):
         'Current-Mon': _c.V_I_LOAD_MEAN,
         'Current1-Mon': _c.V_I_LOAD1,
         'Current2-Mon': _c.V_I_LOAD2,
-        'LoadVoltage-Mon': _c.V_V_LOAD,
         'CapacitorBankVoltageMod1-Mon': _c.V_V_CAPBANK_1,
         'CapacitorBankVoltageMod2-Mon': _c.V_V_CAPBANK_2,
         'PWMDutyCycleMod1-Mon': _c.V_DUTY_CYCLE_1,
