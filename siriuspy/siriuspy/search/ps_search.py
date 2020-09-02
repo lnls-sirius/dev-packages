@@ -14,6 +14,12 @@ from ..magnet.excdata import ExcitationData as _ExcitationData
 class PSSearch:
     """PS and PU Power Supply Search Class."""
 
+    # auxilliary BO dipole bsmp devices not to be considered
+    # power supplies from standpoint of high level appplications
+    _bo_dip_auxps = \
+        set('BO-Fam:PS-B-' + idx for idx in 
+        ('1a', '1b', '1c', '2a', '2b', '2c'))
+
     _splims_labels = list()
     _splims_ps_unit = list()
     _splims_pu_unit = list()
@@ -86,11 +92,14 @@ class PSSearch:
     }
 
     @staticmethod
-    def get_psnames(filters=None):
+    def get_psnames(filters=None, filter_auxps=True):
         """Return a sorted and filtered list of all power supply names."""
         PSSearch._reload_pstype_2_psnames_dict()
-        return sorted(_Filter.process_filters(PSSearch._psnames_list,
-                                              filters=filters))
+        psnames = _Filter.process_filters(
+            PSSearch._psnames_list, filters=filters)
+        if filter_auxps:
+            psnames = set(psnames) - PSSearch._bo_dip_auxps
+        return sorted(psnames)
 
     @staticmethod
     def get_psnicknames(names=None, filters=None):
@@ -249,7 +258,7 @@ class PSSearch:
 
     @staticmethod
     def conv_bbbname_2_bsmps(bbbname):
-        """Given bbb name return bsmps."""
+        """Given bbb name return bsmps devices."""
         PSSearch._reload_bbb_2_bsmps_dict()
         return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
