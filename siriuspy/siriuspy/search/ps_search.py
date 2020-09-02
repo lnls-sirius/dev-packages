@@ -14,7 +14,7 @@ from ..magnet.excdata import ExcitationData as _ExcitationData
 class PSSearch:
     """PS and PU Power Supply Search Class."""
 
-    # auxilliary BO dipole bsmp devices not to be considered
+    # auxiliary BO dipole bsmp devices not to be considered
     # power supplies from standpoint of high level appplications
     _bo_dip_auxps = \
         set('BO-Fam:PS-B-' + idx for idx in 
