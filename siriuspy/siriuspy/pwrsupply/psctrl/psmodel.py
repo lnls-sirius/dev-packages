@@ -390,7 +390,6 @@ class PSModelFAC_2S_DCDC(_PSModel):
         'CapacitorBankVoltageMod2-Mon': _c.V_V_CAPBANK_2,
         'PWMDutyCycleMod1-Mon': _c.V_DUTY_CYCLE_1,
         'PWMDutyCycleMod2-Mon': _c.V_DUTY_CYCLE_2,
-        'PWMDutyDiff-Mon': _c.V_DUTY_DIFF,
         'VoltageInputIIBMod1-Mon': _c.V_V_INPUT_IIB_1,
         'CurrentInputIIBMod1-Mon': _c.V_I_INPUT_IIB_1,
         'CurrentOutputIIBMod1-Mon': _c.V_I_OUTPUT_IIB_1,

@@ -1217,8 +1217,6 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                                  'prec': PS_CURRENT_PRECISION},
         'PWMDutyCycleMod2-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
                                  'prec': PS_CURRENT_PRECISION},
-        'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0, 'unit': 'p.u.',
-                            'prec': PS_CURRENT_PRECISION},
         'VoltageInputIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
