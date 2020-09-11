@@ -106,7 +106,7 @@ class TestBSMPPackage(TestCase):
         'checksum',
         'stream',
         'calc_checksum',
-        'verify_checksum',
+        'verify_checksum'
     )
 
     def test_api(self):
@@ -167,6 +167,7 @@ class TestBSMPChannel(TestCase):
     """Test Channel class of BSMP package."""
 
     api = (
+        'LOCK',
         'pru',
         'address',
         'size_counter',
@@ -175,6 +176,7 @@ class TestBSMPChannel(TestCase):
         'write',
         'request_',
         'request',
+        'create_lock'
         )
 
     def setUp(self):
