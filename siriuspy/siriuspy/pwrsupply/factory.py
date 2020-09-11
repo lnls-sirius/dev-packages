@@ -6,6 +6,7 @@ from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
 from ..thread import DequeThread as _DequeThread
+from ..bsmp.serial import Channel as _Channel
 
 from .csdev import get_ps_propty_database as _get_ps_propty_database
 from .beaglebone import BeagleBone as _BeagleBone
@@ -42,6 +43,14 @@ class BBBFactory:
         # build dicts for grouped udc.
         psmodels, devices, freqs = \
             BBBFactory._build_udcgrouped(bbbname)
+
+        if len(psmodels) > 1:
+            # more than one psmodel under the same beagle. there will be two 
+            # PRUController objects pushing operation requests into the common 
+            # DequeThread. we have to use to lock mechanism in bsmp.Channel in 
+            # order to avoid one PRUController process thread interpreting the
+            # operation request of the other PRUController scan thread.
+            _Channel.create_lock()
 
         # power supply controllers and databases
         # dbase: a pvname-epicsdbase dictionary containing all
@@ -123,7 +132,7 @@ class BBBFactory:
 
         # get names of all udcs under a beaglebone
         udcs = _PSSearch.conv_bbbname_2_udc(bbbname)
-
+        
         psmodels, devices, freqs = dict(), dict(), dict()
         for udc in udcs:
 
@@ -137,8 +146,9 @@ class BBBFactory:
                 devices[psmodel_name] = devs
 
             # add udc psmodel
-            psmodel = _PSModelFactory.create(psmodel_name)
-            psmodels[psmodel_name] = psmodel
+            if psmodel_name not in psmodels:
+                psmodel = _PSModelFactory.create(psmodel_name)
+                psmodels[psmodel_name] = psmodel
 
             # add udc/bbb freqs
             try:
