@@ -9,8 +9,8 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 from .device import Device as _Device, Devices as _Devices
 
 
-class BbB(_Devices):
-    """BbB Device."""
+class BunchbyBunch(_Devices):
+    """BunchbyBunch Device."""
 
     _devices = {
         'H': 'SI-Glob:DI-BbBProc-H',
@@ -20,7 +20,7 @@ class BbB(_Devices):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
         self.info = SystemInfo(devname)
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
@@ -45,10 +45,11 @@ class BbB(_Devices):
     @staticmethod
     def process_device_name(devname):
         """Check whether device exist."""
-        if devname in BbB.DEVICES:
+        if devname in BunchbyBunch.DEVICES:
             devname = devname
-        elif devname in BbB.DEVICES._fields:
-            devname = BbB.DEVICES[BbB.DEVICES._fields.index(devname)]
+        elif devname in BunchbyBunch.DEVICES._fields:
+            devname = BunchbyBunch.DEVICES[
+                BunchbyBunch.DEVICES._fields.index(devname)]
         else:
             raise NotImplementedError(devname)
         return devname
@@ -66,7 +67,7 @@ class SystemInfo(_Device):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
 
         # call base class constructor
         super().__init__(devname, properties=SystemInfo._properties)
@@ -186,7 +187,7 @@ class Timing(_Device):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
 
         # call base class constructor
         super().__init__(devname, properties=Timing._properties)
@@ -343,7 +344,7 @@ class Coefficients(_Device):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
 
         # call base class constructor
         super().__init__(devname, properties=Coefficients._properties)
@@ -570,7 +571,7 @@ class Acquisition(_ProptyDevice):
 
     def __init__(self, devname, acqtype='BRAM'):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
         acqtype = Acquisition.process_acquisition_type(acqtype)
 
         # call base class constructor
@@ -885,7 +886,8 @@ class FrontBackEnd(_Device):
     def __init__(self):
         """."""
         # call base class constructor
-        super().__init__(BbB.DEVICES.L, properties=FrontBackEnd._properties)
+        super().__init__(
+            BunchbyBunch.DEVICES.L, properties=FrontBackEnd._properties)
 
     @property
     def z_att(self):
@@ -979,7 +981,7 @@ class Feedback(_Device):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
 
         # call base class constructor
         super().__init__(devname, properties=Feedback._properties)
@@ -1095,7 +1097,7 @@ class Drive(_ProptyDevice):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
         super().__init__(
             devname, propty_prefix='DRIVE_', properties=Drive._properties)
 
@@ -1181,7 +1183,7 @@ class BunchClean(_ProptyDevice):
 
     def __init__(self, devname):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
         super().__init__(
             devname, propty_prefix='CLEAN_', properties=BunchClean._properties)
 
@@ -1231,7 +1233,7 @@ class PwrAmpL(_ProptyDevice):
 
     def __init__(self, devname, num=0):
         """."""
-        devname = BbB.process_device_name(devname)
+        devname = BunchbyBunch.process_device_name(devname)
 
         # call base class constructor
         super().__init__(
