@@ -60,7 +60,7 @@ class SystemInfo(_Device):
 
     _properties = (
         'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
-        'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'ADC_UNLOCK_COUNT', 'ADC_OVR',
+        'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
         'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
         'RST_COUNT', 'CNTRST', 'RF_FREQ', 'HARM_NUM', 'REVISION', 'GW_TYPE',
         'IP_ADDR')
@@ -105,7 +105,7 @@ class SystemInfo(_Device):
     @property
     def dcm_unlock_count(self):
         """."""
-        return self['ADC_UNLOCK_COUNT']
+        return self['DCM_UNLOCK_COUNT']
 
     @property
     def adc_overrange(self):
@@ -562,9 +562,9 @@ class Acquisition(_ProptyDevice):
         'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
         'DUMP', 'RAW_SAMPLES', 'RAW', 'ACQ_TURNS', 'POST_TURNS',
         'MEAN', 'RMS', 'XSC', 'SPEC', 'MAXRMS', 'TSC', 'FREQ',
-        'MASK', 'ACQ_PATTERN',
-        'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1', 'SP_PEAKFREQ1', 'SP_PEAK1',
-        'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2', 'SP_PEAKFREQ2', 'SP_PEAK2',
+        'ACQ_MASK', 'ACQ_PATTERN',
+        'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1', 'PEAKFREQ1', 'PEAK1',
+        'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2', 'PEAKFREQ2', 'PEAK2',
         )
 
     DEF_TIMEOUT = 10  # [s]
@@ -702,7 +702,11 @@ class Acquisition(_ProptyDevice):
     @property
     def data_raw(self):
         """."""
-        return self['RAW']
+        data = self['RAW']
+        size = self.data_size
+        if size is not None:
+            data = data[:size]
+        return data
 
     @property
     def data_bunch_index(self):
@@ -770,11 +774,11 @@ class Acquisition(_ProptyDevice):
     @property
     def spec_mask(self):
         """."""
-        return self['MASK']
+        return self['ACQ_MASK']
 
     @spec_mask.setter
     def spec_mask(self, value):
-        self['MASK'] = _np.array(value)
+        self['ACQ_MASK'] = _np.array(value)
 
     @property
     def spec_mask_pattern(self):
@@ -815,12 +819,12 @@ class Acquisition(_ProptyDevice):
     @property
     def spec_marker1_freq(self):
         """."""
-        return self['SP_PEAKFREQ1']
+        return self['PEAKFREQ1']
 
     @property
     def spec_marker1_mag(self):
         """."""
-        return self['SP_PEAK1']
+        return self['PEAK1']
 
     @property
     def spec_marker2_freq_min(self):
@@ -852,12 +856,12 @@ class Acquisition(_ProptyDevice):
     @property
     def spec_marker2_freq(self):
         """."""
-        return self['SP_PEAKFREQ2']
+        return self['PEAKFREQ2']
 
     @property
     def spec_marker2_mag(self):
         """."""
-        return self['SP_PEAK2']
+        return self['PEAK2']
 
     @staticmethod
     def process_acquisition_type(acqtype):
@@ -976,7 +980,7 @@ class Feedback(_Device):
     _properties = (
         'PROC_DS', 'FBCTRL', 'SHIFTGAIN', 'SETSEL', 'SAT_THRESHOLD',
         'FB_MASK', 'FB_PATTERN', 'CF_MASK', 'CF_PATTERN',
-        'CF_PATTERN_SUB.VALB',
+        'CF_PATTERN_SUB.VALB', 'GDEN',
         )
 
     def __init__(self, devname):
