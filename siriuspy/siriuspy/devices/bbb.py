@@ -21,46 +21,26 @@ class BbB(_Devices):
     def __init__(self, devname):
         """."""
         devname = BbB.process_device_name(devname)
-        self.sram = AcqProc(devname, acqtype='SRAM')
-        self.bram = AcqProc(devname, acqtype='BRAM')
+        self.info = SystemInfo(devname)
+        self.timing = Timing(devname)
+        self.sram = Acquisition(devname, acqtype='SRAM')
+        self.bram = Acquisition(devname, acqtype='BRAM')
+        self.coeffs = Coefficients(devname)
+        self.feedback = Feedback(devname)
+        self.drive = Drive(devname)
+        self.bunch_clean = BunchClean(devname)
         self.fbe = FrontBackEnd()
-        self.coeffs = CoeffProc(devname)
+        devs = [
+            self.info, self.timing, self.sram, self.bram, self.coeffs,
+            self.feedback, self.drive, self.bunch_clean, self.fbe, ]
 
-        devs = [self.sram, self.bram, self.fbe, self.coeffs]
+        if devname.endswith('-L'):
+            self.pwr_amp1 = PwrAmpL(devname, num=0)
+            self.pwr_amp2 = PwrAmpL(devname, num=1)
+            devs.append(self.pwr_amp1)
+            devs.append(self.pwr_amp2)
+
         super().__init__(devname, devices=devs)
-
-    # @property
-    # def version(self):
-    #     """."""
-    #     return self['REVISION']
-
-    # @property
-    # def output_delay(self):
-    #     """."""
-    #     return self['DELAY']
-
-    # @output_delay.setter
-    # def output_delay(self, value):
-    #     self['DELAY'] = value
-
-    # @property
-    # def info_rffreq(self):
-    #     """."""
-    #     return self['RF_FREQ']
-
-    # @property
-    # def info_harmnum(self):
-    #     """."""
-    #     return self['HARM_NUM']
-
-    # @property
-    # def proc_downsample(self):
-    #     """."""
-    #     return self['PROC_DS']
-
-    # @proc_downsample.setter
-    # def proc_downsample(self, value):
-    #     self['PROC_DS'] = int(value)
 
     @staticmethod
     def process_device_name(devname):
@@ -74,7 +54,277 @@ class BbB(_Devices):
         return devname
 
 
-class CoeffProc(_Device):
+class SystemInfo(_Device):
+    """."""
+
+    _properties = (
+        'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
+        'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'ADC_UNLOCK_COUNT', 'ADC_OVR',
+        'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
+        'RST_COUNT', 'CNTRST', 'RF_FREQ', 'HARM_NUM', 'REVISION', 'GW_TYPE',
+        'IP_ADDR')
+
+    def __init__(self, devname):
+        """."""
+        devname = BbB.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=SystemInfo._properties)
+
+    @property
+    def status(self):
+        """."""
+        return self['ERRSUM']
+
+    @property
+    def clock_miss(self):
+        """."""
+        return self['CLKMISS']
+
+    @property
+    def clock_miss_count(self):
+        """."""
+        return self['CLKMISS_COUNT']
+
+    @property
+    def pll_unlock(self):
+        """."""
+        return self['PLL_UNLOCK']
+
+    @property
+    def pll_unlock_count(self):
+        """."""
+        return self['PLL_UNLOCK_COUNT']
+
+    @property
+    def dcm_unlock(self):
+        """."""
+        return self['DCM_UNLOCK']
+
+    @property
+    def dcm_unlock_count(self):
+        """."""
+        return self['ADC_UNLOCK_COUNT']
+
+    @property
+    def adc_overrange(self):
+        """."""
+        return self['ADC_OVR']
+
+    @property
+    def adc_overrange_count(self):
+        """."""
+        return self['ADC_OVR_COUNT']
+
+    @property
+    def output_saturated(self):
+        """."""
+        return self['SAT']
+
+    @property
+    def output_saturated_count(self):
+        """."""
+        return self['SAT_COUNT']
+
+    @property
+    def fiducial_error(self):
+        """."""
+        return self['FID_ERR']
+
+    @property
+    def fiducial_error_count(self):
+        """."""
+        return self['FID_ERR_COUNT']
+
+    @property
+    def time_since_last_reset(self):
+        """."""
+        return self['RST_COUNT']
+
+    def cmd_reset_counts(self):
+        """."""
+        self['CNTRST'] = 1
+        _time.sleep(0.2)
+        self['CNTRST'] = 0
+
+    @property
+    def rf_freq_nom(self):
+        """."""
+        return self['RF_FREQ']
+
+    @property
+    def harmonic_number(self):
+        """."""
+        return self['HARM_NUM']
+
+    @property
+    def gateway_revision(self):
+        """."""
+        return self['REVISION']
+
+    @property
+    def gateway_type(self):
+        """."""
+        return self['GW_TYPE']
+
+    @property
+    def ip_address(self):
+        """."""
+        return self['IP_ADDR']
+
+
+class Timing(_Device):
+    """."""
+
+    _properties = (
+        'TADC', 'TDAC', 'DELAY', 'OFF_FIDS', 'FID_DELAY', 'CLKRST',
+        'FREQ_CNT_CH0', 'FREQ_CNT_CH1', 'FREQ_CNT_CH2', 'FREQ_CNT_CH3',
+        'FREQ_CNT_CH4',
+        'ECLDEL0', 'ECLDEL1', 'ECLDEL2', 'ECLDEL3',
+        'ECLDEL0_SUBWR', 'ECLDEL1_SUBWR', 'ECLDEL2_SUBWR', 'ECLDEL3_SUBWR',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BbB.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=Timing._properties)
+
+    @property
+    def adc_delay(self):
+        """."""
+        return self['TADC']
+
+    @adc_delay.setter
+    def adc_delay(self, value):
+        self['TADC'] = value
+
+    @property
+    def dac_delay(self):
+        """."""
+        return self['TDAC']
+
+    @dac_delay.setter
+    def dac_delay(self, value):
+        self['TDAC'] = value
+
+    @property
+    def output_delay(self):
+        """."""
+        return self['DELAY']
+
+    @output_delay.setter
+    def output_delay(self, value):
+        self['DELAY'] = value
+
+    @property
+    def fiducial_offset(self):
+        """."""
+        return self['OFF_FIDS']
+
+    @fiducial_offset.setter
+    def fiducial_offset(self, value):
+        self['OFF_FIDS'] = int(value)
+
+    @property
+    def fiducial_delay(self):
+        """."""
+        return self['FID_DELAY']
+
+    @fiducial_delay.setter
+    def fiducial_delay(self, value):
+        self['FID_DELAY'] = value
+
+    def cmd_reset_clock(self):
+        """."""
+        self['CLKRST'] = 1
+        _time.sleep(0.2)
+        self['CLKRST'] = 0
+
+    @property
+    def adc_clock(self):
+        """."""
+        return self['ECLDEL0']
+
+    @adc_clock.setter
+    def adc_clock(self, value):
+        self['ECLDEL0'] = int(value)
+
+    @property
+    def fiducial_clock(self):
+        """."""
+        return self['ECLDEL1']
+
+    @fiducial_clock.setter
+    def fiducial_clock(self, value):
+        self['ECLDEL1'] = int(value)
+
+    @property
+    def fiducial(self):
+        """."""
+        return self['ECLDEL2']
+
+    @fiducial.setter
+    def fiducial(self, value):
+        self['ECLDEL2'] = int(value)
+
+    @property
+    def dac_clock(self):
+        """."""
+        return self['ECLDEL3']
+
+    @dac_clock.setter
+    def dac_clock(self, value):
+        self['ECLDEL3'] = int(value)
+
+    @property
+    def adc_clock_ok(self):
+        """."""
+        return self['ECLDEL0_SUBWR']
+
+    @property
+    def fiducial_clock_ok(self):
+        """."""
+        return self['ECLDEL1_SUBWR']
+
+    @property
+    def fiducial_ok(self):
+        """."""
+        return self['ECLDEL2_SUBWR']
+
+    @property
+    def dac_clock_ok(self):
+        """."""
+        return self['ECLDEL3_SUBWR']
+
+    @property
+    def freq_input_clock(self):
+        """."""
+        return self['FREQ_CNT_CH0']
+
+    @property
+    def freq_rf_over_2(self):
+        """."""
+        return self['FREQ_CNT_CH1']
+
+    @property
+    def freq_rf_over_3(self):
+        """."""
+        return self['FREQ_CNT_CH2']
+
+    @property
+    def freq_dac_clock(self):
+        """."""
+        return self['FREQ_CNT_CH3']
+
+    @property
+    def freq_rf_over_4(self):
+        """."""
+        return self['FREQ_CNT_CH4']
+
+
+class Coefficients(_Device):
     """."""
 
     _properties = (
@@ -96,7 +346,7 @@ class CoeffProc(_Device):
         devname = BbB.process_device_name(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=CoeffProc._properties)
+        super().__init__(devname, properties=Coefficients._properties)
 
     @property
     def set0(self):
@@ -300,7 +550,7 @@ class _ProptyDevice(_Device):
         return pvname
 
 
-class AcqProc(_ProptyDevice):
+class Acquisition(_ProptyDevice):
     """."""
 
     ACQTYPE = _get_namedtuple('Devices', ('SRAM', 'BRAM'))
@@ -317,17 +567,16 @@ class AcqProc(_ProptyDevice):
         )
 
     DEF_TIMEOUT = 10  # [s]
-    OFF, ON = 0, 1
-    FPGA_BITS = 2**15
 
     def __init__(self, devname, acqtype='BRAM'):
         """."""
         devname = BbB.process_device_name(devname)
-        acqtype = AcqProc.process_acquisition_type(acqtype)
+        acqtype = Acquisition.process_acquisition_type(acqtype)
 
         # call base class constructor
         super().__init__(
-            devname, propty_prefix=acqtype+'_', properties=AcqProc._properties)
+            devname, propty_prefix=acqtype+'_',
+            properties=Acquisition._properties)
 
     # ########### Acquisition Config Properties ###########
     @property
@@ -485,7 +734,7 @@ class AcqProc(_ProptyDevice):
 
     def wait_data_dump(self, timeout=None):
         """."""
-        timeout = timeout or AcqProc.DEF_TIMEOUT
+        timeout = timeout or Acquisition.DEF_TIMEOUT
         interval = 0.050  # [s]
         ntrials = int(timeout/interval)
         _time.sleep(10*interval)
@@ -612,9 +861,9 @@ class AcqProc(_ProptyDevice):
     @staticmethod
     def process_acquisition_type(acqtype):
         """."""
-        if acqtype in AcqProc.ACQTYPE:
-            acqtype = AcqProc.ACQTYPE._fields[acqtype]
-        elif acqtype in AcqProc.ACQTYPE._fields:
+        if acqtype in Acquisition.ACQTYPE:
+            acqtype = Acquisition.ACQTYPE._fields[acqtype]
+        elif acqtype in Acquisition.ACQTYPE._fields:
             acqtype = acqtype
         else:
             raise NotImplementedError(acqtype)
@@ -631,8 +880,6 @@ class FrontBackEnd(_Device):
         'FBE_Y_ATT', 'FBE_Y_PHASE', 'FBELT_Y_PHASE_SETPT',
         )
 
-    DEF_TIMEOUT = 10  # [s]
-    OFF, ON = 0, 1
     FPGA_BITS = 2**15
 
     def __init__(self):
@@ -719,3 +966,312 @@ class FrontBackEnd(_Device):
     def y_phase(self, value):
         """."""
         self['FBELT_Y_PHASE_SETPT'] = value
+
+
+class Feedback(_Device):
+    """."""
+
+    _properties = (
+        'PROC_DS', 'FBCTRL', 'SHIFTGAIN', 'SETSEL', 'SAT_THRESHOLD',
+        'FB_MASK', 'FB_PATTERN', 'CF_MASK', 'CF_PATTERN',
+        'CF_PATTERN_SUB.VALB',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BbB.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=Feedback._properties)
+
+    @property
+    def downsample(self):
+        """."""
+        return self['PROC_DS']
+
+    @downsample.setter
+    def downsample(self, value):
+        self['PROC_DS'] = int(value)
+
+    @property
+    def loop_state(self):
+        """."""
+        return self['FBCTRL']
+
+    @loop_state.setter
+    def loop_state(self, value):
+        self['FBCTRL'] = int(value)
+
+    @property
+    def shift_gain(self):
+        """."""
+        return self['SHIFTGAIN']
+
+    @shift_gain.setter
+    def shift_gain(self, value):
+        self['SHIFTGAIN'] = int(value)
+
+    @property
+    def coeff_set(self):
+        """."""
+        return self['SETSEL']
+
+    @coeff_set.setter
+    def coeff_set(self, value):
+        self['SETSEL'] = int(value)
+
+    @property
+    def saturation_threshold(self):
+        """."""
+        return self['SAT_THRESHOLD']
+
+    @saturation_threshold.setter
+    def saturation_threshold(self, value):
+        self['SAT_THRESHOLD'] = value
+
+    @property
+    def mask(self):
+        """."""
+        return self['FB_MASK']
+
+    @mask.setter
+    def mask(self, value):
+        self['FB_MASK'] = _np.array(value)
+
+    @property
+    def mask_pattern(self):
+        """."""
+        return self['FB_PATTERN']
+
+    @mask_pattern.setter
+    def mask_pattern(self, value):
+        self['FB_PATTERN'] = str(value)
+
+    @property
+    def alternate_mask(self):
+        """."""
+        return self['CF_MASK']
+
+    @alternate_mask.setter
+    def alternate_mask(self, value):
+        self['CF_MASK'] = _np.array(value)
+
+    @property
+    def alternate_mask_pattern(self):
+        """."""
+        return self['CF_PATTERN']
+
+    @alternate_mask_pattern.setter
+    def alternate_mask_pattern(self, value):
+        self['CF_PATTERN'] = str(value)
+
+    @property
+    def alternate_nr_bunches(self):
+        """."""
+        return self['CF_PATTERN_SUB.VALB']
+
+    @property
+    def alternate_inuse(self):
+        """."""
+        return bool(self.alternate_nr_bunches)
+
+    @property
+    def grow_damp_state(self):
+        """."""
+        return self['GDEN']
+
+    @grow_damp_state.setter
+    def grow_damp_state(self, value):
+        self['GDEN'] = int(value)
+
+
+class Drive(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'MOD', 'AMPL', 'WAVEFORM', 'FREQ', 'FREQ_ACT', 'SPAN', 'SPAN_ACT',
+        'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BbB.process_device_name(devname)
+        super().__init__(
+            devname, propty_prefix='DRIVE_', properties=Drive._properties)
+
+    @property
+    def state(self):
+        """."""
+        return self['MOD']
+
+    @state.setter
+    def state(self, value):
+        self['MOD'] = int(value)
+
+    @property
+    def waveform(self):
+        """."""
+        return self['WAVEFORM']
+
+    @waveform.setter
+    def waveform(self, value):
+        self['WAVEFORM'] = int(value)
+
+    @property
+    def amplitude(self):
+        """."""
+        return self['AMPL']
+
+    @amplitude.setter
+    def amplitude(self, value):
+        self['AMPL'] = value
+
+    @property
+    def frequency(self):
+        """."""
+        return self['FREQ_ACT']
+
+    @frequency.setter
+    def frequency(self, value):
+        self['FREQ'] = value
+
+    @property
+    def span(self):
+        """."""
+        return self['SPAN_ACT']
+
+    @span.setter
+    def span(self, value):
+        self['SPAN'] = value
+
+    @property
+    def period(self):
+        """."""
+        return self['PERIOD_ACT']
+
+    @period.setter
+    def period(self, value):
+        self['PERIOD'] = value
+
+    @property
+    def mask(self):
+        """."""
+        return self['MASK']
+
+    @mask.setter
+    def mask(self, value):
+        self['MASK'] = _np.array(value)
+
+    @property
+    def mask_pattern(self):
+        """."""
+        return self['PATTERN']
+
+    @mask_pattern.setter
+    def mask_pattern(self, value):
+        self['PATTERN'] = str(value)
+
+
+class BunchClean(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'ENABLE', 'AMPL', 'TUNE', 'PATTERN',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BbB.process_device_name(devname)
+        super().__init__(
+            devname, propty_prefix='CLEAN_', properties=BunchClean._properties)
+
+    @property
+    def state(self):
+        """."""
+        return self['ENABLE']
+
+    @state.setter
+    def state(self, value):
+        self['ENABLE'] = int(value)
+
+    @property
+    def amplitude(self):
+        """."""
+        return self['AMPL']
+
+    @amplitude.setter
+    def amplitude(self, value):
+        self['AMPL'] = value
+
+    @property
+    def frequency(self):
+        """."""
+        return self['TUNE']
+
+    @frequency.setter
+    def frequency(self, value):
+        self['TUNE'] = value
+
+    @property
+    def mask_pattern(self):
+        """."""
+        return self['PATTERN']
+
+    @mask_pattern.setter
+    def mask_pattern(self, value):
+        self['PATTERN'] = str(value)
+
+
+class PwrAmpL(_ProptyDevice):
+    """."""
+
+    _properties = ('FAULT', 'TEMP', 'FWDLOSS', 'REVLOSS', 'FWD', 'REV')
+
+    DEF_TIMEOUT = 10  # [s]
+
+    def __init__(self, devname, num=0):
+        """."""
+        devname = BbB.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, propty_prefix=f'MCLRAW_{num:d}_',
+            properties=PwrAmpL._properties)
+
+    @property
+    def status(self):
+        """."""
+        return self['FAULT']
+
+    @property
+    def forward_loss(self):
+        """."""
+        return self['FWDLOSS']
+
+    @forward_loss.setter
+    def forward_loss(self, value):
+        self['FWDLOSS'] = value
+
+    @property
+    def reverse_loss(self):
+        """."""
+        return self['REVLOSS']
+
+    @reverse_loss.setter
+    def reverse_loss(self, value):
+        self['REVLOSS'] = value
+
+    @property
+    def forward(self):
+        """."""
+        return self['FWD']
+
+    @property
+    def reverse(self):
+        """."""
+        return self['REV']
+
+    @property
+    def temperature(self):
+        """."""
+        return self['TEMP']
