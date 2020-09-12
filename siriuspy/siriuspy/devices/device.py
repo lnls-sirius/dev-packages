@@ -66,9 +66,9 @@ class Device:
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
         set_ = set()
-        for pvname, pvobj in self._pvs.items():
+        for pvobj in self._pvs.values():
             if not pvobj.connected:
-                set_.add(pvname)
+                set_.add(pvobj.pvname)
         return set_
 
     def set_auto_monitor(self, pvname, value):
