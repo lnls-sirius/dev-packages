@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.33 V0.41u - 31/09/2020'
+__version__ = 'FRWM - V1.36 V0.41u - 09/04/2020'
 
 
 # --- Const DCDC ---
@@ -692,22 +692,31 @@ class ConstFAC_2P4S_ACDC(ConstPSBSMP):
     """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
 
     # --- FAC_2P4S_ACDC variables ---
-    V_PS_SOFT_INTERLOCKS = 25
-    V_PS_HARD_INTERLOCKS = 26
-    V_V_CAPACITOR_BANK = 27
-    V_V_OUT_RECTIFIER = 28
-    V_I_OUT_RECTIFIER = 29
-    V_TEMP_HEATSINK = 30
-    V_TEMP_INDUCTORS = 31
-    V_DUTY_CYCLE = 32
-    V_I_INPUT_IS_IIB = 33
-    V_V_INPUT_IS_IIB = 34
-    V_TEMP_INDUCTOR_IS_IIB = 35
-    V_TEMP_HEATSINK_IS_IIB = 36
-    V_V_OUTPUT_CMD_IIB = 37
-    V_V_CAPBANK_CMD_IIB = 38
-    V_TEMP_INDUCTOR_CMD_IIB = 39
-    V_TEMP_HEATSINK_CMD_IIB = 40
-    V_I_LEAKAGE_CMD_IIB = 41
-    V_IIB_INTERLOCKS_IS = 42
-    V_IIB_INTERLOCKS_CMD = 43
+    V_PS_SOFT_INTERLOCKS = 31
+    V_PS_HARD_INTERLOCKS = 32
+    V_V_CAPACITOR_BANK = 33
+    V_I_OUT_RECTIFIER = 34
+    V_DUTY_CYCLE = 35
+    V_I_INPUT_IS_IIB = 36
+    V_V_INPUT_IS_IIB = 37
+    V_TEMP_IGBT_IS_IIB = 38
+    V_V_DRIVER_IS_IIB = 39
+    V_I_DRIVER_IS_IIB = 40
+    V_TEMP_INDUCTOR_IS_IIB = 41
+    V_TEMP_HEATSINK_IS_IIB = 42
+    V_TEMP_BOARD_IS_IIB = 43
+    V_RH_IS_IIB = 44
+    V_IIB_INTERLOCKS_IS = 45
+    V_IIB_ALARMS_IS = 46
+    V_V_OUTPUT_CMD_IIB = 47
+    V_V_CAPBANK_CMD_IIB = 48
+    V_TEMP_RECT_INDUCTOR_CMD_IIB = 49
+    V_TEMP_RECT_HEATSINK_CMD_IIB = 50
+    V_V_EXT_BOARDS_CMD_IIB = 51
+    V_I_AUX_BOARD_CMD_IIB = 52
+    V_I_IDB_BOARD_CMD_IIB = 53
+    V_I_LEAKAGE_CMD_IIB = 54
+    V_TEMP_BOARD_CMD_IIB = 55
+    V_RH_CMD_IIB = 56
+    V_IIB_INTERLOCKS_CMD = 57
+    V_IIB_ALARMS_CMD = 58
