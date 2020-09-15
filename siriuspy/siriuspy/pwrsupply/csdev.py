@@ -430,7 +430,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    IIBIS_ALARMS_2P4S_ACDC = (
+    IIBIS_ALARMS_FAC_2P4S_ACDC = (
         'Sobre-tensao de entrada', 'Sobre-corrente de entrada',
         'Sobre-temperatura no IGBT', 'Sobre-tensao do driver do IGBT',
         'Sobre-corrente no driver do IGBT', 'Sobre-temperatura nos indutores',
