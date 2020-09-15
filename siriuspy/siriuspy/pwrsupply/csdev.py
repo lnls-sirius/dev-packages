@@ -408,10 +408,16 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23', 
         'Bit24', 'Bit25', 'Bit26', 'Bit27', 
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    SOFT_INTLCK_FAC_2P4S_ACDC = (
-        'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-        'Bit2', 'Bit3',
-        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+    SOFT_INTLCK_FAC_2P4S_ACDC = _UNDEF_INTLCK
+    HARD_INTLCK_FAC_2P4S_ACDC = (
+        'Sobre-tensao no banco de capacitores',
+        'Sobre-tensao na saida do retificador',
+        'Sub-tensao na saida do retificador',
+        'Sobre-corrente na saida do retificador',
+        'Contator de entrada AC trifasica colado',
+        'Abertura do contator de entrada AC trifasica ',
+        'Interlock da placa IIB do estagio de entrada',
+        'Interlock da placa IIB da gaveta de comando',
         'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
