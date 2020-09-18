@@ -104,13 +104,9 @@ class CycleController:
 
         if 'SI' in self._sections:
             # trims psnames
-            trims = set(_PSSearch.get_psnames(
+            self.trimnames = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
-                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
-            qs_c2 = set(_PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-                 'dev': 'QS'}))
-            self.trimnames = list(trims - qs_c2)
+                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'})
 
             # trims triggers
             self._si_aux_triggers = [
@@ -118,11 +114,14 @@ class CycleController:
                 'SI-Glob:TI-Mags-QTrims']
             self._triggers.update(self._si_aux_triggers)
 
-            # move CV-2 of C2 to trims group, if they are in cyclers
+            # move CV-2 and QS of C2 to trims group, if they are in cyclers
+            qs_c2 = _PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+                 'dev': 'QS'})
             cv2_c2 = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'})
-            for psn in cv2_c2:
+            for psn in qs_c2 + cv2_c2:
                 if psn in self._cyclers.keys():
                     self._aux_cyclers[psn] = self._cyclers.pop(psn)
 
@@ -165,11 +164,8 @@ class CycleController:
         # create cyclers, if needed
         all_si_psnames = set(_PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
-        qs_c2 = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-             'dev': 'QS'}))
-        missing_ps = list(all_si_psnames - set(self.trimnames) -
-                          set(self.psnames) - qs_c2)
+        missing_ps = list(
+            all_si_psnames - set(self.trimnames) - set(self.psnames))
         self._update_log('Creating auxiliary PS connections...')
         for idx, psn in enumerate(missing_ps):
             if idx % 5 == 4 or idx == len(missing_ps)-1:
@@ -920,22 +916,18 @@ class CycleController:
             return
 
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
-        trims = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
-             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'}))
-        qs_c2 = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-             'dev': 'QS'}))
-        trims = list(trims - qs_c2)
+        trims = _PSSearch.get_psnames({
+            'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
+            'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
         if not self.cycle_trims(trims, timeout=50):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
 
         self._update_log('Preparing to cycle CVs...')
-        trims = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
-             'dev': 'CV'}))
+        trims = _PSSearch.get_psnames({
+            'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
+            'dev': 'CV'})
         if not self.cycle_trims(trims, timeout=50):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
