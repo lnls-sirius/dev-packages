@@ -266,6 +266,28 @@ class EpicsOrbit(BaseOrbit):
         """."""
         return not self._sync_with_inj or self.timing.injecting
 
+    def is_sloworb(self, mode=None):
+        """Check is mode or self._mode is in SlowOrb mode."""
+        if mode is None:
+            mode = self._mode
+        return self.acc == 'SI' and mode == self._csorb.SOFBMode.SlowOrb
+
+    def is_multiturn(self, mode=None):
+        """Check is mode or self._mode is in MultiTurn mode."""
+        if mode is None:
+            mode = self._mode
+        return self.isring and mode == self._csorb.SOFBMode.MultiTurn
+
+    def is_singlepass(self, mode=None):
+        """Check is mode or self._mode is in SinglePass mode."""
+        if mode is None:
+            mode = self._mode
+        return mode == self._csorb.SOFBMode.SinglePass
+
+    def is_trigmode(self, mode=None):
+        """Check is mode or self._mode is in any of the Triggered modes."""
+        return self.is_singlepass(mode) or self.is_multiturn(mode)
+
     def set_ring_extension(self, val):
         """."""
         maval = self._csorb.MAX_RINGSZ
@@ -319,15 +341,15 @@ class EpicsOrbit(BaseOrbit):
                 self._reset_orbs()
             _time.sleep(self._smooth_npts/self._acqrate)
 
-        if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+        if self.is_multiturn():
             orbs = self.smooth_mtorb
             raw_orbs = self.raw_mtorbs
             getorb = self._get_orbit_multiturn
-        elif self._mode == self._csorb.SOFBMode.SinglePass:
+        elif self.is_singlepass():
             orbs = self.smooth_sporb
             raw_orbs = self.raw_sporbs
             getorb = self._get_orbit_singlepass
-        elif self.acc == 'SI' and self._mode == self._csorb.SOFBMode.SlowOrb:
+        elif self.is_sloworb():
             if synced:
                 self.new_orbit.wait(timeout=timeout)
                 self.new_orbit.clear()
@@ -557,17 +579,13 @@ class EpicsOrbit(BaseOrbit):
 
     def set_orbit_acq_rate(self, value):
         """."""
-        trigmds = [self._csorb.SOFBMode.SinglePass, ]
-        if self.isring:
-            trigmds.append(self._csorb.SOFBMode.MultiTurn)
-        if self._mode in trigmds and value > self._csorb.MAX_TRIGMODE_RATE:
+        if self.is_trigmode() and value > self._csorb.MAX_TRIGMODE_RATE:
             msg = 'ERR: In triggered mode cannot set rate > {:d}.'.format(
                 self._csorb.MAX_TRIGMODE_RATE)
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        elif self.acc == 'SI' and self._mode == self._csorb.SOFBMode.SlowOrb \
-                and value < self._csorb.MIN_SLOWORB_RATE:
+        elif self.is_sloworb() and value < self._csorb.MIN_SLOWORB_RATE:
             msg = 'ERR: In SlowOrb cannot set rate < {:d}.'.format(
                 self._csorb.MIN_SLOWORB_RATE)
             self._update_log(msg)
@@ -580,11 +598,8 @@ class EpicsOrbit(BaseOrbit):
 
     def set_orbit_mode(self, value):
         """."""
-        trigmds = [self._csorb.SOFBMode.SinglePass, ]
-        if self.isring:
-            trigmds.append(self._csorb.SOFBMode.MultiTurn)
-        bo1 = self._mode in trigmds
-        bo2 = value not in trigmds
+        bo1 = self.is_trigmode()
+        bo2 = self.is_trigmode(value)
         omode = self._mode
         if not bo2:
             acqrate = self._csorb.MAX_TRIGMODE_RATE
@@ -618,19 +633,16 @@ class EpicsOrbit(BaseOrbit):
         oldmode = self._mode if oldmode is None else oldmode
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
 
-        trigmodes = {self._csorb.SOFBMode.SinglePass, }
-        if self.isring:
-            trigmodes.add(self._csorb.SOFBMode.MultiTurn)
-        if self._mode not in trigmodes:
+        if self.is_trigmode():
             self.acq_config_bpms()
             return True
 
         points = self._ring_extension
-        if self._mode == self._csorb.SOFBMode.SinglePass:
+        if self.is_singlepass():
             chan = self._csorb.TrigAcqChan.ADCSwp
             rep = self._csorb.TrigAcqRepeat.Repetitive
             points *= self._spass_average * self.bpms[0].tbtrate
-        elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+        elif self.is_multiturn():
             chan = self._csorb.TrigAcqChan.TbT
             rep = self._csorb.TrigAcqRepeat.Repetitive
             points *= self._mturndownsample
@@ -668,18 +680,19 @@ class EpicsOrbit(BaseOrbit):
 
     def acq_config_bpms(self, *args):
         """."""
+        _ = args
         for bpm in self.bpms:
-            if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+            if self.is_multiturn():
                 bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.switching_mode = _csbpm.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
-            elif self._mode == self._csorb.SOFBMode.SinglePass:
+            elif self.is_singlepass():
                 bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.switching_mode = _csbpm.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
-            elif self._mode == self._csorb.SOFBMode.SlowOrb:
+            elif self.is_sloworb():
                 bpm.switching_mode = _csbpm.SwModes.switching
         Thread(target=self._synchronize_bpms, daemon=True).start()
         return True
@@ -832,7 +845,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def acquire_mturn_orbit(self):
-        """Acquire Multiturn data from BPMs"""
+        """Acquire Multiturn data from BPMs."""
         Thread(target=self._update_multiturn_orbits, daemon=True).start()
 
     def _wait_bpms(self):
@@ -917,14 +930,13 @@ class EpicsOrbit(BaseOrbit):
         """."""
         try:
             count = 0
-            if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+            if self.is_multiturn():
                 self._update_multiturn_orbits()
                 count = len(self.raw_mtorbs['X'])
-            elif self._mode == self._csorb.SOFBMode.SinglePass:
+            elif self.is_singlepass():
                 self._update_singlepass_orbits()
                 count = len(self.raw_sporbs['X'])
-            elif self.acc == 'SI' and \
-                    self._mode == self._csorb.SOFBMode.SlowOrb:
+            elif self.is_sloworb():
                 self._update_online_orbits()
                 count = len(self.raw_orbs['X'])
             self.run_callbacks('BufferCount-Mon', count)
@@ -1115,11 +1127,8 @@ class EpicsOrbit(BaseOrbit):
     def _update_status(self):
         """."""
         status = 0b11111
-        trig_modes = {self._csorb.SOFBMode.SinglePass, }
-        if self._csorb.isring:
-            trig_modes.add(self._csorb.SOFBMode.MultiTurn)
 
-        if self._mode in trig_modes:
+        if self.is_trigmode():
             tim_conn = self.timing.connected
             tim_conf = self.timing.is_ok
         else:
@@ -1138,9 +1147,9 @@ class EpicsOrbit(BaseOrbit):
         status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
 
         isok = True
-        if self._mode in trig_modes:
+        if self.is_trigmode():
             isok = all(map(lambda x: x.is_ok, self.bpms))
-        elif self._mode == self._csorb.SOFBMode.SlowOrb:
+        elif self.is_sloworb():
             isok = all(map(
                 lambda x: x.switching_mode == _csbpm.SwModes.switching,
                 self.bpms))
