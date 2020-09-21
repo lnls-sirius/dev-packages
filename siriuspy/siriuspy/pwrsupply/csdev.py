@@ -372,7 +372,7 @@ class ETypes(_csdev.ETypes):
         'Interlock da placa IIB do modulo 6',
         'Interlock da placa IIB do modulo 7',
         'Interlock da placa IIB do modulo 8',
-        'Bit25', 'Bit26', 'Bit27', 
+        'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAC_2P4S_DCDC = (
         'Sobre-tensao de entrada', 'Sobre-corrente de entrada',
@@ -389,9 +389,9 @@ class ETypes(_csdev.ETypes):
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
         'Alta corrente de fuga', 'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit19', 
-        'Bit20', 'Bit21', 'Bit22', 'Bit23', 
-        'Bit24', 'Bit25', 'Bit26', 'Bit27', 
+        'Alta umidade relativa', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_ALARMS_FAC_2P4S_DCDC = (
         'Sobre-tensao de entrada', 'Sobre-corrente de entrada',
@@ -403,10 +403,10 @@ class ETypes(_csdev.ETypes):
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
         'Alta corrente de fuga', 'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit13', 'Bit14', 'Bit15', 
-        'Bit16', 'Bit17', 'Bit18', 'Bit19', 
-        'Bit20', 'Bit21', 'Bit22', 'Bit23', 
-        'Bit24', 'Bit25', 'Bit26', 'Bit27', 
+        'Alta umidade relativa', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2P4S_ACDC = _UNDEF_INTLCK
     HARD_INTLCK_FAC_2P4S_ACDC = (
@@ -475,7 +475,7 @@ class ETypes(_csdev.ETypes):
         'Sobre-temperatura no indutor do retificador',
         'Sobre-temperatura no dissipador de calor do retificador',
         'Alta corrente de fuga',
-        'Sobre-temperatura da placa IIB', 'Alta umidade relativa', 
+        'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
         'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
@@ -687,14 +687,18 @@ class ETypes(_csdev.ETypes):
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
         'Ext Interlock Fault', 'LoadI Over Thrs', 'TestPoint', 'ADC Cali')
     LINAC_INTLCK_SGIN = (
-        'FAN', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
-        'Bit8', 'INTERLK1', 'INTERLK2', '0T', 'DCCT', '0C', '0V', 'DCLink')
+        'Fan state', 'Unused', 'Unused', 'Main relay state feedback',
+        'Unused', 'Unused', 'Unused', 'Unused', 'Unused',
+        'External input interlock 1', 'External input interlock 2',
+        'Power module overheated', 'DCCT state', 'Output overcurrent',
+        'Output overvoltage', 'DC bus undervoltage')
     LINAC_INTLCK_RDSGIN_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11', 'Bit12', 'Bit13', 'Bit14', 'Bit15')
     LINAC_INTLCK_SGOUT = (
-        'Main Relay1', 'Bit1', 'Bit2', 'Bit3',
-        'Bit4', 'Bit5', 'Bit6', 'Out Interlock')
+        'Main relay control output', 'Unused', 'Unused', 'Unused',
+        'Unused', 'Unused', 'Threshold interlock',
+        'Overcurr./overvolt./ext. interlock')
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 

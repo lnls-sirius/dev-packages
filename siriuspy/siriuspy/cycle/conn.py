@@ -692,7 +692,7 @@ class LinacPSCycler:
         """Check interlocks."""
         if not self.connected:
             return False
-        return self['StatusIntlk-Mon'].value < 55
+        return self['StatusIntlk-Mon'].value < 64
 
     def check_on(self):
         """Return whether power supply PS is on."""
