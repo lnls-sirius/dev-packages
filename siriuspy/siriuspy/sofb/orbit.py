@@ -599,7 +599,7 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_mode(self, value):
         """."""
         bo1 = self.is_trigmode()
-        bo2 = self.is_trigmode(value)
+        bo2 = not self.is_trigmode(value)
         omode = self._mode
         if not bo2:
             acqrate = self._csorb.MAX_TRIGMODE_RATE
@@ -633,7 +633,7 @@ class EpicsOrbit(BaseOrbit):
         oldmode = self._mode if oldmode is None else oldmode
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
 
-        if self.is_trigmode():
+        if not self.is_trigmode():
             self.acq_config_bpms()
             return True
 
