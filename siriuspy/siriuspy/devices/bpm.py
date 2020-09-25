@@ -3,7 +3,7 @@
 import numpy as _np
 
 from .device import Device as _Device
-from ..diag.bpm.csdev import Const as _csbpm
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 
 
