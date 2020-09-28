@@ -6,7 +6,7 @@ from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, PSSearch as _PSSearch
-from ..diag.bpm.csdev import Const as _csbpm
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..timesys import csdev as _cstiming
 
 
