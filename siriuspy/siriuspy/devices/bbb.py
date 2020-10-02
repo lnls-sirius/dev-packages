@@ -257,7 +257,7 @@ class SystemInfo(_Device):
     @property
     def rf_freq_nom(self):
         """."""
-        return self['RF_FREQ']
+        return self['RF_FREQ'] * 1e6
 
     @property
     def harmonic_number(self):
