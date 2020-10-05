@@ -254,16 +254,14 @@ class SignalTrapezoidal(Signal):
             return self.offset
         else:
             cycle_pos = time_delta % self.cycle_time
-            target = self.offset + self.amplitude
             if cycle_pos < self.rampup_time:
-                return self.offset + \
-                    (cycle_pos/self.rampup_time)*(target - self.offset)
+                value = self.amplitude*cycle_pos/self.rampup_time
             elif cycle_pos < (self.rampup_time + self.plateau_time):
-                return target
+                value = self.amplitude
             else:
                 down_time = cycle_pos - (self.rampup_time + self.plateau_time)
-                return target - \
-                    (down_time / self.rampdown_time)*(target - self.offset)
+                value = self.amplitude*(1 - down_time/self.rampdown_time)
+            return self.offset + value
 
     def _check(self):
         # TODO: avoid this workaround!
