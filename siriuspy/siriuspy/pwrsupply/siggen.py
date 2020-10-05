@@ -152,6 +152,8 @@ class Signal:
             if len(tval) == nrpts:
                 break
             time += tstep
+            if time > tmax:
+                time = tmax
         return wval, tval
 
     # --- virtual methods ---
@@ -183,13 +185,13 @@ class SignalSine(Signal):
             # self.enable = False
             return self.offset
         else:
-            value = self.offset + self._get_sin_signal(time_delta)
+            value = self.offset + self.amplitude * \
+                self._get_sin_signal(time_delta)
             return value
 
     def _get_sin_signal(self, time_delta):
-        # TODO: use theta_beg and theta_end!
-        value = self.amplitude * \
-            _math.sin(2 * _math.pi * self.freq * time_delta)
+        value = _math.sin(2 * _math.pi * self.freq * time_delta +
+                          _math.radians(self.theta_begin))
         return value
 
     def _update(self):
@@ -208,13 +210,13 @@ class SignalDampedNSine(SignalSine):
     def _get_sin_signal(self, time_delta):
         sinsig = (super()._get_sin_signal(time_delta))**self.n
         expsig = self._f * _math.exp(-time_delta/self.decay_time)
-        value = self.offset + sinsig * expsig
+        value = sinsig * expsig
         return value
 
     def _update(self):
         self.wfreq = 2*_math.pi*self.freq
         if self.wfreq != 0.0:
-            self._t0 = _math.atan(self.wfreq*self.decay_time)/self.wfreq
+            self._t0 = _math.atan(self.wfreq*self.decay_time*self.n)/self.wfreq
         else:
             self._t0 = 0.0
         self._f = _math.exp(self._t0/self.decay_time) / \
@@ -334,7 +336,7 @@ class SigGenFactory:
         elif sigtype == SigGenFactory.TYPES['DampedSine']:
             return SignalDampedSine(**kwa)
         elif sigtype == SigGenFactory.TYPES['DampedSquaredSine']:
-            return SignalDampedSine(**kwa)
+            return SignalDampedSquaredSine(**kwa)
 
         # NOTE: this point should not be reached!
         return None
