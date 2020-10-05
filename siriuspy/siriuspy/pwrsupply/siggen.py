@@ -276,12 +276,28 @@ class SignalTrapezoidal(Signal):
         pass
 
 
+class SignalSquare(SignalSine):
+    """Square signal."""
+
+    def _get_value(self, time_delta):
+        if self.duration > 0 and time_delta > self.duration:
+            value = self.offset
+        elif self._get_sin_signal(time_delta) < 0:
+            value = - self.amplitude + self.offset
+        else:
+            value = self.amplitude + self.offset
+        return value
+
+
 class SigGenFactory:
     """Signal Generator Factory."""
 
     TYPES = {
-        'Sine': 0, 'DampedSine': 1,
-        'Trapezoidal': 2, 'DampedSquaredSine': 3}
+        'Sine': 0,
+        'DampedSine': 1,
+        'Trapezoidal': 2,
+        'DampedSquaredSine': 3,
+        'Square': 4}
 
     TYPES_IND = {v: k for k, v in TYPES.items()}
 
@@ -289,7 +305,8 @@ class SigGenFactory:
         'Sine': DEFAULT_SIGGEN_CONFIG,
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
-        'DampedSquaredSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'DampedSquaredSine': [3, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'Square': [4, 3.0, 0.1, 5.0, 5.0, 270.0, 270.0, 0.0, 0.0],
         }
 
     @staticmethod
@@ -301,18 +318,18 @@ class SigGenFactory:
 
         Valid arguments:
 
-        sigtype -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
-        num_cycles -- Number of cycles, int, (Sine, DampedSine, Trapezoidal)
-        freq -- Frequency [Hz], float, (Sine|DampedSine)
-        amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
-        offset -- Offset [A], float, (Sine|DampedSine|Trapezoidal)
-        aux_param -- Aux. Parameters, float4, (Sine|DampedSine|Trapezoidal)
-        rampup_time -- Rampup time [s], float, (Trapezoidal) - aux_param[0]
-        rampdown_time -- Rampdown time [s], float, (Trapezoidal) - aux_param[1]
-        plateau_time -- Plateau time [s], float, (Trapezoidal) - aux_param[2]
-        theta_begin -- Initial phase [deg] (Sine|DampedSine) - aux_param[0]
-        theta_end -- Final phase [deg] (Sine|DampedSine) - aux_param[1]
-        decay_time -- Decay time [s] (DampedSine) - aux_param[2]
+        sigtype: Signal type, int or str (Sine|DampedSine|Trapezoidal|Square)
+        num_cycles: Number of cycles, int (Sine|DampedSine|Trapezoidal|Square)
+        freq: Frequency [Hz], float, (Sine|DampedSine|Square)
+        amplitude: Amplitude [A], float, (Sine|DampedSine|Trapezoidal|Square)
+        offset: Offset [A], float, (Sine|DampedSine|Trapezoidal|Square)
+        aux_param: Aux. Parameters, float4 (Sine|DampedSine|Trapezoidal|Square)
+        rampup_time: Rampup time [s], float, (Trapezoidal) - aux_param[0]
+        rampdown_time: Rampdown time [s], float, (Trapezoidal) - aux_param[1]
+        plateau_time: Plateau time [s], float, (Trapezoidal) - aux_param[2]
+        theta_begin: Initial phase[deg] (Sine|DampedSine|Square) - aux_param[0]
+        theta_end: Final phase[deg] (Sine|DampedSine|Square) - aux_param[1]
+        decay_time: Decay time [s] (DampedSine) - aux_param[2]
         """
         # set signal type
         if 'sigtype' in kwargs:
@@ -335,6 +352,8 @@ class SigGenFactory:
             return SignalDampedSine(**kwa)
         elif sigtype == SigGenFactory.TYPES['DampedSquaredSine']:
             return SignalDampedSquaredSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['Square']:
+            return SignalSquare(**kwa)
 
         # NOTE: this point should not be reached!
         return None
