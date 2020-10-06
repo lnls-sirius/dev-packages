@@ -4,7 +4,8 @@ import time as _time
 
 import numpy as _np
 
-from mathphys.functions import get_namedtuple as _get_namedtuple
+from mathphys.functions import get_namedtuple as _get_namedtuple, \
+    save_pickle as _save_pickle, load_pickle as _load_pickle
 
 from .device import Device as _Device, Devices as _Devices
 
@@ -53,6 +54,111 @@ class BunchbyBunch(_Devices):
         else:
             raise NotImplementedError(devname)
         return devname
+
+    def save_raw_data(self, fname, acqtype='SRAM', overwrite=False):
+        """Save Raw data to file."""
+        acqtype = acqtype.upper()
+        acq = self.sram if acqtype in 'SRAM' else self.bram
+
+        data = dict(
+            acqtype=acqtype, downsample=acq.downsample,
+            data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
+            harmonic_number=self.info.harmonic_number
+            )
+        _save_pickle(data, fname, overwrite=overwrite)
+
+    @staticmethod
+    def load_raw_data(fname):
+        """Load Raw data from file."""
+        return _load_pickle(fname)
+
+    def sweep_phase_shifter(self, values, wait=2, mon_type='mean'):
+        """Sweep Servo Phase for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'FBE Out Phase', 'SRAM Mean'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        init_val = self.fbe.z_phase
+        for i, val in enumerate(values):
+            self.fbe.z_phase = val
+            _time.sleep(wait)
+            if mon_type.lower() in 'mean':
+                mon_val = self.sram.data_mean
+            else:
+                mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+        self.fbe.z_phase = init_val
+        return _np.array(mon_values)
+
+    def sweep_adc_delay(self, values, wait=2, mon_type='mean'):
+        """Sweep ADC Delay for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'ADC Delay', 'SRAM Mean'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        init_val = self.timing.adc_delay
+        for i, val in enumerate(values):
+            self.timing.adc_delay = val
+            _time.sleep(wait)
+            if mon_type.lower() in 'mean':
+                mon_val = self.sram.data_mean
+            else:
+                mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+        self.timing.adc_delay = init_val
+        return _np.array(mon_values)
+
+    def sweep_backend_phase(self, values, wait=2):
+        """Sweep Backend Phase for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'Backend Phase', 'Peak magnitude'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        init_val = self.fbe.be_phase
+        for i, val in enumerate(values):
+            self.fbe.be_phase = val
+            _time.sleep(wait)
+            mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+        self.fbe.be_phase = init_val
+        return _np.array(mon_values)
+
+    def sweep_dac_delay(self, values, wait=2):
+        """Sweep DAC Delay for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'DAC Delay', 'Peak Magnitude'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        init_val = self.timing.dac_delay
+        for i, val in enumerate(values):
+            self.timing.dac_delay = val
+            _time.sleep(wait)
+            mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+        self.timing.dac_delay = init_val
+        return _np.array(mon_values)
+
+    def sweep_feedback_phase(self, values, wait=2):
+        """Sweep Feedback Phase for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'Coeff. Phase', 'Peak Magnitude'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        init_val = self.coeffs.edit_phase
+        for i, val in enumerate(values):
+            self.coeffs.edit_phase = val
+            self.coeffs.cmd_edit_apply()
+            _time.sleep(wait)
+            mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+        self.coeffs.edit_phase = init_val
+        self.coeffs.cmd_edit_apply()
+        return _np.array(mon_values)
 
 
 class SystemInfo(_Device):
@@ -151,7 +257,7 @@ class SystemInfo(_Device):
     @property
     def rf_freq_nom(self):
         """."""
-        return self['RF_FREQ']
+        return self['RF_FREQ'] * 1e6
 
     @property
     def harmonic_number(self):
