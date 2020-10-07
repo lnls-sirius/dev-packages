@@ -191,6 +191,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 
     REV_PERIOD = 1.6571334792998411  # [us]
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+    MAX_CURRENT = 1.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
         '150MeV': 0.0000,
         '1GeV': 0.0859,
@@ -333,16 +334,22 @@ class BOCurrInfoApp(_CurrInfoApp):
                 self.run_callbacks('Current'+str(energy)+'-Mon',
                                    self._currents[energy])
                 # charges
-                self._charges[energy] += current * self.REV_PERIOD
+                if current < self.MAX_CURRENT:
+                    self._charges[energy] += current * self.REV_PERIOD
+                    if energy == '3GeV':
+                        self._intcurrent3gev += \
+                            current * self.INTCURR_INTVL  # [mA.h]
+                        self.run_callbacks(
+                            'IntCurrent3GeV-Mon', self._intcurrent3gev)
+                else:
+                    _log.warning(
+                        'Current {0} value is too high: '
+                        '{1:.3g}A.'.format(energy, current))
                 self.run_callbacks('Charge'+str(energy)+'-Mon',
                                    self._charges[energy])
 
         c150mev = self._currents['150MeV']
         c3gev = self._currents['3GeV']
-
-        # integrated current in 3GeV
-        self._intcurrent3gev += c3gev * self.INTCURR_INTVL  # [mA.h]
-        self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
         # ramp efficiency
         if c150mev > c3gev:
