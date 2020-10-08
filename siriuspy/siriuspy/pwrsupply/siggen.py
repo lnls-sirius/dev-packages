@@ -152,6 +152,8 @@ class Signal:
             if len(tval) == nrpts:
                 break
             time += tstep
+            if time > tmax:
+                time = tmax
         return wval, tval
 
     # --- virtual methods ---
@@ -183,13 +185,13 @@ class SignalSine(Signal):
             # self.enable = False
             return self.offset
         else:
-            value = self.offset + self._get_sin_signal(time_delta)
+            value = self.offset + self.amplitude * \
+                self._get_sin_signal(time_delta)
             return value
 
     def _get_sin_signal(self, time_delta):
-        # TODO: use theta_beg and theta_end!
-        value = self.amplitude * \
-            _math.sin(2 * _math.pi * self.freq * time_delta)
+        value = _math.sin(2 * _math.pi * self.freq * time_delta +
+                          _math.radians(self.theta_begin))
         return value
 
     def _update(self):
@@ -208,13 +210,13 @@ class SignalDampedNSine(SignalSine):
     def _get_sin_signal(self, time_delta):
         sinsig = (super()._get_sin_signal(time_delta))**self.n
         expsig = self._f * _math.exp(-time_delta/self.decay_time)
-        value = self.offset + sinsig * expsig
+        value = sinsig * expsig
         return value
 
     def _update(self):
         self.wfreq = 2*_math.pi*self.freq
         if self.wfreq != 0.0:
-            self._t0 = _math.atan(self.wfreq*self.decay_time)/self.wfreq
+            self._t0 = _math.atan(self.wfreq*self.decay_time*self.n)/self.wfreq
         else:
             self._t0 = 0.0
         self._f = _math.exp(self._t0/self.decay_time) / \
@@ -252,16 +254,14 @@ class SignalTrapezoidal(Signal):
             return self.offset
         else:
             cycle_pos = time_delta % self.cycle_time
-            target = self.offset + self.amplitude
             if cycle_pos < self.rampup_time:
-                return self.offset + \
-                    (cycle_pos/self.rampup_time)*(target - self.offset)
+                value = self.amplitude*cycle_pos/self.rampup_time
             elif cycle_pos < (self.rampup_time + self.plateau_time):
-                return target
+                value = self.amplitude
             else:
                 down_time = cycle_pos - (self.rampup_time + self.plateau_time)
-                return target - \
-                    (down_time / self.rampdown_time)*(target - self.offset)
+                value = self.amplitude*(1 - down_time/self.rampdown_time)
+            return self.offset + value
 
     def _check(self):
         # TODO: avoid this workaround!
@@ -276,12 +276,28 @@ class SignalTrapezoidal(Signal):
         pass
 
 
+class SignalSquare(SignalSine):
+    """Square signal."""
+
+    def _get_value(self, time_delta):
+        if self.duration > 0 and time_delta > self.duration:
+            value = self.offset
+        elif self._get_sin_signal(time_delta) < 0:
+            value = - self.amplitude + self.offset
+        else:
+            value = self.amplitude + self.offset
+        return value
+
+
 class SigGenFactory:
     """Signal Generator Factory."""
 
     TYPES = {
-        'Sine': 0, 'DampedSine': 1,
-        'Trapezoidal': 2, 'DampedSquaredSine': 3}
+        'Sine': 0,
+        'DampedSine': 1,
+        'Trapezoidal': 2,
+        'DampedSquaredSine': 3,
+        'Square': 4}
 
     TYPES_IND = {v: k for k, v in TYPES.items()}
 
@@ -289,7 +305,8 @@ class SigGenFactory:
         'Sine': DEFAULT_SIGGEN_CONFIG,
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
-        'DampedSquaredSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'DampedSquaredSine': [3, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'Square': [4, 3.0, 0.1, 5.0, 5.0, 270.0, 270.0, 0.0, 0.0],
         }
 
     @staticmethod
@@ -301,18 +318,18 @@ class SigGenFactory:
 
         Valid arguments:
 
-        sigtype -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
-        num_cycles -- Number of cycles, int, (Sine, DampedSine, Trapezoidal)
-        freq -- Frequency [Hz], float, (Sine|DampedSine)
-        amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
-        offset -- Offset [A], float, (Sine|DampedSine|Trapezoidal)
-        aux_param -- Aux. Parameters, float4, (Sine|DampedSine|Trapezoidal)
-        rampup_time -- Rampup time [s], float, (Trapezoidal) - aux_param[0]
-        rampdown_time -- Rampdown time [s], float, (Trapezoidal) - aux_param[1]
-        plateau_time -- Plateau time [s], float, (Trapezoidal) - aux_param[2]
-        theta_begin -- Initial phase [deg] (Sine|DampedSine) - aux_param[0]
-        theta_end -- Final phase [deg] (Sine|DampedSine) - aux_param[1]
-        decay_time -- Decay time [s] (DampedSine) - aux_param[2]
+        sigtype: Signal type, int or str (Sine|DampedSine|Trapezoidal|Square)
+        num_cycles: Number of cycles, int (Sine|DampedSine|Trapezoidal|Square)
+        freq: Frequency [Hz], float, (Sine|DampedSine|Square)
+        amplitude: Amplitude [A], float, (Sine|DampedSine|Trapezoidal|Square)
+        offset: Offset [A], float, (Sine|DampedSine|Trapezoidal|Square)
+        aux_param: Aux. Parameters, float4 (Sine|DampedSine|Trapezoidal|Square)
+        rampup_time: Rampup time [s], float, (Trapezoidal) - aux_param[0]
+        rampdown_time: Rampdown time [s], float, (Trapezoidal) - aux_param[1]
+        plateau_time: Plateau time [s], float, (Trapezoidal) - aux_param[2]
+        theta_begin: Initial phase[deg] (Sine|DampedSine|Square) - aux_param[0]
+        theta_end: Final phase[deg] (Sine|DampedSine|Square) - aux_param[1]
+        decay_time: Decay time [s] (DampedSine) - aux_param[2]
         """
         # set signal type
         if 'sigtype' in kwargs:
@@ -334,7 +351,9 @@ class SigGenFactory:
         elif sigtype == SigGenFactory.TYPES['DampedSine']:
             return SignalDampedSine(**kwa)
         elif sigtype == SigGenFactory.TYPES['DampedSquaredSine']:
-            return SignalDampedSine(**kwa)
+            return SignalDampedSquaredSine(**kwa)
+        elif sigtype == SigGenFactory.TYPES['Square']:
+            return SignalSquare(**kwa)
 
         # NOTE: this point should not be reached!
         return None
