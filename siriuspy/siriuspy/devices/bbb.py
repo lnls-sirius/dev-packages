@@ -63,7 +63,9 @@ class BunchbyBunch(_Devices):
         data = dict(
             acqtype=acqtype, downsample=acq.downsample,
             data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
-            harmonic_number=self.info.harmonic_number
+            harmonic_number=self.info.harmonic_number,
+            growth_time=acq.growthtime, acq_time=acq.acqtime,
+            hold_time=acq.holdtime, post_time=acq.posttime,
             )
         _save_pickle(data, fname, overwrite=overwrite)
 
