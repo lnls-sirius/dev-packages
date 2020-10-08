@@ -8,6 +8,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple, \
     save_pickle as _save_pickle, load_pickle as _load_pickle
 
 from .device import Device as _Device, Devices as _Devices
+from .dcct import DCCT
 
 
 class BunchbyBunch(_Devices):
@@ -22,6 +23,7 @@ class BunchbyBunch(_Devices):
     def __init__(self, devname):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
+        self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
         self.info = SystemInfo(devname)
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
@@ -33,7 +35,7 @@ class BunchbyBunch(_Devices):
         self.fbe = FrontBackEnd()
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive, self.bunch_clean, self.fbe, ]
+            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
@@ -61,9 +63,12 @@ class BunchbyBunch(_Devices):
         acq = self.sram if acqtype in 'SRAM' else self.bram
 
         data = dict(
+            current=self.dcct.current,
             acqtype=acqtype, downsample=acq.downsample,
             data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
-            harmonic_number=self.info.harmonic_number
+            harmonic_number=self.info.harmonic_number,
+            growth_time=acq.growthtime, acq_time=acq.acqtime,
+            hold_time=acq.holdtime, post_time=acq.posttime,
             )
         _save_pickle(data, fname, overwrite=overwrite)
 
@@ -110,7 +115,7 @@ class BunchbyBunch(_Devices):
         self.timing.adc_delay = init_val
         return _np.array(mon_values)
 
-    def sweep_backend_phase(self, values, wait=2):
+    def sweep_backend_phase(self, values, wait=2, mon_type='peak'):
         """Sweep Backend Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'Backend Phase', 'Peak magnitude'
@@ -120,13 +125,16 @@ class BunchbyBunch(_Devices):
         for i, val in enumerate(values):
             self.fbe.be_phase = val
             _time.sleep(wait)
-            mon_val = self.sram.spec_marker1_mag
+            if mon_type.lower() in 'peak':
+                mon_val = self.sram.spec_marker1_mag
+            else:
+                mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.fbe.be_phase = init_val
         return _np.array(mon_values)
 
-    def sweep_dac_delay(self, values, wait=2):
+    def sweep_dac_delay(self, values, wait=2, mon_type='peak'):
         """Sweep DAC Delay for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'DAC Delay', 'Peak Magnitude'
@@ -136,13 +144,16 @@ class BunchbyBunch(_Devices):
         for i, val in enumerate(values):
             self.timing.dac_delay = val
             _time.sleep(wait)
-            mon_val = self.sram.spec_marker1_mag
+            if mon_type.lower() in 'peak':
+                mon_val = self.sram.spec_marker1_mag
+            else:
+                mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.timing.dac_delay = init_val
         return _np.array(mon_values)
 
-    def sweep_feedback_phase(self, values, wait=2):
+    def sweep_feedback_phase(self, values, wait=2, mon_type='peak'):
         """Sweep Feedback Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'Coeff. Phase', 'Peak Magnitude'
@@ -153,9 +164,12 @@ class BunchbyBunch(_Devices):
             self.coeffs.edit_phase = val
             self.coeffs.cmd_edit_apply()
             _time.sleep(wait)
-            mon_val = self.sram.spec_marker1_mag
+            if mon_type.lower() in 'peak':
+                mon_val = self.sram.spec_marker1_mag
+            else:
+                mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {mon_val:15.6f}')
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.coeffs.edit_phase = init_val
         self.coeffs.cmd_edit_apply()
         return _np.array(mon_values)
