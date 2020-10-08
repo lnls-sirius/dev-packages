@@ -8,6 +8,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple, \
     save_pickle as _save_pickle, load_pickle as _load_pickle
 
 from .device import Device as _Device, Devices as _Devices
+from .dcct import DCCT
 
 
 class BunchbyBunch(_Devices):
@@ -22,6 +23,7 @@ class BunchbyBunch(_Devices):
     def __init__(self, devname):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
+        self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
         self.info = SystemInfo(devname)
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
@@ -33,7 +35,7 @@ class BunchbyBunch(_Devices):
         self.fbe = FrontBackEnd()
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive, self.bunch_clean, self.fbe, ]
+            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
@@ -61,6 +63,7 @@ class BunchbyBunch(_Devices):
         acq = self.sram if acqtype in 'SRAM' else self.bram
 
         data = dict(
+            current=self.dcct.current,
             acqtype=acqtype, downsample=acq.downsample,
             data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
             harmonic_number=self.info.harmonic_number,
