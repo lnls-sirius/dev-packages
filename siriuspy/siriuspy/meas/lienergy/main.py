@@ -181,6 +181,8 @@ class MeasEnergy(_BaseClass, _Const):
         """."""
         self.energy_calculator = CalcEnergy(callback=callback)
         self.image_processor = _ProcessImage(callback=callback)
+        self.image_processor.imageflipx = self.image_processor.ImgFlip.On
+        self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         self._profile = self.DEFAULT_PROFILE
         self._coefx = _PV(
             self.DEFAULT_PROFILE+':X:Gauss:Coef', callback=self._update_coefx)
@@ -271,8 +273,6 @@ class MeasEnergy(_BaseClass, _Const):
 
     def meas_energy(self):
         """."""
-        self.image_processor.imageflipx = self.image_processor.ImgFlip.On
-        self.image_processor.imageflipy = self.image_processor.ImgFlip.Off
         value = self._width_source.value
         if isinstance(value, (float, int)):
             self.image_processor.imagewidth = int(value)

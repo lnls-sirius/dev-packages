@@ -6,8 +6,7 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
-from ..namesys import SiriusPVName as _PVName, \
-    get_pair_sprb as _get_pair_sprb
+from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
 from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
@@ -41,7 +40,6 @@ class Timing:
 
     _pvs = dict()
     properties = dict()
-    cycle_idx = dict()
     evg_name = ''
 
     def __init__(self):
@@ -71,10 +69,13 @@ class Timing:
         """Initialize properties."""
         if triggers is None:
             triggers = list()
+
         # Enable EVG
         self.enable_evg()
+
         # Disable Injection
         self.set_injection_state(_TIConst.DsblEnbl.Dsbl)
+
         # Config. triggers and events
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
@@ -84,6 +85,7 @@ class Timing:
             if pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 pvobj.value = defval
                 _time.sleep(1.5*TIMEOUT_SLEEP)
+
         # Update events
         self.update_events()
 
@@ -91,17 +93,15 @@ class Timing:
         """Check if timing is configured."""
         if triggers is None:
             triggers = list()
+
         pvs_2_init = self.get_pvname_2_defval_dict(mode, triggers)
         for prop, defval in pvs_2_init.items():
-            try:
-                prop_sts = _get_pair_sprb(prop)[1]
-            except TypeError:
-                continue
+            prop_sts = prop.replace('SP', 'RB').replace('Sel', 'Sts')
             pvobj = Timing._pvs[prop_sts]
+
             if not pvobj.wait_for_connection(TIMEOUT_CONNECTION):
                 return False
-            if prop_sts.propty_name == 'Src':
-                defval = Timing.cycle_idx[prop_sts.device_name]
+
             if prop_sts.propty_name.endswith(('Duration', 'Delay')):
                 tol = 0.008 * 15
                 if not _isclose(pvobj.value, defval, abs_tol=tol):
@@ -121,7 +121,7 @@ class Timing:
         if mode == 'Cycle':
             pvobj = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
             pvobj.value = 1
-        else:
+        elif mode == 'Ramp':
             pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
             pvobj.value = _TIConst.DsblEnbl.Enbl
 
@@ -131,14 +131,9 @@ class Timing:
                 if pvobj.value == _TIConst.DsblEnbl.Enbl:
                     break
                 _time.sleep(TIMEOUT_SLEEP)
-
-    def enable_triggers(self, triggers):
-        """Enable triggers."""
-        return self.set_triggers_state(_TIConst.DsblEnbl.Enbl, triggers)
-
-    def disable_triggers(self, triggers):
-        """Disable triggers."""
-        return self.set_triggers_state(_TIConst.DsblEnbl.Dsbl, triggers)
+        else:
+            raise NotImplementedError(
+                "Trigger control is not defined for '{}' mode!".format(mode))
 
     def enable_evg(self):
         """Enable EVG."""
@@ -153,8 +148,12 @@ class Timing:
         pvobj = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
         pvobj.value = state
 
-    def set_triggers_state(self, state, triggers, timeout=8):
+    def set_triggers_state(self, state, triggers, timeout=TIMEOUT_CHECK):
         """Set triggers state."""
+        if isinstance(state, str):
+            state = _TIConst.DsblEnbl.Enbl if state == 'enbl' \
+                else _TIConst.DsblEnbl.Dsbl
+
         for trig in triggers:
             pvobj = Timing._pvs[trig+':State-Sel']
             pvobj.value = state
@@ -190,6 +189,13 @@ class Timing:
         pvobj = Timing._pvs[Timing.evg_name+':InjCount-Mon']
         return pvobj.value == DEFAULT_RAMP_NRCYCLES
 
+    def save_initial_state(self):
+        """Save initial state."""
+        for pvname in Timing._pvs:
+            if pvname.propty_suffix in ('Cmd', 'Mon', 'Sts', 'RB'):
+                continue
+            self._initial_state[pvname] = Timing._pvs[pvname].value
+
     def restore_initial_state(self):
         """Restore initial state."""
         # Config. triggers and events to initial state
@@ -203,20 +209,26 @@ class Timing:
                 init_val = [init_val, ]
             Timing._pvs[pvname].put(init_val)
             _time.sleep(1.5*TIMEOUT_SLEEP)
+
         # Update events
         self.update_events()
+
         # Set initial injection state
         self.set_injection_state(inj_state)
 
-    def turnoff(self):
+    def turnoff(self, triggers):
         """Turn timing off."""
+        if triggers is None:
+            triggers = list()
+
+        # disable triggers
         pv_event = Timing._pvs[Timing.evg_name+':CycleMode-Sel']
         pv_event.value = _TIConst.EvtModes.Disabled
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
-        for trig in _TRIGGER_NAMES:
+        for trig in triggers:
             pvobj = Timing._pvs[trig+':Src-Sel']
-            pvobj.value = _TIConst.DsblEnbl.Dsbl
+            pvobj.value = 0  # Dsbl has always index 0
             pvobj = Timing._pvs[trig+':State-Sel']
             pvobj.value = _TIConst.DsblEnbl.Dsbl
 
@@ -252,8 +264,8 @@ class Timing:
         """Create PVs."""
         Timing._pvs = dict()
         for dict_ in Timing.properties.values():
-            for pvname in dict_.keys():
-                if pvname in Timing._pvs.keys():
+            for pvname in dict_:
+                if pvname in Timing._pvs:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
@@ -311,8 +323,10 @@ class Timing:
         }
 
         for trig in _TRIGGER_NAMES:
+            _trig_db = _get_trig_db(trig)
+            _evt_index = _trig_db['Src-Sel']['enums'].index(cls.EVTNAME_CYCLE)
             for mode in ('Cycle', 'Ramp'):
-                props[mode][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
+                props[mode][trig+':Src-Sel'] = _evt_index
                 props[mode][trig+':Duration-SP'] = cls.DEFAULT_DURATION
                 props[mode][trig+':NrPulses-SP'] = cls.DEFAULT_NRPULSES
                 props[mode][trig+':Delay-SP'] = cls.DEFAULT_DELAY
@@ -320,8 +334,6 @@ class Timing:
                 props[mode][trig+':State-Sel'] = None
                 props[mode][trig+':Status-Mon'] = 0
 
-            _trig_db = _get_trig_db(trig)
-            cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
         cls.properties = props
 
 
@@ -355,7 +367,7 @@ class PSCycler:
         self._siggen = None
         self._init_wfm_pulsecnt = None
         self._pvs = dict()
-        for prop in PSCycler.properties:
+        for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
                     VACA_PREFIX + self._psname + ':' + prop,
@@ -411,16 +423,20 @@ class PSCycler:
         """Return the duration of the cycling in seconds."""
         if mode == 'Cycle':
             return self.siggen.num_cycles/self.siggen.freq
-        return DEFAULT_RAMP_TOTDURATION
+        if mode == 'Ramp':
+            return DEFAULT_RAMP_TOTDURATION
+        raise NotImplementedError(
+            "Cycle duration is not defined for '{}' mode!".format(mode))
 
-    def check_intlks(self):
+    def check_intlks(self, wait=2):
         """Check Interlocks."""
-        status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
-        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
+        wait = wait/2
+        status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=wait)
+        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=wait)
         return status
 
     def check_on(self):
-        """Return wether power supply PS is on."""
+        """Return whether power supply PS is on."""
         return _pv_timed_get(self['PwrState-Sts'], _PSConst.PwrStateSts.On)
 
     def set_current_zero(self):
@@ -429,15 +445,14 @@ class PSCycler:
         return status
 
     def check_current_zero(self, wait=5):
-        """Return wether power supply PS current is zero."""
+        """Return whether power supply PS current is zero."""
         return _pv_timed_get(
             self['CurrentRef-Mon'], 0, abs_tol=0.05, wait=wait)
 
     def set_params(self, mode):
         """Set params to cycle."""
-        status = True
         if mode == 'Cycle':
-            status &= _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
+            status = _pv_conn_put(self['CycleType-Sel'], self.siggen.sigtype)
             _time.sleep(TIMEOUT_SLEEP)
             status &= _pv_conn_put(self['CycleFreq-SP'], self.siggen.freq)
             _time.sleep(TIMEOUT_SLEEP)
@@ -451,17 +466,21 @@ class PSCycler:
             status &= _pv_conn_put(self['CycleNrCycles-SP'],
                                    self.siggen.num_cycles)
             _time.sleep(TIMEOUT_SLEEP)
-        else:
-            status &= _pv_conn_put(self['Wfm-SP'], self.waveform)
+        elif mode == 'Ramp':
+            status = _pv_conn_put(self['Wfm-SP'], self.waveform)
             _time.sleep(TIMEOUT_SLEEP)
+        else:
+            raise NotImplementedError(
+                "Parameters are not defined for mode '{}'!".format(mode))
         return status
 
     def check_params(self, mode, wait=5):
-        """Return wether power supply cycling parameters are set."""
-        status = True
+        """Return whether power supply cycling parameters are set."""
         if mode == 'Cycle':
+            wait = wait/6
             type_idx = _PSet.CYCLE_TYPES.index(self.siggen.sigtype)
-            status &= _pv_timed_get(self['CycleType-Sts'], type_idx, wait=wait)
+            status = _pv_timed_get(
+                self['CycleType-Sts'], type_idx, wait=wait)
             status &= _pv_timed_get(
                 self['CycleFreq-RB'], self.siggen.freq, wait=wait)
             status &= _pv_timed_get(
@@ -472,33 +491,31 @@ class PSCycler:
                 self['CycleAuxParam-RB'], self.siggen.aux_param, wait=wait)
             status &= _pv_timed_get(
                 self['CycleNrCycles-RB'], self.siggen.num_cycles, wait=wait)
+        elif mode == 'Ramp':
+            status = _pv_timed_get(self['Wfm-RB'], self.waveform, wait=wait)
         else:
-            status &= _pv_timed_get(self['Wfm-RB'], self.waveform, wait=wait)
+            raise NotImplementedError(
+                "Parameters are not defined for mode '{}'!".format(mode))
         return status
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        if not self.check_opmode_slowref(wait=0.5):
-            self.set_opmode_slowref()
-            if not self.check_opmode_slowref():
-                return False
+        if not self.check_opmode_slowref(wait=1):
+            return False
 
-        if not self.check_current_zero(wait=0.5):
-            self.set_current_zero()
-            if not self.check_current_zero():
-                return False
+        if not self.check_current_zero(wait=1):
+            return False
 
-        if not self.check_params(mode, wait=0.5):
-            self.set_params(mode)
+        status = self.set_params(mode)
 
         self.update_wfm_pulsecnt()
-        return True
+        return status
 
-    def is_prepared(self, mode):
-        """Return wether power supply is ready."""
-        if not self.check_current_zero():
+    def is_prepared(self, mode, wait=5):
+        """Return whether power supply is ready."""
+        if not self.check_current_zero(wait):
             return False
-        if not self.check_params(mode):
+        if not self.check_params(mode, wait):
             return False
         return True
 
@@ -507,7 +524,9 @@ class PSCycler:
         return _pv_conn_put(self['OpMode-Sel'], opmode)
 
     def set_opmode_slowref(self):
-        """Set OpMode to SlowRef."""
+        """Set OpMode to SlowRef, if needed."""
+        if self.check_opmode_slowref(wait=1):
+            return True
         status = self.set_opmode(_PSConst.OpMode.SlowRef)
         _time.sleep(TIMEOUT_SLEEP)
         return status
@@ -524,7 +543,7 @@ class PSCycler:
         return self.set_opmode(opmode)
 
     def check_opmode_cycle(self, mode, wait=5):
-        """Return wether power supply is in mode."""
+        """Return whether power supply is in mode."""
         opmode = _PSConst.States.Cycle if mode == 'Cycle'\
             else _PSConst.States.RmpWfm
         return _pv_timed_get(self['OpMode-Sts'], opmode, wait=wait)
@@ -555,7 +574,7 @@ class PSCycler:
             if not status:
                 return 2  # indicate cycling not finished yet
 
-        status = self.check_intlks()
+        status = self.check_intlks(wait=1.0)
         if not status:
             return 3  # indicate interlock problems
 
@@ -564,6 +583,54 @@ class PSCycler:
     def __getitem__(self, prop):
         """Return item."""
         return self._pvs[prop]
+
+
+class PSCyclerFBP(PSCycler):
+    """Handle PS FBP properties related to Cycle and RmpWfm modes."""
+
+    properties = [
+        'Current-SP', 'Current-RB', 'CurrentRef-Mon',
+        'PwrState-Sel', 'PwrState-Sts',
+        'OpMode-Sel', 'OpMode-Sts',
+        'SOFBMode-Sel', 'SOFBMode-Sts',
+        'CycleType-Sel', 'CycleType-Sts',
+        'CycleFreq-SP', 'CycleFreq-RB',
+        'CycleAmpl-SP', 'CycleAmpl-RB',
+        'CycleOffset-SP', 'CycleOffset-RB',
+        'CycleNrCycles-SP', 'CycleNrCycles-RB',
+        'CycleAuxParam-SP', 'CycleAuxParam-RB',
+        'CycleEnbl-Mon',
+        'Wfm-SP', 'Wfm-RB',
+        'WfmIndex-Mon', 'WfmSyncPulseCount-Mon',
+        'IntlkSoft-Mon', 'IntlkHard-Mon',
+        'SyncPulse-Cmd'
+    ]
+
+    def set_sofbmode(self, state):
+        """Set SOFBMode."""
+        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        return _pv_conn_put(self['SOFBMode-Sel'], state)
+
+    def check_sofbmode(self, state, wait=1):
+        """Check if SOFBMode."""
+        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        return _pv_timed_get(self['SOFBMode-Sts'], state, wait=wait)
+
+    def prepare(self, mode):
+        """Config power supply to cycling mode."""
+        if not self.check_sofbmode('off', wait=1):
+            return False
+
+        if not self.check_opmode_slowref(wait=1):
+            return False
+
+        if not self.check_current_zero(wait=1):
+            return False
+
+        status = self.set_params(mode)
+
+        self.update_wfm_pulsecnt()
+        return status
 
 
 class LinacPSCycler:
@@ -621,14 +688,14 @@ class LinacPSCycler:
             self._get_duration_and_waveform()
         return self._cycle_duration
 
-    def check_intlks(self):
+    def check_intlks(self, wait=2):
         """Check interlocks."""
         if not self.connected:
             return False
-        return self['StatusIntlk-Mon'].value < 55
+        return self['StatusIntlk-Mon'].value < 64
 
     def check_on(self):
-        """Return wether power supply PS is on."""
+        """Return whether power supply PS is on."""
         return _pv_timed_get(self['PwrState-Sel'], 1)
 
     def set_current_zero(self):
@@ -636,7 +703,7 @@ class LinacPSCycler:
         return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self, wait=5):
-        """Return wether power supply PS current is zero."""
+        """Return whether power supply PS current is zero."""
         return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.1, wait=wait)
 
     def prepare(self, _):
@@ -646,9 +713,9 @@ class LinacPSCycler:
             status &= self.set_current_zero()
         return status
 
-    def is_prepared(self, _):
-        """Return wether power supply is ready."""
-        status = self.check_current_zero()
+    def is_prepared(self, mode, wait=5):
+        """Return whether power supply is ready."""
+        status = self.check_current_zero(wait)
         return status
 
     def cycle(self):
@@ -660,8 +727,7 @@ class LinacPSCycler:
 
     def check_final_state(self, _):
         """Check state after Cycle."""
-        status = True
-        status &= self.check_on()
+        status = self.check_on()
         status &= self.check_intlks()
         if not status:
             return 4  # indicate interlock problems

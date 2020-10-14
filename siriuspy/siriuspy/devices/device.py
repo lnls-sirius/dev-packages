@@ -58,13 +58,25 @@ class Device:
         return True
 
     @property
+    def auto_monitor_status(self):
+        """Return PVs auto_monitor statuses."""
+        return {pv.pvname: pv.auto_monitor for pv in self._pvs.values()}
+
+    @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
         set_ = set()
-        for pvname, pvobj in self._pvs.items():
+        for pvobj in self._pvs.values():
             if not pvobj.connected:
-                set_.add(pvname)
+                set_.add(pvobj.pvname)
         return set_
+
+    def set_auto_monitor(self, pvname, value):
+        """Set auto_monitor state of individual PVs."""
+        if pvname not in self._pvs:
+            return False
+        self._pvs[pvname].auto_monitor = int(value)
+        return True
 
     def update(self):
         """Update device properties."""
@@ -247,6 +259,14 @@ class Devices:
         for dev in self._devices:
             set_.update(dev.disconnected_pvnames)
         return set_
+
+    @property
+    def auto_monitor_status(self):
+        """Return PVs auto_monitor statuses."""
+        dic_ = dict()
+        for dev in self._devices:
+            dic_.update(dev.auto_monitor_status)
+        return dic_
 
     def update(self):
         """Update device properties."""

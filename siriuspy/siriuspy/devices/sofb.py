@@ -2,6 +2,8 @@
 
 import time as _time
 
+import numpy as _np
+
 from ..sofb.csdev import SOFBFactory
 from .device import Device as _Device
 
@@ -21,11 +23,12 @@ class SOFB(_Device):
     _propty_tmpl = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
+        'RespMat-SP', 'RespMat-RB',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
-        'DeltaFactorCH-SP', 'DeltaFactorCV-SP',
-        'DeltaFactorCH-RB', 'DeltaFactorCV-RB',
+        'ManCorrGainCH-SP', 'ManCorrGainCV-SP',
+        'ManCorrGainCH-RB', 'ManCorrGainCV-RB',
         'RefOrbX-SP', 'RefOrbY-SP',
         'RefOrbX-RB', 'RefOrbY-RB',
         'BPMXEnblList-SP', 'BPMYEnblList-SP',
@@ -38,16 +41,22 @@ class SOFB(_Device):
         'BufferCount-Mon',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'ClosedLoop-Sts', 'ClosedLoop-Sel',
+        'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
+        'MeasRespMat-Cmd', 'MeasRespMat-Mon',
+        'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
+        'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         # properties used only for ring-type accelerators:
+        'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
         'MTurnTime-Mon')
 
     _default_timeout = 10  # [s]
-    _off, _on = 0, 1
+    _default_timeout_respm = 2 * 60 * 60  # [s]
 
     def __init__(self, devname):
         """."""
@@ -98,6 +107,16 @@ class SOFB(_Device):
                 self.data.TrigAcqChan._fields.index(value)
         elif int(value) in self.data.TrigAcqChan:
             self['TrigAcqChan-Sel'] = int(value)
+
+    @property
+    def respmat(self):
+        """."""
+        return self['RespMat-RB']
+
+    @respmat.setter
+    def respmat(self, mat):
+        """."""
+        self['RespMat-SP'] = _np.array(mat)
 
     @property
     def trigchannel_str(self):
@@ -216,24 +235,24 @@ class SOFB(_Device):
         self['DeltaKickCV-SP'] = value
 
     @property
-    def deltafactorch(self):
+    def mancorrgainch(self):
         """."""
-        return self['DeltaFactorCH-RB']
+        return self['ManCorrGainCH-RB']
 
-    @deltafactorch.setter
-    def deltafactorch(self, value):
+    @mancorrgainch.setter
+    def mancorrgainch(self, value):
         """."""
-        self['DeltaFactorCH-SP'] = value
+        self['ManCorrGainCH-SP'] = value
 
     @property
-    def deltafactorcv(self):
+    def mancorrgaincv(self):
         """."""
-        return self['DeltaFactorCV-RB']
+        return self['ManCorrGainCV-RB']
 
-    @deltafactorcv.setter
-    def deltafactorcv(self, value):
+    @mancorrgaincv.setter
+    def mancorrgaincv(self, value):
         """."""
-        self['DeltaFactorCV-SP'] = value
+        self['ManCorrGainCV-SP'] = value
 
     @property
     def refx(self):
@@ -332,38 +351,117 @@ class SOFB(_Device):
         """."""
         self['TrigNrSamplesPost-SP'] = int(value)
 
+    def cmd_mturn_acquire(self):
+        """."""
+        self['MTurnAcquire-Cmd'] = 1
+
     def cmd_reset(self):
         """."""
-        self['SmoothReset-Cmd'] = SOFB._on
+        self['SmoothReset-Cmd'] = 1
 
     def cmd_calccorr(self):
         """."""
-        self['CalcDelta-Cmd'] = SOFB._on
+        self['CalcDelta-Cmd'] = 1
 
-    def cmd_applycorr(self):
+    def cmd_applycorr_ch(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
-        _time.sleep(0.3)
+
+    def cmd_applycorr_cv(self):
+        """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+
+    def cmd_applycorr_rf(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
+
+    def cmd_applycorr_all(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
+
+    def cmd_measrespmat_start(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 0
+
+    def cmd_measrespmat_stop(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 1
+
+    def cmd_measrespmat_reset(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 2
+
+    @property
+    def measrespmat_mon(self):
+        """."""
+        return self['MeasRespMat-Mon']
+
+    @property
+    def measrespmat_kickch(self):
+        """."""
+        return self['MeasRespMatKickCH-RB']
+
+    @measrespmat_kickch.setter
+    def measrespmat_kickch(self, value):
+        self['MeasRespMatKickCH-SP'] = value
+
+    @property
+    def measrespmat_kickcv(self):
+        """."""
+        return self['MeasRespMatKickCV-RB']
+
+    @measrespmat_kickcv.setter
+    def measrespmat_kickcv(self, value):
+        self['MeasRespMatKickCV-SP'] = value
+
+    @property
+    def measrespmat_kickrf(self):
+        """."""
+        return self['MeasRespMatKickRF-RB']
+
+    @measrespmat_kickrf.setter
+    def measrespmat_kickrf(self, value):
+        self['MeasRespMatKickRF-SP'] = value
+
+    @property
+    def measrespmat_wait(self):
+        """."""
+        return self['MeasRespMatWait-RB']
+
+    @measrespmat_wait.setter
+    def measrespmat_wait(self, value):
+        self['MeasRespMatWait-SP'] = value
 
     @property
     def autocorrsts(self):
         """."""
-        return self['ClosedLoop-Sts']
+        return self['LoopState-Sts']
+
+    def correct_orbit_manually(self, nr_iters=10):
+        """."""
+        self.cmd_turn_off_autocorr()
+
+        for i in range(nr_iters):
+            self.cmd_calccorr()
+            _time.sleep(0.5)
+            self.cmd_applycorr_all()
+            _time.sleep(0.5)
+            self.cmd_reset()
+            self.wait_buffer()
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._on
+        self['LoopState-Sel'] = self.data.LoopState.Closed
         self._wait(
-            'ClosedLoop-Sts', SOFB._on, timeout=timeout)
+            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        self['ClosedLoop-Sel'] = SOFB._off
+        self['LoopState-Sel'] = self.data.LoopState.Open
         self._wait(
-            'ClosedLoop-Sts', SOFB._off, timeout=timeout)
+            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
 
     def wait_buffer(self, timeout=None):
         """."""
@@ -377,3 +475,15 @@ class SOFB(_Device):
             _time.sleep(interval)
         else:
             print('WARN: Timed out waiting orbit.')
+
+    def wait_respm_meas(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout_respm
+        interval = 1  # [s]
+        ntrials = int(timeout/interval)
+        for _ in range(ntrials):
+            if not self.measrespmat_mon == self.data.MeasRespMatMon.Measuring:
+                break
+            _time.sleep(interval)
+        else:
+            print('WARN: Timed out waiting respm measurement.')

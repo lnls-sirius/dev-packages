@@ -16,7 +16,7 @@ class PSData:
 
     def __init__(self, psname):
         """Init method."""
-        if psname not in _PSSearch.get_psnames():
+        if psname not in _PSSearch.get_psnames(filter_auxps=False):
             raise ValueError(psname + ' is not a valid power supply name.')
         self._psname = psname
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psname)

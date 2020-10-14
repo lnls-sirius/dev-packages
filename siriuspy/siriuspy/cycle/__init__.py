@@ -1,5 +1,5 @@
 from .main import CycleController
-from .conn import Timing, PSCycler, LinacPSCycler
+from .conn import Timing, PSCycler, LinacPSCycler, PSCyclerFBP
 from .util import get_psnames, get_sections, get_trigger_by_psname, \
     TRIGGER_NAMES
 from .bo_cycle_data import \

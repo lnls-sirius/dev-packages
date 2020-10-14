@@ -328,9 +328,8 @@ class SOFBCurrent(Function):
 class SOFBMode(Function):
     """."""
 
-    def __init__(self, device_ids, pru_controller, setpoints=None):
+    def __init__(self, pru_controller, setpoints=None):
         """Create command to set SOFBMode."""
-        self._device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -339,3 +338,18 @@ class SOFBMode(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.sofb_mode_set(value)
+
+
+class SOFBUpdate(Function):
+    """."""
+
+    def __init__(self, pru_controller, setpoints=None):
+        """Create command to set SOFBMode."""
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.sofb_update_variables_state()

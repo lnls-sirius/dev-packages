@@ -7,50 +7,51 @@ from queue import Queue as _Queue
 from collections import deque as _deque
 
 
-class AsynchronousWorker(_Thread):
+class AsyncWorker(_Thread):
     """Asynchronous Worker Thread.
 
-        Performs indefinite jobs asynchronously.
+    Performs asynchronous jobs indefinitely.
     """
+
     def __init__(self, name=None):
         """."""
         super().__init__(name=name, daemon=True)
-        self._receivedevt = _Event()
-        self._readyevt = _Event()
-        self._readyevt.set()
-        self._stopevt = _Event()
+        self._evt_received = _Event()
+        self._evt_ready = _Event()
+        self._evt_ready.set()
+        self._evt_stop = _Event()
         self.target = None
         self.args = tuple()
 
     def configure_new_run(self, target, args=None):
         """Configure a new run of the thread."""
-        if self._receivedevt.is_set():
+        if not self._evt_ready.is_set():
             return False
         self.target = target
         self.args = args or tuple()
-        self._receivedevt.set()
-        self._readyevt.clear()
+        self._evt_received.set()
+        self._evt_ready.clear()
         return True
 
     def wait_ready(self, timeout=None):
         """Wait until last run is finished."""
-        self._readyevt.wait(timeout=timeout)
+        self._evt_ready.wait(timeout=timeout)
 
     def is_ready(self):
         """Check if last run has finished."""
-        return not self._receivedevt.is_set()
+        return self._evt_ready.is_set()
 
     def stop(self):
         """Stop thread."""
-        self._stopevt.set()
+        self._evt_stop.set()
 
     def run(self):
         """."""
-        while not self._stopevt.is_set():
-            if self._receivedevt.wait(0.5):
+        while not self._evt_stop.is_set():
+            if self._evt_received.wait(0.5):
+                self._evt_received.clear()
                 self.target(*self.args)
-                self._receivedevt.clear()
-                self._readyevt.set()
+                self._evt_ready.set()
 
 
 class QueueThread(_Thread):

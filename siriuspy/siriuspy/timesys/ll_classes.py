@@ -55,11 +55,9 @@ class _BaseLL(_Callback):
 
         evg_name = _LLTimeSearch.get_evg_name()
         self._base_freq_pv = _PV(
-            LL_PREFIX + evg_name + ':FPGAClk-Cte',
-            connection_timeout=_CONN_TIMEOUT)
+            LL_PREFIX + evg_name + ':FPGAClk-Cte')
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
-
 
         _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
@@ -68,16 +66,20 @@ class _BaseLL(_Callback):
                 pvnamerb = pvname
                 pvnamesp = _PVName.from_rb2sp(pvname)
             elif _PVName.is_cmd_pv(pvname):  # -Cmd is different!!
-                self._writepvs[prop] = _PV(
-                                pvname, connection_timeout=_CONN_TIMEOUT)
+                self._writepvs[prop] = _PV(pvname)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _PV(
-                    pvnamerb, connection_timeout=_CONN_TIMEOUT)
+                self._readpvs[prop] = _PV(pvnamerb)
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
-                self._writepvs[prop] = _PV(
-                    pvnamesp, connection_timeout=_CONN_TIMEOUT)
+                self._writepvs[prop] = _PV(pvnamesp)
                 self._writepvs[prop]._initialized = False
+
+        for prop, pv in self._writepvs.items():
+            if not pv.wait_for_connection():
+                _log.info(pv.pvname + ' not connected.')
+        for prop, pv in self._readpvs.items():
+            if not pv.wait_for_connection():
+                _log.info(pv.pvname + ' not connected.')
 
         for prop, pv in self._writepvs.items():
             if _PVName.is_cmd_pv(pv.pvname):
@@ -164,13 +166,6 @@ class _BaseLL(_Callback):
                                 timeout=_CONN_TIMEOUT) or self._base_freq
         self.base_del = 1 / self._base_freq / _US2SEC
         self._rf_del = self.base_del / 5
-        # Trigger update of Delay and Duration PVs.
-        for pv in self._writepvs.values():
-            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
-                self._on_change_pv_thread(pv.pvname, pv.value)
-        for pv in self._readpvs.values():
-            if 'DelayRaw' in pv.pvname or 'Width' in pv.pvname:
-                self._on_change_pv_thread(pv.pvname, pv.value)
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.

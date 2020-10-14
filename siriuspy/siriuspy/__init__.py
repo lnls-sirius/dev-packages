@@ -7,6 +7,9 @@ del _os
 
 
 __all__ = [
-    'envars', 'util', 'csdev', 'clientweb', 'clientconfigdb',
-    'diagnostics', 'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice',
-    'epics', 'callbacks', 'search', 'devices']
+    'callbacks', 'csdev', 'envars', 'thread', 'util',
+    'bsmp', 'clientarch', 'clientconfigdb', 'clientweb', 'currinfo',
+    'cycle', 'devices', 'diagbeam', 'diagsys', 'epics', 'machshift',
+    'magnet', 'meas', 'namesys', 'optics', 'opticscorr', 'posang',
+    'pwrsupply', 'ramp', 'search', 'simul', 'sofb', 'timesys'
+    ]

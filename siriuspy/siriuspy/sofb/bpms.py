@@ -3,7 +3,7 @@ import logging as _log
 import numpy as _np
 
 from ..epics import PV as _PV
-from ..diag.bpm.csdev import Const as _csbpm
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..timesys import csdev as _cstime
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
@@ -44,6 +44,7 @@ class BPM(_BaseTimingConfig):
         self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
+            'SwMode': _csbpm.SwModes.switching,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
             'ACQChannel': _csbpm.AcqChan.ADC,
             # 'ACQNrShots': 1,
@@ -75,6 +76,7 @@ class BPM(_BaseTimingConfig):
             'SUMPosCal': _csbpm.EnbldDsbld.enabled}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
+            'SwMode': 'SwMode-Sel',
             'ACQBPMMode': 'ACQBPMMode-Sel',
             'ACQChannel': 'ACQChannel-Sel',
             # 'ACQNrShots': 'ACQNrShots-SP',
@@ -117,6 +119,7 @@ class BPM(_BaseTimingConfig):
             'INFOFOFBRate': 'INFOFOFBRate-RB',
             'INFOMONITRate': 'INFOMONITRate-RB',
             'INFOMONIT1Rate': 'INFOMONIT1Rate-RB',
+            'SwMode': 'SwMode-Sts',
             'ACQBPMMode': 'ACQBPMMode-Sts',
             'ACQChannel': 'ACQChannel-Sts',
             # 'ACQNrShots': 'ACQNrShots-RB',
@@ -212,6 +215,22 @@ class BPM(_BaseTimingConfig):
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         pvobj = self._config_pvs_sp['asyn.ENBL']
         self._config_ok_vals['asyn.ENBL'] = val
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def switching_mode(self):
+        """."""
+        pvobj = self._config_pvs_rb['SwMode']
+        if pvobj.connected:
+            return pvobj.value
+        return None
+
+    @switching_mode.setter
+    def switching_mode(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['SwMode']
+        self._config_ok_vals['SwMode'] = val
         if pvobj.connected:
             pvobj.put(val, wait=False)
 

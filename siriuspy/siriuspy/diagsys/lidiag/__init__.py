@@ -1,0 +1,1 @@
+"""Linac Diag subpackage."""

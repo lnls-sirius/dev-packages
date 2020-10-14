@@ -70,5 +70,10 @@ class Const(_csdev.Const):
                 val['high'] = hig
         if prefix:
             dbase = {prefix + k: v for k, v in dbase.items()}
-        dbase.update(_csdev.Const.get_database(prefix=prefix))
+        dbase2 = _csdev.Const.get_database(prefix=prefix)
+        dbase2[prefix+'ImgFlipY-Sel']['value'] = cls.ImgFlip.Off
+        dbase2[prefix+'ImgFlipY-Sts']['value'] = cls.ImgFlip.Off
+        dbase2[prefix+'ImgFlipX-Sel']['value'] = cls.ImgFlip.On
+        dbase2[prefix+'ImgFlipX-Sts']['value'] = cls.ImgFlip.On
+        dbase.update(dbase2)
         return dbase
