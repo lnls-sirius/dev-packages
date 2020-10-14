@@ -9,6 +9,7 @@ from siriuspy.posang.csdev import get_posang_database
 
 
 PUB_INTERFACE = (
+        'ETypes',
         'Const',
         'get_posang_database',
     )
