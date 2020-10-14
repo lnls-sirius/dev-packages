@@ -33,6 +33,12 @@ class BPMSearch:
         return _web.server_online()
 
     @classmethod
+    def is_valid_devname(cls, devname):
+        """Check if devname is a valid BPM or PBPM name."""
+        cls._get_data()
+        return devname in cls._mapping
+
+    @classmethod
     def get_mapping(cls):
         """Return a dictionary with the BPMs."""
         cls._get_data()
@@ -43,7 +49,7 @@ class BPMSearch:
         """Return a list with the bpm names for the given filter."""
         cls._get_data()
         return _Filter.process_filters(
-                                cls._names, filters=filters, sorting=sorting)
+            cls._names, filters=filters, sorting=sorting)
 
     @classmethod
     def get_nicknames(cls, names=None, filters=None, sorting=None):

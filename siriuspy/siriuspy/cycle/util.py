@@ -25,6 +25,9 @@ def get_psnames():
     names.extend(_PSSearch.get_psnames(
         {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
          'dev': 'CV', 'idx': '2'}))
+    names.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+         'dev': 'QS'}))
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
     for name in to_remove:
         names.remove(name)
@@ -58,13 +61,14 @@ def pv_timed_get(pvobj, value, wait=5):
         return False
     time0 = _time.time()
     while _time.time() - time0 < wait:
-        pvvalue = pvobj.get()
-        status = False
+        pvvalue = pvobj.value
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             elif len(value) != len(pvvalue):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             else:
                 if isinstance(pvvalue[0], (float, _np.float64)):
                     pvvalue = _np.asarray(pvvalue, dtype=_np.float32)

@@ -71,9 +71,9 @@ def get_timestamp(now=None):
     """Get formatted timestamp ."""
     if now is None:
         now = _time.time()
-    st = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
-    st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
-    return st
+    rst = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
+    rst = rst + '.{0:03d}'.format(int(1000*(now-int(now))))
+    return rst
 
 
 def read_text_data(text):
@@ -144,6 +144,8 @@ def check_pv_online(pvname, timeout=1.0, use_prefix=True):
         pvname = _envars.VACA_PREFIX + pvname
     pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pvobj.wait_for_connection(timeout=timeout)
+    # invoke pv disconnect and explicitly signal to GC that PV object may be collected.
+    del pvobj  
     return status
 
 

@@ -146,11 +146,14 @@ class BaseTimingConfig(_Callback):
         """Configure method."""
         if not self.connected:
             return False
-        for k, pv in self._config_pvs_sp.items():
-            pv.put(self._config_ok_vals[k], wait=False)
+        for k, pvo in self._config_pvs_sp.items():
+            if k in self._config_ok_vals:
+                pvo.put(self._config_ok_vals[k], wait=False)
         return True
 
 
 def compare_kicks(val1, val2):
     """."""
+    if isinstance(val1, _np.ndarray) or isinstance(val2, _np.ndarray):
+        return _np.isclose(val1, val2, atol=_ConstTLines.TINY_KICK)
     return _math.isclose(val1, val2, abs_tol=_ConstTLines.TINY_KICK)

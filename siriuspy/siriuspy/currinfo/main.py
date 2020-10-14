@@ -76,6 +76,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
     def __init__(self, resource_manager):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
+        self._meas = None
         self.resource_manager = resource_manager
         # open communication with Oscilloscope
         self.osc_socket = resource_manager.open_resource(
@@ -88,7 +89,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
     def process(self, interval):
         """."""
         tini = _time.time()
-        self._update_pvs()
+        self._get_measurement()
+        self._update_pvs(self.ACC, self.ICT1, self.ICT2)
         dtim = _time.time() - tini
         if dtim <= interval:
             _time.sleep(interval - dtim)
@@ -96,10 +98,10 @@ class _ASCurrInfoApp(_CurrInfoApp):
             _log.warning(
                 'IOC took {0:.3f} ms in update loop.'.format(dtim*1000))
 
-    def _update_pvs(self):
-        """."""
+    def _get_measurement(self):
         try:
             meas = self.osc_socket.query(":MEASure:RESults?")
+            self._meas = meas.split(',')
         except Exception as err:
             errst = str(err)
             _log.error('Problem reading data: {:s}'.format(errst))
@@ -112,11 +114,15 @@ class _ASCurrInfoApp(_CurrInfoApp):
                 rsman = self.resource_manager
                 soc = self.osc_socket
                 rsman.visalib.sessions[soc.session].interface.lastxid = xid
+            self._meas = None
             return
 
-        meas = meas.split(',')
-
-        name = self.ACC+'-ICT1'
+    def _update_pvs(self, acc, ict1, ict2):
+        """."""
+        meas = self._meas
+        if meas is None:
+            return
+        name = acc + '-ICT1'
         idxict1 = [i for i, val in enumerate(meas) if name in val].pop()
         chg1 = float(meas[idxict1 + self.INDICES.CURR]) * 1e9
         ave1 = float(meas[idxict1 + self.INDICES.AVG]) * 1e9
@@ -125,7 +131,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         std1 = float(meas[idxict1 + self.INDICES.STD]) * 1e9
         cnt1 = int(float(meas[idxict1 + self.INDICES.COUNT]))
 
-        name = self.ACC+'-ICT2'
+        name = acc + '-ICT2'
         idxict2 = [i for i, val in enumerate(meas) if name in val].pop()
         chg2 = float(meas[idxict2 + self.INDICES.CURR]) * 1e9
         ave2 = float(meas[idxict2 + self.INDICES.AVG]) * 1e9
@@ -137,41 +143,23 @@ class _ASCurrInfoApp(_CurrInfoApp):
         eff = 100 * chg2/chg1
         effave = 100 * ave2/ave1
 
-        self.run_callbacks(self.ICT1 + ':Charge-Mon', chg1)
-        self.run_callbacks(self.ICT1 + ':ChargeAvg-Mon', ave1)
-        self.run_callbacks(self.ICT1 + ':ChargeMin-Mon', min1)
-        self.run_callbacks(self.ICT1 + ':ChargeMax-Mon', max1)
-        self.run_callbacks(self.ICT1 + ':ChargeStd-Mon', std1)
-        self.run_callbacks(self.ICT1 + ':PulseCount-Mon', cnt1)
-        self.run_callbacks(self.ICT2 + ':Charge-Mon', chg2)
-        self.run_callbacks(self.ICT2 + ':ChargeAvg-Mon', ave2)
-        self.run_callbacks(self.ICT2 + ':ChargeMin-Mon', min2)
-        self.run_callbacks(self.ICT2 + ':ChargeMax-Mon', max2)
-        self.run_callbacks(self.ICT2 + ':ChargeStd-Mon', std2)
-        self.run_callbacks(self.ICT2 + ':PulseCount-Mon', cnt2)
+        self.run_callbacks(ict1 + ':Charge-Mon', chg1)
+        self.run_callbacks(ict1 + ':ChargeAvg-Mon', ave1)
+        self.run_callbacks(ict1 + ':ChargeMin-Mon', min1)
+        self.run_callbacks(ict1 + ':ChargeMax-Mon', max1)
+        self.run_callbacks(ict1 + ':ChargeStd-Mon', std1)
+        self.run_callbacks(ict1 + ':PulseCount-Mon', cnt1)
+        self.run_callbacks(ict2 + ':Charge-Mon', chg2)
+        self.run_callbacks(ict2 + ':ChargeAvg-Mon', ave2)
+        self.run_callbacks(ict2 + ':ChargeMin-Mon', min2)
+        self.run_callbacks(ict2 + ':ChargeMax-Mon', max2)
+        self.run_callbacks(ict2 + ':ChargeStd-Mon', std2)
+        self.run_callbacks(ict2 + ':PulseCount-Mon', cnt2)
         if chg1 <= self.CHARGE_THRESHOLD:
             return
-        name = self.ACC + '-Glob:AP-CurrInfo:'
+        name = acc + '-Glob:AP-CurrInfo:'
         self.run_callbacks(name + 'TranspEff-Mon', eff)
         self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
-
-
-class LICurrInfoApp(_ASCurrInfoApp):
-    """."""
-
-    OSC_IP = 'scope-dig-linac-ict'
-    ACC = 'LI'
-    ICT1 = 'LI-01:DI-ICT-1'
-    ICT2 = 'LI-01:DI-ICT-2'
-
-
-class TBCurrInfoApp(_ASCurrInfoApp):
-    """."""
-
-    OSC_IP = 'scope-dig-linac-ict'
-    ACC = 'TB'
-    ICT1 = 'TB-02:DI-ICT'
-    ICT2 = 'TB-04:DI-ICT'
 
 
 class TSCurrInfoApp(_ASCurrInfoApp):
@@ -183,11 +171,27 @@ class TSCurrInfoApp(_ASCurrInfoApp):
     ICT2 = 'TS-04:DI-ICT'
 
 
+class LICurrInfoApp(_ASCurrInfoApp):
+    """Linac IOC will Also provide TB PVs."""
+
+    OSC_IP = 'scope-dig-linac-ict'
+    ACC = 'LI'
+    LIICT1 = 'LI-01:DI-ICT-1'
+    LIICT2 = 'LI-01:DI-ICT-2'
+    TBICT1 = 'TB-02:DI-ICT'
+    TBICT2 = 'TB-04:DI-ICT'
+
+    def _update_pvs(self, *args):
+        super()._update_pvs('LI', self.LIICT1, self.LIICT2)
+        super()._update_pvs('TB', self.TBICT1, self.TBICT2)
+
+
 class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
     REV_PERIOD = 1.6571334792998411  # [us]
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
+    MAX_CURRENT = 1.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
         '150MeV': 0.0000,
         '1GeV': 0.0859,
@@ -330,16 +334,22 @@ class BOCurrInfoApp(_CurrInfoApp):
                 self.run_callbacks('Current'+str(energy)+'-Mon',
                                    self._currents[energy])
                 # charges
-                self._charges[energy] += current * self.REV_PERIOD
+                if current < self.MAX_CURRENT:
+                    self._charges[energy] += current * self.REV_PERIOD
+                    if energy == '3GeV':
+                        self._intcurrent3gev += \
+                            current * self.INTCURR_INTVL  # [mA.h]
+                        self.run_callbacks(
+                            'IntCurrent3GeV-Mon', self._intcurrent3gev)
+                else:
+                    _log.warning(
+                        'Current {0} value is too high: '
+                        '{1:.3g}A.'.format(energy, current))
                 self.run_callbacks('Charge'+str(energy)+'-Mon',
                                    self._charges[energy])
 
         c150mev = self._currents['150MeV']
         c3gev = self._currents['3GeV']
-
-        # integrated current in 3GeV
-        self._intcurrent3gev += c3gev * self.INTCURR_INTVL  # [mA.h]
-        self.run_callbacks('IntCurrent3GeV-Mon', self._intcurrent3gev)
 
         # ramp efficiency
         if c150mev > c3gev:

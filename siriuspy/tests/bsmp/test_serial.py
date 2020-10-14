@@ -106,7 +106,7 @@ class TestBSMPPackage(TestCase):
         'checksum',
         'stream',
         'calc_checksum',
-        'verify_checksum',
+        'verify_checksum'
     )
 
     def test_api(self):
@@ -170,14 +170,17 @@ class TestBSMPChannel(TestCase):
         'LOCK',
         'pru',
         'address',
+        'size_counter',
+        'size_counter_reset',
         'read',
         'write',
+        'request_',
         'request',
-        'size_counter',
-        'size_counter_reset',)
+        'create_lock'
+        )
 
     def setUp(self):
-        """Common setup for all tests."""
+        """Setup common to all tests."""
         self.serial = Mock()
         self.channel = Channel(self.serial, 1)
 
@@ -214,7 +217,7 @@ class TestBSMPChannel(TestCase):
     def test_request(self):
         """Test request."""
         response = Message.message(0x11, payload=[chr(10)])
-        self.serial.UART_read.return_value = \
+        self.serial.UART_request.return_value = \
             Package.package(0x01, response).stream
         recv = self.channel.request(
             Message.message(0x01, payload=[chr(1)]), timeout=1)
@@ -223,6 +226,6 @@ class TestBSMPChannel(TestCase):
 
     def test_request_fail(self):
         """Test exception is raised when serial fails."""
-        self.serial.UART_read.return_value = None
+        self.serial.UART_request.return_value = None
         with self.assertRaises(SerialError):
             self.channel.request(Message.message(0x10, payload=[chr(10)]))
