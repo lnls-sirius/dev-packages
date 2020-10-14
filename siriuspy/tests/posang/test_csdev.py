@@ -51,6 +51,7 @@ class TestPosAngCSDevice(TestCase):
         self.assertTrue('RefKickCV1-Mon' in dbase)
         self.assertTrue('RefKickCV2-Mon' in dbase)
         self.assertTrue('SetNewRefKick-Cmd' in dbase)
+        self.assertTrue('NeedRefUpdate-Mon' in dbase)
         self.assertTrue('ConfigPS-Cmd' in dbase)
         self.assertTrue('Status-Mon' in dbase)
         self.assertTrue('StatusLabels-Cte' in dbase)
