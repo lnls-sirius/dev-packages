@@ -6,7 +6,7 @@ from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
     LLTimeSearch as _TISearch, PSSearch as _PSSearch
-from ..diag.bpm.csdev import Const as _csbpm
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..timesys import csdev as _cstiming
 
 
@@ -130,7 +130,7 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         # Define the BPMs and correctors:
-        self.bpm_names = _BPMSearch.get_names({'sec': acc})
+        self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
         self.ch_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
         self.cv_names = _PSSearch.get_psnames(
@@ -668,6 +668,7 @@ class SOFBRings(SOFBTLines, ConstRings):
         """Init method."""
         SOFBTLines.__init__(self, acc)
         self.circum = 496.8  # in meter
+        self.harm_number = 828
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
@@ -767,6 +768,7 @@ class SOFBSI(SOFBRings, ConstSI):
         evts = vals['Src-Sel']['enums']
         self.CorrExtEvtSrc = self.register('CorrExtEvtSrc', evts)
         self.circum = 518.396  # in meter
+        self.harm_number = 864
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
@@ -839,6 +841,8 @@ class SOFBSI(SOFBRings, ConstSI):
                 'value': self.CorrPSSOFBWait.Off},
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
+            'OrbLength-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'm', 'prec': 6},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))

@@ -19,10 +19,11 @@ class APU(_Device):
     class DEVICES:
         """."""
 
+        APU22_06SB = 'SI-06SB:ID-APU22'
         APU22_07SP = 'SI-07SP:ID-APU22'
         APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
-        ALL = (APU22_07SP, APU22_08SB, APU22_09SA, )
+        ALL = (APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA, )
 
     _properties = (
         'DevCtrl-Cmd', 'Moving-Mon',
