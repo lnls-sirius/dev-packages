@@ -239,8 +239,8 @@ class MeasParameters(_BaseClass, _Const):
         dax = dbumpx * self.SS_SIZE / 2
         day = dbumpy * self.SS_SIZE / 2
 
-        orbx = self._sofb_pvs['refx_rb'].value
-        orby = self._sofb_pvs['refy_rb'].value
+        orbx = self._sofb_pvs['refx_rb'].value.copy()
+        orby = self._sofb_pvs['refy_rb'].value.copy()
         orbx[self.BPM1_INDEX] -= dax
         orby[self.BPM1_INDEX] -= day
         orbx[self.BPM2_INDEX] += dax
