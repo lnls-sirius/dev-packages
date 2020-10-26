@@ -424,6 +424,16 @@ _pvs_as_ti = [
     ['LI-01:TI-EGun-MultBun:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['LI-01:TI-EGun-MultBun:LowLvlLock-Sel', 0, 0.0],
 
+    ['LI-01:TI-EGun-MultBunPre:DelayRaw-SP', 0, 0],
+    ['LI-01:TI-EGun-MultBunPre:Duration-SP', 0, 0.0],  # [us]
+    ['LI-01:TI-EGun-MultBunPre:NrPulses-SP', 0, 0.0],
+    ['LI-01:TI-EGun-MultBunPre:Polarity-Sel', 0, 0.0],
+    ['LI-01:TI-EGun-MultBunPre:RFDelayType-Sel', 0, 0.0],
+    ['LI-01:TI-EGun-MultBunPre:Src-Sel', 0, 0.0],
+    ['LI-01:TI-EGun-MultBunPre:State-Sel', 0, 0.0],
+    ['LI-01:TI-EGun-MultBunPre:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-EGun-MultBunPre:LowLvlLock-Sel', 0, 0.0],
+
     ['LI-01:TI-EGun-SglBun:DelayRaw-SP', 0, 0],
     ['LI-01:TI-EGun-SglBun:Duration-SP', 0, 0.0],  # [us]
     ['LI-01:TI-EGun-SglBun:NrPulses-SP', 0, 0.0],
