@@ -20,7 +20,7 @@ class IDSearch:
         'EMA':      'SI-08SB:ID-APU22',
         'MANACA':   'SI-09SA:ID-APU22',
         'SABIA':    'SI-10SB:ID-Delta52',
-        'IPE':      'SI-11SP:ID-Delta52',
+        'IPE':      'SI-11SP:ID-APU58',
         'COLIBRI':  'SI-12SB:ID-Delta52',
         'HARPIA':   'SI-14SB:ID-Delta21',
         'SAGUI':    'SI-15SP:ID-Delta21',
