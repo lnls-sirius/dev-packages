@@ -567,10 +567,10 @@ class BoosterRamp(_ConfigDBDocument):
     def rf_ramp_voltages(self):
         """List of voltages to define RF ramp."""
         vals = (self.rf_ramp_bottom_voltage,
-             self.rf_ramp_bottom_voltage,
-             self.rf_ramp_top_voltage,
-             self.rf_ramp_top_voltage,
-             self.rf_ramp_bottom_voltage)
+                self.rf_ramp_bottom_voltage,
+                self.rf_ramp_top_voltage,
+                self.rf_ramp_top_voltage,
+                self.rf_ramp_bottom_voltage)
         return vals
 
     @property
@@ -842,9 +842,9 @@ class BoosterRamp(_ConfigDBDocument):
         for psname in psnames:
             self._update_ps_waveform(psname)
             w_currents = self._ps_waveforms[psname].currents
-            isNan = _np.any(_np.isnan(w_currents))
-            isInf = _np.any(_np.isinf(w_currents))
-            if isNan or isInf:
+            isnan = _np.any(_np.isnan(w_currents))
+            isinf = _np.any(_np.isinf(w_currents))
+            if isnan or isinf:
                 continue
             limits = _PSSearch.conv_psname_2_splims(psname)
             highlim = limits['HOPR'] if psname not in self.PSNAME_DIPOLES \
@@ -1096,7 +1096,8 @@ class BoosterRamp(_ConfigDBDocument):
         nc_times = sorted(self.ps_normalized_configs_times)
         nc_values = list()
         for time in nc_times:
-            nconfig = self._value['ps_normalized_configs*']['{:.3f}'.format(time)]
+            nconfig = self._value['ps_normalized_configs*'][
+                '{:.3f}'.format(time)]
             nc_values.append(nconfig[psname])
 
         # interpolate strengths
