@@ -44,6 +44,9 @@ _SEVERITY_NO_ALARM = 0
 _SEVERITY_MAJOR_ALARM = 2
 
 
+# --- Linac PS interlock ---
+PS_LI_INTLK_THRS = 64
+
 # --- Enumeration Types ---
 
 
