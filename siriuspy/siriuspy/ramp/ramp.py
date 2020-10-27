@@ -854,6 +854,25 @@ class BoosterRamp(_ConfigDBDocument):
                 psnames_exclimits.append(psname)
         return psnames_exclimits
 
+    @property
+    def ps_waveform_psnames_init_end_diff(self):
+        if not self._value['ps_normalized_configs*']:
+            return list()
+        psnames = _dcopy(self.PSNAMES)
+        for psn in self.PSNAMES:
+            if psn in self.PSNAME_DIPOLES:
+                psnames.remove(psn)
+
+        psnames_initenddiff = list()
+        for psname in psnames:
+            self._update_ps_waveform(psname)
+            w_currents = self._ps_waveforms[psname].currents
+            c_init = w_currents[0]
+            c_end = w_currents[-1]
+            if not _np.isclose(c_init, c_end):
+                psnames_initenddiff.append(psname)
+        return psnames_initenddiff
+
     def ps_waveform_get(self, psname):
         """Return ps waveform for a given power supply."""
         if psname not in self.PSNAME_DIPOLES and \
