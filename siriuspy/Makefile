@@ -1,7 +1,7 @@
 DISTPATH=$(shell python -c "import site; print(site.getsitepackages())" | cut -f2 -d"'")
 PACKAGE:=$(shell basename $(shell pwd))
 ISINST=$(shell pip show $(PACKAGE) | wc -l )
-
+TMPFOLDER=/tmp/install-$(PACKAGE)
 
 .PHONY = clean install uninstall test dist distupload distinstall disttest dist distupload distinstall disttest  disttestupload disttestinstall
 
@@ -9,9 +9,12 @@ clean:
 	git clean -fdX
 
 develop: uninstall
-	pip install --no-deps -e ./
+	pip-sirius install --no-deps -e ./
 
 install: uninstall
+ifneq (, $(wildcard $(TMPFOLDER)))
+	rm -rf /tmp/install-$(PACKAGE)
+endif
 	cp -rRL ../$(PACKAGE) /tmp/install-$(PACKAGE)
 	cd /tmp/install-$(PACKAGE)/; pip install --no-deps ./
 	rm -rf /tmp/install-$(PACKAGE)
