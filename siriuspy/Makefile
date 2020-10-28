@@ -5,13 +5,20 @@ TMPFOLDER=/tmp/install-$(PACKAGE)
 
 .PHONY = clean install uninstall test dist distupload distinstall disttest dist distupload distinstall disttest  disttestupload disttestinstall
 
-clean:
+## -------------------------
+## siriuspy - Makefile help
+## -------------------------
+
+help:  ## Show this help.
+	@grep '##' Makefile| sed -e '/@/d' | sed -r 's,(.*?:).*##(.*),\1\2,g'
+
+clean: ## Clean repository via "git clean -fdX"
 	git clean -fdX
 
-develop: uninstall
-	pip-sirius install --no-deps -e ./
+develop: uninstall ## Install in editable mode (i.e. setuptools "develop mode")
+	pip install --no-deps -e ./
 
-install: uninstall
+install: uninstall ## Install packge using the local repository
 ifneq (, $(wildcard $(TMPFOLDER)))
 	rm -rf /tmp/install-$(PACKAGE)
 endif
@@ -20,29 +27,29 @@ endif
 	rm -rf /tmp/install-$(PACKAGE)
 
 # known issue: It will fail to uninstall scripts if they were installed in develop mode
-uninstall: clean
+uninstall: clean ## Remove package
 ifneq ($(ISINST),0)
 	pip uninstall -y $(PACKAGE)
 else
 	echo 'already uninstalled $(PACKAGE)'
 endif
 
-test:
+test: ## Run tests
 	python setup.py test
 
-dist: clean
+dist: clean ## Build setuptools dist
 	python setup.py sdist bdist_wheel
 
-distupload:
+distupload: ## Upload package dist to PyPi
 	python -m twine upload --verbose dist/*
 
-distinstall:
+distinstall: ## Install package from PyPi
 	python -m pip install $(PACKAGE)==$(shell cat "VERSION")
 
-disttestupload:
+disttestupload: ##  Upload package dist to Test PyPi
 	python -m twine upload --verbose --repository testpypi dist/*
 
-disttestinstall:
+disttestinstall: ##  Install package from Test PyPi
 	python -m pip install --index-url https://test.pypi.org/simple/ --no-deps $(PACKAGE)==$(shell cat "VERSION")
 
-disttest: dist disttestupload disttestinstall test
+disttest: dist disttestupload disttestinstall test ## Build the package, upload to Test PyPi, install from PyPi and run tests
