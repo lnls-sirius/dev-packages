@@ -1,4 +1,3 @@
-DISTPATH=$(shell python -c "import site; print(site.getsitepackages())" | cut -f2 -d"'")
 PACKAGE:=$(shell basename $(shell pwd))
 ISINST=$(shell pip show $(PACKAGE) | wc -l )
 TMPFOLDER=/tmp/install-$(PACKAGE)
@@ -10,7 +9,7 @@ TMPFOLDER=/tmp/install-$(PACKAGE)
 ## -------------------------
 
 help:  ## Show this help.
-	@grep '##' Makefile| sed -e '/@/d' | sed -r 's,(.*?:).*##(.*),\1\2,g'
+	@grep '##' Makefile| sed -e '/@/d' | sed -r 's,((.*?:).*##(.*))|(.*##\s(.*)),\2\3\5,g'
 
 clean: ## Clean repository via "git clean -fdX"
 	git clean -fdX
