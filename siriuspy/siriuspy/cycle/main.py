@@ -508,6 +508,16 @@ class CycleController:
         self._timing.trigger(self.mode)
         self._update_log(done=True)
 
+    def pulse_pwrsupplies(self, psnames):
+        """Send sync pulse to power supplies."""
+        for idx, psname in enumerate(psnames):
+            cycler = self._get_cycler(psname)
+            cycler.pulse()
+            if idx % 5 == 4 or idx == len(psnames)-1:
+                self._update_log(
+                    'Sent sync pulse to {0}/{1}'.format(
+                        str(idx+1), str(len(psnames))))
+
     def init_trims(self, trims):
         """Initialize trims cycling process."""
         # initialize dict to check which trim is cycling
@@ -587,6 +597,12 @@ class CycleController:
             thread = _thread.Thread(target=cycler.cycle, daemon=True)
             self._li_threads.append(thread)
             thread.start()
+
+        id_corrs = _PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+             'dev': 'C.*'})
+        psnames2pulse = list(set(id_corrs) & set(self.psnames))
+        self.pulse_pwrsupplies(psnames2pulse)
 
         # trigger
         self.trigger_timing()

@@ -28,6 +28,9 @@ def get_psnames():
     names.extend(_PSSearch.get_psnames(
         {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
          'dev': 'QS'}))
+    names.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+         'dev': 'C.*'}))
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
     for name in to_remove:
         names.remove(name)
