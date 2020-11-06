@@ -1,24 +1,29 @@
 sudo: required
 language: python
 python:
-  - "3.6.8"
+    - 3.6.8
+branches:
+  only:
+  - master
 script:
   - pip install -r requirements.txt
-# install Eth-Bridge-PRUserial485
   - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
   - cd eth-bridge-pru-serial485/client
   - python setup.py install
   - cd ../../
-# install mathphys
   - git clone https://github.com/lnls-fac/mathphys.git
   - cd mathphys
   - python setup.py install
   - cd ../
-# install siriuspy
   - cd siriuspy
   - python setup.py test
-
-# safelist
-branches:
-  only:
-  - master
+  - git describe --tags | sed -e 's/^v//g' > siriuspy/VERSION
+deploy:
+  skip_cleanup: true
+  provider: pypi
+  username: __token__
+  password:
+    secure: lcS7G4Ty+VV/B7YwbttAiTQSLsamkrXbNsY29hgTeoo0luGIJPt8i56i8FHKtjJ+81LDRs2P2RFW/CuCddFoD028xqxMsyQwwLtxXWcKXhAdoofMk+EFSCcx+NTEDaw/dldpYqwWO1TC4P+ypaHobPjz+VyegLxKzZ6U5lSm0kC/aeY1KixLw+Exig5jnq/fkUZPJVxCqWr7RCo2q4t7nPqxfp4SuqwU2t/n/v+fo1k4m0oLZ8ZU8SxzIcFeKWLEEyAj2+i0F8halE4wygczrEo2+ZydGjNkyCqavZjPZ9roz4aydagZGqgp4p8vT1mjVX62I93tnE90ev3lzQ4qdcugOPls4wAhwRWk0Es0zMa3T1CzbC2peUFVzpgjXBqDqpGyJpOoanLbjVaqQoLqBHOOqPnauvLDLjqrQd3pd8W03B9jaumlNKBtPKkiNUfoNbPoBdkrWq7K/Fh8oSr2OUSP3m7kK+z30YfWjoBzZb4iB1qfB+3gqLlxrI5e6aNrC5BtpQMdwlI0GVbELrUqKHQZKb1Xkkox+3wJ+fvwbeaJv3dkjnlUTMg8TjxEeKzSIY7Ci10KEg6mE1F9SxN2x2JXXmOPlilMzyToBht03ZqohC/vGLeGpzVadUQy44CNSASUOpyjDzRSCKNe241nE9tdQmPT0oqSvrwd4bJ8fuE=
+  on:
+    tags: true
+    branch: PR-pypi-support
