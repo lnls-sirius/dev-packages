@@ -2,9 +2,7 @@ sudo: required
 language: python
 python:
     - 3.6.8
-branches:
-  only:
-  - master
+if: branch = master OR tag IS present
 script:
   - pip install -r requirements.txt
   - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
@@ -23,7 +21,7 @@ deploy:
   provider: pypi
   username: __token__
   password:
-    secure: "AylWPRIogUexNfr8XJjJ4aYKi/I6vsQZQnVUpkgiqSDjaLdus7PEu4oIt36JJyQdoSHRWkmqiJvZvMSG7WyDHoj4bCize2VHIX6NzqbSsAKqQzHHl640aXOYfccN8RxdwKfOgTnH1wG0ypoc+q/tqQBhY3i0BQe6AD2IayuOXFF3hOgQ/JhlYRDNgSI6Y8iBjaNWOasICaxrGXwfnJTcdBW2rqL+Jc1Hra263cqifXZJMx3O7WXFdKw1XhWB8zxLo5BxnfzXVt8ONPw0lhz96g8zZ6Pi0/YdqfPpIc4APwJhmeY9fbVlXVbSd1q1jcy//wKRkQtlCkzGHtEexcs9PUzpCYd2nXZS5wFVTbA5FDMWdNY83dShMk/F4plKCcnxVVK+K18gGYA7YW8yI9e8jWG6Ju+L/fSQl3/9tbC91V8l6p9V78MzIAUIik1PImZqSwVAdHTkoZDzIEa9aR0G60u6yJSDkEtvNVlLLlduBfDzaE+aztRoLS4GEdeFpekAGSYqTON8f+z7hlx+z7gjxze49zBKZrEgrvdGNsXlxnJhU2qIFfK4jxl8NnX86KxlZKs2ZunO9WQAEvZK5g9Gim9Zz5gZ9q4ecLkZNVpXeNsStQQonOXnxauscuZKf/kI7NAxqosjxH+RYneYiFaXXg6pjHlJKS5+9bAxCs5fnTo="
+    secure: "nF66cvnnkQOD7mzeEUYq5B5aatBcW7mm99ekjjtq35JwP9HuifmnzzSBPvx9WEa3jBFjjIeNxE/Picfg2V9QNEL2REL9elbtqdmWJuJGJp3Ytz9JZ4uSOiMwAcg1SNr9MOs0U0fnuIyeJ+Mq5NV+HaetdhPhVdPED3HH7Y2FBQLJUjCfDJ7IC+M+ZgN8YSVR+fgv+fTZiYleuKXi1aOl5K+NfLscxbyZFQxQ8hCBKBhwfeMRq8CuLDOyePujr4cT2y08cOz2o4pAitpam/1rWegDghxgwcQ/HuWqpMS5G/OUYl8y7TGFMGSifnhsqMRvccn+b8M5QF447P5QwlMLR3bExzF5eolJah/7aVTJV20srklmeqaXGKscLmS8SUrzpWWLGdnRSOwNqQZmW8Ij2oqRv5ByImLJaGH1anBSDPLvZYCdrQvy8yR3oeV86XJKnjASlXM5PMoQSBcC1AwlaukOb3RVhyrvS2b+YrbL6v+62jSQRWjvOel6cwMsyUmlrTdS+biNN0Gei6KsHWhI2DFMFy5eWUxDw/8hSUt+T7b9krULLj1Mmv4rqipCUQzaaujDFWKZ9ZXSbzSIMcBruztcrGnlbenf050SylVes4F+KjiFGXsXMdffXgBVn/FhP0o9QE0KTr6kx9jAeIx0ctn6VM/u0fBvkOqLSqxI5No="
   on:
     tags: true
     branch: PR-pypi-support
