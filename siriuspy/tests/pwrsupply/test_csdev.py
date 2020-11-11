@@ -25,6 +25,7 @@ PUB_INTERFACE = (
     'PU_VOLTAGE_PRECISION',
     'PS_CURRENT_UNIT',
     'PU_VOLTAGE_UNIT',
+    'PS_LI_INTLK_THRS',
     'ETypes',
     'Const',
     'get_ps_propty_database',

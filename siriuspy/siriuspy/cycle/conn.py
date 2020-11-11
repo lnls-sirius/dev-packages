@@ -9,7 +9,8 @@ from epics import PV as _PV
 from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
-from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
+from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet, \
+    PS_LI_INTLK_THRS as _PS_LI_INTLK
 from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
@@ -692,7 +693,7 @@ class LinacPSCycler:
         """Check interlocks."""
         if not self.connected:
             return False
-        return self['StatusIntlk-Mon'].value < 64
+        return self['StatusIntlk-Mon'].value < _PS_LI_INTLK
 
     def check_on(self):
         """Return whether power supply PS is on."""
