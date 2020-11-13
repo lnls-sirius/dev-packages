@@ -36,6 +36,7 @@ class EpicsMatrix(BaseMatrix):
         if self.acc == 'SI':
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
+        self._respmat_mode = self._csorb.RespMatMode.Full
         self.min_sing_val = self._csorb.MIN_SING_VAL
         self.tikhonov_reg_const = self._csorb.TIKHONOV_REG_CONST
         self.respmat = _np.zeros(
@@ -66,6 +67,7 @@ class EpicsMatrix(BaseMatrix):
         """Get the write methods of the class."""
         dbase = {
             'RespMat-SP': self.set_respmat,
+            'RespMatMode-Sel': self.set_respmat_mode,
             'CHEnblList-SP': _part(self.set_enbllist, 'ch'),
             'CVEnblList-SP': _part(self.set_enbllist, 'cv'),
             'BPMXEnblList-SP': _part(self.set_enbllist, 'bpmx'),
@@ -76,6 +78,21 @@ class EpicsMatrix(BaseMatrix):
         if self.acc == 'SI':
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return dbase
+
+    def set_respmat_mode(self, mode):
+        """Set the response matrix mode."""
+        msg = 'Setting New RespMatMode.'
+        self._update_log(msg)
+        _log.info(msg)
+        if mode not in self._csorb.RespMatMode:
+            return False
+        old_ = self._respmat_mode
+        self._respmat_mode = mode
+        if not self._calc_matrices():
+            self._respmat_mode = old_
+            return False
+        self.run_callbacks('RespMatMode-Sts', mode)
+        return True
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
@@ -92,7 +109,6 @@ class EpicsMatrix(BaseMatrix):
             return False
         self.respmat_extended = matb
         self._save_respmat(matb)
-        self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
         return True
 
     def _set_respmat(self, mat):
@@ -278,7 +294,20 @@ class EpicsMatrix(BaseMatrix):
         sel_mat = selecbpm[:, None] * seleccor[None, :]
         if sel_mat.size != self.respmat.size:
             return False
-        mat = self.respmat[sel_mat]
+        mat = self.respmat.copy()
+        nr_bpms = self._csorb.nr_bpms
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
+        if self._respmat_mode != self._csorb.RespMatMode.Full:
+            mat[:nr_bpms, nr_ch:nr_chcv] = 0
+            mat[nr_bpms:, :nr_ch] = 0
+            mat[nr_bpms:, nr_chcv:] = 0
+        if self._respmat_mode == self._csorb.RespMatMode.Mxx:
+            mat[nr_bpms:] = 0
+        elif self._respmat_mode == self._csorb.RespMatMode.Myy:
+            mat[:nr_bpms] = 0
+
+        mat = mat[sel_mat]
         mat = _np.reshape(mat, [sum(selecbpm), sum(seleccor)])
         try:
             uuu, sing, vvv = _np.linalg.svd(mat, full_matrices=False)
@@ -324,6 +353,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
+        respmat_proc = _np.zeros(self.respmat.shape, dtype=float)
+        respmat_proc[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
+        self.run_callbacks('RespMat-RB', list(respmat_proc.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)
