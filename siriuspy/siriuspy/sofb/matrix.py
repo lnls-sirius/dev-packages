@@ -109,7 +109,6 @@ class EpicsMatrix(BaseMatrix):
             return False
         self.respmat_extended = matb
         self._save_respmat(matb)
-        self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
         return True
 
     def _set_respmat(self, mat):
@@ -354,6 +353,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
+        respmat_proc = _np.zeros(self.respmat.shape, dtype=float)
+        respmat_proc[sel_mat] = _np.dot(uuu*sing_vals, vvv)
+        self.run_callbacks('RespMat-RB', list(respmat_proc.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)
