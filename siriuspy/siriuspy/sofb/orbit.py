@@ -26,42 +26,6 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess_old(pvs, send_pipe, recv_pipe):
-    """Run subprocesses."""
-    # this timeout is needed to slip the orbit acquisition in case the
-    # loop starts in the middle of the BPMs updates
-    timeout = 15/1000  # in [s]
-
-    def callback(*_, **kwargs):
-        pvo = kwargs['cb_info'][1]
-        # pvo._args['timestamp'] = _time.time()
-        pvo.event.set()
-
-    pvsobj = []
-    for pvn in pvs:
-        pvo = _PV(pvn, connection_timeout=TIMEOUT)
-        pvo.event = _Event()
-        pvsobj.append(pvo)
-
-    for pvo in pvsobj:
-        pvo.wait_for_connection()
-        pvo.add_callback(callback)
-
-    while recv_pipe.recv():
-        out = []
-        tout = None
-        for pvo in pvsobj:
-            if pvo.connected and pvo.event.wait(timeout=tout):
-                tout = timeout
-                # out.append(pvo.timestamp)
-                out.append(pvo.value)
-            else:
-                out.append(_np.nan)
-        for pvo in pvsobj:
-            pvo.event.clear()
-        send_pipe.send(out)
-
-
 def run_subprocess(pvs, send_pipe, recv_pipe):
     """Run subprocesses."""
     max_spread = 25/1000  # in [s]
@@ -983,17 +947,6 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', _bn.nanstd(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', _bn.nanmin(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', _bn.nanmax(dorb))
-
-    def _get_orbit_from_processes_old(self):
-        nr_bpms = self._csorb.nr_bpms
-        for pipe in self._mypipes_send:
-            pipe.send(True)
-        out = []
-        for pipe in self._mypipes_recv:
-            out.extend(pipe.recv())
-        orbx = _np.array(out[:nr_bpms], dtype=float)
-        orby = _np.array(out[nr_bpms:], dtype=float)
-        return orbx, orby
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
