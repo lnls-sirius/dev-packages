@@ -975,6 +975,8 @@ class EpicsOrbit(BaseOrbit):
 
         for plane in ('X', 'Y'):
             orb = self.smooth_orb[plane]
+            if orb is None:
+                return
             dorb = orb - self.ref_orbs[plane]
             self.run_callbacks(f'SlowOrb{plane:s}-Mon', _np.array(orb))
             self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', _bn.nanmean(dorb))
