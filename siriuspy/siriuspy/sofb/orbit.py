@@ -7,6 +7,7 @@ from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread, Event as _Event
 from multiprocessing import Pipe as _Pipe
+import traceback as _traceback
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -942,7 +943,7 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('BufferCount-Mon', count)
         except Exception as err:
             self._update_log('ERR: ' + str(err))
-            _log.error(str(err))
+            _log.error(_traceback.format_exc())
 
     def _update_online_orbits(self):
         """."""
