@@ -588,6 +588,14 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'RespMat-Mon': {
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
+                'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'InvRespMat-Mon': {
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
+                'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'RespMatMode-Sel': {
                 'type': 'enum', 'value': self.RespMatMode.Full,
                 'enums': self.RespMatMode._fields},
@@ -602,10 +610,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.nr_svals,
                 'value': self.nr_svals*[0],
                 'unit': 'Singular values of the matrix in use'},
-            'InvRespMat-Mon': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
-                'value': self.matrix_size*[0],
-                'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
                 'type': 'int', 'count': self.nr_ch, 'value': self.nr_ch*[1],
                 'unit': 'CHs used in correction'},
