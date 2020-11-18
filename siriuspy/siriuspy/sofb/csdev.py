@@ -574,6 +574,8 @@ class SOFBTLines(ConstTLines):
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
                 'value': self.StsLblsOrb._fields},
+            'SlowOrbTimeout-Mon': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1001},
             })
         return self._add_prefix(dbase, prefix)
 

@@ -89,6 +89,7 @@ class EpicsOrbit(BaseOrbit):
 
         self._mode = self._csorb.SOFBMode.Offline
         self._sync_with_inj = False
+        self._sloworb_timeout = 0
         self.ref_orbs = {
             'X': _np.zeros(self._csorb.nr_bpms),
             'Y': _np.zeros(self._csorb.nr_bpms)}
@@ -911,7 +912,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self):
         """."""
-        posx, posy = self._get_orbit_from_processes()
+        posx, posy, nok = self._get_orbit_from_processes()
         posx /= 1000
         posy /= 1000
         nanx = _np.isnan(posx)
@@ -937,6 +938,10 @@ class EpicsOrbit(BaseOrbit):
             self.smooth_orb[plane] = orb
         self.new_orbit.set()
 
+        self._sloworb_timeout += nok
+        if self._sloworb_timeout >= 1000:
+            self._sloworb_timeout = 0
+        self.run_callbacks('SlowOrbTimeout-Mon', self._sloworb_timeout)
         for plane in ('X', 'Y'):
             orb = self.smooth_orb[plane]
             if orb is None:
@@ -958,11 +963,9 @@ class EpicsOrbit(BaseOrbit):
             nok.append(res[-1])
         for pipe in self._mypipes_send:
             pipe.send(True)
-        if any(nok):
-            _log.warning('orbit formation timed out.')
         orbx = _np.array(out[:nr_bpms], dtype=float)
         orby = _np.array(out[nr_bpms:], dtype=float)
-        return orbx, orby
+        return orbx, orby, any(nok)
 
     def _update_multiturn_orbits(self):
         """."""
