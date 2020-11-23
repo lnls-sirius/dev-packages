@@ -54,12 +54,15 @@ class TestPSSearch(TestCase):
         'conv_udc_2_bsmps',
         'conv_psname_2_udc',
         'conv_psname_2_dclink',
+        'conv_dclink_2_psname',
         'get_linac_ps_sinap2sirius_dict',
         'get_linac_ps_sirius2sinap_dict',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
+        'get_psname_2_dclink_dict',
+        'get_dclink_2_psname_dict',
     )
 
     sample = {
