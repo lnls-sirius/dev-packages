@@ -17,8 +17,8 @@ class PSSearch:
     # auxiliary BO dipole bsmp devices not to be considered
     # power supplies from standpoint of high level appplications
     _bo_dip_auxps = \
-        set('BO-Fam:PS-B-' + idx for idx in 
-        ('1a', '1b', '1c', '2a', '2b', '2c'))
+        set('BO-Fam:PS-B-' + idx for idx in
+            ('1a', '1b', '1c', '2a', '2b', '2c'))
 
     _splims_labels = list()
     _splims_ps_unit = list()
@@ -39,6 +39,7 @@ class PSSearch:
     _udc_2_bsmp_dict = dict()
     _bsmp_2_udc_dict = dict()
     _ps_2_dclink_dict = dict()
+    _dclink_2_ps_dict = dict()
 
     _lock = _Lock()
 
@@ -297,11 +298,18 @@ class PSSearch:
         return PSSearch._bsmp_2_udc_dict[psname]
 
     @staticmethod
-    def conv_psname_2_dclink(psname):
+    def conv_psname_2_dclink(psname, filter_auxps=True):
         """Return DCLink associated with a power supply."""
         # NOTE: lock is being used within private method.
-        PSSearch._reload_ps_2_dclink_dict()
-        return PSSearch._ps_2_dclink_dict[psname]
+        dict_aux = PSSearch.get_psname_2_dclink_dict(filter_auxps)
+        return dict_aux[psname]
+
+    @staticmethod
+    def conv_dclink_2_psname(dclink, filter_auxps=True):
+        """Return PS associated with a DCLink."""
+        # NOTE: lock is being used within private method.
+        dict_aux = PSSearch.get_dclink_2_psname_dict(filter_auxps)
+        return dict_aux[dclink]
 
     @staticmethod
     def get_linac_ps_sinap2sirius_dict():
@@ -348,6 +356,28 @@ class PSSearch:
         """Return labels in SP limits dictionary."""
         PSSearch._reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
+
+    @staticmethod
+    def get_psname_2_dclink_dict(filter_auxps=True):
+        """Return a dictionary of power supply and DCLinks."""
+        PSSearch._reload_ps_2_dclink_dict()
+        dict_aux = _copy.deepcopy(PSSearch._ps_2_dclink_dict)
+        if filter_auxps:
+            for psn in PSSearch._bo_dip_auxps:
+                dict_aux.pop(psn)
+        return dict_aux
+
+    @staticmethod
+    def get_dclink_2_psname_dict(filter_auxps=True):
+        """Return a dictionary of DCLink and power supplies."""
+        PSSearch._reload_ps_2_dclink_dict()
+        dict_aux = _copy.deepcopy(PSSearch._dclink_2_ps_dict)
+        if filter_auxps:
+            for dcl, list_aux in PSSearch._dclink_2_ps_dict.items():
+                for psn in PSSearch._bo_dip_auxps:
+                    if psn in list_aux:
+                        dict_aux[dcl].remove(psn)
+        return dict_aux
 
     # --- private methods ---
 
@@ -551,10 +581,17 @@ class PSSearch:
                     'could not read BSMP to DCLink map from web server')
             data, _ = _util.read_text_data(_web.bsmp_dclink_mapping())
             ps_2_dclink_dict = dict()
+            dclink_2_ps_dict = dict()
             for line in data:
                 dclinks = line[1:]
                 if dclinks[0] == 'None':
                     ps_2_dclink_dict[line[0]] = None
                 else:
                     ps_2_dclink_dict[line[0]] = dclinks
+                    for dcl in dclinks:
+                        if dcl not in dclink_2_ps_dict:
+                            dclink_2_ps_dict[dcl] = list()
+                        dclink_2_ps_dict[dcl].append(line[0])
+
             PSSearch._ps_2_dclink_dict = ps_2_dclink_dict
+            PSSearch._dclink_2_ps_dict = dclink_2_ps_dict
