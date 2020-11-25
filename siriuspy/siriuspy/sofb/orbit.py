@@ -7,6 +7,7 @@ from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread, Event as _Event
 from multiprocessing import Pipe as _Pipe
+import traceback as _traceback
 
 from epics import CAProcess as _Process
 import numpy as _np
@@ -23,42 +24,6 @@ from .bpms import BPM, TimingConfig, TIMEOUT
 
 class BaseOrbit(_BaseClass):
     """."""
-
-
-def run_subprocess_old(pvs, send_pipe, recv_pipe):
-    """Run subprocesses."""
-    # this timeout is needed to slip the orbit acquisition in case the
-    # loop starts in the middle of the BPMs updates
-    timeout = 15/1000  # in [s]
-
-    def callback(*_, **kwargs):
-        pvo = kwargs['cb_info'][1]
-        # pvo._args['timestamp'] = _time.time()
-        pvo.event.set()
-
-    pvsobj = []
-    for pvn in pvs:
-        pvo = _PV(pvn, connection_timeout=TIMEOUT)
-        pvo.event = _Event()
-        pvsobj.append(pvo)
-
-    for pvo in pvsobj:
-        pvo.wait_for_connection()
-        pvo.add_callback(callback)
-
-    while recv_pipe.recv():
-        out = []
-        tout = None
-        for pvo in pvsobj:
-            if pvo.connected and pvo.event.wait(timeout=tout):
-                tout = timeout
-                # out.append(pvo.timestamp)
-                out.append(pvo.value)
-            else:
-                out.append(_np.nan)
-        for pvo in pvsobj:
-            pvo.event.clear()
-        send_pipe.send(out)
 
 
 def run_subprocess(pvs, send_pipe, recv_pipe):
@@ -124,6 +89,7 @@ class EpicsOrbit(BaseOrbit):
 
         self._mode = self._csorb.SOFBMode.Offline
         self._sync_with_inj = False
+        self._sloworb_timeout = 0
         self.ref_orbs = {
             'X': _np.zeros(self._csorb.nr_bpms),
             'Y': _np.zeros(self._csorb.nr_bpms)}
@@ -942,11 +908,11 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('BufferCount-Mon', count)
         except Exception as err:
             self._update_log('ERR: ' + str(err))
-            _log.error(str(err))
+            _log.error(_traceback.format_exc())
 
     def _update_online_orbits(self):
         """."""
-        posx, posy = self._get_orbit_from_processes()
+        posx, posy, nok = self._get_orbit_from_processes()
         posx /= 1000
         posy /= 1000
         nanx = _np.isnan(posx)
@@ -972,25 +938,20 @@ class EpicsOrbit(BaseOrbit):
             self.smooth_orb[plane] = orb
         self.new_orbit.set()
 
+        self._sloworb_timeout += nok
+        if self._sloworb_timeout >= 1000:
+            self._sloworb_timeout = 0
+        self.run_callbacks('SlowOrbTimeout-Mon', self._sloworb_timeout)
         for plane in ('X', 'Y'):
             orb = self.smooth_orb[plane]
+            if orb is None:
+                return
             dorb = orb - self.ref_orbs[plane]
             self.run_callbacks(f'SlowOrb{plane:s}-Mon', _np.array(orb))
             self.run_callbacks(f'DeltaOrb{plane:s}Avg-Mon', _bn.nanmean(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Std-Mon', _bn.nanstd(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', _bn.nanmin(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', _bn.nanmax(dorb))
-
-    def _get_orbit_from_processes_old(self):
-        nr_bpms = self._csorb.nr_bpms
-        for pipe in self._mypipes_send:
-            pipe.send(True)
-        out = []
-        for pipe in self._mypipes_recv:
-            out.extend(pipe.recv())
-        orbx = _np.array(out[:nr_bpms], dtype=float)
-        orby = _np.array(out[nr_bpms:], dtype=float)
-        return orbx, orby
 
     def _get_orbit_from_processes(self):
         nr_bpms = self._csorb.nr_bpms
@@ -1002,11 +963,9 @@ class EpicsOrbit(BaseOrbit):
             nok.append(res[-1])
         for pipe in self._mypipes_send:
             pipe.send(True)
-        if any(nok):
-            _log.warning('orbit formation timed out.')
         orbx = _np.array(out[:nr_bpms], dtype=float)
         orby = _np.array(out[nr_bpms:], dtype=float)
-        return orbx, orby
+        return orbx, orby, any(nok)
 
     def _update_multiturn_orbits(self):
         """."""
