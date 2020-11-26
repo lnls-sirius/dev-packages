@@ -56,7 +56,7 @@ class RFGen(_DeviceNC):
         self['GeneralFreq-SP'] = value
 
 
-class RFLL(_DeviceNC):
+class LLRF(_DeviceNC):
     """."""
 
     class DEVICES:
@@ -68,38 +68,35 @@ class RFLL(_DeviceNC):
 
     _properties = (
         'PL:REF:S', 'SL:INP:PHS',
-        'mV:AL:REF:S', 'SL:REF:AMP',
+        'mV:AL:REF:S', 'SL:REF:AMP', 'RmpEnbl-Sts',
         'RmpPhsBot-SP', 'RmpPhsBot-RB',
         'RmpPhsTop-SP', 'RmpPhsTop-RB')
 
-    def __init__(self, devname, is_cw=None):
+    def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in RFLL.DEVICES.ALL:
+        if devname not in LLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        # set is_cw
-        self._is_cw = RFLL._set_is_cw(devname, is_cw)
-
         # call base class constructor
-        super().__init__(devname, properties=RFLL._properties)
+        super().__init__(devname, properties=LLRF._properties)
 
     @property
     def is_cw(self):
         """."""
-        return self._is_cw
+        return not self['RmpEnbl-Sts']
 
     @property
     def phase(self):
         """."""
-        if self._is_cw:
+        if self.is_cw:
             return self['SL:INP:PHS']
         return self['RmpPhsBot-RB']
 
     @phase.setter
     def phase(self, value):
         """."""
-        if self._is_cw:
+        if self.is_cw:
             self['PL:REF:S'] = value
         else:
             self['RmpPhsBot-SP'] = value
@@ -116,12 +113,6 @@ class RFLL(_DeviceNC):
 
     # --- private methods ---
 
-    @staticmethod
-    def _set_is_cw(devname, is_cw):
-        defcw = (devname == RFLL.DEVICES.BO)
-        value = defcw if is_cw is None else is_cw
-        return value
-
 
 class RFPowMon(_DeviceNC):
     """."""
@@ -130,46 +121,29 @@ class RFPowMon(_DeviceNC):
         """Devices names."""
 
         BO = 'BO-05D:RF-P5Cav'
-        SI = 'RA-RaSIA01:RF-LLRFCalSys'
+        SI = 'SI-02SB:RF-P7Cav'
         ALL = (BO, SI)
 
     _properties = {
-        DEVICES.SI: ('PwrW1-Mon', ),
+        DEVICES.SI: ('PwrCell4-Mon', ),
         DEVICES.BO: ('Cell3PwrTop-Mon', 'Cell3Pwr-Mon')}
 
-    def __init__(self, devname, is_cw=None):
+    def __init__(self, devname):
         """."""
         # check if device exists
         if devname not in RFPowMon.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        # set is_cw
-        self._is_cw = self._set_is_cw(devname, is_cw)
-
         # call base class constructor
         super().__init__(devname, properties=RFPowMon._properties[devname])
 
-    @property
-    def is_cw(self):
-        """."""
-        return self._is_cw
-
-    @property
-    def power(self):
+    def get_power(self, is_cw=True):
         """."""
         if self._devname == RFPowMon.DEVICES.BO:
-            if self.is_cw:
+            if is_cw:
                 return self['Cell3PwrTop-Mon']
             return self['Cell3Pwr-Mon']
-        return self['PwrW1-Mon']
-
-    # --- private methods ---
-
-    @staticmethod
-    def _set_is_cw(devname, is_cw):
-        defcw = (devname == RFPowMon.DEVICES.BO)
-        value = defcw if is_cw is None else is_cw
-        return value
+        return self['PwrCell4-Mon']
 
 
 class RFCav(_Devices):
@@ -179,10 +153,10 @@ class RFCav(_Devices):
         """Devices names."""
 
         BO = 'BO-05D:RF-P5Cav'
-        SI = 'RA-RaSIA01:RF-LLRFCalSys'
+        SI = 'SI-02SB:RF-P7Cav'
         ALL = (BO, SI)
 
-    def __init__(self, devname, is_cw=None):
+    def __init__(self, devname):
         """."""
         # check if device exists
         if devname not in RFCav.DEVICES.ALL:
@@ -190,12 +164,12 @@ class RFCav(_Devices):
 
         rfgen = RFGen()
         if devname == RFCav.DEVICES.SI:
-            rfll = RFLL(RFLL.DEVICES.SI, is_cw)
-            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI, is_cw)
+            llrf = LLRF(LLRF.DEVICES.SI)
+            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI)
         elif devname == RFCav.DEVICES.BO:
-            rfll = RFLL(RFLL.DEVICES.BO, is_cw)
-            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI, is_cw)
-        devices = (rfgen, rfll, rfpowmon)
+            llrf = LLRF(LLRF.DEVICES.BO)
+            rfpowmon = RFPowMon(RFPowMon.DEVICES.BO)
+        devices = (rfgen, llrf, rfpowmon)
 
         # call base class constructor
         super().__init__(devname, devices)
@@ -203,7 +177,12 @@ class RFCav(_Devices):
     @property
     def is_cw(self):
         """."""
-        return self.devices[0].is_cw
+        return self.dev_llrf.is_cw
+
+    @property
+    def power(self):
+        """."""
+        return self.dev_rfpowmon.get_power(self.is_cw)
 
     @property
     def dev_rfgen(self):
@@ -211,8 +190,8 @@ class RFCav(_Devices):
         return self.devices[0]
 
     @property
-    def dev_rfll(self):
-        """Return RFLL device."""
+    def dev_llrf(self):
+        """Return LLRF device."""
         return self.devices[1]
 
     @property
@@ -222,12 +201,12 @@ class RFCav(_Devices):
 
     def cmd_set_voltage(self, value, timeout=10):
         """."""
-        self.dev_rfll.voltage = value
+        self.dev_llrf.voltage = value
         self._wait('voltage', timeout=timeout)
 
     def cmd_set_phase(self, value, timeout=10):
         """."""
-        self.dev_rfll.phase = value
+        self.dev_llrf.phase = value
         self._wait('phase', timeout=timeout)
 
     def cmd_set_frequency(self, value, timeout=10):
@@ -244,14 +223,14 @@ class RFCav(_Devices):
             _time.sleep(0.1)
             if propty == 'phase':
                 if self.is_cw:
-                    phase_sp = self.dev_rfll['PL:REF:S']
+                    phase_sp = self.dev_llrf['PL:REF:S']
                 else:
-                    phase_sp = self.dev_rfll['RmpPhsBot-SP']
-                if abs(self.dev_rfll.phase - phase_sp) < 0.1:
+                    phase_sp = self.dev_llrf['RmpPhsBot-SP']
+                if abs(self.dev_llrf.phase - phase_sp) < 0.1:
                     break
             elif propty == 'voltage':
-                voltage_sp = self.dev_rfll['mV:AL:REF:S']
-                if abs(self.dev_rfll.voltage - voltage_sp) < 0.1:
+                voltage_sp = self.dev_llrf['mV:AL:REF:S']
+                if abs(self.dev_llrf.voltage - voltage_sp) < 0.1:
                     break
             elif propty == 'frequency':
                 freq_sp = self.dev_rfgen['GeneralFreq-SP']
