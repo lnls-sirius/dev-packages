@@ -9,6 +9,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple, \
 
 from .device import Device as _Device, Devices as _Devices
 from .dcct import DCCT
+from .rf import RFCav
 
 
 class BunchbyBunch(_Devices):
@@ -24,6 +25,7 @@ class BunchbyBunch(_Devices):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
+        self.rfcav = RFCav(RFCav.DEVICES.SI)
         self.info = SystemInfo(devname)
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
@@ -35,7 +37,8 @@ class BunchbyBunch(_Devices):
         self.fbe = FrontBackEnd()
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct]
+            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
+            self.rfcav]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
@@ -67,6 +70,14 @@ class BunchbyBunch(_Devices):
             acqtype=acqtype, downsample=acq.downsample,
             data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
             harmonic_number=self.info.harmonic_number,
+            fb_set0=self.coeffs.set0, fb_set1=self.coeffs.set1,
+            fb_set0_desc=self.coeffs.set0_desc,
+            fb_set1_desc=self.coeffs.set1_desc,
+            fb_downsample=self.feedback.downsample,
+            fb_state=self.feedback.loop_state,
+            fb_shift_gain=self.feedback.shift_gain,
+            fb_setsel=self.feedback.coeff_set,
+            fb_growdamp_state=self.feedback.grow_damp_state,
             growth_time=acq.growthtime, acq_time=acq.acqtime,
             hold_time=acq.holdtime, post_time=acq.posttime,
             )
@@ -172,6 +183,26 @@ class BunchbyBunch(_Devices):
             print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.coeffs.edit_phase = init_val
         self.coeffs.cmd_edit_apply()
+        return _np.array(mon_values)
+
+    def sweep_rf_phase(self, values, wait=2, mon_type='mean'):
+        """Sweep RF Phase for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'RF Phase', 'SRAM Mean'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        llrf = self.rfcav.dev_llrf
+        init_val = llrf.phase
+        for i, val in enumerate(values):
+            self.rfcav.cmd_set_phase(val)
+            _time.sleep(wait)
+            if mon_type.lower() in 'mean':
+                mon_val = self.sram.data_mean
+            else:
+                mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+        llrf.value = init_val
         return _np.array(mon_values)
 
 
