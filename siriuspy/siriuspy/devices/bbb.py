@@ -60,13 +60,13 @@ class BunchbyBunch(_Devices):
             raise NotImplementedError(devname)
         return devname
 
-    def save_raw_data(self, fname, acqtype='SRAM', overwrite=False):
-        """Save Raw data to file."""
+    def get_raw_data(self, acqtype='SRAM'):
+        """Get Raw data to file."""
         acqtype = acqtype.upper()
         acq = self.sram if acqtype in 'SRAM' else self.bram
-
-        data = dict(
+        return dict(
             current=self.dcct.current,
+            time=_time.time(),
             acqtype=acqtype, downsample=acq.downsample,
             data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
             harmonic_number=self.info.harmonic_number,
@@ -81,7 +81,12 @@ class BunchbyBunch(_Devices):
             growth_time=acq.growthtime, acq_time=acq.acqtime,
             hold_time=acq.holdtime, post_time=acq.posttime,
             )
-        _save_pickle(data, fname, overwrite=overwrite)
+
+    def save_raw_data(self, fname, acqtype='SRAM', overwrite=False):
+        """Save Raw data to file."""
+        _save_pickle(
+            self.get_raw_data(acqtype=acqtype), fname,
+            overwrite=overwrite)
 
     @staticmethod
     def load_raw_data(fname):
