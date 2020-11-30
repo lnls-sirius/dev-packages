@@ -30,6 +30,8 @@ PUB_INTERFACE = (
     'Const',
     'get_ps_propty_database',
     'get_conv_propty_database',
+    'get_ps_interlocks',
+    'get_ps_modules',
 )
 
 
