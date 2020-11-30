@@ -19,7 +19,7 @@ class TestModule(TestCase):
     def _test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                                ps_search, TestModule.public_interface)
+            ps_search, TestModule.public_interface)
         self.assertTrue(valid)
 
 
@@ -196,11 +196,11 @@ class TestPSSearch(TestCase):
 
     def test_get_splims(self):
         """Test get_splims."""
-        l1 = PSSearch.get_splims(
-             pstype='si-quadrupole-q30-trim', label='lolo')
-        l2 = PSSearch.get_splims(
-             pstype='si-quadrupole-q30-trim', label='hihi')
-        self.assertGreater(l2, l1)
+        lim1 = PSSearch.get_splims(
+            pstype='si-quadrupole-q30-trim', label='lolo')
+        lim2 = PSSearch.get_splims(
+            pstype='si-quadrupole-q30-trim', label='hihi')
+        self.assertGreater(lim2, lim1)
         # exceptions
         self.assertRaises(
             KeyError, PSSearch.get_splims,
@@ -211,25 +211,25 @@ class TestPSSearch(TestCase):
 
     def test_get_pstype_dict(self):
         """Test get_pstype_dict."""
-        d = PSSearch.get_pstype_dict()
-        self.assertIsInstance(d, dict)
-        pstypes_d = sorted(list(d.keys()))
+        dict_ = PSSearch.get_pstype_dict()
+        self.assertIsInstance(dict_, dict)
+        pstypes_d = sorted(list(dict_.keys()))
         pstypes = sorted(PSSearch.get_pstype_names())
         self.assertEqual(pstypes_d, pstypes)
 
     def test_get_bbbname_dict(self):
         """Test get_bbbname_dict."""
-        d = PSSearch.get_bbbname_dict()
-        self.assertIsInstance(d, dict)
+        dict_ = PSSearch.get_bbbname_dict()
+        self.assertIsInstance(dict_, dict)
         for bbbname in TestPSSearch.sample_bbb:
-            self.assertTrue(bbbname in d)
+            self.assertTrue(bbbname in dict_)
 
     def test_get_polarities(self):
         """Test get_polarities."""
         polarities = PSSearch.get_polarities()
         self.assertIsInstance(polarities, list)
-        for p in polarities:
-            self.assertIsInstance(p, str)
+        for pol in polarities:
+            self.assertIsInstance(pol, str)
         self.assertIn('bipolar', polarities)
         self.assertIn('monopolar', polarities)
 
@@ -277,14 +277,14 @@ class TestPSSearch(TestCase):
 
     def test_conv_psname_2_psmodel(self):
         """Test conv_psname_2_psmodel."""
-        for ps, pstype in TestPSSearch.sample.items():
-            model = PSSearch.conv_psname_2_psmodel(psname=ps)
+        for psn in TestPSSearch.sample:
+            model = PSSearch.conv_psname_2_psmodel(psname=psn)
             self.assertIsInstance(model, str)
 
     def test_conv_psname_2_siggenconf(self):
         """Test conv_psname_2_siggenconf."""
-        for ps, pstype in TestPSSearch.sample.items():
-            siggenconf = PSSearch.conv_psname_2_siggenconf(psname=ps)
+        for psn in TestPSSearch.sample:
+            siggenconf = PSSearch.conv_psname_2_siggenconf(psname=psn)
             self.assertIsInstance(siggenconf, Signal)
 
     def test_conv_bbbname_2_psnames(self):

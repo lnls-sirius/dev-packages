@@ -86,14 +86,13 @@ class TestPwrSupplyCSDev(TestCase):
         """Define setup method."""
         def get_splims(pstype, alarm):
             dbase = {'lolo': 0.0, 'low': 1.0, 'lolim': 2.0, 'hilim': 3.0,
-                  'high': 4.0, 'hihi': 5.0}
+                     'high': 4.0, 'hihi': 5.0}
             return dbase[alarm]
 
         def get_splims_unit(psmodel):
             if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S', 'FAC_2P4S'):
                 return ['A', 'Ampere']
-            else:
-                return ['V', 'Voltage']
+            return ['V', 'Voltage']
 
         if _MOCK_FLAG:
             _pssearch_patcher = mock.patch(

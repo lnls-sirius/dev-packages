@@ -181,8 +181,8 @@ class PSSearch:
         """Return sorted list of power supply polarities."""
         with PSSearch._lock:
             PSSearch._reload_pstype_dict()
-        p = [datum[0] for datum in PSSearch._pstype_dict.values()]
-        return sorted(set(p))
+        pol = [datum[0] for datum in PSSearch._pstype_dict.values()]
+        return sorted(set(pol))
 
     @staticmethod
     def conv_psname_2_pstype(psname):
