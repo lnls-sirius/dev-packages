@@ -5,7 +5,7 @@ import urllib.request as _urllib_request
 from .. import envars as _envars
 
 
-_TIMEOUT = 1.0  # [seconds]
+_TIMEOUT = 5.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'
 _MAGNET_FOLDER = '/magnet/'
 _PS_FOLDER = '/pwrsupply/'
