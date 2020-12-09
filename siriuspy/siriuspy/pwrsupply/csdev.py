@@ -807,72 +807,6 @@ def _get_ps_common_propty_database():
 
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
 
-    }
-    return dbase
-
-
-def _get_ps_basic_propty_database():
-    """Return database entries to all power-supply-like devices."""
-    dbase = _get_ps_common_propty_database()
-    dbase.update({
-        'Current-SP': {'type': 'float', 'value': 0.0,
-                       'prec': PS_CURRENT_PRECISION},
-        'Current-RB': {'type': 'float', 'value': 0.0,
-                       'prec': PS_CURRENT_PRECISION},
-        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
-                           'prec': PS_CURRENT_PRECISION},
-        'Current-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': PS_CURRENT_PRECISION},
-        # Commands
-        'Abort-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'SyncPulse-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        # Cycle
-        'CycleEnbl-Mon': {'type': 'int', 'value': 0},
-        'CycleType-Sel': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
-                          'value': DEFAULT_SIGGEN_CONFIG[0]},
-        'CycleType-Sts': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
-                          'value': DEFAULT_SIGGEN_CONFIG[0]},
-        'CycleNrCycles-SP': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
-        'CycleNrCycles-RB': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
-        'CycleFreq-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
-                         'unit': 'Hz', 'prec': 4},
-        'CycleFreq-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
-                         'unit': 'Hz', 'prec': 4},
-        'CycleAmpl-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3],
-                         'prec': PS_CURRENT_PRECISION},
-        'CycleAmpl-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3],
-                         'prec': PS_CURRENT_PRECISION},
-        'CycleOffset-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4],
-                           'prec': PS_CURRENT_PRECISION},
-        'CycleOffset-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4],
-                           'prec': PS_CURRENT_PRECISION},
-        'CycleAuxParam-SP': {'type': 'float', 'count': 4,
-                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
-        'CycleAuxParam-RB': {'type': 'float', 'count': 4,
-                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
-        'CycleIndex-Mon': {'type': 'int', 'value': 0},
-        # Wfm - UDC
-        'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
-                   'value': list(DEFAULT_WFM),
-                   'prec': PS_CURRENT_PRECISION},
-        'Wfm-RB': {'type': 'float', 'count': len(DEFAULT_WFM),
-                   'value': list(DEFAULT_WFM),
-                   'prec': PS_CURRENT_PRECISION},
-        'WfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
-                       'value': list(DEFAULT_WFM),
-                       'prec': PS_CURRENT_PRECISION},
-        'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
-                    'value': list(DEFAULT_WFM),
-                    'prec': PS_CURRENT_PRECISION},
-        # 'WfmMonAcq-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
-        #                   'value': Const.DsblEnbl.Dsbl},
-        'WfmIndex-Mon': {'type': 'int', 'value': 0},
-        'WfmSyncPulseCount-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'WfmUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'WfmUpdateAuto-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
-                              'value': Const.DsblEnbl.Dsbl},
-        'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
-                              'value': Const.DsblEnbl.Dsbl},
         # Power Supply Parameters
         # --- PS ---
         'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
@@ -1001,6 +935,72 @@ def _get_ps_basic_propty_database():
         'ParamScopeSamplingFreq-Cte': {
             'type': 'float', 'value': 0.0, 'unit': 'Hz'},
         'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
+    }
+    return dbase
+
+
+def _get_ps_basic_propty_database():
+    """Return database entries to all power-supply-like devices."""
+    dbase = _get_ps_common_propty_database()
+    dbase.update({
+        'Current-SP': {'type': 'float', 'value': 0.0,
+                       'prec': PS_CURRENT_PRECISION},
+        'Current-RB': {'type': 'float', 'value': 0.0,
+                       'prec': PS_CURRENT_PRECISION},
+        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
+                           'prec': PS_CURRENT_PRECISION},
+        'Current-Mon': {'type': 'float', 'value': 0.0,
+                        'prec': PS_CURRENT_PRECISION},
+        # Commands
+        'Abort-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'SyncPulse-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        # Cycle
+        'CycleEnbl-Mon': {'type': 'int', 'value': 0},
+        'CycleType-Sel': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
+                          'value': DEFAULT_SIGGEN_CONFIG[0]},
+        'CycleType-Sts': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
+                          'value': DEFAULT_SIGGEN_CONFIG[0]},
+        'CycleNrCycles-SP': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
+        'CycleNrCycles-RB': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
+        'CycleFreq-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
+                         'unit': 'Hz', 'prec': 4},
+        'CycleFreq-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
+                         'unit': 'Hz', 'prec': 4},
+        'CycleAmpl-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3],
+                         'prec': PS_CURRENT_PRECISION},
+        'CycleAmpl-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3],
+                         'prec': PS_CURRENT_PRECISION},
+        'CycleOffset-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4],
+                           'prec': PS_CURRENT_PRECISION},
+        'CycleOffset-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4],
+                           'prec': PS_CURRENT_PRECISION},
+        'CycleAuxParam-SP': {'type': 'float', 'count': 4,
+                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
+        'CycleAuxParam-RB': {'type': 'float', 'count': 4,
+                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
+        'CycleIndex-Mon': {'type': 'int', 'value': 0},
+        # Wfm - UDC
+        'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
+                   'value': list(DEFAULT_WFM),
+                   'prec': PS_CURRENT_PRECISION},
+        'Wfm-RB': {'type': 'float', 'count': len(DEFAULT_WFM),
+                   'value': list(DEFAULT_WFM),
+                   'prec': PS_CURRENT_PRECISION},
+        'WfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
+                       'value': list(DEFAULT_WFM),
+                       'prec': PS_CURRENT_PRECISION},
+        'Wfm-Mon': {'type': 'float', 'count': len(DEFAULT_WFM),
+                    'value': list(DEFAULT_WFM),
+                    'prec': PS_CURRENT_PRECISION},
+        # 'WfmMonAcq-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+        #                   'value': Const.DsblEnbl.Dsbl},
+        'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        'WfmSyncPulseCount-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'WfmUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'WfmUpdateAuto-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                              'value': Const.DsblEnbl.Dsbl},
+        'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                              'value': Const.DsblEnbl.Dsbl},
     })
 
     return dbase
