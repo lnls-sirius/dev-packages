@@ -886,74 +886,69 @@ def _get_ps_basic_propty_database():
                                    'value': _np.array([0.0, ] * 4)},
         'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
         'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommEthIP-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommEthSubnetMask-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommBuzVol-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamCommEthIP-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommEthSubnetMask-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommBuzVol-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
         # --- Control ---
-        'ParamCtrlFreqCtrlISR-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamCtrlFreqTimeSlicer-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'Hz'},
-        'ParamCtrlLoopState-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': ''},
-        'ParamCtrlMaxRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMinRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMaxRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
-        'ParamCtrlMinRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
+        'ParamCtrlFreqCtrlISR-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamCtrlFreqTimeSlicer-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamCtrlLoopState-Cte': {
+            'type': 'float', 'value': 0.0},
+        'ParamCtrlMaxRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMinRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMaxRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
+        'ParamCtrlMinRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
         # --- PWM ---
-        'ParamPWMFreq-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamPWMDeadTime-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'ns'},
-        'ParamPWMMaxDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMaxDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMLimDutyShare-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamPWMDeadTime-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'ns'},
+        'ParamPWMMaxDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMinDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMaxDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMMinDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        'ParamPWMLimDutyShare-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
         # --- Analog Variables ---
-        'ParamAnalogMax-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
-        'ParamAnalogMin-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
+        'ParamAnalogMax-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
+        'ParamAnalogMin-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
         # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamHardIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamHardIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamHardIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
     })
 
     return dbase
