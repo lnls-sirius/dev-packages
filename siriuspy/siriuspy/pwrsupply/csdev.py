@@ -929,6 +929,55 @@ def _get_ps_basic_propty_database():
             'type': 'float', 'value': 0.0, 'unit': '%'},
         'ParamPWMLimDutyShare-Cte': {
             'type': 'float', 'value': 0.0, 'unit': '%'},
+        # ----- HRADC -----
+        'ParamHRADCNrBoards-Cte': {'type': 'float', 'value': 0.0},
+        'ParamHRADCSpiClk-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'MHz'},
+        'ParamHRADCFreqSampling-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamHRADCEnableHeater-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCEnableRails-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOutput-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- SigGen -----
+        'ParamSigGenType-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenNumCycles-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamSigGenAmplitude-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenOffset-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenAuxParam-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- WfmRef -----
+        'ParamWfmRefId-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefSyncMode-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefFreq-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamWfmRefGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
+        'ParamWfmRefOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
         # --- Analog Variables ---
         'ParamAnalogMax-Cte': {
             'type': 'float', 'count': 64,
@@ -949,6 +998,9 @@ def _get_ps_basic_propty_database():
         'ParamSoftIntlkResetTime-Cte': {
             'type': 'float', 'count': 32,
             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamScopeSamplingFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
     })
 
     return dbase
