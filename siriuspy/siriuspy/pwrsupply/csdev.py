@@ -880,7 +880,8 @@ def _get_ps_basic_propty_database():
         'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
         # --- COMM ---
         'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommRS485BaudRate-Cte': {
+            'type': 'float', 'value': 0.0, 'units': 'bps'},
         'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
                                    'value': _np.array([0.0, ] * 4)},
         'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
