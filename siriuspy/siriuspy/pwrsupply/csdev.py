@@ -6,6 +6,7 @@ import numpy as _np
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
 
+from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
 
@@ -55,14 +56,32 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     INTERFACE = ('Remote', 'Local', 'PCHost')
-    MODELS = ('Empty',
-              'FBP', 'FBP_DCLink', 'FAC_DCDC',
-              'FAC_2S_ACDC', 'FAC_2S_DCDC',
-              'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-              'FAP', 'FAP_4P', 'FAP_2P2S',
-              'FBP_FOFB',
-              'Commercial',
-              'FP')
+    INTERFACE = ['', ] * 3
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_REMOTE] = 'Remote'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_LOCAL] = 'Local'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_PCHOST] = 'PCHost'
+    INTERFACE = tuple(INTERFACE)
+
+    MODELS = ['', ] * 32
+    MODELS[_ConstPSBSMP.E_PS_MODEL_EMPTY] = 'Empty'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP] = 'FBP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP_DCLink] = 'FBP_DCLink'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_ACDC] = 'FAC_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC] = 'FAC_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_ACDC] = 'FAC_2S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_DCDC] = 'FAC_2S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_ACDC] = 'FAC_2P4S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_DCDC] = 'FAC_2P4S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP] = 'FAP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_4P] = 'FAP_4P'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC_EMA] = 'FAC_DCDC_EMA'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_2P2S] = 'FAP_2P2S'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_IMAS] = 'FAP_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_ACDC_IMAS] = 'FAC_2P_ACDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_DCDC_IMAS] = 'FAC_2P_DCDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_UNINITIALIZED] = 'Uninitialized'
+    MODELS = tuple(MODELS)
+
     PWRSTATE_SEL = _csdev.ETypes.OFF_ON
     PWRSTATE_STS = ('Off', 'On', 'Initializing')
     STATES = ('Off', 'Interlock', 'Initializing',
@@ -684,11 +703,24 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    CYCLE_TYPES = (
-        'Sine', 'DampedSine', 'Trapezoidal',
-        'DampedSquaredSine', 'Square'
-        )
-    SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
+
+    CYCLE_TYPES = ['', ] * 5
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SINE] = 'Sine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSINE] = 'DampedSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_TRAPEZOIDAL] = 'Trapezoidal'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSQUAREDSINE] = \
+        'DampedSquaredSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SQUARE] = 'Square'
+    CYCLE_TYPES = tuple(CYCLE_TYPES)
+
+    WFMREF_SYNCMODE = ['', ] * 3
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE] = \
+        'SampleBySample'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE_ONECYCLE] = \
+        'SampleBySample_OneCycle'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_ONESHOT] = 'OneShot'
+    WFMREF_SYNCMODE = tuple(WFMREF_SYNCMODE)
+
     LINAC_INTLCK_WARN = (
         'LoadI 0C Shutdown', 'LoadI 0C Interlock',
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
@@ -727,7 +759,7 @@ class Const(_csdev.Const):
     OpMode = _csdev.Const.register('OpMode', _et.OPMODES)
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
-    SyncMode = _csdev.Const.register('SyncMode', _et.SYNC_MODES)
+    WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
 
 
 # --- Main power supply database functions ---
