@@ -55,7 +55,6 @@ PS_LI_INTLK_THRS = 64
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    INTERFACE = ('Remote', 'Local', 'PCHost')
     INTERFACE = ['', ] * 3
     INTERFACE[_ConstPSBSMP.E_INTERFACE_REMOTE] = 'Remote'
     INTERFACE[_ConstPSBSMP.E_INTERFACE_LOCAL] = 'Local'
