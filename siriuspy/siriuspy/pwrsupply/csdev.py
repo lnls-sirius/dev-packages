@@ -61,7 +61,7 @@ class ETypes(_csdev.ETypes):
     INTERFACE[_ConstPSBSMP.E_INTERFACE_PCHOST] = 'PCHost'
     INTERFACE = tuple(INTERFACE)
 
-    MODELS = ['', ] * 32
+    MODELS = ['Field' + str(i) for i in range(32)]
     MODELS[_ConstPSBSMP.E_PS_MODEL_EMPTY] = 'Empty'
     MODELS[_ConstPSBSMP.E_PS_MODEL_FBP] = 'FBP'
     MODELS[_ConstPSBSMP.E_PS_MODEL_FBP_DCLink] = 'FBP_DCLink'
