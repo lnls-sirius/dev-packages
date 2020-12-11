@@ -54,13 +54,14 @@ def get_dcct_database():
 
         # Measurement Reliability
         'ReliableMeas-Mon': {'type': 'int',
-                             'hihi': 7, 'high': 1, 'hilim': 7,
+                             'hihi': 15, 'high': 1, 'hilim': 15,
                              'lolim': 0, 'low': 0, 'lolo': 0},
-        'ReliableMeasLabels-Cte': {'type': 'string', 'count': 3},
+        'ReliableMeasLabels-Cte': {'type': 'string', 'count': 4},
 
         # Measurement Trigger Source and Timer Configuration
         'Enbl-Sel': {'type': 'enum', 'enums': _et.OFF_ON},
         'Enbl-Sts': {'type': 'enum', 'enums': _et.OFF_ON},
+        'Abort-Cmd': {'type': 'int', 'value': 0},
         'MeasTrg-Sel': {'type': 'enum', 'enums': _et.MEASTRG_SEL},
         'MeasTrg-Sts': {'type': 'enum', 'enums': _et.MEASTRG_STS},
 
