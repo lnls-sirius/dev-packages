@@ -5,8 +5,8 @@ import numpy as _np
 
 from ...namesys import SiriusPVName as _PVName
 from ...search import PSSearch as _PSSearch
-from ...pwrsupply.csdev import Const as _PSConst
-from ...pwrsupply.csdev import ETypes as _ETypes
+from ...pwrsupply.csdev import Const as _PSConst, ETypes as _ETypes, \
+    PS_LI_INTLK_THRS as _PS_LI_INTLK_THRS
 
 
 class PSDiffPV:
@@ -126,7 +126,7 @@ class PSStatusPV:
 
             # interlocks?
             intlk = computed_pv.pvs[PSStatusPV.INTRLCK_LI].value
-            if intlk > 55 or intlk is None:
+            if intlk > _PS_LI_INTLK_THRS or intlk is None:
                 value |= PSStatusPV.BIT_INTERLOCK
 
         return {'value': value}
