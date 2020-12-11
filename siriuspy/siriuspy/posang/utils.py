@@ -38,7 +38,7 @@ class HandleConfigNameFile:
 
 def get_default_config_name(tl, corrs_type):
     """Get default config name."""
-    if tl == 'TB':
+    if tl.upper() == 'TB':
         return 'Default_CHSept'
     else:
         if corrs_type == 'sept-sept':

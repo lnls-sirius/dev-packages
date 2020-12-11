@@ -40,12 +40,12 @@ class HandleConfigNameFile:
 def get_default_config_name(acc, opticsparam):
     """Get default config name."""
     if opticsparam == 'tune':
-        if acc == 'BO':
+        if acc.upper() == 'BO':
             return 'BO.V05.04.M0'
         else:
             return 'SI.V24.04_S05.01'
     elif opticsparam == 'chrom':
-        if acc == 'BO':
+        if acc.upper() == 'BO':
             return 'BO.V05.04.M0'
         else:
             return 'SI.V24.04_S05.01'
