@@ -11,7 +11,7 @@ from .. import csdev as _csdev
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
+    DCCTSELECTIONTYP = ('DCCT13C4', 'DCCT14C4')
     BUFFAUTORSTTYP = ('Off', 'DCurrCheck')
     FITTYP = ('Exponential', 'Linear')
 

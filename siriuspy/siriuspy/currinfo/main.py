@@ -459,9 +459,10 @@ class SICurrInfoApp(_CurrInfoApp):
         status = False
         if reason == 'DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
-                self._update_dcct_mode(value)
-                self.run_callbacks('DCCT-Sts', self._dcct_mode)
-                status = True
+                done = self._update_dcct_mode(value)
+                if done:
+                    self.run_callbacks('DCCT-Sts', self._dcct_mode)
+                    status = True
         elif reason == 'DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.run_callbacks('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
@@ -470,14 +471,15 @@ class SICurrInfoApp(_CurrInfoApp):
 
     # ----- handle writes -----
     def _update_dcct_mode(self, value):
-        if self._dcct_mode != value:
+        if self._dcct_mode == value:
+            return False
+        if value in [_Const.DCCT.DCCT13C4, _Const.DCCT.DCCT14C4]:
             self._dcct_mode = value
+            return True
+        return False
 
     def _update_dcct_mode_by_relblmeas(self):
-        if (self._reliablemeas_13c4_value == 0 and
-                self._reliablemeas_14c4_value == 0):
-            mode = _Const.DCCT.Avg
-        elif self._reliablemeas_13c4_value == 0:
+        if self._reliablemeas_13c4_value == 0:
             mode = _Const.DCCT.DCCT13C4
         elif self._reliablemeas_14c4_value == 0:
             mode = _Const.DCCT.DCCT14C4
@@ -519,10 +521,7 @@ class SICurrInfoApp(_CurrInfoApp):
         elif '14C4' in pvname:
             self._storedebeam_14c4_value = value
 
-        if self._dcct_mode == _Const.DCCT.Avg:
-            self._storedebeam_value = (self._storedebeam_13c4_value and
-                                       self._storedebeam_14c4_value)
-        elif self._dcct_mode == _Const.DCCT.DCCT13C4:
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
             self._storedebeam_value = self._storedebeam_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             self._storedebeam_value = self._storedebeam_14c4_value
@@ -548,7 +547,7 @@ class SICurrInfoApp(_CurrInfoApp):
         _ = timestamp
         # choose current PV
         buffer = self._current_13c4_buffer \
-            if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
+            if self._dcct_mode == _Const.DCCT.DCCT13C4 \
             else self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
         timestamp_dq = _np.asarray(timestamp_dq)
@@ -572,13 +571,7 @@ class SICurrInfoApp(_CurrInfoApp):
     # ----- auxiliar methods -----
 
     def _get_current(self):
-        if self._dcct_mode == _Const.DCCT.Avg:
-            if (self._current_13c4_value is not None and
-                    self._current_14c4_value is not None):
-                current = (self._current_13c4_value+self._current_14c4_value)/2
-            else:
-                current = None
-        elif self._dcct_mode == _Const.DCCT.DCCT13C4:
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
             current = self._current_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             current = self._current_14c4_value
