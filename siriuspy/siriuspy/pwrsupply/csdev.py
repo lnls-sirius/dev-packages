@@ -885,15 +885,15 @@ def _get_ps_common_propty_database():
         'ParamPWMDeadTime-Cte': {
             'type': 'float', 'value': 0.0, 'unit': 'ns'},
         'ParamPWMMaxDuty-Cte': {
-            'type': 'float', 'value': 0.0, 'unit': '%'},
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
         'ParamPWMMinDuty-Cte': {
-            'type': 'float', 'value': 0.0, 'unit': '%'},
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
         'ParamPWMMaxDutyOpenLoop-Cte': {
-            'type': 'float', 'value': 0.0, 'unit': '%'},
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
         'ParamPWMMinDutyOpenLoop-Cte': {
-            'type': 'float', 'value': 0.0, 'unit': '%'},
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
         'ParamPWMLimDutyShare-Cte': {
-            'type': 'float', 'value': 0.0, 'unit': '%'},
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
         # ----- HRADC -----
         'ParamHRADCNrBoards-Cte': {'type': 'float', 'value': 0.0},
         'ParamHRADCSpiClk-Cte': {
