@@ -17,21 +17,23 @@ _TIMESYS_FOLDER = '/timesys/'
 
 def read_url(url, timeout=_TIMEOUT):
     """Read URL from server."""
-    try:
-        url = _envars.SRVURL_CSCONSTS + url
-        response = _urllib_request.urlopen(url, timeout=timeout)
-        data = response.read()
-        text = data.decode('utf-8')
-    except Exception:
-        # try redundancy server
+
+    # build list with servers
+    urls = [_envars.SRVURL_CSCONSTS + url, _envars.SRVURL_CSCONSTS_2 + url]
+    connected = False
+    for url_ in urls:
         try:
-            url = _envars.SRVURL_CSCONSTS_2 + url
-            response = _urllib_request.urlopen(url, timeout=timeout)
+            # try a new server
+            response = _urllib_request.urlopen(url_, timeout=timeout)
             data = response.read()
             text = data.decode('utf-8')
+            connected = True
+            break
         except Exception:
-            errtxt = 'Error reading url "' + url + '"!'
-            raise Exception(errtxt)
+            # could not connect with current server
+            print('Error reading url "' + url_ + '"!')
+    if not connected:
+        raise Exception('Error reading web servers!')
     return text
 
 
