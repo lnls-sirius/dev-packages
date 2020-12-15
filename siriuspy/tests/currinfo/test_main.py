@@ -64,7 +64,6 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
         """Test write DCCT-Sel."""
         self.app._dcctfltcheck_mode = Const.DCCTFltCheck.On
         init_status = self.app._dcct_mode
-        self.app.write('DCCT-Sel', Const.DCCT.Avg)
         self.app.write('DCCT-Sel', Const.DCCT.DCCT13C4)
         self.app.write('DCCT-Sel', Const.DCCT.DCCT14C4)
         end_status = self.app._dcct_mode
