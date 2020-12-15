@@ -770,6 +770,35 @@ def get_conv_propty_database(pstype=None, psname=None):
     return dbase
 
 
+def get_ps_interlocks(psmodel=None, psname=None):
+    """Return interlock PVs for a power supply model."""
+    # in case psname is given
+    if psname is not None:
+        psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+
+    dbase = _get_model_db(psmodel)
+    intlks = [k for k in dbase.keys() if 'Mon' in k and
+              ('Intlk' in k or 'Alarm' in k)]
+    return intlks
+
+
+def get_ps_modules(psmodel=None, psname=None):
+    """Return PS modules for a power supply model."""
+    # in case psname is given
+    if psname is not None:
+        psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+
+    dbase = _get_model_db(psmodel)
+    modules = set()
+    for k in dbase:
+        if ('Mod' in k) and ('Labels-Cte' in k):
+            aux = k.split('Mod')
+            aux = aux[1].split('Labels-Cte')
+            mod = aux[0]
+            modules.add(mod)
+    return sorted(modules)
+
+
 # --- Auxiliary functions ---
 
 

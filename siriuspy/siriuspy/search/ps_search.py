@@ -30,6 +30,7 @@ class PSSearch:
     _pstype_2_splims_dict = dict()
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = dict()
+    _psmodel_2_psname_dict = dict()
     _psname_2_siggen_dict = dict()
     _bbbname_2_bsmps_dict = dict()
     _bsmps_2_bbbname_dict = dict()
@@ -120,6 +121,12 @@ class PSSearch:
         return sorted(set(PSSearch._pstype_dict.keys()))
 
     @staticmethod
+    def get_psmodel_names():
+        """Return sorted list of power supply models."""
+        PSSearch._reload_psname_2_psmodel_dict()
+        return sorted(set(PSSearch._psmodel_2_psname_dict.keys()))
+
+    @staticmethod
     def get_bbbnames(filters=None):
         """Return a sorted and filtered list of all beaglebone names."""
         PSSearch._reload_bbb_2_bsmps_dict()
@@ -174,8 +181,8 @@ class PSSearch:
         """Return sorted list of power supply polarities."""
         with PSSearch._lock:
             PSSearch._reload_pstype_dict()
-        p = [datum[0] for datum in PSSearch._pstype_dict.values()]
-        return sorted(set(p))
+        pol = [datum[0] for datum in PSSearch._pstype_dict.values()]
+        return sorted(set(pol))
 
     @staticmethod
     def conv_psname_2_pstype(psname):
@@ -239,6 +246,12 @@ class PSSearch:
         """Convert psname to psmodel."""
         PSSearch._reload_psname_2_psmodel_dict()
         return PSSearch._psname_2_psmodel_dict[psname]
+
+    @staticmethod
+    def conv_psmodel_2_psname(psmodel):
+        """Convert psmodel to psname."""
+        PSSearch._reload_psname_2_psmodel_dict()
+        return PSSearch._psmodel_2_psname_dict[psmodel]
 
     @staticmethod
     def conv_psname_2_siggenconf(psname):
@@ -448,7 +461,7 @@ class PSSearch:
                 pstype, *lims = datum
                 pstype_2_splims_dict[pstype] = \
                     {PSSearch._splims_labels[i]:
-                        float(lims[i]) for i in range(len(lims))}
+                     float(lims[i]) for i in range(len(lims))}
             PSSearch._pstype_2_splims_dict = pstype_2_splims_dict
 
     @staticmethod
@@ -475,10 +488,15 @@ class PSSearch:
             pu_data, _ = _util.read_text_data(_web.pu_psmodels_read())
             data = ps_data + pu_data
             psname_2_psmodel_dict = dict()
-            for d in data:
-                psname, psmodel = d
+            psmodel_2_psname_dict = dict()
+            for datum in data:
+                psname, psmodel = datum
                 psname_2_psmodel_dict[psname] = psmodel
+                if psmodel not in psmodel_2_psname_dict:
+                    psmodel_2_psname_dict[psmodel] = list()
+                psmodel_2_psname_dict[psmodel].append(psname)
             PSSearch._psname_2_psmodel_dict = psname_2_psmodel_dict
+            PSSearch._psmodel_2_psname_dict = psmodel_2_psname_dict
 
     @staticmethod
     def _reload_psname_2_siggen_dict():
