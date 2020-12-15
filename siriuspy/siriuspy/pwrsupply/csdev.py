@@ -6,6 +6,7 @@ import numpy as _np
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
 
+from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
 
@@ -54,15 +55,32 @@ PS_LI_INTLK_THRS = 55
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    INTERFACE = ('Remote', 'Local', 'PCHost')
-    MODELS = ('Empty',
-              'FBP', 'FBP_DCLink', 'FAC_DCDC',
-              'FAC_2S_ACDC', 'FAC_2S_DCDC',
-              'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-              'FAP', 'FAP_4P', 'FAP_2P2S',
-              'FBP_FOFB',
-              'Commercial',
-              'FP')
+    INTERFACE = ['', ] * 3
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_REMOTE] = 'Remote'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_LOCAL] = 'Local'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_PCHOST] = 'PCHost'
+    INTERFACE = tuple(INTERFACE)
+
+    MODELS = ['Field' + str(i) for i in range(32)]
+    MODELS[_ConstPSBSMP.E_PS_MODEL_EMPTY] = 'Empty'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP] = 'FBP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP_DCLink] = 'FBP_DCLink'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_ACDC] = 'FAC_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC] = 'FAC_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_ACDC] = 'FAC_2S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_DCDC] = 'FAC_2S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_ACDC] = 'FAC_2P4S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_DCDC] = 'FAC_2P4S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP] = 'FAP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_4P] = 'FAP_4P'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC_EMA] = 'FAC_DCDC_EMA'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_2P2S] = 'FAP_2P2S'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_IMAS] = 'FAP_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_ACDC_IMAS] = 'FAC_2P_ACDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_DCDC_IMAS] = 'FAC_2P_DCDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_UNINITIALIZED] = 'Uninitialized'
+    MODELS = tuple(MODELS)
+
     PWRSTATE_SEL = _csdev.ETypes.OFF_ON
     PWRSTATE_STS = ('Off', 'On', 'Initializing')
     STATES = ('Off', 'Interlock', 'Initializing',
@@ -684,11 +702,24 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    CYCLE_TYPES = (
-        'Sine', 'DampedSine', 'Trapezoidal',
-        'DampedSquaredSine', 'Square'
-        )
-    SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
+
+    CYCLE_TYPES = ['', ] * 5
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SINE] = 'Sine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSINE] = 'DampedSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_TRAPEZOIDAL] = 'Trapezoidal'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSQUAREDSINE] = \
+        'DampedSquaredSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SQUARE] = 'Square'
+    CYCLE_TYPES = tuple(CYCLE_TYPES)
+
+    WFMREF_SYNCMODE = ['', ] * 3
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE] = \
+        'SampleBySample'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE_ONECYCLE] = \
+        'SampleBySample_OneCycle'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_ONESHOT] = 'OneShot'
+    WFMREF_SYNCMODE = tuple(WFMREF_SYNCMODE)
+
     LINAC_INTLCK_WARN = (
         'LoadI 0C Shutdown', 'LoadI 0C Interlock',
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
@@ -727,7 +758,7 @@ class Const(_csdev.Const):
     OpMode = _csdev.Const.register('OpMode', _et.OPMODES)
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
-    SyncMode = _csdev.Const.register('SyncMode', _et.SYNC_MODES)
+    WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
 
 
 # --- Main power supply database functions ---
@@ -836,6 +867,134 @@ def _get_ps_common_propty_database():
 
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
 
+        # Power Supply Parameters
+        # --- PS ---
+        'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
+        'ParamPSModel-Cte': {'type': 'float', 'value': 0.0},
+        'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
+        # --- COMM ---
+        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommRS485BaudRate-Cte': {
+            'type': 'float', 'value': 0.0, 'units': 'bps'},
+        'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
+                                   'value': _np.array([0.0, ] * 4)},
+        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommEthIP-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommEthSubnetMask-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommBuzVol-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        # --- Control ---
+        'ParamCtrlFreqCtrlISR-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamCtrlFreqTimeSlicer-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamCtrlLoopState-Cte': {
+            'type': 'float', 'value': 0.0},
+        'ParamCtrlMaxRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMinRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMaxRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
+        'ParamCtrlMinRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
+        # --- PWM ---
+        'ParamPWMFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamPWMDeadTime-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'ns'},
+        'ParamPWMMaxDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMinDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMaxDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMinDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMLimDutyShare-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        # ----- HRADC -----
+        'ParamHRADCNrBoards-Cte': {'type': 'float', 'value': 0.0},
+        'ParamHRADCSpiClk-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'MHz'},
+        'ParamHRADCFreqSampling-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamHRADCEnableHeater-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCEnableRails-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOutput-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- SigGen -----
+        'ParamSigGenType-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenNumCycles-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamSigGenAmplitude-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenOffset-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenAuxParam-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- WfmRef -----
+        'ParamWfmRefId-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefSyncMode-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefFreq-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamWfmRefGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
+        'ParamWfmRefOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
+        # --- Analog Variables ---
+        'ParamAnalogMax-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
+        'ParamAnalogMin-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
+        # --- Debounce Manager ---
+        'ParamHardIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamHardIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamScopeSamplingFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
     }
     return dbase
 
@@ -902,86 +1061,6 @@ def _get_ps_basic_propty_database():
                               'value': Const.DsblEnbl.Dsbl},
         'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                               'value': Const.DsblEnbl.Dsbl},
-        # Power Supply Parameters
-        # --- PS ---
-        'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
-        'ParamPSModel-Cte': {'type': 'float', 'value': 0.0},
-        'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
-        # --- COMM ---
-        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
-                                   'value': _np.array([0.0, ] * 4)},
-        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommEthIP-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommEthSubnetMask-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommBuzVol-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        # --- Control ---
-        'ParamCtrlFreqCtrlISR-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamCtrlFreqTimeSlicer-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'Hz'},
-        'ParamCtrlLoopState-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': ''},
-        'ParamCtrlMaxRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMinRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMaxRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
-        'ParamCtrlMinRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
-        # --- PWM ---
-        'ParamPWMFreq-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamPWMDeadTime-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'ns'},
-        'ParamPWMMaxDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMaxDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMLimDutyShare-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        # --- Analog Variables ---
-        'ParamAnalogMax-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
-        'ParamAnalogMin-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
-        # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamHardIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
     })
 
     return dbase
@@ -1929,10 +2008,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod1-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
@@ -1974,10 +2053,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod2-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
@@ -2019,10 +2098,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod3-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
@@ -2064,10 +2143,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod4-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentMod4IIB-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentMod4IIB-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
@@ -2214,10 +2293,10 @@ def _get_ps_FAP_2P2S_propty_database():
         'VoltageOutputMod1-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
@@ -2257,10 +2336,10 @@ def _get_ps_FAP_2P2S_propty_database():
         'VoltageOutputMod2-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
@@ -2302,10 +2381,10 @@ def _get_ps_FAP_2P2S_propty_database():
         'VoltageOutputMod3-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
@@ -2345,10 +2424,10 @@ def _get_ps_FAP_2P2S_propty_database():
         'VoltageOutputMod4-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,

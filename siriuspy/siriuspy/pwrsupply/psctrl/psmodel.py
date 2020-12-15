@@ -85,27 +85,27 @@ class _PSModel:
         'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 23
         'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 24
         # ----- class HRADC -----
-        # P_HRADC_NR_BOARDS = 25
-        # P_HRADC_SPI_CLK = 26
-        # P_HRADC_FREQ_SAMPLING = 27
-        # P_HRADC_ENABLE_HEATER = 28
-        # P_HRADC_ENABLE_RAILS_MON = 29
-        # P_HRADC_TRANSDUCER_OUTPUT = 30
-        # P_HRADC_TRANSDUCER_GAIN = 31
-        # P_HRADC_TRANSDUCER_OFFSET = 32
-        # # ----- class SigGen -----
-        # P_SIGGEN_TYPE = 33
-        # P_SIGGEN_NUM_CYCLES = 34
-        # P_SIGGEN_FREQ = 35
-        # P_SIGGEN_AMPLITUDE = 36
-        # P_SIGGEN_OFFSET = 37
-        # P_SIGGEN_AUX_PARAM = 38
-        # # ----- class WfmRef -----
-        # P_WFMREF_ID = 39
-        # P_WFMREF_SYNC_MODE = 40
-        # P_WFMREF_FREQ = 41
-        # P_WFMREF_GAIN = 42
-        # P_WFMREF_OFFSET = 43
+        'ParamHRADCNrBoards-Cte': _c.P_HRADC_NR_BOARDS,  # 25
+        'ParamHRADCSpiClk-Cte': _c.P_HRADC_SPI_CLK,  # 26
+        'ParamHRADCFreqSampling-Cte': _c.P_HRADC_FREQ_SAMPLING,  # 27
+        'ParamHRADCEnableHeater-Cte': _c.P_HRADC_ENABLE_HEATER,  # 28
+        'ParamHRADCEnableRails-Cte': _c.P_HRADC_ENABLE_RAILS_MON,  # 29
+        'ParamHRADCTransducerOutput-Cte': _c.P_HRADC_TRANSDUCER_OUTPUT,  # 30
+        'ParamHRADCTransducerGain-Cte': _c.P_HRADC_TRANSDUCER_GAIN,  # 31
+        'ParamHRADCTransducerOffset-Cte': _c.P_HRADC_TRANSDUCER_OFFSET,  # 32
+        # ----- class SigGen -----
+        'ParamSigGenType-Cte': _c.P_SIGGEN_TYPE,  # 33
+        'ParamSigGenNumCycles-Cte': _c.P_SIGGEN_NUM_CYCLES,  # 34
+        'ParamSigGenFreq-Cte': _c.P_SIGGEN_FREQ,  # 35
+        'ParamSigGenAmplitude-Cte': _c.P_SIGGEN_AMPLITUDE,  # 36
+        'ParamSigGenOffset-Cte': _c.P_SIGGEN_OFFSET,  # 37
+        'ParamSigGenAuxParam-Cte': _c.P_SIGGEN_AUX_PARAM,  # 38
+        # ----- class WfmRef -----
+        'ParamWfmRefId-Cte': _c.P_WFMREF_ID,  # 39
+        'ParamWfmRefSyncMode-Cte': _c.P_WFMREF_SYNC_MODE,  # 40
+        'ParamWfmRefFreq-Cte': _c.P_WFMREF_FREQ,  # 41
+        'ParamWfmRefGain-Cte': _c.P_WFMREF_GAIN,  # 42
+        'ParamWfmRefOffset-Cte': _c.P_WFMREF_OFFSET,  # 43
         # --- Analog Variables ---
         'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 44
         'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 45
@@ -115,8 +115,8 @@ class _PSModel:
         'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 48
         'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 49
         # ---- Scope -----
-        # P_SCOPE_SAMPLING_FREQUENCY = 50
-        # P_SCOPE_DATA_SOURCE = 51
+        'ParamScopeSamplingFreq-Cte': _c.P_SCOPE_SAMPLING_FREQUENCY,  # 50
+        'ParamScopeDataSource-Cte': _c.P_SCOPE_DATA_SOURCE,  # 51
         }
 
     @property
@@ -468,7 +468,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'BoardTemperatureIIBModA-Mon': _c.V_TEMP_BOARD_IIB_A,
         'RelativeHumidityIIBModA-Mon': _c.V_RH_IIB_A,
         'IntlkIIBModA-Mon': _c.V_IIB_INTERLOCKS_A,
-        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A, 
+        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A,
         'VoltageInputIIBModB-Mon': _c.V_V_INPUT_IIB_B,
         'CurrentInputIIBModB-Mon': _c.V_I_INPUT_IIB_B,
         'CurrentOutputIIBModB-Mon': _c.V_I_OUTPUT_IIB_B,
