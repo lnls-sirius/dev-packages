@@ -66295,6 +66295,9 @@ _vlightcam_pvs = [
 ]
 
 _dcct_pvs = [
+    ['BO-35D:DI-DCCT:Abort-Cmd', 1, 0.0],
+    ['SI-13C4:DI-DCCT:Abort-Cmd', 1, 0.0],
+    ['SI-14C4:DI-DCCT:Abort-Cmd', 1, 2.0],
     ['BO-35D:DI-DCCT:MeasMode-Sel', 0, 0.0],
     ['BO-35D:DI-DCCT:MeasTrg-Sel', 0, 0.0],
     ['BO-35D:DI-DCCT:SampleCnt-SP', 1, 0.0],
