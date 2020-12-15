@@ -49,10 +49,11 @@ class PVsConfig(_ConfigDBDocument):
 
         # read
         pvs_not_read = set()
-        for pvn, _, delay in template['pvs']:
+        for pvn, defval, delay in template['pvs']:
             pvobj = self._get_pv(pvn)
             if pvobj.wait_for_connection(timeout):
-                value = pvobj.get(timeout=timeout)
+                value = defval if pvn.endswith('-Cmd')\
+                    else pvobj.get(timeout=timeout)
             else:
                 pvs_not_read.add(pvn)
                 value = 0
