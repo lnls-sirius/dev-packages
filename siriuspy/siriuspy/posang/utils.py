@@ -42,6 +42,6 @@ def get_default_config_name(tl, corrs_type):
         return 'Default_CHSept'
     else:
         if corrs_type == 'sept-sept':
-            return 'TS.V04.01-M1.SeptSept'
+            return 'TS.V04.01-M1.SeptSept.4CVs'
         else:
-            return 'TS.V04.01-M1'
+            return 'TS.V04.01-M1.CHSept.4CVs'
