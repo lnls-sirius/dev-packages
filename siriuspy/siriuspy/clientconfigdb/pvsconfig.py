@@ -37,6 +37,14 @@ class PVsConfig(_ConfigDBDocument):
                 return False
         return True
 
+    @property
+    def pvs(self):
+        """Return dict with PVs and values."""
+        self.load()
+        pvslist = self._value['pvs']
+        pvsdict = {item[0]: item[1] for item in pvslist}
+        return pvsdict
+
     def read(self, timeout=_TIMEOUT):
         """Read machine state."""
         new_config_value = dict()
