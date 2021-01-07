@@ -4,8 +4,7 @@ import time as _time
 
 import numpy as _np
 
-from mathphys.functions import get_namedtuple as _get_namedtuple, \
-    save_pickle as _save_pickle, load_pickle as _load_pickle
+from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from .device import Device as _Device, Devices as _Devices
 from .dcct import DCCT
@@ -59,39 +58,6 @@ class BunchbyBunch(_Devices):
         else:
             raise NotImplementedError(devname)
         return devname
-
-    def get_raw_data(self, acqtype='SRAM'):
-        """Get Raw data to file."""
-        acqtype = acqtype.upper()
-        acq = self.sram if acqtype in 'SRAM' else self.bram
-        return dict(
-            current=self.dcct.current,
-            time=_time.time(),
-            acqtype=acqtype, downsample=acq.downsample,
-            data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
-            harmonic_number=self.info.harmonic_number,
-            fb_set0=self.coeffs.set0, fb_set1=self.coeffs.set1,
-            fb_set0_desc=self.coeffs.set0_desc,
-            fb_set1_desc=self.coeffs.set1_desc,
-            fb_downsample=self.feedback.downsample,
-            fb_state=self.feedback.loop_state,
-            fb_shift_gain=self.feedback.shift_gain,
-            fb_setsel=self.feedback.coeff_set,
-            fb_growdamp_state=self.feedback.grow_damp_state,
-            growth_time=acq.growthtime, acq_time=acq.acqtime,
-            hold_time=acq.holdtime, post_time=acq.posttime,
-            )
-
-    def save_raw_data(self, fname, acqtype='SRAM', overwrite=False):
-        """Save Raw data to file."""
-        _save_pickle(
-            self.get_raw_data(acqtype=acqtype), fname,
-            overwrite=overwrite)
-
-    @staticmethod
-    def load_raw_data(fname):
-        """Load Raw data from file."""
-        return _load_pickle(fname)
 
     def sweep_phase_shifter(self, values, wait=2, mon_type='mean'):
         """Sweep Servo Phase for each `value` in `values`."""
