@@ -889,9 +889,21 @@ class Acquisition(_ProptyDevice):
         """."""
         return self['POST_TURNS']
 
-    def cmd_data_dump(self):
+    def cmd_data_acquire(self, timeout=None):
+        """."""
+        self.acq_enbl = 1
+        if timeout is None:
+            timeout = Acquisition.DEF_TIMEOUT
+        if timeout > 0:
+            self._wait('ACQ_EN', 1, timeout=None)
+
+    def cmd_data_dump(self, timeout=None):
         """."""
         self['DUMP'] = 1
+        if timeout is None:
+            timeout = Acquisition.DEF_TIMEOUT
+        if timeout > 0:
+            self.wait_data_dump(timeout)
 
     def wait_data_dump(self, timeout=None):
         """."""
