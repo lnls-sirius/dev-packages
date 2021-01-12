@@ -67,10 +67,12 @@ class LLRF(_DeviceNC):
         ALL = (BO, SI)
 
     _properties = (
-        'PL:REF:S', 'SL:INP:PHS',
-        'mV:AL:REF:S', 'SL:REF:AMP', 'RmpEnbl-Sts',
-        'RmpPhsBot-SP', 'RmpPhsBot-RB',
-        'RmpPhsTop-SP', 'RmpPhsTop-RB')
+        'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
+        'mV:AL:REF:S', 'SL:REF:AMP', 'SL:INP:AMP',
+        'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
+        'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
+        'RmpEnbl-Sts',
+        )
 
     def __init__(self, devname):
         """."""
@@ -87,20 +89,44 @@ class LLRF(_DeviceNC):
         return not self['RmpEnbl-Sts']
 
     @property
+    def phase_top(self):
+        """."""
+        return self['RmpPhsTop-RB']
+
+    @phase_top.setter
+    def phase_top(self, value):
+        """."""
+        self['RmpPhsTop-SP'] = value
+
+    @property
+    def phase_bottom(self):
+        """."""
+        return self['RmpPhsBot-RB']
+
+    @phase_bottom.setter
+    def phase_bottom(self, value):
+        """."""
+        self['RmpPhsBot-SP'] = value
+
+    @property
+    def phase_mon(self):
+        """."""
+        return self['SL:INP:PHS']
+
+    @property
     def phase(self):
         """."""
-        if self.is_cw:
-            return self['SL:INP:PHS']
-        return self['RmpPhsBot-RB']
+        return self['SL:REF:PHS']
 
     @phase.setter
     def phase(self, value):
         """."""
-        if self.is_cw:
-            self['PL:REF:S'] = value
-        else:
-            self['RmpPhsBot-SP'] = value
-            self['RmpPhsTop-SP'] = value
+        self['PL:REF:S'] = value
+
+    @property
+    def voltage_mon(self):
+        """."""
+        return self['SL:INP:AMP']
 
     @property
     def voltage(self):
@@ -111,39 +137,234 @@ class LLRF(_DeviceNC):
     def voltage(self, value):
         self['mV:AL:REF:S'] = value
 
-    # --- private methods ---
+    @property
+    def detune(self):
+        """."""
+        return self['DTune-RB']
+
+    @detune.setter
+    def detune(self, value):
+        """."""
+        self['DTune-SP'] = value
+
+    @property
+    def detune_error(self):
+        """."""
+        return self['TUNE:DEPHS']
 
 
-class RFPowMon(_DeviceNC):
+class BORFCavMonitor(_DeviceNC):
     """."""
 
     class DEVICES:
         """Devices names."""
 
         BO = 'BO-05D:RF-P5Cav'
-        SI = 'SI-02SB:RF-P7Cav'
-        ALL = (BO, SI)
 
-    _properties = {
-        DEVICES.SI: ('PwrCell4-Mon', ),
-        DEVICES.BO: ('Cell3PwrTop-Mon', 'Cell3Pwr-Mon')}
+    _properties = (
+        'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+        'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
+        'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
+        'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
+        )
 
-    def __init__(self, devname):
+    def __init__(self):
         """."""
-        # check if device exists
-        if devname not in RFPowMon.DEVICES.ALL:
-            raise NotImplementedError(devname)
-
         # call base class constructor
-        super().__init__(devname, properties=RFPowMon._properties[devname])
+        super().__init__(
+            BORFCavMonitor.DEVICES.BO, properties=BORFCavMonitor._properties)
 
-    def get_power(self, is_cw=True):
+    @property
+    def status(self):
         """."""
-        if self._devname == RFPowMon.DEVICES.BO:
-            if is_cw:
-                return self['Cell3PwrTop-Mon']
-            return self['Cell3Pwr-Mon']
+        return self['Sts-Mon']
+
+    @property
+    def power_interlock(self):
+        """."""
+        return self['PwrRFIntlk-Mon']
+
+    @property
+    def power_top(self):
+        """."""
+        return self['Cell3PwrTop-Mon']
+
+    @property
+    def power_bottom(self):
+        """."""
+        return self['Cell3PwrBot-Mon']
+
+    @property
+    def power_reverse(self):
+        """."""
+        return self['PwrRev-Mon']
+
+    @property
+    def power_forward(self):
+        """."""
+        return self['PwrFwd-Mon']
+
+    @property
+    def power_cell1(self):
+        """."""
+        return self['Cell1Pwr-Mon']
+
+    @property
+    def power_cell2(self):
+        """."""
+        return self['Cell2Pwr-Mon']
+
+    @property
+    def power_cell3(self):
+        """."""
+        return self['Cell3Pwr-Mon']
+
+    @property
+    def power_cell4(self):
+        """."""
+        return self['Cell4Pwr-Mon']
+
+    @property
+    def power_cell5(self):
+        """."""
+        return self['Cell5Pwr-Mon']
+
+    @property
+    def temp_coupler(self):
+        """."""
+        return self['CoupT-Mon']
+
+    @property
+    def temp_cell1(self):
+        """."""
+        return self['Cylin1T-Mon']
+
+    @property
+    def temp_cell2(self):
+        """."""
+        return self['Cylin2T-Mon']
+
+    @property
+    def temp_cell3(self):
+        """."""
+        return self['Cylin3T-Mon']
+
+    @property
+    def temp_cell4(self):
+        """."""
+        return self['Cylin4T-Mon']
+
+    @property
+    def temp_cell5(self):
+        """."""
+        return self['Cylin5T-Mon']
+
+
+class SIRFCavMonitor(_DeviceNC):
+    """."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SI = 'SI-02SB:RF-P7Cav'
+
+    _properties = (
+        'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+        'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
+        'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
+        'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon'
+        )
+
+    def __init__(self):
+        """."""
+        # call base class constructor
+        super().__init__(
+            SIRFCavMonitor.DEVICES.SI, properties=SIRFCavMonitor._properties)
+
+    @property
+    def status(self):
+        """."""
+        return self['Sts-Mon']
+
+    @property
+    def power_interlock(self):
+        """."""
+        return self['PwrRFIntlk-Mon']
+
+    @property
+    def power_top(self):
+        """."""
+        return self['PwrCell4Top-Mon']
+
+    @property
+    def power_bottom(self):
+        """."""
+        return self['PwrCell4Bot-Mon']
+
+    @property
+    def power_reverse(self):
+        """."""
+        return self['PwrRev-Mon']
+
+    @property
+    def power_forward(self):
+        """."""
+        return self['PwrFwd-Mon']
+
+    @property
+    def power_cell2(self):
+        """."""
+        return self['PwrCell2-Mon']
+
+    @property
+    def power_cell4(self):
+        """."""
         return self['PwrCell4-Mon']
+
+    @property
+    def power_cell6(self):
+        """."""
+        return self['PwrCell6-Mon']
+
+    @property
+    def temp_coupler(self):
+        """."""
+        return self['CoupT-Mon']
+
+    @property
+    def temp_cell1(self):
+        """."""
+        return self['Cylin1T-Mon']
+
+    @property
+    def temp_cell2(self):
+        """."""
+        return self['Cylin2T-Mon']
+
+    @property
+    def temp_cell3(self):
+        """."""
+        return self['Cylin3T-Mon']
+
+    @property
+    def temp_cell4(self):
+        """."""
+        return self['Cylin4T-Mon']
+
+    @property
+    def temp_cell5(self):
+        """."""
+        return self['Cylin5T-Mon']
+
+    @property
+    def temp_cell6(self):
+        """."""
+        return self['Cylin6T-Mon']
+
+    @property
+    def temp_cell7(self):
+        """."""
+        return self['Cylin7T-Mon']
 
 
 class RFCav(_Devices):
@@ -165,11 +386,11 @@ class RFCav(_Devices):
         rfgen = RFGen()
         if devname == RFCav.DEVICES.SI:
             llrf = LLRF(LLRF.DEVICES.SI)
-            rfpowmon = RFPowMon(RFPowMon.DEVICES.SI)
+            rfmon = SIRFCavMonitor()
         elif devname == RFCav.DEVICES.BO:
             llrf = LLRF(LLRF.DEVICES.BO)
-            rfpowmon = RFPowMon(RFPowMon.DEVICES.BO)
-        devices = (rfgen, llrf, rfpowmon)
+            rfmon = BORFCavMonitor()
+        devices = (rfgen, llrf, rfmon)
 
         # call base class constructor
         super().__init__(devname, devices)
@@ -182,7 +403,7 @@ class RFCav(_Devices):
     @property
     def power(self):
         """."""
-        return self.dev_rfpowmon.get_power(self.is_cw)
+        return self.dev_cavmon.get_power(self.is_cw)
 
     @property
     def dev_rfgen(self):
@@ -195,7 +416,7 @@ class RFCav(_Devices):
         return self.devices[1]
 
     @property
-    def dev_rfpowmon(self):
+    def dev_cavmon(self):
         """Return RFPoweMon device."""
         return self.devices[2]
 
