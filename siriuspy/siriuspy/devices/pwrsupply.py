@@ -282,12 +282,12 @@ class PowerSupplyPU(_PSDev):
     @property
     def pulse(self):
         """."""
-        return self._dev_timing['Pulse-Sts']
+        return self['Pulse-Sts']
 
     @pulse.setter
     def pulse(self, value):
         """."""
-        self._dev_timing['Pulse-Sel'] = value
+        self['Pulse-Sel'] = value
 
     def cmd_turn_on_pulse(self):
         """."""
