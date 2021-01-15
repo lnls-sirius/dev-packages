@@ -363,7 +363,7 @@ class PSCycler:
 
     def __init__(self, psname, ramp_config=None):
         """Constructor."""
-        self._psname = psname
+        self._psname = _PVName(psname)
         self._ramp_config = ramp_config
         self._waveform = None
         self._siggen = None
