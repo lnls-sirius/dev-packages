@@ -44,9 +44,12 @@ class PSStatusPV:
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
-    INTLK_PVS = list()
 
     DTOLWFM_DICT = dict()
+
+    def __init__(self):
+        """Init attributs."""
+        self.INTLK_PVS = list()
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
