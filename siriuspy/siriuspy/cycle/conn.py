@@ -6,6 +6,7 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
+from ..util import get_bit as _get_bit
 from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
@@ -640,16 +641,18 @@ class LinacPSCycler:
     # NOTE: this could be a class derived from one of the Device classes.
 
     properties = [
-        'Current-SP', 'Current-Mon', 'PwrState-Sel', 'StatusIntlk-Mon'
+        'Current-SP', 'Current-Mon', 'PwrState-Sel',
+        'StatusIntlk-Mon', 'IntlkWarn-Mon',
     ]
 
     def __init__(self, psname):
         """Constructor."""
-        self._psname = psname
+        self._psname = _PVName(psname)
         self._waveform = None
         self._cycle_duration = None
         self._times = None
         self._pvs = dict()
+        self.intlkwarn_bit = _PSet.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
@@ -693,7 +696,12 @@ class LinacPSCycler:
         """Check interlocks."""
         if not self.connected:
             return False
-        return self['StatusIntlk-Mon'].value < _PS_LI_INTLK
+        intlkval = self['StatusIntlk-Mon'].value
+        if self.psname.dev == 'Spect':
+            intlkwarn = self['IntlkWarn-Mon'].value
+            if _get_bit(intlkwarn, self.intlkwarn_bit):
+                intlkval -= 2**self.intlkwarn_bit
+        return intlkval < _PS_LI_INTLK
 
     def check_on(self):
         """Return whether power supply PS is on."""
