@@ -725,18 +725,17 @@ class ETypes(_csdev.ETypes):
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
         'Ext Interlock Fault', 'LoadI Over Thrs', 'TestPoint', 'ADC Cali')
     LINAC_INTLCK_SGIN = (
-        'Fan state', 'Unused', 'Unused', 'Main relay state feedback',
+        'Fan state', 'Unused', 'Unused', 'DC-Link Delay Feedback',
         'Unused', 'Unused', 'Unused', 'Unused', 'Unused',
-        'External input interlock 1', 'External input interlock 2',
-        'Power module overheated', 'DCCT state', 'Output overcurrent',
-        'Output overvoltage', 'DC bus undervoltage')
+        'External interlock 1', 'External interlock 2',
+        'Power Module OverTemp', 'DCCT Status', 'Output OverCurrent',
+        'Output OverVoltage', 'DC-Link UnderVoltage')
     LINAC_INTLCK_RDSGIN_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11', 'Bit12', 'Bit13', 'Bit14', 'Bit15')
     LINAC_INTLCK_SGOUT = (
-        'Main relay control output', 'Unused', 'Unused', 'Unused',
-        'Unused', 'Unused', 'Threshold interlock',
-        'Overcurr./overvolt./ext. interlock')
+        'DC-Link ON', 'Unused', 'Unused', 'Unused', 'Unused', 'Unused',
+        'Threshold Warning', 'Overcurr./overvolt./ext. interlock')
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
