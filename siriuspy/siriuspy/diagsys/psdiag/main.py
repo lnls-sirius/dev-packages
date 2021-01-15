@@ -49,10 +49,11 @@ class PSDiagApp(_App):
                     computer.INTLK_PVS.append(pvidx)
                     pvs[pvidx] = devname + intlk
             else:
-                pvs = [None]*3
+                pvs = [None]*4
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.INTRLCK_LI] = devname + ':StatusIntlk-Mon'
+                pvs[_PSStatusPV.WARNSTS_LI] = devname + ':IntlkWarn-Mon'
             pvo = _ComputedPV(
                 psname + ':DiagStatus-Mon', computer, self._queue,
                 pvs, monitor=False)
