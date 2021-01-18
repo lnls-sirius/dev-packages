@@ -27,6 +27,7 @@ class ClientArchiver:
     def __init__(self, server_url=None):
         """."""
         self.session = None
+        self.timeout = _TIMEOUT
         self._url = server_url or self.SERVER_URL
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
@@ -47,61 +48,61 @@ class ClientArchiver:
             url, headers=headers, data=payload, verify=False)
         return b"authenticated" in response.content
 
-    def getPVsInfo(self, pvnames, timeout=_TIMEOUT):
+    def getPVsInfo(self, pvnames):
         """."""
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
-        req = self._make_request(url, timeout=_TIMEOUT)
+        req = self._make_request(url)
         if not req.ok:
             return None
         return req.json()
 
-    def getAllPVs(self, pvnames, timeout=_TIMEOUT):
+    def getAllPVs(self, pvnames):
         """."""
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getAllPVs', pv=pvnames, limit='-1')
-        return self._make_request(url, timeout=_TIMEOUT).json()
+        return self._make_request(url).json()
 
-    def deletePVs(self, pvnames, timeout=_TIMEOUT):
+    def deletePVs(self, pvnames):
         """."""
         if not isinstance(pvnames, (list, tuple)):
             pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(
                 method='deletePV', pv=pvname, deleteData='true')
-            self._make_request(url, need_login=True, timeout=_TIMEOUT)
+            self._make_request(url, need_login=True)
 
-    def getPausedPVsReport(self, timeout=_TIMEOUT):
+    def getPausedPVsReport(self):
         """."""
         url = self._create_url(method='getPausedPVsReport')
-        return self._make_request(url, timeout=_TIMEOUT).json()
+        return self._make_request(url).json()
 
-    def pausePVs(self, pvnames, timeout=_TIMEOUT):
+    def pausePVs(self, pvnames):
         """."""
         if not isinstance(pvnames, (list, tuple)):
             pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(method='pauseArchivingPV', pv=pvname)
-            self._make_request(url, need_login=True, timeout=_TIMEOUT)
+            self._make_request(url, need_login=True)
 
-    def renamePV(self, oldname, newname, timeout=_TIMEOUT):
+    def renamePV(self, oldname, newname):
         """."""
         url = self._create_url(method='renamePV', pv=oldname, newname=newname)
-        self._make_request(url, need_login=True, timeout=_TIMEOUT)
+        self._make_request(url, need_login=True)
 
-    def resumePVs(self, pvnames, timeout=_TIMEOUT):
+    def resumePVs(self, pvnames):
         """."""
         if not isinstance(pvnames, (list, tuple)):
             pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
-            self._make_request(url, need_login=True, timeout=_TIMEOUT)
+            self._make_request(url, need_login=True)
 
     def getData(self, pvname, timestamp_start, timestamp_stop,
                 process_type='', interval=None, stddev=None,
-                get_request_url=False, timeout=_TIMEOUT):
+                get_request_url=False):
         """Get archiver data.
 
         pvname -- name of pv.
@@ -132,7 +133,7 @@ class ClientArchiver:
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
         if get_request_url:
             return url
-        req = self._make_request(url, timeout=_TIMEOUT)
+        req = self._make_request(url)
         if not req.ok:
             return None
         ans = req.json()
@@ -143,29 +144,29 @@ class ClientArchiver:
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
 
-    def getPVDetails(self, pvname, get_request_url=False, timeout=_TIMEOUT):
+    def getPVDetails(self, pvname, get_request_url=False):
         """."""
         url = self._create_url(
             method='getPVDetails', pv=pvname)
         if get_request_url:
             return url
-        req = self._make_request(url, timeout=_TIMEOUT)
+        req = self._make_request(url)
         if not req.ok:
             return None
         data = req.json()
         return data
 
-    def _make_request(self, url, need_login=False, timeout=_TIMEOUT):
+    def _make_request(self, url, need_login=False):
         if self.session is not None:
             try:
-                req = self.session.get(url, timeout=timeout)
+                req = self.session.get(url, timeout=self.timeout)
             except requests.exceptions.ConnectTimeout as err_msg:
                 raise ConnectionError(err_msg)
         elif need_login:
             raise AuthenticationError('You need to login first.')
         else:
             try:
-                req = requests.get(url, verify=False, timeout=timeout)
+                req = requests.get(url, verify=False, timeout=self.timeout)
             except requests.exceptions.ConnectTimeout as err_msg:
                 raise ConnectionError(err_msg)
         return req
