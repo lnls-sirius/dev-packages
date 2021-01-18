@@ -1,26 +1,84 @@
 """Time conversion module."""
 
+from datetime import datetime as _datetime
+
 
 class Time:
     """Time conversion class."""
 
     def __init__(self, year=None, month=None, day=None,
-                 hour=None, minute=None, second=None, subsecond=None):
-        """."""
-        minute = 0 if minute is None else minute
-        second = 0 if second is None else second
-        subsecond = 0 if subsecond is None else subsecond
-        self.year = year
-        self.month = month
-        self.day = day
-        self.hour = hour
-        self.minute = minute
-        self.second = second
-        self.subsecond = subsecond
+                 hour=None, minute=0, second=0, microsecond=0,
+                 timestamp=None, datetime=None,
+                 timestamp_string=None, timestamp_format=None):
+        """Init."""
+        if datetime:
+            if not isinstance(datetime, _datetime):
+                raise TypeError("Expected an argument of type 'datetime'.")
+            self.datetime = datetime
+        elif timestamp:
+            if not isinstance(timestamp, float):
+                raise TypeError("Expected an argument of type 'float'.")
+            self.datetime = _datetime.fromtimestamp(timestamp)
+        elif timestamp_string:
+            if not isinstance(timestamp_string, str):
+                raise TypeError("Expected an argument of type 'str'.")
+            self.timestamp_format = '%Y-%m-%d %H:%M:%S.%f' \
+                if timestamp_format is None else timestamp_format
+            self.datetime = _datetime.strptime(
+                timestamp_string, self.timestamp_format)
+        else:
+            self.datetime = _datetime(
+                year=year, month=month, day=day,
+                hour=hour, minute=minute, second=second,
+                microsecond=microsecond)
+
+    @property
+    def year(self):
+        """Return year."""
+        return self.datetime.year
+
+    @property
+    def month(self):
+        """Return month."""
+        return self.datetime.month
+
+    @property
+    def day(self):
+        """Return day."""
+        return self.datetime.day
+
+    @property
+    def hour(self):
+        """Return hour."""
+        return self.datetime.hour
+
+    @property
+    def minute(self):
+        """Return minute."""
+        return self.datetime.minute
+
+    @property
+    def second(self):
+        """Return second."""
+        return self.datetime.second
+
+    @property
+    def microsecond(self):
+        """Return microsecond."""
+        return self.datetime.microsecond
+
+    def get_timestamp(self):
+        """Get timestamp in seconds since epoch format."""
+        return self.datetime.timestamp()
 
     def get_iso8601(self):
-        """."""
-        fstr = '{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}.{:03d}Z'.format(
-            self.year, self.month, self.day,
-            self.hour, self.minute, self.second, int(self.subsecond*1000))
-        return fstr
+        """Get iso8601 format."""
+        return self.datetime.astimezone().isoformat()
+
+    def __add__(self, other):
+        """Addition."""
+        return self.datetime + other
+
+    def __sub__(self, other):
+        """Subtraction."""
+        return self.datetime - other
