@@ -75,7 +75,9 @@ class PVDetails:
             value = value.replace(',', '')
             if field in PVDetails._field2type:
                 fattr, ftype = PVDetails._field2type[field]
-                setattr(self, fattr, ftype(value))
+                if not value == 'Not enough info':
+                    value = ftype(value)
+                setattr(self, fattr, value)
             elif field == 'Is this a scalar:':
                 self.is_scalar = (value.lower() == 'yes')
             elif field == 'Is this PV paused:':
