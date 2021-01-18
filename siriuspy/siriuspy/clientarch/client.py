@@ -99,8 +99,9 @@ class ClientArchiver:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self._make_request(url, need_login=True, timeout=_TIMEOUT)
 
-    def getData(self, pvname, timestamp_start, timestamp_stop, mean_sec=None,
-                get_request_url=False):
+    def getData(self, pvname, timestamp_start, timestamp_stop,
+                process_type='', interval=None, stddev=None,
+                get_request_url=False, timeout=_TIMEOUT):
         """Get archiver data.
 
         pvname -- name of pv.
@@ -108,11 +109,25 @@ class ClientArchiver:
                            Example: '2019-05-23T13:32:27.570Z'
         timestamp_stop -- timestamp of interval stop
                            Example: '2019-05-23T13:32:27.570Z'
+        process_type -- data processing type to use. Can be:
+                     '', 'mean', 'median', 'std', 'variance',
+                     'popvariance', 'kurtosis', 'skewness'
+                     'mini', 'maxi', 'jitter', 'count', 'ncount',
+                     'firstSample', 'lastSample', 'firstFill', 'lastFill',
+                     'nth', 'ignoreflyers' or 'flyers'
+        interval -- interval of the bin of data, in seconds
+        stddev -- number of standard deviations.
+                  argument used in processing 'ignoreflyers' and 'flyers'.
         """
         tstart = _parse.quote(timestamp_start)
         tstop = _parse.quote(timestamp_stop)
-        if mean_sec is not None:
-            pvname = 'mean_' + str(int(mean_sec)) + '(' + pvname + ')'
+        if process_type:
+            process_str = process_type
+            if interval is not None:
+                process_str += '_' + str(int(interval))
+                if 'flyers' in process_type and stddev is not None:
+                    process_str += '_' + str(int(stddev))
+            pvname = process_str + '(' + pvname + ')'
         url = self._create_url(
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
         if get_request_url:
