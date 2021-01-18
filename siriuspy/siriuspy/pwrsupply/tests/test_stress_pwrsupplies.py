@@ -81,6 +81,25 @@ def try_to_stress(nr_iters=100, rate=25.14):
     return is_stressed()
 
 
+
+# Next Steps 2020-01-18
+# =====================
+#
+# 0. Check how we can test without using correctors setpoint. (look code)
+#
+# Using correctors setpoint:
+#
+# 1. try to replicate problem by runnig 'try_to_stress' again (using 40 BBBs)
+# 2. if succeeds:
+#        substitute PSSOFB with PSConnSOFB.
+#        if suceeds:
+#            try using < 40 BBBs
+#        else:
+#            problem prop. in PSSOFB mproc. then ?
+#    else:
+#        try to replicate problem somehow.
+
+
 # bbbname = 'IA-01RaCtrl:CO-PSCtrl-SI2'
 # devs = PSSearch.conv_bbbname_2_bsmps(bbbname)
 # devs, _ = zip(*devs)
