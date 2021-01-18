@@ -1,8 +1,8 @@
 """Devices of Archive PVs."""
 
 import threading as _threading
-import dateutil as _dateutil
 from copy import deepcopy as _dcopy
+import dateutil as _dateutil
 import numpy as _np
 
 from .pvarch import PVData as _PVData
