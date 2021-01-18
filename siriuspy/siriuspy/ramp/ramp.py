@@ -567,10 +567,10 @@ class BoosterRamp(_ConfigDBDocument):
     def rf_ramp_voltages(self):
         """List of voltages to define RF ramp."""
         vals = (self.rf_ramp_bottom_voltage,
-             self.rf_ramp_bottom_voltage,
-             self.rf_ramp_top_voltage,
-             self.rf_ramp_top_voltage,
-             self.rf_ramp_bottom_voltage)
+                self.rf_ramp_bottom_voltage,
+                self.rf_ramp_top_voltage,
+                self.rf_ramp_top_voltage,
+                self.rf_ramp_bottom_voltage)
         return vals
 
     @property
@@ -842,9 +842,9 @@ class BoosterRamp(_ConfigDBDocument):
         for psname in psnames:
             self._update_ps_waveform(psname)
             w_currents = self._ps_waveforms[psname].currents
-            isNan = _np.any(_np.isnan(w_currents))
-            isInf = _np.any(_np.isinf(w_currents))
-            if isNan or isInf:
+            isnan = _np.any(_np.isnan(w_currents))
+            isinf = _np.any(_np.isinf(w_currents))
+            if isnan or isinf:
                 continue
             limits = _PSSearch.conv_psname_2_splims(psname)
             highlim = limits['HOPR'] if psname not in self.PSNAME_DIPOLES \
@@ -853,6 +853,25 @@ class BoosterRamp(_ConfigDBDocument):
             if _np.any(w_currents > highlim) or _np.any(w_currents < lowlim):
                 psnames_exclimits.append(psname)
         return psnames_exclimits
+
+    @property
+    def ps_waveform_psnames_init_end_diff(self):
+        if not self._value['ps_normalized_configs*']:
+            return list()
+        psnames = _dcopy(self.PSNAMES)
+        for psn in self.PSNAMES:
+            if psn in self.PSNAME_DIPOLES:
+                psnames.remove(psn)
+
+        psnames_initenddiff = list()
+        for psname in psnames:
+            self._update_ps_waveform(psname)
+            w_currents = self._ps_waveforms[psname].currents
+            c_init = w_currents[0]
+            c_end = w_currents[-1]
+            if not _np.isclose(c_init, c_end):
+                psnames_initenddiff.append(psname)
+        return psnames_initenddiff
 
     def ps_waveform_get(self, psname):
         """Return ps waveform for a given power supply."""
@@ -1096,7 +1115,8 @@ class BoosterRamp(_ConfigDBDocument):
         nc_times = sorted(self.ps_normalized_configs_times)
         nc_values = list()
         for time in nc_times:
-            nconfig = self._value['ps_normalized_configs*']['{:.3f}'.format(time)]
+            nconfig = self._value['ps_normalized_configs*'][
+                '{:.3f}'.format(time)]
             nc_values.append(nconfig[psname])
 
         # interpolate strengths

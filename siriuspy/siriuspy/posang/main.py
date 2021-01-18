@@ -44,6 +44,7 @@ class App(_Callback):
             corrv = _PAConst.TB_CORRV_POSANG
 
         self._status = _ALLSET
+        self._ref_check_update = _PAConst.NeedRefUpdate.NeedUpdate
         self._orbx_deltapos = 0
         self._orby_deltapos = 0
         self._orbx_deltaang = 0
@@ -59,6 +60,9 @@ class App(_Callback):
             self._config_name = corrparams[0]
             self._respmat_x = corrparams[1]
             self._respmat_y = corrparams[2]
+        else:
+            raise Exception(
+                "Could not read correction parameters from configdb.")
 
         self._correctors = dict()
         self._correctors['CH1'] = _SiriusPVName(corrh[0])
@@ -97,6 +101,8 @@ class App(_Callback):
         self._corr_ctrlmode_mon_pvs = dict()
         self._corr_refkick = dict()
         self._corr_unit_factor = dict()
+        self._corr_kick_rb_impl = dict()
+        self._corr_last_delta = dict()
 
         for corr in self._correctors.values():
             pss = corr.substitute(prefix=_vaca_prefix)
@@ -105,9 +111,12 @@ class App(_Callback):
                 connection_timeout=0.05)
 
             self._corr_refkick[corr] = 0
+            self._corr_last_delta[corr] = 0
+            self._corr_kick_rb_impl[corr] = 0
             self._corr_kick_rb_pvs[corr] = _PV(
                 pss.substitute(propty_name='Kick', propty_suffix='RB'),
-                callback=self._callback_init_refkick,
+                callback=[self._callback_init_refkick,
+                          self._callback_corr_kick_rb],
                 connection_callback=self._connection_callback_corr_kick_pvs,
                 connection_timeout=0.05)
 
@@ -148,6 +157,7 @@ class App(_Callback):
         for corr_id, corr in self._correctors.items():
             self.run_callbacks(
                 'RefKick' + corr_id + '-Mon', self._corr_refkick[corr])
+        self._check_need_update_ref()
 
     @property
     def pvs_database(self):
@@ -195,6 +205,7 @@ class App(_Callback):
                 self._setnewrefkick_cmd_count += 1
                 self.run_callbacks(
                     'SetNewRefKick-Cmd', self._setnewrefkick_cmd_count)
+                self._check_need_update_ref()
 
         elif reason == 'ConfigPS-Cmd':
             done = self._config_ps()
@@ -279,6 +290,7 @@ class App(_Callback):
         for cid, idx in corrs2delta:
             # delta from rad to urad or mrad
             dlt = deltas[idx][0]/self._corr_unit_factor[cid]
+            self._corr_last_delta[cid] = dlt
             val = self._corr_refkick[cid] + dlt
             self._corr_kick_sp_pvs[cid].put(val)
             sp_check.update({cid: [False, val]})
@@ -352,6 +364,7 @@ class App(_Callback):
 
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
+        self._check_need_update_ref()
 
     def _connection_callback_corr_kick_pvs(self, pvname, conn, **kws):
         if not conn:
@@ -406,6 +419,21 @@ class App(_Callback):
             bit_val=any(q != _PSC.Interface.Remote
                         for q in self._corr_check_ctrlmode_mon.values()))
         self.run_callbacks('Status-Mon', self._status)
+
+    def _callback_corr_kick_rb(self, pvname, value, **kws):
+        corr = _SiriusPVName(pvname).device_name
+        self._corr_kick_rb_impl[corr] = value
+        self._check_need_update_ref()
+
+    def _check_need_update_ref(self):
+        self._ref_check_update = _PAConst.NeedRefUpdate.Ok
+        for corr in self._correctors.values():
+            implemented = self._corr_kick_rb_impl[corr]
+            desired = self._corr_last_delta[corr] + self._corr_refkick[corr]
+            if implemented != desired:
+                self._ref_check_update = _PAConst.NeedRefUpdate.NeedUpdate
+                break
+        self.run_callbacks('NeedRefUpdate-Mon', self._ref_check_update)
 
     def _config_ps(self):
         for corr in self._correctors.values():

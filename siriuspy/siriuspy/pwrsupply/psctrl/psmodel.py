@@ -85,27 +85,27 @@ class _PSModel:
         'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 23
         'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 24
         # ----- class HRADC -----
-        # P_HRADC_NR_BOARDS = 25
-        # P_HRADC_SPI_CLK = 26
-        # P_HRADC_FREQ_SAMPLING = 27
-        # P_HRADC_ENABLE_HEATER = 28
-        # P_HRADC_ENABLE_RAILS_MON = 29
-        # P_HRADC_TRANSDUCER_OUTPUT = 30
-        # P_HRADC_TRANSDUCER_GAIN = 31
-        # P_HRADC_TRANSDUCER_OFFSET = 32
-        # # ----- class SigGen -----
-        # P_SIGGEN_TYPE = 33
-        # P_SIGGEN_NUM_CYCLES = 34
-        # P_SIGGEN_FREQ = 35
-        # P_SIGGEN_AMPLITUDE = 36
-        # P_SIGGEN_OFFSET = 37
-        # P_SIGGEN_AUX_PARAM = 38
-        # # ----- class WfmRef -----
-        # P_WFMREF_ID = 39
-        # P_WFMREF_SYNC_MODE = 40
-        # P_WFMREF_FREQ = 41
-        # P_WFMREF_GAIN = 42
-        # P_WFMREF_OFFSET = 43
+        'ParamHRADCNrBoards-Cte': _c.P_HRADC_NR_BOARDS,  # 25
+        'ParamHRADCSpiClk-Cte': _c.P_HRADC_SPI_CLK,  # 26
+        'ParamHRADCFreqSampling-Cte': _c.P_HRADC_FREQ_SAMPLING,  # 27
+        'ParamHRADCEnableHeater-Cte': _c.P_HRADC_ENABLE_HEATER,  # 28
+        'ParamHRADCEnableRails-Cte': _c.P_HRADC_ENABLE_RAILS_MON,  # 29
+        'ParamHRADCTransducerOutput-Cte': _c.P_HRADC_TRANSDUCER_OUTPUT,  # 30
+        'ParamHRADCTransducerGain-Cte': _c.P_HRADC_TRANSDUCER_GAIN,  # 31
+        'ParamHRADCTransducerOffset-Cte': _c.P_HRADC_TRANSDUCER_OFFSET,  # 32
+        # ----- class SigGen -----
+        'ParamSigGenType-Cte': _c.P_SIGGEN_TYPE,  # 33
+        'ParamSigGenNumCycles-Cte': _c.P_SIGGEN_NUM_CYCLES,  # 34
+        'ParamSigGenFreq-Cte': _c.P_SIGGEN_FREQ,  # 35
+        'ParamSigGenAmplitude-Cte': _c.P_SIGGEN_AMPLITUDE,  # 36
+        'ParamSigGenOffset-Cte': _c.P_SIGGEN_OFFSET,  # 37
+        'ParamSigGenAuxParam-Cte': _c.P_SIGGEN_AUX_PARAM,  # 38
+        # ----- class WfmRef -----
+        'ParamWfmRefId-Cte': _c.P_WFMREF_ID,  # 39
+        'ParamWfmRefSyncMode-Cte': _c.P_WFMREF_SYNC_MODE,  # 40
+        'ParamWfmRefFreq-Cte': _c.P_WFMREF_FREQ,  # 41
+        'ParamWfmRefGain-Cte': _c.P_WFMREF_GAIN,  # 42
+        'ParamWfmRefOffset-Cte': _c.P_WFMREF_OFFSET,  # 43
         # --- Analog Variables ---
         'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 44
         'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 45
@@ -115,8 +115,8 @@ class _PSModel:
         'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 48
         'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 49
         # ---- Scope -----
-        # P_SCOPE_SAMPLING_FREQUENCY = 50
-        # P_SCOPE_DATA_SOURCE = 51
+        'ParamScopeSamplingFreq-Cte': _c.P_SCOPE_SAMPLING_FREQUENCY,  # 50
+        'ParamScopeDataSource-Cte': _c.P_SCOPE_DATA_SOURCE,  # 51
         }
 
     @property
@@ -468,7 +468,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'BoardTemperatureIIBModA-Mon': _c.V_TEMP_BOARD_IIB_A,
         'RelativeHumidityIIBModA-Mon': _c.V_RH_IIB_A,
         'IntlkIIBModA-Mon': _c.V_IIB_INTERLOCKS_A,
-        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A, 
+        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A,
         'VoltageInputIIBModB-Mon': _c.V_V_INPUT_IIB_B,
         'CurrentInputIIBModB-Mon': _c.V_I_INPUT_IIB_B,
         'CurrentOutputIIBModB-Mon': _c.V_I_OUTPUT_IIB_B,
@@ -567,8 +567,8 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
         'VoltageInputMod1-Mon': _c.V_V_INPUT_IIB_1,
         'VoltageOutputMod1-Mon': _c.V_V_OUTPUT_IIB_1,
-        'IGBT1IIBCurrentMod1-Mon': _c.V_I_IGBT_1_IIB_1,
-        'IGBT2IIBCurrentMod1-Mon': _c.V_I_IGBT_2_IIB_1,
+        'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
+        'IGBT2CurrentIIBMod1-Mon': _c.V_I_IGBT_2_IIB_1,
         'IGBT1TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_1_IIB_1,
         'IGBT2TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_2_IIB_1,
         'IGBTDriverTemperatureIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
@@ -583,8 +583,8 @@ class PSModelFAP_4P(_PSModel):
         'AlarmsIIBMod1-Mon': _c.V_IIB_ALARMS_1,
         'VoltageInputMod2-Mon': _c.V_V_INPUT_IIB_2,
         'VoltageOutputMod2-Mon': _c.V_V_OUTPUT_IIB_2,
-        'IGBT1IIBCurrentMod2-Mon': _c.V_I_IGBT_1_IIB_2,
-        'IGBT2IIBCurrentMod2-Mon': _c.V_I_IGBT_2_IIB_2,
+        'IGBT1CurrentIIBMod2-Mon': _c.V_I_IGBT_1_IIB_2,
+        'IGBT2CurrentIIBMod2-Mon': _c.V_I_IGBT_2_IIB_2,
         'IGBT1TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_1_IIB_2,
         'IGBT2TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_2_IIB_2,
         'IGBTDriverTemperatureIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
@@ -599,8 +599,8 @@ class PSModelFAP_4P(_PSModel):
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
         'VoltageInputMod3-Mon': _c.V_V_INPUT_IIB_3,
         'VoltageOutputMod3-Mon': _c.V_V_OUTPUT_IIB_3,
-        'IGBT1IIBCurrentMod3-Mon': _c.V_I_IGBT_1_IIB_3,
-        'IGBT2IIBCurrentMod3-Mon': _c.V_I_IGBT_2_IIB_3,
+        'IGBT1CurrentIIBMod3-Mon': _c.V_I_IGBT_1_IIB_3,
+        'IGBT2CurrentIIBMod3-Mon': _c.V_I_IGBT_2_IIB_3,
         'IGBT1TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_1_IIB_3,
         'IGBT2TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_2_IIB_3,
         'IGBTDriverTemperatureIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
@@ -615,8 +615,8 @@ class PSModelFAP_4P(_PSModel):
         'AlarmsIIBMod3-Mon': _c.V_IIB_ALARMS_3,
         'VoltageInputMod4-Mon': _c.V_V_INPUT_IIB_4,
         'VoltageOutputMod4-Mon': _c.V_V_OUTPUT_IIB_4,
-        'IGBT1IIBCurrentMod4-Mon': _c.V_I_IGBT_1_IIB_4,
-        'IGBT2IIBCurrentMod4-Mon': _c.V_I_IGBT_2_IIB_4,
+        'IGBT1CurrentIIBMod4-Mon': _c.V_I_IGBT_1_IIB_4,
+        'IGBT2CurrentIIBMod4-Mon': _c.V_I_IGBT_2_IIB_4,
         'IGBT1TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_1_IIB_4,
         'IGBT2TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_2_IIB_4,
         'IGBTDriverTemperatureIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,
@@ -678,8 +678,8 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
         'VoltageInputMod1-Mon': _c.V_V_INPUT_IIB_1,
         'VoltageOutputMod1-Mon': _c.V_V_OUTPUT_IIB_1,
-        'IGBT1IIBCurrentMod1-Mon': _c.V_I_IGBT_1_IIB_1,
-        'IGBT2IIBCurrentMod1-Mon': _c.V_I_IGBT_2_IIB_1,
+        'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
+        'IGBT2CurrentIIBMod1-Mon': _c.V_I_IGBT_2_IIB_1,
         'IGBT1TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_1_IIB_1,
         'IGBT2TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_2_IIB_1,
         'IGBTDriverTemperatureIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
@@ -694,8 +694,8 @@ class PSModelFAP_2P2S(_PSModel):
         'AlarmsIIBMod1-Mon': _c.V_IIB_ALARMS_1,
         'VoltageInputMod2-Mon': _c.V_V_INPUT_IIB_2,
         'VoltageOutputMod2-Mon': _c.V_V_OUTPUT_IIB_2,
-        'IGBT1IIBCurrentMod2-Mon': _c.V_I_IGBT_1_IIB_2,
-        'IGBT2IIBCurrentMod2-Mon': _c.V_I_IGBT_2_IIB_2,
+        'IGBT1CurrentIIBMod2-Mon': _c.V_I_IGBT_1_IIB_2,
+        'IGBT2CurrentIIBMod2-Mon': _c.V_I_IGBT_2_IIB_2,
         'IGBT1TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_1_IIB_2,
         'IGBT2TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_2_IIB_2,
         'IGBTDriverTemperatureIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
@@ -710,8 +710,8 @@ class PSModelFAP_2P2S(_PSModel):
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
         'VoltageInputMod3-Mon': _c.V_V_INPUT_IIB_3,
         'VoltageOutputMod3-Mon': _c.V_V_OUTPUT_IIB_3,
-        'IGBT1IIBCurrentMod3-Mon': _c.V_I_IGBT_1_IIB_3,
-        'IGBT2IIBCurrentMod3-Mon': _c.V_I_IGBT_2_IIB_3,
+        'IGBT1CurrentIIBMod3-Mon': _c.V_I_IGBT_1_IIB_3,
+        'IGBT2CurrentIIBMod3-Mon': _c.V_I_IGBT_2_IIB_3,
         'IGBT1TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_1_IIB_3,
         'IGBT2TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_2_IIB_3,
         'IGBTDriverTemperatureIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
@@ -726,8 +726,8 @@ class PSModelFAP_2P2S(_PSModel):
         'AlarmsIIBMod3-Mon': _c.V_IIB_ALARMS_3,
         'VoltageInputMod4-Mon': _c.V_V_INPUT_IIB_4,
         'VoltageOutputMod4-Mon': _c.V_V_OUTPUT_IIB_4,
-        'IGBT1IIBCurrentMod4-Mon': _c.V_I_IGBT_1_IIB_4,
-        'IGBT2IIBCurrentMod4-Mon': _c.V_I_IGBT_2_IIB_4,
+        'IGBT1CurrentIIBMod4-Mon': _c.V_I_IGBT_1_IIB_4,
+        'IGBT2CurrentIIBMod4-Mon': _c.V_I_IGBT_2_IIB_4,
         'IGBT1TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_1_IIB_4,
         'IGBT2TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_2_IIB_4,
         'IGBTDriverTemperatureIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,

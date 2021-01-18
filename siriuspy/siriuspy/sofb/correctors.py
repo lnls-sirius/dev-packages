@@ -2,6 +2,7 @@
 
 import time as _time
 import logging as _log
+import traceback as _traceback
 
 import numpy as _np
 from PRUserial485 import EthBridgeClient
@@ -661,7 +662,7 @@ class EpicsCorrectors(BaseCorrectors):
                 self.run_callbacks('OrbLength-Mon', circ)
         except Exception as err:
             self._update_log('ERR: ' + str(err))
-            _log.error(str(err))
+            _log.error(_traceback.format_exc())
 
     def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method."""

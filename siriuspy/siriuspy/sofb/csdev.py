@@ -21,6 +21,7 @@ class ETypes(_csdev.ETypes):
     ORB_MODE_RINGS = ('Offline', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
     SMOOTH_METH = ('Average', 'Median')
+    RESPMAT_MODE = ('Mxx', 'Myy', 'NoCoup', 'Full')
     SPASS_METHOD = ('FromBPMs', 'Calculated')
     SPASS_BG_CTRL = ('Acquire', 'Reset')
     SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
@@ -75,6 +76,7 @@ class ConstTLines(_csdev.Const):
     TrigAcqRepeat = _csbpm.AcqRepeat
     TrigAcqTrig = _csdev.Const.register('TrigAcqTrig', ('External', 'Data'))
     SmoothMeth = _csdev.Const.register('SmoothMeth', _et.SMOOTH_METH)
+    RespMatMode = _csdev.Const.register('RespMatMode', _et.RESPMAT_MODE)
     SPassBgCtrl = _csdev.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
     SPassBgSts = _csdev.Const.register('SPassBgSts', _et.SPASS_BG_STS)
     SPassUseBg = _csdev.Const.register('SPassUseBg', _et.SPASS_USE_BG)
@@ -572,6 +574,8 @@ class SOFBTLines(ConstTLines):
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
                 'value': self.StsLblsOrb._fields},
+            'SlowOrbTimeout-Mon': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1001},
             })
         return self._add_prefix(dbase, prefix)
 
@@ -586,6 +590,20 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'RespMat-Mon': {
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
+                'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
+            'InvRespMat-Mon': {
+                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'value': self.matrix_size*[0],
+                'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
+            'RespMatMode-Sel': {
+                'type': 'enum', 'value': self.RespMatMode.Full,
+                'enums': self.RespMatMode._fields},
+            'RespMatMode-Sts': {
+                'type': 'enum', 'value': self.RespMatMode.Full,
+                'enums': self.RespMatMode._fields},
             'SingValuesRaw-Mon': {
                 'type': 'float', 'count': self.nr_svals,
                 'value': self.nr_svals*[0],
@@ -594,10 +612,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'count': self.nr_svals,
                 'value': self.nr_svals*[0],
                 'unit': 'Singular values of the matrix in use'},
-            'InvRespMat-Mon': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
-                'value': self.matrix_size*[0],
-                'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
                 'type': 'int', 'count': self.nr_ch, 'value': self.nr_ch*[1],
                 'unit': 'CHs used in correction'},

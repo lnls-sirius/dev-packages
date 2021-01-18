@@ -5,8 +5,8 @@ import numpy as _np
 
 from ...namesys import SiriusPVName as _PVName
 from ...search import PSSearch as _PSSearch
-from ...pwrsupply.csdev import Const as _PSConst
-from ...pwrsupply.csdev import ETypes as _ETypes
+from ...pwrsupply.csdev import Const as _PSConst, ETypes as _ETypes, \
+    PS_LI_INTLK_THRS as _PS_LI_INTLK_THRS
 
 
 class PSDiffPV:
@@ -31,8 +31,6 @@ class PSDiffPV:
 class PSStatusPV:
     """Power Supply Status PV."""
 
-    # TODO: Add other interlocks for some PS types
-
     BIT_PSCONNECT = 0b000001
     BIT_PWRSTATON = 0b000010
     BIT_CURRTDIFF = 0b000100
@@ -43,11 +41,10 @@ class PSStatusPV:
     PWRSTE_STS = 0
     CURRT_DIFF = 1
     INTRLCK_LI = 2
-    INTLK_SOFT = 2
-    INTLK_HARD = 3
-    OPMODE_SEL = 4
-    OPMODE_STS = 5
-    WAVFRM_MON = 6
+    OPMODE_SEL = 2
+    OPMODE_STS = 3
+    WAVFRM_MON = 4
+    INTLK_PVS = list()
 
     DTOLWFM_DICT = dict()
 
@@ -60,11 +57,11 @@ class PSStatusPV:
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
-                not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
-                not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
+            for intlk in self.INTLK_PVS:
+                disconnected |= not computed_pv.pvs[intlk].connected
         else:
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
@@ -112,11 +109,11 @@ class PSStatusPV:
                 value |= PSStatusPV.BIT_OPMODEDIF
 
             # interlocks?
-            intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
-            intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
-            if intlksoft != 0 or intlksoft is None or \
-                    intlkhard != 0 or intlkhard is None:
-                value |= PSStatusPV.BIT_INTERLOCK
+            for intlk in self.INTLK_PVS:
+                intlkval = computed_pv.pvs[intlk].value
+                if intlkval != 0 or intlkval is None:
+                    value |= PSStatusPV.BIT_INTERLOCK
+                    break
 
         else:
             # current-diff?
@@ -126,7 +123,7 @@ class PSStatusPV:
 
             # interlocks?
             intlk = computed_pv.pvs[PSStatusPV.INTRLCK_LI].value
-            if intlk > 55 or intlk is None:
+            if intlk > _PS_LI_INTLK_THRS or intlk is None:
                 value |= PSStatusPV.BIT_INTERLOCK
 
         return {'value': value}

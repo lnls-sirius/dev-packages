@@ -9,7 +9,7 @@ from .llrf import LLRF
 from .pwrsupply import PowerSupply, PowerSupplyPU
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
-from .rf import RFGen, RFLL, RFPowMon, RFCav
+from .rf import RFGen, LLRF, BORFCavMonitor, SIRFCavMonitor, RFCav
 from .screen import Screen
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .sofb import SOFB
