@@ -2,8 +2,8 @@
 
 from copy import deepcopy as _dcopy
 import numpy as _np
-from epics import PV as _PV
 
+from ..epics import PV as _PV
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
 from .ramp import BoosterRamp as _BORamp
 from .waveform import Waveform as _Waveform
