@@ -680,6 +680,55 @@ class ConnRF(_EpicsPropsList):
         return True
 
 
+class AuxConvRF:
+    """Class to handle VGap [kV] <-> FPGA units [mV] RF convertions."""
+
+    class Const(_csdev.Const):
+        """Properties names."""
+
+        BO_Rsh = 15*1e6
+
+        Conv_U2Raw_C0 = -2.51e-2
+        Conv_U2Raw_C1 = 2.02
+        Conv_U2Raw_C2 = 0.00
+        Conv_U2Raw_C3 = 0.00
+        Conv_U2Raw_C4 = 0.00
+
+        Conv_Raw2U_C0 = 1.31e-2
+        Conv_Raw2U_C1 = 4.95e-1
+        Conv_Raw2U_C2 = 0
+        Conv_Raw2U_C3 = 0
+        Conv_Raw2U_C4 = 0
+
+    @staticmethod
+    def conv_vgap_2_raw(vgap):
+        """Convert VGap to FPGA units."""
+        c = AuxConvRF.Const
+        _c0 = c.Conv_U2Raw_C0
+        _c1 = c.Conv_U2Raw_C1
+        _c2 = c.Conv_U2Raw_C2
+        _c3 = c.Conv_U2Raw_C3
+        _c4 = c.Conv_U2Raw_C4
+
+        aux = 1000 * vgap/_np.sqrt(2 * c.BO_Rsh)
+        raw = _c0 + _c1*aux + _c2*aux**2 + _c3*aux**3 + _c4*aux**4
+        return raw
+
+    @staticmethod
+    def conv_raw_2_vgap(raw):
+        """Convert FPGA units to VGap."""
+        c = AuxConvRF.Const
+        _c0 = c.Conv_Raw2U_C0
+        _c1 = c.Conv_Raw2U_C1
+        _c2 = c.Conv_Raw2U_C2
+        _c3 = c.Conv_Raw2U_C3
+        _c4 = c.Conv_Raw2U_C4
+
+        aux = (_c0 + _c1*raw + _c2*raw**2 + _c3*raw**3 + _c4*raw**4)
+        vgap = aux * _np.sqrt(2 * c.BO_Rsh) / 1000
+        return vgap
+
+
 class ConnSOFB(_EpicsPropsList):
     """SOFB connector class."""
 
