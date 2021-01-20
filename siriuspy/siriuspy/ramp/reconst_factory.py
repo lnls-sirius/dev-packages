@@ -135,7 +135,7 @@ class BONormListFactory:
 
         diffa = diff1[idd1]
         diffb = wfm[idw] - diffa*idw
-        ind_inter = -_np.diff(diffb)/_np.diff(diffa)
+        ind_inter = -1 * _np.diff(diffb)/_np.diff(diffa)
         w_inter = diffa[:-1]*ind_inter + diffb[:-1]
 
         ind_orig = _np.arange(0, len(wfm))
@@ -209,7 +209,8 @@ class BONormListFactory:
                 wfm = _np.interp(ind, ind_orig, w_orig)
 
                 time_inter, w_inter = self._calc_nconf_times(time, wfm)
-                ps2time2strg[psname] = {i: w for i, w in zip(time_inter, w_inter)}
+                ps2time2strg[psname] = {
+                    i: w for i, w in zip(time_inter, w_inter)}
                 times.update(time_inter)
                 if not all(time_inter == sorted(time_inter)):
                     problems = True
@@ -335,8 +336,8 @@ class BOTIRampFactory:
                 pvname = trig + ':' + ppty
                 pvs[pvname] = _PV(pvname, connection_timeout=TIMEOUT_CONN)
 
-        for ev in BOTIRampFactory._events:
-            pvname = ev + 'Delay-RB'
+        for event in BOTIRampFactory._events:
+            pvname = event + 'Delay-RB'
             pvs[pvname] = _PV(pvname, connection_timeout=TIMEOUT_CONN)
 
         egun_sb_sts_pvname = 'LI-01:EG-PulsePS:singleselstatus'
