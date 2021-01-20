@@ -574,8 +574,8 @@ class ConnRF(_EpicsPropsList):
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
-        Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
+        Rmp_VoltBot = DevName + ':mV:RAMP:AMP:BOT-SP'
+        Rmp_VoltTop = DevName + ':mV:RAMP:AMP:TOP-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
         Rmp_PhsTop = DevName + ':RmpPhsTop-SP'
         Rmp_Intlk = DevName + ':Intlk-Mon'
@@ -585,6 +585,7 @@ class ConnRF(_EpicsPropsList):
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
+        self._aux_conv = AuxConvRF()
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
@@ -609,33 +610,14 @@ class ConnRF(_EpicsPropsList):
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to RF subsystem."""
-        sp_dic = dict()
-        c = ConnRF.Const
-        sp_dic[c.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
-        sp_dic[c.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
-        sp_dic[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
-        sp_dic[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
-        sp_dic[c.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
-        sp_dic[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
-        sp_dic[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
-        sp_dic[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        return self.set_setpoints_check(sp_dic, timeout=timeout)
+        return self.set_setpoints_check(
+            self.get_propty_2_config_ramp_dict(), timeout=timeout)
 
     # --- RF checks ---
 
     def check_config_ramp(self):
         """Check if configured to ramp."""
-        rb = dict()
-        c = ConnRF.Const
-        rb[c.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
-        rb[c.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
-        rb[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
-        rb[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
-        rb[c.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
-        rb[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
-        rb[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
-        rb[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        return self._check(rb)
+        return self._check(self.get_propty_2_config_ramp_dict())
 
     def check_intlk(self):
         """Check if hardware interlocks are reset."""
@@ -645,6 +627,24 @@ class ConnRF(_EpicsPropsList):
         """Check if ramp increase was concluded."""
         return self._check({ConnRF.Const.Rmp_Enbl: 1,
                             ConnRF.Const.Rmp_RmpReady: 1})
+
+    # --- auxiliary method ---
+
+    def get_propty_2_config_ramp_dict(self):
+        """Return dict of PVs to check to be according to config."""
+        dic = dict()
+        c = ConnRF.Const
+        dic[c.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
+        dic[c.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
+        dic[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
+        dic[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
+        dic[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
+        dic[c.Rmp_VoltBot] = self._aux_conv.conv_vgap_2_raw(
+            self._ramp_config.rf_ramp_bottom_voltage)
+        dic[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        dic[c.Rmp_VoltTop] = self._aux_conv.conv_vgap_2_raw(
+            self._ramp_config.rf_ramp_top_voltage)
+        return dic
 
     # --- private methods ---
 

@@ -6,6 +6,7 @@ import numpy as _np
 from ..epics import PV as _PV
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
 from .ramp import BoosterRamp as _BORamp
+from .conn import AuxConvRF
 from .waveform import Waveform as _Waveform
 
 
@@ -260,8 +261,8 @@ class BORFRampFactory:
         'rampup_duration': _DevName+':RmpTs2-RB',
         'top_duration': _DevName+':RmpTs3-RB',
         'rampdown_duration': _DevName+':RmpTs4-RB',
-        'bottom_voltage': _DevName+':RmpVoltBot-RB',
-        'top_voltage': _DevName+':RmpVoltTop-RB',
+        'bottom_voltage': _DevName+':mV:RAMP:AMP:BOT-RB',
+        'top_voltage': _DevName+':mV:RAMP:AMP:TOP-RB',
         'bottom_phase': _DevName+':RmpPhsBot-RB',
         'top_phase': _DevName+':RmpPhsTop-RB',
     }
@@ -270,6 +271,7 @@ class BORFRampFactory:
     def __init__(self):
         """."""
         self._rf_params = None
+        self._aux_conv = AuxConvRF()
         self._create_pvs()
 
     @property
@@ -294,7 +296,12 @@ class BORFRampFactory:
 
         rf_params = dict()
         for param in BORFRampFactory._ppties:
-            rf_params[param] = BORFRampFactory._PVs[param].value
+            val = BORFRampFactory._PVs[param].value
+            if 'voltage' in param:
+                param_val = self._aux_conv.conv_raw_2_vgap(val)
+            else:
+                param_val = val
+            rf_params[param] = param_val
         return rf_params
 
 
