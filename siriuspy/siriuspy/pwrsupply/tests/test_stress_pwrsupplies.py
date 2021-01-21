@@ -98,6 +98,7 @@ def try_to_stress(nr_iters=100, rate=25.14):
 #            problem prop. in PSSOFB mproc. then ?
 #    else:
 #        try to replicate problem somehow.
+# 3. try script (or SOFB ioc) with differente setpoint rates < 25.14 Hz.
 
 
 # bbbname = 'IA-01RaCtrl:CO-PSCtrl-SI2'
