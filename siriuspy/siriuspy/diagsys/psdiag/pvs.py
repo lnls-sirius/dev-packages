@@ -3,6 +3,7 @@
 
 import numpy as _np
 
+from ...util import get_bit as _get_bit
 from ...namesys import SiriusPVName as _PVName
 from ...search import PSSearch as _PSSearch
 from ...pwrsupply.csdev import Const as _PSConst, ETypes as _ETypes, \
@@ -41,12 +42,17 @@ class PSStatusPV:
     PWRSTE_STS = 0
     CURRT_DIFF = 1
     INTRLCK_LI = 2
+    WARNSTS_LI = 3
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
-    INTLK_PVS = list()
 
     DTOLWFM_DICT = dict()
+
+    def __init__(self):
+        """Init attributs."""
+        self.INTLK_PVS = list()
+        self.intlkwarn_bit = _ETypes.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
@@ -123,6 +129,10 @@ class PSStatusPV:
 
             # interlocks?
             intlk = computed_pv.pvs[PSStatusPV.INTRLCK_LI].value
+            if psname.dev == 'Spect':
+                intlkwarn = computed_pv.pvs[PSStatusPV.WARNSTS_LI].value
+                if _get_bit(intlkwarn, self.intlkwarn_bit):
+                    intlk -= 2**self.intlkwarn_bit
             if intlk > _PS_LI_INTLK_THRS or intlk is None:
                 value |= PSStatusPV.BIT_INTERLOCK
 
