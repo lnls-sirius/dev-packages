@@ -11,6 +11,9 @@ import urllib3 as _urllib3
 from .. import envars as _envars
 
 
+_TIMEOUT = 5.0  # [seconds]
+
+
 class AuthenticationError(Exception):
     """."""
 
@@ -24,6 +27,7 @@ class ClientArchiver:
     def __init__(self, server_url=None):
         """."""
         self.session = None
+        self.timeout = _TIMEOUT
         self._url = server_url or self.SERVER_URL
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
@@ -96,7 +100,8 @@ class ClientArchiver:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self._make_request(url, need_login=True)
 
-    def getData(self, pvname, timestamp_start, timestamp_stop, mean_sec=None,
+    def getData(self, pvname, timestamp_start, timestamp_stop,
+                process_type='', interval=None, stddev=None,
                 get_request_url=False):
         """Get archiver data.
 
@@ -105,11 +110,25 @@ class ClientArchiver:
                            Example: '2019-05-23T13:32:27.570Z'
         timestamp_stop -- timestamp of interval stop
                            Example: '2019-05-23T13:32:27.570Z'
+        process_type -- data processing type to use. Can be:
+                     '', 'mean', 'median', 'std', 'variance',
+                     'popvariance', 'kurtosis', 'skewness'
+                     'mini', 'maxi', 'jitter', 'count', 'ncount',
+                     'firstSample', 'lastSample', 'firstFill', 'lastFill',
+                     'nth', 'ignoreflyers' or 'flyers'
+        interval -- interval of the bin of data, in seconds
+        stddev -- number of standard deviations.
+                  argument used in processing 'ignoreflyers' and 'flyers'.
         """
         tstart = _parse.quote(timestamp_start)
         tstop = _parse.quote(timestamp_stop)
-        if mean_sec is not None:
-            pvname = 'mean_' + str(int(mean_sec)) + '(' + pvname + ')'
+        if process_type:
+            process_str = process_type
+            if interval is not None:
+                process_str += '_' + str(int(interval))
+                if 'flyers' in process_type and stddev is not None:
+                    process_str += '_' + str(int(stddev))
+            pvname = process_str + '(' + pvname + ')'
         url = self._create_url(
             method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
         if get_request_url:
@@ -139,11 +158,17 @@ class ClientArchiver:
 
     def _make_request(self, url, need_login=False):
         if self.session is not None:
-            req = self.session.get(url)
+            try:
+                req = self.session.get(url, timeout=self.timeout)
+            except requests.exceptions.ConnectTimeout as err_msg:
+                raise ConnectionError(err_msg)
         elif need_login:
             raise AuthenticationError('You need to login first.')
         else:
-            req = requests.get(url, verify=False)
+            try:
+                req = requests.get(url, verify=False, timeout=self.timeout)
+            except requests.exceptions.ConnectTimeout as err_msg:
+                raise ConnectionError(err_msg)
         return req
 
     def _create_url(self, method, **kwargs):

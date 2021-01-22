@@ -75,7 +75,9 @@ class PVDetails:
             value = value.replace(',', '')
             if field in PVDetails._field2type:
                 fattr, ftype = PVDetails._field2type[field]
-                setattr(self, fattr, ftype(value))
+                if not value == 'Not enough info':
+                    value = ftype(value)
+                setattr(self, fattr, value)
             elif field == 'Is this a scalar:':
                 self.is_scalar = (value.lower() == 'yes')
             elif field == 'Is this PV paused:':
@@ -156,9 +158,10 @@ class PVData:
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined!')
             return
+        process_type = 'mean' if mean_sec is not None else ''
         data = self.connector.getData(
             self.pvname, self.timestamp_start, self.timestamp_stop,
-            mean_sec=mean_sec)
+            process_type=process_type, interval=mean_sec)
         if not data:
             return
         self.timestamp, self.value, self.status, self.severity = data
