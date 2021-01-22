@@ -4,13 +4,119 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 
 from ..epics import PV as _PV
-from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
+from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch, \
+    MASearch as _MASearch
 from .ramp import BoosterRamp as _BORamp
 from .conn import AuxConvRF
 from .waveform import Waveform as _Waveform
+from .magnet import get_magnet as _get_magnet
 
 
 TIMEOUT_CONN = 0.05
+
+
+class BODipRampFactory:
+    """Class to rebuild Dipole energies from machine state."""
+
+    _PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
+    _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
+    _ppties = {
+        'start',
+        'rampup1_start',
+        'rampup2_start',
+        'rampdown_start',
+        'rampdown_stop',
+    }
+    _PVs = dict()
+
+    def __init__(self, ramp_config, waveform=None):
+        """Init."""
+        self._ramp_config = ramp_config
+        self._duration = self._ramp_config.ps_ramp_duration
+        self._magnet = _get_magnet(_MASearch.conv_psname_2_psmaname(
+            BODipRampFactory._PSNAME_DIPOLE_REF))
+        self._nrpoints = None
+        self._times = None
+        self.waveform = waveform
+        self._create_pvs()
+
+    @property
+    def waveform(self):
+        """Return waveform in current values."""
+        return self._waveform
+
+    @waveform.setter
+    def waveform(self, waveform=None):
+        """Set waveform in current values."""
+        if waveform is None:
+            waveform = _np.array([])
+        self._waveform = waveform
+        self._nrpoints = self._waveform.size
+        self._times = _np.linspace(0, self._duration, self._nrpoints)
+
+    def read_waveform(self):
+        """Read waveform in current values from PVs."""
+        if not BODipRampFactory._PVs:
+            self._create_pvs()
+
+        dipname = BODipRampFactory._PSNAME_DIPOLE_REF
+        pvobj = BODipRampFactory._PVs[dipname]
+        pvobj.wait_for_connection(10*TIMEOUT_CONN)
+        if not pvobj.connected:
+            raise ConnectionError('Dipole waveform PV is disconnected!')
+        self._waveform = pvobj.get()
+        self._nrpoints = self._waveform.size
+        self._times = _np.linspace(0, self._duration, self._nrpoints)
+
+    @property
+    def dip_params(self):
+        """Return dipole parameters rebuilt from PV values."""
+        return self._generate_dip_params()
+
+    # ----- private methods -----
+
+    def _create_pvs(self):
+        dipname = BODipRampFactory._PSNAME_DIPOLE_REF
+        pvs = {dipname: _PV(
+            dipname + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)}
+        BODipRampFactory._PVs = pvs
+
+    def _generate_dip_params(self):
+        if self._waveform is None:
+            raise ValueError(
+                'Waveform has None value. '
+                'Set a valid value to waveform property '
+                'or call read_waveform method.')
+
+        params = dict()
+        for ppty in BODipRampFactory._ppties:
+            if ppty == 'rampdown_start':
+                continue
+            time = 0.0 if ppty == 'start' else \
+                getattr(self._ramp_config, 'ps_ramp_' + ppty + '_time')
+            current = _np.interp(time, self._times, self._waveform)
+            params[ppty + '_energy'] = \
+                self._magnet.conv_current_2_strength(current)
+
+        # calculate energy for rampdown_start
+        def func(tims, vals, time):
+            return (vals[1] - vals[0])/(tims[1] - tims[0]) * \
+                (time - tims[0]) + vals[0]
+
+        time = self._ramp_config.ps_ramp_rampdown_start_time
+        ru_times = [self._ramp_config.ps_ramp_rampup2_start_time,
+                    (self._ramp_config.ps_ramp_rampdown_start_time -
+                     self._ramp_config.ps_ramp_rampdown_smooth_intvl/2)]
+        ru_values = _np.interp(ru_times, self._times, self._waveform)
+        rd_times = [(self._ramp_config.ps_ramp_rampdown_start_time +
+                     self._ramp_config.ps_ramp_rampdown_smooth_intvl/2),
+                    self._ramp_config.ps_ramp_rampdown_stop_time]
+        rd_values = _np.interp(rd_times, self._times, self._waveform)
+        params['rampdown_start_energy'] = self._magnet.conv_current_2_strength(
+            _np.mean([func(ru_times, ru_values, time),
+                      func(rd_times, rd_values, time)]))
+
+        return params
 
 
 class BONormListFactory:
