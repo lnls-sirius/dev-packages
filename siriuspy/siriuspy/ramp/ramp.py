@@ -106,11 +106,10 @@ class BoosterNormalized(_ConfigDBDocument):
         return rst
 
     def __eq__(self, value):
-        # TODO: deprecated method? missing self.manames property...
-        for maname in self.manames:
-            if maname == 'BO-Fam:MA-B':
+        for psname in self.psnames:
+            if psname in ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']:
                 continue
-            if not _np.isclose(self[maname], value[maname], atol=1e-5):
+            if not _np.isclose(self[psname], value[psname], atol=1e-5):
                 return False
         return True
 
