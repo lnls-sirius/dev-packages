@@ -2,6 +2,7 @@
 
 from copy import deepcopy as _dcopy
 import numpy as _np
+from scipy.optimize import least_squares
 
 from ..epics import PV as _PV
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch, \
@@ -20,13 +21,13 @@ class BODipRampFactory:
 
     _PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
     _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
-    _ppties = {
+    _ppties = [
         'start',
         'rampup1_start',
         'rampup2_start',
         'rampdown_start',
         'rampdown_stop',
-    }
+    ]
     _PVs = dict()
 
     def __init__(self, ramp_config, waveform=None):
@@ -88,6 +89,15 @@ class BODipRampFactory:
                 'Set a valid value to waveform property '
                 'or call read_waveform method.')
 
+        init_params = self._get_initial_params()
+        _x_init = [init_params[ppty + '_energy']
+                   for ppty in BODipRampFactory._ppties]
+        _x_final = least_squares(self._err_func, _x_init, method='lm').x
+        final_params = {ppty + '_energy': _x_final[i]
+                        for i, ppty in enumerate(BODipRampFactory._ppties)}
+        return final_params
+
+    def _get_initial_params(self):
         params = dict()
         for ppty in BODipRampFactory._ppties:
             if ppty == 'rampdown_start':
@@ -117,6 +127,15 @@ class BODipRampFactory:
                       func(rd_times, rd_values, time)]))
 
         return params
+
+    def _err_func(self, params):
+        new = _dcopy(self._ramp_config)
+        for i, name in enumerate(BODipRampFactory._ppties):
+            setattr(new, 'ps_ramp_' + name + '_energy', params[i])
+        wav = new.ps_waveform_get_currents(BODipRampFactory._PSNAME_DIPOLE_REF)
+        ref = self.waveform
+        error = ref - wav
+        return error
 
 
 class BONormListFactory:

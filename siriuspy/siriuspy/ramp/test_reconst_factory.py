@@ -3,6 +3,7 @@
 import argparse as _argparse
 import numpy as _np
 import matplotlib.pyplot as plt
+from copy import deepcopy as _dcopy
 
 from siriuspy.ramp.ramp import BoosterRamp
 from siriuspy.ramp.reconst_factory import BONormListFactory, BORFRampFactory, \
@@ -34,7 +35,7 @@ def run():
         fac = BONormListFactory(ramp_config=r_orig, waveforms=ps2wfm)
         # fac.read_waveforms()
 
-        r_built = BoosterRamp('testing1')
+        r_built = BoosterRamp('testing')
         attrs = [
             'ps_ramp_wfm_nrpoints_fams',
             'ps_ramp_wfm_nrpoints_corrs',
@@ -113,9 +114,33 @@ def run():
     elif args.factory == 'BODipRampFactory':
         wav = r_orig.ps_waveform_get_currents('BO-Fam:PS-B-1')
         fac = BODipRampFactory(ramp_config=r_orig, waveform=wav)
+        params_init = fac._get_initial_params()
         # fac.read_waveforms()
-        params = fac.dip_params
-        _print_param_dict(params)
+        params_final = fac.dip_params
+        print('initial')
+        _print_param_dict(params_init)
+        print('final')
+        _print_param_dict(params_final)
+
+        r_built_init = _dcopy(r_orig)
+        for name, value in params_init.items():
+            setattr(r_built_init, 'ps_ramp_' + name, value)
+        wav_new_init = r_built_init.ps_waveform_get_currents('BO-Fam:PS-B-1')
+        wav_err_init = wav - wav_new_init
+
+        r_built_final = _dcopy(r_orig)
+        for name, value in params_final.items():
+            setattr(r_built_final, 'ps_ramp_' + name, value)
+        wav_new_final = r_built_final.ps_waveform_get_currents('BO-Fam:PS-B-1')
+        wav_err_final = wav - wav_new_final
+
+        axis = plt.gca()
+        axis.plot(_np.arange(len(wav)), wav_err_init, 'k', label='initial')
+        axis.plot(_np.arange(len(wav)), wav_err_final, 'r--', label='final')
+        axis.grid()
+        plt.title('Fit errors')
+        plt.legend()
+        plt.show()
 
 
 def _print_param_dict(params):
