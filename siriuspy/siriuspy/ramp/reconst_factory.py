@@ -145,20 +145,44 @@ class BONormListFactory:
     _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
     _PVs = dict()
 
-    def __init__(self, ramp_config, waveforms=None):
+    # desired reconstruction precision
+    _DESIRED_PRECISION = 1e-5
+
+    # thersholds to norm. configs time detection
+    _THRESHOLD_DEFAULT = 1e-10
+    _THRESHOLD_PROBLEM = 1e-4
+
+    # loss factors consider that a change of 1e-1urad in a corrector is
+    # comparable to a change of 1e-4 in tune fraction and 1e-2 in chromaticity
+    _LOSS_FACTOR_CORRS = 1
+    _LOSS_FACTOR_QUADS = 2e-5
+    _LOSS_FACTOR_SEXTS = 1e-2
+
+    def __init__(self, ramp_config, waveforms=None, opt_metric='strength',
+                 opt_global=False, opt_times=False):
         """Init."""
         if waveforms is None:
             waveforms = dict()
+        self._opt_metric = opt_metric
+        self._opt_global = opt_global
+        self._opt_times = opt_times
 
         # declaration of attributes (as pylint requires)
-        self._wfms_current = None
+        self._wfms_strength = None
         self._waveforms = None
 
         self._ramp_config = ramp_config
         self._dipole = ramp_config.ps_waveform_get(self._PSNAME_DIPOLE_REF)
         self._duration = ramp_config.ps_ramp_duration
         self._nrpoints_fams = ramp_config.ps_ramp_wfm_nrpoints_fams
+        self._times_fams = self._dipole.times
+        self._dipstrgs_fams = self._dipole.strengths
         self._nrpoints_corrs = ramp_config.ps_ramp_wfm_nrpoints_corrs
+        self._times_corrs = _np.linspace(
+            0.0, self._duration, self._nrpoints_corrs)
+        self._dipstrgs_corrs = _np.interp(
+            self._times_corrs, self._dipole.times, self._dipole.strengths)
+
         self._psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
         for dip in self._PSNAME_DIPOLES:
             self._psnames.remove(dip)
@@ -211,68 +235,20 @@ class BONormListFactory:
         return _dcopy(self._norm_configs_dict)
 
     @property
+    def desired_reconstr_precision(self):
+        """Desired reconstruction precision."""
+        return BONormListFactory._DESIRED_PRECISION
+
+    @property
     def precision_reached(self):
         """Precision reached.
 
         Return if the reconstructed normalized configuration dict
-        reached the precision of 1.e-5.
+        reached the desired  precision.
         """
         if not self._norm_configs_dict:
             return False
 
-        max_error = self._check_waveforms_error()
-        if max_error < 1e-5:
-            return True, max_error
-        return False, max_error
-
-    # ----- private methods -----
-
-    def _create_pvs(self):
-        pvs = dict()
-        for psname in self.psnames:
-            pvs[psname] = _PV(
-                psname + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
-        BONormListFactory._PVs = pvs
-
-    def _create_waveform_objects(self):
-        self._ps2wfms = dict()
-        for psname, wfm_curr in self._wfms_current.items():
-            self._ps2wfms[psname] = _Waveform(
-                psname, self._dipole, currents=wfm_curr,
-                wfm_nrpoints=self._get_appropriate_wfmnrpoints(psname))
-
-    def _get_appropriate_wfmnrpoints(self, psname):
-        """Return appropriate number of points for psname."""
-        if _PSSearch.conv_psname_2_psmodel(psname) == 'FBP':
-            return self._nrpoints_corrs
-        return self._nrpoints_fams
-
-    def _calc_nconf_times(self, times, wfm):
-        diff1 = _np.diff(wfm)
-        diff2 = _np.diff(diff1)
-        ind = _np.where(_np.abs(diff2) < 1e-10)[0]
-        dind = _np.diff(ind)
-        ind2 = _np.where(dind > 1)[0]
-
-        idd2 = _np.ones(ind2.size+1, dtype=int)*(len(diff2)-1)
-        idd2[:ind2.size] = ind[ind2]
-        idd1 = idd2 + 1
-        idw = idd1 + 1
-
-        diffa = diff1[idd1]
-        diffb = wfm[idw] - diffa*idw
-        ind_inter = -1 * _np.diff(diffb)/_np.diff(diffa)
-        w_inter = diffa[:-1]*ind_inter + diffb[:-1]
-
-        ind_orig = _np.arange(0, len(wfm))
-        time_inter = _np.interp(ind_inter, ind_orig, times)
-        if time_inter.size:
-            time_inter2 = _np.round(time_inter, decimals=3)
-            w_inter2 = _np.interp(time_inter2, time_inter, w_inter)
-            return time_inter2, w_inter2
-        return time_inter, w_inter
-
-    def _check_waveforms_error(self):
         r_new = _BORamp()
         attrs = [
             'ps_ramp_wfm_nrpoints_fams',
@@ -310,71 +286,248 @@ class BONormListFactory:
 
         max_error = 0.0
         for psname in self.psnames:
-            error = self._ps2wfms[psname].currents - \
-                r_new.ps_waveform_get_currents(psname)
+            error = _np.abs(
+                self._ps2wfms[psname].currents -
+                r_new.ps_waveform_get_currents(psname))
             max_error = max(max_error, max(error))
-        return max_error
+        if max_error < self.desired_reconstr_precision:
+            return True, max_error
+        return False, max_error
+
+    def calc_psname_current_error(self, psname, nc_times, nc_strengths):
+        """Calculate error vector in current.
+
+        Calculate reconstruction error vector in current units for
+        psname given normalized configurations times and strengths."""
+        if 'Fam' in psname:
+            wfm_times = self._times_fams
+            dip_strgs = self._dipstrgs_fams
+        else:
+            wfm_times = self._times_corrs
+            dip_strgs = self._dipstrgs_corrs
+        wfm_strengths = _np.interp(wfm_times, nc_times, nc_strengths)
+        magnet = _get_magnet(_MASearch.conv_psname_2_psmaname(psname))
+        wfm_currents = magnet.conv_strength_2_current(
+            strengths=wfm_strengths, strengths_dipole=dip_strgs)
+        error = self._wfms_current[psname] - wfm_currents
+        return error
+
+    def calc_psname_strength_error(self, psname, nc_times, nc_strengths):
+        """Calculate error vector in strength.
+
+        Calculate reconstruction error vector in strengths units for
+        psname given normalized configurations times and strengths."""
+        wfm_times = self._times_fams if 'Fam' in psname else self._times_corrs
+        wfm_strengths = _np.interp(wfm_times, nc_times, nc_strengths)
+        error = self._wfms_strength[psname] - wfm_strengths
+        return error
+
+    # ----- private methods -----
+
+    def _create_pvs(self):
+        pvs = dict()
+        for psname in self.psnames:
+            pvs[psname] = _PV(
+                psname + ':Wfm-SP', connection_timeout=TIMEOUT_CONN)
+        BONormListFactory._PVs = pvs
+
+    def _create_waveform_objects(self):
+        self._ps2wfms = dict()
+        self._wfms_strength = dict()
+        for psname, wfm_curr in self._wfms_current.items():
+            wfm_nrpoints = self._nrpoints_fams if 'Fam' in psname \
+                else self._nrpoints_corrs
+            self._ps2wfms[psname] = _Waveform(
+                psname, self._dipole, currents=wfm_curr,
+                wfm_nrpoints=wfm_nrpoints)
+            self._wfms_strength[psname] = self._ps2wfms[psname].strengths
+
+    def _calc_nconf_times(self, times, wfm, thres):
+        # calculate 1 e 2 derivatives
+        diff1 = _np.diff(wfm)
+        diff2 = _np.diff(diff1)
+
+        # change threshold, if necessary
+        maxi = _np.max(_np.abs(diff2))
+        thres = maxi*1e-2 if maxi < thres else thres
+
+        # identify zeros in 2 derivative and norm. configs indices
+        ind = _np.where(_np.abs(diff2) < thres)[0]
+        dind = _np.diff(ind)
+        ind2 = _np.where(dind > 1)[0]
+        idd_bef = _np.r_[ind[ind2], diff2.size-1]
+        idd_aft = _np.r_[0, ind[ind2+1]]
+
+        # calculate slopes, offsets and interceptions to interpolations
+        slopes, offsets = list(), list()
+        for beg, fin in zip(idd_aft, idd_bef):
+            _x, _y = times[beg:fin], wfm[beg:fin]
+            if not _x.size:
+                continue
+            off, slp = _np.polynomial.polynomial.polyfit(_x, _y, 1)
+            slopes.append(slp)
+            offsets.append(off)
+        time_inter = -1 * _np.diff(offsets)/_np.diff(slopes)
+        w_inter = slopes[:-1]*time_inter + offsets[:-1]
+        if time_inter.size:
+            time_inter2 = _np.round(time_inter, decimals=3)
+            w_inter2 = _np.interp(time_inter2, time_inter, w_inter)
+            time_inter, w_inter = time_inter2, w_inter2
+
+        # plt.plot(ind, _np.zeros((len(ind), 1)).flatten(), 'yo')
+        # plt.plot(_np.arange(0, len(diff1)), diff1, 'b-')
+        # plt.plot(_np.arange(1, len(diff1)), diff2, 'g-')
+        # plt.plot(idd_bef, diff1[idd_bef], 'kx')
+        # plt.show()
+        return time_inter, w_inter
+
+    def _get_initial_guess(self, threshold):
+        # get time instants and normalized strengths where there are
+        # normalized configurations
+        problems = False
+        ps2time2strg = dict()
+        times = set()
+        for psname, wfm in self._ps2wfms.items():
+            time = wfm.times
+            wfm = wfm.strengths
+
+            time_inter, w_inter = self._calc_nconf_times(
+                time, wfm, threshold)
+            ps2time2strg[psname] = {
+                i: w for i, w in zip(time_inter, w_inter)}
+            times.update(time_inter)
+            if not all(time_inter == sorted(time_inter)) or \
+                    (time_inter.size == 1 and time_inter[0] == _np.nan):
+                problems = True
+                break
+        if problems and threshold == BONormListFactory._THRESHOLD_DEFAULT:
+            return False
+        if problems:
+            raise Exception(
+                'Could not generate normalized configurations!')
+
+        # sort and verify times
+        times = sorted(times)
+        if _np.any([time > self._duration for time in times]) or \
+                _np.any([time < 0 for time in times]):
+            raise Exception(
+                'Could not generate normalized configurations!')
+        if not times:
+            times = {0.0, }
+
+        # generate dict of normalized configs
+        norm_configs_dict = dict()
+        for time in times:
+            energy = self._dipole.get_strength_from_time(time)
+            nconf = dict()
+            nconf['label'] = ' {:.4f}GeV'.format(energy)
+            for dip in self._PSNAME_DIPOLES:
+                nconf[dip] = energy
+            for psname in self.psnames:
+                if time in ps2time2strg[psname].keys():
+                    nconf[psname] = ps2time2strg[psname][time]
+                else:
+                    wfm = self._ps2wfms[psname]
+                    nconf[psname] = wfm.get_strength_from_time(time)
+            norm_configs_dict['{:.3f}'.format(time)] = nconf
+        return norm_configs_dict
 
     def _generate_nconf_dict(self):
-        oversampling_factor = 1
-        while not self.precision_reached:
-            # get time instants and normalized strengths where there are
-            # normalized configurations
-            problems = False
-            ps2time2strg = dict()
-            times = set()
-            for psname, wfm in self._ps2wfms.items():
-                nrpts_orig = wfm.wfm_nrpoints
-                ind_orig = _np.arange(0, nrpts_orig)
-                t_orig = wfm.times
-                w_orig = wfm.strengths
+        init_guess = self._get_initial_guess(
+            BONormListFactory._THRESHOLD_DEFAULT)
+        if not init_guess:
+            init_guess = self._get_initial_guess(
+                BONormListFactory._THRESHOLD_PROBLEM)
 
-                nrpts = nrpts_orig*oversampling_factor
-                ind = _np.linspace(0, ind_orig[-1], nrpts)
-                time = _np.interp(ind, ind_orig, t_orig)
-                wfm = _np.interp(ind, ind_orig, w_orig)
+        self._norm_configs_dict = init_guess
 
-                time_inter, w_inter = self._calc_nconf_times(time, wfm)
-                ps2time2strg[psname] = {
-                    i: w for i, w in zip(time_inter, w_inter)}
-                times.update(time_inter)
-                if not all(time_inter == sorted(time_inter)):
-                    problems = True
-                    break
-            if problems and oversampling_factor == 1:
-                oversampling_factor *= 4
-                continue
-            elif problems:
-                raise Exception(
-                    'Could not generate normalized configurations!')
+        if self.precision_reached[0]:
+            return
 
-            # sort and verify times
-            times = sorted(times)
-            if _np.any([time > self._duration for time in times]) or \
-                    _np.any([time < 0 for time in times]):
-                raise Exception(
-                    'Could not generate normalized configurations!')
-            if not times:
-                times = {0.0, }
+        self._order = list(init_guess.keys())
 
-            # generate dict of normalized configs
-            self._norm_configs_dict = dict()
-            for time in times:
-                energy = self._dipole.get_strength_from_time(time)
-                nconf = dict()
-                nconf['label'] = ' {:.4f}GeV'.format(energy)
-                for dip in self._PSNAME_DIPOLES:
-                    nconf[dip] = energy
-                for psname in self.psnames:
-                    if time in ps2time2strg[psname].keys():
-                        nconf[psname] = ps2time2strg[psname][time]
-                    else:
-                        wfm = self._ps2wfms[psname]
-                        nconf[psname] = wfm.get_strength_from_time(time)
-                self._norm_configs_dict['{:.3f}'.format(time)] = nconf
+        if self._opt_global:
+            nrows = len(self._psnames)+1 if self._opt_times else \
+                len(self._psnames)
+            ncols = len(self._order)
 
-            # TODO: verify case of precision not reached
-            break
+            init_params = _np.zeros((nrows, ncols))
+            if self._opt_times:
+                init_params[-1] = [float(t) for t in self._order]
+            for row, psname in enumerate(self._psnames):
+                for col, str_time in enumerate(self._order):
+                    init_params[row][col] = init_guess[str_time][psname]
+
+            final_params = least_squares(
+                self._err_func_global, init_params.flatten(), method='lm').x
+            final_params = _np.reshape(final_params, (nrows, ncols))
+
+            final_times = final_params[-1] if self._opt_times else \
+                [float(t) for t in self._order]
+
+            nconfs = dict()
+            for col, str_time_orig in enumerate(self._order):
+                str_time = '{:.3f}'.format(final_times[col])
+                nconfs[str_time] = dict()
+                nconfs[str_time]['label'] = init_guess[str_time_orig]['label']
+                for row, psname in enumerate(self._psnames):
+                    nconfs[str_time][psname] = final_params[row][col]
+        else:
+            nconfs = dict()
+            for psn in self._psnames:
+                init_params = [init_guess[st][psn] for st in self._order]
+                final_params = least_squares(
+                    self._err_func_individual, init_params,
+                    args=(psn,), method='lm').x
+                for i, str_time in enumerate(self._order):
+                    if str_time not in nconfs:
+                        nconfs[str_time] = dict()
+                        nconfs[str_time]['label'] = \
+                            init_guess[str_time]['label']
+                    nconfs[str_time][psn] = final_params[i]
+        self._norm_configs_dict = nconfs
+
+    def _err_func_individual(self, params, psname):
+        nc_strengths = params
+        nc_times = [float(t) for t in self._order]
+        error = self._get_err_vector(psname, nc_times, nc_strengths)
+        return error
+
+    def _err_func_global(self, params):
+        nrows = len(self._psnames)+1 if self._opt_times else \
+            len(self._psnames)
+        ncols = len(self._order)
+        aux_params = _np.reshape(params, (nrows, ncols))
+        if self._opt_times:
+            aux_params = aux_params[:, _np.argsort(aux_params[-1, :])]
+        nc_times = aux_params[-1] if self._opt_times else \
+            [float(t) for t in self._order]
+
+        error = list()
+        for psn in self._psnames:
+            nc_strengths = aux_params[self._psnames.index(psn)]
+            ind_error = self._get_err_vector(psn, nc_times, nc_strengths)
+            error.extend(list(ind_error))
+        error = _np.array(error)
+        return error
+
+    def _get_err_vector(self, psname, nc_times, nc_strengths):
+        if self._opt_metric == 'strength':
+            error = self.calc_psname_strength_error(
+                psname, nc_times, nc_strengths)
+            loss_factor = self._get_loss_factor(psname)
+            error /= loss_factor
+        else:
+            error = self.calc_psname_current_error(
+                psname, nc_times, nc_strengths)
+        return error
+
+    def _get_loss_factor(self, psname):
+        if psname.dev in ('QF', 'QD'):
+            return BONormListFactory._LOSS_FACTOR_QUADS
+        if psname.dev in ('SF', 'SD'):
+            return BONormListFactory._LOSS_FACTOR_SEXTS
+        return BONormListFactory._LOSS_FACTOR_CORRS
 
 
 class BORFRampFactory:

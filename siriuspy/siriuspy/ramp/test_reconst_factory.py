@@ -1,41 +1,62 @@
 #!/usr/bin/env python-sirius
 
+"""Test reconstrction factories."""
+
+from copy import deepcopy as _dcopy
 import argparse as _argparse
 import numpy as _np
 import matplotlib.pyplot as plt
-from copy import deepcopy as _dcopy
 
+from siriuspy.clientconfigdb import ConfigDBDocument
 from siriuspy.ramp.ramp import BoosterRamp
+from siriuspy.ramp.waveform import Waveform
 from siriuspy.ramp.reconst_factory import BONormListFactory, BORFRampFactory, \
     BOTIRampFactory, BODipRampFactory
 
 from siriuspy.search import PSSearch
 
 
-parser = _argparse.ArgumentParser(description="Test BORamp Rebuild Factories.")
-parser.add_argument(
+PARSER = _argparse.ArgumentParser(description="Test BORamp Rebuild Factories.")
+PARSER.add_argument(
     "factory", type=str, default='', help="Define which factory to test.")
-args = parser.parse_args()
+ARGS = PARSER.parse_args()
 
 
-psnames = PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
+PSNAMES = PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
 
-r_orig = BoosterRamp('testing')
-r_orig.load()
+R_ORIG = BoosterRamp('testing')
+R_ORIG.load()
+
+GLOBAL_CONF = ConfigDBDocument(
+    # config_type='global_config', name='ConfigB_adjust_rffreq')
+    config_type='global_config', name='ref_config')
+GLOBAL_CONF.load()
 
 
 def run():
-    if args.factory == 'BONormListFactory':
+    if ARGS.factory == 'BONormListFactory':
         ps2wfm = dict()
-        for ps in psnames:
-            if ps in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
-                continue
-            ps2wfm[ps] = r_orig.ps_waveform_get_currents(ps)
+        # for psn in PSNAMES:
+        #     if psn in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
+        #         continue
+        #     ps2wfm[psn] = R_ORIG.ps_waveform_get_currents(psn)
 
-        fac = BONormListFactory(ramp_config=r_orig, waveforms=ps2wfm)
+        for psn in PSNAMES:
+            if psn in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
+                continue
+            for row in GLOBAL_CONF.value['pvs']:
+                pvname = psn + ':Wfm-SP'
+                if row[0] == pvname:
+                    ps2wfm[psn] = row[1]
+                    break
+
+        fac = BONormListFactory(
+            ramp_config=R_ORIG, waveforms=ps2wfm,
+            opt_global=False, opt_times=False,
+            opt_metric='strength')
         # fac.read_waveforms()
 
-        r_built = BoosterRamp('testing')
+        r_built = BoosterRamp('config_test')
         attrs = [
             'ps_ramp_wfm_nrpoints_fams',
             'ps_ramp_wfm_nrpoints_corrs',
@@ -67,53 +88,60 @@ def run():
             'ti_params_rf_ramp_delay',
         ]
         for attr in attrs:
-            setattr(r_built, attr, getattr(r_orig, attr))
+            setattr(r_built, attr, getattr(R_ORIG, attr))
 
         r_built.ps_normalized_configs_set(fac.normalized_configs)
         times = r_built.ps_normalized_configs_times
-        labels = r_built.ps_normalized_configs_labels
-
         print(r_built)
-        # for name in r_built.ps_normalized_configs_names:
-        #     print(r_built[name])
 
-        f = plt.figure()
+        des_prec = fac.desired_reconstr_precision
+        prec_reached = fac.precision_reached
+        print('Precision rechead?', prec_reached[0])
+        print('Maximum abs.error:', prec_reached[1])
+
+        dip_wav = R_ORIG.ps_waveform_get('BO-Fam:PS-B-1')
         ax = plt.gca()
         ax.grid()
-        for ps in psnames:
+        for psn in PSNAMES:
+            if psn in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
+                continue
             strgs = list()
-            for t in times:
-                strgs.append(r_built[t][ps])
+            for tim in times:
+                strgs.append(r_built[tim][psn])
             strgs = _np.array(strgs)
 
-            dif = r_orig.ps_waveform_get_currents(ps) - \
-                r_built.ps_waveform_get_currents(ps)
-            if not _np.allclose(dif, 0, atol=1e-5):
-                # ax.plot(r_orig.ps_waveform_get_times(ps),
-                #         r_orig.ps_waveform_get_strengths(ps),
-                #         'r.-', label=ps)
-                # ax.plot(r_built.ps_waveform_get_times(ps),
-                #         r_built.ps_waveform_get_strengths(ps),
-                #         'k.-', label=ps)
-                # ax.plot(times, strgs, 'b.')
-                # ax.plot(times, _np.zeros((len(times), 1)).flatten(), 'b.')
-                ax.plot(r_built.ps_waveform_get_times(ps), dif, 'g-')
-        ax.legend()
+            nr_pts = R_ORIG.ps_ramp_wfm_nrpoints_fams if 'Fam' in psn \
+                else R_ORIG.ps_ramp_wfm_nrpoints_corrs
+            orig_times = R_ORIG.ps_waveform_get_times(psn)
+            orig_currs = ps2wfm[psn]
+            orig_strgs = Waveform(
+                psn, dipole=dip_wav, currents=orig_currs,
+                wfm_nrpoints=nr_pts).strengths
+            built_times = r_built.ps_waveform_get_times(psn)
+            built_currs = r_built.ps_waveform_get_currents(psn)
+            built_strgs = r_built.ps_waveform_get_strengths(psn)
+            dif = orig_currs - built_currs
+            if not _np.allclose(dif, 0, atol=des_prec):
+                ax.plot(orig_times, orig_strgs, 'r.-', label=psn)
+                ax.plot(built_times, built_strgs, 'k.-')
+                ax.plot(times, strgs, 'b.')
+        plt.legend()
+        plt.title('Curves with error > than desired ({})'.format(des_prec))
         plt.show()
 
-    elif args.factory == 'BORFRampFactory':
+    elif ARGS.factory == 'BORFRampFactory':
         fac = BORFRampFactory()
         params = fac.rf_params
         _print_param_dict(params)
 
-    elif args.factory == 'BOTIRampFactory':
+    elif ARGS.factory == 'BOTIRampFactory':
         fac = BOTIRampFactory()
         params = fac.ti_params
         _print_param_dict(params)
 
-    elif args.factory == 'BODipRampFactory':
-        wav = r_orig.ps_waveform_get_currents('BO-Fam:PS-B-1')
-        fac = BODipRampFactory(ramp_config=r_orig, waveform=wav)
+    elif ARGS.factory == 'BODipRampFactory':
+        wav = R_ORIG.ps_waveform_get_currents('BO-Fam:PS-B-1')
+        fac = BODipRampFactory(ramp_config=R_ORIG, waveform=wav)
         params_init = fac._get_initial_params()
         # fac.read_waveforms()
         params_final = fac.dip_params
@@ -122,13 +150,13 @@ def run():
         print('final')
         _print_param_dict(params_final)
 
-        r_built_init = _dcopy(r_orig)
+        r_built_init = _dcopy(R_ORIG)
         for name, value in params_init.items():
             setattr(r_built_init, 'ps_ramp_' + name, value)
         wav_new_init = r_built_init.ps_waveform_get_currents('BO-Fam:PS-B-1')
         wav_err_init = wav - wav_new_init
 
-        r_built_final = _dcopy(r_orig)
+        r_built_final = _dcopy(R_ORIG)
         for name, value in params_final.items():
             setattr(r_built_final, 'ps_ramp_' + name, value)
         wav_new_final = r_built_final.ps_waveform_get_currents('BO-Fam:PS-B-1')
