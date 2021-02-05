@@ -24,7 +24,7 @@ class EVG(_Device):
             devname = EVG.DEVICES.AS
 
         # check if device exists
-        if devname != EVG.DEVICES.ALL:
+        if devname not in EVG.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
