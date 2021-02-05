@@ -138,6 +138,9 @@ class SOFBTLines(ConstTLines):
         self.cv_names = _PSSearch.get_psnames(
             {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
         if self.acc == 'TS':
+            self.cv_names = [
+                n for n in self.cv_names
+                if not ('E' in n.idx or '0' in n.idx)]
             self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + self.ch_names
         elif self.acc == 'SI':
             id_cors = ('SA', 'SB', 'SP')
