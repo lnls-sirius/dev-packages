@@ -810,7 +810,7 @@ class EpicsOrbit(BaseOrbit):
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
-    def acquire_mturn_orbit(self):
+    def acquire_mturn_orbit(self, _):
         """Acquire Multiturn data from BPMs."""
         Thread(target=self._update_multiturn_orbits, daemon=True).start()
 
