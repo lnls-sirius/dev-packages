@@ -6,8 +6,9 @@ import numpy as np
 
 from siriuspy.epics import PV
 # from siriuspy.search import PSSearch
-from siriuspy.pwrsupply.pssofb import PSSOFB
+from siriuspy.pwrsupply.pssofb import PSSOFB, PSConnSOFB
 from PRUserial485 import EthBridgeClient
+import matplotlib.pyplot as plt
 
 
 class PVGroup:
@@ -33,26 +34,37 @@ class PVGroup:
             pv.put(value, wait=False)
 
 
-def wait_for_connection():
-    # update_cmd.wait_for_connection()
-    sofbmode_sp.wait_for_connection()
-    sofbmode_rb.wait_for_connection()
-    opmode_sp.wait_for_connection()
-    opmode_rb.wait_for_connection()
+class Cmd:
+    def __init__(self, devs):
+        self.devs = devs
+        self.sofbmode_sp = PVGroup(devs, 'SOFBMode-Sel')
+        self.sofbmode_rb = PVGroup(devs, 'SOFBMode-Sts')
+        self.opmode_sp = PVGroup(devs, 'OpMode-Sel')
+        self.opmode_rb = PVGroup(devs, 'OpMode-Sts')
 
 
-def connected():
+def wait_for_connection(cmd):
+    cmd.sofbmode_sp.wait_for_connection()
+    cmd.sofbmode_rb.wait_for_connection()
+    cmd.opmode_sp.wait_for_connection()
+    cmd.opmode_rb.wait_for_connection()
+
+
+def connected(cmd):
     conn = True
-    # conn = update_cmd.connected
-    conn &= sofbmode_sp.connected
-    conn &= sofbmode_rb.connected
-    conn &= opmode_sp.connected
-    conn &= opmode_rb.connected
+    conn &= cmd.sofbmode_sp.connected
+    conn &= cmd.sofbmode_rb.connected
+    conn &= cmd.opmode_sp.connected
+    conn &= cmd.opmode_rb.connected
     return conn
 
 
-def is_stressed():
-    return not all(map(lambda x: x == 0, sofbmode_rb.value))
+def is_stressed(cmd):
+    values = cmd.sofbmode_rb.value
+    for i in range(len(values)):
+        if values[i] != 0:
+            print(cmd.devs[i])
+    return not all(map(lambda x: x == 0, values))
 
 
 def get_current():
@@ -61,25 +73,33 @@ def get_current():
     return curr
 
 
-def try_to_stress(nr_iters=100, rate=25.14):
-    # update_cmd.put(1, wait=False)
-    opmode_sp.value = 1
-    pssofb.bsmp_sofb_current_set(get_current())
-    sofbmode_sp.value = 1
+def try_to_stress(pssofb, cmd, nr_iters=100, rate=25.14):
+    # cmd.update_cmd.put(1, wait=False)
+    factor = 0.0
+    cmd.opmode_sp.value = 1
+    # time.sleep(1)
 
+    curr = factor * get_current()
+    # plt.plot(curr)
+    # plt.show()
+
+    pssofb.bsmp_sofb_current_set(curr)
+    time.sleep(0.1)
+    cmd.sofbmode_sp.value = 1
     time.sleep(1)
 
-    for _ in range(nr_iters):
+    for i in range(nr_iters):
+        print(i)
+        pssofb.bsmp_sofb_current_set(factor*get_current())
+        # time.sleep(0.1)
         # update_cmd.put(1, wait=False)
-        pssofb.bsmp_sofb_current_set(get_current())
         time.sleep(1/rate)
 
     time.sleep(1)
-    sofbmode_sp.value = 0
-    opmode_sp.value = 0
+    cmd.sofbmode_sp.value = 0
+    cmd.opmode_sp.value = 0
     time.sleep(1)
-    return is_stressed()
-
+    return is_stressed(cmd)
 
 
 # Next Steps 2020-01-18
@@ -108,12 +128,28 @@ def try_to_stress(nr_iters=100, rate=25.14):
 pssofb = PSSOFB(
     EthBridgeClient, nr_procs=8, asynchronous=True,
     sofb_update_iocs=True)
-pssofb.processes_start()
+# pssofb.processes_start()
+
+# pssofb = PSConnSOFB(EthBridgeClient, sofb_update_iocs=True)
 
 devs = pssofb.sofb_psnames
+# print(devs)
+# print(len(devs))
 
-# update_cmd = PV(devs[0] + ':SOFBUpdate-Cmd')
-sofbmode_sp = PVGroup(devs, 'SOFBMode-Sel')
-sofbmode_rb = PVGroup(devs, 'SOFBMode-Sts')
-opmode_sp = PVGroup(devs, 'OpMode-Sel')
-opmode_rb = PVGroup(devs, 'OpMode-Sts')
+cmd = Cmd(devs)
+wait_for_connection(cmd)
+time.sleep(2)
+# print(connected(cmd))
+
+# cmd.sofbmode_sp.value = 0
+# cmd.opmode_sp.value = 0
+
+print(is_stressed(cmd))
+
+# for i in range(1):
+#     try_to_stress(pssofb, cmd, nr_iters=1)
+#     time.sleep(1)
+#     if is_stressed(cmd):
+#         break
+#     time.sleep(1.0)
+#     print()
