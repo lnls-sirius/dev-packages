@@ -1,4 +1,4 @@
-"""."""
+"""Reconstruction factories."""
 
 from copy import deepcopy as _dcopy
 import numpy as _np
@@ -9,7 +9,7 @@ from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch, \
     MASearch as _MASearch
 from .ramp import BoosterRamp as _BORamp
 from .conn import AuxConvRF
-from .waveform import Waveform as _Waveform
+from .waveform import Waveform as _Waveform, WaveformDipole as _WaveformDipole
 from .magnet import get_magnet as _get_magnet
 
 
@@ -21,12 +21,23 @@ class BODipRampFactory:
 
     _PSNAME_DIPOLES = ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2')
     _PSNAME_DIPOLE_REF = _PSNAME_DIPOLES[0]
-    _ppties = [
-        'start',
-        'rampup1_start',
-        'rampup2_start',
-        'rampdown_start',
-        'rampdown_stop',
+    _ppties_2_fit = [
+        'start_value',
+        'rampup1_start_value',
+        'rampup2_start_value',
+        'rampdown_start_value',
+        'rampup_smooth_value',
+        'rampdown_stop_value',
+        'rampdown_smooth_value',
+    ]
+    _ppties_2_use = [
+        'duration',
+        'rampup1_start_time',
+        'rampup2_start_time',
+        'rampdown_start_time',
+        'rampdown_stop_time',
+        'rampup_smooth_intvl',
+        'rampdown_smooth_intvl',
     ]
     _PVs = dict()
 
@@ -38,7 +49,7 @@ class BODipRampFactory:
             BODipRampFactory._PSNAME_DIPOLE_REF))
         self._nrpoints = None
         self._times = None
-        self.waveform = waveform
+        self.waveform = _np.array(waveform)
         self._create_pvs()
 
     @property
@@ -90,51 +101,83 @@ class BODipRampFactory:
                 'or call read_waveform method.')
 
         init_params = self._get_initial_params()
-        _x_init = [init_params[ppty + '_energy']
-                   for ppty in BODipRampFactory._ppties]
-        _x_final = least_squares(self._err_func, _x_init, method='lm').x
-        final_params = {ppty + '_energy': _x_final[i]
-                        for i, ppty in enumerate(BODipRampFactory._ppties)}
-        return final_params
+        _x_init = [init_params[ppty] for ppty in
+                   BODipRampFactory._ppties_2_fit]
+        _x_final = least_squares(
+            self._err_func, _x_init, method='lm').x
+        final_params = {ppty: _x_final[i] for i, ppty in
+                        enumerate(BODipRampFactory._ppties_2_fit)}
+
+        result = dict()
+        for ppty, value in final_params.items():
+            energy_ppty = ppty.replace('value', 'energy')
+            result[energy_ppty] = self._magnet.conv_current_2_strength(value)
+        return result
 
     def _get_initial_params(self):
         params = dict()
-        for ppty in BODipRampFactory._ppties:
-            if ppty == 'rampdown_start':
+        for ppty in BODipRampFactory._ppties_2_fit:
+            if ppty in ['rampup2_start_value', 'rampdown_start_value',
+                        'rampup_smooth_value', 'rampdown_smooth_value']:
                 continue
-            time = 0.0 if ppty == 'start' else \
-                getattr(self._ramp_config, 'ps_ramp_' + ppty + '_time')
-            current = _np.interp(time, self._times, self._waveform)
-            params[ppty + '_energy'] = \
-                self._magnet.conv_current_2_strength(current)
+            else:
+                time_ppty_name = 'ps_ramp_'+ppty.replace('value', 'time')
+                time = 0.0 if ppty == 'start_value' else getattr(
+                    self._ramp_config, time_ppty_name)
+                params[ppty] = _np.interp(time, self._times, self.waveform)
 
-        # calculate energy for rampdown_start
-        def func(tims, vals, time):
-            return (vals[1] - vals[0])/(tims[1] - tims[0]) * \
-                (time - tims[0]) + vals[0]
+        def calc_intersection(s1_times, s2_times, time):
+            slopes, offsets = list(), list()
+            for s_times in [s1_times, s2_times]:
+                ids = _np.arange(len(self._times))
+                s_ids = _np.round(_np.interp(s_times, self._times, ids))
+                slc = slice(int(s_ids[0]), int(s_ids[1]))
+                s_x, s_y = self._times[slc], self.waveform[slc]
+                s_off, s_slp = _np.polynomial.polynomial.polyfit(s_x, s_y, 1)
+                offsets.append(s_off)
+                slopes.append(s_slp)
+            time_inter = -1 * _np.diff(offsets)/_np.diff(slopes)
+            if not s1_times[-1] < time_inter < s2_times[0]:
+                time_inter = time
+            else:
+                time_inter = time_inter[0]
+            val_inter = slopes[0]*time_inter + offsets[0]
+            return val_inter
 
-        time = self._ramp_config.ps_ramp_rampdown_start_time
-        ru_times = [self._ramp_config.ps_ramp_rampup2_start_time,
-                    (self._ramp_config.ps_ramp_rampdown_start_time -
-                     self._ramp_config.ps_ramp_rampdown_smooth_intvl/2)]
-        ru_values = _np.interp(ru_times, self._times, self._waveform)
+        # calculate value for rampup2_start and rampdown_start
+        ru1_times = [self._ramp_config.ps_ramp_rampup1_start_time,
+                     (self._ramp_config.ps_ramp_rampup2_start_time -
+                      self._ramp_config.ps_ramp_rampup_smooth_intvl/2)]
+        ru2_times = [(self._ramp_config.ps_ramp_rampup2_start_time +
+                      self._ramp_config.ps_ramp_rampup_smooth_intvl/2),
+                     (self._ramp_config.ps_ramp_rampdown_start_time -
+                      self._ramp_config.ps_ramp_rampdown_smooth_intvl/2)]
         rd_times = [(self._ramp_config.ps_ramp_rampdown_start_time +
                      self._ramp_config.ps_ramp_rampdown_smooth_intvl/2),
                     self._ramp_config.ps_ramp_rampdown_stop_time]
-        rd_values = _np.interp(rd_times, self._times, self._waveform)
-        params['rampdown_start_energy'] = self._magnet.conv_current_2_strength(
-            _np.mean([func(ru_times, ru_values, time),
-                      func(rd_times, rd_values, time)]))
+
+        ru_time = self._ramp_config.ps_ramp_rampup2_start_time
+        params['rampup2_start_value'] = calc_intersection(
+            ru1_times, ru2_times, ru_time)
+        params['rampup_smooth_value'] = params['rampup2_start_value'] - \
+            _np.interp(ru_time, self._times, self.waveform)
+
+        rd_time = self._ramp_config.ps_ramp_rampdown_start_time
+        params['rampdown_start_value'] = calc_intersection(
+            ru2_times, rd_times, rd_time)
+        params['rampdown_smooth_value'] = params['rampdown_start_value'] - \
+            _np.interp(rd_time, self._times, self.waveform)
 
         return params
 
     def _err_func(self, params):
-        new = _dcopy(self._ramp_config)
-        for i, name in enumerate(BODipRampFactory._ppties):
-            setattr(new, 'ps_ramp_' + name + '_energy', params[i])
-        wav = new.ps_waveform_get_currents(BODipRampFactory._PSNAME_DIPOLE_REF)
-        ref = self.waveform
-        error = ref - wav
+        new = _WaveformDipole()
+        for ppty in BODipRampFactory._ppties_2_use:
+            val = getattr(self._ramp_config, 'ps_ramp_' + ppty)
+            setattr(new, ppty, val)
+        for i, ppty in enumerate(BODipRampFactory._ppties_2_fit):
+            setattr(new, ppty, params[i])
+        error = self.waveform - new.currents
         return error
 
 
