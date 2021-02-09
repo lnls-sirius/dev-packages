@@ -470,7 +470,8 @@ class EpicsCorrectors(BaseCorrectors):
             self._prob = None
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
-                    EthBridgeClient, nr_procs=8, asynchronous=True)
+                    EthBridgeClient, nr_procs=8, asynchronous=True,
+                    sofb_update_iocs=True)
                 self._pssofb.processes_start()
             else:
                 self._pssofb = _PSSOFBIOC('SI', auto_mon=True)
@@ -716,6 +717,17 @@ class EpicsCorrectors(BaseCorrectors):
             # initialize PSSOFB State
             self._pssofb.bsmp_sofb_kick_set(kicks[:-1])
         self._use_pssofb = val
+
+        # NOTE: We need this time to avoid problems in the Correctors IOCs.
+        # We noticed that without this sleep, in ramdom manner, the IOCs from
+        # some correctors do not turn off the SOFB mode when requested, which
+        # required the reboot of the IOC to get back control of the corrs.
+        # We noticed this problem only happens when we use PSSOFB to control
+        # the correctors. This means that PSConnSOFB, which doesn't use
+        # multiprocessing, is problem free somehow.
+        # We don't understand the reason for this sleep to solve the problem
+        # and neither why the problem even occurs...
+        _time.sleep(0.2)
 
         for corr in self._corrs[:-1]:
             if not corr.connected:
