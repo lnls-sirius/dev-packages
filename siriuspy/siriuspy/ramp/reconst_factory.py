@@ -202,13 +202,16 @@ class BONormListFactory:
     _LOSS_FACTOR_SEXTS = 1e-2
 
     def __init__(self, ramp_config, waveforms=None, opt_metric='strength',
-                 opt_global=False, opt_times=False):
+                 opt_global=False, opt_times=False, use_config_times=False,
+                 use_straigth_estim=True):
         """Init."""
         if waveforms is None:
             waveforms = dict()
         self._opt_metric = opt_metric
         self._opt_global = opt_global
         self._opt_times = opt_times
+        self._use_rampconfig_times = use_config_times
+        self._use_straigth_estim = use_straigth_estim
 
         # declaration of attributes (as pylint requires)
         self._wfms_strength = None
@@ -386,20 +389,33 @@ class BONormListFactory:
             self._wfms_strength[psname] = self._ps2wfms[psname].strengths
 
     def _calc_nconf_times(self, times, wfm, thres):
-        # calculate 1 e 2 derivatives
-        diff1 = _np.diff(wfm)
-        diff2 = _np.diff(diff1)
+        if self._use_rampconfig_times:
+            nconf_times = sorted(self._ramp_config.ps_normalized_configs_times)
+            nconf_indcs = list()
+            for tim in nconf_times:
+                atol = self._duration/wfm.size
+                idx = _np.where(_np.isclose(times, tim, atol=atol))[0]
+                nconf_indcs.append(idx[-1])
+            nconf_times = _np.array(nconf_times)
+            nconf_indcs = _np.array(nconf_indcs)
 
-        # change threshold, if necessary
-        maxi = _np.max(_np.abs(diff2))
-        thres = maxi*1e-2 if maxi < thres else thres
+            idd_bef = _np.r_[nconf_indcs, times.size-3]
+            idd_aft = _np.r_[0, nconf_indcs]
+        else:
+            # calculate 1 e 2 derivatives
+            diff1 = _np.diff(wfm)
+            diff2 = _np.diff(diff1)
 
-        # identify zeros in 2 derivative and norm. configs indices
-        ind = _np.where(_np.abs(diff2) < thres)[0]
-        dind = _np.diff(ind)
-        ind2 = _np.where(dind > 1)[0]
-        idd_bef = _np.r_[ind[ind2], diff2.size-1]
-        idd_aft = _np.r_[0, ind[ind2+1]]
+            # change threshold, if necessary
+            maxi = _np.max(_np.abs(diff2))
+            thres = maxi*1e-2 if maxi < thres else thres
+
+            # identify zeros in 2 derivative and norm. configs indices
+            ind = _np.where(_np.abs(diff2) < thres)[0]
+            dind = _np.diff(ind)
+            ind2 = _np.where(dind > 1)[0]
+            idd_bef = _np.r_[ind[ind2], diff2.size-1]
+            idd_aft = _np.r_[0, ind[ind2+1]]
 
         # calculate slopes, offsets and interceptions to interpolations
         slopes, offsets = list(), list()
@@ -417,11 +433,25 @@ class BONormListFactory:
             w_inter2 = _np.interp(time_inter2, time_inter, w_inter)
             time_inter, w_inter = time_inter2, w_inter2
 
-        # plt.plot(ind, _np.zeros((len(ind), 1)).flatten(), 'yo')
-        # plt.plot(_np.arange(0, len(diff1)), diff1, 'b-')
-        # plt.plot(_np.arange(1, len(diff1)), diff2, 'g-')
-        # plt.plot(idd_bef, diff1[idd_bef], 'kx')
-        # plt.show()
+        if self._use_rampconfig_times:
+            if self._use_straigth_estim:
+                w1_inter = slopes[1:]*nconf_times + offsets[1:]
+                w2_inter = slopes[:-1]*nconf_times + offsets[:-1]
+                w_inter = (w1_inter + w2_inter)/2
+            else:
+                w_inter = _np.interp(nconf_times, times, wfm)
+
+            aux_t, aux_w = time_inter, w_inter
+            val1 = _np.where(_np.logical_and(
+                ~_np.isnan(aux_t), ~_np.isnan(aux_w)))[0]
+            val2 = _np.where(_np.logical_and(
+                _np.diff(-aux_t[val1]) <= 0,
+                _np.diff(aux_t[val1]) >= 0))[0]
+            time_inter = nconf_times[val1[val2]]
+            w_inter = aux_w[val1[val2]]
+            if aux_w.size and ~_np.isnan(aux_w[-1]):
+                time_inter = _np.r_[time_inter, nconf_times[-1]]
+                w_inter = _np.r_[w_inter, aux_w[-1]]
         return time_inter, w_inter
 
     def _get_initial_guess(self, threshold):
