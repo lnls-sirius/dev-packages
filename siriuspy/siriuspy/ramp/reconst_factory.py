@@ -557,6 +557,9 @@ class BONormListFactory:
                 str_time = '{:.3f}'.format(final_times[col])
                 nconfs[str_time] = dict()
                 nconfs[str_time]['label'] = init_guess[str_time_orig]['label']
+                for dip in self._PSNAME_DIPOLES:
+                    energy = init_guess[str_time_orig][dip]
+                    nconfs[str_time][dip] = energy
                 for row, psname in enumerate(self._psnames):
                     nconfs[str_time][psname] = final_params[row][col]
         else:
@@ -571,6 +574,9 @@ class BONormListFactory:
                         nconfs[str_time] = dict()
                         nconfs[str_time]['label'] = \
                             init_guess[str_time]['label']
+                        for dip in self._PSNAME_DIPOLES:
+                            energy = init_guess[str_time][dip]
+                            nconfs[str_time][dip] = energy
                     nconfs[str_time][psn] = final_params[i]
         self._norm_configs_dict = nconfs
 
