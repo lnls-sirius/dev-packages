@@ -666,6 +666,37 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         self._strengths = self.conv_current_2_strength(self.currents)
         return self._strengths
 
+    def __str__(self):
+        ppties = (
+            'duration [ms]',
+            'rampup1_start_time [ms]',
+            'rampup2_start_time [ms]',
+            'rampdown_start_time [ms]',
+            'rampdown_stop_time [ms]',
+            'rampup_smooth_intvl [ms]',
+            'rampdown_smooth_intvl [ms]',
+            'start_energy [GeV]',
+            'rampup1_start_energy [GeV]',
+            'rampup2_start_energy [GeV]',
+            'rampdown_start_energy [GeV]',
+            'rampdown_stop_energy [GeV]',
+            'rampup_smooth_energy [GeV]',
+            'rampdown_smooth_energy [GeV]',
+            'start_value [A]',
+            'rampup1_start_value [A]',
+            'rampup2_start_value [A]',
+            'rampdown_start_value [A]',
+            'rampdown_stop_value [A]',
+            'rampup_smooth_value [A]',
+            'rampdown_smooth_value [A]',
+        )
+        maxlen = max(tuple(len(p) for p in ppties) + (len('name'),))
+        strfmt = '{:<' + str(maxlen) + 's}: {}\n'
+        text = ''
+        for ppty in ppties:
+            text += strfmt.format(ppty, getattr(self, ppty.split(' ')[0]))
+        return text
+
 
 class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
