@@ -552,141 +552,110 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         """Set start_energy."""
         value = float(value) if value > self._E0 else self._E0
         self._start_energy = float(value)
-        WaveformParam.start_value = self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.start_value.fset(self, current_value)
 
     @rampup1_start_energy.setter
     def rampup1_start_energy(self, value):
         """Set rampup1_start_energy."""
         value = float(value) if value > self._E0 else self._E0
         self._rampup1_start_energy = value
-        WaveformParam.rampup1_start_value = self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampup1_start_value.fset(self, current_value)
 
     @rampup2_start_energy.setter
     def rampup2_start_energy(self, value):
         """Set rampup2_start_energy."""
         value = float(value) if value > self._E0 else self._E0
         self._rampup2_start_energy = value
-        WaveformParam.rampup2_start_value = self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampup2_start_value.fset(self, current_value)
 
     @rampdown_start_energy.setter
     def rampdown_start_energy(self, value):
         """Set rampdown_start_energy."""
         value = float(value) if value > self._E0 else self._E0
         self._rampdown_start_energy = value
-        WaveformParam.rampdown_start_value = \
-            self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampdown_start_value.fset(self, current_value)
 
     @rampdown_stop_energy.setter
     def rampdown_stop_energy(self, value):
         """Set rampdown_stop_energy."""
         value = float(value) if value > self._E0 else self._E0
         self._rampdown_stop_energy = value
-        WaveformParam.rampdown_stop_value = self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampdown_stop_value.fset(self, current_value)
 
     @rampup_smooth_energy.setter
     def rampup_smooth_energy(self, value):
         """Set rampup_smooth_energy."""
         self._rampup_smooth_energy = value
-        WaveformParam.rampup_smooth_value = \
-            self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampup_smooth_value.fset(self, current_value)
 
     @rampdown_smooth_energy.setter
     def rampdown_smooth_energy(self, value):
         """Set rampdown_smooth_energy."""
         self._rampdown_smooth_energy = value
-        WaveformParam.rampdown_smooth_value = \
-            self.conv_strength_2_current(value)
+        current_value = self.conv_strength_2_current(value)
+        WaveformParam.rampdown_smooth_value.fset(self, current_value)
 
-    @property
-    def start_value(self):
-        """Return start_value."""
-        return WaveformParam.start_value
-
-    @property
-    def rampup1_start_value(self):
-        """Return rampup1_start_value."""
-        return WaveformParam.rampup1_start_value
-
-    @property
-    def rampup2_start_value(self):
-        """Return rampup2_start_value."""
-        return WaveformParam.rampup2_start_value
-
-    @property
-    def rampdown_start_value(self):
-        """Return rampdown_start_value."""
-        return WaveformParam.rampdown_start_value
-
-    @property
-    def rampdown_stop_value(self):
-        """Return rampdown_stop_value."""
-        return WaveformParam.rampdown_stop_value
-
-    @property
-    def rampup_smooth_value(self):
-        """Return rampup_smooth_value."""
-        return WaveformParam.rampup_smooth_value
-
-    @property
-    def rampdown_smooth_value(self):
-        """Return rampdown_smooth_value."""
-        return WaveformParam.rampdown_smooth_value
-
-    @start_value.setter
+    @WaveformParam.start_value.setter
     def start_value(self, value):
         """Set start_value."""
-        WaveformParam.start_value = value
+        WaveformParam.start_value.fset(self, value)
         new_energy = self.conv_current_2_strength(float(value))
         if new_energy < self._E0:
             new_energy = self._E0
         self._start_energy = new_energy
 
-    @rampup1_start_value.setter
+    @WaveformParam.rampup1_start_value.setter
     def rampup1_start_value(self, value):
         """Set rampup1_start_value."""
-        WaveformParam.rampup1_start_value = value
+        WaveformParam.rampup1_start_value.fset(self, value)
         new_energy = self.conv_current_2_strength(float(value))
         if new_energy < self._E0:
             new_energy = self._E0
         self._rampup1_start_energy = new_energy
 
-    @rampup2_start_value.setter
+    @WaveformParam.rampup2_start_value.setter
     def rampup2_start_value(self, value):
         """Set rampup2_start_value."""
-        WaveformParam.rampup2_start_value = value
+        WaveformParam.rampup2_start_value.fset(self, value)
         new_energy = self.conv_current_2_strength(float(value))
         if new_energy < self._E0:
             new_energy = self._E0
         self._rampup2_start_energy = new_energy
 
-    @rampdown_start_value.setter
+    @WaveformParam.rampdown_start_value.setter
     def rampdown_start_value(self, value):
         """Set rampdown_start_value."""
-        WaveformParam.rampdown_start_value = value
+        WaveformParam.rampdown_start_value.fset(self, value)
         new_energy = self.conv_current_2_strength(float(value))
         if new_energy < self._E0:
             new_energy = self._E0
         self._rampdown_start_energy = new_energy
 
-    @rampdown_stop_value.setter
+    @WaveformParam.rampdown_stop_value.setter
     def rampdown_stop_value(self, value):
         """Set rampdown_stop_value."""
-        WaveformParam.rampdown_stop_value = value
+        WaveformParam.rampdown_stop_value.fset(self, value)
         new_energy = self.conv_current_2_strength(float(value))
         if new_energy < self._E0:
             new_energy = self._E0
         self._rampdown_stop_energy = new_energy
 
-    @rampup_smooth_value.setter
+    @WaveformParam.rampup_smooth_value.setter
     def rampup_smooth_value(self, value):
         """Set rampup_smooth_value."""
-        WaveformParam.rampup_smooth_value = value
+        WaveformParam.rampup_smooth_value.fset(self, value)
         self._rampup_smooth_energy = self.conv_current_2_strength(value)
 
-    @rampdown_smooth_value.setter
+    @WaveformParam.rampdown_smooth_value.setter
     def rampdown_smooth_value(self, value):
         """Set rampdown_smooth_value."""
-        WaveformParam.rampdown_smooth_value = value
+        WaveformParam.rampdown_smooth_value.fset(self, value)
         self._rampdown_smooth_energy = self.conv_current_2_strength(value)
 
     def _get_currents(self):
