@@ -201,9 +201,12 @@ class BONormListFactory:
     _LOSS_FACTOR_QUADS = 2e-5
     _LOSS_FACTOR_SEXTS = 1e-2
 
+    # if considering only beam interval
+    _BEAM_INTERVAL = [0.0, 300.0]
+
     def __init__(self, ramp_config, waveforms=None, opt_metric='strength',
                  opt_global=False, opt_times=False, use_config_times=False,
-                 use_straigth_estim=True):
+                 use_straigth_estim=True, consider_beam_interval=False):
         """Init."""
         if waveforms is None:
             waveforms = dict()
@@ -212,6 +215,7 @@ class BONormListFactory:
         self._opt_times = opt_times
         self._use_rampconfig_times = use_config_times
         self._use_straigth_estim = use_straigth_estim
+        self._consider_beam_interval = consider_beam_interval
 
         # declaration of attributes (as pylint requires)
         self._wfms_strength = None
@@ -356,6 +360,11 @@ class BONormListFactory:
         wfm_currents = magnet.conv_strength_2_current(
             strengths=wfm_strengths, strengths_dipole=dip_strgs)
         error = self._wfms_current[psname] - wfm_currents
+        if self._consider_beam_interval:
+            ini, end = _np.round(_np.interp(
+                BONormListFactory._BEAM_INTERVAL,
+                wfm_times, _np.arange(len(wfm_times))))
+            error = error[int(ini):int(end)]
         return error
 
     def calc_psname_strength_error(self, psname, nc_times, nc_strengths):
@@ -366,6 +375,11 @@ class BONormListFactory:
         wfm_times = self._times_fams if 'Fam' in psname else self._times_corrs
         wfm_strengths = _np.interp(wfm_times, nc_times, nc_strengths)
         error = self._wfms_strength[psname] - wfm_strengths
+        if self._consider_beam_interval:
+            ini, end = _np.round(_np.interp(
+                BONormListFactory._BEAM_INTERVAL,
+                wfm_times, _np.arange(len(wfm_times))))
+            error = error[int(ini):int(end)]
         return error
 
     # ----- private methods -----
