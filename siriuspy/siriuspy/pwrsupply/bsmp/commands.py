@@ -81,7 +81,6 @@ class PSBSMP(_BSMP):
         self.pru = pru
         super().__init__(self.pru, slave_address, entities)
         self._wfmref_check_entities_consistency()
-        self._wfmref_vars_group_id = None
 
     @staticmethod
     def parse_firmware_version(version):
@@ -90,8 +89,7 @@ class PSBSMP(_BSMP):
         version = ''.join([chr(ord(v)) for v in version])
         return version
 
-    def reset_groups_of_variables(self, varids_groups,
-                                  add_wfmref_group=False):
+    def reset_groups_of_variables(self, varids_groups):
         """Reset groups of variables."""
 
         # remove previous variables groups
@@ -106,15 +104,6 @@ class PSBSMP(_BSMP):
                 var_ids, timeout=PSBSMP._timeout_create_vars_groups)
             if ack != PSBSMP.CONST_BSMP.ACK_OK:
                 return ack, data
-
-        if not add_wfmref_group:
-            return ack, data
-
-        # add group for wfmref vars
-        ack, data = self.create_group_of_variables(
-            PSBSMP._WFMREF_VAR_IDS,
-            timeout=PSBSMP._timeout_create_vars_groups)
-        self._wfmref_vars_group_id = 1 + len(varids_groups)
 
         return ack, data
 
