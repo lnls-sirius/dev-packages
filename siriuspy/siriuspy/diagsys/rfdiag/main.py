@@ -20,7 +20,7 @@ class RFDiagApp(_App):
 
     def _create_computed_pvs(self, *args):
         # BO
-        devname = SiriusPVName(self._prefix + _Const.BO_DEV)
+        devname = SiriusPVName(_Const.BO_DEV)
 
         # DiagStatus-Mon
         pvs = [None]*4
@@ -35,7 +35,7 @@ class RFDiagApp(_App):
         self.pvs.append(pvo)
 
         # SI
-        devname = SiriusPVName(self._prefix + _Const.SI_DEV)
+        devname = SiriusPVName(_Const.SI_DEV)
 
         # DiagAmpErrSts-Mon
         pvs = [None]*1
