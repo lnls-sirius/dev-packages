@@ -18,7 +18,7 @@ from .utils import HandleConfigNameFile as _HandleConfigNameFile
 
 
 # Constants
-_TIMEOUT_CHECK = 1
+_TIMEOUT_CHECK = 2
 _ALLSET = 0xf
 _ALLCLR = 0x0
 
