@@ -104,6 +104,7 @@ class App(_Callback):
         self._corr_unit_factor = dict()
         self._corr_kick_rb_impl = dict()
         self._corr_last_delta = dict()
+        self._corr_last_delta_impltd = dict()
 
         for corr in self._correctors.values():
             pss = corr.substitute(prefix=_vaca_prefix)
@@ -113,6 +114,7 @@ class App(_Callback):
 
             self._corr_refkick[corr] = 0
             self._corr_last_delta[corr] = 0
+            self._corr_last_delta_impltd[corr] = True
             self._corr_kick_rb_impl[corr] = 0
             self._corr_kick_rb_pvs[corr] = _PV(
                 pss.substitute(propty_name='Kick', propty_suffix='RB'),
@@ -296,13 +298,13 @@ class App(_Callback):
 
         # Convert kicks from rad to correctors units and send values
         sp_check = dict()
-        for cid, idx in corrs2delta:
+        for corr, idx in corrs2delta:
             # delta from rad to urad or mrad
-            dlt = deltas[idx][0]/self._corr_unit_factor[cid]
-            self._corr_last_delta[cid] = dlt
-            val = self._corr_refkick[cid] + dlt
-            self._corr_kick_sp_pvs[cid].put(val)
-            sp_check.update({cid: [False, val]})
+            dlt = deltas[idx][0]/self._corr_unit_factor[corr]
+            self._corr_last_delta[corr] = dlt
+            val = self._corr_refkick[corr] + dlt
+            self._corr_kick_sp_pvs[corr].put(val)
+            sp_check.update({corr: [False, val]})
 
         # check if SP were accepted
         time0 = _time.time()
@@ -319,9 +321,10 @@ class App(_Callback):
                 break
 
         sp_diff = False
-        for cid in sp_check:
-            if not sp_check[cid][0]:
-                msg = 'ERR: Delta not applied to '+cid+'.'
+        for corr in sp_check:
+            self._corr_last_delta_impltd[corr] = sp_check[corr][0]
+            if not sp_check[corr][0]:
+                msg = 'ERR: Delta not applied to '+corr+'.'
                 self.run_callbacks('Log-Mon', msg)
                 _log.info('Log-Mon: ' + msg)
                 sp_diff = True
@@ -339,6 +342,7 @@ class App(_Callback):
                 value = self._corr_kick_rb_pvs[corr].get()
                 # Get correctors kick in urad (PS) or mrad (PU).
                 self._corr_refkick[corr] = value
+                self._corr_last_delta[corr] = 0.0
                 self.run_callbacks('RefKick' + corr_id + '-Mon', value)
 
             # the deltas from new kick references are zero
@@ -450,9 +454,11 @@ class App(_Callback):
     def _check_need_update_ref(self):
         self._ref_check_update = _PAConst.NeedRefUpdate.Ok
         for corr in self._correctors.values():
+            if not self._corr_last_delta_impltd[corr]:
+                continue
             implemented = self._corr_kick_rb_impl[corr]
             desired = self._corr_last_delta[corr] + self._corr_refkick[corr]
-            if implemented != desired:
+            if not _np.isclose(implemented, desired):
                 self._ref_check_update = _PAConst.NeedRefUpdate.NeedUpdate
                 break
         self.run_callbacks('NeedRefUpdate-Mon', self._ref_check_update)
