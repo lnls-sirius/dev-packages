@@ -32,12 +32,13 @@ class PSDiffPV:
 class PSStatusPV:
     """Power Supply Status PV."""
 
-    BIT_PSCONNECT = 0b000001
-    BIT_PWRSTATON = 0b000010
-    BIT_CURRTDIFF = 0b000100
-    BIT_INTERLOCK = 0b001000
-    BIT_OPMODEDIF = 0b010000
-    BIT_BOWFMDIFF = 0b100000
+    BIT_PSCONNECT = 0b0000001
+    BIT_PWRSTATON = 0b0000010
+    BIT_CURRTDIFF = 0b0000100
+    BIT_INTERLOCK = 0b0001000
+    BIT_ALARMSSET = 0b0010000
+    BIT_OPMODEDIF = 0b0100000
+    BIT_BOWFMDIFF = 0b1000000
 
     PWRSTE_STS = 0
     CURRT_DIFF = 1
@@ -52,6 +53,7 @@ class PSStatusPV:
     def __init__(self):
         """Init attributs."""
         self.INTLK_PVS = list()
+        self.ALARM_PVS = list()
         self.intlkwarn_bit = _ETypes.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
 
     def compute_update(self, computed_pv, updated_pv_name, value):
@@ -78,6 +80,7 @@ class PSStatusPV:
             value |= PSStatusPV.BIT_PWRSTATON
             value |= PSStatusPV.BIT_CURRTDIFF
             value |= PSStatusPV.BIT_INTERLOCK
+            value |= PSStatusPV.BIT_ALARMSSET
             value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_BOWFMDIFF
             return {'value': value}
@@ -119,6 +122,13 @@ class PSStatusPV:
                 intlkval = computed_pv.pvs[intlk].value
                 if intlkval != 0 or intlkval is None:
                     value |= PSStatusPV.BIT_INTERLOCK
+                    break
+
+            # alarms?
+            for alarm in self.ALARM_PVS:
+                alarmval = computed_pv.pvs[alarm].value
+                if alarmval != 0 or alarmval is None:
+                    value |= PSStatusPV.BIT_ALARMSSET
                     break
 
         else:
