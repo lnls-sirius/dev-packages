@@ -628,14 +628,14 @@ class BORFRampFactory:
 
     _DevName = 'BR-RF-DLLRF-01'
     _ppties = {
-        'bottom_duration': _DevName+':RmpTs1-RB',
-        'rampup_duration': _DevName+':RmpTs2-RB',
-        'top_duration': _DevName+':RmpTs3-RB',
-        'rampdown_duration': _DevName+':RmpTs4-RB',
-        'bottom_voltage': _DevName+':mV:RAMP:AMP:BOT-RB',
-        'top_voltage': _DevName+':mV:RAMP:AMP:TOP-RB',
-        'bottom_phase': _DevName+':RmpPhsBot-RB',
-        'top_phase': _DevName+':RmpPhsTop-RB',
+        'bottom_duration': _DevName+':RmpTs1-SP',
+        'rampup_duration': _DevName+':RmpTs2-SP',
+        'top_duration': _DevName+':RmpTs3-SP',
+        'rampdown_duration': _DevName+':RmpTs4-SP',
+        'bottom_voltage': _DevName+':mV:RAMP:AMP:BOT-SP',
+        'top_voltage': _DevName+':mV:RAMP:AMP:TOP-SP',
+        'bottom_phase': _DevName+':RmpPhsBot-SP',
+        'top_phase': _DevName+':RmpPhsTop-SP',
     }
     _PVs = dict()
 
