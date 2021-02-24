@@ -166,6 +166,16 @@ class Device:
             pvname = propty
         return pvname
 
+    def _enum_setter(self, propty, value, enums):
+        if hasattr(enums, '_fields'):
+            enums = enums._fields
+        if value is None:
+            return None
+        elif isinstance(value, str) and value in enums:
+            self[propty] = enums.index(value)
+        elif 0 <= int(value) < len(enums):
+            self[propty] = value
+
 
 class ProptyDevice(Device):
     """Device with a prefix property name."""
