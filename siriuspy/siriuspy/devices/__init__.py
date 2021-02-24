@@ -1,6 +1,6 @@
 """Devices subpackage."""
 
-from .device import Device, DeviceApp, Devices
+from .device import Device, DeviceApp, Devices, ProptyDevice
 from .bpm import BPM
 from .dcct import DCCT
 from .egun import EGBias, EGFilament, EGHVPS
