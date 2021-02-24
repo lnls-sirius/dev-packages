@@ -526,7 +526,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Polarity-Sel'] = dic_
 
     dic_ = {
-        'type': 'int', 'unit': 'numer of pulses',
+        'type': 'int', 'unit': 'pulses',
         # 'lolo': 1, 'low': 1, 'lolim': 1,
         'hilim': 100000, 'high': 100000, 'hihi': 100000}
     dic_.update(trig_db['NrPulses'])
