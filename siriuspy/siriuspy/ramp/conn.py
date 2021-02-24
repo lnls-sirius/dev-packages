@@ -580,6 +580,9 @@ class ConnRF(_EpicsPropsList):
         Rmp_PhsTop = DevName + ':RmpPhsTop-SP'
         Rmp_Intlk = DevName + ':Intlk-Mon'
         Rmp_RmpReady = DevName + ':RmpReady-Mon'
+        Rmp_Times = [Rmp_Ts1, Rmp_Ts2, Rmp_Ts3, Rmp_Ts4]
+        Rmp_Volts = [Rmp_VoltBot, Rmp_VoltTop]
+        Rmp_Phss = [Rmp_PhsBot, Rmp_PhsTop]
 
     def __init__(self, ramp_config=None, prefix=_PREFIX,
                  connection_callback=None, callback=None):
@@ -605,13 +608,54 @@ class ConnRF(_EpicsPropsList):
     def cmd_ramping_disable(self, timeout=_TIMEOUT_DFLT):
         """Turn RF ramping disable."""
         return self.set_setpoints_check(
-            {ConnRF.Const.Rmp_Enbl: ConnRF.Const.STATE_DISBL},
+            {ConnRF.Const.Rmp_Enbl: ConnRF.Const.DsblEnbl.Dsbl},
             timeout=timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to RF subsystem."""
-        return self.set_setpoints_check(
-            self.get_propty_2_config_ramp_dict(), timeout=timeout)
+        c = ConnRF.Const
+        allconfig = self.get_propty_2_config_ramp_dict()
+
+        # verify setpoints needed
+        ppty2set = dict()
+        currconfig = dict()
+        for ppty, val in allconfig.items():
+            currconfig[ppty] = self.get_setpoint(ppty)
+            if not _np.isclose(currconfig[ppty], val, rtol=1e-3):
+                ppty2set[ppty] = val
+
+        # verify need to restart the ramp:
+        # times changed or voltage ramp sign changed
+        desr_dir = _np.sign(
+            allconfig[c.Rmp_VoltTop] - allconfig[c.Rmp_VoltBot])
+        impl_dir = _np.sign(
+            currconfig[c.Rmp_VoltTop] - currconfig[c.Rmp_VoltBot])
+        need_restart_ramp = set(c.Rmp_Times) & ppty2set.keys() or \
+            desr_dir != impl_dir
+
+        if need_restart_ramp:
+            # disable ramp
+            stsdsbl = self.cmd_ramping_disable(timeout=2)
+            if not stsdsbl[0]:
+                return stsdsbl
+
+            # perform setpoints
+            status = self.set_setpoints_check(
+                ppty2set, rel_tol=1e-3, timeout=timeout)
+            if not status[0]:
+                return status
+
+            # enable ramp
+            stsenbl = self.cmd_ramping_enable(timeout=2)
+            if not stsenbl[0]:
+                return stsenbl
+        else:
+            # set phases and voltages: ensure VoltBot is set before VoltTop
+            order = [c.Rmp_PhsBot, c.Rmp_VoltBot, c.Rmp_PhsTop, c.Rmp_VoltTop]
+            status = self.set_setpoints_check(
+                ppty2set, timeout=timeout, rel_tol=1e-3,
+                order=[ppty for ppty in order if ppty in ppty2set])
+        return status
 
     # --- RF checks ---
 
