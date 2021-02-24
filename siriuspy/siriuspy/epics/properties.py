@@ -207,11 +207,9 @@ class EpicsPropertiesList:
     def set_setpoints_check(self, setpoints, desired_readbacks=None,
                             timeout=5, order=None, rel_tol=1e-6, abs_tol=0.0):
         """Set setpoints of properties."""
-        if desired_readbacks is None:
-            desired_readbacks = dict()
+        # setpoints
         if order is None:
             order = list(setpoints.keys())
-        # setpoints
         is_nok = list()
         for name in order:
             value = setpoints[name]
@@ -223,7 +221,7 @@ class EpicsPropertiesList:
             if self._logger is not None:
                 self._logger.update(name)
         # check
-        if not desired_readbacks:
+        if desired_readbacks is None:
             desired_readbacks = setpoints
         time0 = _time.time()
         while _time.time() - time0 < timeout:
@@ -233,20 +231,20 @@ class EpicsPropertiesList:
                     continue
                 if pvname not in is_nok:
                     continue
-                rb = self._properties[pvname].readback
+                rbv = self._properties[pvname].readback
                 if isinstance(value, (tuple, list, _np.ndarray)):
-                    if not isinstance(rb, (tuple, list, _np.ndarray)):
+                    if not isinstance(rbv, (tuple, list, _np.ndarray)):
                         finished = False
                         break
-                    if len(value) != len(rb):
+                    if len(value) != len(rbv):
                         finished = False
                         break
-                    if not all(_np.isclose(rb, value,
+                    if not all(_np.isclose(rbv, value,
                                            rtol=rel_tol, atol=abs_tol)):
                         finished = False
                         break
                 else:
-                    if not _np.isclose(rb, value, rtol=rel_tol, atol=abs_tol):
+                    if not _np.isclose(rbv, value, rtol=rel_tol, atol=abs_tol):
                         finished = False
                         break
                 if finished:
