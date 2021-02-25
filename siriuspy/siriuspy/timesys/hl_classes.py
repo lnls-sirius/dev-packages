@@ -120,7 +120,7 @@ class _BaseHL(_Callback):
                 continue
             prop = self._get_prop_name(pvname)
             map2readpvs[pvname] = _partial(
-                            self.read, prop, is_sp=_PVName.is_sp_pv(pvname))
+                self.read, prop, is_sp=_PVName.is_sp_pv(pvname))
         return map2readpvs
 
     def _on_change_pvs(self, channel, prop, value, is_sp=False, **kwargs):

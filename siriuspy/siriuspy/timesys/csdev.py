@@ -541,9 +541,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Delay-RB'] = _dcopy(dic_)
     dbase['Delay-SP'] = dic_
 
+    # Have to be float for spinbox to work properly
     dic_ = {
-        'type': 'int', 'unit': 'hard', 'value': 0,
-        'lolo': 0, 'low': 0, 'lolim': 0,
+        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
     dic_.update(trig_db.get('DelayRaw', dict()))
     dbase['DelayRaw-RB'] = _dcopy(dic_)
@@ -555,9 +556,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dbase['TotalDelay-Mon'] = dic_
 
+    # Have to be float for spinbox to work properly
     dic_ = {
-        'type': 'int', 'unit': 'hard', 'value': 0,
-        'lolo': 0, 'low': 0, 'lolim': 0,
+        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
     dbase['TotalDelayRaw-Mon'] = dic_
 
