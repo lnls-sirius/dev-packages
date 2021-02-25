@@ -9,16 +9,19 @@ from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 from siriuspy.epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
 from siriuspy.envars import VACA_PREFIX as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys import csdev as _cstime
-from siriuspy.search import LLTimeSearch as _LLTimeSearch
+from siriuspy.search import LLTimeSearch as _LLSearch, \
+    HLTimeSearch as _HLSearch
 from siriuspy.callbacks import Callback as _Callback
+from siriuspy.devices import Event as _Event
+
+from siriuspy.timesys.csdev import Const as _TIConst
 
 
-_RFFREQ = _cstime.Const.RF_FREQUENCY
-_RFDIV = _cstime.Const.RF_DIVISION
-_ACFREQ = _cstime.Const.AC_FREQUENCY
+_RFFREQ = _TIConst.RF_FREQUENCY
+_RFDIV = _TIConst.RF_DIVISION
+_ACFREQ = _TIConst.AC_FREQUENCY
 _US2SEC = 1e-6
-_FDEL = _cstime.Const.FINE_DELAY / _US2SEC
+_FDEL = _TIConst.FINE_DELAY / _US2SEC
 
 
 class _Thread(_ThreadBase):
@@ -53,7 +56,9 @@ class _BaseLL(_Callback):
         self._readpvs = dict()
         self._locked = False
 
-        evg_name = _LLTimeSearch.get_evg_name()
+        self._events = {evt: _Event(evt) for evt in _HLSearch.get_hl_events()}
+
+        evg_name = _LLSearch.get_evg_name()
         self._base_freq_pv = _PV(
             LL_PREFIX + evg_name + ':FPGAClk-Cte')
         self._update_base_freq()
@@ -319,12 +324,12 @@ class _EVROUT(_BaseLL):
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, source_enums):
-        fout_chan = _LLTimeSearch.get_fout_channel(channel)
+        fout_chan = _LLSearch.get_fout_channel(channel)
         self._fout_out = int(fout_chan.propty[3:])
-        evg_chan = _LLTimeSearch.get_evg_channel(channel)
+        evg_chan = _LLSearch.get_evg_channel(channel)
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
-        self._duration = None  # I keep this for avoid rounding errors
+        self._duration = None  # I keep this to avoid rounding errors
 
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
@@ -332,8 +337,7 @@ class _EVROUT(_BaseLL):
         # self._config_ok_values['FoutDevEnbl'] = 1
         # self._config_ok_values['EVGDevEnbl'] = 1
         if self.channel.propty.startswith('OUT'):
-            intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
-                                                        self.channel)
+            intrg = _LLSearch.get_channel_internal_trigger_pvname(self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
             # Stop using FineDelay and RF Delay to ease consistency:
@@ -347,14 +351,14 @@ class _EVROUT(_BaseLL):
         return super().write(prop, value)
 
     def _define_convertion_prop2pv(self):
-        intlb = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
-        outlb = _LLTimeSearch.get_channel_output_port_pvname(self.channel)
+        intlb = _LLSearch.get_channel_internal_trigger_pvname(self.channel)
+        outlb = _LLSearch.get_channel_output_port_pvname(self.channel)
         intlb = intlb.propty
         outlb = outlb.propty
 
-        evg_chan = _LLTimeSearch.get_evg_channel(self.channel)
+        evg_chan = _LLSearch.get_evg_channel(self.channel)
         _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
-        fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
+        fout_chan = _LLSearch.get_fout_channel(self.channel)
         _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
@@ -434,6 +438,8 @@ class _EVROUT(_BaseLL):
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
             'DelayRaw': _partial(self._get_delay, 'Delay'),
+            'TotalDelay': _partial(self._get_delay, 'Delay'),
+            'TotalDelayRaw': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, ''),
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
@@ -445,10 +451,11 @@ class _EVROUT(_BaseLL):
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl', def_val=0)
         dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl', def_val=0)
         dic_['FoutDevEnbl'] = self._get_from_pvs(
-                                        is_sp, 'FoutDevEnbl', def_val=0)
+            is_sp, 'FoutDevEnbl', def_val=0)
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
+        dic_['PVsConn'] &= all([x.connected for x in self._events.values()])
 
         dic_['Intlk'] = 0
         if 'Intlk' not in self._REMOVE_PROPS:
@@ -459,11 +466,11 @@ class _EVROUT(_BaseLL):
         if 'Los' not in self._REMOVE_PROPS:
             prt_num = int(self.channel[-1])  # get OUT number for EVR
             dic_['Los'] = self._get_from_pvs(
-                  False, 'Los', def_val=0b11111111)
+                False, 'Los', def_val=0b11111111)
         dic_['EVGLos'] = self._get_from_pvs(
-                                False, 'EVGLos', def_val=0b11111111)
+            False, 'EVGLos', def_val=0b11111111)
         dic_['FoutLos'] = self._get_from_pvs(
-                                False, 'FoutLos', def_val=0b11111111)
+            False, 'FoutLos', def_val=0b11111111)
 
         if value is not None:
             dic_[prop] = value
@@ -499,7 +506,20 @@ class _EVROUT(_BaseLL):
         delay = dic_['Delay']*self.base_del + dic_['FineDelay']*_FDEL
         if not dic_['RFDelayType']:
             delay += dic_['RFDelay']*self._rf_del
-        return {'Delay': delay, 'DelayRaw': dic_['Delay']}
+        dic = self._get_total_delay(
+            {'Delay': delay, 'DelayRaw': dic_['Delay']})
+        return dic
+
+    def _get_total_delay(self, dic):
+        src = self._process_source('', False)['Src']
+        src_str = self._source_enums[src]
+        evt_del = 0
+        if src_str in self._events:
+            evt = self._events[src_str]
+            evt_del = evt.delay_raw if evt.is_in_injection else 0
+        dic['TotalDelayRaw-Mon'] = dic['DelayRaw'] + evt_del
+        dic['TotalDelay-Mon'] = dic['Delay'] + evt_del*self.base_del
+        return dic
 
     def _set_delay(self, value, raw=False):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
@@ -531,27 +551,26 @@ class _EVROUT(_BaseLL):
             return ret
         return self._process_evt(dic_['Evt'], is_sp)
 
-    def _process_evt(self, evt, is_sp):
+    def _process_evt(self, evt, _):
         invalid = len(self._source_enums)-1  # Invalid option
-        if evt not in _cstime.Const.EvtLL:
+        if evt not in _TIConst.EvtLL:
             return {'Src': invalid}
-        evt_st = _cstime.Const.EvtLL._fields[_cstime.Const.EvtLL.index(evt)]
-        if evt_st not in _cstime.Const.EvtLL2HLMap or \
-           _cstime.Const.EvtLL2HLMap[evt_st] not in self._source_enums:
+        evt_st = _TIConst.EvtLL._fields[_TIConst.EvtLL.index(evt)]
+        if evt_st not in _TIConst.EvtLL2HLMap or \
+                _TIConst.EvtLL2HLMap[evt_st] not in self._source_enums:
             return {'Src': invalid}
         else:
-            ev_num = self._source_enums.index(
-                _cstime.Const.EvtLL2HLMap[evt_st])
+            ev_num = self._source_enums.index(_TIConst.EvtLL2HLMap[evt_st])
             return {'Src': ev_num}
 
-    def _process_src_trig(self, src_trig, is_sp):
+    def _process_src_trig(self, src_trig, _):
         invalid = len(self._source_enums)-1  # Invalid option
-        intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
+        intrg = _LLSearch.get_channel_internal_trigger_pvname(self.channel)
         intrg = int(intrg.propty[-2:])  # get internal trigger number for EVR
         if src_trig != intrg:
             return {'Src': invalid}
 
-    def _process_src(self, src, is_sp):
+    def _process_src(self, src, _):
         invalid = len(self._source_enums)-1  # Invalid option
         if src is None:
             return {'Src': invalid}
@@ -563,7 +582,7 @@ class _EVROUT(_BaseLL):
         if self.channel.dev.startswith('AMCFPGAEVR'):
             offset = 1
         try:
-            source = _cstime.Const.TrigSrcLL._fields[src+offset]
+            source = _TIConst.TrigSrcLL._fields[src+offset]
         except IndexError:
             source = ''
         if not source:
@@ -582,19 +601,19 @@ class _EVROUT(_BaseLL):
         if value >= (len(self._source_enums)-1):
             return dict()
         pname = self._source_enums[value]
-        n = _cstime.Const.TrigSrcLL._fields.index('Trigger')
+        n = _TIConst.TrigSrcLL._fields.index('Trigger')
         if pname.startswith('Dsbl'):
-            dic_ = {'Src': n, 'Evt': _cstime.Const.EvtLL.Evt00}
+            dic_ = {'Src': n, 'Evt': _TIConst.EvtLL.Evt00}
         if pname.startswith('Clock'):
-            n = _cstime.Const.TrigSrcLL._fields.index(pname)
+            n = _TIConst.TrigSrcLL._fields.index(pname)
             n -= offset
             dic_ = {'Src': n}
         else:
             n -= offset
-            evt = int(_cstime.Const.EvtHL2LLMap[pname][-2:])
+            evt = int(_TIConst.EvtHL2LLMap[pname][-2:])
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
-            intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
+            intrg = _LLSearch.get_channel_internal_trigger_pvname(
                 self.channel)
             intrg = int(intrg[-2:])  # get internal trigger number for EVR
             dic_['SrcTrig'] = intrg
@@ -663,7 +682,7 @@ class _EVROTP(_EVROUT):
             return dict()
         return self._process_evt(val, is_sp)
 
-    def _process_src(self, src, is_sp):
+    def _process_src(self, src, _):
         return dict()
 
     def _set_source(self, value):
@@ -675,7 +694,7 @@ class _EVROTP(_EVROUT):
         if pname.startswith('Dsbl'):
             dic_['Evt'] = 0
         if not pname.startswith('Clock'):
-            mat = reg.findall(_cstime.Const.EvtHL2LLMap[pname])
+            mat = reg.findall(_TIConst.EvtHL2LLMap[pname])
             dic_['Evt'] = int(mat[0])
         return dic_
 
