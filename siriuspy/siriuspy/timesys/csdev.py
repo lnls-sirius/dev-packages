@@ -550,10 +550,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['DelayRaw-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
+        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
-    dbase['TotalDelay-Mon'] = _dcopy(dic_)
+    dbase['TotalDelay-Mon'] = dic_
 
     dic_ = {
         'type': 'int', 'unit': 'hard', 'value': 0,
