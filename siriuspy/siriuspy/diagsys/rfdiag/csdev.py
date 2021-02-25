@@ -61,15 +61,18 @@ def get_rf_diag_propty_database(device):
                            'low': -1, 'lolo': -1, 'lolim': -1},
         'DiagStatusLabels-Cte': {'type': 'string', 'count': len(enums),
                                  'value': enums},
-        'DiagAmpErrSts-Mon': {'type': 'int', 'value': 0,
-                              'hilim': 1, 'hihi': 1, 'high': 1,
-                              'low': -1, 'lolo': -1, 'lolim': -1},
-        'DiagPhsErrSts-Mon': {'type': 'int', 'value': 0,
-                              'hilim': 1, 'hihi': 1, 'high': 1,
-                              'low': -1, 'lolo': -1, 'lolim': -1},
-        'DiagDTuneErrSts-Mon': {'type': 'int', 'value': 0,
-                                'hilim': 1, 'hihi': 1, 'high': 1,
-                                'low': -1, 'lolo': -1, 'lolim': -1},
     }
+    if device.startswith('SI'):
+        dbase.update({
+            'DiagAmpErrSts-Mon': {'type': 'int', 'value': 0,
+                                  'hilim': 1, 'hihi': 1, 'high': 1,
+                                  'low': -1, 'lolo': -1, 'lolim': -1},
+            'DiagPhsErrSts-Mon': {'type': 'int', 'value': 0,
+                                  'hilim': 1, 'hihi': 1, 'high': 1,
+                                  'low': -1, 'lolo': -1, 'lolim': -1},
+            'DiagDTuneErrSts-Mon': {'type': 'int', 'value': 0,
+                                    'hilim': 1, 'hihi': 1, 'high': 1,
+                                    'low': -1, 'lolo': -1, 'lolim': -1},
+        })
     dbase = _csdev.add_pvslist_cte(dbase, 'Diag')
     return dbase
