@@ -674,7 +674,10 @@ class _EVROTP(_EVROUT):
             val = self._get_from_pvs(is_sp, 'Delay')
         if val is None:
             return dict()
-        return {'Delay': val * self.base_del, 'DelayRaw': val}
+        dic = {'Delay': val * self.base_del, 'DelayRaw': val}
+        if not is_sp:
+            dic = self._get_total_delay(dic)
+        return dic
 
     def _set_delay(self, value, raw=False):
         return {'Delay': int(value if raw else round(value / self.base_del))}
