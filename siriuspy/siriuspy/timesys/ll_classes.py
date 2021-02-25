@@ -56,7 +56,10 @@ class _BaseLL(_Callback):
         self._readpvs = dict()
         self._locked = False
 
-        self._events = {evt: _Event(evt) for evt in _HLSearch.get_hl_events()}
+        evts = _HLSearch.get_hl_events()
+        evts.pop('Dsbl')
+        evts.pop('PsMtn')
+        self._events = {evt: _Event(evt) for evt in evts}
 
         evg_name = _LLSearch.get_evg_name()
         self._base_freq_pv = _PV(
