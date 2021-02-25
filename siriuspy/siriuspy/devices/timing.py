@@ -131,6 +131,7 @@ class Event(_ProptyDevice):
         """."""
         self['ExtTrig-Cmd'] = 1
 
-    def is_in_injection(self):
+    @property
+    def is_in_inj_table(self):
         """."""
         return self.mode_str in Event.MODES[1:4]
