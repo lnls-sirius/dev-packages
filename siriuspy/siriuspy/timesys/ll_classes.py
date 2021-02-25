@@ -446,6 +446,7 @@ class _EVROUT(_BaseLL):
             'Src': _partial(self._process_source, ''),
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
+            'InInjTable': _partial(self._get_status, ''),
             }
         return map_
 
@@ -493,7 +494,19 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
-        return {'Status': prob}
+
+        dic = {'Status': prob}
+        dic.update(self._get_in_inj_table())
+        return
+
+    def _get_in_inj_table(self):
+        src = self._process_source('', False)['Src']
+        src_str = self._source_enums[src]
+        ininj = False
+        if src_str in self._events:
+            ininj = self._events[src_str].is_in_inj_table
+        ininj &= self._get_simple('State', False)
+        return {'InInjTable': int(ininj)}
 
     def _get_delay(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -520,7 +533,7 @@ class _EVROUT(_BaseLL):
         evt_del = 0
         if src_str in self._events:
             evt = self._events[src_str]
-            evt_del = evt.delay_raw if evt.is_in_injection else 0
+            evt_del = evt.delay_raw if evt.is_in_inj_table else 0
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
         dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
