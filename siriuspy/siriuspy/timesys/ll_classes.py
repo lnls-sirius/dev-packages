@@ -168,7 +168,7 @@ class _BaseLL(_Callback):
 
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
-                                timeout=_CONN_TIMEOUT) or self._base_freq
+            timeout=_CONN_TIMEOUT) or self._base_freq
         self.base_del = 1 / self._base_freq / _US2SEC
         self._rf_del = self.base_del / 5
 
@@ -506,8 +506,9 @@ class _EVROUT(_BaseLL):
         delay = dic_['Delay']*self.base_del + dic_['FineDelay']*_FDEL
         if not dic_['RFDelayType']:
             delay += dic_['RFDelay']*self._rf_del
-        dic = self._get_total_delay(
-            {'Delay': delay, 'DelayRaw': dic_['Delay']})
+        dic = {'Delay': delay, 'DelayRaw': dic_['Delay']}
+        if not is_sp:
+            dic = self._get_total_delay(dic)
         return dic
 
     def _get_total_delay(self, dic):
@@ -517,8 +518,8 @@ class _EVROUT(_BaseLL):
         if src_str in self._events:
             evt = self._events[src_str]
             evt_del = evt.delay_raw if evt.is_in_injection else 0
-        dic['TotalDelayRaw-Mon'] = dic['DelayRaw'] + evt_del
-        dic['TotalDelay-Mon'] = dic['Delay'] + evt_del*self.base_del
+        dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
+        dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
 
     def _set_delay(self, value, raw=False):
