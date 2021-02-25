@@ -323,4 +323,6 @@ class HLTrigger(_BaseHL):
             'Status': self._combine_status,
             'DeltaDelay': self._combine_deltadelay,
             'Delay': self._combine_delay,
-            'DelayRaw': self._combine_delay}
+            'DelayRaw': self._combine_delay,
+            'TotalDelay': self._combine_delay,
+            'TotalDelayRaw': self._combine_delay}
