@@ -534,7 +534,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['NrPulses-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'us', 'prec': 3,
+        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dic_.update(trig_db['Delay'])
@@ -542,15 +542,15 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Delay-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'type': 'int', 'unit': 'hard', 'value': 0,
+        'lolo': 0, 'low': 0, 'lolim': 0,
         'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
     dic_.update(trig_db.get('DelayRaw', dict()))
     dbase['DelayRaw-RB'] = _dcopy(dic_)
     dbase['DelayRaw-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'us', 'prec': 3,
+        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dbase['TotalDelay-Mon'] = _dcopy(dic_)
