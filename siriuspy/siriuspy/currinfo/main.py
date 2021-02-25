@@ -161,11 +161,11 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self.run_callbacks(name + 'TranspEff-Mon', eff)
         self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
 
-
+        
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC_IP = 'scope-dig-fctdig'
+    OSC_IP = 'as-di-fctdig'
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -174,7 +174,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = 'scope-dig-linac-ict'
+    OSC_IP = 'li-di-ictosc'
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'
