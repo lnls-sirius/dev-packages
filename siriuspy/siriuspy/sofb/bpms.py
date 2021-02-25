@@ -4,7 +4,7 @@ import numpy as _np
 
 from ..epics import PV as _PV
 from ..diagbeam.bpm.csdev import Const as _csbpm
-from ..timesys import csdev as _cstime
+from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 
@@ -833,14 +833,13 @@ class TimingConfig(_BaseTimingConfig):
         evg = self._csorb.evg_name
         opt = {'connection_timeout': TIMEOUT}
         self._config_ok_vals = {
-            'NrPulses': 1,
-            'State': _cstime.Const.TrigStates.Enbl}
+            'NrPulses': 1, 'State': _TIConst.TrigStates.Enbl}
         if _HLTimesearch.has_delay_type(trig):
-            self._config_ok_vals['RFDelayType'] = \
-                                    _cstime.Const.TrigDlyTyp.Manual
+            self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
         pref_name = LL_PREF + trig + ':'
         self._config_pvs_rb = {
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
+            'TotalDelay': _PV(pref_name + 'TotalDelay-Mon', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
@@ -887,4 +886,10 @@ class TimingConfig(_BaseTimingConfig):
     def delay(self):
         """."""
         pvobj = self._config_pvs_rb['Delay']
+        return pvobj.value if pvobj.connected else None
+
+    @property
+    def totaldelay(self):
+        """."""
+        pvobj = self._config_pvs_rb['TotalDelay']
         return pvobj.value if pvobj.connected else None
