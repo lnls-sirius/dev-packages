@@ -497,7 +497,7 @@ class _EVROUT(_BaseLL):
 
         dic = {'Status': prob}
         dic.update(self._get_in_inj_table())
-        return
+        return dic
 
     def _get_in_inj_table(self):
         src = self._process_source('', False)['Src']
