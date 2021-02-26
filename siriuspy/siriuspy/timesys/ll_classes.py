@@ -13,6 +13,7 @@ from siriuspy.search import LLTimeSearch as _LLSearch, \
     HLTimeSearch as _HLSearch
 from siriuspy.callbacks import Callback as _Callback
 from siriuspy.devices import Event as _Event
+from siriuspy.thread import RepeaterThread as _Timer
 
 from siriuspy.timesys.csdev import Const as _TIConst
 
@@ -48,13 +49,14 @@ class _BaseLL(_Callback):
         self._dict_functs_for_read = self._define_dict_for_read()
         self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
-                val: key for key, val in self._dict_convert_prop2pv.items()}
+            val: key for key, val in self._dict_convert_prop2pv.items()}
         self._config_ok_values = dict()
         self._base_freq = _RFFREQ / _RFDIV
 
         self._writepvs = dict()
         self._readpvs = dict()
         self._locked = False
+        self._lock_threads_dict = dict()
 
         evts = _HLSearch.get_hl_events()
         evts.pop('Dsbl')
@@ -77,31 +79,23 @@ class _BaseLL(_Callback):
                 self._writepvs[prop] = _PV(pvname)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _PV(pvnamerb)
+                pvo = _PV(pvnamerb)
+                pvo.add_callback(self._on_change_readpv)
+                pvo.connection_callbacks.append(self._on_connection)
+                self._readpvs[prop] = pvo
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
-                self._writepvs[prop] = _PV(pvnamesp)
-                self._writepvs[prop]._initialized = False
-
-        for prop, pv in self._writepvs.items():
-            if not pv.wait_for_connection():
-                _log.info(pv.pvname + ' not connected.')
-        for prop, pv in self._readpvs.items():
-            if not pv.wait_for_connection():
-                _log.info(pv.pvname + ' not connected.')
-
-        for prop, pv in self._writepvs.items():
-            if _PVName.is_cmd_pv(pv.pvname):
-                continue
-            pv.add_callback(self._on_change_writepv)
-            pv.connection_callbacks.append(self._on_connection_writepv)
-        for prop, pv in self._readpvs.items():
-            pv.add_callback(self._on_change_readpv)
-            pv.connection_callbacks.append(self._on_connection)
+                pvo = _PV(pvnamesp)
+                pvo.initialized = False
+                pvo.add_callback(self._on_change_writepv)
+                pvo.connection_callbacks.append(self._on_connection_writepv)
+                self._writepvs[prop] = pvo
 
     @property
     def connected(self):
+        """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
+        pvs += list(self._events.values())
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -109,12 +103,25 @@ class _BaseLL(_Callback):
                 _log.debug('NOT CONN: {0:s}'.format(pv.pvname))
         return conn
 
+    def wait_for_connection(self, timeout=None):
+        """."""
+        pvs = list(self._readpvs.values()) + list(self._writepvs.values())
+        pvs += [self._base_freq_pv, ]
+        pvs += list(self._events.values())
+        for pv in pvs:
+            if not pv.wait_for_connection(timeout=timeout):
+                _log.info(pv.pvname + ' not connected.')
+                return False
+        return True
+
     @property
     def locked(self):
+        """."""
         return self._locked
 
     @locked.setter
     def locked(self, value):
+        """."""
         self._locked = bool(value)
         if not self._locked:
             return
@@ -157,7 +164,7 @@ class _BaseLL(_Callback):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        _Thread(target=self._lock_thread, args=(pvname, )).start()
+        self._start_lock_thread(pvname)
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -217,10 +224,7 @@ class _BaseLL(_Callback):
         val = pv.get(timeout=_CONN_TIMEOUT)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None):
-        prop = self._dict_convert_pv2prop[pvname]
-        if value is None:
-            value = self._get_from_pvs(False, prop)
+    def _start_lock_thread(self, pvname):
         # I have loop here to guarantee that the hardware will go to the
         # desired state.
         # I have to do this because of a problem on the LL IOCs triggered by
@@ -231,38 +235,48 @@ class _BaseLL(_Callback):
         # LL IOCs, or the same property twice, in a time interval shorter than
         # the one it takes for LL IOC complete writing on the hardware (~60ms).
         maxatt = 100
-        for count in range(maxatt):
-            my_val = self._config_ok_values.get(prop)
-            pv = self._writepvs.get(prop)
-            if my_val is None or pv is None:
-                break
-            value = value if count < 1 else self._get_from_pvs(False, prop)
-            if value is None:
-                continue
-            if pv._initialized and my_val == value:
-                break
-            self._put_on_pv(pv, my_val)
-            _time.sleep(0.1)  # I wait a little bit to reduce CPU load
-        if count > 1:
-            _log.warning((
-                'chan: {0:s} pvname: {1:s} my_val: {2:s} '
-                'val: {3:s} put_comp: {4:s} initia: {5:s} '
-                'count: {6:s} conn: {7:s}').format(
-                    self.channel, pv.pvname, str(my_val), str(value),
-                    str(pv.put_complete), str(pv._initialized),
-                    str(count), str(pv.connected)))
-        if count == maxatt-1:
-            _log.error('Could not set PV {0:s}.'.format(pv.pvname))
+        interv = 1 / 10  # I wait a little bit to reduce CPU load
+        timer = self._lock_threads_dict.get(pvname)
+        if timer is None or not timer.is_alive():
+            timer = _Timer(
+                interv, self._do_lock, args=(pvname, ), niter=maxatt)
+            self._lock_threads_dict[pvname] = timer
+            timer.start()
+        else:
+            timer.reset()
 
-    def _put_on_pv(self, pv, value, wait=False):
-        if pv.connected and pv.put_complete is not False:
+    def _do_lock(self, pvname):
+        timer = self._lock_threads_dict[pvname]
+
+        prop = self._dict_convert_pv2prop[pvname]
+        my_val = self._config_ok_values.get(prop)
+        pvo = self._writepvs.get(prop)
+        if my_val is None or pvo is None:
+            timer.stop()
+        value = self._get_from_pvs(False, prop)
+        if value is None:
+            return
+        if pvo.initialized and my_val == value:
+            timer.stop()
+        self._put_on_pv(pvo, my_val)
+
+        if timer.cur_iter == timer.niters-1:
+            _log.error(
+                f'Could not set PV: {pvo.pvname:s} --> '
+                f'my_val: {str(my_val):s} val: {str(value):s} '
+                f'put_comp: {str(pvo.put_complete):s} '
+                f'initia: {str(pvo.initialized):s} '
+                f'conn: {str(pvo.connected):s}')
+
+    def _put_on_pv(self, pvo, value, wait=False):
+        if pvo.connected and pvo.put_complete is not False:
             # wait=True is too slow for the LL Timing IOCs. It is better not
             # to use it.
             try:
-                pv.put(value, use_complete=True, wait=wait)
-                pv._initialized = True
+                pvo.put(value, use_complete=True, wait=wait)
+                pvo.initialized = True
             except _CASeverityException:
-                _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
+                _log.error('NO Write Permission to {0:s}'.format(pvo.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them
@@ -274,7 +288,7 @@ class _BaseLL(_Callback):
         if value is None:
             return
         if self._locked:
-            _Thread(target=self._lock_thread, args=(pvname, value)).start()
+            self._start_lock_thread(pvname)
         _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
         # at initialization load _config_ok_values
@@ -296,10 +310,11 @@ class _BaseLL(_Callback):
                 self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
 
     def _on_connection_writepv(self, pvname, conn, **kwargs):
-        if not _PVName.is_cmd_pv(pvname):  # -Cmd must not change
-            prop = self._dict_convert_pv2prop[_PVName.from_sp2rb(pvname)]
-            self._writepvs[prop]._initialized = False  # not self._locked
-            self._on_connection(pvname, conn)
+        if _PVName.is_cmd_pv(pvname):  # -Cmd must not change
+            return
+        prop = self._dict_convert_pv2prop[_PVName.from_sp2rb(pvname)]
+        self._writepvs[prop].initialized = False  # not self._locked
+        self._on_connection(pvname, conn)
 
     def _on_connection(self, pvname, conn, **kwargs):
         self.run_callbacks(self.channel, None, None)
