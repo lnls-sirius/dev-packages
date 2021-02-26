@@ -35,7 +35,6 @@ class SOFB(_Device):
         'BPMXEnblList-RB', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CVEnblList-SP',
         'CHEnblList-RB', 'CVEnblList-RB',
-        'RFEnbl-Sel', 'RFEnbl-Sts',
         'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
@@ -46,14 +45,20 @@ class SOFB(_Device):
         'MeasRespMat-Cmd', 'MeasRespMat-Mon',
         'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
-        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         # properties used only for ring-type accelerators:
         'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
-        'MTurnTime-Mon')
+        'MTurnTime-Mon',
+        # properties used only for sirius:
+        'KickRF-Mon',
+        'DeltaKickRF-Mon', 'DeltaKickRF-SP',
+        'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'RFEnbl-Sel', 'RFEnbl-Sts',
+        )
 
     _default_timeout = 10  # [s]
     _default_timeout_respm = 2 * 60 * 60  # [s]
@@ -70,6 +75,8 @@ class SOFB(_Device):
         propts = SOFB._propty_tmpl
         if not self.data.isring:
             propts = [p for p in propts if not p.startswith(('MTurn', 'Slow'))]
+        if not self.data.acc == 'SI':
+            propts = [p for p in propts if 'RF' not in p]
 
         # call base class constructor
         super().__init__(devname, properties=propts)
@@ -215,6 +222,11 @@ class SOFB(_Device):
         return self['KickCV-Mon']
 
     @property
+    def kickrf(self):
+        """."""
+        return self['KickRF-Mon']
+
+    @property
     def deltakickch(self):
         """."""
         return self['DeltaKickCH-Mon']
@@ -235,6 +247,16 @@ class SOFB(_Device):
         self['DeltaKickCV-SP'] = value
 
     @property
+    def deltakickrf(self):
+        """."""
+        return self['DeltaKickRF-Mon']
+
+    @deltakickrf.setter
+    def deltakickrf(self, value):
+        """."""
+        self['DeltaKickRF-SP'] = value
+
+    @property
     def mancorrgainch(self):
         """."""
         return self['ManCorrGainCH-RB']
@@ -253,6 +275,16 @@ class SOFB(_Device):
     def mancorrgaincv(self, value):
         """."""
         self['ManCorrGainCV-SP'] = value
+
+    @property
+    def mancorrgainrf(self):
+        """."""
+        return self['ManCorrGainRF-RB']
+
+    @mancorrgainrf.setter
+    def mancorrgainrf(self, value):
+        """."""
+        self['ManCorrGainRF-SP'] = value
 
     @property
     def refx(self):
@@ -437,17 +469,20 @@ class SOFB(_Device):
         """."""
         return self['LoopState-Sts']
 
-    def correct_orbit_manually(self, nr_iters=10):
+    def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
         self.cmd_turn_off_autocorr()
-
-        for i in range(nr_iters):
+        for _ in range(nr_iters):
             self.cmd_calccorr()
             _time.sleep(0.5)
             self.cmd_applycorr_all()
             _time.sleep(0.5)
             self.cmd_reset()
             self.wait_buffer()
+            resx = _np.std(self.orbx - self.refx)
+            resy = _np.std(self.orby - self.refy)
+            if resx < residue and resy < residue:
+                break
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
