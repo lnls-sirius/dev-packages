@@ -69,7 +69,6 @@ class _BaseLL(_Callback):
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
-        _log.info(self.channel+': Creating PVs.')
         for prop, pvname in self._dict_convert_prop2pv.items():
             pvnamerb = pvnamesp = None
             if not _PVName.is_write_pv(pvname):
