@@ -123,13 +123,7 @@ class _BaseLL(_Callback):
     @locked.setter
     def locked(self, value):
         """."""
-        self._locked = bool(value)
-        if not self._locked:
-            return
-        for prop, val in self._config_ok_values.items():
-            if val is None:
-                continue
-            self.write_ll(prop, val)
+        self._set_locked(value)
 
     def write(self, prop, value):
         """Set property values in low level IOCS.
@@ -176,6 +170,15 @@ class _BaseLL(_Callback):
         if dic_ is None or prop not in dic_:
             return None
         return dic_[prop]
+
+    def _set_locked(self, value):
+        self._locked = bool(value)
+        if not self._locked:
+            return
+        for prop, val in self._config_ok_values.items():
+            if val is None:
+                continue
+            self.write_ll(prop, val)
 
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
@@ -424,6 +427,7 @@ class _EVROUT(_BaseLL):
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
+            'LowLvlLock': self._set_locked,
             }
         return map_
 
@@ -468,6 +472,7 @@ class _EVROUT(_BaseLL):
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
             'InInjTable': _partial(self._get_status, ''),
+            'LowLvlLock': lambda is_sp: self.locked,
             }
         return map_
 

@@ -251,9 +251,6 @@ class HLTrigger(_BaseHL):
             prop_name = prop_name.replace('DeltaDelay', 'Delay')
             self._update_deltadelay(value)
             value = self._hldelay + self._hldeltadelay
-        elif prop_name.startswith('LowLvlLock'):
-            self.locked = bool(value)
-            return True
         else:
             value = len(self._ll_objs) * [value, ]
 
@@ -267,8 +264,8 @@ class HLTrigger(_BaseHL):
         fun = self._funs_combine_values.get(prop_name, self._combine_default)
         if prop_name.startswith('DeltaDelay'):
             prop_name = prop_name.replace('DeltaDelay', 'Delay')
-        if prop_name.startswith('LowLvlLock'):
-            vals = [x.locked for x in self._ll_objs]
+        if prop_name.startswith('LowLvlLock') and is_sp:
+            vals = self.locked
         else:
             vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
         return fun(vals)
