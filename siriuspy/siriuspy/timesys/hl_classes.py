@@ -265,7 +265,7 @@ class HLTrigger(_BaseHL):
         if prop_name.startswith('DeltaDelay'):
             prop_name = prop_name.replace('DeltaDelay', 'Delay')
         if prop_name.startswith('LowLvlLock') and is_sp:
-            vals = self.locked
+            vals = len(self._ll_objs) * [self.locked, ]
         else:
             vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
         return fun(vals)
