@@ -59,7 +59,18 @@ class _BaseHL(_Callback):
             obj.add_callback(self._on_change_pvs)
 
     @property
+    def connected(self):
+        """."""
+        return all(map(lambda x: x.connected, self._ll_objs))
+
+    def wait_for_connection(self, timeout=None):
+        """."""
+        return all(map(
+            lambda x: x.wait_for_connection(timeout=timeout), self._ll_objs))
+
+    @property
     def locked(self):
+        """."""
         dic_ = self._combine_default(map(lambda x: x.locked, self._ll_objs))
         return dic_['value']
 
@@ -70,6 +81,7 @@ class _BaseHL(_Callback):
         self.run_callbacks(self._get_pv_name('LowLvlLock'), value=bool(value))
 
     def get_database(self):
+        """."""
         return dict()
 
     def write(self, prop_name, value):
@@ -81,7 +93,7 @@ class _BaseHL(_Callback):
         if value is None:
             return False
         return _reduce(_and_, map(
-                    lambda x: x.write(prop_name, value), self._ll_objs))
+            lambda x: x.write(prop_name, value), self._ll_objs))
 
     def read(self, prop_name, is_sp=False):
         """Read."""
@@ -123,7 +135,9 @@ class _BaseHL(_Callback):
                 self.read, prop, is_sp=_PVName.is_sp_pv(pvname))
         return map2readpvs
 
-    def _on_change_pvs(self, channel, prop, value, is_sp=False, **kwargs):
+    def _on_change_pvs(self, *args, **kwargs):
+        _ = args
+        _ = kwargs
         self._start_timer()
 
     def _start_timer(self, *args, **kwargs):
@@ -204,12 +218,15 @@ class HLTrigger(_BaseHL):
 
     def __init__(self, hl_trigger, callback=None):
         """Appropriately initialize the instance."""
+
         src_enums = _cstime.get_hl_trigger_database(hl_trigger=hl_trigger)
         src_enums = src_enums['Src-Sel']['enums']
         ll_obj_names = _HLSearch.get_ll_trigger_names(hl_trigger)
-        ll_objs = list()
+
         self._hldelay = 0.0
         self._hldeltadelay = _np.zeros(len(ll_obj_names))
+
+        ll_objs = list()
         for name in ll_obj_names:
             ll_objs.append(_get_ll_trigger(
                 channel=name, source_enums=src_enums))
@@ -246,6 +263,7 @@ class HLTrigger(_BaseHL):
         return boo
 
     def read(self, prop_name, is_sp=False):
+        """."""
         fun = self._funs_combine_values.get(prop_name, self._combine_default)
         if prop_name.startswith('DeltaDelay'):
             prop_name = prop_name.replace('DeltaDelay', 'Delay')
@@ -261,12 +279,15 @@ class HLTrigger(_BaseHL):
             hl_trigger=self.prefix[:-1], prefix=self.prefix)
 
     def get_ll_triggers(self):
+        """."""
         return self._ll_objs
 
     def get_ll_trigger_names(self):
+        """."""
         return _HLSearch.get_ll_trigger_names(self.prefix[:-1])
 
     def get_ll_channels(self):
+        """."""
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _update_deltadelay(self, value):
