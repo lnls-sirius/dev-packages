@@ -173,13 +173,13 @@ class _BaseLL(_Callback):
 
     def _set_locked(self, value):
         self._locked = bool(value)
+        self.run_callbacks(self.channel, 'LowLvlLock', value, is_sp=False)
         if not self._locked:
             return
         for prop, val in self._config_ok_values.items():
             if val is None:
                 continue
             self.write_ll(prop, val)
-        self.run_callbacks(self.channel, 'LowLvlLock', value, is_sp=False)
 
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
