@@ -124,7 +124,6 @@ class _BaseLL(_Callback):
     def locked(self, value):
         """."""
         self._set_locked(value)
-        self.run_callbacks(self.channel, 'LowLvlLock', value, is_sp=False)
 
     def write(self, prop, value):
         """Set property values in low level IOCS.
@@ -180,6 +179,7 @@ class _BaseLL(_Callback):
             if val is None:
                 continue
             self.write_ll(prop, val)
+        self.run_callbacks(self.channel, 'LowLvlLock', value, is_sp=False)
 
     def _update_base_freq(self, **kwargs):
         self._base_freq = self._base_freq_pv.get(
