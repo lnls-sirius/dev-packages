@@ -533,7 +533,7 @@ class _EVROUT(_BaseLL):
         ininj = False
         if src_str in self._events:
             ininj = self._events[src_str].is_in_inj_table
-        ininj &= self._get_simple('State', False)['State']
+        ininj &= self._get_simple('State', False).get('State', False)
         return {'InInjTable': int(ininj)}
 
     def _get_delay(self, prop, is_sp, value=None):
