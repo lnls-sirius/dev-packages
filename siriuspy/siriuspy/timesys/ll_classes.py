@@ -138,7 +138,6 @@ class _BaseLL(_Callback):
             return False
         dic = fun(value)  # dic must be None for -Cmd PVs
         if dic is None:
-            _log.warning('Function returned None')
             return True
         elif isinstance(dic, dict) and not dic:
             _log.warning('Function return value is empty')
