@@ -42,6 +42,7 @@ class _BaseLL(_Callback):
         its value.
         """
         super().__init__()
+        self._initialized = False
         self.channel = _PVName(channel)
         self.prefix = prefix
         self._dict_functs_for_write = self._define_dict_for_write()
@@ -88,6 +89,7 @@ class _BaseLL(_Callback):
                 pvo.add_callback(self._on_change_writepv)
                 pvo.connection_callbacks.append(self._on_connection_writepv)
                 self._writepvs[prop] = pvo
+        self._initialized = True
 
     @property
     def connected(self):
@@ -300,6 +302,9 @@ class _BaseLL(_Callback):
             self._config_ok_values[prop] = value
 
     def _on_change_pv_thread(self, pvname, value, **kwargs):
+        if not self._initialized:
+            return
+
         pvn = _PVName.from_sp2rb(pvname)
         is_sp = _PVName.is_sp_pv(pvname)
         fun = self._dict_functs_for_update[self._dict_convert_pv2prop[pvn]]
@@ -316,6 +321,8 @@ class _BaseLL(_Callback):
         self._on_connection(pvname, conn)
 
     def _on_connection(self, pvname, conn, **kwargs):
+        if not self._initialized:
+            return
         self.run_callbacks(self.channel, None, None)
 
     def _set_simple(self, prop, value):
