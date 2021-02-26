@@ -472,7 +472,7 @@ class _EVROUT(_BaseLL):
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
             'InInjTable': _partial(self._get_status, ''),
-            'LowLvlLock': lambda is_sp: self.locked,
+            'LowLvlLock': lambda is_sp: {'LowLvlLock': self.locked},
             }
         return map_
 
