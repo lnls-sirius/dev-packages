@@ -521,7 +521,9 @@ class _EVROUT(_BaseLL):
         return dic
 
     def _get_in_inj_table(self):
-        src = self._process_source('', False)['Src']
+        src = self._process_source('', False).get('Src')
+        if src is None:
+            return dict()
         src_str = self._source_enums[src]
         ininj = False
         if src_str in self._events:
@@ -549,7 +551,9 @@ class _EVROUT(_BaseLL):
         return dic
 
     def _get_total_delay(self, dic):
-        src = self._process_source('', False)['Src']
+        src = self._process_source('', False).get('Src')
+        if src is None:
+            return dic
         src_str = self._source_enums[src]
         evt_del = 0
         if src_str in self._events:
