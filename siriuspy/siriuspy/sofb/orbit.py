@@ -827,7 +827,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not self.isring:
             return
-        dly = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
+        dly = (delay or self.timing.totaldelay or 0.0) * 1e-6  # from us to s
         dur = (duration or self.timing.duration or 0.0) * 1e-6  # from us to s
         channel = channel or self.bpms[0].acq_type or 0
 

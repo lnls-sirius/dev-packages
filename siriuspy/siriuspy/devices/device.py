@@ -166,6 +166,34 @@ class Device:
             pvname = propty
         return pvname
 
+    def _enum_setter(self, propty, value, enums):
+        if hasattr(enums, '_fields'):
+            enums = enums._fields
+        if value is None:
+            return None
+        elif isinstance(value, str) and value in enums:
+            self[propty] = enums.index(value)
+        elif 0 <= int(value) < len(enums):
+            self[propty] = value
+
+
+class ProptyDevice(Device):
+    """Device with a prefix property name."""
+
+    def __init__(self, devname, propty_prefix, properties):
+        """."""
+        self._propty_prefix = propty_prefix
+        # call base class constructor
+        super().__init__(devname, properties=properties)
+
+    def _get_pvname(self, devname, propty):
+        if devname:
+            func = devname.substitute
+            pvname = func(propty=self._propty_prefix + propty)
+        else:
+            pvname = self._propty_prefix + propty
+        return pvname
+
 
 # NOTE: This class is temporary. It should become deprecated once all
 # devices names are in accordance with Sirius naming system

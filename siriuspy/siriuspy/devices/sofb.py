@@ -81,12 +81,8 @@ class SOFB(_Device):
 
     @opmode.setter
     def opmode(self, value):
-        if value is None:
-            return
-        if isinstance(value, str) and value in self.data.SOFBMode._fields:
-            self['SOFBMode-Sel'] = self.data.SOFBMode._fields.index(value)
-        elif int(value) in self.data.SOFBMode:
-            self['SOFBMode-Sel'] = int(value)
+        self._enum_setter(
+            'SOFBMode-Sel', value, self.data.SOFBMode)
 
     @property
     def opmode_str(self):
@@ -100,13 +96,8 @@ class SOFB(_Device):
 
     @trigchannel.setter
     def trigchannel(self, value):
-        if value is None:
-            return
-        if isinstance(value, str) and value in self.data.TrigAcqChan._fields:
-            self['TrigAcqChan-Sel'] = \
-                self.data.TrigAcqChan._fields.index(value)
-        elif int(value) in self.data.TrigAcqChan:
-            self['TrigAcqChan-Sel'] = int(value)
+        self._enum_setter(
+            'TrigAcqChan-Sel', value, self.data.TrigAcqChan)
 
     @property
     def respmat(self):
