@@ -128,9 +128,9 @@ class WfmUpdateAutoSel(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
-                self.pru_controller.wfm_update_auto_enable()
+                self.pru_controller.scope_update_auto_enable()
             elif value == 0:
-                self.pru_controller.wfm_update_auto_disable()
+                self.pru_controller.scope_update_auto_disable()
 
 
 class PRUCProperty(Function):

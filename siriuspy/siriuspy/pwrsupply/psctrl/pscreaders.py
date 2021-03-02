@@ -92,7 +92,7 @@ class WfmUpdateAutoSts:
 
     def read(self):
         """Read status."""
-        data = self.pru_controller.wfm_update_auto
+        data = self.pru_controller.scope_update_auto
         return data
 
 
