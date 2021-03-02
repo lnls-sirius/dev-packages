@@ -5,13 +5,14 @@ from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
 import numpy as _np
-from siriuspy.util import mode as _mode
-from siriuspy.thread import RepeaterThread as _Timer
-from siriuspy.search import HLTimeSearch as _HLSearch
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys import csdev as _cstime
 
-from siriuspy.callbacks import Callback as _Callback
+from ..util import mode as _mode
+from ..thread import RepeaterThread as _Timer
+from ..search import HLTimeSearch as _HLSearch
+from ..namesys import SiriusPVName as _PVName
+from ..callbacks import Callback as _Callback
+
+from .csdev import get_hl_trigger_database as _get_hl_trigger_database
 from .ll_classes import get_ll_trigger as _get_ll_trigger
 
 
@@ -219,7 +220,7 @@ class HLTrigger(_BaseHL):
     def __init__(self, hl_trigger, callback=None):
         """Appropriately initialize the instance."""
 
-        src_enums = _cstime.get_hl_trigger_database(hl_trigger=hl_trigger)
+        src_enums = _get_hl_trigger_database(hl_trigger=hl_trigger)
         src_enums = src_enums['Src-Sel']['enums']
         ll_obj_names = _HLSearch.get_ll_trigger_names(hl_trigger)
 
@@ -272,7 +273,7 @@ class HLTrigger(_BaseHL):
 
     def get_database(self):
         """Get the database."""
-        return _cstime.get_hl_trigger_database(
+        return _get_hl_trigger_database(
             hl_trigger=self.prefix[:-1], prefix=self.prefix)
 
     def get_ll_triggers(self):
