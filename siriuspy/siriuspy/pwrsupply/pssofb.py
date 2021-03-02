@@ -38,7 +38,6 @@ class _Process(_mp.get_context('spawn').Process):
         _mp.Process.run(self)
 
 
-
 class _BBBThread(_AsyncWorker):
     """Class to run methods from a given BBB."""
 
