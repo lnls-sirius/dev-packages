@@ -6,20 +6,37 @@ import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread, Event as _Event
-from multiprocessing import Pipe as _Pipe
+import multiprocessing as _mp
 import traceback as _traceback
 
-from epics import CAProcess as _Process
 import numpy as _np
 import bottleneck as _bn
 
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV
+from ..epics import PV as _PV, ca as _ca
 
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig, TIMEOUT
+
+
+# NOTE: I have to rederive epics.CAProcess here to ensure the process will be
+# launched with the spawn method.
+ctx = _mp.get_context('spawn')
+class _Process(ctx.Process):
+    """
+    A Channel-Access aware (and safe) subclass of multiprocessing.Process
+    Use CAProcess in place of multiprocessing.Process if your Process will
+    be doing CA calls!
+    """
+    def __init__(self, **kws):
+        _mp.Process.__init__(self, **kws)
+
+    def run(self):
+        _ca.initial_context = None
+        _ca.clear_cache()
+        _mp.Process.run(self)
 
 
 class BaseOrbit(_BaseClass):
@@ -46,7 +63,6 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
 
     def conn_callback(pvname=None, conn=None, pv=None):
         if not conn:
-            _log.warning(pvname + 'Disconnected')
             tstamps[pv.index] = _np.nan
 
     pvsobj = []
@@ -147,9 +163,9 @@ class EpicsOrbit(BaseOrbit):
 
         # create processes
         for i in range(nrprocs):
-            mine, send_pipe = _Pipe(duplex=False)
+            mine, send_pipe = _mp.Pipe(duplex=False)
             self._mypipes_recv.append(mine)
-            recv_pipe, mine = _Pipe(duplex=False)
+            recv_pipe, mine = _mp.Pipe(duplex=False)
             self._mypipes_send.append(mine)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(

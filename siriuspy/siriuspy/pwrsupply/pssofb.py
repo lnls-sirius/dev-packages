@@ -1,11 +1,10 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
-from multiprocessing import Event as _Event, Pipe as _Pipe, \
-    sharedctypes as _shm
+import multiprocessing as _mp
 
 import numpy as _np
-import epics as _epics
+from epics import get_pv as _get_pv, ca as _ca
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
@@ -20,6 +19,25 @@ from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
 from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
+
+
+# NOTE: I have to rederive epics.CAProcess here to ensure the process will be
+# launched with the spawn method.
+ctx = get_context('spawn')
+class _Process(ctx.Process):
+    """
+    A Channel-Access aware (and safe) subclass of multiprocessing.Process
+    Use CAProcess in place of multiprocessing.Process if your Process will
+    be doing CA calls!
+    """
+    def __init__(self, **kws):
+        _mp.Process.__init__(self, **kws)
+
+    def run(self):
+        _ca.initial_context = None
+        _ca.clear_cache()
+        _mp.Process.run(self)
+
 
 
 class _BBBThread(_AsyncWorker):
@@ -586,7 +604,7 @@ class PSConnSOFB:
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
             if self._sofb_update_iocs:
                 pvname = bsmpdevs[0][0] + ':SOFBUpdate-Cmd'
-                pvobjs[bbbname] = _epics.get_pv(pvname)
+                pvobjs[bbbname] = _get_pv(pvname)
             thread = _BBBThread(name=bbbname)
             thread.start()
             threads.append(thread)
@@ -730,15 +748,16 @@ class PSSOFB:
         # Create shared memory objects to be shared with worker processes.
         arr = self._sofb_current_readback_ref
 
-        rbref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
+        shm = _mp.sharedctypes
+        rbref = shm.Array(shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_readback_ref = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(rbref))
 
-        ref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
+        ref = shm.Array(shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_refmon = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(ref))
 
-        fret = _shm.Array(_shm.ctypes.c_int, arr.size, lock=False)
+        fret = shm.Array(shm.ctypes.c_int, arr.size, lock=False)
         self._sofb_func_return = _np.ndarray(
             arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
@@ -752,10 +771,10 @@ class PSSOFB:
         sub = [div*i + min(i, rem) for i in range(self._nr_procs+1)]
         for i in range(self._nr_procs):
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
-            evt = _Event()
+            evt = _mp.Event()
             evt.set()
-            theirs, mine = _Pipe(duplex=False)
-            proc = _epics.CAProcess(
+            theirs, mine = _mp.Pipe(duplex=False)
+            proc = _Process(
                 target=PSSOFB._run_process,
                 args=(self._ethbridge_cls, bbbnames, theirs, evt,
                       arr.shape, rbref, ref, fret, self._sofb_update_iocs),
