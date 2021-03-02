@@ -2,8 +2,9 @@
 
 import sys as _sys
 import logging as _log
-from siriuspy.namesys import SiriusPVName as PVName
-from siriuspy.search import LLTimeSearch
+
+from ..namesys import SiriusPVName as PVName
+from ..search import LLTimeSearch
 
 
 _disclaimer = """
@@ -27,6 +28,7 @@ _NAMES2CONVERT = {
 
 
 def create_static_table(fname=None, local=False, logfile=None):
+    """."""
     if logfile:
         hand = _log.FileHandler(logfile, mode='w')
     else:

@@ -1,21 +1,21 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
-import time as _time
+
 import re as _re
 from functools import partial as _partial
 import logging as _log
 from threading import Thread as _ThreadBase
 from epics.ca import CASeverityException as _CASeverityException
-from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-from siriuspy.epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
-from siriuspy.envars import VACA_PREFIX as LL_PREFIX
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.search import LLTimeSearch as _LLSearch, \
-    HLTimeSearch as _HLSearch
-from siriuspy.callbacks import Callback as _Callback
-from siriuspy.devices import Event as _Event
-from siriuspy.thread import RepeaterThread as _Timer
 
-from siriuspy.timesys.csdev import Const as _TIConst
+from ..util import update_bit as _update_bit, get_bit as _get_bit
+from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
+from ..envars import VACA_PREFIX as LL_PREFIX
+from ..namesys import SiriusPVName as _PVName
+from ..search import LLTimeSearch as _LLSearch, HLTimeSearch as _HLSearch
+from ..callbacks import Callback as _Callback
+from ..devices import Event as _Event
+from ..thread import RepeaterThread as _Timer
+
+from .csdev import Const as _TIConst
 
 
 _RFFREQ = _TIConst.RF_FREQUENCY

@@ -1,17 +1,18 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
-from multiprocessing import Event as _Event, Pipe as _Pipe, \
-    sharedctypes as _shm
+import multiprocessing as _mp
+from multiprocessing import sharedctypes as _shm
 
 import numpy as _np
-import epics as _epics
+from epics import get_pv as _get_pv
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
+from ..epics import CAProcessSpawn as _Process
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .bsmp.commands import FBP as _FBP
@@ -586,7 +587,7 @@ class PSConnSOFB:
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
             if self._sofb_update_iocs:
                 pvname = bsmpdevs[0][0] + ':SOFBUpdate-Cmd'
-                pvobjs[bbbname] = _epics.get_pv(pvname)
+                pvobjs[bbbname] = _get_pv(pvname)
             thread = _BBBThread(name=bbbname)
             thread.start()
             threads.append(thread)
@@ -752,10 +753,10 @@ class PSSOFB:
         sub = [div*i + min(i, rem) for i in range(self._nr_procs+1)]
         for i in range(self._nr_procs):
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
-            evt = _Event()
+            evt = _mp.Event()
             evt.set()
-            theirs, mine = _Pipe(duplex=False)
-            proc = _epics.CAProcess(
+            theirs, mine = _mp.Pipe(duplex=False)
+            proc = _Process(
                 target=PSSOFB._run_process,
                 args=(self._ethbridge_cls, bbbnames, theirs, evt,
                       arr.shape, rbref, ref, fret, self._sofb_update_iocs),

@@ -3,6 +3,7 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys import constants as _c
+
 from ..util import ClassProperty as _classproperty
 from .. import csdev as _csdev
 from ..optics import constants as _oc
