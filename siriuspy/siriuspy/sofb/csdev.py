@@ -59,7 +59,7 @@ class ConstTLines(_csdev.Const):
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
-    MIN_SING_VAL = 1e-4
+    MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 200  # [um]
