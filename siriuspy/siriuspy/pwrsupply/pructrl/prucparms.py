@@ -23,7 +23,7 @@ class PRUCParmsFBP:
     groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
-    groups[_const.G_SOFB] = (
+    groups[CONST_PSBSMP.G_SOFB] = (
         CONST_PSBSMP.V_PS_SETPOINT1,
         CONST_PSBSMP.V_PS_SETPOINT2,
         CONST_PSBSMP.V_PS_SETPOINT3,
