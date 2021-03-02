@@ -2,7 +2,7 @@
 
 import multiprocessing as _mp
 
-from epics import ca as _ca
+from epics import ca as _ca, CAProcess
 
 
 # NOTE: I have to rederive epics.CAProcess here to ensure the process will be
@@ -15,10 +15,13 @@ class CAProcessSpawn(_mp.get_context('spawn').Process):
     """
     def __init__(self, **kws):
         """."""
-        super().__init__(self, **kws)
+        super().__init__(**kws)
 
     def run(self):
         """."""
         _ca.initial_context = None
         _ca.clear_cache()
-        super().run(self)
+        super().run()
+
+
+#CAProcessSpawn = CAProcess

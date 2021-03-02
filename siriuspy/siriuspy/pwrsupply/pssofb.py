@@ -2,6 +2,7 @@
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
 import multiprocessing as _mp
+from multiprocessing import sharedctypes as _shm
 
 import numpy as _np
 from epics import get_pv as _get_pv
@@ -730,16 +731,15 @@ class PSSOFB:
         # Create shared memory objects to be shared with worker processes.
         arr = self._sofb_current_readback_ref
 
-        shm = _mp.sharedctypes
-        rbref = shm.Array(shm.ctypes.c_double, arr.size, lock=False)
+        rbref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_readback_ref = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(rbref))
 
-        ref = shm.Array(shm.ctypes.c_double, arr.size, lock=False)
+        ref = _shm.Array(_shm.ctypes.c_double, arr.size, lock=False)
         self._sofb_current_refmon = _np.ndarray(
             arr.shape, dtype=arr.dtype, buffer=memoryview(ref))
 
-        fret = shm.Array(shm.ctypes.c_int, arr.size, lock=False)
+        fret = _shm.Array(_shm.ctypes.c_int, arr.size, lock=False)
         self._sofb_func_return = _np.ndarray(
             arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
