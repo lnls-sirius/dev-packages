@@ -4,13 +4,14 @@ from collections.abc import Iterable
 import multiprocessing as _mp
 
 import numpy as _np
-from epics import get_pv as _get_pv, ca as _ca
+from epics import get_pv as _get_pv
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
+from ..epics import CAProcessSpawn as _Process
 
 from .bsmp.constants import ConstFBP as _const_fbp
 from .bsmp.commands import FBP as _FBP
@@ -19,23 +20,6 @@ from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
 from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
-
-
-# NOTE: I have to rederive epics.CAProcess here to ensure the process will be
-# launched with the spawn method.
-class _Process(_mp.get_context('spawn').Process):
-    """
-    A Channel-Access aware (and safe) subclass of multiprocessing.Process
-    Use CAProcess in place of multiprocessing.Process if your Process will
-    be doing CA calls!
-    """
-    def __init__(self, **kws):
-        _mp.Process.__init__(self, **kws)
-
-    def run(self):
-        _ca.initial_context = None
-        _ca.clear_cache()
-        _mp.Process.run(self)
 
 
 class _BBBThread(_AsyncWorker):

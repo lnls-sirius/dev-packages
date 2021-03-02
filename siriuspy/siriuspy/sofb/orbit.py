@@ -11,32 +11,14 @@ import traceback as _traceback
 
 import numpy as _np
 import bottleneck as _bn
-from epics import ca as _ca
 
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CAProcessSpawn as _Process
 
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig, TIMEOUT
-
-
-# NOTE: I have to rederive epics.CAProcess here to ensure the process will be
-# launched with the spawn method.
-class _Process(_mp.get_context('spawn').Process):
-    """
-    A Channel-Access aware (and safe) subclass of multiprocessing.Process
-    Use CAProcess in place of multiprocessing.Process if your Process will
-    be doing CA calls!
-    """
-    def __init__(self, **kws):
-        _mp.Process.__init__(self, **kws)
-
-    def run(self):
-        _ca.initial_context = None
-        _ca.clear_cache()
-        _mp.Process.run(self)
 
 
 class BaseOrbit(_BaseClass):
