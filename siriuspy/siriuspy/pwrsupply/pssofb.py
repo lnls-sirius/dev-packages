@@ -23,8 +23,7 @@ from .psctrl.pscstatus import PSCStatus as _PSCStatus
 
 # NOTE: I have to rederive epics.CAProcess here to ensure the process will be
 # launched with the spawn method.
-ctx = get_context('spawn')
-class _Process(ctx.Process):
+class _Process(_mp.get_context('spawn').Process):
     """
     A Channel-Access aware (and safe) subclass of multiprocessing.Process
     Use CAProcess in place of multiprocessing.Process if your Process will
