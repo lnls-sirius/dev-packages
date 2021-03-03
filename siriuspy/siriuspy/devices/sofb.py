@@ -525,24 +525,13 @@ class SOFB(_Device):
     def wait_buffer(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(10*interval)
-        for _ in range(ntrials):
-            if self.buffer_count >= self['SmoothNrPts-SP']:
-                break
-            _time.sleep(interval)
-        else:
-            print('WARN: Timed out waiting orbit.')
+        return self._wait(
+            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
+
 
     def wait_respm_meas(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout_respm
-        interval = 1  # [s]
-        ntrials = int(timeout/interval)
-        for _ in range(ntrials):
-            if not self.measrespmat_mon == self.data.MeasRespMatMon.Measuring:
-                break
-            _time.sleep(interval)
-        else:
-            print('WARN: Timed out waiting respm measurement.')
+        return self._wait(
+            'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
+            timeout=timeout, comp='ne')
