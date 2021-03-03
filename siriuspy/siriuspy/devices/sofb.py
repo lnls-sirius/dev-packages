@@ -38,6 +38,7 @@ class SOFB(_Device):
         'CHEnblList-SP', 'CVEnblList-SP',
         'CHEnblList-RB', 'CVEnblList-RB',
         'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
+        'ApplyDelta-Mon',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
         'TrigNrSamplesPost-SP',
@@ -65,6 +66,7 @@ class SOFB(_Device):
 
     _default_timeout = 10  # [s]
     _default_timeout_respm = 2 * 60 * 60  # [s]
+    _default_timeout_kick_apply = 2  # [s]
 
     def __init__(self, devname):
         """."""
@@ -448,6 +450,11 @@ class SOFB(_Device):
         self['MeasRespMat-Cmd'] = 2
 
     @property
+    def applydeltakick_mon(self):
+        """."""
+        return self['ApplyDelta-Mon']
+
+    @property
     def measrespmat_mon(self):
         """."""
         return self['MeasRespMat-Mon']
@@ -500,7 +507,8 @@ class SOFB(_Device):
             self.cmd_calccorr()
             _time.sleep(0.5)
             self.cmd_applycorr_all()
-            _time.sleep(0.5)
+            self.wait_apply_delta_kick()
+            _time.sleep(0.2)
             self.cmd_reset()
             self.wait_buffer()
             resx = _np.std(self.orbx - self.refx)
@@ -528,6 +536,14 @@ class SOFB(_Device):
         return self._wait(
             'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
 
+    def wait_apply_delta_kick(self, timeout=None):
+        """."""
+        def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
+        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
+        timeout = timeout or def_timeout
+        return self._wait(
+            'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
+            timeout=timeout, comp='ne')
 
     def wait_respm_meas(self, timeout=None):
         """."""
