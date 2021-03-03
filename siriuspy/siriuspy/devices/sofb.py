@@ -27,6 +27,8 @@ class SOFB(_Device):
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
+        'MaxDeltaKickCH-RB', 'MaxDeltaKickCV-RB',
+        'MaxDeltaKickCH-SP', 'MaxDeltaKickCV-SP',
         'ManCorrGainCH-SP', 'ManCorrGainCV-SP',
         'ManCorrGainCH-RB', 'ManCorrGainCV-RB',
         'RefOrbX-SP', 'RefOrbY-SP',
@@ -55,6 +57,7 @@ class SOFB(_Device):
         # properties used only for sirius:
         'KickRF-Mon',
         'DeltaKickRF-Mon', 'DeltaKickRF-SP',
+        'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
         'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
         'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
         'RFEnbl-Sel', 'RFEnbl-Sts',
@@ -246,6 +249,36 @@ class SOFB(_Device):
     def deltakickrf(self, value):
         """."""
         self['DeltaKickRF-SP'] = value
+
+    @property
+    def maxdeltakickch(self):
+        """."""
+        return self['MaxDeltaKickCH-RB']
+
+    @maxdeltakickch.setter
+    def maxdeltakickch(self, value):
+        """."""
+        self['MaxDeltaKickCH-SP'] = value
+
+    @property
+    def maxdeltakickcv(self):
+        """."""
+        return self['MaxDeltaKickCV-RB']
+
+    @maxdeltakickcv.setter
+    def maxdeltakickcv(self, value):
+        """."""
+        self['MaxDeltaKickCV-SP'] = value
+
+    @property
+    def maxdeltakickrf(self):
+        """."""
+        return self['MaxDeltaKickRF-RB']
+
+    @maxdeltakickrf.setter
+    def maxdeltakickrf(self, value):
+        """."""
+        self['MaxDeltaKickRF-SP'] = value
 
     @property
     def mancorrgainch(self):
