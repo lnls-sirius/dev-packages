@@ -95,7 +95,7 @@ class SOFB(_BaseClass):
             dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
             dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
             dbase['DeltaKickRF-SP'] = _part(
-                self.set_delta_kick, self._csorb.ApplyDelta.RF),
+                self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         return dbase
 
