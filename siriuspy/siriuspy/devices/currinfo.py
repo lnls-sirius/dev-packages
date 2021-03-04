@@ -4,7 +4,7 @@ from .device import Devices as _Devices
 from .ict import ICT
 
 
-class CurrInfoTransp(_Device):
+class CurrInfoTranspEff(_Device):
     """."""
 
     class DEVICES:
@@ -20,11 +20,11 @@ class CurrInfoTransp(_Device):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in CurrInfoTransp.DEVICES.ALL:
+        if devname not in CurrInfoTranspEff.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=CurrInfoTransp._properties)
+        super().__init__(devname, properties=CurrInfoTranspEff._properties)
 
     @property
     def transpeff(self):
@@ -38,9 +38,9 @@ class CurrInfoLinear(_Devices):
     class DEVICES:
         """Devices names."""
 
-        LI = CurrInfoTransp.DEVICES.LI
-        TB = CurrInfoTransp.DEVICES.TB
-        TS = CurrInfoTransp.DEVICES.TS
+        LI = CurrInfoTranspEff.DEVICES.LI
+        TB = CurrInfoTranspEff.DEVICES.TB
+        TS = CurrInfoTranspEff.DEVICES.TS
         ALL = (LI, TB, TS, )
 
     def __init__(self, devname):
@@ -50,15 +50,15 @@ class CurrInfoLinear(_Devices):
             raise NotImplementedError(devname)
 
         if devname == CurrInfoLinear.DEVICES.LI:
-            transp = CurrInfoTransp(CurrInfo.DEVICES.LI)
+            transp = CurrInfoTranspEff(CurrInfo.DEVICES.LI)
             ict1 = ICT(ICT.DEVICES.LI_1)
             ict2 = ICT(ICT.DEVICES.LI_2)
         elif devname == CurrInfoLinear.DEVICES.TB:
-            transp = CurrInfoTransp(CurrInfo.DEVICES.TB)
+            transp = CurrInfoTranspEff(CurrInfo.DEVICES.TB)
             ict1 = ICT(ICT.DEVICES.TB_02)
             ict2 = ICT(ICT.DEVICES.TB_04)
         elif devname == CurrInfoLinear.DEVICES.TS:
-            transp = CurrInfoTransp(CurrInfo.DEVICES.TS)
+            transp = CurrInfoTranspEff(CurrInfo.DEVICES.TS)
             ict1 = ICT(ICT.DEVICES.TS_01)
             ict2 = ICT(ICT.DEVICES.TS_04)
 
