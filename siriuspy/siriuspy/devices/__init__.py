@@ -18,7 +18,7 @@ from .syncd import DevicesSync
 from .energy import Energy
 from .ids import IDCorrectors, APU, APUFeedForward
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
-    CurrInfoBO, CurrInfoSI, CurrInfo
+    CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .blscreen import BeamlineScreen
 from .bbb import BunchbyBunch
 
