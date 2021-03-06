@@ -865,7 +865,25 @@ def _get_ps_common_propty_database():
         'IntlkHard-Mon': {'type': 'int', 'value': 0},
 
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-
+        # Scope
+        'ScopeSrcAddr-SP': {'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
+                            'lolo': 0x000C00, 'low': 0x000C00, 'lolim': 0x000C00,
+                            'hilim': 0x00013FFE, 'high': 0x00013FFE, 'hihi': 0x00013FFE},
+        'ScopeSrcAddr-RB': {'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
+                            'lolo': 0x000C00, 'low': 0x000C00, 'lolim': 0x000C00,
+                            'hilim': 0x00013FFE, 'high': 0x00013FFE, 'hihi': 0x00013FFE},
+        'ScopeFreq-SP': {'type': 'float', 'value': 1.0, 'unit': 'Hz',
+                         'lolo': 1e-4, 'low': 1e-4, 'lolim': 1e-4,
+                         'hilim': 1e4, 'high': 1e4, 'hihi': 1e4},
+        'ScopeFreq-RB': {'type': 'float', 'value': 1.0, 'unit': 'Hz',
+                         'lolo': 1e-4, 'low': 1e-4, 'lolim': 1e-4,
+                         'hilim': 1e4, 'high': 1e4, 'hihi': 1e4},
+        'ScopeDuration-SP': {'type': 'float', 'value': 1.0, 'unit': 's',
+                             'lolo': 1e-4, 'low': 1e-4, 'lolim': 1e-4,
+                             'hilim': 1e4, 'high': 1e4, 'hihi': 1e4},
+        'ScopeDuration-RB': {'type': 'float', 'value': 1.0, 'unit': 's',
+                             'lolo': 1e-4, 'low': 1e-4, 'lolim': 1e-4,
+                             'hilim': 1e4, 'high': 1e4, 'hihi': 1e4},
         # Power Supply Parameters
         # --- PS ---
         'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
