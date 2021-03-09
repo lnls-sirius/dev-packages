@@ -33,6 +33,7 @@ class Screen(_Device):
         'ImgData-Mon',
         'CenterXDimFei-Mon', 'CenterYDimFei-Mon',
         'SigmaXDimFei-Mon', 'SigmaYDimFei-Mon',
+        'ThetaDimFei-Mon',
     )
 
     def __init__(self, devname):
@@ -68,3 +69,8 @@ class Screen(_Device):
     def sigmay(self):
         """."""
         return self['SigmaYDimFei-Mon']
+
+    @property
+    def angle(self):
+        """."""
+        return self['ThetaDimFei-Mon']
