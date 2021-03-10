@@ -79,9 +79,10 @@ class SOFB(_Device):
 
         propts = SOFB._propty_tmpl
         if not self.data.isring:
-            propts = [p for p in propts if not p.startswith(('MTurn', 'Slow'))]
+            propts = [p for p in propts if not p.startswith('MTurn')]
         if not self.data.acc == 'SI':
             propts = [p for p in propts if 'RF' not in p]
+            propts = [p for p in propts if not p.startswith('Slow')]
 
         # call base class constructor
         super().__init__(devname, properties=propts)
