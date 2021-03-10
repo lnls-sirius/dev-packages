@@ -6,7 +6,8 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, Devices as _Devices, \
+    ProptyDevice as _ProptyDevice
 from .dcct import DCCT
 from .rf import RFCav
 
@@ -654,23 +655,6 @@ class Coefficients(_Device):
     def cmd_edit_verify(self):
         """."""
         self['BO_CVERIFY'] = 1
-
-
-class _ProptyDevice(_Device):
-
-    def __init__(self, devname, propty_prefix, properties):
-        """."""
-        self._propty_prefix = propty_prefix
-        # call base class constructor
-        super().__init__(devname, properties=properties)
-
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
-            pvname = func(propty=self._propty_prefix + propty)
-        else:
-            pvname = self._propty_prefix + propty
-        return pvname
 
 
 class Acquisition(_ProptyDevice):

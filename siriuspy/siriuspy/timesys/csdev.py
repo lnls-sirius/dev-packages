@@ -3,6 +3,7 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys import constants as _c
+
 from ..util import ClassProperty as _classproperty
 from .. import csdev as _csdev
 from ..optics import constants as _oc
@@ -20,6 +21,7 @@ class ETypes(_csdev.ETypes):
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
     LOCKLL = ('Unlocked', 'Locked')
     DLYTYP = ('Manual', 'Auto')
+    ININJTAB = ('No', 'Yes')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
 
@@ -46,6 +48,7 @@ class Const(_csdev.Const):
     TrigPol = _csdev.Const.register('TrigPol', _et.NORM_INV)
     LowLvlLock = _csdev.Const.register('LowLvlLock', _et.LOCKLL)
     TrigDlyTyp = _csdev.Const.register('TrigDlyTyp', _et.DLYTYP)
+    InInjTab = _csdev.Const.register('TrigDlyTyp', _et.ININJTAB)
     TrigSrcLL = _csdev.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     HLTrigStatusLabels = (
         'All PVs connected',
@@ -357,16 +360,13 @@ def get_fout_database(prefix=None):
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
     dbase[prefix+'Network-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.DISCONN_CONN}
+        'type': 'enum', 'value': 1, 'enums': _et.DISCONN_CONN}
 
     dbase[prefix+'Link-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.UNLINK_LINK}
+        'type': 'enum', 'value': 1, 'enums': _et.UNLINK_LINK}
 
     dbase[prefix+'Intlk-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
+        'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     return dbase
 
 
@@ -376,9 +376,9 @@ def get_event_database(evt_num=0, prefix=None):
     prefix = def_prefix if prefix is None else prefix
 
     dbase = dict()
-    dic_ = {'type': 'int', 'value': 0,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
+    dic_ = {
+        'type': 'int', 'value': 0, 'lolo': 0, 'low': 0, 'lolim': 0,
+        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     dbase[prefix + 'Delay-SP'] = _dcopy(dic_)
     dbase[prefix + 'Delay-RB'] = dic_
     dic_ = {'type': 'enum', 'enums': _et.EVT_MODES, 'value': 1}
@@ -400,9 +400,9 @@ def get_clock_database(clock_num=0, prefix=None):
     prefix = def_prefix if prefix is None else prefix
     dbase = dict()
 
-    dic_ = {'type': 'int', 'value': 124948114,
-            'lolo': 2, 'low': 2, 'lolim': 2,
-            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
+    dic_ = {
+        'type': 'int', 'value': 124948114, 'lolo': 2, 'low': 2, 'lolim': 2,
+        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     dbase[prefix + 'MuxDiv-SP'] = _dcopy(dic_)
     dbase[prefix + 'MuxDiv-RB'] = dic_
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
@@ -424,10 +424,10 @@ def get_evg_database(prefix=None, only_evg=False):
     dbase[prefix + 'ContinuousEvt-Sel'] = _dcopy(dic_)
     dbase[prefix + 'ContinuousEvt-Sts'] = dic_
 
-    dic_ = {'type': 'int', 'count': 864, 'value': 864*[1],
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 864, 'high': 864, 'hihi': 864
-            }
+    dic_ = {
+        'type': 'int', 'count': 864, 'value': 864*[1],
+        'lolo': 0, 'low': 0, 'lolim': 0,
+        'hilim': 864, 'high': 864, 'hihi': 864}
     dbase[prefix + 'BucketList-SP'] = _dcopy(dic_)
     dbase[prefix + 'BucketList-RB'] = dic_
     dbase[prefix + 'BucketListLen-Mon'] = {
@@ -439,21 +439,21 @@ def get_evg_database(prefix=None, only_evg=False):
     dbase[prefix + 'InjectionEvt-Sel'] = _dcopy(dic_)
     dbase[prefix + 'InjectionEvt-Sts'] = dic_
 
-    dic_ = {'type': 'int', 'value': 0,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 100, 'high': 100, 'hihi': 100}
+    dic_ = {
+        'type': 'int', 'value': 0, 'lolo': 0, 'low': 0, 'lolim': 0,
+        'hilim': 100, 'high': 100, 'hihi': 100}
     dbase[prefix + 'RepeatBucketList-SP'] = _dcopy(dic_)
     dbase[prefix + 'RepeatBucketList-RB'] = dic_
 
-    dic_ = {'type': 'int', 'value': 30,
-            'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 60, 'high': 60, 'hihi': 60}
+    dic_ = {
+        'type': 'int', 'value': 30, 'lolo': 1, 'low': 1, 'lolim': 1,
+        'hilim': 60, 'high': 60, 'hihi': 60}
     dbase[prefix + 'ACDiv-SP'] = _dcopy(dic_)
     dbase[prefix + 'ACDiv-RB'] = dic_
 
-    dic_ = {'type': 'int', 'value': 4,
-            'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
+    dic_ = {
+        'type': 'int', 'value': 4, 'lolo': 1, 'low': 1, 'lolim': 1,
+        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     dbase[prefix + 'RFDiv-SP'] = _dcopy(dic_)
     dbase[prefix + 'RFDiv-RB'] = dic_
 
@@ -468,19 +468,18 @@ def get_evg_database(prefix=None, only_evg=False):
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
     dbase[prefix+'Network-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.DISCONN_CONN}
+        'type': 'enum', 'value': 1, 'enums': _et.DISCONN_CONN}
 
     dbase[prefix+'RFStatus-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': ('Loss or Out of Range', 'Normal')}
+        'type': 'enum', 'value': 1,
+        'enums': ('Loss or Out of Range', 'Normal')}
 
     dbase[prefix+'StateMachine-Mon'] = {
-            'type': 'enum', 'value': 4,
-            'enums': (
-                'Initializing', 'Stopped', 'Continuous', 'Injection',
-                'Preparing Continuous', 'Preparing Injection'
-                )}
+        'type': 'enum', 'value': 4,
+        'enums': (
+            'Initializing', 'Stopped', 'Continuous', 'Injection',
+            'Preparing Continuous', 'Preparing Injection')
+        }
 
     if only_evg:
         return dbase
@@ -534,13 +533,14 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['NrPulses-SP'] = dic_
 
     dic_ = {
-        'type': 'float', 'unit': 'us', 'prec': 3,
+        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
         'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
     dic_.update(trig_db['Delay'])
     dbase['Delay-RB'] = _dcopy(dic_)
     dbase['Delay-SP'] = dic_
 
+    # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
         'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
@@ -548,6 +548,19 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db.get('DelayRaw', dict()))
     dbase['DelayRaw-RB'] = _dcopy(dic_)
     dbase['DelayRaw-SP'] = dic_
+
+    dic_ = {
+        'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+    dbase['TotalDelay-Mon'] = dic_
+
+    # Have to be float for spinbox to work properly
+    dic_ = {
+        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+    dbase['TotalDelayRaw-Mon'] = dic_
 
     siz = len(ll_trig_names)
     dic_ = {
@@ -571,8 +584,9 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         dbase.pop('RFDelayType-Sts')
         dbase.pop('RFDelayType-Sel')
 
-    dic_ = {'type': 'int', 'value': 0b1111111111}
-    dbase['Status-Mon'] = _dcopy(dic_)
+    dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
+    dbase['InInjTable-Mon'] = {
+        'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
 
     dbase['StatusLabels-Cte'] = {
         'type': 'char', 'count': 1000,

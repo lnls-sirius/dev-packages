@@ -178,7 +178,7 @@ class BoosterRamp(_ConfigDBDocument):
                                      psname2strength=dict()):
         """Insert a ps normalized configuration."""
         # verify if there is no config in this time
-        otimes = self.ps_normalized_configs_times
+        otimes = sorted(self.ps_normalized_configs_times)
         if time in otimes:
             raise _RampInvalidNormConfig(
                 'There is already a configuration at this time.')

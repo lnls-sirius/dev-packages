@@ -2,7 +2,7 @@
 
 import time as _time
 
-from .device import Device as _Device
+from .device import Device as _Device, ProptyDevice as _ProptyDevice
 
 
 class EVG(_Device):
@@ -57,3 +57,81 @@ class EVG(_Device):
         """."""
         self.pulses = 0
         self.wait(timeout=timeout)
+
+
+class Event(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
+        'DelayType-Sel', 'DelayType-Sts', 'Mode-Sel', 'Mode-Sts',
+        'Code-Mon', 'ExtTrig-Cmd',
+        )
+
+    MODES = ('Disable', 'Continuous', 'Injection', 'OneShot', 'External')
+    DELAYTYPES = ('Incr', 'Fixed')
+
+    def __init__(self, evtname):
+        """."""
+        super().__init__(
+            EVG.DEVICES.AS, evtname, properties=Event._properties)
+
+    @property
+    def mode(self):
+        """."""
+        return self['Mode-Sts']
+
+    @mode.setter
+    def mode(self, value):
+        self._enum_setter('Mode-Sel', value, Event.MODES)
+
+    @property
+    def mode_str(self):
+        """."""
+        return Event.MODES[self['Mode-Sts']]
+
+    @property
+    def code(self):
+        """."""
+        return self['Code-Mon']
+
+    @property
+    def delay_type(self):
+        """."""
+        return self['DelayType-Sts']
+
+    @delay_type.setter
+    def delay_type(self, value):
+        self._enum_setter('DelayType-Sel', value, Event.DELAYTYPES)
+
+    @property
+    def delay_type_str(self):
+        """."""
+        return Event.DELAYTYPES[self['DelayType-Sts']]
+
+    @property
+    def delay(self):
+        """."""
+        return self['Delay-RB']
+
+    @delay.setter
+    def delay(self, value):
+        self['Delay-SP'] = value
+
+    @property
+    def delay_raw(self):
+        """."""
+        return self['DelayRaw-RB']
+
+    @delay_raw.setter
+    def delay_raw(self, value):
+        self['DelayRaw-SP'] = int(value)
+
+    def cmd_external_trigger(self):
+        """."""
+        self['ExtTrig-Cmd'] = 1
+
+    @property
+    def is_in_inj_table(self):
+        """."""
+        return self.mode_str in Event.MODES[1:4]

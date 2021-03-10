@@ -2,8 +2,9 @@
 
 import sys as _sys
 import logging as _log
-from siriuspy.namesys import SiriusPVName as PVName
-from siriuspy.search import LLTimeSearch
+
+from ..namesys import SiriusPVName as PVName
+from ..search import LLTimeSearch
 
 
 _disclaimer = """
@@ -14,7 +15,7 @@ _disclaimer = """
 # If the mentioned file change, please, run the script
 # again and copy the generated file to replace this one.
 """
-_conversion_linac_names = {
+_NAMES2CONVERT = {
     'LA-RF:H1LLRF': 'LI-RaRF01:RF-LLRFProc',
     'LA-RF:H1SOAM-1': 'LI-RaRF02:RF-SSAmp-1',
     'LA-RF:H1SOAM-2': 'LI-RaRF02:RF-SSAmp-2',
@@ -24,10 +25,10 @@ _conversion_linac_names = {
     'LA-MD:H1PPS-2': 'LI-RaMD02:MD-PPS',  # ?
     '?': 'IA-00RaCtrl:CO-DIO',
     '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE'}
-_translate_port = str.maketrans('', '', ' _-')
 
 
 def create_static_table(fname=None, local=False, logfile=None):
+    """."""
     if logfile:
         hand = _log.FileHandler(logfile, mode='w')
     else:
@@ -42,8 +43,8 @@ def create_static_table(fname=None, local=False, logfile=None):
         data = read_data_from_google()
     _log.info(_disclaimer)
     chans = _get_channels_from_data(data)
-    chans_sort, chans = _sort_connection_table(chans)
-    _print_tables(chans, chans_sort)
+    chans_used, chans_nused = _sort_connection_table(chans)
+    _print_tables(chans_used, chans_nused)
 
 
 def read_data_from_google():
@@ -58,13 +59,6 @@ def read_data_from_google():
     _log.getLogger('oauth2client.transport').setLevel(_log.ERROR)
     _log.getLogger('oauth2client.client').setLevel(_log.ERROR)
 
-    # If modifying these scopes, delete the file token.json.
-    SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-
-    # The ID and range of a sample spreadsheet.
-    SAMPLE_SPREADSHEET_ID = '19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI'
-    SAMPLE_RANGE_NAME = 'Cabos e Fibras'
-
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
@@ -72,14 +66,16 @@ def read_data_from_google():
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(
-                            '/home/fernando/credentials.json', SCOPES)
+            '/home/fernando/credentials.json',
+            'https://www.googleapis.com/auth/spreadsheets.readonly')
         creds = tools.run_flow(flow, store)
     service = build('sheets', 'v4', http=creds.authorize(Http()))
 
     # Call the Sheets API
     sheet = service.spreadsheets()
     result = sheet.values().get(
-        spreadsheetId=SAMPLE_SPREADSHEET_ID, range=SAMPLE_RANGE_NAME).execute()
+        spreadsheetId='19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI',
+        range='Cabos e Fibras').execute()
     values = result.get('values', [])
 
     if not values:
@@ -131,11 +127,8 @@ def _get_channels_from_data(data):
 
 
 def _check_device_and_port(dev, por):
-    por = por.upper().translate(_translate_port)
-    r_ = _conversion_linac_names.get(dev)
-    if r_ is not None:
-        dev = r_
-    return dev + ':' + por
+    por = por.upper().translate(str.maketrans('', '', ' _-'))
+    return _NAMES2CONVERT.get(dev, dev) + ':' + por
 
 
 def _sort_connection_table(chans):
@@ -150,33 +143,34 @@ def _sort_connection_table(chans):
     else:
         raise KeyError('EVG not Found.')
 
-    entries = LLTimeSearch.get_channel_input(PVName(
-                                    dev.device_name+':'+'UPLINK'))
-    chans_sort = []
+    entries = LLTimeSearch.get_channel_input(
+        PVName(dev.device_name+':'+'UPLINK'))
+    chans_used = []
     for entry in entries:
         mark = list(range(len(chans)))
         for i, ks in enumerate(chans):
             k1, k2 = ks
             if k1 == entry:
                 entries.extend(LLTimeSearch.get_channel_input(k2))
-                chans_sort.append((k1, k2))
+                chans_used.append((k1, k2))
                 mark.remove(i)
             if k2 == entry:
                 entries.extend(LLTimeSearch.get_channel_input(k1))
-                chans_sort.append((k2, k1))
+                chans_used.append((k2, k1))
                 mark.remove(i)
         chans = [chans[i] for i in mark]
-    return chans_sort, chans
+    chans_nused = sorted(chans)
+    return chans_used, chans_nused
 
 
-def _print_tables(chans, chans_sort):
+def _print_tables(chans_used, chans_nused):
     _log.info(3*'\n')
-    _log.info('# {}'.format(len(chans_sort)))
-    for k1, k2 in chans_sort:
+    _log.info(f'# {len(chans_used):d}')
+    for k1, k2 in chans_used:
         _log.info('{0:35s} {1:35s}'.format(k1, k2))
 
     _log.info(5*'\n')
     _log.info('# CONNECTIONS NOT USED')
-    _log.info('# {}'.format(len(chans)))
-    for k1, k2 in chans:
+    _log.info(f'# {len(chans_nused):d}')
+    for k1, k2 in chans_nused:
         _log.info('# {0:35s} {1:35s}'.format(k1, k2))
