@@ -140,7 +140,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
         cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
 
-        eff = 100 * chg2/chg1
+        eff = max(100 * chg2/chg1, 110)
         effave = 100 * ave2/ave1
 
         self.run_callbacks(ict1 + ':Charge-Mon', chg1)
@@ -161,7 +161,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self.run_callbacks(name + 'TranspEff-Mon', eff)
         self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
 
-        
+
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
