@@ -218,7 +218,7 @@ _pvs_as_ti = [
 
     ['AS-RaMO:TI-EVG:InjBODelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:InjBODelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
+    # ['AS-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
 
     ['AS-RaMO:TI-EVG:InjSIDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:InjSIDelayType-Sel', 0, 0.0],
@@ -382,7 +382,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-Mags-Corrs:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Corrs:Src-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
+    # ['BO-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
@@ -391,7 +391,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-Mags-Fams:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-Mags-Fams:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Fams:Src-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Fams:State-Sel', 0, 0.0],
+    # ['BO-Glob:TI-Mags-Fams:State-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Fams:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['BO-Glob:TI-Mags-Fams:LowLvlLock-Sel', 0, 0.0],
 
