@@ -130,7 +130,7 @@ class Event(_ProptyDevice):
     def __init__(self, evtname):
         """."""
         super().__init__(
-            EVG.DEVICES.AS, evtname, properties=Event._properties)
+            EVG.DEVNAME, evtname, properties=Event._properties)
 
     @property
     def mode(self):
