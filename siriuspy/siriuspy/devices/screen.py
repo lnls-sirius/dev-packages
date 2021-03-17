@@ -24,6 +24,9 @@ class Screen(_Device):
         TS_4 = 'TS-04:DI-Scrn-1'
         TS_5 = 'TS-04:DI-Scrn-2'
         TS_6 = 'TS-04:DI-Scrn-3'
+        TB = (TB_1, TB_2, TB_3, TB_4, TB_5, TB_6)
+        TS = (TS_1, TS_2, TS_3, TS_4, TS_5, TS_6)
+        BO = (BO_1, BO_2, BO_3)
         ALL = (
             TB_1, TB_2, TB_3, TB_4, TB_5, TB_6,
             BO_1, BO_2, BO_3,

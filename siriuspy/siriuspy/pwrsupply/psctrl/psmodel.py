@@ -33,6 +33,8 @@ class _PSModel:
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
         # Scope
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
+        'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
+        'ScopeDuration-RB': _c.V_SCOPE_DURATION,
         }
     _e2r = {
         # Epics to BSMP variable but with pre/post-processing
