@@ -50,6 +50,7 @@ class SOFB(_Device):
         'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
+        'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
         # properties used only for ring-type accelerators:
         'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
@@ -400,6 +401,21 @@ class SOFB(_Device):
     def nr_points(self, value):
         """."""
         self['SmoothNrPts-SP'] = int(value)
+
+    @property
+    def nr_singvals(self):
+        """."""
+        return self['NrSingValues-Mon']
+
+    @property
+    def singval_min(self):
+        """."""
+        return self['MinSingValue-RB']
+
+    @singval_min.setter
+    def singval_min(self, value):
+        """."""
+        self['MinSingValue-SP'] = value
 
     @property
     def trigsample(self):
