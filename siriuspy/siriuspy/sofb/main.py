@@ -662,6 +662,10 @@ class SOFB(_BaseClass):
                 # means that correctors are not ready yet
                 # skip this iteration
                 continue
+        else:
+            self._drive_state = self._csorb.DriveState.Open
+            self.run_callbacks(
+                'DriveState-Sel', self._csorb.DriveState.Open)
 
         ret = self.correctors.apply_kicks(refkicks)
         if len(data) < 6:
