@@ -689,7 +689,7 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if count >= 100:
+            if count >= 1000:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
