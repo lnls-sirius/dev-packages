@@ -280,7 +280,7 @@ class SOFB(_BaseClass):
         """."""
         val = abs(int(value))
         self._drive_divisor = min(
-            val, self._csorb.MAX_DRIVE_DATA // (val*self._drive_nrcycles))
+            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_nrcycles))
 
         self.run_callbacks('DriveFreqDivisor-RB', self._drive_divisor)
         freq = self._csorb.BPMsFreq/self._drive_divisor
@@ -292,7 +292,7 @@ class SOFB(_BaseClass):
         """."""
         val = max(abs(int(value)), 1)
         self._drive_nrcycles = min(
-            val, self._csorb.MAX_DRIVE_DATA // (val*self._drive_divisor))
+            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_divisor))
 
         self.run_callbacks('DriveNrCycles-RB', self._drive_nrcycles)
         freq = self._csorb.BPMsFreq/self._drive_divisor
