@@ -302,17 +302,20 @@ class SOFB(_BaseClass):
     def set_drive_amplitude(self, value):
         """."""
         self._drive_amplitude = value
+        self.run_callbacks('DriveAmplitude-RB', value)
         return True
 
     def set_drive_phase(self, value):
         """."""
         self._drive_phase = value
+        self.run_callbacks('DrivePhase-RB', value)
         return True
 
     def set_drive_corr_index(self, value):
         """."""
         if -self._csorb.nr_corrs < value < self._csorb.nr_corrs:
             self._drive_corr_index = int(value)
+            self.run_callbacks('DriveCorrIndex-RB', int(value))
             return True
         return False
 
@@ -320,12 +323,14 @@ class SOFB(_BaseClass):
         """."""
         if -self._csorb.nr_bpms*2 < value < self._csorb.nr_bpms*2:
             self._drive_bpm_index = int(value)
+            self.run_callbacks('DriveBPMIndex-RB', int(value))
             return True
         return False
 
     def set_drive_type(self, value):
         """."""
         self._drive_type = int(value)
+        self.run_callbacks('DriveType-Sts', int(value))
         return True
 
     def set_drive_state(self, value):
