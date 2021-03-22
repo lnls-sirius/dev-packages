@@ -36,14 +36,6 @@ class SOFB(_BaseClass):
             ch=dict(kp=0.0, ki=5.0, kd=0.0),
             cv=dict(kp=0.0, ki=3.75, kd=0.0),
             rf=dict(kp=0.0, ki=5.0, kd=0.0))
-        self._drive_divisor = 12
-        self._drive_nrcycles = 10
-        self._drive_amplitude = 5
-        self._drive_phase = 0
-        self._drive_corr_index = 0
-        self._drive_bpm_index = 0
-        self._drive_type = self._csorb.DriveType.Sine
-        self._drive_state = self._csorb.DriveState.Open
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
@@ -51,6 +43,14 @@ class SOFB(_BaseClass):
         self._max_delta_kick = {'ch': 300, 'cv': 300}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
+            self._drive_divisor = 12
+            self._drive_nrcycles = 10
+            self._drive_amplitude = 5
+            self._drive_phase = 0
+            self._drive_corr_index = 0
+            self._drive_bpm_index = 0
+            self._drive_type = self._csorb.DriveType.Sine
+            self._drive_state = self._csorb.DriveState.Open
             self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
             self._max_delta_kick['rf'] = 500
@@ -280,7 +280,7 @@ class SOFB(_BaseClass):
         """."""
         val = abs(int(value))
         self._drive_divisor = min(
-            val, self._csorb.MAX_DRIVE_DATA // (val*self._drive_nrcycles))
+            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_nrcycles))
 
         self.run_callbacks('DriveFreqDivisor-RB', self._drive_divisor)
         freq = self._csorb.BPMsFreq/self._drive_divisor
@@ -292,7 +292,7 @@ class SOFB(_BaseClass):
         """."""
         val = max(abs(int(value)), 1)
         self._drive_nrcycles = min(
-            val, self._csorb.MAX_DRIVE_DATA // (val*self._drive_divisor))
+            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_divisor))
 
         self.run_callbacks('DriveNrCycles-RB', self._drive_nrcycles)
         freq = self._csorb.BPMsFreq/self._drive_divisor
@@ -302,17 +302,20 @@ class SOFB(_BaseClass):
     def set_drive_amplitude(self, value):
         """."""
         self._drive_amplitude = value
+        self.run_callbacks('DriveAmplitude-RB', value)
         return True
 
     def set_drive_phase(self, value):
         """."""
         self._drive_phase = value
+        self.run_callbacks('DrivePhase-RB', value)
         return True
 
     def set_drive_corr_index(self, value):
         """."""
         if -self._csorb.nr_corrs < value < self._csorb.nr_corrs:
             self._drive_corr_index = int(value)
+            self.run_callbacks('DriveCorrIndex-RB', int(value))
             return True
         return False
 
@@ -320,12 +323,14 @@ class SOFB(_BaseClass):
         """."""
         if -self._csorb.nr_bpms*2 < value < self._csorb.nr_bpms*2:
             self._drive_bpm_index = int(value)
+            self.run_callbacks('DriveBPMIndex-RB', int(value))
             return True
         return False
 
     def set_drive_type(self, value):
         """."""
         self._drive_type = int(value)
+        self.run_callbacks('DriveType-Sts', int(value))
         return True
 
     def set_drive_state(self, value):
@@ -638,7 +643,7 @@ class SOFB(_BaseClass):
         tim0 = _time()
         data = []
         for idx in range(x.size):
-            if self._drive_state == self._csorb.DriveState.Closed:
+            if self._drive_state != self._csorb.DriveState.Closed:
                 break
             if not self.havebeam:
                 msg = 'ERR: Cannot Drive, We do not have stored beam!'
