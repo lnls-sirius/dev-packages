@@ -643,7 +643,7 @@ class SOFB(_BaseClass):
         tim0 = _time()
         data = []
         for idx in range(x.size):
-            if self._drive_state == self._csorb.DriveState.Closed:
+            if self._drive_state != self._csorb.DriveState.Closed:
                 break
             if not self.havebeam:
                 msg = 'ERR: Cannot Drive, We do not have stored beam!'
