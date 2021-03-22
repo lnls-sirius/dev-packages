@@ -36,14 +36,6 @@ class SOFB(_BaseClass):
             ch=dict(kp=0.0, ki=5.0, kd=0.0),
             cv=dict(kp=0.0, ki=3.75, kd=0.0),
             rf=dict(kp=0.0, ki=5.0, kd=0.0))
-        self._drive_divisor = 12
-        self._drive_nrcycles = 10
-        self._drive_amplitude = 5
-        self._drive_phase = 0
-        self._drive_corr_index = 0
-        self._drive_bpm_index = 0
-        self._drive_type = self._csorb.DriveType.Sine
-        self._drive_state = self._csorb.DriveState.Open
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
@@ -51,6 +43,14 @@ class SOFB(_BaseClass):
         self._max_delta_kick = {'ch': 300, 'cv': 300}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
+            self._drive_divisor = 12
+            self._drive_nrcycles = 10
+            self._drive_amplitude = 5
+            self._drive_phase = 0
+            self._drive_corr_index = 0
+            self._drive_bpm_index = 0
+            self._drive_type = self._csorb.DriveType.Sine
+            self._drive_state = self._csorb.DriveState.Open
             self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
             self._max_delta_kick['rf'] = 500
