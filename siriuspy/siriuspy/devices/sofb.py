@@ -42,6 +42,8 @@ class SOFB(_Device):
         'ApplyDelta-Mon',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
+        'TrigNrSamplesPre-SP',
+        'TrigNrSamplesPre-RB',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
         'LoopState-Sts', 'LoopState-Sel',
@@ -535,12 +537,22 @@ class SOFB(_Device):
         self['MinSingValue-SP'] = value
 
     @property
-    def trigsample(self):
+    def trigsamplepre(self):
+        """."""
+        return self['TrigNrSamplesPre-RB']
+
+    @trigsamplepre.setter
+    def trigsamplepre(self, value):
+        """."""
+        self['TrigNrSamplesPre-SP'] = int(value)
+
+    @property
+    def trigsamplepost(self):
         """."""
         return self['TrigNrSamplesPost-RB']
 
-    @trigsample.setter
-    def trigsample(self, value):
+    @trigsamplepost.setter
+    def trigsamplepost(self, value):
         """."""
         self['TrigNrSamplesPost-SP'] = int(value)
 
