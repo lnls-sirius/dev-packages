@@ -1,6 +1,6 @@
 """Time conversion module."""
 
-from datetime import datetime as _datetime
+from datetime import datetime as _datetime, timedelta as _timedelta
 
 
 class Time:
@@ -77,8 +77,46 @@ class Time:
 
     def __add__(self, other):
         """Addition."""
+        if isinstance(other, Time):
+            return self.datetime + other.datetime
+        if isinstance(other, _timedelta):
+            return Time(datetime=self.datetime + other)
         return self.datetime + other
 
     def __sub__(self, other):
         """Subtraction."""
+        if isinstance(other, Time):
+            return self.datetime - other.datetime
+        if isinstance(other, _timedelta):
+            return Time(datetime=self.datetime - other)
         return self.datetime - other
+
+    def __eq__(self, other):
+        """Equal operator."""
+        if isinstance(other, Time):
+            return self.datetime == other.datetime
+        return self.datetime == other
+
+    def __lt__(self, other):
+        """Less-than operator."""
+        if isinstance(other, Time):
+            return self.datetime < other.datetime
+        return self.datetime < other
+
+    def __gt__(self, other):
+        """Greater-than operator."""
+        if isinstance(other, Time):
+            return other.__lt__(self)
+        return other.__lt__(self.datetime)
+
+    def __le__(self, other):
+        """Less-or-equal operator."""
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __ge__(self, other):
+        """Greater-or-equal operator."""
+        return self.__gt__(other) or self.__eq__(other)
+
+    def __str__(self):
+        """Return string representation."""
+        return self.datetime.__str__()
