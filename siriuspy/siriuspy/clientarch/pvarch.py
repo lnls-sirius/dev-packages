@@ -1,6 +1,9 @@
-"""."""
+"""PV Arch Module."""
+
+from datetime import timedelta as _timedelta
 
 from .client import ClientArchiver as _ClientArchiver
+from .time import Time as _Time
 
 
 class PVDetails:
@@ -113,34 +116,38 @@ class PVDetails:
 class PVData:
     """Archive PV Data."""
 
+    PARALLEL_QUERY_BIN_INTERVAL = _timedelta(seconds=12*60*60)  # 12h
+
     def __init__(self, pvname, connector=None):
         """."""
-        self.pvname = pvname
-        self.connector = connector
-        self.timestamp_start = None
-        self.timestamp_stop = None
-        self.timestamp = None
-        self.value = None
-        self.status = None
-        self.severity = None
+        self._pvname = pvname
+        self._connector = connector
+        self._timestamp_start = None
+        self._timestamp_stop = None
+        self._timestamp = None
+        self._value = None
+        self._status = None
+        self._severity = None
 
     @property
-    def connected(self):
-        """."""
-        return self.connector and self.connector.connected
+    def pvname(self):
+        """PVName."""
+        return self._pvname
 
     @property
     def request_url(self):
-        """."""
+        """Request url."""
         self.connect()
         url = self.connector.getData(
-            self.pvname, self.timestamp_start,
-            self.timestamp_stop, get_request_url=True)
+            self.pvname,
+            self._timestamp_start.get_iso8601(),
+            self._timestamp_stop.get_iso8601(),
+            get_request_url=True)
         return url
 
     @property
     def is_archived(self):
-        """."""
+        """Is archived."""
         self.connect()
         req = self.connector.getPVDetails(self.pvname)
         if not req.ok:
@@ -148,20 +155,86 @@ class PVData:
         return True
 
     def connect(self):
-        """."""
+        """Connect."""
         if self.connector is None:
-            self.connector = _ClientArchiver()
+            self._connector = _ClientArchiver()
+
+    @property
+    def connector(self):
+        """Connector."""
+        return self._connector
+
+    @property
+    def connected(self):
+        """Check connected."""
+        return self.connector and self.connector.connected
+
+    @property
+    def timestamp_start(self):
+        """Timestamp start."""
+        return self._timestamp_start.get_timestamp()
+
+    @timestamp_start.setter
+    def timestamp_start(self, new_timestamp):
+        self._timestamp_start = _Time(timestamp=new_timestamp)
+
+    @property
+    def timestamp_stop(self):
+        """Timestamp stop."""
+        return self._timestamp_stop.get_timestamp()
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, new_timestamp):
+        self._timestamp_stop = _Time(timestamp=new_timestamp)
+
+    @property
+    def timestamp(self):
+        """Timestamp data."""
+        return self._timestamp
+
+    @property
+    def value(self):
+        """Value data."""
+        return self._value
+
+    @property
+    def status(self):
+        """Status data."""
+        return self._status
+
+    @property
+    def severity(self):
+        """Severity data."""
+        return self._severity
 
     def update(self, mean_sec=None):
-        """."""
+        """Update."""
         self.connect()
         if None in (self.timestamp_start, self.timestamp_stop):
-            print('Start and stop timestamps not defined!')
+            print('Start and stop timestamps not defined! Aborting.')
             return
         process_type = 'mean' if mean_sec is not None else ''
+
+        interval = PVData.PARALLEL_QUERY_BIN_INTERVAL
+        if self._timestamp_start + interval >= self._timestamp_stop:
+            timestamp_start = self._timestamp_start.get_iso8601()
+            timestamp_stop = self._timestamp_stop.get_iso8601()
+        else:
+            t_start = self._timestamp_start
+            t_stop = t_start + interval
+            timestamp_start = [t_start.get_iso8601(), ]
+            timestamp_stop = [t_stop.get_iso8601(), ]
+            while t_stop < self._timestamp_stop:
+                t_start += interval
+                t_stop = t_stop + interval
+                if t_stop + interval > self._timestamp_stop:
+                    t_stop = self._timestamp_stop
+                timestamp_start.append(t_start.get_iso8601())
+                timestamp_stop.append(t_stop.get_iso8601())
+
         data = self.connector.getData(
-            self.pvname, self.timestamp_start, self.timestamp_stop,
+            self._pvname, timestamp_start, timestamp_stop,
             process_type=process_type, interval=mean_sec)
         if not data:
             return
-        self.timestamp, self.value, self.status, self.severity = data
+        self._timestamp, self._value, self._status, self._severity = data
