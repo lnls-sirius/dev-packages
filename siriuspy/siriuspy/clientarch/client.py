@@ -178,7 +178,7 @@ class ClientArchiver:
                    'to': _urllib.parse.quote(tstop)}))
 
         resps = self._make_request(urls, return_json=True)
-        if any([not resp for resp in resps]):
+        if resps is None:
             return None
 
         _ts, _vs, _st, _sv = [], [], [], []
@@ -250,12 +250,16 @@ class ClientArchiver:
                 response = await _asyncio.gather(
                     *[session.get(u, ssl=False, timeout=self.timeout)
                       for u in url])
+                if any([not r.ok for r in response]):
+                    return None
                 if return_json:
                     response = await _asyncio.gather(
                         *[r.json() for r in response])
             else:
                 response = await session.get(
                     url, ssl=False, timeout=self.timeout)
+                if not response.ok:
+                    return None
                 if return_json:
                     response = await response.json()
         except _asyncio.TimeoutError as err_msg:
