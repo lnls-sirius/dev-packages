@@ -1,7 +1,5 @@
 """PV Arch Module."""
 
-from datetime import timedelta as _timedelta
-
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time
 
@@ -116,7 +114,7 @@ class PVDetails:
 class PVData:
     """Archive PV Data."""
 
-    PARALLEL_QUERY_BIN_INTERVAL = _timedelta(seconds=12*60*60)  # 12h
+    PARALLEL_QUERY_BIN_INTERVAL = 12*60*60  # 12h
 
     def __init__(self, pvname, connector=None):
         """."""
@@ -172,7 +170,7 @@ class PVData:
     @property
     def timestamp_start(self):
         """Timestamp start."""
-        return self._timestamp_start.get_timestamp()
+        return self._timestamp_start.timestamp()
 
     @timestamp_start.setter
     def timestamp_start(self, new_timestamp):
@@ -181,7 +179,7 @@ class PVData:
     @property
     def timestamp_stop(self):
         """Timestamp stop."""
-        return self._timestamp_stop.get_timestamp()
+        return self._timestamp_stop.timestamp()
 
     @timestamp_stop.setter
     def timestamp_stop(self, new_timestamp):
