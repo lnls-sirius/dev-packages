@@ -120,8 +120,8 @@ class PVData:
         """."""
         self._pvname = pvname
         self._connector = connector
-        self._timestamp_start = None
-        self._timestamp_stop = None
+        self._time_start = None
+        self._time_stop = None
         self._timestamp = None
         self._value = None
         self._status = None
@@ -138,8 +138,8 @@ class PVData:
         self.connect()
         url = self.connector.getData(
             self.pvname,
-            self._timestamp_start.get_iso8601(),
-            self._timestamp_stop.get_iso8601(),
+            self._time_start.get_iso8601(),
+            self._time_stop.get_iso8601(),
             get_request_url=True)
         return url
 
@@ -170,20 +170,50 @@ class PVData:
     @property
     def timestamp_start(self):
         """Timestamp start."""
-        return self._timestamp_start.timestamp()
+        if not self._time_start:
+            return None
+        return self._time_start.timestamp()
 
     @timestamp_start.setter
     def timestamp_start(self, new_timestamp):
-        self._timestamp_start = _Time(timestamp=new_timestamp)
+        if not isinstance(new_timestamp, (float, int)):
+            raise TypeError('expected argument of type float or int')
+        self._time_start = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_start(self):
+        """Time start."""
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise TypeError('expected argument of type Time')
+        self._time_start = new_time
 
     @property
     def timestamp_stop(self):
         """Timestamp stop."""
-        return self._timestamp_stop.timestamp()
+        if not self._time_stop:
+            return None
+        return self._time_stop.timestamp()
 
     @timestamp_stop.setter
     def timestamp_stop(self, new_timestamp):
-        self._timestamp_stop = _Time(timestamp=new_timestamp)
+        if not isinstance(new_timestamp, (float, int)):
+            raise TypeError('expected argument of type float or int')
+        self._time_stop = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_stop(self):
+        """Time stop."""
+        return self._time_stop
+
+    @time_stop.setter
+    def time_stop(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise TypeError('expected argument of type Time')
+        self._time_stop = new_time
 
     @property
     def timestamp(self):
@@ -214,19 +244,19 @@ class PVData:
         process_type = 'mean' if mean_sec is not None else ''
 
         interval = PVData.PARALLEL_QUERY_BIN_INTERVAL
-        if self._timestamp_start + interval >= self._timestamp_stop:
-            timestamp_start = self._timestamp_start.get_iso8601()
-            timestamp_stop = self._timestamp_stop.get_iso8601()
+        if self._time_start + interval >= self._time_stop:
+            timestamp_start = self._time_start.get_iso8601()
+            timestamp_stop = self._time_stop.get_iso8601()
         else:
-            t_start = self._timestamp_start
+            t_start = self._time_start
             t_stop = t_start + interval
             timestamp_start = [t_start.get_iso8601(), ]
             timestamp_stop = [t_stop.get_iso8601(), ]
-            while t_stop < self._timestamp_stop:
+            while t_stop < self._time_stop:
                 t_start += interval
                 t_stop = t_stop + interval
-                if t_stop + interval > self._timestamp_stop:
-                    t_stop = self._timestamp_stop
+                if t_stop + interval > self._time_stop:
+                    t_stop = self._time_stop
                 timestamp_start.append(t_start.get_iso8601())
                 timestamp_stop.append(t_stop.get_iso8601())
 
