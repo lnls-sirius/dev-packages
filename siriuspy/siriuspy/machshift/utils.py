@@ -5,7 +5,6 @@ import copy as _copy
 from datetime import datetime as _datetime
 
 import numpy as _np
-from scipy.interpolate import interp1d as _interp1d
 from matplotlib import pyplot as _plt
 
 from .. import util as _util
@@ -66,8 +65,7 @@ class MacScheduleData:
             timestamp, datetime, year, month, day, hour, minute)
         times, tags = MacScheduleData._get_numeric_data_for_interval(
             datetime[0], datetime[-1], dtype='macsched_byshift')
-        fun = _interp1d(times, tags, 'previous', fill_value='extrapolate')
-        val = fun(timestamp)
+        val = _interp1d_previous(times, tags, timestamp)
         return bool(val) if ret_uni else val
 
     @staticmethod
@@ -79,8 +77,7 @@ class MacScheduleData:
             timestamp, datetime, year, month, day, hour, minute)
         times, currs = MacScheduleData._get_numeric_data_for_interval(
             datetime[0], datetime[-1], dtype='initial_current')
-        fun = _interp1d(times, currs, 'previous', fill_value='extrapolate')
-        val = fun(timestamp)
+        val = _interp1d_previous(times, currs, timestamp)
         return val[0] if ret_uni else val
 
     @staticmethod
@@ -90,10 +87,9 @@ class MacScheduleData:
         times, tags = MacScheduleData.get_mac_schedule_data(
             year, formating='numeric_byshift')
         days_of_year = len(MacScheduleData._mac_schedule_sdata[year])
-        fun = _interp1d(times, tags, 'previous', fill_value='extrapolate')
         new_timestamp = _np.linspace(times[0], times[-1], days_of_year*24*60)
         new_datetimes = [_datetime.fromtimestamp(ts) for ts in new_timestamp]
-        new_tags = fun(new_timestamp)
+        new_tags = _interp1d_previous(times, tags, new_timestamp)
 
         fig = _plt.figure()
         _plt.plot_date(new_datetimes, new_tags, '-')
@@ -205,3 +201,33 @@ class MacScheduleData:
                 idcs = _np.r_[idcs[0]-1, idcs]
             return times[idcs], tags[idcs]
         return times, tags
+
+
+# This solution is a simplified version of scipy.interpolate.interp1d for
+# interpolation of kind 'previous' with fill_value='extrapolate' option
+def _interp1d_previous(x_org, y_org, x_new):
+    """interp1d to previous."""
+    x_new = _np.asarray(x_new)
+    x_org = _np.asarray(x_org).ravel()
+    y_org = _np.asarray(y_org)
+
+    # Get index of left value
+    x_new_indices = _np.searchsorted(
+        _np.nextafter(x_org, -_np.inf), x_new, side='left')
+
+    # Clip x_new_indices so that they are within the range of x_org indices.
+    x_new_indices = x_new_indices.clip(1, len(x_org)).astype(_np.intp)
+
+    # Calculate the actual value for each entry in x_new.
+    y_new = y_org[x_new_indices-1]
+
+    return y_new
+
+
+# Version using scipy.interpolate.interp1d
+# from scipy.interpolate import interp1d as _interp1d
+# def _interp1d_previous(x_org, y_org, x_new):
+#     """interp1d to previous."""
+#     fun = _interp1d(x_org, y_org, 'previous', fill_value='extrapolate')
+#     y_new = fun(x_new)
+#     return y_new
