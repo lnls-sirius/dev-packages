@@ -31,8 +31,7 @@ class Time(_datetime):
     def __add__(self, other):
         """Addition."""
         if isinstance(other, _datetime):
-            add = super().__add__(other)
-            return add
+            return super().__add__(other)
         if isinstance(other, (float, int)):
             add = super().__add__(_timedelta(seconds=other))
         else:
@@ -42,8 +41,7 @@ class Time(_datetime):
     def __sub__(self, other):
         """Subtraction."""
         if isinstance(other, _datetime):
-            sub = super().__sub__(other)
-            return sub
+            return super().__sub__(other)
         if isinstance(other, (float, int)):
             sub = super().__sub__(_timedelta(seconds=other))
         else:
