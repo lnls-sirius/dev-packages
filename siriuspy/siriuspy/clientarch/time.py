@@ -4,25 +4,66 @@ from datetime import datetime as _datetime, timedelta as _timedelta
 
 
 class Time(_datetime):
-    """Time conversion class."""
+    """Time conversion class.
 
-    def __new__(cls, year=None, month=None, day=None,
-                hour=None, minute=0, second=0, microsecond=0,
-                timestamp=None,
-                timestamp_string=None, timestamp_format=None):
-        """New."""
-        if timestamp:
-            if not isinstance(timestamp, float):
-                raise TypeError("Expected an argument of type 'float'.")
-            return Time.fromtimestamp(timestamp)
-        if timestamp_string:
-            if not isinstance(timestamp_string, str):
-                raise TypeError("Expected an argument of type 'str'.")
-            return Time.strptime(
-                timestamp_string, '%Y-%m-%d %H:%M:%S.%f'
-                if timestamp_format is None else timestamp_format)
-        return super().__new__(
-            cls, year, month, day, hour, minute, second, microsecond)
+    Usage options:
+        Time(timestamp)
+            timestamp is a float/int keyword/positional argument.
+
+        Time(timestamp_string)
+        Time(timestamp_string, timestamp_format='%Y-%m-%d %H:%M:%S.%f')
+            timestamp_string is a str keyword/positional argument.
+            timestamp_format is an optional keyword argument for string
+                formating. Defaults to '%Y-%m-%d %H:%M:%S.%f'.
+
+        Time(year, month, day)
+        Time(year, month, day, hour)
+        Time(year, month, day, hour, minute)
+        Time(year, month, day, hour, minute, second)
+        Time(year, month, day, hour, minute, second, microsecond)
+        Time(year, month, day, hour, minute, second, microsecond, tzinfo)
+            year, month, day, hour, minute, second, microsecond
+                are integer keyword/positional arguments.
+            tzinfo must be None or of a tzinfo subclass keyword/positional
+                argument.
+    """
+
+    _DEFAULT_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+    _DATETIME_ARGS = {'year', 'month', 'day', 'hour', 'minute',
+                      'second', 'microsecond', 'tzinfo'}
+
+    def __new__(cls, *args, **kwargs):
+        """New object."""
+        if not args and not kwargs:
+            raise TypeError('no arguments found to build Time object')
+        if len(args) == 1:
+            if isinstance(args[0], (float, int)):
+                return Time.fromtimestamp(args[0])
+            if isinstance(args[0], str):
+                timestamp_format = \
+                    kwargs['timestamp_format'] if 'timestamp_format'\
+                    in kwargs else Time._DEFAULT_TIMESTAMP_FORMAT
+                return Time.strptime(args[0], timestamp_format)
+            raise TypeError(f'argument of unexpected type {type(args[0])}')
+        if len(kwargs) == 1:
+            if 'timestamp' in kwargs:
+                return Time.fromtimestamp(kwargs['timestamp'])
+            if 'timestamp_string' in kwargs:
+                return Time.strptime(
+                    kwargs['timestamp_string'], Time._DEFAULT_TIMESTAMP_FORMAT)
+            if set(kwargs.keys()) & Time._DATETIME_ARGS:
+                raise TypeError(
+                    'missing input arguments, verify usage options.')
+            raise TypeError(f'unexpected key argument {kwargs}')
+        if len(kwargs) == 2:
+            if set(kwargs.keys()) == {'timestamp_string', 'timestamp_format'}:
+                return Time.strptime(
+                    kwargs['timestamp_string'], kwargs['timestamp_format'])
+            if set(kwargs.keys()) & Time._DATETIME_ARGS:
+                raise TypeError(
+                    'missing input arguments, verify usage options.')
+            raise TypeError(f'unexpected key arguments {list(kwargs.keys())}')
+        return super().__new__(cls, *args, **kwargs)
 
     def get_iso8601(self):
         """Get iso8601 format."""
