@@ -245,7 +245,7 @@ class PVData:
         """Severity data."""
         return self._severity
 
-    def update(self, mean_sec=None):
+    def update(self, mean_sec=None, parallel=True):
         """Update."""
         self.connect()
         if None in (self.timestamp_start, self.timestamp_stop):
@@ -254,7 +254,7 @@ class PVData:
         process_type = 'mean' if mean_sec is not None else ''
 
         interval = self.parallel_query_bin_interval
-        if self._time_start + interval >= self._time_stop:
+        if (self._time_start + interval >= self._time_stop) or not parallel:
             timestamp_start = self._time_start.get_iso8601()
             timestamp_stop = self._time_stop.get_iso8601()
         else:
