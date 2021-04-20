@@ -114,8 +114,6 @@ class PVDetails:
 class PVData:
     """Archive PV Data."""
 
-    PARALLEL_QUERY_BIN_INTERVAL = 12*60*60  # 12h
-
     def __init__(self, pvname, connector=None):
         """."""
         self._pvname = pvname
@@ -126,6 +124,7 @@ class PVData:
         self._value = None
         self._status = None
         self._severity = None
+        self._parallel_query_bin_interval = 12*60*60  # 12h
 
     @property
     def pvname(self):
@@ -216,6 +215,17 @@ class PVData:
         self._time_stop = new_time
 
     @property
+    def parallel_query_bin_interval(self):
+        """Parallel query bin interval."""
+        return self._parallel_query_bin_interval
+
+    @parallel_query_bin_interval.setter
+    def parallel_query_bin_interval(self, new_intvl):
+        if not isinstance(new_intvl, (float, int)):
+            raise TypeError('expected argument of type float or int')
+        self._parallel_query_bin_interval = new_intvl
+
+    @property
     def timestamp(self):
         """Timestamp data."""
         return self._timestamp
@@ -243,7 +253,7 @@ class PVData:
             return
         process_type = 'mean' if mean_sec is not None else ''
 
-        interval = PVData.PARALLEL_QUERY_BIN_INTERVAL
+        interval = self.parallel_query_bin_interval
         if self._time_start + interval >= self._time_stop:
             timestamp_start = self._time_start.get_iso8601()
             timestamp_stop = self._time_stop.get_iso8601()
