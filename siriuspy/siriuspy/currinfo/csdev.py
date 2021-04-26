@@ -148,7 +148,7 @@ def get_si_currinfo_database():
     dev = 'AS-Glob:AP-CurrInfo:'
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
 
-    pvs_db = _csdev.add_pvslist_cte(pvs_db)
+    pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=dev)
     return pvs_db
 
 
