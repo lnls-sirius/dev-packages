@@ -58,7 +58,7 @@ SRVURL_CONFIGDB_2 = _os.environ.get(
     default='http://10.128.255.3/config-db')
 SRVURL_ARCHIVER = _os.environ.get(
     'SIRIUS_URL_ARCHIVER',
-    default='https://sirius-archiver.lnls.br')
+    default='https://10.0.38.42')
 
 
 VACA_PREFIX = _os.environ.get('VACA_PREFIX', default='')
