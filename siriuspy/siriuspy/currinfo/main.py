@@ -396,12 +396,10 @@ class SICurrInfoApp(_CurrInfoApp):
         # pvs
         self._current_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:Current-Mon',
-            connection_timeout=0.05,
-            callback=self._callback_get_dcct_current)
+            connection_timeout=0.05)
         self._current_14c4_pv = _PV(
             _vaca_prefix+'SI-14C4:DI-DCCT:Current-Mon',
-            connection_timeout=0.05,
-            callback=self._callback_get_dcct_current)
+            connection_timeout=0.05)
         self._storedebeam_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
@@ -438,6 +436,8 @@ class SICurrInfoApp(_CurrInfoApp):
             pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
+        self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
+        self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
 
     def init_database(self):
         """Set initial PV values."""
