@@ -56,7 +56,7 @@ class RFGen(_DeviceNC):
         self['GeneralFreq-SP'] = value
 
 
-class LLRF(_DeviceNC):
+class ASLLRF(_DeviceNC):
     """."""
 
     class DEVICES:
@@ -77,11 +77,11 @@ class LLRF(_DeviceNC):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in LLRF.DEVICES.ALL:
+        if devname not in ASLLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=LLRF._properties)
+        super().__init__(devname, properties=ASLLRF._properties)
 
     @property
     def is_cw(self):
@@ -385,10 +385,10 @@ class RFCav(_Devices):
 
         rfgen = RFGen()
         if devname == RFCav.DEVICES.SI:
-            llrf = LLRF(LLRF.DEVICES.SI)
+            llrf = ASLLRF(ASLLRF.DEVICES.SI)
             rfmon = SIRFCavMonitor()
         elif devname == RFCav.DEVICES.BO:
-            llrf = LLRF(LLRF.DEVICES.BO)
+            llrf = ASLLRF(ASLLRF.DEVICES.BO)
             rfmon = BORFCavMonitor()
         devices = (rfgen, llrf, rfmon)
 
