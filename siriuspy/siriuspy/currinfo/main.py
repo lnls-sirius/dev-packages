@@ -422,8 +422,7 @@ class SICurrInfoApp(_CurrInfoApp):
             callback=self._callback_get_dipole_opmode)
         self._bo_curr3gev_pv = _PV(
             _vaca_prefix+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
-            connection_timeout=0.05,
-            callback=self._callback_get_bo_curr3gev)
+            connection_timeout=0.05)
         self._ti_injcount_pv = _PV(
             _vaca_prefix+_LLTimeSearch.get_evg_name()+':InjCount-Mon',
             connection_timeout=0.05,
@@ -436,8 +435,10 @@ class SICurrInfoApp(_CurrInfoApp):
             pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
+
         self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
         self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
+        self._bo_curr3gev_pv.add_callback(self._callback_get_bo_curr3gev)
 
     def init_database(self):
         """Set initial PV values."""
