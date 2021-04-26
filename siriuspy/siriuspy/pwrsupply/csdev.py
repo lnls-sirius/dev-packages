@@ -2499,6 +2499,10 @@ def _get_ps_Commercial_propty_database():
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
 
+def _get_ps_REGATRON_DCLink_database():
+    """Return database with REGATRON DCLink model PVs."""
+    # TODO: implement!!!
+    return dict()
 
 # --- Aux. ---
 
@@ -2555,6 +2559,7 @@ def _get_model_db(psmodel):
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
         'APU': _get_id_apu_propty_database,
+        'REGATRON_DCLink': _get_ps_REGATRON_DCLink_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]
