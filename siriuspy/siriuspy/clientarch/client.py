@@ -144,6 +144,8 @@ class ClientArchiver:
         stddev -- number of standard deviations.
                   argument used in processing 'ignoreflyers' and 'flyers'.
         """
+        if isinstance(pvname, str):
+            pvname = [pvname, ]
         if isinstance(timestamp_start, str):
             timestamp_start = [timestamp_start, ]
         if isinstance(timestamp_stop, str):
@@ -160,41 +162,59 @@ class ClientArchiver:
                 process_str += '_' + str(int(interval))
                 if 'flyers' in process_type and stddev is not None:
                     process_str += '_' + str(int(stddev))
-            pvname = process_str + '(' + pvname + ')'
+            pvname = [process_str+'('+pvn+')' for pvn in pvname]
 
         if get_request_url:
             tstart = _urllib.parse.quote(timestamp_start[0])
             tstop = _urllib.parse.quote(timestamp_stop[-1])
-            url = self._create_url(
-                method='getData.json', pv=pvname,
+            url = [self._create_url(
+                method='getData.json', pv=pvn,
                 **{'from': tstart, 'to': tstop})
-            return url
+                   for pvn in pvname]
+            return url[0] if len(pvname) == 1 else url
 
-        urls = []
-        for tstart, tstop in zip(timestamp_start, timestamp_stop):
-            urls.append(self._create_url(
-                method='getData.json', pv=pvname,
-                **{'from': _urllib.parse.quote(tstart),
-                   'to': _urllib.parse.quote(tstop)}))
+        pvn2idcs = dict()
+        all_urls = list()
+        for pvn in pvname:
+            urls = []
+            for tstart, tstop in zip(timestamp_start, timestamp_stop):
+                urls.append(self._create_url(
+                    method='getData.json', pv=pvn,
+                    **{'from': _urllib.parse.quote(tstart),
+                       'to': _urllib.parse.quote(tstop)}))
+            ini = len(all_urls)
+            all_urls.extend(urls)
+            end = len(all_urls)
+            pvn2idcs[pvn] = _np.arange(ini, end)
 
-        resps = self._make_request(urls, return_json=True)
+        resps = self._make_request(all_urls, return_json=True)
         if resps is None:
             return None
 
-        _ts, _vs, _st, _sv = [], [], [], []
-        for resp in resps:
-            data = resp[0]['data']
-            _ts = _np.r_[_ts, [v['secs'] + v['nanos']/1.0e9 for v in data]]
-            _vs = _np.r_[_vs, [v['val'] for v in data]]
-            _st = _np.r_[_st, [v['status'] for v in data]]
-            _sv = _np.r_[_sv, [v['severity'] for v in data]]
-        if not _ts.size:
-            return None
-        _, _tsidx = _np.unique(_ts, return_index=True)
-        timestamp, value, status, severity = \
-            _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
+        pvn2resp = dict()
+        for pvn, idcs in pvn2idcs.items():
+            _ts, _vs = _np.array([]), _np.array([])
+            _st, _sv = _np.array([]), _np.array([])
+            for idx in idcs:
+                resp = resps[idx]
+                if not resp:
+                    continue
+                data = resp[0]['data']
+                _ts = _np.r_[_ts, [v['secs'] + v['nanos']/1.0e9 for v in data]]
+                _vs = _np.r_[_vs, [v['val'] for v in data]]
+                _st = _np.r_[_st, [v['status'] for v in data]]
+                _sv = _np.r_[_sv, [v['severity'] for v in data]]
+            if not _ts.size:
+                return None
+            _, _tsidx = _np.unique(_ts, return_index=True)
+            timestamp, value, status, severity = \
+                _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
 
-        return timestamp, value, status, severity
+            pvn2resp[pvn] = [timestamp, value, status, severity]
+
+        if len(pvname) == 1:
+            return pvn2resp[pvname[0]]
+        return pvn2resp
 
     def getPVDetails(self, pvname, get_request_url=False):
         """Get PV Details."""
