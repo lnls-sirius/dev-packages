@@ -1,7 +1,7 @@
 """PV Arch Module."""
 
 from .client import ClientArchiver as _ClientArchiver
-from .time import Time as _Time
+from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
 
 class PVDetails:
@@ -115,7 +115,7 @@ class PVData:
     """Archive PV Data."""
 
     def __init__(self, pvname, connector=None):
-        """."""
+        """Initialize."""
         self._pvname = pvname
         self._connector = connector
         self._time_start = None
@@ -254,21 +254,13 @@ class PVData:
         process_type = 'mean' if mean_sec is not None else ''
 
         interval = self.parallel_query_bin_interval
-        if (self._time_start + interval >= self._time_stop) or not parallel:
+        if parallel:
+            timestamp_start, timestamp_stop = _get_time_intervals(
+                self._time_start, self._time_stop, interval,
+                return_isoformat=True)
+        else:
             timestamp_start = self._time_start.get_iso8601()
             timestamp_stop = self._time_stop.get_iso8601()
-        else:
-            t_start = self._time_start
-            t_stop = t_start + interval
-            timestamp_start = [t_start.get_iso8601(), ]
-            timestamp_stop = [t_stop.get_iso8601(), ]
-            while t_stop < self._time_stop:
-                t_start += interval
-                t_stop = t_stop + interval
-                if t_stop + interval > self._time_stop:
-                    t_stop = self._time_stop
-                timestamp_start.append(t_start.get_iso8601())
-                timestamp_stop.append(t_stop.get_iso8601())
 
         data = self.connector.getData(
             self._pvname, timestamp_start, timestamp_stop,

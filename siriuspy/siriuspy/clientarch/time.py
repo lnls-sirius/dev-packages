@@ -88,3 +88,27 @@ class Time(_datetime):
         else:
             sub = super().__sub__(other)
         return Time(timestamp=sub.timestamp())
+
+
+def get_time_intervals(
+        time_start, time_stop, interval, return_isoformat=False):
+    """Return intervals of 'interval' duration from time_start to time_stop."""
+    if time_start + interval >= time_stop:
+        timestamp_start = time_start
+        timestamp_stop = time_stop
+    else:
+        t_start = time_start
+        t_stop = t_start + interval
+        timestamp_start = [t_start, ]
+        timestamp_stop = [t_stop, ]
+        while t_stop < time_stop:
+            t_start += interval
+            t_stop = t_stop + interval
+            if t_stop + interval > time_stop:
+                t_stop = time_stop
+            timestamp_start.append(t_start)
+            timestamp_stop.append(t_stop)
+    if return_isoformat:
+        timestamp_start = [t.get_iso8601() for t in timestamp_start]
+        timestamp_stop = [t.get_iso8601() for t in timestamp_stop]
+    return timestamp_start, timestamp_stop
