@@ -14,7 +14,8 @@ from .. import clientweb as _web
 class MacScheduleData:
     """Machine schedule data."""
 
-    _TAG_FORMAT = r'(\d+)h(\d+)-(\w)'
+    _TAG_FORMAT_BEG = r'(\d+)h(\d+)-(\w)-(\d+\.\d)'
+    _TAG_FORMAT_END = r'(\d+)h(\d+)-(\w)'
 
     _mac_schedule_sdata = dict()
     _mac_schedule_ndata_byshift = dict()
@@ -116,29 +117,35 @@ class MacScheduleData:
         databyday = list()
         datainicurr = list()
         for datum in data:
-            if len(datum) < 3:
+            if len(datum) < 2:
                 raise Exception(
                     'there is a date ({0}) with problem in {1} '
                     'machine schedule'.format(datum, year))
 
-            month, day, inicurr = int(datum[0]), int(datum[1]), float(datum[2])
-            if len(datum) == 3:
+            month, day = int(datum[0]), int(datum[1])
+            if len(datum) == 2:
                 timestamp = _datetime(year, month, day, 0, 0).timestamp()
                 databyshift.append((timestamp, 0))
                 databyday.append((timestamp, 0))
-                datainicurr.append((timestamp, inicurr))
+                datainicurr.append((timestamp, 0.0))
             else:
                 timestamp = _datetime(year, month, day, 0, 0).timestamp()
                 databyday.append((timestamp, 1))
-                datainicurr.append((timestamp, inicurr))
-                for tag in datum[3:]:
-                    hour, minute, flag = _re.findall(
-                        MacScheduleData._TAG_FORMAT, tag)[0]
+                for tag in datum[2:]:
+                    if 'B' in tag:
+                        hour, minute, flag, inicurr = _re.findall(
+                            MacScheduleData._TAG_FORMAT_BEG, tag)[0]
+                        inicurr = float(inicurr)
+                    else:
+                        hour, minute, flag = _re.findall(
+                            MacScheduleData._TAG_FORMAT_END, tag)[0]
+                        inicurr = 0.0
                     flag_bit = 0 if flag == 'E' else 1
                     hour, minute = int(hour), int(minute)
                     timestamp = _datetime(
                         year, month, day, hour, minute).timestamp()
                     databyshift.append((timestamp, flag_bit))
+                    datainicurr.append((timestamp, inicurr))
 
         MacScheduleData._mac_schedule_sdata[year] = data
         MacScheduleData._mac_schedule_ndata_byshift[year] = databyshift
