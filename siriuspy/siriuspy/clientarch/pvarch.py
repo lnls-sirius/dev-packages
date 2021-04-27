@@ -277,7 +277,7 @@ class PVData:
 class PVDataSet:
     """A set of PVData objects."""
 
-    def __init__(self, pvnames, connector):
+    def __init__(self, pvnames, connector=None):
         """Initialize."""
         self._pvnames = pvnames
         self._connector = connector
