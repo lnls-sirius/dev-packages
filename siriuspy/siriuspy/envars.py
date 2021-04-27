@@ -49,7 +49,7 @@ SRVURL_CSCONSTS_2 = _os.environ.get(
     default='http://10.128.255.3/control-system-constants')
 SRVURL_LOGBOOK = _os.environ.get(
     'SIRIUS_URL_LOGBOOK',
-    default='http://sirius-logbook.lnls.br/Olog')
+    default='http://10.0.38.42/Olog')
 SRVURL_CONFIGDB = _os.environ.get(
     'SIRIUS_URL_CONFIGDB',
     default='http://10.128.255.4/config-db')
