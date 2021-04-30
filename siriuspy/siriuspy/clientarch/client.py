@@ -52,7 +52,7 @@ class ClientArchiver:
         headers = {"User-Agent": "Mozilla/5.0"}
         payload = {"username": username, "password": password}
         url = self._create_url(method='login')
-        loop = _asyncio.get_event_loop()
+        loop = self._get_async_event_loop()
         self.session, authenticated = loop.run_until_complete(
             self._create_session(
                 url, headers=headers, payload=payload, ssl=False))
@@ -66,7 +66,7 @@ class ClientArchiver:
     def logout(self):
         """Close login session."""
         if self.session:
-            loop = _asyncio.get_event_loop()
+            loop = self._get_async_event_loop()
             resp = loop.run_until_complete(self._close_session())
             self.session = None
             return resp
@@ -229,7 +229,7 @@ class ClientArchiver:
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
-        loop = _asyncio.get_event_loop()
+        loop = self._get_async_event_loop()
         response = loop.run_until_complete(self._handle_request(
             url, return_json=return_json, need_login=need_login))
         return response
@@ -248,6 +248,18 @@ class ClientArchiver:
         return url
 
     # ---------- async methods ----------
+
+    def _get_async_event_loop(self):
+        """Get event loop."""
+        try:
+            loop = _asyncio.get_event_loop()
+        except RuntimeError as error:
+            if 'no current event loop' in str(error):
+                loop = _asyncio.new_event_loop()
+                _asyncio.set_event_loop(loop)
+            else:
+                raise error
+        return loop
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
