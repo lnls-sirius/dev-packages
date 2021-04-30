@@ -204,7 +204,10 @@ class MacScheduleData:
         if begin != end:
             idcs = _np.where(_np.logical_and(
                 times >= begin.timestamp(), times <= end.timestamp()))[0]
-            if idcs[0] != 0:
+            if not idcs.size:
+                idcs = _np.searchsorted(times, [begin.timestamp(), ])
+                idcs = idcs-1 if idcs[0] != 0 else idcs
+            elif idcs[0] != 0:
                 idcs = _np.r_[idcs[0]-1, idcs]
             return times[idcs], tags[idcs]
         return times, tags
