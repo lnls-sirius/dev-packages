@@ -10,7 +10,8 @@ class ETypes(_csdev.ETypes):
 
     MACHSHIFT = (
         'Users', 'Commissioning', 'Conditioning',
-        'Injection', 'MachineStudy', 'Maintenance')
+        'Injection', 'MachineStudy', 'Maintenance',
+        'Standby', 'Shutdown')
 
 
 _et = ETypes
