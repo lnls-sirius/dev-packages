@@ -6,6 +6,7 @@ import numpy as _np
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
 
+from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
 
@@ -44,21 +45,42 @@ _SEVERITY_NO_ALARM = 0
 _SEVERITY_MAJOR_ALARM = 2
 
 
+# --- Linac PS interlock ---
+PS_LI_INTLK_THRS = 55
+
+
 # --- Enumeration Types ---
 
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    INTERFACE = ('Remote', 'Local', 'PCHost')
-    MODELS = ('Empty',
-              'FBP', 'FBP_DCLink', 'FAC_DCDC',
-              'FAC_2S_ACDC', 'FAC_2S_DCDC',
-              'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-              'FAP', 'FAP_4P', 'FAP_2P2S',
-              'FBP_FOFB',
-              'Commercial',
-              'FP')
+    INTERFACE = ['', ] * 3
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_REMOTE] = 'Remote'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_LOCAL] = 'Local'
+    INTERFACE[_ConstPSBSMP.E_INTERFACE_PCHOST] = 'PCHost'
+    INTERFACE = tuple(INTERFACE)
+
+    MODELS = ['Field' + str(i) for i in range(32)]
+    MODELS[_ConstPSBSMP.E_PS_MODEL_EMPTY] = 'Empty'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP] = 'FBP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FBP_DCLink] = 'FBP_DCLink'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_ACDC] = 'FAC_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC] = 'FAC_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_ACDC] = 'FAC_2S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2S_DCDC] = 'FAC_2S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_ACDC] = 'FAC_2P4S_ACDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P4S_DCDC] = 'FAC_2P4S_DCDC'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP] = 'FAP'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_4P] = 'FAP_4P'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_DCDC_EMA] = 'FAC_DCDC_EMA'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_2P2S] = 'FAP_2P2S'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAP_IMAS] = 'FAP_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_ACDC_IMAS] = 'FAC_2P_ACDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_FAC_2P_DCDC_IMAS] = 'FAC_2P_DCDC_IMAS'
+    MODELS[_ConstPSBSMP.E_PS_MODEL_UNINITIALIZED] = 'Uninitialized'
+    MODELS = tuple(MODELS)
+
     PWRSTATE_SEL = _csdev.ETypes.OFF_ON
     PWRSTATE_STS = ('Off', 'On', 'Initializing')
     STATES = ('Off', 'Interlock', 'Initializing',
@@ -461,7 +483,7 @@ class ETypes(_csdev.ETypes):
         'Sub-tensao da entrada AC trifasica',
         'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa','Bit14', 'Bit15',
+        'Alta umidade relativa', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -531,7 +553,8 @@ class ETypes(_csdev.ETypes):
         'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
         'Sobre-tensao dos drivers dos IGBTs',
         'Sobre-corrente no driver do IGBT 1',
-        'Sobre-corrente no driver do IGBT 2', 'Sobre-temperatura nos indutores',
+        'Sobre-corrente no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador', 'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
         'Bit14', 'Bit15',
@@ -577,8 +600,10 @@ class ETypes(_csdev.ETypes):
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
         'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
-        'Sobre-tensao dos drivers dos IGBTs', 'Sobre-corrente no driver do IGBT 1',
-        'Sobre-corrente no driver do IGBT 2', 'Sobre-temperatura nos indutores',
+        'Sobre-tensao dos drivers dos IGBTs',
+        'Sobre-corrente no driver do IGBT 1',
+        'Sobre-corrente no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador', 'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
         'Bit14', 'Bit15',
@@ -677,28 +702,40 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    CYCLE_TYPES = (
-        'Sine', 'DampedSine', 'Trapezoidal',
-        'DampedSquaredSine', 'Square'
-        )
-    SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
+
+    CYCLE_TYPES = ['', ] * 5
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SINE] = 'Sine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSINE] = 'DampedSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_TRAPEZOIDAL] = 'Trapezoidal'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_DAMPEDSQUAREDSINE] = \
+        'DampedSquaredSine'
+    CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SQUARE] = 'Square'
+    CYCLE_TYPES = tuple(CYCLE_TYPES)
+
+    WFMREF_SYNCMODE = ['', ] * 3
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE] = \
+        'SampleBySample'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_SAMPLEBYSAMPLE_ONECYCLE] = \
+        'SampleBySample_OneCycle'
+    WFMREF_SYNCMODE[_ConstPSBSMP.E_WFMREFSYNC_ONESHOT] = 'OneShot'
+    WFMREF_SYNCMODE = tuple(WFMREF_SYNCMODE)
+
     LINAC_INTLCK_WARN = (
         'LoadI 0C Shutdown', 'LoadI 0C Interlock',
         'LoadV 0V Shutdown', 'LoadV 0V Interlock',
         'Ext Interlock Fault', 'LoadI Over Thrs', 'TestPoint', 'ADC Cali')
     LINAC_INTLCK_SGIN = (
-        'Fan state', 'Unused', 'Unused', 'Main relay state feedback',
+        'Fan state', 'Unused', 'Unused', 'DC-Link Delay Feedback',
         'Unused', 'Unused', 'Unused', 'Unused', 'Unused',
-        'External input interlock 1', 'External input interlock 2',
-        'Power module overheated', 'DCCT state', 'Output overcurrent',
-        'Output overvoltage', 'DC bus undervoltage')
+        'External interlock 1', 'External interlock 2',
+        'Power Module OverTemp', 'DCCT Status', 'Output OverCurrent',
+        'Output OverVoltage', 'DC-Link UnderVoltage')
     LINAC_INTLCK_RDSGIN_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11', 'Bit12', 'Bit13', 'Bit14', 'Bit15')
     LINAC_INTLCK_SGOUT = (
-        'Main relay control output', 'Unused', 'Unused', 'Unused',
-        'Unused', 'Unused', 'Threshold interlock',
-        'Overcurr./overvolt./ext. interlock')
+        'DC-Link ON', 'Unused', 'Unused', 'Unused', 'Unused', 'Unused',
+        'Threshold Warning', 'Overcurr./overvolt./ext. interlock')
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
@@ -720,7 +757,7 @@ class Const(_csdev.Const):
     OpMode = _csdev.Const.register('OpMode', _et.OPMODES)
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
-    SyncMode = _csdev.Const.register('SyncMode', _et.SYNC_MODES)
+    WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
 
 
 # --- Main power supply database functions ---
@@ -763,6 +800,35 @@ def get_conv_propty_database(pstype=None, psname=None):
     return dbase
 
 
+def get_ps_interlocks(psmodel=None, psname=None):
+    """Return interlock PVs for a power supply model."""
+    # in case psname is given
+    if psname is not None:
+        psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+
+    dbase = _get_model_db(psmodel)
+    intlks = [k for k in dbase.keys() if 'Mon' in k and
+              ('Intlk' in k or 'Alarm' in k)]
+    return intlks
+
+
+def get_ps_modules(psmodel=None, psname=None):
+    """Return PS modules for a power supply model."""
+    # in case psname is given
+    if psname is not None:
+        psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+
+    dbase = _get_model_db(psmodel)
+    modules = set()
+    for k in dbase:
+        if ('Mod' in k) and ('Labels-Cte' in k):
+            aux = k.split('Mod')
+            aux = aux[1].split('Labels-Cte')
+            mod = aux[0]
+            modules.add(mod)
+    return sorted(modules)
+
+
 # --- Auxiliary functions ---
 
 
@@ -799,7 +865,153 @@ def _get_ps_common_propty_database():
         'IntlkHard-Mon': {'type': 'int', 'value': 0},
 
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-
+        # Scope
+        'ScopeSrcAddr-SP': {'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
+                            'lolo': 0x0000C000, 'low': 0x0000C000, 'lolim': 0x0000C000,
+                            'hilim': 0x00013FFE, 'high': 0x00013FFE, 'hihi': 0x00013FFE},
+        'ScopeSrcAddr-RB': {'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
+                            'lolo': 0x0000C000, 'low': 0x0000C000, 'lolim': 0x0000C000,
+                            'hilim': 0x00013FFE, 'high': 0x00013FFE, 'hihi': 0x00013FFE},
+        'ScopeFreq-SP': {'type': 'float', 'value': 1.0, 'prec': 4, 'unit': 'Hz',
+                         'lolo': 1, 'low': 1, 'lolim': 1,
+                         'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'ScopeFreq-RB': {'type': 'float', 'value': 1.0, 'prec': 4, 'unit': 'Hz',
+                         'lolo': 1, 'low': 1, 'lolim': 1,
+                         'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'ScopeDuration-SP': {'type': 'float', 'value': 1.0, 'prec': 4, 'unit': 's',
+                             'lolo': 1e-2, 'low': 1e-2, 'lolim': 1e-2,
+                             'hilim': 4096, 'high': 4096, 'hihi': 4096},
+        'ScopeDuration-RB': {'type': 'float', 'value': 1.0, 'prec': 4, 'unit': 's',
+                             'lolo': 1e-2, 'low': 1e-2, 'lolim': 1e-2,
+                             'hilim': 4096, 'high': 4096, 'hihi': 4096},
+        # Power Supply Parameters
+        # --- PS ---
+        'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
+        'ParamPSModel-Cte': {'type': 'float', 'value': 0.0},
+        'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
+        # --- COMM ---
+        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommRS485BaudRate-Cte': {
+            'type': 'float', 'value': 0.0, 'units': 'bps'},
+        'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
+                                   'value': _np.array([0.0, ] * 4)},
+        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
+        'ParamCommEthIP-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommEthSubnetMask-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamCommBuzVol-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%'},
+        # --- Control ---
+        'ParamCtrlFreqCtrlISR-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamCtrlFreqTimeSlicer-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamCtrlLoopState-Cte': {
+            'type': 'float', 'value': 0.0},
+        'ParamCtrlMaxRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMinRef-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V'},
+        'ParamCtrlMaxRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
+        'ParamCtrlMinRefOpenLoop-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': '%'},
+        # --- PWM ---
+        'ParamPWMFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamPWMDeadTime-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'ns'},
+        'ParamPWMMaxDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMinDuty-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMaxDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMMinDutyOpenLoop-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        'ParamPWMLimDutyShare-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3},
+        # ----- HRADC -----
+        'ParamHRADCNrBoards-Cte': {'type': 'float', 'value': 0.0},
+        'ParamHRADCSpiClk-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'MHz'},
+        'ParamHRADCFreqSampling-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamHRADCEnableHeater-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCEnableRails-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOutput-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamHRADCTransducerOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- SigGen -----
+        'ParamSigGenType-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenNumCycles-Cte': {'type': 'float', 'value': 0.0},
+        'ParamSigGenFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamSigGenAmplitude-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenOffset-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'A/V/%'},
+        'ParamSigGenAuxParam-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        # ----- WfmRef -----
+        'ParamWfmRefId-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefSyncMode-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4)},
+        'ParamWfmRefFreq-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'Hz'},
+        'ParamWfmRefGain-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
+        'ParamWfmRefOffset-Cte': {
+            'type': 'float', 'count': 4,
+            'value': _np.array([0.0, ] * 4), 'unit': 'A/V/%'},
+        # --- Analog Variables ---
+        'ParamAnalogMax-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
+        'ParamAnalogMin-Cte': {
+            'type': 'float', 'count': 64,
+            'value': _np.array([0.0, ] * 64)},
+        # --- Debounce Manager ---
+        'ParamHardIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamHardIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkDebounceTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamSoftIntlkResetTime-Cte': {
+            'type': 'float', 'count': 32,
+            'value': _np.array([0.0, ] * 32), 'unit': 'us'},
+        'ParamScopeSamplingFreq-Cte': {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz'},
+        'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
     }
     return dbase
 
@@ -866,86 +1078,6 @@ def _get_ps_basic_propty_database():
                               'value': Const.DsblEnbl.Dsbl},
         'WfmUpdateAuto-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                               'value': Const.DsblEnbl.Dsbl},
-        # Power Supply Parameters
-        # --- PS ---
-        'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},
-        'ParamPSModel-Cte': {'type': 'float', 'value': 0.0},
-        'ParamNrModules-Cte': {'type': 'float', 'value': 0.0},
-        # --- COMM ---
-        'ParamCommCmdInferface-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommRS485BaudRate-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommRS485Addr-Cte': {'type': 'float', 'count': 4,
-                                   'value': _np.array([0.0, ] * 4)},
-        'ParamCommRS485TermRes-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommUDCNetAddr-Cte': {'type': 'float', 'value': 0.0},
-        'ParamCommEthIP-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommEthSubnetMask-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4)},
-        'ParamCommBuzVol-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        # --- Control ---
-        'ParamCtrlFreqCtrlISR-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamCtrlFreqTimeSlicer-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'Hz'},
-        'ParamCtrlLoopState-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': ''},
-        'ParamCtrlMaxRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMinRef-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': 'A/V'},
-        'ParamCtrlMaxRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
-        'ParamCtrlMinRefOpenLoop-Cte':
-            {'type': 'float', 'count': 4,
-             'value': _np.array([0.0, ] * 4),
-             'unit': '%'},
-        # --- PWM ---
-        'ParamPWMFreq-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'Hz'},
-        'ParamPWMDeadTime-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': 'ns'},
-        'ParamPWMMaxDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDuty-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMaxDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMMinDutyOpenLoop-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        'ParamPWMLimDutyShare-Cte':
-            {'type': 'float', 'value': 0.0, 'unit': '%'},
-        # --- Analog Variables ---
-        'ParamAnalogMax-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
-        'ParamAnalogMin-Cte':
-            {'type': 'float', 'count': 64,
-             'value': _np.array([0.0, ] * 64)},
-        # --- Debounce Manager ---
-        'ParamHardIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamHardIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkDebounceTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
-        'ParamSoftIntlkResetTime-Cte':
-            {'type': 'float', 'count': 32,
-             'value': _np.array([0.0, ] * 32), 'unit': 'us'},
     })
 
     return dbase
@@ -957,10 +1089,10 @@ def _get_ps_sofb_propty_database():
     dbase = {
         'SOFBMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         'SOFBMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         'SOFBCurrent-SP': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
@@ -1517,7 +1649,7 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
         'AlarmsIIBModBLabels-Cte': {
             'type': 'string', 'count': len(_et.IIB_ALARMS_FAC_2P4S_DCDC),
             'value': _et.IIB_ALARMS_FAC_2P4S_DCDC},
-            }
+        }
     propty_db.update(db_ps)
     return propty_db
 
@@ -1893,10 +2025,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod1-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
@@ -1938,10 +2070,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod2-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
@@ -1983,10 +2115,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod3-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
@@ -2028,10 +2160,10 @@ def _get_ps_FAP_4P_propty_database():
         'VoltageOutputMod4-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
@@ -2131,24 +2263,23 @@ def _get_ps_FAP_2P2S_propty_database():
                             'prec': PS_CURRENT_PRECISION,
                             'unit': 'A'},
         'DCLinkVoltageMod1-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'V'},
+                                  'prec': PS_CURRENT_PRECISION,
+                                  'unit': 'V'},
         'DCLinkVoltageMod2-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'V'},
+                                  'prec': PS_CURRENT_PRECISION,
+                                  'unit': 'V'},
         'DCLinkVoltageMod3-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'V'},
+                                  'prec': PS_CURRENT_PRECISION,
+                                  'unit': 'V'},
         'DCLinkVoltageMod4-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'V'},
+                                  'prec': PS_CURRENT_PRECISION,
+                                  'unit': 'V'},
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
                              'prec': PS_CURRENT_PRECISION,
                              'unit': 'p.u.'},
-        'PWMDutyCycleArmsDiff-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'p.u.'},
+        'PWMDutyCycleArmsDiff-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': PS_CURRENT_PRECISION,
+                                     'unit': 'p.u.'},
         'IGBT1PWMDutyCycleMod1-Mon': {'type': 'float', 'value': 0.0,
                                       'prec': PS_CURRENT_PRECISION,
                                       'unit': 'p.u.'},
@@ -2179,66 +2310,53 @@ def _get_ps_FAP_2P2S_propty_database():
         'VoltageOutputMod1-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod1-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IGBT2TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'IGBTDriverTemperatureIIBMod1-Mon':
-            {'type': 'float', 'value': 0.0,
-             'prec': 2,
-             'unit': 'C'},
-        'IGBT1DriverCurrentIIBMod1-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
-        'IGBT2DriverCurrentIIBMod1-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                        'prec': 2, 'unit': 'C'},
+        'IGBTDriverTemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                             'prec': 2, 'unit': 'C'},
+        'IGBT1DriverCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
+        'IGBT2DriverCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
         'InductorTemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                           'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'LeakageCurrentIIBMod1-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                           'prec': 2, 'unit': 'C'},
+        'LeakageCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                   'prec': 2,
-                                   'unit': 'C'},
-        'RelativeHumidityIIBMod1-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': '%'},
+                                   'prec': 2, 'unit': 'C'},
+        'RelativeHumidityIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2, 'unit': '%'},
         'IntlkIIBMod1-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBMod1Labels-Cte':  {'type': 'string',
-                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP_2P2S},
+                                    'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                    'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod1-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod1Labels-Cte': {
-            'type': 'string',
-            'count': len(_et.IIB_ALARMS_FAP_2P2S),
-            'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod1Labels-Cte': {'type': 'string',
+                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
+                                    'value': _et.IIB_ALARMS_FAP_2P2S},
         'VoltageInputMod2-Mon': {'type': 'float', 'value': 0.0,
                                  'prec': PS_CURRENT_PRECISION,
                                  'unit': 'V'},
         'VoltageOutputMod2-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod2-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
@@ -2247,110 +2365,86 @@ def _get_ps_FAP_2P2S_propty_database():
         'IGBT2TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
                                         'unit': 'C'},
-        'IGBTDriverTemperatureIIBMod2-Mon':
-            {'type': 'float', 'value': 0.0,
-             'prec': 2,
-             'unit': 'C'},
-        'IGBT1DriverCurrentIIBMod2-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
-        'IGBT2DriverCurrentIIBMod2-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+        'IGBTDriverTemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
+                                             'prec': 2, 'unit': 'C'},
+        'IGBT1DriverCurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
+        'IGBT2DriverCurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
         'InductorTemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                           'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'LeakageCurrentIIBMod2-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                           'prec': 2, 'unit': 'C'},
+        'LeakageCurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                   'prec': 2,
-                                   'unit': 'C'},
-        'RelativeHumidityIIBMod2-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': '%'},
+                                   'prec': 2, 'unit': 'C'},
+        'RelativeHumidityIIBMod2-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2, 'unit': '%'},
         'IntlkIIBMod2-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBMod2Labels-Cte':  {'type': 'string',
-                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP_2P2S},
+        'IntlkIIBMod2Labels-Cte': {'type': 'string',
+                                   'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                   'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod2-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod2Labels-Cte': {
-            'type': 'string',
-            'count': len(_et.IIB_ALARMS_FAP_2P2S),
-            'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod2Labels-Cte': {'type': 'string',
+                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
+                                    'value': _et.IIB_ALARMS_FAP_2P2S},
         'VoltageInputMod3-Mon': {'type': 'float', 'value': 0.0,
                                  'prec': PS_CURRENT_PRECISION,
                                  'unit': 'V'},
         'VoltageOutputMod3-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod3-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                        'prec': 2, 'unit': 'C'},
         'IGBT2TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'IGBTDriverTemperatureIIBMod3-Mon':
-            {'type': 'float', 'value': 0.0,
-             'prec': 2,
-             'unit': 'C'},
-        'IGBT1DriverCurrentIIBMod3-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
-        'IGBT2DriverCurrentIIBMod3-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                        'prec': 2, 'unit': 'C'},
+        'IGBTDriverTemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                             'prec': 2, 'unit': 'C'},
+        'IGBT1DriverCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
+        'IGBT2DriverCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
         'InductorTemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                           'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'LeakageCurrentIIBMod3-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                           'prec': 2, 'unit': 'C'},
+        'LeakageCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                   'prec': 2,
-                                   'unit': 'C'},
-        'RelativeHumidityIIBMod3-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': '%'},
+                                   'prec': 2, 'unit': 'C'},
+        'RelativeHumidityIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2, 'unit': '%'},
         'IntlkIIBMod3-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBMod3Labels-Cte':  {'type': 'string',
-                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP_2P2S},
+                                    'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                    'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod3-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod3Labels-Cte': {
-            'type': 'string',
-            'count': len(_et.IIB_ALARMS_FAP_2P2S),
-            'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod3Labels-Cte': {'type': 'string',
+                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
+                                    'value': _et.IIB_ALARMS_FAP_2P2S},
         'VoltageInputMod4-Mon': {'type': 'float', 'value': 0.0,
                                  'prec': PS_CURRENT_PRECISION,
                                  'unit': 'V'},
         'VoltageOutputMod4-Mon': {'type': 'float', 'value': 0.0,
                                   'prec': PS_CURRENT_PRECISION,
                                   'unit': 'V'},
-        'IGBT1IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT1CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
-        'IGBT2IIBCurrentMod4-Mon': {'type': 'float', 'value': 0.0,
+        'IGBT2CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
         'IGBT1TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
@@ -2359,44 +2453,34 @@ def _get_ps_FAP_2P2S_propty_database():
         'IGBT2TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2,
                                         'unit': 'C'},
-        'IGBTDriverTemperatureIIBMod4-Mon':
-            {'type': 'float', 'value': 0.0,
-             'prec': 2,
-             'unit': 'C'},
-        'IGBT1DriverCurrentIIBMod4-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
-        'IGBT2DriverCurrentIIBMod4-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+        'IGBTDriverTemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                             'prec': 2, 'unit': 'C'},
+        'IGBT1DriverCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
+        'IGBT2DriverCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                          'prec': PS_CURRENT_PRECISION,
+                                          'unit': 'A'},
         'InductorTemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
+                                           'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': 2,
-                                        'unit': 'C'},
-        'LeakageCurrentIIBMod4-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': PS_CURRENT_PRECISION,
-            'unit': 'A'},
+                                           'prec': 2, 'unit': 'C'},
+        'LeakageCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2,
                                    'unit': 'C'},
-        'RelativeHumidityIIBMod4-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': '%'},
+        'RelativeHumidityIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2, 'unit': '%'},
         'IntlkIIBMod4-Mon': {'type': 'int', 'value': 0},
         'IntlkIIBMod4Labels-Cte':  {'type': 'string',
-                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
-                                 'value': _et.IIB_INTLCK_FAP_2P2S},
+                                    'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                    'value': _et.IIB_INTLCK_FAP_2P2S},
         'AlarmsIIBMod4-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod4Labels-Cte': {
-            'type': 'string',
-            'count': len(_et.IIB_ALARMS_FAP_2P2S),
-            'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod4Labels-Cte': {'type': 'string',
+                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
+                                    'value': _et.IIB_ALARMS_FAP_2P2S},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -2415,6 +2499,10 @@ def _get_ps_Commercial_propty_database():
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
 
+def _get_ps_REGATRON_DCLink_database():
+    """Return database with REGATRON DCLink model PVs."""
+    # TODO: implement!!!
+    return dict()
 
 # --- Aux. ---
 
@@ -2471,6 +2559,7 @@ def _get_model_db(psmodel):
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
         'APU': _get_id_apu_propty_database,
+        'REGATRON_DCLink': _get_ps_REGATRON_DCLink_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]

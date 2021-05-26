@@ -5,6 +5,7 @@ import time as _time
 import numpy as _np
 
 from ..sofb.csdev import SOFBFactory
+from ..sofb.utils import si_calculate_bump as _si_calculate_bump
 from .device import Device as _Device
 
 
@@ -20,13 +21,15 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    _propty_tmpl = (
+    _propty_tlines_tmpl = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
         'RespMat-SP', 'RespMat-RB',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
+        'MaxDeltaKickCH-RB', 'MaxDeltaKickCV-RB',
+        'MaxDeltaKickCH-SP', 'MaxDeltaKickCV-SP',
         'ManCorrGainCH-SP', 'ManCorrGainCV-SP',
         'ManCorrGainCH-RB', 'ManCorrGainCV-RB',
         'RefOrbX-SP', 'RefOrbY-SP',
@@ -35,10 +38,12 @@ class SOFB(_Device):
         'BPMXEnblList-RB', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CVEnblList-SP',
         'CHEnblList-RB', 'CVEnblList-RB',
-        'RFEnbl-Sel', 'RFEnbl-Sts',
         'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
+        'ApplyDelta-Mon',
         'SmoothNrPts-SP', 'SmoothNrPts-RB',
         'BufferCount-Mon',
+        'TrigNrSamplesPre-SP',
+        'TrigNrSamplesPre-RB',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
         'LoopState-Sts', 'LoopState-Sel',
@@ -46,17 +51,39 @@ class SOFB(_Device):
         'MeasRespMat-Cmd', 'MeasRespMat-Mon',
         'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
-        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
-        # properties used only for ring-type accelerators:
+        'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
+        )
+    # properties used only for ring-type accelerators:
+    _propty_ring_tmpl = (
         'MTurnAcquire-Cmd',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
-        'MTurnTime-Mon')
+        'MTurnTime-Mon',
+        )
+    # properties used only for sirius:
+    _propty_si_tmpl = (
+        'KickRF-Mon',
+        'DeltaKickRF-Mon', 'DeltaKickRF-SP',
+        'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
+        'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'RFEnbl-Sel', 'RFEnbl-Sts',
+        'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
+        'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
+        'DriveAmplitude-SP', 'DriveAmplitude-RB',
+        'DrivePhase-SP', 'DrivePhase-RB',
+        'DriveCorrIndex-SP', 'DriveCorrIndex-RB',
+        'DriveBPMIndex-SP', 'DriveBPMIndex-RB',
+        'DriveType-Sel', 'DriveType-Sts',
+        'DriveState-Sel', 'DriveState-Sts',
+        'DriveData-Mon',
+        )
 
     _default_timeout = 10  # [s]
     _default_timeout_respm = 2 * 60 * 60  # [s]
+    _default_timeout_kick_apply = 2  # [s]
 
     def __init__(self, devname):
         """."""
@@ -67,9 +94,11 @@ class SOFB(_Device):
         # SOFB object
         self.data = SOFBFactory.create(devname[:2])
 
-        propts = SOFB._propty_tmpl
-        if not self.data.isring:
-            propts = [p for p in propts if not p.startswith(('MTurn', 'Slow'))]
+        propts = SOFB._propty_tlines_tmpl
+        if self.data.isring:
+            propts = propts + SOFB._propty_ring_tmpl
+        if self.data.acc == 'SI':
+            propts = propts + SOFB._propty_si_tmpl
 
         # call base class constructor
         super().__init__(devname, properties=propts)
@@ -81,12 +110,8 @@ class SOFB(_Device):
 
     @opmode.setter
     def opmode(self, value):
-        if value is None:
-            return
-        if isinstance(value, str) and value in self.data.SOFBMode._fields:
-            self['SOFBMode-Sel'] = self.data.SOFBMode._fields.index(value)
-        elif int(value) in self.data.SOFBMode:
-            self['SOFBMode-Sel'] = int(value)
+        self._enum_setter(
+            'SOFBMode-Sel', value, self.data.SOFBMode)
 
     @property
     def opmode_str(self):
@@ -100,13 +125,8 @@ class SOFB(_Device):
 
     @trigchannel.setter
     def trigchannel(self, value):
-        if value is None:
-            return
-        if isinstance(value, str) and value in self.data.TrigAcqChan._fields:
-            self['TrigAcqChan-Sel'] = \
-                self.data.TrigAcqChan._fields.index(value)
-        elif int(value) in self.data.TrigAcqChan:
-            self['TrigAcqChan-Sel'] = int(value)
+        self._enum_setter(
+            'TrigAcqChan-Sel', value, self.data.TrigAcqChan)
 
     @property
     def respmat(self):
@@ -122,6 +142,111 @@ class SOFB(_Device):
     def trigchannel_str(self):
         """."""
         return self.data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+
+    @property
+    def drivests(self):
+        """."""
+        return self['DriveState-Sts']
+
+    @property
+    def drivetype(self):
+        """."""
+        return self['DriveType-Sts']
+
+    @drivetype.setter
+    def drivetype(self, value):
+        self._enum_setter(
+            'DriveType-Sel', value, self.data.DriveType)
+
+    @property
+    def drivetype_str(self):
+        """."""
+        return self.data.DriveType._fields[self['DriveType-Sts']]
+
+    @property
+    def drivefreqdivisor(self):
+        """."""
+        return self['DriveFreqDivisor-RB']
+
+    @drivefreqdivisor.setter
+    def drivefreqdivisor(self, value):
+        """."""
+        self['DriveFreqDivisor-SP'] = value
+
+    @property
+    def drivefrequency_mon(self):
+        """."""
+        return self['DriveFrequency-Mon']
+
+    @property
+    def drivenrcycles(self):
+        """."""
+        return self['DriveNrCycles-RB']
+
+    @drivenrcycles.setter
+    def drivenrcycles(self, value):
+        """."""
+        self['DriveNrCycles-SP'] = value
+
+    @property
+    def driveduration_mon(self):
+        """."""
+        return self['DriveDuration-Mon']
+
+    @property
+    def driveamplitude(self):
+        """."""
+        return self['DriveAmplitude-RB']
+
+    @driveamplitude.setter
+    def driveamplitude(self, value):
+        """."""
+        self['DriveAmplitude-SP'] = value
+
+    @property
+    def drivephase(self):
+        """."""
+        return self['DrivePhase-RB']
+
+    @drivephase.setter
+    def drivephase(self, value):
+        """."""
+        self['DrivePhase-SP'] = value
+
+    @property
+    def drivecorridx(self):
+        """."""
+        return self['DriveCorrIndex-RB']
+
+    @drivecorridx.setter
+    def drivecorridx(self, value):
+        """."""
+        self['DriveCorrIndex-SP'] = value
+
+    @property
+    def drivebpmidx(self):
+        """."""
+        return self['DriveBPMIndex-RB']
+
+    @drivebpmidx.setter
+    def drivebpmidx(self, value):
+        """."""
+        self['DriveBPMIndex-SP'] = value
+
+    @property
+    def drivedata_time(self):
+        """."""
+        return self['DriveData-Mon'][::3]
+
+    @property
+    def drivedata_corr(self):
+        """."""
+        return self['DriveData-Mon'][1::3]
+
+    @property
+    def drivedata_bpm(self):
+        """."""
+        return self['DriveData-Mon'][2::3]
 
     @property
     def sp_trajx(self):
@@ -215,6 +340,11 @@ class SOFB(_Device):
         return self['KickCV-Mon']
 
     @property
+    def kickrf(self):
+        """."""
+        return self['KickRF-Mon']
+
+    @property
     def deltakickch(self):
         """."""
         return self['DeltaKickCH-Mon']
@@ -235,6 +365,46 @@ class SOFB(_Device):
         self['DeltaKickCV-SP'] = value
 
     @property
+    def deltakickrf(self):
+        """."""
+        return self['DeltaKickRF-Mon']
+
+    @deltakickrf.setter
+    def deltakickrf(self, value):
+        """."""
+        self['DeltaKickRF-SP'] = value
+
+    @property
+    def maxdeltakickch(self):
+        """."""
+        return self['MaxDeltaKickCH-RB']
+
+    @maxdeltakickch.setter
+    def maxdeltakickch(self, value):
+        """."""
+        self['MaxDeltaKickCH-SP'] = value
+
+    @property
+    def maxdeltakickcv(self):
+        """."""
+        return self['MaxDeltaKickCV-RB']
+
+    @maxdeltakickcv.setter
+    def maxdeltakickcv(self, value):
+        """."""
+        self['MaxDeltaKickCV-SP'] = value
+
+    @property
+    def maxdeltakickrf(self):
+        """."""
+        return self['MaxDeltaKickRF-RB']
+
+    @maxdeltakickrf.setter
+    def maxdeltakickrf(self, value):
+        """."""
+        self['MaxDeltaKickRF-SP'] = value
+
+    @property
     def mancorrgainch(self):
         """."""
         return self['ManCorrGainCH-RB']
@@ -253,6 +423,16 @@ class SOFB(_Device):
     def mancorrgaincv(self, value):
         """."""
         self['ManCorrGainCV-SP'] = value
+
+    @property
+    def mancorrgainrf(self):
+        """."""
+        return self['ManCorrGainRF-RB']
+
+    @mancorrgainrf.setter
+    def mancorrgainrf(self, value):
+        """."""
+        self['ManCorrGainRF-SP'] = value
 
     @property
     def refx(self):
@@ -342,12 +522,37 @@ class SOFB(_Device):
         self['SmoothNrPts-SP'] = int(value)
 
     @property
-    def trigsample(self):
+    def nr_singvals(self):
+        """."""
+        return self['NrSingValues-Mon']
+
+    @property
+    def singval_min(self):
+        """."""
+        return self['MinSingValue-RB']
+
+    @singval_min.setter
+    def singval_min(self, value):
+        """."""
+        self['MinSingValue-SP'] = value
+
+    @property
+    def trigsamplepre(self):
+        """."""
+        return self['TrigNrSamplesPre-RB']
+
+    @trigsamplepre.setter
+    def trigsamplepre(self, value):
+        """."""
+        self['TrigNrSamplesPre-SP'] = int(value)
+
+    @property
+    def trigsamplepost(self):
         """."""
         return self['TrigNrSamplesPost-RB']
 
-    @trigsample.setter
-    def trigsample(self, value):
+    @trigsamplepost.setter
+    def trigsamplepost(self, value):
         """."""
         self['TrigNrSamplesPost-SP'] = int(value)
 
@@ -390,6 +595,11 @@ class SOFB(_Device):
     def cmd_measrespmat_reset(self):
         """."""
         self['MeasRespMat-Cmd'] = 2
+
+    @property
+    def applydeltakick_mon(self):
+        """."""
+        return self['ApplyDelta-Mon']
 
     @property
     def measrespmat_mon(self):
@@ -437,21 +647,27 @@ class SOFB(_Device):
         """."""
         return self['LoopState-Sts']
 
-    def correct_orbit_manually(self, nr_iters=10):
+    def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
         self.cmd_turn_off_autocorr()
-
-        for i in range(nr_iters):
+        for _ in range(nr_iters):
             self.cmd_calccorr()
             _time.sleep(0.5)
             self.cmd_applycorr_all()
-            _time.sleep(0.5)
+            self.wait_apply_delta_kick()
+            _time.sleep(0.2)
             self.cmd_reset()
             self.wait_buffer()
+            resx = _np.std(self.orbx - self.refx)
+            resy = _np.std(self.orby - self.refy)
+            if resx < residue and resy < residue:
+                break
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
+        if self.autocorrsts == self.data.LoopState.Closed:
+            return
         self['LoopState-Sel'] = self.data.LoopState.Closed
         self._wait(
             'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
@@ -459,31 +675,60 @@ class SOFB(_Device):
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
+        if self.autocorrsts == self.data.LoopState.Open:
+            return
         self['LoopState-Sel'] = self.data.LoopState.Open
         self._wait(
             'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
 
+    def cmd_turn_on_drive(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        if self.drivests == self.data.DriveState.Closed:
+            return
+        self['DriveState-Sel'] = self.data.DriveState.Closed
+        self._wait(
+            'DriveState-Sts', self.data.DriveState.Closed, timeout=timeout)
+
+    def cmd_turn_off_drive(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        if self.drivests == self.data.DriveState.Open:
+            return
+        self['DriveState-Sel'] = self.data.DriveState.Open
+        self._wait(
+            'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
+
     def wait_buffer(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(10*interval)
-        for _ in range(ntrials):
-            if self.buffer_count >= self['SmoothNrPts-SP']:
-                break
-            _time.sleep(interval)
-        else:
-            print('WARN: Timed out waiting orbit.')
+        return self._wait(
+            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
+
+    def wait_apply_delta_kick(self, timeout=None):
+        """."""
+        def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
+        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
+        timeout = timeout or def_timeout
+        return self._wait(
+            'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
+            timeout=timeout, comp='ne')
 
     def wait_respm_meas(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout_respm
-        interval = 1  # [s]
-        ntrials = int(timeout/interval)
-        for _ in range(ntrials):
-            if not self.measrespmat_mon == self.data.MeasRespMatMon.Measuring:
-                break
-            _time.sleep(interval)
-        else:
-            print('WARN: Timed out waiting respm measurement.')
+        return self._wait(
+            'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
+            timeout=timeout, comp='ne')
+
+    def wait_drive(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout_respm
+        return self._wait(
+            'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
+
+    @staticmethod
+    def si_calculate_bumps(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
+        """."""
+        return _si_calculate_bump(
+            orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy)

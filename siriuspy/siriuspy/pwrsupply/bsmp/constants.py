@@ -20,16 +20,10 @@ __version__ = 'FRWM - V1.36 V0.41u - 09/04/2020'
 class ConstPSBSMP:
     """Namespace for organizing power supply BSMP constants."""
 
-    # --- implemented protocol version ---
-    # version = __bsmp_version__
-
     # --- group of BSMP variables
     G_ALL = _const_bsmp.ID_STD_GROUP_ALL
     G_READONLY = _const_bsmp.ID_STD_GROUP_READONLY
     G_WRITE = _const_bsmp.ID_STD_GROUP_WRITE
-    G_ALLRELEVANT = 3
-    G_SCAN = 4
-    G_SOFB = 5
 
     # --- types ---
     T_STATUS = 0
@@ -49,6 +43,24 @@ class ConstPSBSMP:
     T_ENUM = 14
 
     # --- enums ---
+    E_PS_MODEL_EMPTY = 0
+    E_PS_MODEL_FBP = 1
+    E_PS_MODEL_FBP_DCLink = 2
+    E_PS_MODEL_FAC_ACDC = 3
+    E_PS_MODEL_FAC_DCDC = 4
+    E_PS_MODEL_FAC_2S_ACDC = 5
+    E_PS_MODEL_FAC_2S_DCDC = 6
+    E_PS_MODEL_FAC_2P4S_ACDC = 7
+    E_PS_MODEL_FAC_2P4S_DCDC = 8
+    E_PS_MODEL_FAP = 9
+    E_PS_MODEL_FAP_4P = 10
+    E_PS_MODEL_FAC_DCDC_EMA = 11
+    E_PS_MODEL_FAP_2P2S = 12
+    E_PS_MODEL_FAP_IMAS = 13
+    E_PS_MODEL_FAC_2P_ACDC_IMAS = 14
+    E_PS_MODEL_FAC_2P_DCDC_IMAS = 15
+    E_PS_MODEL_UNINITIALIZED = 31
+
     E_STATE_OFF = 0
     E_STATE_INTERLOCK = 1
     E_STATE_INITIALIZING = 2
@@ -56,15 +68,15 @@ class ConstPSBSMP:
     E_STATE_SLOWREFSYNC = 4
     E_STATE_CYCLE = 5
     E_STATE_RMPWFM = 6
-    E_STATE_MIGWFM = 7
-    E_STATE_FASTREF = 8
+    E_STATE_MIGWFM = 7   # deprecated?
+    E_STATE_FASTREF = 8  # deprecated?
 
-    E_REMOTE_REMOTE = 0
-    E_REMOTE_LOCAL = 1
-    E_REMOTE_PCHOST = 2
+    E_INTERFACE_REMOTE = 0
+    E_INTERFACE_LOCAL = 1
+    E_INTERFACE_PCHOST = 2  # deprecated?
 
     E_WFMREFSYNC_SAMPLEBYSAMPLE = 0
-    E_WFMREFSYNC_SAMPLEBYSAMPLE_CONTINOUS = 1
+    E_WFMREFSYNC_SAMPLEBYSAMPLE_ONECYCLE = 1
     E_WFMREFSYNC_ONESHOT = 2
 
     E_SIGGENTYPE_SINE = 0
@@ -81,6 +93,10 @@ class ConstPSBSMP:
     E_DSPCLASS_DSP_IIR_2P3Z = 5
     E_DSPCLASS_DSP_FF = 6
     E_DSPCLASS_DSP_VECT_PRODUCT = 7
+
+    E_PARAMMEMORY_DEFAULT_INITIALIZATION = 1
+    E_PARAMMEMORY_OFFBOARD_EEPROM = 2
+    E_PARAMMEMORY_ONBOARD_EEPROM = 3
 
     # --- functions ---
     F_TURN_ON = 0
@@ -241,6 +257,9 @@ class ConstPSBSMP:
 
 class ConstFBP(ConstPSBSMP):
     """Namespace for organizing power supply FBP BSMP constants."""
+
+    # --- group of BSMP variables
+    G_SOFB = 3
 
     # --- FSB variables ---
     V_PS_SOFT_INTERLOCKS = 31  # BSMP doc says ID numb. should be continous!

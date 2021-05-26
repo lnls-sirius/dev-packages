@@ -650,14 +650,10 @@ class EntitiesFAP_4P(EntitiesPS):
         {'eid': 97, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 98, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 99, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 100, 'waccess': False, 'count': 1,
-         'var_type': _Types.T_UINT32},
-        {'eid': 101, 'waccess': False, 'count': 1,
-         'var_type': _Types.T_UINT32},
-        {'eid': 102, 'waccess': False, 'count': 1,
-         'var_type': _Types.T_UINT32},
-        {'eid': 103, 'waccess': False, 'count': 1,
-         'var_type': _Types.T_UINT32},
+        {'eid': 100, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 101, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 102, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 103, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 104, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 106, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -750,10 +746,10 @@ class EntitiesFAP_2P2S(EntitiesPS):
         {'eid': 95, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 96, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 97, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 98, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 99, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 100, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 101, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 98, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 99, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 100, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 101, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 102, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 103, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 104, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -873,6 +869,6 @@ class EntitiesFAC_2P4S_ACDC(EntitiesPS):
         {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 58, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
-        
+
 
     _ps_curves = ()

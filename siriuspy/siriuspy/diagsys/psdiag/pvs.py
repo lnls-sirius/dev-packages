@@ -3,10 +3,11 @@
 
 import numpy as _np
 
+from ...util import get_bit as _get_bit
 from ...namesys import SiriusPVName as _PVName
 from ...search import PSSearch as _PSSearch
-from ...pwrsupply.csdev import Const as _PSConst
-from ...pwrsupply.csdev import ETypes as _ETypes
+from ...pwrsupply.csdev import Const as _PSConst, ETypes as _ETypes, \
+    PS_LI_INTLK_THRS as _PS_LI_INTLK_THRS
 
 
 class PSDiffPV:
@@ -31,25 +32,29 @@ class PSDiffPV:
 class PSStatusPV:
     """Power Supply Status PV."""
 
-    # TODO: Add other interlocks for some PS types
-
-    BIT_PSCONNECT = 0b000001
-    BIT_PWRSTATON = 0b000010
-    BIT_CURRTDIFF = 0b000100
-    BIT_INTERLOCK = 0b001000
-    BIT_OPMODEDIF = 0b010000
-    BIT_BOWFMDIFF = 0b100000
+    BIT_PSCONNECT = 0b0000001
+    BIT_PWRSTATON = 0b0000010
+    BIT_CURRTDIFF = 0b0000100
+    BIT_INTERLOCK = 0b0001000
+    BIT_ALARMSSET = 0b0010000
+    BIT_OPMODEDIF = 0b0100000
+    BIT_BOWFMDIFF = 0b1000000
 
     PWRSTE_STS = 0
     CURRT_DIFF = 1
     INTRLCK_LI = 2
-    INTLK_SOFT = 2
-    INTLK_HARD = 3
-    OPMODE_SEL = 4
-    OPMODE_STS = 5
-    WAVFRM_MON = 6
+    WARNSTS_LI = 3
+    OPMODE_SEL = 2
+    OPMODE_STS = 3
+    WAVFRM_MON = 4
 
     DTOLWFM_DICT = dict()
+
+    def __init__(self):
+        """Init attributs."""
+        self.INTLK_PVS = list()
+        self.ALARM_PVS = list()
+        self.intlkwarn_bit = _ETypes.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
@@ -60,11 +65,11 @@ class PSStatusPV:
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
-                not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
-                not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
+            for intlk in self.INTLK_PVS:
+                disconnected |= not computed_pv.pvs[intlk].connected
         else:
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
@@ -75,6 +80,7 @@ class PSStatusPV:
             value |= PSStatusPV.BIT_PWRSTATON
             value |= PSStatusPV.BIT_CURRTDIFF
             value |= PSStatusPV.BIT_INTERLOCK
+            value |= PSStatusPV.BIT_ALARMSSET
             value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_BOWFMDIFF
             return {'value': value}
@@ -112,11 +118,18 @@ class PSStatusPV:
                 value |= PSStatusPV.BIT_OPMODEDIF
 
             # interlocks?
-            intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
-            intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
-            if intlksoft != 0 or intlksoft is None or \
-                    intlkhard != 0 or intlkhard is None:
-                value |= PSStatusPV.BIT_INTERLOCK
+            for intlk in self.INTLK_PVS:
+                intlkval = computed_pv.pvs[intlk].value
+                if intlkval != 0 or intlkval is None:
+                    value |= PSStatusPV.BIT_INTERLOCK
+                    break
+
+            # alarms?
+            for alarm in self.ALARM_PVS:
+                alarmval = computed_pv.pvs[alarm].value
+                if alarmval != 0 or alarmval is None:
+                    value |= PSStatusPV.BIT_ALARMSSET
+                    break
 
         else:
             # current-diff?
@@ -126,7 +139,11 @@ class PSStatusPV:
 
             # interlocks?
             intlk = computed_pv.pvs[PSStatusPV.INTRLCK_LI].value
-            if intlk > 55 or intlk is None:
+            if psname.dev == 'Spect':
+                intlkwarn = computed_pv.pvs[PSStatusPV.WARNSTS_LI].value
+                if _get_bit(intlkwarn, self.intlkwarn_bit):
+                    intlk -= 2**self.intlkwarn_bit
+            if intlk > _PS_LI_INTLK_THRS or intlk is None:
                 value |= PSStatusPV.BIT_INTERLOCK
 
         return {'value': value}
