@@ -1,0 +1,7 @@
+numpy>=1.18
+bottleneck>=1.3.2
+pyepics>=3.4.0
+python-dateutil>=2.8.1
+requests>=2.22.0
+six>=1.13.0
+aiohttp>=3.7.4

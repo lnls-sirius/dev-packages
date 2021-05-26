@@ -13,6 +13,7 @@ class ETypes(_csdev.ETypes):
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'Alarms',
         'OpMode-(Sel|Sts) are different',
         'Reserved')
 
@@ -22,6 +23,7 @@ class ETypes(_csdev.ETypes):
         'Current-(SP|Mon) are different',
         'Interlocks',
         'Reserved',
+        'Reserved',
         'Reserved')
 
     DIAG_STATUS_LABELS_BO = (
@@ -29,6 +31,7 @@ class ETypes(_csdev.ETypes):
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'Alarms',
         'OpMode-(Sel|Sts) are different',
         'Wfm error exceeded tolerance')
 

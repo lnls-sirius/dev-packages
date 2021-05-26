@@ -4,6 +4,7 @@ import time as _time
 from datetime import datetime as _datetime
 import logging as _log
 from copy import deepcopy as _dcopy
+from threading import Thread as _Thread
 
 import numpy as _np
 from epics import PV as _PV
@@ -15,6 +16,7 @@ from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
+from ..search import LLTimeSearch as _LLTimeSearch
 
 from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
@@ -140,7 +142,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
         cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
 
-        eff = 100 * chg2/chg1
+        eff = max(100 * chg2/chg1, 110)
         effave = 100 * ave2/ave1
 
         self.run_callbacks(ict1 + ':Charge-Mon', chg1)
@@ -165,7 +167,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC_IP = 'scope-dig-fctdig'
+    OSC_IP = 'as-di-fctdig'
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -174,7 +176,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = 'scope-dig-linac-ict'
+    OSC_IP = 'li-di-ictosc'
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'
@@ -371,7 +373,8 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # initialize vars
         self._time0 = _time.time()
-        self._current_value = None
+        self._thread = None
+        self._current_value = 0
         self._current_13c4_value = None
         self._current_14c4_value = None
         self._dcct_mode = _Const.DCCT.DCCT13C4
@@ -383,6 +386,7 @@ class SICurrInfoApp(_CurrInfoApp):
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
         self._injeff = 0.0
+        self._injcount = 0
         data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
             self._charge = 0.0
@@ -392,12 +396,10 @@ class SICurrInfoApp(_CurrInfoApp):
         # pvs
         self._current_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:Current-Mon',
-            connection_timeout=0.05,
-            callback=self._callback_get_dcct_current)
+            connection_timeout=0.05)
         self._current_14c4_pv = _PV(
             _vaca_prefix+'SI-14C4:DI-DCCT:Current-Mon',
-            connection_timeout=0.05,
-            callback=self._callback_get_dcct_current)
+            connection_timeout=0.05)
         self._storedebeam_13c4_pv = _PV(
             _vaca_prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
@@ -420,20 +422,36 @@ class SICurrInfoApp(_CurrInfoApp):
             callback=self._callback_get_dipole_opmode)
         self._bo_curr3gev_pv = _PV(
             _vaca_prefix+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
+            connection_timeout=0.05)
+        self._ti_injcount_pv = _PV(
+            _vaca_prefix+_LLTimeSearch.get_evg_name()+':InjCount-Mon',
             connection_timeout=0.05,
-            callback=self._callback_get_bo_curr3gev)
+            callback=self._callback_get_injcount)
+        self._eg_trigps_pv = _PV(
+            _vaca_prefix+'LI-01:EG-TriggerPS:status',
+            connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
 
+        self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
+        self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
+        self._bo_curr3gev_pv.add_callback(self._callback_get_bo_curr3gev)
+
     def init_database(self):
         """Set initial PV values."""
-        self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
-        self.run_callbacks('Current-Mon', self._current_value)
-        self.run_callbacks('InjEff-Mon', self._injeff)
-        self.run_callbacks('Charge-Mon', self._charge)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:StoredEBeam-Mon', self._storedebeam_value)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:Current-Mon', self._current_value)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:InjEff-Mon', self._injeff)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
+        self.run_callbacks(
+            'AS-Glob:AP-CurrInfo:InjCount-Mon', self._injcount)
 
     def read(self, reason):
         """Read from IOC database."""
@@ -446,7 +464,8 @@ class SICurrInfoApp(_CurrInfoApp):
                 if current < self.MAX_CURRENT:
                     inc_charge = current*dtm/3600  # Charge [A.h]
                     self._charge += inc_charge
-                    self.run_callbacks('Charge-Mon', self._charge)
+                    self.run_callbacks(
+                        'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
                 else:
                     _log.warning(
                         'Current value is too high: {0:.3f}A.'.format(current))
@@ -457,27 +476,32 @@ class SICurrInfoApp(_CurrInfoApp):
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         status = False
-        if reason == 'DCCT-Sel':
+        if reason == 'SI-Glob:AP-CurrInfo:DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
-                self._update_dcct_mode(value)
-                self.run_callbacks('DCCT-Sts', self._dcct_mode)
-                status = True
-        elif reason == 'DCCTFltCheck-Sel':
+                done = self._update_dcct_mode(value)
+                if done:
+                    self.run_callbacks(
+                        'SI-Glob:AP-CurrInfo:DCCT-Sts', self._dcct_mode)
+                    status = True
+        elif reason == 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
-            self.run_callbacks('DCCTFltCheck-Sts', self._dcctfltcheck_mode)
+            self.run_callbacks(
+                'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
+                self._dcctfltcheck_mode)
             status = True
         return status
 
     # ----- handle writes -----
     def _update_dcct_mode(self, value):
-        if self._dcct_mode != value:
+        if self._dcct_mode == value:
+            return False
+        if value in [_Const.DCCT.DCCT13C4, _Const.DCCT.DCCT14C4]:
             self._dcct_mode = value
+            return True
+        return False
 
     def _update_dcct_mode_by_relblmeas(self):
-        if (self._reliablemeas_13c4_value == 0 and
-                self._reliablemeas_14c4_value == 0):
-            mode = _Const.DCCT.Avg
-        elif self._reliablemeas_13c4_value == 0:
+        if self._reliablemeas_13c4_value == 0:
             mode = _Const.DCCT.DCCT13C4
         elif self._reliablemeas_14c4_value == 0:
             mode = _Const.DCCT.DCCT14C4
@@ -485,7 +509,7 @@ class SICurrInfoApp(_CurrInfoApp):
             mode = self._dcct_mode
         if mode != self._dcct_mode:
             self._dcct_mode = mode
-            self.run_callbacks('DCCT-Sts', self._dcct_mode)
+            self.run_callbacks('SI-Glob:AP-CurrInfo:DCCT-Sts', self._dcct_mode)
 
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
@@ -510,7 +534,8 @@ class SICurrInfoApp(_CurrInfoApp):
         self._current_value = current
 
         # update pvs
-        self.run_callbacks('Current-Mon', self._current_value)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:Current-Mon', self._current_value)
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
         _ = kws
@@ -519,14 +544,12 @@ class SICurrInfoApp(_CurrInfoApp):
         elif '14C4' in pvname:
             self._storedebeam_14c4_value = value
 
-        if self._dcct_mode == _Const.DCCT.Avg:
-            self._storedebeam_value = (self._storedebeam_13c4_value and
-                                       self._storedebeam_14c4_value)
-        elif self._dcct_mode == _Const.DCCT.DCCT13C4:
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
             self._storedebeam_value = self._storedebeam_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             self._storedebeam_value = self._storedebeam_14c4_value
-        self.run_callbacks('StoredEBeam-Mon', self._storedebeam_value)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:StoredEBeam-Mon', self._storedebeam_value)
 
     def _callback_get_reliablemeas(self, pvname, value, **kws):
         _ = kws
@@ -544,11 +567,31 @@ class SICurrInfoApp(_CurrInfoApp):
 
     def _callback_get_bo_curr3gev(self, value, timestamp, **kws):
         """Get BO Current3GeV-Mon and update InjEff PV."""
+        _ = value
         _ = kws
         _ = timestamp
+        self._thread = _Thread(target=self._update_injeff, daemon=True)
+        self._thread.start()
+
+    def _callback_get_injcount(self, value, **kws):
+        _ = kws
+        if value == 0:
+            self._injcount = 0
+        else:
+            if self._eg_trigps_pv.value:
+                self._injcount += 1
+        self.run_callbacks('AS-Glob:AP-CurrInfo:InjCount-Mon', self._injcount)
+
+    def _update_injeff(self):
+        # Sleep some time here to ensure SI DCCT will have been updated
+        _time.sleep(0.11)
+
+        # get booster current
+        bo_curr = self._bo_curr3gev_pv.value
+
         # choose current PV
         buffer = self._current_13c4_buffer \
-            if self._dcct_mode in [_Const.DCCT.Avg, _Const.DCCT.DCCT13C4] \
+            if self._dcct_mode == _Const.DCCT.DCCT13C4 \
             else self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
         timestamp_dq = _np.asarray(timestamp_dq)
@@ -559,26 +602,20 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # check if there is valid current in Booster
-        if value < self.CURR_THRESHOLD:
+        if bo_curr < self.CURR_THRESHOLD:
             return
 
         # calculate efficiency
         delta_curr = value_dq[-1] - _np.min(value_dq)
-        self._injeff = 100*(delta_curr/value) * self.HARMNUM_RATIO
+        self._injeff = 100*(delta_curr/bo_curr) * self.HARMNUM_RATIO
 
         # update pvs
-        self.run_callbacks('InjEff-Mon', self._injeff)
+        self.run_callbacks('SI-Glob:AP-CurrInfo:InjEff-Mon', self._injeff)
 
     # ----- auxiliar methods -----
 
     def _get_current(self):
-        if self._dcct_mode == _Const.DCCT.Avg:
-            if (self._current_13c4_value is not None and
-                    self._current_14c4_value is not None):
-                current = (self._current_13c4_value+self._current_14c4_value)/2
-            else:
-                current = None
-        elif self._dcct_mode == _Const.DCCT.DCCT13C4:
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
             current = self._current_13c4_value
         elif self._dcct_mode == _Const.DCCT.DCCT14C4:
             current = self._current_14c4_value

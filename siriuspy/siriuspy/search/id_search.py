@@ -20,7 +20,7 @@ class IDSearch:
         'EMA':      'SI-08SB:ID-APU22',
         'MANACA':   'SI-09SA:ID-APU22',
         'SABIA':    'SI-10SB:ID-Delta52',
-        'IPE':      'SI-11SP:ID-Delta52',
+        'IPE':      'SI-11SP:ID-APU58',
         'COLIBRI':  'SI-12SB:ID-Delta52',
         'HARPIA':   'SI-14SB:ID-Delta21',
         'SAGUI':    'SI-15SP:ID-Delta21',
@@ -30,18 +30,9 @@ class IDSearch:
     }
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
 
-    _idname_2_orbitcorr = {
-        'SI-09SA:ID-APU22': (
-            'SI-09SA:PS-CH-1', 'SI-09SA:PS-CH-2',
-            'SI-09SA:PS-CH-3', 'SI-09SA:PS-CH-4',
-            'SI-09SA:PS-CV-1', 'SI-09SA:PS-CV-2',
-            'SI-09SA:PS-CV-3', 'SI-09SA:PS-CV-4',
-        )
-    }
+    _idname_2_orbitcorr = {}
 
-    _idname_2_orbitffwd_fname = {
-        'SI-09SA:ID-APU22': 'si-id-apu22-ffwd-09sa',
-    }
+    _idname_2_orbitffwd_fname = {}
 
     _idname_2_orbitffwd_dict = dict()
 

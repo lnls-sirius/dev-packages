@@ -5,7 +5,7 @@ import time as _time
 from .device import DeviceNC as _DeviceNC
 
 
-class LLRF(_DeviceNC):
+class LILLRF(_DeviceNC):
     """."""
 
     class DEVICES:
@@ -23,11 +23,11 @@ class LLRF(_DeviceNC):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in LLRF.DEVICES.ALL:
+        if devname not in LILLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=LLRF._properties)
+        super().__init__(devname, properties=LILLRF._properties)
 
     @property
     def amplitude(self):

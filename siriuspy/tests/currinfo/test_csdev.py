@@ -36,18 +36,21 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertIsInstance(dbase, dict)
 
         # PV names
-        self.assertTrue('Version-Cte' in dbase)
-        self.assertTrue('Current-Mon' in dbase)
-        self.assertTrue('StoredEBeam-Mon' in dbase)
-        self.assertTrue('DCCT-Sel' in dbase)
-        self.assertTrue('DCCT-Sts' in dbase)
-        self.assertTrue('DCCTFltCheck-Sel' in dbase)
-        self.assertTrue('DCCTFltCheck-Sts' in dbase)
-        self.assertTrue('Charge-Mon' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:Version-Cte' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:Current-Mon' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:StoredEBeam-Mon' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:DCCT-Sel' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:DCCT-Sts' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts' in dbase)
+        self.assertTrue('SI-Glob:AP-CurrInfo:Charge-Mon' in dbase)
+        self.assertTrue('AS-Glob:AP-CurrInfo:InjCount-Mon' in dbase)
 
         # PVs units
-        self.assertEqual(dbase['Current-Mon']['unit'], 'mA')
-        self.assertEqual(dbase['Charge-Mon']['unit'], 'A.h')
+        self.assertEqual(
+            dbase['SI-Glob:AP-CurrInfo:Current-Mon']['unit'], 'mA')
+        self.assertEqual(
+            dbase['SI-Glob:AP-CurrInfo:Charge-Mon']['unit'], 'A.h')
 
         # ---- BO ----
         dbase = get_currinfo_database('BO')

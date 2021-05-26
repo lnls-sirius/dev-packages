@@ -4,11 +4,12 @@ import time as _time
 
 import numpy as _np
 
-from mathphys.functions import get_namedtuple as _get_namedtuple, \
-    save_pickle as _save_pickle, load_pickle as _load_pickle
+from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, Devices as _Devices, \
+    ProptyDevice as _ProptyDevice
 from .dcct import DCCT
+from .rf import RFCav
 
 
 class BunchbyBunch(_Devices):
@@ -24,6 +25,7 @@ class BunchbyBunch(_Devices):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
+        self.rfcav = RFCav(RFCav.DEVICES.SI)
         self.info = SystemInfo(devname)
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
@@ -35,7 +37,8 @@ class BunchbyBunch(_Devices):
         self.fbe = FrontBackEnd()
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct]
+            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
+            self.rfcav]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
@@ -56,26 +59,6 @@ class BunchbyBunch(_Devices):
         else:
             raise NotImplementedError(devname)
         return devname
-
-    def save_raw_data(self, fname, acqtype='SRAM', overwrite=False):
-        """Save Raw data to file."""
-        acqtype = acqtype.upper()
-        acq = self.sram if acqtype in 'SRAM' else self.bram
-
-        data = dict(
-            current=self.dcct.current,
-            acqtype=acqtype, downsample=acq.downsample,
-            data=acq.data_raw, rf_freq=self.info.rf_freq_nom,
-            harmonic_number=self.info.harmonic_number,
-            growth_time=acq.growthtime, acq_time=acq.acqtime,
-            hold_time=acq.holdtime, post_time=acq.posttime,
-            )
-        _save_pickle(data, fname, overwrite=overwrite)
-
-    @staticmethod
-    def load_raw_data(fname):
-        """Load Raw data from file."""
-        return _load_pickle(fname)
 
     def sweep_phase_shifter(self, values, wait=2, mon_type='mean'):
         """Sweep Servo Phase for each `value` in `values`."""
@@ -172,6 +155,26 @@ class BunchbyBunch(_Devices):
             print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.coeffs.edit_phase = init_val
         self.coeffs.cmd_edit_apply()
+        return _np.array(mon_values)
+
+    def sweep_rf_phase(self, values, wait=2, mon_type='mean'):
+        """Sweep RF Phase for each `value` in `values`."""
+        mon_values = []
+        ctrl, mon = 'RF Phase', 'SRAM Mean'
+        print(f'Idx: {ctrl:15s} {mon:15s}')
+
+        llrf = self.rfcav.dev_llrf
+        init_val = llrf.phase
+        for i, val in enumerate(values):
+            self.rfcav.cmd_set_phase(val)
+            _time.sleep(wait)
+            if mon_type.lower() in 'mean':
+                mon_val = self.sram.data_mean
+            else:
+                mon_val = self.sram.spec_marker1_mag
+            mon_values.append(mon_val)
+            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+        llrf.value = init_val
         return _np.array(mon_values)
 
 
@@ -654,23 +657,6 @@ class Coefficients(_Device):
         self['BO_CVERIFY'] = 1
 
 
-class _ProptyDevice(_Device):
-
-    def __init__(self, devname, propty_prefix, properties):
-        """."""
-        self._propty_prefix = propty_prefix
-        # call base class constructor
-        super().__init__(devname, properties=properties)
-
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
-            pvname = func(propty=self._propty_prefix + propty)
-        else:
-            pvname = self._propty_prefix + propty
-        return pvname
-
-
 class Acquisition(_ProptyDevice):
     """."""
 
@@ -853,9 +839,21 @@ class Acquisition(_ProptyDevice):
         """."""
         return self['POST_TURNS']
 
-    def cmd_data_dump(self):
+    def cmd_data_acquire(self, timeout=None):
+        """."""
+        self.acq_enbl = 1
+        if timeout is None:
+            timeout = Acquisition.DEF_TIMEOUT
+        if timeout > 0:
+            self._wait('ACQ_EN', 1, timeout=None)
+
+    def cmd_data_dump(self, timeout=None):
         """."""
         self['DUMP'] = 1
+        if timeout is None:
+            timeout = Acquisition.DEF_TIMEOUT
+        if timeout > 0:
+            self.wait_data_dump(timeout)
 
     def wait_data_dump(self, timeout=None):
         """."""
