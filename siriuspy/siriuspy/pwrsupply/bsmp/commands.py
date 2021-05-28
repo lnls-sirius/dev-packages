@@ -11,16 +11,11 @@ import numpy as _np
 from ...bsmp import constants as _const_bsmp
 from ...bsmp import BSMP as _BSMP
 
-from ..csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
-from ..pructrl.pru import PRU as _PRU
-
 from . import constants as _const_psbsmp
 from . import entities as _etity_psbsmp
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
-
 
 class PSBSMP(_BSMP):
     """Power supply BSMP.
@@ -529,7 +524,7 @@ class FBP(PSBSMP):
 
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFBP
-    _ACK_OK = _np.zeros(_UDC_MAX_NR_DEV, dtype=int)
+    _ACK_OK = _np.zeros(_const_psbsmp.UDC_MAX_NR_DEV, dtype=int)
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""

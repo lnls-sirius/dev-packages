@@ -14,6 +14,8 @@ from ...bsmp import constants as _const_bsmp
 
 __version__ = 'FRWM - V1.36 V0.41u - 09/04/2020'
 
+# maximum number of power supplies controlled with a UDC
+UDC_MAX_NR_DEV = 4
 
 # --- Const DCDC ---
 
