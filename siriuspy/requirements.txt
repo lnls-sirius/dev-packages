@@ -1,7 +1,8 @@
-numpy>=1.18
+aiohttp
 bottleneck>=1.3.2
+mathphys>=2.1.1
+numpy>=1.18
 pyepics>=3.4.0
 python-dateutil>=2.8.1
 requests>=2.22.0
 six>=1.13.0
-mathphys>=2.1.1
