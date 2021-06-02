@@ -1,12 +1,37 @@
 """BSMP serial communications classes."""
-
+import abc
 import struct as _struct
+import typing
 from threading import Lock as _Lock
 
-from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
-from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
+from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrMsgShort as _SerialErrMsgShort
+from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
+
+
+class IOInterface(metaclass=abc.ABCMeta):
+    """Base class for I/O"""
+
+    @abc.abstractmethod
+    def open(self) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def close(self) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def UART_read(self) -> typing.List[str]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def UART_write(self, stream, timeout: float) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def UART_request(self, stream, timeout: float) -> typing.Optional[typing.List[str]]:
+        raise NotImplementedError
 
 
 class Message:
@@ -20,19 +45,19 @@ class Message:
     # TODO: indicate somehow that stream is a char stream.
 
     # Constructors
-    def __init__(self, stream):
+    def __init__(self, stream: typing.List[str]):
         """Build a BSMP message."""
         if len(stream) < 3:
             raise _SerialErrMsgShort("BSMP Message too short.")
-        self._stream = stream
-        self._cmd = ord(stream[0])
+        self._stream: typing.List[str] = stream
+        self._cmd: int = ord(stream[0])
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare messages."""
         return self._stream == other.stream
 
     @classmethod
-    def message(cls, cmd, payload=None):
+    def message(cls, cmd: int, payload: typing.List[str]):
         """Build a Message object from a byte stream."""
         if payload and not isinstance(payload, list):
             # TODO: should be create serial exceptions here too?
@@ -41,7 +66,7 @@ class Message:
             # TODO: should be create serial exceptions here too?
             raise ValueError("Load must be smaller than 65535.")
 
-        stream = []
+        stream: typing.List[str] = []
 
         if not payload:
             payload = []
@@ -65,7 +90,7 @@ class Message:
         return self._cmd
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Load size."""
         return _struct.unpack('>H', bytes(map(ord, self._stream[1:3])))[0]
 
@@ -83,21 +108,24 @@ class Package:
     Checksum: package checksum
     """
 
-    def __init__(self, stream):
+    def __init__(
+        self,
+        stream: typing.List[str]
+    ):
         """Build a BSMP package."""
         if len(stream) < 5:
             raise _SerialErrPckgLen("BSMP Package too short.")
         if not Package.verify_checksum(stream):
-            # print('resp: ', [hex(ord(c)) for c in stream])
             raise _SerialErrCheckSum(
                 "Inconsistent message. Checksum does not check.")
-        self._stream = stream
-        self._address = ord(stream[0])  # 0 to 31
-        self._message = Message(stream[1:-1])
-        self._checksum = ord(stream[-1])
+
+        self._stream: typing.List[str] = stream
+        self._address: int = ord(stream[0])  # 0 to 31
+        self._message: Message = Message(stream[1:-1])
+        self._checksum: int = ord(stream[-1])
 
     @classmethod
-    def package(cls, address, message):
+    def package(cls, address, message: Message):
         """Build a Package object from a byte stream."""
         # Return new package
         stream = []
@@ -109,27 +137,27 @@ class Package:
 
     # API
     @property
-    def stream(self):
+    def stream(self) -> typing.List[str]:
         """Stream."""
         return self._stream
 
     @property
-    def address(self):
+    def address(self) -> int:
         """Receiver node serial address."""
         return self._address
 
     @property
-    def message(self):
+    def message(self) -> Message:
         """Return package message."""
         return self._message
 
     @property
-    def checksum(self):
+    def checksum(self) -> int:
         """Return package checksum."""
         return self._checksum
 
     @staticmethod
-    def calc_checksum(stream):
+    def calc_checksum(stream) -> int:
         """Return stream checksum."""
         streambytes = [ord(s) for s in stream]
         counter = sum(streambytes)
@@ -138,7 +166,7 @@ class Package:
         return counter
 
     @staticmethod
-    def verify_checksum(stream):
+    def verify_checksum(stream: typing.List[str]) -> bool:
         """Verify stream checksum."""
         streambytes = [ord(s) for s in stream[:-1]]
         counter = sum(streambytes)
@@ -158,92 +186,80 @@ class Channel:
     """
 
     # TODO: should we remove use of default timeout values. It is dangerous!
-    LOCK = None
+    LOCK: typing.Optional[_Lock] = None
 
-    def __init__(self, pru, address):
+    def __init__(self, pru: IOInterface, address: int):
         """Set channel."""
-        self._pru = pru  # PRU object to communicate with bsmp device
-        self._address = address  # address of recipient device.
-        self._size_counter = 0  # stream size counter [bytes]
+        self._pru: IOInterface = pru  # PRU object to communicate with bsmp device
+        self._address: int = address  # address of recipient device.
+        self._size_counter: int = 0  # stream size counter [bytes]
 
     @property
-    def pru(self):
+    def pru(self) -> IOInterface:
         """Reurn PRU serial communication object."""
         return self._pru
 
     @property
-    def address(self):
+    def address(self) -> int:
         """Return attached bsmp device id."""
         return self._address
 
     @property
-    def size_counter(self):
+    def size_counter(self) -> int:
         """Return stream size of last request."""
         return self._size_counter
 
-    def size_counter_reset(self):
+    def size_counter_reset(self) -> None:
         """Reset stream size counter."""
         self._size_counter = 0
 
-    def read(self):
+    def read(self) -> Message:
         """Read from serial."""
         resp = self.pru.UART_read()
-        # print('read resp ({}): '.format(
-        #     len(resp)), [hex(ord(c)) for c in resp])
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
         self._size_counter += len(package.stream)
         return package.message
 
-    def write(self, message, timeout=100):
+    def write(self, message: Message, timeout: float = 100):
         """Write to serial."""
         stream = Package.package(self._address, message).stream
-        # print('write query : ', [hex(ord(c)) for c in stream])
         response = self.pru.UART_write(stream, timeout=timeout)
         self._size_counter += len(stream)
         return response
 
-    def request_(self, message, timeout=100):
+    def request_(self, message: Message, timeout: float = 100) -> Message:
         """."""
         stream = Package.package(self._address, message).stream
-        # print('write query : ', [hex(ord(c)) for c in stream])
-        
+
         if Channel.LOCK is None:
             response = self.pru.UART_request(stream, timeout=timeout)
         else:
             with Channel.LOCK:
                 response = self.pru.UART_request(stream, timeout=timeout)
-        # response = self.pru.UART_request(stream, timeout=timeout)
 
         self._size_counter += len(stream)
 
         if not response:
             raise _SerialErrEmpty("Serial read returned empty!")
+
         package = Package(response)
         self._size_counter += len(package.stream)
         return package.message
 
-    def request(self, message, timeout=100, read_flag=True):
+    def request(self, message: Message, timeout: float = 100, read_flag: bool = True) -> typing.Optional[Message]:
         """Write and wait for response."""
-        # if message.cmd == 0x50:
-        # print('[request]')
-        # print('address : {}'.format(self.address))
-        # print('cmd     : 0x{:02X}'.format(message.cmd))
-        # print('payload : {}'.format([ord(c) for c in message.payload]))
-        # print()
+        response: typing.Optional[Message] = None
 
-        # if message.cmd not in (0x32, 0x30):
-        #     while True:
-        #         pass
         if read_flag:
             response = self.request_(message, timeout)
         else:
             self.write(message, timeout)
-            response = None
+
         return response
 
     @staticmethod
-    def create_lock():
+    def create_lock() -> None:
         """."""
         Channel.LOCK = _Lock()
