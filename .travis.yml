@@ -15,13 +15,9 @@ script:
   - cd ../
   - cd siriuspy
   - python setup.py test
-  - git describe --tags | sed -e 's/^v//g' > siriuspy/VERSION
-deploy:
-  provider: pypi
-  edge: true
-  username: __token__
-  password:
-    secure: "nF66cvnnkQOD7mzeEUYq5B5aatBcW7mm99ekjjtq35JwP9HuifmnzzSBPvx9WEa3jBFjjIeNxE/Picfg2V9QNEL2REL9elbtqdmWJuJGJp3Ytz9JZ4uSOiMwAcg1SNr9MOs0U0fnuIyeJ+Mq5NV+HaetdhPhVdPED3HH7Y2FBQLJUjCfDJ7IC+M+ZgN8YSVR+fgv+fTZiYleuKXi1aOl5K+NfLscxbyZFQxQ8hCBKBhwfeMRq8CuLDOyePujr4cT2y08cOz2o4pAitpam/1rWegDghxgwcQ/HuWqpMS5G/OUYl8y7TGFMGSifnhsqMRvccn+b8M5QF447P5QwlMLR3bExzF5eolJah/7aVTJV20srklmeqaXGKscLmS8SUrzpWWLGdnRSOwNqQZmW8Ij2oqRv5ByImLJaGH1anBSDPLvZYCdrQvy8yR3oeV86XJKnjASlXM5PMoQSBcC1AwlaukOb3RVhyrvS2b+YrbL6v+62jSQRWjvOel6cwMsyUmlrTdS+biNN0Gei6KsHWhI2DFMFy5eWUxDw/8hSUt+T7b9krULLj1Mmv4rqipCUQzaaujDFWKZ9ZXSbzSIMcBruztcrGnlbenf050SylVes4F+KjiFGXsXMdffXgBVn/FhP0o9QE0KTr6kx9jAeIx0ctn6VM/u0fBvkOqLSqxI5No="
-  on:
-    tags: true
-    branch: PR-pypi-support
+
+# safelist
+branches:
+  only:
+  - master
+
