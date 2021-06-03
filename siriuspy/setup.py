@@ -2,8 +2,8 @@
 
 """Siriuspy setup script."""
 
-from setuptools import setup, find_namespace_packages, find_packages
 import pkg_resources
+from setuptools import find_packages, setup
 
 
 def get_abs_path(relative):
