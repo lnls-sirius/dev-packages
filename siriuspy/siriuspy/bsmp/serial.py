@@ -57,7 +57,7 @@ class Message:
         return self._stream == other.stream
 
     @classmethod
-    def message(cls, cmd: int, payload: typing.List[str]):
+    def message(cls, cmd: int, payload: typing.Optional[typing.List[str]] = None):
         """Build a Message object from a byte stream."""
         if payload and not isinstance(payload, list):
             # TODO: should be create serial exceptions here too?

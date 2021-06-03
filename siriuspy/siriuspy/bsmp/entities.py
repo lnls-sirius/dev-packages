@@ -16,7 +16,7 @@ class Entity:
         else:
             return [chr(c) for c in _struct.pack(fmt, value)]
 
-    def _check_type(self, var_type: BSMPType, value):
+    def _check_type(self, var_type: BSMPType, value: typing.Union[str, int, float]):
         if not var_type.check(value):
             raise TypeError("{}, {}".format(var_type.type, value))
 
