@@ -57,7 +57,7 @@ class Entity:
     def _conv_load_to_value(
         self,
         var_types: typing.Tuple[BSMPType],
-        load: typing.List
+        load: typing.List[str]
     ):
         # NOTE: optimize this critical function!
         _load = list(map(ord, load))
@@ -131,16 +131,20 @@ class VariablesGroup(Entity):
             offset += variable.size
         return value
 
-    def value_to_load(self, value):
+    def value_to_load(
+        self,
+        value: typing.List
+    ) -> typing.List[str]:
         """Parse load from value."""
         if len(value) != self.size:
+            # Value list must match the amount of variables
             return []
-        load = list()
+        load: typing.List[str] = []
         for i, variable in enumerate(self.variables):
             load.extend(variable.value_to_load(value[i]))
         return load
 
-    def variables_size(self):
+    def variables_size(self) -> int:
         """Return sum of variables size."""
         size = 0
         for variable in self.variables:
@@ -182,9 +186,9 @@ class Curve(Entity):
                 break
         return values
 
-    def value_to_load(self, value):
+    def value_to_load(self, value) -> typing.List[str]:
         """Convert curve block number to load."""
-        load = []
+        load: typing.List[str] = []
         for idx, val in enumerate(value):
             self._check_type(self._var_types[idx], val)
             load += self._conv_value(self._var_types[idx].fmt, val)
@@ -226,7 +230,7 @@ class Function(Entity):
         self.o_size: int = o_size  # 0..32
         self.o_type: typing.Tuple[BSMPType] = o_type
 
-    def load_to_value(self, load):  # Parse output_size
+    def load_to_value(self, load: typing.Optional[typing.List[str]]):  # Parse output_size
         """Parse value from load."""
         if load is None or not load:
             return None
@@ -259,7 +263,8 @@ class Entities:
             var_type = variable['var_type']
             count = variable['count']
             self.variables.append(
-                Variable(var_id, waccess, var_type, count))
+                Variable(var_id, waccess, var_type, count)
+            )
 
         # Standard groups
         self._groups: typing.List[VariablesGroup] = []

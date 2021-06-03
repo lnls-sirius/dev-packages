@@ -26,7 +26,7 @@ class IOInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def UART_write(self, stream, timeout: float) -> None:
+    def UART_write(self, stream, timeout: float) -> typing.Optional[typing.Any]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -57,7 +57,11 @@ class Message:
         return self._stream == other.stream
 
     @classmethod
-    def message(cls, cmd: int, payload: typing.Optional[typing.List[str]] = None):
+    def message(
+        cls,
+        cmd: int,
+        payload: typing.Optional[typing.List[str]] = None
+    ):
         """Build a Message object from a byte stream."""
         if payload and not isinstance(payload, list):
             # TODO: should be create serial exceptions here too?
@@ -80,12 +84,12 @@ class Message:
 
     # API
     @property
-    def stream(self):
+    def stream(self) -> typing.List[str]:
         """Return stream."""
         return self._stream
 
     @property
-    def cmd(self):
+    def cmd(self) -> int:
         """Command ID."""
         return self._cmd
 
@@ -95,7 +99,7 @@ class Message:
         return _struct.unpack('>H', bytes(map(ord, self._stream[1:3])))[0]
 
     @property
-    def payload(self):
+    def payload(self) -> typing.List[str]:
         """Message payload."""
         return self._stream[3:]
 
@@ -125,10 +129,10 @@ class Package:
         self._checksum: int = ord(stream[-1])
 
     @classmethod
-    def package(cls, address, message: Message):
+    def package(cls, address: int, message: Message):
         """Build a Package object from a byte stream."""
         # Return new package
-        stream = []
+        stream: typing.List[str] = []
         stream.append(chr(address))
         stream.extend(message.stream)
         chksum = cls.calc_checksum(stream)
