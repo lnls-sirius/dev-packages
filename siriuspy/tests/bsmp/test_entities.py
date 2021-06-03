@@ -2,18 +2,17 @@
 
 """Test entities module."""
 
-from unittest import TestCase
 import struct
+from unittest import TestCase
 
-from siriuspy.bsmp import Types
-from siriuspy.bsmp import Variable, VariablesGroup, Function
+from siriuspy.bsmp import Function, Types, Variable, VariablesGroup
 from siriuspy.util import check_public_interface_namespace
 
 
 class TestBSMPVariable(TestCase):
     """Test Variable class."""
 
-    api = ('load_to_value', 'value_to_load')
+    api = ("load_to_value", "value_to_load")
 
     def test_api(self):
         """Test API."""
@@ -22,20 +21,20 @@ class TestBSMPVariable(TestCase):
     def test_int_value_to_load(self):
         """Test value to load method."""
         value = 10
-        expected_load = [chr(b) for b in struct.pack('<b', 10)]
+        expected_load = [chr(b) for b in struct.pack("<b", 10)]
         var = Variable(1, False, Types.T_UINT8, 1)
         self.assertEqual(var.value_to_load(value), expected_load)
 
     def test_float_value_to_load(self):
         """Test value to load method."""
         value = 10.5
-        expected_load = [chr(b) for b in struct.pack('<f', value)]
+        expected_load = [chr(b) for b in struct.pack("<f", value)]
         var = Variable(1, False, Types.T_FLOAT, 1)
         self.assertEqual(var.value_to_load(value), expected_load)
 
     def test_string_value_to_load(self):
         """Test value to load method."""
-        value = 'V0.07 2018-03-14V0.07 2018-03-14'
+        value = "V0.07 2018-03-14V0.07 2018-03-14"
 
         expected_load = ['V', '0', '.', '0', '7', ' ', '2', '0', '1', '8', '-',
                          '0', '3', '-', '1', '4', 'V', '0', '.', '0', '7', ' ',
@@ -65,7 +64,7 @@ class TestBSMPVariable(TestCase):
         value = [1.0, 2.0, 3.0, 4.0]
         expected_load = []
         for v in value:
-            expected_load.extend(list(map(chr, struct.pack('<f', v))))
+            expected_load.extend(list(map(chr, struct.pack("<f", v))))
         var = Variable(1, False, Types.T_FLOAT, 4)
         self.assertEqual(var.value_to_load(value), expected_load)
 
@@ -78,7 +77,7 @@ class TestBSMPVariable(TestCase):
 
     def test_float_load_to_value(self):
         """Test load to value conversion method."""
-        load = [chr(v) for v in struct.pack('<f', 10.5)]
+        load = [chr(v) for v in struct.pack("<f", 10.5)]
         expected_value = 10.5
         var = Variable(1, False, Types.T_FLOAT, 1)
         self.assertEqual(var.load_to_value(load), expected_value)
@@ -118,12 +117,12 @@ class TestBSMPVariablesGroup(TestCase):
     """Test VariablesGroup class."""
 
     api = (
-        'ALL',
-        'READ_ONLY',
-        'WRITEABLE',
-        'load_to_value',
-        'value_to_load',
-        'variables_size'
+        "ALL",
+        "READ_ONLY",
+        "WRITEABLE",
+        "load_to_value",
+        "value_to_load",
+        "variables_size",
     )
 
     def setUp(self):
@@ -141,8 +140,7 @@ class TestBSMPVariablesGroup(TestCase):
 
     def test_api(self):
         """Test API."""
-        self.assertTrue(
-            check_public_interface_namespace(VariablesGroup, self.api))
+        self.assertTrue(check_public_interface_namespace(VariablesGroup, self.api))
 
     def _conv_value(self, fmt, value):
         return list(map(chr, struct.pack(fmt, value)))
@@ -182,7 +180,7 @@ class TestWfmCurve(TestCase):
 class TestBSMPFunction(TestCase):
     """Test Function class."""
 
-    api = ('value_to_load', 'load_to_value')
+    api = ("value_to_load", "load_to_value")
 
     def test_api(self):
         """Test API."""
@@ -210,8 +208,7 @@ class TestBSMPFunction(TestCase):
 
     def test_null_value_to_load(self):
         """Test empty list is returned."""
-        ret = \
-            Function(1, [Types.T_UINT16], [Types.T_UINT16]).value_to_load(None)
+        ret = Function(1, [Types.T_UINT16], [Types.T_UINT16]).value_to_load(None)
         self.assertEqual(ret, [])
 
     def test_strange_value_to_load(self):
@@ -224,14 +221,14 @@ class TestBSMPFunction(TestCase):
     def test_int_value_to_load(self):
         """Test value to load method."""
         value = 10
-        expected_load = [chr(b) for b in struct.pack('<b', 10)]
+        expected_load = [chr(b) for b in struct.pack("<b", 10)]
         func = Function(1, [Types.T_UINT8], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(value), expected_load)
 
     def test_float_value_to_load(self):
         """Test value to load method."""
         value = 10.5
-        expected_load = [chr(b) for b in struct.pack('<f', value)]
+        expected_load = [chr(b) for b in struct.pack("<f", value)]
         func = Function(1, [Types.T_FLOAT], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(value), expected_load)
 
@@ -249,21 +246,20 @@ class TestBSMPFunction(TestCase):
         value = [1.0, 2.0]
         expected_load = []
         for v in value:
-            expected_load.extend(list(map(chr, struct.pack('<f', v))))
+            expected_load.extend(list(map(chr, struct.pack("<f", v))))
         func = Function(1, [Types.T_FLOAT, Types.T_FLOAT], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(value), expected_load)
 
     def test_composite_value_to_load(self):
         """Test value to load method when there are many types involved."""
         values = [2032018, 15.41]
-        load = ['\x92', '\x01', '\x1f', '\x00', '\\', '\x8f', 'v', 'A']
+        load = ["\x92", "\x01", "\x1f", "\x00", "\\", "\x8f", "v", "A"]
         func = Function(1, [Types.T_UINT32, Types.T_FLOAT], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(values), load)
 
     def test_null_load_to_value(self):
         """Test empty list is returned."""
-        ret = \
-            Function(1, [Types.T_UINT8], [Types.T_UINT8]).load_to_value(None)
+        ret = Function(1, [Types.T_UINT8], [Types.T_UINT8]).load_to_value(None)
         self.assertIsNone(ret)
 
     def test_empty_load_to_value(self):
@@ -280,7 +276,7 @@ class TestBSMPFunction(TestCase):
 
     def test_float_load_to_value(self):
         """Test load to value conversion method."""
-        load = [chr(v) for v in struct.pack('<f', 10.5)]
+        load = [chr(v) for v in struct.pack("<f", 10.5)]
         expected_value = 10.5
         func = Function(1, [Types.T_UINT8], [Types.T_FLOAT])
         self.assertEqual(func.load_to_value(load), expected_value)
@@ -297,7 +293,7 @@ class TestBSMPFunction(TestCase):
 
     def test_arr_float_load_to_value(self):
         """Test load to value conversion method."""
-        load = ['\x00', '\x00', '\x80', '?', '\x00', '\x00', '\x00', '\x00']
+        load = ["\x00", "\x00", "\x80", "?", "\x00", "\x00", "\x00", "\x00"]
         expected_value = [1.0, 0.0]
         func = Function(1, [Types.T_UINT8], [Types.T_FLOAT, Types.T_FLOAT])
         self.assertEqual(func.load_to_value(load), expected_value)
@@ -305,7 +301,7 @@ class TestBSMPFunction(TestCase):
     def test_composite_load_to_value(self):
         """Test load to value when there are many types involved."""
         values = [2032018, 15.409999847]
-        load = ['\x92', '\x01', '\x1f', '\x00', '\\', '\x8f', 'v', 'A']
+        load = ["\x92", "\x01", "\x1f", "\x00", "\\", "\x8f", "v", "A"]
         func = Function(1, [Types.T_UINT8], [Types.T_UINT32, Types.T_FLOAT])
         self.assertEqual(func.load_to_value(load)[0], values[0])
         self.assertAlmostEqual(func.load_to_value(load)[1], values[1])
