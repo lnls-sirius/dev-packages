@@ -12,7 +12,7 @@ from siriuspy.util import check_public_interface_namespace
 class TestBSMPVariable(TestCase):
     """Test Variable class."""
 
-    api = ("load_to_value", "value_to_load")
+    api = ('load_to_value', 'value_to_load')
 
     def test_api(self):
         """Test API."""
