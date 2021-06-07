@@ -38,7 +38,7 @@ class Entity:
 
     def _conv_value_to_load(
         self,
-        var_types: typing.Tuple[BSMPType],
+        var_types: typing.Union[typing.Tuple[BSMPType], typing.List[BSMPType]],
         size: int,
         values: typing.Union[str, typing.List[str]]
     ) -> typing.List[str]:
@@ -56,9 +56,9 @@ class Entity:
 
     def _conv_load_to_value(
         self,
-        var_types: typing.Tuple[BSMPType],
+        var_types: typing.Union[typing.Tuple[BSMPType], typing.List[BSMPType]],
         load: typing.List[str]
-    )-> typing.Union[str, float, int, typing.List[typing.Union[str, float, int]]]:
+    ) -> typing.Union[str, float, int, typing.List[typing.Union[str, float, int]]]:
         """Return a value or a list of values unpacked according to the BMSPType.fmt"""
         # NOTE: optimize this critical function!
         _load = list(map(ord, load))
@@ -122,9 +122,9 @@ class VariablesGroup(Entity):
         self.size: int = len(variables)
         self.variables: typing.List[Variable] = variables
 
-    def load_to_value(self, load: typing.List[str]) -> typing.List[typing.Union[str,float,int]]:
+    def load_to_value(self, load: typing.List[str]) -> typing.List[typing.Union[str, float, int]]:
         """Parse value from load."""
-        value: typing.List[typing.Union[str,float,int]] = []
+        value: typing.List[typing.Union[str, float, int]] = []
         offset = 0
         for variable in self.variables:
             i, j = offset, offset + variable.size
@@ -253,7 +253,7 @@ class Entities:
         self,
         variables: typing.Tuple[typing.Union[Variable, typing.Dict[str, typing.Any]]],
         curves: typing.Tuple[typing.Union[Curve, typing.Dict[str, typing.Any]]],
-        functions: typing.Tuple[typing.Union[Function,typing.Dict[str, typing.Any]]]
+        functions: typing.Tuple[typing.Union[Function, typing.Dict[str, typing.Any]]]
     ):
         """Constructor."""
         # Get variables

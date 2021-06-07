@@ -388,7 +388,7 @@ class BSMP:
         timeout: float = _timeout_execute_function,
         read_flag: bool = True,
         print_error: bool = True
-    ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.List[str]]]]:
+    ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.Union[typing.List[str], str]]]]:
         """Execute a function.
 
         parameter:
