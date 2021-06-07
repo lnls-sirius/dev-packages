@@ -39,6 +39,6 @@ setup(
     package_data={"siriuspy": ["VERSION"]},
     include_package_data=True,
     test_suite="tests",
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     zip_safe=False,
 )
