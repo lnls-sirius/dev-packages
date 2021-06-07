@@ -246,7 +246,7 @@ class TestBSMPFunction(TestCase):
         value = [1.0, 2.0]
         expected_load = []
         for v in value:
-            expected_load.extend(list(map(chr, struct.pack("<f", v))))
+            expected_load.extend(list(map(chr, struct.pack('<f', v))))
         func = Function(1, [Types.T_FLOAT, Types.T_FLOAT], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(value), expected_load)
 

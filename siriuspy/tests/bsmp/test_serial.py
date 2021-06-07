@@ -134,7 +134,7 @@ class TestBSMPPackage(TestCase):
 
     def test_parse_small_stream(self):
         """Test constructor that tries to parse strem smaller than 5."""
-        stream = ["\x02", "\x00", "\x00", chr(254)]
+        stream = ['\x02', '\x00', '\x00', chr(254)]
         with self.assertRaises(SerialErrPckgLen):
             Package(stream)
 
