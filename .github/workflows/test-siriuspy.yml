@@ -1,0 +1,52 @@
+name: Test siriuspy
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install linter and test libs
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest-testinfra
+
+      - name: Install eth-bridge-pru-serial485
+        run: |
+          git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
+          cd eth-bridge-pru-serial485/client
+          python setup.py install
+          cd ../../
+
+      - name: Install mathphys
+        run: |
+          git clone https://github.com/lnls-fac/mathphys.git
+          cd mathphys
+          python setup.py install
+          cd ../
+
+      - name: Install requirements
+        run: |
+          cd siriuspy
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 siriuspy --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 siriuspy --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          pytest tests/
