@@ -20,11 +20,11 @@ class TestBSMPMessage(TestCase):
     """Test BSMP Message class."""
 
     api = (
-        "message",
-        "stream",
-        "cmd",
-        "size",
-        "payload",
+        'message',
+        'stream',
+        'cmd',
+        'size',
+        'payload',
     )
 
     def test_api(self):
@@ -33,7 +33,7 @@ class TestBSMPMessage(TestCase):
 
     def test_init(self):
         """Test constructor that creates object from stream."""
-        stream = ["\x01", "\x00", "\x03", "\x02", "\n", "\x00"]
+        stream = ['\x01', '\x00', '\x03', '\x02', '\n', '\x00']
         m = Message(stream)
         # Check properties
         self.assertEqual(m.cmd, 0x01)
@@ -44,7 +44,7 @@ class TestBSMPMessage(TestCase):
     def test_small_message(self):
         """Test message with stream impossibly small."""
         with self.assertRaises(SerialErrMsgShort):
-            Message(["\x11", "\x00"])
+            Message(['\x11', '\x00'])
 
     def test_message_with_no_load(self):
         """Test constructor with no load."""
@@ -54,18 +54,13 @@ class TestBSMPMessage(TestCase):
 
     def test_message_with_load(self):
         """Test constructor with load."""
-        m = Message.message(
-            cmd=0x10,
-            payload=[
-                1,
-            ],
-        )
+        m = Message.message(cmd=0x10, payload=[1])
         self.assertEqual(m.cmd, 0x10)
         self.assertEqual(m.payload, [1])
 
     def test_message_with_extraneous_load(self):
         """Test constructor with loads that are not list."""
-        loads = [1, "string", (1, 2, 3), 63.7]
+        loads = [1, 'string', (1, 2, 3), 63.7]
         for load in loads:
             with self.assertRaises(TypeError):
                 Message.message(cmd=0x10, payload=load)
@@ -95,73 +90,24 @@ class TestBSMPPackage(TestCase):
 
     # Tuples with address, message and checksum
     data = [
-        (1, 0x10, [chr(3)], ["\x01", "\x10", "\x00", "\x01", "\x03", chr(235)], 235),
-        (
-            0,
-            0x11,
-            [chr(3), chr(255), chr(255)],
-            ["\x00", "\x11", "\x00", "\x03", "\x03", "\xFF", "\xFF", chr(235)],
-            235,
-        ),
-        (
-            2,
-            0x20,
-            [chr(4), chr(1), chr(187), chr(187)],
-            ["\x02", "\x20", "\x00", "\x04", "\x04", "\x01", "\xBB", "\xBB", chr(95)],
-            95,
-        ),
-        (
-            3,
-            0x22,
-            [
-                chr(2),
-                chr(1),
-                chr(187),
-                chr(187),
-                chr(1),
-                chr(187),
-                chr(187),
-                chr(1),
-                chr(187),
-                chr(187),
-                chr(1),
-                chr(187),
-                chr(187),
-                chr(204),
-            ],
-            [
-                "\x03",
-                "\x22",
-                "\x00",
-                "\x0E",
-                "\x02",
-                "\x01",
-                "\xBB",
-                "\xBB",
-                "\x01",
-                "\xBB",
-                "\xBB",
-                "\x01",
-                "\xBB",
-                "\xBB",
-                "\x01",
-                "\xBB",
-                "\xBB",
-                "\xCC",
-                chr(35),
-            ],
+        (1, 0x10, [chr(3)], ['\x01', '\x10', '\x00', '\x01', '\x03', chr(235)], 235),
+        (0, 0x11, [chr(3), chr(255), chr(255)], ['\x00', '\x11', '\x00', '\x03', '\x03', '\xFF', '\xFF', chr(235)], 235),
+        (2, 0x20, [chr(4), chr(1), chr(187), chr(187)], ['\x02', '\x20', '\x00', '\x04', '\x04', '\x01', '\xBB', '\xBB', chr(95)], 95),
+        (3, 0x22,
+            [chr(2), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(204)],
+            ['\x03', '\x22', '\x00', '\x0E', '\x02', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\xCC', chr(35)],
             35,
         ),
     ]
 
     api = (
-        "package",
-        "address",
-        "message",
-        "checksum",
-        "stream",
-        "calc_checksum",
-        "verify_checksum",
+        'package',
+        'address',
+        'message',
+        'checksum',
+        'stream',
+        'calc_checksum',
+        'verify_checksum',
     )
 
     def test_api(self):
@@ -222,16 +168,16 @@ class TestBSMPChannel(TestCase):
     """Test Channel class of BSMP package."""
 
     api = (
-        "LOCK",
-        "pru",
-        "address",
-        "size_counter",
-        "size_counter_reset",
-        "read",
-        "write",
-        "request_",
-        "request",
-        "create_lock",
+        'LOCK',
+        'pru',
+        'address',
+        'size_counter',
+        'size_counter_reset',
+        'read',
+        'write',
+        'request_',
+        'request',
+        'create_lock',
     )
 
     def setUp(self):

@@ -23,29 +23,29 @@ class TestBSMPAPI(TestCase):
     """Test BSMP."""
 
     api = (
-        "entities",
-        "channel",
-        "query_protocol_version",
-        "query_list_of_variables",
-        "query_list_of_group_of_variables",
-        "query_group_of_variables",
-        "query_list_of_curves",
-        "query_curve_checksum",
-        "query_list_of_functions",
-        "read_variable",
-        "read_group_of_variables",
-        "write_variable",
-        "write_group_of_variables",
-        "binoperation_variable",
-        "binoperation_group",
-        "write_and_read_variable",
-        "create_group_of_variables",
-        "remove_all_groups_of_variables",
-        "request_curve_block",
-        "curve_block",
-        "recalculate_curve_checksum",
-        "execute_function",
-        "anomalous_response",
+        'entities',
+        'channel',
+        'query_protocol_version',
+        'query_list_of_variables',
+        'query_list_of_group_of_variables',
+        'query_group_of_variables',
+        'query_list_of_curves',
+        'query_curve_checksum',
+        'query_list_of_functions',
+        'read_variable',
+        'read_group_of_variables',
+        'write_variable',
+        'write_group_of_variables',
+        'binoperation_variable',
+        'binoperation_group',
+        'write_and_read_variable',
+        'create_group_of_variables',
+        'remove_all_groups_of_variables',
+        'request_curve_block',
+        'curve_block',
+        'recalculate_curve_checksum',
+        'execute_function',
+        'anomalous_response',
     )
 
     def test_api(self):
@@ -139,7 +139,7 @@ class TestBSMP0x1(TestCase):
 
     def test_read_int2_variable(self):
         """Test read_variable."""
-        load = list(map(chr, struct.pack("<h", 1020)))
+        load = list(map(chr, struct.pack('<h', 1020)))
         pck = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_request.return_value = pck.stream
         response = self.bsmp.read_variable(0, 100)
@@ -147,7 +147,7 @@ class TestBSMP0x1(TestCase):
 
     def test_read_float_variable(self):
         """Test read_variable."""
-        load = list(map(chr, struct.pack("<f", 50.52)))
+        load = list(map(chr, struct.pack('<f', 50.52)))
         pck = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_request.return_value = pck.stream
         response = self.bsmp.read_variable(1, 100)
@@ -157,8 +157,8 @@ class TestBSMP0x1(TestCase):
     def test_read_arrfloat_variable(self):
         """Test read_variable."""
         values = [1.1234567, 2.7654321]
-        load = list(map(chr, struct.pack("<f", 1.1234567)))
-        load.extend(list(map(chr, struct.pack("<f", 2.7654321))))
+        load = list(map(chr, struct.pack('<f', 1.1234567)))
+        load.extend(list(map(chr, struct.pack('<f', 2.7654321))))
         pck = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_request.return_value = pck.stream
         response = self.bsmp.read_variable(2, 100)
@@ -168,7 +168,7 @@ class TestBSMP0x1(TestCase):
 
     def test_read_string_variable(self):
         """Test read_variable."""
-        load = ["t", "e", "s", "t", "e"]
+        load = ['t', 'e', 's', 't', 'e']
         while len(load) < 64:
             load.append(chr(0))
         expected_value = [c.encode() for c in load]
@@ -193,15 +193,15 @@ class TestBSMP0x1(TestCase):
 
     def test_read_group_of_variables(self):
         """Test read_group_of_variables."""
-        ld_string = ["t", "e", "s", "t", "e"]
+        ld_string = ['t', 'e', 's', 't', 'e']
         for _ in range(64 - len(ld_string)):
             ld_string.append(chr(0))
         val_string = [c.encode() for c in ld_string]
         values = [1020, 40.7654321, [1.7654321, 0.0123456], val_string]
-        load = list(map(chr, struct.pack("<h", 1020)))
-        load.extend(list(map(chr, struct.pack("<f", 40.7654321))))
-        load.extend(list(map(chr, struct.pack("<f", 1.7654321))))
-        load.extend(list(map(chr, struct.pack("<f", 0.0123456))))
+        load = list(map(chr, struct.pack('<h', 1020)))
+        load.extend(list(map(chr, struct.pack('<f', 40.7654321))))
+        load.extend(list(map(chr, struct.pack('<f', 1.7654321))))
+        load.extend(list(map(chr, struct.pack('<f', 0.0123456))))
         load.extend(ld_string)
         pck = Package.package(0, Message.message(0x13, payload=load))
         self.serial.UART_request.return_value = pck.stream
@@ -254,12 +254,12 @@ class TestBSMP0x2(TestCase):
     def test_binoperation_variable(self):
         """Test binoperation_variable."""
         with self.assertRaises(NotImplementedError):
-            self.bsmp.binoperation_variable(0, "and", 0xFF)
+            self.bsmp.binoperation_variable(0, 'and', 0xFF)
 
     def test_binoperation_group(self):
         """Test binoperation_group."""
         with self.assertRaises(NotImplementedError):
-            self.bsmp.binoperation_group(2, "and", [0xFF, 0xFF])
+            self.bsmp.binoperation_group(2, 'and', [0xFF, 0xFF])
 
     def test_write_and_read_variable(self):
         """Test write_and_read_variable."""
@@ -373,7 +373,7 @@ class TestBSMP0x5(TestCase):
     def test_execute_function(self):
         """Test execute_function."""
         resp_p = Package.package(0, Message.message(0x51, payload=[chr(0)]))
-        send_load = [chr(0x00)] + list(map(chr, struct.pack("<f", 1.5)))
+        send_load = [chr(0x00)] + list(map(chr, struct.pack('<f', 1.5)))
         send_p = Package.package(1, Message.message(0x50, payload=send_load))
         self.serial.UART_request.return_value = resp_p.stream
 
