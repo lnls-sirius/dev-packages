@@ -227,14 +227,14 @@ class Channel:
         return package.message
 
     def write(self, message: Message, timeout: float = 100):
-        """Write to serial."""
+        """Write to serial. :param timeout [ms]"""
         stream = Package.package(self._address, message).stream
         response = self.pru.UART_write(stream, timeout=timeout)
         self._size_counter += len(stream)
         return response
 
     def request_(self, message: Message, timeout: float = 100) -> Message:
-        """."""
+        """:param timeout [ms]"""
         stream = Package.package(self._address, message).stream
 
         if Channel.LOCK is None:
@@ -253,7 +253,7 @@ class Channel:
         return package.message
 
     def request(self, message: Message, timeout: float = 100, read_flag: bool = True) -> typing.Optional[Message]:
-        """Write and wait for response."""
+        """Write and wait for response. :param timeout [ms]"""
         response: typing.Optional[Message] = None
 
         if read_flag:

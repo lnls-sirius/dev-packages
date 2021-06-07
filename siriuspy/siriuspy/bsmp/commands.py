@@ -13,7 +13,7 @@ from .serial import Message as _Message
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
-    _timeout_execute_function = 100  # [ms]
+    _timeout_execute_function: float = 100.0  # [ms]
 
     def __init__(self, pru: _IOInterface, slave_address: int, entities: _Entities):
         """_cructor."""
@@ -41,7 +41,7 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self, timeout: float):
+    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.Tuple[bool, int]]]:
         """Consult groups list. Command 0x04."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
@@ -59,7 +59,7 @@ class BSMP:
 
         # expected response
         if res.cmd == ack:
-            groupdata = list()
+            groupdata: typing.List[typing.Tuple[bool, int]] = []
             for groupchar in res.payload:
                 byte = ord(groupchar)
                 waccess = (byte & 0b10000000) > 0
@@ -74,7 +74,7 @@ class BSMP:
         self,
         group_id: int,
         timeout: float
-    ):
+    ) -> typing.Tuple[int, typing.Optional[typing.List[int]]]:
         """Return id of the variables in the given group."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_GROUP_OF_VARIABLES, \
@@ -114,7 +114,7 @@ class BSMP:
         self,
         var_id: int,
         timeout: float
-    ):
+    ) -> typing.Union[typing.Tuple[None,None], typing.Tuple[int, typing.Any]]:
         """Read variable."""
         # command and expected response
         cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
@@ -134,6 +134,7 @@ class BSMP:
             if len(res.payload) == variable.size:
                 # expected response
                 return _const.ACK_OK, variable.load_to_value(res.payload)
+
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
             print(fmts.format(cmd, res.cmd))

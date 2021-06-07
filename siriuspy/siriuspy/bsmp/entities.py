@@ -58,7 +58,8 @@ class Entity:
         self,
         var_types: typing.Tuple[BSMPType],
         load: typing.List[str]
-    ):
+    )-> typing.Union[str, float, int, typing.List[typing.Union[str, float, int]]]:
+        """Return a value or a list of values unpacked according to the BMSPType.fmt"""
         # NOTE: optimize this critical function!
         _load = list(map(ord, load))
         if len(var_types) > 1:
@@ -90,11 +91,11 @@ class Variable(Entity):
 
         self._var_types: typing.List[BSMPType] = [var_type for _ in range(count)]
 
-    def load_to_value(self, load):
+    def load_to_value(self, load: typing.List[str]):
         """Parse value from load."""
         return self._conv_load_to_value(self._var_types, load)
 
-    def value_to_load(self, value):
+    def value_to_load(self, value) -> typing.List[str]:
         """Convert value to load."""
         if not isinstance(value, (list, tuple, _np.ndarray)):
             value = [value, ]
@@ -104,9 +105,9 @@ class Variable(Entity):
 class VariablesGroup(Entity):
     """BSMP variables group entity."""
 
-    ALL = 0
-    READ_ONLY = 1
-    WRITEABLE = 2
+    ALL: int = 0
+    READ_ONLY: int = 1
+    WRITEABLE: int = 2
 
     def __init__(
         self,
@@ -121,9 +122,9 @@ class VariablesGroup(Entity):
         self.size: int = len(variables)
         self.variables: typing.List[Variable] = variables
 
-    def load_to_value(self, load):
+    def load_to_value(self, load: typing.List[str]) -> typing.List[typing.Union[str,float,int]]:
         """Parse value from load."""
-        value = list()
+        value: typing.List[typing.Union[str,float,int]] = []
         offset = 0
         for variable in self.variables:
             i, j = offset, offset + variable.size
@@ -173,16 +174,16 @@ class Curve(Entity):
         self.max_size_t_float: int = self.nblocks * (self.size // self.type.size)
         self._var_types: typing.List[BSMPType] = [var_type for _ in range(count)]
 
-    def load_to_value(self, load):
+    def load_to_value(self, load: typing.List[str]):
         """Parse value from load."""
-        load = [ord(c) for c in load]
+        _load = [ord(c) for c in load]
         values = []
         offset = 0
         for var_type in self._var_types:
-            datum = load[offset:offset+var_type.size]
+            datum = _load[offset:offset+var_type.size]
             values.append(_struct.unpack(var_type.fmt, bytes(datum))[0])
             offset += var_type.size
-            if offset >= len(load):
+            if offset >= len(_load):
                 break
         return values
 
@@ -250,14 +251,19 @@ class Entities:
 
     def __init__(
         self,
-        variables: typing.Tuple[typing.Dict[str, typing.Any]],
-        curves: typing.Tuple[typing.Dict[str, typing.Any]],
-        functions: typing.Tuple[typing.Dict[str, typing.Any]]
+        variables: typing.Tuple[typing.Union[Variable, typing.Dict[str, typing.Any]]],
+        curves: typing.Tuple[typing.Union[Curve, typing.Dict[str, typing.Any]]],
+        functions: typing.Tuple[typing.Union[Function,typing.Dict[str, typing.Any]]]
     ):
         """Constructor."""
         # Get variables
         self._variables: typing.List[Variable] = []
         for variable in variables:
+
+            if isinstance(variable, Variable):
+                self.variables.append(variable)
+                continue
+
             var_id = variable['eid']
             waccess = variable['waccess']
             var_type = variable['var_type']
@@ -272,6 +278,11 @@ class Entities:
 
         self._curves: typing.List[Curve] = []
         for curve in curves:
+
+            if isinstance(curve, Curve):
+                self.curves.append(curve)
+                continue
+
             curve_id = curve['eid']
             waccess = curve['waccess']
             nblocks = curve['nblocks']
@@ -282,6 +293,11 @@ class Entities:
 
         self._functions: typing.List[Function] = []
         for function in functions:
+
+            if isinstance(function, Function):
+                self.functions.append(function)
+                continue
+
             func_id = function['eid']
             i_type = function['i_type']
             o_type = function['o_type']
