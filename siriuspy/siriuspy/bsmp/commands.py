@@ -41,7 +41,7 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.Tuple[bool, int]]]:
+    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.List[typing.Tuple[bool, int]]]]:
         """Consult groups list. Command 0x04."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
@@ -114,7 +114,7 @@ class BSMP:
         self,
         var_id: int,
         timeout: float
-    ) -> typing.Union[typing.Tuple[None,None], typing.Tuple[int, typing.Any]]:
+    ) -> typing.Union[typing.Tuple[None, None], typing.Tuple[int, typing.Any]]:
         """Read variable."""
         # command and expected response
         cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
