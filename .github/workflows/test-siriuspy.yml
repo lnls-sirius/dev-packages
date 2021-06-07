@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.9]
+        python-version: [3.6]
        #python-version: [3.6, 3.9]
 
     steps:
@@ -26,7 +26,7 @@ jobs:
         run: |
           git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
           cd eth-bridge-pru-serial485/client
-          pip install .
+          python setup.py install
           cd ../../
 
       - name: Install mathphys
