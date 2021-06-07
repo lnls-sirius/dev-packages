@@ -2,7 +2,7 @@ sudo: required
 language: python
 python:
     - 3.6.8
-if: branch = master OR tag IS present
+
 script:
   # Install eth-bridge-pru-serial485
   - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
