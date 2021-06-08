@@ -15,9 +15,9 @@ from ..devices import StrengthConv as _StrengthConv
 from ..epics import CAProcessSpawn as _Process
 
 from .bsmp.constants import ConstFBP as _const_fbp
+from .bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .bsmp.commands import FBP as _FBP
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
 from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus

@@ -6,6 +6,7 @@ import numpy as _np
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
 
+from .bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
@@ -25,8 +26,6 @@ DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
 # --- SOFBCurrent ---
 PSSOFB_MAX_NR_UDC = 2
-UDC_MAX_NR_DEV = 4
-
 
 # --- SigGen ---
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
@@ -1085,7 +1084,7 @@ def _get_ps_basic_propty_database():
 
 def _get_ps_sofb_propty_database():
     """Return PSSOFB properties."""
-    count = UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
+    count = _UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
         'SOFBMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
