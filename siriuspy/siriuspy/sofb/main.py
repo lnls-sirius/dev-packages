@@ -763,7 +763,7 @@ class SOFB(_BaseClass):
         self.run_callbacks('LoopState-Sts', 0)
 
     def _process_pid(self, dkicks, interval):
-        """ This is a velocity algorithm of PID."""
+        """Velocity algorithm of PID."""
         if dkicks is None:
             return None
 

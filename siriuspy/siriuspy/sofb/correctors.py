@@ -69,7 +69,7 @@ class Corrector(_BaseTimingConfig):
 
     @property
     def sofbmode_ok(self):
-        """SOFBMode ok status."""
+        """Return SOFBMode Ok status."""
         return self.connected
 
     @property

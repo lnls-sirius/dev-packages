@@ -391,7 +391,8 @@ class PSConnSOFB:
         current = curr_sp[indcs_sofb]
 
         # initialize setpoint
-        readback = udc.sofb_current_rb_get()  # read last setpoint already stored in PSBSMP object
+        # read last setpoint already stored in PSBSMP object:
+        readback = udc.sofb_current_rb_get()
         if readback is None:
             setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
         else:
