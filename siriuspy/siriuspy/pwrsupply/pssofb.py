@@ -1,6 +1,7 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
+import logging as _log
 import multiprocessing as _mp
 from multiprocessing import sharedctypes as _shm
 
@@ -701,6 +702,7 @@ class PSSOFB:
         self._ethbridge_cls = ethbridgeclnt_class
         self._nr_procs = nr_procs
         self._doneevts = []
+        self._recevts = []
         self._procs = []
         self._pipes = []
 
@@ -717,15 +719,25 @@ class PSSOFB:
 
     def wait(self, timeout=None):
         """."""
-        for doneevt in self._doneevts:
+        for i, (doneevt, recevt) in enumerate(zip(
+                self._doneevts, self._recevts)):
+            if not recevt.wait(timeout=timeout):
+                _log.error('Wait Receive timed out for process '+str(i))
+                return None
             if not doneevt.wait(timeout=timeout):
+                _log.error('Wait Done timed out for process '+str(i))
                 return False
         return True
 
     def is_ready(self):
         """."""
-        for doneevt in self._doneevts:
+        for i, (doneevt, recevt) in enumerate(zip(
+                self._doneevts, self._recevts)):
+            if not recevt.is_set():
+                _log.error('Ready: not received for process '+str(i))
+                return None
             if not doneevt.is_set():
+                _log.error('Ready: not done for process '+str(i))
                 return False
         return True
 
@@ -763,17 +775,20 @@ class PSSOFB:
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
             # NOTE: It is crucial to use the Event class from the appropriate
             # context, otherwise it will fail for 'spawn' start method.
-            evt = spw.Event()
-            evt.set()
+            doneevt = spw.Event()
+            recevt = spw.Event()
+            doneevt.set()
+            recevt.set()
             theirs, mine = spw.Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB._run_process,
-                args=(self._ethbridge_cls, bbbnames, theirs, evt,
+                args=(self._ethbridge_cls, bbbnames, theirs, doneevt, recevt,
                       arr.shape, rbref, ref, fret, self._sofb_update_iocs),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
-            self._doneevts.append(evt)
+            self._doneevts.append(doneevt)
+            self._recevts.append(recevt)
             self._pipes.append(mine)
 
     def processes_shutdown(self):
@@ -876,7 +891,7 @@ class PSSOFB:
 
     @staticmethod
     def _run_process(
-            ethbridgeclnt_class, bbbnames, pipe, doneevt,
+            ethbridgeclnt_class, bbbnames, pipe, doneevt, recevt,
             shape, rbref, ref, fret, sofb_update_iocs):
         """."""
         mproc = {
@@ -893,6 +908,7 @@ class PSSOFB:
             rec = pipe.recv()
             if not rec:
                 break
+            recevt.set()
             meth, args = rec
             if isinstance(meth, str):
                 if isinstance(args, Iterable):
@@ -907,8 +923,10 @@ class PSSOFB:
 
     def _parallel_execution(self, target_name, args=None):
         """Execute 'method' in parallel."""
-        for pipe, doneevt in zip(self._pipes, self._doneevts):
+        for pipe, doneevt, recevt in zip(
+                self._pipes, self._doneevts, self._recevts):
             doneevt.clear()
+            recevt.clear()
             pipe.send((target_name, args))
 
         if not self._async:

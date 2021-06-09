@@ -562,6 +562,9 @@ class EpicsCorrectors(BaseCorrectors):
         Will return >0 indicating how many previous kicks were not implemented.
         """
         if not self._pssofb.is_ready():
+            msg = 'ERR: PSSOFB not ready!'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return -1
 
         # Send correctors setpoint
@@ -576,7 +579,15 @@ class EpicsCorrectors(BaseCorrectors):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 
         if self._wait_pssofb:
-            self._pssofb.wait()
+            ret = self._pssofb.wait(timeout=1)
+            if ret is None:
+                msg = 'ERR: PSSOFB timed out: Worker did not Receive!'
+                self._update_log(msg)
+                _log.error(msg[5:])
+            elif ret is False:
+                msg = 'ERR: PSSOFB timed out: Worker is not Done!'
+                self._update_log(msg)
+                _log.error(msg[5:])
 
         # compare kicks to check if there is something wrong
         ret = self._compare_kicks_pssofb(ret_kicks, func_ret)

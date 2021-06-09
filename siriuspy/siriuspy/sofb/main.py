@@ -743,7 +743,8 @@ class SOFB(_BaseClass):
             tims.append(_time())
             tims.append(tims[1])  # to compute total time - get_orbit
             times.append(tims)
-            if ret == -2:
+            # if ret == -2:
+            if ret < 0:  # change here for debug
                 self._loop_state = self._csorb.LoopState.Open
                 self.run_callbacks('LoopState-Sel', 0)
                 break
