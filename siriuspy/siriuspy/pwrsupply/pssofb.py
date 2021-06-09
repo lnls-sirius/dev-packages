@@ -6,6 +6,7 @@ from multiprocessing import sharedctypes as _shm
 
 import numpy as _np
 from epics import get_pv as _get_pv
+from socket import timeout as _socket_timeout
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
@@ -140,6 +141,7 @@ class PSConnSOFB:
 
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
+    SOCKET_TIMEOUT_ERR = 255
 
     def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None,
                  sofb_update_iocs=False):
@@ -388,7 +390,7 @@ class PSConnSOFB:
         current = curr_sp[indcs_sofb]
 
         # initialize setpoint
-        readback = udc.sofb_current_rb_get()  # stores last setpoint
+        readback = udc.sofb_current_rb_get()  # read last setpoint already stored in PSBSMP object
         if readback is None:
             setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
         else:
@@ -398,11 +400,14 @@ class PSConnSOFB:
         setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(setpoint)
-
-        # update sofb_func_return
-        func_return = udc.sofb_func_return_get()
-        self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        try:
+            udc.sofb_current_set(setpoint)
+            # update sofb_func_return
+            func_return = udc.sofb_func_return_get()
+            self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        except _socket_timeout:
+            # update sofb_func_return indicating socket timeout
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -894,7 +899,7 @@ class PSSOFB:
                     getattr(psconnsofb, meth)(*args)
                 else:
                     getattr(psconnsofb, meth)()
-                doneevt.set()
+            doneevt.set()
         psconnsofb.threads_shutdown()
         pipe.close()
 
