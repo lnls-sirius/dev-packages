@@ -38,7 +38,7 @@ Python packages useful for the development of the Sirius control system.
 
 ### Prerequisites
 
-See the repository's  [requirements.txt](requirements.txt) file.
+See the repository's  [requirements.txt](siriuspy/requirements.txt) file.
 
 ### Installation
 
