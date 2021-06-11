@@ -1,24 +1,28 @@
 sudo: required
 language: python
 python:
-  - "3.6.8"
+    - 3.6.8
+
 script:
-  - pip install -r requirements.txt
-# install Eth-Bridge-PRUserial485
+  # Install eth-bridge-pru-serial485
   - git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
   - cd eth-bridge-pru-serial485/client
   - python setup.py install
   - cd ../../
-# install mathphys
+
+  # Install mathphys
   - git clone https://github.com/lnls-fac/mathphys.git
   - cd mathphys
   - python setup.py install
   - cd ../
-# install siriuspy
+
+  # Install requirements and run tests
   - cd siriuspy
+  - pip install -r requirements.txt
   - python setup.py test
 
 # safelist
 branches:
   only:
   - master
+
