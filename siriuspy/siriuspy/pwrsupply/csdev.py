@@ -2461,7 +2461,7 @@ def _get_ps_FAP_2P2S_propty_database():
                                         'unit': 'C'},
         'IGBTDriverVoltageIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                          'prec': PS_CURRENT_PRECISION,
-                                         'unit': 'C'},
+                                         'unit': 'V'},
         'IGBT1DriverCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                           'prec': PS_CURRENT_PRECISION,
                                           'unit': 'A'},
