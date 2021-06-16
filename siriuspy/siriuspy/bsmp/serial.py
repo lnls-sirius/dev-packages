@@ -185,7 +185,7 @@ class Package:
 class Channel:
     """BSMP Channel.
 
-    The channel is defined by a IOInterface object and recipient
+    The channel is defined by an IOInterface object and recipient
     address.
     """
 
