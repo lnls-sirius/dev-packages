@@ -17,7 +17,7 @@ class BPMInterlock(_Device):
         'IntlkEn-Sel', 'IntlkEn-Sts',
         # General interlock clear:
         'IntlkClr-Sel',
-        # Minisum sum threshold enable:
+        # Minimum sum threshold enable:
         # Habilita interlock de óbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
