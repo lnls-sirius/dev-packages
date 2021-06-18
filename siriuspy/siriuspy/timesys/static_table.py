@@ -16,7 +16,7 @@ _disclaimer = """
 # again and copy the generated file to replace this one.
 """
 _NAMES2CONVERT = {
-    'LA-RF:H1LLRF': 'LI-RaRF01:RF-LLRFProc',
+    'LA-RF:H1TRIG': 'LI-RaRF01:RF-LLRFProc',
     'LA-RF:H1SOAM-1': 'LI-RaRF02:RF-SSAmp-1',
     'LA-RF:H1SOAM-2': 'LI-RaRF02:RF-SSAmp-2',
     'LA-RF:H1SOAM-3': 'LI-RaRF02:RF-SSAmp-3',
