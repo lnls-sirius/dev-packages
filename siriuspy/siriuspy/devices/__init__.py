@@ -6,6 +6,7 @@ from .dcct import DCCT
 from .egun import EGBias, EGFilament, EGHVPS
 from .ict import ICT, TranspEff
 from .lillrf import LILLRF
+from .orbit_interlock import BPMInterlock
 from .pwrsupply import PowerSupply, PowerSupplyPU
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
