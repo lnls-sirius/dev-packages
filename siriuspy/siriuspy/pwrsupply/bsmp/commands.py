@@ -7,7 +7,6 @@ https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 
 import time as _time
 import numpy as _np
-import typing as _typing
 
 from ...bsmp import constants as _const_bsmp
 from ...bsmp import (
