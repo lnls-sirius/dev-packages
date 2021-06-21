@@ -650,7 +650,13 @@ class SOFB(_Device):
     def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
         self.cmd_turn_off_autocorr()
-        for _ in range(nr_iters):
+        for i in range(nr_iters):
+            resx = self.orbx - self.refx
+            resy = self.orby - self.refy
+            resx = _np.linalg.norm(resx[self.bpmxenbl])
+            resy = _np.linalg.norm(resy[self.bpmyenbl])
+            if resx < residue and resy < residue:
+                break
             self.cmd_calccorr()
             _time.sleep(0.5)
             self.cmd_applycorr_all()
@@ -658,10 +664,7 @@ class SOFB(_Device):
             _time.sleep(0.2)
             self.cmd_reset()
             self.wait_buffer()
-            resx = _np.std(self.orbx - self.refx)
-            resy = _np.std(self.orby - self.refy)
-            if resx < residue and resy < residue:
-                break
+        return i, resx, resy
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
