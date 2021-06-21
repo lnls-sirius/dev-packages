@@ -526,7 +526,7 @@ class FBP(PSBSMP):
     CONST = _const_psbsmp.ConstFBP
     _ACK_OK = _np.zeros(_const_psbsmp.UDC_MAX_NR_DEV, dtype=int)
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
@@ -612,7 +612,7 @@ class FAC_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
@@ -624,7 +624,7 @@ class FAC_2P4S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2P4S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(),
@@ -637,7 +637,7 @@ class FAC_2S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
@@ -649,7 +649,7 @@ class FAP(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
@@ -661,7 +661,7 @@ class FAP_4P(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_4P
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
@@ -673,7 +673,7 @@ class FAP_2P2S(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_2P2S
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
@@ -688,7 +688,7 @@ class FBP_DCLink(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFBP_DCLink
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
@@ -700,7 +700,7 @@ class FAC_2P4S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2P4S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(),
@@ -713,7 +713,7 @@ class FAC_2S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address, pru):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)
