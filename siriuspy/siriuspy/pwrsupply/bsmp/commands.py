@@ -58,7 +58,7 @@ class PSBSMP(_BSMP):
             CONST.V_WFMREF1_IDX),
     }
 
-    def __init__(self, slave_address, entities, pru=None):
+    def __init__(self, slave_address, entities, pru):
         """Init BSMP."""
         self.pru = pru
         super().__init__(self.pru, slave_address, entities)
