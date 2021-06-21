@@ -578,16 +578,10 @@ class EpicsCorrectors(BaseCorrectors):
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 
-        if self._wait_pssofb:
-            ret = self._pssofb.wait(timeout=1)
-            if ret is None:
-                msg = 'ERR: PSSOFB timed out: Worker did not Receive!'
-                self._update_log(msg)
-                _log.error(msg[5:])
-            elif ret is False:
-                msg = 'ERR: PSSOFB timed out: Worker is not Done!'
-                self._update_log(msg)
-                _log.error(msg[5:])
+        if self._wait_pssofb and not self._pssofb.wait(timeout=1):
+            msg = 'ERR: PSSOFB timed out: Worker is not Done!'
+            self._update_log(msg)
+            _log.error(msg[5:])
 
         # compare kicks to check if there is something wrong
         ret = self._compare_kicks_pssofb(ret_kicks, func_ret)
