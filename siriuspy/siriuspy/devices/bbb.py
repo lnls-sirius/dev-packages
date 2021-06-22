@@ -30,6 +30,7 @@ class BunchbyBunch(_Devices):
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
         self.bram = Acquisition(devname, acqtype='BRAM')
+        self.tune_tracking = TuneTracking(devname)
         self.coeffs = Coefficients(devname)
         self.feedback = Feedback(devname)
         self.drive = Drive(devname)
@@ -38,7 +39,7 @@ class BunchbyBunch(_Devices):
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
-            self.rfcav]
+            self.rfcav, self.tune_tracking]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
@@ -995,6 +996,186 @@ class Acquisition(_ProptyDevice):
         else:
             raise NotImplementedError(acqtype)
         return acqtype
+
+
+class TuneTracking(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'ACQTIME', 'ACQ_SAMPLES', 'ACQ_EN', 'ACQ_SINGLE',
+        'BUNCH_ID', 'RAW_BUNCH_ID',
+        'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
+        'RAW_SAMPLES', 'TSC', 'RAW', 'FREQ', 'MAG', 'PHASE', 'TF_ENABLE',
+        'NFFT', 'NOVERLAP', 'DEL_CAL', 'SP_AVG',
+        'MEANVAL', 'RMSVAL', 'AMP_PP',
+        'SP_LOW1', 'SP_HIGH1', 'PEAKFREQ1', 'PEAK1', 'SP_SEARCH1', 'PHASE1',
+        )
+
+    DEF_TIMEOUT = 10  # [s]
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, propty_prefix='SB_', properties=TuneTracking._properties)
+
+    @property
+    def acqtime(self):
+        """."""
+        return self['ACQTIME']
+
+    @acqtime.setter
+    def acqtime(self, value):
+        self['ACQTIME'] = value
+
+    @property
+    def acq_enbl(self):
+        """."""
+        return self['ACQ_EN']
+
+    @acq_enbl.setter
+    def acq_enbl(self, value):
+        self['ACQ_EN'] = value
+
+    @property
+    def acq_mode(self):
+        """."""
+        return self['ACQ_SINGLE']
+
+    @acq_mode.setter
+    def acq_mode(self, value):
+        self['ACQ_SINGLE'] = value
+
+    @property
+    def bunch_id(self):
+        """."""
+        return self['RAW_BUNCH_ID']
+
+    @bunch_id.setter
+    def bunch_id(self, value):
+        self['BUNCH_ID'] = value
+
+    # ########### Trigger Properties ###########
+    @property
+    def trigger_type(self):
+        """."""
+        return self['EXTEN']
+
+    @trigger_type.setter
+    def trigger_type(self, value):
+        self['EXTEN'] = value
+
+    @property
+    def trigger_sel(self):
+        """."""
+        return self['TRIG_IN_SEL']
+
+    @trigger_sel.setter
+    def trigger_sel(self, value):
+        self['TRIG_IN_SEL'] = value
+
+    @property
+    def trigger_armed(self):
+        """."""
+        return self['ARM_MON']
+
+    @trigger_armed.setter
+    def trigger_armed(self, value):
+        self['ARM'] = value
+
+    @property
+    def trigger_rearm(self):
+        """."""
+        return self['BR_ARM']
+
+    @trigger_rearm.setter
+    def trigger_rearm(self, value):
+        self['BR_ARM'] = value
+
+    # ########### Data Properties ###########
+    @property
+    def data_size(self):
+        """."""
+        return self['RAW_SAMPLES']
+
+    @data_size.setter
+    def data_size(self, value):
+        self['RAW_SAMPLES'] = value
+
+    @property
+    def data_raw(self):
+        """."""
+        data = self['RAW']
+        size = self.data_size
+        if size is not None:
+            data = data[:size]
+        return data
+
+    @property
+    def data_time(self):
+        """."""
+        return self['TSC']
+
+    ##
+    @property
+    def spec_mag(self):
+        """."""
+        return self['MAG']
+
+    @property
+    def spec_phase(self):
+        """."""
+        return self['PHASE']
+
+    @property
+    def spec_freq(self):
+        """."""
+        return self['FREQ']
+
+    @property
+    def spec_marker1_freq_min(self):
+        """."""
+        return self['SP_LOW1']
+
+    @spec_marker1_freq_min.setter
+    def spec_marker1_freq_min(self, value):
+        self['SP_LOW1'] = value
+
+    @property
+    def spec_marker1_freq_max(self):
+        """."""
+        return self['SP_HIGH1']
+
+    @spec_marker1_freq_max.setter
+    def spec_marker1_freq_max(self, value):
+        self['SP_HIGH1'] = value
+
+    @property
+    def spec_marker1_search_mode(self):
+        """."""
+        return self['SP_SEARCH1']
+
+    @spec_marker1_search_mode.setter
+    def spec_marker1_search_mode(self, value):
+        self['SP_SEARCH1'] = value
+
+    @property
+    def spec_marker1_freq(self):
+        """."""
+        return self['PEAKFREQ1']
+
+    @property
+    def spec_marker1_mag(self):
+        """."""
+        return self['PEAK1']
+
+    @property
+    def spec_marker1_phase(self):
+        """."""
+        return self['PHASE1']
+
 
 
 class FrontBackEnd(_Device):
