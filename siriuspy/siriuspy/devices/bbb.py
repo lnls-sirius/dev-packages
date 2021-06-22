@@ -66,9 +66,17 @@ class BunchbyBunch(_Devices):
         ctrl, mon = 'FBE Out Phase', 'SRAM Mean'
         print(f'Idx: {ctrl:15s} {mon:15s}')
 
-        init_val = self.fbe.z_phase
+        if self.devname.endswith('L'):
+            propty = 'FBELT_SERVO_SETPT'
+        elif self.devname.endswith('H'):
+            propty = 'FBELT_X_PHASE_SETPT'
+        else:
+            propty = 'FBELT_Y_PHASE_SETPT'
+
+        init_val = self.fbe[propty]
         for i, val in enumerate(values):
-            self.fbe.z_phase = val
+            self.fbe[propty] = val
+            self.fbe._wait(propty, val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -76,7 +84,7 @@ class BunchbyBunch(_Devices):
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
             print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
-        self.fbe.z_phase = init_val
+        self.fbe[propty] = init_val
         return _np.array(mon_values)
 
     def sweep_adc_delay(self, values, wait=2, mon_type='mean'):
@@ -88,6 +96,7 @@ class BunchbyBunch(_Devices):
         init_val = self.timing.adc_delay
         for i, val in enumerate(values):
             self.timing.adc_delay = val
+            self.timing._wait('TADC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -107,6 +116,7 @@ class BunchbyBunch(_Devices):
         init_val = self.fbe.be_phase
         for i, val in enumerate(values):
             self.fbe.be_phase = val
+            self.fbe._wait('FBE_BE_PHASE', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -126,6 +136,7 @@ class BunchbyBunch(_Devices):
         init_val = self.timing.dac_delay
         for i, val in enumerate(values):
             self.timing.dac_delay = val
+            self.timing._wait('TDAC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -845,7 +856,7 @@ class Acquisition(_ProptyDevice):
         if timeout is None:
             timeout = Acquisition.DEF_TIMEOUT
         if timeout > 0:
-            self._wait('ACQ_EN', 1, timeout=None)
+            self._wait('ACQ_EN', 1, timeout=timeout)
 
     def cmd_data_dump(self, timeout=None):
         """."""
@@ -858,14 +869,7 @@ class Acquisition(_ProptyDevice):
     def wait_data_dump(self, timeout=None):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(10*interval)
-        for _ in range(ntrials):
-            if not self['DUMP']:
-                break
-            _time.sleep(interval)
-        else:
+        if not self._wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
 
     # ########### Spectrometer Properties ###########
