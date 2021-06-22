@@ -12,6 +12,7 @@ class BPM(_Device):
 
     _properties = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'RFFEAtt-SP', 'RFFEAtt-RB',
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
@@ -110,6 +111,16 @@ class BPM(_Device):
         okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
         okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
+
+    @property
+    def rffe_att(self):
+        """."""
+        return self['RFFEAtt-RB']
+
+    @rffe_att.setter
+    def rffe_att(self, val):
+        """."""
+        self['RFFEAtt-SP'] = val
 
     @property
     def asyn_state(self):
