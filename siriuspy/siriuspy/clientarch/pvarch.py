@@ -147,7 +147,7 @@ class PVData:
         """Is archived."""
         self.connect()
         req = self.connector.getPVDetails(self.pvname)
-        if not req.ok:
+        if not req:
             return False
         return True
 
