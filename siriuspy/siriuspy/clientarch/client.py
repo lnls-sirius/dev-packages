@@ -205,10 +205,11 @@ class ClientArchiver:
                 _st = _np.r_[_st, [v['status'] for v in data]]
                 _sv = _np.r_[_sv, [v['severity'] for v in data]]
             if not _ts.size:
-                return None
-            _, _tsidx = _np.unique(_ts, return_index=True)
-            timestamp, value, status, severity = \
-                _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
+                timestamp, value, status, severity = [None, None, None, None]
+            else:
+                _, _tsidx = _np.unique(_ts, return_index=True)
+                timestamp, value, status, severity = \
+                    _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
 
             pvn2resp[pvn] = [timestamp, value, status, severity]
 
