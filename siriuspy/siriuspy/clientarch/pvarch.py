@@ -286,6 +286,11 @@ class PVDataSet:
         self._parallel_query_bin_interval = 12*60*60  # 12h
         self._pvdata = self._init_connectors()
 
+    @property
+    def pvnames(self):
+        """PV names."""
+        return self._pvnames
+
     def connect(self):
         """Connect."""
         if self.connector is None:
