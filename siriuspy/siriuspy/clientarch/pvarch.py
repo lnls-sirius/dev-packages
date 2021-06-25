@@ -1,5 +1,7 @@
 """PV Arch Module."""
 
+from copy import deepcopy as _dcopy
+
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
@@ -124,7 +126,7 @@ class PVData:
         self._value = None
         self._status = None
         self._severity = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = 24*60*60*30  # 1month
 
     @property
     def pvname(self):
@@ -283,13 +285,13 @@ class PVDataSet:
         self._connector = connector
         self._time_start = None
         self._time_stop = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = 24*60*60*30  # 1month
         self._pvdata = self._init_connectors()
 
     @property
     def pvnames(self):
         """PV names."""
-        return self._pvnames
+        return _dcopy(self._pvnames)
 
     def connect(self):
         """Connect."""
