@@ -6,6 +6,8 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from ..namesys import SiriusPVName as _PVName
+
 from .device import Device as _Device, Devices as _Devices, \
     ProptyDevice as _ProptyDevice
 from .dcct import DCCT
@@ -30,7 +32,8 @@ class BunchbyBunch(_Devices):
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
         self.bram = Acquisition(devname, acqtype='BRAM')
-        self.tune_tracking = TuneTracking(devname)
+        self.single_bunch = SingleBunch(devname)
+        self.phase_track = PhaseTracking(devname)
         self.coeffs = Coefficients(devname)
         self.feedback = Feedback(devname)
         self.drive = Drive(devname)
@@ -39,13 +42,16 @@ class BunchbyBunch(_Devices):
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
-            self.rfcav, self.tune_tracking]
+            self.rfcav, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
             self.pwr_amp2 = PwrAmpL(devname, num=1)
             devs.append(self.pwr_amp1)
             devs.append(self.pwr_amp2)
+        else:
+            self.pwr_amp = PwrAmpT(devname)
+            devs.append(self.pwr_amp)
 
         super().__init__(devname, devices=devs)
 
@@ -59,7 +65,7 @@ class BunchbyBunch(_Devices):
                 BunchbyBunch.DEVICES._fields.index(devname)]
         else:
             raise NotImplementedError(devname)
-        return devname
+        return _PVName(devname)
 
     def sweep_phase_shifter(self, values, wait=2, mon_type='mean'):
         """Sweep Servo Phase for each `value` in `values`."""
@@ -998,7 +1004,7 @@ class Acquisition(_ProptyDevice):
         return acqtype
 
 
-class TuneTracking(_ProptyDevice):
+class SingleBunch(_ProptyDevice):
     """."""
 
     _properties = (
@@ -1019,7 +1025,7 @@ class TuneTracking(_ProptyDevice):
 
         # call base class constructor
         super().__init__(
-            devname, propty_prefix='SB_', properties=TuneTracking._properties)
+            devname, propty_prefix='SB_', properties=SingleBunch._properties)
 
     @property
     def acqtime(self):
@@ -1176,6 +1182,114 @@ class TuneTracking(_ProptyDevice):
         """."""
         return self['PHASE1']
 
+
+class PhaseTracking(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'GAIN', 'SETPT', 'RANGE', 'DECIM', 'RATE', 'BANDWIDTH', 'LOOPCTRL',
+        'MAG', 'TFGAIN', 'SHIFT', 'PHASE', 'ERROR', 'FREQ', 'TUNE')
+
+    DEF_TIMEOUT = 10  # [s]
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, propty_prefix='PHTRK_',
+            properties=PhaseTracking._properties)
+
+    @property
+    def gain(self):
+        """."""
+        return self['GAIN']
+
+    @gain.setter
+    def gain(self, value):
+        self['GAIN'] = value
+
+    @property
+    def setpoint(self):
+        """Phase setpoint in degrees."""
+        return self['SETPT']
+
+    @setpoint.setter
+    def setpoint(self, value):
+        self['SETPT'] = value
+
+    @property
+    def range(self):
+        """Frequency range in kHz."""
+        return self['RANGE']
+
+    @range.setter
+    def range(self, value):
+        self['RANGE'] = value
+
+    @property
+    def decimation(self):
+        """."""
+        return self['DECIM']
+
+    @decimation.setter
+    def decimation(self, value):
+        self['DECIM'] = value
+
+    @property
+    def loop_state(self):
+        """Loop State."""
+        return self['LOOPCTRL']
+
+    @loop_state.setter
+    def loop_state(self, value):
+        self['LOOPCTRL'] = value
+
+    @property
+    def rate(self):
+        """."""
+        return self['RATE']
+
+    @property
+    def bandwidth(self):
+        """."""
+        return self['BANDWIDTH']
+
+    @property
+    def magnitude(self):
+        """."""
+        return self['MAG']
+
+    @property
+    def transfer_gain(self):
+        """."""
+        return self['TFGAIN']
+
+    @property
+    def normalizing_shift(self):
+        """."""
+        return self['SHIFT']
+
+    @property
+    def phase(self):
+        """Phase monitor in degrees."""
+        return self['PHASE']
+
+    @property
+    def error(self):
+        """Error in degrees."""
+        return self['ERROR']
+
+    @property
+    def frequency(self):
+        """."""
+        return self['FREQ']
+
+    @property
+    def tune(self):
+        """."""
+        return self['TUNE']
 
 
 class FrontBackEnd(_Device):
@@ -1584,3 +1698,62 @@ class PwrAmpL(_ProptyDevice):
     def temperature(self):
         """."""
         return self['TEMP']
+
+
+class PwrAmpT(_Device):
+    """."""
+
+    _properties = (
+        'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
+        'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+        devname = devname.substitute(dev='BbBAmp'+devname.idx, idx='')
+
+        # call base class constructor
+        super().__init__(devname, properties=PwrAmpT._properties)
+
+    @property
+    def enable(self):
+        """."""
+        return self['Enbl-Sts']
+
+    @enable.setter
+    def enable(self, value):
+        self['Enbl-Sel'] = int(value)
+
+    @property
+    def auto_gain(self):
+        """."""
+        return self['GainAuto-Sts']
+
+    @auto_gain.setter
+    def auto_gain(self, value):
+        self['GainAuto-Sel'] = int(value)
+
+    @property
+    def gain(self):
+        """."""
+        return self['Gain-RB']
+
+    @gain.setter
+    def gain(self, value):
+        self['Gain-SP'] = value
+
+    @property
+    def gain_step(self):
+        """."""
+        return self['GainStep-RB']
+
+    @gain_step.setter
+    def gain_step(self, value):
+        self['GainStep-SP'] = value
+
+    def cmd_reset(self):
+        """."""
+        self['Rst-Cmd'] = 1
+        _time.sleep(0.2)
+        self['Rst-Cmd'] = 0
