@@ -126,7 +126,7 @@ class PVData:
         self._value = None
         self._status = None
         self._severity = None
-        self._parallel_query_bin_interval = 24*60*60*30  # 1month
+        self._parallel_query_bin_interval = 12*60*60  # 12h
 
     @property
     def pvname(self):
@@ -285,7 +285,7 @@ class PVDataSet:
         self._connector = connector
         self._time_start = None
         self._time_stop = None
-        self._parallel_query_bin_interval = 24*60*60*30  # 1month
+        self._parallel_query_bin_interval = 12*60*60  # 12h
         self._pvdata = self._init_connectors()
 
     @property
