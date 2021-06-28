@@ -197,9 +197,14 @@ class Event(_ProptyDevice):
 class Trigger(_Device):
     """Device trigger."""
 
+    STATES = ('Dsbl', 'Enbl')
+    POLARITIES = ('Normal', 'Inverse')
+
     def __init__(self, trigname):
         """Init."""
-        self._properties = tuple(_get_hl_trigger_database(trigname))
+        self._database = _get_hl_trigger_database(trigname)
+        self._properties = tuple(self._database)
+        self._source_options = self._database['Src-Sel']['enums']
         super().__init__(trigname, properties=self._properties)
 
     @property
@@ -208,18 +213,18 @@ class Trigger(_Device):
         return self['Status-Mon']
 
     @property
-    def in_inj_table(self):
-        """Is in Injection table."""
-        return self['InInjTable-Mon']
-
-    @property
     def state(self):
         """State."""
         return self['State-Sts']
 
     @state.setter
     def state(self, value):
-        self['State-Sel'] = value
+        self._enum_setter('State-Sel', value, Trigger.STATES)
+
+    @property
+    def state_str(self):
+        """State string."""
+        return Trigger.STATES[self['State-Sts']]
 
     @property
     def source(self):
@@ -228,7 +233,17 @@ class Trigger(_Device):
 
     @source.setter
     def source(self, value):
-        self['Src-Sel'] = value
+        self._enum_setter('Src-Sel', value, self._source_options)
+
+    @property
+    def source_str(self):
+        """Source string."""
+        return self._source_options[self['Src-Sts']]
+
+    @property
+    def source_options(self):
+        """Source options."""
+        return self._source_options
 
     @property
     def duration(self):
@@ -246,7 +261,12 @@ class Trigger(_Device):
 
     @polarity.setter
     def polarity(self, value):
-        self['Polarity-Sel'] = value
+        self._enum_setter('Polarity-Sel', value, Trigger.POLARITIES)
+
+    @property
+    def polarity_str(self):
+        """Polarity string."""
+        return Trigger.POLARITIES[self['Polarity-Sts']]
 
     @property
     def nr_pulses(self):
@@ -284,3 +304,8 @@ class Trigger(_Device):
     def total_delay_raw(self):
         """Total delay raw."""
         return self['TotalDelayRaw-Mon']
+
+    @property
+    def is_in_inj_table(self):
+        """Is in Injection table."""
+        return self['InInjTable-Mon']
