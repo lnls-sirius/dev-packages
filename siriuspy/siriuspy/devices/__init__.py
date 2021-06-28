@@ -3,7 +3,7 @@
 from .device import Device, DeviceApp, Devices
 from .bpm import BPM
 from .dcct import DCCT
-from .egun import EGBias, EGFilament, EGHVPS
+from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS
 from .ict import ICT, TranspEff
 from .lillrf import LILLRF
 from .orbit_interlock import BPMInterlock
