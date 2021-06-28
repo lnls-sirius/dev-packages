@@ -3,10 +3,11 @@
 import numpy as _np
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice
+from ..timesys.csdev import get_hl_trigger_database as _get_hl_trigger_database
 
 
 class EVG(_Device):
-    """."""
+    """Device EVG."""
 
     DEVNAME = 'AS-RaMO:TI-EVG'
 
@@ -116,7 +117,7 @@ class EVG(_Device):
 
 
 class Event(_ProptyDevice):
-    """."""
+    """Device Timing Event."""
 
     _properties = (
         'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
@@ -191,3 +192,95 @@ class Event(_ProptyDevice):
     def is_in_inj_table(self):
         """."""
         return self.mode_str in Event.MODES[1:4]
+
+
+class Trigger(_Device):
+    """Device trigger."""
+
+    def __init__(self, trigname):
+        """Init."""
+        self._properties = tuple(_get_hl_trigger_database(trigname))
+        super().__init__(trigname, properties=self._properties)
+
+    @property
+    def status(self):
+        """Status."""
+        return self['Status-Mon']
+
+    @property
+    def in_inj_table(self):
+        """Is in Injection table."""
+        return self['InInjTable-Mon']
+
+    @property
+    def state(self):
+        """State."""
+        return self['State-Sts']
+
+    @state.setter
+    def state(self, value):
+        self['State-Sel'] = value
+
+    @property
+    def source(self):
+        """Source."""
+        return self['Src-Sts']
+
+    @source.setter
+    def source(self, value):
+        self['Src-Sel'] = value
+
+    @property
+    def duration(self):
+        """Duration."""
+        return self['Duration-RB']
+
+    @duration.setter
+    def duration(self, value):
+        self['Duration-SP'] = value
+
+    @property
+    def polarity(self):
+        """Polarity."""
+        return self['Polarity-Sts']
+
+    @polarity.setter
+    def polarity(self, value):
+        self['Polarity-Sel'] = value
+
+    @property
+    def nr_pulses(self):
+        """Nr. of pulses."""
+        return self['NrPulses-RB']
+
+    @nr_pulses.setter
+    def nr_pulses(self, value):
+        self['NrPulses-SP'] = value
+
+    @property
+    def delay(self):
+        """Delay."""
+        return self['Delay-RB']
+
+    @delay.setter
+    def delay(self, value):
+        self['Delay-SP'] = value
+
+    @property
+    def total_delay(self):
+        """Total delay."""
+        return self['TotalDelay-Mon']
+
+    @property
+    def delay_raw(self):
+        """Delay raw."""
+        return self['DelayRaw-RB']
+
+    @delay_raw.setter
+    def delay_raw(self, value):
+        self['DelayRaw-SP'] = value
+
+    @property
+    def total_delay_raw(self):
+        """Total delay raw."""
+        return self['TotalDelayRaw-Mon']
