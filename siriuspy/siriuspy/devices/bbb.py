@@ -6,6 +6,8 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from ..namesys import SiriusPVName as _PVName
+
 from .device import Device as _Device, Devices as _Devices, \
     ProptyDevice as _ProptyDevice
 from .dcct import DCCT
@@ -30,6 +32,8 @@ class BunchbyBunch(_Devices):
         self.timing = Timing(devname)
         self.sram = Acquisition(devname, acqtype='SRAM')
         self.bram = Acquisition(devname, acqtype='BRAM')
+        self.single_bunch = SingleBunch(devname)
+        self.phase_track = PhaseTracking(devname)
         self.coeffs = Coefficients(devname)
         self.feedback = Feedback(devname)
         self.drive = Drive(devname)
@@ -38,13 +42,16 @@ class BunchbyBunch(_Devices):
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
-            self.rfcav]
+            self.rfcav, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0)
             self.pwr_amp2 = PwrAmpL(devname, num=1)
             devs.append(self.pwr_amp1)
             devs.append(self.pwr_amp2)
+        else:
+            self.pwr_amp = PwrAmpT(devname)
+            devs.append(self.pwr_amp)
 
         super().__init__(devname, devices=devs)
 
@@ -58,7 +65,7 @@ class BunchbyBunch(_Devices):
                 BunchbyBunch.DEVICES._fields.index(devname)]
         else:
             raise NotImplementedError(devname)
-        return devname
+        return _PVName(devname)
 
     def sweep_phase_shifter(self, values, wait=2, mon_type='mean'):
         """Sweep Servo Phase for each `value` in `values`."""
@@ -66,9 +73,17 @@ class BunchbyBunch(_Devices):
         ctrl, mon = 'FBE Out Phase', 'SRAM Mean'
         print(f'Idx: {ctrl:15s} {mon:15s}')
 
-        init_val = self.fbe.z_phase
+        if self.devname.endswith('L'):
+            propty = 'FBELT_SERVO_SETPT'
+        elif self.devname.endswith('H'):
+            propty = 'FBELT_X_PHASE_SETPT'
+        else:
+            propty = 'FBELT_Y_PHASE_SETPT'
+
+        init_val = self.fbe[propty]
         for i, val in enumerate(values):
-            self.fbe.z_phase = val
+            self.fbe[propty] = val
+            self.fbe._wait(propty, val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -76,7 +91,7 @@ class BunchbyBunch(_Devices):
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
             print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
-        self.fbe.z_phase = init_val
+        self.fbe[propty] = init_val
         return _np.array(mon_values)
 
     def sweep_adc_delay(self, values, wait=2, mon_type='mean'):
@@ -88,6 +103,7 @@ class BunchbyBunch(_Devices):
         init_val = self.timing.adc_delay
         for i, val in enumerate(values):
             self.timing.adc_delay = val
+            self.timing._wait('TADC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -107,6 +123,7 @@ class BunchbyBunch(_Devices):
         init_val = self.fbe.be_phase
         for i, val in enumerate(values):
             self.fbe.be_phase = val
+            self.fbe._wait('FBE_BE_PHASE', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -126,6 +143,7 @@ class BunchbyBunch(_Devices):
         init_val = self.timing.dac_delay
         for i, val in enumerate(values):
             self.timing.dac_delay = val
+            self.timing._wait('TDAC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -845,7 +863,7 @@ class Acquisition(_ProptyDevice):
         if timeout is None:
             timeout = Acquisition.DEF_TIMEOUT
         if timeout > 0:
-            self._wait('ACQ_EN', 1, timeout=None)
+            self._wait('ACQ_EN', 1, timeout=timeout)
 
     def cmd_data_dump(self, timeout=None):
         """."""
@@ -858,14 +876,7 @@ class Acquisition(_ProptyDevice):
     def wait_data_dump(self, timeout=None):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(10*interval)
-        for _ in range(ntrials):
-            if not self['DUMP']:
-                break
-            _time.sleep(interval)
-        else:
+        if not self._wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
 
     # ########### Spectrometer Properties ###########
@@ -991,6 +1002,294 @@ class Acquisition(_ProptyDevice):
         else:
             raise NotImplementedError(acqtype)
         return acqtype
+
+
+class SingleBunch(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'ACQTIME', 'ACQ_SAMPLES', 'ACQ_EN', 'ACQ_SINGLE',
+        'BUNCH_ID', 'RAW_BUNCH_ID',
+        'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
+        'RAW_SAMPLES', 'TSC', 'RAW', 'FREQ', 'MAG', 'PHASE', 'TF_ENABLE',
+        'NFFT', 'NOVERLAP', 'DEL_CAL', 'SP_AVG',
+        'MEANVAL', 'RMSVAL', 'AMP_PP',
+        'SP_LOW1', 'SP_HIGH1', 'PEAKFREQ1', 'PEAK1', 'SP_SEARCH1', 'PHASE1',
+        )
+
+    DEF_TIMEOUT = 10  # [s]
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, propty_prefix='SB_', properties=SingleBunch._properties)
+
+    @property
+    def acqtime(self):
+        """."""
+        return self['ACQTIME']
+
+    @acqtime.setter
+    def acqtime(self, value):
+        self['ACQTIME'] = value
+
+    @property
+    def acq_enbl(self):
+        """."""
+        return self['ACQ_EN']
+
+    @acq_enbl.setter
+    def acq_enbl(self, value):
+        self['ACQ_EN'] = value
+
+    @property
+    def acq_mode(self):
+        """."""
+        return self['ACQ_SINGLE']
+
+    @acq_mode.setter
+    def acq_mode(self, value):
+        self['ACQ_SINGLE'] = value
+
+    @property
+    def bunch_id(self):
+        """."""
+        return self['RAW_BUNCH_ID']
+
+    @bunch_id.setter
+    def bunch_id(self, value):
+        self['BUNCH_ID'] = value
+
+    # ########### Trigger Properties ###########
+    @property
+    def trigger_type(self):
+        """."""
+        return self['EXTEN']
+
+    @trigger_type.setter
+    def trigger_type(self, value):
+        self['EXTEN'] = value
+
+    @property
+    def trigger_sel(self):
+        """."""
+        return self['TRIG_IN_SEL']
+
+    @trigger_sel.setter
+    def trigger_sel(self, value):
+        self['TRIG_IN_SEL'] = value
+
+    @property
+    def trigger_armed(self):
+        """."""
+        return self['ARM_MON']
+
+    @trigger_armed.setter
+    def trigger_armed(self, value):
+        self['ARM'] = value
+
+    @property
+    def trigger_rearm(self):
+        """."""
+        return self['BR_ARM']
+
+    @trigger_rearm.setter
+    def trigger_rearm(self, value):
+        self['BR_ARM'] = value
+
+    # ########### Data Properties ###########
+    @property
+    def data_size(self):
+        """."""
+        return self['RAW_SAMPLES']
+
+    @data_size.setter
+    def data_size(self, value):
+        self['RAW_SAMPLES'] = value
+
+    @property
+    def data_raw(self):
+        """."""
+        data = self['RAW']
+        size = self.data_size
+        if size is not None:
+            data = data[:size]
+        return data
+
+    @property
+    def data_time(self):
+        """."""
+        return self['TSC']
+
+    ##
+    @property
+    def spec_mag(self):
+        """."""
+        return self['MAG']
+
+    @property
+    def spec_phase(self):
+        """."""
+        return self['PHASE']
+
+    @property
+    def spec_freq(self):
+        """."""
+        return self['FREQ']
+
+    @property
+    def spec_marker1_freq_min(self):
+        """."""
+        return self['SP_LOW1']
+
+    @spec_marker1_freq_min.setter
+    def spec_marker1_freq_min(self, value):
+        self['SP_LOW1'] = value
+
+    @property
+    def spec_marker1_freq_max(self):
+        """."""
+        return self['SP_HIGH1']
+
+    @spec_marker1_freq_max.setter
+    def spec_marker1_freq_max(self, value):
+        self['SP_HIGH1'] = value
+
+    @property
+    def spec_marker1_search_mode(self):
+        """."""
+        return self['SP_SEARCH1']
+
+    @spec_marker1_search_mode.setter
+    def spec_marker1_search_mode(self, value):
+        self['SP_SEARCH1'] = value
+
+    @property
+    def spec_marker1_freq(self):
+        """."""
+        return self['PEAKFREQ1']
+
+    @property
+    def spec_marker1_mag(self):
+        """."""
+        return self['PEAK1']
+
+    @property
+    def spec_marker1_phase(self):
+        """."""
+        return self['PHASE1']
+
+
+class PhaseTracking(_ProptyDevice):
+    """."""
+
+    _properties = (
+        'GAIN', 'SETPT', 'RANGE', 'DECIM', 'RATE', 'BANDWIDTH', 'LOOPCTRL',
+        'MAG', 'TFGAIN', 'SHIFT', 'PHASE', 'ERROR', 'FREQ', 'TUNE')
+
+    DEF_TIMEOUT = 10  # [s]
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, propty_prefix='PHTRK_',
+            properties=PhaseTracking._properties)
+
+    @property
+    def gain(self):
+        """."""
+        return self['GAIN']
+
+    @gain.setter
+    def gain(self, value):
+        self['GAIN'] = value
+
+    @property
+    def setpoint(self):
+        """Phase setpoint in degrees."""
+        return self['SETPT']
+
+    @setpoint.setter
+    def setpoint(self, value):
+        self['SETPT'] = value
+
+    @property
+    def range(self):
+        """Frequency range in kHz."""
+        return self['RANGE']
+
+    @range.setter
+    def range(self, value):
+        self['RANGE'] = value
+
+    @property
+    def decimation(self):
+        """."""
+        return self['DECIM']
+
+    @decimation.setter
+    def decimation(self, value):
+        self['DECIM'] = value
+
+    @property
+    def loop_state(self):
+        """Loop State."""
+        return self['LOOPCTRL']
+
+    @loop_state.setter
+    def loop_state(self, value):
+        self['LOOPCTRL'] = value
+
+    @property
+    def rate(self):
+        """."""
+        return self['RATE']
+
+    @property
+    def bandwidth(self):
+        """."""
+        return self['BANDWIDTH']
+
+    @property
+    def magnitude(self):
+        """."""
+        return self['MAG']
+
+    @property
+    def transfer_gain(self):
+        """."""
+        return self['TFGAIN']
+
+    @property
+    def normalizing_shift(self):
+        """."""
+        return self['SHIFT']
+
+    @property
+    def phase(self):
+        """Phase monitor in degrees."""
+        return self['PHASE']
+
+    @property
+    def error(self):
+        """Error in degrees."""
+        return self['ERROR']
+
+    @property
+    def frequency(self):
+        """."""
+        return self['FREQ']
+
+    @property
+    def tune(self):
+        """."""
+        return self['TUNE']
 
 
 class FrontBackEnd(_Device):
@@ -1399,3 +1698,62 @@ class PwrAmpL(_ProptyDevice):
     def temperature(self):
         """."""
         return self['TEMP']
+
+
+class PwrAmpT(_Device):
+    """."""
+
+    _properties = (
+        'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
+        'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
+        )
+
+    def __init__(self, devname):
+        """."""
+        devname = BunchbyBunch.process_device_name(devname)
+        devname = devname.substitute(dev='BbBAmp'+devname.idx, idx='')
+
+        # call base class constructor
+        super().__init__(devname, properties=PwrAmpT._properties)
+
+    @property
+    def enable(self):
+        """."""
+        return self['Enbl-Sts']
+
+    @enable.setter
+    def enable(self, value):
+        self['Enbl-Sel'] = int(value)
+
+    @property
+    def auto_gain(self):
+        """."""
+        return self['GainAuto-Sts']
+
+    @auto_gain.setter
+    def auto_gain(self, value):
+        self['GainAuto-Sel'] = int(value)
+
+    @property
+    def gain(self):
+        """."""
+        return self['Gain-RB']
+
+    @gain.setter
+    def gain(self, value):
+        self['Gain-SP'] = value
+
+    @property
+    def gain_step(self):
+        """."""
+        return self['GainStep-RB']
+
+    @gain_step.setter
+    def gain_step(self, value):
+        self['GainStep-SP'] = value
+
+    def cmd_reset(self):
+        """."""
+        self['Rst-Cmd'] = 1
+        _time.sleep(0.2)
+        self['Rst-Cmd'] = 0
