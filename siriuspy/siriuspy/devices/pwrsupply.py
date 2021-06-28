@@ -215,6 +215,7 @@ class PowerSupplyPU(_PSDev):
     """Pulsed Power Supply Device."""
 
     PULSTATE = _PSCStatus.PWRSTATE
+    DEF_TIMEOUT = 10
 
     class DEVICES:
         """Devices names."""
@@ -289,13 +290,15 @@ class PowerSupplyPU(_PSDev):
         """."""
         self['Pulse-Sel'] = value
 
-    def cmd_turn_on_pulse(self):
+    def cmd_turn_on_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.On
+        self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
 
-    def cmd_turn_off_pulse(self):
+    def cmd_turn_off_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.Off
+        self._wait('Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
 
     @property
     def properties(self):
