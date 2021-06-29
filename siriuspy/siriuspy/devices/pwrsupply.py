@@ -309,7 +309,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def pvnames(self):
         """Return device PV names."""
-        return super().pvnames + self._dev_timing.pvnames
+        return set(list(super().pvnames) +
+                   list(self._dev_timing.pvnames))
 
     @property
     def connected(self):
@@ -321,8 +322,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        return super().disconnected_pvnames + \
-            self._dev_timing.disconnected_pvnames
+        return set(list(super().disconnected_pvnames) +
+                   list(self._dev_timing.disconnected_pvnames))
 
     def update(self):
         """Update device properties."""
