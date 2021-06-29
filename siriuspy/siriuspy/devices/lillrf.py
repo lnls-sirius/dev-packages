@@ -6,7 +6,7 @@ from .device import DeviceNC as _DeviceNC
 
 
 class LILLRF(_DeviceNC):
-    """."""
+    """LI LLRF."""
 
     class DEVICES:
         """Devices names."""
@@ -31,7 +31,7 @@ class LILLRF(_DeviceNC):
 
     @property
     def amplitude(self):
-        """."""
+        """Amplitude."""
         return self['GET_AMP']
 
     @amplitude.setter
@@ -40,7 +40,7 @@ class LILLRF(_DeviceNC):
 
     @property
     def phase(self):
-        """."""
+        """Phase."""
         return self['GET_PHASE']
 
     @phase.setter

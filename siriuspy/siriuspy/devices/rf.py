@@ -57,7 +57,7 @@ class RFGen(_DeviceNC):
 
 
 class ASLLRF(_DeviceNC):
-    """."""
+    """AS LLRF."""
 
     class DEVICES:
         """Devices names."""
@@ -95,7 +95,6 @@ class ASLLRF(_DeviceNC):
 
     @phase_top.setter
     def phase_top(self, value):
-        """."""
         self['RmpPhsTop-SP'] = value
 
     @property
@@ -105,7 +104,6 @@ class ASLLRF(_DeviceNC):
 
     @phase_bottom.setter
     def phase_bottom(self, value):
-        """."""
         self['RmpPhsBot-SP'] = value
 
     @property
@@ -120,7 +118,6 @@ class ASLLRF(_DeviceNC):
 
     @phase.setter
     def phase(self, value):
-        """."""
         self['PL:REF:S'] = value
 
     @property
@@ -144,7 +141,6 @@ class ASLLRF(_DeviceNC):
 
     @detune.setter
     def detune(self, value):
-        """."""
         self['DTune-SP'] = value
 
     @property
