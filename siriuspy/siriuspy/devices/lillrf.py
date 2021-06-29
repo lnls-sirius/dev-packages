@@ -18,7 +18,9 @@ class LILLRF(_DeviceNC):
 
     _properties = (
         'SET_AMP', 'GET_AMP',
-        'SET_PHASE', 'GET_PHASE')
+        'SET_PHASE', 'GET_PHASE',
+        'SET_INTEGRAL_ENABLE', 'GET_INTEGRAL_ENABLE',
+        'SET_FB_MODE', 'GET_FB_MODE')
 
     def __init__(self, devname):
         """."""
@@ -46,6 +48,24 @@ class LILLRF(_DeviceNC):
     @phase.setter
     def phase(self, value):
         self['SET_PHASE'] = value
+
+    @property
+    def integral(self):
+        """Integral Enable."""
+        return self['GET_INTEGRAL_ENABLE']
+
+    @integral.setter
+    def integral(self, value):
+        self['SET_INTEGRAL_ENABLE'] = value
+
+    @property
+    def feedback(self):
+        """Feedback Mode."""
+        return self['GET_FB_MODE']
+
+    @feedback.setter
+    def feedback(self, value):
+        self['SET_FB_MODE'] = value
 
     def cmd_set_phase(self, value, timeout=10):
         """."""
