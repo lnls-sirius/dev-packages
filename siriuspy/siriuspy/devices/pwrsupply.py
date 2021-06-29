@@ -23,7 +23,8 @@ class _PSDev(_Device):
     )
     _properties_magps = (
         'Current-SP', 'Current-RB', 'Current-Mon',
-        'OpMode-Sel', 'OpMode-Sts'
+        'OpMode-Sel', 'OpMode-Sts',
+        'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
