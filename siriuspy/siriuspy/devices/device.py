@@ -334,6 +334,62 @@ class Devices:
         """Return devices."""
         return self._devices
 
+    # --- private methods ---
+
+    def _set_devices_propty(self, devices, propty, values, wait=0):
+        """Set devices property to value(s)."""
+        dev2val = self._get_dev_2_val(devices, values)
+        for dev, val in dev2val.items():
+            if dev.pv_object(propty).wait_for_connection():
+                dev[propty] = val
+                _time.sleep(wait)
+
+    def _wait_devices_propty(self, devices, propty, values, comp='eq',
+                             timeout=10, return_prob=False):
+        """Wait for devices property to reach value(s)."""
+        dev2val = self._get_dev_2_val(devices, values)
+        need_check = {dev: True for dev in dev2val}
+
+        interval = 0.050  # [s]
+        ntrials = int(timeout/interval)
+        _time.sleep(4*interval)
+        for _ in range(ntrials):
+            for dev, val in dev2val.items():
+                if not need_check[dev]:
+                    continue
+                need_check[dev] = not getattr(_opr, comp)(
+                    dev[propty], val)
+            if all([not v for v in need_check.values()]):
+                break
+            _time.sleep(interval)
+
+        prob = list()
+        for dev, sts in need_check.items():
+            if not sts:
+                continue
+            if isinstance(dev, DeviceNC):
+                prob.append(dev.devname + ':' + propty)
+            else:
+                prob.append(dev.devname.substitute(propty=propty))
+        allok = not prob
+        if return_prob:
+            return allok, prob
+        return allok
+
+    def _get_dev_2_val(self, devices, values):
+        """Get devices to values dict."""
+        # always use an iterable object
+        if not isinstance(devices, (tuple, list)):
+            devices = [devices, ]
+        # if 'values' is not iterable, consider the same value for all devices
+        if not isinstance(values, (tuple, list)):
+            values = len(devices)*[values]
+
+        dev2val = dict()
+        for i, dev in enumerate(devices):
+            dev2val[dev] = values[i]
+        return dev2val
+
     def __getitem__(self, devidx):
         """Return device."""
         return self._devices[devidx]
