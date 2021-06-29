@@ -3,7 +3,8 @@
 import numpy as _np
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice
-from ..timesys.csdev import get_hl_trigger_database as _get_hl_trigger_database
+from ..timesys.csdev import ETypes as _ETypes, \
+    get_hl_trigger_database as _get_hl_trigger_database
 
 
 class EVG(_Device):
@@ -125,7 +126,7 @@ class Event(_ProptyDevice):
         'Code-Mon', 'ExtTrig-Cmd',
         )
 
-    MODES = ('Disable', 'Continuous', 'Injection', 'OneShot', 'External')
+    MODES = _ETypes.EVT_MODES
     DELAYTYPES = ('Incr', 'Fixed')
 
     def __init__(self, evtname):
