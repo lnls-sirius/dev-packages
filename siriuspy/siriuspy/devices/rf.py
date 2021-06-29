@@ -71,7 +71,7 @@ class ASLLRF(_DeviceNC):
         'mV:AL:REF:S', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
-        'RmpEnbl-Sts',
+        'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
         )
 
     def __init__(self, devname):
@@ -85,8 +85,22 @@ class ASLLRF(_DeviceNC):
 
     @property
     def is_cw(self):
-        """."""
-        return not self['RmpEnbl-Sts']
+        """Is CW."""
+        return not self.rmp_enable
+
+    @property
+    def rmp_enable(self):
+        """Ramp enable."""
+        return self['RmpEnbl-Sts']
+
+    @rmp_enable.setter
+    def rmp_enable(self, value):
+        self['RmpEnbl-Sel'] = value
+
+    @property
+    def rmp_ready(self):
+        """Ramp ready."""
+        return self['RmpReady-Mon']
 
     @property
     def phase_top(self):
