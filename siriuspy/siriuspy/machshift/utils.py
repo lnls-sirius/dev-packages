@@ -1588,8 +1588,10 @@ class MacReport:
             [value for value in self._raw_data['Failures'].values()]) * \
             self._user_shift_progmd_values
         dtimes_failures_users = dtimes*self._failures_users
-        dtimes_users_impltd = dtimes_users_progmd*_np.logical_not(
-            self._failures_users)
+        self._user_shift_impltd_values = self._user_shift_progmd_values * \
+            _np.logical_not(self._failures_users)
+        self._raw_data['UserShiftImpltd'] = self._user_shift_impltd_values
+        dtimes_users_impltd = dtimes*self._user_shift_impltd_values
         self._failures_users_operat = 1 * _np.logical_or.reduce(
             [self._raw_data['Failures']['SubsystemsNOk'],
              self._raw_data['Failures']['NoEBeam']]) * \
