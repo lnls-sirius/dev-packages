@@ -1,6 +1,5 @@
 """Devices subpackage."""
 
-from .device import Device, DeviceApp, Devices
 from .bbb import BunchbyBunch
 from .blscreen import BeamlineScreen
 from .bpm import BPM
@@ -12,6 +11,9 @@ from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS
 from .energy import Energy
 from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
+from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
+    BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
+    LILLRFStandbyHandler
 from .lillrf import LILLRF
 from .orbit_interlock import BPMInterlock
 from .psconv import PSProperty, StrengthConv
@@ -25,6 +27,6 @@ from .timing import EVG, Event, Trigger
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 
 del device, bpm, dcct, egun, ict, lillrf
-del pwrsupply, psconv, pssofb, rf
+del pwrsupply, psconv, pssofb, rf, injsys
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, blscreen, bbb
