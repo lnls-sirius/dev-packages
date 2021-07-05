@@ -1,6 +1,7 @@
-"""."""
+"""LI LLRF device."""
 
 import time as _time
+import numpy as _np
 
 from .device import DeviceNC as _DeviceNC
 
@@ -20,7 +21,9 @@ class LILLRF(_DeviceNC):
         'SET_AMP', 'GET_AMP',
         'SET_PHASE', 'GET_PHASE',
         'SET_INTEGRAL_ENABLE', 'GET_INTEGRAL_ENABLE',
-        'SET_FB_MODE', 'GET_FB_MODE')
+        'SET_FB_MODE', 'GET_FB_MODE',
+        'GET_CH1_SETTING_I', 'GET_CH1_SETTING_Q',
+        'GET_CH1_I', 'GET_CH1_Q')
 
     def __init__(self, devname):
         """."""
@@ -50,35 +53,72 @@ class LILLRF(_DeviceNC):
         self['SET_PHASE'] = value
 
     @property
-    def integral(self):
+    def integral_enable(self):
         """Integral Enable."""
         return self['GET_INTEGRAL_ENABLE']
 
-    @integral.setter
-    def integral(self, value):
+    @integral_enable.setter
+    def integral_enable(self, value):
         self['SET_INTEGRAL_ENABLE'] = value
 
     @property
-    def feedback(self):
-        """Feedback Mode."""
+    def feedback_state(self):
+        """Feedback State."""
         return self['GET_FB_MODE']
 
-    @feedback.setter
-    def feedback(self, value):
+    @feedback_state.setter
+    def feedback_state(self, value):
         self['SET_FB_MODE'] = value
 
+    @property
+    def i_ref(self):
+        """I reference."""
+        return self['GET_CH1_SETTING_I']
+
+    @property
+    def q_ref(self):
+        """Q reference."""
+        return self['GET_CH1_SETTING_Q']
+
+    @property
+    def i_mon(self):
+        """I monitor."""
+        return self['GET_CH1_I']
+
+    @property
+    def q_mon(self):
+        """Q monitor."""
+        return self['GET_CH1_Q']
+
     def cmd_set_phase(self, value, timeout=10):
-        """."""
+        """Set and wait for phase property to reach value."""
         self.phase = value
         self._wait_rb_sp(timeout, 'phase')
 
     def cmd_set_amplitude(self, value, timeout=30):
-        """."""
+        """Set and wait for amplitude property to reach value."""
         self.amplitude = value
         self._wait_rb_sp(timeout, 'amplitude')
 
+    def cmd_set_integral_enable(self, value, timeout=3):
+        """Set and wait for integral enable property to reach value."""
+        self.integral_enable = value
+        self._wait('GET_INTEGRAL_ENABLE', value, timeout=timeout)
+
+    def cmd_set_feedback_state(self, value, timeout=3):
+        """Set and wait for feedback state property to reach value."""
+        self.feedback_state = value
+        self._wait('GET_FB_MODE', value, timeout=timeout)
+
+    def check_feeedback_loop_closed(self, tol=5e-3):
+        """Check if feedback loop is closed within a tolerance."""
+        sp_vec = _np.array([self.i_ref, self.q_ref])
+        rb_vec = _np.array([self.i_mon, self.q_mon])
+        diff = _np.linalg.norm(rb_vec - sp_vec)
+        return diff < tol
+
     def _wait_rb_sp(self, timeout=10, propty=None):
-        """."""
+        """Wait for property readback to reach setpoint."""
         nrp = int(timeout / 0.1)
         for _ in range(nrp):
             _time.sleep(0.1)
