@@ -361,14 +361,10 @@ class Devices:
                 break
             _time.sleep(_TINY_INTERVAL)
 
-        prob = list()
-        for dev in dev2val:
-            if isinstance(dev, DeviceNC):
-                prob.append(dev.devname + ':' + propty)
-            else:
-                prob.append(dev.devname.substitute(propty=propty))
         allok = not dev2val
-        return allok, prob if return_prob else allok
+        if return_prob:
+            return allok, [dev.devname+':'+propty for dev in dev2val]
+        return allok
 
     def _get_dev_2_val(self, devices, values):
         """Get devices to values dict."""
