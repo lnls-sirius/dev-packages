@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 
 from .device import DeviceNC as _DeviceNC
+from ..csdev import Const as _Const
 
 
 class LILLRF(_DeviceNC):
@@ -110,12 +111,32 @@ class LILLRF(_DeviceNC):
         self.feedback_state = value
         self._wait('GET_FB_MODE', value, timeout=timeout)
 
-    def check_feeedback_loop_closed(self, tol=5e-3):
+    def cmd_turn_on_feedback_loop(self):
+        """Close feedback loop."""
+        self.cmd_set_integral_enable(_Const.DsblEnbl.Enbl)
+        self.cmd_set_feedback_state(_Const.DsblEnbl.Enbl)
+
+    def cmd_turn_off_feedback_loop(self):
+        """Open feedback loop."""
+        self.cmd_set_feedback_state(_Const.DsblEnbl.Dsbl)
+        self.cmd_set_integral_enable(_Const.DsblEnbl.Dsbl)
+
+    def check_feeedback_loop(self, tol=5e-3):
         """Check if feedback loop is closed within a tolerance."""
         sp_vec = _np.array([self.i_ref, self.q_ref])
         rb_vec = _np.array([self.i_mon, self.q_mon])
         diff = _np.linalg.norm(rb_vec - sp_vec)
         return diff < tol
+
+    def wait_feedback_loop(self, tol=5e-3, timeout=10):
+        """Wait for feedback loop to be closed."""
+        ntrials = int(timeout/0.1)
+        _time.sleep(4*0.1)
+        for _ in range(ntrials):
+            if self.check_feeedback_loop(tol):
+                return True
+            _time.sleep(0.1)
+        return False
 
     def _wait_rb_sp(self, timeout=10, propty=None):
         """Wait for property readback to reach setpoint."""
