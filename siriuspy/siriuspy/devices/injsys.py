@@ -55,9 +55,7 @@ class ASPUStandbyHandler(_BaseHandler):
         # trigger devices
         self._trigdevs = [Trigger(trg) for trg in self._trignames]
 
-        alldevs = list(self._pudevs)
-        alldevs.extend(list(self._trigdevs))
-        alldevs = tuple(alldevs)
+        alldevs = tuple(self._pudevs + self._trigdevs)
 
         self._on_values = dict()
         for pudev in self._pudevs:
@@ -174,9 +172,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
         # trigger devices
         self._trigdevs = [Trigger(trg) for trg in self._trignames]
 
-        alldevs = list(self._psdevs)
-        alldevs.extend(self._trigdevs)
-        alldevs = tuple(alldevs)
+        alldevs = tuple(self._psdevs + self._trigdevs)
 
         self._on_values = dict()
         for psdev in self._psdevs:
