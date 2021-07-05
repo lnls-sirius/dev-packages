@@ -3,8 +3,9 @@
 import numpy as _np
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice
-from ..timesys.csdev import ETypes as _ETypes, \
+from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
     get_hl_trigger_database as _get_hl_trigger_database
+from ..util import get_bit as _get_bit
 
 
 class EVG(_Device):
@@ -212,6 +213,14 @@ class Trigger(_Device):
     def status(self):
         """Status."""
         return self['Status-Mon']
+
+    @property
+    def status_str(self):
+        """Status string."""
+        value = self.status
+        strs = [d for i, d in enumerate(_TIConst.HLTrigStatusLabels)
+                if _get_bit(value, i)]
+        return ', '.join(strs) if strs else 'Ok'
 
     @property
     def state(self):
