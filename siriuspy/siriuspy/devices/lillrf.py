@@ -128,8 +128,8 @@ class LILLRF(_DeviceNC):
 
     def cmd_turn_off_feedback_loop(self):
         """Turn off feedback loop."""
-        self.cmd_turn_off_integral_enable()
         self.cmd_turn_off_feedback_state()
+        self.cmd_turn_off_integral_enable()
 
     def check_feeedback_loop(self, tol=5e-3):
         """Check if feedback loop is closed within a tolerance."""
