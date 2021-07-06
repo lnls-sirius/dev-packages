@@ -91,12 +91,12 @@ class LILLRF(_DeviceNC):
         """Q monitor."""
         return self['GET_CH1_Q']
 
-    def cmd_set_phase(self, value, timeout=10):
+    def set_phase(self, value, timeout=10):
         """Set and wait for phase property to reach value."""
         self.phase = value
         self._wait_rb_sp(timeout, 'phase')
 
-    def cmd_set_amplitude(self, value, timeout=30):
+    def set_amplitude(self, value, timeout=30):
         """Set and wait for amplitude property to reach value."""
         self.amplitude = value
         self._wait_rb_sp(timeout, 'amplitude')

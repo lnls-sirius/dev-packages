@@ -184,7 +184,7 @@ class BunchbyBunch(_Devices):
         llrf = self.rfcav.dev_llrf
         init_val = llrf.phase
         for i, val in enumerate(values):
-            self.rfcav.cmd_set_phase(val)
+            self.rfcav.set_phase(val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean

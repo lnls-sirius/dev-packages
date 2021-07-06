@@ -430,17 +430,17 @@ class RFCav(_Devices):
         """Return RFPoweMon device."""
         return self.devices[2]
 
-    def cmd_set_voltage(self, value, timeout=10):
+    def set_voltage(self, value, timeout=10):
         """."""
         self.dev_llrf.voltage = value
         self._wait('voltage', timeout=timeout)
 
-    def cmd_set_phase(self, value, timeout=10):
+    def set_phase(self, value, timeout=10):
         """."""
         self.dev_llrf.phase = value
         self._wait('phase', timeout=timeout)
 
-    def cmd_set_frequency(self, value, timeout=10):
+    def set_frequency(self, value, timeout=10):
         """."""
         self.dev_rfgen.frequency = value
         self._wait('frequency', timeout=timeout)
