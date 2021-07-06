@@ -101,25 +101,37 @@ class LILLRF(_DeviceNC):
         self.amplitude = value
         self._wait_rb_sp(timeout, 'amplitude')
 
-    def cmd_set_integral_enable(self, value, timeout=3):
-        """Set and wait for integral enable property to reach value."""
-        self.integral_enable = value
-        self._wait('GET_INTEGRAL_ENABLE', value, timeout=timeout)
+    def cmd_turn_on_integral_enable(self):
+        """Set and wait for integral enable property to reach 'on' state."""
+        self.integral_enable = _Const.DsblEnbl.Enbl
 
-    def cmd_set_feedback_state(self, value, timeout=3):
-        """Set and wait for feedback state property to reach value."""
-        self.feedback_state = value
-        self._wait('GET_FB_MODE', value, timeout=timeout)
+    def cmd_turn_off_integral_enable(self):
+        """Set and wait for integral enable property to reach 'off' state."""
+        self.integral_enable = _Const.DsblEnbl.Dsbl
+
+    def cmd_turn_on_feedback_state(self):
+        """Set and wait for feedback state property to reach 'on' state."""
+        self.feedback_state = _Const.DsblEnbl.Enbl
+
+    def cmd_turn_off_feedback_state(self):
+        """Set and wait for feedback state property to reach 'off' state."""
+        self.feedback_state = _Const.DsblEnbl.Dsbl
 
     def cmd_turn_on_feedback_loop(self):
-        """Close feedback loop."""
-        self.cmd_set_integral_enable(_Const.DsblEnbl.Enbl)
-        self.cmd_set_feedback_state(_Const.DsblEnbl.Enbl)
+        """Turn on feedback loop."""
+        value = _Const.DsblEnbl.Enbl
+        self.integral_enable = value
+        self._wait('GET_INTEGRAL_ENABLE', value, timeout=3)
+        self.feedback_state = value
+        self._wait('GET_FB_MODE', value, timeout=3)
 
     def cmd_turn_off_feedback_loop(self):
-        """Open feedback loop."""
-        self.cmd_set_feedback_state(_Const.DsblEnbl.Dsbl)
-        self.cmd_set_integral_enable(_Const.DsblEnbl.Dsbl)
+        """Turn off feedback loop."""
+        value = _Const.DsblEnbl.Dsbl
+        self.feedback_state = value
+        self._wait('GET_FB_MODE', value, timeout=3)
+        self.integral_enable = value
+        self._wait('GET_INTEGRAL_ENABLE', value, timeout=3)
 
     def check_feeedback_loop(self, tol=5e-3):
         """Check if feedback loop is closed within a tolerance."""
