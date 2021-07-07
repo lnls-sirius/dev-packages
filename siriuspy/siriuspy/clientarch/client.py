@@ -156,6 +156,7 @@ class ClientArchiver:
                 "'timestampstart' and 'timestamp_stop' arguments must be "
                 "timestamp strings or iterable.")
 
+        pvname_orig = list(pvname)
         if process_type:
             process_str = process_type
             if interval is not None:
@@ -175,7 +176,7 @@ class ClientArchiver:
 
         pvn2idcs = dict()
         all_urls = list()
-        for pvn in pvname:
+        for i, pvn in enumerate(pvname):
             urls = []
             for tstart, tstop in zip(timestamp_start, timestamp_stop):
                 urls.append(self._create_url(
@@ -185,7 +186,7 @@ class ClientArchiver:
             ini = len(all_urls)
             all_urls.extend(urls)
             end = len(all_urls)
-            pvn2idcs[pvn] = _np.arange(ini, end)
+            pvn2idcs[pvname_orig[i]] = _np.arange(ini, end)
 
         resps = self._make_request(all_urls, return_json=True)
         if resps is None:
@@ -205,15 +206,16 @@ class ClientArchiver:
                 _st = _np.r_[_st, [v['status'] for v in data]]
                 _sv = _np.r_[_sv, [v['severity'] for v in data]]
             if not _ts.size:
-                return None
-            _, _tsidx = _np.unique(_ts, return_index=True)
-            timestamp, value, status, severity = \
-                _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
+                timestamp, value, status, severity = [None, None, None, None]
+            else:
+                _, _tsidx = _np.unique(_ts, return_index=True)
+                timestamp, value, status, severity = \
+                    _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
 
             pvn2resp[pvn] = [timestamp, value, status, severity]
 
         if len(pvname) == 1:
-            return pvn2resp[pvname[0]]
+            return pvn2resp[pvname_orig[0]]
         return pvn2resp
 
     def getPVDetails(self, pvname, get_request_url=False):

@@ -1,18 +1,33 @@
 """BSMP types definitions."""
-from collections import namedtuple
+import enum
+import typing
+
+
+@enum.unique
+class BSMPBytesFmt(str, enum.Enum):
+    CHAR = "<c"
+    UCHAR = "<B"
+    USHORT = "<H"
+    UINT = "<I"
+    FLOAT = "<f"
+
+
+class BSMPType(typing.NamedTuple):
+    type: str
+    size: int
+    fmt: str
+    check: typing.Callable[[typing.Any], bool]
 
 
 class Types:
     """Types used by BSMP entities."""
 
-    _BSMPType = namedtuple('BSMPType', 'type, size, fmt, check')
-
-    T_CHAR = _BSMPType('char', 1, '<c', lambda x: isinstance(x, str))
-    T_UINT8 = _BSMPType('uint8', 1, '<B', lambda x: isinstance(x, int))
-    T_UINT16 = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
-    T_UINT32 = _BSMPType('uint32', 4, '<I', lambda x: isinstance(x, int))
-    T_FLOAT = _BSMPType('float', 4, '<f', lambda x: isinstance(x, float))
-    T_PARAM = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
-    T_STATE = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
-    T_ENUM = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
-    T_DSP_CLASS = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
+    T_CHAR = BSMPType("char", 1, BSMPBytesFmt.CHAR.value, lambda x: isinstance(x, str))
+    T_UINT8 = BSMPType("uint8", 1, BSMPBytesFmt.UCHAR.value, lambda x: isinstance(x, int))
+    T_UINT16 = BSMPType("uint16", 2, BSMPBytesFmt.USHORT.value, lambda x: isinstance(x, int))
+    T_UINT32 = BSMPType("uint32", 4, BSMPBytesFmt.UINT.value, lambda x: isinstance(x, int))
+    T_FLOAT = BSMPType("float", 4, BSMPBytesFmt.FLOAT.value, lambda x: isinstance(x, float))
+    T_PARAM = BSMPType("uint16", 2, BSMPBytesFmt.USHORT.value, lambda x: isinstance(x, int))
+    T_STATE = BSMPType("uint16", 2, BSMPBytesFmt.USHORT.value, lambda x: isinstance(x, int))
+    T_ENUM = BSMPType("uint16", 2, BSMPBytesFmt.USHORT.value, lambda x: isinstance(x, int))
+    T_DSP_CLASS = BSMPType("uint16", 2, BSMPBytesFmt.USHORT.value, lambda x: isinstance(x, int))

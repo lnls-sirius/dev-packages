@@ -1,11 +1,13 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
+import logging as _log
 import multiprocessing as _mp
 from multiprocessing import sharedctypes as _shm
 
 import numpy as _np
 from epics import get_pv as _get_pv
+from socket import timeout as _socket_timeout
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
@@ -15,9 +17,9 @@ from ..devices import StrengthConv as _StrengthConv
 from ..epics import CAProcessSpawn as _Process
 
 from .bsmp.constants import ConstFBP as _const_fbp
+from .bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .bsmp.commands import FBP as _FBP
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
 from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
@@ -140,6 +142,7 @@ class PSConnSOFB:
 
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
+    SOCKET_TIMEOUT_ERR = 255
 
     def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None,
                  sofb_update_iocs=False):
@@ -388,7 +391,8 @@ class PSConnSOFB:
         current = curr_sp[indcs_sofb]
 
         # initialize setpoint
-        readback = udc.sofb_current_rb_get()  # stores last setpoint
+        # read last setpoint already stored in PSBSMP object:
+        readback = udc.sofb_current_rb_get()
         if readback is None:
             setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
         else:
@@ -398,11 +402,14 @@ class PSConnSOFB:
         setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(setpoint)
-
-        # update sofb_func_return
-        func_return = udc.sofb_func_return_get()
-        self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        try:
+            udc.sofb_current_set(setpoint)
+            # update sofb_func_return
+            func_return = udc.sofb_func_return_get()
+            self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        except _socket_timeout:
+            # update sofb_func_return indicating socket timeout
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -712,15 +719,17 @@ class PSSOFB:
 
     def wait(self, timeout=None):
         """."""
-        for doneevt in self._doneevts:
+        for i, doneevt in enumerate(self._doneevts):
             if not doneevt.wait(timeout=timeout):
+                _log.error('Wait Done timed out for process '+str(i))
                 return False
         return True
 
     def is_ready(self):
         """."""
-        for doneevt in self._doneevts:
+        for i, doneevt in enumerate(self._doneevts):
             if not doneevt.is_set():
+                _log.error('Ready: not done for process '+str(i))
                 return False
         return True
 
@@ -758,17 +767,17 @@ class PSSOFB:
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
             # NOTE: It is crucial to use the Event class from the appropriate
             # context, otherwise it will fail for 'spawn' start method.
-            evt = spw.Event()
-            evt.set()
+            doneevt = spw.Event()
+            doneevt.set()
             theirs, mine = spw.Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB._run_process,
-                args=(self._ethbridge_cls, bbbnames, theirs, evt,
+                args=(self._ethbridge_cls, bbbnames, theirs, doneevt,
                       arr.shape, rbref, ref, fret, self._sofb_update_iocs),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
-            self._doneevts.append(evt)
+            self._doneevts.append(doneevt)
             self._pipes.append(mine)
 
     def processes_shutdown(self):
@@ -894,7 +903,7 @@ class PSSOFB:
                     getattr(psconnsofb, meth)(*args)
                 else:
                     getattr(psconnsofb, meth)()
-                doneevt.set()
+            doneevt.set()
         psconnsofb.threads_shutdown()
         pipe.close()
 

@@ -2,13 +2,20 @@
 
 """Test commands module."""
 
+import struct
 from unittest import TestCase
 from unittest.mock import Mock
-import struct
 
-from siriuspy.bsmp import Package, Message, Types, Variable, VariablesGroup, \
-    Function, BSMP, SerialAnomResp
-
+from siriuspy.bsmp import (
+    BSMP,
+    Function,
+    Message,
+    Package,
+    SerialAnomResp,
+    Types,
+    Variable,
+    VariablesGroup,
+)
 from siriuspy.util import check_public_interface_namespace
 
 
@@ -16,7 +23,8 @@ class TestBSMPAPI(TestCase):
     """Test BSMP."""
 
     api = (
-        'entities', 'channel',
+        'entities',
+        'channel',
         'query_protocol_version',
         'query_list_of_variables',
         'query_list_of_group_of_variables',
@@ -72,7 +80,8 @@ class TestBSMP0x0(TestCase):
     def test_query_group_of_variables(self):
         """Test query_group_of_variables."""
         p = Package.package(
-            0, Message.message(0x07, payload=[chr(0), chr(1), chr(2), chr(3)]))
+            0, Message.message(0x07, payload=[chr(0), chr(1), chr(2), chr(3)])
+        )
         self.serial.UART_request.return_value = p.stream
         response = self.bsmp.query_group_of_variables(1, timeout=100)
         self.assertEqual(response, (0xE0, [0, 1, 2, 3]))
@@ -121,7 +130,8 @@ class TestBSMP0x1(TestCase):
             Variable(0, False, Types.T_UINT16, 1),
             Variable(1, False, Types.T_FLOAT, 1),
             Variable(2, False, Types.T_FLOAT, 2),
-            Variable(3, False, Types.T_CHAR, 64)]
+            Variable(3, False, Types.T_CHAR, 64),
+        ]
         self.entities.groups = [
             VariablesGroup(0, False, self.entities.variables),
         ]
@@ -275,8 +285,7 @@ class TestBSMP0x3(TestCase):
 
         response = self.bsmp.create_group_of_variables([1, 3], timeout=100)
 
-        self.serial.UART_request.assert_called_once_with(
-            send_p.stream, timeout=100)
+        self.serial.UART_request.assert_called_once_with(send_p.stream, timeout=100)
         self.assertEqual(response, (0xE0, None))
 
     def test_create_group_of_variables_error(self):
@@ -303,8 +312,7 @@ class TestBSMP0x3(TestCase):
 
         response = self.bsmp.remove_all_groups_of_variables(timeout=100)
 
-        self.serial.UART_request.assert_called_once_with(
-            send_p.stream, timeout=100)
+        self.serial.UART_request.assert_called_once_with(send_p.stream, timeout=100)
         self.assertEqual(response, (0xE0, None))
 
     def test_remove_all_groups_of_variables_error(self):
@@ -370,6 +378,5 @@ class TestBSMP0x5(TestCase):
         self.serial.UART_request.return_value = resp_p.stream
 
         response = self.bsmp.execute_function(0, 1.5)
-        self.serial.UART_request.assert_called_once_with(
-            send_p.stream, timeout=100)
+        self.serial.UART_request.assert_called_once_with(send_p.stream, timeout=100)
         self.assertEqual(response, (0xE0, 0))

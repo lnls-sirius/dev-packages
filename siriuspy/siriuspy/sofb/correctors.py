@@ -69,7 +69,7 @@ class Corrector(_BaseTimingConfig):
 
     @property
     def sofbmode_ok(self):
-        """SOFBMode ok status."""
+        """Return SOFBMode Ok status."""
         return self.connected
 
     @property
@@ -562,6 +562,9 @@ class EpicsCorrectors(BaseCorrectors):
         Will return >0 indicating how many previous kicks were not implemented.
         """
         if not self._pssofb.is_ready():
+            msg = 'ERR: PSSOFB not ready!'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return -1
 
         # Send correctors setpoint
@@ -575,8 +578,10 @@ class EpicsCorrectors(BaseCorrectors):
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 
-        if self._wait_pssofb:
-            self._pssofb.wait()
+        if self._wait_pssofb and not self._pssofb.wait(timeout=1):
+            msg = 'ERR: PSSOFB timed out: Worker is not Done!'
+            self._update_log(msg)
+            _log.error(msg[5:])
 
         # compare kicks to check if there is something wrong
         ret = self._compare_kicks_pssofb(ret_kicks, func_ret)

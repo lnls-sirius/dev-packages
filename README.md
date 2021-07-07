@@ -1,5 +1,9 @@
 
-[![Build Status](https://travis-ci.org/lnls-sirius/dev-packages.svg?branch=master)](https://travis-ci.org/lnls-sirius/dev-packages)
+[![Test siriuspy](https://github.com/lnls-sirius/dev-packages/actions/workflows/test-siriuspy.yml/badge.svg)](https://github.com/lnls-sirius/dev-packages/actions/workflows/test-siriuspy.yml)
+
+![Latest tag](https://img.shields.io/github/tag/lnls-sirius/dev-packages.svg?style=flat)
+[![Latest release](https://img.shields.io/github/release/lnls-sirius/dev-packages.svg?style=flat)](https://github.com/lnls-sirius/dev-packages/releases)
+[![PyPI version fury.io](https://badge.fury.io/py/siriuspy.svg)](https://pypi.python.org/pypi/siriuspy/)
 
 # Dev-packages
 
@@ -38,7 +42,7 @@ Python packages useful for the development of the Sirius control system.
 
 ### Prerequisites
 
-See the repository's  [requirements.txt](requirements.txt) file.
+See the repository's  [requirements.txt](siriuspy/requirements.txt) file.
 
 ### Installation
 

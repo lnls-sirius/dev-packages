@@ -30,3 +30,23 @@ ifneq ($(ISINST),0)
 else
 	echo 'already uninstalled $(PACKAGE)'
 endif
+
+test: ## Run tests
+	python setup.py test
+
+dist: clean ## Build setuptools dist
+	python setup.py sdist bdist_wheel
+
+distupload: ## Upload package dist to PyPi
+	python -m twine upload --verbose dist/*
+
+distinstall: ## Install package from PyPi
+	python -m pip install $(PACKAGE)==$(shell cat "VERSION")
+
+disttestupload: ##  Upload package dist to Test PyPi
+	python -m twine upload --verbose --repository testpypi dist/*
+
+disttestinstall: ##  Install package from Test PyPi
+	python -m pip install --index-url https://test.pypi.org/simple/ --no-deps $(PACKAGE)==$(shell cat "VERSION")
+
+disttest: dist disttestupload disttestinstall test ## Build the package, upload to Test PyPi, install from PyPi and run tests
