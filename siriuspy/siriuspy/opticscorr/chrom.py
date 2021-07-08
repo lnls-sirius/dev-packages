@@ -400,7 +400,7 @@ class ChromCorrApp(_BaseApp):
             log_msg = 'Chromaticity measurement completed!'
 
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
-        self._measuring_config = False
+        self._measuring_chrom = False
         self.run_callbacks('Log-Mon', log_msg)
         return not aborted
 
