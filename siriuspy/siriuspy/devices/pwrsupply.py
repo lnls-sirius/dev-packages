@@ -23,7 +23,8 @@ class _PSDev(_Device):
     )
     _properties_magps = (
         'Current-SP', 'Current-RB', 'Current-Mon',
-        'OpMode-Sel', 'OpMode-Sts'
+        'OpMode-Sel', 'OpMode-Sts',
+        'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -215,6 +216,7 @@ class PowerSupplyPU(_PSDev):
     """Pulsed Power Supply Device."""
 
     PULSTATE = _PSCStatus.PWRSTATE
+    DEF_TIMEOUT = 10
 
     class DEVICES:
         """Devices names."""
@@ -289,13 +291,15 @@ class PowerSupplyPU(_PSDev):
         """."""
         self['Pulse-Sel'] = value
 
-    def cmd_turn_on_pulse(self):
+    def cmd_turn_on_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.On
+        self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
 
-    def cmd_turn_off_pulse(self):
+    def cmd_turn_off_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.Off
+        self._wait('Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
 
     @property
     def properties(self):
@@ -305,7 +309,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def pvnames(self):
         """Return device PV names."""
-        return super().pvnames + self._dev_timing.pvnames
+        return set(list(super().pvnames) +
+                   list(self._dev_timing.pvnames))
 
     @property
     def connected(self):
@@ -317,8 +322,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        return super().disconnected_pvnames + \
-            self._dev_timing.disconnected_pvnames
+        return set(list(super().disconnected_pvnames) +
+                   list(self._dev_timing.disconnected_pvnames))
 
     def update(self):
         """Update device properties."""

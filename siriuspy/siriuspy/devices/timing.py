@@ -3,10 +3,13 @@
 import numpy as _np
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice
+from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
+    get_hl_trigger_database as _get_hl_trigger_database
+from ..util import get_bit as _get_bit
 
 
 class EVG(_Device):
-    """."""
+    """Device EVG."""
 
     DEVNAME = 'AS-RaMO:TI-EVG'
 
@@ -116,7 +119,7 @@ class EVG(_Device):
 
 
 class Event(_ProptyDevice):
-    """."""
+    """Device Timing Event."""
 
     _properties = (
         'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
@@ -124,7 +127,7 @@ class Event(_ProptyDevice):
         'Code-Mon', 'ExtTrig-Cmd',
         )
 
-    MODES = ('Disable', 'Continuous', 'Injection', 'OneShot', 'External')
+    MODES = _ETypes.EVT_MODES
     DELAYTYPES = ('Incr', 'Fixed')
 
     def __init__(self, evtname):
@@ -191,3 +194,128 @@ class Event(_ProptyDevice):
     def is_in_inj_table(self):
         """."""
         return self.mode_str in Event.MODES[1:4]
+
+
+class Trigger(_Device):
+    """Device trigger."""
+
+    STATES = ('Dsbl', 'Enbl')
+    POLARITIES = ('Normal', 'Inverse')
+
+    def __init__(self, trigname):
+        """Init."""
+        self._database = _get_hl_trigger_database(trigname)
+        self._properties = tuple(self._database)
+        self._source_options = self._database['Src-Sel']['enums']
+        super().__init__(trigname, properties=self._properties)
+
+    @property
+    def status(self):
+        """Status."""
+        return self['Status-Mon']
+
+    @property
+    def status_str(self):
+        """Status string."""
+        value = self.status
+        strs = [d for i, d in enumerate(_TIConst.HLTrigStatusLabels)
+                if _get_bit(value, i)]
+        return ', '.join(strs) if strs else 'Ok'
+
+    @property
+    def state(self):
+        """State."""
+        return self['State-Sts']
+
+    @state.setter
+    def state(self, value):
+        self._enum_setter('State-Sel', value, Trigger.STATES)
+
+    @property
+    def state_str(self):
+        """State string."""
+        return Trigger.STATES[self['State-Sts']]
+
+    @property
+    def source(self):
+        """Source."""
+        return self['Src-Sts']
+
+    @source.setter
+    def source(self, value):
+        self._enum_setter('Src-Sel', value, self._source_options)
+
+    @property
+    def source_str(self):
+        """Source string."""
+        return self._source_options[self['Src-Sts']]
+
+    @property
+    def source_options(self):
+        """Source options."""
+        return self._source_options
+
+    @property
+    def duration(self):
+        """Duration."""
+        return self['Duration-RB']
+
+    @duration.setter
+    def duration(self, value):
+        self['Duration-SP'] = value
+
+    @property
+    def polarity(self):
+        """Polarity."""
+        return self['Polarity-Sts']
+
+    @polarity.setter
+    def polarity(self, value):
+        self._enum_setter('Polarity-Sel', value, Trigger.POLARITIES)
+
+    @property
+    def polarity_str(self):
+        """Polarity string."""
+        return Trigger.POLARITIES[self['Polarity-Sts']]
+
+    @property
+    def nr_pulses(self):
+        """Nr. of pulses."""
+        return self['NrPulses-RB']
+
+    @nr_pulses.setter
+    def nr_pulses(self, value):
+        self['NrPulses-SP'] = value
+
+    @property
+    def delay(self):
+        """Delay."""
+        return self['Delay-RB']
+
+    @delay.setter
+    def delay(self, value):
+        self['Delay-SP'] = value
+
+    @property
+    def total_delay(self):
+        """Total delay."""
+        return self['TotalDelay-Mon']
+
+    @property
+    def delay_raw(self):
+        """Delay raw."""
+        return self['DelayRaw-RB']
+
+    @delay_raw.setter
+    def delay_raw(self, value):
+        self['DelayRaw-SP'] = value
+
+    @property
+    def total_delay_raw(self):
+        """Total delay raw."""
+        return self['TotalDelayRaw-Mon']
+
+    @property
+    def is_in_inj_table(self):
+        """Is in Injection table."""
+        return self['InInjTable-Mon']

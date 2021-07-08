@@ -176,3 +176,60 @@ class EGHVPS(_Device):
         ison = self['enstatus'] == self.PWRSTATE.On
         ison &= self['swstatus'] == self.PWRSTATE.On
         return ison
+
+
+class EGTriggerPS(_Device):
+    """Egun Trigger Power Supply Device."""
+
+    DEF_TIMEOUT = 10  # [s]
+
+    class DEVICES:
+        """Devices names."""
+
+        LI = 'LI-01:EG-TriggerPS'
+        ALL = (LI, )
+
+    _properties = (
+        'status', 'allow', 'enable', 'enablereal')
+
+    def __init__(self, devname=DEVICES.LI):
+        """."""
+        # check if device exists
+        if devname not in EGTriggerPS.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=EGTriggerPS._properties)
+
+    @property
+    def status(self):
+        """."""
+        return self['status']
+
+    @property
+    def allow(self):
+        """."""
+        return self['allow']
+
+    @property
+    def enable(self):
+        """."""
+        return self['enablereal']
+
+    @enable.setter
+    def enable(self, value):
+        self['enable'] = bool(value)
+
+    def cmd_enable_trigger(self, timeout=DEF_TIMEOUT):
+        """."""
+        self['enable'] = 1
+        self._wait('enablereal', value=1, timeout=timeout)
+
+    def cmd_disable_trigger(self, timeout=DEF_TIMEOUT):
+        """."""
+        self['enable'] = 0
+        self._wait('enablereal', value=0, timeout=timeout)
+
+    def is_on(self):
+        """."""
+        return self['enablereal'] == 1

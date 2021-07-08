@@ -57,7 +57,7 @@ class RFGen(_DeviceNC):
 
 
 class ASLLRF(_DeviceNC):
-    """."""
+    """AS LLRF."""
 
     class DEVICES:
         """Devices names."""
@@ -71,7 +71,7 @@ class ASLLRF(_DeviceNC):
         'mV:AL:REF:S', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
-        'RmpEnbl-Sts',
+        'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
         )
 
     def __init__(self, devname):
@@ -85,8 +85,22 @@ class ASLLRF(_DeviceNC):
 
     @property
     def is_cw(self):
-        """."""
-        return not self['RmpEnbl-Sts']
+        """Is CW."""
+        return not self.rmp_enable
+
+    @property
+    def rmp_enable(self):
+        """Ramp enable."""
+        return self['RmpEnbl-Sts']
+
+    @rmp_enable.setter
+    def rmp_enable(self, value):
+        self['RmpEnbl-Sel'] = value
+
+    @property
+    def rmp_ready(self):
+        """Ramp ready."""
+        return self['RmpReady-Mon']
 
     @property
     def phase_top(self):
@@ -95,7 +109,6 @@ class ASLLRF(_DeviceNC):
 
     @phase_top.setter
     def phase_top(self, value):
-        """."""
         self['RmpPhsTop-SP'] = value
 
     @property
@@ -105,7 +118,6 @@ class ASLLRF(_DeviceNC):
 
     @phase_bottom.setter
     def phase_bottom(self, value):
-        """."""
         self['RmpPhsBot-SP'] = value
 
     @property
@@ -120,7 +132,6 @@ class ASLLRF(_DeviceNC):
 
     @phase.setter
     def phase(self, value):
-        """."""
         self['PL:REF:S'] = value
 
     @property
@@ -144,7 +155,6 @@ class ASLLRF(_DeviceNC):
 
     @detune.setter
     def detune(self, value):
-        """."""
         self['DTune-SP'] = value
 
     @property
@@ -420,17 +430,17 @@ class RFCav(_Devices):
         """Return RFPoweMon device."""
         return self.devices[2]
 
-    def cmd_set_voltage(self, value, timeout=10):
+    def set_voltage(self, value, timeout=10):
         """."""
         self.dev_llrf.voltage = value
         self._wait('voltage', timeout=timeout)
 
-    def cmd_set_phase(self, value, timeout=10):
+    def set_phase(self, value, timeout=10):
         """."""
         self.dev_llrf.phase = value
         self._wait('phase', timeout=timeout)
 
-    def cmd_set_frequency(self, value, timeout=10):
+    def set_frequency(self, value, timeout=10):
         """."""
         self.dev_rfgen.frequency = value
         self._wait('frequency', timeout=timeout)

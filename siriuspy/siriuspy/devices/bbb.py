@@ -184,7 +184,7 @@ class BunchbyBunch(_Devices):
         llrf = self.rfcav.dev_llrf
         init_val = llrf.phase
         for i, val in enumerate(values):
-            self.rfcav.cmd_set_phase(val)
+            self.rfcav.set_phase(val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -1126,6 +1126,78 @@ class SingleBunch(_ProptyDevice):
 
     ##
     @property
+    def fft_size(self):
+        """."""
+        return self['NFFT']
+
+    @fft_size.setter
+    def fft_size(self, value):
+        self['NFFT'] = value
+
+    @property
+    def fft_overlap(self):
+        """."""
+        return self['NOVERLAP']
+
+    @fft_overlap.setter
+    def fft_overlap(self, value):
+        self['NOVERLAP'] = value
+
+    @property
+    def delay_calibration(self):
+        """."""
+        return self['DEL_CAL']
+
+    @delay_calibration.setter
+    def delay_calibration(self, value):
+        self['DEL_CAL'] = value
+
+    @property
+    def nr_averages(self):
+        """."""
+        return self['SP_AVG']
+
+    @nr_averages.setter
+    def nr_averages(self, value):
+        self['SP_AVG'] = value
+
+    @property
+    def transfer_function_enable(self):
+        """."""
+        return self['TF_ENABLE']
+
+    @transfer_function_enable.setter
+    def transfer_function_enable(self, value):
+        self['TF_ENABLE'] = value
+
+    @property
+    def amplitude_mean(self):
+        """."""
+        return self['MEANVAL']
+
+    @amplitude_mean.setter
+    def amplitude_mean(self, value):
+        self['MEANVAL'] = value
+
+    @property
+    def amplitude_rms(self):
+        """."""
+        return self['RMSVAL']
+
+    @amplitude_rms.setter
+    def amplitude_rms(self, value):
+        self['RMSVAL'] = value
+
+    @property
+    def amplitude_pp(self):
+        """."""
+        return self['AMP_PP']
+
+    @amplitude_pp.setter
+    def amplitude_pp(self, value):
+        self['AMP_PP'] = value
+
+    @property
     def spec_mag(self):
         """."""
         return self['MAG']
@@ -1181,6 +1253,10 @@ class SingleBunch(_ProptyDevice):
     def spec_marker1_phase(self):
         """."""
         return self['PHASE1']
+
+    def cmd_enable_transfer_function(self, timeout=DEF_TIMEOUT):
+        self.transfer_function_enable = 1
+        self._wait('TF_ENABLE', value=1, timeout=timeout)
 
 
 class PhaseTracking(_ProptyDevice):

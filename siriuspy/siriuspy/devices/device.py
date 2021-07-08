@@ -12,6 +12,9 @@ from ..simul import SimPV as _PVSim
 from ..simul import Simulation as _Simulation
 from ..namesys import SiriusPVName as _SiriusPVName
 
+_DEF_TIMEOUT = 10  # s
+_TINY_INTERVAL = 0.050  # s
+
 
 class Device:
     """Epics Device."""
@@ -149,16 +152,15 @@ class Device:
                 connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
-    def _wait(self, propty, value, timeout=10, comp='eq'):
+    def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
         comp = getattr(_opr, comp)
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(4*interval)
+        ntrials = int(timeout/_TINY_INTERVAL)
+        _time.sleep(4*_TINY_INTERVAL)
         for _ in range(ntrials):
             if comp(self[propty], value):
                 return True
-            _time.sleep(interval)
+            _time.sleep(_TINY_INTERVAL)
         return False
 
     def _get_pvname(self, devname, propty):
@@ -333,6 +335,46 @@ class Devices:
     def devices(self):
         """Return devices."""
         return self._devices
+
+    # --- private methods ---
+
+    def _set_devices_propty(self, devices, propty, values, wait=0):
+        """Set devices property to value(s)."""
+        dev2val = self._get_dev_2_val(devices, values)
+        for dev, val in dev2val.items():
+            if dev.pv_object(propty).wait_for_connection():
+                dev[propty] = val
+                _time.sleep(wait)
+
+    def _wait_devices_propty(
+            self, devices, propty, values, comp='eq',
+            timeout=_DEF_TIMEOUT, return_prob=False):
+        """Wait for devices property to reach value(s)."""
+        comp = getattr(_opr, comp)
+        dev2val = self._get_dev_2_val(devices, values)
+
+        _time.sleep(4*_TINY_INTERVAL)
+        for _ in range(int(timeout/_TINY_INTERVAL)):
+            okdevs = {k for k, v in dev2val.items() if comp(k[propty], v)}
+            list(map(dev2val.__delitem__, okdevs))
+            if not dev2val:
+                break
+            _time.sleep(_TINY_INTERVAL)
+
+        allok = not dev2val
+        if return_prob:
+            return allok, [dev.devname+':'+propty for dev in dev2val]
+        return allok
+
+    def _get_dev_2_val(self, devices, values):
+        """Get devices to values dict."""
+        # always use an iterable object
+        if not isinstance(devices, (tuple, list)):
+            devices = [devices, ]
+        # if 'values' is not iterable, consider the same value for all devices
+        if not isinstance(values, (tuple, list)):
+            values = len(devices)*[values]
+        return {k: v for k, v in zip(devices, values)}
 
     def __getitem__(self, devidx):
         """Return device."""
