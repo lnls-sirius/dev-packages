@@ -15,10 +15,10 @@ class BSMP:
 
     _timeout_execute_function: float = 100.0  # [ms]
 
-    def __init__(self, pru: _IOInterface, slave_address: int, entities: _Entities):
+    def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
         """_cructor."""
         self._entities: _Entities = entities
-        self._channel: _Channel = _Channel(pru, slave_address)
+        self._channel: _Channel = _Channel(iointerf, slave_address)
 
     @property
     def entities(self) -> _Entities:

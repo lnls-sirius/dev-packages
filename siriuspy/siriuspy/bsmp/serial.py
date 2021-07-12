@@ -185,23 +185,23 @@ class Package:
 class Channel:
     """BSMP Channel.
 
-    The channel is defined by a sender pru controller and recipient
+    The channel is defined by an IOInterface object and recipient
     address.
     """
 
     # TODO: should we remove use of default timeout values. It is dangerous!
     LOCK: typing.Optional[_Lock] = None
 
-    def __init__(self, pru: IOInterface, address: int):
+    def __init__(self, iointerf: IOInterface, address: int):
         """Set channel."""
-        self._pru: IOInterface = pru  # PRU object to communicate with bsmp device
+        self._iointerf: IOInterface = iointerf  # IOInterface object to communicate with bsmp device
         self._address: int = address  # address of recipient device.
         self._size_counter: int = 0  # stream size counter [bytes]
 
     @property
-    def pru(self) -> IOInterface:
-        """Reurn PRU serial communication object."""
-        return self._pru
+    def iointerf(self) -> IOInterface:
+        """Return IOInterface serial communication object."""
+        return self._iointerf
 
     @property
     def address(self) -> int:
@@ -219,7 +219,7 @@ class Channel:
 
     def read(self) -> Message:
         """Read from serial."""
-        resp = self.pru.UART_read()
+        resp = self.iointerf.UART_read()
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
@@ -229,7 +229,7 @@ class Channel:
     def write(self, message: Message, timeout: float = 100):
         """Write to serial. :param timeout [ms]"""
         stream = Package.package(self._address, message).stream
-        response = self.pru.UART_write(stream, timeout=timeout)
+        response = self.iointerf.UART_write(stream, timeout=timeout)
         self._size_counter += len(stream)
         return response
 
@@ -238,10 +238,10 @@ class Channel:
         stream = Package.package(self._address, message).stream
 
         if Channel.LOCK is None:
-            response = self.pru.UART_request(stream, timeout=timeout)
+            response = self.iointerf.UART_request(stream, timeout=timeout)
         else:
             with Channel.LOCK:
-                response = self.pru.UART_request(stream, timeout=timeout)
+                response = self.iointerf.UART_request(stream, timeout=timeout)
 
         self._size_counter += len(stream)
 
