@@ -739,7 +739,7 @@ class LinacPSCycler:
         status = self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 4  # indicate interlock problems
+            return 3  # indicate interlock problems
         return 0
 
     def _get_duration_and_waveform(self):
