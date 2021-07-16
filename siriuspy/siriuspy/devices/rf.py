@@ -68,7 +68,7 @@ class ASLLRF(_DeviceNC):
 
     _properties = (
         'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
-        'mV:AL:REF:S', 'SL:REF:AMP', 'SL:INP:AMP',
+        'mV:AL:REF-SP', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
