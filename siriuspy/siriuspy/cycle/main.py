@@ -511,7 +511,7 @@ class CycleController:
     def init_trims(self, trims):
         """Initialize trims cycling process."""
         # initialize dict to check which trim is cycling
-        self._is_trim_cycling_dict = {ps: True for ps in trims}
+        self._is_cycling_dict = {ps: True for ps in trims}
 
         # trigger
         self.trigger_timing()
@@ -529,13 +529,13 @@ class CycleController:
 
             # verify if trims started to cycle
             if 14 < _time.time() - time0 < 15:
-                for psname in self._is_trim_cycling_dict:
+                for psname in self._is_cycling_dict:
                     cycler = self._get_cycler(psname)
                     if not cycler.get_cycle_enable():
                         self._update_log(
                             psname + ' is not cycling!', warning=True)
-                        self._is_trim_cycling_dict[psname] = False
-                if sum(self._is_trim_cycling_dict.values()) == 0:
+                        self._is_cycling_dict[psname] = False
+                if sum(self._is_cycling_dict.values()) == 0:
                     self._update_log(
                         'All trims failed. Stopping.', error=True)
                     return False
