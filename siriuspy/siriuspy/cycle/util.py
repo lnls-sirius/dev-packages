@@ -5,6 +5,7 @@ import time as _time
 import math as _math
 import numpy as _np
 
+from ..csdev import Const as _Const
 from ..namesys import Filter as _Filter
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 
@@ -85,3 +86,10 @@ def pv_conn_put(pvobj, value):
     if pvobj.put(value):
         return True
     return False
+
+
+class Const(_Const):
+    """PSCycle Constants."""
+
+    CycleEndStatus = _Const.register(
+        'CycleEndStatus', ('Ok', 'LackTriggers', 'NotFinished', 'Interlock'))

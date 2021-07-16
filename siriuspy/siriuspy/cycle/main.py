@@ -12,7 +12,7 @@ from ..search import PSSearch as _PSSearch
 
 from .conn import Timing, PSCycler, PSCyclerFBP, LinacPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
-from .util import get_sections as _get_sections, \
+from .util import get_sections as _get_sections, Const as _Const, \
     get_trigger_by_psname as _get_trigger_by_psname
 
 TIMEOUT_SLEEP = 0.1
@@ -640,7 +640,7 @@ class CycleController:
         for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             status = cycler.check_final_state(self.mode)
-            if status == 0:
+            if status == _Const.CycleEndStatus.Ok:
                 sucess_cnt += 1
                 if sucess_cnt % 5 == 0 or idx == len(psnames)-1:
                     self._update_log(
@@ -651,17 +651,18 @@ class CycleController:
 
         all_ok = True
         for psname, has_prob in self._checks_final_result.items():
-            if has_prob == 1:
+            if has_prob == _Const.CycleEndStatus.LackTriggers:
                 self._update_log(
                     'Verify the number of pulses '+psname+' received!',
                     error=True)
                 all_ok = False
-            elif has_prob == 2 and self._is_cycling_dict[psname]:
-                self._update_log(psname+' is finishing cycling...',
-                                 warning=True)
-            elif has_prob == 3:
-                self._update_log(psname+' has interlock problems.',
-                                 error=True)
+            elif has_prob == _Const.CycleEndStatus.NotFinished \
+                    and self._is_cycling_dict[psname]:
+                self._update_log(
+                    psname+' is finishing cycling...', warning=True)
+            elif has_prob == _Const.CycleEndStatus.Interlock:
+                self._update_log(
+                    psname+' has interlock problems.', error=True)
                 all_ok = False
         return all_ok
 
