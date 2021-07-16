@@ -637,6 +637,7 @@ class CycleController:
         self._update_log('Checking power supplies final state...')
         self._checks_final_result = dict()
         sucess_cnt = 0
+        msg = 'Successfully checked final state for {0}/{1}'
         for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             status = cycler.check_final_state(self.mode)
@@ -644,10 +645,10 @@ class CycleController:
                 sucess_cnt += 1
                 if sucess_cnt % 5 == 0 or idx == len(psnames)-1:
                     self._update_log(
-                        'Successfully checked final state for '
-                        '{0}/{1}'.format(
-                            str(sucess_cnt), str(len(psnames))))
+                        msg.format(str(sucess_cnt), str(len(psnames))))
             self._checks_final_result[psname] = status
+        if sucess_cnt != len(psnames):
+            self._update_log(msg.format(str(sucess_cnt), str(len(psnames))))
 
         all_ok = True
         for psname, has_prob in self._checks_final_result.items():
