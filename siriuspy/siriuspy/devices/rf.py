@@ -12,7 +12,7 @@ class RFGen(_DeviceNC):
 
     RF_DELTA_MIN = 0.1  # [Hz]
     RF_DELTA_MAX = 15000.0  # [Hz]
-    RF_DELTA_RMP = 20  # [Hz]
+    RF_DELTA_RMP = 200  # [Hz]
 
     class DEVICES:
         """Devices names."""
