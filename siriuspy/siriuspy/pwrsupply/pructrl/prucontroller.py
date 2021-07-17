@@ -6,10 +6,12 @@ at the other end of the serial line.
 """
 
 import time as _time
+import socket as _socket
 from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
+from ...util import get_timestamp as _get_timestamp
 from ...bsmp import SerialError as _SerialError
 
 from ..bsmp.constants import _const_bsmp
@@ -595,21 +597,20 @@ class PRUController:
 
     def _bsmp_update(self):
 
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PRUC._bsmp_update (beg)', 1e3*(_time.time() % 1)))
+        try:
+            # update variables
+            self._bsmp_update_variables()
 
-        # update variables
-        self._bsmp_update_variables()
+            # update device wfm curves cyclically
+            if self._scope_update:
+                self._scope_update_dev_idx = \
+                    (self._scope_update_dev_idx + 1) % len(self._device_ids)
+                dev_id = self._device_ids[self._scope_update_dev_idx]
+                self._bsmp_update_wfm(dev_id)
 
-        # update device wfm curves cyclically
-        if self._scope_update:
-            self._scope_update_dev_idx = \
-                (self._scope_update_dev_idx + 1) % len(self._device_ids)
-            dev_id = self._device_ids[self._scope_update_dev_idx]
-            self._bsmp_update_wfm(dev_id)
+        except _socket.timeout:
+            print('!!! {} : socket timeout !!!'.format(_get_timestamp()))
 
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PRUC._bsmp_update (end)', 1e3*(_time.time() % 1)))
 
     def _bsmp_update_variables(self, dev_id=None):
         if dev_id is None:
