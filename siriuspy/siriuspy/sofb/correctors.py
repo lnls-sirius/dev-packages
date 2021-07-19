@@ -704,7 +704,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def set_timing_delay(self, value):
         """."""
-        frf = 499664 / 4  # [kHz]
+        frf = 499666 / 4  # [kHz]
         raw = int(value * frf)
         self.timing.delayraw = raw
         return True

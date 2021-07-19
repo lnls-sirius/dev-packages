@@ -28,7 +28,7 @@ class SOFB(_BaseClass):
         _log.info('Starting SOFB...')
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
-        self._loop_freq = 1
+        self._loop_freq = self._csorb.BPMsFreq
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -40,7 +40,7 @@ class SOFB(_BaseClass):
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
-        self._max_delta_kick = {'ch': 300, 'cv': 300}
+        self._max_delta_kick = {'ch': 5, 'cv': 5}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
             self._drive_divisor = 12
@@ -53,7 +53,7 @@ class SOFB(_BaseClass):
             self._drive_state = self._csorb.DriveState.Open
             self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
-            self._max_delta_kick['rf'] = 500
+            self._max_delta_kick['rf'] = 10
             self._meas_respmat_kick['rf'] = 80
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None

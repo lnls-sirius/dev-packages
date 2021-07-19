@@ -124,7 +124,7 @@ class ConstSI(ConstRings):
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 35  # [ms]
+    CORR_DEF_DELAY = 18  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -218,11 +218,11 @@ class SOFBTLines(ConstTLines):
             'LoopState-Sts': {
                 'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
             'LoopFreq-SP': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 60},
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
-                'lolim': 1e-3, 'hilim': 60},
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
@@ -316,16 +316,16 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'DeltaKickCH-SP': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
@@ -831,10 +831,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'ManCorrGainRF-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxDeltaKickRF-SP': {
-                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 10, 'unit': 'Hz', 'prec': 2,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickRF-RB': {
-                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
+                'type': 'float', 'value': 10, 'prec': 2, 'unit': 'Hz',
                 'lolim': 0, 'hilim': 10000},
             'DeltaKickRF-SP': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
