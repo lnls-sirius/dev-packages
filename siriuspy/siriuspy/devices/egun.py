@@ -420,8 +420,8 @@ class EGun(_Devices):
             self.bias, self.fila, self.hvps, self.trigps, self.pulse,
             self.trigsingle, self.trigmulti, self.trigmultipre)
 
-        self._bias_mb = EGun.MULTI_BUNCH_BIAS
-        self._bias_sb = EGun.SINGLE_BUNCH_BIAS
+        self._bias_mb = EGun.BIAS_MULTI_BUNCH
+        self._bias_sb = EGun.BIAS_SINGLE_BUNCH
         self._bias_tol = EGun.BIAS_TOLERANCE
 
         super().__init__('', devices)
