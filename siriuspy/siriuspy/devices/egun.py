@@ -1,5 +1,7 @@
 """E-Gun devices."""
 
+import time as _time
+
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
@@ -59,6 +61,18 @@ class EGBias(_Device):
     def is_on(self):
         """."""
         return self['swstatus'] == self.PWRSTATE.On
+
+    def set_voltage(self, value, tol=0.2, timeout=DEF_TIMEOUT):
+        """Set voltage and wait readback reach value with a tolerance."""
+        self.voltage = value
+        nrp = int(timeout / 0.1)
+        for _ in range(nrp):
+            if abs(self.voltage - value) < tol:
+                return True
+            _time.sleep(0.1)
+        print('timed out waiting for EGBias voltage to reach ',
+              value, 'with tolerance ', tol)
+        return False
 
 
 class EGFilament(_Device):
