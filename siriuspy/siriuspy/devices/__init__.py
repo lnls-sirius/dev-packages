@@ -15,6 +15,7 @@ from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
     LILLRFStandbyHandler
 from .lillrf import LILLRF
+from .machshift import MachShift
 from .orbit_interlock import BPMInterlock
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
@@ -29,4 +30,4 @@ from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 del device, bpm, dcct, egun, ict, lillrf
 del pwrsupply, psconv, pssofb, rf, injsys
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, blscreen, bbb
+del ids, currinfo, blscreen, bbb, machshift
