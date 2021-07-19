@@ -577,6 +577,7 @@ class InjSysStandbyHandler(_Devices):
         """Reset commands order."""
         self.on_order = InjSysStandbyHandler.DEF_ON_ORDER
         self.off_order = InjSysStandbyHandler.DEF_OFF_ORDER
+        return True
 
     def cmd_turn_on(self, run_in_thread=False):
         """Turn on."""
