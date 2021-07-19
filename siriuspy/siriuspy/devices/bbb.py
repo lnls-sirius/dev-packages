@@ -1067,11 +1067,11 @@ class Acquisition(_ProptyDevice):
     @property
     def modal_nr_averages(self):
         """."""
-        return self['MD_SP_AVG']
+        return self['MD_AVG']
 
     @modal_nr_averages.setter
     def modal_nr_averages(self, value):
-        self['MD_SP_AVG'] = value
+        self['MD_AVG'] = value
 
     @property
     def modal_sideband_freq(self):
