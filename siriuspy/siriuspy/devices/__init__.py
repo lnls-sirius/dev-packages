@@ -7,7 +7,7 @@ from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
 from .device import Device, DeviceApp, Devices
-from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS
+from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
 from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward

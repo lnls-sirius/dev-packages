@@ -4,7 +4,8 @@ import time as _time
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
-from .device import Device as _Device
+from .device import Device as _Device, Devices as _Devices
+from .timing import Trigger
 
 
 class EGBias(_Device):
@@ -394,3 +395,126 @@ class EGPulsePS(_Device):
         if not self.cmd_turn_on_multi_bunch_mode():
             return False
         return self.cmd_turn_on_multi_bunch_switch()
+
+
+class EGun(_Devices):
+    """EGun device."""
+
+    DEF_TIMEOUT = 10  # [s]
+    BIAS_MULTI_BUNCH = -49.0
+    BIAS_SINGLE_BUNCH = -80.0
+    BIAS_TOLERANCE = 0.2
+
+    def __init__(self):
+        """Init."""
+        self.bias = EGBias()
+        self.fila = EGFilament()
+        self.hvps = EGHVPS()
+        self.trigps = EGTriggerPS()
+        self.pulse = EGPulsePS()
+        self.trigsingle = Trigger('LI-01:TI-EGun-SglBun')
+        self.trigmulti = Trigger('LI-01:TI-EGun-MultBun')
+        self.trigmultipre = Trigger('LI-01:TI-EGun-MultBunPre')
+
+        devices = (
+            self.bias, self.fila, self.hvps, self.trigps, self.pulse,
+            self.trigsingle, self.trigmulti, self.trigmultipre)
+
+        self._bias_mb = EGun.MULTI_BUNCH_BIAS
+        self._bias_sb = EGun.SINGLE_BUNCH_BIAS
+        self._bias_tol = EGun.BIAS_TOLERANCE
+
+        super().__init__('', devices)
+
+    @property
+    def multi_bunch_bias_voltage(self):
+        """Multi bunch bias voltage."""
+        return self._bias_mb
+
+    @multi_bunch_bias_voltage.setter
+    def multi_bunch_bias_voltage(self, value):
+        self._bias_mb = value
+
+    @property
+    def single_bunch_bias_voltage(self):
+        """Single bunch bias voltage."""
+        return self._bias_sb
+
+    @single_bunch_bias_voltage.setter
+    def single_bunch_bias_voltage(self, value):
+        self._bias_sb = value
+
+    @property
+    def bias_voltage_tol(self):
+        """Bias voltage tolerance."""
+        return self._bias_tol
+
+    @bias_voltage_tol.setter
+    def bias_voltage_tol(self, value):
+        self._bias_tol = value
+
+    def cmd_switch_to_single_bunch(self):
+        """Switch to single bunch mode."""
+        if not self.trigps.cmd_disable_trigger():
+            return False
+
+        if not self.pulse.cmd_turn_off_multi_bunch():
+            return False
+
+        if not self.bias.set_voltage(self._bias_sb):
+            return False
+
+        if not self.trigmultipre.cmd_disable():
+            return False
+        if not self.trigmulti.cmd_disable():
+            return False
+        if not self.trigsingle.cmd_enable():
+            return False
+
+        return self.pulse.cmd_turn_on_single_bunch()
+
+    def cmd_switch_to_multi_bunch(self):
+        """Switch to multi bunch mode."""
+        if not self.trigps.cmd_disable_trigger():
+            return False
+
+        if not self.pulse.cmd_turn_off_single_bunch():
+            return False
+
+        if not self.bias.set_voltage(self._bias_mb):
+            return False
+
+        if not self.trigsingle.cmd_disable():
+            return False
+        if not self.trigmultipre.cmd_enable():
+            return False
+        if not self.trigmulti.cmd_enable():
+            return False
+
+        return self.pulse.cmd_turn_on_multi_bunch()
+
+    @property
+    def is_single_bunch(self):
+        """Is configured to single bunch mode."""
+        sts = not self.pulse.multi_bunch_mode
+        sts &= not self.pulse.multi_bunch_switch
+        sts &= self.bias.voltage - self._bias_sb < self._bias_tol
+        sts &= not self.trigmultipre.state
+        sts &= not self.trigmulti.state
+        sts &= self.trigsingle.state
+        sts &= not self.pulse.single_bunch_switch
+        sts &= not self.pulse.single_bunch_mode
+        return sts
+
+    @property
+    def is_multi_bunch(self):
+        """Is configured to multi bunch mode."""
+        sts = not self.pulse.single_bunch_switch
+        sts &= not self.pulse.single_bunch_mode
+        sts &= self.bias.voltage - self._bias_mb < self._bias_tol
+        sts &= not self.trigsingle.state
+        sts &= self.trigmultipre.state
+        sts &= self.trigmulti.state
+        sts &= not self.pulse.multi_bunch_mode
+        sts &= not self.pulse.multi_bunch_switch
+        return sts
