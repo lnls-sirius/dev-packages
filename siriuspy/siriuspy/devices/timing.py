@@ -120,6 +120,11 @@ class EVG(_Device):
         self.continuous_state = 0
         return self._wait(propty='ContinuousEvt-Sel', value=0, timeout=timeout)
 
+    def set_nrpulses(self, value, timeout=10):
+        """Set and wait number of pulses."""
+        self['RepeatBucketList-SP'] = value
+        return self._wait('RepeatBucketList-RB', value)
+
 
 class Event(_ProptyDevice):
     """Device Timing Event."""
