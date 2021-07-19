@@ -121,12 +121,12 @@ class _PSDev(_Device):
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.On
-        self._wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
+        return self._wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
 
     def cmd_turn_off(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.Off
-        self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
+        return self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
 
     @staticmethod
     def get_device_type(devname):
@@ -204,12 +204,14 @@ class PowerSupply(_PSDev):
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRef
-        self._wait('OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
+        return self._wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
 
     def cmd_slowrefsync(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRefSync
-        self._wait('OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
+        return self._wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
 
 
 class PowerSupplyPU(_PSDev):
@@ -294,12 +296,13 @@ class PowerSupplyPU(_PSDev):
     def cmd_turn_on_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.On
-        self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
+        return self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
 
     def cmd_turn_off_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.Off
-        self._wait('Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
+        return self._wait(
+            'Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
 
     @property
     def properties(self):

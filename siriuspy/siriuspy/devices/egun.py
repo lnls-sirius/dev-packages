@@ -1,4 +1,4 @@
-"""."""
+"""E-Gun devices."""
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
@@ -8,6 +8,7 @@ from .device import Device as _Device
 class EGBias(_Device):
     """EGun Bias Device."""
 
+    DEF_TIMEOUT = 10  # [s]
     PWRSTATE = _PSCStatus.PWRSTATE
 
     class DEVICES:
@@ -38,7 +39,6 @@ class EGBias(_Device):
 
     @voltage.setter
     def voltage(self, value):
-        """."""
         self['voltoutsoft'] = value
 
     @property
@@ -46,13 +46,15 @@ class EGBias(_Device):
         """."""
         return self['currentinsoft']
 
-    def cmd_turn_on(self):
+    def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.On
+        return self._wait('swstatus', self.PWRSTATE.On, timeout)
 
-    def cmd_turn_off(self):
+    def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.Off
+        return self._wait('swstatus', self.PWRSTATE.Off, timeout)
 
     def is_on(self):
         """."""
@@ -62,6 +64,7 @@ class EGBias(_Device):
 class EGFilament(_Device):
     """EGun Filament Device."""
 
+    DEF_TIMEOUT = 10  # [s]
     PWRSTATE = _PSCStatus.PWRSTATE
 
     class DEVICES:
@@ -100,13 +103,15 @@ class EGFilament(_Device):
         """."""
         self['currentoutsoft'] = value
 
-    def cmd_turn_on(self):
+    def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.On
+        return self._wait('swstatus', self.PWRSTATE.On, timeout)
 
-    def cmd_turn_off(self):
+    def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.Off
+        return self._wait('swstatus', self.PWRSTATE.Off, timeout)
 
     def is_on(self):
         """."""
@@ -116,6 +121,7 @@ class EGFilament(_Device):
 class EGHVPS(_Device):
     """Egun High-Voltage Power Supply Device."""
 
+    DEF_TIMEOUT = 10  # [s]
     PWRSTATE = _PSCStatus.PWRSTATE
 
     class DEVICES:
@@ -161,15 +167,21 @@ class EGHVPS(_Device):
     def voltage(self, value):
         self['voltoutsoft'] = value
 
-    def cmd_turn_on(self):
+    def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.On
+        if not self._wait('enstatus', self.PWRSTATE.On, timeout=timeout/2):
+            return False
         self['switch'] = self.PWRSTATE.On
+        return self._wait('swstatus', self.PWRSTATE.On, timeout=timeout/2)
 
-    def cmd_turn_off(self):
+    def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.Off
+        if not self._wait('enstatus', self.PWRSTATE.Off, timeout=timeout/2):
+            return False
         self['switch'] = self.PWRSTATE.Off
+        return self._wait('swstatus', self.PWRSTATE.Off, timeout=timeout/2)
 
     def is_on(self):
         """."""
@@ -223,12 +235,12 @@ class EGTriggerPS(_Device):
     def cmd_enable_trigger(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = 1
-        self._wait('enablereal', value=1, timeout=timeout)
+        return self._wait('enablereal', value=1, timeout=timeout)
 
     def cmd_disable_trigger(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = 0
-        self._wait('enablereal', value=0, timeout=timeout)
+        return self._wait('enablereal', value=0, timeout=timeout)
 
     def is_on(self):
         """."""

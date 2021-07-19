@@ -681,10 +681,16 @@ class BPM(_Device):
         self['ACQShots-SP'] = val
 
     def cmd_acq_start(self):
+        """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
+        """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
+        """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)

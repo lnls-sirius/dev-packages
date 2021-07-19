@@ -433,17 +433,17 @@ class RFCav(_Devices):
     def set_voltage(self, value, timeout=10):
         """."""
         self.dev_llrf.voltage = value
-        self._wait('voltage', timeout=timeout)
+        return self._wait('voltage', timeout=timeout)
 
     def set_phase(self, value, timeout=10):
         """."""
         self.dev_llrf.phase = value
-        self._wait('phase', timeout=timeout)
+        return self._wait('phase', timeout=timeout)
 
     def set_frequency(self, value, timeout=10):
         """."""
         self.dev_rfgen.frequency = value
-        self._wait('frequency', timeout=timeout)
+        return self._wait('frequency', timeout=timeout)
 
     # --- private methods ---
 
@@ -458,15 +458,16 @@ class RFCav(_Devices):
                 else:
                     phase_sp = self.dev_llrf['RmpPhsBot-SP']
                 if abs(self.dev_llrf.phase - phase_sp) < 0.1:
-                    break
+                    return True
             elif propty == 'voltage':
                 voltage_sp = self.dev_llrf['mV:AL:REF:S']
                 if abs(self.dev_llrf.voltage - voltage_sp) < 0.1:
-                    break
+                    return True
             elif propty == 'frequency':
                 freq_sp = self.dev_rfgen['GeneralFreq-SP']
                 if abs(self.dev_rfgen.frequency - freq_sp) < 0.1:
-                    break
+                    return True
             else:
                 raise Exception(
                     'Set RF property (phase, voltage or frequency)')
+        return False

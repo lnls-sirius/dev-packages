@@ -122,3 +122,4 @@ class BPMInterlock(_Device):
     def cmd_reset(self):
         """General interlock clear."""
         self['IntlkClr-Sel'] = 1
+        return True
