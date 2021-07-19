@@ -328,3 +328,13 @@ class Trigger(_Device):
     def is_in_inj_table(self):
         """Is in Injection table."""
         return self['InInjTable-Mon']
+
+    def cmd_enable(self, timeout=3):
+        """Command enable."""
+        self.state = 1
+        return self._wait('State-Sts', 1, timeout)
+
+    def cmd_disable(self, timeout=3):
+        """Command disable."""
+        self.state = 0
+        return self._wait('State-Sts', 0, timeout)
