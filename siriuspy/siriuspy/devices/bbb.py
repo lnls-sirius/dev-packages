@@ -690,15 +690,19 @@ class Acquisition(_ProptyDevice):
 
     _properties = (
         'GDTIME', 'HOLDTIME', 'POSTTIME', 'ACQTIME',
-        'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE',
+        'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE', 'SP_AVG',
         'HWTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
         'DUMP', 'RAW_SAMPLES', 'RAW', 'ACQ_TURNS', 'POST_TURNS',
         'MEAN', 'RMS', 'XSC', 'SPEC', 'MAXRMS', 'TSC', 'FREQ',
         'ACQ_MASK', 'ACQ_PATTERN',
         'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1',
-        'PEAKFREQ1', 'PEAK1', 'PEAKTUNE1',
         'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2',
+        'PEAKFREQ1', 'PEAK1', 'PEAKTUNE1',
         'PEAKFREQ2', 'PEAK2', 'PEAKTUNE2',
+        'MD_ENABLE', 'MD_SMODE', 'MD_FTUNE', 'MD_FSPAN', 'MD_MSEL',
+        'MD_AVG', 'MD_SP_LOW', 'MD_SP_HIGH', 'MD_SP_SEARCH',
+        'MD_MAXMODE', 'MD_MAXVAL', 'MD_PEAK', 'MD_PEAKFREQ', 'MD_PEAKTUNE',
+        'MD_MODES', 'MD_SPEC',
         )
 
     DEF_TIMEOUT = 10  # [s]
@@ -785,6 +789,15 @@ class Acquisition(_ProptyDevice):
     @downsample.setter
     def downsample(self, value):
         self['REC_DS'] = value
+
+    @property
+    def nr_averages(self):
+        """."""
+        return self['SP_AVG']
+
+    @nr_averages.setter
+    def nr_averages(self, value):
+        self['SP_AVG'] = value
 
     # ########### Trigger Properties ###########
     @property
@@ -1022,6 +1035,123 @@ class Acquisition(_ProptyDevice):
         else:
             raise NotImplementedError(acqtype)
         return acqtype
+
+    # ############# Modal Analysis Properties #############
+    @property
+    def modal_acq_enbl(self):
+        """."""
+        return self['MD_ENABLE']
+
+    @modal_acq_enbl.setter
+    def modal_acq_enbl(self, value):
+        self['MD_ENABLE'] = value
+
+    @property
+    def modal_acq_mode(self):
+        """."""
+        return self['MD_SMODE']
+
+    @modal_acq_mode.setter
+    def modal_acq_mode(self, value):
+        self['MD_SMODE'] = value
+
+    @property
+    def modal_mode_selected(self):
+        """."""
+        return self['MD_MSEL']
+
+    @modal_mode_selected.setter
+    def modal_mode_selected(self, value):
+        self['MD_MSEL'] = value
+
+    @property
+    def modal_nr_averages(self):
+        """."""
+        return self['MD_SP_AVG']
+
+    @modal_nr_averages.setter
+    def modal_nr_averages(self, value):
+        self['MD_SP_AVG'] = value
+
+    @property
+    def modal_sideband_freq(self):
+        """."""
+        return self['MD_FTUNE']
+
+    @modal_sideband_freq.setter
+    def modal_sideband_freq(self, value):
+        self['MD_FTUNE'] = value
+
+    @property
+    def modal_sideband_span(self):
+        """."""
+        return self['MD_FSPAN']
+
+    @modal_sideband_span.setter
+    def modal_sideband_span(self, value):
+        self['MD_FSPAN'] = value
+
+    @property
+    def modal_marker_freq_min(self):
+        """."""
+        return self['MD_SP_LOW']
+
+    @modal_marker_freq_min.setter
+    def modal_marker_freq_min(self, value):
+        self['MD_SP_LOW'] = value
+
+    @property
+    def modal_marker_freq_max(self):
+        """."""
+        return self['MD_SP_HIGH']
+
+    @modal_marker_freq_max.setter
+    def modal_marker_freq_max(self, value):
+        self['MD_SP_HIGH'] = value
+
+    @property
+    def modal_marker_search_mode(self):
+        """."""
+        return self['MD_SP_SEARCH']
+
+    @modal_marker_search_mode.setter
+    def modal_marker_search_mode(self, value):
+        self['MD_SP_SEARCH'] = value
+
+    @property
+    def modal_maximum_mode(self):
+        """."""
+        return self['MD_MAXMODE']
+
+    @property
+    def modal_maximum_value(self):
+        """."""
+        return self['MD_MAXVAL']
+
+    @property
+    def modal_marker_freq(self):
+        """."""
+        return self['MD_PEAKFREQ']
+
+    @property
+    def modal_marker_tune(self):
+        """."""
+        return self['MD_PEAKTUNE']
+
+    @property
+    def modal_marker_mag(self):
+        """."""
+        return self['MD_PEAK']
+
+    @property
+    def modal_modes_amp(self):
+        """."""
+        return self['MD_MODES']
+
+    @property
+    def modal_maximum_mode_spec(self):
+        """."""
+        return self['MD_SPEC']
 
 
 class SingleBunch(_ProptyDevice):
