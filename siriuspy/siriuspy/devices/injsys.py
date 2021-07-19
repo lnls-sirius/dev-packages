@@ -93,7 +93,7 @@ class ASPUStandbyHandler(_BaseHandler):
         """Trigger devices."""
         return self._trigdevs
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """Turn off."""
         # set pulse off
         self._set_devices_propty(
@@ -123,7 +123,7 @@ class ASPUStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """Turn on."""
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
@@ -207,7 +207,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
         """Trigger devices."""
         return self._trigdevs
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """Turn off."""
         # disable triggers
         self._set_devices_propty(
@@ -252,7 +252,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """Turn on."""
         # set rmpwfm
         self._set_devices_propty(
@@ -327,7 +327,7 @@ class BORFRampStandbyHandler(_BaseHandler):
         # call base class constructor
         super().__init__('', devices)
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """Turn off."""
         # set RF ramp to disable
         self.llrf.rmp_enable = _Const.DsblEnbl.Dsbl
@@ -343,7 +343,7 @@ class BORFRampStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """Turn on."""
         # set RF ramp to enabled
         self.llrf.rmp_enable = _Const.DsblEnbl.Enbl
@@ -375,7 +375,7 @@ class InjBOStandbyHandler(_BaseHandler):
         # call base class constructor
         super().__init__('', devices)
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """Turn off."""
         # disable injbo
         self.injboevt.mode = 'Disabled'
@@ -394,7 +394,7 @@ class InjBOStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """Turn on."""
         # set injbo to Continuous table
         self.injboevt.mode = 'Continuous'
@@ -435,7 +435,7 @@ class LILLRFStandbyHandler(_BaseHandler):
         # call base class constructor
         super().__init__('', devices)
 
-    def turn_off(self):
+    def cmd_turn_off(self):
         """Turn off."""
         # turn feedback off
         self._set_devices_propty(
@@ -465,7 +465,7 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def turn_on(self):
+    def cmd_turn_on(self):
         """Turn on."""
         # turn integral on
         self._set_devices_propty(
@@ -609,7 +609,7 @@ class InjSysStandbyHandler(_Devices):
         retval = None
         for handler_name in order:
             handler = self._dev_refs[handler_name]
-            func = getattr(handler, 'turn_'+cmdtype)
+            func = getattr(handler, 'cmd_turn_'+cmdtype)
             retval = func()
             if not retval[0]:
                 break
