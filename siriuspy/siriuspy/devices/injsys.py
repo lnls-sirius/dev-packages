@@ -524,6 +524,7 @@ class InjSysStandbyHandler(_Devices):
         self._is_running = ''
         self._result = None
         self._thread = None
+        self._abort = False
 
         self._on_values = dict()
         for dev in devs.values():
@@ -573,6 +574,12 @@ class InjSysStandbyHandler(_Devices):
         """Command result."""
         return self._result
 
+    def cmd_abort(self):
+        """Abort command."""
+        if self._is_running:
+            self._abort = True
+        return True
+
     def cmd_reset_comm_order(self):
         """Reset commands order."""
         self.on_order = InjSysStandbyHandler.DEF_ON_ORDER
@@ -609,6 +616,9 @@ class InjSysStandbyHandler(_Devices):
 
         retval = None
         for handler_name in order:
+            if self._abort:
+                self._abort = False
+                break
             handler = self._dev_refs[handler_name]
             func = getattr(handler, 'cmd_turn_'+cmdtype)
             retval = func()
