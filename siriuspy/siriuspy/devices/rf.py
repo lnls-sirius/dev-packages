@@ -146,7 +146,7 @@ class ASLLRF(_DeviceNC):
 
     @voltage.setter
     def voltage(self, value):
-        self['mV:AL:REF:S'] = value
+        self['mV:AL:REF-SP'] = value
 
     @property
     def detune(self):
@@ -460,7 +460,7 @@ class RFCav(_Devices):
                 if abs(self.dev_llrf.phase - phase_sp) < 0.1:
                     break
             elif propty == 'voltage':
-                voltage_sp = self.dev_llrf['mV:AL:REF:S']
+                voltage_sp = self.dev_llrf['mV:AL:REF-SP']
                 if abs(self.dev_llrf.voltage - voltage_sp) < 0.1:
                     break
             elif propty == 'frequency':
