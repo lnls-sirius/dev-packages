@@ -259,6 +259,96 @@ class SOFBTLines(ConstTLines):
             'LoopPIDKdCV-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
+            'LoopPerfItersOk-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfItersTOut-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfItersDiff-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfDiffNrPSMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfTimGetOMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
             'LoopMaxOrbDistortion-SP': {
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',

@@ -797,22 +797,23 @@ class SOFB(_BaseClass):
     def _print_auto_corr_info(self, times, rets):
         """."""
         rets = _np.array(rets)
-        ok_ = _np.sum(rets == 0)
-        tout = _np.sum(rets == -1)
+        ok_ = _np.sum(rets == 0) / rets.size * 100
+        tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
         diff = _np.sum(bo_diff)
         _log.info('PERFORMANCE:')
-        _log.info(f'  # iterations = {rets.size:03d}')
-        _log.info(f'  # Ok = {ok_:03d}')
-        _log.info(f'  # Timeout = {tout:03d}')
-        strng = f'  # Diff = {diff:03d}'
+        self.run_callbacks('LoopPerfItersOk-Mon', ok_)
+        self.run_callbacks('LoopPerfItersTOut-Mon', tout)
+        self.run_callbacks('LoopPerfItersDiff-Mon', diff)
+        psmax = psavg = psstd = 0
         if diff:
             drets = rets[bo_diff]
-            strng += ' (NR_PSs: ' +\
-                f'max={drets.max():03.0f}, ' +\
-                f'avg={drets.mean():03.0f}, ' +\
-                f'std={drets.std():03.0f})'
-        _log.info(strng)
+            psmax = drets.max()
+            psavg = drets.mean()
+            psstd = drets.std()
+        self.run_callbacks('LoopPerfDiffNrPSMax-Mon', psmax)
+        self.run_callbacks('LoopPerfDiffNrPSAvg-Mon', psavg)
+        self.run_callbacks('LoopPerfDiffNrPSStd-Mon', psstd)
 
         dtimes = _np.diff(times, axis=1).T * 1000
         dtimes[-1] *= -1
@@ -820,13 +821,12 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        msg = '{:s}: geto={:7.2f}, getk={:7.2f}, calc={:7.2f}, proc={:7.2f}, '
-        msg += 'apply={:7.2f}, tot={:7.2f}'
-        _log.info('TIME:')
-        _log.info(msg.format('  MAX', *max_))
-        _log.info(msg.format('  MIN', *min_))
-        _log.info(msg.format('  AVG', *avg_))
-        _log.info(msg.format('  STD', *std_))
+        labs = ['GetO', 'GetK', 'Calc', 'Proc', 'App', 'Tot']
+        for i, lab in enumerate(labs):
+            self.run_callbacks(f'LoopPerfTim{lab:s}Max-Mon', max_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Min-Mon', min_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Avg-Mon', avg_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Std-Mon', std_[i])
 
     def _check_valid_orbit(self, orbit):
         conn = _np.array([bpm.connected for bpm in self._orbit.bpms])
