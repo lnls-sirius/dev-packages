@@ -68,7 +68,7 @@ class ASLLRF(_DeviceNC):
 
     _properties = (
         'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
-        'mV:AL:REF:S', 'SL:REF:AMP', 'SL:INP:AMP',
+        'mV:AL:REF-SP', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
@@ -146,7 +146,7 @@ class ASLLRF(_DeviceNC):
 
     @voltage.setter
     def voltage(self, value):
-        self['mV:AL:REF:S'] = value
+        self['mV:AL:REF-SP'] = value
 
     @property
     def detune(self):
@@ -433,17 +433,17 @@ class RFCav(_Devices):
     def set_voltage(self, value, timeout=10):
         """."""
         self.dev_llrf.voltage = value
-        self._wait('voltage', timeout=timeout)
+        return self._wait('voltage', timeout=timeout)
 
     def set_phase(self, value, timeout=10):
         """."""
         self.dev_llrf.phase = value
-        self._wait('phase', timeout=timeout)
+        return self._wait('phase', timeout=timeout)
 
     def set_frequency(self, value, timeout=10):
         """."""
         self.dev_rfgen.frequency = value
-        self._wait('frequency', timeout=timeout)
+        return self._wait('frequency', timeout=timeout)
 
     # --- private methods ---
 
@@ -458,15 +458,16 @@ class RFCav(_Devices):
                 else:
                     phase_sp = self.dev_llrf['RmpPhsBot-SP']
                 if abs(self.dev_llrf.phase - phase_sp) < 0.1:
-                    break
+                    return True
             elif propty == 'voltage':
-                voltage_sp = self.dev_llrf['mV:AL:REF:S']
+                voltage_sp = self.dev_llrf['mV:AL:REF-SP']
                 if abs(self.dev_llrf.voltage - voltage_sp) < 0.1:
-                    break
+                    return True
             elif propty == 'frequency':
                 freq_sp = self.dev_rfgen['GeneralFreq-SP']
                 if abs(self.dev_rfgen.frequency - freq_sp) < 0.1:
-                    break
+                    return True
             else:
                 raise Exception(
                     'Set RF property (phase, voltage or frequency)')
+        return False

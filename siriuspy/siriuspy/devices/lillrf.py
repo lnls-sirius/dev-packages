@@ -10,6 +10,8 @@ from ..csdev import Const as _Const
 class LILLRF(_DeviceNC):
     """LI LLRF."""
 
+    DEF_TIMEOUT = 10  # [s]
+
     class DEVICES:
         """Devices names."""
 
@@ -94,42 +96,48 @@ class LILLRF(_DeviceNC):
     def set_phase(self, value, timeout=10):
         """Set and wait for phase property to reach value."""
         self.phase = value
-        self._wait_rb_sp(timeout, 'phase')
+        return self._wait_rb_sp(timeout, 'phase')
 
     def set_amplitude(self, value, timeout=30):
         """Set and wait for amplitude property to reach value."""
         self.amplitude = value
-        self._wait_rb_sp(timeout, 'amplitude')
+        return self._wait_rb_sp(timeout, 'amplitude')
 
-    def cmd_turn_on_integral_enable(self):
+    def cmd_turn_on_integral_enable(self, timeout=DEF_TIMEOUT):
         """Set and wait for integral enable property to reach 'on' state."""
         self.integral_enable = _Const.DsblEnbl.Enbl
-        self._wait('GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl, timeout=3)
+        return self._wait(
+            'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl, timeout=timeout)
 
-    def cmd_turn_off_integral_enable(self):
+    def cmd_turn_off_integral_enable(self, timeout=DEF_TIMEOUT):
         """Set and wait for integral enable property to reach 'off' state."""
         self.integral_enable = _Const.DsblEnbl.Dsbl
-        self._wait('GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl, timeout=3)
+        return self._wait(
+            'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl, timeout=timeout)
 
-    def cmd_turn_on_feedback_state(self):
+    def cmd_turn_on_feedback_state(self, timeout=DEF_TIMEOUT):
         """Set and wait for feedback state property to reach 'on' state."""
         self.feedback_state = _Const.DsblEnbl.Enbl
-        self._wait('GET_FB_MODE', _Const.DsblEnbl.Enbl, timeout=3)
+        return self._wait(
+            'GET_FB_MODE', _Const.DsblEnbl.Enbl, timeout=timeout)
 
-    def cmd_turn_off_feedback_state(self):
+    def cmd_turn_off_feedback_state(self, timeout=DEF_TIMEOUT):
         """Set and wait for feedback state property to reach 'off' state."""
         self.feedback_state = _Const.DsblEnbl.Dsbl
-        self._wait('GET_FB_MODE', _Const.DsblEnbl.Dsbl, timeout=3)
+        return self._wait(
+            'GET_FB_MODE', _Const.DsblEnbl.Dsbl, timeout=timeout)
 
-    def cmd_turn_on_feedback_loop(self):
+    def cmd_turn_on_feedback_loop(self, timeout=DEF_TIMEOUT):
         """Turn on feedback loop."""
-        self.cmd_turn_on_integral_enable()
-        self.cmd_turn_on_feedback_state()
+        if not self.cmd_turn_on_integral_enable(timeout=timeout/2):
+            return False
+        return self.cmd_turn_on_feedback_state(timeout=timeout/2)
 
-    def cmd_turn_off_feedback_loop(self):
+    def cmd_turn_off_feedback_loop(self, timeout=DEF_TIMEOUT):
         """Turn off feedback loop."""
-        self.cmd_turn_off_feedback_state()
-        self.cmd_turn_off_integral_enable()
+        if not self.cmd_turn_off_feedback_state(timeout=timeout/2):
+            return False
+        return self.cmd_turn_off_integral_enable(timeout=timeout/2)
 
     def check_feeedback_loop(self, tol=5e-3):
         """Check if feedback loop is closed within a tolerance."""
@@ -155,12 +163,12 @@ class LILLRF(_DeviceNC):
             _time.sleep(0.1)
             if propty == 'phase':
                 if abs(self.phase - self['SET_PHASE']) < 0.1:
-                    break
+                    return True
             elif propty == 'amplitude':
                 if abs(self.amplitude - self['SET_AMP']) < 0.1:
-                    break
+                    return True
             else:
                 raise Exception(
                     'Set LLRF property (phase or amplitude)')
-        else:
-            print('timed out waiting LLRF.')
+        print('timed out waiting LLRF.')
+        return False
