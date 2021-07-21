@@ -36,12 +36,15 @@ class BunchbyBunch(_Devices):
         self.phase_track = PhaseTracking(devname)
         self.coeffs = Coefficients(devname)
         self.feedback = Feedback(devname)
-        self.drive = Drive(devname)
+        self.drive0 = Drive(devname, drive_num=0)
+        self.drive1 = Drive(devname, drive_num=1)
+        self.drive2 = Drive(devname, drive_num=2)
         self.bunch_clean = BunchClean(devname)
         self.fbe = FrontBackEnd()
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive, self.bunch_clean, self.fbe, self.dcct,
+            self.feedback, self.drive0, self.drive1, self.drive2,
+            self.bunch_clean, self.fbe, self.dcct,
             self.rfcav, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
@@ -205,8 +208,8 @@ class SystemInfo(_Device):
         'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
         'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
         'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
-        'RST_COUNT', 'CNTRST', 'RF_FREQ', 'HARM_NUM', 'REVISION', 'GW_TYPE',
-        'IP_ADDR')
+        'RST_COUNT', 'CNTRST', 'RF_FREQ', 'FREV', 'HARM_NUM', 'REVISION',
+        'GW_TYPE', 'IP_ADDR')
 
     def __init__(self, devname):
         """."""
@@ -298,6 +301,11 @@ class SystemInfo(_Device):
     def rf_freq_nom(self):
         """."""
         return self['RF_FREQ'] * 1e6
+
+    @property
+    def revolution_freq_nom(self):
+        """."""
+        return self['FREV'] * 1e6
 
     @property
     def harmonic_number(self):
@@ -694,13 +702,19 @@ class Acquisition(_ProptyDevice):
 
     _properties = (
         'GDTIME', 'HOLDTIME', 'POSTTIME', 'ACQTIME',
-        'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE',
-        'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
+        'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE', 'SP_AVG',
+        'HWTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
         'DUMP', 'RAW_SAMPLES', 'RAW', 'ACQ_TURNS', 'POST_TURNS',
         'MEAN', 'RMS', 'XSC', 'SPEC', 'MAXRMS', 'TSC', 'FREQ',
         'ACQ_MASK', 'ACQ_PATTERN',
-        'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1', 'PEAKFREQ1', 'PEAK1',
-        'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2', 'PEAKFREQ2', 'PEAK2',
+        'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1',
+        'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2',
+        'PEAKFREQ1', 'PEAK1', 'PEAKTUNE1',
+        'PEAKFREQ2', 'PEAK2', 'PEAKTUNE2',
+        'MD_ENABLE', 'MD_SMODE', 'MD_FTUNE', 'MD_FSPAN', 'MD_MSEL',
+        'MD_AVG', 'MD_SP_LOW', 'MD_SP_HIGH', 'MD_SP_SEARCH',
+        'MD_MAXMODE', 'MD_MAXVAL', 'MD_PEAK', 'MD_PEAKFREQ', 'MD_PEAKTUNE',
+        'MD_MODES', 'MD_SPEC',
         )
 
     DEF_TIMEOUT = 10  # [s]
@@ -788,15 +802,24 @@ class Acquisition(_ProptyDevice):
     def downsample(self, value):
         self['REC_DS'] = value
 
+    @property
+    def nr_averages(self):
+        """."""
+        return self['SP_AVG']
+
+    @nr_averages.setter
+    def nr_averages(self, value):
+        self['SP_AVG'] = value
+
     # ########### Trigger Properties ###########
     @property
     def trigger_type(self):
         """."""
-        return self['EXTEN']
+        return self['HWTEN']
 
     @trigger_type.setter
     def trigger_type(self, value):
-        self['EXTEN'] = value
+        self['HWTEN'] = value
 
     @property
     def trigger_sel(self):
@@ -959,6 +982,11 @@ class Acquisition(_ProptyDevice):
         return self['PEAKFREQ1']
 
     @property
+    def spec_marker1_tune(self):
+        """."""
+        return self['PEAKTUNE1']
+
+    @property
     def spec_marker1_mag(self):
         """."""
         return self['PEAK1']
@@ -996,6 +1024,11 @@ class Acquisition(_ProptyDevice):
         return self['PEAKFREQ2']
 
     @property
+    def spec_marker2_tune(self):
+        """."""
+        return self['PEAKTUNE2']
+
+    @property
     def spec_marker2_mag(self):
         """."""
         return self['PEAK2']
@@ -1011,6 +1044,123 @@ class Acquisition(_ProptyDevice):
             raise NotImplementedError(acqtype)
         return acqtype
 
+    # ############# Modal Analysis Properties #############
+    @property
+    def modal_acq_enbl(self):
+        """."""
+        return self['MD_ENABLE']
+
+    @modal_acq_enbl.setter
+    def modal_acq_enbl(self, value):
+        self['MD_ENABLE'] = value
+
+    @property
+    def modal_acq_mode(self):
+        """."""
+        return self['MD_SMODE']
+
+    @modal_acq_mode.setter
+    def modal_acq_mode(self, value):
+        self['MD_SMODE'] = value
+
+    @property
+    def modal_mode_selected(self):
+        """."""
+        return self['MD_MSEL']
+
+    @modal_mode_selected.setter
+    def modal_mode_selected(self, value):
+        self['MD_MSEL'] = value
+
+    @property
+    def modal_nr_averages(self):
+        """."""
+        return self['MD_AVG']
+
+    @modal_nr_averages.setter
+    def modal_nr_averages(self, value):
+        self['MD_AVG'] = value
+
+    @property
+    def modal_sideband_freq(self):
+        """."""
+        return self['MD_FTUNE']
+
+    @modal_sideband_freq.setter
+    def modal_sideband_freq(self, value):
+        self['MD_FTUNE'] = value
+
+    @property
+    def modal_sideband_span(self):
+        """."""
+        return self['MD_FSPAN']
+
+    @modal_sideband_span.setter
+    def modal_sideband_span(self, value):
+        self['MD_FSPAN'] = value
+
+    @property
+    def modal_marker_freq_min(self):
+        """."""
+        return self['MD_SP_LOW']
+
+    @modal_marker_freq_min.setter
+    def modal_marker_freq_min(self, value):
+        self['MD_SP_LOW'] = value
+
+    @property
+    def modal_marker_freq_max(self):
+        """."""
+        return self['MD_SP_HIGH']
+
+    @modal_marker_freq_max.setter
+    def modal_marker_freq_max(self, value):
+        self['MD_SP_HIGH'] = value
+
+    @property
+    def modal_marker_search_mode(self):
+        """."""
+        return self['MD_SP_SEARCH']
+
+    @modal_marker_search_mode.setter
+    def modal_marker_search_mode(self, value):
+        self['MD_SP_SEARCH'] = value
+
+    @property
+    def modal_maximum_mode(self):
+        """."""
+        return self['MD_MAXMODE']
+
+    @property
+    def modal_maximum_value(self):
+        """."""
+        return self['MD_MAXVAL']
+
+    @property
+    def modal_marker_freq(self):
+        """."""
+        return self['MD_PEAKFREQ']
+
+    @property
+    def modal_marker_tune(self):
+        """."""
+        return self['MD_PEAKTUNE']
+
+    @property
+    def modal_marker_mag(self):
+        """."""
+        return self['MD_PEAK']
+
+    @property
+    def modal_modes_amp(self):
+        """."""
+        return self['MD_MODES']
+
+    @property
+    def modal_maximum_mode_spec(self):
+        """."""
+        return self['MD_SPEC']
+
 
 class SingleBunch(_ProptyDevice):
     """."""
@@ -1022,7 +1172,8 @@ class SingleBunch(_ProptyDevice):
         'RAW_SAMPLES', 'TSC', 'RAW', 'FREQ', 'MAG', 'PHASE', 'TF_ENABLE',
         'NFFT', 'NOVERLAP', 'DEL_CAL', 'SP_AVG',
         'MEANVAL', 'RMSVAL', 'AMP_PP',
-        'SP_LOW1', 'SP_HIGH1', 'PEAKFREQ1', 'PEAK1', 'SP_SEARCH1', 'PHASE1',
+        'SP_LOW1', 'SP_HIGH1', 'PEAKFREQ1', 'PEAKTUNE1',
+        'PEAK1', 'SP_SEARCH1', 'PHASE1',
         )
 
     DEF_TIMEOUT = 10  # [s]
@@ -1253,6 +1404,11 @@ class SingleBunch(_ProptyDevice):
         return self['PEAKFREQ1']
 
     @property
+    def spec_marker1_freq(self):
+        """."""
+        return self['PEAKTUNE1']
+
+    @property
     def spec_marker1_mag(self):
         """."""
         return self['PEAK1']
@@ -1268,12 +1424,15 @@ class SingleBunch(_ProptyDevice):
         return self._wait('TF_ENABLE', value=1, timeout=timeout)
 
 
-class PhaseTracking(_ProptyDevice):
+class PhaseTracking(_Device):
     """."""
 
     _properties = (
-        'GAIN', 'SETPT', 'RANGE', 'DECIM', 'RATE', 'BANDWIDTH', 'LOOPCTRL',
-        'MAG', 'TFGAIN', 'SHIFT', 'PHASE', 'ERROR', 'FREQ', 'TUNE')
+        'PHTRK_GAIN', 'PHTRK_SETPT', 'PHTRK_RANGE', 'PHTRK_DECIM',
+        'PHTRK_RATE', 'PHTRK_BANDWIDTH', 'PHTRK_LOOPCTRL',
+        'PHTRK_MAG', 'PHTRK_TFGAIN', 'PHTRK_SHIFT', 'PHTRK_PHASE',
+        'PHTRK_ERROR', 'PHTRK_FREQ0', 'PHTRK_TUNE',
+        'DRIVE2_TRACK', 'PHTRK_MOD')
 
     DEF_TIMEOUT = 10  # [s]
 
@@ -1283,98 +1442,115 @@ class PhaseTracking(_ProptyDevice):
 
         # call base class constructor
         super().__init__(
-            devname, propty_prefix='PHTRK_',
-            properties=PhaseTracking._properties)
+            devname, properties=PhaseTracking._properties)
 
     @property
     def gain(self):
         """."""
-        return self['GAIN']
+        return self['PHTRK_GAIN']
 
     @gain.setter
     def gain(self, value):
-        self['GAIN'] = value
+        self['PHTRK_GAIN'] = value
 
     @property
     def setpoint(self):
         """Phase setpoint in degrees."""
-        return self['SETPT']
+        return self['PHTRK_SETPT']
 
     @setpoint.setter
     def setpoint(self, value):
-        self['SETPT'] = value
+        self['PHTRK_SETPT'] = value
 
     @property
     def range(self):
         """Frequency range in kHz."""
-        return self['RANGE']
+        return self['PHTRK_RANGE']
 
     @range.setter
     def range(self, value):
-        self['RANGE'] = value
+        self['PHTRK_RANGE'] = value
 
     @property
     def decimation(self):
         """."""
-        return self['DECIM']
+        return self['PHTRK_DECIM']
 
     @decimation.setter
     def decimation(self, value):
-        self['DECIM'] = value
+        self['PHTRK_DECIM'] = value
 
     @property
     def loop_state(self):
         """Loop State."""
-        return self['LOOPCTRL']
+        return self['PHTRK_LOOPCTRL']
 
     @loop_state.setter
     def loop_state(self, value):
-        self['LOOPCTRL'] = value
+        self['PHTRK_LOOPCTRL'] = value
+
+    @property
+    def use_drive2(self):
+        """Loop State."""
+        return self['DRIVE2_TRACK']
+
+    @use_drive2.setter
+    def use_drive2(self, value):
+        self['DRIVE2_TRACK'] = value
+
+    @property
+    def time_modulation(self):
+        """Loop State."""
+        return self['PHTRK_MOD']
+
+    @time_modulation.setter
+    def time_modulation(self, value):
+        self['PHTRK_MOD'] = value
 
     @property
     def rate(self):
         """."""
-        return self['RATE']
+        return self['PHTRK_RATE']
 
     @property
     def bandwidth(self):
         """."""
-        return self['BANDWIDTH']
+        return self['PHTRK_BANDWIDTH']
 
     @property
     def magnitude(self):
         """."""
-        return self['MAG']
+        return self['PHTRK_MAG']
 
     @property
     def transfer_gain(self):
         """."""
-        return self['TFGAIN']
+        return self['PHTRK_TFGAIN']
 
     @property
     def normalizing_shift(self):
         """."""
-        return self['SHIFT']
+        return self['PHTRK_SHIFT']
 
     @property
     def phase(self):
         """Phase monitor in degrees."""
-        return self['PHASE']
+        return self['PHTRK_PHASE']
 
     @property
     def error(self):
         """Error in degrees."""
-        return self['ERROR']
+        return self['PHTRK_ERROR']
 
     @property
     def frequency(self):
         """."""
-        return self['FREQ']
+        return self['PHTRK_FREQ0']
 
     @property
     def tune(self):
         """."""
-        return self['TUNE']
+        return self['PHTRK_TUNE']
 
 
 class FrontBackEnd(_Device):
@@ -1598,14 +1774,23 @@ class Drive(_ProptyDevice):
 
     _properties = (
         'MOD', 'AMPL', 'WAVEFORM', 'FREQ', 'FREQ_ACT', 'SPAN', 'SPAN_ACT',
-        'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN',
+        'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN', 'BITS',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, drive_num=None):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
+        propty = 'DRIVE'
+        if drive_num is not None:
+            propty += str(drive_num)
+        propty += '_'
         super().__init__(
-            devname, propty_prefix='DRIVE_', properties=Drive._properties)
+            devname, propty_prefix=propty, properties=Drive._properties)
+
+    @property
+    def number_of_bits(self):
+        """."""
+        return self['BITS']
 
     @property
     def state(self):
@@ -1684,7 +1869,7 @@ class BunchClean(_ProptyDevice):
     """."""
 
     _properties = (
-        'ENABLE', 'AMPL', 'TUNE', 'PATTERN',
+        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN',
         )
 
     def __init__(self, devname):
@@ -1719,6 +1904,24 @@ class BunchClean(_ProptyDevice):
     @frequency.setter
     def frequency(self, value):
         self['TUNE'] = value
+
+    @property
+    def span(self):
+        """."""
+        return self['SPAN']
+
+    @span.setter
+    def span(self, value):
+        self['SPAN'] = value
+
+    @property
+    def period(self):
+        """."""
+        return self['PERIOD']
+
+    @period.setter
+    def period(self, value):
+        self['PERIOD'] = value
 
     @property
     def mask_pattern(self):
