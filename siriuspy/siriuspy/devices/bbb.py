@@ -199,6 +199,8 @@ class BunchbyBunch(_Devices):
 class SystemInfo(_Device):
     """."""
 
+    DEF_TIMEOUT = 10  # [s]
+
     _properties = (
         'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
         'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
@@ -283,11 +285,14 @@ class SystemInfo(_Device):
         """."""
         return self['RST_COUNT']
 
-    def cmd_reset_counts(self):
+    def cmd_reset_counts(self, timeout=DEF_TIMEOUT):
         """."""
         self['CNTRST'] = 1
+        if not self._wait('CNTRST', 1, timeout/2):
+            return False
         _time.sleep(0.2)
         self['CNTRST'] = 0
+        return self._wait('CNTRST', 0, timeout/2)
 
     @property
     def rf_freq_nom(self):
@@ -317,6 +322,8 @@ class SystemInfo(_Device):
 
 class Timing(_Device):
     """."""
+
+    DEF_TIMEOUT = 10  # [s]
 
     _properties = (
         'TADC', 'TDAC', 'DELAY', 'OFF_FIDS', 'FID_DELAY', 'CLKRST',
@@ -378,11 +385,14 @@ class Timing(_Device):
     def fiducial_delay(self, value):
         self['FID_DELAY'] = value
 
-    def cmd_reset_clock(self):
+    def cmd_reset_clock(self, timeout=DEF_TIMEOUT):
         """."""
         self['CLKRST'] = 1
+        if not self._wait('CLKRST', 1, timeout/2):
+            return False
         _time.sleep(0.2)
         self['CLKRST'] = 0
+        return self._wait('CLKRST', 0, timeout/2)
 
     @property
     def adc_clock(self):
@@ -666,13 +676,15 @@ class Coefficients(_Device):
         """."""
         self['FLT_TAPS'] = value
 
-    def cmd_edit_apply(self):
+    def cmd_edit_apply(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CPCOEFF'] = 1
+        return self._wait('BO_CPCOEFF', 1, timeout)
 
-    def cmd_edit_verify(self):
+    def cmd_edit_verify(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CVERIFY'] = 1
+        return self._wait('BO_CVERIFY', 1, timeout)
 
 
 class Acquisition(_ProptyDevice):
@@ -857,27 +869,23 @@ class Acquisition(_ProptyDevice):
         """."""
         return self['POST_TURNS']
 
-    def cmd_data_acquire(self, timeout=None):
+    def cmd_data_acquire(self, timeout=DEF_TIMEOUT):
         """."""
         self.acq_enbl = 1
-        if timeout is None:
-            timeout = Acquisition.DEF_TIMEOUT
-        if timeout > 0:
-            self._wait('ACQ_EN', 1, timeout=timeout)
+        return self._wait('ACQ_EN', 1, timeout=timeout)
 
-    def cmd_data_dump(self, timeout=None):
+    def cmd_data_dump(self, timeout=DEF_TIMEOUT):
         """."""
         self['DUMP'] = 1
-        if timeout is None:
-            timeout = Acquisition.DEF_TIMEOUT
-        if timeout > 0:
-            self.wait_data_dump(timeout)
+        return self.wait_data_dump(timeout)
 
     def wait_data_dump(self, timeout=None):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
         if not self._wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
+            return False
+        return True
 
     # ########### Spectrometer Properties ###########
     @property
@@ -1255,8 +1263,9 @@ class SingleBunch(_ProptyDevice):
         return self['PHASE1']
 
     def cmd_enable_transfer_function(self, timeout=DEF_TIMEOUT):
+        """Enable transfer function."""
         self.transfer_function_enable = 1
-        self._wait('TF_ENABLE', value=1, timeout=timeout)
+        return self._wait('TF_ENABLE', value=1, timeout=timeout)
 
 
 class PhaseTracking(_ProptyDevice):
@@ -1779,6 +1788,8 @@ class PwrAmpL(_ProptyDevice):
 class PwrAmpT(_Device):
     """."""
 
+    DEF_TIMEOUT = 10  # [s]
+
     _properties = (
         'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
         'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
@@ -1828,8 +1839,11 @@ class PwrAmpT(_Device):
     def gain_step(self, value):
         self['GainStep-SP'] = value
 
-    def cmd_reset(self):
+    def cmd_reset(self, timeout=DEF_TIMEOUT):
         """."""
         self['Rst-Cmd'] = 1
+        if not self._wait('Rst-Cmd', 1, timeout/2):
+            return False
         _time.sleep(0.2)
         self['Rst-Cmd'] = 0
+        return self._wait('Rst-Cmd', 0, timeout/2)

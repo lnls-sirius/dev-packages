@@ -152,7 +152,9 @@ class TuneCorr(_Device):
     def cmd_update_reference(self):
         """."""
         self['SetNewRefKL-Cmd'] = 1
+        return True
 
     def cmd_apply_delta(self):
         """."""
         self['ApplyDelta-Cmd'] = 1
+        return True

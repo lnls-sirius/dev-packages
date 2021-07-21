@@ -559,42 +559,52 @@ class SOFB(_Device):
     def cmd_mturn_acquire(self):
         """."""
         self['MTurnAcquire-Cmd'] = 1
+        return True
 
     def cmd_reset(self):
         """."""
         self['SmoothReset-Cmd'] = 1
+        return True
 
     def cmd_calccorr(self):
         """."""
         self['CalcDelta-Cmd'] = 1
+        return True
 
     def cmd_applycorr_ch(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
+        return True
 
     def cmd_applycorr_cv(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+        return True
 
     def cmd_applycorr_rf(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
+        return True
 
     def cmd_applycorr_all(self):
         """."""
         self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
+        return True
 
     def cmd_measrespmat_start(self):
         """."""
         self['MeasRespMat-Cmd'] = 0
+        return True
 
     def cmd_measrespmat_stop(self):
         """."""
         self['MeasRespMat-Cmd'] = 1
+        return True
 
     def cmd_measrespmat_reset(self):
         """."""
         self['MeasRespMat-Cmd'] = 2
+        return True
 
     @property
     def applydeltakick_mon(self):
@@ -670,36 +680,36 @@ class SOFB(_Device):
         """."""
         timeout = timeout or SOFB._default_timeout
         if self.autocorrsts == self.data.LoopState.Closed:
-            return
+            return True
         self['LoopState-Sel'] = self.data.LoopState.Closed
-        self._wait(
+        return self._wait(
             'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
         if self.autocorrsts == self.data.LoopState.Open:
-            return
+            return True
         self['LoopState-Sel'] = self.data.LoopState.Open
-        self._wait(
+        return self._wait(
             'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
         if self.drivests == self.data.DriveState.Closed:
-            return
+            return True
         self['DriveState-Sel'] = self.data.DriveState.Closed
-        self._wait(
+        return self._wait(
             'DriveState-Sts', self.data.DriveState.Closed, timeout=timeout)
 
     def cmd_turn_off_drive(self, timeout=None):
         """."""
         timeout = timeout or SOFB._default_timeout
         if self.drivests == self.data.DriveState.Open:
-            return
+            return True
         self['DriveState-Sel'] = self.data.DriveState.Open
-        self._wait(
+        return self._wait(
             'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
 
     def wait_buffer(self, timeout=None):

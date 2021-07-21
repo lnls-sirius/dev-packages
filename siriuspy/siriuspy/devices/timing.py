@@ -85,9 +85,11 @@ class EVG(_Device):
         """."""
         return self['InjCount-Mon']
 
-    def fill_bucketlist(self, stop, start=1, step=30):
+    def fill_bucketlist(self, stop, start=1, step=30, timeout=10):
         """."""
-        self.bucketlist = _np.arange(start=start, stop=stop, step=step)
+        value = _np.arange(start=start, stop=stop, step=step)
+        self.bucketlist = value
+        return self._wait('BucketList-Mon', value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
@@ -96,26 +98,32 @@ class EVG(_Device):
     def cmd_update_events(self):
         """."""
         self['UpdateEvt-Cmd'] = 1
+        return True
 
     def cmd_turn_on_injection(self, timeout=10):
         """."""
         self.injection_state = 1
-        self._wait(propty='InjectionEvt-Sel', value=1, timeout=timeout)
+        return self._wait(propty='InjectionEvt-Sel', value=1, timeout=timeout)
 
     def cmd_turn_off_injection(self, timeout=10):
         """."""
         self.injection_state = 0
-        self._wait(propty='InjectionEvt-Sel', value=0, timeout=timeout)
+        return self._wait(propty='InjectionEvt-Sel', value=0, timeout=timeout)
 
     def cmd_turn_on_continuous(self, timeout=10):
         """."""
         self.continuous_state = 1
-        self._wait(propty='ContinuousEvt-Sel', value=1, timeout=timeout)
+        return self._wait(propty='ContinuousEvt-Sel', value=1, timeout=timeout)
 
     def cmd_turn_off_continuous(self, timeout=10):
         """."""
         self.continuous_state = 0
-        self._wait(propty='ContinuousEvt-Sel', value=0, timeout=timeout)
+        return self._wait(propty='ContinuousEvt-Sel', value=0, timeout=timeout)
+
+    def set_nrpulses(self, value, timeout=10):
+        """Set and wait number of pulses."""
+        self['RepeatBucketList-SP'] = value
+        return self._wait('RepeatBucketList-RB', value)
 
 
 class Event(_ProptyDevice):
@@ -189,6 +197,7 @@ class Event(_ProptyDevice):
     def cmd_external_trigger(self):
         """."""
         self['ExtTrig-Cmd'] = 1
+        return True
 
     @property
     def is_in_inj_table(self):
@@ -319,3 +328,13 @@ class Trigger(_Device):
     def is_in_inj_table(self):
         """Is in Injection table."""
         return self['InInjTable-Mon']
+
+    def cmd_enable(self, timeout=3):
+        """Command enable."""
+        self.state = 1
+        return self._wait('State-Sts', 1, timeout)
+
+    def cmd_disable(self, timeout=3):
+        """Command disable."""
+        self.state = 0
+        return self._wait('State-Sts', 0, timeout)
