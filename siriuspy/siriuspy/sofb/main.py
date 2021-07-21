@@ -28,7 +28,7 @@ class SOFB(_BaseClass):
         _log.info('Starting SOFB...')
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
-        self._loop_freq = 1
+        self._loop_freq = self._csorb.BPMsFreq
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -40,7 +40,7 @@ class SOFB(_BaseClass):
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
-        self._max_delta_kick = {'ch': 300, 'cv': 300}
+        self._max_delta_kick = {'ch': 5, 'cv': 5}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
         if self.acc == 'SI':
             self._drive_divisor = 12
@@ -53,7 +53,7 @@ class SOFB(_BaseClass):
             self._drive_state = self._csorb.DriveState.Open
             self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
-            self._max_delta_kick['rf'] = 500
+            self._max_delta_kick['rf'] = 10
             self._meas_respmat_kick['rf'] = 80
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
@@ -797,22 +797,23 @@ class SOFB(_BaseClass):
     def _print_auto_corr_info(self, times, rets):
         """."""
         rets = _np.array(rets)
-        ok_ = _np.sum(rets == 0)
-        tout = _np.sum(rets == -1)
+        ok_ = _np.sum(rets == 0) / rets.size * 100
+        tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
         diff = _np.sum(bo_diff)
         _log.info('PERFORMANCE:')
-        _log.info(f'  # iterations = {rets.size:03d}')
-        _log.info(f'  # Ok = {ok_:03d}')
-        _log.info(f'  # Timeout = {tout:03d}')
-        strng = f'  # Diff = {diff:03d}'
+        self.run_callbacks('LoopPerfItersOk-Mon', ok_)
+        self.run_callbacks('LoopPerfItersTOut-Mon', tout)
+        self.run_callbacks('LoopPerfItersDiff-Mon', diff)
+        psmax = psavg = psstd = 0
         if diff:
             drets = rets[bo_diff]
-            strng += ' (NR_PSs: ' +\
-                f'max={drets.max():03.0f}, ' +\
-                f'avg={drets.mean():03.0f}, ' +\
-                f'std={drets.std():03.0f})'
-        _log.info(strng)
+            psmax = drets.max()
+            psavg = drets.mean()
+            psstd = drets.std()
+        self.run_callbacks('LoopPerfDiffNrPSMax-Mon', psmax)
+        self.run_callbacks('LoopPerfDiffNrPSAvg-Mon', psavg)
+        self.run_callbacks('LoopPerfDiffNrPSStd-Mon', psstd)
 
         dtimes = _np.diff(times, axis=1).T * 1000
         dtimes[-1] *= -1
@@ -820,13 +821,12 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        msg = '{:s}: geto={:7.2f}, getk={:7.2f}, calc={:7.2f}, proc={:7.2f}, '
-        msg += 'apply={:7.2f}, tot={:7.2f}'
-        _log.info('TIME:')
-        _log.info(msg.format('  MAX', *max_))
-        _log.info(msg.format('  MIN', *min_))
-        _log.info(msg.format('  AVG', *avg_))
-        _log.info(msg.format('  STD', *std_))
+        labs = ['GetO', 'GetK', 'Calc', 'Proc', 'App', 'Tot']
+        for i, lab in enumerate(labs):
+            self.run_callbacks(f'LoopPerfTim{lab:s}Max-Mon', max_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Min-Mon', min_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Avg-Mon', avg_[i])
+            self.run_callbacks(f'LoopPerfTim{lab:s}Std-Mon', std_[i])
 
     def _check_valid_orbit(self, orbit):
         conn = _np.array([bpm.connected for bpm in self._orbit.bpms])

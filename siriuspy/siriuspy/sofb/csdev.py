@@ -124,7 +124,7 @@ class ConstSI(ConstRings):
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 35  # [ms]
+    CORR_DEF_DELAY = 18  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
@@ -218,11 +218,11 @@ class SOFBTLines(ConstTLines):
             'LoopState-Sts': {
                 'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
             'LoopFreq-SP': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 60},
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 3, 'unit': 'Hz',
-                'lolim': 1e-3, 'hilim': 60},
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
@@ -259,6 +259,96 @@ class SOFBTLines(ConstTLines):
             'LoopPIDKdCV-RB': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
+            'LoopPerfItersOk-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfItersTOut-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfItersDiff-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfDiffNrPSMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfTimGetOMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetKStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
             'LoopMaxOrbDistortion-SP': {
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',
@@ -316,16 +406,16 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'DeltaKickCH-SP': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
@@ -831,10 +921,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'ManCorrGainRF-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxDeltaKickRF-SP': {
-                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 10, 'unit': 'Hz', 'prec': 2,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickRF-RB': {
-                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
+                'type': 'float', 'value': 10, 'prec': 2, 'unit': 'Hz',
                 'lolim': 0, 'hilim': 10000},
             'DeltaKickRF-SP': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
