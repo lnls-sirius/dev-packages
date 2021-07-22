@@ -87,9 +87,19 @@ class EpicsProperty:
         return self._pv_rb.get(timeout=0)
 
     @property
+    def readback_string(self):
+        """Property readback string."""
+        return self._pv_rb.get(timeout=0, as_string=True)
+
+    @property
     def setpoint(self):
         """Property setpoint."""
         return self._pv_sp.get(timeout=0)
+
+    @property
+    def setpoint_string(self):
+        """Property setpoint string."""
+        return self._pv_sp.get(timeout=0, as_string=True)
 
     @property
     def default(self):
@@ -199,10 +209,20 @@ class EpicsPropertiesList:
         ppty = self._properties[name]
         return ppty.readback
 
+    def get_readback_string(self, name):
+        """Return readback value of a property as string."""
+        ppty = self._properties[name]
+        return ppty.readback_string
+
     def get_setpoint(self, name):
         """Return setpoint value of a property."""
         ppty = self._properties[name]
         return ppty.setpoint
+
+    def get_setpoint_string(self, name):
+        """Return setpoint value of a property as string."""
+        ppty = self._properties[name]
+        return ppty.setpoint_string
 
     def set_setpoints_check(self, setpoints, desired_readbacks=None,
                             timeout=5, order=None, rel_tol=1e-6, abs_tol=0.0):
