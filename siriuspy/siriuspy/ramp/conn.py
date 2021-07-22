@@ -221,14 +221,16 @@ class ConnTI(_EpicsPropsList):
 
         # Injection
         injection_time = self._ramp_config.ti_params_injection_time*1e3
-        egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
-            if self.get_readback(c.LinacEgun_SglBun_State) \
-            else self.get_readback(c.TrgEGunMultBun_Delay)
+        if self.get_readback(c.LinacEgun_SglBun_State):
+            egun_dly = self.get_readback(c.TrgEGunSglBun_Delay)
+            egun_src = self.get_readback_string(c.TrgEGunSglBun_Src)
+        else:
+            egun_dly = self.get_readback(c.TrgEGunMultBun_Delay)
+            egun_src = self.get_readback_string(c.TrgEGunMultBun_Src)
         delay_inj = injection_time - egun_dly
 
-        # curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        dlt_inj_dly = delay_inj - curr_injbo_dly
+        curr_dly = self.get_readback(getattr(c, 'Evt'+egun_src+'_Delay'))
+        dlt_inj_dly = delay_inj - curr_dly
         dlt_inj_dly = int(dlt_inj_dly/bo_rev)*bo_rev
 
         # Ejection
@@ -360,7 +362,9 @@ class ConnTI(_EpicsPropsList):
             # EGun trigger delays
             c.EVG_FPGAClk: 0,
             c.TrgEGunSglBun_Delay: 0,     # [us]
+            c.TrgEGunSglBun_Src: None,
             c.TrgEGunMultBun_Delay: 0,    # [us]
+            c.TrgEGunMultBun_Src: None,
             # EjeKckr trigger delay
             c.TrgEjeKckr_Delay: 0,        # [us]
             # LinacEgun Mode
