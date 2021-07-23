@@ -191,7 +191,7 @@ class LICurrInfoApp(_ASCurrInfoApp):
 class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
-    REV_PERIOD = 1.6571334792998411  # [us]
+    HARMNUM = 828
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
     MAX_CURRENT = 1.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
@@ -255,6 +255,8 @@ class BOCurrInfoApp(_CurrInfoApp):
         self._reliablemeas_pv = _PV(
             _vaca_prefix+self._dcct+':ReliableMeas-Mon',
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
+        self._rffreq_pv = _PV(
+            _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
     def init_database(self):
         """Set initial PV values."""
@@ -337,7 +339,8 @@ class BOCurrInfoApp(_CurrInfoApp):
                                    self._currents[energy])
                 # charges
                 if current < self.MAX_CURRENT:
-                    self._charges[energy] += current * self.REV_PERIOD
+                    self._charges[energy] += \
+                        1e6 * current * self.HARMNUM / self._rffreq_pv.value
                     if energy == '3GeV':
                         self._intcurrent3gev += \
                             current * self.INTCURR_INTVL  # [mA.h]
