@@ -44,6 +44,8 @@ class TestCurrInfoCSDevice(TestCase):
         self.assertTrue('SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel' in dbase)
         self.assertTrue('SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts' in dbase)
         self.assertTrue('SI-Glob:AP-CurrInfo:Charge-Mon' in dbase)
+        self.assertTrue('AS-Glob:AP-CurrInfo:InjCurr-Mon' in dbase)
+        self.assertTrue('AS-Glob:AP-CurrInfo:InjCharge-Mon' in dbase)
         self.assertTrue('AS-Glob:AP-CurrInfo:InjCount-Mon' in dbase)
 
         # PVs units
@@ -51,6 +53,10 @@ class TestCurrInfoCSDevice(TestCase):
             dbase['SI-Glob:AP-CurrInfo:Current-Mon']['unit'], 'mA')
         self.assertEqual(
             dbase['SI-Glob:AP-CurrInfo:Charge-Mon']['unit'], 'A.h')
+        self.assertEqual(
+            dbase['SI-Glob:AP-CurrInfo:InjCurr-Mon']['unit'], 'mA')
+        self.assertEqual(
+            dbase['SI-Glob:AP-CurrInfo:InjCharge-Mon']['unit'], 'nC')
 
         # ---- BO ----
         dbase = get_currinfo_database('BO')
