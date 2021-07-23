@@ -42,14 +42,12 @@ class ConnTI(_EpicsPropsList):
         """Properties names."""
 
         BO_HarmNum = 828
-        EVG_RFDiv = 4
 
         # EVG PVs
         EVG = _LLTimeSearch.get_evg_name()
         EVG_DevEnbl = EVG + ':DevEnbl-Sel'
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
-        EVG_FPGAClk = EVG + ':FPGAClk-Cte'
         EVG_UpdateEvt = EVG + ':UpdateEvt-Cmd'
 
         # Linac Egun mode properties
@@ -58,6 +56,9 @@ class ConnTI(_EpicsPropsList):
 
         # Interlock PV
         Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
+
+        # RFFreq
+        RFFreq = 'RF-Gen:GeneralFreq-RB'
 
     # Add events properties to Const
     _events = {
@@ -216,8 +217,7 @@ class ConnTI(_EpicsPropsList):
             return
 
         c = ConnTI.Const
-        evg_base_time = 1e6 / self.get_readback(c.EVG_FPGAClk)
-        bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
+        bo_rev = 1e6 * c.BO_HarmNum / self.get_readback(c.RFFreq)
 
         # Injection
         injection_time = self._ramp_config.ti_params_injection_time*1e3
@@ -360,7 +360,7 @@ class ConnTI(_EpicsPropsList):
 
         self._reading_propties = {
             # EGun trigger delays
-            c.EVG_FPGAClk: 0,
+            c.RFFreq: None,
             c.TrgEGunSglBun_Delay: 0,     # [us]
             c.TrgEGunSglBun_Src: None,
             c.TrgEGunMultBun_Delay: 0,    # [us]
