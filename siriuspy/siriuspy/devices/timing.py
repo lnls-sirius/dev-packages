@@ -89,7 +89,7 @@ class EVG(_Device):
         """."""
         value = _np.arange(start=start, stop=stop, step=step)
         self.bucketlist = value
-        return self._wait('BucketList-Mon', value, timeout=timeout)
+        return self._wait('BucketList-RB', value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
