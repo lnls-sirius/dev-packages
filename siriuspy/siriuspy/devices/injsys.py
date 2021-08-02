@@ -614,6 +614,7 @@ class InjSysStandbyHandler(_Devices):
     def _command_target(self, cmdtype):
         order = getattr(self, cmdtype+'_order')
 
+        self._result = None
         retval = None
         for handler_name in order:
             if self._abort:
