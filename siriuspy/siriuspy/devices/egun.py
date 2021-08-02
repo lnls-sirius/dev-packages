@@ -500,14 +500,14 @@ class EGun(_Devices):
     @property
     def is_single_bunch(self):
         """Is configured to single bunch mode."""
-        sts = not self.pulse.multi_bunch_mode
-        sts &= not self.pulse.multi_bunch_switch
+        sts = not self.pulse.multi_bunch_switch
+        sts &= not self.pulse.multi_bunch_mode
         sts &= self.bias.voltage - self._bias_sb < self._bias_tol
         sts &= not self.trigmultipre.state
         sts &= not self.trigmulti.state
         sts &= self.trigsingle.state
-        sts &= not self.pulse.single_bunch_switch
-        sts &= not self.pulse.single_bunch_mode
+        sts &= self.pulse.single_bunch_mode
+        sts &= self.pulse.single_bunch_switch
         return sts
 
     @property
@@ -519,8 +519,8 @@ class EGun(_Devices):
         sts &= not self.trigsingle.state
         sts &= self.trigmultipre.state
         sts &= self.trigmulti.state
-        sts &= not self.pulse.multi_bunch_mode
-        sts &= not self.pulse.multi_bunch_switch
+        sts &= self.pulse.multi_bunch_mode
+        sts &= self.pulse.multi_bunch_switch
         return sts
 
     @property
