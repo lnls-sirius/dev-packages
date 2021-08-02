@@ -11,6 +11,7 @@ from .csdev import conv_dev_2_liname, Const as _Const
 from .pvs import LIScalarDiffPV as _LIScalarDiffPV, \
     LIVecDiffPV as _LIVecDiffPV, \
     LIRFStatusPV as _LIRFStatusPV, \
+    LIPUStatusPV as _LIPUStatusPV, \
     LIEGHVStatusPV as _LIEGHVStatusPV, \
     LIFilaPSStatusPV as _LIFilaPSStatusPV
 
@@ -65,6 +66,53 @@ class LIDiagApp(_App):
             pvs[_LIRFStatusPV.PV_IXQDIF] = devname + ':DiagIxQDiff-Mon'
             pvo = _ComputedPV(
                 devname + ':DiagStatus-Mon', _LIRFStatusPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
+
+        # # PU devices
+        for dev in _Const.PU_DEVICES:
+            devname = SiriusPVName(self._prefix + dev)
+            liname = conv_dev_2_liname(dev)
+
+            # DiagVoltageDiff-Mon
+            pvs = [None]*2
+            pvs[_LIScalarDiffPV.SP] = liname + ':WRITE_V'
+            pvs[_LIScalarDiffPV.RB] = liname + ':READV'
+            pvo = _ComputedPV(
+                devname + ':DiagVoltageDiff-Mon', _LIScalarDiffPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
+
+            # DiagCurrentDiff-Mon
+            pvs = [None]*2
+            pvs[_LIScalarDiffPV.SP] = liname + ':WRITE_I'
+            pvs[_LIScalarDiffPV.RB] = liname + ':READI'
+            pvo = _ComputedPV(
+                devname + ':DiagCurrentDiff-Mon', _LIScalarDiffPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
+
+            # DiagStatus-Mon
+            pvs = [None]*17
+            pvs[_LIPUStatusPV.PV_RUNSTOP] = liname + ':Run/Stop'
+            pvs[_LIPUStatusPV.PV_PREHEAT] = liname + ':PreHeat'
+            pvs[_LIPUStatusPV.PV_CHRALLW] = liname + ':Charge_Allowed'
+            pvs[_LIPUStatusPV.PV_TRGALLW] = liname + ':TrigOut_Allowed'
+            pvs[_LIPUStatusPV.PV_EMRSTOP] = liname + ':Emer_Stop'
+            pvs[_LIPUStatusPV.PV_CPS_ALL] = liname + ':CPS_ALL'
+            pvs[_LIPUStatusPV.PV_THYHEAT] = liname + ':Thy_Heat'
+            pvs[_LIPUStatusPV.PV_KLYHEAT] = liname + ':Kly_Heat'
+            pvs[_LIPUStatusPV.PV_LVRDYOK] = liname + ':LV_Rdy_OK'
+            pvs[_LIPUStatusPV.PV_HVRDYOK] = liname + ':HV_Rdy_OK'
+            pvs[_LIPUStatusPV.PV_TRRDYOK] = liname + ':TRIG_Rdy_OK'
+            pvs[_LIPUStatusPV.PV_SELFFLT] = liname + ':MOD_Self_Fault'
+            pvs[_LIPUStatusPV.PV_SYS_RDY] = liname + ':MOD_Sys_Ready'
+            pvs[_LIPUStatusPV.PV_TRGNORM] = liname + ':TRIG_Norm'
+            pvs[_LIPUStatusPV.PV_PLSCURR] = liname + ':Pulse_Current'
+            pvs[_LIPUStatusPV.PV_VLTDIFF] = liname + ':DiagVoltageDiff-Mon'
+            pvs[_LIPUStatusPV.PV_CRRDIFF] = liname + ':DiagCurrentDiff-Mon'
+            pvo = _ComputedPV(
+                devname + ':DiagStatus-Mon', _LIPUStatusPV(),
                 self._queue, pvs, monitor=False)
             self.pvs.append(pvo)
 

@@ -134,6 +134,178 @@ class LIRFStatusPV:
         return {'value': value}
 
 
+class LIPUStatusPV:
+    """LI PU Status PV."""
+
+    BIT_DISCONN = 0b000000000000000001
+    BIT_RUNSTOP = 0b000000000000000010
+    BIT_PREHEAT = 0b000000000000000100
+    BIT_CHRALLW = 0b000000000000001000
+    BIT_TRGALLW = 0b000000000000010000
+    BIT_EMRSTOP = 0b000000000000100000
+    BIT_CPS_ALL = 0b000000000001000000
+    BIT_THYHEAT = 0b000000000010000000
+    BIT_KLYHEAT = 0b000000000100000000
+    BIT_LVRDYOK = 0b000000001000000000
+    BIT_HVRDYOK = 0b000000010000000000
+    BIT_TRRDYOK = 0b000000100000000000
+    BIT_SELFFLT = 0b000001000000000000
+    BIT_SYS_RDY = 0b000010000000000000
+    BIT_TRGNORM = 0b000100000000000000
+    BIT_PLSCURR = 0b001000000000000000
+    BIT_VLTDIFF = 0b010000000000000000
+    BIT_CRRDIFF = 0b100000000000000000
+
+    PV_RUNSTOP = 0
+    PV_PREHEAT = 1
+    PV_CHRALLW = 2
+    PV_TRGALLW = 3
+    PV_EMRSTOP = 4
+    PV_CPS_ALL = 5
+    PV_THYHEAT = 6
+    PV_KLYHEAT = 7
+    PV_LVRDYOK = 8
+    PV_HVRDYOK = 9
+    PV_TRRDYOK = 10
+    PV_SELFFLT = 11
+    PV_SYS_RDY = 12
+    PV_TRGNORM = 13
+    PV_PLSCURR = 14
+    PV_VLTDIFF = 15
+    PV_CRRDIFF = 16
+
+    def compute_update(self, computed_pv, updated_pv_name, value):
+        """Compute Status PV."""
+        value = 0
+
+        # connected?
+        disconnected = \
+            not computed_pv.pvs[LIPUStatusPV.PV_RUNSTOP].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_PREHEAT].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_CHRALLW].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_TRGALLW].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_EMRSTOP].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_CPS_ALL].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_THYHEAT].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_KLYHEAT].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_LVRDYOK].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_HVRDYOK].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_TRRDYOK].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_SELFFLT].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_SYS_RDY].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_TRGNORM].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_PLSCURR].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_VLTDIFF].connected or \
+            not computed_pv.pvs[LIPUStatusPV.PV_CRRDIFF].connected
+        if disconnected:
+            value |= LIPUStatusPV.BIT_DISCONN
+            value |= LIPUStatusPV.BIT_RUNSTOP
+            value |= LIPUStatusPV.BIT_PREHEAT
+            value |= LIPUStatusPV.BIT_CHRALLW
+            value |= LIPUStatusPV.BIT_TRGALLW
+            value |= LIPUStatusPV.BIT_EMRSTOP
+            value |= LIPUStatusPV.BIT_CPS_ALL
+            value |= LIPUStatusPV.BIT_THYHEAT
+            value |= LIPUStatusPV.BIT_KLYHEAT
+            value |= LIPUStatusPV.BIT_LVRDYOK
+            value |= LIPUStatusPV.BIT_HVRDYOK
+            value |= LIPUStatusPV.BIT_TRRDYOK
+            value |= LIPUStatusPV.BIT_SELFFLT
+            value |= LIPUStatusPV.BIT_SYS_RDY
+            value |= LIPUStatusPV.BIT_TRGNORM
+            value |= LIPUStatusPV.BIT_PLSCURR
+            value |= LIPUStatusPV.BIT_VLTDIFF
+            value |= LIPUStatusPV.BIT_CRRDIFF
+            return {'value': value}
+
+        # Run/Stop
+        sts = computed_pv.pvs[LIPUStatusPV.PV_RUNSTOP].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_RUNSTOP
+
+        # PreHeat
+        sts = computed_pv.pvs[LIPUStatusPV.PV_PREHEAT].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_PREHEAT
+
+        # Charge_Allowed
+        sts = computed_pv.pvs[LIPUStatusPV.PV_CHRALLW].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_CHRALLW
+
+        # TrigOut_Allowed
+        sts = computed_pv.pvs[LIPUStatusPV.PV_TRGALLW].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_TRGALLW
+
+        # Emer_Stop
+        sts = computed_pv.pvs[LIPUStatusPV.PV_EMRSTOP].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_EMRSTOP
+
+        # CPS_ALL
+        sts = computed_pv.pvs[LIPUStatusPV.PV_CPS_ALL].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_CPS_ALL
+
+        # Thy_Heat
+        sts = computed_pv.pvs[LIPUStatusPV.PV_THYHEAT].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_THYHEAT
+
+        # Kly_Heat
+        sts = computed_pv.pvs[LIPUStatusPV.PV_KLYHEAT].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_KLYHEAT
+
+        # LV_Rdy_OK
+        sts = computed_pv.pvs[LIPUStatusPV.PV_LVRDYOK].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_LVRDYOK
+
+        # HV_Rdy_OK
+        sts = computed_pv.pvs[LIPUStatusPV.PV_HVRDYOK].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_HVRDYOK
+
+        # TRIG_Rdy_OK
+        sts = computed_pv.pvs[LIPUStatusPV.PV_TRRDYOK].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_TRRDYOK
+
+        # MOD_Self_Fault
+        sts = computed_pv.pvs[LIPUStatusPV.PV_SELFFLT].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_SELFFLT
+
+        # MOD_Sys_Ready
+        sts = computed_pv.pvs[LIPUStatusPV.PV_SYS_RDY].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_SYS_RDY
+
+        # TRIG_Norm
+        sts = computed_pv.pvs[LIPUStatusPV.PV_TRGNORM].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_TRGNORM
+
+        # Pulse_Current
+        sts = computed_pv.pvs[LIPUStatusPV.PV_PLSCURR].value
+        if sts != 1 or sts is None:
+            value |= LIPUStatusPV.BIT_PLSCURR
+
+        # volt diff?
+        severity = computed_pv.pvs[LIPUStatusPV.PV_VLTDIFF].severity
+        if severity != 0:
+            value |= LIPUStatusPV.BIT_VLTDIFF
+
+        # current diff?
+        severity = computed_pv.pvs[LIPUStatusPV.PV_CRRDIFF].severity
+        if severity != 0:
+            value |= LIPUStatusPV.BIT_CRRDIFF
+
+        return {'value': value}
+
+
 class LIEGHVStatusPV:
     """LI Egun HVPS Status PV."""
 
