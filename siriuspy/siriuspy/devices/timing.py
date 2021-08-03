@@ -86,11 +86,16 @@ class EVG(_Device):
         return self['InjCount-Mon']
 
     def fill_bucketlist(self, stop, start=1, step=30, timeout=10):
-        """."""
-        value = _np.arange(start=start, stop=stop, step=step)
+        """Fill bucket list."""
+        if (step > 0) and (start > stop):
+            stop += 864
+        if (step < 0) and (stop > start):
+            stop -= 864
+        value = _np.arange(start, stop, step)
+        value = (value-1) % 864 + 1
         self.bucketlist = value
         rb_value = _np.zeros(864)
-        rb_value[0:len(value)] = value
+        rb_value[:len(value)] = value
         return self._wait('BucketList-RB', rb_value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
