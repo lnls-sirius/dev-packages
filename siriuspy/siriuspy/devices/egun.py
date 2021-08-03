@@ -401,9 +401,9 @@ class EGun(_Devices):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
-    BIAS_MULTI_BUNCH = -49.0
-    BIAS_SINGLE_BUNCH = -80.0
-    BIAS_TOLERANCE = 0.2
+    BIAS_MULTI_BUNCH = -46.0  # [V]
+    BIAS_SINGLE_BUNCH = -80.0  # [V]
+    BIAS_TOLERANCE = 0.2  # [V]
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
 
