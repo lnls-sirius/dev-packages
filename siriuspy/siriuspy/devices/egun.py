@@ -404,6 +404,8 @@ class EGun(_Devices):
     BIAS_MULTI_BUNCH = -49.0
     BIAS_SINGLE_BUNCH = -80.0
     BIAS_TOLERANCE = 0.2
+    HV_OPVALUE = 90.0  # [V]
+    HV_TOLERANCE = 1.0  # [V]
 
     def __init__(self):
         """Init."""
@@ -423,6 +425,8 @@ class EGun(_Devices):
         self._bias_mb = EGun.BIAS_MULTI_BUNCH
         self._bias_sb = EGun.BIAS_SINGLE_BUNCH
         self._bias_tol = EGun.BIAS_TOLERANCE
+        self._hv_opval = EGun.HV_OPVALUE
+        self._hv_tol = EGun.HV_TOLERANCE
 
         super().__init__('', devices)
 
@@ -518,3 +522,19 @@ class EGun(_Devices):
         sts &= not self.pulse.multi_bunch_mode
         sts &= not self.pulse.multi_bunch_switch
         return sts
+
+    @property
+    def high_voltage_opvalue(self):
+        """High voltage operation value."""
+        return self._hv_opval
+
+    @high_voltage_opvalue.setter
+    def high_voltage_opvalue(self, value):
+        self._hv_opval = value
+
+    @property
+    def is_hv_on(self):
+        """Indicate whether high voltage is on and in operational value."""
+        is_on = self.hvps.is_on
+        is_high = self.hvps.voltage - self._hv_opval < self._hv_tol
+        return is_on and is_high
