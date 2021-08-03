@@ -502,7 +502,6 @@ class EGun(_Devices):
         """Is configured to single bunch mode."""
         sts = not self.pulse.multi_bunch_switch
         sts &= not self.pulse.multi_bunch_mode
-        sts &= self.bias.voltage - self._bias_sb < self._bias_tol
         sts &= not self.trigmultipre.state
         sts &= not self.trigmulti.state
         sts &= self.trigsingle.state
@@ -515,7 +514,6 @@ class EGun(_Devices):
         """Is configured to multi bunch mode."""
         sts = not self.pulse.single_bunch_switch
         sts &= not self.pulse.single_bunch_mode
-        sts &= self.bias.voltage - self._bias_mb < self._bias_tol
         sts &= not self.trigsingle.state
         sts &= self.trigmultipre.state
         sts &= self.trigmulti.state
