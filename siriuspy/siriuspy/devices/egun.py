@@ -403,7 +403,7 @@ class EGun(_Devices):
     DEF_TIMEOUT = 10  # [s]
     BIAS_MULTI_BUNCH = -46.0  # [V]
     BIAS_SINGLE_BUNCH = -80.0  # [V]
-    BIAS_TOLERANCE = 0.2  # [V]
+    BIAS_TOLERANCE = 1.0  # [V]
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
 
@@ -465,7 +465,7 @@ class EGun(_Devices):
         if not self.pulse.cmd_turn_off_multi_bunch():
             return False
 
-        if not self.bias.set_voltage(self._bias_sb):
+        if not self.bias.set_voltage(self._bias_sb, tol=self._bias_tol):
             return False
 
         if not self.trigmultipre.cmd_disable():
@@ -485,7 +485,7 @@ class EGun(_Devices):
         if not self.pulse.cmd_turn_off_single_bunch():
             return False
 
-        if not self.bias.set_voltage(self._bias_mb):
+        if not self.bias.set_voltage(self._bias_mb, tol=self._bias_tol):
             return False
 
         if not self.trigsingle.cmd_disable():
