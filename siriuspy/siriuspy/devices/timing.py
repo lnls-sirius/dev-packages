@@ -43,12 +43,12 @@ class EVG(_Device):
     @property
     def bucketlist_mon(self):
         """."""
-        return self['BucketList-Mon']
+        return self['BucketList-Mon'][:self.bucketlist_len]
 
     @property
     def bucketlist(self):
         """."""
-        return self['BucketList-RB']
+        return self['BucketList-RB'][:self.bucketlist_len]
 
     @bucketlist.setter
     def bucketlist(self, value):
@@ -89,7 +89,9 @@ class EVG(_Device):
         """."""
         value = _np.arange(start=start, stop=stop, step=step)
         self.bucketlist = value
-        return self._wait('BucketList-RB', value, timeout=timeout)
+        rb_value = _np.zeros(864)
+        rb_value[0:len(value)] = value
+        return self._wait('BucketList-RB', rb_value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
