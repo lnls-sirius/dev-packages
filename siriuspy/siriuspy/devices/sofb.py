@@ -21,7 +21,25 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    _propty_tlines_tmpl = (
+    def __new__(cls, devname):
+        # check if device exists
+        if devname not in SOFB.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # SOFB object
+        data = SOFBFactory.create(devname[:2])
+
+        if data.acc == 'SI':
+            return SISOFB(devname, data)
+        elif data.isring:
+            return BOSOFB(devname, data)
+        return TLSOFB(devname, data)
+
+
+class TLSOFB(_Device):
+    """SOFB Device."""
+
+    _properties = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
         'RespMat-SP', 'RespMat-RB',
@@ -54,54 +72,21 @@ class SOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
         )
-    # properties used only for ring-type accelerators:
-    _propty_ring_tmpl = (
-        'MTurnAcquire-Cmd',
-        'SlowOrbX-Mon', 'SlowOrbY-Mon',
-        'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
-        'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
-        'MTurnTime-Mon',
-        )
-    # properties used only for sirius:
-    _propty_si_tmpl = (
-        'KickRF-Mon',
-        'DeltaKickRF-Mon', 'DeltaKickRF-SP',
-        'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
-        'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
-        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
-        'RFEnbl-Sel', 'RFEnbl-Sts',
-        'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
-        'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
-        'DriveAmplitude-SP', 'DriveAmplitude-RB',
-        'DrivePhase-SP', 'DrivePhase-RB',
-        'DriveCorrIndex-SP', 'DriveCorrIndex-RB',
-        'DriveBPMIndex-SP', 'DriveBPMIndex-RB',
-        'DriveType-Sel', 'DriveType-Sts',
-        'DriveState-Sel', 'DriveState-Sts',
-        'DriveData-Mon',
-        )
 
     _default_timeout = 10  # [s]
     _default_timeout_respm = 2 * 60 * 60  # [s]
     _default_timeout_kick_apply = 2  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, data=None):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # SOFB object
-        self.data = SOFBFactory.create(devname[:2])
-
-        propts = SOFB._propty_tlines_tmpl
-        if self.data.isring:
-            propts = propts + SOFB._propty_ring_tmpl
-        if self.data.acc == 'SI':
-            propts = propts + SOFB._propty_si_tmpl
-
+        self.data = data or SOFBFactory.create(devname[:2])
         # call base class constructor
-        super().__init__(devname, properties=propts)
+        super().__init__(devname, properties=self._properties)
 
     @property
     def opmode(self):
@@ -142,6 +127,442 @@ class SOFB(_Device):
     def trigchannel_str(self):
         """."""
         return self.data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+
+    @property
+    def sp_trajx(self):
+        """."""
+        return self['SPassOrbX-Mon']
+
+    @property
+    def sp_trajy(self):
+        """."""
+        return self['SPassOrbY-Mon']
+
+    @property
+    def sp_sum(self):
+        """."""
+        return self['SPassSum-Mon']
+
+    @property
+    def trajx(self):
+        """."""
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_trajx_idx
+        return self.sp_trajx
+
+    @property
+    def trajy(self):
+        """."""
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_trajy_idx
+        return self.sp_trajy
+
+    @property
+    def sum(self):
+        """."""
+        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
+            return self.mt_sum_idx
+        return self.sp_sum
+
+    @property
+    def kickch(self):
+        """."""
+        return self['KickCH-Mon']
+
+    @property
+    def kickcv(self):
+        """."""
+        return self['KickCV-Mon']
+
+    @property
+    def deltakickch(self):
+        """."""
+        return self['DeltaKickCH-Mon']
+
+    @deltakickch.setter
+    def deltakickch(self, value):
+        """."""
+        self['DeltaKickCH-SP'] = value
+
+    @property
+    def deltakickcv(self):
+        """."""
+        return self['DeltaKickCV-Mon']
+
+    @deltakickcv.setter
+    def deltakickcv(self, value):
+        """."""
+        self['DeltaKickCV-SP'] = value
+
+    @property
+    def maxdeltakickch(self):
+        """."""
+        return self['MaxDeltaKickCH-RB']
+
+    @maxdeltakickch.setter
+    def maxdeltakickch(self, value):
+        """."""
+        self['MaxDeltaKickCH-SP'] = value
+
+    @property
+    def maxdeltakickcv(self):
+        """."""
+        return self['MaxDeltaKickCV-RB']
+
+    @maxdeltakickcv.setter
+    def maxdeltakickcv(self, value):
+        """."""
+        self['MaxDeltaKickCV-SP'] = value
+
+    @property
+    def mancorrgainch(self):
+        """."""
+        return self['ManCorrGainCH-RB']
+
+    @mancorrgainch.setter
+    def mancorrgainch(self, value):
+        """."""
+        self['ManCorrGainCH-SP'] = value
+
+    @property
+    def mancorrgaincv(self):
+        """."""
+        return self['ManCorrGainCV-RB']
+
+    @mancorrgaincv.setter
+    def mancorrgaincv(self, value):
+        """."""
+        self['ManCorrGainCV-SP'] = value
+
+    @property
+    def refx(self):
+        """."""
+        return self['RefOrbX-RB']
+
+    @refx.setter
+    def refx(self, value):
+        """."""
+        self['RefOrbX-SP'] = value
+
+    @property
+    def refy(self):
+        """."""
+        return self['RefOrbY-RB']
+
+    @refy.setter
+    def refy(self, value):
+        """."""
+        self['RefOrbY-SP'] = value
+
+    @property
+    def bpmxenbl(self):
+        """."""
+        return self['BPMXEnblList-RB']
+
+    @bpmxenbl.setter
+    def bpmxenbl(self, value):
+        """."""
+        self['BPMXEnblList-SP'] = value
+
+    @property
+    def bpmyenbl(self):
+        """."""
+        return self['BPMYEnblList-RB']
+
+    @bpmyenbl.setter
+    def bpmyenbl(self, value):
+        """."""
+        self['BPMYEnblList-SP'] = value
+
+    @property
+    def chenbl(self):
+        """."""
+        return self['CHEnblList-RB']
+
+    @chenbl.setter
+    def chenbl(self, value):
+        """."""
+        self['CHEnblList-SP'] = value
+
+    @property
+    def cvenbl(self):
+        """."""
+        return self['CVEnblList-RB']
+
+    @cvenbl.setter
+    def cvenbl(self, value):
+        """."""
+        self['CVEnblList-SP'] = value
+
+    @property
+    def buffer_count(self):
+        """."""
+        return self['BufferCount-Mon']
+
+    @property
+    def nr_points(self):
+        """."""
+        return self['SmoothNrPts-RB']
+
+    @nr_points.setter
+    def nr_points(self, value):
+        """."""
+        self['SmoothNrPts-SP'] = int(value)
+
+    @property
+    def nr_singvals(self):
+        """."""
+        return self['NrSingValues-Mon']
+
+    @property
+    def singval_min(self):
+        """."""
+        return self['MinSingValue-RB']
+
+    @singval_min.setter
+    def singval_min(self, value):
+        """."""
+        self['MinSingValue-SP'] = value
+
+    @property
+    def trigsamplepre(self):
+        """."""
+        return self['TrigNrSamplesPre-RB']
+
+    @trigsamplepre.setter
+    def trigsamplepre(self, value):
+        """."""
+        self['TrigNrSamplesPre-SP'] = int(value)
+
+    @property
+    def trigsamplepost(self):
+        """."""
+        return self['TrigNrSamplesPost-RB']
+
+    @trigsamplepost.setter
+    def trigsamplepost(self, value):
+        """."""
+        self['TrigNrSamplesPost-SP'] = int(value)
+
+    def cmd_reset(self):
+        """."""
+        self['SmoothReset-Cmd'] = 1
+        return True
+
+    def cmd_calccorr(self):
+        """."""
+        self['CalcDelta-Cmd'] = 1
+        return True
+
+    def cmd_applycorr_ch(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
+        return True
+
+    def cmd_applycorr_cv(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+        return True
+
+    def cmd_applycorr_rf(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
+        return True
+
+    def cmd_applycorr_all(self):
+        """."""
+        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
+        return True
+
+    def cmd_measrespmat_start(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 0
+        return True
+
+    def cmd_measrespmat_stop(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 1
+        return True
+
+    def cmd_measrespmat_reset(self):
+        """."""
+        self['MeasRespMat-Cmd'] = 2
+        return True
+
+    @property
+    def applydeltakick_mon(self):
+        """."""
+        return self['ApplyDelta-Mon']
+
+    @property
+    def measrespmat_mon(self):
+        """."""
+        return self['MeasRespMat-Mon']
+
+    @property
+    def measrespmat_kickch(self):
+        """."""
+        return self['MeasRespMatKickCH-RB']
+
+    @measrespmat_kickch.setter
+    def measrespmat_kickch(self, value):
+        self['MeasRespMatKickCH-SP'] = value
+
+    @property
+    def measrespmat_kickcv(self):
+        """."""
+        return self['MeasRespMatKickCV-RB']
+
+    @measrespmat_kickcv.setter
+    def measrespmat_kickcv(self, value):
+        self['MeasRespMatKickCV-SP'] = value
+
+    @property
+    def measrespmat_wait(self):
+        """."""
+        return self['MeasRespMatWait-RB']
+
+    @measrespmat_wait.setter
+    def measrespmat_wait(self, value):
+        self['MeasRespMatWait-SP'] = value
+
+    @property
+    def autocorrsts(self):
+        """."""
+        return self['LoopState-Sts']
+
+    def correct_orbit_manually(self, nr_iters=10, residue=5):
+        """."""
+        self.cmd_turn_off_autocorr()
+        for i in range(nr_iters):
+            resx = self.orbx - self.refx
+            resy = self.orby - self.refy
+            resx = _np.linalg.norm(resx[self.bpmxenbl])
+            resy = _np.linalg.norm(resy[self.bpmyenbl])
+            if resx < residue and resy < residue:
+                break
+            self.cmd_calccorr()
+            _time.sleep(0.5)
+            self.cmd_applycorr_all()
+            self.wait_apply_delta_kick()
+            _time.sleep(0.2)
+            self.cmd_reset()
+            self.wait_buffer()
+        return i, resx, resy
+
+    def cmd_turn_on_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        if self.autocorrsts == self.data.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = self.data.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        if self.autocorrsts == self.data.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = self.data.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
+
+    def wait_buffer(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout
+        return self._wait(
+            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
+
+    def wait_apply_delta_kick(self, timeout=None):
+        """."""
+        def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
+        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
+        timeout = timeout or def_timeout
+        return self._wait(
+            'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
+            timeout=timeout, comp='ne')
+
+    def wait_respm_meas(self, timeout=None):
+        """."""
+        timeout = timeout or SOFB._default_timeout_respm
+        return self._wait(
+            'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
+            timeout=timeout, comp='ne')
+
+
+class BOSOFB(TLSOFB):
+    """SOFB Device."""
+
+    _properties = TLSOFB._properties + (
+        'MTurnAcquire-Cmd',
+        'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
+        'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
+        'MTurnTime-Mon',
+        )
+
+    @property
+    def mt_trajx(self):
+        """."""
+        return self['MTurnOrbX-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajy(self):
+        """."""
+        return self['MTurnOrbY-Mon'] if self.data.isring else None
+
+    @property
+    def mt_sum(self):
+        """."""
+        return self['MTurnSum-Mon'] if self.data.isring else None
+
+    @property
+    def mt_time(self):
+        """."""
+        return self['MTurnTime-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajx_idx(self):
+        """."""
+        return self['MTurnIdxOrbX-Mon'] if self.data.isring else None
+
+    @property
+    def mt_trajy_idx(self):
+        """."""
+        return self['MTurnIdxOrbY-Mon'] if self.data.isring else None
+
+    @property
+    def mt_sum_idx(self):
+        """."""
+        return self['MTurnIdxSum-Mon'] if self.data.isring else None
+
+    def cmd_mturn_acquire(self):
+        """."""
+        self['MTurnAcquire-Cmd'] = 1
+        return True
+
+
+class SISOFB(BOSOFB):
+    """SOFB Device."""
+
+    _properties = BOSOFB._properties + (
+        'KickRF-Mon',
+        'DeltaKickRF-Mon', 'DeltaKickRF-SP',
+        'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
+        'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'RFEnbl-Sel', 'RFEnbl-Sts',
+        'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
+        'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
+        'DriveAmplitude-SP', 'DriveAmplitude-RB',
+        'DrivePhase-SP', 'DrivePhase-RB',
+        'DriveCorrIndex-SP', 'DriveCorrIndex-RB',
+        'DriveBPMIndex-SP', 'DriveBPMIndex-RB',
+        'DriveType-Sel', 'DriveType-Sts',
+        'DriveState-Sel', 'DriveState-Sts',
+        'DriveData-Mon',
+        )
 
     @property
     def drivests(self):
@@ -249,77 +670,6 @@ class SOFB(_Device):
         return self['DriveData-Mon'][2::3]
 
     @property
-    def sp_trajx(self):
-        """."""
-        return self['SPassOrbX-Mon']
-
-    @property
-    def sp_trajy(self):
-        """."""
-        return self['SPassOrbY-Mon']
-
-    @property
-    def sp_sum(self):
-        """."""
-        return self['SPassSum-Mon']
-
-    @property
-    def mt_trajx(self):
-        """."""
-        return self['MTurnOrbX-Mon'] if self.data.isring else None
-
-    @property
-    def mt_trajy(self):
-        """."""
-        return self['MTurnOrbY-Mon'] if self.data.isring else None
-
-    @property
-    def mt_sum(self):
-        """."""
-        return self['MTurnSum-Mon'] if self.data.isring else None
-
-    @property
-    def mt_time(self):
-        """."""
-        return self['MTurnTime-Mon'] if self.data.isring else None
-
-    @property
-    def mt_trajx_idx(self):
-        """."""
-        return self['MTurnIdxOrbX-Mon'] if self.data.isring else None
-
-    @property
-    def mt_trajy_idx(self):
-        """."""
-        return self['MTurnIdxOrbY-Mon'] if self.data.isring else None
-
-    @property
-    def mt_sum_idx(self):
-        """."""
-        return self['MTurnIdxSum-Mon'] if self.data.isring else None
-
-    @property
-    def trajx(self):
-        """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_trajx_idx
-        return self.sp_trajx
-
-    @property
-    def trajy(self):
-        """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_trajy_idx
-        return self.sp_trajy
-
-    @property
-    def sum(self):
-        """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_sum_idx
-        return self.sp_sum
-
-    @property
     def orbx(self):
         """."""
         return self['SlowOrbX-Mon'] if self.data.isring else None
@@ -330,39 +680,9 @@ class SOFB(_Device):
         return self['SlowOrbY-Mon'] if self.data.isring else None
 
     @property
-    def kickch(self):
-        """."""
-        return self['KickCH-Mon']
-
-    @property
-    def kickcv(self):
-        """."""
-        return self['KickCV-Mon']
-
-    @property
     def kickrf(self):
         """."""
         return self['KickRF-Mon']
-
-    @property
-    def deltakickch(self):
-        """."""
-        return self['DeltaKickCH-Mon']
-
-    @deltakickch.setter
-    def deltakickch(self, value):
-        """."""
-        self['DeltaKickCH-SP'] = value
-
-    @property
-    def deltakickcv(self):
-        """."""
-        return self['DeltaKickCV-Mon']
-
-    @deltakickcv.setter
-    def deltakickcv(self, value):
-        """."""
-        self['DeltaKickCV-SP'] = value
 
     @property
     def deltakickrf(self):
@@ -375,26 +695,6 @@ class SOFB(_Device):
         self['DeltaKickRF-SP'] = value
 
     @property
-    def maxdeltakickch(self):
-        """."""
-        return self['MaxDeltaKickCH-RB']
-
-    @maxdeltakickch.setter
-    def maxdeltakickch(self, value):
-        """."""
-        self['MaxDeltaKickCH-SP'] = value
-
-    @property
-    def maxdeltakickcv(self):
-        """."""
-        return self['MaxDeltaKickCV-RB']
-
-    @maxdeltakickcv.setter
-    def maxdeltakickcv(self, value):
-        """."""
-        self['MaxDeltaKickCV-SP'] = value
-
-    @property
     def maxdeltakickrf(self):
         """."""
         return self['MaxDeltaKickRF-RB']
@@ -405,26 +705,6 @@ class SOFB(_Device):
         self['MaxDeltaKickRF-SP'] = value
 
     @property
-    def mancorrgainch(self):
-        """."""
-        return self['ManCorrGainCH-RB']
-
-    @mancorrgainch.setter
-    def mancorrgainch(self, value):
-        """."""
-        self['ManCorrGainCH-SP'] = value
-
-    @property
-    def mancorrgaincv(self):
-        """."""
-        return self['ManCorrGainCV-RB']
-
-    @mancorrgaincv.setter
-    def mancorrgaincv(self, value):
-        """."""
-        self['ManCorrGainCV-SP'] = value
-
-    @property
     def mancorrgainrf(self):
         """."""
         return self['ManCorrGainRF-RB']
@@ -433,66 +713,6 @@ class SOFB(_Device):
     def mancorrgainrf(self, value):
         """."""
         self['ManCorrGainRF-SP'] = value
-
-    @property
-    def refx(self):
-        """."""
-        return self['RefOrbX-RB']
-
-    @refx.setter
-    def refx(self, value):
-        """."""
-        self['RefOrbX-SP'] = value
-
-    @property
-    def refy(self):
-        """."""
-        return self['RefOrbY-RB']
-
-    @refy.setter
-    def refy(self, value):
-        """."""
-        self['RefOrbY-SP'] = value
-
-    @property
-    def bpmxenbl(self):
-        """."""
-        return self['BPMXEnblList-RB']
-
-    @bpmxenbl.setter
-    def bpmxenbl(self, value):
-        """."""
-        self['BPMXEnblList-SP'] = value
-
-    @property
-    def bpmyenbl(self):
-        """."""
-        return self['BPMYEnblList-RB']
-
-    @bpmyenbl.setter
-    def bpmyenbl(self, value):
-        """."""
-        self['BPMYEnblList-SP'] = value
-
-    @property
-    def chenbl(self):
-        """."""
-        return self['CHEnblList-RB']
-
-    @chenbl.setter
-    def chenbl(self, value):
-        """."""
-        self['CHEnblList-SP'] = value
-
-    @property
-    def cvenbl(self):
-        """."""
-        return self['CVEnblList-RB']
-
-    @cvenbl.setter
-    def cvenbl(self, value):
-        """."""
-        self['CVEnblList-SP'] = value
 
     @property
     def rfenbl(self):
@@ -507,134 +727,6 @@ class SOFB(_Device):
             self['RFEnbl-Sel'] = value
 
     @property
-    def buffer_count(self):
-        """."""
-        return self['BufferCount-Mon']
-
-    @property
-    def nr_points(self):
-        """."""
-        return self['SmoothNrPts-RB']
-
-    @nr_points.setter
-    def nr_points(self, value):
-        """."""
-        self['SmoothNrPts-SP'] = int(value)
-
-    @property
-    def nr_singvals(self):
-        """."""
-        return self['NrSingValues-Mon']
-
-    @property
-    def singval_min(self):
-        """."""
-        return self['MinSingValue-RB']
-
-    @singval_min.setter
-    def singval_min(self, value):
-        """."""
-        self['MinSingValue-SP'] = value
-
-    @property
-    def trigsamplepre(self):
-        """."""
-        return self['TrigNrSamplesPre-RB']
-
-    @trigsamplepre.setter
-    def trigsamplepre(self, value):
-        """."""
-        self['TrigNrSamplesPre-SP'] = int(value)
-
-    @property
-    def trigsamplepost(self):
-        """."""
-        return self['TrigNrSamplesPost-RB']
-
-    @trigsamplepost.setter
-    def trigsamplepost(self, value):
-        """."""
-        self['TrigNrSamplesPost-SP'] = int(value)
-
-    def cmd_mturn_acquire(self):
-        """."""
-        self['MTurnAcquire-Cmd'] = 1
-        return True
-
-    def cmd_reset(self):
-        """."""
-        self['SmoothReset-Cmd'] = 1
-        return True
-
-    def cmd_calccorr(self):
-        """."""
-        self['CalcDelta-Cmd'] = 1
-        return True
-
-    def cmd_applycorr_ch(self):
-        """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
-        return True
-
-    def cmd_applycorr_cv(self):
-        """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
-        return True
-
-    def cmd_applycorr_rf(self):
-        """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
-        return True
-
-    def cmd_applycorr_all(self):
-        """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
-        return True
-
-    def cmd_measrespmat_start(self):
-        """."""
-        self['MeasRespMat-Cmd'] = 0
-        return True
-
-    def cmd_measrespmat_stop(self):
-        """."""
-        self['MeasRespMat-Cmd'] = 1
-        return True
-
-    def cmd_measrespmat_reset(self):
-        """."""
-        self['MeasRespMat-Cmd'] = 2
-        return True
-
-    @property
-    def applydeltakick_mon(self):
-        """."""
-        return self['ApplyDelta-Mon']
-
-    @property
-    def measrespmat_mon(self):
-        """."""
-        return self['MeasRespMat-Mon']
-
-    @property
-    def measrespmat_kickch(self):
-        """."""
-        return self['MeasRespMatKickCH-RB']
-
-    @measrespmat_kickch.setter
-    def measrespmat_kickch(self, value):
-        self['MeasRespMatKickCH-SP'] = value
-
-    @property
-    def measrespmat_kickcv(self):
-        """."""
-        return self['MeasRespMatKickCV-RB']
-
-    @measrespmat_kickcv.setter
-    def measrespmat_kickcv(self, value):
-        self['MeasRespMatKickCV-SP'] = value
-
-    @property
     def measrespmat_kickrf(self):
         """."""
         return self['MeasRespMatKickRF-RB']
@@ -642,57 +734,6 @@ class SOFB(_Device):
     @measrespmat_kickrf.setter
     def measrespmat_kickrf(self, value):
         self['MeasRespMatKickRF-SP'] = value
-
-    @property
-    def measrespmat_wait(self):
-        """."""
-        return self['MeasRespMatWait-RB']
-
-    @measrespmat_wait.setter
-    def measrespmat_wait(self, value):
-        self['MeasRespMatWait-SP'] = value
-
-    @property
-    def autocorrsts(self):
-        """."""
-        return self['LoopState-Sts']
-
-    def correct_orbit_manually(self, nr_iters=10, residue=5):
-        """."""
-        self.cmd_turn_off_autocorr()
-        for i in range(nr_iters):
-            resx = self.orbx - self.refx
-            resy = self.orby - self.refy
-            resx = _np.linalg.norm(resx[self.bpmxenbl])
-            resy = _np.linalg.norm(resy[self.bpmyenbl])
-            if resx < residue and resy < residue:
-                break
-            self.cmd_calccorr()
-            _time.sleep(0.5)
-            self.cmd_applycorr_all()
-            self.wait_apply_delta_kick()
-            _time.sleep(0.2)
-            self.cmd_reset()
-            self.wait_buffer()
-        return i, resx, resy
-
-    def cmd_turn_on_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or SOFB._default_timeout
-        if self.autocorrsts == self.data.LoopState.Closed:
-            return True
-        self['LoopState-Sel'] = self.data.LoopState.Closed
-        return self._wait(
-            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
-
-    def cmd_turn_off_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or SOFB._default_timeout
-        if self.autocorrsts == self.data.LoopState.Open:
-            return True
-        self['LoopState-Sel'] = self.data.LoopState.Open
-        return self._wait(
-            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
@@ -711,28 +752,6 @@ class SOFB(_Device):
         self['DriveState-Sel'] = self.data.DriveState.Open
         return self._wait(
             'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
-
-    def wait_buffer(self, timeout=None):
-        """."""
-        timeout = timeout or SOFB._default_timeout
-        return self._wait(
-            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
-
-    def wait_apply_delta_kick(self, timeout=None):
-        """."""
-        def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
-        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
-        timeout = timeout or def_timeout
-        return self._wait(
-            'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
-            timeout=timeout, comp='ne')
-
-    def wait_respm_meas(self, timeout=None):
-        """."""
-        timeout = timeout or SOFB._default_timeout_respm
-        return self._wait(
-            'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
-            timeout=timeout, comp='ne')
 
     def wait_drive(self, timeout=None):
         """."""
