@@ -1413,4 +1413,6 @@ _tune_pvs = [
 _template_dict = {
     'pvs':
         _li_diags + _amcfpgaevr_pvs + _bpm_pvs + _scrn_pvs + _vlightcam_pvs +
-        _dcct_pvs + _ict_pvs + _slit_pvs + _tune_pvs}
+        _dcct_pvs + _slit_pvs + _tune_pvs +
+        # _ict_pvs  # commented out becaus IOC is down.
+        }
