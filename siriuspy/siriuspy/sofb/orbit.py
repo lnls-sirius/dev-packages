@@ -762,6 +762,9 @@ class EpicsOrbit(BaseOrbit):
         val = int(val) if val > 0 else 0
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
+        oth = 'post' if not ispost else 'pre'
+        if getattr(self, '_acqtrignrsamples' + oth) == 0 and val == 0:
+            return False
         with self._lock_raw_orbs:
             for bpm in self.bpms:
                 setattr(bpm, 'nrsamples' + suf, val)
