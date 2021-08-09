@@ -406,6 +406,8 @@ class EGun(_Devices):
     BIAS_TOLERANCE = 1.0  # [V]
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
+    FILACURR_OPVALUE = 1.34  # [A]
+    FILACURR_TOLERANCE = 0.05  # [A]
 
     def __init__(self):
         """Init."""
@@ -427,6 +429,8 @@ class EGun(_Devices):
         self._bias_tol = EGun.BIAS_TOLERANCE
         self._hv_opval = EGun.HV_OPVALUE
         self._hv_tol = EGun.HV_TOLERANCE
+        self._filacurr_opval = EGun.FILACURR_OPVALUE
+        self._filacurr_tol = EGun.FILACURR_TOLERANCE
 
         super().__init__('', devices)
 
@@ -537,3 +541,19 @@ class EGun(_Devices):
         is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
         return is_on and is_op
 
+    @property
+    def fila_current_opvalue(self):
+        """Filament current operation value."""
+        return self._filacurr_opval
+
+    @fila_current_opvalue.setter
+    def fila_current_opvalue(self, value):
+        self._filacurr_opval = value
+
+    @property
+    def is_fila_on(self):
+        """Indicate whether filament is on and in operational current."""
+        is_on = self.fila.is_on()
+        is_op = abs(self.fila.current - self._filacurr_opval) < \
+            self._filacurr_tol
+        return is_on and is_op
