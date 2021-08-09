@@ -432,7 +432,7 @@ class EGun(_Devices):
 
     @property
     def multi_bunch_bias_voltage(self):
-        """Multi bunch bias voltage."""
+        """Multi bunch bias voltage to be used in mode setup."""
         return self._bias_mb
 
     @multi_bunch_bias_voltage.setter
@@ -441,7 +441,7 @@ class EGun(_Devices):
 
     @property
     def single_bunch_bias_voltage(self):
-        """Single bunch bias voltage."""
+        """Single bunch bias voltage to be used in mode setup."""
         return self._bias_sb
 
     @single_bunch_bias_voltage.setter
@@ -533,6 +533,7 @@ class EGun(_Devices):
     @property
     def is_hv_on(self):
         """Indicate whether high voltage is on and in operational value."""
-        is_on = self.hvps.is_on
-        is_high = self.hvps.voltage - self._hv_opval < self._hv_tol
-        return is_on and is_high
+        is_on = self.hvps.is_on()
+        is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
+        return is_on and is_op
+
