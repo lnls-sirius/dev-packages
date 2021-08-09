@@ -1205,43 +1205,43 @@ def _get_ps_LINAC_propty_database():
     propty_db = {
         # --- ioc metapvs
         'Version-Cte': {'type': 'string', 'value': version},
-        'TimestampBoot-Cte': {'type': 'string'},
-        'TimestampUpdate-Mon': {'type': 'float'},
+        'TimestampBoot-Cte': {'type': 'string', 'value': ''},
+        'TimestampUpdate-Mon': {'type': 'float', 'value': 0.0},
         'Connected-Mon': {
             'type': 'enum', 'enums': ['Connected', 'Broken'],
-            'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM]},
+            'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM], 'value': 0},
         # --- ps state
-        'PwrState-Sel': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
-        'PwrState-Sts': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
+        'PwrState-Sel': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On'], 'value': 0},  # 40
+        'PwrState-Sts': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On'], 'value': 0},  # 40
         # --- current
-        'Current-SP': {'type': 'float', 'prec': PS_CURRENT_PRECISION,
+        'Current-SP': {'type': 'float', 'prec': PS_CURRENT_PRECISION, 'value': 0.0,
                        'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                        'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},  # 90
-        'Current-RB': {'type': 'float', 'prec': PS_CURRENT_PRECISION,
+        'Current-RB': {'type': 'float', 'prec': PS_CURRENT_PRECISION, 'value': 0.0,
                        'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                        'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},  # 90
 
-        'Current-Mon': {'type': 'float', 'prec': PS_CURRENT_PRECISION,
+        'Current-Mon': {'type': 'float', 'prec': PS_CURRENT_PRECISION, 'value': 0.0,
                         'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                         'hilim': 0.0, 'high': 0.0, 'hihi': 0.0,
                         'mdel': 0.000099, 'adel': 0.000099},  # f1
-        'CurrentMax-Mon': {'type': 'float',
+        'CurrentMax-Mon': {'type': 'float', 'value': 0.0,
                            'prec': PS_CURRENT_PRECISION,
                            'unit': 'A'},  # 91
-        'CurrentMin-Mon': {'type': 'float',
+        'CurrentMin-Mon': {'type': 'float', 'value': 0.0,
                            'prec': PS_CURRENT_PRECISION,
                            'unit': 'A'},  # 92
-        'CurrentFit-Mon': {'type': 'float',
+        'CurrentFit-Mon': {'type': 'float', 'value': 0.0,
                            'prec': PS_CURRENT_PRECISION},  # f0
         # --- interlocks
-        'StatusIntlk-Mon': {'type': 'int', 'hihi': 55},
-        'IntlkWarn-Mon': {'type': 'int'},  # 23
-        'IntlkSignalIn-Mon': {'type': 'int'},
-        'IntlkSignalOut-Mon': {'type': 'int'},
-        'IntlkRdSignalIn-Mon': {'type': 'int'},  # 70
-        'IntlkRdSignalInMask-Mon': {'type': 'int'},  # 71
-        'IntlkRdSignalOut-Mon': {'type': 'int'},  # 72
-        'IntlkRdSignalOutMask-Mon': {'type': 'int'},  # 73
+        'StatusIntlk-Mon': {'type': 'int', 'hihi': 55, 'value': 0},
+        'IntlkWarn-Mon': {'type': 'int', 'value': 0},  # 23
+        'IntlkSignalIn-Mon': {'type': 'int', 'value': 0},
+        'IntlkSignalOut-Mon': {'type': 'int', 'value': 0},
+        'IntlkRdSignalIn-Mon': {'type': 'int', 'value': 0},  # 70
+        'IntlkRdSignalInMask-Mon': {'type': 'int', 'value': 0},  # 71
+        'IntlkRdSignalOut-Mon': {'type': 'int', 'value': 0},  # 72
+        'IntlkRdSignalOutMask-Mon': {'type': 'int', 'value': 0},  # 73
         # --- interlock labels
         'IntlkWarnLabels-Cte':  {
             'type': 'string',
@@ -1264,9 +1264,9 @@ def _get_ps_LINAC_propty_database():
             'count': len(_et.LINAC_INTLCK_RDSGOUT_MASK),
             'value': _et.LINAC_INTLCK_RDSGOUT_MASK},
         # --- misc
-        'Temperature-Mon': {'type': 'float', 'prec': 4},  # 74
-        'LoadVoltage-Mon': {'type': 'float', 'prec': 4},  # f2
-        'BusVoltage-Mon': {'type': 'float', 'prec': 4}  # f3
+        'Temperature-Mon': {'type': 'float', 'prec': 4, 'value': 0.0},  # 74
+        'LoadVoltage-Mon': {'type': 'float', 'prec': 4, 'value': 0.0},  # f2
+        'BusVoltage-Mon': {'type': 'float', 'prec': 4, 'value': 0.0},  # f3
     }
     propty_db = _csdev.add_pvslist_cte(propty_db)
     return propty_db
