@@ -4,6 +4,7 @@ import time as _time
 import operator as _opr
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
@@ -158,7 +159,10 @@ class Device:
         ntrials = int(timeout/_TINY_INTERVAL)
         _time.sleep(4*_TINY_INTERVAL)
         for _ in range(ntrials):
-            if comp(self[propty], value):
+            boo = comp(self[propty], value)
+            if isinstance(boo, _np.ndarray):
+                boo = _np.all(boo)
+            if boo:
                 return True
             _time.sleep(_TINY_INTERVAL)
         return False
@@ -355,7 +359,13 @@ class Devices:
 
         _time.sleep(4*_TINY_INTERVAL)
         for _ in range(int(timeout/_TINY_INTERVAL)):
-            okdevs = {k for k, v in dev2val.items() if comp(k[propty], v)}
+            okdevs = set()
+            for k, v in dev2val.items():
+                boo = comp(k[propty], v)
+                if isinstance(boo, _np.ndarray):
+                    boo = _np.all(boo)
+                if boo:
+                    okdevs.add(k)
             list(map(dev2val.__delitem__, okdevs))
             if not dev2val:
                 break
