@@ -144,6 +144,10 @@ def get_si_currinfo_database():
 
     pvs_db[dev+'InjEff-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%'}
+    pvs_db[dev+'InjCurr-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'mA'}
+    pvs_db[dev+'InjCharge-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'nC'}
 
     dev = 'AS-Glob:AP-CurrInfo:'
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}

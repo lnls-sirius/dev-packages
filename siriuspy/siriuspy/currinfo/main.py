@@ -191,7 +191,7 @@ class LICurrInfoApp(_ASCurrInfoApp):
 class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
-    REV_PERIOD = 1.6571334792998411  # [us]
+    HARMNUM = 828
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
     MAX_CURRENT = 1.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
@@ -255,6 +255,8 @@ class BOCurrInfoApp(_CurrInfoApp):
         self._reliablemeas_pv = _PV(
             _vaca_prefix+self._dcct+':ReliableMeas-Mon',
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
+        self._rffreq_pv = _PV(
+            _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
     def init_database(self):
         """Set initial PV values."""
@@ -337,7 +339,8 @@ class BOCurrInfoApp(_CurrInfoApp):
                                    self._currents[energy])
                 # charges
                 if current < self.MAX_CURRENT:
-                    self._charges[energy] += current * self.REV_PERIOD
+                    self._charges[energy] += \
+                        1e6 * current * self.HARMNUM / self._rffreq_pv.value
                     if energy == '3GeV':
                         self._intcurrent3gev += \
                             current * self.INTCURR_INTVL  # [mA.h]
@@ -362,6 +365,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 class SICurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
+    HARMNUM = 864
     HARMNUM_RATIO = 864 / 828
     CURR_THRESHOLD = 0.06  # [mA]
     MAX_CURRENT = 1.0  # [A]
@@ -386,6 +390,8 @@ class SICurrInfoApp(_CurrInfoApp):
         self._storedebeam_14c4_value = 0
         self._is_cycling = False
         self._injeff = 0.0
+        self._injcurr = 0.0
+        self._injcharge = 0.0
         self._injcount = 0
         data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
         if data is None:
@@ -430,6 +436,8 @@ class SICurrInfoApp(_CurrInfoApp):
         self._eg_trigps_pv = _PV(
             _vaca_prefix+'LI-01:EG-TriggerPS:status',
             connection_timeout=0.05)
+        self._rffreq_pv = _PV(
+            _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
@@ -452,6 +460,10 @@ class SICurrInfoApp(_CurrInfoApp):
             'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
         self.run_callbacks(
             'AS-Glob:AP-CurrInfo:InjCount-Mon', self._injcount)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:InjCurr-Mon', self._injcurr)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:InjCharge-Mon', self._injcharge)
 
     def read(self, reason):
         """Read from IOC database."""
@@ -606,11 +618,17 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # calculate efficiency
-        delta_curr = value_dq[-1] - _np.min(value_dq)
-        self._injeff = 100*(delta_curr/bo_curr) * self.HARMNUM_RATIO
+        self._injcurr = value_dq[-1] - _np.min(value_dq)  # mA
+        self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
+
+        # calculate injected charge: 1e6 * mA / Hz = nC
+        self._injcharge = 1e6*self._injcurr*self.HARMNUM/self._rffreq_pv.value
 
         # update pvs
         self.run_callbacks('SI-Glob:AP-CurrInfo:InjEff-Mon', self._injeff)
+        self.run_callbacks('SI-Glob:AP-CurrInfo:InjCurr-Mon', self._injcurr)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:InjCharge-Mon', self._injcharge)
 
     # ----- auxiliar methods -----
 
