@@ -163,90 +163,14 @@ class LIPUStatusPV:
             value = (1 << len(LIPUStatusPV.BIT)+1)-1
             return {'value': value}
 
-        # Run/Stop
-        sts = computed_pv.pvs[LIPUStatusPV.PV.RUNSTOP].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.RUNSTOP, sts != 1 or sts is None)
-
-        # PreHeat
-        sts = computed_pv.pvs[LIPUStatusPV.PV.PREHEAT].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.PREHEAT, sts != 1 or sts is None)
-
-        # Charge_Allowed
-        sts = computed_pv.pvs[LIPUStatusPV.PV.CHRALLW].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.CHRALLW, sts != 1 or sts is None)
-
-        # TrigOut_Allowed
-        sts = computed_pv.pvs[LIPUStatusPV.PV.TRGALLW].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.TRGALLW, sts != 1 or sts is None)
-
-        # Emer_Stop
-        sts = computed_pv.pvs[LIPUStatusPV.PV.EMRSTOP].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.EMRSTOP, sts != 1 or sts is None)
-
-        # CPS_ALL
-        sts = computed_pv.pvs[LIPUStatusPV.PV.CPS_ALL].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.CPS_ALL, sts != 1 or sts is None)
-
-        # Thy_Heat
-        sts = computed_pv.pvs[LIPUStatusPV.PV.THYHEAT].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.THYHEAT, sts != 1 or sts is None)
-
-        # Kly_Heat
-        sts = computed_pv.pvs[LIPUStatusPV.PV.KLYHEAT].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.KLYHEAT, sts != 1 or sts is None)
-
-        # LV_Rdy_OK
-        sts = computed_pv.pvs[LIPUStatusPV.PV.LVRDYOK].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.LVRDYOK, sts != 1 or sts is None)
-
-        # HV_Rdy_OK
-        sts = computed_pv.pvs[LIPUStatusPV.PV.HVRDYOK].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.HVRDYOK, sts != 1 or sts is None)
-
-        # TRIG_Rdy_OK
-        sts = computed_pv.pvs[LIPUStatusPV.PV.TRRDYOK].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.TRRDYOK, sts != 1 or sts is None)
-
-        # MOD_Self_Fault
-        sts = computed_pv.pvs[LIPUStatusPV.PV.SELFFLT].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.SELFFLT, sts != 1 or sts is None)
-
-        # MOD_Sys_Ready
-        sts = computed_pv.pvs[LIPUStatusPV.PV.SYS_RDY].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.SYS_RDY, sts != 1 or sts is None)
-
-        # TRIG_Norm
-        sts = computed_pv.pvs[LIPUStatusPV.PV.TRGNORM].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.TRGNORM, sts != 1 or sts is None)
-
-        # Pulse_Current
-        sts = computed_pv.pvs[LIPUStatusPV.PV.PLSCURR].value
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.PLSCURR, sts != 1 or sts is None)
-
-        # volt diff?
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.VLTDIFF,
-            computed_pv.pvs[LIPUStatusPV.PV.VLTDIFF].severity != 0)
-
-        # current diff?
-        value = _update_bit(
-            value, LIPUStatusPV.BIT.CRRDIFF,
-            computed_pv.pvs[LIPUStatusPV.PV.CRRDIFF].severity != 0)
+        for pvi, attr in enumerate(LIPUStatusPV.PV._fields):
+            bit = getattr(LIPUStatusPV.BIT, attr)
+            if 'DIFF' in attr:
+                sts = computed_pv.pvs[pvi].severity
+                value = _update_bit(value, bit, sts != 0)
+            else:
+                sts = computed_pv.pvs[pvi].value
+                value = _update_bit(value, bit, sts != 1 or sts is None)
 
         return {'value': value}
 
