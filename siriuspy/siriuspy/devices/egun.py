@@ -401,9 +401,13 @@ class EGun(_Devices):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
-    BIAS_MULTI_BUNCH = -49.0
-    BIAS_SINGLE_BUNCH = -80.0
-    BIAS_TOLERANCE = 0.2
+    BIAS_MULTI_BUNCH = -46.0  # [V]
+    BIAS_SINGLE_BUNCH = -80.0  # [V]
+    BIAS_TOLERANCE = 1.0  # [V]
+    HV_OPVALUE = 90.0  # [V]
+    HV_TOLERANCE = 1.0  # [V]
+    FILACURR_OPVALUE = 1.34  # [A]
+    FILACURR_TOLERANCE = 0.05  # [A]
 
     def __init__(self):
         """Init."""
@@ -423,12 +427,16 @@ class EGun(_Devices):
         self._bias_mb = EGun.BIAS_MULTI_BUNCH
         self._bias_sb = EGun.BIAS_SINGLE_BUNCH
         self._bias_tol = EGun.BIAS_TOLERANCE
+        self._hv_opval = EGun.HV_OPVALUE
+        self._hv_tol = EGun.HV_TOLERANCE
+        self._filacurr_opval = EGun.FILACURR_OPVALUE
+        self._filacurr_tol = EGun.FILACURR_TOLERANCE
 
         super().__init__('', devices)
 
     @property
     def multi_bunch_bias_voltage(self):
-        """Multi bunch bias voltage."""
+        """Multi bunch bias voltage to be used in mode setup."""
         return self._bias_mb
 
     @multi_bunch_bias_voltage.setter
@@ -437,7 +445,7 @@ class EGun(_Devices):
 
     @property
     def single_bunch_bias_voltage(self):
-        """Single bunch bias voltage."""
+        """Single bunch bias voltage to be used in mode setup."""
         return self._bias_sb
 
     @single_bunch_bias_voltage.setter
@@ -461,7 +469,7 @@ class EGun(_Devices):
         if not self.pulse.cmd_turn_off_multi_bunch():
             return False
 
-        if not self.bias.set_voltage(self._bias_sb):
+        if not self.bias.set_voltage(self._bias_sb, tol=self._bias_tol):
             return False
 
         if not self.trigmultipre.cmd_disable():
@@ -481,7 +489,7 @@ class EGun(_Devices):
         if not self.pulse.cmd_turn_off_single_bunch():
             return False
 
-        if not self.bias.set_voltage(self._bias_mb):
+        if not self.bias.set_voltage(self._bias_mb, tol=self._bias_tol):
             return False
 
         if not self.trigsingle.cmd_disable():
@@ -496,14 +504,13 @@ class EGun(_Devices):
     @property
     def is_single_bunch(self):
         """Is configured to single bunch mode."""
-        sts = not self.pulse.multi_bunch_mode
-        sts &= not self.pulse.multi_bunch_switch
-        sts &= self.bias.voltage - self._bias_sb < self._bias_tol
+        sts = not self.pulse.multi_bunch_switch
+        sts &= not self.pulse.multi_bunch_mode
         sts &= not self.trigmultipre.state
         sts &= not self.trigmulti.state
         sts &= self.trigsingle.state
-        sts &= not self.pulse.single_bunch_switch
-        sts &= not self.pulse.single_bunch_mode
+        sts &= self.pulse.single_bunch_mode
+        sts &= self.pulse.single_bunch_switch
         return sts
 
     @property
@@ -511,10 +518,42 @@ class EGun(_Devices):
         """Is configured to multi bunch mode."""
         sts = not self.pulse.single_bunch_switch
         sts &= not self.pulse.single_bunch_mode
-        sts &= self.bias.voltage - self._bias_mb < self._bias_tol
         sts &= not self.trigsingle.state
         sts &= self.trigmultipre.state
         sts &= self.trigmulti.state
-        sts &= not self.pulse.multi_bunch_mode
-        sts &= not self.pulse.multi_bunch_switch
+        sts &= self.pulse.multi_bunch_mode
+        sts &= self.pulse.multi_bunch_switch
         return sts
+
+    @property
+    def high_voltage_opvalue(self):
+        """High voltage operation value."""
+        return self._hv_opval
+
+    @high_voltage_opvalue.setter
+    def high_voltage_opvalue(self, value):
+        self._hv_opval = value
+
+    @property
+    def is_hv_on(self):
+        """Indicate whether high voltage is on and in operational value."""
+        is_on = self.hvps.is_on()
+        is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
+        return is_on and is_op
+
+    @property
+    def fila_current_opvalue(self):
+        """Filament current operation value."""
+        return self._filacurr_opval
+
+    @fila_current_opvalue.setter
+    def fila_current_opvalue(self, value):
+        self._filacurr_opval = value
+
+    @property
+    def is_fila_on(self):
+        """Indicate whether filament is on and in operational current."""
+        is_on = self.fila.is_on()
+        is_op = abs(self.fila.current - self._filacurr_opval) < \
+            self._filacurr_tol
+        return is_on and is_op
