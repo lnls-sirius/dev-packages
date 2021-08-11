@@ -252,6 +252,29 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:TunSIDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:TunSIMode-Sel', 0, 0.0],
 
+    # AMCFPGAEVRs
+    ['IA-01RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-02RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-03RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-04RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-05RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-06RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-07RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-08RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-09RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-10RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-11RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-12RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-13RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-14RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-15RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-16RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-17RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-18RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-19RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-20RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-20RaBPMTL:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+
     # Triggers
     ['AS-Fam:TI-Scrn-TBBO:DelayRaw-SP', 0, 0],
     ['AS-Fam:TI-Scrn-TBBO:Duration-SP', 0, 0.0],  # [us]
@@ -768,26 +791,26 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Skews:DeltaDelay-SP', 30*[0.0, ], 0.0],
     ['SI-Glob:TI-Mags-Skews:LowLvlLock-Sel', 0, 0.0],
 
-# NOTE: This trigger is not present yet in timing IOC:
-#     ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
-#     ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
+    # NOTE: This trigger is not present yet in timing IOC:
+    # ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
+    # ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-#     ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
-#     ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
+    # ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-04:TI-InjSept:DelayRaw-SP', 0, 0],
     ['TB-04:TI-InjSept:Duration-SP', 0, 0.0],  # [us]
