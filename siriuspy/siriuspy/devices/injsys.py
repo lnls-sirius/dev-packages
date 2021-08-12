@@ -7,6 +7,7 @@ import logging as _log
 
 from .device import Devices as _Devices
 from .lillrf import LILLRF
+from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
 from .timing import EVG, Event, Trigger
 from .rf import ASLLRF
@@ -48,6 +49,7 @@ class ASPUStandbyHandler(_BaseHandler):
             {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
         self._trignames = [
             dev.replace('PU', 'TI') for dev in self._punames]
+        self._modnames = LIModltr.DEVICES.ALL
 
         # pu devices
         self._pudevs = [PowerSupplyPU(pun) for pun in self._punames]
@@ -55,7 +57,10 @@ class ASPUStandbyHandler(_BaseHandler):
         # trigger devices
         self._trigdevs = [Trigger(trg) for trg in self._trignames]
 
-        alldevs = tuple(self._pudevs + self._trigdevs)
+        # modulator devices
+        self._moddevs = [LIModltr(mod) for mod in self._modnames]
+
+        alldevs = tuple(self._pudevs + self._trigdevs + self._moddevs)
 
         self._on_values = dict()
         for pudev in self._pudevs:
@@ -69,6 +74,10 @@ class ASPUStandbyHandler(_BaseHandler):
                 continue
             self._on_values[tdev] = {
                 'State-Sts': _TIConst.DsblEnbl.Enbl}
+        for mdev in self._moddevs:
+            self._on_values[mdev] = {
+                'CHARGE': _TIConst.DsblEnbl.Enbl,
+                'TRIGOUT': _TIConst.DsblEnbl.Enbl}
 
         # call base class constructor
         super().__init__('', alldevs)
@@ -93,64 +102,126 @@ class ASPUStandbyHandler(_BaseHandler):
         """Trigger devices."""
         return self._trigdevs
 
+    @property
+    def modnames(self):
+        """Modulator names."""
+        return _dcopy(self._modnames)
+
+    @property
+    def moddevices(self):
+        """Modulator devices."""
+        return self._moddevs
+
     def cmd_turn_off(self):
         """Turn off."""
-        # set pulse off
+        # turn modulator trigout off
+        self._set_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl)
+
+        # wait for modulator trigout to turn off
+        retval = self._wait_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator TrigOut to be off timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
+        # set pulsed magnet pulse off
         self._set_devices_propty(
             self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl, wait=0.5)
 
-        # wait for PU pulse to be off
+        # wait for pulsed magnet pulse to be off
         retval = self._wait_devices_propty(
             self._pudevs, 'Pulse-Sts', _PSConst.DsblEnbl.Dsbl,
             timeout=3, return_prob=True)
         if not retval[0]:
-            text = 'Check for PU Pulse to be disabled '\
-                   'timed out without success! Verify PU!'
+            text = 'Check for pulsed magnet Pulse to be disabled '\
+                   'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
-        # set power state off
+        # set pulsed magnet power state off
         self._set_devices_propty(
             self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl, wait=1)
 
-        # wait for PU power state to be off
+        # wait for pulsed magnet power state to be off
         retval = self._wait_devices_propty(
             self._pudevs, 'PwrState-Sts', _PSConst.DsblEnbl.Dsbl,
             timeout=3, return_prob=True)
         if not retval[0]:
-            text = 'Check for PU PwrState to be off '\
-                   'timed out without success! Verify PU!'
+            text = 'Check for pulsed magnet PwrState to be off '\
+                   'timed out without success! Verify pulsed magnets!'
+            return [False, text, retval[1]]
+
+        # turn modulator charge off
+        self._set_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl)
+
+        # wait for modulator charge to turn off
+        retval = self._wait_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator Charge to be off timed '\
+                   'out without success! Verify LI Modulators!'
             return [False, text, retval[1]]
 
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
+        # turn modulators charge on
+        self._set_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl)
+
+        # wait for modulators charge to turn on
+        retval = self._wait_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator Charge to be on timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
-        # set pulse on
+        # set pulsed magnet pulse on
         self._set_devices_propty(
             devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl, wait=0.5)
 
-        # wait for PU pulse to be on
+        # wait for pulsed magnet pulse to be on
         retval = self._wait_devices_propty(
             devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
         if not retval[0]:
-            text = 'Check for PU Pulse to be enabled '\
-                   'timed out without success! Verify PU!'
+            text = 'Check for pulsed magnet Pulse to be enabled '\
+                   'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
-        # set power state on
+        # set pulsed magnet power state on
         self._set_devices_propty(
             devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl, wait=1)
 
-        # wait for PU power state to be on
+        # wait for pulsed magnet power state to be on
         retval = self._wait_devices_propty(
             devs, 'PwrState-Sts', _PSConst.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
         if not retval[0]:
-            text = 'Check for PU PwrState to be on '\
-                   'timed out without success! Verify PU!'
+            text = 'Check for pulsed magnet PwrState to be on '\
+                   'timed out without success! Verify pulsed magnets!'
+            return [False, text, retval[1]]
+
+        # turn modulator trigout on
+        self._set_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl)
+
+        # wait for modulator trigout to turn on
+        retval = self._wait_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator TrigOut to be on timed '\
+                   'out without success! Verify LI Modulators!'
             return [False, text, retval[1]]
 
         return True, '', []
@@ -417,6 +488,8 @@ class InjBOStandbyHandler(_BaseHandler):
 class LILLRFStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
+    WAIT_2_TURNON = 2  # [s]
+
     def __init__(self):
         """Init."""
 
@@ -467,6 +540,9 @@ class LILLRFStandbyHandler(_BaseHandler):
 
     def cmd_turn_on(self):
         """Turn on."""
+        # wait for some InjBO pulses
+        _time.sleep(LILLRFStandbyHandler.WAIT_2_TURNON)
+
         # turn integral on
         self._set_devices_propty(
             self.devices, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl)
@@ -499,10 +575,10 @@ class LILLRFStandbyHandler(_BaseHandler):
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
 
-    DEF_ON_ORDER = ['bo_rf', 'injbo', 'as_pu', 'bo_ps', 'li_rf']
-    DEF_OFF_ORDER = ['li_rf', 'bo_rf', 'as_pu', 'bo_ps', 'injbo']
+    DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
+    DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
     HANDLER_DESC = {
-        'as_pu': 'AS PU (Septa and Kickers)',
+        'as_pu': 'AS PU (Septa, Kickers and Modulators)',
         'bo_ps': 'BO PS Ramp',
         'bo_rf': 'BO RF Ramp',
         'injbo': 'TI InjBO Event',
