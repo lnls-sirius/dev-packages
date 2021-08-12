@@ -522,6 +522,7 @@ class InjSysStandbyHandler(_Devices):
         self._on_order = InjSysStandbyHandler.DEF_ON_ORDER
         self._off_order = InjSysStandbyHandler.DEF_OFF_ORDER
         self._is_running = ''
+        self._done = list()
         self._result = None
         self._thread = None
         self._abort = False
@@ -570,6 +571,11 @@ class InjSysStandbyHandler(_Devices):
         return self._is_running
 
     @property
+    def done(self):
+        """Return commands already done."""
+        return self._done
+
+    @property
     def result(self):
         """Command result."""
         return self._result
@@ -615,6 +621,7 @@ class InjSysStandbyHandler(_Devices):
         order = getattr(self, cmdtype+'_order')
 
         self._result = None
+        self._done = list()
         retval = None
         for handler_name in order:
             if self._abort:
@@ -623,7 +630,9 @@ class InjSysStandbyHandler(_Devices):
             handler = self._dev_refs[handler_name]
             func = getattr(handler, 'cmd_turn_'+cmdtype)
             retval = func()
-            if not retval[0]:
+            if retval[0]:
+                self._done.append(handler_name)
+            else:
                 break
 
         self._result = retval
