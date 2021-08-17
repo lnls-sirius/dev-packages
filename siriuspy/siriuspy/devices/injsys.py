@@ -36,7 +36,7 @@ class _BaseHandler(_Devices):
         vals = dict()
         for dev, ppties in self._on_values.items():
             for ppty, val in ppties.items():
-                vals[dev.devname+':'+ppty] = val
+                vals[dev.pv_object(ppty).pvname] = val
         return vals
 
 
@@ -441,7 +441,7 @@ class InjBOStandbyHandler(_BaseHandler):
         devices = (self.evg, self.injboevt)
 
         self._on_values = {
-            self.injboevt: {'InjBOMode-Sts': Event.MODES.index('Continuous')}}
+            self.injboevt: {'Mode-Sts': Event.MODES.index('Continuous')}}
 
         # call base class constructor
         super().__init__('', devices)

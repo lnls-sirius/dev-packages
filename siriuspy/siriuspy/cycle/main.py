@@ -427,9 +427,11 @@ class CycleController:
 
         self._update_log('Checking power supplies '+ppty+'...')
         self._checks_result = {psn: False for psn in psnames}
+        msg = 'Successfully checked '+ppty+' preparation for {}/' + \
+            str(len(psnames))
         time = _time.time()
         while _time.time() - time < timeout:
-            for idx, psname in enumerate(psnames):
+            for psname in psnames:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
@@ -440,15 +442,14 @@ class CycleController:
                 if ret:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0 or idx == len(psnames)-1:
-                        self._update_log(
-                            'Successfully checked '+ppty+' preparation for ' +
-                            '{0}/{1}'.format(str(checked), str(len(psnames))))
+                    if not checked % 5:
+                        self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
+        self._update_log(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
@@ -637,18 +638,16 @@ class CycleController:
         self._update_log('Checking power supplies final state...')
         self._checks_final_result = dict()
         sucess_cnt = 0
-        msg = 'Successfully checked final state for {0}/{1}'
-        for idx, psname in enumerate(psnames):
+        msg = 'Successfully checked final state for {}/'+str(len(psnames))
+        for psname in psnames:
             cycler = self._get_cycler(psname)
             status = cycler.check_final_state(self.mode)
             if status == _Const.CycleEndStatus.Ok:
                 sucess_cnt += 1
-                if sucess_cnt % 5 == 0 or idx == len(psnames)-1:
-                    self._update_log(
-                        msg.format(str(sucess_cnt), str(len(psnames))))
+                if sucess_cnt % 5 == 0:
+                    self._update_log(msg.format(str(sucess_cnt)))
             self._checks_final_result[psname] = status
-        if sucess_cnt != len(psnames):
-            self._update_log(msg.format(str(sucess_cnt), str(len(psnames))))
+        self._update_log(msg.format(str(sucess_cnt)))
 
         all_ok = True
         for psname, has_prob in self._checks_final_result.items():
@@ -692,24 +691,25 @@ class CycleController:
 
         self._update_log('Checking power supplies SOFBMode...')
         self._checks_result = {psn: False for psn in psnames}
+        msg = 'Successfully checked SOFBMode preparation for {}/' + \
+            str(len(psnames))
         time = _time.time()
         while _time.time() - time < timeout:
-            for idx, psname in enumerate(psnames):
+            for psname in psnames:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_sofbmode('off', 0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0 or idx == len(psnames)-1:
-                        self._update_log(
-                            'Successfully checked SOFBMode preparation for ' +
-                            '{0}/{1}'.format(str(checked), str(len(psnames))))
+                    if not checked % 5:
+                        self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
+        self._update_log(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
@@ -744,24 +744,25 @@ class CycleController:
 
         self._update_log('Checking power supplies opmode...')
         self._checks_result = {psn: False for psn in psnames}
+        msg = 'Successfully checked opmode preparation for {}/' + \
+            str(len(psnames))
         time = _time.time()
         while _time.time() - time < timeout:
-            for idx, psname in enumerate(psnames):
+            for psname in psnames:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_opmode_slowref(0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0 or idx == len(psnames)-1:
-                        self._update_log(
-                            'Successfully checked opmode preparation for ' +
-                            '{0}/{1}'.format(str(checked), str(len(psnames))))
+                    if not checked % 5:
+                        self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
+        self._update_log(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
@@ -786,24 +787,25 @@ class CycleController:
         """Check power supplies current."""
         self._update_log('Checking power supplies current...')
         self._checks_result = {psn: False for psn in psnames}
+        msg = 'Successfully checked current preparation for {}/' + \
+            str(len(psnames))
         time = _time.time()
         while _time.time() - time < timeout:
-            for idx, psname in enumerate(psnames):
+            for psname in psnames:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
                 if cycler.check_current_zero(0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0 or idx == len(psnames)-1:
-                        self._update_log(
-                            'Successfully checked current preparation for ' +
-                            '{0}/{1}'.format(str(checked), str(len(psnames))))
+                    if not checked % 5:
+                        self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
+        self._update_log(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
