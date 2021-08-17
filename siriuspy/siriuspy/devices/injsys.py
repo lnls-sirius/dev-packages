@@ -62,7 +62,7 @@ class ASPUStandbyHandler(_BaseHandler):
         self._limps = _DeviceNC(
             'LA-CN:H1MPS-1',
             ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
-             'Mod2State_I', 'Mod2State_L', 'Mod1State_R'))
+             'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
 
         alldevs = self._pudevs + self._trigdevs + self._moddevs
         alldevs.append(self._limps)
