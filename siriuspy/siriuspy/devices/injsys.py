@@ -5,7 +5,7 @@ from copy import deepcopy as _dcopy
 from threading import Thread
 import logging as _log
 
-from .device import Devices as _Devices
+from .device import Devices as _Devices, DeviceNC as _DeviceNC
 from .lillrf import LILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
@@ -59,8 +59,14 @@ class ASPUStandbyHandler(_BaseHandler):
 
         # modulator devices
         self._moddevs = [LIModltr(mod) for mod in self._modnames]
+        self._limps = _DeviceNC(
+            'LA-CN:H1MPS-1',
+            ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
+             'Mod2State_I', 'Mod2State_L', 'Mod1State_R'))
 
-        alldevs = tuple(self._pudevs + self._trigdevs + self._moddevs)
+        alldevs = self._pudevs + self._trigdevs + self._moddevs
+        alldevs.append(self._limps)
+        alldevs = tuple(alldevs)
 
         self._on_values = dict()
         for pudev in self._pudevs:
@@ -77,7 +83,17 @@ class ASPUStandbyHandler(_BaseHandler):
         for mdev in self._moddevs:
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
-                'TRIGOUT': _TIConst.DsblEnbl.Enbl}
+                'TRIGOUT': _TIConst.DsblEnbl.Enbl,
+                'TRIG_Norm': 1,
+                'Pulse_Current': 1,
+                'CPS_ALL': 1,
+            }
+        self._on_values[self._limps] = {
+            'Mod1State_I': 0,
+            'Mod1State_L': 0,
+            'Mod2State_I': 0,
+            'Mod2State_L': 0,
+        }
 
         # call base class constructor
         super().__init__('', alldevs)
@@ -183,6 +199,12 @@ class ASPUStandbyHandler(_BaseHandler):
                    'out without success! Verify LI Modulators!'
             return [False, text, retval[1]]
 
+        # reset modulator
+        for dev in self._moddevs:
+            if not dev.cmd_reset():
+                text = 'Could not reset LI modulator! Verify LI Modulators!'
+                return [False, text, [dev.devname, ]]
+
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
         # set pulsed magnet pulse on
@@ -223,6 +245,35 @@ class ASPUStandbyHandler(_BaseHandler):
             text = 'Check for LI modulator TrigOut to be on timed '\
                    'out without success! Verify LI Modulators!'
             return [False, text, retval[1]]
+
+        # check if mps status is ok
+        _t0 = _time.time()
+        while _time.time() - _t0 < 5:
+            if not self._limps['Mod1State_I'] and \
+                    not self._limps['Mod2State_I']:
+                break
+        else:
+            text = 'Check for LI modulators MPS Status to be ok timed '\
+                   'out without success! Verify LI Modulators MPS!'
+            return [False, text, [self._limps.devname, ]]
+
+        # reset linac mps modulator signal
+        self._limps['Mod1State_R'] = 1
+        self._limps['Mod2State_R'] = 1
+        _time.sleep(1)
+        self._limps['Mod1State_R'] = 0
+        self._limps['Mod2State_R'] = 0
+
+        # check if mps status is ok
+        _t0 = _time.time()
+        while _time.time() - _t0 < 5:
+            if not self._limps['Mod1State_L'] and \
+                    not self._limps['Mod2State_L']:
+                break
+        else:
+            text = 'Check for LI modulators MPS Status to be ok timed '\
+                   'out without success! Verify LI Modulators MPS!'
+            return [False, text, [self._limps.devname, ]]
 
         return True, '', []
 
