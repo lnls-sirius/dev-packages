@@ -442,7 +442,7 @@ class CycleController:
                 if ret:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0:
+                    if not checked % 5:
                         self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
@@ -702,7 +702,7 @@ class CycleController:
                 if cycler.check_sofbmode('off', 0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0:
+                    if not checked % 5:
                         self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
@@ -755,7 +755,7 @@ class CycleController:
                 if cycler.check_opmode_slowref(0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0:
+                    if not checked % 5:
                         self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
@@ -798,7 +798,7 @@ class CycleController:
                 if cycler.check_current_zero(0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
-                    if checked % 5 == 0:
+                    if not checked % 5:
                         self._update_log(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
