@@ -407,7 +407,7 @@ class EGun(_Devices):
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
     FILACURR_OPVALUE = 1.34  # [A]
-    FILACURR_TOLERANCE = 0.05  # [A]
+    FILACURR_TOLERANCE = 0.20  # [A]
 
     def __init__(self):
         """Init."""

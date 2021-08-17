@@ -19,7 +19,7 @@ class EVG(_Device):
         'RepeatBucketList-SP', 'RepeatBucketList-RB',
         'BucketList-SP', 'BucketList-RB', 'BucketList-Mon',
         'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
-        )
+        'BucketListSyncStatus-Mon')
 
     def __init__(self):
         """."""
@@ -54,6 +54,11 @@ class EVG(_Device):
     def bucketlist(self, value):
         """."""
         self['BucketList-SP'] = _np.array(value, dtype=int)
+
+    @property
+    def bucketlist_sync(self):
+        """Bucket list syncronized status."""
+        return self['BucketListSyncStatus-Mon']
 
     @property
     def continuous_state(self):
