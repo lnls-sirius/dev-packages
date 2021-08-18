@@ -203,7 +203,7 @@ class ASPUStandbyHandler(_BaseHandler):
         for dev in self._moddevs:
             if not dev.cmd_reset():
                 text = 'Could not reset LI modulator! Verify LI Modulators!'
-                return [False, text, [dev.devname, ]]
+                return [False, text, [dev.devname+':RESET', ]]
 
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
@@ -253,9 +253,12 @@ class ASPUStandbyHandler(_BaseHandler):
                     not self._limps['Mod2State_I']:
                 break
         else:
+            problems = [
+                self._limps.pv_object('Mod'+i+'State_I').pvname for
+                i in ['1', '2'] if self._limps['Mod'+i+'State_I']]
             text = 'Check for LI modulators MPS Status to be ok timed '\
                    'out without success! Verify LI Modulators MPS!'
-            return [False, text, [self._limps.devname, ]]
+            return [False, text, problems]
 
         # reset linac mps modulator signal
         self._limps['Mod1State_R'] = 1
@@ -264,16 +267,19 @@ class ASPUStandbyHandler(_BaseHandler):
         self._limps['Mod1State_R'] = 0
         self._limps['Mod2State_R'] = 0
 
-        # check if mps status is ok
+        # check if mps latch is ok
         _t0 = _time.time()
         while _time.time() - _t0 < 5:
             if not self._limps['Mod1State_L'] and \
                     not self._limps['Mod2State_L']:
                 break
         else:
-            text = 'Check for LI modulators MPS Status to be ok timed '\
+            problems = [
+                self._limps.pv_object('Mod'+i+'State_L').pvname for
+                i in ['1', '2'] if self._limps['Mod'+i+'State_L']]
+            text = 'Check for LI modulators MPS Latch to be ok timed '\
                    'out without success! Verify LI Modulators MPS!'
-            return [False, text, [self._limps.devname, ]]
+            return [False, text, problems]
 
         return True, '', []
 
