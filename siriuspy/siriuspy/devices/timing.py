@@ -27,32 +27,33 @@ class EVG(_Device):
 
     @property
     def nrpulses(self):
-        """."""
+        """Number of pulses to repeat Bucket List."""
         return self['RepeatBucketList-RB']
 
     @nrpulses.setter
     def nrpulses(self, value):
-        """."""
+        """Set number of pulses to repeat Bucket List."""
         self['RepeatBucketList-SP'] = bool(value)
 
     @property
     def bucketlist_len(self):
-        """."""
-        return self['BucketListLen-Mon']
+        """Bucket List Length."""
+        value = self['BucketListLen-Mon']
+        return int(value) if value is not None else None
 
     @property
     def bucketlist_mon(self):
-        """."""
+        """Implemented Bucket List."""
         return self['BucketList-Mon'][:self.bucketlist_len]
 
     @property
     def bucketlist(self):
-        """."""
+        """Last setpoint accepted for Bucket List."""
         return self['BucketList-RB'][:self.bucketlist_len]
 
     @bucketlist.setter
     def bucketlist(self, value):
-        """."""
+        """Set Bucket List."""
         self['BucketList-SP'] = _np.array(value, dtype=int)
 
     @property
