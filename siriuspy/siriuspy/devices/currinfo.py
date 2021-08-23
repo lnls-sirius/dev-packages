@@ -214,6 +214,7 @@ class CurrInfoSI(_Device):
         'InjEff-Mon', 'InjCurr-Mon', 'InjCharge-Mon',
         'Lifetime-Mon', 'LifetimeBPM-Mon',
         'StoredEBeam-Mon',
+        'BufferValue-Mon', 'BufferTimestamp-Mon',
     )
 
     def __init__(self):
