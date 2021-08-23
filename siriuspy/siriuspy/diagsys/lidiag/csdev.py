@@ -75,7 +75,7 @@ class Const(_csdev.Const):
 
     LI_RF_AMP_TOL = 1e-2
     LI_RF_PHS_TOL = 1e-2
-    LI_RF_IxQ_TOL = 5e-3
+    LI_RF_IxQ_TOL = 1e-2
     LI_PU_VOLT_TOL = 1e-1
     LI_PU_CURR_TOL = 1e-1
     LI_HVPS_TOL = 1.5
