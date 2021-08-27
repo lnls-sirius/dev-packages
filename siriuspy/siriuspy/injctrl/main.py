@@ -613,19 +613,18 @@ class App(_Callback):
 
     # --- auxiliary injection methods ---
 
-    def _check_allok_2_inject(self):
-        if self._status['All'] != 0:
-            self._update_log('ERR:Aborted. DiagStatus not ok.')
-            for prob in self._status_problems:
-                self._update_log('ERR:Verify '+prob+'!')
-            return False
+    def _check_allok_2_inject(self, show_warn=True):
+        if show_warn:
+            if self._status['All'] != 0:
+                self._update_log('WARN:DiagStatus not ok:')
+                for prob in self._status_problems:
+                    self._update_log('WARN:Verify '+prob+'!')
 
-        if self._injstatus != 0:
-            self._update_log('ERR:Aborted. InjStatus not ok.')
-            for bit, prob in enumerate(_Const.INJ_STATUS_LABELS):
-                if _get_bit(self._injstatus, bit):
-                    self._update_log('ERR:'+prob)
-            return False
+            if self._injstatus != 0:
+                self._update_log('WARN:InjStatus not ok:')
+                for bit, prob in enumerate(_Const.INJ_STATUS_LABELS):
+                    if _get_bit(self._injstatus, bit):
+                        self._update_log('WARN:'+prob)
 
         if self._mode == _Const.InjMode.TopUp:
             if self._evg_dev.nrpulses != 0:
@@ -650,7 +649,7 @@ class App(_Callback):
         self._update_log('Waiting for InjectionEvt to be on...')
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.TI_INJ_TIMEOUT:
-            if not self._check_allok_2_inject():
+            if not self._check_allok_2_inject(show_warn=False):
                 self._abort_injection()
                 return False
             if self._evg_dev.injection_state:
@@ -668,7 +667,7 @@ class App(_Callback):
         init_autostop = self._autostop
         while self._currinfo_dev.current < self._target_current:
             # if there are problems, abort injection
-            if not self._check_allok_2_inject():
+            if not self._check_allok_2_inject(show_warn=False):
                 self._abort_injection()
                 return False
             # if in decay mode and autostop is turned off, interrupt wait
@@ -774,7 +773,7 @@ class App(_Callback):
     def _wait_topup_period(self):
         _t0 = _time.time()
         while _time.time() - _t0 < self._topupperiod:
-            if not self._check_allok_2_inject():
+            if not self._check_allok_2_inject(show_warn=False):
                 self.run_callbacks(
                     'TopUpNextInj-Mon', _Time.now().timestamp())
                 return False
