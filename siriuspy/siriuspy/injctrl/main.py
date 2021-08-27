@@ -43,12 +43,11 @@ class App(_Callback):
         self._bucketlist_stop = 864
         self._bucketlist_step = 15
 
+        self._topupstate_sel = _Const.OffOn.Off
+        self._topupstate_sts = _Const.TopUpSts.Off
         self._topupperiod = 15*60
-        self._topoupsts = _Const.TopUpSts.Off
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
-        self._start_count = 0
-        self._stop_count = 0
         self._abort = False
 
         self._injsys_turn_on_count = 0
@@ -139,10 +138,9 @@ class App(_Callback):
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
+            'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
             'AutoStop-Sel': self.set_autostop,
-            'Start-Cmd': self.cmd_start,
-            'Stop-Cmd': self.cmd_stop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
             'InjSysTurnOnOrder-SP': self.set_injsys_on_order,
@@ -194,14 +192,13 @@ class App(_Callback):
         self.run_callbacks('BucketListStop-RB', self._bucketlist_stop)
         self.run_callbacks('BucketListStep-SP', self._bucketlist_step)
         self.run_callbacks('BucketListStep-RB', self._bucketlist_step)
+        self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
+        self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
         self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
-        self.run_callbacks('TopUpStatus-Mon', _Const.TopUpSts.Off)
         self.run_callbacks('TopUpNextInj-Mon', 0.0)
         self.run_callbacks('AutoStop-Sel', self._autostop)
         self.run_callbacks('AutoStop-Sts', self._autostop)
-        self.run_callbacks('Start-Cmd', self._start_count)
-        self.run_callbacks('Stop-Cmd', self._stop_count)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
         self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
         self.run_callbacks(
@@ -249,7 +246,7 @@ class App(_Callback):
             return False
 
         if value == _Const.InjMode.TopUp and \
-                self._topoupsts == _Const.TopUpSts.Off:
+                self._topupstate_sts == _Const.TopUpSts.Off:
             self._update_log('Waiting to start top-up.')
         else:
             if self._topup_thread and self._topup_thread.is_alive():
@@ -376,7 +373,30 @@ class App(_Callback):
         self._update_log('WARN:Timed out waiting for BucketList.')
         return False
 
+    def set_topupstate(self, value):
+        """Set top-up state."""
+        if self._mode != _Const.InjMode.TopUp:
+            return
 
+        self._topupstate_sel = value
+        if value == _Const.OffOn.On:
+            self._update_log('Start received!')
+            if not self._check_allok_2_inject():
+                return
+            if self._topup_thread and not self._topup_thread.is_alive()\
+                    or not self._topup_thread:
+                self._topupnext = _Time.now().timestamp()
+                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+                self._launch_topup_thread()
+        else:
+            self._update_log('Stop received!')
+            if self._topup_thread and self._topup_thread.is_alive():
+                self._stop_topup_thread()
+                now = _Time.now().timestamp()
+                self._topupnext = now - (now % (24*60*60)) + 3*60*60
+                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
+        return True
 
     def set_topupperiod(self, value):
         """Set top-up period."""
@@ -397,38 +417,6 @@ class App(_Callback):
             'Turned '+_ETypes.OFF_ON[value]+' Auto Stop.')
         self._callback_autostop()
         return True
-
-    def cmd_start(self, value):
-        """Command start injection."""
-        self._update_log('Start received!')
-        if self._check_allok_2_inject():
-            if self._mode == _Const.InjMode.TopUp:
-                if self._topup_thread and not self._topup_thread.is_alive() or\
-                        not self._topup_thread:
-                    self._update_log('Starting...')
-                    self._launch_topup_thread()
-            else:
-                self._update_log('Starting...')
-                self._start_injection(wait=False)
-
-        self._start_count += 1
-        self.run_callbacks('Start-Cmd', self._start_count)
-        return False
-
-    def cmd_stop(self, value):
-        """Command stop injection."""
-        self._update_log('Stop received!')
-        if self._mode == _Const.InjMode.TopUp:
-            if self._topup_thread and self._topup_thread.is_alive():
-                self._update_log('Stoping...')
-                self._stop_topup_thread()
-        else:
-            self._update_log('Stoping...')
-            self._stop_injection()
-
-        self._stop_count += 1
-        self.run_callbacks('Stop-Cmd', self._stop_count)
-        return False
 
     def cmd_injsys_turn_on(self, value):
         """Set turn on Injection System."""
@@ -649,7 +637,7 @@ class App(_Callback):
                 return False
         return True
 
-    def _start_injection(self, wait=True):
+    def _start_injection(self):
         # turn on injectionevt
         self._update_log('Turning InjectionEvt on...')
         if not self._evg_dev.cmd_turn_on_injection():
@@ -657,8 +645,6 @@ class App(_Callback):
             return False
         self._update_log('Sent turn on to InjectionEvt.')
 
-        if not wait:
-            return True
 
         # wait for injectionevt to be ready
         self._update_log('Waiting for InjectionEvt to be on...')
@@ -747,6 +733,8 @@ class App(_Callback):
         self._topup_thread = None
         self._update_log('Stopped top-up thread.')
         self._abort = False
+        self._topupstate_sel = _Const.OffOn.Off
+        self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _do_topup(self):
         while self._mode == _Const.InjMode.TopUp:
@@ -820,8 +808,8 @@ class App(_Callback):
         self.run_callbacks('Log-Mon', msg)
 
     def _update_topupsts(self, sts):
-        self._topoupsts = sts
-        self.run_callbacks('TopUpStatus-Mon', sts)
+        self._topupstate_sts = sts
+        self.run_callbacks('TopUpState-Sts', sts)
 
     # --- auxiliary update status methods ---
 

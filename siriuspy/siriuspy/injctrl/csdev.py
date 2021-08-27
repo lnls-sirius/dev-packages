@@ -156,6 +156,10 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 15, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
 
+        'TopUpState-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'TopUpState-Sts': {
+            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
         'TopUpPeriod-SP': {
             'type': 'int', 'value': 15*60, 'unit': 's',
             'lolim': 30, 'hilim': 6*60*60},
@@ -164,14 +168,10 @@ def get_injctrl_propty_database():
             'lolim': 30, 'hilim': 6*60*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
-        'TopUpStatus-Mon': {
-            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
         'AutoStop-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'AutoStop-Sts': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
-        'Start-Cmd': {'type': 'int', 'value': 0},
-        'Stop-Cmd': {'type': 'int', 'value': 0},
 
         'InjSysTurnOn-Cmd': {'type': 'int', 'value': 0},
         'InjSysTurnOff-Cmd': {'type': 'int', 'value': 0},
