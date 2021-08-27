@@ -729,7 +729,7 @@ class App(_Callback):
         return True
 
     def _update_bucket_list(self):
-        old_bucklist = self._evg_dev.bucketlist
+        old_bucklist = self._evg_dev.bucketlist_mon
         injcount = self._evg_dev.injection_count
         blistlen = self._evg_dev.bucketlist_len
         proll = int(injcount % blistlen)
