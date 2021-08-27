@@ -998,20 +998,12 @@ class App(_Callback):
                 # EGTriggerPS is off
                 val = not self._egun_dev.trigps.is_on()
                 value = _updt_bit(value, 6, val)
-
-                # Top-up minimum current not satisfied
-                if self._mode == _Const.InjMode.TopUp:
-                    # TODO: replace by interlock check
-                    val = self._currinfo_dev.current < _Const.TOPUP_MINCURR
-                    value = _updt_bit(value, 7, val)
-
             else:
                 value = _updt_bit(value, 2, 1)
                 value = _updt_bit(value, 3, 1)
                 value = _updt_bit(value, 4, 1)
                 value = _updt_bit(value, 5, 1)
                 value = _updt_bit(value, 6, 1)
-                value = _updt_bit(value, 7, 1)
 
             # Inj.System is off
             val = 1 if not self._injsys_dev.connected else \

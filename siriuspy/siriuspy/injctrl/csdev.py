@@ -48,7 +48,6 @@ class Const(_csdev.Const):
         'EGPulsePS setup is diff. from desired',
         'EGTriggerPS is off',
         'Inj.System is not on',
-        'Top-up minimum current not satisfied',
     )
 
     MIN_BKT = 1
@@ -56,8 +55,6 @@ class Const(_csdev.Const):
 
     RF_RMP_TIMEOUT = 3*60  # [s]
     TI_INJ_TIMEOUT = 3*60  # [s]
-
-    TOPUP_MINCURR = 10  # [mA] TODO: replace by interlock check
 
 
 _ct = Const
