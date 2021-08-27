@@ -741,22 +741,22 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 break
 
+            if self._currinfo_dev.current <= self._target_current:
+                self._update_topupsts(_Const.TopUpSts.TurningOn)
+                self._update_log('Starting injection...')
+                if not self._start_injection():
+                    break
 
-            self._update_topupsts(_Const.TopUpSts.TurningOn)
-            self._update_log('Starting injection...')
-            if not self._start_injection():
-                break
+                self._update_topupsts(_Const.TopUpSts.Injecting)
+                self._update_log('Injecting...')
+                if not self._wait_injection():
+                    break
 
-            self._update_topupsts(_Const.TopUpSts.Injecting)
-            self._update_log('Injecting...')
-            if not self._wait_injection():
-                break
-
-            self._update_topupsts(_Const.TopUpSts.TurningOff)
-            self._update_log('Stopping injection...')
-            if not self._stop_injection():
-                break
-            self._update_bucket_list()
+                self._update_topupsts(_Const.TopUpSts.TurningOff)
+                self._update_log('Stopping injection...')
+                if not self._stop_injection():
+                    break
+                self._update_bucket_list()
 
             self._update_topupsts(_Const.TopUpSts.Waiting)
             self._update_log('Waiting for next injection...')
