@@ -49,6 +49,7 @@ class App(_Callback):
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnextinjround_count = 0
+        self._topupmaxnrp = 100
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
         self._abort = False
@@ -144,6 +145,7 @@ class App(_Callback):
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
             'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
+            'TopUpMaxNrPulses-SP': self.set_topupmaxnrp,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -203,6 +205,8 @@ class App(_Callback):
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks(
             'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
+        self.run_callbacks('TopUpMaxNrPulses-SP', self._topupmaxnrp)
+        self.run_callbacks('TopUpMaxNrPulses-RB', self._topupmaxnrp)
         self.run_callbacks('AutoStop-Sel', self._autostop)
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
@@ -416,6 +420,16 @@ class App(_Callback):
         self._topupperiod = value
         self._update_log('Changed top-up period to '+str(value)+'s.')
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        return True
+
+    def set_topupmaxnrp(self, value):
+        """Set top-up maximum number of injection pulses."""
+        if not 1 <= value <= 1000:
+            return False
+
+        self._topupmaxnrp = value
+        self._update_log('Changed top-up max.nr.pulses to '+str(value)+'.')
+        self.run_callbacks('TopUpMaxNrPulses-RB', self._topupmaxnrp)
         return True
 
     def cmd_nextinjround(self, value):
@@ -695,6 +709,11 @@ class App(_Callback):
             # if in decay mode and autostop is turned off, interrupt wait
             if init_mode == _Const.InjMode.Decay and \
                     init_autostop and not self._autostop:
+                return False
+            # if in TopUp mode and max pulses exceeded, stop injection
+            if self._mode == _Const.InjMode.TopUp and \
+                    self._evg_dev.injection_count >= self._topupmaxnrp:
+                self._abort_injection()
                 return False
             _time.sleep(0.1)
 

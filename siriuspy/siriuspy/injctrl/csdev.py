@@ -13,7 +13,6 @@ class ETypes(_csdev.ETypes):
     INJMODE = ('Decay', 'TopUp')
     INJTYPE_SEL = ('SingleBunch', 'MultiBunch')
     INJTYPE_STS = ('SingleBunch', 'MultiBunch', 'Undefined')
-    TOPUPMODE = ('TimePeriod', 'CurrThold')
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
@@ -30,7 +29,6 @@ class Const(_csdev.Const):
     InjMode = _csdev.Const.register('InjMode', _et.INJMODE)
     InjTypeSel = _csdev.Const.register('InjTypeSel', _et.INJTYPE_SEL)
     InjTypeSts = _csdev.Const.register('InjTypeSts', _et.INJTYPE_STS)
-    TopUpMode = _csdev.Const.register('TopUpMode', _et.TOPUPMODE)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
 
@@ -169,6 +167,12 @@ def get_injctrl_propty_database():
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNextInjRound-Cmd': {'type': 'int', 'value': 0},
+        'TopUpMaxNrPulses-SP': {
+            'type': 'int', 'value': 100, 'unit': 'pulses',
+            'lolim': 1, 'hilim': 1000},
+        'TopUpMaxNrPulses-RB': {
+            'type': 'int', 'value': 100, 'unit': 'pulses',
+            'lolim': 1, 'hilim': 1000},
         'AutoStop-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'AutoStop-Sts': {
