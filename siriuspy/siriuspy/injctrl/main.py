@@ -107,10 +107,7 @@ class App(_Callback):
                     n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
-        # auxiliary PVs and devices
-        # self._pvs_gammast = _PV(
-        #     'AS-Glob:PP-GammaShutter:Status-Mon', connection_timeout=0.05)
-
+        # auxiliary devices
         self._egun_dev = EGun()
         self._init_egun = False
         self._egun_dev.trigps.pv_object('enable').add_callback(
@@ -131,6 +128,7 @@ class App(_Callback):
 
         self._currinfo_dev = CurrInfoSI()
 
+        # pvname to write method map
         self.map_pv2write = {
             'Mode-Sel': self.set_mode,
             'Type-Sel': self.set_type,
@@ -668,7 +666,7 @@ class App(_Callback):
                 return False
 
             if self._abort:
-                self._update_log('ERR:Abort received.')
+                self._update_log('Abort received.')
                 return False
         return True
 
@@ -738,7 +736,7 @@ class App(_Callback):
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
         self._evg_dev.bucketlist = new_bucklist
         if not _np.all(self._evg_dev.bucketlist == new_bucklist):
-            self._update_log('WARN:Could not updated BucketList.')
+            self._update_log('WARN:Could not update BucketList.')
         else:
             self._update_log('Updated BucketList.')
 
@@ -807,9 +805,6 @@ class App(_Callback):
             if not self._wait_topup_period():
                 break
             self._update_log('Top-up period elapsed. Preparing...')
-
-        if self._abort:
-            self._update_log('Aborted.')
 
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
