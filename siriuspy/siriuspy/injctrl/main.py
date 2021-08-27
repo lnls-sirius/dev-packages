@@ -46,6 +46,8 @@ class App(_Callback):
         self._topupstate_sel = _Const.OffOn.Off
         self._topupstate_sts = _Const.TopUpSts.Off
         self._topupperiod = 15*60
+        now = _Time.now().timestamp()
+        self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
         self._abort = False
@@ -196,7 +198,7 @@ class App(_Callback):
         self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
         self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
-        self.run_callbacks('TopUpNextInj-Mon', 0.0)
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('AutoStop-Sel', self._autostop)
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
@@ -402,6 +404,11 @@ class App(_Callback):
         """Set top-up period."""
         if not 30 <= value <= 6*60*60:
             return False
+
+        if self._topupstate_sts != _Const.TopUpSts.Off:
+            self._topupnext = self._topupnext - self._topupperiod + value
+            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
         self._topupperiod = value
         self._update_log('Changed top-up period to '+str(value)+'s.')
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
@@ -740,6 +747,9 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 break
 
+            self._topupnext += self._topupperiod
+            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
             if self._currinfo_dev.current <= self._target_current:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
@@ -772,26 +782,28 @@ class App(_Callback):
 
     def _wait_topup_period(self):
         _t0 = _time.time()
-        while _time.time() - _t0 < self._topupperiod:
+        while _time.time() < self._topupnext:
             if not self._check_allok_2_inject(show_warn=False):
-                self.run_callbacks(
-                    'TopUpNextInj-Mon', _Time.now().timestamp())
                 return False
             _time.sleep(1)
 
             elapsed = int(_time.time() - _t0)
-            remaining = self._topupperiod - elapsed
-            injtime = _Time.now().timestamp() + remaining
-
-            self.run_callbacks('TopUpNextInj-Mon', injtime)
-            text = 'Remaining time: {}s...'.format(remaining)
+            remaining = int(self._topupnext - _time.time())
+            text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
             if elapsed % 60 == 0:
                 _log.info(text)
 
-        self.run_callbacks('TopUpNextInj-Mon', _Time.now().timestamp())
-        self._update_log('Remaining time: 0.0s.')
+            if self._currinfo_dev.current < self._target_current and \
+                    _time.time() > self._topupnext - self._get_adv_estim():
+                return True
+
+        self._update_log('Remaining time: 0s')
         return True
+
+    def _get_adv_estim(self):
+        return 0 if self._evg_dev.bucketlist_len is None \
+            else self._evg_dev.bucketlist_len
 
     # --- auxiliary log methods ---
 
