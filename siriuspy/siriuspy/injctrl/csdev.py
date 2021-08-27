@@ -156,26 +156,12 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 15, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
 
-        'TopUpMode-Sel': {
-            'type': 'enum', 'value': _ct.TopUpMode.TimePeriod,
-            'enums': _et.TOPUPMODE},
-        'TopUpMode-Sts': {
-            'type': 'enum', 'value': _ct.TopUpMode.TimePeriod,
-            'enums': _et.TOPUPMODE},
         'TopUpPeriod-SP': {
             'type': 'int', 'value': 15*60, 'unit': 's',
             'lolim': 30, 'hilim': 6*60*60},
         'TopUpPeriod-RB': {
             'type': 'int', 'value': 15*60, 'unit': 's',
             'lolim': 30, 'hilim': 6*60*60},
-        'TopUpThres-SP': {
-            'type': 'float', 'value': 5.0, 'unit': '%',
-            'prec': 1, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-            'hilim': 100.0, 'high': 100.0, 'hihi': 100.0},
-        'TopUpThres-RB': {
-            'type': 'float', 'value': 5.0, 'unit': '%',
-            'prec': 1, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-            'hilim': 100.0, 'high': 100.0, 'hihi': 100.0},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpStatus-Mon': {

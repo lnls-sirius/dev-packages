@@ -43,9 +43,7 @@ class App(_Callback):
         self._bucketlist_stop = 864
         self._bucketlist_step = 15
 
-        self._topupmode = _Const.TopUpMode.TimePeriod
         self._topupperiod = 15*60
-        self._topupthres = 5.0
         self._topoupsts = _Const.TopUpSts.Off
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
@@ -141,9 +139,7 @@ class App(_Callback):
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
-            'TopUpMode-Sel': self.set_topupmode,
             'TopUpPeriod-SP': self.set_topupperiod,
-            'TopUpThres-SP': self.set_topupthres,
             'AutoStop-Sel': self.set_autostop,
             'Start-Cmd': self.cmd_start,
             'Stop-Cmd': self.cmd_stop,
@@ -198,12 +194,8 @@ class App(_Callback):
         self.run_callbacks('BucketListStop-RB', self._bucketlist_stop)
         self.run_callbacks('BucketListStep-SP', self._bucketlist_step)
         self.run_callbacks('BucketListStep-RB', self._bucketlist_step)
-        self.run_callbacks('TopUpMode-Sel', self._topupmode)
-        self.run_callbacks('TopUpMode-Sts', self._topupmode)
         self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
-        self.run_callbacks('TopUpThres-SP', self._topupthres)
-        self.run_callbacks('TopUpThres-RB', self._topupthres)
         self.run_callbacks('TopUpStatus-Mon', _Const.TopUpSts.Off)
         self.run_callbacks('TopUpNextInj-Mon', 0.0)
         self.run_callbacks('AutoStop-Sel', self._autostop)
@@ -384,39 +376,15 @@ class App(_Callback):
         self._update_log('WARN:Timed out waiting for BucketList.')
         return False
 
-    def set_topupmode(self, value):
-        """Select top-up mode."""
-        if not 0 <= value < len(_ETypes.TOPUPMODE):
-            return False
-        if value == self._topupmode:
-            return False
-        self._topupmode = value
-        modestr = _ETypes.TOPUPMODE[value]
 
-        if self._topup_thread and self._topup_thread.is_alive():
-            self._update_log('Switching top-up mode to '+modestr+'...')
-            self._stop_topup_thread()
-            self._launch_topup_thread()
-
-        self._update_log('Changed top-up mode to '+modestr+'.')
-        self.run_callbacks('TopUpMode-Sts', self._topupmode)
-        return True
 
     def set_topupperiod(self, value):
-        """Select top-up mode."""
+        """Set top-up period."""
         if not 30 <= value <= 6*60*60:
             return False
         self._topupperiod = value
         self._update_log('Changed top-up period to '+str(value)+'s.')
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
-        return True
-
-    def set_topupthres(self, value):
-        """Set the current value that triggers injection in top-up mode."""
-        self._topupthres = value
-        self.run_callbacks('TopUpThres-RB', self._topupthres)
-        self._update_log(
-            'Updated top-up threshold value: {}%.'.format(value))
         return True
 
     def set_autostop(self, value):
@@ -785,11 +753,6 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 break
 
-            if self._topupmode == _Const.TopUpMode.CurrThold:
-                self._update_log('Waiting for current to reach threshold..')
-                if not self._wait_topup_thres():
-                    break
-                self._update_log('Top-up threshold reached. Preparing...')
 
             self._update_topupsts(_Const.TopUpSts.TurningOn)
             self._update_log('Starting injection...')
@@ -810,61 +773,15 @@ class App(_Callback):
             self._update_topupsts(_Const.TopUpSts.Waiting)
             self._update_log('Waiting for next injection...')
 
-            if self._topupmode == _Const.TopUpMode.TimePeriod:
-                if not self._wait_topup_period():
-                    break
-                self._update_log('Top-up period elapsed. Preparing...')
+            if not self._wait_topup_period():
+                break
+            self._update_log('Top-up period elapsed. Preparing...')
 
         if self._abort:
             self._update_log('Aborted.')
 
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
-
-    def _wait_topup_thres(self):
-        _t0 = _time.time()
-
-        desy = (1-self._topupthres/100)*self._target_current
-        injtime = self._estimate_next_injtime(desy)
-        self.run_callbacks('TopUpNextInj-Mon', injtime)
-
-        while self._currinfo_dev.current > desy:
-            if not self._check_allok_2_inject():
-                self.run_callbacks(
-                    'TopUpNextInj-Mon', _Time.now().timestamp())
-                return False
-            _time.sleep(1)
-
-            if desy != (1-self._topupthres/100)*self._target_current:
-                desy = (1-self._topupthres/100)*self._target_current
-                injtime = self._estimate_next_injtime(desy)
-                self.run_callbacks('TopUpNextInj-Mon', injtime)
-            remaining = injtime - _Time.now().timestamp()
-
-            text = 'Estimated remaining time: {}s...'.format(remaining)
-            self.run_callbacks('Log-Mon', text)
-            if int(_time.time() - _t0) % 60 == 0:
-                _log.info(text)
-
-        self.run_callbacks('TopUpNextInj-Mon', _Time.now().timestamp())
-        return True
-
-    def _estimate_next_injtime(self, desy):
-        values = self._currinfo_dev['BufferValue-Mon']
-        if len(values) < 100:
-            return _Time.now().timestamp() + 10*60
-        tstamp = self._currinfo_dev['BufferTimestamp-Mon']
-        values = values[len(values)-10000:]
-        tstamp = tstamp[len(tstamp)-10000:]
-        _ns = len(tstamp)
-        _x1 = _np.sum(tstamp)
-        _y1 = _np.sum(values)
-        _x2 = _np.dot(tstamp, tstamp)
-        _xy = _np.dot(tstamp, values)
-        fit_a = (_x2*_y1 - _xy*_x1)/(_ns*_x2 - _x1*_x1)
-        fit_b = (_ns*_xy - _x1*_y1)/(_ns*_x2 - _x1*_x1)
-        injtime = (desy - fit_b)/fit_a
-        return injtime
 
     def _wait_topup_period(self):
         _t0 = _time.time()
