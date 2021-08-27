@@ -586,14 +586,13 @@ class App(_Callback):
         self._update_log(msg)
 
     def _callback_autostop(self, **kws):
+        if self._mode == _Const.InjMode.TopUp:
+            return
         if self._autostop == _Const.OffOn.Off:
-            print('auto stop off')
             return
         if not self._evg_dev['InjectionEvt-Sel']:
-            print('injection off')
             return
         if not self._egun_dev.trigps.is_on():
-            print('not self._egun_dev.trigps.is_on()')
             return
 
         _Thread(target=self._run_autostop, daemon=True).start()
