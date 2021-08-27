@@ -12,6 +12,7 @@ from ..clientarch import Time as _Time
 
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst
+from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
 from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift
 
@@ -910,6 +911,7 @@ class App(_Callback):
     def _update_diagstatus(self):
         """Run as a thread scanning PVs."""
         tplanned = 1.0/App.SCAN_FREQUENCY
+        psalrm = 1 << _PSDiagEnum.DIAG_STATUS_LABELS_AS.index('Alarms')
         while not self.quit:
             if not self.scanning:
                 _time.sleep(tplanned)
@@ -927,7 +929,15 @@ class App(_Callback):
                     bit = lbls.index(sub)
                     problems = set()
                     for pvo in d2pv.values():
-                        if not pvo.connected or pvo.value > 0:
+                        if pvo.connected:
+                            if sub == 'PS':  # disregard alarms
+                                value = _np.bitwise_and(int(pvo.value), psalrm)
+                                nok = value > 0
+                            else:
+                                nok = pvo.value > 0
+                        else:
+                            nok = True
+                        if nok:
                             problems.add(_PVName(pvo.pvname).device_name)
                     val = 1 if problems else 0
                     self._status[sec] = _updt_bit(self._status[sec], bit, val)
