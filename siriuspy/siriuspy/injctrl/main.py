@@ -14,7 +14,8 @@ from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift
+from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
+    PowerSupplyPU
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -127,6 +128,10 @@ class App(_Callback):
         self._macshift_dev = MachShift()
 
         self._currinfo_dev = CurrInfoSI()
+
+        punames = _PSSearch.get_psnames(
+            {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
+        self._pu_devs = [PowerSupplyPU(pun) for pun in punames]
 
         # pvname to write method map
         self.map_pv2write = {
@@ -678,6 +683,20 @@ class App(_Callback):
             return False
         self._update_log('Sent turn on to InjectionEvt.')
 
+        # turn on PU Pulse
+        self._update_log('Turninig on PU Pulse...')
+        for pudev in self._pu_devs:
+            pudev.pulse = _Const.DsblEnbl.Enbl
+            _time.sleep(0.5)
+        _t0 = _time.time()
+        while _time.time() - _t0 < 3:
+            if all([pud.pulse == _Const.DsblEnbl.Enbl
+                    for pud in self._pu_devs]):
+                self._update_log('Turned on PU Pulse.')
+                break
+        else:
+            self._update_log('ERR:Timed out waiting for PU to be on.')
+            return False
 
         # wait for injectionevt to be ready
         self._update_log('Waiting for InjectionEvt to be on...')
@@ -724,9 +743,24 @@ class App(_Callback):
         if not self._evg_dev.cmd_turn_off_injection():
             self._update_log('ERR:Timed out waiting for InjectionEvt.')
             return False
-
         self._update_log('Turned off InjectionEvt.')
-        return True
+
+        if self._mode == _Const.InjMode.Decay:
+            return True
+
+        # turn off PU Pulse
+        self._update_log('Turninig off PU Pulse...')
+        for pudev in self._pu_devs:
+            pudev.pulse = _Const.DsblEnbl.Dsbl
+            _time.sleep(0.5)
+        _t0 = _time.time()
+        while _time.time() - _t0 < 3:
+            if all([pud.pulse == _Const.DsblEnbl.Dsbl
+                    for pud in self._pu_devs]):
+                self._update_log('Turned off PU Pulse.')
+                return True
+        self._update_log('ERR:Timed out waiting for PU to be off.')
+        return False
 
     def _update_bucket_list(self):
         old_bucklist = self._evg_dev.bucketlist_mon
