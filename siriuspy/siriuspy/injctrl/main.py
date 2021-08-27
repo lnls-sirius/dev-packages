@@ -606,6 +606,7 @@ class App(_Callback):
 
         if self._stop_injection():
             self._update_log('Injection Auto Stop done.')
+            self._update_bucket_list()
         else:
             self._update_log('Injection Auto Stop failed.')
 
