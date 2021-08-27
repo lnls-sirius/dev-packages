@@ -610,17 +610,18 @@ class App(_Callback):
             self._update_log('Injection Auto Stop failed.')
 
     def _wait_autostop(self):
-        self._update_log('Waiting for Inj.System to be on...')
-        _t0 = _time.time()
-        while _time.time() - _t0 < _Const.RF_RMP_TIMEOUT:
-            if self._autostop == _Const.OffOn.Off:
+        if not self._injsys_dev.is_on:
+            self._update_log('Waiting for Inj.System to be on...')
+            _t0 = _time.time()
+            while _time.time() - _t0 < _Const.RF_RMP_TIMEOUT:
+                if self._autostop == _Const.OffOn.Off:
+                    return False
+                if self._injsys_dev.is_on:
+                    self._update_log('Inj.System is on.')
+                    break
+            else:
+                self._update_log('ERR:Timed out waiting for Inj.Sys.')
                 return False
-            if self._injsys_dev.is_on:
-                self._update_log('Inj.System is on.')
-                break
-        else:
-            self._update_log('ERR:Timed out waiting for Inj.Sys.')
-            return False
 
         self._update_log('Waiting for InjectionEvt to be on...')
         _t0 = _time.time()
