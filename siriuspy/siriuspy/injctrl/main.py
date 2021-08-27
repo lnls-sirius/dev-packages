@@ -48,6 +48,7 @@ class App(_Callback):
         self._topupperiod = 15*60
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
+        self._topupnextinjround_count = 0
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
         self._abort = False
@@ -142,6 +143,7 @@ class App(_Callback):
             'BucketListStep-SP': self.set_bucketlist_step,
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
+            'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -199,6 +201,8 @@ class App(_Callback):
         self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+        self.run_callbacks(
+            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
         self.run_callbacks('AutoStop-Sel', self._autostop)
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
@@ -413,6 +417,17 @@ class App(_Callback):
         self._update_log('Changed top-up period to '+str(value)+'s.')
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
         return True
+
+    def cmd_nextinjround(self, value):
+        """Round next injection time instant to smallest minute nearest."""
+        nextinj = self._topupnext
+        self._topupnext = nextinj - (nextinj % 60)
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
+        self._topupnextinjround_count += 1
+        self.run_callbacks(
+            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
+        return False
 
     def set_autostop(self, value):
         """Set Auto Stop."""

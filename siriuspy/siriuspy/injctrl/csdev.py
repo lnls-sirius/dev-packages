@@ -168,6 +168,7 @@ def get_injctrl_propty_database():
             'lolim': 30, 'hilim': 6*60*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
+        'TopUpNextInjRound-Cmd': {'type': 'int', 'value': 0},
         'AutoStop-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'AutoStop-Sts': {
