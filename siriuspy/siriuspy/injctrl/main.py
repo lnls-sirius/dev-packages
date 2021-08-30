@@ -892,7 +892,8 @@ class App(_Callback):
     def _update_diagstatus(self):
         """Run as a thread scanning PVs."""
         tplanned = 1.0/App.SCAN_FREQUENCY
-        psalrm = 1 << _PSDiagEnum.DIAG_STATUS_LABELS_AS.index('Alarms')
+        psdiag = _PSDiagEnum.DIAG_STATUS_LABELS_AS
+        psalrm = int(1 << len(psdiag)) - 1 - int(1 << psdiag.index('Alarms'))
         while not self.quit:
             if not self.scanning:
                 _time.sleep(tplanned)
