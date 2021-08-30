@@ -684,7 +684,7 @@ class App(_Callback):
         self._update_log('Sent turn on to InjectionEvt.')
 
         # turn on PU Pulse
-        self._update_log('Turninig on PU Pulse...')
+        self._update_log('Turning on PU Pulse...')
         for pudev in self._pu_devs:
             pudev.pulse = _Const.DsblEnbl.Enbl
             _time.sleep(0.5)
@@ -730,6 +730,7 @@ class App(_Callback):
             # if in TopUp mode and max pulses exceeded, stop injection
             if self._mode == _Const.InjMode.TopUp and \
                     self._evg_dev.injection_count >= self._topupmaxnrp:
+                self._update_log('ERR:Max.Nr.Pulses exceeded. Stopping.')
                 self._abort_injection()
                 return False
             _time.sleep(0.1)
@@ -749,7 +750,7 @@ class App(_Callback):
             return True
 
         # turn off PU Pulse
-        self._update_log('Turninig off PU Pulse...')
+        self._update_log('Turning off PU Pulse...')
         for pudev in self._pu_devs:
             pudev.pulse = _Const.DsblEnbl.Dsbl
             _time.sleep(0.5)
