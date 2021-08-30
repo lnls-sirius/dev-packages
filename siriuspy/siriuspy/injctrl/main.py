@@ -806,8 +806,6 @@ class App(_Callback):
         self._topup_thread = None
         self._update_log('Stopped top-up thread.')
         self._abort = False
-        self._topupstate_sel = _Const.OffOn.Off
-        self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _do_topup(self):
         while self._mode == _Const.InjMode.TopUp:
@@ -843,6 +841,9 @@ class App(_Callback):
 
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
+        if not self._abort:
+            self._topupstate_sel = _Const.OffOn.Off
+            self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _wait_topup_period(self):
         _t0 = _time.time()
