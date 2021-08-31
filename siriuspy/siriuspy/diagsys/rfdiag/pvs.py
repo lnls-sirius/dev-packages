@@ -66,9 +66,11 @@ class CheckErrPV:
     """Check error PV and filter spurious spikes."""
 
     PV_ERR = 0
-    _hist = [0]*10
-    _idx = 0
     _tol = 0
+
+    def __init__(self):
+        self._hist = [0]*10
+        self._idx = 0
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Check error exceeds tolerance."""
