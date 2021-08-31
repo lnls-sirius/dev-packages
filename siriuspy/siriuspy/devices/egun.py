@@ -463,6 +463,9 @@ class EGun(_Devices):
 
     def cmd_switch_to_single_bunch(self):
         """Switch to single bunch mode."""
+        if not self.connected:
+            return False
+
         if not self.trigps.cmd_disable_trigger():
             return False
 
@@ -483,6 +486,9 @@ class EGun(_Devices):
 
     def cmd_switch_to_multi_bunch(self):
         """Switch to multi bunch mode."""
+        if not self.connected:
+            return False
+
         if not self.trigps.cmd_disable_trigger():
             return False
 

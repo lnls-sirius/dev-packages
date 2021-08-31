@@ -142,8 +142,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
         std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
         cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
 
-        eff = max(100 * chg2/chg1, 110)
-        effave = 100 * ave2/ave1
+        eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
+        effave = 0 if ave1 == 0 else 100 * ave2/ave1
 
         self.run_callbacks(ict1 + ':Charge-Mon', chg1)
         self.run_callbacks(ict1 + ':ChargeAvg-Mon', ave1)
