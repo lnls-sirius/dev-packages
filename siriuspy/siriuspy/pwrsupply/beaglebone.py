@@ -123,6 +123,8 @@ class BeagleBone:
         else:
             priority_pvs = self._controllers[devname].write(
                 devname, field, value)
+            if field == 'SOFBMode-Sel' and value == 0:
+                self._sofb_mode_off()
         return priority_pvs
 
     def get_strength_limits(self, devname):
@@ -244,3 +246,22 @@ class BeagleBone:
                 strelims[0], strelims[1] = strengths[5], strengths[4]
         # t1_ = _time.time()
         # print('update_strengths: {:.3f}'.format(1000*(t1_-t0_)))
+
+    def _sofb_mode_off(self):
+
+        # update variables in prucontrollers and controllers
+        pruc_initialized = set()
+        psc_initialized = set()
+        for controller in self._controllers.values():
+            pruc = controller.prucontroller
+            if pruc not in pruc_initialized:
+                pruc.update_variables()  # update mirrored variables
+            if controller not in psc_initialized:
+                controller.init_setpoints()  # set controller setpoint values
+                psc_initialized.add(controller)
+
+        # update mirror in beaglebone and strengths
+        for devname in self._dev2mirror:
+            self._dev2mirror[devname] = \
+                self._controllers[devname].read_all_fields(devname)
+            self._update_strengths(devname)

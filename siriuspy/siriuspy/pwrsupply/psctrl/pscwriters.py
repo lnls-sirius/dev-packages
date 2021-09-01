@@ -273,6 +273,7 @@ class Current(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             self.set_current.execute(value)
 
+
 class Voltage(Function):
     """Command to set voltage in DCLink type PS."""
 

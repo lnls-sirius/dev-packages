@@ -264,6 +264,10 @@ class PRUController:
         self._queue.append(operation)
         return True
 
+    def update_variables(self, device_id=None):
+        """Update variable."""
+        self._bsmp_update_variables(device_id)
+
     # --- wfmref and scope curves ---
 
     def scope_update_auto_enable(self):
@@ -390,7 +394,7 @@ class PRUController:
     # --- scan and process loop methods ---
 
     def bsmp_scan(self):
-        """Run scan one."""
+        """Run scan once."""
         # select devices and variable group, defining the read group
         # operation to be performed
         operation = (self._bsmp_update, ())
@@ -611,12 +615,11 @@ class PRUController:
         except _socket_timeout:
             print('!!! {} : socket timeout !!!'.format(_get_timestamp()))
 
-
-    def _bsmp_update_variables(self, dev_id=None):
-        if dev_id is None:
+    def _bsmp_update_variables(self, device_id=None):
+        if device_id is None:
             psupplies = self._psupplies.values()
         else:
-            psupplies = (self._psupplies[dev_id], )
+            psupplies = (self._psupplies[device_id], )
 
         for psupply in psupplies:
             try:
