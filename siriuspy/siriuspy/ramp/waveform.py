@@ -450,7 +450,7 @@ class _WaveformMagnet:
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    _E0 = _c.electron_rest_energy * _mu.joule_2_GeV
+    _E0 = _c.electron_rest_energy * _mu.joule_2_eV * _mu.eV_2_GeV
 
     def __init__(
             self, psname='BO-Fam:PS-B-1', wfm_nrpoints=_DEF_WFMSIZE_OTHERS,

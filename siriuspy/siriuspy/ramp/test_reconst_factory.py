@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from siriuspy.clientconfigdb import ConfigDBDocument
 from siriuspy.ramp.ramp import BoosterRamp
 from siriuspy.ramp.waveform import Waveform
+# from siriuspy.ramp.waveform import WaveformDipole
 from siriuspy.ramp.magnet import get_magnet
 from siriuspy.ramp.reconst_factory import BONormListFactory, BORFRampFactory, \
     BOTIRampFactory, BODipRampFactory
@@ -25,7 +26,9 @@ ARGS = PARSER.parse_args()
 
 PSNAMES = PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
 
-R_ORIG = BoosterRamp('testing')
+# R_ORIG = BoosterRamp('testing')
+# R_ORIG = BoosterRamp('testing_newexc_dip')
+R_ORIG = BoosterRamp('testing_newexc5_norm_newconfigs')
 R_ORIG.load()
 
 GLOBAL_CONF = ConfigDBDocument(
@@ -57,10 +60,10 @@ def run():
             opt_global=False, opt_times=False,
             opt_metric='current', use_config_times=True,
             use_straigth_estim=True,
-            consider_beam_interval=False)
+            consider_beam_interval=True)
         # fac.read_waveforms()
 
-        r_built = BoosterRamp('config_test')
+        r_built = BoosterRamp('testing_newexc5_norm_newconfigs_opt')
         attrs = [
             'ps_ramp_wfm_nrpoints_fams',
             'ps_ramp_wfm_nrpoints_corrs',
@@ -97,6 +100,7 @@ def run():
         r_built.ps_normalized_configs_set(fac.normalized_configs)
         ntimes = r_built.ps_normalized_configs_times
         print(r_built)
+        # r_built.save()
 
         des_prec = fac.desired_reconstr_precision
         prec_reached = fac.precision_reached
@@ -109,6 +113,11 @@ def run():
         axs.grid()
         for psn in PSNAMES:
             if psn in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
+                continue
+            # if psn not in [PSNAMES[-1], PSNAMES[-2]]:
+            # if psn not in [PSNAMES[-3], PSNAMES[-4]]:
+            # if psn not in [PSNAMES[1], ]:
+            if psn in [PSNAMES[1], PSNAMES[-1], PSNAMES[-2], PSNAMES[-3], PSNAMES[-4]]:
                 continue
             strgs = list()
             for tim in ntimes:
@@ -132,12 +141,15 @@ def run():
                 # axs.plot(orig_times, orig_strgs, 'r.-', label=psn)
                 # axs.plot(built_times, built_strgs, 'k.-')
                 # axs.plot(ntimes, strgs, 'b.')
-                # axs.plot(built_times, dif_curr, label=psn)
-                axs.plot(built_times, dif_strg, label=psn)
+                axs.plot(built_times, dif_curr, label=psn)
+                # axs.plot(built_times, dif_strg, label=psn)
 
         # for tim in ntimes:
         #     axs.plot([tim, tim], [-max_error, max_error], 'k-.')
-        plt.legend()
+        axs.set_xlim(0.0, 300.0)
+        # axs.set_ylim(-0.0003, 0.0003)
+        # axs.set_ylim(-0.003, 0.003)
+        # plt.legend()
         plt.title('Curves with error > than desired ({})'.format(des_prec))
         plt.show()
 
@@ -163,6 +175,22 @@ def run():
                 break
 
         wav_energy = dip_mag.conv_current_2_strength(wav_orig)
+
+        # wav_orig0 = WaveformDipole()
+        # wav_orig0.duration = 490.0
+        # wav_orig0.rampup1_start_time = 10.0
+        # wav_orig0.rampup2_start_time = 132.2
+        # wav_orig0.rampdown_start_time = 340.0
+        # wav_orig0.rampdown_stop_time = 470.5
+        # wav_orig0.rampup_smooth_intvl = 60.0
+        # wav_orig0.rampdown_smooth_intvl = 60.0
+        # wav_orig0.start_value = 10.142484086113715
+        # wav_orig0.rampup1_start_value = 32.86164843900845
+        # wav_orig0.rampup2_start_value = 439.0308176816456
+        # wav_orig0.rampdown_start_value = 1129.7706848875455
+        # wav_orig0.rampdown_stop_value = 100.34449514749313
+        # wav_orig0.rampup_smooth_value = 0.0
+        # wav_orig0.rampdown_smooth_value = 83.75807945066049
 
         fac = BODipRampFactory(ramp_config=R_ORIG, waveform=wav_orig)
         # fac.read_waveforms()

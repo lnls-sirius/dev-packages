@@ -202,7 +202,7 @@ class BONormListFactory:
     _LOSS_FACTOR_SEXTS = 1e-2
 
     # if considering only beam interval
-    _BEAM_INTERVAL = [0.0, 300.0]
+    _BEAM_INTERVAL = [13.0, 304.0]
 
     def __init__(self, ramp_config, waveforms=None, opt_metric='strength',
                  opt_global=False, opt_times=False, use_config_times=False,

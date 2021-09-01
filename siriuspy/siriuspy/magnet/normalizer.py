@@ -307,6 +307,7 @@ class MagnetNormalizer(_MagnetNormalizer):
             with _np.errstate(divide='ignore', invalid='ignore'):
                 strengths = self._magnet_conv_sign * intfields / brho
                 strengths[brho == 0] = 0.0
+                strengths[_np.isnan(brho)] = 0.0
         else:
             if brho == 0:
                 strengths = 0.0
