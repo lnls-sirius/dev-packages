@@ -141,6 +141,7 @@ class EGFilament(_Device):
         while _time.time() - _t0 < timeout:
             if abs(self.current - value) < tol:
                 return True
+            _time.sleep(0.1)
         return False
 
 
@@ -221,6 +222,7 @@ class EGHVPS(_Device):
         while _time.time() - _t0 < timeout:
             if abs(self.voltage - value) < tol:
                 return True
+            _time.sleep(0.1)
         return False
 
 
@@ -626,6 +628,7 @@ class EGun(_Devices):
                 if self.hvps.voltage - volt < self._hv_tol and \
                         self.hvps.current < volt * 1e-4:
                     break
+                _time.sleep(0.1)
             else:
                 if self.hvps.voltage - volt > self._hv_tol:
                     self._update_last_status(
