@@ -248,18 +248,23 @@ class MacReport:
         Count of failures occurred.
     - beam_dump_count
         Number of beam dumps occurred.
-    - mean_time_to_recover
-        Mean time took to recover from failures.
-    - mean_time_between_failures
-        Mean time between failure occurrences.
+    - time_to_recover_average
+        Average time interval took to recover from failures.
+    - time_to_recover_stddev
+        Time interval standard deviation took to recover from failures.
+    - time_between_failures_average
+        Average time interval between failure occurrences.
     - beam_reliability
         Ratio between implemented and programmed user shift time interval.
     - inj_shift_interval
         Time interval in injection shift
     - inj_shift_count
         Number of injections occurred
-    - inj_shift_mean_interval
-        Mean interval in injection shift (inj_shift_interval/inj_shift_count)
+    - inj_shift_interval_average
+        Average time interval in injection shift
+        (inj_shift_interval/inj_shift_count)
+    - inj_shift_interval_stddev
+        Time interval standard deviation in injection shift
 
     - lsusage_total_interval
         Total interval of Light Source Usage.
@@ -449,12 +454,14 @@ class MacReport:
         self._failures_interval = None
         self._failures_count = None
         self._beam_dump_count = None
-        self._mean_time_to_recover = None
-        self._mean_time_between_failures = None
+        self._time_to_recover_average = None
+        self._time_to_recover_stddev = None
+        self._time_between_failures_average = None
         self._beam_reliability = None
         self._inj_shift_interval = None
         self._inj_shift_count = None
-        self._inj_shift_mean_interval = None
+        self._inj_shift_interval_average = None
+        self._inj_shift_interval_stddev = None
 
         # light source usage stats
         self._lsusage_total_interval = None
@@ -668,14 +675,19 @@ class MacReport:
         return self._beam_dump_count
 
     @property
-    def mean_time_to_recover(self):
-        """Mean time to recover, in hours."""
-        return self._conv_sec_2_hour(self._mean_time_to_recover)
+    def time_to_recover_average(self):
+        """Average time interval took to recover from failures, in hours."""
+        return self._conv_sec_2_hour(self._time_to_recover_average)
 
     @property
-    def mean_time_between_failures(self):
-        """Mean time between failures, in hours."""
-        return self._conv_sec_2_hour(self._mean_time_between_failures)
+    def time_to_recover_stddev(self):
+        """Time interval std.dev. took to recover from failures, in hours."""
+        return self._conv_sec_2_hour(self._time_to_recover_stddev)
+
+    @property
+    def time_between_failures_average(self):
+        """Average time interval between failure occurrences, in hours."""
+        return self._conv_sec_2_hour(self._time_between_failures_average)
 
     @property
     def beam_reliability(self):
@@ -695,9 +707,14 @@ class MacReport:
         return self._inj_shift_count
 
     @property
-    def inj_shift_mean_interval(self):
-        """Injection shift mean interval, in hours."""
-        return self._conv_sec_2_hour(self._inj_shift_mean_interval)
+    def inj_shift_interval_average(self):
+        """Average time interval in injection shift, in hours."""
+        return self._conv_sec_2_hour(self._inj_shift_interval_average)
+
+    @property
+    def inj_shift_interval_stddev(self):
+        """Time interval standard deviation in injection shift, in hours."""
+        return self._conv_sec_2_hour(self._inj_shift_interval_stddev)
 
     # light source usage stats
 
@@ -1477,17 +1494,19 @@ class MacReport:
         # # # ----- failures -----
         self._failures_interval = _np.sum(dtimes_failures_users)
 
-        self._failures_count = _np.sum(_np.diff(self._failures_users) > 0)
-
         beam_dump_values = _np.logical_not(
             self._raw_data['Failures']['WrongShift']) * \
             self._raw_data['Failures']['NoEBeam']
         self._beam_dump_count = _np.sum(_np.diff(beam_dump_values) > 0)
 
-        self._mean_time_to_recover = 0.0 if not self._failures_count else \
-            self._failures_interval/self._failures_count
+        ave, std, count = self._calc_interval_stats(
+            self._failures_users, dtimes_failures_users)
+        self._time_to_recover_average = ave
+        self._time_to_recover_stddev = std
+        self._failures_count = count
 
-        self._mean_time_between_failures = _np.inf if not self._failures_count\
+        self._time_between_failures_average = \
+            _np.inf if not self._failures_count\
             else self._user_shift_progmd_interval/self._failures_count
 
         # # # ----- reliability -----
@@ -1498,10 +1517,11 @@ class MacReport:
         # # # ----- injection shift -----
         self._inj_shift_interval = _np.sum(dtimes_injection)
 
-        self._inj_shift_count = _np.sum(_np.diff(self._inj_shift_values) > 0)
-
-        self._inj_shift_mean_interval = 0.0 if self._inj_shift_count == 0 else\
-            self._inj_shift_interval / self._inj_shift_count
+        ave, std, count = self._calc_interval_stats(
+            self._inj_shift_values, dtimes_injection)
+        self._inj_shift_interval_average = ave
+        self._inj_shift_interval_stddev = std
+        self._inj_shift_count = count
 
         # # light source usage stats
         self._lsusage_machinestudy_interval = _np.sum(dtimes_machinestudy)
@@ -1605,6 +1625,22 @@ class MacReport:
             stddev = _np.sqrt(_np.sum(aux*aux*dtimes)/interval)
         return average, stddev
 
+    def _calc_interval_stats(self, values, dtimes):
+        transit = _np.diff(values)
+        beg_idcs = _np.where(transit == 1)[0]
+        end_idcs = _np.where(transit == -1)[0]
+        if beg_idcs.size and end_idcs.size:
+            if beg_idcs[0] > end_idcs[0]:
+                end_idcs = end_idcs[1:]
+            if beg_idcs.size > end_idcs.size:
+                end_idcs = _np.r_[end_idcs, values.size-1]
+            stats_vals = [_np.sum(dtimes[beg_idcs[i]:end_idcs[i]])
+                          for i in range(beg_idcs.size)]
+            avg = _np.mean(stats_vals)
+            std = _np.std(stats_vals)
+            return avg, std, beg_idcs.size
+        return 0, 0, 0
+
     def _conv_sec_2_hour(self, seconds):
         if seconds is None:
             return None
@@ -1633,12 +1669,14 @@ class MacReport:
             ['failures_interval', 'h'],
             ['failures_count', ''],
             ['beam_dump_count', ''],
-            ['mean_time_to_recover', 'h'],
-            ['mean_time_between_failures', 'h'],
+            ['time_to_recover_average', 'h'],
+            ['time_to_recover_stddev', 'h'],
+            ['time_between_failures_average', 'h'],
             ['beam_reliability', '%'],
             ['inj_shift_interval', 'h'],
             ['inj_shift_count', ''],
-            ['inj_shift_mean_interval', 'h'],
+            ['inj_shift_interval_average', 'h'],
+            ['inj_shift_interval_stddev', 'h'],
         ]
         ppties_lsusage = [
             ['lsusage_total_interval', 'h'],
