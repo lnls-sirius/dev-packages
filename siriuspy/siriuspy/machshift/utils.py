@@ -248,8 +248,6 @@ class MacReport:
         Count of failures occurred.
     - beam_dump_count
         Number of beam dumps occurred.
-    - user_shift_canceled_count
-        Number of user shifts canceled.
     - mean_time_to_recover
         Mean time took to recover from failures.
     - mean_time_between_failures
@@ -448,7 +446,6 @@ class MacReport:
         self._user_shift_extra_interval = None
         self._user_shift_total_interval = None
         self._user_shift_progmd_count = None
-        self._user_shift_canceled_count = None
         self._user_shift_average_current = None
         self._user_shift_stddev_current = None
         self._failures_interval = None
@@ -673,11 +670,6 @@ class MacReport:
     def beam_dump_count(self):
         """Number of beam dumps."""
         return self._beam_dump_count
-
-    @property
-    def user_shift_canceled_count(self):
-        """Number of user shift canceled."""
-        return self._user_shift_canceled_count
 
     @property
     def mean_time_to_recover(self):
@@ -1478,25 +1470,6 @@ class MacReport:
         dtimes_users_extra = dtimes_users_total*_np.logical_not(
             self._user_shift_progmd_values)
 
-        # canceled shifts
-        self._shift_transit = _np.diff(self._user_shift_progmd_values)
-        shift_beg_idcs = _np.where(self._shift_transit == 1)[0]
-        shift_end_idcs = _np.where(self._shift_transit == -1)[0]
-        if shift_beg_idcs.size and shift_end_idcs.size:
-            if shift_beg_idcs[0] > shift_end_idcs[0]:
-                shift_end_idcs = shift_end_idcs[1:]
-            if shift_beg_idcs.size > shift_end_idcs.size:
-                shift_end_idcs = _np.r_[
-                    shift_end_idcs, self._user_shift_progmd_values.size-1]
-            shift_sts_values = [
-                _np.mean(self._user_shift_act_values[
-                    shift_beg_idcs[i]:shift_end_idcs[i]])
-                for i in range(shift_beg_idcs.size)]
-            self._user_shift_canceled_count = _np.sum(
-                _np.logical_not(shift_sts_values))
-        else:
-            self._user_shift_canceled_count = 0
-
         # calculate stats
 
         # # beam for users stats
@@ -1676,7 +1649,6 @@ class MacReport:
             ['failures_interval', 'h'],
             ['failures_count', ''],
             ['beam_dump_count', ''],
-            ['user_shift_canceled_count', ''],
             ['mean_time_to_recover', 'h'],
             ['mean_time_between_failures', 'h'],
             ['beam_reliability', '%'],
