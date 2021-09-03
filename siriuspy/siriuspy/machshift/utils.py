@@ -254,8 +254,6 @@ class MacReport:
         Mean time between failure occurrences.
     - beam_reliability
         Ratio between implemented and programmed user shift time interval.
-    - beam_availability
-        Ratio between operational and programmed + extra user shit interval.
     - inj_shift_interval
         Time interval in injection shift
     - inj_shift_count
@@ -454,7 +452,6 @@ class MacReport:
         self._mean_time_to_recover = None
         self._mean_time_between_failures = None
         self._beam_reliability = None
-        self._beam_availability = None
         self._inj_shift_interval = None
         self._inj_shift_count = None
         self._inj_shift_mean_interval = None
@@ -686,13 +683,6 @@ class MacReport:
 
         Ratio between implemented and programmed user shift time interval."""
         return self._beam_reliability
-
-    @property
-    def beam_availability(self):
-        """Beam availability.
-
-        Ratio between operational and programmed + extra user shit interval."""
-        return self._beam_availability
 
     @property
     def inj_shift_interval(self):
@@ -1565,11 +1555,6 @@ class MacReport:
             setattr(self, '_lsusage_'+usage,
                     100*total_intvl/self._lsusage_total_interval)
 
-        # # # ----- availability -----
-        self._beam_availability = \
-            0.0 if not self._lsusage_user_interval else 100 * \
-            self._user_shift_total_interval/self._lsusage_user_interval
-
         # # stored current stats
         for shifttype in ['machinestudy', 'commissioning', 'conditioning',
                           'user', 'ebeam']:
@@ -1651,7 +1636,6 @@ class MacReport:
             ['mean_time_to_recover', 'h'],
             ['mean_time_between_failures', 'h'],
             ['beam_reliability', '%'],
-            ['beam_availability', '%'],
             ['inj_shift_interval', 'h'],
             ['inj_shift_count', ''],
             ['inj_shift_mean_interval', 'h'],
