@@ -261,6 +261,7 @@ class BeagleBone:
             pruc = controller.prucontroller
             if pruc not in pruc_initialized:
                 pruc.update_variables()  # update mirrored variables
+                pruc_initialized.add(pruc)
             if controller not in psc_initialized:
                 controller.init_setpoints()  # set controller setpoint values
                 psc_initialized.add(controller)
