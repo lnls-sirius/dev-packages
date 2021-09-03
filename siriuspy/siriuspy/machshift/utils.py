@@ -1260,6 +1260,33 @@ class MacReport:
 
         return fig
 
+    def plot_progmd_vs_delivd_hours(self):
+        """Plot programmed vs. delivered hours graph."""
+        if not self._raw_data:
+            print('No data to display. Call update() to get data.')
+            return
+
+        datetimes = [_Time(d) for d in self._raw_data['Timestamp']]
+
+        dtimes = _np.diff(self._raw_data['Timestamp'])
+        dtimes = _np.r_[dtimes, dtimes[-1]]
+        dtimes = dtimes/60/60
+
+        dtimes_users_progmd = dtimes*self._raw_data['UserShiftProgmd']
+        cum_progmd = _np.cumsum(dtimes_users_progmd)
+        dtimes_users_impltd = dtimes*self._raw_data['UserShiftImpltd']
+        cum_deliv = _np.cumsum(dtimes_users_impltd)
+
+        fig = _plt.figure()
+        axs = _plt.gca()
+        axs.plot_date(datetimes, cum_progmd, '-', label='Programmed')
+        axs.plot_date(datetimes, cum_deliv, '-', label='Delivered')
+        axs.grid()
+        axs.set_ylabel('Integrated Hours')
+        _plt.legend(loc=4)
+        _plt.title('Integrated User Hours')
+        return fig
+
     # ----- auxiliary methods -----
 
     def _init_connectors(self):
