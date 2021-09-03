@@ -242,8 +242,6 @@ class MacReport:
         Average current in the total user shift time interval.
     - user_shift_stddev_current
         Current standard deviation in the total user shift time interval.
-    - user_shift_max_current
-        Maximum current in the total user shift time interval.
     - failures_interval
         Total failure duration.
     - failures_count
@@ -334,112 +332,84 @@ class MacReport:
         Current average for machine study single bunch shifts.
     - current_machinestudy_singlebunch_stddev
         Current standard deviation for machine study single bunch shifts.
-    - current_machinestudy_singlebunch_max
-        Maximum current for machine study single bunch shifts.
     - current_machinestudy_singlebunch_interval
         Interval of machine study single bunch shifts.
     - current_machinestudy_multibunch_average
         Current average for machine study multi bunch shifts.
     - current_machinestudy_multibunch_stddev
         Current standard deviation for machine study multi bunch shifts.
-    - current_machinestudy_multibunch_max
-        Maximum current for machine study multi bunch shifts.
     - current_machinestudy_multibunch_interval
         Interval of machine study multi bunch shifts.
     - current_machinestudy_total_average
         Current average for machine study shifts.
     - current_machinestudy_total_stddev
         Current standard deviation for machine study shifts.
-    - current_machinestudy_total_max
-        Maximum current for machine study shifts.
     - current_machinestudy_total_interval
         Interval of machine study shifts.
     - current_commissioning_singlebunch_average
         Current average for single bunch commissioning shifts.
     - current_commissioning_singlebunch_stddev
         Current standard deviation for single bunch commissioning shifts.
-    - current_commissioning_singlebunch_max
-        Maximum current for single bunch commissioning shifts.
     - current_commissioning_singlebunch_interval
         Interval of single bunch commissioning shifts.
     - current_commissioning_multibunch_average
         Current average for multi bunch commissioning shifts.
     - current_commissioning_multibunch_stddev
         Current standard deviation for multi bunch commissioning shifts.
-    - current_commissioning_multibunch_max
-        Maximum current for multi bunch commissioning shifts.
     - current_commissioning_multibunch_interval
         Interval of multi bunch commissioning shifts.
     - current_commissioning_total_average
         Current average in commissioning shifts.
     - current_commissioning_total_stddev
         Current standard deviation in commissioning shifts.
-    - current_commissioning_total_max
-        Maximum current in commissioning shifts.
     - current_commissioning_total_interval
         Interval of commissioning shifts.
     - current_conditioning_singlebunch_average
         Current average for single bunch conditioning shifts.
     - current_conditioning_singlebunch_stddev
         Current standard deviation for single bunch conditioning shifts.
-    - current_conditioning_singlebunch_max
-        Maximum current for single bunch conditioning shifts.
     - current_conditioning_singlebunch_interval
         Interval of single bunch conditioning shifts.
     - current_conditioning_multibunch_average
         Current average for multi bunch conditioning shifts.
     - current_conditioning_multibunch_stddev
         Current standard deviation for multi bunch conditioning shifts.
-    - current_conditioning_multibunch_max
-        Maximum current for multi bunch conditioning shifts.
     - current_conditioning_multibunch_interval
         Interval of multi bunch conditioning shifts.
     - current_conditioning_total_average
         Current average in conditioning shifts.
     - current_conditioning_total_stddev
         Current standard deviation in conditioning shifts.
-    - current_conditioning_total_max
-        Maximum current in conditioning shifts.
     - current_conditioning_total_interval
         Interval of conditioning shifts.
     - current_user_singlebunch_average
         Current average for single bunch user shifts.
     - current_user_singlebunch_stddev
         Current standard deviation for single bunch user shifts.
-    - current_user_singlebunch_max
-        Maximum current for single bunch user shifts.
     - current_user_singlebunch_interval
         Interval of single bunch user shifts.
     - current_user_multibunch_average
         Current average for multi bunch user shifts.
     - current_user_multibunch_stddev
         Current standard deviation for multi bunch user shifts.
-    - current_user_multibunch_max
-        Maximum current for multi bunch user shifts.
     - current_user_multibunch_interval
         Interval of multi bunch user shifts.
     - current_user_total_average
         Current average in all user shifts.
     - current_user_total_stddev
         Current standard deviation in all user shifts.
-    - current_user_total_max
-        Maximum current in all user shifts.
     - current_user_total_interval
         Interval of all user shifts.
     - current_ebeam_singlebunch_average
         Current average for all single bunch shifts.
     - current_ebeam_singlebunch_stddev
         Current standard deviation for all single bunch shifts.
-    - current_ebeam_singlebunch_max
-        Maximum current for all single bunch shifts.
     - current_ebeam_singlebunch_interval
         Interval of all single bunch shifts.
     - current_ebeam_multibunch_average
         Current average for all multi bunch shifts.
     - current_ebeam_multibunch_stddev
         Current standard deviation for all multi bunch shifts.
-    - current_ebeam_multibunch_max
-        Maximum current for all multi bunch shifts.
     - current_ebeam_multibunch_interval
         Interval of all multi bunch shifts.
     - current_ebeam_total_average
@@ -447,9 +417,6 @@ class MacReport:
         there was any current above a threshold (THOLD_STOREDBEAM)
     - current_ebeam_total_stddev
         Current standard deviation considering the entire interval in which
-        there was any current above a threshold (THOLD_STOREDBEAM)
-    - current_ebeam_total_max
-        Maximum current considering the entire interval in which
         there was any current above a threshold (THOLD_STOREDBEAM)
     - current_ebeam_total_interval
         Time interval in which there was stored beam, for any
@@ -484,7 +451,6 @@ class MacReport:
         self._user_shift_canceled_count = None
         self._user_shift_average_current = None
         self._user_shift_stddev_current = None
-        self._user_shift_max_current = None
         self._failures_interval = None
         self._failures_count = None
         self._beam_dump_count = None
@@ -532,63 +498,48 @@ class MacReport:
         # stored current stats
         self._current_machinestudy_singlebunch_average = None
         self._current_machinestudy_singlebunch_stddev = None
-        self._current_machinestudy_singlebunch_max = None
         self._current_machinestudy_singlebunch_interval = None
         self._current_machinestudy_multibunch_average = None
         self._current_machinestudy_multibunch_stddev = None
-        self._current_machinestudy_multibunch_max = None
         self._current_machinestudy_multibunch_interval = None
         self._current_machinestudy_total_average = None
         self._current_machinestudy_total_stddev = None
-        self._current_machinestudy_total_max = None
         self._current_machinestudy_total_interval = None
         self._current_commissioning_singlebunch_average = None
         self._current_commissioning_singlebunch_stddev = None
-        self._current_commissioning_singlebunch_max = None
         self._current_commissioning_singlebunch_interval = None
         self._current_commissioning_multibunch_average = None
         self._current_commissioning_multibunch_stddev = None
-        self._current_commissioning_multibunch_max = None
         self._current_commissioning_multibunch_interval = None
         self._current_commissioning_total_average = None
         self._current_commissioning_total_stddev = None
-        self._current_commissioning_total_max = None
         self._current_commissioning_total_interval = None
         self._current_conditioning_singlebunch_average = None
         self._current_conditioning_singlebunch_stddev = None
-        self._current_conditioning_singlebunch_max = None
         self._current_conditioning_singlebunch_interval = None
         self._current_conditioning_multibunch_average = None
         self._current_conditioning_multibunch_stddev = None
-        self._current_conditioning_multibunch_max = None
         self._current_conditioning_multibunch_interval = None
         self._current_conditioning_total_average = None
         self._current_conditioning_total_stddev = None
-        self._current_conditioning_total_max = None
         self._current_conditioning_total_interval = None
         self._current_user_singlebunch_average = None
         self._current_user_singlebunch_stddev = None
-        self._current_user_singlebunch_max = None
         self._current_user_singlebunch_interval = None
         self._current_user_multibunch_average = None
         self._current_user_multibunch_stddev = None
-        self._current_user_multibunch_max = None
         self._current_user_multibunch_interval = None
         self._current_user_total_average = None
         self._current_user_total_stddev = None
-        self._current_user_total_max = None
         self._current_user_total_interval = None
         self._current_ebeam_singlebunch_average = None
         self._current_ebeam_singlebunch_stddev = None
-        self._current_ebeam_singlebunch_max = None
         self._current_ebeam_singlebunch_interval = None
         self._current_ebeam_multibunch_average = None
         self._current_ebeam_multibunch_stddev = None
-        self._current_ebeam_multibunch_max = None
         self._current_ebeam_multibunch_interval = None
         self._current_ebeam_total_average = None
         self._current_ebeam_total_stddev = None
-        self._current_ebeam_total_max = None
         self._current_ebeam_total_interval = None
 
         # auxiliary data
@@ -702,10 +653,6 @@ class MacReport:
         """User shift current standard deviation."""
         return self._user_shift_stddev_current
 
-    @property
-    def user_shift_max_current(self):
-        """User shift maximum current."""
-        return self._user_shift_max_current
 
     @property
     def user_shift_progmd_count(self):
@@ -949,11 +896,6 @@ class MacReport:
         return self._current_machinestudy_singlebunch_stddev
 
     @property
-    def current_machinestudy_singlebunch_max(self):
-        """Maximum current for machine study single bunch shifts."""
-        return self._current_machinestudy_singlebunch_max
-
-    @property
     def current_machinestudy_singlebunch_interval(self):
         """Interval of machine study single bunch shifts.
         Consider any stored current."""
@@ -969,11 +911,6 @@ class MacReport:
     def current_machinestudy_multibunch_stddev(self):
         """Current standard deviation for machine study multi bunch shifts."""
         return self._current_machinestudy_multibunch_stddev
-
-    @property
-    def current_machinestudy_multibunch_max(self):
-        """Maximum current for machine study multi bunch shifts."""
-        return self._current_machinestudy_multibunch_max
 
     @property
     def current_machinestudy_multibunch_interval(self):
@@ -993,11 +930,6 @@ class MacReport:
         return self._current_machinestudy_total_stddev
 
     @property
-    def current_machinestudy_total_max(self):
-        """Maximum current for machine study shifts."""
-        return self._current_machinestudy_total_max
-
-    @property
     def current_machinestudy_total_interval(self):
         """Interval of machine study shifts.
         Consider any stored current."""
@@ -1012,11 +944,6 @@ class MacReport:
     def current_commissioning_singlebunch_stddev(self):
         """Current standard deviation for single bunch commissioning shifts."""
         return self._current_commissioning_singlebunch_stddev
-
-    @property
-    def current_commissioning_singlebunch_max(self):
-        """Maximum current for single bunch commissioning shifts."""
-        return self._current_commissioning_singlebunch_max
 
     @property
     def current_commissioning_singlebunch_interval(self):
@@ -1036,11 +963,6 @@ class MacReport:
         return self._current_commissioning_multibunch_stddev
 
     @property
-    def current_commissioning_multibunch_max(self):
-        """Maximum current for multi bunch commissioning shifts."""
-        return self._current_commissioning_multibunch_max
-
-    @property
     def current_commissioning_multibunch_interval(self):
         """Interval of multi bunch commissioning shifts.
         Consider any stored current."""
@@ -1056,11 +978,6 @@ class MacReport:
     def current_commissioning_total_stddev(self):
         """Current standard deviation in commissioning shifts."""
         return self._current_commissioning_total_stddev
-
-    @property
-    def current_commissioning_total_max(self):
-        """Maximum current in commissioning shifts."""
-        return self._current_commissioning_total_max
 
     @property
     def current_commissioning_total_interval(self):
@@ -1080,11 +997,6 @@ class MacReport:
         return self._current_conditioning_singlebunch_stddev
 
     @property
-    def current_conditioning_singlebunch_max(self):
-        """Maximum current for single bunch conditioning shifts."""
-        return self._current_conditioning_singlebunch_max
-
-    @property
     def current_conditioning_singlebunch_interval(self):
         """Interval of single bunch conditioning shifts.
         Consider any stored current."""
@@ -1100,11 +1012,6 @@ class MacReport:
     def current_conditioning_multibunch_stddev(self):
         """Current standard deviation for multi bunch conditioning shifts."""
         return self._current_conditioning_multibunch_stddev
-
-    @property
-    def current_conditioning_multibunch_max(self):
-        """Maximum current for multi bunch conditioning shifts."""
-        return self._current_conditioning_multibunch_max
 
     @property
     def current_conditioning_multibunch_interval(self):
@@ -1124,11 +1031,6 @@ class MacReport:
         return self._current_conditioning_total_stddev
 
     @property
-    def current_conditioning_total_max(self):
-        """Maximum current in conditioning shifts."""
-        return self._current_conditioning_total_max
-
-    @property
     def current_conditioning_total_interval(self):
         """Interval of conditioning shifts.
         Consider any stored current."""
@@ -1143,11 +1045,6 @@ class MacReport:
     def current_user_singlebunch_stddev(self):
         """Current standard deviation for single bunch user shifts."""
         return self._current_user_singlebunch_stddev
-
-    @property
-    def current_user_singlebunch_max(self):
-        """Maximum current for single bunch user shifts."""
-        return self._current_user_singlebunch_max
 
     @property
     def current_user_singlebunch_interval(self):
@@ -1166,11 +1063,6 @@ class MacReport:
         return self._current_user_multibunch_stddev
 
     @property
-    def current_user_multibunch_max(self):
-        """Maximum current for multi bunch user shifts."""
-        return self._current_user_multibunch_max
-
-    @property
     def current_user_multibunch_interval(self):
         """Interval of multi bunch user shifts. Consider any stored current."""
         return self._conv_sec_2_hour(self._current_user_multibunch_interval)
@@ -1184,11 +1076,6 @@ class MacReport:
     def current_user_total_stddev(self):
         """Current standard deviation in all user shifts."""
         return self._current_user_total_stddev
-
-    @property
-    def current_user_total_max(self):
-        """Maximum current  in all user shifts."""
-        return self._current_user_total_max
 
     @property
     def current_user_total_interval(self):
@@ -1206,11 +1093,6 @@ class MacReport:
         return self._current_ebeam_singlebunch_stddev
 
     @property
-    def current_ebeam_singlebunch_max(self):
-        """Maximum current for all single bunch shifts."""
-        return self._current_ebeam_singlebunch_max
-
-    @property
     def current_ebeam_singlebunch_interval(self):
         """Interval of all single bunch shifts. Consider any stored current."""
         return self._conv_sec_2_hour(self._current_ebeam_singlebunch_interval)
@@ -1226,11 +1108,6 @@ class MacReport:
         return self._current_ebeam_multibunch_stddev
 
     @property
-    def current_ebeam_multibunch_max(self):
-        """Maximum current for all multi bunch shifts."""
-        return self._current_ebeam_multibunch_max
-
-    @property
     def current_ebeam_multibunch_interval(self):
         """Interval of all multi bunch shifts. Consider any stored current."""
         return self._conv_sec_2_hour(self._current_ebeam_multibunch_interval)
@@ -1244,11 +1121,6 @@ class MacReport:
     def current_ebeam_total_stddev(self):
         """Current standard deviation for all stored beam interval."""
         return self._current_ebeam_total_stddev
-
-    @property
-    def current_ebeam_total_max(self):
-        """Maximum current for all stored beam interval."""
-        return self._current_ebeam_total_max
 
     @property
     def current_ebeam_total_interval(self):
@@ -1640,9 +1512,6 @@ class MacReport:
         self._user_shift_average_current, self._user_shift_stddev_current = \
             self._calc_current_stats(dtimes_users_total)
 
-        self._user_shift_max_current = _np.max(
-            self._curr_values*self._user_shift_act_values)
-
         # # # ----- failures -----
         self._failures_interval = _np.sum(dtimes_failures_users)
 
@@ -1743,7 +1612,6 @@ class MacReport:
                     select = select*shift_values
 
                 dtimes_select = dtimes*select
-                current_select = self._curr_values*select
 
                 pname = '_current_'+shifttype+'_'+fillmode
 
@@ -1752,8 +1620,6 @@ class MacReport:
                 avg, sdv = self._calc_current_stats(dtimes_select)
                 setattr(self, pname+'_average', avg)
                 setattr(self, pname+'_stddev', sdv)
-
-                setattr(self, pname+'_max', _np.max(current_select))
 
     def _get_pv_data(self, pvname):
         t_start = self._time_start.timestamp()
@@ -1807,7 +1673,6 @@ class MacReport:
             ['user_shift_progmd_count', ''],
             ['user_shift_average_current', 'mA'],
             ['user_shift_stddev_current', 'mA'],
-            ['user_shift_max_current', 'mA'],
             ['failures_interval', 'h'],
             ['failures_count', ''],
             ['beam_dump_count', ''],
@@ -1856,63 +1721,48 @@ class MacReport:
         ppties_storedcurrent = [
             ['current_machinestudy_singlebunch_average', 'mA'],
             ['current_machinestudy_singlebunch_stddev', 'mA'],
-            ['current_machinestudy_singlebunch_max', 'mA'],
             ['current_machinestudy_singlebunch_interval', 'h'],
             ['current_machinestudy_multibunch_average', 'mA'],
             ['current_machinestudy_multibunch_stddev', 'mA'],
-            ['current_machinestudy_multibunch_max', 'mA'],
             ['current_machinestudy_multibunch_interval', 'h'],
             ['current_machinestudy_total_average', 'mA'],
             ['current_machinestudy_total_stddev', 'mA'],
-            ['current_machinestudy_total_max', 'mA'],
             ['current_machinestudy_total_interval', 'h'],
             ['current_commissioning_singlebunch_average', 'mA'],
             ['current_commissioning_singlebunch_stddev', 'mA'],
-            ['current_commissioning_singlebunch_max', 'mA'],
             ['current_commissioning_singlebunch_interval', 'h'],
             ['current_commissioning_multibunch_average', 'mA'],
             ['current_commissioning_multibunch_stddev', 'mA'],
-            ['current_commissioning_multibunch_max', 'mA'],
             ['current_commissioning_multibunch_interval', 'h'],
             ['current_commissioning_total_average', 'mA'],
             ['current_commissioning_total_stddev', 'mA'],
-            ['current_commissioning_total_max', 'mA'],
             ['current_commissioning_total_interval', 'h'],
             ['current_conditioning_singlebunch_average', 'mA'],
             ['current_conditioning_singlebunch_stddev', 'mA'],
-            ['current_conditioning_singlebunch_max', 'mA'],
             ['current_conditioning_singlebunch_interval', 'h'],
             ['current_conditioning_multibunch_average', 'mA'],
             ['current_conditioning_multibunch_stddev', 'mA'],
-            ['current_conditioning_multibunch_max', 'mA'],
             ['current_conditioning_multibunch_interval', 'h'],
             ['current_conditioning_total_average', 'mA'],
             ['current_conditioning_total_stddev', 'mA'],
-            ['current_conditioning_total_max', 'mA'],
             ['current_conditioning_total_interval', 'h'],
             ['current_user_singlebunch_average', 'mA'],
             ['current_user_singlebunch_stddev', 'mA'],
-            ['current_user_singlebunch_max', 'mA'],
             ['current_user_singlebunch_interval', 'h'],
             ['current_user_multibunch_average', 'mA'],
             ['current_user_multibunch_stddev', 'mA'],
-            ['current_user_multibunch_max', 'mA'],
             ['current_user_multibunch_interval', 'h'],
             ['current_user_total_average', 'mA'],
             ['current_user_total_stddev', 'mA'],
-            ['current_user_total_max', 'mA'],
             ['current_user_total_interval', 'h'],
             ['current_ebeam_singlebunch_average', 'mA'],
             ['current_ebeam_singlebunch_stddev', 'mA'],
-            ['current_ebeam_singlebunch_max', 'mA'],
             ['current_ebeam_singlebunch_interval', 'h'],
             ['current_ebeam_multibunch_average', 'mA'],
             ['current_ebeam_multibunch_stddev', 'mA'],
-            ['current_ebeam_multibunch_max', 'mA'],
             ['current_ebeam_multibunch_interval', 'h'],
             ['current_ebeam_total_average', 'mA'],
             ['current_ebeam_total_stddev', 'mA'],
-            ['current_ebeam_total_max', 'mA'],
             ['current_ebeam_total_interval', 'h'],
         ]
         rst = 'User Beam Statistics\n'
