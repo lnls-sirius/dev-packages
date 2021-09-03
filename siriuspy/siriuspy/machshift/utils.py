@@ -5,7 +5,6 @@ import re as _re
 import copy as _copy
 import time as _time
 import logging as _log
-from datetime import datetime as _datetime
 
 import numpy as _np
 from matplotlib import pyplot as _plt
@@ -96,7 +95,7 @@ class MacScheduleData:
             year, formating='numeric_byshift')
         days_of_year = len(MacScheduleData._mac_schedule_sdata[year])
         new_timestamp = _np.linspace(times[0], times[-1], days_of_year*24*60)
-        new_datetimes = [_datetime.fromtimestamp(ts) for ts in new_timestamp]
+        new_datetimes = [_Time(ts) for ts in new_timestamp]
         new_tags = _interp1d_previous(times, tags, new_timestamp)
 
         fig = _plt.figure()
@@ -131,12 +130,12 @@ class MacScheduleData:
 
             month, day = int(datum[0]), int(datum[1])
             if len(datum) == 2:
-                timestamp = _datetime(year, month, day, 0, 0).timestamp()
+                timestamp = _Time(year, month, day, 0, 0).timestamp()
                 databyshift.append((timestamp, 0))
                 databyday.append((timestamp, 0))
                 datainicurr.append((timestamp, 0.0))
             else:
-                timestamp = _datetime(year, month, day, 0, 0).timestamp()
+                timestamp = _Time(year, month, day, 0, 0).timestamp()
                 databyday.append((timestamp, 1))
                 for tag in datum[2:]:
                     if 'B' in tag:
@@ -149,7 +148,7 @@ class MacScheduleData:
                         inicurr = 0.0
                     flag_bit = 0 if flag == 'E' else 1
                     hour, minute = int(hour), int(minute)
-                    timestamp = _datetime(
+                    timestamp = _Time(
                         year, month, day, hour, minute).timestamp()
                     databyshift.append((timestamp, flag_bit))
                     datainicurr.append((timestamp, inicurr))
@@ -168,7 +167,7 @@ class MacScheduleData:
             if not isinstance(timestamp, (list, tuple, _np.ndarray)):
                 timestamp = [timestamp, ]
                 ret_uni = True
-            datetime = [_datetime.fromtimestamp(ts) for ts in timestamp]
+            datetime = [_Time(ts) for ts in timestamp]
         elif datetime is not None:
             if not isinstance(datetime, (list, tuple, _np.ndarray)):
                 datetime = [datetime, ]
@@ -176,7 +175,7 @@ class MacScheduleData:
             timestamp = [dt.timestamp() for dt in datetime]
         elif year is not None:
             ret_uni = True
-            datetime = [_datetime(year, month, day, hour, minute), ]
+            datetime = [_Time(year, month, day, hour, minute), ]
             timestamp = [dt.timestamp() for dt in datetime]
         else:
             raise Exception(
@@ -186,11 +185,11 @@ class MacScheduleData:
     @staticmethod
     def _handle_interval_data(begin, end):
         if isinstance(begin, float):
-            begin = _datetime.fromtimestamp(begin)
-            end = _datetime.fromtimestamp(end)
+            begin = _Time(begin)
+            end = _Time(end)
         elif isinstance(begin, dict):
-            begin = _datetime(**begin)
-            end = _datetime(**end)
+            begin = _Time(**begin)
+            end = _Time(**end)
         return begin, end
 
     @staticmethod
@@ -1171,9 +1170,7 @@ class MacReport:
             print('No data to display. Call update() to get data.')
             return
 
-        datetimes = _np.array(
-            [_datetime.fromtimestamp(t)
-             for t in self._raw_data['Timestamp']])
+        datetimes = _np.array([_Time(t) for t in self._raw_data['Timestamp']])
 
         fig, axs = _plt.subplots(11, 1, sharex=True)
         fig.set_size_inches(9, 9)
