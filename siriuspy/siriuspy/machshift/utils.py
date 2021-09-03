@@ -238,9 +238,9 @@ class MacReport:
         Total user shift time interval (implemented + extra).
     - user_shift_progmd_count
         Number of user shifts programmed.
-    - user_shift_average_current
+    - user_shift_current_average
         Average current in the total user shift time interval.
-    - user_shift_stddev_current
+    - user_shift_current_stddev
         Current standard deviation in the total user shift time interval.
     - failures_interval
         Total failure duration.
@@ -446,8 +446,8 @@ class MacReport:
         self._user_shift_extra_interval = None
         self._user_shift_total_interval = None
         self._user_shift_progmd_count = None
-        self._user_shift_average_current = None
-        self._user_shift_stddev_current = None
+        self._user_shift_current_average = None
+        self._user_shift_current_stddev = None
         self._failures_interval = None
         self._failures_count = None
         self._beam_dump_count = None
@@ -641,15 +641,14 @@ class MacReport:
         return self._conv_sec_2_hour(self._user_shift_total_interval)
 
     @property
-    def user_shift_average_current(self):
-        """User shift average current."""
-        return self._user_shift_average_current
+    def user_shift_current_average(self):
+        """User shift current average."""
+        return self._user_shift_current_average
 
     @property
-    def user_shift_stddev_current(self):
+    def user_shift_current_stddev(self):
         """User shift current standard deviation."""
-        return self._user_shift_stddev_current
-
+        return self._user_shift_current_stddev
 
     @property
     def user_shift_progmd_count(self):
@@ -1482,7 +1481,7 @@ class MacReport:
 
         self._user_shift_total_interval = _np.sum(dtimes_users_total)
 
-        self._user_shift_average_current, self._user_shift_stddev_current = \
+        self._user_shift_current_average, self._user_shift_current_stddev = \
             self._calc_current_stats(dtimes_users_total)
 
         # # # ----- failures -----
@@ -1644,8 +1643,8 @@ class MacReport:
             ['user_shift_total_interval', 'h'],
             ['user_shift_extra_interval', 'h'],
             ['user_shift_progmd_count', ''],
-            ['user_shift_average_current', 'mA'],
-            ['user_shift_stddev_current', 'mA'],
+            ['user_shift_current_average', 'mA'],
+            ['user_shift_current_stddev', 'mA'],
             ['failures_interval', 'h'],
             ['failures_count', ''],
             ['beam_dump_count', ''],
