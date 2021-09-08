@@ -1030,7 +1030,8 @@ _pvs_tb_di = [
     ['TB-02:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
     ['TB-03:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
     ['TB-04:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
-]
+    ]
+
 
 _pvs_bo_di = [
     ['BO-02U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
@@ -1083,7 +1084,8 @@ _pvs_bo_di = [
     ['BO-49U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
     ['BO-50U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
     ['BO-01U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
-]
+    ]
+
 
 _pvs_ts_di = [
     ['TS-01:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
@@ -1091,7 +1093,8 @@ _pvs_ts_di = [
     ['TS-03:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
     ['TS-04:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
     ['TS-04:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
-]
+    ]
+
 
 _pvs_si_di = [
     ['SI-01M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
@@ -1254,7 +1257,8 @@ _pvs_si_di = [
     ['SI-20C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
     ['SI-20C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
     ['SI-01M1:DI-BPM:RFFEAtt-SP ', 0.0, 0.0],
-]
+    ]
+
 
 _pvs_tb_ps = [
     ['TB-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
