@@ -452,7 +452,7 @@ class TLSOFB(_Device):
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.autocorrsts == self.data.LoopState.Closed:
             return True
         self['LoopState-Sel'] = self.data.LoopState.Closed
@@ -461,7 +461,7 @@ class TLSOFB(_Device):
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.autocorrsts == self.data.LoopState.Open:
             return True
         self['LoopState-Sel'] = self.data.LoopState.Open
@@ -470,14 +470,14 @@ class TLSOFB(_Device):
 
     def wait_buffer(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         return self._wait(
             'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
 
     def wait_apply_delta_kick(self, timeout=None):
         """."""
         def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
-        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
+        def_timeout = max(self._default_timeout_kick_apply, def_timeout)
         timeout = timeout or def_timeout
         return self._wait(
             'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
@@ -485,7 +485,7 @@ class TLSOFB(_Device):
 
     def wait_respm_meas(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout_respm
+        timeout = timeout or self._default_timeout_respm
         return self._wait(
             'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
             timeout=timeout, comp='ne')
@@ -737,7 +737,7 @@ class SISOFB(BOSOFB):
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.drivests == self.data.DriveState.Closed:
             return True
         self['DriveState-Sel'] = self.data.DriveState.Closed
@@ -746,7 +746,7 @@ class SISOFB(BOSOFB):
 
     def cmd_turn_off_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.drivests == self.data.DriveState.Open:
             return True
         self['DriveState-Sel'] = self.data.DriveState.Open
@@ -755,7 +755,7 @@ class SISOFB(BOSOFB):
 
     def wait_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout_respm
+        timeout = timeout or self._default_timeout_respm
         return self._wait(
             'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
 
