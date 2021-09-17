@@ -282,7 +282,7 @@ class SIRFCavMonitor(_DeviceNC):
         'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
         'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
-        'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon'
+        'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
         )
 
     def __init__(self):
@@ -375,6 +375,11 @@ class SIRFCavMonitor(_DeviceNC):
     def temp_cell7(self):
         """."""
         return self['Cylin7T-Mon']
+
+    @property
+    def gap_voltage(self):
+        """."""
+        return self['AmpVCav-Mon']
 
 
 class RFCav(_Devices):
