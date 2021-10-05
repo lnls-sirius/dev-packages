@@ -241,6 +241,14 @@ class MacReport:
         Average current in the total user shift time interval.
     - user_shift_current_stddev
         Current standard deviation in the total user shift time interval.
+    - user_shift_current_beg_average
+        User shift current average at the beginning of the shift.
+    - user_shift_current_beg_stddev
+        User shift current st.dev. at the beginning of the shift.
+    - user_shift_current_end_average
+        User shift current average at the end of the shift.
+    - user_shift_current_end_stddev
+        User shift current st.dev. at the end of the shift.
     - failures_interval
         Total failure duration.
     - failures_count
@@ -450,6 +458,10 @@ class MacReport:
         self._user_shift_progmd_count = None
         self._user_shift_current_average = None
         self._user_shift_current_stddev = None
+        self._user_shift_current_beg_average = None
+        self._user_shift_current_beg_stddev = None
+        self._user_shift_current_end_average = None
+        self._user_shift_current_end_stddev = None
         self._failures_interval = None
         self._failures_count = None
         self._beam_dump_count = None
@@ -652,6 +664,26 @@ class MacReport:
     def user_shift_current_stddev(self):
         """User shift current standard deviation."""
         return self._user_shift_current_stddev
+
+    @property
+    def user_shift_current_beg_average(self):
+        """User shift current average at the beginning of the shift."""
+        return self._user_shift_current_beg_average
+
+    @property
+    def user_shift_current_beg_stddev(self):
+        """User shift current st.dev. at the beginning of the shift."""
+        return self._user_shift_current_beg_stddev
+
+    @property
+    def user_shift_current_end_average(self):
+        """User shift current average at the end of the shift."""
+        return self._user_shift_current_end_average
+
+    @property
+    def user_shift_current_end_stddev(self):
+        """User shift current st.dev. at the end of the shift."""
+        return self._user_shift_current_end_stddev
 
     @property
     def user_shift_progmd_count(self):
@@ -1515,6 +1547,47 @@ class MacReport:
         self._user_shift_current_average, self._user_shift_current_stddev = \
             self._calc_current_stats(dtimes_users_total)
 
+        transit = _np.diff(self._user_shift_impltd_values)
+        beg_idcs = _np.where(transit == 1)[0]
+        end_idcs = _np.where(transit == -1)[0]
+
+        if beg_idcs.size:
+            beg_val = [i for i in range(beg_idcs.size-1) if
+                       beg_idcs[i+1]-beg_idcs[i] > 15]
+            beg_val += [beg_idcs.size-1]
+            beg1, beg2 = beg_idcs[beg_val], beg_idcs[beg_val] + 15
+            if beg2[-1] > self._user_shift_impltd_values.size-1:
+                beg1.pop()
+                beg2.pop()
+            beg_val = [i for i in range(beg1.size) if not
+                       any([beg1[i] < e < beg2[i] for e in end_idcs])]
+            beg1, beg2 = beg1[beg_val], beg2[beg_val]
+            stats_vals = [_np.mean(self._curr_values[beg1[i]:beg2[i]])
+                          for i in range(beg1.size)]
+            self._user_shift_current_beg_average = _np.mean(stats_vals)
+            self._user_shift_current_beg_stddev = _np.std(stats_vals)
+        else:
+            self._user_shift_current_beg_average = 0
+            self._user_shift_current_beg_stddev = 0
+
+        if end_idcs.size:
+            end_val = [0] + [i for i in range(end_idcs.size)
+                             if end_idcs[i]-end_idcs[i-1] > 15]
+            end1, end2 = end_idcs[end_val] - 15, end_idcs[end_val]
+            if end1[0] < 0:
+                end1.pop(0)
+                end2.pop(0)
+            end_val = [i for i in range(end1.size-1) if not
+                       any([end1[i] < b < end2[i] for b in beg_idcs])]
+            end1, end2 = end1[end_val], end2[end_val]
+            stats_vals = [_np.mean(self._curr_values[end1[i]:end2[i]])
+                          for i in range(end1.size)]
+            self._user_shift_current_end_average = _np.mean(stats_vals)
+            self._user_shift_current_end_stddev = _np.std(stats_vals)
+        else:
+            self._user_shift_current_end_average = 0
+            self._user_shift_current_end_stddev = 0
+
         # # # ----- failures -----
         self._failures_interval = _np.sum(dtimes_failures_users)
 
@@ -1690,6 +1763,10 @@ class MacReport:
             ['user_shift_progmd_count', ''],
             ['user_shift_current_average', 'mA'],
             ['user_shift_current_stddev', 'mA'],
+            ['user_shift_current_beg_average', 'mA'],
+            ['user_shift_current_beg_stddev', 'mA'],
+            ['user_shift_current_end_average', 'mA'],
+            ['user_shift_current_end_stddev', 'mA'],
             ['failures_interval', 'h'],
             ['failures_count', ''],
             ['beam_dump_count', ''],
