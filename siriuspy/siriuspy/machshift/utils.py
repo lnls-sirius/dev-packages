@@ -228,13 +228,13 @@ class MacReport:
 
     - user_shift_progmd_interval
         Time interval programmed to be user shift.
-    - user_shift_impltd_interval
-        Time interval implemented as programmed user shift, considering
+    - user_shift_delivd_interval
+        Time interval delivered as programmed user shift, considering
         right shift and current above initial current*THOLD_FACTOR_USERSSBEAM.
     - user_shift_extra_interval
         Extra user shift time interval.
     - user_shift_total_interval
-        Total user shift time interval (implemented + extra).
+        Total user shift time interval (delivered + extra).
     - user_shift_progmd_count
         Number of user shifts programmed.
     - user_shift_current_average
@@ -262,7 +262,7 @@ class MacReport:
     - time_between_failures_average
         Average time interval between failure occurrences.
     - beam_reliability
-        Ratio between implemented and programmed user shift time interval.
+        Ratio between delivered and programmed user shift time interval.
     - inj_shift_interval
         Time interval in injection shift
     - inj_shift_count
@@ -452,7 +452,7 @@ class MacReport:
 
         # user shift stats
         self._user_shift_progmd_interval = None
-        self._user_shift_impltd_interval = None
+        self._user_shift_delivd_interval = None
         self._user_shift_extra_interval = None
         self._user_shift_total_interval = None
         self._user_shift_progmd_count = None
@@ -641,9 +641,9 @@ class MacReport:
         return self._conv_sec_2_hour(self._user_shift_progmd_interval)
 
     @property
-    def user_shift_impltd_interval(self):
-        """User shift interval implemented, in hours."""
-        return self._conv_sec_2_hour(self._user_shift_impltd_interval)
+    def user_shift_delivd_interval(self):
+        """User shift interval delivered, in hours."""
+        return self._conv_sec_2_hour(self._user_shift_delivd_interval)
 
     @property
     def user_shift_extra_interval(self):
@@ -652,7 +652,7 @@ class MacReport:
 
     @property
     def user_shift_total_interval(self):
-        """User shift interval total (implemented + extra), in hours."""
+        """User shift interval total (delivered + extra), in hours."""
         return self._conv_sec_2_hour(self._user_shift_total_interval)
 
     @property
@@ -724,7 +724,7 @@ class MacReport:
     def beam_reliability(self):
         """Beam reliability.
 
-        Ratio between implemented and programmed user shift time interval."""
+        Ratio between delivered and programmed user shift time interval."""
         return self._beam_reliability
 
     @property
@@ -1306,8 +1306,8 @@ class MacReport:
 
         dtimes_users_progmd = dtimes*self._raw_data['UserShiftProgmd']
         cum_progmd = _np.cumsum(dtimes_users_progmd)
-        dtimes_users_impltd = dtimes*self._raw_data['UserShiftImpltd']
-        cum_deliv = _np.cumsum(dtimes_users_impltd)
+        dtimes_users_delivd = dtimes*self._raw_data['UserShiftImpltd']
+        cum_deliv = _np.cumsum(dtimes_users_delivd)
 
         fig = _plt.figure()
         axs = _plt.gca()
@@ -1409,7 +1409,7 @@ class MacReport:
         self._mps_fail_values = _interp1d_previous(
             siintlk_times, siintlk_values, self._curr_times)
 
-        # implemented shift data
+        # delivered shift data
         ishift_times, ishift_values = \
             self._get_pv_data('AS-Glob:AP-MachShift:Mode-Sts')
 
@@ -1514,10 +1514,10 @@ class MacReport:
             [value for value in self._raw_data['Failures'].values()]) * \
             self._user_shift_progmd_values
         dtimes_failures_users = dtimes*self._failures_users
-        self._user_shift_impltd_values = self._user_shift_progmd_values * \
+        self._user_shift_delivd_values = self._user_shift_progmd_values * \
             _np.logical_not(self._failures_users)
-        self._raw_data['UserShiftImpltd'] = self._user_shift_impltd_values
-        dtimes_users_impltd = dtimes*self._user_shift_impltd_values
+        self._raw_data['UserShiftImpltd'] = self._user_shift_delivd_values
+        dtimes_users_delivd = dtimes*self._user_shift_delivd_values
         self._failures_users_operat = 1 * _np.logical_or.reduce(
             [self._raw_data['Failures']['SubsystemsNOk'],
              self._raw_data['Failures']['NoEBeam']]) * \
@@ -1538,7 +1538,7 @@ class MacReport:
         # # # ----- users shift -----
         self._user_shift_progmd_interval = _np.sum(dtimes_users_progmd)
 
-        self._user_shift_impltd_interval = _np.sum(dtimes_users_impltd)
+        self._user_shift_delivd_interval = _np.sum(dtimes_users_delivd)
 
         self._user_shift_extra_interval = _np.sum(dtimes_users_extra)
 
@@ -1547,7 +1547,7 @@ class MacReport:
         self._user_shift_current_average, self._user_shift_current_stddev = \
             self._calc_current_stats(dtimes_users_total)
 
-        transit = _np.diff(self._user_shift_impltd_values)
+        transit = _np.diff(self._user_shift_delivd_values)
         beg_idcs = _np.where(transit == 1)[0]
         end_idcs = _np.where(transit == -1)[0]
 
@@ -1556,7 +1556,7 @@ class MacReport:
                        beg_idcs[i+1]-beg_idcs[i] > 15]
             beg_val += [beg_idcs.size-1]
             beg1, beg2 = beg_idcs[beg_val], beg_idcs[beg_val] + 15
-            if beg2[-1] > self._user_shift_impltd_values.size-1:
+            if beg2[-1] > self._user_shift_delivd_values.size-1:
                 beg1.pop()
                 beg2.pop()
             beg_val = [i for i in range(beg1.size) if not
@@ -1609,7 +1609,7 @@ class MacReport:
         # # # ----- reliability -----
         self._beam_reliability = \
             0.0 if not self._user_shift_progmd_interval else 100 * \
-            self._user_shift_impltd_interval/self._user_shift_progmd_interval
+            self._user_shift_delivd_interval/self._user_shift_progmd_interval
 
         # # # ----- injection shift -----
         self._inj_shift_interval = _np.sum(dtimes_injection)
@@ -1757,7 +1757,7 @@ class MacReport:
     def __str__(self):
         ppties_userbeam = [
             ['user_shift_progmd_interval', 'h'],
-            ['user_shift_impltd_interval', 'h'],
+            ['user_shift_delivd_interval', 'h'],
             ['user_shift_total_interval', 'h'],
             ['user_shift_extra_interval', 'h'],
             ['user_shift_progmd_count', ''],
