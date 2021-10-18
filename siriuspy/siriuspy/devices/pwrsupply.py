@@ -319,7 +319,9 @@ class PowerSupply(_PSDev):
     @property
     def cycle_duration(self):
         """Total duration of the cycling process [s]."""
-        return self.cycle_num_cycles / self.cycle_freq
+        if self.cycle_freq != 0:
+            return self.cycle_num_cycles / self.cycle_freq
+        return float('nan')
 
     @property
     def cycle_rampup_time(self):
