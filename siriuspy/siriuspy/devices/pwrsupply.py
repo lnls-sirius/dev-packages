@@ -245,42 +245,42 @@ class PowerSupply(_PSDev):
 
     @property
     def cycle_freq(self):
-        """Frequency of the cycling curve in Hertz."""
+        """Frequency of the cycling curve [Hz]."""
         return self['CycleFreq-RB']
 
     @cycle_freq.setter
     def cycle_freq(self, value):
-        """Frequency of the cycling curve in Hertz."""
+        """Frequency of the cycling curve [Hz]."""
         self['CycleFreq-SP'] = value
 
     @property
     def cycle_period(self):
-        """Period of the cycling curve in seconds."""
+        """Period of the cycling curve [s]."""
         return 1 / self['CycleFreq-RB']
 
     @cycle_period.setter
     def cycle_period(self, value):
-        """Period of the cycling curve in seconds."""
+        """Period of the cycling curve [s]."""
         self['CycleFreq-SP'] = 1 / value
 
     @property
     def cycle_ampl(self):
-        """Return the current amplitude of the cycling curve in Ampere."""
+        """Return the current amplitude of the cycling curve [A]."""
         return self['CycleAmpl-RB']
 
     @cycle_ampl.setter
     def cycle_ampl(self, value):
-        """Return the current amplitude of the cycling curve in Ampere."""
+        """Return the current amplitude of the cycling curve [A]."""
         self['CycleAmpl-SP'] = value
 
     @property
     def cycle_offset(self):
-        """Return the current offset of the cycling curve in Ampere."""
+        """Return the current offset of the cycling curve [A]."""
         return self['CycleOffset-RB']
 
     @cycle_offset.setter
     def cycle_offset(self, value):
-        """Return the current offset of the cycling curve in Ampere."""
+        """Return the current offset of the cycling curve [A]."""
         self['CycleOffset-SP'] = value
 
     @property
@@ -288,7 +288,7 @@ class PowerSupply(_PSDev):
         """Meaning of each index is presented below.
 
         for Sine and DampedSine and DampedSquaredSine:
-         - AuxParams[0] --> inital phase [°]
+         - AuxParams[0] --> initial phase [°]
          - AuxParams[1] --> final phase [°]
          - AuxParams[2] --> damping time [s]
          - AuxParams[3] --> not used
@@ -300,7 +300,7 @@ class PowerSupply(_PSDev):
          - AuxParams[3] --> not used
 
         for Square:
-         - AuxParams[0] --> inital phase [°]
+         - AuxParams[0] --> initial phase [°]
          - AuxParams[1] --> not used
          - AuxParams[2] --> not used
          - AuxParams[3] --> not used
@@ -315,77 +315,77 @@ class PowerSupply(_PSDev):
 
     @property
     def cycle_duration(self):
-        """Total duration of the cycling process in seconds."""
+        """Total duration of the cycling process [s]."""
         return self.cycle_num_cycles / self.cycle_freq
 
     @property
     def cycle_rampup_time(self):
-        """Rampup time for Trapezoidal signals in seconds."""
+        """Rampup time for Trapezoidal signals [s]."""
         return self.cycle_aux_param[0]
 
     @cycle_rampup_time.setter
     def cycle_rampup_time(self, value):
-        """Set Rampup time for Trapezoidal signals in seconds."""
+        """Set Rampup time for Trapezoidal signals [s]."""
         var = self.cycle_aux_param
         var[0] = value
         self.cycle_aux_param = var
 
     @property
     def cycle_theta_begin(self):
-        """Return initial phase for Sine or Damped(Squared)Sine in degrees."""
+        """Return initial phase for Sine or Damped(Squared)Sine [°]."""
         return self.cycle_aux_param[0]
 
     @cycle_theta_begin.setter
     def cycle_theta_begin(self, value):
-        """Set Initial phase for Sine or Damped(Squared)Sine in degrees."""
+        """Set Initial phase for Sine or Damped(Squared)Sine [°]."""
         var = self.cycle_aux_param
         var[0] = value
         self.cycle_aux_param = var
 
     @property
     def cycle_rampdown_time(self):
-        """Rampdown time for Trapezoidal signals in seconds."""
+        """Rampdown time for Trapezoidal signals [s]."""
         return self.cycle_aux_param[2]
 
     @cycle_rampdown_time.setter
     def cycle_rampdown_time(self, value):
-        """Set Rampdown time for Trapezoidal signals in seconds."""
+        """Set Rampdown time for Trapezoidal signals [s]."""
         var = self.cycle_aux_param
         var[2] = value
         self.cycle_aux_param = var
 
     @property
     def cycle_theta_end(self):
-        """Return final phase for Sine or Damped(Squared)Sine in degrees."""
+        """Return final phase for Sine or Damped(Squared)Sine [°]."""
         return self.cycle_aux_param[1]
 
     @cycle_theta_end.setter
     def cycle_theta_end(self, value):
-        """Set Final phase for Sine or Damped(Squared)Sine in degrees."""
+        """Set Final phase for Sine or Damped(Squared)Sine [°]."""
         var = self.cycle_aux_param
         var[1] = value
         self.cycle_aux_param = var
 
     @property
     def cycle_plateau_time(self):
-        """Plateau time for Trapezoidal signals in seconds."""
+        """Plateau time for Trapezoidal signals [s]."""
         return self.cycle_aux_param[1]
 
     @cycle_plateau_time.setter
     def cycle_plateau_time(self, value):
-        """Set Plateau time for Trapezoidal signals in seconds."""
+        """Set plateau time for Trapezoidal signals [s]."""
         var = self.cycle_aux_param
         var[1] = value
         self.cycle_aux_param = var
 
     @property
     def cycle_decay_time(self):
-        """Decay time constant for Damped(Squared)Sine signals in seconds."""
+        """Decay time constant for Damped(Squared)Sine signals [s]."""
         return self.cycle_aux_param[2]
 
     @cycle_decay_time.setter
     def cycle_decay_time(self, value):
-        """Set Decay time constant for Damped(Squared)Sine in seconds."""
+        """Set Decay time constant for Damped(Squared)Sine [s]."""
         var = self.cycle_aux_param
         var[2] = value
         self.cycle_aux_param = var
