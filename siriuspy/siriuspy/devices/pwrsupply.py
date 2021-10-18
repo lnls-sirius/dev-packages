@@ -256,7 +256,8 @@ class PowerSupply(_PSDev):
     @property
     def cycle_period(self):
         """Period of the cycling curve [s]."""
-        return 1 / self['CycleFreq-RB']
+        freq = self['CycleFreq-RB']
+        return 1 / freq if freq != 0 else float('nan')
 
     @cycle_period.setter
     def cycle_period(self, value):
