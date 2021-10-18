@@ -263,7 +263,7 @@ class PowerSupply(_PSDev):
     def cycle_period(self, value):
         """Period of the cycling curve [s]."""
         if value == 0:
-            raise ValueError('Cannot sey zero for cycle period.')
+            raise ValueError('Cannot set zero for cycle period.')
         self['CycleFreq-SP'] = 1 / value
 
     @property
