@@ -295,7 +295,7 @@ class PowerSupply(_PSDev):
 
         for Trapezoidal:
          - AuxParams[0] --> rampup time [s]
-         - AuxParams[1] --> plato time [s]
+         - AuxParams[1] --> plateau time [s]
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
 
