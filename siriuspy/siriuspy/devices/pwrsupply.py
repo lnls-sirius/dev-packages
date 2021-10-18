@@ -262,6 +262,8 @@ class PowerSupply(_PSDev):
     @cycle_period.setter
     def cycle_period(self, value):
         """Period of the cycling curve [s]."""
+        if value == 0:
+            raise ValueError
         self['CycleFreq-SP'] = 1 / value
 
     @property
