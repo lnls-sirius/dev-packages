@@ -65,7 +65,7 @@ class Device:
     @property
     def auto_monitor_status(self):
         """Return PVs auto_monitor statuses."""
-        return {pv.pvname: pv.auto_monitor for pv in self._pvs.values()}
+        return {pvn: pv.auto_monitor for pvn, pv in self._pvs.items()}
 
     @property
     def disconnected_pvnames(self):
