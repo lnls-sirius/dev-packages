@@ -22,7 +22,7 @@ class _PSDev(_Device):
         'Current-SP', 'Current-RB', 'Current-Mon',
     )
     _properties_magps = (
-        'Current-SP', 'Current-RB', 'Current-Mon',
+        'Current-SP', 'Current-RB', 'Current-Mon',  'CurrentRef-Mon',
         'OpMode-Sel', 'OpMode-Sts',
         'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
         'CycleType-Sel', 'CycleType-Sts',
@@ -202,6 +202,11 @@ class PowerSupply(_PSDev):
     def current_mon(self):
         """."""
         return self['Current-Mon']
+
+    @property
+    def currentref_mon(self):
+        """."""
+        return self['CurrentRef-Mon']
 
     @property
     def opmode(self):
