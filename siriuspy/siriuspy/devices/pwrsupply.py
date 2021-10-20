@@ -295,7 +295,13 @@ class PowerSupply(_PSDev):
     def cycle_aux_param(self):
         """Meaning of each index is presented below.
 
-        for Sine and DampedSine and DampedSquaredSine:
+        for Sine and Square:
+         - AuxParams[0] --> initial phase [°]
+         - AuxParams[1] --> final phase [°]
+         - AuxParams[2] --> not used
+         - AuxParams[3] --> not used
+
+        for DampedSine and DampedSquaredSine:
          - AuxParams[0] --> initial phase [°]
          - AuxParams[1] --> final phase [°]
          - AuxParams[2] --> damping time [s]
@@ -306,13 +312,6 @@ class PowerSupply(_PSDev):
          - AuxParams[1] --> plateau time [s]
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
-
-        for Square:
-         - AuxParams[0] --> initial phase [°]
-         - AuxParams[1] --> not used
-         - AuxParams[2] --> not used
-         - AuxParams[3] --> not used
-
         """
         return self['CycleAuxParam-RB']
 
