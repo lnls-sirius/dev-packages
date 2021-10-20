@@ -108,10 +108,12 @@ class EVG(_Device):
         """."""
         return self._wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
 
-    def cmd_update_events(self):
+    def cmd_update_events(self, timeout=10):
         """."""
+        val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
-        return True
+        return self._wait(
+            propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
     def cmd_turn_on_injection(self, timeout=10):
         """."""
@@ -136,7 +138,7 @@ class EVG(_Device):
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""
         self['RepeatBucketList-SP'] = value
-        return self._wait('RepeatBucketList-RB', value)
+        return self._wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
 class Event(_ProptyDevice):
