@@ -22,7 +22,7 @@ class _PSDev(_Device):
         'Current-SP', 'Current-RB', 'Current-Mon',
     )
     _properties_magps = (
-        'Current-SP', 'Current-RB', 'Current-Mon',
+        'Current-SP', 'Current-RB', 'Current-Mon',  'CurrentRef-Mon',
         'OpMode-Sel', 'OpMode-Sts',
         'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
         'CycleType-Sel', 'CycleType-Sts',
@@ -204,6 +204,11 @@ class PowerSupply(_PSDev):
         return self['Current-Mon']
 
     @property
+    def currentref_mon(self):
+        """."""
+        return self['CurrentRef-Mon']
+
+    @property
     def opmode(self):
         """."""
         return self['OpMode-Sts']
@@ -290,7 +295,13 @@ class PowerSupply(_PSDev):
     def cycle_aux_param(self):
         """Meaning of each index is presented below.
 
-        for Sine and DampedSine and DampedSquaredSine:
+        for Sine and Square:
+         - AuxParams[0] --> initial phase [°]
+         - AuxParams[1] --> final phase [°]
+         - AuxParams[2] --> not used
+         - AuxParams[3] --> not used
+
+        for DampedSine and DampedSquaredSine:
          - AuxParams[0] --> initial phase [°]
          - AuxParams[1] --> final phase [°]
          - AuxParams[2] --> damping time [s]
@@ -301,13 +312,6 @@ class PowerSupply(_PSDev):
          - AuxParams[1] --> plateau time [s]
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
-
-        for Square:
-         - AuxParams[0] --> initial phase [°]
-         - AuxParams[1] --> not used
-         - AuxParams[2] --> not used
-         - AuxParams[3] --> not used
-
         """
         return self['CycleAuxParam-RB']
 
