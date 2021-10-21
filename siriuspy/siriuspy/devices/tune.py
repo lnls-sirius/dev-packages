@@ -126,12 +126,12 @@ class Tune(_Devices):
     @property
     def enablex(self):
         """."""
-        return self.devices[0]['Enbl-Sts']
+        return self.devices[0].enable
 
     @property
     def enabley(self):
         """."""
-        return self.devices[1]['Enbl-Sts']
+        return self.devices[1].enable
 
     def cmd_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
         """."""
