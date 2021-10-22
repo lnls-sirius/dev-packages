@@ -155,7 +155,8 @@ class Device:
 
     def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
-        comp = getattr(_opr, comp)
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
         ntrials = int(timeout/_TINY_INTERVAL)
         _time.sleep(4*_TINY_INTERVAL)
         for _ in range(ntrials):
