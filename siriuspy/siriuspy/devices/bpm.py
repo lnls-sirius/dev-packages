@@ -680,6 +680,16 @@ class BPM(_Device):
         """."""
         self['ACQShots-SP'] = val
 
+    def wait_acq_finish(self, timeout=10):
+        """Wait Acquisition to finish."""
+        vals = {
+            _csbpm.AcqStates.Idle, _csbpm.AcqStates.Error,
+            _csbpm.AcqStates.Aborted, _csbpm.AcqStates.Too_Many_Samples,
+            _csbpm.AcqStates.Too_Few_Samples, _csbpm.AcqStates.No_Memory,
+            _csbpm.AcqStates.Acq_Overflow}
+        return self._wait(
+            'ACQStatus-Sts', vals, timeout=timeout, comp=lambda x, y: x in y)
+
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
