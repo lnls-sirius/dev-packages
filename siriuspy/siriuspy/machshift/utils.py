@@ -637,22 +637,22 @@ class MacReport:
 
     @property
     def user_shift_progmd_interval(self):
-        """User shift interval programmed, in hours."""
+        """User shift interval programmed [h]."""
         return self._conv_sec_2_hour(self._user_shift_progmd_interval)
 
     @property
     def user_shift_delivd_interval(self):
-        """User shift interval delivered, in hours."""
+        """User shift interval delivered [h]."""
         return self._conv_sec_2_hour(self._user_shift_delivd_interval)
 
     @property
     def user_shift_extra_interval(self):
-        """User shift interval extra, in hours."""
+        """User shift interval extra [h]."""
         return self._conv_sec_2_hour(self._user_shift_extra_interval)
 
     @property
     def user_shift_total_interval(self):
-        """User shift interval total (delivered + extra), in hours."""
+        """User shift interval total (delivered + extra) [h]."""
         return self._conv_sec_2_hour(self._user_shift_total_interval)
 
     @property
@@ -692,7 +692,7 @@ class MacReport:
 
     @property
     def failures_interval(self):
-        """Failures interval, in hours."""
+        """Failures interval [h]."""
         return self._conv_sec_2_hour(self._failures_interval)
 
     @property
@@ -707,17 +707,17 @@ class MacReport:
 
     @property
     def time_to_recover_average(self):
-        """Average time interval took to recover from failures, in hours."""
+        """Average time interval took to recover from failures [h]."""
         return self._conv_sec_2_hour(self._time_to_recover_average)
 
     @property
     def time_to_recover_stddev(self):
-        """Time interval std.dev. took to recover from failures, in hours."""
+        """Time interval std.dev. took to recover from failures [h]."""
         return self._conv_sec_2_hour(self._time_to_recover_stddev)
 
     @property
     def time_between_failures_average(self):
-        """Average time interval between failure occurrences, in hours."""
+        """Average time interval between failure occurrences [h]."""
         return self._conv_sec_2_hour(self._time_between_failures_average)
 
     @property
@@ -729,7 +729,7 @@ class MacReport:
 
     @property
     def inj_shift_interval(self):
-        """Injection shift interval, in hours."""
+        """Injection shift interval [h]."""
         return self._conv_sec_2_hour(self._inj_shift_interval)
 
     @property
@@ -739,12 +739,12 @@ class MacReport:
 
     @property
     def inj_shift_interval_average(self):
-        """Average time interval in injection shift, in hours."""
+        """Average time interval in injection shift [h]."""
         return self._conv_sec_2_hour(self._inj_shift_interval_average)
 
     @property
     def inj_shift_interval_stddev(self):
-        """Time interval standard deviation in injection shift, in hours."""
+        """Time interval standard deviation in injection shift [h]."""
         return self._conv_sec_2_hour(self._inj_shift_interval_stddev)
 
     # light source usage stats
@@ -1153,7 +1153,7 @@ class MacReport:
 
     @property
     def current_ebeam_total_interval(self):
-        """Stored beam interval, in hours. Consider any stored current."""
+        """Stored beam interval [h]. Consider any stored current."""
         return self._conv_sec_2_hour(self._current_ebeam_total_interval)
 
     @property
@@ -1410,48 +1410,48 @@ class MacReport:
             siintlk_times, siintlk_values, self._curr_times)
 
         # delivered shift data
-        ishift_times, ishift_values = \
+        shift_times, shift_values = \
             self._get_pv_data('AS-Glob:AP-MachShift:Mode-Sts')
 
         self._raw_data['Shift'] = dict()
 
         inj_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.Injection) for v in ishift_values])
+            [1*(v == _Cte.MachShift.Injection) for v in shift_values])
         self._inj_shift_values = _interp1d_previous(
-            ishift_times, inj_shift_values, self._curr_times)
+            shift_times, inj_shift_values, self._curr_times)
         self._raw_data['Shift']['Injection'] = self._inj_shift_values
 
         stdy_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.MachineStudy) for v in ishift_values])
+            [1*(v == _Cte.MachShift.MachineStudy) for v in shift_values])
         self._machinestudy_shift_values = _interp1d_previous(
-            ishift_times, stdy_shift_values, self._curr_times)
+            shift_times, stdy_shift_values, self._curr_times)
         self._raw_data['Shift']['MachineStudy'] = \
             self._machinestudy_shift_values
 
         cmm_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.Commissioning) for v in ishift_values])
+            [1*(v == _Cte.MachShift.Commissioning) for v in shift_values])
         self._commissioning_shift_values = _interp1d_previous(
-            ishift_times, cmm_shift_values, self._curr_times)
+            shift_times, cmm_shift_values, self._curr_times)
         self._raw_data['Shift']['Commissioning'] = \
             self._commissioning_shift_values
 
         cdt_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.Conditioning) for v in ishift_values])
+            [1*(v == _Cte.MachShift.Conditioning) for v in shift_values])
         self._conditioning_shift_values = _interp1d_previous(
-            ishift_times, cdt_shift_values, self._curr_times)
+            shift_times, cdt_shift_values, self._curr_times)
         self._raw_data['Shift']['Conditioning'] = \
             self._conditioning_shift_values
 
         mtn_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.Maintenance) for v in ishift_values])
+            [1*(v == _Cte.MachShift.Maintenance) for v in shift_values])
         self._maintenance_shift_values = _interp1d_previous(
-            ishift_times, mtn_shift_values, self._curr_times)
+            shift_times, mtn_shift_values, self._curr_times)
         self._raw_data['Shift']['Maintenance'] = self._maintenance_shift_values
 
         user_shift_values = _np.array(
-            [1*(v == _Cte.MachShift.Users) for v in ishift_values])
+            [1*(v == _Cte.MachShift.Users) for v in shift_values])
         self._user_shift_values = _interp1d_previous(
-            ishift_times, user_shift_values, self._curr_times)
+            shift_times, user_shift_values, self._curr_times)
 
         # desired shift data
         _t0 = _time.time()
@@ -1489,7 +1489,7 @@ class MacReport:
         self._is_stored_users = self._curr_values >= \
             self._user_shift_inicurr_values*MacReport.THOLD_FACTOR_USERSSBEAM
 
-        # time vectors and failures
+        # auxiliary time vectors
         dtimes = _np.diff(self._curr_times)
         dtimes = _np.r_[dtimes, dtimes[-1]]
 
@@ -1500,6 +1500,7 @@ class MacReport:
         dtimes_conditioning = dtimes*self._conditioning_shift_values
         dtimes_maintenance = dtimes*self._maintenance_shift_values
 
+        # failures
         self._raw_data['Failures'] = dict()
         self._raw_data['Failures']['SubsystemsNOk'] = _np.logical_or(
             self._ps_fail_values, self._mps_fail_values)
@@ -1514,6 +1515,7 @@ class MacReport:
             [value for value in self._raw_data['Failures'].values()]) * \
             self._user_shift_progmd_values
         dtimes_failures_users = dtimes*self._failures_users
+
         self._user_shift_delivd_values = self._user_shift_progmd_values * \
             _np.logical_not(self._failures_users)
         self._raw_data['UserShiftDelivd'] = self._user_shift_delivd_values
