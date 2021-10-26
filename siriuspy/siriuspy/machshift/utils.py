@@ -1529,11 +1529,6 @@ class MacReport:
             _np.logical_not(self._failures_users)
         self._raw_data['UserShiftDelivd'] = self._user_shift_delivd_values
         dtimes_users_delivd = dtimes*self._user_shift_delivd_values
-        self._failures_users_operat = 1 * _np.logical_or.reduce(
-            [self._raw_data['Failures']['SubsystemsNOk'],
-             self._raw_data['Failures']['NoEBeam']]) * \
-            self._user_shift_progmd_values
-        dtimes_failures_users_oper = dtimes*self._failures_users_operat
 
         # user total and extra shift
         self._user_shift_act_values = \
@@ -1661,6 +1656,7 @@ class MacReport:
 
         self._lsusage_maintenance_failures_interval = 0.0
 
+        dtimes_failures_users_oper = dtimes*self._failures_users
         self._lsusage_user_failures_interval = _np.sum(
             dtimes_failures_users_oper)
 
