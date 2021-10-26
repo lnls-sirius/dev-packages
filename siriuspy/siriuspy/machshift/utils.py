@@ -1324,13 +1324,14 @@ class MacReport:
     def _init_connectors(self):
         self._current_pv = 'SI-Glob:AP-CurrInfo:Current-Mon'
         self._macshift_pv = 'AS-Glob:AP-MachShift:Mode-Sts'
-        self._egtrigg_pv = 'LI-01:EG-TriggerPS:enablereal'
-        self._egpulse_pv = 'LI-01:EG-PulsePS:singleselstatus'
+        self._egtrgen_pv = 'LI-01:EG-TriggerPS:enablereal'
+        self._egpusel_pv = 'LI-01:EG-PulsePS:singleselstatus'
+        self._injevt_pv = 'AS-RaMO:TI-EVG:InjectionEvt-Sts'
         self._gammashutt_pv = 'AS-Glob:PP-GammaShutter:Status-Mon'
         self._siintlk_pv = 'RA-RaSIA02:RF-IntlkCtrl:IntlkSirius-Mon'
         self._pvnames = [
             self._current_pv, self._macshift_pv,
-            self._egtrigg_pv, self._egpulse_pv,
+            self._egtrgen_pv, self._egpusel_pv, self._injevt_pv,
             self._gammashutt_pv, self._siintlk_pv]
 
         self._pvdata = dict()
@@ -1471,15 +1472,23 @@ class MacReport:
         self._raw_data['UserShiftInitCurr'] = self._user_shift_inicurr_values
 
         # single/multi bunch mode data
-        egtrig_times, _ = self._get_pv_data('LI-01:EG-TriggerPS:enablereal')
-        egmode_times, egmode_values = \
-            self._get_pv_data('LI-01:EG-PulsePS:singleselstatus')
-        egmode_values = _interp1d_previous(
-            egmode_times, egmode_values, egtrig_times)
-        egmode_values = _interp1d_previous(
-            egtrig_times, egmode_values, self._curr_times)
-        self._singlebunch_values = egmode_values
-        self._multibunch_values = _np.logical_not(egmode_values)
+        inj_ts, inj_vs = self._get_pv_data('AS-RaMO:TI-EVG:InjectionEvt-Sts')
+        inj_vs = _interp1d_previous(inj_ts, inj_vs, self._curr_times)
+        trig_ts, trig_vs = self._get_pv_data('LI-01:EG-TriggerPS:enablereal')
+        trig_vs = _interp1d_previous(trig_ts, trig_vs, self._curr_times)
+        sb_ts, sb_vs = self._get_pv_data('LI-01:EG-PulsePS:singleselstatus')
+        sb_vs = _interp1d_previous(sb_ts, sb_vs, self._curr_times)
+        idcs1 = _np.where(inj_vs*trig_vs*sb_vs)[0]
+        mode_ts = self._curr_times[idcs1]
+        mode_vs = [1]*len(idcs1)
+        idcs2 = _np.where(inj_vs*trig_vs*1*_np.logical_not(sb_vs))[0]
+        mode_ts = _np.r_[mode_ts, self._curr_times[idcs2]]
+        mode_vs = _np.r_[mode_vs, [0]*len(idcs2)]
+        ind = mode_ts.argsort()
+        mode_ts, mode_vs = mode_ts[ind], mode_vs[ind]
+        mode_vs = _interp1d_previous(mode_ts, mode_vs, self._curr_times)
+        self._singlebunch_values = mode_vs
+        self._multibunch_values = _np.logical_not(mode_vs)
         self._raw_data['EgunModes'] = dict()
         self._raw_data['EgunModes']['SingleBunch'] = self._singlebunch_values
         self._raw_data['EgunModes']['MultiBunch'] = self._multibunch_values
