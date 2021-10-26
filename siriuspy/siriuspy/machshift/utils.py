@@ -226,208 +226,208 @@ class MacReport:
 
     Reports:
 
-    - user_shift_progmd_interval
-        Time interval programmed to be user shift.
-    - user_shift_delivd_interval
-        Time interval delivered as programmed user shift, considering
-        right shift and current above initial current*THOLD_FACTOR_USERSSBEAM.
-    - user_shift_extra_interval
-        Extra user shift time interval.
-    - user_shift_total_interval
-        Total user shift time interval (delivered + extra).
-    - user_shift_progmd_count
-        Number of user shifts programmed.
-    - user_shift_current_average
-        Average current in the total user shift time interval.
-    - user_shift_current_stddev
-        Current standard deviation in the total user shift time interval.
-    - user_shift_current_beg_average
-        User shift current average at the beginning of the shift.
-    - user_shift_current_beg_stddev
-        User shift current st.dev. at the beginning of the shift.
-    - user_shift_current_end_average
-        User shift current average at the end of the shift.
-    - user_shift_current_end_stddev
-        User shift current st.dev. at the end of the shift.
-    - failures_interval
-        Total failure duration.
-    - failures_count
-        Count of failures occurred.
-    - beam_dump_count
-        Number of beam dumps occurred.
-    - time_to_recover_average
-        Average time interval took to recover from failures.
-    - time_to_recover_stddev
-        Time interval standard deviation took to recover from failures.
-    - time_between_failures_average
-        Average time interval between failure occurrences.
-    - beam_reliability
-        Ratio between delivered and programmed user shift time interval.
-    - inj_shift_interval
-        Time interval in injection shift
-    - inj_shift_count
-        Number of injections occurred
-    - inj_shift_interval_average
-        Average time interval in injection shift
-        (inj_shift_interval/inj_shift_count)
-    - inj_shift_interval_stddev
-        Time interval standard deviation in injection shift
+    - usershift_progmd_time
+        Programmed time[h].
+    - usershift_delivd_time
+        Delivered time[h], considering current above initial
+        current*THOLD_FACTOR_USERSSBEAM.
+    - usershift_extra_time
+        Extra time[h].
+    - usershift_total_time
+        Total time(delivered + extra)[h].
+    - usershift_progmd_count
+        Number of shifts programmed.
+    - usershift_current_average
+        Current average.
+    - usershift_current_stddev
+        Current standard deviation.
+    - usershift_current_beg_average
+        Current average at the beginning of the shift.
+    - usershift_current_beg_stddev
+        Current st.dev. at the beginning of the shift.
+    - usershift_current_end_average
+        Current average at the end of the shift.
+    - usershift_current_end_stddev
+        Current st.dev. at the end of the shift.
+    - usershift_total_failures_time
+        Total failures time[h].
+    - usershift_failures_count
+        Number of failures.
+    - usershift_beam_dump_count
+        Number of beam dumps.
+    - usershift_time_to_recover_average
+        Average time took to recover from failures[h].
+    - usershift_time_to_recover_stddev
+        Time std.dev. took to recover from failures[h].
+    - usershift_time_between_failures_average
+        Average time between failure occurrences[h].
+    - usershift_beam_reliability
+        Beam reliability. Ratio between delivered and programmed time.
+    - usershift_total_injection_time
+        Total injection shift[h].
+    - usershift_injection_count
+        Number of injections.
+    - usershift_injection_time_average
+        Average time used for injection[h].
+        (usershift_injection_time/usershift_injection_count)
+    - usershift_injection_time_stddev
+        Standard deviation of time used for injection[h].
 
-    - lsusage_total_interval
-        Total interval of Light Source Usage.
-    - lsusage_machinestudy_failures_interval
-        Interval of Light Source Usage for Study in Failure.
+    - lsusage_total_time
+        Total time of Light Source Usage.
+    - lsusage_machinestudy_failures_time
+        Failures time in Machine Study Shift.
     - lsusage_machinestudy_failures
-        Percentage of Light Source Usage for Study in Failure.
-    - lsusage_machinestudy_operational_interval
-        Operational Interval of Light Source Usage for Study.
+        Relative failures time in Machine Study Shift.
+    - lsusage_machinestudy_operational_time
+        Operational time in Machine Study Shift.
     - lsusage_machinestudy_operational
-        Operational Percentage of Light Source Usage for Study.
-    - lsusage_machinestudy_interval
-        Interval of Light Source Usage for Study.
+        Relative operational time in Machine Study Shift.
+    - lsusage_machinestudy_time
+        Time in Machine Study Shift.
     - lsusage_machinestudy
-        Percentage of Light Source Usage for Study.
-    - lsusage_commissioning_failures_interval
-        Interval of Light Source Usage for Commissioning in Failure.
+        Relative time in Machine Study Shift.
+    - lsusage_commissioning_failures_time
+        Failures time in Commissioning Shift.
     - lsusage_commissioning_failures
-        Percentage of Light Source Usage for Commissioning in Failure.
-    - lsusage_commissioning_operational_interval
-        Operational Interval of Light Source Usage for Commissioning.
+        Relative failures time in Commissioning Shift.
+    - lsusage_commissioning_operational_time
+        Operational time in Commissioning Shift.
     - lsusage_commissioning_operational
-        Operational Percentage of Light Source Usage for Commissioning.
-    - lsusage_commissioning_interval
-        Interval of Light Source Usage for Commissioning.
+        Relative operational time in Commissioning Shift.
+    - lsusage_commissioning_time
+        Time in Commissioning Shift.
     - lsusage_commissioning
-        Percentage of Light Source Usage for Commissioning.
-    - lsusage_conditioning_failures_interval
-        Interval of Light Source Usage for Conditioning in Failure.
+        Relative time in Commissioning Shift.
+    - lsusage_conditioning_failures_time
+        Failures time in Conditioning Shift.
     - lsusage_conditioning_failures
-        Percentage of Light Source Usage for Conditioning in Failure.
-    - lsusage_conditioning_operational_interval
-        Operational Interval of Light Source Usage for Conditioning.
+        Relative failures time in Conditioning Shift.
+    - lsusage_conditioning_operational_time
+        Operational time in Conditioning Shift.
     - lsusage_conditioning_operational
-        Operational Percentage of Light Source Usage for Conditioning.
-    - lsusage_conditioning_interval
-        Interval of Light Source Usage for Conditioning.
+        Relative operational time in Conditioning Shift.
+    - lsusage_conditioning_time
+        Time in Conditioning Shift.
     - lsusage_conditioning
-        Percentage of Light Source Usage for Conditioning.
-    - lsusage_maintenance_failures_interval
-        Interval of Light Source Usage for Maintenance in Failure.
+        Relative time in Conditioning Shift.
+    - lsusage_maintenance_failures_time
+        Failures time in Maintenance Shift.
     - lsusage_maintenance_failures
-        Percentage of Light Source Usage for Maintenance in Failure.
-    - lsusage_maintenance_operational_interval
-        Operational Interval of Light Source Usage for Maintenance.
+        Relative failures time in Maintenance Shift.
+    - lsusage_maintenance_operational_time
+        Operational time in Maintenance Shift.
     - lsusage_maintenance_operational
-        Operational Percentage of Light Source Usage for Maintenance.
-    - lsusage_maintenance_interval
-        Interval of Light Source Usage for Maintenance.
+        Relative operational time in Maintenance Shift.
+    - lsusage_maintenance_time
+        Time in Maintenance Shift.
     - lsusage_maintenance
-        Percentage of Light Source Usage for Maintenance.
-    - lsusage_user_failures_interval
-        Interval of Light Source Usage for Users in Failure.
+        Relative time in Maintenance Shift.
+    - lsusage_user_failures_time
+        Failures time in Users Shift.
     - lsusage_user_failures
-        Percentage of Light Source Usage for Users in Failure.
-    - lsusage_user_operational_interval
-        Operational Interval of Light Source Usage for Users.
+        Relative failures time in Users Shift.
+    - lsusage_user_operational_time
+        Operational time in Users Shift.
     - lsusage_user_operational
-        Operational Percentage of Light Source Usage for Users.
-    - lsusage_user_interval
-        Interval of Light Source Usage for Users.
+        Relative operational time in Users Shift.
+    - lsusage_user_time
+        Time in Users Shift.
     - lsusage_user
-        Percentage of Light Source Usage for Users.
+        Relative time in Users Shift.
 
     - current_machinestudy_singlebunch_average
         Current average for machine study single bunch shifts.
     - current_machinestudy_singlebunch_stddev
         Current standard deviation for machine study single bunch shifts.
-    - current_machinestudy_singlebunch_interval
-        Interval of machine study single bunch shifts.
+    - current_machinestudy_singlebunch_time
+        Time of machine study single bunch shifts.
     - current_machinestudy_multibunch_average
         Current average for machine study multi bunch shifts.
     - current_machinestudy_multibunch_stddev
         Current standard deviation for machine study multi bunch shifts.
-    - current_machinestudy_multibunch_interval
-        Interval of machine study multi bunch shifts.
+    - current_machinestudy_multibunch_time
+        Time of machine study multi bunch shifts.
     - current_machinestudy_total_average
         Current average for machine study shifts.
     - current_machinestudy_total_stddev
         Current standard deviation for machine study shifts.
-    - current_machinestudy_total_interval
-        Interval of machine study shifts.
+    - current_machinestudy_total_time
+        Time of machine study shifts.
     - current_commissioning_singlebunch_average
         Current average for single bunch commissioning shifts.
     - current_commissioning_singlebunch_stddev
         Current standard deviation for single bunch commissioning shifts.
-    - current_commissioning_singlebunch_interval
-        Interval of single bunch commissioning shifts.
+    - current_commissioning_singlebunch_time
+        Time of single bunch commissioning shifts.
     - current_commissioning_multibunch_average
         Current average for multi bunch commissioning shifts.
     - current_commissioning_multibunch_stddev
         Current standard deviation for multi bunch commissioning shifts.
-    - current_commissioning_multibunch_interval
-        Interval of multi bunch commissioning shifts.
+    - current_commissioning_multibunch_time
+        Time of multi bunch commissioning shifts.
     - current_commissioning_total_average
         Current average in commissioning shifts.
     - current_commissioning_total_stddev
         Current standard deviation in commissioning shifts.
-    - current_commissioning_total_interval
-        Interval of commissioning shifts.
+    - current_commissioning_total_time
+        Time of commissioning shifts.
     - current_conditioning_singlebunch_average
         Current average for single bunch conditioning shifts.
     - current_conditioning_singlebunch_stddev
         Current standard deviation for single bunch conditioning shifts.
-    - current_conditioning_singlebunch_interval
-        Interval of single bunch conditioning shifts.
+    - current_conditioning_singlebunch_time
+        Time of single bunch conditioning shifts.
     - current_conditioning_multibunch_average
         Current average for multi bunch conditioning shifts.
     - current_conditioning_multibunch_stddev
         Current standard deviation for multi bunch conditioning shifts.
-    - current_conditioning_multibunch_interval
-        Interval of multi bunch conditioning shifts.
+    - current_conditioning_multibunch_time
+        Time of multi bunch conditioning shifts.
     - current_conditioning_total_average
         Current average in conditioning shifts.
     - current_conditioning_total_stddev
         Current standard deviation in conditioning shifts.
-    - current_conditioning_total_interval
-        Interval of conditioning shifts.
+    - current_conditioning_total_time
+        Time of conditioning shifts.
     - current_user_singlebunch_average
         Current average for single bunch user shifts.
     - current_user_singlebunch_stddev
         Current standard deviation for single bunch user shifts.
-    - current_user_singlebunch_interval
-        Interval of single bunch user shifts.
+    - current_user_singlebunch_time
+        Time of single bunch user shifts.
     - current_user_multibunch_average
         Current average for multi bunch user shifts.
     - current_user_multibunch_stddev
         Current standard deviation for multi bunch user shifts.
-    - current_user_multibunch_interval
-        Interval of multi bunch user shifts.
+    - current_user_multibunch_time
+        Time of multi bunch user shifts.
     - current_user_total_average
         Current average in all user shifts.
     - current_user_total_stddev
         Current standard deviation in all user shifts.
-    - current_user_total_interval
-        Interval of all user shifts.
+    - current_user_total_time
+        Time of all user shifts.
     - current_ebeam_singlebunch_average
         Current average for all single bunch shifts.
     - current_ebeam_singlebunch_stddev
         Current standard deviation for all single bunch shifts.
-    - current_ebeam_singlebunch_interval
-        Interval of all single bunch shifts.
+    - current_ebeam_singlebunch_time
+        Time of all single bunch shifts.
     - current_ebeam_multibunch_average
         Current average for all multi bunch shifts.
     - current_ebeam_multibunch_stddev
         Current standard deviation for all multi bunch shifts.
-    - current_ebeam_multibunch_interval
-        Interval of all multi bunch shifts.
+    - current_ebeam_multibunch_time
+        Time of all multi bunch shifts.
     - current_ebeam_total_average
-        Average current considering the entire interval in which
+        Average current considering the entire time in which
         there was any current above a threshold (THOLD_STOREDBEAM)
     - current_ebeam_total_stddev
-        Current standard deviation considering the entire interval in which
+        Current standard deviation considering the entire time in which
         there was any current above a threshold (THOLD_STOREDBEAM)
-    - current_ebeam_total_interval
-        Time interval in which there was stored beam, for any
+    - current_ebeam_total_time
+        Time in which there was stored beam, for any
         current value above a threshold (THOLD_STOREDBEAM)
     """
 
@@ -451,120 +451,132 @@ class MacReport:
         self._time_stop = None
 
         # user shift stats
-        self._user_shift_progmd_interval = None
-        self._user_shift_delivd_interval = None
-        self._user_shift_extra_interval = None
-        self._user_shift_total_interval = None
-        self._user_shift_progmd_count = None
-        self._user_shift_current_average = None
-        self._user_shift_current_stddev = None
-        self._user_shift_current_beg_average = None
-        self._user_shift_current_beg_stddev = None
-        self._user_shift_current_end_average = None
-        self._user_shift_current_end_stddev = None
-        self._failures_interval = None
-        self._failures_count = None
-        self._beam_dump_count = None
-        self._time_to_recover_average = None
-        self._time_to_recover_stddev = None
-        self._time_between_failures_average = None
-        self._beam_reliability = None
-        self._inj_shift_interval = None
-        self._inj_shift_count = None
-        self._inj_shift_interval_average = None
-        self._inj_shift_interval_stddev = None
+        self._usershift_progmd_time = None
+        self._usershift_delivd_time = None
+        self._usershift_extra_time = None
+        self._usershift_total_time = None
+        self._usershift_progmd_count = None
+        self._usershift_current_average = None
+        self._usershift_current_stddev = None
+        self._usershift_current_beg_average = None
+        self._usershift_current_beg_stddev = None
+        self._usershift_current_end_average = None
+        self._usershift_current_end_stddev = None
+        self._usershift_total_failures_time = None
+        self._usershift_failures_count = None
+        self._usershift_beam_dump_count = None
+        self._usershift_time_to_recover_average = None
+        self._usershift_time_to_recover_stddev = None
+        self._usershift_time_between_failures_average = None
+        self._usershift_beam_reliability = None
+        self._usershift_total_injection_time = None
+        self._usershift_injection_count = None
+        self._usershift_injection_time_average = None
+        self._usershift_injection_time_stddev = None
 
         # light source usage stats
-        self._lsusage_total_interval = None
-        self._lsusage_machinestudy_failures_interval = None
+        self._lsusage_total_time = None
+        self._lsusage_machinestudy_failures_time = None
         self._lsusage_machinestudy_failures = None
-        self._lsusage_machinestudy_operational_interval = None
+        self._lsusage_machinestudy_operational_time = None
         self._lsusage_machinestudy_operational = None
-        self._lsusage_machinestudy_interval = None
+        self._lsusage_machinestudy_time = None
         self._lsusage_machinestudy = None
-        self._lsusage_commissioning_failures_interval = None
+        self._lsusage_commissioning_failures_time = None
         self._lsusage_commissioning_failures = None
-        self._lsusage_commissioning_operational_interval = None
+        self._lsusage_commissioning_operational_time = None
         self._lsusage_commissioning_operational = None
-        self._lsusage_commissioning_interval = None
+        self._lsusage_commissioning_time = None
         self._lsusage_commissioning = None
-        self._lsusage_conditioning_failures_interval = None
+        self._lsusage_conditioning_failures_time = None
         self._lsusage_conditioning_failures = None
-        self._lsusage_conditioning_operational_interval = None
+        self._lsusage_conditioning_operational_time = None
         self._lsusage_conditioning_operational = None
-        self._lsusage_conditioning_interval = None
+        self._lsusage_conditioning_time = None
         self._lsusage_conditioning = None
-        self._lsusage_maintenance_failures_interval = None
+        self._lsusage_maintenance_failures_time = None
         self._lsusage_maintenance_failures = None
-        self._lsusage_maintenance_operational_interval = None
+        self._lsusage_maintenance_operational_time = None
         self._lsusage_maintenance_operational = None
-        self._lsusage_maintenance_interval = None
+        self._lsusage_maintenance_time = None
         self._lsusage_maintenance = None
-        self._lsusage_user_failures_interval = None
+        self._lsusage_user_failures_time = None
         self._lsusage_user_failures = None
-        self._lsusage_user_operational_interval = None
+        self._lsusage_user_operational_time = None
         self._lsusage_user_operational = None
-        self._lsusage_user_interval = None
+        self._lsusage_user_time = None
         self._lsusage_user = None
 
         # stored current stats
         self._current_machinestudy_singlebunch_average = None
         self._current_machinestudy_singlebunch_stddev = None
-        self._current_machinestudy_singlebunch_interval = None
+        self._current_machinestudy_singlebunch_time = None
         self._current_machinestudy_multibunch_average = None
         self._current_machinestudy_multibunch_stddev = None
-        self._current_machinestudy_multibunch_interval = None
+        self._current_machinestudy_multibunch_time = None
         self._current_machinestudy_total_average = None
         self._current_machinestudy_total_stddev = None
-        self._current_machinestudy_total_interval = None
+        self._current_machinestudy_total_time = None
         self._current_commissioning_singlebunch_average = None
         self._current_commissioning_singlebunch_stddev = None
-        self._current_commissioning_singlebunch_interval = None
+        self._current_commissioning_singlebunch_time = None
         self._current_commissioning_multibunch_average = None
         self._current_commissioning_multibunch_stddev = None
-        self._current_commissioning_multibunch_interval = None
+        self._current_commissioning_multibunch_time = None
         self._current_commissioning_total_average = None
         self._current_commissioning_total_stddev = None
-        self._current_commissioning_total_interval = None
+        self._current_commissioning_total_time = None
         self._current_conditioning_singlebunch_average = None
         self._current_conditioning_singlebunch_stddev = None
-        self._current_conditioning_singlebunch_interval = None
+        self._current_conditioning_singlebunch_time = None
         self._current_conditioning_multibunch_average = None
         self._current_conditioning_multibunch_stddev = None
-        self._current_conditioning_multibunch_interval = None
+        self._current_conditioning_multibunch_time = None
         self._current_conditioning_total_average = None
         self._current_conditioning_total_stddev = None
-        self._current_conditioning_total_interval = None
+        self._current_conditioning_total_time = None
         self._current_user_singlebunch_average = None
         self._current_user_singlebunch_stddev = None
-        self._current_user_singlebunch_interval = None
+        self._current_user_singlebunch_time = None
         self._current_user_multibunch_average = None
         self._current_user_multibunch_stddev = None
-        self._current_user_multibunch_interval = None
+        self._current_user_multibunch_time = None
         self._current_user_total_average = None
         self._current_user_total_stddev = None
-        self._current_user_total_interval = None
+        self._current_user_total_time = None
         self._current_ebeam_singlebunch_average = None
         self._current_ebeam_singlebunch_stddev = None
-        self._current_ebeam_singlebunch_interval = None
+        self._current_ebeam_singlebunch_time = None
         self._current_ebeam_multibunch_average = None
         self._current_ebeam_multibunch_stddev = None
-        self._current_ebeam_multibunch_interval = None
+        self._current_ebeam_multibunch_time = None
         self._current_ebeam_total_average = None
         self._current_ebeam_total_stddev = None
-        self._current_ebeam_total_interval = None
+        self._current_ebeam_total_time = None
 
         # auxiliary data
         self._raw_data = None
         self._failures_users = None
         self._curr_times = None
         self._curr_values = None
+        self._ps_fail_values = None
+        self._gamblk_fail_values = None
+        self._sofbloop_fail_values = None
+        self._mps_fail_values = None
         self._inj_shift_values = None
+        self._machinestudy_shift_values = None
+        self._commissioning_shift_values = None
+        self._conditioning_shift_values = None
+        self._maintenance_shift_values = None
         self._user_shift_values = None
+        self._user_shift_act_values = None
         self._user_shift_progmd_values = None
         self._user_shift_inicurr_values = None
+        self._user_shift_delivd_values = None
         self._is_stored_total = None
         self._is_stored_users = None
+        self._singlebunch_values = None
+        self._multibunch_values = None
 
     @property
     def connector(self):
@@ -633,283 +645,283 @@ class MacReport:
             raise TypeError('expected argument of type Time')
         self._time_stop = new_time
 
-    # beam for users stats
+    # user shift stats
 
     @property
-    def user_shift_progmd_interval(self):
-        """User shift interval programmed [h]."""
-        return self._conv_sec_2_hour(self._user_shift_progmd_interval)
+    def usershift_progmd_time(self):
+        """Programmed time [h]."""
+        return self._conv_sec_2_hour(self._usershift_progmd_time)
 
     @property
-    def user_shift_delivd_interval(self):
-        """User shift interval delivered [h]."""
-        return self._conv_sec_2_hour(self._user_shift_delivd_interval)
+    def usershift_delivd_time(self):
+        """Delivered time [h]."""
+        return self._conv_sec_2_hour(self._usershift_delivd_time)
 
     @property
-    def user_shift_extra_interval(self):
-        """User shift interval extra [h]."""
-        return self._conv_sec_2_hour(self._user_shift_extra_interval)
+    def usershift_extra_time(self):
+        """Extra time [h]."""
+        return self._conv_sec_2_hour(self._usershift_extra_time)
 
     @property
-    def user_shift_total_interval(self):
-        """User shift interval total (delivered + extra) [h]."""
-        return self._conv_sec_2_hour(self._user_shift_total_interval)
+    def usershift_total_time(self):
+        """Total time (delivered + extra) [h]."""
+        return self._conv_sec_2_hour(self._usershift_total_time)
 
     @property
-    def user_shift_current_average(self):
-        """User shift current average."""
-        return self._user_shift_current_average
+    def usershift_current_average(self):
+        """Current average."""
+        return self._usershift_current_average
 
     @property
-    def user_shift_current_stddev(self):
-        """User shift current standard deviation."""
-        return self._user_shift_current_stddev
+    def usershift_current_stddev(self):
+        """Current standard deviation."""
+        return self._usershift_current_stddev
 
     @property
-    def user_shift_current_beg_average(self):
-        """User shift current average at the beginning of the shift."""
-        return self._user_shift_current_beg_average
+    def usershift_current_beg_average(self):
+        """Current average at the beginning of the shift."""
+        return self._usershift_current_beg_average
 
     @property
-    def user_shift_current_beg_stddev(self):
-        """User shift current st.dev. at the beginning of the shift."""
-        return self._user_shift_current_beg_stddev
+    def usershift_current_beg_stddev(self):
+        """Current st.dev. at the beginning of the shift."""
+        return self._usershift_current_beg_stddev
 
     @property
-    def user_shift_current_end_average(self):
-        """User shift current average at the end of the shift."""
-        return self._user_shift_current_end_average
+    def usershift_current_end_average(self):
+        """Current average at the end of the shift."""
+        return self._usershift_current_end_average
 
     @property
-    def user_shift_current_end_stddev(self):
-        """User shift current st.dev. at the end of the shift."""
-        return self._user_shift_current_end_stddev
+    def usershift_current_end_stddev(self):
+        """Current st.dev. at the end of the shift."""
+        return self._usershift_current_end_stddev
 
     @property
-    def user_shift_progmd_count(self):
-        """Number of user shift programmed."""
-        return self._user_shift_progmd_count
+    def usershift_progmd_count(self):
+        """Number of programmed shifts."""
+        return self._usershift_progmd_count
 
     @property
-    def failures_interval(self):
-        """Failures interval [h]."""
-        return self._conv_sec_2_hour(self._failures_interval)
+    def usershift_total_failures_time(self):
+        """Total failures time [h]."""
+        return self._conv_sec_2_hour(self._usershift_total_failures_time)
 
     @property
-    def failures_count(self):
+    def usershift_failures_count(self):
         """Number of failures."""
-        return self._failures_count
+        return self._usershift_failures_count
 
     @property
-    def beam_dump_count(self):
+    def usershift_beam_dump_count(self):
         """Number of beam dumps."""
-        return self._beam_dump_count
+        return self._usershift_beam_dump_count
 
     @property
-    def time_to_recover_average(self):
-        """Average time interval took to recover from failures [h]."""
-        return self._conv_sec_2_hour(self._time_to_recover_average)
+    def usershift_time_to_recover_average(self):
+        """Average time took to recover from failures [h]."""
+        return self._conv_sec_2_hour(self._usershift_time_to_recover_average)
 
     @property
-    def time_to_recover_stddev(self):
-        """Time interval std.dev. took to recover from failures [h]."""
-        return self._conv_sec_2_hour(self._time_to_recover_stddev)
+    def usershift_time_to_recover_stddev(self):
+        """Time std.dev. took to recover from failures [h]."""
+        return self._conv_sec_2_hour(self._usershift_time_to_recover_stddev)
 
     @property
-    def time_between_failures_average(self):
-        """Average time interval between failure occurrences [h]."""
-        return self._conv_sec_2_hour(self._time_between_failures_average)
+    def usershift_time_between_failures_average(self):
+        """Average time between failure occurrences [h]."""
+        return self._conv_sec_2_hour(
+            self._usershift_time_between_failures_average)
 
     @property
-    def beam_reliability(self):
-        """Beam reliability.
-
-        Ratio between delivered and programmed user shift time interval."""
-        return self._beam_reliability
+    def usershift_beam_reliability(self):
+        """Beam reliability. Ratio between delivered and programmed time."""
+        return self._usershift_beam_reliability
 
     @property
-    def inj_shift_interval(self):
-        """Injection shift interval [h]."""
-        return self._conv_sec_2_hour(self._inj_shift_interval)
+    def usershift_total_injection_time(self):
+        """Total injection shift [h]."""
+        return self._conv_sec_2_hour(self._usershift_total_injection_time)
 
     @property
-    def inj_shift_count(self):
-        """Number of injection shifts."""
-        return self._inj_shift_count
+    def usershift_injection_count(self):
+        """Number of injections."""
+        return self._usershift_injection_count
 
     @property
-    def inj_shift_interval_average(self):
-        """Average time interval in injection shift [h]."""
-        return self._conv_sec_2_hour(self._inj_shift_interval_average)
+    def usershift_injection_time_average(self):
+        """Average time used for injection [h]."""
+        return self._conv_sec_2_hour(
+            self._usershift_injection_time_average)
 
     @property
-    def inj_shift_interval_stddev(self):
-        """Time interval standard deviation in injection shift [h]."""
-        return self._conv_sec_2_hour(self._inj_shift_interval_stddev)
+    def usershift_injection_time_stddev(self):
+        """Standard deviation of time used for injection [h]."""
+        return self._conv_sec_2_hour(self._usershift_injection_time_stddev)
 
     # light source usage stats
 
     @property
-    def lsusage_total_interval(self):
-        """Total interval of Light Source Usage."""
-        return self._conv_sec_2_hour(self._lsusage_total_interval)
+    def lsusage_total_time(self):
+        """Total time of Light Source Usage."""
+        return self._conv_sec_2_hour(self._lsusage_total_time)
 
     @property
-    def lsusage_machinestudy_failures_interval(self):
-        """Interval of Light Source Usage for Study in Failure."""
+    def lsusage_machinestudy_failures_time(self):
+        """Failures time in Machine Study Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_machinestudy_failures_interval)
+            self._lsusage_machinestudy_failures_time)
 
     @property
     def lsusage_machinestudy_failures(self):
-        """Percentage of Light Source Usage for Study in Failure."""
+        """Relative failures time in Machine Study Shift."""
         return self._lsusage_machinestudy_failures
 
     @property
-    def lsusage_machinestudy_operational_interval(self):
-        """Operational Interval of Light Source Usage for Study."""
+    def lsusage_machinestudy_operational_time(self):
+        """Operational time in Machine Study Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_machinestudy_operational_interval)
+            self._lsusage_machinestudy_operational_time)
 
     @property
     def lsusage_machinestudy_operational(self):
-        """Operational Percentage of Light Source Usage for Study."""
+        """Relative operational time in Machine Study Shift."""
         return self._lsusage_machinestudy_operational
 
     @property
-    def lsusage_machinestudy_interval(self):
-        """Interval of Light Source Usage for Study."""
-        return self._conv_sec_2_hour(self._lsusage_machinestudy_interval)
+    def lsusage_machinestudy_time(self):
+        """Time in Machine Study Shift."""
+        return self._conv_sec_2_hour(self._lsusage_machinestudy_time)
 
     @property
     def lsusage_machinestudy(self):
-        """Percentage of Light Source Usage for Study."""
+        """Relative time in Machine Study Shift."""
         return self._lsusage_machinestudy
 
     @property
-    def lsusage_commissioning_failures_interval(self):
-        """Interval of Light Source Usage for Commissioning in Failure."""
+    def lsusage_commissioning_failures_time(self):
+        """Failures time in Commissioning Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_commissioning_failures_interval)
+            self._lsusage_commissioning_failures_time)
 
     @property
     def lsusage_commissioning_failures(self):
-        """Percentage of Light Source Usage for Commissioning in Failure."""
+        """Relative failures time in Commissioning Shift."""
         return self._lsusage_commissioning_failures
 
     @property
-    def lsusage_commissioning_operational_interval(self):
-        """Operational Interval of Light Source Usage for Commissioning."""
+    def lsusage_commissioning_operational_time(self):
+        """Operational time in Commissioning Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_commissioning_operational_interval)
+            self._lsusage_commissioning_operational_time)
 
     @property
     def lsusage_commissioning_operational(self):
-        """Operational Percentage of Light Source Usage for Commissioning."""
+        """Relative operational time in Commissioning Shift."""
         return self._lsusage_commissioning_operational
 
     @property
-    def lsusage_commissioning_interval(self):
-        """Interval of Light Source Usage for Commissioning."""
-        return self._conv_sec_2_hour(self._lsusage_commissioning_interval)
+    def lsusage_commissioning_time(self):
+        """Time in Commissioning Shift."""
+        return self._conv_sec_2_hour(self._lsusage_commissioning_time)
 
     @property
     def lsusage_commissioning(self):
-        """Percentage of Light Source Usage for Commissioning."""
+        """Relative time in Commissioning Shift."""
         return self._lsusage_commissioning
 
     @property
-    def lsusage_conditioning_failures_interval(self):
-        """Interval of Light Source Usage for Conditioning in Failure."""
+    def lsusage_conditioning_failures_time(self):
+        """Failures time in Conditioning Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_conditioning_failures_interval)
+            self._lsusage_conditioning_failures_time)
 
     @property
     def lsusage_conditioning_failures(self):
-        """Percentage of Light Source Usage for Conditioning in Failure."""
+        """Relative failures time in Conditioning Shift."""
         return self._lsusage_conditioning_failures
 
     @property
-    def lsusage_conditioning_operational_interval(self):
-        """Operational Interval of Light Source Usage for Conditioning."""
+    def lsusage_conditioning_operational_time(self):
+        """Operational time in Conditioning Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_conditioning_operational_interval)
+            self._lsusage_conditioning_operational_time)
 
     @property
     def lsusage_conditioning_operational(self):
-        """Operational Percentage of Light Source Usage for Conditioning."""
+        """Relative operational time in Conditioning Shift."""
         return self._lsusage_conditioning_operational
 
     @property
-    def lsusage_conditioning_interval(self):
-        """Interval of Light Source Usage for Conditioning."""
-        return self._conv_sec_2_hour(self._lsusage_conditioning_interval)
+    def lsusage_conditioning_time(self):
+        """Time in Conditioning Shift."""
+        return self._conv_sec_2_hour(self._lsusage_conditioning_time)
 
     @property
     def lsusage_conditioning(self):
-        """Percentage of Light Source Usage for Conditioning."""
+        """Relative time in Conditioning Shift."""
         return self._lsusage_conditioning
 
     @property
-    def lsusage_maintenance_failures_interval(self):
-        """Interval of Light Source Usage for Maintenance in Failure."""
+    def lsusage_maintenance_failures_time(self):
+        """Failures time in Maintenance Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_maintenance_failures_interval)
+            self._lsusage_maintenance_failures_time)
 
     @property
     def lsusage_maintenance_failures(self):
-        """Percentage of Light Source Usage for Maintenance in Failure."""
+        """Relative failures time in Maintenance Shift."""
         return self._lsusage_maintenance_failures
 
     @property
-    def lsusage_maintenance_operational_interval(self):
-        """Operational Interval of Light Source Usage for Maintenance."""
+    def lsusage_maintenance_operational_time(self):
+        """Operational time in Maintenance Shift."""
         return self._conv_sec_2_hour(
-            self._lsusage_maintenance_operational_interval)
+            self._lsusage_maintenance_operational_time)
 
     @property
     def lsusage_maintenance_operational(self):
-        """Operational Percentage of Light Source Usage for Maintenance."""
+        """Relative operational time in Maintenance Shift."""
         return self._lsusage_maintenance_operational
 
     @property
-    def lsusage_maintenance_interval(self):
-        """Interval of Light Source Usage for Maintenance."""
-        return self._conv_sec_2_hour(self._lsusage_maintenance_interval)
+    def lsusage_maintenance_time(self):
+        """Time in Maintenance Shift."""
+        return self._conv_sec_2_hour(self._lsusage_maintenance_time)
 
     @property
     def lsusage_maintenance(self):
-        """Percentage of Light Source Usage for Maintenance."""
+        """Relative time in Maintenance Shift."""
         return self._lsusage_maintenance
 
     @property
-    def lsusage_user_failures_interval(self):
-        """Interval of Light Source Usage for Users in Failure."""
-        return self._conv_sec_2_hour(self._lsusage_user_failures_interval)
+    def lsusage_user_failures_time(self):
+        """Failures time in Users Shift."""
+        return self._conv_sec_2_hour(self._lsusage_user_failures_time)
 
     @property
     def lsusage_user_failures(self):
-        """Percentage of Light Source Usage for Users in Failure."""
+        """Relative failures time in Users Shift."""
         return self._lsusage_user_failures
 
     @property
-    def lsusage_user_operational_interval(self):
-        """Operational Interval of Light Source Usage for Users."""
-        return self._conv_sec_2_hour(self._lsusage_user_operational_interval)
+    def lsusage_user_operational_time(self):
+        """Operational time in Users Shift."""
+        return self._conv_sec_2_hour(self._lsusage_user_operational_time)
 
     @property
     def lsusage_user_operational(self):
-        """Operational Percentage of Light Source Usage for Users."""
+        """Relative operational time in Users Shift."""
         return self._lsusage_user_operational
 
     @property
-    def lsusage_user_interval(self):
-        """Interval of Light Source Usage for Users."""
-        return self._conv_sec_2_hour(self._lsusage_user_interval)
+    def lsusage_user_time(self):
+        """Time in Users Shift."""
+        return self._conv_sec_2_hour(self._lsusage_user_time)
 
     @property
     def lsusage_user(self):
-        """Percentage of Light Source Usage for Users."""
+        """Relative time in Users Shift."""
         return self._lsusage_user
 
     # stored current stats
@@ -925,11 +937,11 @@ class MacReport:
         return self._current_machinestudy_singlebunch_stddev
 
     @property
-    def current_machinestudy_singlebunch_interval(self):
-        """Interval of machine study single bunch shifts.
+    def current_machinestudy_singlebunch_time(self):
+        """Time of machine study single bunch shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_machinestudy_singlebunch_interval)
+            self._current_machinestudy_singlebunch_time)
 
     @property
     def current_machinestudy_multibunch_average(self):
@@ -942,11 +954,11 @@ class MacReport:
         return self._current_machinestudy_multibunch_stddev
 
     @property
-    def current_machinestudy_multibunch_interval(self):
-        """Interval of machine study multi bunch shifts.
+    def current_machinestudy_multibunch_time(self):
+        """Time of machine study multi bunch shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_machinestudy_multibunch_interval)
+            self._current_machinestudy_multibunch_time)
 
     @property
     def current_machinestudy_total_average(self):
@@ -959,10 +971,10 @@ class MacReport:
         return self._current_machinestudy_total_stddev
 
     @property
-    def current_machinestudy_total_interval(self):
-        """Interval of machine study shifts.
+    def current_machinestudy_total_time(self):
+        """Time of machine study shifts.
         Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_machinestudy_total_interval)
+        return self._conv_sec_2_hour(self._current_machinestudy_total_time)
 
     @property
     def current_commissioning_singlebunch_average(self):
@@ -975,11 +987,11 @@ class MacReport:
         return self._current_commissioning_singlebunch_stddev
 
     @property
-    def current_commissioning_singlebunch_interval(self):
-        """Interval of single bunch commissioning shifts.
+    def current_commissioning_singlebunch_time(self):
+        """Time of single bunch commissioning shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_commissioning_singlebunch_interval)
+            self._current_commissioning_singlebunch_time)
 
     @property
     def current_commissioning_multibunch_average(self):
@@ -992,11 +1004,11 @@ class MacReport:
         return self._current_commissioning_multibunch_stddev
 
     @property
-    def current_commissioning_multibunch_interval(self):
-        """Interval of multi bunch commissioning shifts.
+    def current_commissioning_multibunch_time(self):
+        """Time of multi bunch commissioning shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_commissioning_multibunch_interval)
+            self._current_commissioning_multibunch_time)
 
     @property
     def current_commissioning_total_average(self):
@@ -1009,11 +1021,11 @@ class MacReport:
         return self._current_commissioning_total_stddev
 
     @property
-    def current_commissioning_total_interval(self):
-        """Interval of commissioning shifts.
+    def current_commissioning_total_time(self):
+        """Time of commissioning shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_commissioning_total_interval)
+            self._current_commissioning_total_time)
 
     @property
     def current_conditioning_singlebunch_average(self):
@@ -1026,11 +1038,11 @@ class MacReport:
         return self._current_conditioning_singlebunch_stddev
 
     @property
-    def current_conditioning_singlebunch_interval(self):
-        """Interval of single bunch conditioning shifts.
+    def current_conditioning_singlebunch_time(self):
+        """Time of single bunch conditioning shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_conditioning_singlebunch_interval)
+            self._current_conditioning_singlebunch_time)
 
     @property
     def current_conditioning_multibunch_average(self):
@@ -1043,11 +1055,11 @@ class MacReport:
         return self._current_conditioning_multibunch_stddev
 
     @property
-    def current_conditioning_multibunch_interval(self):
-        """Interval of multi bunch conditioning shifts.
+    def current_conditioning_multibunch_time(self):
+        """Time of multi bunch conditioning shifts.
         Consider any stored current."""
         return self._conv_sec_2_hour(
-            self._current_conditioning_multibunch_interval)
+            self._current_conditioning_multibunch_time)
 
     @property
     def current_conditioning_total_average(self):
@@ -1060,10 +1072,10 @@ class MacReport:
         return self._current_conditioning_total_stddev
 
     @property
-    def current_conditioning_total_interval(self):
-        """Interval of conditioning shifts.
+    def current_conditioning_total_time(self):
+        """Time of conditioning shifts.
         Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_conditioning_total_interval)
+        return self._conv_sec_2_hour(self._current_conditioning_total_time)
 
     @property
     def current_user_singlebunch_average(self):
@@ -1076,10 +1088,10 @@ class MacReport:
         return self._current_user_singlebunch_stddev
 
     @property
-    def current_user_singlebunch_interval(self):
-        """Interval of single bunch user shifts.
+    def current_user_singlebunch_time(self):
+        """Time of single bunch user shifts.
         Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_user_singlebunch_interval)
+        return self._conv_sec_2_hour(self._current_user_singlebunch_time)
 
     @property
     def current_user_multibunch_average(self):
@@ -1092,9 +1104,9 @@ class MacReport:
         return self._current_user_multibunch_stddev
 
     @property
-    def current_user_multibunch_interval(self):
-        """Interval of multi bunch user shifts. Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_user_multibunch_interval)
+    def current_user_multibunch_time(self):
+        """Time of multi bunch user shifts. Consider any stored current."""
+        return self._conv_sec_2_hour(self._current_user_multibunch_time)
 
     @property
     def current_user_total_average(self):
@@ -1107,9 +1119,9 @@ class MacReport:
         return self._current_user_total_stddev
 
     @property
-    def current_user_total_interval(self):
-        """Interval of user shifts. Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_user_total_interval)
+    def current_user_total_time(self):
+        """Time of user shifts. Consider any stored current."""
+        return self._conv_sec_2_hour(self._current_user_total_time)
 
     @property
     def current_ebeam_singlebunch_average(self):
@@ -1122,9 +1134,9 @@ class MacReport:
         return self._current_ebeam_singlebunch_stddev
 
     @property
-    def current_ebeam_singlebunch_interval(self):
-        """Interval of all single bunch shifts. Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_ebeam_singlebunch_interval)
+    def current_ebeam_singlebunch_time(self):
+        """Time of all single bunch shifts. Consider any stored current."""
+        return self._conv_sec_2_hour(self._current_ebeam_singlebunch_time)
 
     @property
     def current_ebeam_multibunch_average(self):
@@ -1137,24 +1149,24 @@ class MacReport:
         return self._current_ebeam_multibunch_stddev
 
     @property
-    def current_ebeam_multibunch_interval(self):
-        """Interval of all multi bunch shifts. Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_ebeam_multibunch_interval)
+    def current_ebeam_multibunch_time(self):
+        """Time of all multi bunch shifts. Consider any stored current."""
+        return self._conv_sec_2_hour(self._current_ebeam_multibunch_time)
 
     @property
     def current_ebeam_total_average(self):
-        """Current average for all stored beam interval."""
+        """Current average for all stored beam time."""
         return self._current_ebeam_total_average
 
     @property
     def current_ebeam_total_stddev(self):
-        """Current standard deviation for all stored beam interval."""
+        """Current standard deviation for all stored beam time."""
         return self._current_ebeam_total_stddev
 
     @property
-    def current_ebeam_total_interval(self):
-        """Stored beam interval [h]. Consider any stored current."""
-        return self._conv_sec_2_hour(self._current_ebeam_total_interval)
+    def current_ebeam_total_time(self):
+        """Stored beam time [h]. Consider any stored current."""
+        return self._conv_sec_2_hour(self._current_ebeam_total_time)
 
     @property
     def raw_data(self):
@@ -1462,7 +1474,7 @@ class MacReport:
         self._user_shift_inicurr_values = \
             MacScheduleData.get_initial_current_programmed(
                 timestamp=self._curr_times)
-        self._user_shift_progmd_count = \
+        self._usershift_progmd_count = \
             MacScheduleData.get_users_shift_count(
                 self._curr_times[0], self._curr_times[-1])
         self._update_log(
@@ -1542,15 +1554,15 @@ class MacReport:
 
         # # beam for users stats
         # # # ----- users shift -----
-        self._user_shift_progmd_interval = _np.sum(dtimes_users_progmd)
+        self._usershift_progmd_time = _np.sum(dtimes_users_progmd)
 
-        self._user_shift_delivd_interval = _np.sum(dtimes_users_delivd)
+        self._usershift_delivd_time = _np.sum(dtimes_users_delivd)
 
-        self._user_shift_extra_interval = _np.sum(dtimes_users_extra)
+        self._usershift_extra_time = _np.sum(dtimes_users_extra)
 
-        self._user_shift_total_interval = _np.sum(dtimes_users_total)
+        self._usershift_total_time = _np.sum(dtimes_users_total)
 
-        self._user_shift_current_average, self._user_shift_current_stddev = \
+        self._usershift_current_average, self._usershift_current_stddev = \
             self._calc_current_stats(dtimes_users_total)
 
         transit = _np.diff(self._user_shift_delivd_values)
@@ -1570,11 +1582,11 @@ class MacReport:
             beg1, beg2 = beg1[beg_val], beg2[beg_val]
             stats_vals = [_np.mean(self._curr_values[beg1[i]:beg2[i]])
                           for i in range(beg1.size)]
-            self._user_shift_current_beg_average = _np.mean(stats_vals)
-            self._user_shift_current_beg_stddev = _np.std(stats_vals)
+            self._usershift_current_beg_average = _np.mean(stats_vals)
+            self._usershift_current_beg_stddev = _np.std(stats_vals)
         else:
-            self._user_shift_current_beg_average = 0
-            self._user_shift_current_beg_stddev = 0
+            self._usershift_current_beg_average = 0
+            self._usershift_current_beg_stddev = 0
 
         if end_idcs.size:
             end_val = [0] + [i for i in range(end_idcs.size)
@@ -1588,96 +1600,97 @@ class MacReport:
             end1, end2 = end1[end_val], end2[end_val]
             stats_vals = [_np.mean(self._curr_values[end1[i]:end2[i]])
                           for i in range(end1.size)]
-            self._user_shift_current_end_average = _np.mean(stats_vals)
-            self._user_shift_current_end_stddev = _np.std(stats_vals)
+            self._usershift_current_end_average = _np.mean(stats_vals)
+            self._usershift_current_end_stddev = _np.std(stats_vals)
         else:
-            self._user_shift_current_end_average = 0
-            self._user_shift_current_end_stddev = 0
+            self._usershift_current_end_average = 0
+            self._usershift_current_end_stddev = 0
 
         # # # ----- failures -----
-        self._failures_interval = _np.sum(dtimes_failures_users)
+        self._usershift_total_failures_time = _np.sum(dtimes_failures_users)
 
         beam_dump_values = _np.logical_not(
             self._raw_data['Failures']['WrongShift']) * \
             self._raw_data['Failures']['NoEBeam']
-        self._beam_dump_count = _np.sum(_np.diff(beam_dump_values) > 0)
+        self._usershift_beam_dump_count = _np.sum(
+            _np.diff(beam_dump_values) > 0)
 
         ave, std, count = self._calc_interval_stats(
             self._failures_users, dtimes_failures_users)
-        self._time_to_recover_average = ave
-        self._time_to_recover_stddev = std
-        self._failures_count = count
+        self._usershift_time_to_recover_average = ave
+        self._usershift_time_to_recover_stddev = std
+        self._usershift_failures_count = count
 
-        self._time_between_failures_average = \
-            _np.inf if not self._failures_count\
-            else self._user_shift_progmd_interval/self._failures_count
+        self._usershift_time_between_failures_average = \
+            _np.inf if not self._usershift_failures_count\
+            else self._usershift_progmd_time/self._usershift_failures_count
 
         # # # ----- reliability -----
-        self._beam_reliability = \
-            0.0 if not self._user_shift_progmd_interval else 100 * \
-            self._user_shift_delivd_interval/self._user_shift_progmd_interval
+        self._usershift_beam_reliability = \
+            0.0 if not self._usershift_progmd_time else 100 * \
+            self._usershift_delivd_time/self._usershift_progmd_time
 
         # # # ----- injection shift -----
-        self._inj_shift_interval = _np.sum(dtimes_injection)
+        self._usershift_total_injection_time = _np.sum(dtimes_injection)
 
         ave, std, count = self._calc_interval_stats(
             self._inj_shift_values, dtimes_injection)
-        self._inj_shift_interval_average = ave
-        self._inj_shift_interval_stddev = std
-        self._inj_shift_count = count
+        self._usershift_injection_time_average = ave
+        self._usershift_injection_time_stddev = std
+        self._usershift_injection_count = count
 
         # # light source usage stats
-        self._lsusage_machinestudy_interval = _np.sum(dtimes_machinestudy)
+        self._lsusage_machinestudy_time = _np.sum(dtimes_machinestudy)
 
-        self._lsusage_commissioning_interval = _np.sum(dtimes_commissioning)
+        self._lsusage_commissioning_time = _np.sum(dtimes_commissioning)
 
-        self._lsusage_conditioning_interval = _np.sum(dtimes_conditioning)
+        self._lsusage_conditioning_time = _np.sum(dtimes_conditioning)
 
-        self._lsusage_maintenance_interval = _np.sum(dtimes_maintenance)
+        self._lsusage_maintenance_time = _np.sum(dtimes_maintenance)
 
-        self._lsusage_user_interval = self._user_shift_progmd_interval + \
-            self._user_shift_extra_interval
+        self._lsusage_user_time = self._usershift_progmd_time + \
+            self._usershift_extra_time
 
-        self._lsusage_total_interval = \
-            self._lsusage_machinestudy_interval + \
-            self._lsusage_commissioning_interval + \
-            self._lsusage_conditioning_interval + \
-            self._lsusage_maintenance_interval + \
-            self._lsusage_user_interval
+        self._lsusage_total_time = \
+            self._lsusage_machinestudy_time + \
+            self._lsusage_commissioning_time + \
+            self._lsusage_conditioning_time + \
+            self._lsusage_maintenance_time + \
+            self._lsusage_user_time
 
-        self._lsusage_machinestudy_failures_interval = _np.sum(
+        self._lsusage_machinestudy_failures_time = _np.sum(
             dtimes_machinestudy*self._raw_data['Failures']['SubsystemsNOk'])
 
-        self._lsusage_commissioning_failures_interval = _np.sum(
+        self._lsusage_commissioning_failures_time = _np.sum(
             dtimes_commissioning*self._raw_data['Failures']['SubsystemsNOk'])
 
-        self._lsusage_conditioning_failures_interval = _np.sum(
+        self._lsusage_conditioning_failures_time = _np.sum(
             dtimes_conditioning*self._raw_data['Failures']['SubsystemsNOk'])
 
-        self._lsusage_maintenance_failures_interval = 0.0
+        self._lsusage_maintenance_failures_time = 0.0
 
         dtimes_failures_users_oper = dtimes*self._failures_users
-        self._lsusage_user_failures_interval = _np.sum(
+        self._lsusage_user_failures_time = _np.sum(
             dtimes_failures_users_oper)
 
         for usage in ['machinestudy', 'commissioning', 'conditioning',
                       'maintenance', 'user']:
-            fail_intvl = getattr(self, '_lsusage_'+usage+'_failures_interval')
-            total_intvl = getattr(self, '_lsusage_'+usage+'_interval')
+            fail_intvl = getattr(self, '_lsusage_'+usage+'_failures_time')
+            total_intvl = getattr(self, '_lsusage_'+usage+'_time')
             oper_intvl = total_intvl - fail_intvl
             if total_intvl:
-                setattr(self, '_lsusage_'+usage+'_operational_interval',
+                setattr(self, '_lsusage_'+usage+'_operational_time',
                         oper_intvl)
                 setattr(self, '_lsusage_'+usage+'_failures',
                         100*fail_intvl/total_intvl)
                 setattr(self, '_lsusage_'+usage+'_operational',
                         100*oper_intvl/total_intvl)
             else:
-                setattr(self, '_lsusage_'+usage+'_operational_interval', 0.0)
+                setattr(self, '_lsusage_'+usage+'_operational_time', 0.0)
                 setattr(self, '_lsusage_'+usage+'_failures', 0.0)
                 setattr(self, '_lsusage_'+usage+'_operational', 0.0)
             setattr(self, '_lsusage_'+usage,
-                    100*total_intvl/self._lsusage_total_interval)
+                    100*total_intvl/self._lsusage_total_time)
 
         # # stored current stats
         for shifttype in ['machinestudy', 'commissioning', 'conditioning',
@@ -1696,7 +1709,7 @@ class MacReport:
 
                 pname = '_current_'+shifttype+'_'+fillmode
 
-                setattr(self, pname+'_interval', _np.sum(dtimes_select))
+                setattr(self, pname+'_time', _np.sum(dtimes_select))
 
                 avg, sdv = self._calc_current_stats(dtimes_select)
                 setattr(self, pname+'_average', avg)
@@ -1763,108 +1776,108 @@ class MacReport:
 
     def __str__(self):
         ppties_userbeam = [
-            ['user_shift_progmd_interval', 'h'],
-            ['user_shift_delivd_interval', 'h'],
-            ['user_shift_total_interval', 'h'],
-            ['user_shift_extra_interval', 'h'],
-            ['user_shift_progmd_count', ''],
-            ['user_shift_current_average', 'mA'],
-            ['user_shift_current_stddev', 'mA'],
-            ['user_shift_current_beg_average', 'mA'],
-            ['user_shift_current_beg_stddev', 'mA'],
-            ['user_shift_current_end_average', 'mA'],
-            ['user_shift_current_end_stddev', 'mA'],
-            ['failures_interval', 'h'],
-            ['failures_count', ''],
-            ['beam_dump_count', ''],
-            ['time_to_recover_average', 'h'],
-            ['time_to_recover_stddev', 'h'],
-            ['time_between_failures_average', 'h'],
-            ['beam_reliability', '%'],
-            ['inj_shift_interval', 'h'],
-            ['inj_shift_count', ''],
-            ['inj_shift_interval_average', 'h'],
-            ['inj_shift_interval_stddev', 'h'],
+            ['usershift_progmd_time', 'h'],
+            ['usershift_delivd_time', 'h'],
+            ['usershift_total_time', 'h'],
+            ['usershift_extra_time', 'h'],
+            ['usershift_progmd_count', ''],
+            ['usershift_current_average', 'mA'],
+            ['usershift_current_stddev', 'mA'],
+            ['usershift_current_beg_average', 'mA'],
+            ['usershift_current_beg_stddev', 'mA'],
+            ['usershift_current_end_average', 'mA'],
+            ['usershift_current_end_stddev', 'mA'],
+            ['usershift_total_failures_time', 'h'],
+            ['usershift_failures_count', ''],
+            ['usershift_beam_dump_count', ''],
+            ['usershift_time_to_recover_average', 'h'],
+            ['usershift_time_to_recover_stddev', 'h'],
+            ['usershift_time_between_failures_average', 'h'],
+            ['usershift_beam_reliability', '%'],
+            ['usershift_total_injection_time', 'h'],
+            ['usershift_injection_count', ''],
+            ['usershift_injection_time_average', 'h'],
+            ['usershift_injection_time_stddev', 'h'],
         ]
         ppties_lsusage = [
-            ['lsusage_total_interval', 'h'],
-            ['lsusage_machinestudy_failures_interval', 'h'],
+            ['lsusage_total_time', 'h'],
+            ['lsusage_machinestudy_failures_time', 'h'],
             ['lsusage_machinestudy_failures', '%'],
-            ['lsusage_machinestudy_operational_interval', 'h'],
+            ['lsusage_machinestudy_operational_time', 'h'],
             ['lsusage_machinestudy_operational', '%'],
-            ['lsusage_machinestudy_interval', 'h'],
+            ['lsusage_machinestudy_time', 'h'],
             ['lsusage_machinestudy', '%'],
-            ['lsusage_commissioning_failures_interval', 'h'],
+            ['lsusage_commissioning_failures_time', 'h'],
             ['lsusage_commissioning_failures', '%'],
-            ['lsusage_commissioning_operational_interval', 'h'],
+            ['lsusage_commissioning_operational_time', 'h'],
             ['lsusage_commissioning_operational', '%'],
-            ['lsusage_commissioning_interval', 'h'],
+            ['lsusage_commissioning_time', 'h'],
             ['lsusage_commissioning', '%'],
-            ['lsusage_conditioning_failures_interval', 'h'],
+            ['lsusage_conditioning_failures_time', 'h'],
             ['lsusage_conditioning_failures', '%'],
-            ['lsusage_conditioning_operational_interval', 'h'],
+            ['lsusage_conditioning_operational_time', 'h'],
             ['lsusage_conditioning_operational', '%'],
-            ['lsusage_conditioning_interval', 'h'],
+            ['lsusage_conditioning_time', 'h'],
             ['lsusage_conditioning', '%'],
-            ['lsusage_maintenance_failures_interval', 'h'],
+            ['lsusage_maintenance_failures_time', 'h'],
             ['lsusage_maintenance_failures', '%'],
-            ['lsusage_maintenance_operational_interval', 'h'],
+            ['lsusage_maintenance_operational_time', 'h'],
             ['lsusage_maintenance_operational', '%'],
-            ['lsusage_maintenance_interval', 'h'],
+            ['lsusage_maintenance_time', 'h'],
             ['lsusage_maintenance', '%'],
-            ['lsusage_user_failures_interval', 'h'],
+            ['lsusage_user_failures_time', 'h'],
             ['lsusage_user_failures', '%'],
-            ['lsusage_user_operational_interval', 'h'],
+            ['lsusage_user_operational_time', 'h'],
             ['lsusage_user_operational', '%'],
-            ['lsusage_user_interval', 'h'],
+            ['lsusage_user_time', 'h'],
             ['lsusage_user', '%'],
         ]
         ppties_storedcurrent = [
             ['current_machinestudy_singlebunch_average', 'mA'],
             ['current_machinestudy_singlebunch_stddev', 'mA'],
-            ['current_machinestudy_singlebunch_interval', 'h'],
+            ['current_machinestudy_singlebunch_time', 'h'],
             ['current_machinestudy_multibunch_average', 'mA'],
             ['current_machinestudy_multibunch_stddev', 'mA'],
-            ['current_machinestudy_multibunch_interval', 'h'],
+            ['current_machinestudy_multibunch_time', 'h'],
             ['current_machinestudy_total_average', 'mA'],
             ['current_machinestudy_total_stddev', 'mA'],
-            ['current_machinestudy_total_interval', 'h'],
+            ['current_machinestudy_total_time', 'h'],
             ['current_commissioning_singlebunch_average', 'mA'],
             ['current_commissioning_singlebunch_stddev', 'mA'],
-            ['current_commissioning_singlebunch_interval', 'h'],
+            ['current_commissioning_singlebunch_time', 'h'],
             ['current_commissioning_multibunch_average', 'mA'],
             ['current_commissioning_multibunch_stddev', 'mA'],
-            ['current_commissioning_multibunch_interval', 'h'],
+            ['current_commissioning_multibunch_time', 'h'],
             ['current_commissioning_total_average', 'mA'],
             ['current_commissioning_total_stddev', 'mA'],
-            ['current_commissioning_total_interval', 'h'],
+            ['current_commissioning_total_time', 'h'],
             ['current_conditioning_singlebunch_average', 'mA'],
             ['current_conditioning_singlebunch_stddev', 'mA'],
-            ['current_conditioning_singlebunch_interval', 'h'],
+            ['current_conditioning_singlebunch_time', 'h'],
             ['current_conditioning_multibunch_average', 'mA'],
             ['current_conditioning_multibunch_stddev', 'mA'],
-            ['current_conditioning_multibunch_interval', 'h'],
+            ['current_conditioning_multibunch_time', 'h'],
             ['current_conditioning_total_average', 'mA'],
             ['current_conditioning_total_stddev', 'mA'],
-            ['current_conditioning_total_interval', 'h'],
+            ['current_conditioning_total_time', 'h'],
             ['current_user_singlebunch_average', 'mA'],
             ['current_user_singlebunch_stddev', 'mA'],
-            ['current_user_singlebunch_interval', 'h'],
+            ['current_user_singlebunch_time', 'h'],
             ['current_user_multibunch_average', 'mA'],
             ['current_user_multibunch_stddev', 'mA'],
-            ['current_user_multibunch_interval', 'h'],
+            ['current_user_multibunch_time', 'h'],
             ['current_user_total_average', 'mA'],
             ['current_user_total_stddev', 'mA'],
-            ['current_user_total_interval', 'h'],
+            ['current_user_total_time', 'h'],
             ['current_ebeam_singlebunch_average', 'mA'],
             ['current_ebeam_singlebunch_stddev', 'mA'],
-            ['current_ebeam_singlebunch_interval', 'h'],
+            ['current_ebeam_singlebunch_time', 'h'],
             ['current_ebeam_multibunch_average', 'mA'],
             ['current_ebeam_multibunch_stddev', 'mA'],
-            ['current_ebeam_multibunch_interval', 'h'],
+            ['current_ebeam_multibunch_time', 'h'],
             ['current_ebeam_total_average', 'mA'],
             ['current_ebeam_total_stddev', 'mA'],
-            ['current_ebeam_total_interval', 'h'],
+            ['current_ebeam_total_time', 'h'],
         ]
         rst = 'User Beam Statistics\n'
         for ppty, unit in ppties_userbeam:
