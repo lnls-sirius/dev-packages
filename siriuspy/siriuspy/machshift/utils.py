@@ -1306,7 +1306,7 @@ class MacReport:
 
         dtimes_users_progmd = dtimes*self._raw_data['UserShiftProgmd']
         cum_progmd = _np.cumsum(dtimes_users_progmd)
-        dtimes_users_delivd = dtimes*self._raw_data['UserShiftImpltd']
+        dtimes_users_delivd = dtimes*self._raw_data['UserShiftDelivd']
         cum_deliv = _np.cumsum(dtimes_users_delivd)
 
         fig = _plt.figure()
@@ -1516,7 +1516,7 @@ class MacReport:
         dtimes_failures_users = dtimes*self._failures_users
         self._user_shift_delivd_values = self._user_shift_progmd_values * \
             _np.logical_not(self._failures_users)
-        self._raw_data['UserShiftImpltd'] = self._user_shift_delivd_values
+        self._raw_data['UserShiftDelivd'] = self._user_shift_delivd_values
         dtimes_users_delivd = dtimes*self._user_shift_delivd_values
         self._failures_users_operat = 1 * _np.logical_or.reduce(
             [self._raw_data['Failures']['SubsystemsNOk'],
