@@ -31,8 +31,8 @@ for intvl in intervals:
 
 mtbfs, mttrs, reliabs = dict(), dict(), dict()
 for date, macr in macreports.items():
-    mtbfs[date] = macr.mean_time_between_failures
-    mttrs[date] = macr.mean_time_to_recover
+    mtbfs[date] = macr.time_between_failures_average
+    mttrs[date] = macr.time_to_recover_average
     reliabs[date] = macr.beam_reliability
 
 str_ = '{:<10s}    {:<7s}    {:<7s}    {:<7s}'
