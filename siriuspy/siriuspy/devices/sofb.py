@@ -41,7 +41,7 @@ class TLSOFB(_Device):
 
     _properties = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
-        'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
+        'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
         'RespMat-SP', 'RespMat-RB',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
@@ -389,6 +389,26 @@ class TLSOFB(_Device):
         self['MeasRespMat-Cmd'] = 2
         return True
 
+    def cmd_change_opmode_to_multiturn(self, timeout=10):
+        """."""
+        mode = self.data.SOFBMode.MultiTurn
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(1)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_change_opmode_to_sloworb(self, timeout=10):
+        """."""
+        mode = self.data.SOFBMode.SlowOrb
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(1)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
     @property
     def applydeltakick_mon(self):
         """."""
@@ -489,6 +509,10 @@ class TLSOFB(_Device):
         return self._wait(
             'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
             timeout=timeout, comp='ne')
+
+    def wait_orb_status_ok(self, timeout=10):
+        """."""
+        return self._wait('OrbStatus-Mon', 0, timeout=timeout)
 
 
 class BOSOFB(TLSOFB):
