@@ -354,7 +354,8 @@ class Devices:
             self, devices, propty, values, comp='eq',
             timeout=_DEF_TIMEOUT, return_prob=False):
         """Wait for devices property to reach value(s)."""
-        comp = getattr(_opr, comp)
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
         _time.sleep(4*_TINY_INTERVAL)
