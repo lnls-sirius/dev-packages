@@ -158,7 +158,6 @@ class Device:
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
         ntrials = int(timeout/_TINY_INTERVAL)
-        _time.sleep(4*_TINY_INTERVAL)
         for _ in range(ntrials):
             boo = comp(self[propty], value)
             if isinstance(boo, _np.ndarray):

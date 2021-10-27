@@ -1,4 +1,5 @@
 """."""
+import time as _time
 
 import numpy as _np
 
@@ -112,6 +113,7 @@ class EVG(_Device):
         """."""
         val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
+        _time.sleep(0.1)
         return self._wait(
             propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
