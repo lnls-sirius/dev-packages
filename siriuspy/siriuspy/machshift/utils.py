@@ -14,6 +14,7 @@ from .. import util as _util
 from .. import clientweb as _web
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \
     PVData as _PVData, PVDataSet as _PVDataSet
+from ..sofb.csdev import ConstTLines as _SOFBCte
 from .csdev import Const as _Cte
 
 
@@ -263,6 +264,16 @@ class MacReport:
         Average time between failure occurrences[h].
     - usershift_beam_reliability
         Beam reliability. Ratio between delivered and programmed time.
+    - usershift_total_stable_beam_time
+        Total stable beam time[h].
+    - usershift_total_unstable_beam_time
+        Total unstable beam time[h].
+    - usershift_unstable_beam_count
+        Number of unstable beam occurrences.
+    - usershift_time_between_unstable_beams_average
+        Average time between unstable beam occurrences[h].
+    - usershift_relative_stable_beam_time
+        Ratio between stable + delivered and programmed time.
     - usershift_total_injection_time
         Total injection shift[h].
     - usershift_injection_count
@@ -469,6 +480,11 @@ class MacReport:
         self._usershift_time_to_recover_stddev = None
         self._usershift_time_between_failures_average = None
         self._usershift_beam_reliability = None
+        self._usershift_total_stable_beam_time = None
+        self._usershift_total_unstable_beam_time = None
+        self._usershift_unstable_beam_count = None
+        self._usershift_time_between_unstable_beams_average = None
+        self._usershift_relative_stable_beam_time = None
         self._usershift_total_injection_time = None
         self._usershift_injection_count = None
         self._usershift_injection_time_average = None
@@ -556,7 +572,6 @@ class MacReport:
 
         # auxiliary data
         self._raw_data = None
-        self._failures_users = None
         self._curr_times = None
         self._curr_values = None
         self._ps_fail_values = None
@@ -573,10 +588,13 @@ class MacReport:
         self._user_shift_progmd_values = None
         self._user_shift_inicurr_values = None
         self._user_shift_delivd_values = None
+        self._user_shift_stable_values = None
         self._is_stored_total = None
         self._is_stored_users = None
         self._singlebunch_values = None
         self._multibunch_values = None
+        self._failures_users = None
+        self._distortions_users = None
 
     @property
     def connector(self):
@@ -737,6 +755,32 @@ class MacReport:
     def usershift_beam_reliability(self):
         """Beam reliability. Ratio between delivered and programmed time."""
         return self._usershift_beam_reliability
+
+    @property
+    def usershift_total_stable_beam_time(self):
+        """Total stable beam time [h]."""
+        return self._conv_sec_2_hour(self._usershift_total_stable_beam_time)
+
+    @property
+    def usershift_total_unstable_beam_time(self):
+        """Total unstable beam time [h]."""
+        return self._conv_sec_2_hour(self._usershift_total_unstable_beam_time)
+
+    @property
+    def usershift_unstable_beam_count(self):
+        """Number of unstable beam occurrences."""
+        return self._usershift_unstable_beam_count
+
+    @property
+    def usershift_time_between_unstable_beams_average(self):
+        """Average time between unstable beam occurrences [h]."""
+        return self._conv_sec_2_hour(
+            self._usershift_time_between_unstable_beams_average)
+
+    @property
+    def usershift_relative_stable_beam_time(self):
+        """Ratio between stable + delivered and programmed time."""
+        return self._usershift_relative_stable_beam_time
 
     @property
     def usershift_total_injection_time(self):
@@ -1216,8 +1260,8 @@ class MacReport:
 
         datetimes = _np.array([_Time(t) for t in self._raw_data['Timestamp']])
 
-        fig, axs = _plt.subplots(11, 1, sharex=True)
-        fig.set_size_inches(9, 9)
+        fig, axs = _plt.subplots(14, 1, sharex=True)
+        fig.set_size_inches(9, 10)
         fig.subplots_adjust(top=0.96, left=0.08, bottom=0.05, right=0.96)
         axs[0].set_title('Raw data', fontsize=12)
 
@@ -1240,40 +1284,58 @@ class MacReport:
         axs[2].grid()
 
         axs[3].plot_date(
-            datetimes, self._raw_data['UserShiftTotal'], '-',
-            color='gold', label='User Shifts - Total')
+            datetimes, self._raw_data['UserShiftDelivd'], '-',
+            color='gold', label='User Shifts - Delivered')
         axs[3].legend(loc='upper left', fontsize=9)
         axs[3].grid()
 
         axs[4].plot_date(
-            datetimes, self._raw_data['Failures']['NoEBeam'], '-',
-            color='red', label='Failures - NoEBeam')
+            datetimes, self._raw_data['UserShiftStable'], '-',
+            color='gold', label='User Shifts - Delivered Without Distortions')
         axs[4].legend(loc='upper left', fontsize=9)
         axs[4].grid()
 
         axs[5].plot_date(
-            datetimes, self._raw_data['GammaShutter'], '-',
-            color='red', label='Failures - Gamma Shutter Closed')
+            datetimes, self._raw_data['UserShiftTotal'], '-',
+            color='gold', label='User Shifts - Total')
         axs[5].legend(loc='upper left', fontsize=9)
         axs[5].grid()
 
         axs[6].plot_date(
-            datetimes, self._raw_data['Failures']['WrongShift'], '-',
-            color='red', label='Failures - WrongShift')
+            datetimes, self._raw_data['Failures']['NoEBeam'], '-',
+            color='red', label='Failures - NoEBeam')
         axs[6].legend(loc='upper left', fontsize=9)
         axs[6].grid()
 
         axs[7].plot_date(
-            datetimes, self._raw_data['Failures']['SubsystemsNOk'], '-',
-            color='red', label='Failures - PS, RF and MPS')
+            datetimes, self._raw_data['GammaShutter'], '-',
+            color='red', label='Failures - Gamma Shutter Closed')
         axs[7].legend(loc='upper left', fontsize=9)
         axs[7].grid()
 
         axs[8].plot_date(
-            datetimes, self._raw_data['Shift']['Injection'], '-',
-            color='lightsalmon', label='Injection Shifts')
+            datetimes, self._raw_data['Failures']['WrongShift'], '-',
+            color='red', label='Failures - WrongShift')
         axs[8].legend(loc='upper left', fontsize=9)
         axs[8].grid()
+
+        axs[9].plot_date(
+            datetimes, self._raw_data['Failures']['SubsystemsNOk'], '-',
+            color='red', label='Failures - PS, RF and MPS')
+        axs[9].legend(loc='upper left', fontsize=9)
+        axs[9].grid()
+
+        axs[10].plot_date(
+            datetimes, self._raw_data['Distortions']['SOFBLoop'], '-',
+            color='orangered', label='Distortions - SOFB Loop Open')
+        axs[10].legend(loc='upper left', fontsize=9)
+        axs[10].grid()
+
+        axs[11].plot_date(
+            datetimes, self._raw_data['Shift']['Injection'], '-',
+            color='lightsalmon', label='Injection Shifts')
+        axs[11].legend(loc='upper left', fontsize=9)
+        axs[11].grid()
 
         shift2color = {
             'MachineStudy': ['MacStudy', 'skyblue'],
@@ -1283,24 +1345,24 @@ class MacReport:
         for shift, auxdata in shift2color.items():
             ydata = self._raw_data['Shift'][shift]
 
-            axs[9].plot_date(
+            axs[12].plot_date(
                 datetimes, ydata, '-',
                 color=auxdata[1], label=auxdata[0])
-        axs[9].legend(loc='upper left', ncol=4, fontsize=9)
-        axs[9].set_ylim(0.0, 2.0)
-        axs[9].grid()
+        axs[12].legend(loc='upper left', ncol=4, fontsize=9)
+        axs[12].set_ylim(0.0, 2.0)
+        axs[12].grid()
 
         egmodes2color = {
             'MultiBunch': 'orangered', 'SingleBunch': 'orange'}
         for egmode, color in egmodes2color.items():
             ydata = self._raw_data['EgunModes'][egmode]
 
-            axs[10].plot_date(
+            axs[13].plot_date(
                 datetimes, ydata, '-',
                 color=color, label=egmode)
-        axs[10].legend(loc='upper left', ncol=2, fontsize=9)
-        axs[10].set_ylim(0.0, 2.0)
-        axs[10].grid()
+        axs[13].legend(loc='upper left', ncol=2, fontsize=9)
+        axs[13].set_ylim(0.0, 2.0)
+        axs[13].grid()
 
         return fig
 
@@ -1341,10 +1403,12 @@ class MacReport:
         self._injevt_pv = 'AS-RaMO:TI-EVG:InjectionEvt-Sts'
         self._gammashutt_pv = 'AS-Glob:PP-GammaShutter:Status-Mon'
         self._siintlk_pv = 'RA-RaSIA02:RF-IntlkCtrl:IntlkSirius-Mon'
+        self._sisofbloop_pv = 'SI-Glob:AP-SOFB:LoopState-Sts'
         self._pvnames = [
             self._current_pv, self._macshift_pv,
             self._egtrgen_pv, self._egpusel_pv, self._injevt_pv,
-            self._gammashutt_pv, self._siintlk_pv]
+            self._gammashutt_pv, self._siintlk_pv,
+            self._sisofbloop_pv]
 
         self._pvdata = dict()
         self._pv2default = dict()
@@ -1415,6 +1479,13 @@ class MacReport:
         self._gamblk_fail_values = _interp1d_previous(
             gamblk_times, gamblk_values, self._curr_times)
         self._raw_data['GammaShutter'] = self._gamblk_fail_values
+
+        sofbloop_times, sofbloop_values = \
+            self._get_pv_data('SI-Glob:AP-SOFB:LoopState-Sts')
+        sofbloop_fail_rawvalues = _np.array(
+            [1*(v == _SOFBCte.LoopState.Open) for v in sofbloop_values])
+        self._sofbloop_fail_values = _interp1d_previous(
+            sofbloop_times, sofbloop_fail_rawvalues, self._curr_times)
 
         # rf and mps status data
         siintlk_times, siintlk_values = \
@@ -1542,6 +1613,21 @@ class MacReport:
         self._raw_data['UserShiftDelivd'] = self._user_shift_delivd_values
         dtimes_users_delivd = dtimes*self._user_shift_delivd_values
 
+        # distortions
+        self._raw_data['Distortions'] = dict()
+        self._raw_data['Distortions']['SOFBLoop'] = \
+            self._sofbloop_fail_values
+
+        self._distortions_users = 1 * _np.logical_or.reduce(
+            [value for value in self._raw_data['Distortions'].values()]) * \
+            self._user_shift_delivd_values
+        dtimes_distortions_users = dtimes*self._distortions_users
+
+        self._user_shift_stable_values = self._user_shift_delivd_values * \
+            _np.logical_not(self._distortions_users)
+        self._raw_data['UserShiftStable'] = self._user_shift_stable_values
+        dtimes_users_stable = dtimes*self._user_shift_stable_values
+
         # user total and extra shift
         self._user_shift_act_values = \
             self._user_shift_values*_np.logical_not(self._failures_users)
@@ -1624,6 +1710,24 @@ class MacReport:
         self._usershift_time_between_failures_average = \
             _np.inf if not self._usershift_failures_count\
             else self._usershift_progmd_time/self._usershift_failures_count
+
+        # # # ----- distortions -----
+        self._usershift_total_unstable_beam_time = _np.sum(
+            dtimes_distortions_users)
+
+        _, _, count = self._calc_interval_stats(
+            self._distortions_users, dtimes_distortions_users)
+        self._usershift_unstable_beam_count = count
+
+        self._usershift_time_between_unstable_beams_average = \
+            _np.inf if not self._usershift_unstable_beam_count\
+            else self._usershift_progmd_time / \
+            self._usershift_unstable_beam_count
+
+        self._usershift_total_stable_beam_time = _np.sum(dtimes_users_stable)
+        self._usershift_relative_stable_beam_time = \
+            0.0 if not self._usershift_progmd_time else 100 * \
+            self._usershift_total_stable_beam_time/self._usershift_progmd_time
 
         # # # ----- reliability -----
         self._usershift_beam_reliability = \
@@ -1794,6 +1898,11 @@ class MacReport:
             ['usershift_time_to_recover_stddev', 'h'],
             ['usershift_time_between_failures_average', 'h'],
             ['usershift_beam_reliability', '%'],
+            ['usershift_total_stable_beam_time', 'h'],
+            ['usershift_total_unstable_beam_time', 'h'],
+            ['usershift_unstable_beam_count', ''],
+            ['usershift_time_between_unstable_beams_average', 'h'],
+            ['usershift_relative_stable_beam_time', '%'],
             ['usershift_total_injection_time', 'h'],
             ['usershift_injection_count', ''],
             ['usershift_injection_time_average', 'h'],
