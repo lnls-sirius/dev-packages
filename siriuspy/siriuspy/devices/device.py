@@ -358,7 +358,6 @@ class Devices:
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
-        _time.sleep(4*_TINY_INTERVAL)
         for _ in range(int(timeout/_TINY_INTERVAL)):
             okdevs = set()
             for k, v in dev2val.items():
