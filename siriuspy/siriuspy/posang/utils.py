@@ -23,6 +23,7 @@ class HandleConfigNameFile:
             with open(self.fname, 'r') as fil:
                 config_name = fil.read().strip('\n')
         else:
+            _os.makedirs(self.fpath, exist_ok=True)
             config_name = get_default_config_name(self.tl, self.corrs_type)
             with open(self.fname, 'w+') as fil:
                 fil.write(config_name)
