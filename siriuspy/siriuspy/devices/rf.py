@@ -279,6 +279,7 @@ class SIRFCavMonitor(_DeviceNC):
         SI = 'SI-02SB:RF-P7Cav'
 
     _properties = (
+        'PwrRev-Mon', 'PwrFwd-Mon',
         'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
         'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
