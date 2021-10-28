@@ -51,6 +51,7 @@ class TuneFrac(_Device):
         self['Enbl-Sel'] = 0
         return self._wait('Enbl-Sts', value=0, timeout=timeout)
 
+
 class TuneProc(_Device):
     """."""
 

@@ -750,8 +750,7 @@ class SISOFB(BOSOFB):
         if self.drivests == self.data.DriveState.Open:
             return True
         self['DriveState-Sel'] = self.data.DriveState.Open
-        return self._wait(
-            'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
+        return self.wait_drive(timeout=timeout)
 
     def wait_drive(self, timeout=None):
         """."""
