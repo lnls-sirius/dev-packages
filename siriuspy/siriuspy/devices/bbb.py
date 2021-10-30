@@ -305,7 +305,7 @@ class SystemInfo(_Device):
     @property
     def revolution_freq_nom(self):
         """."""
-        return self['FREV'] * 1e6
+        return self['FREV'] * 1e3
 
     @property
     def harmonic_number(self):
