@@ -123,12 +123,15 @@ class BPM(_Device):
     @property
     def rffe_att(self):
         """."""
+        if 'RFFEAtt-RB' not in self._pvs:
+            return None
         return self['RFFEAtt-RB']
 
     @rffe_att.setter
     def rffe_att(self, val):
         """."""
-        self['RFFEAtt-SP'] = val
+        if 'RFFEAtt-RB' in self._pvs:
+            self['RFFEAtt-SP'] = val
 
     @property
     def asyn_state(self):
