@@ -9,7 +9,7 @@ from ..search import BPMSearch as _BPMSearch
 
 
 class BPM(_Device):
-    """BPM Device"""
+    """BPM Device."""
 
     _properties = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
@@ -70,7 +70,13 @@ class BPM(_Device):
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
             raise ValueError(devname + ' is no a valid BPM or PBPM name.')
-        super().__init__(devname, properties=BPM._properties)
+
+        properties = set(BPM._properties)
+        if _BPMSearch.is_photon_bpm(devname):
+            properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
+        properties = list(properties)
+
+        super().__init__(devname, properties=properties)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -117,12 +123,15 @@ class BPM(_Device):
     @property
     def rffe_att(self):
         """."""
+        if 'RFFEAtt-RB' not in self._pvs:
+            return None
         return self['RFFEAtt-RB']
 
     @rffe_att.setter
     def rffe_att(self, val):
         """."""
-        self['RFFEAtt-SP'] = val
+        if 'RFFEAtt-SP' in self._pvs:
+            self['RFFEAtt-SP'] = val
 
     @property
     def asyn_state(self):
