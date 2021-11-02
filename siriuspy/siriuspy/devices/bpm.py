@@ -130,7 +130,7 @@ class BPM(_Device):
     @rffe_att.setter
     def rffe_att(self, val):
         """."""
-        if 'RFFEAtt-RB' in self._pvs:
+        if 'RFFEAtt-SP' in self._pvs:
             self['RFFEAtt-SP'] = val
 
     @property
