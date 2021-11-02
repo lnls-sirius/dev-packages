@@ -1,4 +1,5 @@
 """."""
+import time as _time
 
 import numpy as _np
 
@@ -50,6 +51,7 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
+        'SwTagEn-Sel', 'SwTagEn-Sts',
         'TbtTagEn-Sel', 'TbtTagEn-Sts',
         'Monit1TagEn-Sel', 'Monit1TagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
@@ -202,6 +204,16 @@ class BPM(_Device):
     def tbt_mask_end(self, val):
         """."""
         self['TbtDataMaskSamplesEnd-SP'] = val
+
+    @property
+    def fofb_sync_enbl(self):
+        """."""
+        return self['SwTagEn-Sts']
+
+    @fofb_sync_enbl.setter
+    def fofb_sync_enbl(self, val):
+        """."""
+        self['SwTagEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -723,3 +735,31 @@ class BPM(_Device):
         """Command Turn off Switching."""
         self.switching_mode = _csbpm.SwModes.direct
         return self._wait('SwMode-Sts', _csbpm.SwModes.direct)
+
+    def cmd_sync_tbt(self):
+        """Synchronize TbT acquisitions with Timing System."""
+        self.tbt_sync_enbl = 1
+        _time.sleep(0.1)
+        self.tbt_sync_enbl = 0
+        return self._wait('TbtTagEn-Sts', 0)
+
+    def cmd_sync_fofb(self):
+        """Synchronize FOFB acquisitions with Timing System."""
+        self.fofb_sync_enbl = 1
+        _time.sleep(0.1)
+        self.fofb_sync_enbl = 0
+        return self._wait('SwTagEn-Sts', 0)
+
+    def cmd_sync_monit1(self):
+        """Synchronize Monit1 acquisitions with Timing System."""
+        self.monit1_sync_enbl = 1
+        _time.sleep(0.1)
+        self.monit1_sync_enbl = 0
+        return self._wait('Monit1TagEn-Sts', 0)
+
+    def cmd_sync_monit(self):
+        """Synchronize Monit acquisitions with Timing System."""
+        self.monit_sync_enbl = 1
+        _time.sleep(0.1)
+        self.monit_sync_enbl = 0
+        return self._wait('Monit1TagEn-Sts', 0)
