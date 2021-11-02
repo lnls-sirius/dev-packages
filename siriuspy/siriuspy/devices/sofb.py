@@ -71,7 +71,7 @@ class TLSOFB(_Device):
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
-        'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts',
+        'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
         )
 
     _default_timeout = 10  # [s]
@@ -443,6 +443,11 @@ class TLSOFB(_Device):
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_config(self, timeout=10):
+        """."""
+        self['TrigAcqConfig-Cmd'] = 1
         return self.wait_orb_status_ok(timeout=timeout)
 
     @property
