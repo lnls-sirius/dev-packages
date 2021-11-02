@@ -418,7 +418,8 @@ class TLSOFB(_Device):
     def cmd_trigacq_start(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Start'
-        ret = self._wait('TrigAcqCtrl-Sts', 'Start', timeout=timeout)
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Start, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -427,7 +428,8 @@ class TLSOFB(_Device):
     def cmd_trigacq_stop(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Stop'
-        ret = self._wait('TrigAcqCtrl-Sts', 'Stop', timeout=timeout)
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Stop, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -436,7 +438,8 @@ class TLSOFB(_Device):
     def cmd_trigacq_abort(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Abort'
-        ret = self._wait('TrigAcqCtrl-Sts', 'Abort', timeout=timeout)
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Abort, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
