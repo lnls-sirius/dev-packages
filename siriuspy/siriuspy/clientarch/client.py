@@ -4,6 +4,7 @@
 See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
 """
 
+from threading import Thread as _Thread
 import asyncio as _asyncio
 import urllib as _urllib
 import ssl as _ssl
@@ -33,6 +34,7 @@ class ClientArchiver:
         self.session = None
         self.timeout = _TIMEOUT
         self._url = server_url or self.SERVER_URL
+        self._ret = None
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
@@ -52,10 +54,9 @@ class ClientArchiver:
         headers = {"User-Agent": "Mozilla/5.0"}
         payload = {"username": username, "password": password}
         url = self._create_url(method='login')
-        loop = self._get_async_event_loop()
-        self.session, authenticated = loop.run_until_complete(
-            self._create_session(
-                url, headers=headers, payload=payload, ssl=False))
+        self.session, authenticated = self._run_async_event_loop(
+            self._create_session,
+            url, headers=headers, payload=payload, ssl=False)
         if authenticated:
             print('Reminder: close connection after using this '
                   'session by calling logout method!')
@@ -66,8 +67,7 @@ class ClientArchiver:
     def logout(self):
         """Close login session."""
         if self.session:
-            loop = self._get_async_event_loop()
-            resp = loop.run_until_complete(self._close_session())
+            resp = self._run_async_event_loop(self._close_session)
             self.session = None
             return resp
         return None
@@ -231,9 +231,9 @@ class ClientArchiver:
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
-        loop = self._get_async_event_loop()
-        response = loop.run_until_complete(self._handle_request(
-            url, return_json=return_json, need_login=need_login))
+        response = self._run_async_event_loop(
+            self._handle_request,
+            url, return_json=return_json, need_login=need_login)
         return response
 
     def _create_url(self, method, **kwargs):
@@ -250,8 +250,18 @@ class ClientArchiver:
         return url
 
     # ---------- async methods ----------
+    def _run_async_event_loop(self, *args, **kwargs):
+        # NOTE: Run the asyncio commands in a separated Thread to isolate
+        # their EventLoop from the external environment (important for class
+        # to work within jupyter notebook environment).
+        _thread = _Thread(
+            target=self._thread_run_async_event_loop,
+            daemon=True, args=args, kwargs=kwargs)
+        _thread.start()
+        _thread.join()
+        return self._ret
 
-    def _get_async_event_loop(self):
+    def _thread_run_async_event_loop(self, func, *args, **kwargs):
         """Get event loop."""
         try:
             loop = _asyncio.get_event_loop()
@@ -261,7 +271,7 @@ class ClientArchiver:
                 _asyncio.set_event_loop(loop)
             else:
                 raise error
-        return loop
+        self._ret = loop.run_until_complete(func(*args, **kwargs))
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
