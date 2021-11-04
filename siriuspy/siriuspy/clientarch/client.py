@@ -54,15 +54,18 @@ class ClientArchiver:
         headers = {"User-Agent": "Mozilla/5.0"}
         payload = {"username": username, "password": password}
         url = self._create_url(method='login')
-        self.session, authenticated = self._run_async_event_loop(
+        ret = self._run_async_event_loop(
             self._create_session,
             url, headers=headers, payload=payload, ssl=False)
-        if authenticated:
-            print('Reminder: close connection after using this '
-                  'session by calling logout method!')
-        else:
-            self.logout()
-        return authenticated
+        if ret is not None:
+            self.session, authenticated = ret
+            if authenticated:
+                print('Reminder: close connection after using this '
+                      'session by calling logout method!')
+            else:
+                self.logout()
+            return authenticated
+        return False
 
     def logout(self):
         """Close login session."""
@@ -271,7 +274,10 @@ class ClientArchiver:
                 _asyncio.set_event_loop(loop)
             else:
                 raise error
-        self._ret = loop.run_until_complete(func(*args, **kwargs))
+        try:
+            self._ret = loop.run_until_complete(func(*args, **kwargs))
+        except _asyncio.TimeoutError:
+            self._ret = None
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
