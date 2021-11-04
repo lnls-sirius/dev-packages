@@ -7,6 +7,9 @@ import numpy as _np
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
+from mathphys.functions import save_pickle as _save_pickle, \
+    load_pickle as _load_pickle
+
 
 class _Base:
 
@@ -297,7 +300,75 @@ class PVData(_Base):
         self._status = _np.asarray(status)
         self._severity = _np.asarray(severity)
 
+    def to_dict(self):
+        """Return dictionary with PV properties.
 
+        Returns:
+            dict: dictionary with fields:
+                server_url (str): url of the Archiver server.
+                pvname (str): the name of the PV.
+                timestamp_start (time.time): start of acquisition time.
+                timestamp_stop (time.time): end of acquisition time.
+                data (dict): dictionary with archiver data  with fields:
+                    value (numpy.ndarray): values of the PV.
+                    timestamp (numpy.ndarray): timestamps of the PV.
+                    status (numpy.ndarray): status of the PV.
+                    severity (numpy.ndarray): severity of the PV.
+
+        """
+        return dict(
+            server_url=self.connector.server_url,
+            pvname=self.pvname,
+            timestamp_start=self.timestamp_start,
+            timestamp_stop=self.timestamp_stop,
+            data=dict(
+                timestamp=self.timestamp, value=self.value,
+                status=self.status, severity=self.severity)
+            )
+
+    @staticmethod
+    def from_dict(infos):
+        """Return PVData object with information in data.
+
+        Args:
+            infos (dict): must have the same fields as the dictionary returned
+                by PVData.to_dict method.
+
+        Returns:
+            PVData: with values compatible with data.
+
+        """
+        pvdata = PVData(infos['pvname'], connector=infos['server_url'])
+        pvdata.timestamp_start = infos['timestamp_start']
+        pvdata.timestamp_stop = infos['timestamp_stop']
+        pvdata.set_data(**infos['data'])
+        return pvdata
+
+    def to_pickle(self, fname, overwrite=False):
+        """Create pickle file with complete PVData.
+
+        The data saved is the dictionary returned by PVData.to_dict method.
+
+        Args:
+            fname (str): name of the file to save.
+            overwrite (bool, optional): Whether to overwrite existing file
+                with same name or not. Defaults to False.
+
+        """
+        _save_pickle(self.to_dict(), fname, overwrite=overwrite)
+
+    @staticmethod
+    def from_pickle(fname):
+        """Load data from pickle file and return PVData object.
+
+        Args:
+            fname (str): name of the file to load.
+
+        Returns:
+            PVData: with values from the pickle file.
+
+        """
+        return PVData.from_dict(_load_pickle(fname))
 
 
 class PVDataSet(_Base):
@@ -310,8 +381,7 @@ class PVDataSet(_Base):
         self._time_start = None
         self._time_stop = None
         self._parallel_query_bin_interval = 12*60*60  # 12h
-        self._pvdata = self._init_connectors()
-        self.connect()
+        self._pvdata = self._init_pvdatas(pvnames, self.connector)
 
     @property
     def pvnames(self):
@@ -430,15 +500,93 @@ class PVDataSet(_Base):
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
-    def _init_connectors(self):
+    @staticmethod
+    def _init_pvdatas(pvnames, connector):
         pvdata = dict()
-        for pvname in self._pvnames:
-            pvdata[pvname] = PVData(pvname, self._connector)
+        for pvname in pvnames:
+            pvdata[pvname] = PVData(pvname, connector)
         return pvdata
 
     def __getitem__(self, val):
         """Get item."""
         if isinstance(val, str):
             return self._pvdata[val]
-        else:
+        elif isinstance(val, int):
             return self._pvdata[self._pvnames[val]]
+        else:
+            raise TypeError('Item must be int or str.')
+
+    def __iter__(self):
+        """Iterate over object."""
+        for pvn in self.pvnames:
+            yield self[pvn]
+
+    def __len__(self):
+        """Size of the object."""
+        return len(self.pvnames)
+
+    def to_dict(self):
+        """Return dictionary with PV properties.
+
+        Returns:
+            dict: dictionary with fields:
+                server_url (str): url of the Archiver server.
+                pvnames (list): the names of the PVs.
+                timestamp_start (time.time): start of acquisition time.
+                timestamp_stop (time.time): end of acquisition time.
+                pvdata_info (list): with dictionaries containing the data for
+                    all PVs. Compatible input for PVData.from_dict.
+
+        """
+        data = dict(
+            server_url=self.connector.server_url,
+            pvnames=self.pvnames,
+            timestamp_start=self.timestamp_start,
+            timestamp_stop=self.timestamp_stop)
+        data['pvdata_info'] = [self[pvn].to_dict() for pvn in self._pvnames]
+        return data
+
+    @staticmethod
+    def from_dict(info):
+        """Return PVDataSet object with information in data.
+
+        Args:
+            info (dict): must have the same fields as the dictionary returned
+                by PVDataSet.to_dict method.
+
+        Returns:
+            PVDataSet: with values compatible with data.
+
+        """
+        pvdataset = PVDataSet(info['pvnames'], info['server_url'])
+        pvdataset.timestamp_start = info['timestamp_start']
+        pvdataset.timestamp_stop = info['timestamp_stop']
+        for i, pvdata in enumerate(pvdataset):
+            pvdata.set_data(**info['pvdata_info'][i]['data'])
+        return pvdataset
+
+    def to_pickle(self, fname, overwrite=False):
+        """Create pickle file with complete PVDataSet.
+
+        The data saved is the dictionary returned by PVDataSet.to_dict method.
+
+        Args:
+            fname (str): name of the file to save.
+            overwrite (bool, optional): Whether to overwrite existing file
+                with same name or not. Defaults to False.
+
+        """
+        _save_pickle(self.to_dict(), fname, overwrite=overwrite)
+
+    @staticmethod
+    def from_pickle(fname):
+        """Load data from pickle file and return PVDataSet object.
+
+        Args:
+            fname (str): name of the file to load.
+
+        Returns:
+            PVDataSet: with values from the pickle file.
+
+        """
+        return PVDataSet.from_dict(_load_pickle(fname))
