@@ -49,6 +49,27 @@ class ClientArchiver:
         except _urllib.error.URLError:
             return False
 
+    @property
+    def server_url(self):
+        """Return URL of the Archiver server.
+
+        Returns:
+            str: URL of the server.
+
+        """
+        return self._url
+
+    @server_url.setter
+    def server_url(self, url):
+        """Set the new server URL. Logs out if needed.
+
+        Args:
+            url (str): New server URL to use.
+
+        """
+        self.logout()
+        self._url = url
+
     def login(self, username, password):
         """Open login session."""
         headers = {"User-Agent": "Mozilla/5.0"}
