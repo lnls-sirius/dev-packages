@@ -236,7 +236,9 @@ class ClientArchiver:
                 timestamp, value, status, severity = \
                     _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
 
-            pvn2resp[pvn] = [timestamp, value, status, severity]
+            pvn2resp[pvn] = dict(
+                timestamp=timestamp, value=value, status=status,
+                severity=severity)
 
         if len(pvname) == 1:
             return pvn2resp[pvname_orig[0]]

@@ -281,11 +281,15 @@ class PVData:
             process_type=process_type, interval=mean_sec)
         if not data:
             return
-        self._timestamp, self._value, self._status, self._severity = data
+        self.set_data(**data)
 
-    def set_data(self, data):
+    def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
-        self._timestamp, self._value, self._status, self._severity = data
+        self._timestamp = _np.asarray(timestamp)
+        self._value = _np.asarray(value)
+        self._status = _np.asarray(status)
+        self._severity = _np.asarray(severity)
+
 
 
 class PVDataSet:
@@ -422,7 +426,7 @@ class PVDataSet:
         if not data:
             return
         for pvname in self._pvnames:
-            self._pvdata[pvname].set_data(data[pvname])
+            self._pvdata[pvname].set_data(**data[pvname])
 
     def _init_connectors(self):
         pvdata = dict()
