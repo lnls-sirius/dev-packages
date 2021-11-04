@@ -36,6 +36,7 @@ class PVDetails:
         self.estimated_storage_rate_kb_hour = None
         self.estimated_storage_rate_mb_day = None
         self.estimated_storage_rate_gb_year = None
+        self.connect()
 
     @property
     def connected(self):
@@ -127,6 +128,7 @@ class PVData:
         self._status = None
         self._severity = None
         self._parallel_query_bin_interval = 12*60*60  # 12h
+        self.connect()
 
     @property
     def pvname(self):
@@ -287,6 +289,7 @@ class PVDataSet:
         self._time_stop = None
         self._parallel_query_bin_interval = 12*60*60  # 12h
         self._pvdata = self._init_connectors()
+        self.connect()
 
     @property
     def pvnames(self):
