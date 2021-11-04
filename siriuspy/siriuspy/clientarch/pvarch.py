@@ -74,6 +74,8 @@ class PVDetails:
         for datum in data:
             # print(datum)
             field, value = datum['name'], datum['value']
+            if value is None:
+                continue
             # value = value.replace(',', '.')
             value = value.replace(',', '')
             if field in PVDetails._field2type:
