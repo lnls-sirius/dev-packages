@@ -409,6 +409,9 @@ class PVDataSet:
             pvdata[pvname] = PVData(pvname, self._connector)
         return pvdata
 
-    def __getitem__(self, pvname):
+    def __getitem__(self, val):
         """Get item."""
-        return self._pvdata[pvname]
+        if isinstance(val, str):
+            return self._pvdata[val]
+        else:
+            return self._pvdata[self._pvnames[val]]
