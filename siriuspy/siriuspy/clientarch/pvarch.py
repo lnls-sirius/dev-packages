@@ -2,11 +2,56 @@
 
 from copy import deepcopy as _dcopy
 
+import numpy as _np
+
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
 
-class PVDetails:
+class _Base:
+
+    def __init__(self, connector=None):
+        self._connector = None
+        self.connector = connector
+        self.connect()
+
+    @property
+    def is_archived(self):
+        """Is archived."""
+        self.connect()
+        return self.connector.getPVDetails(self.pvname) is not None
+
+    def connect(self):
+        """Connect."""
+        if self.connector is None:
+            self._connector = _ClientArchiver()
+
+    @property
+    def connector(self):
+        """Connector."""
+        return self._connector
+
+    @connector.setter
+    def connector(self, conn):
+        if conn is None:
+            return
+        elif isinstance(conn, _ClientArchiver):
+            self._connector = conn
+        elif isinstance(conn, str):
+            self._connector = _ClientArchiver(server_url=conn)
+        else:
+            raise TypeError(
+                'Variable conn must be a str or ClientArchiver object.')
+
+    @property
+    def connected(self):
+        """."""
+        if not self.connector:
+            return False
+        return self.connector.connected
+
+
+class PVDetails(_Base):
     """Archive PV Details."""
 
     _field2type = {
@@ -24,8 +69,8 @@ class PVDetails:
 
     def __init__(self, pvname, connector=None):
         """."""
+        super().__init__(connector)
         self.pvname = pvname
-        self.connector = connector
         self.is_scalar = None
         self.is_paused = None
         self.is_connected = None
@@ -36,14 +81,6 @@ class PVDetails:
         self.estimated_storage_rate_kb_hour = None
         self.estimated_storage_rate_mb_day = None
         self.estimated_storage_rate_gb_year = None
-        self.connect()
-
-    @property
-    def connected(self):
-        """."""
-        if not self.connector:
-            return False
-        return self.connector.connected
 
     @property
     def request_url(self):
@@ -60,11 +97,6 @@ class PVDetails:
         if not data:
             return False
         return True
-
-    def connect(self):
-        """."""
-        if self.connector is None:
-            self.connector = _ClientArchiver()
 
     def update(self):
         """."""
@@ -116,13 +148,13 @@ class PVDetails:
         return rst
 
 
-class PVData:
+class PVData(_Base):
     """Archive PV Data."""
 
     def __init__(self, pvname, connector=None):
         """Initialize."""
+        super().__init__(connector)
         self._pvname = pvname
-        self._connector = connector
         self._time_start = None
         self._time_stop = None
         self._timestamp = None
@@ -130,7 +162,6 @@ class PVData:
         self._status = None
         self._severity = None
         self._parallel_query_bin_interval = 12*60*60  # 12h
-        self.connect()
 
     @property
     def pvname(self):
@@ -147,30 +178,6 @@ class PVData:
             self._time_stop.get_iso8601(),
             get_request_url=True)
         return url
-
-    @property
-    def is_archived(self):
-        """Is archived."""
-        self.connect()
-        req = self.connector.getPVDetails(self.pvname)
-        if not req:
-            return False
-        return True
-
-    def connect(self):
-        """Connect."""
-        if self.connector is None:
-            self._connector = _ClientArchiver()
-
-    @property
-    def connector(self):
-        """Connector."""
-        return self._connector
-
-    @property
-    def connected(self):
-        """Check connected."""
-        return self.connector and self.connector.connected
 
     @property
     def timestamp_start(self):
@@ -292,13 +299,14 @@ class PVData:
 
 
 
-class PVDataSet:
+
+class PVDataSet(_Base):
     """A set of PVData objects."""
 
     def __init__(self, pvnames, connector=None):
         """Initialize."""
+        super().__init__(connector)
         self._pvnames = pvnames
-        self._connector = connector
         self._time_start = None
         self._time_stop = None
         self._parallel_query_bin_interval = 12*60*60  # 12h
@@ -310,20 +318,14 @@ class PVDataSet:
         """PV names."""
         return _dcopy(self._pvnames)
 
-    def connect(self):
-        """Connect."""
-        if self.connector is None:
-            self._connector = _ClientArchiver()
-
     @property
-    def connector(self):
-        """Connector."""
-        return self._connector
-
-    @property
-    def connected(self):
-        """Check connected."""
-        return self.connector and self.connector.connected
+    def is_archived(self):
+        """Is archived."""
+        self.connect()
+        for pvn in self._pvnames:
+            if self.connector.getPVDetails(pvn) is None:
+                return False
+        return True
 
     @property
     def timestamp_start(self):
