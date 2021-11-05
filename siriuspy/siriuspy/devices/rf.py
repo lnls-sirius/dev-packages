@@ -192,47 +192,47 @@ class ASLLRF(_DeviceNC):
 
     @property
     def field_flatness_gain1(self):
-        """Return the field flatness gain of cell 2."""
+        """Return the gain of the first cell controlled."""
         return self['FF:GAIN:CELL2']
 
     @field_flatness_gain1.setter
     def field_flatness_gain1(self, value):
-        """Control the field flatness gain of cell 2."""
+        """Control the gain of the first cell controlled."""
         self['FF:GAIN:CELL2:S'] = value
 
     @property
     def field_flatness_gain2(self):
-        """Return the field flatness gain of cell 4."""
+        """Return the gain of the second cell controle."""
         return self['FF:GAIN:CELL4']
 
     @field_flatness_gain2.setter
     def field_flatness_gain2(self, value):
-        """Control the field flatness gain of cell 4."""
+        """Control the gain of the second cell controlled."""
         self['FF:GAIN:CELL4:S'] = value
 
     @property
     def field_flatness_deadband(self):
-        """Return the field flatness action deadband in [%]."""
+        """Return the loop action deadband in [%]."""
         return self['FF:DEADBAND']
 
     @field_flatness_deadband.setter
     def field_flatness_deadband(self, value):
-        """Control the field flatness action deadband in [%]."""
+        """Control the loop action deadband in [%]."""
         self['FF:DEADBAND:S'] = value
 
     @property
-    def field_flatness_cell1_amp(self):
-        """Return the field flatness cell2 amplitude in [mV]."""
+    def field_flatness_amp1(self):
+        """Amplitude of the first cell controled in [mV]."""
         return self['FF:CELL2']
 
     @property
-    def field_flatness_cell2_amp(self):
-        """Return the field flatness cell6 amplitude in [mV]."""
+    def field_flatness_amp2(self):
+        """Amplitude of the second cell controled in [mV]."""
         return self['FF:CELL4']
 
     @property
     def field_flatness_error(self):
-        """Return the field flatness error amplitude in [mV]."""
+        """Return the amplitude error in [mV]."""
         return self['FF:ERR']
 
 
