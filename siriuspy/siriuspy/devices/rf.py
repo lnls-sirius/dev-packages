@@ -72,6 +72,9 @@ class ASLLRF(_DeviceNC):
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
+        'FF:ON', 'FF', 'FF:S', 'FF:POS', 'FF:POS:S',
+        'FF:GAIN:CELL2', 'FF:GAIN:CELL2:S', 'FF:GAIN:CELL4', 'FF:GAIN:CELL4:S',
+        'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
         )
 
     def __init__(self, devname):
@@ -161,6 +164,76 @@ class ASLLRF(_DeviceNC):
     def detune_error(self):
         """."""
         return self['TUNE:DEPHS']
+
+    @property
+    def field_flatness_acting(self):
+        """Return whether the field flatness loop is acting."""
+        return self['FF:ON']
+
+    @property
+    def field_flatness_enable(self):
+        """Return whether the field flatness loop is enabled."""
+        return self['FF']
+
+    @field_flatness_enable.setter
+    def field_flatness_enable(self, value):
+        """Control state of field flatness loop."""
+        self['FF:S'] = bool(value)
+
+    @property
+    def field_flatness_position(self):
+        """Return the field flatness position."""
+        return self['FF:POS']
+
+    @field_flatness_position.setter
+    def field_flatness_position(self, value):
+        """Control the field flatness position."""
+        self['FF:POS:S'] = bool(value)
+
+    @property
+    def field_flatness_gain1(self):
+        """Return the gain of the first cell controlled."""
+        return self['FF:GAIN:CELL2']
+
+    @field_flatness_gain1.setter
+    def field_flatness_gain1(self, value):
+        """Control the gain of the first cell controlled."""
+        self['FF:GAIN:CELL2:S'] = value
+
+    @property
+    def field_flatness_gain2(self):
+        """Return the gain of the second cell controle."""
+        return self['FF:GAIN:CELL4']
+
+    @field_flatness_gain2.setter
+    def field_flatness_gain2(self, value):
+        """Control the gain of the second cell controlled."""
+        self['FF:GAIN:CELL4:S'] = value
+
+    @property
+    def field_flatness_deadband(self):
+        """Return the loop action deadband in [%]."""
+        return self['FF:DEADBAND']
+
+    @field_flatness_deadband.setter
+    def field_flatness_deadband(self, value):
+        """Control the loop action deadband in [%]."""
+        self['FF:DEADBAND:S'] = value
+
+    @property
+    def field_flatness_amp1(self):
+        """Amplitude of the first cell controled in [mV]."""
+        return self['FF:CELL2']
+
+    @property
+    def field_flatness_amp2(self):
+        """Amplitude of the second cell controled in [mV]."""
+        return self['FF:CELL4']
+
+    @property
+    def field_flatness_error(self):
+        """Return the amplitude error in [mV]."""
+        return self['FF:ERR']
 
 
 class BORFCavMonitor(_DeviceNC):

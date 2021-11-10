@@ -71,6 +71,7 @@ class TLSOFB(_Device):
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
+        'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
         )
 
     _default_timeout = 10  # [s]
@@ -325,6 +326,11 @@ class TLSOFB(_Device):
         self['MinSingValue-SP'] = value
 
     @property
+    def trigacq(self):
+        """."""
+        return self['TrigAcqCtrl-Sts']
+
+    @property
     def trigsamplepre(self):
         """."""
         return self['TrigNrSamplesPre-RB']
@@ -406,7 +412,42 @@ class TLSOFB(_Device):
         ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
         if not ret:
             return False
-        _time.sleep(1)  # Status PV updates at 2Hz
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_start(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Start'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Start, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_stop(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Stop'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Stop, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_abort(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Abort'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Abort, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_config(self, timeout=10):
+        """."""
+        self['TrigAcqConfig-Cmd'] = 1
         return self.wait_orb_status_ok(timeout=timeout)
 
     @property

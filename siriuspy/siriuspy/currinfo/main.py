@@ -231,7 +231,7 @@ class BOCurrInfoApp(_CurrInfoApp):
             if data is None:
                 charge = 0.0
             else:
-                charge = data[1][0]
+                charge = data['value'][0]
             self._charges[k] = charge
 
         data = self._get_value_from_arch(
@@ -239,7 +239,7 @@ class BOCurrInfoApp(_CurrInfoApp):
         if data is None:
             self._intcurrent3gev = 0.0
         else:
-            self._intcurrent3gev = data[1][0]
+            self._intcurrent3gev = data['value'][0]
 
         # PVs
         self._rawreadings_pv = _PV(
@@ -397,7 +397,7 @@ class SICurrInfoApp(_CurrInfoApp):
         if data is None:
             self._charge = 0.0
         else:
-            self._charge = data[1][0]
+            self._charge = data['value'][0]
 
         # pvs
         self._current_13c4_pv = _PV(

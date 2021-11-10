@@ -85,10 +85,10 @@ class _BaseLL(_Callback):
                 self._readpvs[prop] = pvo
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 pvo = _PV(pvnamesp)
+                self._writepvs[prop] = pvo
                 pvo.initialized = False
                 pvo.add_callback(self._on_change_writepv)
                 pvo.connection_callbacks.append(self._on_connection_writepv)
-                self._writepvs[prop] = pvo
         self._initialized = True
 
     @property
@@ -255,7 +255,9 @@ class _BaseLL(_Callback):
         prop = self._dict_convert_pv2prop[pvname]
         my_val = self._config_ok_values.get(prop)
         pvo = self._writepvs.get(prop)
-        if my_val is None or pvo is None:
+        if pvo is None:
+            return
+        if my_val is None:
             timer.stop()
         value = self._get_from_pvs(False, prop)
         if value is None:

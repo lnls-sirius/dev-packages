@@ -432,9 +432,9 @@ class PowerSupplyPU(_PSDev):
         BO_EJE_KCKR = 'BO-48D:PU-EjeKckr'
         TS_EJE_SEPTF = 'TS-01:PU-EjeSeptF'
         TS_EJE_SEPTG = 'TS-01:PU-EjeSeptG'
-        TS_INJ_SPETG_1 = 'TS-04:PU-InjSeptG-1'
-        TS_INJ_SPETG_2 = 'TS-04:PU-InjSeptG-2'
-        TS_INJ_SPETF = 'TS-04:PU-InjSeptF'
+        TS_INJ_SEPTG_1 = 'TS-04:PU-InjSeptG-1'
+        TS_INJ_SEPTG_2 = 'TS-04:PU-InjSeptG-2'
+        TS_INJ_SEPTF = 'TS-04:PU-InjSeptF'
         SI_INJ_DPKCKR = 'SI-01SA:PU-InjDpKckr'
         SI_INJ_NLKCKR = 'SI-01SA:PU-InjNLKckr'
         SI_PING_H = 'SI-01SA:PU-PingH'
@@ -443,8 +443,8 @@ class PowerSupplyPU(_PSDev):
             TB_INJ_SEPT,
             BO_INJ_KCKR, BO_EJE_KCKR,
             TS_EJE_SEPTF, TS_EJE_SEPTG,
-            TS_INJ_SPETG_1, TS_INJ_SPETG_2,
-            TS_INJ_SPETF,
+            TS_INJ_SEPTG_1, TS_INJ_SEPTG_2,
+            TS_INJ_SEPTF,
             SI_INJ_DPKCKR, SI_INJ_NLKCKR,
             SI_PING_H, SI_PING_V,
         )
