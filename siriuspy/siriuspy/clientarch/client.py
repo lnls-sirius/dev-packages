@@ -13,13 +13,10 @@ from aiohttp import ClientSession as _ClientSession
 import numpy as _np
 
 from .. import envars as _envars
+from . import exceptions as _exceptions
 
 
 _TIMEOUT = 5.0  # [seconds]
-
-
-class AuthenticationError(Exception):
-    """."""
 
 
 class ClientArchiver:
@@ -152,7 +149,7 @@ class ClientArchiver:
             timestamp_stop = [timestamp_stop, ]
         if not isinstance(timestamp_start, (list, tuple)) or \
                 not isinstance(timestamp_stop, (list, tuple)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 "'timestampstart' and 'timestamp_stop' arguments must be "
                 "timestamp strings or iterable.")
 
@@ -260,7 +257,7 @@ class ClientArchiver:
                 loop = _asyncio.new_event_loop()
                 _asyncio.set_event_loop(loop)
             else:
-                raise error
+                raise _exceptions.RuntimeError
         return loop
 
     async def _handle_request(
@@ -270,7 +267,7 @@ class ClientArchiver:
             response = await self._get_request_response(
                 url, self.session, return_json)
         elif need_login:
-            raise AuthenticationError('You need to login first.')
+            raise _exceptions.AuthenticationError('You need to login first.')
         else:
             async with _ClientSession() as sess:
                 response = await self._get_request_response(
@@ -297,7 +294,7 @@ class ClientArchiver:
                 if return_json:
                     response = await response.json()
         except _asyncio.TimeoutError as err_msg:
-            raise ConnectionError(err_msg)
+            raise _exceptions.TimeoutError(err_msg)
         return response
 
     async def _create_session(self, url, headers, payload, ssl):
