@@ -1251,7 +1251,7 @@ def _get_ps_LINAC_propty_database():
             'value': 0, 'unit': 'pwrstate'},  # 40
         # --- current
         'Current-SP': {
-            'type': 'float', 'prec': PS_CURRENT_PRECISION, 'value': 0.0, 
+            'type': 'float', 'prec': PS_CURRENT_PRECISION, 'value': 0.0,
             'unit': 'A', 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
             'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},  # 90
         'Current-RB': {
