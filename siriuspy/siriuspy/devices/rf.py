@@ -3,6 +3,8 @@
 import time as _time
 import numpy as _np
 
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
 from .device import DeviceNC as _DeviceNC
 from .device import Devices as _Devices
 
@@ -14,13 +16,44 @@ class RFGen(_DeviceNC):
     RF_DELTA_MAX = 15000.0  # [Hz]
     RF_DELTA_RMP = 200  # [Hz]
 
+    FREQ_OPMODE = _get_namedtuple('FreqOpMode', ('CW', 'SWE', 'LIST'))
+    SWEEP_MODE = _get_namedtuple(
+        'SweepTrigSrc', ('AUTO', 'MAN', 'STEP'))
+    SWEEP_TRIG_SRC = _get_namedtuple(
+        'SweepTrigSrc', ('AUTO', 'SING', 'EXT', 'EAUT'))
+    SWEEP_SPACING = _get_namedtuple('SweepSpacing', ('LIN', 'LOG'))
+    SWEEP_SHAPE = _get_namedtuple('SweepShape', ('SAWT', 'TRI'))
+    SWEEP_RETRACE = _get_namedtuple('SweepRetrace', ('OFF', 'ON'))
+
     class DEVICES:
         """Devices names."""
 
         AS = 'RF-Gen'
         ALL = (AS, )
 
-    _properties = ('GeneralFreq-SP', 'GeneralFreq-RB')
+    _properties = (
+        'GeneralFreq-SP', 'GeneralFreq-RB',
+
+        'FreqFExeSweep-Cmd',  # execute single sweep
+        'FreqRst-Cmd',  # reset sweeps
+        'FreqFRunnMode-Mon',  # is sweep running?
+
+        'GeneralFSweep-Sel', 'GeneralFSweep-Sts',  # frequency opmode
+        'FreqFSweepMode-Sel', 'FreqFSweepMode-Sts',  # sweep mode
+        'TrigFSweepSrc-Sel', 'TrigFSweepSrc-Sts',  # trigger source
+        'FreqFSpacMode-Sel', 'FreqFSpacMode-Sts',  # spacing mode
+        'FreqFreqRetr-Sel', 'FreqFreqRetr-Sts',  # retrace
+        'FreqFreqShp-Sel', 'FreqFreqShp-Sts',  # shape
+        'FreqPhsCont-Sel', 'FreqPhsCont-Sts',
+
+        'FreqFreqSpan-RB', 'FreqFreqSpan-SP',
+        'FreqCenterFreq-RB', 'FreqCenterFreq-SP',
+        'FreqStartFreq-RB', 'FreqStartFreq-SP',
+        'FreqStopFreq-RB', 'FreqStopFreq-SP',
+        'FreqFStepLin-RB', 'FreqFStepLin-SP',
+        'FreqFStepLog-RB', 'FreqFStepLog-SP',
+        'FreqFDwellTime-RB', 'FreqFDwellTime-SP',
+        )
 
     def __init__(self, devname=None):
         """."""
@@ -54,6 +87,218 @@ class RFGen(_DeviceNC):
             self._pvs['GeneralFreq-SP'].put(freq, wait=False)
             _time.sleep(1.0)
         self['GeneralFreq-SP'] = value
+
+    @property
+    def freq_opmode(self):
+        """."""
+        return self['GeneralFSweep-Sts']
+
+    @freq_opmode.setter
+    def freq_opmode(self, value):
+        self._enum_setter('GeneralFSweep-Sel', value, self.FREQ_OPMODE)
+
+    @property
+    def freq_opmode_str(self):
+        """."""
+        return self.FREQ_OPMODE._fields[self['GeneralFSweep-Sts']]
+
+    def cmd_set_freq_opmode_to_continuous_wave(self):
+        """."""
+        self.freq_opmode = self.FREQ_OPMODE.CW
+        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.CW)
+
+    def cmd_set_freq_opmode_to_sweep(self):
+        """."""
+        self.freq_opmode = self.FREQ_OPMODE.SWE
+        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.SWE)
+
+    @property
+    def freq_sweep_mode(self):
+        """."""
+        return self['FreqFSweepMode-Sts']
+
+    @freq_sweep_mode.setter
+    def freq_sweep_mode(self, value):
+        self._enum_setter('FreqFSweepMode-Sel', value, self.SWEEP_MODE)
+
+    @property
+    def freq_sweep_mode_str(self):
+        """."""
+        return self.SWEEP_MODE._fields[self['FreqFSweepMode-Sts']]
+
+    def cmd_set_freq_sweep_mode_to_automatic(self):
+        """."""
+        self.freq_sweep_mode = self.SWEEP_MODE.AUTO
+        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.AUTO)
+
+    def cmd_set_freq_sweep_mode_to_step(self):
+        """."""
+        self.freq_sweep_mode = self.SWEEP_MODE.STEP
+        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.STEP)
+
+    @property
+    def freq_sweep_spacing_mode(self):
+        """."""
+        return self['FreqFSpacMode-Sts']
+
+    @freq_sweep_spacing_mode.setter
+    def freq_sweep_spacing_mode(self, value):
+        self._enum_setter('FreqFSpacMode-Sel', value, self.SWEEP_SPACING)
+
+    @property
+    def freq_sweep_spacing_mode_str(self):
+        """."""
+        return self.SWEEP_SPACING._fields[self['FreqFSpacMode-Sts']]
+
+    def cmd_set_freq_sweep_spacing_mode_to_linear(self):
+        """."""
+        self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LIN
+        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LIN)
+
+    def cmd_set_freq_sweep_spacing_mode_to_log(self):
+        """."""
+        self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LOG
+        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LOG)
+
+    @property
+    def freq_sweep_trig_src(self):
+        """."""
+        return self['TrigFSweepSrc-Sts']
+
+    @freq_sweep_trig_src.setter
+    def freq_sweep_trig_src(self, value):
+        self._enum_setter('TrigFSweepSrc-Sel', value, self.SWEEP_TRIG_SRC)
+
+    @property
+    def freq_sweep_trig_src_str(self):
+        """."""
+        return self.SWEEP_TRIG_SRC._fields[self['TrigFSweepSrc-Sts']]
+
+    def cmd_set_freq_sweep_trig_src_to_external(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.EXT
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.EXT)
+
+    def cmd_set_freq_sweep_trig_src_to_single(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.SING
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.SING)
+
+    def cmd_set_freq_sweep_trig_src_to_auto(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.AUTO
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.AUTO)
+
+    @property
+    def freq_sweep_shape(self):
+        """."""
+        return self['FreqFreqShp-Sts']
+
+    @freq_sweep_shape.setter
+    def freq_sweep_shape(self, value):
+        self._enum_setter('FreqFreqShp-Sel', value, self.SWEEP_SHAPE)
+
+    @property
+    def freq_sweep_shape_str(self):
+        """."""
+        return self.SWEEP_SHAPE._fields[self['FreqFreqShp-Sts']]
+
+    def cmd_set_freq_sweep_shape_to_sawtooth(self):
+        """."""
+        self.freq_sweep_shape = self.SWEEP_SHAPE.SAWT
+        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.SAWT)
+
+    def cmd_set_freq_sweep_shape_to_triangular(self):
+        """."""
+        self.freq_sweep_shape = self.SWEEP_SHAPE.TRI
+        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.TRI)
+
+    @property
+    def freq_sweep_retrace(self):
+        """."""
+        return self['FreqFreqRetr-Sts']
+
+    @freq_sweep_retrace.setter
+    def freq_sweep_retrace(self, value):
+        self._enum_setter('FreqFreqRetr-Sel', value, self.SWEEP_RETRACE)
+
+    @property
+    def freq_sweep_retrace_str(self):
+        """."""
+        return self.SWEEP_RETRACE._fields[self['FreqFreqRetr-Sts']]
+
+    def cmd_freq_sweep_retrace_turn_off(self):
+        """."""
+        self.freq_sweep_retrace = self.SWEEP_RETRACE.OFF
+        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.OFF)
+
+    def cmd_freq_sweep_retrace_turn_on(self):
+        """."""
+        self.freq_sweep_retrace = self.SWEEP_RETRACE.ON
+        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.ON)
+
+    @property
+    def freq_sweep_span(self):
+        """."""
+        return self['FreqFreqSpan-RB']
+
+    @freq_sweep_span.setter
+    def freq_sweep_span(self, value):
+        self['FreqFreqSpan-SP'] = float(value)
+
+    @property
+    def freq_sweep_center_freq(self):
+        """."""
+        return self['FreqCenterFreq-RB']
+
+    @freq_sweep_center_freq.setter
+    def freq_sweep_center_freq(self, value):
+        self['FreqCenterFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_start_freq(self):
+        """."""
+        return self['FreqStartFreq-RB']
+
+    @freq_sweep_start_freq.setter
+    def freq_sweep_start_freq(self, value):
+        self['FreqStartFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_stop_freq(self):
+        """."""
+        return self['FreqStopFreq-RB']
+
+    @freq_sweep_stop_freq.setter
+    def freq_sweep_stop_freq(self, value):
+        self['FreqStopFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_freq_linear(self):
+        """."""
+        return self['FreqFStepLin-RB']
+
+    @freq_sweep_step_freq_linear.setter
+    def freq_sweep_step_freq_linear(self, value):
+        self['FreqFStepLin-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_freq_log(self):
+        """."""
+        return self['FreqFStepLog-RB']
+
+    @freq_sweep_step_freq_log.setter
+    def freq_sweep_step_freq_log(self, value):
+        self['FreqFStepLog-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_time(self):
+        """."""
+        return self['FreqFDwellTime-RB']
+
+    @freq_sweep_step_time.setter
+    def freq_sweep_step_time(self, value):
+        self['FreqFDwellTime-SP'] = float(value)
 
 
 class ASLLRF(_DeviceNC):
