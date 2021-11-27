@@ -183,10 +183,12 @@ class RFGen(_DeviceNC):
 
         """
         self['FreqFExeSweep-Cmd'] = 1
+        return True
 
     def cmd_freq_sweep_reset(self):
         """Reset current frequency sweep and wait to start new one."""
         self['FreqRst-Cmd'] = 1
+        return True
 
     @property
     def freq_sweep_mode(self):
