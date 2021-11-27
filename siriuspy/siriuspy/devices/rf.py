@@ -485,7 +485,8 @@ class RFGen(_DeviceNC):
                 frequency.
             nr_steps (int): number of steps to divide the ramp. Notice that if
                 the triangular waveform is chosen, the actual number of steps
-                will be 2 times the value provided here.
+                will be 2 times minus 1 the value provided here. Must be
+                larger than 2, so stepsize is at least equal to amplitude.
             duration (float): total desired duration in seconds.
             sawtooth (bool, optional): If True, then the wavefor will be se to
                 sawtooth. If False, the triangular waveform will be chosen.
@@ -500,16 +501,29 @@ class RFGen(_DeviceNC):
                 to the current frequency after finish the sweep.
                 Detaults to True.
 
+        Returns:
+            ampl (float): real amplitude that will be used in sweep.
+
         Raises:
-            ValueError: raised if nr_steps is <= 0.
+            ValueError: raised if nr_steps is <= 2.
 
         """
         ampl = abs(ampl)
         nr_steps = int(nr_steps)
-        if nr_steps > 0:
-            raise ValueError('Input nr_steps must be an integer.')
-        stepsize = round(ampl / nr_steps, 2)
+        if nr_steps > 2:
+            raise ValueError('Input nr_steps must be larger than 2.')
+        span = 2*ampl
+        stepsize = round(span / (nr_steps-1), 2)
         ampl = nr_steps * stepsize
+        span = 2*ampl
+
+        if sawtooth:
+            self.cmd_freq_sweep_shape_to_sawtooth()
+            dwelltime = duration / nr_steps
+        else:
+            self.cmd_freq_sweep_shape_to_triangular()
+            dwelltime = duration / (2*nr_steps - 1)
+        self.freq_sweep_step_time = dwelltime
 
         ampl *= 1 if increasing else -1
         center = self.frequency
@@ -518,17 +532,9 @@ class RFGen(_DeviceNC):
         start = center - ampl
         stop = center + ampl
         self.freq_sweep_center_freq = center
-        self.freq_sweep_span = abs(2*ampl)
+        self.freq_sweep_span = span
         self.freq_sweep_start_freq = start
         self.freq_sweep_stop_freq = stop
-
-        if sawtooth:
-            self.cmd_freq_sweep_shape_to_sawtooth()
-            dwelltime = duration / nr_steps
-        else:
-            self.cmd_freq_sweep_shape_to_triangular()
-            dwelltime = duration / nr_steps / 2
-        self.freq_sweep_step_time = dwelltime
 
         if retrace:
             self.cmd_freq_sweep_retrace_turn_on()
@@ -541,6 +547,7 @@ class RFGen(_DeviceNC):
         self.cmd_freq_sweep_mode_to_automatic()
         self.cmd_freq_sweep_trig_src_to_single()
         self.cmd_freq_opmode_to_sweep()
+        return ampl
 
 
 class ASLLRF(_DeviceNC):
