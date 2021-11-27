@@ -10,10 +10,10 @@ from .device import Devices as _Devices
 
 
 class RFGen(_DeviceNC):
-    """Encapsulate the basic features of the RF Generator used in Sirius.
+    """Wrap the basic features of the RF Generator used in Sirius.
 
     The Generator is the R&S SMA100A Signal Generator.
-    For more informations of the funcionalities of this equipment, please
+    For more informations of the functionalities of this equipment, please
     refer to:
         https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/s/sma/SMA100A_OperatingManual_en_14.pdf
 
@@ -31,12 +31,12 @@ class RFGen(_DeviceNC):
     FREQ_OPMODE = _get_namedtuple(
         'FreqOpMode', (
             'CW',  # Continuous wave (regular mode of operation.)
-            'SWE',  # Seep Mode turned on
+            'SWE',  # Sweep Mode turned on
             'LIST')  # I don't know yet.
         )
     SWEEP_MODE = _get_namedtuple(
         'SweepMode', (
-            'AUTO',  # each trigger exectutes waveform
+            'AUTO',  # each trigger executes waveform
             'MAN',  # execution is manual
             'STEP')  # each trigger executes one step
         )
@@ -375,7 +375,7 @@ class RFGen(_DeviceNC):
 
         Takes the following values:
             0 - 'OFF': return to starting frequency.
-            1 - 'ON': stay at stop frequency frequency.
+            1 - 'ON': stay at last frequency of the sweep.
 
         """
         return self['FreqFreqRetr-Sts']
