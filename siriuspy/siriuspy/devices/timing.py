@@ -453,5 +453,5 @@ class Trigger(_Device):
 
     def cmd_unlock_low_level(self, timeout=3):
         """Unlock low level IOCs state."""
-        self.state = 0
+        self.lock_low_level = 0
         return self._wait('LowLvlLock-Sts', 0, timeout)
