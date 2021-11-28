@@ -572,6 +572,15 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['DeltaDelay-RB'] = _dcopy(dic_)
     dbase['DeltaDelay-SP'] = dic_
 
+    dic_ = {
+        'type': 'float', 'unit': 'hard', 'prec': 0,
+        'count': siz, 'value': _np.zeros(siz),
+        'lolo': -2**31-1, 'low': -2**32-1, 'lolim': -2**32-1,
+        'hilim': 2**31-1, 'high': 2**32-1, 'hihi': 2**32-1}
+    dic_.update(trig_db.get('DeltaDelayRaw', dict()))
+    dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
+    dbase['DeltaDelayRaw-SP'] = dic_
+
     dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
     dbase['LowLvlLock-Sts'] = _dcopy(dic_)
     dbase['LowLvlLock-Sel'] = dic_
