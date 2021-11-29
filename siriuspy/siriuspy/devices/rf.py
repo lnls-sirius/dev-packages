@@ -526,15 +526,18 @@ class RFGen(_DeviceNC):
         self.freq_sweep_step_time = dwelltime
 
         ampl *= 1 if increasing else -1
+        stepsize *= 1 if increasing else -1
         center = self.frequency
         if not centered:
             center += ampl
         start = center - ampl
         stop = center + ampl
-        self.freq_sweep_center_freq = center
-        self.freq_sweep_span = span
         self.freq_sweep_start_freq = start
         self.freq_sweep_stop_freq = stop
+
+        # NOTE: We just need to set start_freq and stop_freq:
+        # self.freq_sweep_center_freq = center
+        # self.freq_sweep_span = span
 
         if retrace:
             self.cmd_freq_sweep_retrace_turn_on()
@@ -546,7 +549,11 @@ class RFGen(_DeviceNC):
 
         self.cmd_freq_sweep_mode_to_automatic()
         self.cmd_freq_sweep_trig_src_to_single()
-        self.cmd_freq_opmode_to_sweep()
+
+        # NOTE: do not change freq_opmode here, because this will make the
+        #  generator automatically go to the starting frequency, regardless of
+        # the trigger type:
+        # self.cmd_freq_opmode_to_sweep()
         return ampl
 
 
