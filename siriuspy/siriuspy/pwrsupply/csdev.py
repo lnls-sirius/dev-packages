@@ -1372,24 +1372,24 @@ def _get_ps_FBP_DCLink_propty_database():
     db_ps = {
         'Voltage-SP': {
             'type': 'float', 'value': 0.0,
-            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': 'A'},
+            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': '%'},
         'Voltage-RB': {
             'type': 'float', 'value': 0.0,
-            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': 'A'},
+            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': '%'},
         'VoltageRef-Mon': {
             'type': 'float', 'value': 0.0,
-            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': 'A'},
+            'lolim': 0.0, 'hilim': 100.0, 'prec': 4, 'unit': '%'},
         'Voltage-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'A'},
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'V'},
         'Voltage1-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'A'},
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'V'},
         'Voltage2-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'A'},
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'V'},
         'Voltage3-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'A'},
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'V'},
         'VoltageDig-Mon': {
             'type': 'int', 'value': 0,
-            'lolim': 0, 'hilim': 255, 'unit': 'A'},
+            'lolim': 0, 'hilim': 255, 'unit': '%'},
         'IntlkSoftLabels-Cte':  {
             'type': 'string',
             'count': len(_et.SOFT_INTLCK_FBP_DCLINK),
@@ -2657,16 +2657,17 @@ def _get_ps_REGATRON_DCLink_database():
 
 
 def _set_limits(pstype, database):
-    signals_lims = (
+    signals_unit = (
         'Current-SP', 'Current-RB',
         'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
+    )
+    signals_lims = signals_unit + (
         'Voltage-SP', 'Voltage-RB',
         'VoltageRef-Mon', 'Voltage-Mon',
         )
-    signals_unit = signals_lims
-    signals_prec = signals_unit
+    signals_prec = signals_lims
 
     for propty, dbase in database.items():
         # set setpoint limits in database
