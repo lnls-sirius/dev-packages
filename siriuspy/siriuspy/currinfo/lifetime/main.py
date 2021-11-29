@@ -11,8 +11,6 @@ from ...envars import VACA_PREFIX as _vaca_prefix
 from ..csdev import \
     Const as _Const, get_lifetime_database as _get_database
 
-warnings.filterwarnings('error')
-
 _MAX_BUFFER_SIZE = 36000
 
 
@@ -295,10 +293,12 @@ class SILifetimeApp(_Callback):
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
         if fit == 'exp':
-            try:
-                value = _np.log(value)
-            except Exception:
-                return 0.0
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error')
+                try:
+                    value = _np.log(value)
+                except Warning:
+                    return 0.0
         _ns = len(timestamp)
         _x1 = _np.sum(timestamp)
         _y1 = _np.sum(value)
