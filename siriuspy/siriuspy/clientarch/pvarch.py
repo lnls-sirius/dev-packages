@@ -4,6 +4,7 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
+from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
@@ -192,7 +193,7 @@ class PVData(_Base):
     @timestamp_start.setter
     def timestamp_start(self, new_timestamp):
         if not isinstance(new_timestamp, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_timestamp)))
         self._time_start = _Time(timestamp=new_timestamp)
@@ -205,7 +206,7 @@ class PVData(_Base):
     @time_start.setter
     def time_start(self, new_time):
         if not isinstance(new_time, _Time):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type Time, got '+str(type(new_time)))
         self._time_start = new_time
 
@@ -219,7 +220,7 @@ class PVData(_Base):
     @timestamp_stop.setter
     def timestamp_stop(self, new_timestamp):
         if not isinstance(new_timestamp, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_timestamp)))
         self._time_stop = _Time(timestamp=new_timestamp)
@@ -232,8 +233,8 @@ class PVData(_Base):
     @time_stop.setter
     def time_stop(self, new_time):
         if not isinstance(new_time, _Time):
-            raise TypeError(
-                'expected argument of type Time, got '+str(type(new_time)))
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time)))
         self._time_stop = new_time
 
     @property
@@ -244,7 +245,7 @@ class PVData(_Base):
     @parallel_query_bin_interval.setter
     def parallel_query_bin_interval(self, new_intvl):
         if not isinstance(new_intvl, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_intvl)))
         self._parallel_query_bin_interval = new_intvl
@@ -407,7 +408,7 @@ class PVDataSet(_Base):
     @timestamp_start.setter
     def timestamp_start(self, new_timestamp):
         if not isinstance(new_timestamp, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_timestamp)))
         self._time_start = _Time(timestamp=new_timestamp)
@@ -422,7 +423,7 @@ class PVDataSet(_Base):
     @time_start.setter
     def time_start(self, new_time):
         if not isinstance(new_time, _Time):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type Time, got '+str(type(new_time)))
         self._time_start = new_time
         for pvname in self._pvnames:
@@ -438,7 +439,7 @@ class PVDataSet(_Base):
     @timestamp_stop.setter
     def timestamp_stop(self, new_timestamp):
         if not isinstance(new_timestamp, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_timestamp)))
         self._time_stop = _Time(timestamp=new_timestamp)
@@ -453,7 +454,7 @@ class PVDataSet(_Base):
     @time_stop.setter
     def time_stop(self, new_time):
         if not isinstance(new_time, _Time):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type Time, got '+str(type(new_time)))
         self._time_stop = new_time
         for pvname in self._pvnames:
@@ -467,7 +468,7 @@ class PVDataSet(_Base):
     @parallel_query_bin_interval.setter
     def parallel_query_bin_interval(self, new_intvl):
         if not isinstance(new_intvl, (float, int)):
-            raise TypeError(
+            raise _exceptions.TypeError(
                 'expected argument of type float or int, got ' +
                 str(type(new_intvl)))
         self._parallel_query_bin_interval = new_intvl
