@@ -3,16 +3,62 @@
 import time as _time
 import numpy as _np
 
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
 from .device import DeviceNC as _DeviceNC
 from .device import Devices as _Devices
 
 
 class RFGen(_DeviceNC):
-    """."""
+    """Wrap the basic features of the RF Generator used in Sirius.
+
+    The Generator is the R&S SMA100A Signal Generator.
+    For more informations of the functionalities of this equipment, please
+    refer to:
+        https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/s/sma/SMA100A_OperatingManual_en_14.pdf
+
+    This class interacts with an EPICS IOC made for the generator mentioned
+    above. More informations on the IOC can be found in:
+        https://github.com/lnls-dig/rssmx100a-epics-ioc
+
+    """
 
     RF_DELTA_MIN = 0.1  # [Hz]
     RF_DELTA_MAX = 15000.0  # [Hz]
     RF_DELTA_RMP = 200  # [Hz]
+
+    PHASE_CONTINUOUS = _get_namedtuple('PhaseContinuous', ('OFF', 'ON'))
+    FREQ_OPMODE = _get_namedtuple(
+        'FreqOpMode', (
+            'CW',  # Continuous wave (regular mode of operation.)
+            'SWE',  # Sweep Mode turned on
+            'LIST')  # I don't know yet.
+        )
+    SWEEP_MODE = _get_namedtuple(
+        'SweepMode', (
+            'AUTO',  # each trigger executes waveform
+            'MAN',  # execution is manual
+            'STEP')  # each trigger executes one step
+        )
+    SWEEP_TRIG_SRC = _get_namedtuple(
+        'SweepTrigSrc', (
+            'AUTO',  # run continuously as soon as mode is configured.
+            'SING',  # run single waveform with internal trigger.
+            'EXT',   # run single waveform with external trigger.
+            'EAUT')  # external trigger tells when to start and stop.
+        )
+    SWEEP_SPACING = _get_namedtuple(
+        'SweepSpacing', (
+            'LIN',  # spacing between steps is linear
+            'LOG')  # spacing between steps is logarithmic
+        )
+    SWEEP_SHAPE = _get_namedtuple(
+        'SweepShape', (
+            'SAWT',  # sawtooth-like waveform
+            'TRI')  # triangular waveform
+        )
+    SWEEP_RETRACE = _get_namedtuple('SweepRetrace', ('OFF', 'ON'))
+    SWEEP_RUNNING = _get_namedtuple('SweepRunning', ('OFF', 'ON'))
 
     class DEVICES:
         """Devices names."""
@@ -20,7 +66,29 @@ class RFGen(_DeviceNC):
         AS = 'RF-Gen'
         ALL = (AS, )
 
-    _properties = ('GeneralFreq-SP', 'GeneralFreq-RB')
+    _properties = (
+        'GeneralFreq-SP', 'GeneralFreq-RB',
+
+        'FreqFExeSweep-Cmd',  # execute single sweep
+        'FreqRst-Cmd',  # reset sweeps
+        'FreqFRunnMode-Mon',  # is sweep running?
+
+        'GeneralFSweep-Sel', 'GeneralFSweep-Sts',  # frequency opmode
+        'FreqFSweepMode-Sel', 'FreqFSweepMode-Sts',  # sweep mode
+        'TrigFSweepSrc-Sel', 'TrigFSweepSrc-Sts',  # trigger source
+        'FreqFSpacMode-Sel', 'FreqFSpacMode-Sts',  # spacing mode
+        'FreqFreqRetr-Sel', 'FreqFreqRetr-Sts',  # retrace
+        'FreqFreqShp-Sel', 'FreqFreqShp-Sts',  # shape
+        'FreqPhsCont-Sts',  # 'FreqPhsCont-Sel', (setpoint is not needed here)
+
+        'FreqFreqSpan-RB', 'FreqFreqSpan-SP',
+        'FreqCenterFreq-RB', 'FreqCenterFreq-SP',
+        'FreqStartFreq-RB', 'FreqStartFreq-SP',
+        'FreqStopFreq-RB', 'FreqStopFreq-SP',
+        'FreqFStepLin-RB', 'FreqFStepLin-SP',
+        'FreqFStepLog-RB', 'FreqFStepLog-SP',
+        'FreqFDwellTime-RB', 'FreqFDwellTime-SP',
+        )
 
     def __init__(self, devname=None):
         """."""
@@ -33,6 +101,11 @@ class RFGen(_DeviceNC):
 
         # call base class constructor
         super().__init__(devname, properties=RFGen._properties)
+
+    @property
+    def is_phase_continuous(self):
+        """."""
+        return self['FreqPhsCont-Sts'] == self.PHASE_CONTINUOUS.ON
 
     @property
     def frequency(self):
@@ -54,6 +127,427 @@ class RFGen(_DeviceNC):
             self._pvs['GeneralFreq-SP'].put(freq, wait=False)
             _time.sleep(1.0)
         self['GeneralFreq-SP'] = value
+
+    @property
+    def freq_opmode(self):
+        """Operation mode of the frequency generator.
+
+        Takes the following values:
+            0 - 'CW':  Continuous wave (regular mode of operation.)
+            1 - 'SWE': Seep Mode turned on.
+            2 - 'LIST': I don't know yet.
+
+        """
+        return self['GeneralFSweep-Sts']
+
+    @freq_opmode.setter
+    def freq_opmode(self, value):
+        self._enum_setter('GeneralFSweep-Sel', value, self.FREQ_OPMODE)
+
+    @property
+    def freq_opmode_str(self):
+        """Operation mode of the frequency generator.
+
+        Takes the following values:
+            0 - 'CW':  Continuous wave (regular mode of operation.)
+            1 - 'SWE': Seep Mode turned on.
+            2 - 'LIST': I don't know yet.
+
+        """
+        return self.FREQ_OPMODE._fields[self['GeneralFSweep-Sts']]
+
+    def cmd_freq_opmode_to_continuous_wave(self):
+        """."""
+        self.freq_opmode = self.FREQ_OPMODE.CW
+        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.CW)
+
+    def cmd_freq_opmode_to_sweep(self):
+        """."""
+        self.freq_opmode = self.FREQ_OPMODE.SWE
+        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.SWE)
+
+    @property
+    def freq_sweep_is_running(self):
+        """Check whether any frequency sweep is in progress."""
+        return self['FreqFRunnMode-Mon'] == self.SWEEP_RUNNING.ON
+
+    def wait_freq_sweep_to_finish(self, timeout=10):
+        """Wait until the current frequency sweep is finished."""
+        return self._wait(
+            'FreqFRunnMode-Mon', self.SWEEP_RUNNING.OFF, timeout=timeout)
+
+    def cmd_freq_sweep_start(self):
+        """Send an internal trigger to start frequency sweep.
+
+        Only effective when `freq_sweep_trig_src` is in "SING".
+
+        """
+        self['FreqFExeSweep-Cmd'] = 1
+        return True
+
+    def cmd_freq_sweep_reset(self):
+        """Reset current frequency sweep and wait to start new one."""
+        self['FreqRst-Cmd'] = 1
+        return True
+
+    @property
+    def freq_sweep_mode(self):
+        """Mode of the frequency sweep.
+
+        Takes the following values:
+            0 - 'AUTO': each trigger executes the waveform;
+            1 - 'MAN': execution is manual;
+            2 - 'STEP': each trigger executes one step of the waveform.
+
+        """
+        return self['FreqFSweepMode-Sts']
+
+    @freq_sweep_mode.setter
+    def freq_sweep_mode(self, value):
+        self._enum_setter('FreqFSweepMode-Sel', value, self.SWEEP_MODE)
+
+    @property
+    def freq_sweep_mode_str(self):
+        """Mode of the frequency sweep.
+
+        Takes the following values:
+            0 - 'AUTO': each trigger executes the waveform;
+            1 - 'MAN': execution is manual;
+            2 - 'STEP': each trigger executes one step of the waveform.
+
+        """
+        return self.SWEEP_MODE._fields[self['FreqFSweepMode-Sts']]
+
+    def cmd_freq_sweep_mode_to_automatic(self):
+        """."""
+        self.freq_sweep_mode = self.SWEEP_MODE.AUTO
+        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.AUTO)
+
+    def cmd_freq_sweep_mode_to_step(self):
+        """."""
+        self.freq_sweep_mode = self.SWEEP_MODE.STEP
+        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.STEP)
+
+    @property
+    def freq_sweep_spacing_mode(self):
+        """Define the spacing scale between steps of the sweep.
+
+        Takes the following values:
+            0 - 'LIN': Constant spaces between steps;
+            1 - 'LOG': Logarithmic spaces between steps;
+
+        """
+        return self['FreqFSpacMode-Sts']
+
+    @freq_sweep_spacing_mode.setter
+    def freq_sweep_spacing_mode(self, value):
+        self._enum_setter('FreqFSpacMode-Sel', value, self.SWEEP_SPACING)
+
+    @property
+    def freq_sweep_spacing_mode_str(self):
+        """Define the spacing scale between steps of the sweep.
+
+        Takes the following values:
+            0 - 'LIN': Constant spaces between steps;
+            1 - 'LOG': Logarithmic spaces between steps;
+
+        """
+        return self.SWEEP_SPACING._fields[self['FreqFSpacMode-Sts']]
+
+    def cmd_freq_sweep_spacing_mode_to_linear(self):
+        """."""
+        self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LIN
+        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LIN)
+
+    def cmd_freq_sweep_spacing_mode_to_log(self):
+        """."""
+        self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LOG
+        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LOG)
+
+    @property
+    def freq_sweep_trig_src(self):
+        """Define the trigger source for the sweep.
+
+        Takes the following values:
+            0 - 'AUTO': run continuously as soon as `freq_sweep_mode` is
+                    changed to `SWE`.
+            1 - 'SING': run single waveform with internal trigger.
+            2 - 'EXT': run single waveform with external trigger.
+            3 - 'EAUT': external trigger tells when to start and stop.
+
+        """
+        return self['TrigFSweepSrc-Sts']
+
+    @freq_sweep_trig_src.setter
+    def freq_sweep_trig_src(self, value):
+        self._enum_setter('TrigFSweepSrc-Sel', value, self.SWEEP_TRIG_SRC)
+
+    @property
+    def freq_sweep_trig_src_str(self):
+        """Define the trigger source for the sweep.
+
+        Takes the following values:
+            0 - 'AUTO': run continuously as soon as `freq_sweep_mode` is
+                    changed to `SWE`.
+            1 - 'SING': run single waveform with internal trigger.
+            2 - 'EXT': run single waveform with external trigger.
+            3 - 'EAUT': external trigger tells when to start and stop.
+
+        """
+        return self.SWEEP_TRIG_SRC._fields[self['TrigFSweepSrc-Sts']]
+
+    def cmd_freq_sweep_trig_src_to_external(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.EXT
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.EXT)
+
+    def cmd_freq_sweep_trig_src_to_single(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.SING
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.SING)
+
+    def cmd_freq_sweep_trig_src_to_auto(self):
+        """."""
+        self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.AUTO
+        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.AUTO)
+
+    @property
+    def freq_sweep_shape(self):
+        """Define the shape of the sweep.
+
+        Takes the following values:
+            0 - 'SAWT': sawtooth-like waveform:
+                                _           _           _
+                              _| |        _| |        _| |
+                            _|   |      _|   |      _|   |
+                -----|    _|     |    _|     |    _|     |-----
+                     |  _|       |  _|       |  _|
+                     |_|         |_|         |_|
+            1 - 'TRI': triangular waveform:
+                                _                   _
+                              _| |_               _| |_
+                            _|     |_           _|     |_
+                -----|    _|         |_       _|         |_    |-----
+                     |  _|             |_   _|             |_  |
+                     |_|                 |_|                 |_|
+
+        """
+        return self['FreqFreqShp-Sts']
+
+    @freq_sweep_shape.setter
+    def freq_sweep_shape(self, value):
+        self._enum_setter('FreqFreqShp-Sel', value, self.SWEEP_SHAPE)
+
+    @property
+    def freq_sweep_shape_str(self):
+        """Define the shape of the sweep.
+
+        Takes the following values:
+            0 - 'SAWT': sawtooth-like waveform:
+                                _           _           _
+                              _| |        _| |        _| |
+                            _|   |      _|   |      _|   |
+                -----|    _|     |    _|     |    _|     |-----
+                     |  _|       |  _|       |  _|
+                     |_|         |_|         |_|
+            1 - 'TRI': triangular waveform:
+                                _                   _
+                              _| |_               _| |_
+                            _|     |_           _|     |_
+                -----|    _|         |_       _|         |_    |-----
+                     |  _|             |_   _|             |_  |
+                     |_|                 |_|                 |_|
+
+        """
+        return self.SWEEP_SHAPE._fields[self['FreqFreqShp-Sts']]
+
+    def cmd_freq_sweep_shape_to_sawtooth(self):
+        """."""
+        self.freq_sweep_shape = self.SWEEP_SHAPE.SAWT
+        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.SAWT)
+
+    def cmd_freq_sweep_shape_to_triangular(self):
+        """."""
+        self.freq_sweep_shape = self.SWEEP_SHAPE.TRI
+        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.TRI)
+
+    @property
+    def freq_sweep_retrace(self):
+        """Define whether to return to start freq. after sweep finish.
+
+        Takes the following values:
+            0 - 'OFF': return to starting frequency.
+            1 - 'ON': stay at last frequency of the sweep.
+
+        """
+        return self['FreqFreqRetr-Sts']
+
+    @freq_sweep_retrace.setter
+    def freq_sweep_retrace(self, value):
+        self._enum_setter('FreqFreqRetr-Sel', value, self.SWEEP_RETRACE)
+
+    @property
+    def freq_sweep_retrace_str(self):
+        """Define whether to return to start freq. after sweep finish.
+
+        Takes the following values:
+            0 - 'OFF': return to starting frequency.
+            1 - 'ON': stay at last frequency of the sweep.
+
+        """
+        return self.SWEEP_RETRACE._fields[self['FreqFreqRetr-Sts']]
+
+    def cmd_freq_sweep_retrace_turn_off(self):
+        """."""
+        self.freq_sweep_retrace = self.SWEEP_RETRACE.OFF
+        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.OFF)
+
+    def cmd_freq_sweep_retrace_turn_on(self):
+        """."""
+        self.freq_sweep_retrace = self.SWEEP_RETRACE.ON
+        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.ON)
+
+    @property
+    def freq_sweep_span(self):
+        """Total span of the frequency sweep in [Hz]."""
+        return self['FreqFreqSpan-RB']
+
+    @freq_sweep_span.setter
+    def freq_sweep_span(self, value):
+        self['FreqFreqSpan-SP'] = float(value)
+
+    @property
+    def freq_sweep_center_freq(self):
+        """Center frequency of the frequency sweep in [Hz]."""
+        return self['FreqCenterFreq-RB']
+
+    @freq_sweep_center_freq.setter
+    def freq_sweep_center_freq(self, value):
+        self['FreqCenterFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_start_freq(self):
+        """Start point of the frequency sweep in [Hz]."""
+        return self['FreqStartFreq-RB']
+
+    @freq_sweep_start_freq.setter
+    def freq_sweep_start_freq(self, value):
+        self['FreqStartFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_stop_freq(self):
+        """Other extreme of the frequency sweep in [Hz]."""
+        return self['FreqStopFreq-RB']
+
+    @freq_sweep_stop_freq.setter
+    def freq_sweep_stop_freq(self, value):
+        self['FreqStopFreq-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_freq_linear(self):
+        """Step used if `freq_sweep_spacing_mode` is linear, in [Hz]."""
+        return self['FreqFStepLin-RB']
+
+    @freq_sweep_step_freq_linear.setter
+    def freq_sweep_step_freq_linear(self, value):
+        self['FreqFStepLin-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_freq_log(self):
+        """Step used if `freq_sweep_spacing_mode` is linear, in [%]."""
+        return self['FreqFStepLog-RB']
+
+    @freq_sweep_step_freq_log.setter
+    def freq_sweep_step_freq_log(self, value):
+        self['FreqFStepLog-SP'] = float(value)
+
+    @property
+    def freq_sweep_step_time(self):
+        """Time to stay in each step of the sweep in [s]."""
+        return self['FreqFDwellTime-RB']
+
+    @freq_sweep_step_time.setter
+    def freq_sweep_step_time(self, value):
+        self['FreqFDwellTime-SP'] = float(value)
+
+    def configure_freq_sweep(
+            self, ampl, nr_steps, duration, sawtooth=True, centered=True,
+            increasing=True, retrace=True):
+        """Configure generator to create a single frequency sweep.
+
+        Currently the sweep will be ready to be triggered by an internal
+        trigger (see method `cmd_freq_sweep_start`).
+
+        Args:
+            ampl (float): Amplitude of the sweep in Hz. NOTE: Be careful not
+                to create discontinuities larger than 200 Hz in the frequency,
+                which could make the LLRF lose track of the reference
+                frequency.
+            nr_steps (int): number of steps to divide the ramp. Notice that if
+                the triangular waveform is chosen, the actual number of steps
+                will be 2 times minus 1 the value provided here. Must be
+                larger than 2, so stepsize is at least equal to amplitude.
+            duration (float): total desired duration in seconds.
+            sawtooth (bool, optional): If True, then the wavefor will be se to
+                sawtooth. If False, the triangular waveform will be chosen.
+                Defaults to True.
+            centered (bool, optional): If True the current frequency will be
+                centered in the ramp. If False, it will be equal to the
+                starting frequency. Defaults to True.
+            increasing (bool, optional): Whether the ramp will start at the
+                smaller frequency and go to the higher one (True) or
+                vice-versa (False). Defaults to True.
+            retrace (bool, optional): Whether (True) or not (False) to go back
+                to the current frequency after finish the sweep.
+                Detaults to True.
+
+        Returns:
+            ampl (float): real amplitude that will be used in sweep.
+
+        Raises:
+            ValueError: raised if nr_steps is <= 2.
+
+        """
+        ampl = abs(ampl)
+        nr_steps = int(nr_steps)
+        if nr_steps > 2:
+            raise ValueError('Input nr_steps must be larger than 2.')
+        span = 2*ampl
+        stepsize = round(span / (nr_steps-1), 2)
+        ampl = nr_steps * stepsize
+        span = 2*ampl
+
+        if sawtooth:
+            self.cmd_freq_sweep_shape_to_sawtooth()
+            dwelltime = duration / nr_steps
+        else:
+            self.cmd_freq_sweep_shape_to_triangular()
+            dwelltime = duration / (2*nr_steps - 1)
+        self.freq_sweep_step_time = dwelltime
+
+        ampl *= 1 if increasing else -1
+        center = self.frequency
+        if not centered:
+            center += ampl
+        start = center - ampl
+        stop = center + ampl
+        self.freq_sweep_center_freq = center
+        self.freq_sweep_span = span
+        self.freq_sweep_start_freq = start
+        self.freq_sweep_stop_freq = stop
+
+        if retrace:
+            self.cmd_freq_sweep_retrace_turn_on()
+        else:
+            self.cmd_freq_sweep_retrace_turn_off()
+
+        self.cmd_freq_sweep_spacing_mode_to_linear()
+        self.freq_sweep_step_freq_linear = stepsize
+
+        self.cmd_freq_sweep_mode_to_automatic()
+        self.cmd_freq_sweep_trig_src_to_single()
+        self.cmd_freq_opmode_to_sweep()
+        return ampl
 
 
 class ASLLRF(_DeviceNC):
