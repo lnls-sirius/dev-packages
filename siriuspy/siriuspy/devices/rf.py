@@ -64,7 +64,8 @@ class RFGen(_DeviceNC):
         """Devices names."""
 
         AS = 'RF-Gen'
-        ALL = (AS, )
+        SPARE = 'RF-SI-Gen'
+        ALL = (AS, SPARE)
 
     _properties = (
         'GeneralFreq-SP', 'GeneralFreq-RB',
