@@ -6,7 +6,7 @@ from ..callbacks import Callback as _Callback
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_machshift_propty_database as _get_database
-from .utils import MacScheduleData as _MacSched
+from .macschedule import MacScheduleData as _MacSched
 
 
 class App(_Callback):
