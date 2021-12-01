@@ -65,7 +65,7 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname):
+    def __init__(self, devname, auto_mon=True):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
@@ -76,7 +76,8 @@ class BPM(_Device):
             properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
         properties = list(properties)
 
-        super().__init__(devname, properties=properties)
+        super().__init__(
+            devname, properties=properties, auto_mon=auto_mon)
         self.csdata = _csbpm
 
     def __str__(self):
