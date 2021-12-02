@@ -116,17 +116,18 @@ class RFGen(_DeviceNC):
     @frequency.setter
     def frequency(self, value):
         delta_max = RFGen.RF_DELTA_RMP  # [Hz]
-        freq0 = self['GeneralFreq-SP']
+        freq0 = self.frequency
         if freq0 is None or value is None:
             return
         delta = abs(value-freq0)
         if delta < RFGen.RF_DELTA_MIN or delta > RFGen.RF_DELTA_MAX:
             return
-        npoints = int(round(delta/delta_max)) + 2
+        npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
-        for freq in freq_span:
-            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+        self._pvs['GeneralFreq-SP'].put(freq_span[0], wait=False)
+        for freq in freq_span[1:]:
             _time.sleep(1.0)
+            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
     @property
