@@ -1023,6 +1023,46 @@ _pvs_as_rf = [
     ]
 
 
+_pvs_bo_llrf = [
+    ['BR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:PL:REF:S', 0, 0.0],# Deg
+    ['BR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+    ['BR-RF-DLLRF-01:RmpTs1-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs2-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs3-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs4-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:RmpPhsTop-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP', 0, 0.0],  # mV
+    ]
+
+
+_pvs_si_llrf = [
+    ['SR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
+    ['SR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
+    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],# Deg
+    ['SR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+    ]
+
+
 _pvs_tb_di = [
     ['TB-01:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
     ['TB-01:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
@@ -2541,7 +2581,7 @@ _template_dict = {
     _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_as_rf +
+    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf +
     _pvs_tb_di + _pvs_bo_di + _pvs_ts_di + _pvs_si_di +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
