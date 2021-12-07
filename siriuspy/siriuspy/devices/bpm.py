@@ -6,7 +6,7 @@ import numpy as _np
 from .device import Device as _Device, Devices as _Devices
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
-
+from ..namesys import SiriusPVName as _PVName
 
 
 class BPM(_Device):
@@ -776,14 +776,28 @@ class BPM(_Device):
         return self._wait('Monit1TagEn-Sts', 0)
 
 
-class SIBPMs(_Devices):
+class FamBPMs(_Devices):
     """."""
 
-    def __init__(self):
+    class DEVICES:
         """."""
-        bpm_names = _BPMSearch.get_names(filters={'sec': 'SI', 'dev': 'BPM'})
+        SI = 'SI-Fam:DI-BPM'
+        BO = 'BO-Fam:DI-BPM'
+        ALL = (BO, SI)
+
+    def __init__(self, devname=None):
+        """."""
+        if devname is None:
+            devname = self.DEVICES.SI
+        if devname not in self.DEVICES.ALL:
+            raise ValueError('Wrong value for devname')
+
+        devname = _PVName(devname)
+        bpm_names = _BPMSearch.get_names(
+            filters={'sec': devname.sec, 'dev': devname.dev})
         devs = [BPM(dev, auto_mon=False) for dev in bpm_names]
-        super().__init__('SI-Fam:DI-BPM', devs)
+
+        super().__init__(devname, devs)
         self.bpm_names = bpm_names
         self.csbpm = devs[0].csdata
         propties_to_keep = ['GEN_XArrayData', 'GEN_YArrayData']
@@ -954,7 +968,7 @@ class SIBPMs(_Devices):
 
         """
         orbx0, orby0 = self.get_mturn_orbit()
-        for i, (name, flag) in enumerate(self._mturn_flags.items()):
+        for i, flag in enumerate(self._mturn_flags.values()):
             t00 = _time.time()
             if not flag.wait(timeout=timeout):
                 return (i // 2) + 1
