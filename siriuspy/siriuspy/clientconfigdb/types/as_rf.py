@@ -3,7 +3,7 @@ from copy import deepcopy as _dcopy
 
 # NOTE: absolute imports are necessary here due to how
 # CONFIG_TYPES in __init__.py is built.
-# from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf
+from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf
 
 
 def get_dict():
@@ -651,7 +651,7 @@ _pvs_si_rfcal = [
 
 _template_dict = {
     'pvs':
-    # _pvs_as_rf +
+    _pvs_as_rf +
     _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
     _pvs_si_llrf + _pvs_si_rfssa + _pvs_si_rfcav + _pvs_si_rfcal
     }
