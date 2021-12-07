@@ -42,7 +42,7 @@ class TLSOFB(_Device):
     _properties = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
-        'RespMat-SP', 'RespMat-RB',
+        'RespMat-SP', 'RespMat-RB', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
@@ -117,12 +117,17 @@ class TLSOFB(_Device):
     @property
     def respmat(self):
         """."""
-        return self['RespMat-RB']
+        return self['RespMat-RB'].reshape(self.data.nr_bpms*2, -1)
 
     @respmat.setter
     def respmat(self, mat):
         """."""
-        self['RespMat-SP'] = _np.array(mat)
+        self['RespMat-SP'] = _np.array(mat).ravel()
+
+    @property
+    def invrespmat(self):
+        """."""
+        return self['InvRespMat-Mon'].reshape(-1, self.data.nr_bpms*2)
 
     @property
     def trigchannel_str(self):
