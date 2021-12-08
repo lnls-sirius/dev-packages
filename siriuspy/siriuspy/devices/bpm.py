@@ -864,7 +864,7 @@ class FamBPMs(_Devices):
             float: acquisition frequency.
 
         """
-        fsamp = rf_freq / 864 / 23
+        fsamp = rf_freq / 864
         if acq_rate.lower().startswith('tbt'):
             return fsamp
         fsamp /= 23
