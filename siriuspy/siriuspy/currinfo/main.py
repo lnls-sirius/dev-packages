@@ -7,12 +7,11 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 
 import numpy as _np
-from epics import PV as _PV
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
-from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
