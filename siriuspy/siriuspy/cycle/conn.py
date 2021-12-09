@@ -269,9 +269,9 @@ class Timing:
             for pvname in dict_:
                 if pvname in Timing._pvs:
                     continue
-                pvname = _PVName(pvname)
+                pvname = _PVName(pvname).substitute(prefix=VACA_PREFIX)
                 Timing._pvs[pvname] = _PV(
-                    VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+                    pvname, connection_timeout=TIMEOUT_CONNECTION)
 
                 if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
@@ -279,14 +279,15 @@ class Timing:
                 self._initial_state[pvname] = Timing._pvs[pvname].value
 
                 if pvname.propty_suffix == 'SP':
-                    pvname_sts = pvname.substitute(propty_suffix='RB')
+                    pvname_sts = pvname.substitute(
+                        prefix=VACA_PREFIX, propty_suffix='RB')
                 elif pvname.propty_suffix == 'Sel':
-                    pvname_sts = pvname.substitute(propty_suffix='Sts')
+                    pvname_sts = pvname.substitute(
+                        prefix=VACA_PREFIX, propty_suffix='Sts')
                 else:
                     continue
                 Timing._pvs[pvname_sts] = _PV(
-                    VACA_PREFIX+pvname_sts,
-                    connection_timeout=TIMEOUT_CONNECTION)
+                    pvname_sts, connection_timeout=TIMEOUT_CONNECTION)
 
     @classmethod
     def _init_properties(cls):
@@ -372,7 +373,7 @@ class PSCycler:
         for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -656,7 +657,7 @@ class LinacPSCycler:
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
