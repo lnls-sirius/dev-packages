@@ -21,7 +21,7 @@ class BPM(_BaseTimingConfig):
         super().__init__(name[:2], callback)
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
-        pvpref = LL_PREF + self._name + ':'
+        pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
         opt = {'connection_timeout': TIMEOUT}
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
