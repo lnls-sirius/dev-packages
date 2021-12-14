@@ -162,33 +162,6 @@ class CycleController:
                 duration, self._aux_cyclers[psname].cycle_duration(self._mode))
         self._cycle_trims_duration = duration
 
-    def create_aux_cyclers(self):
-        """Create auxiliar cyclers."""
-        # create cyclers, if needed
-        all_si_psnames = set(_PSSearch.get_psnames(
-            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q|S|CH|CV)'}))
-        missing_ps = list(
-            all_si_psnames - set(self.trimnames) - set(self.psnames))
-        self._update_log('Creating auxiliary PS connections...')
-        for idx, psn in enumerate(missing_ps):
-            if idx % 5 == 4 or idx == len(missing_ps)-1:
-                self._update_log(
-                    'Created connections of {0}/{1} auxiliary PS'.format(
-                        str(idx+1), str(len(missing_ps))))
-            if psn in self._aux_cyclers.keys():
-                continue
-            if _PSSearch.conv_psname_2_psmodel(psn) == 'FBP':
-                self._aux_cyclers[psn] = PSCyclerFBP(psn, self._ramp_config)
-            else:
-                self._aux_cyclers[psn] = PSCycler(psn, self._ramp_config)
-
-        # wait for connections
-        self._update_log('Waiting for connections...')
-        for cycler in self._aux_cyclers.values():
-            cycler.wait_for_connection()
-
-        return missing_ps
-
     @property
     def timing(self):
         """Return timing connector."""
@@ -844,8 +817,6 @@ class CycleController:
         if 'SI' in self._sections:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
-            aux_ps = self.create_aux_cyclers()
-            psnames.extend(aux_ps)
             timeout += TIMEOUT_CHECK
 
         self.set_pwrsupplies_sofbmode(psnames)
@@ -862,8 +833,6 @@ class CycleController:
         if 'SI' in self._sections:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
-            aux_ps = self.create_aux_cyclers()
-            psnames.extend(aux_ps)
             timeout += 3*TIMEOUT_CHECK
 
         self.set_pwrsupplies_slowref(psnames)
@@ -880,8 +849,6 @@ class CycleController:
         if 'SI' in self._sections:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
-            aux_ps = self.create_aux_cyclers()
-            psnames.extend(aux_ps)
             timeout += 3*TIMEOUT_CHECK
 
         self.set_pwrsupplies_current_zero(psnames)
