@@ -50,11 +50,6 @@ class CycleController:
         self._logger_message = ''
         self.logger = logger
 
-        # egun pv
-        if 'LI-01:PS-Spect' in self.psnames:
-            self._pv_egun = _PV('LI-01:EG-TriggerPS:enablereal',
-                                connection_timeout=0.05)
-
     # --- main parameter setters ---
 
     @property
@@ -134,6 +129,11 @@ class CycleController:
             duration = max(
                 duration, self._cyclers[psname].cycle_duration(self._mode))
         self._cycle_duration = duration
+
+        # egun pv
+        if 'LI-01:PS-Spect' in self.psnames:
+            self._pv_egun = _PV('LI-01:EG-TriggerPS:enablereal',
+                                connection_timeout=0.05)
 
     def create_trims_cyclers(self):
         """Create trims cyclers."""
