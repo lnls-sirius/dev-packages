@@ -34,6 +34,7 @@ class CycleController:
         self._aux_cyclers = dict()
         self._cycle_trims_duration = 0
         self._checks_result = dict()
+        self._si_aux_triggers = list()
 
         # in case cyclers are not set and user wants to cycle bo
         self._is_bo = is_bo
@@ -124,6 +125,8 @@ class CycleController:
             for psn in qs_c2 + cv2_c2:
                 if psn in self._cyclers.keys():
                     self._aux_cyclers[psn] = self._cyclers.pop(psn)
+        else:
+            self.trimnames = list()
 
         # define cycle duration
         duration = 0
