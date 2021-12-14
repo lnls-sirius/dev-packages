@@ -24,7 +24,8 @@ class CycleController:
     """Class to perform automated cycle procedure."""
 
     def __init__(self, cyclers=None, timing=None,
-                 is_bo=False, ramp_config=None, logger=None):
+                 is_bo=False, ramp_config=None, logger=None,
+                 isadv=False):
         """Initialize."""
         # initialize auxiliar variables
         self._mode = None
@@ -35,6 +36,10 @@ class CycleController:
         self._cycle_trims_duration = 0
         self._checks_result = dict()
         self._si_aux_triggers = list()
+
+        # in case user wants to cycle SI power supplies individually,
+        # not following the standard procedure
+        self._isadv = isadv
 
         # in case cyclers are not set and user wants to cycle bo
         self._is_bo = is_bo
@@ -98,7 +103,7 @@ class CycleController:
         # define triggers
         self._triggers = _get_trigger_by_psname(self._cyclers.keys())
 
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             # trims psnames
             self.trimnames = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
@@ -215,7 +220,7 @@ class CycleController:
     def prepare_ps_sofbmode_size(self):
         """Prepare PS SOFBMode task size."""
         prepare_ps_size = 2*(len(self.psnames)+1)
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_size += 2*len(self.trimnames)
         return prepare_ps_size
 
@@ -223,7 +228,7 @@ class CycleController:
     def prepare_ps_opmode_slowref_size(self):
         """Prepare PS OpMode SlowRef task size."""
         prepare_ps_size = 2*(len(self.psnames)+1)
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_size += 3*len(self.trimnames)
         return prepare_ps_size
 
@@ -231,7 +236,7 @@ class CycleController:
     def prepare_ps_current_zero_size(self):
         """Prepare PS current zero task size."""
         prepare_ps_size = 2*(len(self.psnames)+1)
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_size += 3*len(self.trimnames)
         return prepare_ps_size
 
@@ -239,7 +244,7 @@ class CycleController:
     def prepare_ps_params_size(self):
         """Prepare PS parameters task size."""
         prepare_ps_size = 2*(len(self.psnames)+1)
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_size += 3*len(self.trimnames)
         return prepare_ps_size
 
@@ -293,7 +298,7 @@ class CycleController:
     def prepare_ps_sofbmode_max_duration(self):
         """Prepare PS SOFBMode task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_max_duration += TIMEOUT_CHECK
         return prepare_ps_max_duration
 
@@ -301,7 +306,7 @@ class CycleController:
     def prepare_ps_opmode_slowref_max_duration(self):
         """Prepare PS OpMode SlowRef task maximum duration."""
         prepare_ps_max_duration = 10 + TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
@@ -309,7 +314,7 @@ class CycleController:
     def prepare_ps_current_zero_max_duration(self):
         """Prepare PS current zero task maximum duration."""
         prepare_ps_max_duration = 10 + TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
@@ -317,7 +322,7 @@ class CycleController:
     def prepare_ps_params_max_duration(self):
         """Prepare PS parameters task maximum duration."""
         prepare_ps_max_duration = 10 + TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
@@ -325,7 +330,7 @@ class CycleController:
     def prepare_ps_opmode_cycle_max_duration(self):
         """Prepare PS task maximum duration."""
         prepare_ps_max_duration = 10 + TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             prepare_ps_max_duration += 3*TIMEOUT_CHECK
         return prepare_ps_max_duration
 
@@ -814,7 +819,7 @@ class CycleController:
         """Prepare SOFBMode."""
         psnames = self.psnames
         timeout = TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
             timeout += TIMEOUT_CHECK
@@ -830,7 +835,7 @@ class CycleController:
         """Prepare OpMode to slowref."""
         psnames = self.psnames
         timeout = TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
             timeout += 3*TIMEOUT_CHECK
@@ -846,7 +851,7 @@ class CycleController:
         """Prepare current to cycle."""
         psnames = self.psnames
         timeout = TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
             timeout += 3*TIMEOUT_CHECK
@@ -862,7 +867,7 @@ class CycleController:
         """Prepare parameters to cycle."""
         psnames = self.psnames
         timeout = TIMEOUT_CHECK
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             self.create_trims_cyclers()
             psnames.extend(self.trimnames)
             timeout += 3*TIMEOUT_CHECK
@@ -887,7 +892,7 @@ class CycleController:
 
     def cycle_trims(self):
         """Cycle all trims."""
-        if 'SI' not in self._sections:
+        if 'SI' not in self._sections or self._isadv:
             return
 
         if not self.check_timing():
@@ -935,7 +940,7 @@ class CycleController:
             return
 
         triggers = self._triggers.copy()
-        if 'SI' in self._sections:
+        if 'SI' in self._sections and not self._isadv:
             triggers.difference_update(self._si_aux_triggers)
         if not self.set_triggers_state(triggers, 'enbl'):
             return
