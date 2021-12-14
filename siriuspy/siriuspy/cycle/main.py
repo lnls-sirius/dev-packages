@@ -432,6 +432,7 @@ class CycleController:
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked '+ppty+' preparation for {}/' + \
             str(len(psnames))
+        checked = 0
         time = _time.time()
         while _time.time() - time < timeout:
             for psname in psnames:
@@ -696,6 +697,7 @@ class CycleController:
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked SOFBMode preparation for {}/' + \
             str(len(psnames))
+        checked = 0
         time = _time.time()
         while _time.time() - time < timeout:
             for psname in psnames:
@@ -749,6 +751,7 @@ class CycleController:
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked opmode preparation for {}/' + \
             str(len(psnames))
+        checked = 0
         time = _time.time()
         while _time.time() - time < timeout:
             for psname in psnames:
@@ -792,6 +795,7 @@ class CycleController:
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked current preparation for {}/' + \
             str(len(psnames))
+        checked = 0
         time = _time.time()
         while _time.time() - time < timeout:
             for psname in psnames:
