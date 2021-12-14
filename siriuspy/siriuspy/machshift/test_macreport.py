@@ -3,22 +3,20 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from siriuspy.clientarch.time import Time
-from siriuspy.machshift.utils import MacReport
+from siriuspy.machshift.macreport import MacReport
 
 # failure statistics per month
 intervals = [
-    [Time(2020, 7, 1, 0, 0), Time(2020, 7, 30, 23, 59)],
-    [Time(2020, 8, 1, 0, 0), Time(2020, 8, 31, 23, 59)],
-    [Time(2020, 9, 1, 0, 0), Time(2020, 9, 30, 23, 59)],
-    [Time(2020, 10, 1, 0, 0), Time(2020, 10, 31, 23, 59)],
-    [Time(2020, 11, 1, 0, 0), Time(2020, 11, 30, 23, 59)],
-    [Time(2020, 12, 1, 0, 0), Time(2020, 12, 31, 23, 59)],
     [Time(2021, 1, 1, 0, 0), Time(2021, 1, 31, 23, 59)],
     [Time(2021, 2, 1, 0, 0), Time(2021, 2, 28, 23, 59)],
     [Time(2021, 3, 1, 0, 0), Time(2021, 3, 31, 23, 59)],
     [Time(2021, 4, 1, 0, 0), Time(2021, 4, 30, 23, 59)],
     [Time(2021, 5, 1, 0, 0), Time(2021, 5, 31, 23, 59)],
     [Time(2021, 6, 1, 0, 0), Time(2021, 6, 30, 23, 59)],
+    [Time(2021, 7, 1, 0, 0), Time(2021, 7, 30, 23, 59)],
+    [Time(2021, 8, 1, 0, 0), Time(2021, 8, 31, 23, 59)],
+    [Time(2021, 9, 1, 0, 0), Time(2021, 9, 30, 23, 59)],
+    [Time(2021, 10, 1, 0, 0), Time(2021, 10, 31, 23, 59)],
 ]
 
 macreports = dict()
@@ -31,13 +29,13 @@ for intvl in intervals:
 
 mtbfs, mttrs, reliabs = dict(), dict(), dict()
 for date, macr in macreports.items():
-    mtbfs[date] = macr.time_between_failures_average
-    mttrs[date] = macr.time_to_recover_average
-    reliabs[date] = macr.beam_reliability
+    mtbfs[date] = macr.usershift_time_between_failures_average
+    mttrs[date] = macr.usershift_time_to_recover_average
+    reliabs[date] = macr.usershift_beam_reliability
 
-str_ = '{:<10s}    {:<7s}    {:<7s}    {:<7s}'
-print(str_.format('M/Y', 'MTBF', 'MTTR', 'Reliability'))
-str_ = '{:<10s}    {:<3.3f}    {:<3.3f}    {:<3.3f}'
+str_ = '{:<12s}    {:<12s}    {:<12s}    {:<12s}'
+print(str_.format('Y-M', 'MTBF', 'MTTR', 'Reliability'))
+str_ = '{:<12s}    {:<9.3f}    {:<9.3f}    {:<9.3f}'
 for date in macreports:
     print(str_.format(str(date.year)+'-'+str(date.month),
                       mtbfs[date],
@@ -77,7 +75,7 @@ dates = [Time(d) for d in rd['Timestamp']]
 
 dtimes_users_progmd = dtimes*rd['UserShiftProgmd']
 cum_progmd = np.cumsum(dtimes_users_progmd)
-dtimes_users_impltd = dtimes*rd['UserShiftImpltd']
+dtimes_users_impltd = dtimes*rd['UserShiftDelivd']
 cum_deliv = np.cumsum(dtimes_users_impltd)
 
 fig = plt.figure()
@@ -112,4 +110,7 @@ plt.legend(loc=4)
 plt.title('Integrated User Hours')
 fig.show()
 
-np.savetxt('integrated_user_hours_2021.txt', np.c_[[d.timestamp() for d in new_dates], new_cum_progmd, new_cum_deliv])
+np.savetxt(
+    'integrated_user_hours_2021.txt',
+    np.c_[[d.timestamp() for d in new_dates],
+          new_cum_progmd, new_cum_deliv])
