@@ -524,7 +524,7 @@ class CycleController:
         self._update_log(done=True)
         return True
 
-    def cycle_trims(self, trims, timeout=TIMEOUT_CHECK):
+    def cycle_trims_subset(self, trims, timeout=TIMEOUT_CHECK):
         """Cycle trims."""
         if not self.check_pwrsupplies('parameters', trims, timeout):
             return False
@@ -885,7 +885,7 @@ class CycleController:
             return
         self._update_log('Power supplies OpMode preparation finished!')
 
-    def cycle_all_trims(self):
+    def cycle_trims(self):
         """Cycle all trims."""
         if 'SI' not in self._sections:
             return
@@ -897,7 +897,7 @@ class CycleController:
         trims = _PSSearch.get_psnames({
             'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
-        if not self.cycle_trims(trims, timeout=50):
+        if not self.cycle_trims_subset(trims, timeout=50):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
@@ -906,7 +906,7 @@ class CycleController:
         trims = _PSSearch.get_psnames({
             'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
             'dev': 'CV'})
-        if not self.cycle_trims(trims, timeout=50):
+        if not self.cycle_trims_subset(trims, timeout=50):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
