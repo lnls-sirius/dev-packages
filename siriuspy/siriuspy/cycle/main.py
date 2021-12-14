@@ -893,6 +893,8 @@ class CycleController:
         if not self.check_timing():
             return
 
+        self.create_trims_cyclers()
+
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
         trims = _PSSearch.get_psnames({
             'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
