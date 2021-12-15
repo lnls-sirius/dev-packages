@@ -7,12 +7,11 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 
 import numpy as _np
-from epics import PV as _PV
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
-from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
@@ -206,6 +205,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 
         # consts
         self._pvs_database = _get_database('BO')
+        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
         self._dcct = 'BO-35D:DI-DCCT'
 
         # initialize vars
@@ -243,20 +243,20 @@ class BOCurrInfoApp(_CurrInfoApp):
 
         # PVs
         self._rawreadings_pv = _PV(
-            _vaca_prefix+self._dcct+':RawReadings-Mon',
+            self._prefix+self._dcct+':RawReadings-Mon',
             connection_timeout=0.05, callback=self._callback_get_rawreadings,
             auto_monitor=True)
         self._samplecnt_pv = _PV(
-            _vaca_prefix+self._dcct+':FastSampleCnt-RB',
+            self._prefix+self._dcct+':FastSampleCnt-RB',
             connection_timeout=0.05, callback=self._callback_get_samplecnt)
         self._measperiod_pv = _PV(
-            _vaca_prefix+self._dcct+':FastMeasPeriod-RB',
+            self._prefix+self._dcct+':FastMeasPeriod-RB',
             connection_timeout=0.05, callback=self._callback_get_measperiod)
         self._reliablemeas_pv = _PV(
-            _vaca_prefix+self._dcct+':ReliableMeas-Mon',
+            self._prefix+self._dcct+':ReliableMeas-Mon',
             connection_timeout=0.05, callback=self._callback_get_reliablemeas)
         self._rffreq_pv = _PV(
-            _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
+            self._prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
     def init_database(self):
         """Set initial PV values."""
@@ -374,6 +374,7 @@ class SICurrInfoApp(_CurrInfoApp):
         """Class constructor."""
         super().__init__()
         self._pvs_database = _get_database('SI')
+        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
 
         # initialize vars
         self._time0 = _time.time()
@@ -401,43 +402,43 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # pvs
         self._current_13c4_pv = _PV(
-            _vaca_prefix+'SI-13C4:DI-DCCT:Current-Mon',
+            self._prefix+'SI-13C4:DI-DCCT:Current-Mon',
             connection_timeout=0.05)
         self._current_14c4_pv = _PV(
-            _vaca_prefix+'SI-14C4:DI-DCCT:Current-Mon',
+            self._prefix+'SI-14C4:DI-DCCT:Current-Mon',
             connection_timeout=0.05)
         self._storedebeam_13c4_pv = _PV(
-            _vaca_prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
+            self._prefix+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
         self._storedebeam_14c4_pv = _PV(
-            _vaca_prefix+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
+            self._prefix+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_storedebeam)
         self._reliablemeas_13c4_pv = _PV(
-            _vaca_prefix+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
+            self._prefix+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
         self._reliablemeas_14c4_pv = _PV(
-            _vaca_prefix+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
+            self._prefix+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_reliablemeas)
         self._dipole_opmode_pv = _PV(
-            _vaca_prefix+'SI-Fam:PS-B1B2-1:OpMode-Sts',
+            self._prefix+'SI-Fam:PS-B1B2-1:OpMode-Sts',
             connection_timeout=0.05,
             callback=self._callback_get_dipole_opmode)
         self._bo_curr3gev_pv = _PV(
-            _vaca_prefix+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
+            self._prefix+'BO-Glob:AP-CurrInfo:Current3GeV-Mon',
             connection_timeout=0.05)
         self._ti_injcount_pv = _PV(
-            _vaca_prefix+_LLTimeSearch.get_evg_name()+':InjCount-Mon',
+            self._prefix+_LLTimeSearch.get_evg_name()+':InjCount-Mon',
             connection_timeout=0.05,
             callback=self._callback_get_injcount)
         self._eg_trigps_pv = _PV(
-            _vaca_prefix+'LI-01:EG-TriggerPS:status',
+            self._prefix+'LI-01:EG-TriggerPS:status',
             connection_timeout=0.05)
         self._rffreq_pv = _PV(
-            _vaca_prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
+            self._prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
             pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)

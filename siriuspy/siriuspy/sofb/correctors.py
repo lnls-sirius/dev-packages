@@ -121,13 +121,14 @@ class RFCtrl(Corrector):
         super().__init__(acc)
         self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _PV(LL_PREF+self._name+':GeneralFreq-SP', **opt)
-        self._rb = _PV(LL_PREF+self._name+':GeneralFreq-RB', **opt)
+        pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name
+        self._sp = _PV(pvpref+':GeneralFreq-SP', **opt)
+        self._rb = _PV(pvpref+':GeneralFreq-RB', **opt)
         self._config_ok_vals = {'PwrState': 1}
         self._config_pvs_sp = dict()
-        #     'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
+        #     'PwrState': _PV(pvpref+':PwrState-Sel', **opt)}
         self._config_pvs_rb = dict()
-        #     'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt)}
+        #     'PwrState': _PV(pvpref+':PwrState-Sts', **opt)}
 
     @property
     def value(self):
@@ -190,14 +191,15 @@ class CHCV(Corrector):
             'OpMode': _PSConst.OpMode.SlowRef,
             'PwrState': _PSConst.PwrStateSel.On,
             'SOFBMode': _PSConst.DsblEnbl.Dsbl}
+        pvpref = self._name.substitute(prefix=LL_PREF)
         self._config_pvs_sp = {
-            'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt),
-            'SOFBMode': _PV(LL_PREF+self._name+':SOFBMode-Sel', **opt)}
+            'OpMode': _PV(pvpref.substitute(propty='OpMode-Sel'), **opt),
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sel'), **opt),
+            'SOFBMode': _PV(pvpref.substitute(propty='SOFBMode-Sel'), **opt)}
         self._config_pvs_rb = {
-            'OpMode': _PV(LL_PREF+self._name+':OpMode-Sts', **opt),
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt),
-            'SOFBMode': _PV(LL_PREF+self._name+':SOFBMode-Sts', **opt)}
+            'OpMode': _PV(pvpref.substitute(propty='OpMode-Sts'), **opt),
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sts'), **opt),
+            'SOFBMode': _PV(pvpref.substitute(propty='SOFBMode-Sts'), **opt)}
 
     @property
     def opmode_ok(self):
@@ -297,12 +299,13 @@ class Septum(Corrector):
         self._config_ok_vals = {
             'Pulse': 1,
             'PwrState': _PSConst.PwrStateSel.On}
+        pvpref = self._name.substitute(prefix=LL_PREF)
         self._config_pvs_sp = {
-            'Pulse': _PV(LL_PREF+self._name+':Pulse-Sel', **opt),
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
+            'Pulse': _PV(pvpref.substitute(propty='Pulse-Sel'), **opt),
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sel'), **opt)}
         self._config_pvs_rb = {
-            'Pulse': _PV(LL_PREF+self._name+':Pulse-Sts', **opt),
-            'PwrState': _PV(LL_PREF+self._name+':PwrState-Sts', **opt)}
+            'Pulse': _PV(pvpref.substitute(propty='Pulse-Sts'), **opt),
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sts'), **opt)}
 
     @property
     def opmode_ok(self):
@@ -355,7 +358,8 @@ class TimingConfig(_BaseTimingConfig):
         """Init method."""
         super().__init__(acc)
         evt = self._csorb.evt_cor_name
-        pref_name = LL_PREF + self._csorb.evg_name + ':' + evt
+        pref = LL_PREF + ('-' if LL_PREF else '')
+        pref_name = pref + self._csorb.evg_name + ':' + evt
         trig = self._csorb.trigger_cor_name
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
@@ -373,7 +377,7 @@ class TimingConfig(_BaseTimingConfig):
             }
         if _HLTimesearch.has_delay_type(trig):
             self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
-        pref_trig = LL_PREF + trig + ':'
+        pref_trig = pref + trig + ':'
         self._config_pvs_rb = {
             'Mode': _PV(pref_name + 'Mode-Sts', **opt),
             'Src': _PV(pref_trig + 'Src-Sts', **opt),

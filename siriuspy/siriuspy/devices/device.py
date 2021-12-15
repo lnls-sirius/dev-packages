@@ -144,7 +144,6 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
-            pvname = _VACA_PREFIX + pvname
             auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
@@ -170,9 +169,9 @@ class Device:
     def _get_pvname(self, devname, propty):
         if devname:
             func = devname.substitute
-            pvname = func(propty=propty)
+            pvname = func(prefix=_VACA_PREFIX, propty=propty)
         else:
-            pvname = propty
+            pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
         return pvname
 
     def _enum_setter(self, propty, value, enums):
