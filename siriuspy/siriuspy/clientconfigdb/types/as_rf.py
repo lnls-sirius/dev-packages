@@ -24,7 +24,7 @@ def get_dict():
 
 
 _pvs_bo_llrf = [
-    ['BR-RF-DLLRF-01:LIMIT:REVSSA1:S', 0.0, 0.0],  # Interlock disable
+    ['BR-RF-DLLRF-01:ILK:REVSSA1:S', 0.0, 0.0],  # Interlock disable
     ['BR-RF-DLLRF-01:ILK:REVSSA2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:ILK:REVSSA3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:ILK:REVSSA4:S', 0, 0.0],
