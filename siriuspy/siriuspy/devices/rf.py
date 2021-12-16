@@ -64,7 +64,8 @@ class RFGen(_DeviceNC):
         """Devices names."""
 
         AS = 'RF-Gen'
-        ALL = (AS, )
+        SPARE = 'RF-SI-Gen'
+        ALL = (AS, SPARE)
 
     _properties = (
         'GeneralFreq-SP', 'GeneralFreq-RB',
@@ -115,17 +116,18 @@ class RFGen(_DeviceNC):
     @frequency.setter
     def frequency(self, value):
         delta_max = RFGen.RF_DELTA_RMP  # [Hz]
-        freq0 = self['GeneralFreq-SP']
+        freq0 = self.frequency
         if freq0 is None or value is None:
             return
         delta = abs(value-freq0)
         if delta < RFGen.RF_DELTA_MIN or delta > RFGen.RF_DELTA_MAX:
             return
-        npoints = int(round(delta/delta_max)) + 2
+        npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
-        for freq in freq_span:
-            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+        self._pvs['GeneralFreq-SP'].put(freq_span[0], wait=False)
+        for freq in freq_span[1:]:
             _time.sleep(1.0)
+            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
     @property
@@ -472,7 +474,7 @@ class RFGen(_DeviceNC):
 
     def configure_freq_sweep(
             self, ampl, nr_steps, duration, sawtooth=True, centered=True,
-            increasing=True, retrace=True):
+            increasing=True, retrace=False):
         """Configure generator to create a single frequency sweep.
 
         Currently the sweep will be ready to be triggered by an internal
@@ -486,9 +488,9 @@ class RFGen(_DeviceNC):
             nr_steps (int): number of steps to divide the ramp. Notice that if
                 the triangular waveform is chosen, the actual number of steps
                 will be 2 times minus 1 the value provided here. Must be
-                larger than 2, so stepsize is at least equal to amplitude.
+                larger than 1, so stepsize is at least equal to span.
             duration (float): total desired duration in seconds.
-            sawtooth (bool, optional): If True, then the wavefor will be se to
+            sawtooth (bool, optional): If True, then the waveform will be se to
                 sawtooth. If False, the triangular waveform will be chosen.
                 Defaults to True.
             centered (bool, optional): If True the current frequency will be
@@ -499,23 +501,28 @@ class RFGen(_DeviceNC):
                 vice-versa (False). Defaults to True.
             retrace (bool, optional): Whether (True) or not (False) to go back
                 to the current frequency after finish the sweep.
-                Detaults to True.
+                Detaults to False.
 
         Returns:
             ampl (float): real amplitude that will be used in sweep.
 
         Raises:
-            ValueError: raised if nr_steps is <= 2.
+            ValueError: raised if nr_steps is <= 1.
 
         """
         ampl = abs(ampl)
         nr_steps = int(nr_steps)
-        if nr_steps > 2:
-            raise ValueError('Input nr_steps must be larger than 2.')
+        if nr_steps <= 1:
+            raise ValueError('Input nr_steps must be larger than 1.')
+        nr_interv = nr_steps-1
+
         span = 2*ampl
-        stepsize = round(span / (nr_steps-1), 2)
-        ampl = nr_steps * stepsize
-        span = 2*ampl
+        stepsize = round(span / nr_interv, 2)
+        span = nr_interv * stepsize
+        span *= 1 if increasing else -1
+        stepsize *= 1 if increasing else -1
+        curr_freq = self.frequency
+        ampl = span/2
 
         if sawtooth:
             self.cmd_freq_sweep_shape_to_sawtooth()
@@ -525,16 +532,14 @@ class RFGen(_DeviceNC):
             dwelltime = duration / (2*nr_steps - 1)
         self.freq_sweep_step_time = dwelltime
 
-        ampl *= 1 if increasing else -1
-        center = self.frequency
-        if not centered:
-            center += ampl
-        start = center - ampl
-        stop = center + ampl
-        self.freq_sweep_center_freq = center
-        self.freq_sweep_span = span
-        self.freq_sweep_start_freq = start
-        self.freq_sweep_stop_freq = stop
+        # NOTE: Depending whether the sweep is centered or not it is easier to
+        # set the center_freq and span or start and stop
+        if centered:
+            self.freq_sweep_center_freq = curr_freq
+            self.freq_sweep_span = span
+        else:
+            self.freq_sweep_start_freq = curr_freq
+            self.freq_sweep_stop_freq = curr_freq + span
 
         if retrace:
             self.cmd_freq_sweep_retrace_turn_on()
@@ -546,7 +551,11 @@ class RFGen(_DeviceNC):
 
         self.cmd_freq_sweep_mode_to_automatic()
         self.cmd_freq_sweep_trig_src_to_single()
-        self.cmd_freq_opmode_to_sweep()
+
+        # NOTE: do not change freq_opmode here, because this will make the
+        #  generator automatically go to the starting frequency, regardless of
+        # the trigger type:
+        # self.cmd_freq_opmode_to_sweep()
         return ampl
 
 
