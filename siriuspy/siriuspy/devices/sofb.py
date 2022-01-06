@@ -503,8 +503,10 @@ class TLSOFB(_Device):
         for i in range(nr_iters):
             resx = self.orbx - self.refx
             resy = self.orby - self.refy
-            resx = _np.linalg.norm(resx[self.bpmxenbl])
-            resy = _np.linalg.norm(resy[self.bpmyenbl])
+            resx = resx[self.bpmxenbl.nonzero()[0]]
+            resy = resy[self.bpmyenbl.nonzero()[0]]
+            resx = _np.sqrt(_np.sum(resx*resx)/resx.size)
+            resy = _np.sqrt(_np.sum(resy*resy)/resy.size)
             if resx < residue and resy < residue:
                 break
             self.cmd_calccorr()
