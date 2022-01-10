@@ -17,19 +17,18 @@ from .. import envars as _envars
 from . import exceptions as _exceptions
 
 
-_TIMEOUT = 5.0  # [seconds]
-
-
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
+    DEFAULT_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
 
-    def __init__(self, server_url=None):
+    def __init__(self, server_url=None, timeout=None):
         """Initialize."""
+        timeout = timeout or ClientArchiver.DEFAULT_TIMEOUT
         self.session = None
-        self.timeout = _TIMEOUT
+        self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._ret = None
         # print('urllib3 InsecureRequestWarning disabled!')
@@ -40,11 +39,21 @@ class ClientArchiver:
         """Connected."""
         try:
             status = _urllib.request.urlopen(
-                self._url, timeout=self.timeout,
+                self._url, timeout=self._timeout,
                 context=_ssl.SSLContext()).status
             return status == 200
         except _urllib.error.URLError:
             return False
+
+    @property
+    def timeout(self):
+        """Connection timeout."""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        """Set connection timeout."""
+        self._timeout = float(value)
 
     @property
     def server_url(self):
@@ -318,7 +327,7 @@ class ClientArchiver:
         try:
             if isinstance(url, list):
                 response = await _asyncio.gather(
-                    *[session.get(u, ssl=False, timeout=self.timeout)
+                    *[session.get(u, ssl=False, timeout=self._timeout)
                       for u in url])
                 if any([not r.ok for r in response]):
                     return None
@@ -327,7 +336,7 @@ class ClientArchiver:
                         *[r.json() for r in response])
             else:
                 response = await session.get(
-                    url, ssl=False, timeout=self.timeout)
+                    url, ssl=False, timeout=self._timeout)
                 if not response.ok:
                     return None
                 if return_json:
@@ -341,7 +350,7 @@ class ClientArchiver:
         session = _ClientSession()
         async with session.post(
                 url, headers=headers, data=payload, ssl=ssl,
-                timeout=self.timeout) as response:
+                timeout=self._timeout) as response:
             content = await response.content.read()
             authenticated = b"authenticated" in content
         return session, authenticated
