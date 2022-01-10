@@ -17,14 +17,14 @@ class MeasFillingPattern:
         SI = ('10.128.150.77', 5035)
         ALL = (SI, )
 
-    def __init__(self, devname):
+    def __init__(self, device):
         """."""
         # check if device exists
-        if devname not in MeasFillingPattern.DEVICES.ALL:
-            raise NotImplementedError(devname)
+        if device not in MeasFillingPattern.DEVICES.ALL:
+            raise NotImplementedError(device)
 
-        self.host = devname[0]
-        self.port = devname[1]
+        self.host = device[0]
+        self.port = device[1]
         self._socket = None
 
     def connect(self):
