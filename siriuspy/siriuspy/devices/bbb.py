@@ -1419,7 +1419,7 @@ class SingleBunch(_ProptyDevice):
         return self['PEAKFREQ1']
 
     @property
-    def spec_marker1_freq(self):
+    def spec_marker1_tune(self):
         """."""
         return self['PEAKTUNE1']
 

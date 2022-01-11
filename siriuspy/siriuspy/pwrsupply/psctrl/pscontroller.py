@@ -21,9 +21,9 @@ class PSController:
                  pru_controller, devname2devid):
         """Initialize PS controller.
 
-        readers : objects from classes in fields module that are responsible
+        readers : objects from classes in psreaders module that are responsible
                   for reading power supply parameters
-        writers : objects from classes in writers
+        writers : objects from classes in pscwriters
 
         """
         self._readers = readers
