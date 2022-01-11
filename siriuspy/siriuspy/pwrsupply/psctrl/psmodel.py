@@ -45,7 +45,7 @@ class _PSModel:
         'Version-Cte': (_readers.Version, _c.V_FIRMWARE_VERSION),
         }
     _e2c = {
-        # Epics to PRUCrontroller property
+        # Epics to PRUController property
         'PRUCtrlQueueSize-Mon': 'queue_length',
         }
     _e2o = {
