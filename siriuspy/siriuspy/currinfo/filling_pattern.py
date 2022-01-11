@@ -14,7 +14,7 @@ class MeasFillingPattern:
         high-definition-oscilloscope-1-ghz-4-analog-channels.html"""
 
     class DEVICES:
-        SI = ('10.128.150.77', 5035)
+        SI = ('10.128.150.77', 5025)
         ALL = (SI, )
 
     def __init__(self, device):
@@ -90,13 +90,12 @@ class MeasFillingPattern:
         # Data aquisition
         sock.sendall(b":WAVeform:STReaming OFF\n")
         sock.sendall(b":WAVeform:DATA?\n")
-        # initchar = sock.recv(1)
+        _ = sock.recv(1)  # ignore marker '#'
         num = int(sock.recv(1).decode('ascii'))
         datanum = int(sock.recv(num).decode('ascii'))
-        # datasize = int(datanum/points)
         dataraw = b''
 
-        # rerurn oscilloscopy to
+        # return oscilloscopy to
         self._socket.sendall(b":RUN\n")
 
         while len(dataraw) < datanum:
@@ -119,10 +118,10 @@ class MeasFillingPattern:
             self.initialize()
             self.acquire()
             tini = _time.time()
-            print('Acquiring Function 1')
-            wavet, waved, srate1, bdw1 = self.capture('FUNCTION1')
+            print('Acquiring CHAN1')
+            wavet, waved, srate1, bdw1 = self.capture('CHAN1')
             print('Total acquisition time:', _time.time()-tini)
-            self._socket.sendall(b":WAVeform:STReaming ON\n")
+            # self._socket.sendall(b":WAVeform:STReaming ON\n")
         except Exception:
             print("Unexpected error:", _sys.exc_info()[0])
             print('Close connetion by exception')
