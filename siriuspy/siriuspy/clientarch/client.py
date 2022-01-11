@@ -306,7 +306,7 @@ class ClientArchiver:
         try:
             self._ret = loop.run_until_complete(func(*args, **kwargs))
         except _asyncio.TimeoutError:
-            self._ret = None
+            raise _exceptions.TimeoutError
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
