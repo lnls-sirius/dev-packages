@@ -415,14 +415,17 @@ class SOFBUpdate(Function):
 class ParamUpdate(Function):
     """ParamUpdate Function."""
 
-    def __init__(self, device_ids, pru_controller):
+    def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to update parameters."""
         self._device_ids = device_ids
         self.pru_controller = pru_controller
+        self.setpoints = setpoints
 
     def execute(self, value=None):
         """Execute command."""
-        self.pru_controller.update_parameters(self._device_ids)
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.update_parameters(self._device_ids)
 
 
 class Setpoint:
