@@ -252,6 +252,8 @@ class _PSModel:
         if epics_field == 'SyncPulse-Cmd':
             return _writers.Command(
                 device_ids, pru_controller, _c.F_SYNC_PULSE, setpoints)
+        if epics_field == 'ParamUpdate-Cmd':
+            return _writers.ParamUpdate(device_ids, pru_controller)
         if epics_field == 'Abort-Cmd':
             return _writers.BSMPFunctionNull()
         return None

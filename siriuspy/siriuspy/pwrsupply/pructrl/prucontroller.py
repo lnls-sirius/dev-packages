@@ -164,7 +164,7 @@ class PRUController:
 
     # === queueing writes and local state copy reads ===
 
-    # --- bsmp variables ---
+    # --- bsmp variables and parameters ---
 
     def read_variables(self, device_ids, variable_id=None):
         """
@@ -263,6 +263,14 @@ class PRUController:
         operation = (self._bsmp_exec_function, args)
         self._queue.append(operation)
         return True
+
+    def update_parameters(self, device_ids):
+        """Update device parameters."""
+        if isinstance(device_ids, int):
+            device_ids = (device_ids, )
+        for dev_id in device_ids:
+            psupply = self._psupplies[dev_id]
+            psupply.update_parameters(interval=0.0)
 
     # --- wfmref and scope curves ---
 

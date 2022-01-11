@@ -1028,6 +1028,8 @@ def _get_ps_common_propty_database():
         'ParamScopeSamplingFreq-Cte': {
             'type': 'float', 'value': 0.0, 'unit': 'Hz'},
         'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
+        # --- Update Parameters ---
+        'ParamUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
     }
     return dbase
 

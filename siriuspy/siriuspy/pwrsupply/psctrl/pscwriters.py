@@ -200,7 +200,7 @@ class PSPwrStateFBP_DCLink(Function):
                 self.turn_off.execute()
 
 
-# NOTE: writers below may be implemented as a general class 
+# NOTE: writers below may be implemented as a general class
 # with the BMSP Function ID as an argument.
 
 
@@ -409,6 +409,19 @@ class SOFBUpdate(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.sofb_update_variables_state()
+
+
+class ParamUpdate(Function):
+    """ParamUpdate Function."""
+
+    def __init__(self, device_ids, pru_controller):
+        """Create command to update parameters."""
+        self.device_ids = device_ids
+        self.pru_controller = pru_controller
+
+    def execute(self, value=None):
+        """Execute command."""
+        self.pru_controller.update_parameters(self.device_ids)
 
 
 class Setpoint:
