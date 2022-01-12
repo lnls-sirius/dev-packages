@@ -17,8 +17,10 @@ class MeasFillingPattern:
         SI = ('10.128.150.77', 5025)
         ALL = (SI, )
 
-    def __init__(self, device):
+    def __init__(self, device=None):
         """."""
+        device = device or MeasFillingPattern.DEVICES.SI
+
         # check if device exists
         if device not in MeasFillingPattern.DEVICES.ALL:
             raise NotImplementedError(device)
