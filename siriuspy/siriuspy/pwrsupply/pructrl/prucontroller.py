@@ -29,7 +29,7 @@ class PRUController:
     controllers.
     """
 
-    # NOTE: All private methods starting with '_bsmp' string invole serial
+    # NOTE: All private methods starting with '_bsmp' string invoke serial
     #       bsmp communications.
 
     _sleep_process_loop = 0.020  # [s]
@@ -266,11 +266,18 @@ class PRUController:
 
     def update_parameters(self, device_ids):
         """Update device parameters."""
+        # if in SOFBMode on, do not accept comm. commands
+        if self._sofb_mode:
+            return False
+
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
-        for dev_id in device_ids:
-            psupply = self._psupplies[dev_id]
-            psupply.update_parameters(interval=0.0)
+
+        # append function operation to queue
+        args = (device_ids, )
+        operation = (self._bsmp_init_parameter_values, args)
+        self._queue.append(operation)
+        return True
 
     # --- wfmref and scope curves ---
 
@@ -619,7 +626,6 @@ class PRUController:
         except _socket_timeout:
             print('!!! {} : socket timeout !!!'.format(_get_timestamp()))
 
-
     def _bsmp_update_variables(self, dev_id=None):
         if dev_id is None:
             psupplies = self._psupplies.values()
@@ -778,10 +784,12 @@ class PRUController:
         for psupply in self._psupplies.values():
             psupply.update_variables(interval=0.0)
 
-    def _bsmp_init_parameter_values(self):
+    def _bsmp_init_parameter_values(self, device_ids=None):
 
-        # init psupplies variables
-        for psupply in self._psupplies.values():
+        device_ids = device_ids or self._device_ids
+        for dev_id in device_ids:
+            psupply = self._psupplies[dev_id]
+            # read psupplies parameters
             psupply.update_parameters(interval=0.0)
 
     def _bsmp_init_sofb_values(self):
