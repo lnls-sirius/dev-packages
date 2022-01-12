@@ -9,7 +9,7 @@ import numpy as _np
 class MeasFillingPattern:
     """Beam filling pattern from Keysight DSOS104A Oscilloscopes.
     
-    For users' and programming guides, see
+    For users' and programmers' guides, see
         https://www.keysight.com/us/en/support/DSOS104A/
         high-definition-oscilloscope-1-ghz-4-analog-channels.html"""
 
