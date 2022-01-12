@@ -275,7 +275,7 @@ class PRUController:
 
         # append function operation to queue
         args = (device_ids, )
-        operation = (self._read_parameter_values, args)
+        operation = (self._bsmp_read_parameter_values, args)
         self._queue.append(operation)
         return True
 
@@ -786,11 +786,18 @@ class PRUController:
 
     def _bsmp_init_parameter_values(self):
         # init psupplies parameters
-        self._read_parameter_values()
+        self._bsmp_read_parameter_values()
 
     def _bsmp_init_sofb_values(self):
 
         self._udc.sofb_update()
+
+    def _bsmp_read_parameter_values(self, device_ids=None):
+        device_ids = device_ids or self._device_ids
+        for dev_id in device_ids:
+            psupply = self._psupplies[dev_id]
+            # read psupplies parameters
+            psupply.update_parameters(interval=0.0)
 
     @staticmethod
     def _dict2list_vargroups(groups_dict):
@@ -807,10 +814,3 @@ class PRUController:
         # create list of variable ids
         groups_list = [groups_dict[gid] for gid in group_ids]
         return groups_list
-
-    def _read_parameter_values(self, device_ids=None):
-        device_ids = device_ids or self._device_ids
-        for dev_id in device_ids:
-            psupply = self._psupplies[dev_id]
-            # read psupplies parameters
-            psupply.update_parameters(interval=0.0)
