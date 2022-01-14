@@ -68,9 +68,10 @@ class UnitConverter:
 
     DIPOLE_PROPTY = 'Ref-Mon'
 
-    def __init__(self, psnames):
+    def __init__(self, psnames, dipoleoff=False):
         """."""
         self.psnames = psnames
+        self._dipoleoff = dipoleoff
         self._pstype_2_index, self._pstype_2_sconv = self._init_strenconv()
 
     def _init_strenconv(self):
@@ -109,9 +110,12 @@ class UnitConverter:
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = current[index]
-            # stren = sconv.conv_current_2_strength(
-            #     currents=value, strengths_dipole=self._strengths_dipole)
-            stren = sconv.conv_current_2_strength(currents=value)
+            if self._dipoleoff:
+                stren = sconv.conv_current_2_strength(
+                    currents=value, strengths_dipole=3.0)
+            else:
+                stren = sconv.conv_current_2_strength(currents=value)
+
             strength[index] = stren
         return strength
 
@@ -124,13 +128,11 @@ class UnitConverter:
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = strength[index]
-            # idcs = ~_np.isnan(value)
-            # curr = sconv.conv_strength_2_current(
-            #     strengths=value[idcs],
-            #     strengths_dipole=self._strengths_dipole)
-            # curr = sconv.conv_strength_2_current(strengths=value[idcs])
-            # current[index[idcs]] = curr
-            curr = sconv.conv_strength_2_current(strengths=value)
+            if self._dipoleoff:
+                curr = sconv.conv_strength_2_current(
+                    strengths=value, strengths_dipole=3.0)
+            else:
+                curr = sconv.conv_strength_2_current(strengths=value)
             current[index] = curr
         return current
 
@@ -144,8 +146,9 @@ class PSConnSOFB:
     PS_OPMODE = _PSCStatus.OPMODE
     SOCKET_TIMEOUT_ERR = 255
 
-    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None,
-                 sofb_update_iocs=False):
+    def __init__(
+            self, ethbridgeclnt_class, bbbnames=None, mproc=None,
+            sofb_update_iocs=False, dipoleoff=False):
         """."""
         # check arguments
         if mproc is not None and \
@@ -153,6 +156,7 @@ class PSConnSOFB:
                  set(mproc.keys()) != {'rbref', 'ref', 'fret'}):
             raise ValueError('Invalid mproc dictionary!')
 
+        self._dipoleoff = dipoleoff
         self._acc = 'SI'
         self._pru = None
         self._udc = None
@@ -196,9 +200,9 @@ class PSConnSOFB:
         self._pscstatus = [_PSCStatus() for _ in self._sofb_psnames]
 
         # strength to current converters
-        self._strengths_dipole = 3.0  # [GeV]
         if mproc is None:
-            self.converter = UnitConverter(self._sofb_psnames)
+            self.converter = UnitConverter(
+                self._sofb_psnames, dipoleoff=dipoleoff)
 
     def pru(self):
         """Return Beagle-name to PRU-object dictionary."""
@@ -678,9 +682,11 @@ class PSSOFB:
         )
     BBB2DEVS = dict()
 
-    def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False,
-                 sofb_update_iocs=False):
+    def __init__(
+            self, ethbridgeclnt_class, nr_procs=8, asynchronous=False,
+            sofb_update_iocs=False, dipoleoff=False):
         """."""
+        self._dipoleoff = dipoleoff
         self._acc = 'SI'
         self._async = asynchronous
         self._sofb_update_iocs = sofb_update_iocs
@@ -697,7 +703,8 @@ class PSSOFB:
         self._sofb_func_return = _np.zeros(ncorrs, dtype=int)
 
         # Unit converter.
-        self.converter = UnitConverter(self._sofb_psnames)
+        self.converter = UnitConverter(
+            self._sofb_psnames, dipoleoff=dipoleoff)
 
         # Worker Processes control and synchronization
         self._ethbridge_cls = ethbridgeclnt_class
@@ -756,7 +763,8 @@ class PSSOFB:
             arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
         # Unit converter.
-        self.converter = UnitConverter(self._sofb_psnames)
+        self.converter = UnitConverter(
+            self._sofb_psnames, dipoleoff=self._dipoleoff)
 
         # subdivide the pv list for the processes
         nr_bbbs = len(PSSOFB.BBBNAMES)
@@ -773,7 +781,8 @@ class PSSOFB:
             proc = _Process(
                 target=PSSOFB._run_process,
                 args=(self._ethbridge_cls, bbbnames, theirs, doneevt,
-                      arr.shape, rbref, ref, fret, self._sofb_update_iocs),
+                      arr.shape, rbref, ref, fret, self._sofb_update_iocs,
+                      self._dipoleoff),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
@@ -881,7 +890,7 @@ class PSSOFB:
     @staticmethod
     def _run_process(
             ethbridgeclnt_class, bbbnames, pipe, doneevt,
-            shape, rbref, ref, fret, sofb_update_iocs):
+            shape, rbref, ref, fret, sofb_update_iocs, dipoleoff):
         """."""
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
@@ -891,7 +900,7 @@ class PSSOFB:
             }
         psconnsofb = PSConnSOFB(
             ethbridgeclnt_class, bbbnames, mproc=mproc,
-            sofb_update_iocs=sofb_update_iocs)
+            sofb_update_iocs=sofb_update_iocs, dipoleoff=dipoleoff)
 
         while True:
             rec = pipe.recv()
