@@ -739,7 +739,7 @@ class SOFB(_BaseClass):
                 # NOTE: Limit tests for currents around zero.
                 kicks = _np.random.rand(dkicks.size)
                 kicks -= 0.5
-                kicks *= 2 * 0.1  # Maximum kicks of +-1 urad
+                kicks *= 2 * 0.1  # Maximum kicks of +-0.1 urad
                 kicks[-1] = 0  # Do not vary RF
 
             tims.append(_time())
