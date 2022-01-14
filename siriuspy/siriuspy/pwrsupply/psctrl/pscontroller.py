@@ -83,7 +83,7 @@ class PSController:
             self._writers[pvname].execute(value)
 
         # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
+        if value == 0 and 'SOFBMode-Sel' in field:
             self._update_setpoints(devname)
 
         # return priority pvs
