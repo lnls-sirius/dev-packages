@@ -718,6 +718,13 @@ class SOFB(_BaseClass):
                 if i >= norbs:
                     break
                 orb = self.orbit.get_orbit(synced=True)
+
+            if self._tests:
+                orb *= 0
+                orb += _np.random.rand(orb.size)
+                orb -= orb.mean()  # avoid RF integration error.
+                orb *= 2 * 3  # Maximum orbit distortion of 3 um
+
             tims.append(_time())
 
             self._ref_corr_kicks = self.correctors.get_strength()
@@ -731,16 +738,9 @@ class SOFB(_BaseClass):
                 self.run_callbacks('LoopState-Sel', 0)
                 break
 
-            if not self._tests:
-                dkicks = self._process_pid(dkicks, interval)
-                kicks = self._process_kicks(
-                    self._ref_corr_kicks, dkicks, apply_gain=False)
-            else:
-                # NOTE: Limit tests for currents around zero.
-                kicks = _np.random.rand(dkicks.size)
-                kicks -= 0.5
-                kicks *= 2 * 0.1  # Maximum kicks of +-0.1 urad
-                kicks[-1] = 0  # Do not vary RF
+            dkicks = self._process_pid(dkicks, interval)
+            kicks = self._process_kicks(
+                self._ref_corr_kicks, dkicks, apply_gain=False)
 
             tims.append(_time())
             if kicks is None:
@@ -796,6 +796,13 @@ class SOFB(_BaseClass):
             kdt = gin['kd']/interval
             kit = gin['ki']*interval
 
+            if self._tests:
+                # Do not use integrators when testing without beam:
+                kit = 0
+                if pln == 'rf':
+                    # Do not use RF when testing without beam:
+                    kpt = kdt = 0
+
             qq0 = kpt + kdt + kit
             qq1 = -kpt - 2*kdt
             qq2 = kdt
@@ -810,7 +817,7 @@ class SOFB(_BaseClass):
         ok_ = _np.sum(rets == 0) / rets.size * 100
         tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
-        diff = _np.sum(bo_diff)  / rets.size * 100
+        diff = _np.sum(bo_diff) / rets.size * 100
         _log.info('PERFORMANCE:')
         self.run_callbacks('LoopPerfItersOk-Mon', ok_)
         self.run_callbacks('LoopPerfItersTOut-Mon', tout)
