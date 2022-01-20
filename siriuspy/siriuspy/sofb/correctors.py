@@ -458,7 +458,7 @@ class EpicsCorrectors(BaseCorrectors):
     PSSOFB_USE_IOC = False
     MAX_PROB = 5
 
-    def __init__(self, acc, prefix='', callback=None):
+    def __init__(self, acc, prefix='', callback=None, dipoleoff=False):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sync_kicks = False
@@ -475,10 +475,11 @@ class EpicsCorrectors(BaseCorrectors):
             if not EpicsCorrectors.PSSOFB_USE_IOC:
                 self._pssofb = _PSSOFB(
                     EthBridgeClient, nr_procs=8, asynchronous=True,
-                    sofb_update_iocs=True)
+                    sofb_update_iocs=True, dipoleoff=dipoleoff)
                 self._pssofb.processes_start()
             else:
-                self._pssofb = _PSSOFBIOC('SI', auto_mon=True)
+                self._pssofb = _PSSOFBIOC(
+                    'SI', auto_mon=True, dipoleoff=dipoleoff)
             self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(

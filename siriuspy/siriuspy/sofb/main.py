@@ -22,10 +22,11 @@ class SOFB(_BaseClass):
 
     def __init__(
             self, acc, prefix='', callback=None, orbit=None, matrix=None,
-            correctors=None):
+            correctors=None, tests=False):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
+        self._tests = tests
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
@@ -154,7 +155,7 @@ class SOFB(_BaseClass):
     @property
     def havebeam(self):
         """."""
-        if self.acc != 'SI':
+        if self._tests or self.acc != 'SI':
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
 
@@ -729,9 +730,18 @@ class SOFB(_BaseClass):
                 self._loop_state = self._csorb.LoopState.Open
                 self.run_callbacks('LoopState-Sel', 0)
                 break
-            dkicks = self._process_pid(dkicks, interval)
-            kicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_gain=False)
+
+            if not self._tests:
+                dkicks = self._process_pid(dkicks, interval)
+                kicks = self._process_kicks(
+                    self._ref_corr_kicks, dkicks, apply_gain=False)
+            else:
+                # NOTE: Limit tests for currents around zero.
+                kicks = _np.random.rand(dkicks.size)
+                kicks -= 0.5
+                kicks *= 2 * 0.1  # Maximum kicks of +-0.1 urad
+                kicks[-1] = 0  # Do not vary RF
+
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
