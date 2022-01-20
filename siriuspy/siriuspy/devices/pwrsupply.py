@@ -22,8 +22,15 @@ class _PSDev(_Device):
         'Current-SP', 'Current-RB', 'Current-Mon',
     )
     _properties_magps = (
-        'Current-SP', 'Current-RB', 'Current-Mon',
-        'OpMode-Sel', 'OpMode-Sts'
+        'Current-SP', 'Current-RB', 'Current-Mon',  'CurrentRef-Mon',
+        'OpMode-Sel', 'OpMode-Sts',
+        'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
+        'CycleType-Sel', 'CycleType-Sts',
+        'CycleNrCycles-SP', 'CycleNrCycles-RB',
+        'CycleFreq-SP', 'CycleFreq-RB',
+        'CycleAmpl-SP', 'CycleAmpl-RB',
+        'CycleOffset-SP', 'CycleOffset-RB',
+        'CycleAuxParam-SP', 'CycleAuxParam-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -120,12 +127,12 @@ class _PSDev(_Device):
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.On
-        self._wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
+        return self._wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
 
     def cmd_turn_off(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.Off
-        self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
+        return self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
 
     @staticmethod
     def get_device_type(devname):
@@ -177,6 +184,7 @@ class PowerSupply(_PSDev):
 
     OPMODE_SEL = _PSCStatus.OPMODE
     OPMODE_STS = _PSCStatus.STATES
+    CYCLETYPE = _PSCStatus.CYCLETYPE
 
     class DEVICES:
         """Devices names."""
@@ -196,25 +204,225 @@ class PowerSupply(_PSDev):
         return self['Current-Mon']
 
     @property
+    def currentref_mon(self):
+        """."""
+        return self['CurrentRef-Mon']
+
+    @property
     def opmode(self):
         """."""
         return self['OpMode-Sts']
 
+    @opmode.setter
+    def opmode(self, value):
+        self._enum_setter(
+            'OpMode-Sel', value, self.OPMODE_SEL)
+
+    @property
+    def opmode_str(self):
+        """."""
+        return self.OPMODE_STS._fields[self['OpMode-Sts']]
+
+    @property
+    def cycle_type(self):
+        """."""
+        return self['CycleType-Sts']
+
+    @cycle_type.setter
+    def cycle_type(self, value):
+        self._enum_setter(
+            'CycleType-Sel', value, self.CYCLETYPE)
+
+    @property
+    def cycle_type_str(self):
+        """."""
+        return self.CYCLETYPE._fields[self['CycleType-Sts']]
+
+    @property
+    def cycle_num_cycles(self):
+        """Return the number of cycles of the cycling curve."""
+        return self['CycleNrCycles-RB']
+
+    @cycle_num_cycles.setter
+    def cycle_num_cycles(self, value):
+        """Return the number of cycles of the cycling curve."""
+        self['CycleNrCycles-SP'] = value
+
+    @property
+    def cycle_freq(self):
+        """Frequency of the cycling curve [Hz]."""
+        return self['CycleFreq-RB']
+
+    @cycle_freq.setter
+    def cycle_freq(self, value):
+        """Frequency of the cycling curve [Hz]."""
+        self['CycleFreq-SP'] = value
+
+    @property
+    def cycle_period(self):
+        """Period of the cycling curve [s]."""
+        freq = self['CycleFreq-RB']
+        return 1 / freq if freq != 0 else float('nan')
+
+    @cycle_period.setter
+    def cycle_period(self, value):
+        """Period of the cycling curve [s]."""
+        if value == 0:
+            raise ValueError('Cannot set zero for cycle period.')
+        self['CycleFreq-SP'] = 1 / value
+
+    @property
+    def cycle_ampl(self):
+        """Return the current amplitude of the cycling curve [A]."""
+        return self['CycleAmpl-RB']
+
+    @cycle_ampl.setter
+    def cycle_ampl(self, value):
+        """Return the current amplitude of the cycling curve [A]."""
+        self['CycleAmpl-SP'] = value
+
+    @property
+    def cycle_offset(self):
+        """Return the current offset of the cycling curve [A]."""
+        return self['CycleOffset-RB']
+
+    @cycle_offset.setter
+    def cycle_offset(self, value):
+        """Return the current offset of the cycling curve [A]."""
+        self['CycleOffset-SP'] = value
+
+    @property
+    def cycle_aux_param(self):
+        """Meaning of each index is presented below.
+
+        for Sine and Square:
+         - AuxParams[0] --> initial phase [°]
+         - AuxParams[1] --> final phase [°]
+         - AuxParams[2] --> not used
+         - AuxParams[3] --> not used
+
+        for DampedSine and DampedSquaredSine:
+         - AuxParams[0] --> initial phase [°]
+         - AuxParams[1] --> final phase [°]
+         - AuxParams[2] --> damping time [s]
+         - AuxParams[3] --> not used
+
+        for Trapezoidal:
+         - AuxParams[0] --> rampup time [s]
+         - AuxParams[1] --> plateau time [s]
+         - AuxParams[2] --> rampdown time [s]
+         - AuxParams[3] --> not used
+        """
+        return self['CycleAuxParam-RB']
+
+    @cycle_aux_param.setter
+    def cycle_aux_param(self, value):
+        """."""
+        self['CycleAuxParam-SP'] = value
+
+    @property
+    def cycle_duration(self):
+        """Total duration of the cycling process [s]."""
+        if self.cycle_freq != 0:
+            return self.cycle_num_cycles / self.cycle_freq
+        return float('nan')
+
+    @property
+    def cycle_rampup_time(self):
+        """Rampup time for Trapezoidal signals [s]."""
+        return self.cycle_aux_param[0]
+
+    @cycle_rampup_time.setter
+    def cycle_rampup_time(self, value):
+        """Set Rampup time for Trapezoidal signals [s]."""
+        var = self.cycle_aux_param
+        var[0] = value
+        self.cycle_aux_param = var
+
+    @property
+    def cycle_theta_begin(self):
+        """Return initial phase for Sine or Damped(Squared)Sine [°]."""
+        return self.cycle_aux_param[0]
+
+    @cycle_theta_begin.setter
+    def cycle_theta_begin(self, value):
+        """Set Initial phase for Sine or Damped(Squared)Sine [°]."""
+        var = self.cycle_aux_param
+        var[0] = value
+        self.cycle_aux_param = var
+
+    @property
+    def cycle_rampdown_time(self):
+        """Rampdown time for Trapezoidal signals [s]."""
+        return self.cycle_aux_param[2]
+
+    @cycle_rampdown_time.setter
+    def cycle_rampdown_time(self, value):
+        """Set Rampdown time for Trapezoidal signals [s]."""
+        var = self.cycle_aux_param
+        var[2] = value
+        self.cycle_aux_param = var
+
+    @property
+    def cycle_theta_end(self):
+        """Return final phase for Sine or Damped(Squared)Sine [°]."""
+        return self.cycle_aux_param[1]
+
+    @cycle_theta_end.setter
+    def cycle_theta_end(self, value):
+        """Set Final phase for Sine or Damped(Squared)Sine [°]."""
+        var = self.cycle_aux_param
+        var[1] = value
+        self.cycle_aux_param = var
+
+    @property
+    def cycle_plateau_time(self):
+        """Plateau time for Trapezoidal signals [s]."""
+        return self.cycle_aux_param[1]
+
+    @cycle_plateau_time.setter
+    def cycle_plateau_time(self, value):
+        """Set plateau time for Trapezoidal signals [s]."""
+        var = self.cycle_aux_param
+        var[1] = value
+        self.cycle_aux_param = var
+
+    @property
+    def cycle_decay_time(self):
+        """Decay time constant for Damped(Squared)Sine signals [s]."""
+        return self.cycle_aux_param[2]
+
+    @cycle_decay_time.setter
+    def cycle_decay_time(self, value):
+        """Set Decay time constant for Damped(Squared)Sine [s]."""
+        var = self.cycle_aux_param
+        var[2] = value
+        self.cycle_aux_param = var
+
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRef
-        self._wait('OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
+        return self._wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
 
     def cmd_slowrefsync(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRefSync
-        self._wait('OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
+        return self._wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
+
+    def cmd_cycle(self, timeout=_PSDev._default_timeout):
+        """."""
+        self['OpMode-Sel'] = self.OPMODE_SEL.Cycle
+        return self._wait(
+            'OpMode-Sts', self.OPMODE_STS.Cycle, timeout=timeout)
 
 
 class PowerSupplyPU(_PSDev):
     """Pulsed Power Supply Device."""
 
     PULSTATE = _PSCStatus.PWRSTATE
+    DEF_TIMEOUT = 10
 
     class DEVICES:
         """Devices names."""
@@ -224,9 +432,9 @@ class PowerSupplyPU(_PSDev):
         BO_EJE_KCKR = 'BO-48D:PU-EjeKckr'
         TS_EJE_SEPTF = 'TS-01:PU-EjeSeptF'
         TS_EJE_SEPTG = 'TS-01:PU-EjeSeptG'
-        TS_INJ_SPETG_1 = 'TS-04:PU-InjSeptG-1'
-        TS_INJ_SPETG_2 = 'TS-04:PU-InjSeptG-2'
-        TS_INJ_SPETF = 'TS-04:PU-InjSeptF'
+        TS_INJ_SEPTG_1 = 'TS-04:PU-InjSeptG-1'
+        TS_INJ_SEPTG_2 = 'TS-04:PU-InjSeptG-2'
+        TS_INJ_SEPTF = 'TS-04:PU-InjSeptF'
         SI_INJ_DPKCKR = 'SI-01SA:PU-InjDpKckr'
         SI_INJ_NLKCKR = 'SI-01SA:PU-InjNLKckr'
         SI_PING_H = 'SI-01SA:PU-PingH'
@@ -235,8 +443,8 @@ class PowerSupplyPU(_PSDev):
             TB_INJ_SEPT,
             BO_INJ_KCKR, BO_EJE_KCKR,
             TS_EJE_SEPTF, TS_EJE_SEPTG,
-            TS_INJ_SPETG_1, TS_INJ_SPETG_2,
-            TS_INJ_SPETF,
+            TS_INJ_SEPTG_1, TS_INJ_SEPTG_2,
+            TS_INJ_SEPTF,
             SI_INJ_DPKCKR, SI_INJ_NLKCKR,
             SI_PING_H, SI_PING_V,
         )
@@ -289,13 +497,16 @@ class PowerSupplyPU(_PSDev):
         """."""
         self['Pulse-Sel'] = value
 
-    def cmd_turn_on_pulse(self):
+    def cmd_turn_on_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.On
+        return self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
 
-    def cmd_turn_off_pulse(self):
+    def cmd_turn_off_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.Off
+        return self._wait(
+            'Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
 
     @property
     def properties(self):
@@ -305,7 +516,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def pvnames(self):
         """Return device PV names."""
-        return super().pvnames + self._dev_timing.pvnames
+        return set(list(super().pvnames) +
+                   list(self._dev_timing.pvnames))
 
     @property
     def connected(self):
@@ -317,8 +529,8 @@ class PowerSupplyPU(_PSDev):
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        return super().disconnected_pvnames + \
-            self._dev_timing.disconnected_pvnames
+        return set(list(super().disconnected_pvnames) +
+                   list(self._dev_timing.disconnected_pvnames))
 
     def update(self):
         """Update device properties."""

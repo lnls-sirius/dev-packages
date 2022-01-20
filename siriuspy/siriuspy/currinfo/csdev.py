@@ -120,29 +120,39 @@ def get_bo_currinfo_database():
 
 def get_si_currinfo_database():
     """Return SI CurrentInfo Soft IOC database."""
-    pvs_db = {'Version-Cte': {'type': 'string', 'value': 'UNDEF'}}
+    dev = 'SI-Glob:AP-CurrInfo:'
+    pvs_db = {dev+'Version-Cte': {'type': 'string', 'value': 'UNDEF'}}
 
-    pvs_db['Current-Mon'] = {
+    pvs_db[dev+'Current-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mA'}
-    pvs_db['StoredEBeam-Mon'] = {'type': 'int', 'value': 0}
+    pvs_db[dev+'StoredEBeam-Mon'] = {'type': 'int', 'value': 0}
 
-    pvs_db['DCCT-Sel'] = {
+    pvs_db[dev+'DCCT-Sel'] = {
         'type': 'enum', 'value': _c.DCCT.DCCT13C4,
         'enums': _et.DCCTSELECTIONTYP}
-    pvs_db['DCCT-Sts'] = {
+    pvs_db[dev+'DCCT-Sts'] = {
         'type': 'enum', 'value': _c.DCCT.DCCT13C4,
         'enums': _et.DCCTSELECTIONTYP}
 
-    pvs_db['DCCTFltCheck-Sel'] = {
+    pvs_db[dev+'DCCTFltCheck-Sel'] = {
         'type': 'enum', 'enums': _et.OFF_ON, 'value': _c.DCCTFltCheck.Off}
-    pvs_db['DCCTFltCheck-Sts'] = {
+    pvs_db[dev+'DCCTFltCheck-Sts'] = {
         'type': 'enum', 'enums': _et.OFF_ON, 'value': _c.DCCTFltCheck.Off}
 
-    pvs_db['Charge-Mon'] = {
+    pvs_db[dev+'Charge-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 12, 'unit': 'A.h', 'scan': 60}
-    pvs_db['InjEff-Mon'] = {
+
+    pvs_db[dev+'InjEff-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%'}
-    pvs_db = _csdev.add_pvslist_cte(pvs_db)
+    pvs_db[dev+'InjCurr-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'mA'}
+    pvs_db[dev+'InjCharge-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'nC'}
+
+    dev = 'AS-Glob:AP-CurrInfo:'
+    pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
+
+    pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=dev)
     return pvs_db
 
 

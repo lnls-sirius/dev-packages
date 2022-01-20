@@ -34,6 +34,7 @@ class APU(_Device):
         'Kx-SP', 'Kx-Mon',
     )
 
+    _DEF_TIMEOUT = 10  # [s]
     _CMD_MOVE = 3
     _MOVECHECK_SLEEP = 0.1  # [s]
 
@@ -93,9 +94,10 @@ class APU(_Device):
         """Return True if phase is changing."""
         return round(self['Moving-Mon']) == 1
 
-    def cmd_move(self):
+    def cmd_move(self, timeout=_DEF_TIMEOUT):
         """."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE
+        return True
 
     def wait_move(self):
         """Wait for phase movement to complete."""
