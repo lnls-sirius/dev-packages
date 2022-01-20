@@ -31,8 +31,8 @@ else
 	echo 'already uninstalled $(PACKAGE)'
 endif
 
-test: ## Run tests
-	python setup.py test
+test: 
+	pytest tests/
 
 dist: clean ## Build setuptools dist
 	python setup.py sdist bdist_wheel

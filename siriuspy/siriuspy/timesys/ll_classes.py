@@ -64,9 +64,9 @@ class _BaseLL(_Callback):
         evts.pop('PsMtn')
         self._events = {evt: _Event(evt) for evt in evts}
 
-        evg_name = _LLSearch.get_evg_name()
+        evg_name = _PVName(_LLSearch.get_evg_name())
         self._base_freq_pv = _PV(
-            LL_PREFIX + evg_name + ':FPGAClk-Cte')
+            evg_name.substitute(prefix=LL_PREFIX, propty='FPGAClk-Cte'))
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
@@ -85,10 +85,10 @@ class _BaseLL(_Callback):
                 self._readpvs[prop] = pvo
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 pvo = _PV(pvnamesp)
+                self._writepvs[prop] = pvo
                 pvo.initialized = False
                 pvo.add_callback(self._on_change_writepv)
                 pvo.connection_callbacks.append(self._on_connection_writepv)
-                self._writepvs[prop] = pvo
         self._initialized = True
 
     @property
@@ -255,7 +255,9 @@ class _BaseLL(_Callback):
         prop = self._dict_convert_pv2prop[pvname]
         my_val = self._config_ok_values.get(prop)
         pvo = self._writepvs.get(prop)
-        if my_val is None or pvo is None:
+        if pvo is None:
+            return
+        if my_val is None:
             timer.stop()
         value = self._get_from_pvs(False, prop)
         if value is None:
@@ -358,7 +360,8 @@ class _EVROUT(_BaseLL):
         self._source_enums = source_enums
         self._duration = None  # I keep this to avoid rounding errors
 
-        prefix = LL_PREFIX + _PVName(channel).device_name + ':'
+        prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
+        prefix += _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
         # self._config_ok_values['DevEnbl'] = 1
         # self._config_ok_values['FoutDevEnbl'] = 1
@@ -383,10 +386,11 @@ class _EVROUT(_BaseLL):
         intlb = intlb.propty
         outlb = outlb.propty
 
+        prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
         evg_chan = _LLSearch.get_evg_channel(self.channel)
-        _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
+        _evg_prefix = prefix + evg_chan.device_name + ':'
         fout_chan = _LLSearch.get_fout_channel(self.channel)
-        _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
+        _fout_prefix = prefix + fout_chan.device_name + ':'
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',

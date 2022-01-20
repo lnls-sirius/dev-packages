@@ -1,4 +1,5 @@
 """."""
+import time as _time
 
 import numpy as _np
 
@@ -19,7 +20,7 @@ class EVG(_Device):
         'RepeatBucketList-SP', 'RepeatBucketList-RB',
         'BucketList-SP', 'BucketList-RB', 'BucketList-Mon',
         'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
-        )
+        'BucketListSyncStatus-Mon')
 
     def __init__(self):
         """."""
@@ -27,33 +28,39 @@ class EVG(_Device):
 
     @property
     def nrpulses(self):
-        """."""
+        """Number of pulses to repeat Bucket List."""
         return self['RepeatBucketList-RB']
 
     @nrpulses.setter
     def nrpulses(self, value):
-        """."""
+        """Set number of pulses to repeat Bucket List."""
         self['RepeatBucketList-SP'] = bool(value)
 
     @property
     def bucketlist_len(self):
-        """."""
-        return self['BucketListLen-Mon']
+        """Bucket List Length."""
+        value = self['BucketListLen-Mon']
+        return int(value) if value is not None else None
 
     @property
     def bucketlist_mon(self):
-        """."""
-        return self['BucketList-Mon']
+        """Implemented Bucket List."""
+        return self['BucketList-Mon'][:self.bucketlist_len]
 
     @property
     def bucketlist(self):
-        """."""
-        return self['BucketList-RB']
+        """Last setpoint accepted for Bucket List."""
+        return self['BucketList-RB'][:self.bucketlist_len]
 
     @bucketlist.setter
     def bucketlist(self, value):
-        """."""
+        """Set Bucket List."""
         self['BucketList-SP'] = _np.array(value, dtype=int)
+
+    @property
+    def bucketlist_sync(self):
+        """Bucket list syncronized status."""
+        return self['BucketListSyncStatus-Mon']
 
     @property
     def continuous_state(self):
@@ -86,19 +93,29 @@ class EVG(_Device):
         return self['InjCount-Mon']
 
     def fill_bucketlist(self, stop, start=1, step=30, timeout=10):
-        """."""
-        value = _np.arange(start=start, stop=stop, step=step)
+        """Fill bucket list."""
+        if (step > 0) and (start > stop):
+            stop += 864
+        if (step < 0) and (stop > start):
+            stop -= 864
+        value = _np.arange(start, stop, step)
+        value = (value-1) % 864 + 1
         self.bucketlist = value
-        return self._wait('BucketList-Mon', value, timeout=timeout)
+        rb_value = _np.zeros(864)
+        rb_value[:len(value)] = value
+        return self._wait('BucketList-RB', rb_value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
         return self._wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
 
-    def cmd_update_events(self):
+    def cmd_update_events(self, timeout=10):
         """."""
+        val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
-        return True
+        _time.sleep(0.1)
+        return self._wait(
+            propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
     def cmd_turn_on_injection(self, timeout=10):
         """."""
@@ -123,7 +140,7 @@ class EVG(_Device):
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""
         self['RepeatBucketList-SP'] = value
-        return self._wait('RepeatBucketList-RB', value)
+        return self._wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
 class Event(_ProptyDevice):
@@ -209,6 +226,7 @@ class Trigger(_Device):
     """Device trigger."""
 
     STATES = ('Dsbl', 'Enbl')
+    LOCKLL = ('Unlocked', 'Locked')
     POLARITIES = ('Normal', 'Inverse')
 
     def __init__(self, trigname):
@@ -232,6 +250,17 @@ class Trigger(_Device):
         return ', '.join(strs) if strs else 'Ok'
 
     @property
+    def status_labels(self):
+        """Return Status labels of trigger.
+
+        Returns:
+            list: labels describing the possible statuses of the trigger.
+
+        """
+        pvo = self.pv_object('StatusLabels-Cte')
+        return pvo.get(as_string=True).split('\n')
+
+    @property
     def state(self):
         """State."""
         return self['State-Sts']
@@ -244,6 +273,42 @@ class Trigger(_Device):
     def state_str(self):
         """State string."""
         return Trigger.STATES[self['State-Sts']]
+
+    @property
+    def lock_low_level(self):
+        """Lock low level status."""
+        return self['LowLvlLock-Sts']
+
+    @lock_low_level.setter
+    def lock_low_level(self, value):
+        self._enum_setter('LowLvlLock-Sel', value, Trigger.LOCKLL)
+
+    @property
+    def lock_low_level_str(self):
+        """Lock low level status string."""
+        return Trigger.LOCKLL[self['LowLvlLock-Sts']]
+
+    @property
+    def controlled_channels(self):
+        """Return channels controlled by this trigger.
+
+        Returns:
+            list: names of the controlled channels.
+
+        """
+        pvo = self.pv_object('CtrldChannels-Cte')
+        return pvo.get(as_string=True).split('\n')
+
+    @property
+    def low_level_triggers(self):
+        """Return low level triggers controlled by this trigger.
+
+        Returns:
+            list: names of the controlled low level triggers.
+
+        """
+        pvo = self.pv_object('LowLvlTriggers-Cte')
+        return pvo.get(as_string=True).split('\n')
 
     @property
     def source(self):
@@ -311,6 +376,27 @@ class Trigger(_Device):
         return self['TotalDelay-Mon']
 
     @property
+    def delta_delay(self):
+        """Return delta delay array.
+
+        Returns:
+            numpy.ndarray: delta delays.
+
+        """
+        return self['DeltaDelay-RB']
+
+    @delta_delay.setter
+    def delta_delay(self, value):
+        if not isinstance(value, (_np.ndarray, list, tuple)):
+            raise TypeError('Value must be a numpy.ndarray, list or tuple.')
+
+        value = _np.array(value)
+        size = self.delta_delay.size
+        if value.size != size:
+            raise TypeError(f'Size of value must be {size:d}.')
+        self['DeltaDelay-SP'] = value
+
+    @property
     def delay_raw(self):
         """Delay raw."""
         return self['DelayRaw-RB']
@@ -323,6 +409,27 @@ class Trigger(_Device):
     def total_delay_raw(self):
         """Total delay raw."""
         return self['TotalDelayRaw-Mon']
+
+    @property
+    def delta_delay_raw(self):
+        """Return delta delay raw array.
+
+        Returns:
+            numpy.ndarray: delta delays raw.
+
+        """
+        return self['DeltaDelayRaw-RB']
+
+    @delta_delay_raw.setter
+    def delta_delay_raw(self, value):
+        if not isinstance(value, (_np.ndarray, list, tuple)):
+            raise TypeError('Value must be a numpy.ndarray, list or tuple.')
+
+        value = _np.array(value)
+        size = self.delta_delay_raw.size
+        if value.size != size:
+            raise TypeError(f'Size of value must be {size:d}.')
+        self['DeltaDelayRaw-SP'] = value
 
     @property
     def is_in_inj_table(self):
@@ -338,3 +445,13 @@ class Trigger(_Device):
         """Command disable."""
         self.state = 0
         return self._wait('State-Sts', 0, timeout)
+
+    def cmd_lock_low_level(self, timeout=3):
+        """Lock low level IOCs state."""
+        self.lock_low_level = 1
+        return self._wait('LowLvlLock-Sts', 1, timeout)
+
+    def cmd_unlock_low_level(self, timeout=3):
+        """Unlock low level IOCs state."""
+        self.lock_low_level = 0
+        return self._wait('LowLvlLock-Sts', 0, timeout)

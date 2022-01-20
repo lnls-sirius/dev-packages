@@ -4,6 +4,7 @@ import time as _time
 import operator as _opr
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
@@ -64,7 +65,7 @@ class Device:
     @property
     def auto_monitor_status(self):
         """Return PVs auto_monitor statuses."""
-        return {pv.pvname: pv.auto_monitor for pv in self._pvs.values()}
+        return {pvn: pv.auto_monitor for pvn, pv in self._pvs.items()}
 
     @property
     def disconnected_pvnames(self):
@@ -143,7 +144,6 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
-            pvname = _VACA_PREFIX + pvname
             auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
@@ -154,11 +154,14 @@ class Device:
 
     def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
-        comp = getattr(_opr, comp)
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
         ntrials = int(timeout/_TINY_INTERVAL)
-        _time.sleep(4*_TINY_INTERVAL)
         for _ in range(ntrials):
-            if comp(self[propty], value):
+            boo = comp(self[propty], value)
+            if isinstance(boo, _np.ndarray):
+                boo = _np.all(boo)
+            if boo:
                 return True
             _time.sleep(_TINY_INTERVAL)
         return False
@@ -166,9 +169,9 @@ class Device:
     def _get_pvname(self, devname, propty):
         if devname:
             func = devname.substitute
-            pvname = func(propty=propty)
+            pvname = func(prefix=_VACA_PREFIX, propty=propty)
         else:
-            pvname = propty
+            pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
         return pvname
 
     def _enum_setter(self, propty, value, enums):
@@ -350,12 +353,18 @@ class Devices:
             self, devices, propty, values, comp='eq',
             timeout=_DEF_TIMEOUT, return_prob=False):
         """Wait for devices property to reach value(s)."""
-        comp = getattr(_opr, comp)
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
-        _time.sleep(4*_TINY_INTERVAL)
         for _ in range(int(timeout/_TINY_INTERVAL)):
-            okdevs = {k for k, v in dev2val.items() if comp(k[propty], v)}
+            okdevs = set()
+            for k, v in dev2val.items():
+                boo = comp(k[propty], v)
+                if isinstance(boo, _np.ndarray):
+                    boo = _np.all(boo)
+                if boo:
+                    okdevs.add(k)
             list(map(dev2val.__delitem__, okdevs))
             if not dev2val:
                 break

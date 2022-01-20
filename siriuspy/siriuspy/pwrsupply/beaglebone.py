@@ -54,7 +54,7 @@ class BeagleBone:
         self._create_dev2mirr_dev2timestamp_dict()
 
         # create strength conv epics objects
-        self._streconv, self._streconnected, self._strelims = \
+        self._streconvs, self._streconnected, self._strelims = \
             self._create_streconvs()
 
         # initialized state
@@ -116,7 +116,7 @@ class BeagleBone:
             return None
 
         if field in {'Energy-SP', 'Kick-SP', 'KL-SP', 'SL-SP'}:
-            streconv = self._streconv[devname]
+            streconv = self._streconvs[devname]
             curr = streconv.conv_strength_2_current(value)
             priority_pvs = self._controllers[devname].write(
                 devname, 'Current-SP', curr)
@@ -166,6 +166,11 @@ class BeagleBone:
             if controller not in psc_initialized:
                 controller.init_setpoints()
                 psc_initialized.add(controller)
+
+        # guarantee strengthconv PVs connected
+        for streconv in self._streconvs.values():
+            streconv.wait_for_connection()
+
         self._initialized = True
 
     # --- private methods ---
@@ -203,7 +208,7 @@ class BeagleBone:
         strec = dict()
         strelims = dict()
         for psname in self.psnames:
-            if 'DCLink' in psname:
+            if 'DCLink' in psname or psname.startswith('IT'):
                 strec[psname] = True
             else:
                 # NOTE: use 'Ref-Mon' proptype for all
@@ -214,9 +219,9 @@ class BeagleBone:
 
     def _update_strengths(self, psname):
         # t0_ = _time.time()
-        if 'DCLink' in psname:
+        if 'DCLink' in psname or psname.startswith('IT'):
             return
-        streconv = self._streconv[psname]
+        streconv = self._streconvs[psname]
         strelims = self._strelims[psname]
         mirror = self._dev2mirror[psname]
         dbase = self._databases[psname]

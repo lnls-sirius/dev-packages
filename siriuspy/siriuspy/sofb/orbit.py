@@ -666,10 +666,14 @@ class EpicsOrbit(BaseOrbit):
 
     def _synchronize_bpms(self):
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
         _time.sleep(0.5)
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
 
@@ -878,8 +882,7 @@ class EpicsOrbit(BaseOrbit):
         orbs = _np.array([refx, refy]).T
         try:
             path = _os.path.split(self._csorb.ref_orb_fname)[0]
-            if not _os.path.isdir(path):
-                _os.mkdir(path)
+            _os.makedirs(path, exist_ok=True)
             _np.savetxt(self._csorb.ref_orb_fname, orbs)
         except FileNotFoundError:
             msg = 'WARN: Could not save reference orbit in file.'

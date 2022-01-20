@@ -2,7 +2,7 @@
 
 from .bbb import BunchbyBunch
 from .blscreen import BeamlineScreen
-from .bpm import BPM
+from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
@@ -16,6 +16,7 @@ from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     LILLRFStandbyHandler
 from .lillrf import LILLRF
 from .machshift import MachShift
+from .modltr import LIModltr
 from .orbit_interlock import BPMInterlock
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
@@ -27,7 +28,7 @@ from .syncd import DevicesSync
 from .timing import EVG, Event, Trigger
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 
-del device, bpm, dcct, egun, ict, lillrf
+del device, bpm, dcct, egun, ict, lillrf, modltr,
 del pwrsupply, psconv, pssofb, rf, injsys
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, blscreen, bbb, machshift
