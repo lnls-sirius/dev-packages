@@ -3,6 +3,20 @@
 from .. import csdev as _csdev
 
 
+# --- Enumeration Types ---
+
+class ETypes(_csdev.ETypes):
+    """Local enumerate types."""
+
+    NEED_REF_UPDATE = ('Ok', 'NeedUpdate')
+
+
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+
 class Const:
     """Const class defining PosAng constants."""
 
@@ -17,19 +31,24 @@ class Const:
 
     STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
 
+    NeedRefUpdate = _csdev.Const.register('NeedRefUpdate', _et.NEED_REF_UPDATE)
+
+
+_c = Const  # syntactic sugar
+
 
 def get_posang_database(tl, corrs_type='ch-sept'):
     """Return Soft IOC database."""
     if tl.upper() == 'TS':
         if corrs_type == 'ch-sept':
-            corrh = Const.TS_CORRH_POSANG_CHSEPT
+            corrh = _c.TS_CORRH_POSANG_CHSEPT
         else:
-            corrh = Const.TS_CORRH_POSANG_SEPTSEPT
-        corrv = Const.TS_CORRV_POSANG
+            corrh = _c.TS_CORRH_POSANG_SEPTSEPT
+        corrv = _c.TS_CORRV_POSANG
         ch1_kick_unit = 'mrad'
     elif tl.upper() == 'TB':
-        corrh = Const.TB_CORRH_POSANG
-        corrv = Const.TB_CORRV_POSANG
+        corrh = _c.TB_CORRH_POSANG
+        corrv = _c.TB_CORRV_POSANG
         ch1_kick_unit = 'urad'
 
     pvs_database = {
@@ -75,12 +94,14 @@ def get_posang_database(tl, corrs_type='ch-sept'):
         'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
+        'NeedRefUpdate-Mon': {'type': 'enum', 'enums': _et.NEED_REF_UPDATE,
+                              'value': _c.NeedRefUpdate.NeedUpdate},
 
         'ConfigPS-Cmd':      {'type': 'int', 'value': 0},
 
         'Status-Mon':        {'type': 'int', 'value': 0b1111},
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
-                              'value': '\n'.join(Const.STATUSLABELS)},
+                              'value': '\n'.join(_c.STATUSLABELS)},
     }
     if len(corrh) == 3:
         pvs_database['CH3-Cte'] = {'type': 'string', 'value': corrh[2]}

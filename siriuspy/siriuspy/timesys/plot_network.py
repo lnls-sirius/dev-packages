@@ -2,10 +2,12 @@
 
 import sys as _sys
 import math as _math
-import numpy as _np
 import importlib as _importlib
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.search import LLTimeSearch as _LLTimeSearch
+
+import numpy as _np
+
+from ..namesys import SiriusPVName as _PVName
+from ..search import LLTimeSearch as _LLTimeSearch
 if _importlib.util.find_spec('matplotlib') is not None:
     import matplotlib.pyplot as _plt
     import matplotlib.gridspec as _gridspec

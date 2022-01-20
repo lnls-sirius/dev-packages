@@ -141,11 +141,13 @@ def beam_rigidity(energy):
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
-        pvname = _envars.VACA_PREFIX + pvname
+        pref = _envars.VACA_PREFIX
+        pvname = pref + ('-' if pref else '') + pvname
     pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pvobj.wait_for_connection(timeout=timeout)
-    # invoke pv disconnect and explicitly signal to GC that PV object may be collected.
-    del pvobj  
+    # invoke pv disconnect and explicitly signal to GC that PV object
+    # may be collected.
+    del pvobj
     return status
 
 

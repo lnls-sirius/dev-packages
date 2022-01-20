@@ -29,8 +29,9 @@ class AsyncWorker(_Thread):
             return False
         self.target = target
         self.args = args or tuple()
-        self._evt_received.set()
         self._evt_ready.clear()
+        # NOTE: _evt_received setting must be last operation of this method.
+        self._evt_received.set()
         return True
 
     def wait_ready(self, timeout=None):

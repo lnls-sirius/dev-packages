@@ -91,12 +91,12 @@ class Signal:
     @property
     def rampdown_time(self):
         """Rampdown time for Trapezoidal signals."""
-        return self.aux_param[1]
+        return self.aux_param[2]
 
     @rampdown_time.setter
     def rampdown_time(self, value):
         """Set Rampdown time for Trapezoidal signals."""
-        self.aux_param[1] = value
+        self.aux_param[2] = value
         self._update()
         return value
 
@@ -115,12 +115,12 @@ class Signal:
     @property
     def plateau_time(self):
         """Plateau time for Trapezoidal signals."""
-        return self.aux_param[2]
+        return self.aux_param[1]
 
     @plateau_time.setter
     def plateau_time(self, value):
         """Set Plateau time for Trapezoidal signals."""
-        self.aux_param[2] = value
+        self.aux_param[1] = value
         self._update()
         return value
 

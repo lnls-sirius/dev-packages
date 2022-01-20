@@ -4,8 +4,15 @@
 
 from unittest import TestCase
 from unittest.mock import Mock
-from siriuspy.bsmp import SerialErrMsgShort, SerialErrPckgLen
-from siriuspy.bsmp import Message, Package, Channel, SerialError
+
+from siriuspy.bsmp import (
+    Channel,
+    Message,
+    Package,
+    SerialErrMsgShort,
+    SerialError,
+    SerialErrPckgLen,
+)
 from siriuspy.util import check_public_interface_namespace
 
 
@@ -47,9 +54,9 @@ class TestBSMPMessage(TestCase):
 
     def test_message_with_load(self):
         """Test constructor with load."""
-        m = Message.message(cmd=0x10, payload=[1, ])
+        m = Message.message(cmd=0x10, payload=[1])
         self.assertEqual(m.cmd, 0x10)
-        self.assertEqual(m.payload, [1, ])
+        self.assertEqual(m.payload, [1])
 
     def test_message_with_extraneous_load(self):
         """Test constructor with loads that are not list."""
@@ -69,7 +76,7 @@ class TestBSMPMessage(TestCase):
         # Example in 3.8.2 of BSMP protocol document
         curve_id = chr(0x07)
         blk_n = [chr(0x40), chr(0x00)]
-        blk_load = [chr(0xdd) for _ in range(16384)]
+        blk_load = [chr(0xDD) for _ in range(16384)]
         load = [curve_id] + blk_n + blk_load
         m = Message.message(cmd=0x41, payload=load)
 
@@ -83,20 +90,14 @@ class TestBSMPPackage(TestCase):
 
     # Tuples with address, message and checksum
     data = [
-        (1, 0x10, [chr(3)], ['\x01', '\x10', '\x00', '\x01', '\x03',
-         chr(235)], 235),
-        (0, 0x11, [chr(3), chr(255), chr(255)],
-         ['\x00', '\x11', '\x00', '\x03', '\x03', '\xFF', '\xFF', chr(235)],
-         235),
-        (2, 0x20, [chr(4), chr(1), chr(187), chr(187)],
-         ['\x02', '\x20', '\x00', '\x04', '\x04', '\x01', '\xBB', '\xBB',
-          chr(95)], 95),
-        (3, 0x22, [chr(2), chr(1), chr(187), chr(187), chr(1),
-         chr(187), chr(187), chr(1), chr(187), chr(187), chr(1), chr(187),
-         chr(187), chr(204)],
-         ['\x03', '\x22', '\x00', '\x0E', '\x02', '\x01', '\xBB', '\xBB',
-          '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\x01', '\xBB',
-          '\xBB', '\xCC', chr(35)], 35),
+        (1, 0x10, [chr(3)], ['\x01', '\x10', '\x00', '\x01', '\x03', chr(235)], 235),
+        (0, 0x11, [chr(3), chr(255), chr(255)], ['\x00', '\x11', '\x00', '\x03', '\x03', '\xFF', '\xFF', chr(235)], 235),
+        (2, 0x20, [chr(4), chr(1), chr(187), chr(187)], ['\x02', '\x20', '\x00', '\x04', '\x04', '\x01', '\xBB', '\xBB', chr(95)], 95),
+        (3, 0x22,
+            [chr(2), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(1), chr(187), chr(187), chr(204)],
+            ['\x03', '\x22', '\x00', '\x0E', '\x02', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\x01', '\xBB', '\xBB', '\xCC', chr(35)],
+            35,
+        ),
     ]
 
     api = (
@@ -106,7 +107,7 @@ class TestBSMPPackage(TestCase):
         'checksum',
         'stream',
         'calc_checksum',
-        'verify_checksum'
+        'verify_checksum',
     )
 
     def test_api(self):
@@ -168,7 +169,7 @@ class TestBSMPChannel(TestCase):
 
     api = (
         'LOCK',
-        'pru',
+        'iointerf',
         'address',
         'size_counter',
         'size_counter_reset',
@@ -176,8 +177,8 @@ class TestBSMPChannel(TestCase):
         'write',
         'request_',
         'request',
-        'create_lock'
-        )
+        'create_lock',
+    )
 
     def setUp(self):
         """Setup common to all tests."""
@@ -191,16 +192,14 @@ class TestBSMPChannel(TestCase):
     def test_read_calls_serial_method(self):
         """Test UART_read is called."""
         response = Message.message(0x11, payload=[chr(10)])
-        self.serial.UART_read.return_value = \
-            Package.package(0x01, response).stream
+        self.serial.UART_read.return_value = Package.package(0x01, response).stream
         self.channel.read()
         self.serial.UART_read.assert_called_once()
 
     def test_read(self):
         """Test read method."""
         response = Message.message(0x11, payload=[chr(10)])
-        self.serial.UART_read.return_value = \
-            Package.package(0x01, response).stream
+        self.serial.UART_read.return_value = Package.package(0x01, response).stream
         recv = self.channel.read()
         self.assertEqual(recv.cmd, response.cmd)
         self.assertEqual(recv.payload, response.payload)
@@ -208,19 +207,15 @@ class TestBSMPChannel(TestCase):
     def test_write_calls_serial_method(self):
         """Test write calls UART_write."""
         message = Message.message(0x10, payload=[chr(1)])
-        expected_stream = \
-            Package.package(self.channel.address, message).stream
+        expected_stream = Package.package(self.channel.address, message).stream
         self.channel.write(message, 1000)
-        self.serial.UART_write.assert_called_with(
-            expected_stream, timeout=1000)
+        self.serial.UART_write.assert_called_with(expected_stream, timeout=1000)
 
     def test_request(self):
         """Test request."""
         response = Message.message(0x11, payload=[chr(10)])
-        self.serial.UART_request.return_value = \
-            Package.package(0x01, response).stream
-        recv = self.channel.request(
-            Message.message(0x01, payload=[chr(1)]), timeout=1)
+        self.serial.UART_request.return_value = Package.package(0x01, response).stream
+        recv = self.channel.request(Message.message(0x01, payload=[chr(1)]), timeout=1)
         self.assertEqual(recv.cmd, response.cmd)
         self.assertEqual(recv.payload, response.payload)
 

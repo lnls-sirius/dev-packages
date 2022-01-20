@@ -4,6 +4,7 @@
 from pcaspy import Alarm as _Alarm, Severity as _Severity
 
 from ...namesys import SiriusPVName
+from ...pwrsupply.csdev import get_ps_interlocks as _get_ps_interlocks
 from ..app import App as _App
 from ..pvs import ComputedPV as _ComputedPV
 from .pvs import PSStatusPV as _PSStatusPV, PSDiffPV as _PSDiffPV
@@ -15,38 +16,62 @@ class PSDiagApp(_App):
     def _create_computed_pvs(self, psnames):
         self._psnames = psnames
         for psname in self._psnames:
-            devname = SiriusPVName(self._prefix + psname)
+            devname = SiriusPVName(psname).substitute(prefix=self._prefix)
 
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
             pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
-            pv = _ComputedPV(
+            pvo = _ComputedPV(
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)
-            self.pvs.append(pv)
+            self.pvs.append(pvo)
 
             # DiagStatus-Mon
+            computer = _PSStatusPV()
             if devname.sec != 'LI':
-                pvs = [None]*7
+                intlks = _get_ps_interlocks(psname=psname)
+                intlk_list = [':' + ppt for ppt in intlks if 'Intlk' in ppt]
+                alarm_list = [':' + ppt for ppt in intlks if 'Alarm' in ppt]
+
+                if psname in ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']:
+                    for aux in ['a', 'b', 'c']:
+                        intlk_list.extend(
+                            [aux+':'+ilk for ilk in intlks if 'Intlk' in ilk
+                             if 'Soft' not in ilk and 'Hard' not in ilk])
+                        alarm_list.extend(
+                            [aux+':'+alm for alm in intlks if 'Alarm' in alm])
+
+                pvs = [None]*(5+len(intlk_list)+len(alarm_list))
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
-                pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
-                pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
                 pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
                 pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
                 pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
-                # TODO: Add other interlocks for PS types that have them
+
+                computer.INTLK_PVS = list()
+                for idx, intlk in enumerate(intlk_list):
+                    pvidx = idx + computer.WAVFRM_MON + 1
+                    computer.INTLK_PVS.append(pvidx)
+                    pvs[pvidx] = devname + intlk
+                computer.ALARM_PVS = list()
+                for idx, alarm in enumerate(alarm_list):
+                    pvidx = idx + computer.INTLK_PVS[-1] + 1
+                    computer.ALARM_PVS.append(pvidx)
+                    pvs[pvidx] = devname + alarm
             else:
-                pvs = [None]*3
+                pvs = [None]*5
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.INTRLCK_LI] = devname + ':StatusIntlk-Mon'
-            pv = _ComputedPV(
-                psname + ':DiagStatus-Mon', _PSStatusPV(), self._queue,
+                pvs[_PSStatusPV.WARNSTS_LI] = devname + ':IntlkWarn-Mon'
+                pvs[_PSStatusPV.CONNCTD_LI] = devname + ':Connected-Mon'
+
+            pvo = _ComputedPV(
+                psname + ':DiagStatus-Mon', computer, self._queue,
                 pvs, monitor=False)
-            self.pvs.append(pv)
-        self._pvs_connected = {pv: False for pv in self.pvs}
+            self.pvs.append(pvo)
+        self._pvs_connected = {pvo: False for pvo in self.pvs}
 
     def _update_pvs(self):
         for pvo in self.pvs:

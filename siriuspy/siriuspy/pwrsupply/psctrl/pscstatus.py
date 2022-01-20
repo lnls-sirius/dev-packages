@@ -10,6 +10,7 @@ class PSCStatus:
     OPMODE = _c.OpMode
     PWRSTATE = _c.PwrStateSel
     STATES = _c.States
+    CYCLETYPE = _c.CycleType
 
     _mask_state = 0b0000000000001111
     _mask_oloop = 0b0000000000010000

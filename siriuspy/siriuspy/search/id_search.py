@@ -14,34 +14,24 @@ class IDSearch:
     # NOTE: Maybe we should move these mappings to
     # static tables in our cs-constants server.
 
+    # NOTE: see
+    # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
+
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-APU22',
         'CATERETE': 'SI-07SP:ID-APU22',
         'EMA':      'SI-08SB:ID-APU22',
         'MANACA':   'SI-09SA:ID-APU22',
         'SABIA':    'SI-10SB:ID-Delta52',
-        'IPE':      'SI-11SP:ID-Delta52',
-        'COLIBRI':  'SI-12SB:ID-Delta52',
-        'HARPIA':   'SI-14SB:ID-Delta21',
-        'SAGUI':    'SI-15SP:ID-Delta21',
-        'INGA':     'SI-16SB:ID-Delta21',
-        'SAPUCAIA': 'SI-17SA:ID-APU19',
-        'PAINEIRA': 'SI-18SB:ID-Delta21',
+        'IPE':      'SI-11SP:ID-APU58',
+        # 'PAINEIRA': 'SI-14SB:ID-???',
+        # 'SAPUCAIA': 'SI-17SA:ID-???',
     }
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
 
-    _idname_2_orbitcorr = {
-        'SI-09SA:ID-APU22': (
-            'SI-09SA:PS-CH-1', 'SI-09SA:PS-CH-2',
-            'SI-09SA:PS-CH-3', 'SI-09SA:PS-CH-4',
-            'SI-09SA:PS-CV-1', 'SI-09SA:PS-CV-2',
-            'SI-09SA:PS-CV-3', 'SI-09SA:PS-CV-4',
-        )
-    }
+    _idname_2_orbitcorr = {}
 
-    _idname_2_orbitffwd_fname = {
-        'SI-09SA:ID-APU22': 'si-id-apu22-ffwd-09sa',
-    }
+    _idname_2_orbitffwd_fname = {}
 
     _idname_2_orbitffwd_dict = dict()
 

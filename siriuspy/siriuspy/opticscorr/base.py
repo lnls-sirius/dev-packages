@@ -9,7 +9,7 @@ from epics import PV as _PV
 from .. import util as _util
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
-from ..namesys import SiriusPVName as _SiriusPVName
+from ..namesys import SiriusPVName as _PVName
 from ..search import LLTimeSearch as _LLTimeSearch
 from ..clientconfigdb import ConfigDBClient as _ConfigDBClient, \
     ConfigDBException as _ConfigDBException
@@ -48,7 +48,7 @@ class BaseApp(_Callback):
             else:
                 self._psfams = _Const.SI_QFAMS_TUNECORR
                 self._psfam_nelm = _Const.SI_QFAMS_NELM
-                self._trigger_name = 'SI-Glob:TI-Mags-Quads'
+                self._trigger_name = _PVName('SI-Glob:TI-Mags-Quads')
                 self._event_name = 'TunSI'
         else:
             self._pvs_database = _get_chrom_database(self._acc)
@@ -58,7 +58,7 @@ class BaseApp(_Callback):
             else:
                 self._psfams = _Const.SI_SFAMS_CHROMCORR
                 self._psfam_nelm = _Const.SI_SFAMS_NELM
-                self._trigger_name = 'SI-Glob:TI-Mags-Sexts'
+                self._trigger_name = _PVName('SI-Glob:TI-Mags-Sexts')
                 self._event_name = 'ChromSI'
 
         self._status = ALLSET if self._acc == 'SI' else 0x0f
@@ -138,7 +138,8 @@ class BaseApp(_Callback):
         self._psfam_opmode_sts_pvs = dict()
         self._psfam_ctrlmode_mon_pvs = dict()
         for fam in self._psfams:
-            pss = _SiriusPVName(_vaca_prefix+self._acc+'-Fam:PS-'+fam)
+            pss = _PVName(self._acc+'-Fam:PS-'+fam).substitute(
+                prefix=_vaca_prefix)
             intstr = 'KL' if self._optics_param == 'tune' else 'SL'
             self._psfam_intstr_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name=intstr, propty_suffix='SP'),
@@ -168,8 +169,10 @@ class BaseApp(_Callback):
 
         if self._acc == 'SI':
             # Connect to Timing
-            trig_name = self._trigger_name
-            evt_name = self._event_name
+            evg = _LLTimeSearch.get_evg_name()
+            trig_name = self._trigger_name.substitute(prefix=_vaca_prefix)
+            evt_name = _PVName(evg).substitute(
+                prefix=_vaca_prefix, propty_name=self._event_name)
             try:
                 trig_db = _get_trig_db(trig_name)
                 self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
@@ -177,82 +180,87 @@ class BaseApp(_Callback):
                 self._evt_src_idx = 1
 
             self._trigger_state_sel = _PV(
-                _vaca_prefix+trig_name+':State-Sel', connection_timeout=0.05)
+                trig_name.substitute(propty='State-Sel'),
+                connection_timeout=0.05)
             self._trigger_state_sts = _PV(
-                _vaca_prefix+trig_name+':State-Sts',
+                trig_name.substitute(propty='State-Sts'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._trigger_polarity_sel = _PV(
-                _vaca_prefix+trig_name+':Polarity-Sel',
+                trig_name.substitute(propty='Polarity-Sel'),
                 connection_timeout=0.05)
             self._trigger_polarity_sts = _PV(
-                _vaca_prefix+trig_name+':Polarity-Sts',
+                trig_name.substitute(propty='Polarity-Sts'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._trigger_src_sel = _PV(
-                _vaca_prefix+trig_name+':Src-Sel', connection_timeout=0.05)
+                trig_name.substitute(propty='Src-Sel'),
+                connection_timeout=0.05)
             self._trigger_src_sts = _PV(
-                _vaca_prefix+trig_name+':Src-Sts',
+                trig_name.substitute(propty='Src-Sts'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._trigger_nrpulses_sp = _PV(
-                _vaca_prefix+trig_name+':NrPulses-SP',
+                trig_name.substitute(propty='NrPulses-SP'),
                 connection_timeout=0.05)
             self._trigger_nrpulses_rb = _PV(
-                _vaca_prefix+trig_name+':NrPulses-RB',
+                trig_name.substitute(propty='NrPulses-RB'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._trigger_duration_sp = _PV(
-                _vaca_prefix+trig_name+':Duration-SP',
+                trig_name.substitute(propty='Duration-SP'),
                 connection_timeout=0.05)
             self._trigger_duration_rb = _PV(
-                _vaca_prefix+trig_name+':Duration-RB',
+                trig_name.substitute(propty='Duration-RB'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._trigger_delay_sp = _PV(
-                _vaca_prefix+trig_name+':Delay-SP', connection_timeout=0.05)
+                trig_name.substitute(propty='Delay-SP'),
+                connection_timeout=0.05)
             self._trigger_delay_rb = _PV(
-                _vaca_prefix+trig_name+':Delay-RB',
+                trig_name.substitute(propty='Delay-RB'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
-            evg = _LLTimeSearch.get_evg_name()
             self._event_mode_sel = _PV(
-                _vaca_prefix+evg+':'+evt_name+'Mode-Sel',
+                evt_name.substitute(propty=evt_name.propty+'Mode-Sel'),
                 connection_timeout=0.05)
             self._event_mode_sts = _PV(
-                _vaca_prefix+evg+':'+evt_name+'Mode-Sts',
+                evt_name.substitute(propty=evt_name.propty+'Mode-Sts'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._event_delaytype_sel = _PV(
-                _vaca_prefix+evg+':'+evt_name+'DelayType-Sel',
+                evt_name.substitute(propty=evt_name.propty+'DelayType-Sel'),
                 connection_timeout=0.05)
             self._event_delaytype_sts = _PV(
-                _vaca_prefix+evg+':'+evt_name+'DelayType-Sts',
+                evt_name.substitute(propty=evt_name.propty+'DelayType-Sts'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._event_delay_sp = _PV(
-                _vaca_prefix+evg+':'+evt_name+'Delay-SP',
+                evt_name.substitute(propty=evt_name.propty+'Delay-SP'),
                 connection_timeout=0.05)
             self._event_delay_rb = _PV(
-                _vaca_prefix+evg+':'+evt_name+'Delay-RB',
+                evt_name.substitute(propty=evt_name.propty+'Delay-RB'),
                 callback=self._callback_timing_state, connection_timeout=0.05)
 
             self._event_exttrig_cmd = _PV(
-                _vaca_prefix+evg+':'+evt_name+'ExtTrig-Cmd',
+                evt_name.substitute(propty=evt_name.propty+'ExtTrig-Cmd'),
                 connection_timeout=0.05)
 
             # Connect to CurrInfo
             self._storedebeam_pv = _PV(
-                _vaca_prefix+'SI-Glob:AP-CurrInfo:StoredEBeam-Mon',
+                _PVName('SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
+                    prefix=_vaca_prefix),
                 callback=self._callback_get_storedebeam,
                 connection_timeout=0.05)
 
             # Connect to Tunes
             self._tune_x_pv = _PV(
-                _vaca_prefix+'SI-Glob:DI-Tune-H:TuneFrac-Mon',
+                _PVName('SI-Glob:DI-Tune-H:TuneFrac-Mon').substitute(
+                    prefix=_vaca_prefix),
                 connection_timeout=0.05)
             self._tune_y_pv = _PV(
-                _vaca_prefix+'SI-Glob:DI-Tune-V:TuneFrac-Mon',
+                _PVName('SI-Glob:DI-Tune-V:TuneFrac-Mon').substitute(
+                    prefix=_vaca_prefix),
                 connection_timeout=0.05)
 
         # Create map of pv -> write function
@@ -762,7 +770,7 @@ class BaseApp(_Callback):
         if not conn:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
 
-        fam = _SiriusPVName(pvname).dev
+        fam = _PVName(pvname).dev
         self._psfam_check_connection[fam] = (1 if conn else 0)
 
         # Change the first bit of correction status
@@ -776,7 +784,7 @@ class BaseApp(_Callback):
         if value != _PSConst.PwrStateSts.On:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not On.')
 
-        fam = _SiriusPVName(pvname).dev
+        fam = _PVName(pvname).dev
         self._psfam_check_pwrstate_sts[fam] = value
 
         # Change the second bit of correction status
@@ -790,7 +798,7 @@ class BaseApp(_Callback):
         """Callback."""
         self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
 
-        fam = _SiriusPVName(pvname).dev
+        fam = _PVName(pvname).dev
         self._psfam_check_opmode_sts[fam] = value
 
         # Change the third bit of correction status
@@ -807,7 +815,7 @@ class BaseApp(_Callback):
         if value != _PSConst.Interface.Remote:
             self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
 
-        fam = _SiriusPVName(pvname).dev
+        fam = _PVName(pvname).dev
         self._psfam_check_ctrlmode_mon[fam] = value
 
         # Change the fourth bit of correction status

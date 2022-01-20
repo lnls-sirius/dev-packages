@@ -5,7 +5,7 @@ import urllib.request as _urllib_request
 from .. import envars as _envars
 
 
-_TIMEOUT = 1.0  # [seconds]
+_TIMEOUT = 5.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'
 _MAGNET_FOLDER = '/magnet/'
 _PS_FOLDER = '/pwrsupply/'
@@ -13,25 +13,28 @@ _BBB_FOLDER = '/beaglebone/'
 _PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
 _DIAG_FOLDER = '/diagnostics/'
 _TIMESYS_FOLDER = '/timesys/'
+_MAC_SCHEDULE_FOLDER = '/macschedule/'
 
 
 def read_url(url, timeout=_TIMEOUT):
     """Read URL from server."""
-    try:
-        url = _envars.SRVURL_CSCONSTS + url
-        response = _urllib_request.urlopen(url, timeout=timeout)
-        data = response.read()
-        text = data.decode('utf-8')
-    except Exception:
-        # try redundancy server
+
+    # build list with servers
+    urls = [_envars.SRVURL_CSCONSTS + url, _envars.SRVURL_CSCONSTS_2 + url]
+    connected = False
+    for url_ in urls:
         try:
-            url = _envars.SRVURL_CSCONSTS_2 + url
-            response = _urllib_request.urlopen(url, timeout=timeout)
+            # try a new server
+            response = _urllib_request.urlopen(url_, timeout=timeout)
             data = response.read()
             text = data.decode('utf-8')
+            connected = True
+            break
         except Exception:
-            errtxt = 'Error reading url "' + url + '"!'
-            raise Exception(errtxt)
+            # could not connect with current server
+            print('Error reading url "' + url_ + '"!')
+    if not connected:
+        raise Exception('Error reading web servers!')
     return text
 
 
@@ -168,4 +171,10 @@ def high_level_events(timeout=_TIMEOUT):
 def bsmp_dclink_mapping(timeout=_TIMEOUT):
     """Read bsmp dclink mapping."""
     url = _PS_FOLDER + 'bsmp-dclink.txt'
+    return read_url(url, timeout=timeout)
+
+
+def mac_schedule_read(year, timeout=_TIMEOUT):
+    """Read machine schedule data."""
+    url = _MAC_SCHEDULE_FOLDER + str(year) + '.txt'
     return read_url(url, timeout=timeout)

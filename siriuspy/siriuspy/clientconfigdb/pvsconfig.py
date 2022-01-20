@@ -37,6 +37,14 @@ class PVsConfig(_ConfigDBDocument):
                 return False
         return True
 
+    @property
+    def pvs(self):
+        """Return dict with PVs and values."""
+        self.load()
+        pvslist = self._value['pvs']
+        pvsdict = {item[0]: item[1] for item in pvslist}
+        return pvsdict
+
     def read(self, timeout=_TIMEOUT):
         """Read machine state."""
         new_config_value = dict()
@@ -49,10 +57,11 @@ class PVsConfig(_ConfigDBDocument):
 
         # read
         pvs_not_read = set()
-        for pvn, _, delay in template['pvs']:
+        for pvn, defval, delay in template['pvs']:
             pvobj = self._get_pv(pvn)
             if pvobj.wait_for_connection(timeout):
-                value = pvobj.get(timeout=timeout)
+                value = defval if pvn.endswith('-Cmd')\
+                    else pvobj.get(timeout=timeout)
             else:
                 pvs_not_read.add(pvn)
                 value = 0

@@ -1,21 +1,25 @@
 """PSSOFB class."""
 from copy import deepcopy as _dcopy
 from collections.abc import Iterable
-from multiprocessing import Event as _Event, Pipe as _Pipe, \
-    Process as _Process, sharedctypes as _shm
+import logging as _log
+import multiprocessing as _mp
+from multiprocessing import sharedctypes as _shm
 
 import numpy as _np
+from epics import get_pv as _get_pv
+from socket import timeout as _socket_timeout
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
+from ..epics import CAProcessSpawn as _Process
 
 from .bsmp.constants import ConstFBP as _const_fbp
+from .bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .bsmp.commands import FBP as _FBP
 from .csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from .csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .pructrl.pru import PRU as _PRU
 from .pructrl.udc import UDC as _UDC
 from .psctrl.pscstatus import PSCStatus as _PSCStatus
@@ -64,9 +68,10 @@ class UnitConverter:
 
     DIPOLE_PROPTY = 'Ref-Mon'
 
-    def __init__(self, psnames):
+    def __init__(self, psnames, dipoleoff=False):
         """."""
         self.psnames = psnames
+        self._dipoleoff = dipoleoff
         self._pstype_2_index, self._pstype_2_sconv = self._init_strenconv()
 
     def _init_strenconv(self):
@@ -105,9 +110,12 @@ class UnitConverter:
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = current[index]
-            # stren = sconv.conv_current_2_strength(
-            #     currents=value, strengths_dipole=self._strengths_dipole)
-            stren = sconv.conv_current_2_strength(currents=value)
+            if self._dipoleoff:
+                stren = sconv.conv_current_2_strength(
+                    currents=value, strengths_dipole=3.0)
+            else:
+                stren = sconv.conv_current_2_strength(currents=value)
+
             strength[index] = stren
         return strength
 
@@ -120,13 +128,11 @@ class UnitConverter:
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = strength[index]
-            # idcs = ~_np.isnan(value)
-            # curr = sconv.conv_strength_2_current(
-            #     strengths=value[idcs],
-            #     strengths_dipole=self._strengths_dipole)
-            # curr = sconv.conv_strength_2_current(strengths=value[idcs])
-            # current[index[idcs]] = curr
-            curr = sconv.conv_strength_2_current(strengths=value)
+            if self._dipoleoff:
+                curr = sconv.conv_strength_2_current(
+                    strengths=value, strengths_dipole=3.0)
+            else:
+                curr = sconv.conv_strength_2_current(strengths=value)
             current[index] = curr
         return current
 
@@ -138,8 +144,11 @@ class PSConnSOFB:
 
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
+    SOCKET_TIMEOUT_ERR = 255
 
-    def __init__(self, ethbridgeclnt_class, bbbnames=None, mproc=None):
+    def __init__(
+            self, ethbridgeclnt_class, bbbnames=None, mproc=None,
+            sofb_update_iocs=False, dipoleoff=False):
         """."""
         # check arguments
         if mproc is not None and \
@@ -147,11 +156,15 @@ class PSConnSOFB:
                  set(mproc.keys()) != {'rbref', 'ref', 'fret'}):
             raise ValueError('Invalid mproc dictionary!')
 
+        self._dipoleoff = dipoleoff
         self._acc = 'SI'
         self._pru = None
         self._udc = None
         self.bbbnames = bbbnames or _dcopy(PSSOFB.BBBNAMES)
         self.bbb2devs = dict()
+
+        # flag that controls sending sofbupdate signal to IOCs
+        self._sofb_update_iocs = sofb_update_iocs
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -180,16 +193,16 @@ class PSConnSOFB:
 
         # dictionaries with comm. ack, state snapshot of all correctors
         # states and threads
-        self._dev_ack, self._dev_state, self._threads = \
+        self._dev_ack, self._dev_state, self._threads, self._pvobjs = \
             self._init_threads_dev_state()
 
         # power supply status objects
         self._pscstatus = [_PSCStatus() for _ in self._sofb_psnames]
 
         # strength to current converters
-        self._strengths_dipole = 3.0  # [GeV]
         if mproc is None:
-            self.converter = UnitConverter(self._sofb_psnames)
+            self.converter = UnitConverter(
+                self._sofb_psnames, dipoleoff=dipoleoff)
 
     def pru(self):
         """Return Beagle-name to PRU-object dictionary."""
@@ -382,7 +395,8 @@ class PSConnSOFB:
         current = curr_sp[indcs_sofb]
 
         # initialize setpoint
-        readback = udc.sofb_current_rb_get()  # stores last setpoint
+        # read last setpoint already stored in PSBSMP object:
+        readback = udc.sofb_current_rb_get()
         if readback is None:
             setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
         else:
@@ -392,17 +406,25 @@ class PSConnSOFB:
         setpoint[indcs_bsmp] = current
 
         # --- bsmp communication ---
-        udc.sofb_current_set(setpoint)
-
-        # update sofb_func_return
-        func_return = udc.sofb_func_return_get()
-        self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        try:
+            udc.sofb_current_set(setpoint)
+            # update sofb_func_return
+            func_return = udc.sofb_func_return_get()
+            self._sofb_func_return[indcs_sofb] = func_return[indcs_bsmp]
+        except _socket_timeout:
+            # update sofb_func_return indicating socket timeout
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
         if current is None:
             return
         self._sofb_current_readback_ref[indcs_sofb] = current[indcs_bsmp]
+
+        # send signal to IOC to update one power supply state
+        if self._sofb_update_iocs:
+            pvobj = self._pvobjs[bbbname]
+            pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
@@ -570,13 +592,17 @@ class PSConnSOFB:
         dev_ack = dict()  # last ack state of bsmp comm.
         dev_state = dict()  # snapshot of device variable values
         threads = list()  # threads to run BBB methods
+        pvobjs = dict()  # SOFBUpdate PVs
         for bbbname, bsmpdevs in self.bbb2devs.items():
             dev_ack[bbbname] = {bsmp[1]: True for bsmp in bsmpdevs}
             dev_state[bbbname] = {bsmp[1]: dict() for bsmp in bsmpdevs}
+            if self._sofb_update_iocs:
+                pvname = bsmpdevs[0][0] + ':SOFBUpdate-Cmd'
+                pvobjs[bbbname] = _get_pv(pvname)
             thread = _BBBThread(name=bbbname)
             thread.start()
             threads.append(thread)
-        return dev_ack, dev_state, threads
+        return dev_ack, dev_state, threads, pvobjs
 
     def _update_bbb2devs(self):
         """."""
@@ -656,10 +682,14 @@ class PSSOFB:
         )
     BBB2DEVS = dict()
 
-    def __init__(self, ethbridgeclnt_class, nr_procs=8, asynchronous=False):
+    def __init__(
+            self, ethbridgeclnt_class, nr_procs=8, asynchronous=False,
+            sofb_update_iocs=False, dipoleoff=False):
         """."""
+        self._dipoleoff = dipoleoff
         self._acc = 'SI'
         self._async = asynchronous
+        self._sofb_update_iocs = sofb_update_iocs
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
@@ -673,7 +703,8 @@ class PSSOFB:
         self._sofb_func_return = _np.zeros(ncorrs, dtype=int)
 
         # Unit converter.
-        self.converter = UnitConverter(self._sofb_psnames)
+        self.converter = UnitConverter(
+            self._sofb_psnames, dipoleoff=dipoleoff)
 
         # Worker Processes control and synchronization
         self._ethbridge_cls = ethbridgeclnt_class
@@ -695,15 +726,17 @@ class PSSOFB:
 
     def wait(self, timeout=None):
         """."""
-        for doneevt in self._doneevts:
+        for i, doneevt in enumerate(self._doneevts):
             if not doneevt.wait(timeout=timeout):
+                _log.error('Wait Done timed out for process '+str(i))
                 return False
         return True
 
     def is_ready(self):
         """."""
-        for doneevt in self._doneevts:
+        for i, doneevt in enumerate(self._doneevts):
             if not doneevt.is_set():
+                _log.error('Ready: not done for process '+str(i))
                 return False
         return True
 
@@ -711,6 +744,9 @@ class PSSOFB:
 
     def processes_start(self):
         """."""
+        # get the start method of the Processes that will be launched:
+        spw = _mp.get_context('spawn')
+
         # Create shared memory objects to be shared with worker processes.
         arr = self._sofb_current_readback_ref
 
@@ -727,7 +763,8 @@ class PSSOFB:
             arr.shape, dtype=_np.int32, buffer=memoryview(fret))
 
         # Unit converter.
-        self.converter = UnitConverter(self._sofb_psnames)
+        self.converter = UnitConverter(
+            self._sofb_psnames, dipoleoff=self._dipoleoff)
 
         # subdivide the pv list for the processes
         nr_bbbs = len(PSSOFB.BBBNAMES)
@@ -736,17 +773,20 @@ class PSSOFB:
         sub = [div*i + min(i, rem) for i in range(self._nr_procs+1)]
         for i in range(self._nr_procs):
             bbbnames = PSSOFB.BBBNAMES[sub[i]:sub[i+1]]
-            evt = _Event()
-            evt.set()
-            theirs, mine = _Pipe(duplex=False)
+            # NOTE: It is crucial to use the Event class from the appropriate
+            # context, otherwise it will fail for 'spawn' start method.
+            doneevt = spw.Event()
+            doneevt.set()
+            theirs, mine = spw.Pipe(duplex=False)
             proc = _Process(
                 target=PSSOFB._run_process,
-                args=(self._ethbridge_cls, bbbnames, theirs, evt,
-                      arr.shape, rbref, ref, fret),
+                args=(self._ethbridge_cls, bbbnames, theirs, doneevt,
+                      arr.shape, rbref, ref, fret, self._sofb_update_iocs,
+                      self._dipoleoff),
                 daemon=True)
             proc.start()
             self._procs.append(proc)
-            self._doneevts.append(evt)
+            self._doneevts.append(doneevt)
             self._pipes.append(mine)
 
     def processes_shutdown(self):
@@ -850,14 +890,17 @@ class PSSOFB:
     @staticmethod
     def _run_process(
             ethbridgeclnt_class, bbbnames, pipe, doneevt,
-            shape, rbref, ref, fret):
+            shape, rbref, ref, fret, sofb_update_iocs, dipoleoff):
         """."""
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=_np.int32, buffer=memoryview(fret)),
+            'fret': _np.ndarray(shape, dtype=_np.int32,
+                                buffer=memoryview(fret)),
             }
-        psconnsofb = PSConnSOFB(ethbridgeclnt_class, bbbnames, mproc=mproc)
+        psconnsofb = PSConnSOFB(
+            ethbridgeclnt_class, bbbnames, mproc=mproc,
+            sofb_update_iocs=sofb_update_iocs, dipoleoff=dipoleoff)
 
         while True:
             rec = pipe.recv()
@@ -869,7 +912,7 @@ class PSSOFB:
                     getattr(psconnsofb, meth)(*args)
                 else:
                     getattr(psconnsofb, meth)()
-                doneevt.set()
+            doneevt.set()
         psconnsofb.threads_shutdown()
         pipe.close()
 

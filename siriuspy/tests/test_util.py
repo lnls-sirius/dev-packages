@@ -159,10 +159,10 @@ class TestUtil(TestCase):
         self.assertIsInstance(ret, float)
         self.assertAlmostEqual(ret, 10.00692271077752, delta=tol)
         self.assertAlmostEqual(beta, 0.9999999854933386, delta=tol)
-        self.assertAlmostEqual(gamma, 5870.853807994258, delta=tol)
+        self.assertAlmostEqual(gamma, 5870.853550721619, delta=tol)
         ret, *_ = util.beam_rigidity(energy=1.001*en0)
         self.assertIsInstance(ret, float)
-        self.assertAlmostEqual(ret, 7.624701218711276e-05, delta=tol)
+        self.assertAlmostEqual(ret, 7.624534235479652e-05, delta=tol)
         ret, *_ = util.beam_rigidity(0.0)
         self.assertEqual(ret, 0.0)
         ret, *_ = util.beam_rigidity(0.999*en0)
@@ -184,7 +184,7 @@ class TestUtil(TestCase):
         self.assertAlmostEqual(ret[1], 10.00692271077752, delta=tol)
         ret, *_ = util.beam_rigidity(energy=np.array([1.001*en0, 3.0]))
         self.assertIsInstance(ret, np.ndarray)
-        self.assertAlmostEqual(ret[0], 7.624701218711276e-05, delta=tol)
+        self.assertAlmostEqual(ret[0], 7.624534235479652e-05, delta=tol)
 
     def test_check_pv_online(self):
         """Test check_pv_online."""

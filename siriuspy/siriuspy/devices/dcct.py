@@ -81,19 +81,19 @@ class DCCT(_Device):
         for _ in range(nrp):
             _time.sleep(0.1)
             if self._isok():
-                break
-        else:
-            print('timed out waiting DCCT.')
+                return True
+        print('timed out waiting DCCT.')
+        return False
 
     def cmd_turn_on(self, timeout=10):
         """."""
         self.acq_ctrl = DCCT.PWRSTATE.On
-        self.wait(timeout)
+        return self.wait(timeout)
 
     def cmd_turn_off(self, timeout=10):
         """."""
         self.acq_ctrl = DCCT.PWRSTATE.Off
-        self.wait(timeout)
+        return self.wait(timeout)
 
     # --- private methods ---
 

@@ -15,7 +15,7 @@ class PUDiagApp(_App):
     def _create_computed_pvs(self, punames):
         self._punames = punames
         for puname in self._punames:
-            devname = SiriusPVName(self._prefix + puname)
+            devname = SiriusPVName(puname).substitute(prefix=self._prefix)
 
             # DiagVoltageDiff-Mon
             pvs = [None, None]

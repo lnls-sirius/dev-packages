@@ -11,8 +11,6 @@ from ...envars import VACA_PREFIX as _vaca_prefix
 from ..csdev import \
     Const as _Const, get_lifetime_database as _get_database
 
-warnings.filterwarnings('error')
-
 _MAX_BUFFER_SIZE = 36000
 
 
@@ -46,14 +44,15 @@ class SILifetimeApp(_Callback):
         self._lifetime = 0
         self._lifetime_bpm = 0
 
+        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
         self._current_pv = _PV(
-            _vaca_prefix+'SI-Glob:AP-CurrInfo:Current-Mon',
+            self._prefix+'SI-Glob:AP-CurrInfo:Current-Mon',
             connection_timeout=0.05)
         self._bpmsum_pv = _PV(
-            _vaca_prefix+'SI-01M1:DI-BPM:Sum-Mon',
+            self._prefix+'SI-01M1:DI-BPM:Sum-Mon',
             connection_timeout=0.05)
         self._storedebeam_pv = _PV(
-            _vaca_prefix+'SI-Glob:AP-CurrInfo:StoredEBeam-Mon',
+            self._prefix+'SI-Glob:AP-CurrInfo:StoredEBeam-Mon',
             connection_timeout=0.05)
 
         self._current_buffer = _SiriusPVTimeSerie(
@@ -295,10 +294,12 @@ class SILifetimeApp(_Callback):
     @staticmethod
     def _least_squares_fit(timestamp, value, fit='exp'):
         if fit == 'exp':
-            try:
-                value = _np.log(value)
-            except Exception:
-                return 0.0
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error')
+                try:
+                    value = _np.log(value)
+                except Warning:
+                    return 0.0
         _ns = len(timestamp)
         _x1 = _np.sum(timestamp)
         _y1 = _np.sum(value)

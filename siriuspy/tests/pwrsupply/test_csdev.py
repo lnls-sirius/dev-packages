@@ -19,16 +19,18 @@ PUB_INTERFACE = (
     'DEFAULT_WFM_OTHERS',
     'DEFAULT_WFM',
     'PSSOFB_MAX_NR_UDC',
-    'UDC_MAX_NR_DEV',
     'DEFAULT_SIGGEN_CONFIG',
     'PS_CURRENT_PRECISION',
     'PU_VOLTAGE_PRECISION',
     'PS_CURRENT_UNIT',
     'PU_VOLTAGE_UNIT',
+    'PS_LI_INTLK_THRS',
     'ETypes',
     'Const',
     'get_ps_propty_database',
     'get_conv_propty_database',
+    'get_ps_interlocks',
+    'get_ps_modules',
 )
 
 
@@ -83,14 +85,13 @@ class TestPwrSupplyCSDev(TestCase):
         """Define setup method."""
         def get_splims(pstype, alarm):
             dbase = {'lolo': 0.0, 'low': 1.0, 'lolim': 2.0, 'hilim': 3.0,
-                  'high': 4.0, 'hihi': 5.0}
+                     'high': 4.0, 'hihi': 5.0}
             return dbase[alarm]
 
         def get_splims_unit(psmodel):
             if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S', 'FAC_2P4S'):
                 return ['A', 'Ampere']
-            else:
-                return ['V', 'Voltage']
+            return ['V', 'Voltage']
 
         if _MOCK_FLAG:
             _pssearch_patcher = mock.patch(

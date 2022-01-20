@@ -16,6 +16,26 @@ class ETypes(_csdev.ETypes):
         'Phase-(SP|RB) are different',
         'IxQ (SP|Mon) are different')
 
+    DIAG_STATUS_LABELS_PU = (
+        'Disconnected',
+        'Run/Stop not ok',
+        'PreHeat not ok',
+        'Charge_Allowed not ok',
+        'TrigOut_Allowed not ok',
+        'Emer_Stop not ok',
+        'CPS_ALL not ok',
+        'Thy_Heat not ok',
+        'Kly_Heat not ok',
+        'LV_Rdy_OK not ok',
+        'HV_Rdy_OK not ok',
+        'TRIG_Rdy_OK not ok',
+        'MOD_Self_Fault not ok',
+        'MOD_Sys_Ready not ok',
+        'TRIG_Norm not ok',
+        'Pulse_Current not ok',
+        'Voltage-(SP|RB) are different',
+        'Current-(SP|RB) are different')
+
     DIAG_STATUS_LABELS_EG_HVPS = (
         'Disconnected',
         'Swicth Status Off',
@@ -38,6 +58,9 @@ class Const(_csdev.Const):
     KLY1 = 'LI-01:RF-Kly-1'
     KLY2 = 'LI-01:RF-Kly-2'
     RF_DEVICES = [SHB, KLY1, KLY2]
+    MOD1 = 'LI-01:PU-Modltr-1'
+    MOD2 = 'LI-01:PU-Modltr-2'
+    PU_DEVICES = [MOD1, MOD2]
     HVPS = 'LI-01:EG-HVPS'
     FILA = 'LI-01:EG-FilaPS'
     DEV_2_LINAME = {
@@ -45,12 +68,16 @@ class Const(_csdev.Const):
         FILA: 'LI-01:EG-FilaPS',
         SHB: 'LA-RF:LLRF:BUN1',
         KLY1: 'LA-RF:LLRF:KLY1',
-        KLY2: 'LA-RF:LLRF:KLY2'}
+        KLY2: 'LA-RF:LLRF:KLY2',
+        MOD1: 'LI-01:PU-Modltr-1',
+        MOD2: 'LI-01:PU-Modltr-2'}
     ALL_DEVICES = DEV_2_LINAME.keys()
 
     LI_RF_AMP_TOL = 1e-2
     LI_RF_PHS_TOL = 1e-2
-    LI_RF_IxQ_TOL = 5e-3
+    LI_RF_IxQ_TOL = 1e-2
+    LI_PU_VOLT_TOL = 1e-1
+    LI_PU_CURR_TOL = 1e-1
     LI_HVPS_TOL = 1.5
     LI_FILAPS_TOL = 1e-1
 
@@ -67,6 +94,8 @@ def get_li_diag_status_labels(device):
     """Return Diag Status Labels enum."""
     if 'RF' in device:
         return _et.DIAG_STATUS_LABELS_RF
+    if 'PU' in device:
+        return _et.DIAG_STATUS_LABELS_PU
     if 'HVPS' in device:
         return _et.DIAG_STATUS_LABELS_EG_HVPS
     if 'FilaPS' in device:
@@ -103,6 +132,19 @@ def get_li_diag_propty_database(device):
                 'type': 'float', 'value': 0.0,
                 'hilim': vtol, 'hihi': vtol, 'high': vtol,
                 'low': -vtol, 'lolo': -vtol, 'lolim': -vtol},
+        })
+    elif 'PU' in device:
+        vtol = _c.LI_PU_VOLT_TOL
+        ctol = _c.LI_PU_CURR_TOL
+        dbase.update({
+            'DiagVoltageDiff-Mon': {
+                'type': 'float', 'value': 0.0,
+                'hilim': vtol, 'hihi': vtol, 'high': vtol,
+                'low': -vtol, 'lolo': -vtol, 'lolim': -vtol},
+            'DiagCurrentDiff-Mon': {
+                'type': 'float', 'value': 0.0,
+                'hilim': ctol, 'hihi': ctol, 'high': ctol,
+                'low': -ctol, 'lolo': -ctol, 'lolim': -ctol},
         })
     elif 'HVPS' in device:
         dtol = _c.LI_HVPS_TOL

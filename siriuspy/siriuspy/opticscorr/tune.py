@@ -33,8 +33,10 @@ class TuneCorrApp(_BaseApp):
         self._psfam_refkl = {fam: 0 for fam in self._psfams}
         self._lastcalc_deltakl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
+            pvname = _SiriusPVName(self._acc+'-Fam:PS-'+fam+':KL-RB')
+            pvname = pvname.substitute(prefix=_vaca_prefix)
             self._psfam_intstr_rb_pvs[fam] = _PV(
-                _vaca_prefix+self._acc+'-Fam:PS-'+fam+':KL-RB',
+                pvname,
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
                 connection_timeout=0.05)

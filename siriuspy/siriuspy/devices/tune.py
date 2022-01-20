@@ -8,6 +8,8 @@ from .device import Devices as _Devices
 class TuneFrac(_Device):
     """."""
 
+    DEF_TIMEOUT = 1  # [s]
+
     class DEVICES:
         """Devices names."""
 
@@ -15,7 +17,10 @@ class TuneFrac(_Device):
         SI_V = 'SI-Glob:DI-Tune-V'
         ALL = (SI_H, SI_V)
 
-    _properties = ('TuneFrac-Mon', )
+    _properties = (
+        'TuneFrac-Mon',
+        'Enbl-Sel', 'Enbl-Sts'
+        )
 
     def __init__(self, devname):
         """."""
@@ -30,6 +35,21 @@ class TuneFrac(_Device):
     def tune(self):
         """."""
         return self['TuneFrac-Mon']
+
+    @property
+    def enable(self):
+        """."""
+        return self['Enbl-Sts']
+
+    def cmd_enable(self, timeout=DEF_TIMEOUT):
+        """."""
+        self['Enbl-Sel'] = 1
+        return self._wait('Enbl-Sts', value=1, timeout=timeout)
+
+    def cmd_disable(self, timeout=DEF_TIMEOUT):
+        """."""
+        self['Enbl-Sel'] = 0
+        return self._wait('Enbl-Sts', value=0, timeout=timeout)
 
 
 class TuneProc(_Device):
@@ -104,6 +124,31 @@ class Tune(_Devices):
         """."""
         return self.devices[3].tune_wfm
 
+    @property
+    def enablex(self):
+        """."""
+        return self.devices[0].enable
+
+    @property
+    def enabley(self):
+        """."""
+        return self.devices[1].enable
+
+    def cmd_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """."""
+        return self.devices[0].cmd_enable(timeout=timeout)
+
+    def cmd_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """."""
+        return self.devices[1].cmd_enable(timeout=timeout)
+
+    def cmd_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """."""
+        return self.devices[0].cmd_disable(timeout=timeout)
+
+    def cmd_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """."""
+        return self.devices[1].cmd_disable(timeout=timeout)
 
 class TuneCorr(_Device):
     """."""
@@ -152,7 +197,9 @@ class TuneCorr(_Device):
     def cmd_update_reference(self):
         """."""
         self['SetNewRefKL-Cmd'] = 1
+        return True
 
     def cmd_apply_delta(self):
         """."""
         self['ApplyDelta-Cmd'] = 1
+        return True

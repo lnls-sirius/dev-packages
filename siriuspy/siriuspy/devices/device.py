@@ -1,8 +1,10 @@
 """Epics Devices and Device Application."""
 
 import time as _time
+import operator as _opr
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
@@ -10,6 +12,9 @@ from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
 from ..simul import SimPV as _PVSim
 from ..simul import Simulation as _Simulation
 from ..namesys import SiriusPVName as _SiriusPVName
+
+_DEF_TIMEOUT = 10  # s
+_TINY_INTERVAL = 0.050  # s
 
 
 class Device:
@@ -60,7 +65,7 @@ class Device:
     @property
     def auto_monitor_status(self):
         """Return PVs auto_monitor statuses."""
-        return {pv.pvname: pv.auto_monitor for pv in self._pvs.values()}
+        return {pvn: pv.auto_monitor for pvn, pv in self._pvs.items()}
 
     @property
     def disconnected_pvnames(self):
@@ -139,7 +144,6 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
-            pvname = _VACA_PREFIX + pvname
             auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
@@ -148,22 +152,54 @@ class Device:
                 connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
-    def _wait(self, propty, value, timeout=10):
+    def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
-        interval = 0.050  # [s]
-        ntrials = int(timeout/interval)
-        _time.sleep(4*interval)
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
+        ntrials = int(timeout/_TINY_INTERVAL)
         for _ in range(ntrials):
-            if self[propty] == value:
-                break
-            _time.sleep(interval)
+            boo = comp(self[propty], value)
+            if isinstance(boo, _np.ndarray):
+                boo = _np.all(boo)
+            if boo:
+                return True
+            _time.sleep(_TINY_INTERVAL)
+        return False
 
     def _get_pvname(self, devname, propty):
         if devname:
             func = devname.substitute
-            pvname = func(propty=propty)
+            pvname = func(prefix=_VACA_PREFIX, propty=propty)
         else:
-            pvname = propty
+            pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
+        return pvname
+
+    def _enum_setter(self, propty, value, enums):
+        if hasattr(enums, '_fields'):
+            enums = enums._fields
+        if value is None:
+            return None
+        elif isinstance(value, str) and value in enums:
+            self[propty] = enums.index(value)
+        elif 0 <= int(value) < len(enums):
+            self[propty] = value
+
+
+class ProptyDevice(Device):
+    """Device with a prefix property name."""
+
+    def __init__(self, devname, propty_prefix, properties):
+        """."""
+        self._propty_prefix = propty_prefix
+        # call base class constructor
+        super().__init__(devname, properties=properties)
+
+    def _get_pvname(self, devname, propty):
+        if devname:
+            func = devname.substitute
+            pvname = func(propty=self._propty_prefix + propty)
+        else:
+            pvname = self._propty_prefix + propty
         return pvname
 
 
@@ -302,6 +338,52 @@ class Devices:
     def devices(self):
         """Return devices."""
         return self._devices
+
+    # --- private methods ---
+
+    def _set_devices_propty(self, devices, propty, values, wait=0):
+        """Set devices property to value(s)."""
+        dev2val = self._get_dev_2_val(devices, values)
+        for dev, val in dev2val.items():
+            if dev.pv_object(propty).wait_for_connection():
+                dev[propty] = val
+                _time.sleep(wait)
+
+    def _wait_devices_propty(
+            self, devices, propty, values, comp='eq',
+            timeout=_DEF_TIMEOUT, return_prob=False):
+        """Wait for devices property to reach value(s)."""
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
+        dev2val = self._get_dev_2_val(devices, values)
+
+        for _ in range(int(timeout/_TINY_INTERVAL)):
+            okdevs = set()
+            for k, v in dev2val.items():
+                boo = comp(k[propty], v)
+                if isinstance(boo, _np.ndarray):
+                    boo = _np.all(boo)
+                if boo:
+                    okdevs.add(k)
+            list(map(dev2val.__delitem__, okdevs))
+            if not dev2val:
+                break
+            _time.sleep(_TINY_INTERVAL)
+
+        allok = not dev2val
+        if return_prob:
+            return allok, [dev.devname+':'+propty for dev in dev2val]
+        return allok
+
+    def _get_dev_2_val(self, devices, values):
+        """Get devices to values dict."""
+        # always use an iterable object
+        if not isinstance(devices, (tuple, list)):
+            devices = [devices, ]
+        # if 'values' is not iterable, consider the same value for all devices
+        if not isinstance(values, (tuple, list)):
+            values = len(devices)*[values]
+        return {k: v for k, v in zip(devices, values)}
 
     def __getitem__(self, devidx):
         """Return device."""

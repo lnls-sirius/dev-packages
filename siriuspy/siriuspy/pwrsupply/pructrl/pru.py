@@ -1,11 +1,12 @@
 """Module implementing PRU elements."""
 import time as _time
 
+from siriuspy.bsmp import IOInterface as _IOInterface
 
 from ... import csdev as _csdev
 
 
-class PRUInterface:
+class PRUInterface(_IOInterface):
     """Interface class for programmable real-time units."""
 
     def __init__(self):
@@ -15,6 +16,14 @@ class PRUInterface:
         self._wr_duration = 0.0
 
     # --- public interface ---
+
+    def open(self):
+        """."""
+
+    def close(self):
+        """Close PRU session."""
+        self._close()
+        return None
 
     @property
     def wr_duration(self):
@@ -43,11 +52,6 @@ class PRUInterface:
         self._timestamp_write = _time.time()
         ret = self._UART_request(stream, timeout=timeout)
         return ret
-
-    def close(self):
-        """Close PRU session."""
-        self._close()
-        return None
 
     # --- pure virtual methods ---
 

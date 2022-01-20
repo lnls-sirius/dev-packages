@@ -1,27 +1,32 @@
 """BSMP protocol implementation."""
+import typing
+
 from . import constants as _const
-from .serial import Channel as _Channel
-from .serial import Message as _Message
+from .entities import Entities as _Entities
 from .exceptions import SerialAnomResp as _SerialAnomResp
+from .exceptions import SerialError as _SerialError
+from .serial import Channel as _Channel
+from .serial import IOInterface as _IOInterface
+from .serial import Message as _Message
 
 
 class BSMP:
     """BSMP protocol implementation for Master Node."""
 
-    _timeout_execute_function = 100  # [ms]
+    _timeout_execute_function: float = 100.0  # [ms]
 
-    def __init__(self, pru, slave_address, entities):
+    def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
         """_cructor."""
-        self._entities = entities
-        self._channel = _Channel(pru, slave_address)
+        self._entities: _Entities = entities
+        self._channel: _Channel = _Channel(iointerf, slave_address)
 
     @property
-    def entities(self):
+    def entities(self) -> _Entities:
         """Return BSMP entities."""
         return self._entities
 
     @property
-    def channel(self):
+    def channel(self) -> _Channel:
         """Return serial channel to an address."""
         return self._channel
 
@@ -36,22 +41,25 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self, timeout):
+    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.List[typing.Tuple[bool, int]]]]:
         """Consult groups list. Command 0x04."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
             _const.CMD_LIST_OF_GROUP_OF_VARIABLES
 
         # build payload
-        payload = []
+        payload: typing.List[str] = []
 
         # send request package
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         # expected response
         if res.cmd == ack:
-            groupdata = list()
+            groupdata: typing.List[typing.Tuple[bool, int]] = []
             for groupchar in res.payload:
                 byte = ord(groupchar)
                 waccess = (byte & 0b10000000) > 0
@@ -62,7 +70,11 @@ class BSMP:
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
 
-    def query_group_of_variables(self, group_id, timeout):
+    def query_group_of_variables(
+        self,
+        group_id: int,
+        timeout: float
+    ) -> typing.Tuple[int, typing.Optional[typing.List[int]]]:
         """Return id of the variables in the given group."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_GROUP_OF_VARIABLES, \
@@ -75,6 +87,9 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         # expected response
         if res.cmd == ack:
             return _const.ACK_OK, list(map(ord, res.payload))
@@ -86,7 +101,7 @@ class BSMP:
         """Consult curves_list. Command 0x08."""
         raise NotImplementedError()
 
-    def query_curve_checksum(self, curve_id):
+    def query_curve_checksum(self, curve_id: int):
         """Consult curve checksum given curve id. Command 0x0A."""
         raise NotImplementedError()
 
@@ -95,7 +110,11 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x1_
-    def read_variable(self, var_id, timeout):
+    def read_variable(
+        self,
+        var_id: int,
+        timeout: float
+    ) -> typing.Union[typing.Tuple[None, None], typing.Tuple[int, typing.Any]]:
         """Read variable."""
         # command and expected response
         cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
@@ -107,11 +126,15 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         if res.cmd == ack:
             variable = self.entities.variables[var_id]
             if len(res.payload) == variable.size:
                 # expected response
                 return _const.ACK_OK, variable.load_to_value(res.payload)
+
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
             print(fmts.format(cmd, res.cmd))
@@ -121,7 +144,11 @@ class BSMP:
         return BSMP.anomalous_response(
             cmd, res.cmd, var_id=var_id, payload=res.payload)
 
-    def read_group_of_variables(self, group_id, timeout):
+    def read_group_of_variables(
+        self,
+        group_id: int,
+        timeout: float
+    ):
         """Read variable group."""
         # command and expected response
         cmd, ack = \
@@ -135,6 +162,9 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         if res.cmd == ack:
             # expected response
             group = self.entities.groups[group_id]
@@ -146,7 +176,7 @@ class BSMP:
                 group_id=group_id,
                 payload_len=len(res.payload),
                 var_size=group.variables_size()
-                )
+            )
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
@@ -178,7 +208,11 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x3_
-    def create_group_of_variables(self, var_ids, timeout):
+    def create_group_of_variables(
+        self,
+        var_ids: typing.List[int],
+        timeout: float
+    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
         """Create new group with given variable ids."""
         cmd, ack = \
             _const.CMD_CREATE_GROUP_OF_VARIABLES, _const.ACK_OK
@@ -190,6 +224,9 @@ class BSMP:
         # send request package
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
+
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
 
         if res.cmd == ack:
             if not res.payload:
@@ -207,17 +244,23 @@ class BSMP:
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
 
-    def remove_all_groups_of_variables(self, timeout):
+    def remove_all_groups_of_variables(
+        self,
+        timeout: float
+    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
         """Remove all groups."""
         cmd, ack = \
             _const.CMD_REMOVE_ALL_GROUPS_OF_VARIABLES, _const.ACK_OK
 
         # build payload
-        payload = []
+        payload: typing.List[str] = []
 
         # send request package
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
+
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
 
         if res.cmd == ack and not res.payload:
             # expected response
@@ -230,7 +273,13 @@ class BSMP:
         return BSMP.anomalous_response(cmd, res.cmd, payload=res.payload)
 
     # 0x4_
-    def request_curve_block(self, curve_id, block, timeout, print_error=True):
+    def request_curve_block(
+            self,
+            curve_id,
+            block,
+            timeout: float,
+            print_error: bool = True
+    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
         """Read curve block."""
         # command and expected response
         cmd, ack = _const.CMD_REQUEST_CURVE_BLOCK, _const.CMD_CURVE_BLOCK
@@ -242,6 +291,9 @@ class BSMP:
         # send request package
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
+
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
 
         if res.cmd == ack:
             data = res.payload[3:]
@@ -270,7 +322,13 @@ class BSMP:
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd, print_error=print_error)
 
-    def curve_block(self, curve_id, block, value, timeout):
+    def curve_block(
+            self,
+            curve_id: int,
+            block,
+            value,
+            timeout: float
+    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
         """Write to curve block."""
         # command and expected response
         cmd, ack = _const.CMD_CURVE_BLOCK, _const.ACK_OK
@@ -285,6 +343,9 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         if res.cmd == ack:
             # expected response
             return res.cmd, res.payload
@@ -292,7 +353,11 @@ class BSMP:
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
 
-    def recalculate_curve_checksum(self, curve_id, timeout):
+    def recalculate_curve_checksum(
+        self,
+        curve_id: int,
+        timeout: float
+    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
         """Recalculate curve checksum."""
         # command and expected response
         cmd, ack = \
@@ -305,6 +370,9 @@ class BSMP:
         msg = _Message.message(cmd, payload=payload)
         res = self.channel.request(msg, timeout=timeout)
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         if res.cmd == ack:
             # expected response
             return res.cmd, res.payload
@@ -313,9 +381,14 @@ class BSMP:
         return BSMP.anomalous_response(cmd, res.cmd)
 
     # 0x5_
-    def execute_function(self, func_id, input_val=None,
-                         timeout=_timeout_execute_function,
-                         read_flag=True, print_error=True):
+    def execute_function(
+        self,
+        func_id: int,
+        input_val=None,
+        timeout: float = _timeout_execute_function,
+        read_flag: bool = True,
+        print_error: bool = True
+    ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.Union[typing.List[str], str]]]]:
         """Execute a function.
 
         parameter:
@@ -337,10 +410,10 @@ class BSMP:
         if not read_flag:
             return None
 
+        if not res:
+            raise _SerialError("Expected response from request, found {}".format(res))
+
         if res.cmd == ack:
-            # print(len(res.payload))
-            # print(function.o_size)
-            # print(res.payload)
             if len(res.payload) == function.o_size:
                 # expected response
                 return _const.ACK_OK, function.load_to_value(res.payload)
@@ -355,7 +428,7 @@ class BSMP:
             cmd, res.cmd, func_id=func_id, print_error=print_error)
 
     @staticmethod
-    def anomalous_response(cmd, ack, **kwargs):
+    def anomalous_response(cmd, ack: int, **kwargs) -> typing.Tuple[int, None]:
         """Print information about anomalous response."""
         # response with error
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:

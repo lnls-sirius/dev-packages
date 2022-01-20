@@ -4,6 +4,7 @@
 import time as _time
 from threading import Thread as _Thread
 
+from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..callbacks import Callback as _Callback
 from ..thread import QueueThread as _QueueThread
 
@@ -13,10 +14,10 @@ class App(_Callback):
 
     SCAN_FREQUENCY = 2
 
-    def __init__(self, prefix, *args):
+    def __init__(self, *args):
         """Create Computed PVs."""
         super().__init__()
-        self._prefix = prefix
+        self._prefix = _VACA_PREFIX
         self._queue = _QueueThread()
         self.pvs = list()
         self.scanning = False
