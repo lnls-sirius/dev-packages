@@ -1,6 +1,7 @@
 """."""
 
 import time as _time
+from threading import Event as _Event
 
 import numpy as _np
 
@@ -305,7 +306,7 @@ class SystemInfo(_Device):
     @property
     def revolution_freq_nom(self):
         """."""
-        return self['FREV'] * 1e6
+        return self['FREV'] * 1e3
 
     @property
     def harmonic_number(self):
@@ -729,6 +730,10 @@ class Acquisition(_ProptyDevice):
             devname, propty_prefix=acqtype+'_',
             properties=Acquisition._properties)
 
+        pvo = self.pv_object('RAW')
+        self._update_data_evt = _Event()
+        pvo.add_callback(self._update_evt)
+
     # ########### Acquisition Config Properties ###########
     @property
     def acq_type(self):
@@ -897,17 +902,23 @@ class Acquisition(_ProptyDevice):
         self.acq_enbl = 1
         return self._wait('ACQ_EN', 1, timeout=timeout)
 
-    def cmd_data_dump(self, timeout=DEF_TIMEOUT):
+    def cmd_data_dump(self, timeout=DEF_TIMEOUT, pv_update=False):
         """."""
+        if pv_update:
+            self._update_data_evt.clear()
         self['DUMP'] = 1
-        return self.wait_data_dump(timeout)
+        return self.wait_data_dump(timeout, pv_update=pv_update)
 
-    def wait_data_dump(self, timeout=None):
+    def wait_data_dump(self, timeout=None, pv_update=False):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
         if not self._wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
             return False
+        if pv_update and not self._update_data_evt.wait(timeout=timeout):
+            print('WARN: Timed out waiting PV data update.')
+            return False
+        self._update_data_evt.clear()
         return True
 
     # ########### Spectrometer Properties ###########
@@ -1161,6 +1172,10 @@ class Acquisition(_ProptyDevice):
         """."""
         return self['MD_SPEC']
 
+    def _update_evt(self, **kwargs):
+        _ = kwargs
+        self._update_data_evt.set()
+
 
 class SingleBunch(_ProptyDevice):
     """."""
@@ -1404,7 +1419,7 @@ class SingleBunch(_ProptyDevice):
         return self['PEAKFREQ1']
 
     @property
-    def spec_marker1_freq(self):
+    def spec_marker1_tune(self):
         """."""
         return self['PEAKTUNE1']
 

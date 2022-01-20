@@ -271,7 +271,8 @@ class Timing:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
-                    VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+                    pvname.substitute(prefix=VACA_PREFIX),
+                    connection_timeout=TIMEOUT_CONNECTION)
 
                 if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
@@ -285,7 +286,7 @@ class Timing:
                 else:
                     continue
                 Timing._pvs[pvname_sts] = _PV(
-                    VACA_PREFIX+pvname_sts,
+                    pvname_sts.substitute(prefix=VACA_PREFIX),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @classmethod
@@ -372,7 +373,7 @@ class PSCycler:
         for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -656,7 +657,7 @@ class LinacPSCycler:
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
