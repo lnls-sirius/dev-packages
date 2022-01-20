@@ -6,17 +6,16 @@ import logging as _log
 from functools import partial as _part
 from copy import deepcopy as _dcopy
 from threading import Lock, Thread, Event as _Event
-from multiprocessing import Pipe as _Pipe
+import multiprocessing as _mp
 import traceback as _traceback
 
-from epics import CAProcess as _Process
 import numpy as _np
 import bottleneck as _bn
 
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CAProcessSpawn as _Process
 
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig, TIMEOUT
@@ -46,7 +45,6 @@ def run_subprocess(pvs, send_pipe, recv_pipe):
 
     def conn_callback(pvname=None, conn=None, pv=None):
         if not conn:
-            _log.warning(pvname + 'Disconnected')
             tstamps[pv.index] = _np.nan
 
     pvsobj = []
@@ -134,6 +132,9 @@ class EpicsOrbit(BaseOrbit):
         self._update_time_vector()
 
     def _create_processes(self, nrprocs=8):
+        # get the start method of the Processes that will be launched:
+        spw = _mp.get_context('spawn')
+
         pvs = []
         for bpm in self._csorb.bpm_names:
             pvs.append(bpm+':PosX-Mon')
@@ -147,9 +148,9 @@ class EpicsOrbit(BaseOrbit):
 
         # create processes
         for i in range(nrprocs):
-            mine, send_pipe = _Pipe(duplex=False)
+            mine, send_pipe = spw.Pipe(duplex=False)
             self._mypipes_recv.append(mine)
-            recv_pipe, mine = _Pipe(duplex=False)
+            recv_pipe, mine = spw.Pipe(duplex=False)
             self._mypipes_send.append(mine)
             pvsn = pvs[sub[i]:sub[i+1]]
             self._processes.append(_Process(
@@ -665,10 +666,14 @@ class EpicsOrbit(BaseOrbit):
 
     def _synchronize_bpms(self):
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
         _time.sleep(0.5)
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
 
@@ -761,6 +766,9 @@ class EpicsOrbit(BaseOrbit):
         val = int(val) if val > 0 else 0
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
+        oth = 'post' if not ispost else 'pre'
+        if getattr(self, '_acqtrignrsamples' + oth) == 0 and val == 0:
+            return False
         with self._lock_raw_orbs:
             for bpm in self.bpms:
                 setattr(bpm, 'nrsamples' + suf, val)
@@ -827,7 +835,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not self.isring:
             return
-        dly = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
+        dly = (delay or self.timing.totaldelay or 0.0) * 1e-6  # from us to s
         dur = (duration or self.timing.duration or 0.0) * 1e-6  # from us to s
         channel = channel or self.bpms[0].acq_type or 0
 
@@ -874,8 +882,7 @@ class EpicsOrbit(BaseOrbit):
         orbs = _np.array([refx, refy]).T
         try:
             path = _os.path.split(self._csorb.ref_orb_fname)[0]
-            if not _os.path.isdir(path):
-                _os.mkdir(path)
+            _os.makedirs(path, exist_ok=True)
             _np.savetxt(self._csorb.ref_orb_fname, orbs)
         except FileNotFoundError:
             msg = 'WARN: Could not save reference orbit in file.'

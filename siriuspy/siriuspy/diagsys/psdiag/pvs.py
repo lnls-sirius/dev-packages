@@ -44,6 +44,7 @@ class PSStatusPV:
     CURRT_DIFF = 1
     INTRLCK_LI = 2
     WARNSTS_LI = 3
+    CONNCTD_LI = 4
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
@@ -70,11 +71,22 @@ class PSStatusPV:
                 not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
             for intlk in self.INTLK_PVS:
                 disconnected |= not computed_pv.pvs[intlk].connected
+
+            if not disconnected:  # comm ok?
+                commsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].status
+                if commsts != 0 or commsts is None:
+                    disconnected = True
         else:
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
                 not computed_pv.pvs[PSStatusPV.INTRLCK_LI].connected
+
+            if not disconnected:  # comm ok?
+                commval = computed_pv.pvs[PSStatusPV.CONNCTD_LI].value
+                commsts = computed_pv.pvs[PSStatusPV.CONNCTD_LI].status
+                if commval != 0 or commval is None or commsts != 0:
+                    disconnected = True
         if disconnected:
             value |= PSStatusPV.BIT_PSCONNECT
             value |= PSStatusPV.BIT_PWRSTATON

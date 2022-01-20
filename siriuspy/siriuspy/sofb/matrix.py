@@ -376,6 +376,5 @@ class EpicsMatrix(BaseMatrix):
 
     def _save_respmat(self, mat):
         path = _os.path.split(self._csorb.respmat_fname)[0]
-        if not _os.path.isdir(path):
-            _os.mkdir(path)
+        _os.makedirs(path, exist_ok=True)
         _np.savetxt(self._csorb.respmat_fname, mat)

@@ -16,7 +16,7 @@ class PSDiagApp(_App):
     def _create_computed_pvs(self, psnames):
         self._psnames = psnames
         for psname in self._psnames:
-            devname = SiriusPVName(self._prefix + psname)
+            devname = SiriusPVName(psname).substitute(prefix=self._prefix)
 
             # DiagCurrentDiff-Mon
             pvs = [None, None]
@@ -60,11 +60,12 @@ class PSDiagApp(_App):
                     computer.ALARM_PVS.append(pvidx)
                     pvs[pvidx] = devname + alarm
             else:
-                pvs = [None]*4
+                pvs = [None]*5
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.INTRLCK_LI] = devname + ':StatusIntlk-Mon'
                 pvs[_PSStatusPV.WARNSTS_LI] = devname + ':IntlkWarn-Mon'
+                pvs[_PSStatusPV.CONNCTD_LI] = devname + ':Connected-Mon'
 
             pvo = _ComputedPV(
                 psname + ':DiagStatus-Mon', computer, self._queue,

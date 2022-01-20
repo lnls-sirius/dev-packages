@@ -28,10 +28,11 @@ class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
     PUB_INTERFACE = (
+        'open',
+        'close',
         'UART_write',
         'UART_read',
         'UART_request',
-        'close',
         'wr_duration',
         'wr_duration_reset',
     )

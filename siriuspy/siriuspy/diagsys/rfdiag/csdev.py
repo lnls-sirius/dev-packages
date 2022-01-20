@@ -36,7 +36,7 @@ class Const(_csdev.Const):
 
     SI_SL_ERRTOL_AMP = 1  # [mV]
     SI_SL_ERRTOL_PHS = 1e-1  # [DEG]
-    SI_SL_ERRTOL_DTU = 2  # [DEG]
+    SI_SL_ERRTOL_DTU = 3  # [DEG]
 
 
 _c = Const  # syntactic sugar

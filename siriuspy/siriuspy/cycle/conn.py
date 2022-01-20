@@ -16,7 +16,7 @@ from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
-    get_trigger_by_psname as _get_trigger_by_psname, \
+    get_trigger_by_psname as _get_trigger_by_psname, Const as _Const, \
     TRIGGER_NAMES as _TRIGGER_NAMES
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
@@ -271,7 +271,8 @@ class Timing:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
-                    VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+                    pvname.substitute(prefix=VACA_PREFIX),
+                    connection_timeout=TIMEOUT_CONNECTION)
 
                 if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
@@ -285,7 +286,7 @@ class Timing:
                 else:
                     continue
                 Timing._pvs[pvname_sts] = _PV(
-                    VACA_PREFIX+pvname_sts,
+                    pvname_sts.substitute(prefix=VACA_PREFIX),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @classmethod
@@ -372,7 +373,7 @@ class PSCycler:
         for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -570,17 +571,17 @@ class PSCycler:
                 self.init_wfm_pulsecnt + DEFAULT_RAMP_NRCYCLES, wait=10.0)
             self.update_wfm_pulsecnt()
             if not status:
-                return 1  # indicate lack of trigger pulses
+                return _Const.CycleEndStatus.LackTriggers
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 2  # indicate cycling not finished yet
+                return _Const.CycleEndStatus.NotFinished
 
         status = self.check_intlks(wait=1.0)
         if not status:
-            return 3  # indicate interlock problems
+            return _Const.CycleEndStatus.Interlock
 
-        return 0
+        return _Const.CycleEndStatus.Ok
 
     def __getitem__(self, prop):
         """Return item."""
@@ -656,7 +657,7 @@ class LinacPSCycler:
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -739,8 +740,8 @@ class LinacPSCycler:
         status = self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 4  # indicate interlock problems
-        return 0
+            return _Const.CycleEndStatus.Interlock
+        return _Const.CycleEndStatus.Ok
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
