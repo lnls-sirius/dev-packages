@@ -44,6 +44,9 @@ class BeagleBone:
         # psnames
         self._psnames = tuple(self._controllers.keys())
 
+        # SOFB mode on
+        self._sofbps = 'SOFBMode-Sts' in self._databases[self._psnames[0]]
+
         # strength property names
         self._strenames = self._get_strength_names()
 
@@ -101,6 +104,8 @@ class BeagleBone:
             updated = False
 
         if field is None:
+            if self._sofbps:
+                self._sofb_mode_update_setpoints(devname)
             return self._dev2mirror[devname], updated
         else:
             pvname = devname + ':' + field
@@ -123,6 +128,8 @@ class BeagleBone:
         else:
             priority_pvs = self._controllers[devname].write(
                 devname, field, value)
+            if field == 'SOFBMode-Sel' and value == 0:
+                self._sofb_mode_disable()
         return priority_pvs
 
     def get_strength_limits(self, devname):
@@ -217,27 +224,27 @@ class BeagleBone:
                 strelims[psname] = [None, None]
         return streconvs, strec, strelims
 
-    def _update_strengths(self, psname):
+    def _update_strengths(self, devname):
         # t0_ = _time.time()
-        if 'DCLink' in psname or psname.startswith('IT'):
+        if 'DCLink' in devname or devname.startswith('IT'):
             return
-        streconv = self._streconvs[psname]
-        strelims = self._strelims[psname]
-        mirror = self._dev2mirror[psname]
-        dbase = self._databases[psname]
-        curr0 = mirror[psname + ':Current-SP']
-        curr1 = mirror[psname + ':Current-RB']
-        curr2 = mirror[psname + ':CurrentRef-Mon']
-        curr3 = mirror[psname + ':Current-Mon']
+        streconv = self._streconvs[devname]
+        strelims = self._strelims[devname]
+        mirror = self._dev2mirror[devname]
+        dbase = self._databases[devname]
+        curr0 = mirror[devname + ':Current-SP']
+        curr1 = mirror[devname + ':Current-RB']
+        curr2 = mirror[devname + ':CurrentRef-Mon']
+        curr3 = mirror[devname + ':Current-Mon']
         curr4 = dbase['Current-SP']['lolo']
         curr5 = dbase['Current-SP']['hihi']
         currs = (curr0, curr1, curr2, curr3, curr4, curr5)
         strengths = streconv.conv_current_2_strength(currents=currs)
         if strengths is None or None in strengths:
-            self._streconnected[psname] = False
+            self._streconnected[devname] = False
         else:
-            self._streconnected[psname] = True
-            propname = psname + ':' + self._strenames[psname]
+            self._streconnected[devname] = True
+            propname = devname + ':' + self._strenames[devname]
             mirror[propname + '-SP'] = strengths[0]
             mirror[propname + '-RB'] = strengths[1]
             mirror[propname + 'Ref-Mon'] = strengths[2]
@@ -249,3 +256,31 @@ class BeagleBone:
                 strelims[0], strelims[1] = strengths[5], strengths[4]
         # t1_ = _time.time()
         # print('update_strengths: {:.3f}'.format(1000*(t1_-t0_)))
+
+    def _sofb_mode_disable(self):
+
+        # update variables in prucontrollers and controllers
+        pruc_initialized = set()
+        psc_initialized = set()
+        for controller in self._controllers.values():
+            pruc = controller.prucontroller
+            if pruc not in pruc_initialized:
+                pruc.update_variables()  # update mirrored variables
+                pruc_initialized.add(pruc)
+            if controller not in psc_initialized:
+                controller.init_setpoints()  # set controller setpoint values
+                psc_initialized.add(controller)
+
+        # update mirror in beaglebone and strengths
+        for devname in self._dev2mirror:
+            self._dev2mirror[devname] = \
+                self._controllers[devname].read_all_fields(devname)
+            self._update_strengths(devname)
+
+    def _sofb_mode_update_setpoints(self, devname):
+        mirror = self._dev2mirror[devname]
+        controller = self._controllers[devname]
+        if controller.prucontroller.sofb_mode:
+            # If power supply in SOFBMode, update Current-SP
+            pvpref = devname + ':Current-'
+            mirror[pvpref + 'SP'] = mirror[pvpref + 'RB']

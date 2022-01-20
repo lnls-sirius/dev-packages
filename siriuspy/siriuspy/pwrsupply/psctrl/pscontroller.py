@@ -82,10 +82,6 @@ class PSController:
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
-            self._update_setpoints(devname)
-
         # return priority pvs
         return priority_pvs
 
@@ -127,10 +123,15 @@ class PSController:
             if key.endswith('OpMode-Sel'):
                 # OpModel-Sel is shifted in 3 units relative OpMode-Sts
                 if value is not None:
-                    value = 0 if value < 3 else value - 3
+                    value = PSController.get_opmode_sts2sel(value)
 
             # apply value to setpoint using its reader
             reader_sp.apply(value)
+
+    @staticmethod
+    def get_opmode_sts2sel(value):
+        # OpModel-Sel is shifted in 3 units relative OpMode-Sts
+        return 0 if value < 3 else value - 3
 
     # --- private methods ---
 
@@ -149,11 +150,6 @@ class PSController:
             split = name.split(':')
             fields.add(split[-1])
         return fields
-
-    def _update_setpoints(self, devname):
-        """."""
-        self.read_all_fields(devname)
-        self.init_setpoints(devname)
         
     @staticmethod
     def _get_readback_field(field):
@@ -190,10 +186,6 @@ class StandardPSController(PSController):
             self._set_siggen(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
-
-        # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
-            self._update_setpoints(devname)
 
         # return priority pvs
         return priority_pvs
