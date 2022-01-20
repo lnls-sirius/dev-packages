@@ -4,7 +4,6 @@ import os as _os
 import sys as _sys
 import time as _time
 from collections import Counter as _Counter
-from collections import namedtuple as _namedtuple
 import logging as _log
 import inspect as _inspect
 import subprocess as _sp
@@ -37,14 +36,14 @@ def conv_splims_labels(label):
     labels_dict = {
         # Epics-DB  pcaspy    PyEpics
         # ===========================
-        'DRVH':     'DRVH',   # ???
+        'DRVH':     'DRVH',   # upper_ctrl_limit
         'HIHI':     'hihi',   # upper_alarm_limit
         'HIGH':     'high',   # upper_warning_limit
-        'HOPR':     'hilim',  # upper_disp_limit & upper_ctrl_limit
-        'LOPR':     'lolim',  # lower_disp_limit & lower_ctrl_limit
+        'HOPR':     'hilim',  # upper_disp_limit
+        'LOPR':     'lolim',  # lower_disp_limit
         'LOW':      'low',    # lower_warning_limit
         'LOLO':     'lolo',   # lower_alarm_limit
-        'DRVL':     'DRVL',   # ???
+        'DRVL':     'DRVL',   # lower_ctrl_limit
         'TSTV':     'TSTV',   # SIRIUS specific (Test value)
         'TSTR':     'TSTR',   # SIRIUS specific (Test acceptable range)
     }
@@ -72,9 +71,9 @@ def get_timestamp(now=None):
     """Get formatted timestamp ."""
     if now is None:
         now = _time.time()
-    st = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
-    st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
-    return st
+    rst = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
+    rst = rst + '.{0:03d}'.format(int(1000*(now-int(now))))
+    return rst
 
 
 def read_text_data(text):
@@ -142,9 +141,13 @@ def beam_rigidity(energy):
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
-        pvname = _envars.VACA_PREFIX + pvname
+        pref = _envars.VACA_PREFIX
+        pvname = pref + ('-' if pref else '') + pvname
     pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pvobj.wait_for_connection(timeout=timeout)
+    # invoke pv disconnect and explicitly signal to GC that PV object
+    # may be collected.
+    del pvobj
     return status
 
 

@@ -63,33 +63,38 @@ class ProcessImage(BaseClass):
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int),
             _np.arange(self.DEFAULT_ROI_SIZE, dtype=int)]
         self._roi_proj = [
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int),
-            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=int)]
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
+            _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._roi_gauss = [
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float),
             _np.zeros(self.DEFAULT_ROI_SIZE, dtype=float)]
         self._background = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._background_use = False
-        self._crop = [0, 255]
+        self._crop = [0, 2**16]
         self._crop_use = False
         self._width = 0
         self._reading_order = self.ReadingOrder.CLike
         self._method = self.Method.GaussFit
+        self._nr_averages = 1
+        self._images = []
+        self._reset_buffer = False
         self._image = _np.zeros(
-            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=int)
+            (self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), dtype=float)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._flip = [False, False]
-        self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
+        self._beam_params = [None, None]
 
     def get_map2write(self):
         """."""
         return {
+            'ResetBuffer-Cmd': self.cmd_reset_buffer,
             'Image-SP': _part(self.write, 'image'),
             'Width-SP': _part(self.write, 'imagewidth'),
             'ReadingOrder-Sel': _part(self.write, 'readingorder'),
+            'NrAverages-SP': _part(self.write, 'nr_averages'),
             'ImgCropLow-SP': _part(self.write, 'imagecroplow'),
             'ImgCropHigh-SP': _part(self.write, 'imagecrophigh'),
             'ImgCropUse-Sel': _part(self.write, 'useimagecrop'),
@@ -116,6 +121,8 @@ class ProcessImage(BaseClass):
             'Image-RB': _part(self.read, 'image'),
             'Width-RB': _part(self.read, 'imagewidth'),
             'ReadingOrder-Sts': _part(self.read, 'readingorder'),
+            'NrAverages-RB': _part(self.read, 'nr_averages'),
+            'BufferSize-Mon': _part(self.read, 'buffer_size'),
             'ImgCropLow-RB': _part(self.read, 'imagecroplow'),
             'ImgCropHigh-RB': _part(self.read, 'imagecrophigh'),
             'ImgCropUse-Sts': _part(self.read, 'useimagecrop'),
@@ -161,7 +168,7 @@ class ProcessImage(BaseClass):
     @property
     def image(self):
         """."""
-        return self._image.copy().flatten()
+        return self._image.copy().ravel()
 
     @image.setter
     def image(self, val):
@@ -201,6 +208,21 @@ class ProcessImage(BaseClass):
         if int(val) in self.ReadingOrder:
             self._reading_order = int(val)
             self.run_callbacks('ReadingOrder-Sts', int(val))
+
+    @property
+    def nr_averages(self):
+        """Return the number of averages to be used."""
+        return self._nr_averages
+
+    @nr_averages.setter
+    def nr_averages(self, val):
+        self._nr_averages = int(val)
+        self.run_callbacks('NrAverages-RB', val)
+
+    @property
+    def buffer_size(self):
+        """Return the current buffer size."""
+        return len(self._images)
 
     @property
     def imagecroplow(self):
@@ -399,7 +421,7 @@ class ProcessImage(BaseClass):
     @property
     def background(self):
         """."""
-        return self._background.copy().flatten()
+        return self._background.copy().ravel()
 
     @background.setter
     def background(self, val):
@@ -407,7 +429,7 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
-        img = self._adjust_image_dimensions(val.copy())
+        img = self._adjust_image_dimensions(np.array(val, dtype=float))
         if img is None:
             _log.error('Could not set background')
             return
@@ -559,12 +581,39 @@ class ProcessImage(BaseClass):
         """."""
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
+    def cmd_reset_buffer(self, *args):
+        """Schedule reset Buffer in next update."""
+        _ = args
+        self._reset_buffer = True
+        self.run_callbacks('BufferSize-Mon', 0)
+
     def _process_image(self, image):
         """."""
-        image = self._adjust_image_dimensions(image.copy())
+        image = self._adjust_image_dimensions(image)
+        image = _np.array(image, dtype=float)
         if image is None:
             _log.error('Image is None')
             return
+
+        # check whether to reset or not the buffer
+        imgs = self._images
+        self._reset_buffer |= bool(imgs) and (imgs[-1].shape != image.shape)
+        if self._reset_buffer:
+            self._images = [image, ]
+            self._reset_buffer = False
+        else:
+            self._images.append(image)
+            self._images = self._images[-self._nr_averages:]
+        buf_size = self.buffer_size
+        self.run_callbacks('BufferSize-Mon', buf_size)
+
+        # calculate average of the images
+        if buf_size > 1:
+            image = self._images[0].copy()
+            for img in self._images[1:]:  # faster than using numpy.mean
+                image += img
+            image /= len(self._images)
+
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
             b = _np.where(image < 0)
@@ -583,7 +632,7 @@ class ProcessImage(BaseClass):
         if self._flip[self.Plane.Y]:
             image = _np.flip(image, axis=self.Plane.Y)
 
-        self._image = _np.array(image, dtype=_np.int16)
+        self._image = image
         self.run_callbacks('Image-RB', self.image)
         self._update_roi()
         axisx = self._roi_axis[self.Plane.X]
@@ -594,8 +643,10 @@ class ProcessImage(BaseClass):
             parx = self._calc_moments(axisx, projx)
             pary = self._calc_moments(axisy, projy)
         else:
-            parx = self._fit_gaussian(axisx, projx)
-            pary = self._fit_gaussian(axisy, projy)
+            parx = self._fit_gaussian(
+                axisx, projx, self._beam_params[self.Plane.X])
+            pary = self._fit_gaussian(
+                axisy, projy, self._beam_params[self.Plane.Y])
         self._roi_gauss[self.Plane.X] = self._gaussian(axisx, *parx)
         self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.Plane.X] = parx
@@ -686,9 +737,10 @@ class ProcessImage(BaseClass):
         proj = proj - y0
         amp = _np.amax(proj)
         dx = axis[1]-axis[0]
-        Norm = _np.trapz(proj, dx=dx)
-        cen = _np.trapz(proj*axis, dx=dx)/Norm
-        sec = _np.trapz(proj*axis*axis, dx=dx)/Norm
+        norm = _np.trapz(proj, dx=dx)
+        praxis = proj*axis
+        cen = _np.trapz(praxis, dx=dx)/norm
+        sec = _np.trapz(praxis*axis, dx=dx)/norm
         std = _np.sqrt(sec - cen*cen)
         ret[cls.FitParams.Amp] = amp
         ret[cls.FitParams.Cen] = cen
@@ -707,13 +759,10 @@ class ProcessImage(BaseClass):
         return amp*_np.exp(-x*x/(2.0*sigma*sigma))+y0
 
     @classmethod
-    def _fit_gaussian(cls, x, y, amp=None, mu=None, sigma=None, y0=None):
+    def _fit_gaussian(cls, x, y, par=None):
         """."""
-        par = cls._calc_moments(x, y)
-        par[cls.FitParams.Cen] = mu or par[cls.FitParams.Cen]
-        par[cls.FitParams.Sig] = sigma or par[cls.FitParams.Sig]
-        par[cls.FitParams.Off] = y0 or par[cls.FitParams.Off]
-        par[cls.FitParams.Amp] = amp or par[cls.FitParams.Amp]
+        if par is None:
+            par = cls._calc_moments(x, y)
         try:
             par, _ = curve_fit(cls._gaussian, x, y, par)
         except Exception:

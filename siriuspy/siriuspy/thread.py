@@ -1,11 +1,58 @@
 """Definition of thread classes to used across the package."""
 
 import time as _time
-from threading import Thread as _Thread
-from threading import Event as _Event
-from threading import Lock as _Lock
+from threading import Thread as _Thread, Event as _Event, \
+    Lock as _Lock
 from queue import Queue as _Queue
 from collections import deque as _deque
+
+
+class AsyncWorker(_Thread):
+    """Asynchronous Worker Thread.
+
+    Performs asynchronous jobs indefinitely.
+    """
+
+    def __init__(self, name=None):
+        """."""
+        super().__init__(name=name, daemon=True)
+        self._evt_received = _Event()
+        self._evt_ready = _Event()
+        self._evt_ready.set()
+        self._evt_stop = _Event()
+        self.target = None
+        self.args = tuple()
+
+    def configure_new_run(self, target, args=None):
+        """Configure a new run of the thread."""
+        if not self._evt_ready.is_set():
+            return False
+        self.target = target
+        self.args = args or tuple()
+        self._evt_ready.clear()
+        # NOTE: _evt_received setting must be last operation of this method.
+        self._evt_received.set()
+        return True
+
+    def wait_ready(self, timeout=None):
+        """Wait until last run is finished."""
+        self._evt_ready.wait(timeout=timeout)
+
+    def is_ready(self):
+        """Check if last run has finished."""
+        return self._evt_ready.is_set()
+
+    def stop(self):
+        """Stop thread."""
+        self._evt_stop.set()
+
+    def run(self):
+        """."""
+        while not self._evt_stop.is_set():
+            if self._evt_received.wait(0.5):
+                self._evt_received.clear()
+                self.target(*self.args)
+                self._evt_ready.set()
 
 
 class QueueThread(_Thread):

@@ -1,4 +1,4 @@
-"""Search module."""
+"""PS Search module."""
 
 import copy as _copy
 from threading import Lock as _Lock
@@ -14,6 +14,12 @@ from ..magnet.excdata import ExcitationData as _ExcitationData
 class PSSearch:
     """PS and PU Power Supply Search Class."""
 
+    # auxiliary BO dipole bsmp devices not to be considered
+    # power supplies from standpoint of high level appplications
+    _bo_dip_auxps = \
+        set('BO-Fam:PS-B-' + idx for idx in
+            ('1a', '1b', '1c', '2a', '2b', '2c'))
+
     _splims_labels = list()
     _splims_ps_unit = list()
     _splims_pu_unit = list()
@@ -24,6 +30,7 @@ class PSSearch:
     _pstype_2_splims_dict = dict()
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = dict()
+    _psmodel_2_psname_dict = dict()
     _psname_2_siggen_dict = dict()
     _bbbname_2_bsmps_dict = dict()
     _bsmps_2_bbbname_dict = dict()
@@ -33,6 +40,7 @@ class PSSearch:
     _udc_2_bsmp_dict = dict()
     _bsmp_2_udc_dict = dict()
     _ps_2_dclink_dict = dict()
+    _dclink_2_ps_dict = dict()
 
     _lock = _Lock()
 
@@ -86,11 +94,14 @@ class PSSearch:
     }
 
     @staticmethod
-    def get_psnames(filters=None):
+    def get_psnames(filters=None, filter_auxps=True):
         """Return a sorted and filtered list of all power supply names."""
         PSSearch._reload_pstype_2_psnames_dict()
-        return sorted(_Filter.process_filters(PSSearch._psnames_list,
-                                              filters=filters))
+        psnames = _Filter.process_filters(
+            PSSearch._psnames_list, filters=filters)
+        if filter_auxps:
+            psnames = set(psnames) - PSSearch._bo_dip_auxps
+        return sorted(psnames)
 
     @staticmethod
     def get_psnicknames(names=None, filters=None):
@@ -108,6 +119,12 @@ class PSSearch:
         with PSSearch._lock:
             PSSearch._reload_pstype_dict()
         return sorted(set(PSSearch._pstype_dict.keys()))
+
+    @staticmethod
+    def get_psmodel_names():
+        """Return sorted list of power supply models."""
+        PSSearch._reload_psname_2_psmodel_dict()
+        return sorted(set(PSSearch._psmodel_2_psname_dict.keys()))
 
     @staticmethod
     def get_bbbnames(filters=None):
@@ -164,8 +181,8 @@ class PSSearch:
         """Return sorted list of power supply polarities."""
         with PSSearch._lock:
             PSSearch._reload_pstype_dict()
-        p = [datum[0] for datum in PSSearch._pstype_dict.values()]
-        return sorted(set(p))
+        pol = [datum[0] for datum in PSSearch._pstype_dict.values()]
+        return sorted(set(pol))
 
     @staticmethod
     def conv_psname_2_pstype(psname):
@@ -231,6 +248,12 @@ class PSSearch:
         return PSSearch._psname_2_psmodel_dict[psname]
 
     @staticmethod
+    def conv_psmodel_2_psname(psmodel):
+        """Convert psmodel to psname."""
+        PSSearch._reload_psname_2_psmodel_dict()
+        return PSSearch._psmodel_2_psname_dict[psmodel]
+
+    @staticmethod
     def conv_psname_2_siggenconf(psname):
         """Convert psname to corresponding SigGenConf object."""
         PSSearch._reload_psname_2_siggen_dict()
@@ -249,7 +272,7 @@ class PSSearch:
 
     @staticmethod
     def conv_bbbname_2_bsmps(bbbname):
-        """Given bbb name return bsmps."""
+        """Given bbb name return bsmps devices."""
         PSSearch._reload_bbb_2_bsmps_dict()
         return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
@@ -288,11 +311,18 @@ class PSSearch:
         return PSSearch._bsmp_2_udc_dict[psname]
 
     @staticmethod
-    def conv_psname_2_dclink(psname):
+    def conv_psname_2_dclink(psname, filter_auxps=True):
         """Return DCLink associated with a power supply."""
         # NOTE: lock is being used within private method.
-        PSSearch._reload_ps_2_dclink_dict()
-        return PSSearch._ps_2_dclink_dict[psname]
+        dict_aux = PSSearch.get_psname_2_dclink_dict(filter_auxps)
+        return dict_aux[psname]
+
+    @staticmethod
+    def conv_dclink_2_psname(dclink, filter_auxps=True):
+        """Return PS associated with a DCLink."""
+        # NOTE: lock is being used within private method.
+        dict_aux = PSSearch.get_dclink_2_psname_dict(filter_auxps)
+        return dict_aux[dclink]
 
     @staticmethod
     def get_linac_ps_sinap2sirius_dict():
@@ -339,6 +369,28 @@ class PSSearch:
         """Return labels in SP limits dictionary."""
         PSSearch._reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
+
+    @staticmethod
+    def get_psname_2_dclink_dict(filter_auxps=True):
+        """Return a dictionary of power supply and DCLinks."""
+        PSSearch._reload_ps_2_dclink_dict()
+        dict_aux = _copy.deepcopy(PSSearch._ps_2_dclink_dict)
+        if filter_auxps:
+            for psn in PSSearch._bo_dip_auxps:
+                dict_aux.pop(psn)
+        return dict_aux
+
+    @staticmethod
+    def get_dclink_2_psname_dict(filter_auxps=True):
+        """Return a dictionary of DCLink and power supplies."""
+        PSSearch._reload_ps_2_dclink_dict()
+        dict_aux = _copy.deepcopy(PSSearch._dclink_2_ps_dict)
+        if filter_auxps:
+            for dcl, list_aux in PSSearch._dclink_2_ps_dict.items():
+                for psn in PSSearch._bo_dip_auxps:
+                    if psn in list_aux:
+                        dict_aux[dcl].remove(psn)
+        return dict_aux
 
     # --- private methods ---
 
@@ -409,7 +461,7 @@ class PSSearch:
                 pstype, *lims = datum
                 pstype_2_splims_dict[pstype] = \
                     {PSSearch._splims_labels[i]:
-                        float(lims[i]) for i in range(len(lims))}
+                     float(lims[i]) for i in range(len(lims))}
             PSSearch._pstype_2_splims_dict = pstype_2_splims_dict
 
     @staticmethod
@@ -436,10 +488,15 @@ class PSSearch:
             pu_data, _ = _util.read_text_data(_web.pu_psmodels_read())
             data = ps_data + pu_data
             psname_2_psmodel_dict = dict()
-            for d in data:
-                psname, psmodel = d
+            psmodel_2_psname_dict = dict()
+            for datum in data:
+                psname, psmodel = datum
                 psname_2_psmodel_dict[psname] = psmodel
+                if psmodel not in psmodel_2_psname_dict:
+                    psmodel_2_psname_dict[psmodel] = list()
+                psmodel_2_psname_dict[psmodel].append(psname)
             PSSearch._psname_2_psmodel_dict = psname_2_psmodel_dict
+            PSSearch._psmodel_2_psname_dict = psmodel_2_psname_dict
 
     @staticmethod
     def _reload_psname_2_siggen_dict():
@@ -542,10 +599,17 @@ class PSSearch:
                     'could not read BSMP to DCLink map from web server')
             data, _ = _util.read_text_data(_web.bsmp_dclink_mapping())
             ps_2_dclink_dict = dict()
+            dclink_2_ps_dict = dict()
             for line in data:
                 dclinks = line[1:]
                 if dclinks[0] == 'None':
                     ps_2_dclink_dict[line[0]] = None
                 else:
                     ps_2_dclink_dict[line[0]] = dclinks
+                    for dcl in dclinks:
+                        if dcl not in dclink_2_ps_dict:
+                            dclink_2_ps_dict[dcl] = list()
+                        dclink_2_ps_dict[dcl].append(line[0])
+
             PSSearch._ps_2_dclink_dict = ps_2_dclink_dict
+            PSSearch._dclink_2_ps_dict = dclink_2_ps_dict

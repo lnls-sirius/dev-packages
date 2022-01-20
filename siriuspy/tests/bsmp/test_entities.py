@@ -2,11 +2,10 @@
 
 """Test entities module."""
 
-from unittest import TestCase
 import struct
+from unittest import TestCase
 
-from siriuspy.bsmp import Types
-from siriuspy.bsmp import Variable, VariablesGroup, Function
+from siriuspy.bsmp import Function, Types, Variable, VariablesGroup
 from siriuspy.util import check_public_interface_namespace
 
 
@@ -123,7 +122,7 @@ class TestBSMPVariablesGroup(TestCase):
         'WRITEABLE',
         'load_to_value',
         'value_to_load',
-        'variables_size'
+        'variables_size',
     )
 
     def setUp(self):
@@ -141,8 +140,7 @@ class TestBSMPVariablesGroup(TestCase):
 
     def test_api(self):
         """Test API."""
-        self.assertTrue(
-            check_public_interface_namespace(VariablesGroup, self.api))
+        self.assertTrue(check_public_interface_namespace(VariablesGroup, self.api))
 
     def _conv_value(self, fmt, value):
         return list(map(chr, struct.pack(fmt, value)))
@@ -182,7 +180,7 @@ class TestWfmCurve(TestCase):
 class TestBSMPFunction(TestCase):
     """Test Function class."""
 
-    api = ('value_to_load', 'load_to_value')
+    api = ("value_to_load", "load_to_value")
 
     def test_api(self):
         """Test API."""
@@ -210,8 +208,7 @@ class TestBSMPFunction(TestCase):
 
     def test_null_value_to_load(self):
         """Test empty list is returned."""
-        ret = \
-            Function(1, [Types.T_UINT16], [Types.T_UINT16]).value_to_load(None)
+        ret = Function(1, [Types.T_UINT16], [Types.T_UINT16]).value_to_load(None)
         self.assertEqual(ret, [])
 
     def test_strange_value_to_load(self):
@@ -262,8 +259,7 @@ class TestBSMPFunction(TestCase):
 
     def test_null_load_to_value(self):
         """Test empty list is returned."""
-        ret = \
-            Function(1, [Types.T_UINT8], [Types.T_UINT8]).load_to_value(None)
+        ret = Function(1, [Types.T_UINT8], [Types.T_UINT8]).load_to_value(None)
         self.assertIsNone(ret)
 
     def test_empty_load_to_value(self):

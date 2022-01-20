@@ -33,6 +33,30 @@ class BPMSearch:
         return _web.server_online()
 
     @classmethod
+    def is_valid_devname(cls, devname):
+        """Check if devname is a valid BPM or PBPM name."""
+        cls._get_data()
+        return devname in cls._mapping
+
+    @classmethod
+    def is_photon_bpm(cls, devname):
+        """Check whether BPM is a Phothon BPM (XBPM)."""
+        devname = _PVName(devname)
+        return devname.dev == 'PBPM'
+
+    @classmethod
+    def is_rf_bpm(cls, devname):
+        """Check whether BPM is a RF BPM."""
+        devname = _PVName(devname)
+        return devname.dev == 'BPM'
+
+    @classmethod
+    def is_id_rf_bpm(cls, devname):
+        """Check whether BPM is from Insertion Device."""
+        devname = _PVName(devname)
+        return devname.sub.endswith('SA', 'SB', 'SP')
+
+    @classmethod
     def get_mapping(cls):
         """Return a dictionary with the BPMs."""
         cls._get_data()
@@ -43,7 +67,7 @@ class BPMSearch:
         """Return a list with the bpm names for the given filter."""
         cls._get_data()
         return _Filter.process_filters(
-                                cls._names, filters=filters, sorting=sorting)
+            cls._names, filters=filters, sorting=sorting)
 
     @classmethod
     def get_nicknames(cls, names=None, filters=None, sorting=None):

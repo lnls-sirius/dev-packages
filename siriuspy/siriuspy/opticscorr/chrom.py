@@ -27,7 +27,9 @@ class ChromCorrApp(_BaseApp):
 
         # consts
         self._chrom_sp = 2*[0.0]
+        self._deltachrom_sp = 2*[0.0]
         self._chrom_mon = 2*[0.0]
+        self._last_param_set = 'abs'
 
         if self._acc == 'SI':
             self._measuring_chrom = False
@@ -43,8 +45,10 @@ class ChromCorrApp(_BaseApp):
         # Connect to Sextupoles Families
         self._lastcalc_sl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
+            pvname = _SiriusPVName(self._acc+'-Fam:PS-'+fam+':SL-RB')
+            pvname = pvname.substitute(prefix=_vaca_prefix)
             self._psfam_intstr_rb_pvs[fam] = _PV(
-                _vaca_prefix+self._acc+'-Fam:PS-'+fam+':SL-RB',
+                pvname,
                 callback=self._callback_estimate_chrom,
                 connection_timeout=0.05)
 
@@ -55,6 +59,8 @@ class ChromCorrApp(_BaseApp):
         self.map_pv2write.update({
             'ChromX-SP': self.set_chrom_x,
             'ChromY-SP': self.set_chrom_y,
+            'DeltaChromX-SP': self.set_deltachrom_x,
+            'DeltaChromY-SP': self.set_deltachrom_y,
             'MeasChromDeltaFreqRF-SP': self.set_meas_chrom_dfreq_rf,
             'MeasChromWaitTune-SP': self.set_meas_chrom_wait_tune,
             'MeasChromNrSteps-SP': self.set_meas_chrom_nrsteps,
@@ -98,15 +104,35 @@ class ChromCorrApp(_BaseApp):
 
     def set_chrom_x(self, value):
         """Set ChromX."""
+        self._last_param_set = 'absolut'
         self._chrom_sp[0] = value
         self.run_callbacks('ChromX-RB', value)
+        self._deltachrom_sp[0] = self._chrom_sp[0]-self._optprm_est[0]
         self._calc_intstrength()
         return True
 
     def set_chrom_y(self, value):
         """Set ChromY."""
+        self._last_param_set = 'absolut'
         self._chrom_sp[1] = value
         self.run_callbacks('ChromY-RB', value)
+        self._deltachrom_sp[1] = self._chrom_sp[1]-self._optprm_est[1]
+        self._calc_intstrength()
+        return True
+
+    def set_deltachrom_x(self, value):
+        """Set DeltaChromX."""
+        self._last_param_set = 'delta'
+        self._deltachrom_sp[0] = value
+        self.run_callbacks('DeltaChromX-RB', value)
+        self._calc_intstrength()
+        return True
+
+    def set_deltachrom_y(self, value):
+        """Set DeltaChromY."""
+        self._last_param_set = 'delta'
+        self._deltachrom_sp[1] = value
+        self.run_callbacks('DeltaChromY-RB', value)
         self._calc_intstrength()
         return True
 
@@ -181,8 +207,11 @@ class ChromCorrApp(_BaseApp):
         return value
 
     def _calc_intstrength(self):
-        delta_chromx = self._chrom_sp[0]-self._optprm_est[0]
-        delta_chromy = self._chrom_sp[1]-self._optprm_est[1]
+        if self._last_param_set == 'absolut':
+            delta_chromx = self._chrom_sp[0]-self._optprm_est[0]
+            delta_chromy = self._chrom_sp[1]-self._optprm_est[1]
+        else:
+            delta_chromx, delta_chromy = self._deltachrom_sp
 
         method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional \
@@ -203,6 +232,7 @@ class ChromCorrApp(_BaseApp):
                 return False
             self._lastcalc_sl[fam] = sl_now + lastcalc_deltasl[fam_idx]
             self.run_callbacks('SL'+fam+'-Mon', self._lastcalc_sl[fam])
+        self._estimate_calc_chrom()
 
         self.run_callbacks('Log-Mon', 'Calculated SL values.')
         return True
@@ -242,6 +272,7 @@ class ChromCorrApp(_BaseApp):
 
     def _start_meas_chrom(self):
         """Start chromaticity measurement."""
+        cont = True
         if self._measuring_chrom:
             log_msg = 'ERR: Chrom measurement already in progress!'
             cont = False
@@ -290,7 +321,7 @@ class ChromCorrApp(_BaseApp):
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
 
         self._measuring_chrom = True
-        self.run_callbacks('Starting chrom measurement!')
+        self.run_callbacks('Log-Mon', 'Starting chrom measurement!')
 
         _, data = self._get_tunes()
         tunex0, tuney0 = data
@@ -354,14 +385,15 @@ class ChromCorrApp(_BaseApp):
         if aborted:
             self._meas_chrom_status = _Const.MeasMon.Aborted
         else:
-            den = -(_np.array(freq) - freq0)/freq0/_MOM_COMPACT
+            den = -(_np.array(freq_list) - freq0)/freq0/_MOM_COMPACT
             tunex_array = _np.array(tunex_list)
             tuney_array = _np.array(tuney_list)
 
-            self._chrom_mon[0], _ = _np.polyfit(
-                den, tunex_array, deg=1, cov=True)
-            self._chrom_mon[1], _ = _np.polyfit(
-                den, tuney_array, deg=1, cov=True)
+            chromx, _ = _np.polyfit(den, tunex_array, deg=1, cov=True)
+            chromy, _ = _np.polyfit(den, tuney_array, deg=1, cov=True)
+
+            self._chrom_mon[0] = chromx[0]
+            self._chrom_mon[1] = chromy[0]
 
             self.run_callbacks('MeasChromX-Mon', self._chrom_mon[0])
             self.run_callbacks('MeasChromY-Mon', self._chrom_mon[1])
@@ -370,9 +402,19 @@ class ChromCorrApp(_BaseApp):
             log_msg = 'Chromaticity measurement completed!'
 
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
-        self._measuring_config = False
+        self._measuring_chrom = False
         self.run_callbacks('Log-Mon', log_msg)
         return not aborted
+
+    def _estimate_calc_chrom(self):
+        sfam_deltasl = len(self._psfams)*[0]
+        for fam_idx, fam in enumerate(self._psfams):
+            sfam_deltasl[fam_idx] = \
+                self._lastcalc_sl[fam] - self._psfam_nom_intstr[fam_idx]
+
+        calc_estim = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.run_callbacks('CalcChromX-Mon', calc_estim[0])
+        self.run_callbacks('CalcChromY-Mon', calc_estim[1])
 
     # ---------- callbacks ----------
 

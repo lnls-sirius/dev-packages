@@ -6,6 +6,7 @@ from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
 from ..thread import DequeThread as _DequeThread
+from ..bsmp.serial import Channel as _Channel
 
 from .csdev import get_ps_propty_database as _get_ps_propty_database
 from .beaglebone import BeagleBone as _BeagleBone
@@ -17,7 +18,7 @@ from .pructrl.pru import PRU as _PRU
 from .pructrl.prucontroller import PRUController as _PRUController
 
 from .psctrl.pscreaders import Constant as _Constant
-from .psctrl.pscreaders import Setpoint as _Setpoint
+from .psctrl.pscwriters import Setpoint as _Setpoint
 from .psctrl.psmodel import PSModelFactory as _PSModelFactory
 
 
@@ -42,6 +43,14 @@ class BBBFactory:
         # build dicts for grouped udc.
         psmodels, devices, freqs = \
             BBBFactory._build_udcgrouped(bbbname)
+
+        if len(psmodels) > 1:
+            # more than one psmodel under the same beagle. there will be two 
+            # PRUController objects pushing operation requests into the common 
+            # DequeThread. we have to use to lock mechanism in bsmp.Channel in 
+            # order to avoid one PRUController process thread interpreting the
+            # operation request of the other PRUController scan thread.
+            _Channel.create_lock()
 
         # power supply controllers and databases
         # dbase: a pvname-epicsdbase dictionary containing all
@@ -123,7 +132,7 @@ class BBBFactory:
 
         # get names of all udcs under a beaglebone
         udcs = _PSSearch.conv_bbbname_2_udc(bbbname)
-
+        
         psmodels, devices, freqs = dict(), dict(), dict()
         for udc in udcs:
 
@@ -137,8 +146,9 @@ class BBBFactory:
                 devices[psmodel_name] = devs
 
             # add udc psmodel
-            psmodel = _PSModelFactory.create(psmodel_name)
-            psmodels[psmodel_name] = psmodel
+            if psmodel_name not in psmodels:
+                psmodel = _PSModelFactory.create(psmodel_name)
+                psmodels[psmodel_name] = psmodel
 
             # add udc/bbb freqs
             try:
@@ -202,7 +212,7 @@ class BBBFactory:
                 for devname, devid in devices:
                     pvname = devname + ':' + field
                     dbase[pvname] = _deepcopy(database[field])
-                    readers[pvname] = model.field(
+                    readers[pvname] = model.reader(
                         devid, field, pru_controller)
         return readers, writers
 
@@ -233,14 +243,14 @@ class BBBFactory:
         #         pvname = devname + ':' + field
         #         ids.append(devid)
         #         sps.append(setpoints[pvname])
-        #     function = model.function(
+        #     writer = model.writer(
         #         ids, field, pru_controller, _Setpoints(sps))
-        #     return {device[0] + ':' + field: function
+        #     return {device[0] + ':' + field: writer
         #             for device in devices}
         writers = dict()
         for devname, devid in devices:
             setpoint = setpoints[devname + ':' + field]
-            writers[devname + ':' + field] = model.function(
+            writers[devname + ':' + field] = model.writer(
                 [devid], field, pru_controller, setpoint)
         return writers
 

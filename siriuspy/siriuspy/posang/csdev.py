@@ -3,6 +3,20 @@
 from .. import csdev as _csdev
 
 
+# --- Enumeration Types ---
+
+class ETypes(_csdev.ETypes):
+    """Local enumerate types."""
+
+    NEED_REF_UPDATE = ('Ok', 'NeedUpdate')
+
+
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+
 class Const:
     """Const class defining PosAng constants."""
 
@@ -12,23 +26,29 @@ class Const:
     TS_CORRH_POSANG_CHSEPT = ('TS-04:PS-CH', 'TS-04:PU-InjSeptF')
     TS_CORRH_POSANG_SEPTSEPT = \
         ('TS-04:PU-InjSeptG-1', 'TS-04:PU-InjSeptG-2', 'TS-04:PU-InjSeptF')
-    TS_CORRV_POSANG = ('TS-04:PS-CV-1', 'TS-04:PS-CV-2')
+    TS_CORRV_POSANG = \
+        ('TS-04:PS-CV-0', 'TS-04:PS-CV-1', 'TS-04:PS-CV-1E2', 'TS-04:PS-CV-2')
 
     STATUSLABELS = ('PS Connection', 'PS PwrState', 'PS OpMode', 'PS CtrlMode')
+
+    NeedRefUpdate = _csdev.Const.register('NeedRefUpdate', _et.NEED_REF_UPDATE)
+
+
+_c = Const  # syntactic sugar
 
 
 def get_posang_database(tl, corrs_type='ch-sept'):
     """Return Soft IOC database."""
     if tl.upper() == 'TS':
         if corrs_type == 'ch-sept':
-            CORRH = Const.TS_CORRH_POSANG_CHSEPT
+            corrh = _c.TS_CORRH_POSANG_CHSEPT
         else:
-            CORRH = Const.TS_CORRH_POSANG_SEPTSEPT
-        CORRV = Const.TS_CORRV_POSANG
+            corrh = _c.TS_CORRH_POSANG_SEPTSEPT
+        corrv = _c.TS_CORRV_POSANG
         ch1_kick_unit = 'mrad'
     elif tl.upper() == 'TB':
-        CORRH = Const.TB_CORRH_POSANG
-        CORRV = Const.TB_CORRV_POSANG
+        corrh = _c.TB_CORRH_POSANG
+        corrv = _c.TB_CORRV_POSANG
         ch1_kick_unit = 'urad'
 
     pvs_database = {
@@ -61,29 +81,38 @@ def get_posang_database(tl, corrs_type='ch-sept'):
         'RespMatY-Mon':      {'type': 'float', 'value': 4*[0], 'prec': 6,
                               'count': 4},
 
-        'CH1-Cte':           {'type': 'string', 'value': CORRH[0]},
+        'CH1-Cte':           {'type': 'string', 'value': corrh[0]},
         'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': ch1_kick_unit},
-        'CH2-Cte':           {'type': 'string', 'value': CORRH[1]},
+        'CH2-Cte':           {'type': 'string', 'value': corrh[1]},
         'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'mrad'},
-        'CV1-Cte':           {'type': 'string', 'value':  CORRV[0]},
+        'CV1-Cte':           {'type': 'string', 'value':  corrv[0]},
         'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
-        'CV2-Cte':           {'type': 'string', 'value':  CORRV[1]},
+        'CV2-Cte':           {'type': 'string', 'value':  corrv[1]},
         'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
+        'NeedRefUpdate-Mon': {'type': 'enum', 'enums': _et.NEED_REF_UPDATE,
+                              'value': _c.NeedRefUpdate.NeedUpdate},
 
         'ConfigPS-Cmd':      {'type': 'int', 'value': 0},
 
         'Status-Mon':        {'type': 'int', 'value': 0b1111},
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
-                              'value': '\n'.join(Const.STATUSLABELS)},
+                              'value': '\n'.join(_c.STATUSLABELS)},
     }
-    if len(CORRH) == 3:
-        pvs_database['CH3-Cte'] = {'type': 'string', 'value': CORRH[2]}
+    if len(corrh) == 3:
+        pvs_database['CH3-Cte'] = {'type': 'string', 'value': corrh[2]}
         pvs_database['RefKickCH3-Mon'] = {'type': 'float', 'value': 0,
                                           'prec': 4, 'unit': 'mrad'}
+    if len(corrv) == 4:
+        pvs_database['CV3-Cte'] = {'type': 'string', 'value': corrv[2]}
+        pvs_database['RefKickCV3-Mon'] = {'type': 'float', 'value': 0,
+                                          'prec': 4, 'unit': 'urad'}
+        pvs_database['CV4-Cte'] = {'type': 'string', 'value': corrv[3]}
+        pvs_database['RefKickCV4-Mon'] = {'type': 'float', 'value': 0,
+                                          'prec': 4, 'unit': 'urad'}
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database

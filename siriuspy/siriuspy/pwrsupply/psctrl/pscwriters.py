@@ -4,6 +4,8 @@ These classes implement a command interface, that is, they have
 an `execute` method.
 """
 
+import re as _re
+
 from ..csdev import Const as _const_psdev
 from ..bsmp.constants import ConstPSBSMP as _const_psbsmp
 
@@ -66,9 +68,9 @@ class WfmMonAcq(Function):
         """Define CurveAcq."""
         self._device_ids = device_ids
         self.enable = BSMPFunction(
-            device_ids, pru_controller, _const_psbsmp.F_ENABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_ENABLE_SCOPE)
         self.disable = BSMPFunction(
-            device_ids, pru_controller, _const_psbsmp.F_DISABLE_BUF_SAMPLES)
+            device_ids, pru_controller, _const_psbsmp.F_DISABLE_SCOPE)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -95,7 +97,7 @@ class WfmSP(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             for dev_id in self._device_ids:
-                self.pru_controller.wfm_write(dev_id, value)
+                self.pru_controller.wfmref_write(dev_id, value)
 
 
 class WfmUpdate(Function):
@@ -128,9 +130,9 @@ class WfmUpdateAutoSel(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
-                self.pru_controller.wfm_update_auto_enable()
+                self.pru_controller.scope_update_auto_enable()
             elif value == 0:
-                self.pru_controller.wfm_update_auto_disable()
+                self.pru_controller.scope_update_auto_disable()
 
 
 class PRUCProperty(Function):
@@ -169,7 +171,8 @@ class PSPwrState(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.turn_on.execute()
-                self.close_loop.execute()
+                # Not necessary anymore from firmware v1.25 onwards
+                # self.close_loop.execute()
             elif value == 0:
                 self.turn_off.execute()
 
@@ -195,6 +198,10 @@ class PSPwrStateFBP_DCLink(Function):
                 self.turn_on.execute()
             elif value == _const_psdev.PwrStateSel.Off:
                 self.turn_off.execute()
+
+
+# NOTE: writers below may be implemented as a general class 
+# with the BMSP Function ID as an argument.
 
 
 class CtrlLoop(Function):
@@ -249,7 +256,7 @@ class PSOpMode(Function):
 
 
 class Current(Function):
-    """Command to set current in PSs linked to magnets."""
+    """Writer to set power supplies current."""
     # NOTE: This was needed when PRU was used to control timing.
     # It may be discarded...
     def __init__(self, device_ids, pru_controller, setpoints=None):
@@ -266,7 +273,6 @@ class Current(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             self.set_current.execute(value)
 
-
 class Voltage(Function):
     """Command to set voltage in DCLink type PS."""
 
@@ -282,6 +288,57 @@ class Voltage(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.set_voltage.execute()
+
+
+class ScopeSrcAddr(Function):
+    """Writer to set scope source address."""
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.set_address = BSMPFunction(
+            device_ids, pru_controller, _const_psbsmp.F_CFG_SOURCE_SCOPE)
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.set_address.execute(value)
+
+
+class ScopeFreq(Function):
+    """Writer to set scpope frequency."""
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.set_frequency = BSMPFunction(
+            device_ids, pru_controller, _const_psbsmp.F_CFG_FREQ_SCOPE)
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.set_frequency.execute(value)
+
+
+class ScopeDuration(Function):
+    """Writer to set scpope frequency."""
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.set_duration = BSMPFunction(
+            device_ids, pru_controller, _const_psbsmp.F_CFG_DURATION_SCOPE)
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.set_duration.execute(value)
 
 
 class CfgSiggen(Function):
@@ -322,3 +379,122 @@ class SOFBCurrent(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.sofb_current_set(value)
+
+
+class SOFBMode(Function):
+    """."""
+
+    def __init__(self, pru_controller, setpoints=None):
+        """Create command to set SOFBMode."""
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.sofb_mode_set(value)
+
+
+class SOFBUpdate(Function):
+    """."""
+
+    def __init__(self, pru_controller, setpoints=None):
+        """Create command to set SOFBMode."""
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.sofb_update_variables_state()
+
+
+class Setpoint:
+    """Setpoint."""
+
+    _regexp_setpoint = _re.compile('^.*-(SP|Sel|Cmd)$')
+
+    def __init__(self, epics_field, epics_database):
+        """Init."""
+        self.field = epics_field
+        self.value = epics_database['value']
+        self.database = epics_database
+        if '-Cmd' in epics_field:
+            self.is_cmd = True
+        else:
+            self.is_cmd = False
+        self.type = epics_database['type']
+        if 'count' in epics_database:
+            self.count = epics_database['count']
+        else:
+            self.count = None
+        if self.type == 'enum' and 'enums' in epics_database:
+            self.enums = epics_database['enums']
+        else:
+            self.enums = None
+        self.value = epics_database['value']
+        if self.type in ('int', 'float'):
+            if 'hihi' in epics_database:
+                self.high = epics_database['hihi']
+            else:
+                self.high = None
+            if 'lolo' in epics_database:
+                self.low = epics_database['lolo']
+            else:
+                self.low = None
+        else:
+            self.low = None
+            self.high = None
+
+    def apply(self, value):
+        """Apply setpoint value."""
+        if self._check(value):
+            if self.is_cmd:
+                self.value += 1
+            else:
+                self.value = value
+            return True
+        return False
+
+    def read(self):
+        """Read setpoint value."""
+        return self.value
+
+    def _check(self, value):
+        """Check value."""
+        if self.is_cmd:
+            if value > 0:
+                return True
+        elif self.type in ('int', 'float'):
+            if self.low is None and self.high is None:
+                return True
+            if value is not None and \
+               (value >= self.low and value <= self.high):
+                return True
+        elif self.type == 'enum':
+            if value in tuple(range(len(self.enums))):
+                return True
+        return False
+
+    @staticmethod
+    def match(field):
+        """Check if field is a setpoint."""
+        return Setpoint._regexp_setpoint.match(field)
+
+
+class Setpoints:
+    """Setpoints."""
+
+    def __init__(self, setpoints):
+        """Constructor."""
+        self._setpoints = setpoints
+
+    def apply(self, value):
+        """Apply setpoint."""
+        for setpoint in self._setpoints:
+            if not setpoint.apply(value):
+                return False
+
+        return True

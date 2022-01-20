@@ -9,18 +9,17 @@ import time as _time
 import numpy as _np
 
 from ...bsmp import constants as _const_bsmp
-from ...bsmp import BSMP as _BSMP
-
-from ..csdev import PSSOFB_MAX_NR_UDC as _PSSOFB_MAX_NR_UDC
-from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
-from ..pructrl.pru import PRU as _PRU
+from ...bsmp import (
+    BSMP as _BSMP,
+    IOInterface as _IOInterface,
+)
 
 from . import constants as _const_psbsmp
 from . import entities as _etity_psbsmp
+from . entities import EntitiesPS as _EntitiesPS
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
-
 
 class PSBSMP(_BSMP):
     """Power supply BSMP.
@@ -44,49 +43,40 @@ class PSBSMP(_BSMP):
 
     _sleep_turn_onoff = 0.050  # [s]
     _sleep_reset_udc = 1.000  # [s]
-    _sleep_disable_bufsample = 0.5  # [s]
+    _sleep_disable_scope = 0.5  # [s]
     _sleep_select_op_mode = 0.030  # [s]
 
-    _wfmref_mon_pointers_var_ids = {
-        0: (CONST.V_WFMREF0_START,
+    # --- BSMP PS curves ---
+    CURVE_ID_WFMREF_DATA0 = 0
+    CURVE_ID_WFMREF_DATA1 = 1
+    CURVE_ID_SCOPE = 2
+
+    _WFMREF_POINTERS_VAR_IDS = {
+        CURVE_ID_WFMREF_DATA0: (
+            CONST.V_WFMREF0_START,
             CONST.V_WFMREF0_END,
             CONST.V_WFMREF0_IDX),
-        1: (CONST.V_WFMREF1_START,
+        CURVE_ID_WFMREF_DATA1: (
+            CONST.V_WFMREF1_START,
             CONST.V_WFMREF1_END,
             CONST.V_WFMREF1_IDX),
     }
 
-    ID_CURVE_BUFSAMPLE = 2
-
-    _wfmref_vars_ids = (
-        CONST.V_WFMREF_SELECTED,
-        CONST.V_WFMREF_SYNC_MODE,
-        CONST.V_WFMREF_GAIN,
-        CONST.V_WFMREF_OFFSET,
-        CONST.V_WFMREF0_START,
-        CONST.V_WFMREF0_END,
-        CONST.V_WFMREF0_IDX,
-        CONST.V_WFMREF1_START,
-        CONST.V_WFMREF1_END,
-        CONST.V_WFMREF1_IDX,
-    )
-
-    def __init__(self, slave_address, entities, pru=None):
+    def __init__(self, slave_address: int, entities: _EntitiesPS, pru: _IOInterface):
         """Init BSMP."""
-        self.pru = pru
+        self.pru: _IOInterface = pru
+        self.entities: _EntitiesPS
         super().__init__(self.pru, slave_address, entities)
-        self._wfmref_mon_check_entities_consistency()
-        self._wfmref_vars_group_id = None
+        self._wfmref_check_entities_consistency()
 
     @staticmethod
-    def parse_firmware_version(version):
+    def parse_firmware_version(version) -> str:
         """Process firmware version from BSMP device."""
         version = version[:version.index(b'\x00')]
         version = ''.join([chr(ord(v)) for v in version])
         return version
 
-    def reset_groups_of_variables(self, varids_groups,
-                                  add_wfmref_group=False):
+    def reset_groups_of_variables(self, varids_groups):
         """Reset groups of variables."""
 
         # remove previous variables groups
@@ -102,15 +92,6 @@ class PSBSMP(_BSMP):
             if ack != PSBSMP.CONST_BSMP.ACK_OK:
                 return ack, data
 
-        if not add_wfmref_group:
-            return ack, data
-
-        # add group fro wfmref vars
-        ack, data = self.create_group_of_variables(
-            PSBSMP._wfmref_vars_ids,
-            timeout=PSBSMP._timeout_create_vars_groups)
-        self._wfmref_vars_group_id = 1 + len(varids_groups)
-
         return ack, data
 
     # --- bsmp overriden methods ---
@@ -120,13 +101,6 @@ class PSBSMP(_BSMP):
             timeout=_timeout_execute_function,
             read_flag=True, print_error=True):
         """."""
-        # execute function
-        # print('--- execute_function ---')
-        # print('func_id: ', func_id)
-        # print('input_val: ', input_val)
-        # print('timeout: ', timeout)
-        # print('read_flag: ', read_flag)
-
         if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
                        PSBSMP.CONST.F_RESET_UDC):
             # NOTE: this is necessary while PS BSMP spec is
@@ -141,10 +115,10 @@ class PSBSMP(_BSMP):
         # TODO: check with ELP if these numbers can be optimized further!
         if func_id == PSBSMP.CONST.F_RESET_UDC:
             _time.sleep(PSBSMP._sleep_reset_udc)
-        elif func_id == PSBSMP.CONST.F_DISABLE_BUF_SAMPLES:
+        elif func_id == PSBSMP.CONST.F_DISABLE_SCOPE:
             # NOTE: sleep is implemented in UDC class,
             # for optimization purpose!
-            # _time.sleep(PSBSMP._sleep_disable_bufsample)
+            # _time.sleep(PSBSMP._sleep_disable_scope)
             pass
         elif func_id == PSBSMP.CONST.F_SELECT_OP_MODE:
             # _time.sleep(PSBSMP._sleep_select_op_mode)
@@ -193,158 +167,170 @@ class PSBSMP(_BSMP):
         self.execute_function(
             PSBSMP.CONST.F_SET_SLOWREF_FBP, setpoints)
 
+    def ps_function_set_slowref_fbp_readback_ref(self, setpoints):
+        """Write FBP 4-valued setpoints and get reference values."""
+        ack, data = self.execute_function(
+            PSBSMP.CONST.F_SET_SLOWREF_FBP_READBACK_REF, setpoints)
+        return ack, data
+
     # --- pwrsupply parameters ---
+    def _parameter_read_ps_name(self, count):
+        # PS_NAME parameter
+        value = _np.zeros(count)
+        for index in range(count):
+            value[index] = self._read_parm(PSBSMP.CONST.P_PS_NAME, index)
+            if value[index] == 0.0:
+                # TODO: this end-of-string convention is
+                # yet to be implemented!
+                value = value[:index]
+                break
+        return ''.join([chr(int(v)) for v in value]).strip()
 
     def parameter_read(self, eid, index=None):
         """Return power supply parameter."""
 
         parameter = self.entities.parameters[eid]
         count = parameter['count']
+
         if eid == PSBSMP.CONST.P_PS_NAME:
             # PS_NAME parameter
+            return self._parameter_read_ps_name(count=count)
+
+        # other parameters
+        if index is None:
             value = _np.zeros(count)
-            for index in range(count):
-                value[index] = self._read_parm(eid, index)
-                if value[index] == 0.0:
-                    # TODO: this end-of-string convention is
-                    # yet to be implemented!
-                    value = value[:index]
-                    break
-            value = ''.join([chr(int(v)) for v in value]).strip()
-        else:
-            # other parameters
-            if index is None:
-                value = _np.zeros(count)
-                for idx in range(count):
-                    val = self._read_parm(eid, idx)
-                    if val is None:
-                        return None
-                    value[idx] = val
-                if count == 1:
-                    value = value[0]
-            else:
-                value = self._read_parm(eid, index)
-                if value is None:
+            for idx in range(count):
+                val = self._read_parm(eid, idx)
+                if val is None:
                     return None
+                value[idx] = val
+            if count == 1:
+                value = value[0]
+        else:
+            value = self._read_parm(eid, index)
+            if value is None:
+                return None
         return value
 
-    def parameter_write(self, eid, value, index=0):
+    def _parameter_write_ps_name(self, count, val):
+        value = _np.zeros(count)
+        value[:len(val)] = [float(ord(c)) for c in val]
+        for index, value_datum in enumerate(value):
+            self.execute_function(
+                func_id=PSBSMP.CONST.F_SET_PARAM,
+                input_val=(PSBSMP.CONST.P_PS_NAME, index, value_datum),
+            )
+
+    def parameter_write(self, eid, value, index=0) -> None:
         """Set power supply parameter."""
         parameter = self.entities.parameters[eid]
         count = parameter['count']
         val = value[:count]
         if eid == PSBSMP.CONST.P_PS_NAME:
             # PS_NAME parameter
-            value = _np.zeros(count)
-            value[:len(val)] = [float(ord(c)) for c in val]
-            for index, value_datum in enumerate(value):
-                self.execute_function(
-                    func_id=PSBSMP.CONST.F_SET_PARAM,
-                    input_val=(eid, index, value_datum))
+            self._parameter_write_ps_name(count=count, val=val)
         else:
             self.execute_function(
                 func_id=PSBSMP.CONST.F_SET_PARAM,
                 input_val=(eid, index, value))
 
-    # --- wfmref methods ---
+    # --- wfmref and scope methods ---
 
     @property
-    def wfmref_mon_select(self):
-        """Return ID of curve currently in use by DSP."""
+    def wfmref_select(self):
+        """Return wfmref curve ID currently in use by DSP."""
         _, curve_id = self.read_variable(
             var_id=PSBSMP.CONST.V_WFMREF_SELECTED,
             timeout=PSBSMP._timeout_read_variable)
         return curve_id
 
-    @wfmref_mon_select.setter
-    def wfmref_mon_select(self, curve_id):
-        """Select ID of curve to be used by DSP."""
+    @wfmref_select.setter
+    def wfmref_select(self, curve_id):
+        """Select wfmref curve ID to be used by DSP."""
         ack, data = self.execute_function(
             func_id=PSBSMP.CONST.F_SELECT_WFMREF,
             input_val=curve_id,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
-    @property
-    def wfmref_mon_size(self):
-        """Return WfmRef size in t_float units.
+    def wfmref_size(self, curve_id=None):
+        """Return wfmref curve size in t_float units.
 
             This is the waveform size as last registered by the
         ARM controller.
         """
         # calculate wfmref size from buffer pointer values used by
         # ARM controller
-        i_beg, i_end, _ = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        i_beg, i_end, _ = self._wfmref_get_pointers_ids_of_selected(curve_id)
         values = self._bsmp_get_variable_values(i_beg, i_end)
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
-    def wfmref_mon_index(self):
-        """Return WfmRef Index
+    def wfmref_index(self):
+        """Return wfmref curve index.
 
             This index refers to the current waveform in use by the
         DSP controller.
         """
         # calculate wfmref index from buffer pointer values used by
         # ARM controller
-        i_beg, _, i_idx = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        i_beg, _, i_idx = self._wfmref_get_pointers_ids_of_selected()
         values = self._bsmp_get_variable_values(i_beg, i_idx)
         return PSBSMP.curve_index_calc(values[0], values[1])
 
     @property
-    def wfmref_mon_maxsize(self):
-        """."""
+    def wfmref_maxsize(self):
+        """Return max size of bsmp curves 0 and 1."""
         # curve with ids 0 and 1 should have same sizes.
         maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
 
     @ property
-    def wfmref_mon_pointer_values(self):
+    def wfmref_pointer_values(self):
         """Return pointer values of currently selected wfmref curve."""
-        pointer_ids = self._wfmref_mon_bsmp_get_pointers_ids_of_selected()
+        pointer_ids = self._wfmref_get_pointers_ids_of_selected()
         pointer_values = self._bsmp_get_variable_values(*pointer_ids)
         return pointer_values
 
-    def wfmref_mon_read(self):
-        """Return data of curve currently in use by DSP."""
+    def wfmref_read(self):
+        """Return data of wfmref curve currently in use by DSP."""
         # get curve ID
-        curve_id = self.wfmref_mon_select
+        curve_id = self.wfmref_select
 
         # get curve data
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
-    def wfmref_mon_write(self, curve):
-        """Write WfmRef to currently ."""
+    def wfmref_write(self, curve):
+        """Write a new wfmref curve to the available buffer not in use."""
         # get id of writable wfmref curve
-        curve_id = self._wfmref_mon_bsmp_select_writable_curve_id()
+        curve_id = self._wfmref_bsmp_select_writable_curve_id()
 
         # write curve
         curve = self.curve_write(curve_id, curve, read_curve=True)
 
         # execute selection of WfmRef to be used
-        self.wfmref_mon_select = curve_id
+        self.wfmref_select = curve_id
 
         return curve
 
-    def wfm_mon_read(self):
-        """Update wfm_mon."""
-        curve_id = PSBSMP.ID_CURVE_BUFSAMPLE
+    def scope_read(self):
+        """Read scope."""
+        curve_id = PSBSMP.CURVE_ID_SCOPE
         curve = self._curve_bsmp_read(curve_id=curve_id)
         return curve
 
-    def wfmref_mon_bufsample_enable(self):
-        """Enable buffer samples."""
+    def scope_enable(self):
+        """Enable scope update."""
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_ENABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_ENABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
-    def wfmref_mon_bufsample_disable(self):
-        """Disable buffer samples."""
-        # print('disabling bufsample.')
+    def scope_disable(self):
+        """Disable scope update."""
         ack, data = self.execute_function(
-            func_id=PSBSMP.CONST.F_DISABLE_BUF_SAMPLES,
+            func_id=PSBSMP.CONST.F_DISABLE_SCOPE,
             timeout=PSBSMP._timeout_execute_function)
         return ack, data
 
@@ -383,11 +369,12 @@ class PSBSMP(_BSMP):
 
     # --- private methods ---
 
-    def _wfmref_mon_bsmp_get_pointers_ids_of_selected(self):
-        curve_id = self.wfmref_mon_select
-        return PSBSMP._wfmref_mon_pointers_var_ids[curve_id]
+    def _wfmref_get_pointers_ids_of_selected(self, curve_id=None):
+        if curve_id is None:
+            curve_id = self.wfmref_select
+        return PSBSMP._WFMREF_POINTERS_VAR_IDS[curve_id]
 
-    def _wfmref_mon_check_entities_consistency(self):
+    def _wfmref_check_entities_consistency(self):
         # check consistency of curves with ids 0 and 1
         curves = self.entities.curves
         if 0 in curves and 1 in curves:
@@ -397,7 +384,7 @@ class PSBSMP(_BSMP):
                curve0.nblocks != curve1.nblocks:
                 raise ValueError('Inconsistent curves!')
 
-    def _wfmref_mon_bsmp_select_writable_curve_id(self):
+    def _wfmref_bsmp_select_writable_curve_id(self):
 
         # get current curve id
         _, curve_id = self.read_variable(
@@ -405,37 +392,30 @@ class PSBSMP(_BSMP):
             timeout=PSBSMP._timeout_read_variable)
 
         # select the other buffer and send curve blocks
-        curve_id = 0 if curve_id == 1 else 1
+        if curve_id == PSBSMP.CURVE_ID_WFMREF_DATA1:
+            curve_id = PSBSMP.CURVE_ID_WFMREF_DATA0
+        else:
+            curve_id = PSBSMP.CURVE_ID_WFMREF_DATA1
 
         return curve_id
 
-        # # read status
-        # var_ids = (
-        #     PSBSMP.CONST.V_PS_STATUS,
-        #     PSBSMP.CONST.V_WFMREF_SELECTED,
-        #   )
-        # data = self._bsmp_get_variable_values(*var_ids)
-        # state = data[0] & 0b1111
-        # curve_id = data[1]
-        # if state in (PSBSMP.CONST.E_STATE_RMPWFM,
-        #              PSBSMP.CONST.E_STATE_MIGWFM):
-        #     # select the other buffer and send curve blocks
-        #     curve_id = 0 if curve_id == 1 else 1
-
-        # return curve_id
-
     def _curve_bsmp_read(self, curve_id):
         # select minimum curve size between spec and firmware.
-        wfmref_mon_size = self.wfmref_mon_size
-        wfmref_mon_size_min = self._curve_get_implementable_size(
-            curve_id, wfmref_mon_size)
+        if curve_id == PSBSMP.CURVE_ID_SCOPE:
+            # for scope, we have to assume the size as the same as selected
+            # buffer since there are no bsmp variables indicating its size.
+            wfmref_size = self.wfmref_size()
+        else:
+            wfmref_size = self.wfmref_size(curve_id)
+        wfmref_size_min = self._curve_get_implementable_size(
+            curve_id, wfmref_size)
 
         # create initial output data
-        curve = _np.zeros(wfmref_mon_size_min)
+        curve = _np.zeros(wfmref_size_min)
 
         # read curve blocks
         curve_entity = self.entities.curves[curve_id]
-        indices = curve_entity.get_indices(wfmref_mon_size_min)
+        indices = curve_entity.get_indices(wfmref_size_min)
         # print('reading - curve id: ', curve_id)
         # print('reading - indices: ', indices)
         for block, idx in enumerate(indices):
@@ -450,11 +430,12 @@ class PSBSMP(_BSMP):
             # print('psbsmp.curve_read-1')
             if ack != self.CONST_BSMP.ACK_OK:
                 # print('psbsmp.curve_read-2')
-                if curve_id == PSBSMP.ID_CURVE_BUFSAMPLE and \
+                if curve_id == PSBSMP.CURVE_ID_SCOPE and \
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
                     # print('sit1, add:{}, curve_id:{}, block:{}'.format(
                     #     add, curve_id, block))
-                    # This is the expected behaviour when DSP is writting to buffer sample
+                    # This is the expected behaviour when DSP is writting to
+                    # buffer sample
                     return None
                 # anomalous response!
                 PSBSMP.anomalous_response(
@@ -464,7 +445,7 @@ class PSBSMP(_BSMP):
                     block=block,
                     index=idx)
                 # print('sit2, add:{}, curve_id:{}, block:{}'.format(
-                    # add, curve_id, block))
+                #     add, curve_id, block))
                 return None
             else:
                 # print('sit3, add:{}, curve_id:{}, block:{}'.format(
@@ -476,12 +457,12 @@ class PSBSMP(_BSMP):
 
     def _curve_bsmp_write(self, curve_id, curve):
         # select minimum curve size between spec and firmware.
-        wfmref_mon_size_min = self._curve_get_implementable_size(
+        wfmref_size_min = self._curve_get_implementable_size(
             curve_id, len(curve))
 
         # send curve blocks
         curve_entity = self.entities.curves[curve_id]
-        indices = curve_entity.get_indices(wfmref_mon_size_min)
+        indices = curve_entity.get_indices(wfmref_size_min)
         # print('writing - curve id: ', curve_id)
         # print('writing - indices: ', indices)
 
@@ -545,17 +526,23 @@ class PSBSMP(_BSMP):
 class FBP(PSBSMP):
     """BSMP with EntitiesFBP."""
 
+    SOFB_PRINT_COMM_ERRORS = True
+
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFBP
+    _ACK_OK = _np.zeros(_const_psbsmp.UDC_MAX_NR_DEV, dtype=int)
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
 
         # SOFB attributes
         self._sofb_ps_setpoint = None
         self._sofb_ps_reference = None
         self._sofb_ps_iload = None
+        self._sofb_ps_readback_ref = None
+        self._sofb_ps_func_return = None
 
     # --- SOFB methods ---
 
@@ -574,10 +561,25 @@ class FBP(PSBSMP):
         """."""
         return self._sofb_ps_iload
 
+    @property
+    def sofb_ps_readback_ref(self):
+        """Return mirror powersupply currents read after last setpoint."""
+        return self._sofb_ps_readback_ref
+
+    @property
+    def sofb_ps_func_return(self):
+        """Return ack code of last function execution."""
+        return self._sofb_ps_func_return
+
     def sofb_ps_setpoint_set(self, value):
         """."""
-        self.ps_function_set_slowref_fbp(value)
-
+        self._sofb_ps_setpoint = value
+        ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
+        if ack == self.CONST_BSMP.ACK_OK:
+            self._sofb_ps_readback_ref = func_resp
+            self._sofb_ps_func_return = FBP._ACK_OK
+        else:
+            self._sofb_func_error(ack, func_resp, 'sofb_ps_setpoint_set')
 
     def sofb_update(self):
         """."""
@@ -587,21 +589,27 @@ class FBP(PSBSMP):
          self._sofb_ps_iload) = data
 
     def _sofb_read_group_of_variables(self):
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PSBSMP._sofb_read_group_of_variables (beg)', 1e3*(_time.time() % 1)))
-
         group_id = self.CONST.G_SOFB
-        ack, values = self.read_group_of_variables(
+        ack, func_resp = self.read_group_of_variables(
             group_id=group_id)
         if ack == self.CONST_BSMP.ACK_OK:
-            setpoints, references, iload = _np.array(values).reshape((3, -1))
+            self._sofb_ps_func_return = FBP._ACK_OK
+            setpoints, references, iload = \
+                _np.array(func_resp).reshape((3, -1))
         else:
-            print('Anomalous bsmp communication if sofb read group: ', ack)
-
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PSBSMP._sofb_read_group_of_variables (end)', 1e3*(_time.time() % 1)))
+            setpoints, references, iload = None, None, None
+            self._sofb_func_error(
+                ack, func_resp, '_sofb_read_group_of_variables')
 
         return setpoints, references, iload
+
+    def _sofb_func_error(self, ack, func_resp, methodname):
+        func_resp = ord(func_resp)
+        self._sofb_ps_func_return = FBP._ACK_OK + func_resp
+        if self.SOFB_PRINT_COMM_ERRORS:
+            sfmt = 'FBP: Anomalous response ' + methodname + \
+                ': ack:0x{:02X}, func_resp:0x{:02X}'
+            print(sfmt.format(ack, func_resp))
 
 
 class FAC_DCDC(PSBSMP):
@@ -610,9 +618,10 @@ class FAC_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
 
 
 class FAC_2P4S_DCDC(PSBSMP):
@@ -621,9 +630,11 @@ class FAC_2P4S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2P4S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(),
+            pru=pru)
 
 
 class FAC_2S_DCDC(PSBSMP):
@@ -632,9 +643,10 @@ class FAC_2S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
 
 
 class FAP(PSBSMP):
@@ -643,9 +655,10 @@ class FAP(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
 
 
 class FAP_4P(PSBSMP):
@@ -654,9 +667,10 @@ class FAP_4P(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_4P
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
 
 
 class FAP_2P2S(PSBSMP):
@@ -665,9 +679,10 @@ class FAP_2P2S(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_2P2S
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
 # --- ACDC ---
@@ -679,9 +694,10 @@ class FBP_DCLink(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFBP_DCLink
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
 
 
 class FAC_2P4S_ACDC(PSBSMP):
@@ -690,9 +706,11 @@ class FAC_2P4S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2P4S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(),
+            pru=pru)
 
 
 class FAC_2S_ACDC(PSBSMP):
@@ -701,6 +719,7 @@ class FAC_2S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
-        PSBSMP.__init__(self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)

@@ -11,7 +11,7 @@ from .. import csdev as _csdev
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
+    DCCTSELECTIONTYP = ('DCCT13C4', 'DCCT14C4')
     BUFFAUTORSTTYP = ('Off', 'DCurrCheck')
     FITTYP = ('Exponential', 'Linear')
 
@@ -38,8 +38,11 @@ _c = Const  # syntactic sugar
 def get_currinfo_database(acc):
     """Return CurrentInfo Soft IOC database."""
     acc = acc.upper()
-    if acc in {'LI', 'TB', 'TS'}:
+    if acc == 'TS':
         pvs_db = get_litbts_currinfo_database(acc)
+    elif acc == 'LI':
+        pvs_db = get_litbts_currinfo_database('LI')
+        pvs_db.update(get_litbts_currinfo_database('TB'))
     elif acc == 'SI':
         pvs_db = get_si_currinfo_database()
     elif acc == 'BO':
@@ -56,7 +59,7 @@ def get_litbts_currinfo_database(acc):
         'LI': ('LI-01:DI-ICT-1:', 'LI-01:DI-ICT-2:'),
         'TB': ('TB-02:DI-ICT:', 'TB-04:DI-ICT:'),
         'TS': ('TS-01:DI-ICT:', 'TS-04:DI-ICT:')}
-    def_db = {'type': 'float', 'value': 0.0, 'unit': 'nC', 'prec': 3}
+    def_db = {'type': 'float', 'value': 0.0, 'unit': 'nC', 'prec': 4}
     pvs = [
         'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMin-Mon', 'ChargeMax-Mon',
         'ChargeStd-Mon']
@@ -65,7 +68,7 @@ def get_litbts_currinfo_database(acc):
         pvs_db.update({device+pv: _dcopy(def_db) for pv in pvs})
         pvs_db[device+'PulseCount-Mon'] = {'type': 'int', 'value': 0}
 
-    def_db = {'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 3}
+    def_db = {'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 2}
     pvs_db[pref + 'TranspEff-Mon'] = _dcopy(def_db)
     pvs_db[pref + 'TranspEffAvg-Mon'] = _dcopy(def_db)
     pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=pref)
@@ -117,29 +120,39 @@ def get_bo_currinfo_database():
 
 def get_si_currinfo_database():
     """Return SI CurrentInfo Soft IOC database."""
-    pvs_db = {'Version-Cte': {'type': 'string', 'value': 'UNDEF'}}
+    dev = 'SI-Glob:AP-CurrInfo:'
+    pvs_db = {dev+'Version-Cte': {'type': 'string', 'value': 'UNDEF'}}
 
-    pvs_db['Current-Mon'] = {
+    pvs_db[dev+'Current-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mA'}
-    pvs_db['StoredEBeam-Mon'] = {'type': 'int', 'value': 0}
+    pvs_db[dev+'StoredEBeam-Mon'] = {'type': 'int', 'value': 0}
 
-    pvs_db['DCCT-Sel'] = {
+    pvs_db[dev+'DCCT-Sel'] = {
         'type': 'enum', 'value': _c.DCCT.DCCT13C4,
         'enums': _et.DCCTSELECTIONTYP}
-    pvs_db['DCCT-Sts'] = {
+    pvs_db[dev+'DCCT-Sts'] = {
         'type': 'enum', 'value': _c.DCCT.DCCT13C4,
         'enums': _et.DCCTSELECTIONTYP}
 
-    pvs_db['DCCTFltCheck-Sel'] = {
+    pvs_db[dev+'DCCTFltCheck-Sel'] = {
         'type': 'enum', 'enums': _et.OFF_ON, 'value': _c.DCCTFltCheck.Off}
-    pvs_db['DCCTFltCheck-Sts'] = {
+    pvs_db[dev+'DCCTFltCheck-Sts'] = {
         'type': 'enum', 'enums': _et.OFF_ON, 'value': _c.DCCTFltCheck.Off}
 
-    pvs_db['Charge-Mon'] = {
+    pvs_db[dev+'Charge-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 12, 'unit': 'A.h', 'scan': 60}
-    pvs_db['InjEff-Mon'] = {
+
+    pvs_db[dev+'InjEff-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%'}
-    pvs_db = _csdev.add_pvslist_cte(pvs_db)
+    pvs_db[dev+'InjCurr-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'mA'}
+    pvs_db[dev+'InjCharge-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'nC'}
+
+    dev = 'AS-Glob:AP-CurrInfo:'
+    pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
+
+    pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=dev)
     return pvs_db
 
 

@@ -82,6 +82,10 @@ class PSController:
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
+        # update all setpoint properties upon return from SOFBMode
+        if 'SOFBMode-Sel' in field and value == 0:
+            self._update_setpoints(devname)
+
         # return priority pvs
         return priority_pvs
 
@@ -90,9 +94,13 @@ class PSController:
         devid = self._devname2devid[devname]
         return self._pru_controller.check_connected(devid)
 
-    def init_setpoints(self):
+    def init_setpoints(self, devname=None):
         """Initialize controller setpoint fields."""
         for key, reader_sp in self._readers.items():
+
+            # if devname was passed, continue in case reader does not belong to device
+            if devname and devname not in key:
+                continue
 
             # ignore non-setpoint fields
             if not key.endswith(('-Sel', '-SP')):
@@ -142,6 +150,11 @@ class PSController:
             fields.add(split[-1])
         return fields
 
+    def _update_setpoints(self, devname):
+        """."""
+        self.read_all_fields(devname)
+        self.init_setpoints(devname)
+        
     @staticmethod
     def _get_readback_field(field):
         # NOTE: to be updated
@@ -172,11 +185,15 @@ class StandardPSController(PSController):
             return priority_pvs
 
         if field == 'SOFBCurrent-SP':
-            self._set_sofb(pvname, value, devname, field, priority_pvs)
+            self._set_sofb_current(pvname, value, devname, field, priority_pvs)
         elif field in StandardPSController._SIGGEN_PARMS:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
+
+        # update all setpoint properties upon return from SOFBMode
+        if 'SOFBMode-Sel' in field and value == 0:
+            self._update_setpoints(devname)
 
         # return priority pvs
         return priority_pvs
@@ -193,7 +210,7 @@ class StandardPSController(PSController):
             values[idx] = value
         self._writers[pvname].execute(values)
 
-    def _set_sofb(self, pvname, value, devname, field, priority_pvs):
+    def _set_sofb_current(self, pvname, value, devname, field, priority_pvs):
         _ = field
 
         # set actual SOFBCurrent-SP

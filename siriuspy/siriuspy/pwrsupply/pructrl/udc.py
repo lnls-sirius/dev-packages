@@ -4,7 +4,8 @@ import time as _time
 import numpy as _np
 
 from . import prucparms as _prucparms
-from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+
+from ..bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from ..bsmp.factory import PSBSMPFactory as _PSBSMPFactory
 
 
@@ -25,6 +26,7 @@ class UDC:
     }
 
     _soft_def = _np.zeros(_UDC_MAX_NR_DEV)
+    _soft_def_int = _np.zeros(_UDC_MAX_NR_DEV, dtype=int)
 
     def __init__(self, pru, psmodel, device_ids):
         """Init."""
@@ -94,7 +96,7 @@ class UDC:
     def bufsample_disable(self):
         """Disable DSP from writting to bufsample curve."""
         for dev in self._devs_bsmp.values():
-            ack, data = dev.wfmref_mon_bufsample_disable()
+            ack, data = dev.scope_disable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         # a single sleep for all devices
@@ -105,7 +107,7 @@ class UDC:
     def bufsample_enable(self):
         """Enable DSP from writting to bufsample curve."""
         for dev in self._devs_bsmp.values():
-            ack, data = dev.wfmref_mon_bufsample_enable()
+            ack, data = dev.scope_enable()
             if ack != self.CONST_BSMP.ACK_OK:
                 return ack, data
         return ack, data
@@ -116,14 +118,32 @@ class UDC:
         dev = self._devs_bsmp[next(iter(self._devs_bsmp))]  # first dev
         return dev.parse_firmware_version(version)
 
-    def reset_groups_of_variables(self, groups):
-        """Reset groups of variables."""
+    # NOTE: this unused function can be deleted in the future
+    # def reset_groups_of_variables(self, groups):
+    #     """Reset groups of variables."""
+    #     for dev in self._devs_bsmp.values():
+    #         dev.reset_groups_of_variables(groups=groups)
+
+    def add_groups_of_variables(self):
+        """Add psmodel-specific variables groups in entities (no comm)."""
+        # build varids for groups with G_IDS >= 3
+        gids = sorted(tuple(self.prucparms.groups.keys()))
+        groups = [self.prucparms.groups[gid] for gid in gids[3:]]
+
         for dev in self._devs_bsmp.values():
-            dev.reset_groups_of_variables(groups=groups)
+            # reset group list, adding only default groups 0, 1 and 2.
+            dev.entities.reset_group()
+            # add psmodel-specific groups
+            for var_ids in groups:
+                dev.entities.add_group(var_ids)
 
     def __getitem__(self, index):
         """Return BSMP."""
         return self._devs_bsmp[index]
+
+    def __len__(self):
+        """."""
+        return len(self._devs_bsmp)
 
     # --- SOFBCurrent methods
 
@@ -133,7 +153,8 @@ class UDC:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_setpoint
             val2 = dev2.sofb_ps_setpoint if dev2 else UDC._soft_def
-            return _np.concatenate((val1, val2))
+            if val1 is not None and val2 is not None:
+                return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_refmon_get(self):
@@ -142,7 +163,8 @@ class UDC:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_reference
             val2 = dev2.sofb_ps_reference if dev2 else UDC._soft_def
-            return _np.concatenate((val1, val2))
+            if val1 is not None and val2 is not None:
+                return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_mon_get(self):
@@ -151,35 +173,43 @@ class UDC:
             dev1, dev2 = self._dev_first, self._dev_second
             val1 = dev1.sofb_ps_iload
             val2 = dev2.sofb_ps_iload if dev2 else UDC._soft_def
+            if val1 is not None and val2 is not None:
+                return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_current_readback_ref_get(self):
+        """Return SOFBCurrentRef-Mon, readback of last setpoint."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_readback_ref
+            val2 = dev2.sofb_ps_readback_ref if dev2 else UDC._soft_def
+            if val1 is not None and val2 is not None:
+                return _np.concatenate((val1, val2))
+        return None
+
+    def sofb_func_return_get(self):
+        """Return function return from last SOFB communication."""
+        if self._is_fbp:
+            dev1, dev2 = self._dev_first, self._dev_second
+            val1 = dev1.sofb_ps_func_return
+            val2 = dev2.sofb_ps_func_return if dev2 else UDC._soft_def_int
             return _np.concatenate((val1, val2))
         return None
 
     def sofb_current_set(self, value):
         """Set SOFB Current."""
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'UDC.sofb_current_set (beg)', 1e3*(_time.time() % 1)))
-
         if self._is_fbp:
             # set value
             self._dev_first.sofb_ps_setpoint_set(value[:4])
             if self._dev_second:
                 self._dev_second.sofb_ps_setpoint_set(value[4:])
 
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'UDC.sofb_current_set (end)', 1e3*(_time.time() % 1)))
-
     def sofb_update(self):
         """Update sofb."""
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'UDC.sofb_update (beg)', 1e3*(_time.time() % 1)))
-
         if self._is_fbp:
             self._dev_first.sofb_update()
             if self._dev_second:
                 self._dev_second.sofb_update()
-
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'UDC.sofb_update (end)', 1e3*(_time.time() % 1)))
 
     # --- private methods
 

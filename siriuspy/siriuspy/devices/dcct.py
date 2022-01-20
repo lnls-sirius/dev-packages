@@ -21,7 +21,7 @@ class DCCT(_Device):
         ALL = (BO, SI_13C4, SI_14C4)
 
     _properties = (
-        'RawReadings-Mon',
+        'RawReadings-Mon', 'Current-Mon',
         'FastMeasPeriod-SP', 'FastMeasPeriod-RB',
         'FastSampleCnt-SP', 'FastSampleCnt-RB',
         'MeasTrg-Sel', 'MeasTrg-Sts',
@@ -66,9 +66,14 @@ class DCCT(_Device):
         self['MeasTrg-Sel'] = DCCT.PWRSTATE.On if value else DCCT.PWRSTATE.Off
 
     @property
-    def current(self):
+    def current_fast(self):
         """."""
         return self['RawReadings-Mon']
+
+    @property
+    def current(self):
+        """."""
+        return self['Current-Mon']
 
     def wait(self, timeout=10):
         """."""
@@ -76,19 +81,19 @@ class DCCT(_Device):
         for _ in range(nrp):
             _time.sleep(0.1)
             if self._isok():
-                break
-        else:
-            print('timed out waiting DCCT.')
+                return True
+        print('timed out waiting DCCT.')
+        return False
 
     def cmd_turn_on(self, timeout=10):
         """."""
         self.acq_ctrl = DCCT.PWRSTATE.On
-        self.wait(timeout)
+        return self.wait(timeout)
 
     def cmd_turn_off(self, timeout=10):
         """."""
         self.acq_ctrl = DCCT.PWRSTATE.Off
-        self.wait(timeout)
+        return self.wait(timeout)
 
     # --- private methods ---
 

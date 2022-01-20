@@ -18,7 +18,7 @@ class PSProperty(_DevicesSync):
         'SI-Fam:PS-B1B2-2': ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2'),
         }
 
-    def __init__(self, devname, propty):
+    def __init__(self, devname, propty, auto_mon=False):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -27,7 +27,7 @@ class PSProperty(_DevicesSync):
 
         # call base class constructor
         super().__init__(
-            devnames=devnames, propty_sync=[propty])
+            devnames=devnames, propty_sync=[propty], auto_mon=auto_mon)
 
     @property
     def property_sync(self):
@@ -76,7 +76,10 @@ class PSProperty(_DevicesSync):
 class StrengthConv(_Devices):
     """Strength Converter."""
 
-    def __init__(self, devname, proptype):
+    # TODO: Test changing default value of auto_mon to see if conversion
+    # IOCs are improved.
+
+    def __init__(self, devname, proptype, auto_mon=False):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -85,7 +88,7 @@ class StrengthConv(_Devices):
 
         # get devices that provide normalization current for strengths
         self._dev_dip, self._dev_fam = \
-            self._get_devices(devname, proptype)
+            self._get_devices(devname, proptype, auto_mon)
         if self._dev_fam:
             devices = (self._dev_dip, self._dev_fam)
         elif self._dev_dip:
@@ -179,7 +182,7 @@ class StrengthConv(_Devices):
         return norm_mag
 
     @staticmethod
-    def _get_devices(devname, proptype):
+    def _get_devices(devname, proptype, auto_mon):
         # is dipole?
         if StrengthConv._get_dev_if_dipole(devname):
             return None, None
@@ -190,18 +193,18 @@ class StrengthConv(_Devices):
 
         # is trim?
         status, dev_dip, dev_fam = \
-            StrengthConv._get_dev_if_trim(devname, proptype)
+            StrengthConv._get_dev_if_trim(devname, proptype, auto_mon)
         if status:
             return dev_dip, dev_fam
 
         # is booster ps?
         status, dev_dip = StrengthConv._get_dev_if_booster(
-            devname, proptype)
+            devname, proptype, auto_mon)
         if status:
             return dev_dip, None
 
         # is others
-        return StrengthConv._get_dev_others(devname, proptype), None
+        return StrengthConv._get_dev_others(devname, proptype, auto_mon), None
 
     @staticmethod
     def _get_dev_if_dipole(devname):
@@ -218,52 +221,52 @@ class StrengthConv(_Devices):
         return False
 
     @staticmethod
-    def _get_dev_if_trim(devname, proptype):
+    def _get_dev_if_trim(devname, proptype, auto_mon):
         if StrengthConv._is_trim(devname):
             # trims need dipole and family connectors
             dev_dip = PSProperty(
-                'SI-Fam:PS-B1B2-1', 'Energy' + proptype)
+                'SI-Fam:PS-B1B2-1', 'Energy' + proptype, auto_mon)
             devname = devname.substitute(sub='Fam')
-            dev_fam = PSProperty(devname, 'KL' + proptype)
+            dev_fam = PSProperty(devname, 'KL' + proptype, auto_mon)
             return True, dev_dip, dev_fam
         return False, None, None
 
     @staticmethod
-    def _get_dev_if_booster(devname, proptype):
+    def _get_dev_if_booster(devname, proptype, auto_mon):
         if devname.startswith('BO'):
             if devname.dev == 'InjKckr':
                 # BO injection kicker uses TB dipole normalizer
                 dev_dip = PSProperty(
-                    'TB-Fam:PS-B', 'Energy' + proptype)
+                    'TB-Fam:PS-B', 'Energy' + proptype, auto_mon)
             elif devname.dev == 'EjeKckr':
                 # BO ejection kicker uses TS dipole normalizer
                 dev_dip = PSProperty(
-                    'TS-Fam:PS-B', 'Energy' + proptype)
+                    'TS-Fam:PS-B', 'Energy' + proptype, auto_mon)
             else:
                 # other BO ps use BO dipoles as normalizer
                 dev_dip = PSProperty(
-                    'BO-Fam:PS-B-1', 'Energy' + proptype)
+                    'BO-Fam:PS-B-1', 'Energy' + proptype, auto_mon)
             return True, dev_dip
         return False, None
 
     @staticmethod
-    def _get_dev_others(devname, proptype):
+    def _get_dev_others(devname, proptype, auto_mon):
         if devname.startswith('LI'):
-            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype, auto_mon)
         if devname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
-            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TB-Fam:PS-B', 'Energy' + proptype, auto_mon)
         elif devname.startswith('TS'):
             # all TS ps use TS dipole
-            return PSProperty('TS-Fam:PS-B', 'Energy' + proptype)
+            return PSProperty('TS-Fam:PS-B', 'Energy' + proptype, auto_mon)
         elif devname.startswith('SI'):
             if devname.dev in {'InjDpKckr', 'InjNLKckr'}:
                 # SI injection ps use TS dipole
-                return PSProperty('TS-Fam:PS-B', 'Energy' + proptype)
+                return PSProperty('TS-Fam:PS-B', 'Energy' + proptype, auto_mon)
             else:
                 # other SI ps use SI dipole
                 return PSProperty(
-                    'SI-Fam:PS-B1B2-1', 'Energy' + proptype)
+                    'SI-Fam:PS-B1B2-1', 'Energy' + proptype, auto_mon)
         return None
 
     @staticmethod

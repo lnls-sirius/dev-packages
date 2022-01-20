@@ -3,8 +3,8 @@ import logging as _log
 import numpy as _np
 
 from ..epics import PV as _PV
-from ..diag.bpm.csdev import Const as _csbpm
-from ..timesys import csdev as _cstime
+from ..diagbeam.bpm.csdev import Const as _csbpm
+from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 
@@ -21,13 +21,11 @@ class BPM(_BaseTimingConfig):
         super().__init__(name[:2], callback)
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
-        pvpref = LL_PREF + self._name + ':'
+        pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
         opt = {'connection_timeout': TIMEOUT}
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
         self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
-        self._posx = _PV(pvpref + 'PosX-Mon', **opt)
-        self._posy = _PV(pvpref + 'PosY-Mon', **opt)
         self._spposx = _PV(pvpref + 'SPPosX-Mon', **opt)
         self._spposy = _PV(pvpref + 'SPPosY-Mon', **opt)
         self._spsum = _PV(pvpref + 'SPSum-Mon', **opt)
@@ -46,6 +44,7 @@ class BPM(_BaseTimingConfig):
         self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
+            'SwMode': _csbpm.SwModes.switching,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
             'ACQChannel': _csbpm.AcqChan.ADC,
             # 'ACQNrShots': 1,
@@ -67,14 +66,18 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 0,
-            'TbtTagEn': _csbpm.EnbldDsbld.enabled,  # Enable TbT sync Timing
+            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
+            'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
+            'MonitTagEn': _csbpm.EnbldDsbld.disabled,
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
             'TbtDataMaskSamplesBeg': 0,
             'TbtDataMaskSamplesEnd': 0,
-            'XYPosCal': _csbpm.EnbldDsbld.disabled,
-            'SUMPosCal': _csbpm.EnbldDsbld.disabled}
+            'XYPosCal': _csbpm.EnbldDsbld.enabled,
+            'SUMPosCal': _csbpm.EnbldDsbld.enabled}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
+            'SwMode': 'SwMode-Sel',
             'ACQBPMMode': 'ACQBPMMode-Sel',
             'ACQChannel': 'ACQChannel-Sel',
             # 'ACQNrShots': 'ACQNrShots-SP',
@@ -98,6 +101,9 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP',
             'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
+            'Monit1TagEn': 'Monit1TagEn-Sel',  # Enable Monit1 sync with timing
+            'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
             'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
             'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP',
@@ -115,6 +121,7 @@ class BPM(_BaseTimingConfig):
             'INFOFOFBRate': 'INFOFOFBRate-RB',
             'INFOMONITRate': 'INFOMONITRate-RB',
             'INFOMONIT1Rate': 'INFOMONIT1Rate-RB',
+            'SwMode': 'SwMode-Sts',
             'ACQBPMMode': 'ACQBPMMode-Sts',
             'ACQChannel': 'ACQChannel-Sts',
             # 'ACQNrShots': 'ACQNrShots-RB',
@@ -140,6 +147,9 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB',
             'TbtTagEn': 'TbtTagEn-Sts',
+            'SwTagEn': 'SwTagEn-Sts',
+            'Monit1TagEn': 'Monit1TagEn-Sts',
+            'MonitTagEn': 'MonitTagEn-Sts',
             'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
             'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
             'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB',
@@ -147,11 +157,6 @@ class BPM(_BaseTimingConfig):
             'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
-
-    def set_auto_monitor(self, boo):
-        """."""
-        self._posx.set_auto_monitor(boo)
-        self._posy.set_auto_monitor(boo)
 
     @property
     def name(self):
@@ -163,7 +168,6 @@ class BPM(_BaseTimingConfig):
         """."""
         conn = super().connected
         pvs = (
-            self._posx, self._posy,
             self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
@@ -214,6 +218,22 @@ class BPM(_BaseTimingConfig):
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         pvobj = self._config_pvs_sp['asyn.ENBL']
         self._config_ok_vals['asyn.ENBL'] = val
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def switching_mode(self):
+        """."""
+        pvobj = self._config_pvs_rb['SwMode']
+        if pvobj.connected:
+            return pvobj.value
+        return None
+
+    @switching_mode.setter
+    def switching_mode(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['SwMode']
+        self._config_ok_vals['SwMode'] = val
         if pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -338,22 +358,6 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals['ACQBPMMode'] = mode
         if pvobj.connected:
             pvobj.value = mode
-
-    @property
-    def posx(self):
-        """."""
-        pvobj = self._posx
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def posy(self):
-        """."""
-        pvobj = self._posy
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
 
     @property
     def spposx(self):
@@ -593,6 +597,46 @@ class BPM(_BaseTimingConfig):
             pvobj.put(val, wait=False)
 
     @property
+    def fofb_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['SwTagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @fofb_sync_enbl.setter
+    def fofb_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['SwTagEn']
+        self._config_ok_vals['SwTagEn'] = val
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def monit1_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['Monit1TagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @monit1_sync_enbl.setter
+    def monit1_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['Monit1TagEn']
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def monit_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['MonitTagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @monit_sync_enbl.setter
+    def monit_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['MonitTagEn']
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
     def tbt_mask_enbl(self):
         """."""
         pvobj = self._config_pvs_rb['TbtDataMaskEn']
@@ -719,9 +763,12 @@ class BPM(_BaseTimingConfig):
         maskend = min(maskend, wsize - maskbeg - 2)
         mask = slice(maskbeg, wsize - maskend)
 
+        # NOTE: I have to invert array B with C here because of the way
+        # the ADCSWAP rate works. Fixed in 2020/07/01 after talking to
+        # Daniel Tavares.
         vals = {
-            'A': self.arraya, 'B': self.arrayb,
-            'C': self.arrayc, 'D': self.arrayd}
+            'A': self.arraya, 'C': self.arrayb,
+            'B': self.arrayc, 'D': self.arrayd}
         siz = None
         for key, val in vals.items():
             if val is None or val.size == 0:
@@ -803,14 +850,13 @@ class TimingConfig(_BaseTimingConfig):
         evg = self._csorb.evg_name
         opt = {'connection_timeout': TIMEOUT}
         self._config_ok_vals = {
-            'NrPulses': 1,
-            'State': _cstime.Const.TrigStates.Enbl}
+            'NrPulses': 1, 'State': _TIConst.TrigStates.Enbl}
         if _HLTimesearch.has_delay_type(trig):
-            self._config_ok_vals['RFDelayType'] = \
-                                    _cstime.Const.TrigDlyTyp.Manual
+            self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
         pref_name = LL_PREF + trig + ':'
         self._config_pvs_rb = {
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
+            'TotalDelay': _PV(pref_name + 'TotalDelay-Mon', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
@@ -857,4 +903,10 @@ class TimingConfig(_BaseTimingConfig):
     def delay(self):
         """."""
         pvobj = self._config_pvs_rb['Delay']
+        return pvobj.value if pvobj.connected else None
+
+    @property
+    def totaldelay(self):
+        """."""
+        pvobj = self._config_pvs_rb['TotalDelay']
         return pvobj.value if pvobj.connected else None

@@ -2,8 +2,10 @@
 """Utilities for cycle."""
 
 import time as _time
+import math as _math
 import numpy as _np
 
+from ..csdev import Const as _Const
 from ..namesys import Filter as _Filter
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 
@@ -16,14 +18,23 @@ TRIGGER_NAMES = {
     'SI-Glob:TI-Mags-Corrs', 'SI-Glob:TI-Mags-QTrims'}
 
 
-def get_psnames():
+def get_psnames(isadv=False):
     """Return psnames."""
     names = _PSSearch.get_psnames({'sec': '(LI|TB|TS)', 'dis': 'PS'})
-    names.extend(_PSSearch.get_psnames(
-        {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
-    names.extend(_PSSearch.get_psnames(
-        {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
-         'dev': 'CV', 'idx': '2'}))
+
+    if not isadv:
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+             'dev': 'CV', 'idx': '2'}))
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
+             'dev': 'QS'}))
+    else:
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q.*|S.*|C.*)'}))
+
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
     for name in to_remove:
         names.remove(name)
@@ -57,24 +68,21 @@ def pv_timed_get(pvobj, value, wait=5, abs_tol=0.0, rel_tol=1e-06):
         return False
     time0 = _time.time()
     while _time.time() - time0 < wait:
-        pvvalue = pvobj.get()
-        status = False
+        pvvalue = pvobj.value
         if isinstance(value, (tuple, list, _np.ndarray)):
             if not isinstance(pvvalue, (tuple, list, _np.ndarray)):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             elif len(value) != len(pvvalue):
-                status = False
+                _time.sleep(wait/10.0)
+                continue
             else:
-                if all(_np.isclose(pvvalue, value,
-                                   atol=abs_tol, rtol=rel_tol)):
-                    status = True
-                    break
+                if _np.allclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
+                    return True
         else:
-            if _np.isclose(pvvalue, value, atol=abs_tol, rtol=rel_tol):
-                status = True
-                break
-        _time.sleep(wait/10.0)
-    return status
+            if _math.isclose(pvvalue, value, abs_tol=abs_tol, rel_tol=rel_tol):
+                return True
+    return False
 
 
 def pv_conn_put(pvobj, value):
@@ -84,3 +92,10 @@ def pv_conn_put(pvobj, value):
     if pvobj.put(value):
         return True
     return False
+
+
+class Const(_Const):
+    """PSCycle Constants."""
+
+    CycleEndStatus = _Const.register(
+        'CycleEndStatus', ('Ok', 'LackTriggers', 'NotFinished', 'Interlock'))
