@@ -9,26 +9,29 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     DIAG_STATUS_LABELS_AS = (
-        'PS Disconnected',
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'Alarms',
         'OpMode-(Sel|Sts) are different',
         'Reserved')
 
     DIAG_STATUS_LABELS_LI = (
-        'PS Disconnected',
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
         'Reserved',
+        'Reserved',
         'Reserved')
 
     DIAG_STATUS_LABELS_BO = (
-        'PS Disconnected',
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
+        'Alarms',
         'OpMode-(Sel|Sts) are different',
         'Wfm error exceeded tolerance')
 

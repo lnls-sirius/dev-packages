@@ -38,8 +38,12 @@ class EpicsProperty:
         callbacks = {'connection_callback': self._pv_connection_callback,
                      'callback': self._pv_callback}
 
-        self._pv_sp = _epics.PV(self._prefix + self._pvname_sp, **callbacks)
-        self._pv_rb = _epics.PV(self._prefix + self._pvname_rb, **callbacks)
+        self._pv_sp = _epics.PV(
+            self._prefix + ('-' if self._prefix else '') + self._pvname_sp,
+            **callbacks)
+        self._pv_rb = _epics.PV(
+            self._prefix + ('-' if self._prefix else '') + self._pvname_rb,
+            **callbacks)
 
     @property
     def name(self):
@@ -88,9 +92,19 @@ class EpicsProperty:
         return self._pv_rb.get(timeout=0)
 
     @property
+    def readback_string(self):
+        """Property readback string."""
+        return self._pv_rb.get(timeout=0, as_string=True)
+
+    @property
     def setpoint(self):
         """Property setpoint."""
         return self._pv_sp.get(timeout=0)
+
+    @property
+    def setpoint_string(self):
+        """Property setpoint string."""
+        return self._pv_sp.get(timeout=0, as_string=True)
 
     @property
     def default(self):
@@ -200,19 +214,27 @@ class EpicsPropertiesList:
         ppty = self._properties[name]
         return ppty.readback
 
+    def get_readback_string(self, name):
+        """Return readback value of a property as string."""
+        ppty = self._properties[name]
+        return ppty.readback_string
+
     def get_setpoint(self, name):
         """Return setpoint value of a property."""
         ppty = self._properties[name]
         return ppty.setpoint
 
+    def get_setpoint_string(self, name):
+        """Return setpoint value of a property as string."""
+        ppty = self._properties[name]
+        return ppty.setpoint_string
+
     def set_setpoints_check(self, setpoints, desired_readbacks=None,
                             timeout=5, order=None):
         """Set setpoints of properties."""
-        if desired_readbacks is None:
-            desired_readbacks = dict()
+        # setpoints
         if order is None:
             order = list(setpoints.keys())
-        # setpoints
         is_nok = list()
         for name in order:
             value = setpoints[name]
@@ -224,7 +246,7 @@ class EpicsPropertiesList:
             if self._logger is not None:
                 self._logger.update(name)
         # check
-        if not desired_readbacks:
+        if desired_readbacks is None:
             desired_readbacks = setpoints
         time0 = _time.time()
         while _time.time() - time0 < timeout:
@@ -234,24 +256,24 @@ class EpicsPropertiesList:
                     continue
                 if pvname not in is_nok:
                     continue
-                rbval = self._properties[pvname].readback
+                rbv = self._properties[pvname].readback
                 if isinstance(value, (tuple, list, _np.ndarray)):
-                    if not isinstance(rbval, (tuple, list, _np.ndarray)):
+                    if not isinstance(rbv, (tuple, list, _np.ndarray)):
                         finished = False
                         break
-                    if len(value) != len(rbval):
+                    if len(value) != len(rbv):
                         finished = False
                         break
-                    if isinstance(rbval[0], (float, _np.float64)):
-                        rbval = _np.asarray(rbval, dtype=_np.float32)
+                    if isinstance(rbv[0], (float, _np.float64)):
+                        rbval = _np.asarray(rbv, dtype=_np.float32)
                     if isinstance(value[0], (float, _np.float64)):
                         value = _np.asarray(value, dtype=_np.float32)
-                    finished = _np.array_equal(rbval, value)
+                    finished = _np.array_equal(rbv, value)
                     if not finished:
                         break
                 else:
                     finished = \
-                        _struct.pack('f', rbval) == _struct.pack('f', value)
+                        _struct.pack('f', rbv) == _struct.pack('f', value)
                     if not finished:
                         break
                 if finished:

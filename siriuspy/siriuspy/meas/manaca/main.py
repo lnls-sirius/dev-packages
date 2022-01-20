@@ -227,18 +227,20 @@ class MeasParameters(_BaseClass, _Const):
         self._need_update = False
 
     def _calc_and_apply_bumps(self):
-        total_bumpx = self._needed_dbumpx + self._applied_bumpx
-        total_bumpy = self._needed_dbumpy + self._applied_bumpy
+        dbumpx = self._needed_dbumpx
+        dbumpy = self._needed_dbumpy
+        total_bumpx = dbumpx + self._applied_bumpx
+        total_bumpy = dbumpy + self._applied_bumpy
 
         maxb = max(abs(total_bumpx), abs(total_bumpy))
         if maxb > self.MAX_BUMP:
             return self.ApplyStatus.LimitExceeded
 
-        dax = total_bumpx * self.SS_SIZE / 2
-        day = total_bumpy * self.SS_SIZE / 2
+        dax = dbumpx * self.SS_SIZE / 2
+        day = dbumpy * self.SS_SIZE / 2
 
-        orbx = self._refs['x'].copy()
-        orby = self._refs['y'].copy()
+        orbx = self._sofb_pvs['refx_rb'].value.copy()
+        orby = self._sofb_pvs['refy_rb'].value.copy()
         orbx[self.BPM1_INDEX] -= dax
         orby[self.BPM1_INDEX] -= day
         orbx[self.BPM2_INDEX] += dax

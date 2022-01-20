@@ -4,7 +4,8 @@ import time as _time
 import numpy as _np
 
 from . import prucparms as _prucparms
-from ..csdev import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+
+from ..bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from ..bsmp.factory import PSBSMPFactory as _PSBSMPFactory
 
 
@@ -117,14 +118,15 @@ class UDC:
         dev = self._devs_bsmp[next(iter(self._devs_bsmp))]  # first dev
         return dev.parse_firmware_version(version)
 
-    def reset_groups_of_variables(self, groups):
-        """Reset groups of variables."""
-        for dev in self._devs_bsmp.values():
-            dev.reset_groups_of_variables(groups=groups)
+    # NOTE: this unused function can be deleted in the future
+    # def reset_groups_of_variables(self, groups):
+    #     """Reset groups of variables."""
+    #     for dev in self._devs_bsmp.values():
+    #         dev.reset_groups_of_variables(groups=groups)
 
     def add_groups_of_variables(self):
         """Add psmodel-specific variables groups in entities (no comm)."""
-        # buld varids for group with id > 2
+        # build varids for groups with G_IDS >= 3
         gids = sorted(tuple(self.prucparms.groups.keys()))
         groups = [self.prucparms.groups[gid] for gid in gids[3:]]
 
