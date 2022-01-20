@@ -866,6 +866,13 @@ def _get_ps_common_propty_database():
                                  'unit': 'count',
                                  'low': -1, 'lolo': -1,
                                  'high': 50, 'hihi': 50},
+        # StandBy
+        'StandByMode-Sel': {
+            'type': 'enum', 'enums': _et.DSBL_ENBL,
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'standbymode'},
+        'StandByMode-Sts': {
+            'type': 'enum', 'enums': _et.DSBL_ENBL,
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'standbymode'},
         # Interlocks
         'IntlkSoft-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkHard-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
@@ -1029,6 +1036,7 @@ def _get_ps_common_propty_database():
             'type': 'float', 'value': 0.0, 'unit': 'Hz'},
         'ParamScopeDataSource-Cte': {'type': 'float', 'value': 0.0},
     }
+
     return dbase
 
 
@@ -1115,12 +1123,6 @@ def _get_ps_sofb_propty_database():
     """Return PSSOFB properties."""
     count = _UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
     dbase = {
-        'SOFBMode-Sel': {
-            'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
-        'SOFBMode-Sts': {
-            'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         'SOFBCurrent-SP': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
