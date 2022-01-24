@@ -28,8 +28,8 @@ class ETypes(_csdev.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     MTURN_ACQUIRE = ('Idle', 'Acquire')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
+    APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_DELTA_MON = ('Idle', 'Applying', 'Done', 'Error')
-    APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
     SI_CORR_SYNC = ('Off', 'Event', 'Clock')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
@@ -42,8 +42,7 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_CORR_TLINES = (
         'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn')
     STS_LBLS_CORR_RINGS = STS_LBLS_CORR_TLINES + (
-        'TimingConnected', 'TimingConfigured')
-    STS_LBLS_CORR_SI = STS_LBLS_CORR_RINGS + ('RFConnected', 'RFPwrStateOn')
+        'TimingConnected', 'TimingConfigured', 'RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
         'BPMsEnabled', 'BPMsConfigured')
@@ -109,23 +108,22 @@ class ConstRings(ConstTLines):
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
     MTurnAcquire = _csdev.Const.register('MTurnAcquire', _et.MTURN_ACQUIRE)
+    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_RINGS)
+    EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
+    RF_GEN_NAME = 'RF-Gen'
 
 
 class ConstSI(ConstRings):
     """Const class defining rings orbitcorr constants."""
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
-    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
-    StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
     CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
     CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
-    RF_GEN_NAME = 'RF-Gen'
     CORR_DEF_DELAY = 12  # [ms]
-    EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
 # --- Database classes ---
