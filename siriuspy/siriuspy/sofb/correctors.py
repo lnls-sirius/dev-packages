@@ -139,7 +139,7 @@ class RFCtrl(Corrector):
     @value.setter
     def value(self, freq):
         """."""
-        delta_max = 20  # Hz
+        delta_max = 200  # Hz
         freq0 = self.value
         if freq0 is None or freq is None:
             return
