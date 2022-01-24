@@ -669,6 +669,9 @@ class EpicsCorrectors(BaseCorrectors):
             self.run_callbacks(
                 'KickCV-Mon', corr_vals[self._csorb.nr_ch:self._csorb.nr_chcv])
             if self.isring and corr_vals[-1] > 0:
+                # NOTE: I have to check whether the RF frequency is larger
+                # than zero not to take the inverse of 0. It will be 0 in case
+                # there is a failure to get the RF frequency from its PV.
                 rfv = corr_vals[-1]
                 circ = 1/rfv * self._csorb.harm_number * 299792458
                 self.run_callbacks('KickRF-Mon', rfv)
