@@ -214,7 +214,7 @@ class SOFBTLines(ConstTLines):
         return dbase
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
             'LoopState-Sel': {
@@ -446,7 +446,7 @@ class SOFBTLines(ConstTLines):
         return self._add_prefix(dbase, prefix)
 
     def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB Correctors database."""
         dbase = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
@@ -687,7 +687,7 @@ class SOFBTLines(ConstTLines):
         return self._add_prefix(dbase, prefix)
 
     def get_respmat_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB respmat database."""
         dbase = {
             'RespMat-SP': {
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
@@ -793,7 +793,7 @@ class SOFBRings(SOFBTLines, ConstRings):
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         db_ring = {
             'MeasRespMatKickRF-SP': {
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
@@ -848,7 +848,7 @@ class SOFBRings(SOFBTLines, ConstRings):
         return dbase
 
     def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB correctors database."""
         db_ring = {
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
@@ -858,7 +858,7 @@ class SOFBRings(SOFBTLines, ConstRings):
         return dbase
 
     def get_respmat_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB respmat database."""
         db_ring = {
             'RFEnbl-Sel': {
                 'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
@@ -958,7 +958,7 @@ class SOFBSI(SOFBRings, ConstSI):
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         db_ring = {
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
@@ -1019,7 +1019,7 @@ class SOFBSI(SOFBRings, ConstSI):
         return dbase
 
     def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB correctors database."""
         db_ring = {
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
