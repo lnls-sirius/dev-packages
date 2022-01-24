@@ -228,28 +228,28 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCH-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -802,16 +802,16 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'LoopPIDKpRF-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpRF-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdRF-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
