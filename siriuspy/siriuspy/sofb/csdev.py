@@ -124,7 +124,7 @@ class ConstSI(ConstRings):
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
     RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 18  # [ms]
+    CORR_DEF_DELAY = 12  # [ms]
     EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
 
 
