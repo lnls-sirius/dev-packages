@@ -528,6 +528,12 @@ class EpicsCorrectors(BaseCorrectors):
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
         """
+        if self.acc == 'BO':
+            msg = 'ERR: Cannot correct Orbit in Booster. Use Ramp Interface!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return 0
+
         if self.acc == 'SI' and self._use_pssofb:
             return self.apply_kicks_pssofb(values)
 
