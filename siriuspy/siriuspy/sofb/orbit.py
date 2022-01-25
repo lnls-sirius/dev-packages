@@ -1043,6 +1043,14 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('MTurn' + name + '-Mon', orb.ravel())
             self.run_callbacks(
                 'MTurnIdx' + name + '-Mon', orb[idx, :].ravel())
+            if pln == 'Sum':
+                continue
+            nrb = self._ring_extension * self._csorb.nr_bpms
+            dorb = orb[idx, :].ravel() - self.ref_orbs[pln][:nrb]
+            self.run_callbacks(f'DeltaOrb{pln:s}Avg-Mon', _bn.nanmean(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Std-Mon', _bn.nanstd(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Min-Mon', _bn.nanmin(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Max-Mon', _bn.nanmax(dorb))
 
     def _update_singlepass_orbits(self):
         """."""

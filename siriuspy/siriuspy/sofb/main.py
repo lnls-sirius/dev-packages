@@ -34,15 +34,20 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.0, ki=5.0, kd=0.0),
-            cv=dict(kp=0.0, ki=3.75, kd=0.0),
-            rf=dict(kp=0.0, ki=5.0, kd=0.0))
+            ch=dict(kp=0.1, ki=2.0, kd=0.0),
+            cv=dict(kp=0.1, ki=2.0, kd=0.0),
+            rf=dict(kp=0.1, ki=2.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 5, 'cv': 5}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
+        if self.isring:
+            self._mancorr_gain['rf'] = 1.00
+            self._max_kick['rf'] = 1e12  # a very large value
+            self._max_delta_kick['rf'] = 10
+            self._meas_respmat_kick['rf'] = 80
         if self.acc == 'SI':
             self._drive_divisor = 12
             self._drive_nrcycles = 10
@@ -52,10 +57,6 @@ class SOFB(_BaseClass):
             self._drive_bpm_index = 0
             self._drive_type = self._csorb.DriveType.Sine
             self._drive_state = self._csorb.DriveState.Open
-            self._mancorr_gain['rf'] = 1.00
-            self._max_kick['rf'] = 1e12  # a very large value
-            self._max_delta_kick['rf'] = 10
-            self._meas_respmat_kick['rf'] = 80
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
@@ -96,6 +97,14 @@ class SOFB(_BaseClass):
             'ApplyDelta-Cmd': self.apply_corr,
             }
         if self.isring:
+            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
+            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
+            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
+            dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
+            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            dbase['DeltaKickRF-SP'] = _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.RF)
+            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
@@ -106,14 +115,6 @@ class SOFB(_BaseClass):
             dbase['DriveBPMIndex-SP'] = self.set_drive_bpm_index
             dbase['DriveType-Sel'] = self.set_drive_type
             dbase['DriveState-Sel'] = self.set_drive_state
-            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
-            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
-            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
-            dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
-            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
-            dbase['DeltaKickRF-SP'] = _part(
-                self.set_delta_kick, self._csorb.ApplyDelta.RF)
-            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         return dbase
 
     @property
@@ -441,7 +442,7 @@ class SOFB(_BaseClass):
             self._dtheta[nr_ch:nr_chcv] = dkicks
             self.run_callbacks('DeltaKickCV-RB', list(dkicks))
             self.run_callbacks('DeltaKickCV-Mon', list(dkicks))
-        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
+        elif self.isring and code == self._csorb.ApplyDelta.RF:
             self._dtheta[-1] = dkicks
             self.run_callbacks('DeltaKickRF-RB', float(dkicks))
             self.run_callbacks('DeltaKickRF-Mon', float(dkicks))
@@ -462,9 +463,9 @@ class SOFB(_BaseClass):
             dkicks[nr_ch:] = 0
         elif code == self._csorb.ApplyDelta.CV:
             dkicks[:nr_ch] = 0
-            if self.acc == 'SI':
+            if self.isring:
                 dkicks[-1] = 0
-        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
+        elif self.isring and code == self._csorb.ApplyDelta.RF:
             dkicks[:-1] = 0
         msg = f'Applying {self._csorb.ApplyDelta._fields[code]:s} kicks.'
         self._update_log(msg)
@@ -784,7 +785,7 @@ class SOFB(_BaseClass):
         errs = self._pid_errs
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
-        if self.acc == 'SI':
+        if self.isring:
             slcs = {
                 'ch': slice(None, nr_ch),
                 'cv': slice(nr_ch, -1),
@@ -896,7 +897,7 @@ class SOFB(_BaseClass):
 
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
-        if self.acc == 'SI':
+        if self.isring:
             slcs = {
                 'ch': slice(None, nr_ch),
                 'cv': slice(nr_ch, -1),

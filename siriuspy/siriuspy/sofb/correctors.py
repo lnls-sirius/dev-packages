@@ -139,7 +139,7 @@ class RFCtrl(Corrector):
     @value.setter
     def value(self, freq):
         """."""
-        delta_max = 20  # Hz
+        delta_max = 200  # Hz
         freq0 = self.value
         if freq0 is None or freq is None:
             return
@@ -463,8 +463,12 @@ class EpicsCorrectors(BaseCorrectors):
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sync_kicks = False
         self._acq_rate = 2
+
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
+        if self.isring:
+            self._corrs.append(RFCtrl(self.acc))
+
         self._use_pssofb = False
         self._wait_pssofb = False
         if self.acc == 'SI':
@@ -480,7 +484,6 @@ class EpicsCorrectors(BaseCorrectors):
             else:
                 self._pssofb = _PSSOFBIOC(
                     'SI', auto_mon=True, dipoleoff=dipoleoff)
-            self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
             1/self._acq_rate, self._update_corrs_strength, niter=0)
@@ -525,6 +528,12 @@ class EpicsCorrectors(BaseCorrectors):
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
         """
+        if self.acc == 'BO':
+            msg = 'ERR: Cannot correct Orbit in Booster. Use Ramp Interface!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return 0
+
         if self.acc == 'SI' and self._use_pssofb:
             return self.apply_kicks_pssofb(values)
 
@@ -665,7 +674,10 @@ class EpicsCorrectors(BaseCorrectors):
             self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.nr_ch])
             self.run_callbacks(
                 'KickCV-Mon', corr_vals[self._csorb.nr_ch:self._csorb.nr_chcv])
-            if self.acc == 'SI' and corr_vals[-1] > 0:
+            if self.isring and corr_vals[-1] > 0:
+                # NOTE: I have to check whether the RF frequency is larger
+                # than zero not to take the inverse of 0. It will be 0 in case
+                # there is a failure to get the RF frequency from its PV.
                 rfv = corr_vals[-1]
                 circ = 1/rfv * self._csorb.harm_number * 299792458
                 self.run_callbacks('KickRF-Mon', rfv)
@@ -813,7 +825,7 @@ class EpicsCorrectors(BaseCorrectors):
             tim_conn = tim_conf = True
         status = _util.update_bit(status, bit_pos=3, bit_val=not tim_conn)
         status = _util.update_bit(status, bit_pos=4, bit_val=not tim_conf)
-        if self.acc == 'SI':
+        if self.isring:
             rfctrl = self._corrs[-1]
             status = _util.update_bit(
                 status, bit_pos=5, bit_val=not rfctrl.connected)
