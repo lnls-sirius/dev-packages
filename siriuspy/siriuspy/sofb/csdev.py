@@ -850,6 +850,8 @@ class SOFBRings(SOFBTLines, ConstRings):
         db_ring = {
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
+            'OrbLength-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'm', 'prec': 6},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
@@ -1037,8 +1039,6 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrPSSOFBWait-Sts': {
                 'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
                 'value': self.CorrPSSOFBWait.Off},
-            'OrbLength-Mon': {
-                'type': 'float', 'value': 1, 'unit': 'm', 'prec': 6},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
