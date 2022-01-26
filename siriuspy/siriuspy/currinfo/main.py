@@ -367,7 +367,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
     HARMNUM = 864
     HARMNUM_RATIO = 864 / 828
-    CURR_THRESHOLD = 0.06  # [mA]
+    CURR_THRESHOLD = 0.02  # [mA]
     MAX_CURRENT = 1.0  # [A]
 
     def __init__(self):
