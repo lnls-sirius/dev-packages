@@ -149,7 +149,7 @@ class BeagleBone:
         """Return device database."""
         return self._databases[devname]
 
-    def init(self):
+    def init(self, processing=True, scanning=True):
         """Initialize controllers."""
         # return  # allow for IOC initialization without HW comm.
 
@@ -160,8 +160,8 @@ class BeagleBone:
             pruc = controller.pru_controller
             if pruc not in pruc_initialized:
                 pruc.bsmp_init_communication()
-                pruc.processing = True
-                pruc.scanning = True
+                pruc.processing = processing
+                pruc.scanning = scanning
                 pruc_initialized.add(pruc)
             if controller not in psc_initialized:
                 controller.init_setpoints()
