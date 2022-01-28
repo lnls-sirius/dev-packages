@@ -296,10 +296,12 @@ class PVData(_Base):
 
     def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
-        self._timestamp = _np.asarray(timestamp)
-        self._value = _np.asarray(value)
-        self._status = _np.asarray(status)
-        self._severity = _np.asarray(severity)
+        self._timestamp = self._value = self._status = self._severity = None
+        if timestamp is not None:
+            self._timestamp = _np.asarray(timestamp)
+            self._value = _np.asarray(value)
+            self._status = _np.asarray(status)
+            self._severity = _np.asarray(severity)
 
     def to_dict(self):
         """Return dictionary with PV properties.
