@@ -224,7 +224,7 @@ class ClientArchiver:
 
         pvn2resp = dict()
         for pvn, idcs in pvn2idcs.items():
-            _ts, _vs = _np.array([]), _np.array([])
+            _ts, _vs = _np.array([]), list()
             _st, _sv = _np.array([]), _np.array([])
             for idx in idcs:
                 resp = resps[idx]
@@ -232,15 +232,17 @@ class ClientArchiver:
                     continue
                 data = resp[0]['data']
                 _ts = _np.r_[_ts, [v['secs'] + v['nanos']/1.0e9 for v in data]]
-                _vs = _np.r_[_vs, [v['val'] for v in data]]
+                for val in data:
+                    _vs.append(val['val'])
                 _st = _np.r_[_st, [v['status'] for v in data]]
                 _sv = _np.r_[_sv, [v['severity'] for v in data]]
             if not _ts.size:
                 timestamp, value, status, severity = [None, None, None, None]
             else:
                 _, _tsidx = _np.unique(_ts, return_index=True)
-                timestamp, value, status, severity = \
-                    _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
+                timestamp, status, severity = \
+                    _ts[_tsidx], _st[_tsidx], _sv[_tsidx]
+                value = [_vs[i] for i in _tsidx]
 
             pvn2resp[pvn] = dict(
                 timestamp=timestamp, value=value, status=status,
