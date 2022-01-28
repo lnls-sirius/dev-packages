@@ -1065,73 +1065,85 @@ class MacReport:
         fig.subplots_adjust(top=0.96, left=0.08, bottom=0.05, right=0.96)
         axs[0].set_title('Raw data', fontsize=12)
 
-        axs[0].plot_date(
+        axs[0].xaxis.axis_date()
+        axs[0].plot(
             datetimes, self._raw_data['Current'], '-',
             color='blue', label='Current')
         axs[0].legend(loc='upper left', fontsize=9)
         axs[0].grid()
 
-        axs[1].plot_date(
+        axs[1].xaxis.axis_date()
+        axs[1].plot(
             datetimes, self._raw_data['UserShiftInitCurr'], '-',
             color='blue', label='User Shifts - Initial Current')
         axs[1].legend(loc='upper left', fontsize=9)
         axs[1].grid()
 
-        axs[2].plot_date(
+        axs[2].xaxis.axis_date()
+        axs[2].plot(
             datetimes, self._raw_data['UserShiftProgmd'], '-',
             color='gold', label='User Shifts - Programmed')
         axs[2].legend(loc='upper left', fontsize=9)
         axs[2].grid()
 
-        axs[3].plot_date(
+        axs[3].xaxis.axis_date()
+        axs[3].plot(
             datetimes, self._raw_data['UserShiftDelivd'], '-',
             color='gold', label='User Shifts - Delivered')
         axs[3].legend(loc='upper left', fontsize=9)
         axs[3].grid()
 
-        axs[4].plot_date(
+        axs[4].xaxis.axis_date()
+        axs[4].plot(
             datetimes, self._raw_data['UserShiftStable'], '-',
             color='gold', label='User Shifts - Delivered Without Distortions')
         axs[4].legend(loc='upper left', fontsize=9)
         axs[4].grid()
 
-        axs[5].plot_date(
+        axs[5].xaxis.axis_date()
+        axs[5].plot(
             datetimes, self._raw_data['UserShiftTotal'], '-',
             color='gold', label='User Shifts - Total')
         axs[5].legend(loc='upper left', fontsize=9)
         axs[5].grid()
 
-        axs[6].plot_date(
+        axs[6].xaxis.axis_date()
+        axs[6].plot(
             datetimes, self._raw_data['Failures']['NoEBeam'], '-',
             color='red', label='Failures - NoEBeam')
         axs[6].legend(loc='upper left', fontsize=9)
         axs[6].grid()
 
-        axs[7].plot_date(
+        axs[7].xaxis.axis_date()
+        axs[7].plot(
             datetimes, self._raw_data['GammaShutter'], '-',
             color='red', label='Failures - Gamma Shutter Closed')
         axs[7].legend(loc='upper left', fontsize=9)
         axs[7].grid()
 
-        axs[8].plot_date(
+        axs[8].xaxis.axis_date()
+        axs[8].plot(
             datetimes, self._raw_data['Failures']['WrongShift'], '-',
             color='red', label='Failures - WrongShift')
         axs[8].legend(loc='upper left', fontsize=9)
         axs[8].grid()
 
-        axs[9].plot_date(
+        axs[9].xaxis.axis_date()
+        axs[9].plot(
             datetimes, self._raw_data['Failures']['SubsystemsNOk'], '-',
             color='red', label='Failures - PS, RF and MPS')
         axs[9].legend(loc='upper left', fontsize=9)
         axs[9].grid()
 
-        axs[10].plot_date(
+        axs[10].xaxis.axis_date()
+        axs[10].plot(
             datetimes, self._raw_data['Distortions']['SOFBLoop'], '-',
             color='orangered', label='Distortions - SOFB Loop Open')
         axs[10].legend(loc='upper left', fontsize=9)
         axs[10].grid()
 
-        axs[11].plot_date(
+        axs[11].xaxis.axis_date()
+        axs[11].plot(
             datetimes, self._raw_data['Shift']['Injection'], '-',
             color='lightsalmon', label='Injection Shifts')
         axs[11].legend(loc='upper left', fontsize=9)
@@ -1145,7 +1157,8 @@ class MacReport:
         for shift, auxdata in shift2color.items():
             ydata = self._raw_data['Shift'][shift]
 
-            axs[12].plot_date(
+            axs[12].xaxis.axis_date()
+            axs[12].plot(
                 datetimes, ydata, '-',
                 color=auxdata[1], label=auxdata[0])
         axs[12].legend(loc='upper left', ncol=4, fontsize=9)
@@ -1157,7 +1170,8 @@ class MacReport:
         for egmode, color in egmodes2color.items():
             ydata = self._raw_data['EgunModes'][egmode]
 
-            axs[13].plot_date(
+            axs[13].xaxis.axis_date()
+            axs[13].plot(
                 datetimes, ydata, '-',
                 color=color, label=egmode)
         axs[13].legend(loc='upper left', ncol=2, fontsize=9)
@@ -1185,8 +1199,9 @@ class MacReport:
 
         fig = _plt.figure()
         axs = _plt.gca()
-        axs.plot_date(datetimes, cum_progmd, '-', label='Programmed')
-        axs.plot_date(datetimes, cum_deliv, '-', label='Delivered')
+        axs.xaxis.axis_date()
+        axs.plot(datetimes, cum_progmd, '-', label='Programmed')
+        axs.plot(datetimes, cum_deliv, '-', label='Delivered')
         axs.grid()
         axs.set_ylabel('Integrated Hours')
         _plt.legend(loc=4)
