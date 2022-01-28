@@ -295,18 +295,23 @@ class ClientArchiver:
 
     def _thread_run_async_event_loop(self, func, *args, **kwargs):
         """Get event loop."""
+        close = False
         try:
             loop = _asyncio.get_event_loop()
         except RuntimeError as error:
             if 'no current event loop' in str(error):
                 loop = _asyncio.new_event_loop()
                 _asyncio.set_event_loop(loop)
+                close = True
             else:
                 raise error
         try:
             self._ret = loop.run_until_complete(func(*args, **kwargs))
         except _asyncio.TimeoutError:
             raise _exceptions.TimeoutError
+
+        if close:
+            loop.close()
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
