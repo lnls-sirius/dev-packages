@@ -584,7 +584,7 @@ class EGun(_Devices):
         is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
         return is_on and is_op
 
-    def set_hv_voltage(self, value=None, nrpts=15, timeout=DEF_TIMEOUT):
+    def set_hv_voltage(self, value=None, duration=5*60, timeout=DEF_TIMEOUT):
         """Set HVPS voltage."""
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
@@ -610,14 +610,16 @@ class EGun(_Devices):
             return self.hvps.wait_voltage(value, self._hv_tol)
 
         # else, do a ramp up
-        xdata = _np.linspace(self.hvps.voltage/value, 1, nrpts)
-        ydata = self._get_ramp(xdata, value, False)
+        nrpts = 15
+        ydata = self._get_ramp(self.hvps.voltage, value, nrpts, False)
+        t_inter = duration / (nrpts-1)
 
         self._update_last_status(
             'Starting HVPS ramp to {0:.3f} kV.'.format(value))
         self.hvps.voltage = ydata[0]
         for volt in ydata[1:]:
             self.hvps.voltage = volt
+            _time.sleep(t_inter)
             self._update_last_status('HV: {:.3f}kV'.format(volt))
             _t0 = _time.time()
             while _time.time() - _t0 < timeout:
@@ -625,19 +627,13 @@ class EGun(_Devices):
                     self._update_last_status(
                         'ERR:MPS or LI Status not ok. Aborted.')
                     return False
-                if self.hvps.voltage - volt < self._hv_tol and \
-                        self.hvps.current < volt * 1e-4:
+                if self.hvps.voltage - volt < self._hv_tol:
                     break
                 _time.sleep(0.1)
             else:
-                if self.hvps.voltage - volt > self._hv_tol:
-                    self._update_last_status(
-                        'ERR:HVPS Voltage is taking too'
-                        ' long to increase. Aborted.')
-                else:
-                    self._update_last_status(
-                        'ERR:HVPS Current is taking too'
-                        ' long to decrease. Aborted.')
+                self._update_last_status(
+                    'ERR:HVPS Voltage is taking too'
+                    ' long to increase. Aborted.')
                 return False
         self._update_last_status('HVPS Ready!')
         return True
@@ -659,7 +655,7 @@ class EGun(_Devices):
             self._filacurr_tol
         return is_on and is_op
 
-    def set_fila_current(self, value=None, nrpts=10, duration=5*60):
+    def set_fila_current(self, value=None):
         """Set filament current."""
         if not self.fila.is_on():
             self._update_last_status('FilaPS is not on.')
@@ -682,36 +678,38 @@ class EGun(_Devices):
             return self.fila.wait_current(value, self._filacurr_tol)
 
         # else, do a ramp up
-        isfast = value < 0.7
-        if isfast:
-            duration = 5
-            nrpts = 10
-        xdata = _np.linspace(0, 1, nrpts)
-        ydata = self._get_ramp(xdata, value, isfast)
-
+        duration = 5*60
+        nrpts = 10
+        ydata = self._get_ramp(self.fila.current, value, nrpts)
         t_inter = duration / (nrpts-1)
 
-        strg = 'fast' if isfast else 'slow'
-        self._update_last_status(
-            'Starting {0:s} filament ramp to {1:.3f}.'.format(strg, value))
+        self._update_last_status(f'Starting filament ramp to {value:.3f}.')
         self.fila.current = ydata[0]
         for i, cur in enumerate(ydata[1:]):
+            self.fila.current = cur
+            _time.sleep(t_inter)
             dur = str(_timedelta(seconds=duration - i*t_inter)).split('.')[0]
             self._update_last_status(
                 'Remaining Time: {0:s}  Curr: {1:.3f} A'.format(dur, cur))
-            _time.sleep(t_inter)
-            self.fila.current = cur
+
+            if not self._check_status_ok():
+                self._update_last_status(
+                    'ERR:MPS or LI Status not ok. Aborted.')
+                return False
         self._update_last_status('FilaPS Ready!')
 
-    def _get_ramp(self, xdata, value, isfast):
-        if isfast:
-            ydata = xdata.copy()
-        else:
-            ydata = 1 - (1-xdata)**3
-            # ydata = 1 - (1-xdata)**2
-            # ydata = _np.sqrt(1 - (1-xdata)**2)
-            # ydata = _np.sin(2*np.pi * xdata/4)
-        return ydata*value
+    def _get_ramp(self, curr_val, goal, nrpts, max_val):
+        xdata = _np.linspace(0, 1, nrpts)
+        ydata = 1 - (1-xdata)**3
+        # ydata = 1 - (1-xdata)**2
+        # ydata = _np.sqrt(1 - (1-xdata)**2)
+        # ydata = _np.sin(2*np.pi * xdata/4)
+
+        ydata *= max_val
+        ydata = ydata[ydata > curr_val]
+        ydata = ydata[ydata < goal]
+        ydata = _np.r_[curr_val, ydata, goal]
+        return ydata
 
     def _check_status_ok(self):
         """Check if interlock signals are ok."""
