@@ -149,7 +149,7 @@ def get_injctrl_propty_database():
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'BucketListStep-SP': {
             'type': 'int', 'value': 15, 'unit': 'buckets',
-            'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT},
+            'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
         'BucketListStep-RB': {
             'type': 'int', 'value': 15, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
