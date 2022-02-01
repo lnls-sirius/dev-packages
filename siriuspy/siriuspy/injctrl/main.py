@@ -39,7 +39,7 @@ class App(_Callback):
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
         self._hvopvolt = EGun.HV_OPVALUE
-        self._target_current = 70.0
+        self._target_current = 100.0
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
         self._bucketlist_step = 15

@@ -128,11 +128,11 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': eghvolt, 'prec': 3,
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
         'TargetCurrent-SP': {
-            'type': 'float', 'value': 70.0, 'unit': 'mA',
+            'type': 'float', 'value': 100.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'TargetCurrent-RB': {
-            'type': 'float', 'value': 70.0, 'unit': 'mA',
+            'type': 'float', 'value': 100.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'BucketListStart-SP': {
