@@ -37,8 +37,12 @@ class EpicsProperty:
         callbacks = {'connection_callback': self._pv_connection_callback,
                      'callback': self._pv_callback}
 
-        self._pv_sp = _epics.PV(self._prefix + self._pvname_sp, **callbacks)
-        self._pv_rb = _epics.PV(self._prefix + self._pvname_rb, **callbacks)
+        self._pv_sp = _epics.PV(
+            self._prefix + ('-' if self._prefix else '') + self._pvname_sp,
+            **callbacks)
+        self._pv_rb = _epics.PV(
+            self._prefix + ('-' if self._prefix else '') + self._pvname_rb,
+            **callbacks)
 
     @property
     def name(self):

@@ -666,10 +666,14 @@ class EpicsOrbit(BaseOrbit):
 
     def _synchronize_bpms(self):
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
         _time.sleep(0.5)
         for bpm in self.bpms:
+            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
 
@@ -878,8 +882,7 @@ class EpicsOrbit(BaseOrbit):
         orbs = _np.array([refx, refy]).T
         try:
             path = _os.path.split(self._csorb.ref_orb_fname)[0]
-            if not _os.path.isdir(path):
-                _os.mkdir(path)
+            _os.makedirs(path, exist_ok=True)
             _np.savetxt(self._csorb.ref_orb_fname, orbs)
         except FileNotFoundError:
             msg = 'WARN: Could not save reference orbit in file.'
@@ -1040,6 +1043,14 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('MTurn' + name + '-Mon', orb.ravel())
             self.run_callbacks(
                 'MTurnIdx' + name + '-Mon', orb[idx, :].ravel())
+            if pln == 'Sum':
+                continue
+            nrb = self._ring_extension * self._csorb.nr_bpms
+            dorb = orb[idx, :].ravel() - self.ref_orbs[pln][:nrb]
+            self.run_callbacks(f'DeltaOrb{pln:s}Avg-Mon', _bn.nanmean(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Std-Mon', _bn.nanstd(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Min-Mon', _bn.nanmin(dorb))
+            self.run_callbacks(f'DeltaOrb{pln:s}Max-Mon', _bn.nanmax(dorb))
 
     def _update_singlepass_orbits(self):
         """."""

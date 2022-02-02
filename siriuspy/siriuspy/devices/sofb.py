@@ -41,8 +41,8 @@ class TLSOFB(_Device):
 
     _properties = (
         'SOFBMode-Sel', 'SOFBMode-Sts',
-        'TrigAcqChan-Sel', 'TrigAcqChan-Sts',
-        'RespMat-SP', 'RespMat-RB',
+        'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
+        'RespMat-SP', 'RespMat-RB', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
@@ -71,6 +71,7 @@ class TLSOFB(_Device):
         'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
+        'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
         )
 
     _default_timeout = 10  # [s]
@@ -116,12 +117,17 @@ class TLSOFB(_Device):
     @property
     def respmat(self):
         """."""
-        return self['RespMat-RB']
+        return self['RespMat-RB'].reshape(self.data.nr_bpms*2, -1)
 
     @respmat.setter
     def respmat(self, mat):
         """."""
-        self['RespMat-SP'] = _np.array(mat)
+        self['RespMat-SP'] = _np.array(mat).ravel()
+
+    @property
+    def invrespmat(self):
+        """."""
+        return self['InvRespMat-Mon'].reshape(-1, self.data.nr_bpms*2)
 
     @property
     def trigchannel_str(self):
@@ -325,6 +331,11 @@ class TLSOFB(_Device):
         self['MinSingValue-SP'] = value
 
     @property
+    def trigacq(self):
+        """."""
+        return self['TrigAcqCtrl-Sts']
+
+    @property
     def trigsamplepre(self):
         """."""
         return self['TrigNrSamplesPre-RB']
@@ -389,6 +400,61 @@ class TLSOFB(_Device):
         self['MeasRespMat-Cmd'] = 2
         return True
 
+    def cmd_change_opmode_to_multiturn(self, timeout=10):
+        """."""
+        mode = self.data.SOFBMode.MultiTurn
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(1)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_change_opmode_to_sloworb(self, timeout=10):
+        """."""
+        mode = self.data.SOFBMode.SlowOrb
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_start(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Start'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Start, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_stop(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Stop'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Stop, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_abort(self, timeout=10):
+        """."""
+        self['TrigAcqCtrl-Sel'] = 'Abort'
+        ret = self._wait(
+            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Abort, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_trigacq_config(self, timeout=10):
+        """."""
+        self['TrigAcqConfig-Cmd'] = 1
+        return self.wait_orb_status_ok(timeout=timeout)
+
     @property
     def applydeltakick_mon(self):
         """."""
@@ -437,8 +503,10 @@ class TLSOFB(_Device):
         for i in range(nr_iters):
             resx = self.orbx - self.refx
             resy = self.orby - self.refy
-            resx = _np.linalg.norm(resx[self.bpmxenbl])
-            resy = _np.linalg.norm(resy[self.bpmyenbl])
+            resx = resx[self.bpmxenbl.nonzero()[0]]
+            resy = resy[self.bpmyenbl.nonzero()[0]]
+            resx = _np.sqrt(_np.sum(resx*resx)/resx.size)
+            resy = _np.sqrt(_np.sum(resy*resy)/resy.size)
             if resx < residue and resy < residue:
                 break
             self.cmd_calccorr()
@@ -452,7 +520,7 @@ class TLSOFB(_Device):
 
     def cmd_turn_on_autocorr(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.autocorrsts == self.data.LoopState.Closed:
             return True
         self['LoopState-Sel'] = self.data.LoopState.Closed
@@ -461,7 +529,7 @@ class TLSOFB(_Device):
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.autocorrsts == self.data.LoopState.Open:
             return True
         self['LoopState-Sel'] = self.data.LoopState.Open
@@ -470,14 +538,14 @@ class TLSOFB(_Device):
 
     def wait_buffer(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         return self._wait(
             'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
 
     def wait_apply_delta_kick(self, timeout=None):
         """."""
         def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
-        def_timeout = max(SOFB._default_timeout_kick_apply, def_timeout)
+        def_timeout = max(self._default_timeout_kick_apply, def_timeout)
         timeout = timeout or def_timeout
         return self._wait(
             'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
@@ -485,10 +553,14 @@ class TLSOFB(_Device):
 
     def wait_respm_meas(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout_respm
+        timeout = timeout or self._default_timeout_respm
         return self._wait(
             'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
             timeout=timeout, comp='ne')
+
+    def wait_orb_status_ok(self, timeout=10):
+        """."""
+        return self._wait('OrbStatus-Mon', 0, timeout=timeout)
 
 
 class BOSOFB(TLSOFB):
@@ -737,7 +809,7 @@ class SISOFB(BOSOFB):
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.drivests == self.data.DriveState.Closed:
             return True
         self['DriveState-Sel'] = self.data.DriveState.Closed
@@ -746,16 +818,15 @@ class SISOFB(BOSOFB):
 
     def cmd_turn_off_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout
+        timeout = timeout or self._default_timeout
         if self.drivests == self.data.DriveState.Open:
             return True
         self['DriveState-Sel'] = self.data.DriveState.Open
-        return self._wait(
-            'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
+        return self.wait_drive(timeout=timeout)
 
     def wait_drive(self, timeout=None):
         """."""
-        timeout = timeout or SOFB._default_timeout_respm
+        timeout = timeout or self._default_timeout_respm
         return self._wait(
             'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
 
