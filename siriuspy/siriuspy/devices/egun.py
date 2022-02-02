@@ -580,6 +580,16 @@ class EGun(_Devices):
         self._hv_opval = value
 
     @property
+    def high_voltage_leakcurr(self):
+        """High voltage leakage current value."""
+        return self._hv_leakcurr
+
+    @high_voltage_leakcurr.setter
+    def high_voltage_leakcurr(self, value):
+        self._hv_leakcurr = value
+        self.hvps.current = value
+
+    @property
     def is_hv_on(self):
         """Indicate whether high voltage is on and in operational value."""
         is_on = self.hvps.is_on()
