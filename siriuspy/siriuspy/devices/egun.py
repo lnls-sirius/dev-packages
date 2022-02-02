@@ -428,8 +428,14 @@ class EGun(_Devices):
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
     HV_LEAKCURR_OPVALUE = 0.015  # [mA]
+    HV_MAXVALUE = 90.0  # [V]
+    HV_RAMP_NRPTS = 15
+    HV_RAMP_DURATION = 5*60  # [s]
     FILACURR_OPVALUE = 1.34  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
+    FILACURR_MAXVALUE = 1.40  # [A]
+    FILACURR_RAMP_NRPTS = 10
+    FILACURR_RAMP_DURATION = 5*60  # [s]
 
     def __init__(self):
         """Init."""
@@ -596,7 +602,7 @@ class EGun(_Devices):
         is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
         return is_on and is_op
 
-    def set_hv_voltage(self, value=None, duration=5*60, timeout=DEF_TIMEOUT):
+    def set_hv_voltage(self, value=None, duration=None, timeout=DEF_TIMEOUT):
         """Set HVPS voltage."""
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
@@ -628,8 +634,10 @@ class EGun(_Devices):
             return self.hvps.wait_voltage(value, self._hv_tol)
 
         # else, do a ramp up
-        nrpts = 15
-        ydata = self._get_ramp(self.hvps.voltage, value, nrpts, False)
+        duration = duration if duration is not None else EGun.HV_RAMP_DURATION
+        nrpts = EGun.HV_RAMP_NRPTS
+        max_value = EGun.HV_MAXVALUE
+        ydata = self._get_ramp(self.hvps.voltage, value, nrpts, max_value)
         t_inter = duration / (nrpts-1)
 
         self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
@@ -699,9 +707,10 @@ class EGun(_Devices):
             return self.fila.wait_current(value, self._filacurr_tol)
 
         # else, do a ramp up
-        duration = 5*60
-        nrpts = 10
-        ydata = self._get_ramp(self.fila.current, value, nrpts)
+        duration = EGun.FILACURR_RAMP_DURATION
+        nrpts = EGun.FILACURR_RAMP_NRPTS
+        max_value = EGun.FILACURR_MAXVALUE
+        ydata = self._get_ramp(self.fila.current, value, nrpts, max_value)
         t_inter = duration / (nrpts-1)
         total_steps_duration = (len(ydata)-1)*t_inter
 
