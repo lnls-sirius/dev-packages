@@ -427,6 +427,7 @@ class EGun(_Devices):
     BIAS_TOLERANCE = 1.0  # [V]
     HV_OPVALUE = 90.0  # [V]
     HV_TOLERANCE = 1.0  # [V]
+    HV_LEAKCURR_OPVALUE = 0.015  # [mA]
     FILACURR_OPVALUE = 1.34  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
 
@@ -460,6 +461,7 @@ class EGun(_Devices):
         self._bias_tol = EGun.BIAS_TOLERANCE
         self._hv_opval = EGun.HV_OPVALUE
         self._hv_tol = EGun.HV_TOLERANCE
+        self._hv_leakcurr = EGun.HV_LEAKCURR_OPVALUE
         self._filacurr_opval = EGun.FILACURR_OPVALUE
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
         self._last_status = ''
@@ -604,7 +606,12 @@ class EGun(_Devices):
             self.hvps.voltage = value
             return True
 
-        # elif value is lower, do only one setpoint
+        # before voltage setpoints, set leakage current to suitable value
+        self._update_last_status(
+            f'Setting leakage current to {self._hv_leakcurr:.3f}mA.')
+        self.hvps.current = self._hv_leakcurr
+
+        # if value is lower, do only one setpoint
         if value < self.hvps.voltage:
             self._update_last_status(f'Setting voltage to {value:.3f}kV.')
             self.hvps.voltage = value
