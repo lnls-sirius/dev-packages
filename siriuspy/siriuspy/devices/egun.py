@@ -590,7 +590,7 @@ class EGun(_Devices):
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
         if not self.hvps.is_on():
-            self._update_last_status('HVPS voltage is not on.')
+            self._update_last_status('ERR:HVPS voltage is not on.')
             return False
         if value is None:
             value = self._hv_opval
@@ -600,12 +600,13 @@ class EGun(_Devices):
         cond &= abs(self.hvps['voltoutsoft'] - value) < 1e-4
         if cond:
             self._update_last_status(
-                'HVPS Voltage is already at {0:.3f}kV.'.format(value))
+                f'HVPS Voltage is already at {value:.3f}kV.')
             self.hvps.voltage = value
             return True
 
         # elif value is lower, do only one setpoint
         if value < self.hvps.voltage:
+            self._update_last_status(f'Setting voltage to {value:.3f}kV.')
             self.hvps.voltage = value
             return self.hvps.wait_voltage(value, self._hv_tol)
 
@@ -614,13 +615,12 @@ class EGun(_Devices):
         ydata = self._get_ramp(self.hvps.voltage, value, nrpts, False)
         t_inter = duration / (nrpts-1)
 
-        self._update_last_status(
-            'Starting HVPS ramp to {0:.3f} kV.'.format(value))
+        self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
         self.hvps.voltage = ydata[0]
         for volt in ydata[1:]:
             self.hvps.voltage = volt
+            self._update_last_status(f'Sent HV: {volt:.3f}kV...')
             _time.sleep(t_inter)
-            self._update_last_status('HV: {:.3f}kV'.format(volt))
             _t0 = _time.time()
             while _time.time() - _t0 < timeout:
                 if not self._check_status_ok():
@@ -657,8 +657,11 @@ class EGun(_Devices):
 
     def set_fila_current(self, value=None):
         """Set filament current."""
+        if not self._check_status_ok():
+            self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
+            return False
         if not self.fila.is_on():
-            self._update_last_status('FilaPS is not on.')
+            self._update_last_status('ERR:FilaPS is not on.')
             return False
         if value is None:
             value = self._filacurr_opval
@@ -674,6 +677,7 @@ class EGun(_Devices):
 
         # elif value is lower, do only one setpoint
         if value < self.fila.current:
+            self._update_last_status(f'Setting current to {value:.3f}A.')
             self.fila.current = value
             return self.fila.wait_current(value, self._filacurr_tol)
 
@@ -682,15 +686,17 @@ class EGun(_Devices):
         nrpts = 10
         ydata = self._get_ramp(self.fila.current, value, nrpts)
         t_inter = duration / (nrpts-1)
+        total_steps_duration = (len(ydata)-1)*t_inter
 
         self._update_last_status(f'Starting filament ramp to {value:.3f}.')
         self.fila.current = ydata[0]
         for i, cur in enumerate(ydata[1:]):
             self.fila.current = cur
-            _time.sleep(t_inter)
-            dur = str(_timedelta(seconds=duration - i*t_inter)).split('.')[0]
+            dur = str(_timedelta(
+                seconds=total_steps_duration - i*t_inter)).split('.')[0]
             self._update_last_status(
                 'Remaining Time: {0:s}  Curr: {1:.3f} A'.format(dur, cur))
+            _time.sleep(t_inter)
 
             if not self._check_status_ok():
                 self._update_last_status(
