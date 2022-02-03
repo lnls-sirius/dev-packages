@@ -425,10 +425,10 @@ class EGun(_Devices):
     BIAS_MULTI_BUNCH = -46.0  # [V]
     BIAS_SINGLE_BUNCH = -80.0  # [V]
     BIAS_TOLERANCE = 1.0  # [V]
-    HV_OPVALUE = 90.0  # [V]
-    HV_TOLERANCE = 1.0  # [V]
+    HV_OPVALUE = 90.0  # [kV]
+    HV_TOLERANCE = 1.0  # [kV]
     HV_LEAKCURR_OPVALUE = 0.015  # [mA]
-    HV_MAXVALUE = 90.0  # [V]
+    HV_MAXVALUE = 90.0  # [kV]
     HV_RAMP_NRPTS = 15
     HV_RAMP_DURATION = 5*60  # [s]
     FILACURR_OPVALUE = 1.34  # [A]
