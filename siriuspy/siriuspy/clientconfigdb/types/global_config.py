@@ -1040,10 +1040,10 @@ _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:RmpTs2-SP', 0, 0.0],  # ms
     ['BR-RF-DLLRF-01:RmpTs3-SP', 0, 0.0],  # ms
     ['BR-RF-DLLRF-01:RmpTs4-SP', 0, 0.0],  # ms
-    ['BR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:RmpPhsTop-SP', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # mV
     ]
 
 
