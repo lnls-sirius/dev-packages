@@ -3,7 +3,8 @@ from copy import deepcopy as _dcopy
 
 # NOTE: absolute imports are necessary here due to how
 # CONFIG_TYPES in __init__.py is built.
-from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf
+from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf, \
+    _pvs_li_llrf
 
 
 def get_dict():
@@ -21,127 +22,6 @@ def get_dict():
 # the list of PVs should be processed in the same order they are stored
 # in the configuration. The second numeric parameter in the pair is the
 # delay [s] the client should wait before setting the next PV.
-
-_pvs_li_llrf = [
-    ['LA-RF:LLRF:BUN1:SET_STREAM', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH1_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH2_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH7_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH8_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_AMP', 0.0, 0.0],  # [%]
-    ['LA-RF:LLRF:BUN1:SET_PHASE', 0.0, 0.0],  # [deg]
-    ['LA-RF:LLRF:BUN1:SET_KP', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_KI', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH1_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH2_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH7_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH8_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_FBLOOP_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_FBLOOP_AMP_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH1_ADT', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH2_ADT', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH7_ADT', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH8_ADT', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_VM_ADT', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH1_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH2_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH7_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_CH8_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_PID_KP', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_PID_KI', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_STREAM', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH1_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH2_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH3_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH4_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH5_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH6_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH7_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH8_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH9_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_AMP', 0.0, 0.0],  # [%]
-    ['LA-RF:LLRF:KLY1:SET_PHASE', 0.0, 0.0],  # [deg]
-    ['LA-RF:LLRF:KLY1:SET_REFL_POWER_LIMIT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_KP', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_KI', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_FBLOOP_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_FBLOOP_AMP_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH1_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH2_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH3_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH4_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH5_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH6_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH7_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH8_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH9_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH1_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH2_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH3_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH4_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH5_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH6_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH7_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH8_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_VM_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH1_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH2_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH3_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH4_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH5_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH6_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH7_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH8_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_CH9_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_SHIF_MOTOR_ANGLE', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_STREAM', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH1_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH2_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH3_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH4_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH5_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH6_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH7_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH8_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH9_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_AMP', 0.0, 0.0],  # [%]
-    ['LA-RF:LLRF:KLY2:SET_PHASE', 0.0, 0.0],  # [deg]
-    ['LA-RF:LLRF:KLY2:SET_REFL_POWER_LIMIT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_KP', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_KI', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_FBLOOP_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_FBLOOP_AMP_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH1_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH2_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH3_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH4_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH5_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH6_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH7_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH8_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH1_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH2_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH3_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH4_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH5_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH6_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH7_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH8_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_VM_ADT', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH1_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH2_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH3_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH4_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH5_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH6_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH7_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH8_ATT', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_CH9_ATT', 0.0, 0.0],
-    ]
-
 
 _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:ILK:REVSSA1:S', 0.0, 0.0],  # Interlock disable
@@ -254,7 +134,7 @@ _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:TUNE:FILT:S', 0, 0.0],
     ['BR-RF-DLLRF-01:TUNE:TRIG:S', 0, 0.0],
     ['BR-RF-DLLRF-01:TUNE:TOPRAMP:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FF:POS:S', 0, 0.0], # Field Flatness loop config
+    ['BR-RF-DLLRF-01:FF:POS:S', 0, 0.0],  # Field Flatness loop config
     ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # [%]
     ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
@@ -572,7 +452,7 @@ _pvs_si_llrf = [
 
 
 _pvs_si_rfssa = [
-    ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr 1
+    ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr1
     ['RA-ToSIA01:OffsetConfig:UpperReflectedPower', 0, 0.0],
     ['RA-ToSIA01:OffsetConfig:LowerIncidentPower', 0, 0.0],
     ['RA-ToSIA01:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -594,7 +474,7 @@ _pvs_si_rfssa = [
     ['RA-ToSIA01:AlarmConfig:CurrentLimHigh', 0, 0.0],
     ['RA-ToSIA01:AlarmConfig:CurrentLimLow', 0, 0.0],
     ['RA-ToSIA01:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr 2
+    ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr2
     ['RA-ToSIA02:OffsetConfig:UpperReflectedPower', 0, 0.0],
     ['RA-ToSIA02:OffsetConfig:LowerIncidentPower', 0, 0.0],
     ['RA-ToSIA02:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -771,7 +651,7 @@ _pvs_si_rfcal = [
 
 _template_dict = {
     'pvs':
-    _pvs_as_rf + 
+    _pvs_as_rf +
     _pvs_li_llrf + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
     _pvs_si_llrf + _pvs_si_rfssa + _pvs_si_rfcav + _pvs_si_rfcal
     }
