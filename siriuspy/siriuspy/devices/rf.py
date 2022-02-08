@@ -752,6 +752,7 @@ class BORFCavMonitor(_DeviceNC):
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
         'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
+        'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
         )
 
     def __init__(self):
@@ -844,6 +845,16 @@ class BORFCavMonitor(_DeviceNC):
     def temp_cell5(self):
         """."""
         return self['Cylin5T-Mon']
+
+    @property
+    def gap_voltage_bottom(self):
+        """."""
+        return self['RmpAmpVCavBot-Mon']
+
+    @property
+    def gap_voltage_top(self):
+        """."""
+        return self['RmpAmpVCavTop-Mon']
 
 
 class SIRFCavMonitor(_DeviceNC):
