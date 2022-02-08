@@ -853,12 +853,12 @@ class BORFCavMonitor(_DeviceNC):
 
     @property
     def gap_voltage_bottom(self):
-        """."""
+        """Gap Voltage in [V]."""
         return self['RmpAmpVCavBot-Mon']
 
     @property
     def gap_voltage_top(self):
-        """."""
+        """Gap Voltage in [V]."""
         return self['RmpAmpVCavTop-Mon']
 
 
