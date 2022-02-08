@@ -1,6 +1,6 @@
 PACKAGE:=$(shell basename $(shell pwd))
-PREFIX=
-PIP=pip
+PREFIX ?=
+PIP ?= pip
 ifeq ($(CONDA_PREFIX),)
 	PREFIX=sudo -H
 	PIP=pip-sirius
