@@ -6,7 +6,7 @@ from threading import Thread
 import logging as _log
 
 from .device import Devices as _Devices, DeviceNC as _DeviceNC
-from .lillrf import LILLRF
+from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
 from .timing import EVG, Event, Trigger
@@ -552,8 +552,8 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         # create devices
         devices = list()
-        for dev in LILLRF.DEVICES.ALL:
-            devices.append(LILLRF(dev))
+        for dev in DevLILLRF.DEVICES.ALL:
+            devices.append(DevLILLRF(dev))
         devices = tuple(devices)
 
         self._on_values = dict()
