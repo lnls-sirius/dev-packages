@@ -14,7 +14,7 @@ from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
     LILLRFStandbyHandler
-from .lillrf import LILLRF
+from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
 from .orbit_interlock import BPMInterlock
