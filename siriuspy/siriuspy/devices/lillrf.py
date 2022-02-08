@@ -7,8 +7,8 @@ from .device import DeviceNC as _DeviceNC
 from ..csdev import Const as _Const
 
 
-class LILLRF(_DeviceNC):
-    """LI LLRF."""
+class DevLILLRF(_DeviceNC):
+    """Linac-LLRF single device (SHB, Klystron1 or Klystron2)."""
 
     DEF_TIMEOUT = 10  # [s]
 
@@ -31,11 +31,11 @@ class LILLRF(_DeviceNC):
     def __init__(self, devname):
         """."""
         # check if device exists
-        if devname not in LILLRF.DEVICES.ALL:
+        if devname not in DevLILLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=LILLRF._properties)
+        super().__init__(devname, properties=DevLILLRF._properties)
 
     @property
     def amplitude(self):
@@ -48,12 +48,12 @@ class LILLRF(_DeviceNC):
 
     @property
     def phase(self):
-        """Phase."""
+        """Phase in [deg]."""
         return self['GET_PHASE']
 
     @phase.setter
     def phase(self, value):
-        self['SET_PHASE'] = value
+        self['SET_PHASE'] = self._wrap_phase(value)
 
     @property
     def integral_enable(self):
@@ -172,3 +172,8 @@ class LILLRF(_DeviceNC):
                     'Set LLRF property (phase or amplitude)')
         print('timed out waiting LLRF.')
         return False
+
+    @staticmethod
+    def _wrap_phase(phase):
+        """Phase must be in [-180, +180] interval."""
+        return (phase + 180) % 360 - 180
