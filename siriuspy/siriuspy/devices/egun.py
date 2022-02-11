@@ -430,12 +430,12 @@ class EGun(_Devices):
     HV_LEAKCURR_OPVALUE = 0.015  # [mA]
     HV_MAXVALUE = 90.0  # [kV]
     HV_RAMP_NRPTS = 15
-    HV_RAMP_DURATION = 5*60  # [s]
-    FILACURR_OPVALUE = 1.34  # [A]
+    HV_RAMP_DURATION = 70  # [s]
+    FILACURR_OPVALUE = 1.38  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
-    FILACURR_MAXVALUE = 1.40  # [A]
+    FILACURR_MAXVALUE = 1.42  # [A]
     FILACURR_RAMP_NRPTS = 10
-    FILACURR_RAMP_DURATION = 5*60  # [s]
+    FILACURR_RAMP_DURATION = 7*60  # [s]
 
     def __init__(self):
         """Init."""
@@ -624,27 +624,32 @@ class EGun(_Devices):
 
         # before voltage setpoints, set leakage current to suitable value
         self._update_last_status(
-            f'Setting leakage current to {self._hv_leakcurr:.3f}mA.')
+            f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
         self.hvps.current = self._hv_leakcurr
 
         # if value is lower, do only one setpoint
         if value < self.hvps.voltage:
             self._update_last_status(f'Setting voltage to {value:.3f}kV.')
             self.hvps.voltage = value
-            return self.hvps.wait_voltage(value, self._hv_tol)
+            return self.hvps.wait_voltage(
+                value, self._hv_tol, timeout=3*timeout)
 
         # else, do a ramp up
         duration = duration if duration is not None else EGun.HV_RAMP_DURATION
         nrpts = EGun.HV_RAMP_NRPTS
         max_value = EGun.HV_MAXVALUE
-        ydata = self._get_ramp(self.hvps.voltage, value, nrpts, max_value)
+        ydata = self._get_ramp(
+            self.hvps.voltage, value, nrpts, max_value)
         t_inter = duration / (nrpts-1)
 
         self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
-        self.hvps.voltage = ydata[0]
-        for volt in ydata[1:]:
+        self._update_last_status(
+            'This process will take approximatelly'
+            f' {ydata.size*t_inter:.1f}s.')
+        for i, volt in enumerate(ydata[1:]):
             self.hvps.voltage = volt
-            self._update_last_status(f'Sent HV: {volt:.3f}kV...')
+            self._update_last_status(
+                f'{i+1:02d}/{len(ydata[1:]):02d} -> HV = {volt:.3f}kV')
             _time.sleep(t_inter)
             _t0 = _time.time()
             while _time.time() - _t0 < timeout:
@@ -715,14 +720,14 @@ class EGun(_Devices):
         t_inter = duration / (nrpts-1)
         total_steps_duration = (len(ydata)-1)*t_inter
 
-        self._update_last_status(f'Starting filament ramp to {value:.3f}.')
-        self.fila.current = ydata[0]
+        self._update_last_status(
+            f'Starting filament ramp to {value:.3f} A.')
         for i, cur in enumerate(ydata[1:]):
             self.fila.current = cur
-            dur = str(_timedelta(
-                seconds=total_steps_duration - i*t_inter)).split('.')[0]
+            dur = total_steps_duration - i*t_inter
             self._update_last_status(
-                'Remaining Time: {0:s}  Curr: {1:.3f} A'.format(dur, cur))
+                f'{i+1:02d}/{len(ydata[1:]):02d} -> '
+                f'Rem. Time: {dur:03.0f}s  Curr: {cur:.3f} A')
             _time.sleep(t_inter)
 
             if not self._check_status_ok():
@@ -731,10 +736,9 @@ class EGun(_Devices):
                 return False
         self._update_last_status('FilaPS Ready!')
 
-    def _get_ramp(self, curr_val, goal, nrpts, max_val):
+    def _get_ramp(self, curr_val, goal, nrpts, max_val, power=2):
         xdata = _np.linspace(0, 1, nrpts)
-        ydata = 1 - (1-xdata)**3
-        # ydata = 1 - (1-xdata)**2
+        ydata = 1 - (1-xdata)**power
         # ydata = _np.sqrt(1 - (1-xdata)**2)
         # ydata = _np.sin(2*np.pi * xdata/4)
 
