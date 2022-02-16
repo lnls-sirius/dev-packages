@@ -615,7 +615,7 @@ class ASLLRF(_DeviceNC):
 
     @phase_top.setter
     def phase_top(self, value):
-        self['RmpPhsTop-SP'] = value
+        self['RmpPhsTop-SP'] = self._wrap_phase(value)
 
     @property
     def phase_bottom(self):
@@ -624,7 +624,7 @@ class ASLLRF(_DeviceNC):
 
     @phase_bottom.setter
     def phase_bottom(self, value):
-        self['RmpPhsBot-SP'] = value
+        self['RmpPhsBot-SP'] = self._wrap_phase(value)
 
     @property
     def phase_mon(self):
@@ -638,7 +638,7 @@ class ASLLRF(_DeviceNC):
 
     @phase.setter
     def phase(self, value):
-        self['PL:REF:S'] = value
+        self['PL:REF:S'] = self._wrap_phase(value)
 
     @property
     def voltage_mon(self):
@@ -738,6 +738,11 @@ class ASLLRF(_DeviceNC):
         """Return the amplitude error in [mV]."""
         return self['FF:ERR']
 
+    @staticmethod
+    def _wrap_phase(phase):
+        """Phase must be in [-180, +180] interval."""
+        return (phase + 180) % 360 - 180
+
 
 class BORFCavMonitor(_DeviceNC):
     """."""
@@ -752,6 +757,7 @@ class BORFCavMonitor(_DeviceNC):
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
         'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
+        'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
         )
 
     def __init__(self):
@@ -844,6 +850,16 @@ class BORFCavMonitor(_DeviceNC):
     def temp_cell5(self):
         """."""
         return self['Cylin5T-Mon']
+
+    @property
+    def gap_voltage_bottom(self):
+        """Gap Voltage in [V]."""
+        return self['RmpAmpVCavBot-Mon']
+
+    @property
+    def gap_voltage_top(self):
+        """Gap Voltage in [V]."""
+        return self['RmpAmpVCavTop-Mon']
 
 
 class SIRFCavMonitor(_DeviceNC):
