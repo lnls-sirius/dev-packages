@@ -23,7 +23,7 @@ BUMP_MATRICES = {
         [1.25316, 1.54265, 0, 0],
         [0, 0, 0.90631, -0.57170],
         [0, 0, 0.69528, 1.80929]]),
-    'B2': _np.array([  # NOTE: only for first B2 in sector
+    'C2': _np.array([  # NOTE: first B2 in sector, subsec C2
         [1.23679, -0.43310, 0, 0],
         [0.75773, 1.19247, 0, 0],
         [0, 0, 0.90320, -0.50532],
@@ -32,7 +32,7 @@ BUMP_MATRICES = {
 
 
 def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
-    """Calculate bumps on SA, SB, SP and BC subsections.
+    """Calculate bumps on SA, SB, SP, BC and C2 subsections.
 
     Inputs:
         agx, agy, psx, psy - are the desired angles and positions at the
@@ -48,7 +48,7 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
         orbx, orby - The orbits with the bump applied to them
     """
     # These are the indices of the BPMs inside one section of the ring:
-    bpmidcs = {'BC': 4, 'SA': 0, 'SB': 0, 'SP': 0, 'B2': 3}
+    bpmidcs = {'BC': 4, 'SA': 0, 'SB': 0, 'SP': 0, 'C2': 3}
 
     # get section and subsection
     sec = int(subsec[:2])
