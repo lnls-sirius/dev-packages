@@ -10,20 +10,25 @@ def _get_matrix_ss_section(leng):
         [0, 0, 1, leng/2]])
 
 
-# NOTE: these matrices translates the desired angle and positions of
-# the bump to the BPM orbit distortions needed to get them.
+# NOTE: these matrices translate desired angles and positions of
+# the bump at specific longitudinal positions to associated BPM orbit
+# distortions. Usually these bumps are specified at source points, dipoles
+# or insertion devices, and the BPMs adjacent to these source poiints.
+#
+# these matrices are calculated using the funcntion 'calc_matrices'
+# with corresponding modules in apsuite.orbcorr subpackage.
 BUMP_MATRICES = {
     'SA': _get_matrix_ss_section(7.0358),
     'SB': _get_matrix_ss_section(6.1758),
     'SP': _get_matrix_ss_section(6.1758),
     # The BC matrix was calculated using the storage ring model.
-    # The script used calculate it is
     'BC': _np.array([
         [1.11371, -0.61624, 0, 0],
         [1.25316, 1.54265, 0, 0],
         [0, 0, 0.90631, -0.57170],
         [0, 0, 0.69528, 1.80929]]),
-    'C2': _np.array([  # NOTE: first B2 in sector, subsec C2
+    # The B2 matrix was calculated using the storage ring model.
+    'C2': _np.array([  # NOTE: first B2 in sector, that is, in subsec C2.
         [1.23679, -0.43310, 0, 0],
         [0.75773, 1.19247, 0, 0],
         [0, 0, 0.90320, -0.50532],
@@ -36,8 +41,8 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
 
     Inputs:
         agx, agy, psx, psy - are the desired angles and positions at the
-            center of the straight section/center of BC. The must have the same
-            unit as orbx and orby.
+            center of the straight section/center of BC/source point at B2.
+            The must have the same unit as orbx and orby.
         subsec - is a 4 character string with the name of the subsection where
             the bump is to be made. Examples: '01SA', '10SA', '13BC', '02SB'
         orbx, orby - the 160 long vector related to the storage ring orbit.
