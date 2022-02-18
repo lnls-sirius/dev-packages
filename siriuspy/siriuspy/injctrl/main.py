@@ -971,7 +971,7 @@ class App(_Callback):
                 volt = self._sglbunbiasvolt \
                     if self._type_sel == _Const.InjTypeSel.SingleBunch \
                     else self._multbunbiasvolt
-                val = self._egun_dev.bias.voltage - volt > \
+                val = abs(self._egun_dev.bias.voltage - volt) > \
                     self._egun_dev.bias_voltage_tol
                 value = _updt_bit(value, 2, val)
 
