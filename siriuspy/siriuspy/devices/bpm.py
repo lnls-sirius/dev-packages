@@ -779,6 +779,9 @@ class BPM(_Device):
 class FamBPMs(_Devices):
     """."""
 
+    TIMEOUT = 10
+    RFFEATT_MAX = 30
+
     class DEVICES:
         """."""
         SI = 'SI-Fam:DI-BPM'
@@ -809,6 +812,26 @@ class FamBPMs(_Devices):
                 pvo = bpm.pv_object(propty)
                 self._mturn_flags[pvo.pvname] = _Flag()
                 pvo.add_callback(self._mturn_set_flag)
+
+    def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
+        """."""
+        for bpm in self:
+            bpm.rffe_att = value
+
+        mstr = ''
+        okall = True
+        t0 = _time.time()
+        for bpm in self:
+            tout = timeout - (_time.time() - t0)
+            if not bpm._wait('RFFEAtt-RB', value, timeout=tout):
+                okall = False
+                mstr += (
+                    f'\n{bpm.devname:<20s}: ' +
+                    f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
+
+        print('RFFE attenuation set confirmed in all BPMs', end='')
+        print(', except:' + mstr if mstr else '.')
+        return okall
 
     def get_slow_orbit(self):
         """Get slow orbit vectors.
