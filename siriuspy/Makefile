@@ -7,7 +7,7 @@ ifeq ($(CONDA_PREFIX),)
 endif
 
 clean:
-	git clean -fdX
+	$(PREFIX) git clean -fdX
 
 install: clean uninstall
 	$(PREFIX) $(PIP) install --no-deps ./
