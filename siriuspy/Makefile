@@ -6,16 +6,14 @@ ifeq ($(CONDA_PREFIX),)
 	PIP=pip-sirius
 endif
 
-clean:
-	$(PREFIX) git clean -fdX
-
-install: clean uninstall
+install: uninstall
 	$(PREFIX) $(PIP) install --no-deps ./
+	$(PREFIX) git clean -fdX
 
 uninstall:
 	$(PREFIX) $(PIP) uninstall -y $(PACKAGE)
 
-develop-install: clean develop-uninstall
+develop-install: develop-uninstall
 	$(PIP) install --no-deps -e ./
 
 # known issue: It will fail to uninstall scripts
@@ -26,7 +24,7 @@ develop-uninstall:
 test:
 	pytest tests/
 
-dist: clean ## Build setuptools dist
+dist: ## Build setuptools dist
 	python setup.py sdist bdist_wheel
 
 distupload: ## Upload package dist to PyPi
