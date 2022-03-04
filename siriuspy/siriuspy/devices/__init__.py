@@ -17,7 +17,7 @@ from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
 from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
-from .orbit_interlock import BPMInterlock
+from .orbit_interlock import BPMOrbitIntlk
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
 from .pwrsupply import PowerSupply, PowerSupplyPU
