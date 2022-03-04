@@ -6,8 +6,8 @@ from .device import Device as _Device
 from ..search import BPMSearch as _BPMSearch
 
 
-class BPMInterlock(_Device):
-    """BPM Device"""
+class BPMOrbitIntlk(_Device):
+    """This device group the orbit interlock  PVs from one BPM."""
 
     _properties = (
         # ==============================================================
@@ -35,7 +35,8 @@ class BPMInterlock(_Device):
         # +++++++++++++++++++++++++++++++++++++
         # ***************************************************************
         # Condição para interlock de translação:
-        #   (posição BPM downstream + posição BPM upstream)/2 > threshold
+        #   thres_min > (pos BPM downstream + pos BPM upstream)/2 or
+        #   thres_max < (pos BPM downstream + pos BPM upstream)/2
         # BPMs são agrupados 2 a 2 seguindo a ordem do feixe:
         # - M1/M2
         # - C1-1/C1-2
@@ -56,9 +57,10 @@ class BPMInterlock(_Device):
         # Status Instantâneo:
         #   XouY mascarado pelo "Enable"
         'IntlkTransSmaller-Mon', 'IntlkTransBigger-Mon',
+        # the ones bellow are not masked by "Enable"
+        'IntlkTransSmallerAny-Mon', 'IntlkTransBiggerAny-Mon',  # X ou Y
         'IntlkTransSmallerX-Mon', 'IntlkTransBiggerX-Mon',  # X
         'IntlkTransSmallerY-Mon', 'IntlkTransBiggerY-Mon',  # Y
-        'IntlkTransSmallerAny-Mon', 'IntlkTransBiggerAny-Mon',  # X ou Y
         # limpo apenas acionando-se a PV "Clr" correspondente
         'IntlkTransSmallerLtc-Mon', 'IntlkTransBiggerLtc-Mon',
         'IntlkTransSmallerLtcX-Mon', 'IntlkTransBiggerLtcX-Mon',
@@ -68,7 +70,8 @@ class BPMInterlock(_Device):
         # +++++++++++++++++++++++++++++
         # *************************************************************
         # Condição para interlock de ângulo:
-        #   (posição BPM downstream - posição BPM upstream) > threshold
+        #   thres_min > (posição BPM downstream - posição BPM upstream) or
+        #   thres_max < (posição BPM downstream - posição BPM upstream)
         # BPMs são agrupados 2 a 2 seguindo a ordem do feixe:
         # - M1/M2
         # - C1-1/C1-2
@@ -81,7 +84,7 @@ class BPMInterlock(_Device):
         'IntlkAngEn-Sel', 'IntlkAngEn-Sts',
         # Anglation interlock clear:
         'IntlkAngClr-Sel',
-        # Thresholds (em rad.nm da taxa Monit1.
+        # Thresholds (em rad.nm da taxa Monit1).
         #  Thresholds devem ser calculados como ângulo (em rad)
         #  entre os 2 BPMs adjacentes * distância (em nm) entre eles):
         'IntlkLmtAngMaxX-SP', 'IntlkLmtAngMaxX-RB',
@@ -91,6 +94,7 @@ class BPMInterlock(_Device):
         # Status Instantâneo:
         #  X ou Y mascarado pelo "Enable"
         'IntlkAngSmaller-Mon', 'IntlkAngBigger-Mon',
+        # the ones bellow are not masked by "Enable"
         'IntlkAngSmallerAny-Mon', 'IntlkAngBiggerAny-Mon',  # X ou Y
         'IntlkAngSmallerX-Mon', 'IntlkAngBiggerX-Mon',  # X
         'IntlkAngSmallerY-Mon', 'IntlkAngBiggerY-Mon',  # Y
@@ -108,7 +112,7 @@ class BPMInterlock(_Device):
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
             raise ValueError(devname + ' is no a valid BPM or PBPM name.')
-        super().__init__(devname, properties=BPMInterlock._properties)
+        super().__init__(devname, properties=BPMOrbitIntlk._properties)
 
     @property
     def enabled(self):
