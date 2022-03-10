@@ -48,6 +48,16 @@ class _Base:
                 'Variable conn must be a str or ClientArchiver object.')
 
     @property
+    def timeout(self):
+        """Connection timeout."""
+        return self.connector.timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        """Set connection timeout."""
+        self.connector.timeout = float(value)
+
+    @property
     def connected(self):
         """."""
         if not self.connector:

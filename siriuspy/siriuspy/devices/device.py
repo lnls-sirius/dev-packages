@@ -154,16 +154,23 @@ class Device:
 
     def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
-        if isinstance(comp, str):
-            comp = getattr(_opr, comp)
-        ntrials = int(timeout/_TINY_INTERVAL)
-        for _ in range(ntrials):
-            boo = comp(self[propty], value)
+        def comp_(val):
+            boo = comp(self[propty], val)
             if isinstance(boo, _np.ndarray):
                 boo = _np.all(boo)
-            if boo:
-                return True
+            return boo
+
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
+
+        if comp_(value):
+            return True
+
+        ntrials = int(timeout/_TINY_INTERVAL)
+        for _ in range(ntrials):
             _time.sleep(_TINY_INTERVAL)
+            if comp_(value):
+                return True
         return False
 
     def _get_pvname(self, devname, propty):
