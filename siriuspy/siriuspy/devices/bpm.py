@@ -499,6 +499,26 @@ class BPM(_Device):
         self['QPosCal-Sel'] = val
 
     @property
+    def mtraw_posx(self):
+        """Multi turn raw X array data."""
+        return self['GEN_RawXArrayData']
+
+    @property
+    def mtraw_posy(self):
+        """Multi turn raw Y array data."""
+        return self['GEN_RawYArrayData']
+
+    @property
+    def mtraw_possum(self):
+        """Multi turn raw sum array data."""
+        return self['GEN_RawSUMArrayData']
+
+    @property
+    def mtraw_posq(self):
+        """Multi turn raw Q array data."""
+        return self['GEN_RawQArrayData']
+
+    @property
     def sp_posx(self):
         """."""
         return self['SPPosX-Mon'] * self.CONV_NM2UM
