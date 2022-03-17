@@ -1,8 +1,9 @@
-"""."""
+"""Orbit Interlock devices."""
 
 import numpy as _np
 
 from ..search import BPMSearch as _BPMSearch
+from ..util import ClassProperty as _classproperty
 from .device import Device as _Device, Devices as _Devices
 
 
@@ -10,10 +11,6 @@ class BaseOrbitIntlk:
     """Base BPM Orbit Interlock Info."""
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
-
-    BPM_NAMES = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
-    BPM_NICKNAMES = _BPMSearch.get_nicknames(BPM_NAMES)
-    BPM_POS = _BPMSearch.get_positions(BPM_NAMES)
 
     DOWN_2_UP = {
         'M1': 'M2',
@@ -23,7 +20,73 @@ class BaseOrbitIntlk:
     }
     UP_2_DOWN = {val: key for key, val in DOWN_2_UP.items()}
 
+    __BPM_NAMES = None
+    __BPM_NICKNAMES = None
+    __BPM_POS = None
+    __BPM_DOWNSTREAM = None
+    __BPM_UPSTREAM = None
+
+    @_classproperty
+    def BPM_NAMES(cls):
+        """BPM names."""
+        if cls.__BPM_NAMES is None:
+            cls.__BPM_NAMES = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+            cls.__BPM_NICKNAMES = _BPMSearch.get_nicknames(cls.__BPM_NAMES)
+            cls.__BPM_POS = _BPMSearch.get_positions(cls.__BPM_NAMES)
+
+            def _parse_nick_down_up(name, nick):
+                if '-' in nick:
+                    sub, idx = nick.split('-')
+                else:
+                    sub, idx = nick, ''
+                return name.substitute(sub=name.sub[:2]+sub, idx=idx)
+
+            downnames, upnames = [], []
+            for bpm in cls.__BPM_NAMES:
+                nick = bpm.sub[2:]+('-' + bpm.idx if bpm.idx else '')
+                if nick in BaseOrbitIntlk.DOWN_2_UP:
+                    down = bpm
+                    upnick = BaseOrbitIntlk.DOWN_2_UP[nick]
+                    upn = _parse_nick_down_up(bpm, upnick)
+                elif nick in BaseOrbitIntlk.UP_2_DOWN:
+                    upn = bpm
+                    downnick = BaseOrbitIntlk.UP_2_DOWN[nick]
+                    down = _parse_nick_down_up(bpm, downnick)
+                else:
+                    down, upn = '', ''
+                downnames.append(down)
+                upnames.append(upn)
+            cls.__BPM_DOWNSTREAM = downnames
+            cls.__BPM_UPSTREAM = upnames
+
+        return cls.__BPM_NAMES
+
+    @_classproperty
+    def BPM_NICKNAMES(cls):
+        """BPM nicknames."""
+        cls.BPM_NAMES
+        return cls.__BPM_NICKNAMES
+
+    @_classproperty
+    def BPM_POS(cls):
+        """BPM positions."""
+        cls.BPM_NAMES
+        return cls.__BPM_POS
+
+    @_classproperty
+    def BPM_DOWNSTREAM(cls):
+        """BPM downstream."""
+        cls.BPM_NAMES
+        return cls.__BPM_DOWNSTREAM
+
+    @_classproperty
+    def BPM_UPSTREAM(cls):
+        """BPM upstream."""
+        cls.BPM_NAMES
+        return cls.__BPM_UPSTREAM
+
     def __init__(self):
+        """Init."""
         self._oper = {
             'mean': self._mean,
             'diff': self._diff,
@@ -32,25 +95,9 @@ class BaseOrbitIntlk:
     @staticmethod
     def get_down_up_bpms(bpmname):
         """Return down and up BPM names for bpmname."""
-
-        def _parse_nick_down_up(name, nick):
-            if '-' in nick:
-                sub, idx = nick.split('-')
-            else:
-                sub, idx = nick, ''
-            return name.substitute(sub=name.sub[:2]+sub, idx=idx)
-
-        nick = bpmname.sub[2:]+('-' + bpmname.idx if bpmname.idx else '')
-        if nick in BaseOrbitIntlk.DOWN_2_UP:
-            down = bpmname
-            upnick = BaseOrbitIntlk.DOWN_2_UP[nick]
-            upn = _parse_nick_down_up(bpmname, upnick)
-        elif nick in BaseOrbitIntlk.UP_2_DOWN:
-            upn = bpmname
-            downnick = BaseOrbitIntlk.UP_2_DOWN[nick]
-            down = _parse_nick_down_up(bpmname, downnick)
-        else:
-            down, upn = '', ''
+        index = BaseOrbitIntlk.BPM_NAMES.index(bpmname)
+        down = BaseOrbitIntlk.BPM_DOWNSTREAM[index]
+        upn = BaseOrbitIntlk.BPM_UPSTREAM[index]
         return down, upn
 
     def get_intlk_metric(self, posarray, operation='', metric=''):
