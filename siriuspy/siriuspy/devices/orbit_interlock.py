@@ -100,7 +100,7 @@ class BaseOrbitIntlk:
         upn = BaseOrbitIntlk.BPM_UPSTREAM[index]
         return down, upn
 
-    def get_intlk_metric(self, posarray, operation='', metric=''):
+    def calc_intlk_metric(self, posarray, operation='', metric=''):
         """Return interlock metric, translation or angulation."""
         if not operation:
             if not metric:
