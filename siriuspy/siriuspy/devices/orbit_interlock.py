@@ -660,11 +660,107 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         devs = [BPMOrbitIntlk(dev) for dev in self.BPM_NAMES]
         _Devices.__init__(self, devname, devs)
 
-    def cmd_reset(self):
+    # --- general interlock ---
+
+    def cmd_gen_enable(self, timeout=TIMEOUT):
+        """Enable all BPM general interlock."""
+        for dev in self.devices:
+            dev.gen_enable = 1
+        return self._wait_devices_propty(
+            self.devices, 'IntlkEn-Sts', 1, timeout=timeout)
+
+    def cmd_gen_disable(self, timeout=TIMEOUT):
+        """Disable all BPM general interlock."""
+        for dev in self.devices:
+            dev.gen_enable = 0
+        return self._wait_devices_propty(
+            self.devices, 'IntlkEn-Sts', 0, timeout=timeout)
+
+    def cmd_reset_gen(self):
         """Reset all BPM general interlock."""
         for dev in self.devices:
             dev.cmd_reset_gen()
         return True
+
+    @property
+    def gen_inst(self):
+        """General instantaneous interlocks.
+
+        Returns:
+            gen_inst (numpy.ndarray, 160):
+                general instantaneous interlock for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.gen_inst)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def gen_latch(self):
+        """General latch interlocks.
+
+        Returns:
+            gen_latch (numpy.ndarray, 160):
+                general latch interlock for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.gen_latch)
+        intlk = _np.array(intlk)
+        return intlk
+
+    # --- minimum sum threshold ---
+
+    def cmd_minsumthres_enable(self, timeout=TIMEOUT):
+        """Enable all BPM minimum sum threshold."""
+        for dev in self.devices:
+            dev.minsumthres_enable = 1
+        return self._wait_devices_propty(
+            self.devices, 'IntlkMinSumEn-Sts', 1, timeout=timeout)
+
+    def cmd_minsumthres_disable(self, timeout=TIMEOUT):
+        """Disable all BPM minimum sum threshold."""
+        for dev in self.devices:
+            dev.minsumthres_enable = 0
+        return self._wait_devices_propty(
+            self.devices, 'IntlkMinSumEn-Sts', 0, timeout=timeout)
+
+    @property
+    def minsumthres(self):
+        """Minimum sum thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160): min.sum threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.minsumthres)
+        thres = _np.array(thres)
+        return thres
+
+    @minsumthres.setter
+    def minsumthres(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.minsumthres = value[idx]
+
+    # --- translation interlock ---
+
+    def cmd_trans_enable(self, timeout=TIMEOUT):
+        """Enable all BPM translation interlock."""
+        for dev in self.devices:
+            dev.trans_enable = 1
+        return self._wait_devices_propty(
+            self.devices, 'IntlkTransEn-Sts', 1, timeout=timeout)
+
+    def cmd_trans_disable(self, timeout=TIMEOUT):
+        """Disable all BPM translation interlock."""
+        for dev in self.devices:
+            dev.trans_enable = 0
+        return self._wait_devices_propty(
+            self.devices, 'IntlkTransEn-Sts', 0, timeout=timeout)
 
     def cmd_reset_trans(self):
         """Reset all BPM translation interlock."""
@@ -672,8 +768,646 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             dev.cmd_reset_trans()
         return True
 
+    @property
+    def trans_thresminx(self):
+        """Minimum x translation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. x translation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.trans_thresminx)
+        thres = _np.array(thres)
+        return thres
+
+    @trans_thresminx.setter
+    def trans_thresminx(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.trans_thresminx = value[idx]
+
+    @property
+    def trans_thresmaxx(self):
+        """Maximum x translation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. x translation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.trans_thresmaxx)
+        thres = _np.array(thres)
+        return thres
+
+    @trans_thresmaxx.setter
+    def trans_thresmaxx(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.trans_thresmaxx = value[idx]
+
+    @property
+    def trans_thresminy(self):
+        """Minimum y translation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. y translation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.trans_thresminy)
+        thres = _np.array(thres)
+        return thres
+
+    @trans_thresminy.setter
+    def trans_thresminy(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.trans_thresminy = value[idx]
+
+    @property
+    def trans_thresmaxy(self):
+        """Maximum y translation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. y translation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.trans_thresmaxy)
+        thres = _np.array(thres)
+        return thres
+
+    @trans_thresmaxy.setter
+    def trans_thresmaxy(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.trans_thresmaxy = value[idx]
+
+    @property
+    def trans_mask_smaller(self):
+        """Instantaneous translation interlock set when either X or Y
+        minimum thresholds are exceeded, masked by general enable.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_mask_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_mask_bigger(self):
+        """Instantaneous translation interlock set when either X or Y
+        maximum thresholds are exceeded, masked by general enable.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_mask_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_smaller(self):
+        """Instantaneous translation interlock set when either X or Y
+        minimum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_bigger(self):
+        """Instantaneous translation interlock set when either X or Y
+        maximum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_smaller_x(self):
+        """Instantaneous translation interlock set when X
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_smaller_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_bigger_x(self):
+        """Instantaneous translation interlock set when X
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_bigger_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_smaller_y(self):
+        """Instantaneous translation interlock set when Y
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_smaller_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_inst_bigger_y(self):
+        """Instantaneous translation interlock set when Y
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_inst_bigger_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_smaller(self):
+        """Latch translation interlock set when either X or Y
+        minimum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_bigger(self):
+        """Latch translation interlock set when either X or Y
+        maximum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_smaller_x(self):
+        """Latch translation interlock set when X
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_smaller_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_bigger_x(self):
+        """Latch translation interlock set when X
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_bigger_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_smaller_y(self):
+        """Latch translation interlock set when Y
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_smaller_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def trans_latch_bigger_y(self):
+        """Latch translation interlock set when Y
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.trans_latch_bigger_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    #  --- angulation interlock ---
+
+    def cmd_ang_enable(self, timeout=TIMEOUT):
+        """Enable all BPM angulation interlock."""
+        for dev in self.devices:
+            dev.ang_enable = 1
+        return self._wait_devices_propty(
+            self.devices, 'IntlkAngEn-Sts', 1, timeout=timeout)
+
+    def cmd_ang_disable(self, timeout=TIMEOUT):
+        """Disable all BPM angulation interlock."""
+        for dev in self.devices:
+            dev.ang_enable = 0
+        return self._wait_devices_propty(
+            self.devices, 'IntlkAngEn-Sts', 0, timeout=timeout)
+
     def cmd_reset_ang(self):
         """Reset all BPM angulation interlock."""
         for dev in self.devices:
             dev.cmd_reset_ang()
         return True
+
+    @property
+    def ang_thresminx(self):
+        """Minimum x angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. x angulation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.ang_thresminx)
+        thres = _np.array(thres)
+        return thres
+
+    @ang_thresminx.setter
+    def ang_thresminx(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.ang_thresminx = value[idx]
+
+    @property
+    def ang_thresmaxx(self):
+        """Maximum x angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. x angulation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.ang_thresmaxx)
+        thres = _np.array(thres)
+        return thres
+
+    @ang_thresmaxx.setter
+    def ang_thresmaxx(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.ang_thresmaxx = value[idx]
+
+    @property
+    def ang_thresminy(self):
+        """Minimum y angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. y angulation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.ang_thresminy)
+        thres = _np.array(thres)
+        return thres
+
+    @ang_thresminy.setter
+    def ang_thresminy(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.ang_thresminy = value[idx]
+
+    @property
+    def ang_thresmaxy(self):
+        """Maximum y angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. y angulation threshold for each BPM.
+        """
+        thres = []
+        for bpm in self._devices:
+            thres.append(bpm.ang_thresmaxy)
+        thres = _np.array(thres)
+        return thres
+
+    @ang_thresmaxy.setter
+    def ang_thresmaxy(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ] * len(self.BPM_NAMES)
+        for idx, dev in enumerate(self.devices):
+            dev.ang_thresmaxy = value[idx]
+
+    @property
+    def ang_mask_smaller(self):
+        """Instantaneous angulation interlock set when either X or Y
+        minimum thresholds are exceeded, masked by general enable.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_mask_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_mask_bigger(self):
+        """Instantaneous angulation interlock set when either X or Y
+        maximum thresholds are exceeded, masked by general enable.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_mask_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_smaller(self):
+        """Instantaneous angulation interlock set when either X or Y
+        minimum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_bigger(self):
+        """Instantaneous angulation interlock set when either X or Y
+        maximum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_smaller_x(self):
+        """Instantaneous angulation interlock set when X
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_smaller_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_bigger_x(self):
+        """Instantaneous angulation interlock set when X
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_bigger_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_smaller_y(self):
+        """Instantaneous angulation interlock set when Y
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_smaller_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_inst_bigger_y(self):
+        """Instantaneous angulation interlock set when Y
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_inst_bigger_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_smaller(self):
+        """Latch angulation interlock set when either X or Y
+        minimum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_smaller)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_bigger(self):
+        """Latch angulation interlock set when either X or Y
+        maximum thresholds are exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_bigger)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_smaller_x(self):
+        """Latch angulation interlock set when X
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_smaller_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_bigger_x(self):
+        """Latch angulation interlock set when X
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_bigger_x)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_smaller_y(self):
+        """Latch angulation interlock set when Y
+        minimum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_smaller_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def ang_latch_bigger_y(self):
+        """Latch angulation interlock set when Y
+        maximum threshold is exceeded.
+
+        Returns:
+            intlk (numpy.ndarray, 160): interlock status for each BPM.
+        """
+        intlk = []
+        for bpm in self._devices:
+            intlk.append(bpm.ang_latch_bigger_y)
+        intlk = _np.array(intlk)
+        return intlk
+
+    @property
+    def slow_orbit(self):
+        """Slow orbit vectors.
+
+        Returns:
+            orbx (numpy.ndarray, 160): Horizontal Orbit.
+            orby (numpy.ndarray, 160): Vertical Orbit.
+
+        """
+        orbx, orby = [], []
+        for bpm in self._devices:
+            orbx.append(bpm.posx)
+            orby.append(bpm.posy)
+        orbx = _np.array(orbx)
+        orby = _np.array(orby)
+        return orbx, orby
+
+    @property
+    def possum(self):
+        """Sum vector, at Monit rate.
+
+        Returns:
+            possum (numpy.ndarray, 160): Sum vector, at Monit rate.
+        """
+        possum = []
+        for bpm in self._devices:
+            possum.append(bpm.possum)
+        possum = _np.array(possum)
+        return possum
+
+    @property
+    def translation(self):
+        """Translation vectors.
+
+        Translation at each BPM is defined as:
+            (pos BPM downstream + pos BPM upstream)/2
+
+        Returns:
+            transx (numpy.ndarray, 160): Horizontal Translation.
+            transy (numpy.ndarray, 160): Vertical Translation.
+        """
+        orbx, orby = self.slow_orbit
+        transx = _np.array(self.calc_intlk_metric(orbx, metric='trans'))
+        transy = _np.array(self.calc_intlk_metric(orby, metric='trans'))
+        return transx, transy
+
+    @property
+    def angulation(self):
+        """Angulation vectors.
+
+        Angulation at each BPM is defined as:
+            (posição BPM downstream - posição BPM upstream)
+
+        Returns:
+            angx (numpy.ndarray, 160): Horizontal Angulation.
+            angy (numpy.ndarray, 160): Vertical Angulation.
+        """
+        orbx, orby = self.slow_orbit
+        angx = _np.array(self.calc_intlk_metric(orbx, metric='ang'))
+        angy = _np.array(self.calc_intlk_metric(orby, metric='ang'))
+        return angx, angy
