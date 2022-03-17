@@ -135,6 +135,9 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     _properties = (
         # ==============================================================
+        # Basic properties
+        'PosX-Mon', 'PosY-Mon', 'Sum-Mon',
+        # ==============================================================
         # General
         # +++++++
         # General interlock enable:
@@ -142,7 +145,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # General interlock clear:
         'IntlkClr-Sel',
         # Minimum sum threshold enable:
-        # Habilita interlock de óbita apenas quando threshold da soma
+        # Habilita interlock de órbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
         # Minimum sum threshold (em contagens da Soma da taxa Monit1):
@@ -204,9 +207,9 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # BPM upstream é sempre o "primeiro" BPM da dupla acima e BPM
         # downstream é sempre o "segundo" BPM da dupla.
         # ************************************************************
-        # Anglation interlock enable:
+        # Angulation interlock enable:
         'IntlkAngEn-Sel', 'IntlkAngEn-Sts',
-        # Anglation interlock clear:
+        # Angulation interlock clear:
         'IntlkAngClr-Sel',
         # Thresholds (em rad.nm da taxa Monit1).
         #  Thresholds devem ser calculados como ângulo (em rad)
@@ -234,8 +237,23 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # call base class constructor
         BaseOrbitIntlk.__init__(self)
         if devname not in self.BPM_NAMES:
-            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
+            raise ValueError(devname + ' is no a valid BPM name.')
         _Device.__init__(self, devname, properties=BPMOrbitIntlk._properties)
+
+    @property
+    def posx(self):
+        """Position X, Monit rate."""
+        return self['PosX-Mon'] * self.CONV_NM2UM
+
+    @property
+    def posy(self):
+        """Position Y, Monit rate."""
+        return self['PosY-Mon'] * self.CONV_NM2UM
+
+    @property
+    def possum(self):
+        """Sum, Monit rate."""
+        return self['Sum-Mon']
 
     @property
     def pair_down_up_bpms(self):
@@ -245,28 +263,30 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
     # --- general interlock ---
 
     @property
-    def enable(self):
+    def gen_enable(self):
         """General interlock enable."""
         return self['IntlkEn-Sts']
 
-    @enable.setter
-    def enable(self, value):
+    @gen_enable.setter
+    def gen_enable(self, value):
         self['IntlkEn-Sel'] = int(value)
 
-    def cmd_reset(self):
+    def cmd_reset_gen(self):
         """General interlock clear."""
         self['IntlkClr-Sel'] = 1
         return True
 
     @property
-    def interlock_inst(self):
+    def gen_inst(self):
         """Instantaneous general interlock."""
         return self['Intlk-Mon']
 
     @property
-    def interlock_latch(self):
+    def gen_latch(self):
         """Latch general interlock."""
         return self['IntlkLtc-Mon']
+
+    # --- minimum sum threshold ---
 
     @property
     def minsumthres_enable(self):
@@ -344,7 +364,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         self['IntlkLmtTransMaxY-SP'] = value
 
     @property
-    def trans_interlock_mask_smaller(self):
+    def trans_mask_smaller(self):
         """
         Instantaneous translation interlock set when either X or Y
         minimum thresholds are exceeded, masked by general enable.
@@ -352,7 +372,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmaller-Mon']
 
     @property
-    def trans_interlock_mask_bigger(self):
+    def trans_mask_bigger(self):
         """
         Instantaneous translation interlock set when either X or Y
         maximum thresholds are exceeded, masked by general enable.
@@ -360,7 +380,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBigger-Mon']
 
     @property
-    def trans_interlock_inst_smaller(self):
+    def trans_inst_smaller(self):
         """
         Instantaneous translation interlock set when either X or Y
         minimum thresholds are exceeded.
@@ -368,7 +388,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerAny-Mon']
 
     @property
-    def trans_interlock_inst_bigger(self):
+    def trans_inst_bigger(self):
         """
         Instantaneous translation interlock set when either X or Y
         maximum thresholds are exceeded.
@@ -376,7 +396,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBiggerAny-Mon']
 
     @property
-    def trans_interlock_inst_smaller_x(self):
+    def trans_inst_smaller_x(self):
         """
         Instantaneous translation interlock set when X
         minimum threshold is exceeded.
@@ -384,7 +404,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerX-Mon']
 
     @property
-    def trans_interlock_inst_bigger_x(self):
+    def trans_inst_bigger_x(self):
         """
         Instantaneous translation interlock set when X
         maximum threshold is exceeded.
@@ -392,7 +412,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBiggerX-Mon']
 
     @property
-    def trans_interlock_inst_smaller_y(self):
+    def trans_inst_smaller_y(self):
         """
         Instantaneous translation interlock set when Y
         minimum threshold is exceeded.
@@ -400,7 +420,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerY-Mon']
 
     @property
-    def trans_interlock_inst_bigger_y(self):
+    def trans_inst_bigger_y(self):
         """
         Instantaneous translation interlock set when Y
         maximum threshold is exceeded.
@@ -408,7 +428,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBiggerY-Mon']
 
     @property
-    def trans_interlock_latch_smaller(self):
+    def trans_latch_smaller(self):
         """
         Latch translation interlock set when either X or Y
         minimum thresholds are exceeded.
@@ -416,7 +436,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerLtc-Mon']
 
     @property
-    def trans_interlock_latch_bigger(self):
+    def trans_latch_bigger(self):
         """
         Latch translation interlock set when either X or Y
         maximum thresholds are exceeded.
@@ -424,7 +444,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBiggerLtc-Mon']
 
     @property
-    def trans_interlock_latch_smaller_x(self):
+    def trans_latch_smaller_x(self):
         """
         Latch translation interlock set when X
         minimum threshold is exceeded.
@@ -432,7 +452,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerLtcX-Mon']
 
     @property
-    def trans_interlock_latch_bigger_x(self):
+    def trans_latch_bigger_x(self):
         """
         Latch translation interlock set when X
         maximum threshold is exceeded.
@@ -440,7 +460,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransBiggerLtcX-Mon']
 
     @property
-    def trans_interlock_latch_smaller_y(self):
+    def trans_latch_smaller_y(self):
         """
         Latch translation interlock set when Y
         minimum threshold is exceeded.
@@ -448,7 +468,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkTransSmallerLtcY-Mon']
 
     @property
-    def trans_interlock_latch_bigger_y(self):
+    def trans_latch_bigger_y(self):
         """
         Latch translation interlock set when Y
         maximum threshold is exceeded.
@@ -508,7 +528,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         self['IntlkLmtAngMaxY-SP'] = value
 
     @property
-    def ang_interlock_mask_smaller(self):
+    def ang_mask_smaller(self):
         """
         Instantaneous angulation interlock set when either X or Y
         minimum thresholds are exceeded, masked by general enable.
@@ -516,7 +536,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmaller-Mon']
 
     @property
-    def ang_interlock_mask_bigger(self):
+    def ang_mask_bigger(self):
         """
         Instantaneous angulation interlock set when either X or Y
         maximum thresholds are exceeded, masked by general enable.
@@ -524,7 +544,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBigger-Mon']
 
     @property
-    def ang_interlock_inst_smaller(self):
+    def ang_inst_smaller(self):
         """
         Instantaneous angulation interlock set when either X or Y
         minimum thresholds are exceeded.
@@ -532,7 +552,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerAny-Mon']
 
     @property
-    def ang_interlock_inst_bigger(self):
+    def ang_inst_bigger(self):
         """
         Instantaneous angulation interlock set when either X or Y
         maximum thresholds are exceeded.
@@ -540,7 +560,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBiggerAny-Mon']
 
     @property
-    def ang_interlock_inst_smaller_x(self):
+    def ang_inst_smaller_x(self):
         """
         Instantaneous angulation interlock set when X
         minimum threshold is exceeded.
@@ -548,7 +568,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerX-Mon']
 
     @property
-    def ang_interlock_inst_bigger_x(self):
+    def ang_inst_bigger_x(self):
         """
         Instantaneous angulation interlock set when X
         maximum threshold is exceeded.
@@ -556,7 +576,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBiggerX-Mon']
 
     @property
-    def ang_interlock_inst_smaller_y(self):
+    def ang_inst_smaller_y(self):
         """
         Instantaneous angulation interlock set when Y
         minimum threshold is exceeded.
@@ -564,7 +584,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerY-Mon']
 
     @property
-    def ang_interlock_inst_bigger_y(self):
+    def ang_inst_bigger_y(self):
         """
         Instantaneous angulation interlock set when Y
         maximum threshold is exceeded.
@@ -572,7 +592,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBiggerY-Mon']
 
     @property
-    def ang_interlock_latch_smaller(self):
+    def ang_latch_smaller(self):
         """
         Latch angulation interlock set when either X or Y
         minimum thresholds are exceeded.
@@ -580,7 +600,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerLtc-Mon']
 
     @property
-    def ang_interlock_latch_bigger(self):
+    def ang_latch_bigger(self):
         """
         Latch angulation interlock set when either X or Y
         maximum thresholds are exceeded.
@@ -588,7 +608,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBiggerLtc-Mon']
 
     @property
-    def ang_interlock_latch_smaller_x(self):
+    def ang_latch_smaller_x(self):
         """
         Latch angulation interlock set when X
         minimum threshold is exceeded.
@@ -596,7 +616,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerLtcX-Mon']
 
     @property
-    def ang_interlock_latch_bigger_x(self):
+    def ang_latch_bigger_x(self):
         """
         Latch angulation interlock set when X
         maximum threshold is exceeded.
@@ -604,7 +624,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngBiggerLtcX-Mon']
 
     @property
-    def ang_interlock_latch_smaller_y(self):
+    def ang_latch_smaller_y(self):
         """
         Latch angulation interlock set when Y
         minimum threshold is exceeded.
@@ -612,7 +632,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngSmallerLtcY-Mon']
 
     @property
-    def ang_interlock_latch_bigger_y(self):
+    def ang_latch_bigger_y(self):
         """
         Latch angulation interlock set when Y
         maximum threshold is exceeded.
@@ -643,7 +663,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
     def cmd_reset(self):
         """Reset all BPM general interlock."""
         for dev in self.devices:
-            dev.cmd_reset()
+            dev.cmd_reset_gen()
         return True
 
     def cmd_reset_trans(self):
