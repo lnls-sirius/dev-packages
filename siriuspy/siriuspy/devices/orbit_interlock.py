@@ -757,8 +757,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @minsumthres.setter
     def minsumthres(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.minsumthres = value[idx]
 
@@ -796,8 +800,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @trans_thresminx.setter
     def trans_thresminx(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.trans_thresminx = value[idx]
 
@@ -813,8 +821,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @trans_thresmaxx.setter
     def trans_thresmaxx(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.trans_thresmaxx = value[idx]
 
@@ -830,8 +842,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @trans_thresminy.setter
     def trans_thresminy(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.trans_thresminy = value[idx]
 
@@ -847,8 +863,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @trans_thresmaxy.setter
     def trans_thresmaxy(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.trans_thresmaxy = value[idx]
 
@@ -1026,8 +1046,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @ang_thresminx.setter
     def ang_thresminx(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.ang_thresminx = value[idx]
 
@@ -1043,8 +1067,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @ang_thresmaxx.setter
     def ang_thresmaxx(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.ang_thresmaxx = value[idx]
 
@@ -1060,8 +1088,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @ang_thresminy.setter
     def ang_thresminy(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.ang_thresminy = value[idx]
 
@@ -1077,8 +1109,12 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
 
     @ang_thresmaxy.setter
     def ang_thresmaxy(self, value):
-        if isinstance(value, (int, float)):
+        if isinstance(value, (int, float, _np.int, _np.float)):
             value = [value, ] * len(self.BPM_NAMES)
+        elif len(value) != len(self.devices):
+            raise ValueError(
+                'the expected length is {0}, not {1}'.format(
+                    len(self.devices), len(value)))
         for idx, dev in enumerate(self.devices):
             dev.ang_thresmaxy = value[idx]
 
