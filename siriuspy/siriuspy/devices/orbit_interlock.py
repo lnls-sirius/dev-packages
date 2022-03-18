@@ -29,36 +29,37 @@ class BaseOrbitIntlk:
     @_classproperty
     def BPM_NAMES(cls):
         """BPM names."""
-        if cls.__BPM_NAMES is None:
-            cls.__BPM_NAMES = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
-            cls.__BPM_NICKNAMES = _BPMSearch.get_nicknames(cls.__BPM_NAMES)
-            cls.__BPM_POS = _BPMSearch.get_positions(cls.__BPM_NAMES)
+        if cls.__BPM_NAMES is not None:
+            return cls.__BPM_NAMES
 
-            def _parse_nick_down_up(name, nick):
-                if '-' in nick:
-                    sub, idx = nick.split('-')
-                else:
-                    sub, idx = nick, ''
-                return name.substitute(sub=name.sub[:2]+sub, idx=idx)
+        cls.__BPM_NAMES = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+        cls.__BPM_NICKNAMES = _BPMSearch.get_nicknames(cls.__BPM_NAMES)
+        cls.__BPM_POS = _BPMSearch.get_positions(cls.__BPM_NAMES)
 
-            downnames, upnames = [], []
-            for bpm in cls.__BPM_NAMES:
-                nick = bpm.sub[2:]+('-' + bpm.idx if bpm.idx else '')
-                if nick in BaseOrbitIntlk.DOWN_2_UP:
-                    down = bpm
-                    upnick = BaseOrbitIntlk.DOWN_2_UP[nick]
-                    upn = _parse_nick_down_up(bpm, upnick)
-                elif nick in BaseOrbitIntlk.UP_2_DOWN:
-                    upn = bpm
-                    downnick = BaseOrbitIntlk.UP_2_DOWN[nick]
-                    down = _parse_nick_down_up(bpm, downnick)
-                else:
-                    down, upn = '', ''
-                downnames.append(down)
-                upnames.append(upn)
-            cls.__BPM_DOWNSTREAM = downnames
-            cls.__BPM_UPSTREAM = upnames
+        def _parse_nick_down_up(name, nick):
+            if '-' in nick:
+                sub, idx = nick.split('-')
+            else:
+                sub, idx = nick, ''
+            return name.substitute(sub=name.sub[:2]+sub, idx=idx)
 
+        downnames, upnames = [], []
+        for bpm in cls.__BPM_NAMES:
+            nick = bpm.sub[2:]+('-' + bpm.idx if bpm.idx else '')
+            if nick in BaseOrbitIntlk.DOWN_2_UP:
+                down = bpm
+                upnick = BaseOrbitIntlk.DOWN_2_UP[nick]
+                upn = _parse_nick_down_up(bpm, upnick)
+            elif nick in BaseOrbitIntlk.UP_2_DOWN:
+                upn = bpm
+                downnick = BaseOrbitIntlk.UP_2_DOWN[nick]
+                down = _parse_nick_down_up(bpm, downnick)
+            else:
+                down, upn = '', ''
+            downnames.append(down)
+            upnames.append(upn)
+        cls.__BPM_DOWNSTREAM = downnames
+        cls.__BPM_UPSTREAM = upnames
         return cls.__BPM_NAMES
 
     @_classproperty
