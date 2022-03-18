@@ -12,13 +12,13 @@ class BaseOrbitIntlk:
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    DOWN_2_UP = {
+    UP_2_DOWN = {
         'M1': 'M2',
         'C1-1': 'C1-2',
         'C2': 'C3-1',
         'C3-2': 'C4',
     }
-    UP_2_DOWN = {val: key for key, val in DOWN_2_UP.items()}
+    DOWN_2_UP = {val: key for key, val in UP_2_DOWN.items()}
 
     __BPM_NAMES = None
     __BPM_NICKNAMES = None
@@ -111,13 +111,10 @@ class BaseOrbitIntlk:
         data_values = list()
         for bpm in BaseOrbitIntlk.BPM_NAMES:
             down, upn = BaseOrbitIntlk.get_down_up_bpms(bpm)
-            if down:
-                dval = posarray[BaseOrbitIntlk.BPM_NAMES.index(down)]
-                uval = posarray[BaseOrbitIntlk.BPM_NAMES.index(upn)]
-                func = self._oper[operation]
-                val = func(dval, uval)
-            else:
-                val = 0
+            dval = posarray[BaseOrbitIntlk.BPM_NAMES.index(down)]
+            uval = posarray[BaseOrbitIntlk.BPM_NAMES.index(upn)]
+            func = self._oper[operation]
+            val = func(dval, uval)
             data_values.append(val)
         return data_values
 
@@ -143,7 +140,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # General interlock enable:
         'IntlkEn-Sel', 'IntlkEn-Sts',
         # General interlock clear:
-        'IntlkClr-Sel',
+        'IntlkClr-Sel',  # maybe -Cmd?
         # Minimum sum threshold enable:
         # Habilita interlock de órbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
@@ -644,6 +641,173 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
     """Orbit Interlock device."""
 
     TIMEOUT = 10
+
+    # NOTE: this is a temporary location, will migrate to csconstants.
+    # The values will be replaced by the measured calibration data.
+    CONV_POLY_MONIT1_2_MONIT = _np.array([
+        # for each BPM, folowing BPM_NAMES indices
+        # a, b: monit = a*monit1 + b
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+        [1, 0],
+    ])
 
     class DEVICES:
         """."""
