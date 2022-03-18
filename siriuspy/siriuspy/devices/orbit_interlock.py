@@ -37,10 +37,7 @@ class BaseOrbitIntlk:
         cls.__BPM_POS = _BPMSearch.get_positions(cls.__BPM_NAMES)
 
         def _parse_nick_down_up(name, nick):
-            if '-' in nick:
-                sub, idx = nick.split('-')
-            else:
-                sub, idx = nick, ''
+            sub, idx, *_ = nick.split('-') + ['']
             return name.substitute(sub=name.sub[:2]+sub, idx=idx)
 
         downnames, upnames = [], []
