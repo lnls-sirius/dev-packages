@@ -855,11 +855,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             gen_inst (numpy.ndarray, 160):
                 general instantaneous interlock for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.gen_inst)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.gen_inst for b in self._devices])
 
     @property
     def gen_latch(self):
@@ -869,11 +865,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             gen_latch (numpy.ndarray, 160):
                 general latch interlock for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.gen_latch)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.gen_latch for b in self._devices])
 
     # --- minimum sum threshold ---
 
@@ -898,11 +890,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             thres (numpy.ndarray, 160): min.sum threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.minsumthres)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.minsumthres for b in self._devices])
 
     @minsumthres.setter
     def minsumthres(self, value):
@@ -941,11 +929,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 min. x translation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.trans_thresminx)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.trans_thresminx for b in self._devices])
 
     @trans_thresminx.setter
     def trans_thresminx(self, value):
@@ -962,11 +946,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 max. x translation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.trans_thresmaxx)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.trans_thresmaxx for b in self._devices])
 
     @trans_thresmaxx.setter
     def trans_thresmaxx(self, value):
@@ -983,11 +963,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 min. y translation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.trans_thresminy)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.trans_thresminy for b in self._devices])
 
     @trans_thresminy.setter
     def trans_thresminy(self, value):
@@ -1004,11 +980,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 max. y translation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.trans_thresmaxy)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.trans_thresmaxy for b in self._devices])
 
     @trans_thresmaxy.setter
     def trans_thresmaxy(self, value):
@@ -1025,11 +997,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_mask_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_mask_smaller for b in self._devices])
 
     @property
     def trans_mask_bigger(self):
@@ -1039,11 +1007,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_mask_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_mask_bigger for b in self._devices])
 
     @property
     def trans_inst_smaller(self):
@@ -1053,11 +1017,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_smaller for b in self._devices])
 
     @property
     def trans_inst_bigger(self):
@@ -1067,11 +1027,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_bigger for b in self._devices])
 
     @property
     def trans_inst_smaller_x(self):
@@ -1081,11 +1037,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_smaller_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_smaller_x for b in self._devices])
 
     @property
     def trans_inst_bigger_x(self):
@@ -1095,11 +1047,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_bigger_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_bigger_x for b in self._devices])
 
     @property
     def trans_inst_smaller_y(self):
@@ -1109,11 +1057,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_smaller_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_smaller_y for b in self._devices])
 
     @property
     def trans_inst_bigger_y(self):
@@ -1123,11 +1067,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_inst_bigger_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_inst_bigger_y for b in self._devices])
 
     @property
     def trans_latch_smaller(self):
@@ -1137,11 +1077,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_smaller for b in self._devices])
 
     @property
     def trans_latch_bigger(self):
@@ -1151,11 +1087,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_bigger for b in self._devices])
 
     @property
     def trans_latch_smaller_x(self):
@@ -1165,11 +1097,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_smaller_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_smaller_x for b in self._devices])
 
     @property
     def trans_latch_bigger_x(self):
@@ -1179,11 +1107,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_bigger_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_bigger_x for b in self._devices])
 
     @property
     def trans_latch_smaller_y(self):
@@ -1193,11 +1117,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_smaller_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_smaller_y for b in self._devices])
 
     @property
     def trans_latch_bigger_y(self):
@@ -1207,11 +1127,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.trans_latch_bigger_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.trans_latch_bigger_y for b in self._devices])
 
     #  --- angulation interlock ---
 
@@ -1243,11 +1159,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 min. x angulation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.ang_thresminx)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.ang_thresminx for b in self._devices])
 
     @ang_thresminx.setter
     def ang_thresminx(self, value):
@@ -1264,11 +1176,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 max. x angulation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.ang_thresmaxx)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.ang_thresmaxx for b in self._devices])
 
     @ang_thresmaxx.setter
     def ang_thresmaxx(self, value):
@@ -1285,11 +1193,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 min. y angulation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.ang_thresminy)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.ang_thresminy for b in self._devices])
 
     @ang_thresminy.setter
     def ang_thresminy(self, value):
@@ -1306,11 +1210,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             thres (numpy.ndarray, 160):
                 max. y angulation threshold for each BPM.
         """
-        thres = []
-        for bpm in self._devices:
-            thres.append(bpm.ang_thresmaxy)
-        thres = _np.array(thres)
-        return thres
+        return _np.array([b.ang_thresmaxy for b in self._devices])
 
     @ang_thresmaxy.setter
     def ang_thresmaxy(self, value):
@@ -1327,11 +1227,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_mask_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_mask_smaller for b in self._devices])
 
     @property
     def ang_mask_bigger(self):
@@ -1341,11 +1237,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_mask_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_mask_bigger for b in self._devices])
 
     @property
     def ang_inst_smaller(self):
@@ -1355,11 +1247,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_smaller for b in self._devices])
 
     @property
     def ang_inst_bigger(self):
@@ -1369,11 +1257,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_bigger for b in self._devices])
 
     @property
     def ang_inst_smaller_x(self):
@@ -1383,11 +1267,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_smaller_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_smaller_x for b in self._devices])
 
     @property
     def ang_inst_bigger_x(self):
@@ -1397,11 +1277,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_bigger_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_bigger_x for b in self._devices])
 
     @property
     def ang_inst_smaller_y(self):
@@ -1411,11 +1287,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_smaller_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_smaller_y for b in self._devices])
 
     @property
     def ang_inst_bigger_y(self):
@@ -1425,11 +1297,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_inst_bigger_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_inst_bigger_y for b in self._devices])
 
     @property
     def ang_latch_smaller(self):
@@ -1439,11 +1307,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_smaller)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_smaller for b in self._devices])
 
     @property
     def ang_latch_bigger(self):
@@ -1453,11 +1317,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_bigger)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_bigger for b in self._devices])
 
     @property
     def ang_latch_smaller_x(self):
@@ -1467,11 +1327,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_smaller_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_smaller_x for b in self._devices])
 
     @property
     def ang_latch_bigger_x(self):
@@ -1481,11 +1337,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_bigger_x)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_bigger_x for b in self._devices])
 
     @property
     def ang_latch_smaller_y(self):
@@ -1495,11 +1347,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_smaller_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_smaller_y for b in self._devices])
 
     @property
     def ang_latch_bigger_y(self):
@@ -1509,11 +1357,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        intlk = []
-        for bpm in self._devices:
-            intlk.append(bpm.ang_latch_bigger_y)
-        intlk = _np.array(intlk)
-        return intlk
+        return _np.array([b.ang_latch_bigger_y for b in self._devices])
 
     @property
     def slow_orbit(self):
@@ -1539,11 +1383,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         Returns:
             possum (numpy.ndarray, 160): Sum vector, at Monit rate.
         """
-        possum = []
-        for bpm in self._devices:
-            possum.append(bpm.possum)
-        possum = _np.array(possum)
-        return possum
+        return _np.array([b.possum for b in self._devices])
 
     @property
     def translation(self):
