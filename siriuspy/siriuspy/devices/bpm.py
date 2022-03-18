@@ -19,6 +19,8 @@ class BPM(_Device):
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
+        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
+        'GEN_RawQArrayData',
         'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
         'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
@@ -497,6 +499,26 @@ class BPM(_Device):
     def mt_polyq_enbl(self, val):
         """."""
         self['QPosCal-Sel'] = val
+
+    @property
+    def mtraw_posx(self):
+        """Multi turn raw X array data."""
+        return self['GEN_RawXArrayData']
+
+    @property
+    def mtraw_posy(self):
+        """Multi turn raw Y array data."""
+        return self['GEN_RawYArrayData']
+
+    @property
+    def mtraw_possum(self):
+        """Multi turn raw sum array data."""
+        return self['GEN_RawSUMArrayData']
+
+    @property
+    def mtraw_posq(self):
+        """Multi turn raw Q array data."""
+        return self['GEN_RawQArrayData']
 
     @property
     def sp_posx(self):
