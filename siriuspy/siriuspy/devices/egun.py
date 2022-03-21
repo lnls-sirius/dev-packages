@@ -681,8 +681,8 @@ class EGun(_Devices):
     def is_fila_on(self):
         """Indicate whether filament is on and in operational current."""
         is_on = self.fila.is_on()
-        is_op_sp = abs(self.fila['currentinsoft']-self._filacurr_opval) < 1e-4
-        is_op_rb = abs(self.fila['currentoutsoft']-self._filacurr_opval) < \
+        is_op_sp = abs(self.fila['currentoutsoft']-self._filacurr_opval) < 1e-4
+        is_op_rb = abs(self.fila['currentinsoft']-self._filacurr_opval) < \
             self._filacurr_tol
         return is_on and is_op_sp and is_op_rb
 
