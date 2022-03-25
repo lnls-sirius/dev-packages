@@ -686,23 +686,22 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
-        count = 0
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+
+        wait_orb_error = 5
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if count >= 1000:
+            if len(times) >= 1000:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
                 times, rets = [], []
-                count = 0
-            count += 1
             tims = []
 
             interval = 1/self._loop_freq
@@ -735,9 +734,18 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
-                break
+                # NOTE: Assume PSSOFB is active.
+                msg = 'WARN: Skipping iteration and waiting 5s.'
+                self._update_log(msg)
+                _log.info(msg)
+                _sleep(wait_orb_error)
+                continue
+                # NOTE: The code bellow is the default implementation.
+                #       We decided to use the temporaty work around solution
+                #       implemented above to handle mal-functioning BPMs.
+                # self._loop_state = self._csorb.LoopState.Open
+                # self.run_callbacks('LoopState-Sel', 0)
+                # break
 
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
