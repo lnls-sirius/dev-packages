@@ -436,7 +436,7 @@ class EGun(_Devices):
     FILACURR_RAMP_NRPTS = 10
     FILACURR_RAMP_DURATION = 7*60  # [s]
 
-    def __init__(self):
+    def __init__(self, print_log=True):
         """Init."""
         self.bias = EGBias()
         self.fila = EGFilament()
@@ -470,6 +470,7 @@ class EGun(_Devices):
         self._filacurr_opval = EGun.FILACURR_OPVALUE
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
         self._last_status = ''
+        self._print_log = print_log
 
         super().__init__('', devices)
 
@@ -760,4 +761,5 @@ class EGun(_Devices):
 
     def _update_last_status(self, status):
         self._last_status = status
-        print(status)
+        if self._print_log:
+            print(status)

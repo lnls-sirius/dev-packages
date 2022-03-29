@@ -109,7 +109,7 @@ class App(_Callback):
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
         # auxiliary devices
-        self._egun_dev = EGun()
+        self._egun_dev = EGun(print_log=False)
         self._init_egun = False
         self._egun_dev.trigps.pv_object('enable').add_callback(
             self._callback_watch_eguntrig)
