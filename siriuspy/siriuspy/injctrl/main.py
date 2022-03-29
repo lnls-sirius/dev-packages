@@ -38,7 +38,10 @@ class App(_Callback):
         self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
+        self._thread_filaps = None
         self._hvopvolt = EGun.HV_OPVALUE
+        self._thread_hvps = None
+        self._thread_wtegps = None
         self._target_current = 100.0
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
@@ -324,7 +327,14 @@ class App(_Callback):
         self._filaopcurr = value
         self.run_callbacks('FilaOpCurr-RB', self._filaopcurr)
 
-        # TODO: set egun property on setpoint
+        self._thread_filaps = _Thread(
+            target=self._egun_dev.set_fila_current, daemon=True)
+        self._thread_filaps.start()
+        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
+            self._thread_wtegps = _Thread(
+                target=self._watch_egunps, daemon=True)
+            self._thread_wtegps.start()
+        return True
 
     def set_hvopvolt(self, value):
         """Set high voltage operation value."""
@@ -332,7 +342,34 @@ class App(_Callback):
         self._hvopvolt = value
         self.run_callbacks('HVOpVolt-RB', self._hvopvolt)
 
-        # TODO: set egun property on setpoint
+        self._thread_hvps = _Thread(
+            target=self._egun_dev.set_hv_voltage, daemon=True)
+        self._thread_hvps.start()
+        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
+            self._thread_wtegps = _Thread(
+                target=self._watch_egunps, daemon=True)
+            self._thread_wtegps.start()
+        return True
+
+    def _watch_egunps(self):
+        running = True
+        sts = ''
+        while running:
+            filarun = self._thread_filaps is not None and \
+                self._thread_filaps.is_alive()
+            hvpsrun = self._thread_hvps is not None and \
+                self._thread_hvps.is_alive()
+            running = filarun | hvpsrun
+            if self._egun_dev.last_status != sts:
+                sts = self._egun_dev.last_status
+                if 'err:' in sts.lower():
+                    sts = sts.split(':')[1]
+                    msgs = ['ERR:'+sts[i:i+35] for i in range(0, len(sts), 35)]
+                else:
+                    msgs = [sts[i:i+39] for i in range(0, len(sts), 39)]
+                for msg in msgs:
+                    self._update_log(msg)
+            _time.sleep(0.05)
 
     def set_target_current(self, value):
         """Set the target injection current value ."""
@@ -547,9 +584,10 @@ class App(_Callback):
             return
         if self._mode == _Const.InjMode.TopUp:
             return
-        _Thread(target=self._watch_egun, args=[value, ], daemon=True).start()
+        _Thread(target=self._watch_eguntrig,
+                args=[value, ], daemon=True).start()
 
-    def _watch_egun(self, value, **kws):
+    def _watch_eguntrig(self, value, **kws):
         cmd = 'on' if value else 'off'
         _t0 = _time.time()
         while _time.time() - _t0 < 10:
