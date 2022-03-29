@@ -1,7 +1,6 @@
 """E-Gun devices."""
 
 import time as _time
-from datetime import timedelta as _timedelta
 import numpy as _np
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
