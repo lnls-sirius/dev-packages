@@ -663,7 +663,7 @@ class EGun(_Devices):
                     self._update_last_status(
                         'ERR:MPS or LI Status not ok. Aborted.')
                     return False
-                if self.hvps.voltage - volt < self._hv_tol:
+                if abs(self.hvps.voltage - volt) < self._hv_tol:
                     break
                 _time.sleep(0.1)
             else:
