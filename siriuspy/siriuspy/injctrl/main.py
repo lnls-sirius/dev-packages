@@ -35,13 +35,14 @@ class App(_Callback):
         self._mode = _Const.InjMode.Decay
         self._type = _Const.InjType.MultiBunch
         self._type_mon = _Const.InjTypeMon.Undefined
+        self._thread_type = None
         self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
         self._thread_filaps = None
         self._hvopvolt = EGun.HV_OPVALUE
         self._thread_hvps = None
-        self._thread_wtegps = None
+        self._thread_wategun = None
         self._target_current = 100.0
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
@@ -280,24 +281,20 @@ class App(_Callback):
             self._update_log(
                 'ERR:Turn off top-up mode before changing inj.type.')
             return False
-
-        # change egun configuration to new type
         self._type = value
         self.run_callbacks('Type-Sts', self._type)
-        self._update_log(
-            'Switching EGun mode to '+_ETypes.INJTYPE[value]+'...')
-        _Thread(target=self._setup_egun, args=[value, ], daemon=True).start()
-        return True
 
-    def _setup_egun(self, value):
-        cmm = self._egun_dev.cmd_switch_to_single_bunch \
+        target = self._egun_dev.cmd_switch_to_single_bunch \
             if value == _Const.InjType.SingleBunch else \
             self._egun_dev.cmd_switch_to_multi_bunch
-        if cmm():
-            msg = 'EGun configured to '+_ETypes.INJTYPE[value]+'.'
-        else:
-            msg = 'ERR:EGun setup failed. Try again.'
-        self._update_log(msg)
+        self._thread_type = _Thread(target=target, daemon=True)
+        self._thread_type.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
+        return True
 
     def set_sglbunbiasvolt(self, value):
         """Set single bunch bias voltage."""
@@ -330,10 +327,11 @@ class App(_Callback):
         self._thread_filaps = _Thread(
             target=self._egun_dev.set_fila_current, daemon=True)
         self._thread_filaps.start()
-        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
-            self._thread_wtegps = _Thread(
-                target=self._watch_egunps, daemon=True)
-            self._thread_wtegps.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
         return True
 
     def set_hvopvolt(self, value):
@@ -345,13 +343,14 @@ class App(_Callback):
         self._thread_hvps = _Thread(
             target=self._egun_dev.set_hv_voltage, daemon=True)
         self._thread_hvps.start()
-        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
-            self._thread_wtegps = _Thread(
-                target=self._watch_egunps, daemon=True)
-            self._thread_wtegps.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
         return True
 
-    def _watch_egunps(self):
+    def _watch_egundev(self):
         running = True
         sts = ''
         while running:
@@ -359,7 +358,9 @@ class App(_Callback):
                 self._thread_filaps.is_alive()
             hvpsrun = self._thread_hvps is not None and \
                 self._thread_hvps.is_alive()
-            running = filarun | hvpsrun
+            typerun = self._thread_type is not None and \
+                self._thread_type.is_alive()
+            running = filarun | hvpsrun | typerun
             if self._egun_dev.last_status != sts:
                 sts = self._egun_dev.last_status
                 if 'err:' in sts.lower():
