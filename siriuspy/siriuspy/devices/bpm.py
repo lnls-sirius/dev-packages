@@ -72,7 +72,7 @@ class BPM(_Device):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
+            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
 
         properties = set(BPM._properties)
         if _BPMSearch.is_photon_bpm(devname):
