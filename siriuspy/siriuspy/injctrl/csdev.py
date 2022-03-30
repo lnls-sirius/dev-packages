@@ -11,8 +11,8 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     INJMODE = ('Decay', 'TopUp')
-    INJTYPE_SEL = ('SingleBunch', 'MultiBunch')
-    INJTYPE_STS = ('SingleBunch', 'MultiBunch', 'Undefined')
+    INJTYPE = ('SingleBunch', 'MultiBunch')
+    INJTYPE_MON = ('SingleBunch', 'MultiBunch', 'Undefined')
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
@@ -27,8 +27,8 @@ class Const(_csdev.Const):
     """Const class."""
 
     InjMode = _csdev.Const.register('InjMode', _et.INJMODE)
-    InjTypeSel = _csdev.Const.register('InjTypeSel', _et.INJTYPE_SEL)
-    InjTypeSts = _csdev.Const.register('InjTypeSts', _et.INJTYPE_STS)
+    InjType = _csdev.Const.register('InjType', _et.INJTYPE)
+    InjTypeMon = _csdev.Const.register('InjTypeMon', _et.INJTYPE_MON)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
 
@@ -98,11 +98,14 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.InjMode.Decay,
             'enums': _et.INJMODE},
         'Type-Sel': {
-            'type': 'enum', 'value': _ct.InjTypeSel.MultiBunch,
-            'enums': _et.INJTYPE_SEL},
+            'type': 'enum', 'value': _ct.InjType.MultiBunch,
+            'enums': _et.INJTYPE},
         'Type-Sts': {
-            'type': 'enum', 'value': _ct.InjTypeSts.Undefined,
-            'enums': _et.INJTYPE_STS},
+            'type': 'enum', 'value': _ct.InjType.MultiBunch,
+            'enums': _et.INJTYPE},
+        'Type-Mon': {
+            'type': 'enum', 'value': _ct.InjTypeMon.Undefined,
+            'enums': _et.INJTYPE_MON},
         'SglBunBiasVolt-SP': {
             'type': 'float', 'value': egsbbias, 'prec': 1,
             'unit': 'V', 'lolim': -150.0, 'hilim': 0.0},

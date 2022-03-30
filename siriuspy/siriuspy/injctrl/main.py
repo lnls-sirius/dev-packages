@@ -33,8 +33,8 @@ class App(_Callback):
         self._pvs_database = _get_database()
 
         self._mode = _Const.InjMode.Decay
-        self._type_sel = _Const.InjTypeSel.MultiBunch
-        self._type_sts = _Const.InjTypeSts.Undefined
+        self._type = _Const.InjType.MultiBunch
+        self._type_mon = _Const.InjTypeMon.Undefined
         self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
@@ -274,27 +274,27 @@ class App(_Callback):
 
     def set_type(self, value):
         """Set injection type."""
-        if not 0 <= value < len(_ETypes.INJTYPE_SEL):
+        if not 0 <= value < len(_ETypes.INJTYPE):
             return False
         if self._mode == _Const.InjMode.TopUp:
             self._update_log(
                 'ERR:Turn off top-up mode before changing inj.type.')
             return False
 
-        # change egun configuration to new type and
-        # update Type-Sts according to command success
+        # change egun configuration to new type
+        self._type = value
+        self.run_callbacks('Type-Sts', self._type)
         self._update_log(
-            'Switching EGun mode to '+_ETypes.INJTYPE_SEL[value]+'...')
+            'Switching EGun mode to '+_ETypes.INJTYPE[value]+'...')
         _Thread(target=self._setup_egun, args=[value, ], daemon=True).start()
-        self._type_sel = value
         return True
 
     def _setup_egun(self, value):
         cmm = self._egun_dev.cmd_switch_to_single_bunch \
-            if value == _Const.InjTypeSel.SingleBunch else \
+            if value == _Const.InjType.SingleBunch else \
             self._egun_dev.cmd_switch_to_multi_bunch
         if cmm():
-            msg = 'EGun configured to '+_ETypes.INJTYPE_SEL[value]+'.'
+            msg = 'EGun configured to '+_ETypes.INJTYPE[value]+'.'
         else:
             msg = 'ERR:EGun setup failed. Try again.'
         self._update_log(msg)
@@ -305,7 +305,7 @@ class App(_Callback):
         self._sglbunbiasvolt = value
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
 
-        if self._type_sel == _Const.InjTypeSel.SingleBunch:
+        if self._type == _Const.InjType.SingleBunch:
             if not self._egun_dev.bias.set_voltage(value):
                 self._update_log('ERR:Could not set EGun Bias voltage.')
         return True
@@ -316,7 +316,7 @@ class App(_Callback):
         self._multbunbiasvolt = value
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
 
-        if self._type_sel == _Const.InjTypeSel.MultiBunch:
+        if self._type == _Const.InjType.MultiBunch:
             if not self._egun_dev.bias.set_voltage(value):
                 self._update_log('ERR:Could not set EGun Bias voltage.')
         return True
@@ -675,18 +675,19 @@ class App(_Callback):
 
     def _callback_update_type(self, **kws):
         if self._egun_dev.is_single_bunch:
-            self._type_sts = _Const.InjTypeSts.SingleBunch
+            self._type_mon = _Const.InjTypeMon.SingleBunch
         elif self._egun_dev.is_multi_bunch:
-            self._type_sts = _Const.InjTypeSts.MultiBunch
+            self._type_mon = _Const.InjTypeMon.MultiBunch
         else:
-            self._type_sts = _Const.InjTypeSts.Undefined
-        self.run_callbacks('Type-Sts', self._type_sts)
+            self._type_mon = _Const.InjTypeMon.Undefined
+        self.run_callbacks('Type-Mon', self._type_mon)
 
         if 'init' in kws and kws['init']:
-            if self._type_sts != _Const.InjTypeSts.Undefined:
-                self._type_sel = _ETypes.INJTYPE_SEL.index(
-                    _ETypes.INJTYPE_STS[self._type_sts])
-            self.run_callbacks('Type-Sel', self._type_sel)
+            if self._type_mon != _Const.InjTypeMon.Undefined:
+                self._type = _ETypes.INJTYPE.index(
+                    _ETypes.INJTYPE_MON[self._type_mon])
+            self.run_callbacks('Type-Sel', self._type)
+            self.run_callbacks('Type-Sts', self._type)
 
     # --- auxiliary injection methods ---
 
@@ -1007,7 +1008,7 @@ class App(_Callback):
             if self._egun_dev.connected:
                 # EGBiasPS voltage diff. from desired
                 volt = self._sglbunbiasvolt \
-                    if self._type_sel == _Const.InjTypeSel.SingleBunch \
+                    if self._type == _Const.InjType.SingleBunch \
                     else self._multbunbiasvolt
                 val = abs(self._egun_dev.bias.voltage - volt) > \
                     self._egun_dev.bias_voltage_tol
@@ -1022,8 +1023,8 @@ class App(_Callback):
                 value = _updt_bit(value, 4, val)
 
                 # EGPulsePS setup is diff. from desired
-                val = _ETypes.INJTYPE_SEL[self._type_sel] != \
-                    _ETypes.INJTYPE_STS[self._type_sts]
+                val = _ETypes.INJTYPE[self._type] != \
+                    _ETypes.INJTYPE_MON[self._type_mon]
                 value = _updt_bit(value, 5, val)
 
                 # EGTriggerPS is off
