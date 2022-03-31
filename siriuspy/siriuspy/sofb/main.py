@@ -690,7 +690,8 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
 
-        wait_orb_error = 5
+        wait_orb_error = int(5)
+        previous_orb_problem = False
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -734,11 +735,20 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
+                self.run_callbacks('LoopState-Sts', 0)
                 # NOTE: Assume PSSOFB is active.
-                msg = 'WARN: Skipping iteration and waiting 5s.'
+                msg = 'WARN: Skipping iteration.'
                 self._update_log(msg)
                 _log.info(msg)
-                _sleep(wait_orb_error)
+                for ii_ in range(wait_orb_error):
+                    msg = f'WARN: waiting {wait_orb_error-ii_:d}s ...'
+                    self._update_log(msg)
+                    _log.info(msg)
+                    _sleep(1)
+                msg = f'WARN: Trying again...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = True
                 continue
                 # NOTE: The code bellow is the default implementation.
                 #       We decided to use the temporaty work around solution
@@ -746,6 +756,12 @@ class SOFB(_BaseClass):
                 # self._loop_state = self._csorb.LoopState.Open
                 # self.run_callbacks('LoopState-Sel', 0)
                 # break
+            elif previous_orb_problem:
+                msg = f'WARN: Orbit is Ok now. Resuming correction...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = False
+                self.run_callbacks('LoopState-Sts', 1)
 
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
