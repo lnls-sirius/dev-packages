@@ -129,6 +129,8 @@ class App(_Callback):
             self._callback_watch_injectionevt)
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_autostop)
+        self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
+            self._callback_watch_repeatbucketlist)
 
         self._injsys_dev = InjSysStandbyHandler()
 
@@ -496,6 +498,10 @@ class App(_Callback):
         """Set Auto Stop."""
         if not 0 <= value < len(_ETypes.OFF_ON):
             return False
+        if self._evg_dev.nrpulses != 0:
+            self._update_log('ERR:Could not turn on AutoStop. Set ')
+            self._update_log('ERR:RepeatBucketList to 0 to continue.')
+            return False
         self._autostop = value
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self._update_log(
@@ -723,6 +729,16 @@ class App(_Callback):
                     _ETypes.INJTYPE_MON[self._type_mon])
             self.run_callbacks('Type-Sel', self._type)
             self.run_callbacks('Type-Sts', self._type)
+
+    def _callback_watch_repeatbucketlist(self, value, **kws):
+        if self._mode == _Const.InjMode.TopUp:
+            return
+        if self._autostop == _Const.OffOn.On and value != 0:
+            self._autostop = _Const.OffOn.Off
+            self.run_callbacks('AutoStop-Sel', self._autostop)
+            self.run_callbacks('AutoStop-Sts', self._autostop)
+            self._update_log('WARN:RepeatBucketList is diff. from 0.')
+            self._update_log('WARN:Turned Off Auto Stop.')
 
     # --- auxiliary injection methods ---
 
