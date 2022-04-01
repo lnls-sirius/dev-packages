@@ -1,7 +1,6 @@
 """E-Gun devices."""
 
 import time as _time
-from datetime import timedelta as _timedelta
 import numpy as _np
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
@@ -437,7 +436,7 @@ class EGun(_Devices):
     FILACURR_RAMP_NRPTS = 10
     FILACURR_RAMP_DURATION = 7*60  # [s]
 
-    def __init__(self):
+    def __init__(self, print_log=True):
         """Init."""
         self.bias = EGBias()
         self.fila = EGFilament()
@@ -471,6 +470,7 @@ class EGun(_Devices):
         self._filacurr_opval = EGun.FILACURR_OPVALUE
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
         self._last_status = ''
+        self._print_log = print_log
 
         super().__init__('', devices)
 
@@ -604,6 +604,7 @@ class EGun(_Devices):
 
     def set_hv_voltage(self, value=None, duration=None, timeout=DEF_TIMEOUT):
         """Set HVPS voltage."""
+        self._update_last_status('Setpoint received for HVPS voltage...')
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
@@ -626,13 +627,17 @@ class EGun(_Devices):
         self._update_last_status(
             f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
         self.hvps.current = self._hv_leakcurr
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
 
         # if value is lower, do only one setpoint
         if value < self.hvps.voltage:
-            self._update_last_status(f'Setting voltage to {value:.3f}kV.')
+            self._update_last_status(f'Setting voltage to {value:.3f}kV...')
             self.hvps.voltage = value
-            return self.hvps.wait_voltage(
-                value, self._hv_tol, timeout=3*timeout)
+            if self.hvps.wait_voltage(value, self._hv_tol, timeout=3*timeout):
+                self._update_last_status('HVPS Ready!')
+                return True
+            self._update_last_status('ERR:Timed out waiting for HVPS voltage.')
+            return False
 
         # else, do a ramp up
         duration = duration if duration is not None else EGun.HV_RAMP_DURATION
@@ -643,9 +648,10 @@ class EGun(_Devices):
         t_inter = duration / (nrpts-1)
 
         self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         self._update_last_status(
-            'This process will take approximatelly'
-            f' {ydata.size*t_inter:.1f}s.')
+            f'This process will take about {ydata.size*t_inter:.1f}s.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         for i, volt in enumerate(ydata[1:]):
             self.hvps.voltage = volt
             self._update_last_status(
@@ -657,7 +663,7 @@ class EGun(_Devices):
                     self._update_last_status(
                         'ERR:MPS or LI Status not ok. Aborted.')
                     return False
-                if self.hvps.voltage - volt < self._hv_tol:
+                if abs(self.hvps.voltage - volt) < self._hv_tol:
                     break
                 _time.sleep(0.1)
             else:
@@ -681,13 +687,14 @@ class EGun(_Devices):
     def is_fila_on(self):
         """Indicate whether filament is on and in operational current."""
         is_on = self.fila.is_on()
-        is_op_sp = abs(self.fila['currentinsoft']-self._filacurr_opval) < 1e-4
-        is_op_rb = abs(self.fila['currentoutsoft']-self._filacurr_opval) < \
+        is_op_sp = abs(self.fila['currentoutsoft']-self._filacurr_opval) < 1e-4
+        is_op_rb = abs(self.fila['currentinsoft']-self._filacurr_opval) < \
             self._filacurr_tol
         return is_on and is_op_sp and is_op_rb
 
     def set_fila_current(self, value=None):
         """Set filament current."""
+        self._update_last_status('Setpoint received for FilaPS current...')
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
@@ -708,9 +715,14 @@ class EGun(_Devices):
 
         # elif value is lower, do only one setpoint
         if value < self.fila.current:
-            self._update_last_status(f'Setting current to {value:.3f}A.')
+            self._update_last_status(f'Setting current to {value:.3f}A...')
             self.fila.current = value
-            return self.fila.wait_current(value, self._filacurr_tol)
+            if self.fila.wait_current(value, self._filacurr_tol):
+                self._update_last_status('FilaPS Ready!')
+                return True
+            self._update_last_status(
+                'ERR:Timed out waiting for FilaPS current.')
+            return False
 
         # else, do a ramp up
         duration = EGun.FILACURR_RAMP_DURATION
@@ -722,6 +734,7 @@ class EGun(_Devices):
 
         self._update_last_status(
             f'Starting filament ramp to {value:.3f} A.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         for i, cur in enumerate(ydata[1:]):
             self.fila.current = cur
             dur = total_steps_duration - i*t_inter
@@ -735,6 +748,7 @@ class EGun(_Devices):
                     'ERR:MPS or LI Status not ok. Aborted.')
                 return False
         self._update_last_status('FilaPS Ready!')
+        return True
 
     def _get_ramp(self, curr_val, goal, nrpts, max_val, power=2):
         xdata = _np.linspace(0, 1, nrpts)
@@ -761,4 +775,5 @@ class EGun(_Devices):
 
     def _update_last_status(self, status):
         self._last_status = status
-        print(status)
+        if self._print_log:
+            print(status)
