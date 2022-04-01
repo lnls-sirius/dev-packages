@@ -16,6 +16,7 @@ class ETypes(_csdev.ETypes):
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
+    RFKILLBEAMMON = ('Idle', 'Kill')
 
 
 _et = ETypes
@@ -31,6 +32,7 @@ class Const(_csdev.Const):
     InjTypeMon = _csdev.Const.register('InjTypeMon', _et.INJTYPE_MON)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
+    RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
     LI_STATUS_LABELS = ('Egun', 'PS', 'PU', 'RF', 'TI')
@@ -192,6 +194,11 @@ def get_injctrl_propty_database():
         'InjSysTurnOnOrder-RB': {'type': 'string', 'value': injsys_onorder},
         'InjSysTurnOffOrder-SP': {'type': 'string', 'value': injsys_offorder},
         'InjSysTurnOffOrder-RB': {'type': 'string', 'value': injsys_offorder},
+
+        'RFKillBeam-Cmd': {'type': 'int', 'value': 0},
+        'RFKillBeam-Mon': {
+            'type': 'enum', 'value': _ct.RFKillBeamMon.Idle,
+            'enums': _et.RFKILLBEAMMON},
 
         'DiagStatusLI-Mon': {
             'type': 'int', 'value': 2**len(_ct.LI_STATUS_LABELS)-1},

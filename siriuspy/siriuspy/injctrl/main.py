@@ -15,7 +15,7 @@ from ..diagsys.lidiag.csdev import Const as _LIDiagConst
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
 from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
-    PowerSupplyPU
+    PowerSupplyPU, RFKillBeam
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -61,6 +61,9 @@ class App(_Callback):
 
         self._injsys_turn_on_count = 0
         self._injsys_turn_off_count = 0
+
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
+        self._rfkillbeam_count = 0
 
         secs = ['LI', 'TB', 'BO', 'TS', 'SI', 'AS']
         self._status = {
@@ -137,6 +140,8 @@ class App(_Callback):
             {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in punames]
 
+        self._rfkillbeam = RFKillBeam()
+
         # pvname to write method map
         self.map_pv2write = {
             'Mode-Sel': self.set_mode,
@@ -158,6 +163,7 @@ class App(_Callback):
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
             'InjSysTurnOnOrder-SP': self.set_injsys_on_order,
             'InjSysTurnOffOrder-SP': self.set_injsys_off_order,
+            'RFKillBeam-Cmd': self.cmd_rfkillbeam,
         }
 
         # status scanning
@@ -221,6 +227,8 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
+        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
+        self.run_callbacks('RFKillBeam-Mon', _Const.RFKillBeamMon.Idle)
         self.run_callbacks('DiagStatusLI-Mon', self._status['LI'])
         self.run_callbacks('DiagStatusTB-Mon', self._status['TB'])
         self.run_callbacks('DiagStatusBO-Mon', self._status['BO'])
@@ -576,6 +584,32 @@ class App(_Callback):
         self._update_log('Updated inj.sys. turn off command order.')
         self.run_callbacks('InjSysTurnOffOrder-RB', value)
         return True
+
+    def cmd_rfkillbeam(self, value):
+        """RF Kill Beam command."""
+        if self._rfkillbeam_mon == _Const.RFKillBeamMon.Kill:
+            self._update_log('ERR:Still processing RFKillBeam command')
+            return False
+
+        self._update_log('Received RFKillBeam Command...')
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Kill
+        self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
+        _Thread(target=self._watch_rfkillbeam, daemon=True).start()
+
+        self._rfkillbeam_count += 1
+        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
+        return False
+
+    def _watch_rfkillbeam(self):
+        ret = self._rfkillbeam.cmd_kill_beam()
+        if not ret[0]:
+            msgs = [ret[1][i:i+35] for i in range(0, len(ret[1]), 35)]
+            for msg in msgs:
+                self._update_log('ERR:'+msg)
+        else:
+            self._update_log('The beam was killed by RF!')
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
+        self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
 
     # --- callbacks ---
 
