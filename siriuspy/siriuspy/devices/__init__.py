@@ -21,7 +21,8 @@ from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav
+from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
+    RFKillBeam
 from .screen import Screen
 from .sofb import SOFB
 from .syncd import DevicesSync
