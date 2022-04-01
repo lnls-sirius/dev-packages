@@ -308,25 +308,34 @@ class App(_Callback):
 
     def set_sglbunbiasvolt(self, value):
         """Set single bunch bias voltage."""
+        self._update_log('Received setpoint to SB Bias voltage.')
         self._egun_dev.single_bunch_bias_voltage = value
         self._sglbunbiasvolt = value
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
 
         if self._type == _Const.InjType.SingleBunch:
-            if not self._egun_dev.bias.set_voltage(value):
-                self._update_log('ERR:Could not set EGun Bias voltage.')
+            _Thread(target=self._set_egunbias,
+                    args=[value, ], daemon=True).start()
         return True
 
     def set_multbunbiasvolt(self, value):
         """Set multi bunch bias voltage."""
+        self._update_log('Received setpoint to MB Bias voltage.')
         self._egun_dev.multi_bunch_bias_voltage = value
         self._multbunbiasvolt = value
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
 
         if self._type == _Const.InjType.MultiBunch:
-            if not self._egun_dev.bias.set_voltage(value):
-                self._update_log('ERR:Could not set EGun Bias voltage.')
+            _Thread(target=self._set_egunbias,
+                    args=[value, ], daemon=True).start()
         return True
+
+    def _set_egunbias(self, value):
+        self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
+        if not self._egun_dev.bias.set_voltage(value):
+            self._update_log('ERR:Could not set EGun Bias voltage.')
+        else:
+            self._update_log('Set EGun Bias voltage: {}V.'.format(value))
 
     def set_filaopcurr(self, value):
         """Set filament current operation value."""
