@@ -4,6 +4,7 @@ from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
+from ..pwrsupply.csdev import Const as _Const
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
@@ -185,6 +186,7 @@ class PowerSupply(_PSDev):
     OPMODE_SEL = _PSCStatus.OPMODE
     OPMODE_STS = _PSCStatus.STATES
     CYCLETYPE = _PSCStatus.CYCLETYPE
+    WFMUPDATEAUTO = _Const.DsblEnbl
 
     class DEVICES:
         """Devices names."""
@@ -398,6 +400,22 @@ class PowerSupply(_PSDev):
         var = self.cycle_aux_param
         var[2] = value
         self.cycle_aux_param = var
+
+    @property
+    def wfm_update_auto(self):
+        """Waveform auto update."""
+        return self['WfmUpdateAuto-Sts']
+
+    @property
+    def wfm_update_auto_str(self):
+        """Waveform auto update."""
+        return self.WFMUPDATEAUTO._fields[self['WfmUpdateAuto-Sts']]
+
+    @wfm_update_auto.setter
+    def wfm_update_auto(self, value):
+        """Set waveform auto update."""
+        self._enum_setter(
+            'WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
 
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""

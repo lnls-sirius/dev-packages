@@ -597,15 +597,16 @@ class SICurrInfoApp(_CurrInfoApp):
 
     def _update_injeff(self):
         # Sleep some time here to ensure SI DCCT will have been updated
-        _time.sleep(0.11)
+        _time.sleep(0.21)
 
         # get booster current
         bo_curr = self._bo_curr3gev_pv.value
 
         # choose current PV
-        buffer = self._current_13c4_buffer \
-            if self._dcct_mode == _Const.DCCT.DCCT13C4 \
-            else self._current_14c4_buffer
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
+            buffer = self._current_13c4_buffer
+        else:
+            buffer = self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
         timestamp_dq = _np.asarray(timestamp_dq)
         value_dq = _np.asarray(value_dq)
@@ -619,7 +620,7 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # calculate efficiency
-        self._injcurr = value_dq[-1] - _np.min(value_dq)  # mA
+        self._injcurr = value_dq[-1] - value_dq.min()  # mA
         self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC

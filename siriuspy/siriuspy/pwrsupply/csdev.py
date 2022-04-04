@@ -757,7 +757,7 @@ class Const(_csdev.Const):
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
     WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
-
+    DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBL_ENBL)
 
 # --- Main power supply database functions ---
 
