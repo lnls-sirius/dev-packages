@@ -15,7 +15,7 @@ from ..diagsys.lidiag.csdev import Const as _LIDiagConst
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
 from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
-    PowerSupplyPU
+    PowerSupplyPU, RFKillBeam
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -33,15 +33,16 @@ class App(_Callback):
         self._pvs_database = _get_database()
 
         self._mode = _Const.InjMode.Decay
-        self._type_sel = _Const.InjTypeSel.MultiBunch
-        self._type_sts = _Const.InjTypeSts.Undefined
+        self._type = _Const.InjType.MultiBunch
+        self._type_mon = _Const.InjTypeMon.Undefined
+        self._thread_type = None
         self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
         self._thread_filaps = None
         self._hvopvolt = EGun.HV_OPVALUE
         self._thread_hvps = None
-        self._thread_wtegps = None
+        self._thread_wategun = None
         self._target_current = 100.0
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
@@ -60,6 +61,9 @@ class App(_Callback):
 
         self._injsys_turn_on_count = 0
         self._injsys_turn_off_count = 0
+
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
+        self._rfkillbeam_count = 0
 
         secs = ['LI', 'TB', 'BO', 'TS', 'SI', 'AS']
         self._status = {
@@ -125,6 +129,8 @@ class App(_Callback):
             self._callback_watch_injectionevt)
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_autostop)
+        self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
+            self._callback_watch_repeatbucketlist)
 
         self._injsys_dev = InjSysStandbyHandler()
 
@@ -135,6 +141,8 @@ class App(_Callback):
         punames = _PSSearch.get_psnames(
             {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in punames]
+
+        self._rfkillbeam = RFKillBeam()
 
         # pvname to write method map
         self.map_pv2write = {
@@ -157,6 +165,7 @@ class App(_Callback):
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
             'InjSysTurnOnOrder-SP': self.set_injsys_on_order,
             'InjSysTurnOffOrder-SP': self.set_injsys_off_order,
+            'RFKillBeam-Cmd': self.cmd_rfkillbeam,
         }
 
         # status scanning
@@ -220,6 +229,8 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
+        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
+        self.run_callbacks('RFKillBeam-Mon', _Const.RFKillBeamMon.Idle)
         self.run_callbacks('DiagStatusLI-Mon', self._status['LI'])
         self.run_callbacks('DiagStatusTB-Mon', self._status['TB'])
         self.run_callbacks('DiagStatusBO-Mon', self._status['BO'])
@@ -274,52 +285,57 @@ class App(_Callback):
 
     def set_type(self, value):
         """Set injection type."""
-        if not 0 <= value < len(_ETypes.INJTYPE_SEL):
+        if not 0 <= value < len(_ETypes.INJTYPE):
             return False
         if self._mode == _Const.InjMode.TopUp:
             self._update_log(
                 'ERR:Turn off top-up mode before changing inj.type.')
             return False
+        self._type = value
+        self.run_callbacks('Type-Sts', self._type)
 
-        # change egun configuration to new type and
-        # update Type-Sts according to command success
-        self._update_log(
-            'Switching EGun mode to '+_ETypes.INJTYPE_SEL[value]+'...')
-        _Thread(target=self._setup_egun, args=[value, ], daemon=True).start()
-        self._type_sel = value
-        return True
-
-    def _setup_egun(self, value):
-        cmm = self._egun_dev.cmd_switch_to_single_bunch \
-            if value == _Const.InjTypeSel.SingleBunch else \
+        target = self._egun_dev.cmd_switch_to_single_bunch \
+            if value == _Const.InjType.SingleBunch else \
             self._egun_dev.cmd_switch_to_multi_bunch
-        if cmm():
-            msg = 'EGun configured to '+_ETypes.INJTYPE_SEL[value]+'.'
-        else:
-            msg = 'ERR:EGun setup failed. Try again.'
-        self._update_log(msg)
+        self._thread_type = _Thread(target=target, daemon=True)
+        self._thread_type.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
+        return True
 
     def set_sglbunbiasvolt(self, value):
         """Set single bunch bias voltage."""
+        self._update_log('Received setpoint to SB Bias voltage.')
         self._egun_dev.single_bunch_bias_voltage = value
         self._sglbunbiasvolt = value
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
 
-        if self._type_sel == _Const.InjTypeSel.SingleBunch:
-            if not self._egun_dev.bias.set_voltage(value):
-                self._update_log('ERR:Could not set EGun Bias voltage.')
+        if self._type == _Const.InjType.SingleBunch:
+            _Thread(target=self._set_egunbias,
+                    args=[value, ], daemon=True).start()
         return True
 
     def set_multbunbiasvolt(self, value):
         """Set multi bunch bias voltage."""
+        self._update_log('Received setpoint to MB Bias voltage.')
         self._egun_dev.multi_bunch_bias_voltage = value
         self._multbunbiasvolt = value
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
 
-        if self._type_sel == _Const.InjTypeSel.MultiBunch:
-            if not self._egun_dev.bias.set_voltage(value):
-                self._update_log('ERR:Could not set EGun Bias voltage.')
+        if self._type == _Const.InjType.MultiBunch:
+            _Thread(target=self._set_egunbias,
+                    args=[value, ], daemon=True).start()
         return True
+
+    def _set_egunbias(self, value):
+        self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
+        if not self._egun_dev.bias.set_voltage(value):
+            self._update_log('ERR:Could not set EGun Bias voltage.')
+        else:
+            self._update_log('Set EGun Bias voltage: {}V.'.format(value))
 
     def set_filaopcurr(self, value):
         """Set filament current operation value."""
@@ -330,10 +346,11 @@ class App(_Callback):
         self._thread_filaps = _Thread(
             target=self._egun_dev.set_fila_current, daemon=True)
         self._thread_filaps.start()
-        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
-            self._thread_wtegps = _Thread(
-                target=self._watch_egunps, daemon=True)
-            self._thread_wtegps.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
         return True
 
     def set_hvopvolt(self, value):
@@ -345,13 +362,14 @@ class App(_Callback):
         self._thread_hvps = _Thread(
             target=self._egun_dev.set_hv_voltage, daemon=True)
         self._thread_hvps.start()
-        if self._thread_wtegps is None or not self._thread_wtegps.is_alive():
-            self._thread_wtegps = _Thread(
-                target=self._watch_egunps, daemon=True)
-            self._thread_wtegps.start()
+
+        if self._thread_wategun is None or not self._thread_wategun.is_alive():
+            self._thread_wategun = _Thread(
+                target=self._watch_egundev, daemon=True)
+            self._thread_wategun.start()
         return True
 
-    def _watch_egunps(self):
+    def _watch_egundev(self):
         running = True
         sts = ''
         while running:
@@ -359,7 +377,9 @@ class App(_Callback):
                 self._thread_filaps.is_alive()
             hvpsrun = self._thread_hvps is not None and \
                 self._thread_hvps.is_alive()
-            running = filarun | hvpsrun
+            typerun = self._thread_type is not None and \
+                self._thread_type.is_alive()
+            running = filarun | hvpsrun | typerun
             if self._egun_dev.last_status != sts:
                 sts = self._egun_dev.last_status
                 if 'err:' in sts.lower():
@@ -487,6 +507,10 @@ class App(_Callback):
         """Set Auto Stop."""
         if not 0 <= value < len(_ETypes.OFF_ON):
             return False
+        if self._evg_dev.nrpulses != 0:
+            self._update_log('ERR:Could not turn on AutoStop. Set ')
+            self._update_log('ERR:RepeatBucketList to 0 to continue.')
+            return False
         self._autostop = value
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self._update_log(
@@ -575,6 +599,32 @@ class App(_Callback):
         self._update_log('Updated inj.sys. turn off command order.')
         self.run_callbacks('InjSysTurnOffOrder-RB', value)
         return True
+
+    def cmd_rfkillbeam(self, value):
+        """RF Kill Beam command."""
+        if self._rfkillbeam_mon == _Const.RFKillBeamMon.Kill:
+            self._update_log('ERR:Still processing RFKillBeam command')
+            return False
+
+        self._update_log('Received RFKillBeam Command...')
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Kill
+        self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
+        _Thread(target=self._watch_rfkillbeam, daemon=True).start()
+
+        self._rfkillbeam_count += 1
+        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
+        return False
+
+    def _watch_rfkillbeam(self):
+        ret = self._rfkillbeam.cmd_kill_beam()
+        if not ret[0]:
+            msgs = [ret[1][i:i+35] for i in range(0, len(ret[1]), 35)]
+            for msg in msgs:
+                self._update_log('ERR:'+msg)
+        else:
+            self._update_log('The beam was killed by RF!')
+        self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
+        self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
 
     # --- callbacks ---
 
@@ -675,18 +725,29 @@ class App(_Callback):
 
     def _callback_update_type(self, **kws):
         if self._egun_dev.is_single_bunch:
-            self._type_sts = _Const.InjTypeSts.SingleBunch
+            self._type_mon = _Const.InjTypeMon.SingleBunch
         elif self._egun_dev.is_multi_bunch:
-            self._type_sts = _Const.InjTypeSts.MultiBunch
+            self._type_mon = _Const.InjTypeMon.MultiBunch
         else:
-            self._type_sts = _Const.InjTypeSts.Undefined
-        self.run_callbacks('Type-Sts', self._type_sts)
+            self._type_mon = _Const.InjTypeMon.Undefined
+        self.run_callbacks('Type-Mon', self._type_mon)
 
         if 'init' in kws and kws['init']:
-            if self._type_sts != _Const.InjTypeSts.Undefined:
-                self._type_sel = _ETypes.INJTYPE_SEL.index(
-                    _ETypes.INJTYPE_STS[self._type_sts])
-            self.run_callbacks('Type-Sel', self._type_sel)
+            if self._type_mon != _Const.InjTypeMon.Undefined:
+                self._type = _ETypes.INJTYPE.index(
+                    _ETypes.INJTYPE_MON[self._type_mon])
+            self.run_callbacks('Type-Sel', self._type)
+            self.run_callbacks('Type-Sts', self._type)
+
+    def _callback_watch_repeatbucketlist(self, value, **kws):
+        if self._mode == _Const.InjMode.TopUp:
+            return
+        if self._autostop == _Const.OffOn.On and value != 0:
+            self._autostop = _Const.OffOn.Off
+            self.run_callbacks('AutoStop-Sel', self._autostop)
+            self.run_callbacks('AutoStop-Sts', self._autostop)
+            self._update_log('WARN:RepeatBucketList is diff. from 0.')
+            self._update_log('WARN:Turned Off Auto Stop.')
 
     # --- auxiliary injection methods ---
 
@@ -1007,7 +1068,7 @@ class App(_Callback):
             if self._egun_dev.connected:
                 # EGBiasPS voltage diff. from desired
                 volt = self._sglbunbiasvolt \
-                    if self._type_sel == _Const.InjTypeSel.SingleBunch \
+                    if self._type == _Const.InjType.SingleBunch \
                     else self._multbunbiasvolt
                 val = abs(self._egun_dev.bias.voltage - volt) > \
                     self._egun_dev.bias_voltage_tol
@@ -1022,8 +1083,8 @@ class App(_Callback):
                 value = _updt_bit(value, 4, val)
 
                 # EGPulsePS setup is diff. from desired
-                val = _ETypes.INJTYPE_SEL[self._type_sel] != \
-                    _ETypes.INJTYPE_STS[self._type_sts]
+                val = _ETypes.INJTYPE[self._type] != \
+                    _ETypes.INJTYPE_MON[self._type_mon]
                 value = _updt_bit(value, 5, val)
 
                 # EGTriggerPS is off
