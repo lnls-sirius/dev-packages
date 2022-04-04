@@ -72,7 +72,7 @@ class BPM(_Device):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
+            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
 
         properties = set(BPM._properties)
         if _BPMSearch.is_photon_bpm(devname):
@@ -937,8 +937,12 @@ class FamBPMs(_Devices):
         """
         if acq_rate.lower().startswith('monit1'):
             acq_rate = self.csbpm.AcqChan.Monit1
-        else:
+        elif acq_rate.lower().startswith('fofb'):
             acq_rate = self.csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbt'):
+            acq_rate = self.csbpm.AcqChan.TbT
+        else:
+            raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
         if repeat:
             repeat = self.csbpm.AcqRepeat.Repetitive
