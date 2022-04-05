@@ -99,12 +99,12 @@ class BaseOrbitIntlk:
         return down, upn
 
     def calc_intlk_metric(self, posarray, operation='', metric=''):
-        """Return interlock metric, translation or angulation."""
+        """Return interlock metric, position or angulation."""
         if not operation:
             if not metric:
                 raise ValueError(
                     'either the operation or the metric is required')
-            operation = 'mean' if 'trans' in metric.lower() else 'diff'
+            operation = 'mean' if 'pos' in metric.lower() else 'diff'
 
         data_values = list()
         for bpm in BaseOrbitIntlk.BPM_NAMES:
@@ -138,7 +138,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # General interlock enable:
         'IntlkEn-Sel', 'IntlkEn-Sts',
         # General interlock clear:
-        'IntlkClr-Sel',  # maybe -Cmd?
+        'IntlkClr-Cmd',  # maybe -Cmd?
         # Minimum sum threshold enable:
         # Habilita interlock de órbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
@@ -153,10 +153,10 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # correspondente
         'IntlkLtc-Mon',
         # ===============================================================
-        # Translation (interlock de translação)
+        # Position (interlock de posição)
         # +++++++++++++++++++++++++++++++++++++
         # ***************************************************************
-        # Condição para interlock de translação:
+        # Condição para interlock de posição:
         #   thres_min > (pos BPM downstream + pos BPM upstream)/2 or
         #   thres_max < (pos BPM downstream + pos BPM upstream)/2
         # BPMs são agrupados 2 a 2 seguindo a ordem do feixe:
@@ -167,26 +167,24 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # BPM upstream é sempre o "primeiro" BPM da dupla acima e BPM
         # downstream é sempre o "segundo" BPM da dupla.
         # ***************************************************************
-        # Translation interlock enable:
-        'IntlkTransEn-Sel', 'IntlkTransEn-Sts',
-        # Translation interlock clear:
-        'IntlkTransClr-Sel',
+        # Position interlock enable:
+        'IntlkPosEn-Sel', 'IntlkPosEn-Sts',
+        # Position interlock clear:
+        'IntlkPosClr-Cmd',
         # Thresholds (em nm da taxa Monit1):
-        'IntlkLmtTransMaxX-SP', 'IntlkLmtTransMaxX-RB',
-        'IntlkLmtTransMinX-SP', 'IntlkLmtTransMinX-RB',
-        'IntlkLmtTransMaxY-SP', 'IntlkLmtTransMaxY-RB',
-        'IntlkLmtTransMinY-SP', 'IntlkLmtTransMinY-RB',
+        'IntlkLmtPosMaxX-SP', 'IntlkLmtPosMaxX-RB',
+        'IntlkLmtPosMinX-SP', 'IntlkLmtPosMinX-RB',
+        'IntlkLmtPosMaxY-SP', 'IntlkLmtPosMaxY-RB',
+        'IntlkLmtPosMinY-SP', 'IntlkLmtPosMinY-RB',
+        # Todos os interlocks são mascarados pelo "Enable"
         # Status Instantâneo:
-        #   XouY mascarado pelo "Enable"
-        'IntlkTransSmaller-Mon', 'IntlkTransBigger-Mon',
-        # the ones bellow are not masked by "Enable"
-        'IntlkTransSmallerAny-Mon', 'IntlkTransBiggerAny-Mon',  # X ou Y
-        'IntlkTransSmallerX-Mon', 'IntlkTransBiggerX-Mon',  # X
-        'IntlkTransSmallerY-Mon', 'IntlkTransBiggerY-Mon',  # Y
-        # limpo apenas acionando-se a PV "Clr" correspondente
-        'IntlkTransSmallerLtc-Mon', 'IntlkTransBiggerLtc-Mon',
-        'IntlkTransSmallerLtcX-Mon', 'IntlkTransBiggerLtcX-Mon',
-        'IntlkTransSmallerLtcY-Mon', 'IntlkTransBiggerLtcY-Mon',
+        'IntlkPosLower-Mon', 'IntlkPosUpper-Mon',  # X ou Y
+        'IntlkPosLowerX-Mon', 'IntlkPosUpperX-Mon',  # X
+        'IntlkPosLowerY-Mon', 'IntlkPosUpperY-Mon',  # Y
+        # Status Latch, limpo apenas acionando-se a PV "Clr" correspondente:
+        'IntlkPosLowerLtc-Mon', 'IntlkPosUpperLtc-Mon',
+        'IntlkPosLowerLtcX-Mon', 'IntlkPosUpperLtcX-Mon',
+        'IntlkPosLowerLtcY-Mon', 'IntlkPosUpperLtcY-Mon',
         # =============================================================
         # Angular (interlock de ângulo)
         # +++++++++++++++++++++++++++++
@@ -205,7 +203,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # Angulation interlock enable:
         'IntlkAngEn-Sel', 'IntlkAngEn-Sts',
         # Angulation interlock clear:
-        'IntlkAngClr-Sel',
+        'IntlkAngClr-Cmd',
         # Thresholds (em rad.nm da taxa Monit1).
         #  Thresholds devem ser calculados como ângulo (em rad)
         #  entre os 2 BPMs adjacentes * distância (em nm) entre eles):
@@ -213,17 +211,15 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkLmtAngMinX-SP', 'IntlkLmtAngMinX-RB',
         'IntlkLmtAngMaxY-SP', 'IntlkLmtAngMaxY-RB',
         'IntlkLmtAngMinY-SP', 'IntlkLmtAngMinY-RB',
+        # Todos os interlocks são mascarados pelo "Enable"
         # Status Instantâneo:
-        #  X ou Y mascarado pelo "Enable"
-        'IntlkAngSmaller-Mon', 'IntlkAngBigger-Mon',
-        # the ones bellow are not masked by "Enable"
-        'IntlkAngSmallerAny-Mon', 'IntlkAngBiggerAny-Mon',  # X ou Y
-        'IntlkAngSmallerX-Mon', 'IntlkAngBiggerX-Mon',  # X
-        'IntlkAngSmallerY-Mon', 'IntlkAngBiggerY-Mon',  # Y
-        # limpo apenas acionando-se a PV "Clr" correspondente
-        'IntlkAngSmallerLtc-Mon', 'IntlkAngBiggerLtc-Mon',
-        'IntlkAngSmallerLtcX-Mon', 'IntlkAngBiggerLtcX-Mon',
-        'IntlkAngSmallerLtcY-Mon', 'IntlkAngBiggerLtcY-Mon',
+        'IntlkAngLower-Mon', 'IntlkAngUpper-Mon',
+        'IntlkAngLowerX-Mon', 'IntlkAngUpperX-Mon',  # X
+        'IntlkAngLowerY-Mon', 'IntlkAngUpperY-Mon',  # Y
+        # Status Latch, limpo apenas acionando-se a PV "Clr" correspondente:
+        'IntlkAngLowerLtc-Mon', 'IntlkAngUpperLtc-Mon',
+        'IntlkAngLowerLtcX-Mon', 'IntlkAngUpperLtcX-Mon',
+        'IntlkAngLowerLtcY-Mon', 'IntlkAngUpperLtcY-Mon',
         # ============================================================
         )
 
@@ -268,7 +264,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     def cmd_reset_gen(self):
         """General interlock clear."""
-        self['IntlkClr-Sel'] = 1
+        self['IntlkClr-Cmd'] = 1
         return True
 
     @property
@@ -306,169 +302,153 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
     def minsumthres(self, value):
         self['IntlkLmtMinSum-SP'] = int(value)
 
-    # --- translation interlock ---
+    # --- position interlock ---
 
     @property
-    def trans_enable(self):
-        """Translation interlock enable."""
-        return self['IntlkTransEn-Sts']
+    def pos_enable(self):
+        """Position interlock enable."""
+        return self['IntlkPosEn-Sts']
 
-    @trans_enable.setter
-    def trans_enable(self, value):
-        self['IntlkTransEn-Sel'] = int(value)
+    @pos_enable.setter
+    def pos_enable(self, value):
+        self['IntlkPosEn-Sel'] = int(value)
 
-    def cmd_reset_trans(self):
-        """Translation interlock clear."""
-        self['IntlkTransClr-Sel'] = 1
+    def cmd_reset_pos(self):
+        """Position interlock clear."""
+        self['IntlkPosClr-Cmd'] = 1
         return True
 
     @property
-    def trans_thresminx(self):
-        """Minimum X translation threshold."""
-        return self['IntlkLmtTransMinX-RB']
+    def pos_thresminx(self):
+        """Minimum X position threshold."""
+        return self['IntlkLmtPosMinX-RB']
 
-    @trans_thresminx.setter
-    def trans_thresminx(self, value):
-        self['IntlkLmtTransMinX-SP'] = value
-
-    @property
-    def trans_thresmaxx(self):
-        """Maximum X translation threshold."""
-        return self['IntlkLmtTransMaxX-RB']
-
-    @trans_thresmaxx.setter
-    def trans_thresmaxx(self, value):
-        self['IntlkLmtTransMaxX-SP'] = value
+    @pos_thresminx.setter
+    def pos_thresminx(self, value):
+        self['IntlkLmtPosMinX-SP'] = value
 
     @property
-    def trans_thresminy(self):
-        """Minimum Y translation threshold."""
-        return self['IntlkLmtTransMinY-RB']
+    def pos_thresmaxx(self):
+        """Maximum X position threshold."""
+        return self['IntlkLmtPosMaxX-RB']
 
-    @trans_thresminy.setter
-    def trans_thresminy(self, value):
-        self['IntlkLmtTransMinY-SP'] = value
-
-    @property
-    def trans_thresmaxy(self):
-        """Maximum Y translation threshold."""
-        return self['IntlkLmtTransMaxY-RB']
-
-    @trans_thresmaxy.setter
-    def trans_thresmaxy(self, value):
-        self['IntlkLmtTransMaxY-SP'] = value
+    @pos_thresmaxx.setter
+    def pos_thresmaxx(self, value):
+        self['IntlkLmtPosMaxX-SP'] = value
 
     @property
-    def trans_mask_smaller(self):
+    def pos_thresminy(self):
+        """Minimum Y position threshold."""
+        return self['IntlkLmtPosMinY-RB']
+
+    @pos_thresminy.setter
+    def pos_thresminy(self, value):
+        self['IntlkLmtPosMinY-SP'] = value
+
+    @property
+    def pos_thresmaxy(self):
+        """Maximum Y position threshold."""
+        return self['IntlkLmtPosMaxY-RB']
+
+    @pos_thresmaxy.setter
+    def pos_thresmaxy(self, value):
+        self['IntlkLmtPosMaxY-SP'] = value
+
+    @property
+    def pos_inst_lower(self):
         """
-        Instantaneous translation interlock set when either X or Y
-        minimum thresholds are exceeded, masked by general enable.
-        """
-        return self['IntlkTransSmaller-Mon']
-
-    @property
-    def trans_mask_bigger(self):
-        """
-        Instantaneous translation interlock set when either X or Y
-        maximum thresholds are exceeded, masked by general enable.
-        """
-        return self['IntlkTransBigger-Mon']
-
-    @property
-    def trans_inst_smaller(self):
-        """
-        Instantaneous translation interlock set when either X or Y
+        Instantaneous position interlock set when either X or Y
         minimum thresholds are exceeded.
         """
-        return self['IntlkTransSmallerAny-Mon']
+        return self['IntlkPosLower-Mon']
 
     @property
-    def trans_inst_bigger(self):
+    def pos_inst_upper(self):
         """
-        Instantaneous translation interlock set when either X or Y
+        Instantaneous position interlock set when either X or Y
         maximum thresholds are exceeded.
         """
-        return self['IntlkTransBiggerAny-Mon']
+        return self['IntlkPosUpper-Mon']
 
     @property
-    def trans_inst_smaller_x(self):
+    def pos_inst_lower_x(self):
         """
-        Instantaneous translation interlock set when X
+        Instantaneous position interlock set when X
         minimum threshold is exceeded.
         """
-        return self['IntlkTransSmallerX-Mon']
+        return self['IntlkPosLowerX-Mon']
 
     @property
-    def trans_inst_bigger_x(self):
+    def pos_inst_upper_x(self):
         """
-        Instantaneous translation interlock set when X
+        Instantaneous position interlock set when X
         maximum threshold is exceeded.
         """
-        return self['IntlkTransBiggerX-Mon']
+        return self['IntlkPosUpperX-Mon']
 
     @property
-    def trans_inst_smaller_y(self):
+    def pos_inst_lower_y(self):
         """
-        Instantaneous translation interlock set when Y
+        Instantaneous position interlock set when Y
         minimum threshold is exceeded.
         """
-        return self['IntlkTransSmallerY-Mon']
+        return self['IntlkPosLowerY-Mon']
 
     @property
-    def trans_inst_bigger_y(self):
+    def pos_inst_upper_y(self):
         """
-        Instantaneous translation interlock set when Y
+        Instantaneous position interlock set when Y
         maximum threshold is exceeded.
         """
-        return self['IntlkTransBiggerY-Mon']
+        return self['IntlkPosUpperY-Mon']
 
     @property
-    def trans_latch_smaller(self):
+    def pos_latch_lower(self):
         """
-        Latch translation interlock set when either X or Y
+        Latch position interlock set when either X or Y
         minimum thresholds are exceeded.
         """
-        return self['IntlkTransSmallerLtc-Mon']
+        return self['IntlkPosLowerLtc-Mon']
 
     @property
-    def trans_latch_bigger(self):
+    def pos_latch_upper(self):
         """
-        Latch translation interlock set when either X or Y
+        Latch position interlock set when either X or Y
         maximum thresholds are exceeded.
         """
-        return self['IntlkTransBiggerLtc-Mon']
+        return self['IntlkPosUpperLtc-Mon']
 
     @property
-    def trans_latch_smaller_x(self):
+    def pos_latch_lower_x(self):
         """
-        Latch translation interlock set when X
+        Latch position interlock set when X
         minimum threshold is exceeded.
         """
-        return self['IntlkTransSmallerLtcX-Mon']
+        return self['IntlkPosLowerLtcX-Mon']
 
     @property
-    def trans_latch_bigger_x(self):
+    def pos_latch_upper_x(self):
         """
-        Latch translation interlock set when X
+        Latch position interlock set when X
         maximum threshold is exceeded.
         """
-        return self['IntlkTransBiggerLtcX-Mon']
+        return self['IntlkPosUpperLtcX-Mon']
 
     @property
-    def trans_latch_smaller_y(self):
+    def pos_latch_lower_y(self):
         """
-        Latch translation interlock set when Y
+        Latch position interlock set when Y
         minimum threshold is exceeded.
         """
-        return self['IntlkTransSmallerLtcY-Mon']
+        return self['IntlkPosLowerLtcY-Mon']
 
     @property
-    def trans_latch_bigger_y(self):
+    def pos_latch_upper_y(self):
         """
-        Latch translation interlock set when Y
+        Latch position interlock set when Y
         maximum threshold is exceeded.
         """
-        return self['IntlkTransBiggerLtcY-Mon']
+        return self['IntlkPosUpperLtcY-Mon']
 
     #  --- angulation interlock ---
 
@@ -483,7 +463,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     def cmd_reset_ang(self):
         """Angulation interlock clear."""
-        self['IntlkAngClr-Sel'] = 1
+        self['IntlkAngClr-Cmd'] = 1
         return True
 
     @property
@@ -523,116 +503,100 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         self['IntlkLmtAngMaxY-SP'] = value
 
     @property
-    def ang_mask_smaller(self):
-        """
-        Instantaneous angulation interlock set when either X or Y
-        minimum thresholds are exceeded, masked by general enable.
-        """
-        return self['IntlkAngSmaller-Mon']
-
-    @property
-    def ang_mask_bigger(self):
-        """
-        Instantaneous angulation interlock set when either X or Y
-        maximum thresholds are exceeded, masked by general enable.
-        """
-        return self['IntlkAngBigger-Mon']
-
-    @property
-    def ang_inst_smaller(self):
+    def ang_inst_lower(self):
         """
         Instantaneous angulation interlock set when either X or Y
         minimum thresholds are exceeded.
         """
-        return self['IntlkAngSmallerAny-Mon']
+        return self['IntlkAngLower-Mon']
 
     @property
-    def ang_inst_bigger(self):
+    def ang_inst_upper(self):
         """
         Instantaneous angulation interlock set when either X or Y
         maximum thresholds are exceeded.
         """
-        return self['IntlkAngBiggerAny-Mon']
+        return self['IntlkAngUpper-Mon']
 
     @property
-    def ang_inst_smaller_x(self):
+    def ang_inst_lower_x(self):
         """
         Instantaneous angulation interlock set when X
         minimum threshold is exceeded.
         """
-        return self['IntlkAngSmallerX-Mon']
+        return self['IntlkAngLowerX-Mon']
 
     @property
-    def ang_inst_bigger_x(self):
+    def ang_inst_upper_x(self):
         """
         Instantaneous angulation interlock set when X
         maximum threshold is exceeded.
         """
-        return self['IntlkAngBiggerX-Mon']
+        return self['IntlkAngUpperX-Mon']
 
     @property
-    def ang_inst_smaller_y(self):
+    def ang_inst_lower_y(self):
         """
         Instantaneous angulation interlock set when Y
         minimum threshold is exceeded.
         """
-        return self['IntlkAngSmallerY-Mon']
+        return self['IntlkAngLowerY-Mon']
 
     @property
-    def ang_inst_bigger_y(self):
+    def ang_inst_upper_y(self):
         """
         Instantaneous angulation interlock set when Y
         maximum threshold is exceeded.
         """
-        return self['IntlkAngBiggerY-Mon']
+        return self['IntlkAngUpperY-Mon']
 
     @property
-    def ang_latch_smaller(self):
+    def ang_latch_lower(self):
         """
         Latch angulation interlock set when either X or Y
         minimum thresholds are exceeded.
         """
-        return self['IntlkAngSmallerLtc-Mon']
+        return self['IntlkAngLowerLtc-Mon']
 
     @property
-    def ang_latch_bigger(self):
+    def ang_latch_upper(self):
         """
         Latch angulation interlock set when either X or Y
         maximum thresholds are exceeded.
         """
-        return self['IntlkAngBiggerLtc-Mon']
+        return self['IntlkAngUpperLtc-Mon']
 
     @property
-    def ang_latch_smaller_x(self):
+    def ang_latch_lower_x(self):
         """
         Latch angulation interlock set when X
         minimum threshold is exceeded.
         """
-        return self['IntlkAngSmallerLtcX-Mon']
+        return self['IntlkAngLowerLtcX-Mon']
 
     @property
-    def ang_latch_bigger_x(self):
+    def ang_latch_upper_x(self):
         """
         Latch angulation interlock set when X
         maximum threshold is exceeded.
         """
-        return self['IntlkAngBiggerLtcX-Mon']
+        return self['IntlkAngUpperLtcX-Mon']
 
     @property
-    def ang_latch_smaller_y(self):
+    def ang_latch_lower_y(self):
         """
         Latch angulation interlock set when Y
         minimum threshold is exceeded.
         """
-        return self['IntlkAngSmallerLtcY-Mon']
+        return self['IntlkAngLowerLtcY-Mon']
 
     @property
-    def ang_latch_bigger_y(self):
+    def ang_latch_upper_y(self):
         """
         Latch angulation interlock set when Y
         maximum threshold is exceeded.
         """
-        return self['IntlkAngBiggerLtcY-Mon']
+        return self['IntlkAngUpperLtcY-Mon']
 
 
 class OrbitInterlock(BaseOrbitIntlk, _Devices):
@@ -761,231 +725,211 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         for idx, dev in enumerate(self.devices):
             dev.minsumthres = value[idx]
 
-    # --- translation interlock ---
+    # --- position interlock ---
 
-    def cmd_trans_enable(self, timeout=TIMEOUT):
-        """Enable all BPM translation interlock."""
+    def cmd_pos_enable(self, timeout=TIMEOUT):
+        """Enable all BPM position interlock."""
         for dev in self.devices:
-            dev.trans_enable = 1
+            dev.pos_enable = 1
         return self._wait_devices_propty(
-            self.devices, 'IntlkTransEn-Sts', 1, timeout=timeout)
+            self.devices, 'IntlkPosEn-Sts', 1, timeout=timeout)
 
-    def cmd_trans_disable(self, timeout=TIMEOUT):
-        """Disable all BPM translation interlock."""
+    def cmd_pos_disable(self, timeout=TIMEOUT):
+        """Disable all BPM position interlock."""
         for dev in self.devices:
-            dev.trans_enable = 0
+            dev.pos_enable = 0
         return self._wait_devices_propty(
-            self.devices, 'IntlkTransEn-Sts', 0, timeout=timeout)
+            self.devices, 'IntlkPosEn-Sts', 0, timeout=timeout)
 
-    def cmd_reset_trans(self):
-        """Reset all BPM translation interlock."""
+    def cmd_reset_pos(self):
+        """Reset all BPM position interlock."""
         for dev in self.devices:
-            dev.cmd_reset_trans()
+            dev.cmd_reset_pos()
         return True
 
     @property
-    def trans_thresminx(self):
-        """Minimum x translation thresholds.
+    def pos_thresminx(self):
+        """Minimum x position thresholds.
 
         Returns:
             thres (numpy.ndarray, 160):
-                min. x translation threshold for each BPM.
+                min. x position threshold for each BPM.
         """
-        return _np.array([b.trans_thresminx for b in self._devices])
+        return _np.array([b.pos_thresminx for b in self._devices])
 
-    @trans_thresminx.setter
-    def trans_thresminx(self, value):
+    @pos_thresminx.setter
+    def pos_thresminx(self, value):
         value = self._handle_thres_input(value)
         for idx, dev in enumerate(self.devices):
-            dev.trans_thresminx = value[idx]
+            dev.pos_thresminx = value[idx]
 
     @property
-    def trans_thresmaxx(self):
-        """Maximum x translation thresholds.
+    def pos_thresmaxx(self):
+        """Maximum x position thresholds.
 
         Returns:
             thres (numpy.ndarray, 160):
-                max. x translation threshold for each BPM.
+                max. x position threshold for each BPM.
         """
-        return _np.array([b.trans_thresmaxx for b in self._devices])
+        return _np.array([b.pos_thresmaxx for b in self._devices])
 
-    @trans_thresmaxx.setter
-    def trans_thresmaxx(self, value):
+    @pos_thresmaxx.setter
+    def pos_thresmaxx(self, value):
         value = self._handle_thres_input(value)
         for idx, dev in enumerate(self.devices):
-            dev.trans_thresmaxx = value[idx]
+            dev.pos_thresmaxx = value[idx]
 
     @property
-    def trans_thresminy(self):
-        """Minimum y translation thresholds.
+    def pos_thresminy(self):
+        """Minimum y position thresholds.
 
         Returns:
             thres (numpy.ndarray, 160):
-                min. y translation threshold for each BPM.
+                min. y position threshold for each BPM.
         """
-        return _np.array([b.trans_thresminy for b in self._devices])
+        return _np.array([b.pos_thresminy for b in self._devices])
 
-    @trans_thresminy.setter
-    def trans_thresminy(self, value):
+    @pos_thresminy.setter
+    def pos_thresminy(self, value):
         value = self._handle_thres_input(value)
         for idx, dev in enumerate(self.devices):
-            dev.trans_thresminy = value[idx]
+            dev.pos_thresminy = value[idx]
 
     @property
-    def trans_thresmaxy(self):
-        """Maximum y translation thresholds.
+    def pos_thresmaxy(self):
+        """Maximum y position thresholds.
 
         Returns:
             thres (numpy.ndarray, 160):
-                max. y translation threshold for each BPM.
+                max. y position threshold for each BPM.
         """
-        return _np.array([b.trans_thresmaxy for b in self._devices])
+        return _np.array([b.pos_thresmaxy for b in self._devices])
 
-    @trans_thresmaxy.setter
-    def trans_thresmaxy(self, value):
+    @pos_thresmaxy.setter
+    def pos_thresmaxy(self, value):
         value = self._handle_thres_input(value)
         for idx, dev in enumerate(self.devices):
-            dev.trans_thresmaxy = value[idx]
+            dev.pos_thresmaxy = value[idx]
 
     @property
-    def trans_mask_smaller(self):
-        """Instantaneous translation interlock set when either X or Y
-        minimum thresholds are exceeded, masked by general enable.
-
-        Returns:
-            intlk (numpy.ndarray, 160): interlock status for each BPM.
-        """
-        return _np.array([b.trans_mask_smaller for b in self._devices])
-
-    @property
-    def trans_mask_bigger(self):
-        """Instantaneous translation interlock set when either X or Y
-        maximum thresholds are exceeded, masked by general enable.
-
-        Returns:
-            intlk (numpy.ndarray, 160): interlock status for each BPM.
-        """
-        return _np.array([b.trans_mask_bigger for b in self._devices])
-
-    @property
-    def trans_inst_smaller(self):
-        """Instantaneous translation interlock set when either X or Y
+    def pos_inst_lower(self):
+        """Instantaneous position interlock set when either X or Y
         minimum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_smaller for b in self._devices])
+        return _np.array([b.pos_inst_lower for b in self._devices])
 
     @property
-    def trans_inst_bigger(self):
-        """Instantaneous translation interlock set when either X or Y
+    def pos_inst_upper(self):
+        """Instantaneous position interlock set when either X or Y
         maximum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_bigger for b in self._devices])
+        return _np.array([b.pos_inst_upper for b in self._devices])
 
     @property
-    def trans_inst_smaller_x(self):
-        """Instantaneous translation interlock set when X
+    def pos_inst_lower_x(self):
+        """Instantaneous position interlock set when X
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_smaller_x for b in self._devices])
+        return _np.array([b.pos_inst_lower_x for b in self._devices])
 
     @property
-    def trans_inst_bigger_x(self):
-        """Instantaneous translation interlock set when X
+    def pos_inst_upper_x(self):
+        """Instantaneous position interlock set when X
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_bigger_x for b in self._devices])
+        return _np.array([b.pos_inst_upper_x for b in self._devices])
 
     @property
-    def trans_inst_smaller_y(self):
-        """Instantaneous translation interlock set when Y
+    def pos_inst_lower_y(self):
+        """Instantaneous position interlock set when Y
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_smaller_y for b in self._devices])
+        return _np.array([b.pos_inst_lower_y for b in self._devices])
 
     @property
-    def trans_inst_bigger_y(self):
-        """Instantaneous translation interlock set when Y
+    def pos_inst_upper_y(self):
+        """Instantaneous position interlock set when Y
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_inst_bigger_y for b in self._devices])
+        return _np.array([b.pos_inst_upper_y for b in self._devices])
 
     @property
-    def trans_latch_smaller(self):
-        """Latch translation interlock set when either X or Y
+    def pos_latch_lower(self):
+        """Latch position interlock set when either X or Y
         minimum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_smaller for b in self._devices])
+        return _np.array([b.pos_latch_lower for b in self._devices])
 
     @property
-    def trans_latch_bigger(self):
-        """Latch translation interlock set when either X or Y
+    def pos_latch_upper(self):
+        """Latch position interlock set when either X or Y
         maximum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_bigger for b in self._devices])
+        return _np.array([b.pos_latch_upper for b in self._devices])
 
     @property
-    def trans_latch_smaller_x(self):
-        """Latch translation interlock set when X
+    def pos_latch_lower_x(self):
+        """Latch position interlock set when X
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_smaller_x for b in self._devices])
+        return _np.array([b.pos_latch_lower_x for b in self._devices])
 
     @property
-    def trans_latch_bigger_x(self):
-        """Latch translation interlock set when X
+    def pos_latch_upper_x(self):
+        """Latch position interlock set when X
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_bigger_x for b in self._devices])
+        return _np.array([b.pos_latch_upper_x for b in self._devices])
 
     @property
-    def trans_latch_smaller_y(self):
-        """Latch translation interlock set when Y
+    def pos_latch_lower_y(self):
+        """Latch position interlock set when Y
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_smaller_y for b in self._devices])
+        return _np.array([b.pos_latch_lower_y for b in self._devices])
 
     @property
-    def trans_latch_bigger_y(self):
-        """Latch translation interlock set when Y
+    def pos_latch_upper_y(self):
+        """Latch position interlock set when Y
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.trans_latch_bigger_y for b in self._devices])
+        return _np.array([b.pos_latch_upper_y for b in self._devices])
 
     #  --- angulation interlock ---
 
@@ -1074,144 +1018,124 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
             dev.ang_thresmaxy = value[idx]
 
     @property
-    def ang_mask_smaller(self):
-        """Instantaneous angulation interlock set when either X or Y
-        minimum thresholds are exceeded, masked by general enable.
-
-        Returns:
-            intlk (numpy.ndarray, 160): interlock status for each BPM.
-        """
-        return _np.array([b.ang_mask_smaller for b in self._devices])
-
-    @property
-    def ang_mask_bigger(self):
-        """Instantaneous angulation interlock set when either X or Y
-        maximum thresholds are exceeded, masked by general enable.
-
-        Returns:
-            intlk (numpy.ndarray, 160): interlock status for each BPM.
-        """
-        return _np.array([b.ang_mask_bigger for b in self._devices])
-
-    @property
-    def ang_inst_smaller(self):
+    def ang_inst_lower(self):
         """Instantaneous angulation interlock set when either X or Y
         minimum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_smaller for b in self._devices])
+        return _np.array([b.ang_inst_lower for b in self._devices])
 
     @property
-    def ang_inst_bigger(self):
+    def ang_inst_upper(self):
         """Instantaneous angulation interlock set when either X or Y
         maximum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_bigger for b in self._devices])
+        return _np.array([b.ang_inst_upper for b in self._devices])
 
     @property
-    def ang_inst_smaller_x(self):
+    def ang_inst_lower_x(self):
         """Instantaneous angulation interlock set when X
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_smaller_x for b in self._devices])
+        return _np.array([b.ang_inst_lower_x for b in self._devices])
 
     @property
-    def ang_inst_bigger_x(self):
+    def ang_inst_upper_x(self):
         """Instantaneous angulation interlock set when X
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_bigger_x for b in self._devices])
+        return _np.array([b.ang_inst_upper_x for b in self._devices])
 
     @property
-    def ang_inst_smaller_y(self):
+    def ang_inst_lower_y(self):
         """Instantaneous angulation interlock set when Y
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_smaller_y for b in self._devices])
+        return _np.array([b.ang_inst_lower_y for b in self._devices])
 
     @property
-    def ang_inst_bigger_y(self):
+    def ang_inst_upper_y(self):
         """Instantaneous angulation interlock set when Y
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_inst_bigger_y for b in self._devices])
+        return _np.array([b.ang_inst_upper_y for b in self._devices])
 
     @property
-    def ang_latch_smaller(self):
+    def ang_latch_lower(self):
         """Latch angulation interlock set when either X or Y
         minimum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_smaller for b in self._devices])
+        return _np.array([b.ang_latch_lower for b in self._devices])
 
     @property
-    def ang_latch_bigger(self):
+    def ang_latch_upper(self):
         """Latch angulation interlock set when either X or Y
         maximum thresholds are exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_bigger for b in self._devices])
+        return _np.array([b.ang_latch_upper for b in self._devices])
 
     @property
-    def ang_latch_smaller_x(self):
+    def ang_latch_lower_x(self):
         """Latch angulation interlock set when X
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_smaller_x for b in self._devices])
+        return _np.array([b.ang_latch_lower_x for b in self._devices])
 
     @property
-    def ang_latch_bigger_x(self):
+    def ang_latch_upper_x(self):
         """Latch angulation interlock set when X
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_bigger_x for b in self._devices])
+        return _np.array([b.ang_latch_upper_x for b in self._devices])
 
     @property
-    def ang_latch_smaller_y(self):
+    def ang_latch_lower_y(self):
         """Latch angulation interlock set when Y
         minimum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_smaller_y for b in self._devices])
+        return _np.array([b.ang_latch_lower_y for b in self._devices])
 
     @property
-    def ang_latch_bigger_y(self):
+    def ang_latch_upper_y(self):
         """Latch angulation interlock set when Y
         maximum threshold is exceeded.
 
         Returns:
             intlk (numpy.ndarray, 160): interlock status for each BPM.
         """
-        return _np.array([b.ang_latch_bigger_y for b in self._devices])
+        return _np.array([b.ang_latch_upper_y for b in self._devices])
 
     @property
     def slow_orbit(self):
@@ -1240,20 +1164,20 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         return _np.array([b.possum for b in self._devices])
 
     @property
-    def translation(self):
-        """Translation vectors.
+    def position(self):
+        """Position vectors.
 
-        Translation at each BPM is defined as:
+        Position at each BPM is defined as:
             (pos BPM downstream + pos BPM upstream)/2
 
         Returns:
-            transx (numpy.ndarray, 160): Horizontal Translation.
-            transy (numpy.ndarray, 160): Vertical Translation.
+            posx (numpy.ndarray, 160): Horizontal Position.
+            posy (numpy.ndarray, 160): Vertical Position.
         """
         orbx, orby = self.slow_orbit
-        transx = _np.array(self.calc_intlk_metric(orbx, metric='trans'))
-        transy = _np.array(self.calc_intlk_metric(orby, metric='trans'))
-        return transx, transy
+        posx = _np.array(self.calc_intlk_metric(orbx, metric='pos'))
+        posy = _np.array(self.calc_intlk_metric(orby, metric='pos'))
+        return posx, posy
 
     @property
     def angulation(self):
