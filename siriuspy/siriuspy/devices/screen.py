@@ -46,9 +46,22 @@ class Screen(_Devices):
         super().__init__(devname, devices=devs)
 
     @property
+    def image_width(self):
+        """."""
+        return self.screen['ImgROIWidth-RB']
+
+    @property
+    def image_height(self):
+        """."""
+        return self.screen['ImgROIHeight-RB']
+
+    @property
     def image(self):
         """."""
-        return self.screen['ImgData-Mon']
+        row_image = self.screen['ImgData-Mon']
+        h = self.image_height
+        w = self.image_width
+        return row_image.reshape([h, w])
 
     @property
     def centerx(self):
@@ -77,12 +90,12 @@ class Screen(_Devices):
 
     @property
     def scale_factor_x(self):
-        """."""
+        """Pixel to mm"""
         return self.screencam['ScaleFactorX-RB']
 
     @property
     def scale_factor_y(self):
-        """."""
+        """Pixel to mm"""
         return self.screencam['ScaleFactorY-RB']
 
     @property
@@ -105,7 +118,8 @@ class _Screen(_Device):
         'ImgData-Mon',
         'CenterXDimFei-Mon', 'CenterYDimFei-Mon',
         'SigmaXDimFei-Mon', 'SigmaYDimFei-Mon',
-        'ThetaDimFei-Mon',
+        'ThetaDimFei-Mon', 'ImgROIHeight-RB',
+        'ImgROIWidth-RB'
     )
 
     def __init__(self, devname):
