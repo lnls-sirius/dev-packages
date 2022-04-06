@@ -1,9 +1,10 @@
 """."""
 
-from .device import Device as _Device
+from ..namesys import SiriusPVName as _PVName
+from .device import Device as _Device, Devices as _Devices
 
 
-class Screen(_Device):
+class Screen(_Devices):
     """."""
 
     class DEVICES:
@@ -32,6 +33,74 @@ class Screen(_Device):
             BO_1, BO_2, BO_3,
             TS_1, TS_2, TS_3, TS_4, TS_5, TS_6)
 
+    def __init__(self, devname):
+        """."""
+        # check if device exists
+        if devname not in Screen.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        self.screen = _Screen(devname)
+        self.screencam = _ScreenCam(devname)
+        devs = [self.screen, self.screencam]
+        super().__init__(devname, devices=devs)
+
+    @property
+    def image(self):
+        """."""
+        return self.screen['ImgData-Mon']
+
+    @property
+    def centerx(self):
+        """."""
+        return self.screen['CenterXDimFei-Mon']
+
+    @property
+    def centery(self):
+        """."""
+        return self.screen['CenterYDimFei-Mon']
+
+    @property
+    def sigmax(self):
+        """."""
+        return self.screen['SigmaXDimFei-Mon']
+
+    @property
+    def sigmay(self):
+        """."""
+        return self.screen['SigmaYDimFei-Mon']
+
+    @property
+    def angle(self):
+        """."""
+        return self.screen['ThetaDimFei-Mon']
+
+    @property
+    def scale_factor_x(self):
+        """."""
+        return self.screencam['ScaleFactorX-RB']
+
+    @property
+    def scale_factor_y(self):
+        """."""
+        return self.screencam['ScaleFactorY-RB']
+
+    @property
+    def center_offset_x(self):
+        """."""
+        return self.screencam['CenterOffsetX-RB']
+
+    @property
+    def center_offset_y(self):
+        """."""
+        return self.screencam['CenterOffsetY-RB']
+
+
+class _Screen(_Device):
+    """."""
+
+    DEVICES = Screen.DEVICES
+
     _properties = (
         'ImgData-Mon',
         'CenterXDimFei-Mon', 'CenterYDimFei-Mon',
@@ -46,34 +115,25 @@ class Screen(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=Screen._properties)
+        super().__init__(devname, properties=_Screen._properties)
 
-    @property
-    def image(self):
-        """."""
-        return self['ImgData-Mon']
 
-    @property
-    def centerx(self):
-        """."""
-        return self['CenterXDimFei-Mon']
+class _ScreenCam(_Device):
+    """."""
 
-    @property
-    def centery(self):
-        """."""
-        return self['CenterYDimFei-Mon']
+    DEVICES = Screen.DEVICES
 
-    @property
-    def sigmax(self):
-        """."""
-        return self['SigmaXDimFei-Mon']
+    _properties = (
+        'ScaleFactorX-RB', 'ScaleFactorY-RB',
+        'CenterOffsetX-RB', 'CenterOffsetY-RB',
+        )
 
-    @property
-    def sigmay(self):
+    def __init__(self, devname):
         """."""
-        return self['SigmaYDimFei-Mon']
+        # check if device exists
+        if devname not in Screen.DEVICES.ALL:
+            raise NotImplementedError(devname)
 
-    @property
-    def angle(self):
-        """."""
-        return self['ThetaDimFei-Mon']
+        devname = _PVName(devname).substitute(dev='ScrnCam')
+        # call base class constructor
+        super().__init__(devname, properties=_ScreenCam._properties)
