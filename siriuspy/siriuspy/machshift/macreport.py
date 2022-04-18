@@ -1259,10 +1259,18 @@ class MacReport:
         self._raw_data = dict()
 
         # current data
-        self._curr_times, self._curr_values = \
+        _curr_times, _curr_values = \
             self._get_pv_data('SI-Glob:AP-CurrInfo:Current-Mon')
-        self._curr_values[self._curr_values < 0] = 0
-        self._curr_values[self._curr_values > 500] = 0
+        _curr_values[_curr_values < 0] = 0
+        _curr_values[_curr_values > 500] = 0
+
+        # resample current data, from 1 pt in 60s, to 1pt in 5s
+        new_len = (len(_curr_times)-1)*12 + 1
+        new_times = _np.linspace(_curr_times[0], _curr_times[-1], new_len)
+        self._curr_times = new_times
+        self._curr_values = _np.interp(
+            new_times, _curr_times, _curr_values)
+
         self._raw_data['Timestamp'] = self._curr_times
         self._raw_data['Current'] = self._curr_values
 
@@ -1407,8 +1415,18 @@ class MacReport:
             self._gamblk_fail_values.astype(int)
         self._raw_data['Failures']['NoEBeam'] = \
             _np.logical_not(self._is_stored_users)
-        self._raw_data['Failures']['WrongShift'] = \
+
+        # # # ignore wrong shift failures shorter than 60s
+        wrong_shift = \
             1 * ((self._user_shift_progmd_values-self._user_shift_values) > 0)
+        ignore_wrong_shift = _np.zeros(wrong_shift.shape)
+        for i, val in enumerate(wrong_shift):
+            if i >= len(wrong_shift)-12:
+                break
+            if val == 1 and not _np.sum(wrong_shift[(i-12):(i+12)]) >= 12:
+                ignore_wrong_shift[i] = 1
+        consider_wrong_shift = wrong_shift - ignore_wrong_shift
+        self._raw_data['Failures']['WrongShift'] = consider_wrong_shift
 
         self._failures_users = 1 * _np.logical_or.reduce(
             [value for value in self._raw_data['Failures'].values()]) * \
