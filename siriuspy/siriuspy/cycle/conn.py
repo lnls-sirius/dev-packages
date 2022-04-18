@@ -21,6 +21,7 @@ from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
+from .fc_cycle_data import fc_get_default_waveform as _fc_get_default_waveform
 
 
 TIMEOUT_SLEEP = 0.1
@@ -746,6 +747,151 @@ class LinacPSCycler:
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
         time, wfm = _li_get_default_waveform(psname=self.psname)
+        self._times = time
+        self._cycle_duration = max(time)
+        self._waveform = wfm
+
+    def __getitem__(self, prop):
+        """Return item."""
+        return self._pvs[prop]
+
+
+class FOFBPSCycler:
+    """Handle FOFB power supply properties to cycle."""
+
+    # NOTE: this could be a class derived from one of the Device classes.
+
+    properties = [
+        'Current-SP', 'Current-RB', 'PwrState-Sts',
+        'PSAmpOverCurrFlagL-Sts', 'PSAmpOverTempFlagL-Sts',
+        'PSAmpOverCurrFlagR-Sts', 'PSAmpOverTempFlagR-Sts',
+        'TestOpenLoopTriang-Sel', 'TestOpenLoopTriang-Sts',
+        'TestOpenLoopSquare-Sel', 'TestOpenLoopSquare-Sts',
+        'TestClosedLoopSquare-Sel', 'TestClosedLoopSquare-Sts',
+    ]
+
+    def __init__(self, psname):
+        """Constructor."""
+        self._psname = _PVName(psname)
+        self._waveform = None
+        self._cycle_duration = None
+        self._times = None
+        self._pvs = dict()
+        for prop in FOFBPSCycler.properties:
+            if prop not in self._pvs.keys():
+                self._pvs[prop] = _PV(
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
+                    connection_timeout=TIMEOUT_CONNECTION)
+
+    @property
+    def psname(self):
+        """Power supply name."""
+        return self._psname
+
+    @property
+    def connected(self):
+        """Return connected state."""
+        for prop in FOFBPSCycler.properties:
+            if not self[prop].connected:
+                return False
+        return True
+
+    def wait_for_connection(self, timeout=0.5):
+        """Wait for connection."""
+        for pvobj in self._pvs.values():
+            if not pvobj.wait_for_connection(timeout):
+                return False
+        return True
+
+    @property
+    def waveform(self):
+        """Return waveform."""
+        if self._waveform is None:
+            self._get_duration_and_waveform()
+        return self._waveform
+
+    def cycle_duration(self, _):
+        """Return the duration of the cycling in seconds."""
+        if self._cycle_duration is None:
+            self._get_duration_and_waveform()
+        return self._cycle_duration
+
+    def check_intlks(self, wait=2):
+        """Check interlocks."""
+        if not self.connected:
+            return False
+        status = (self._pvs['PSAmpOverCurrFlagL-Sts'].value == 1)
+        status &= (self._pvs['PSAmpOverTempFlagL-Sts'].value == 1)
+        status &= (self._pvs['PSAmpOverCurrFlagR-Sts'].value == 1)
+        status &= (self._pvs['PSAmpOverTempFlagR-Sts'].value == 1)
+        return status
+
+    def check_on(self):
+        """Return whether power supply PS is on."""
+        return _pv_timed_get(self['PwrState-Sts'], 1)
+
+    def set_current_zero(self):
+        """Set PS current to zero ."""
+        return _pv_conn_put(self['Current-SP'], 0)
+
+    def check_current_zero(self, wait=5):
+        """Return whether power supply PS current is zero."""
+        return _pv_timed_get(self['Current-RB'], 0, abs_tol=0.01, wait=wait)
+
+    def prepare(self, _):
+        """Config power supply to cycling mode."""
+        status = True
+        if not self.check_current_zero(wait=0.5):
+            status &= self.set_current_zero()
+        return status
+
+    def is_prepared(self, _, wait=5):
+        """Return whether power supply is ready."""
+        status = self.check_current_zero(wait)
+        return status
+
+    def set_opmode_slowref(self):
+        """Set OpMode to SlowRef, if needed."""
+        if self.check_opmode_slowref(wait=1):
+            return True
+        sts = _pv_conn_put(
+            self['TestOpenLoopTriang-Sel'], _PSConst.DsblEnbl.Dsbl)
+        sts &= _pv_conn_put(
+            self['TestOpenLoopSquare-Sel'], _PSConst.DsblEnbl.Dsbl)
+        sts &= _pv_conn_put(
+            self['TestClosedLoopSquare-Sel'], _PSConst.DsblEnbl.Dsbl)
+        _time.sleep(TIMEOUT_SLEEP)
+        return sts
+
+    def check_opmode_slowref(self, wait=10):
+        """Check if OpMode is SlowRef."""
+        _wt = wait/3
+        sts = _pv_timed_get(
+            self['TestOpenLoopTriang-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
+        sts &= _pv_timed_get(
+            self['TestOpenLoopSquare-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
+        sts &= _pv_timed_get(
+            self['TestClosedLoopSquare-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
+        return sts
+
+    def cycle(self):
+        """Cycle. This function may run in a thread."""
+        for i in range(len(self._waveform)-1):
+            self['Current-SP'].value = self._waveform[i]
+            _time.sleep(self._times[i+1] - self._times[i])
+        self['Current-SP'].value = self._waveform[-1]
+
+    def check_final_state(self, _):
+        """Check state after Cycle."""
+        status = self.check_on()
+        status &= self.check_intlks()
+        if not status:
+            return _Const.CycleEndStatus.Interlock
+        return _Const.CycleEndStatus.Ok
+
+    def _get_duration_and_waveform(self):
+        """Get duration and waveform."""
+        time, wfm = _fc_get_default_waveform(psname=self.psname)
         self._times = time
         self._cycle_duration = max(time)
         self._waveform = wfm
