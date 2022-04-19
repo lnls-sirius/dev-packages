@@ -62,7 +62,13 @@ class PSStatusPV:
         psname = _PVName(computed_pv.pvs[0].pvname).device_name
         value = 0
         # ps connected?
-        if psname.sec != 'LI':
+        if psname.dev in ['FCH', 'FCV']:
+            disconnected = \
+                not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
+                not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected
+            for alrm in self.ALARM_PVS:
+                disconnected |= not computed_pv.pvs[alrm].connected
+        elif psname.sec != 'LI':
             disconnected = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
@@ -102,7 +108,20 @@ class PSStatusPV:
         if pwrsts != _PSConst.PwrStateSts.On or pwrsts is None:
             value |= PSStatusPV.BIT_PWRSTATON
 
-        if psname.sec != 'LI':
+        if psname.dev in ['FCH', 'FCV']:
+            # current-diff?
+            severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+            if severity != 0:
+                value |= PSStatusPV.BIT_CURRTDIFF
+
+            # alarms?
+            for alarm in self.ALARM_PVS:
+                alarmval = computed_pv.pvs[alarm].value
+                if alarmval != 1 or alarmval is None:
+                    value |= PSStatusPV.BIT_ALARMSSET
+                    break
+
+        elif psname.sec != 'LI':
             # opmode?
             sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
             sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
