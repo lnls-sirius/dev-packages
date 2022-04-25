@@ -32,6 +32,7 @@ class _PSDev(_Device):
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
+        'CycleEnbl-Mon',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -224,6 +225,15 @@ class PowerSupply(_PSDev):
     def opmode_str(self):
         """."""
         return self.OPMODE_STS._fields[self['OpMode-Sts']]
+
+    def wait_cycle_to_finish(self, timeout=10):
+        """."""
+        return self._wait('CycleEnbl-Mon', 0, timeout)
+
+    @property
+    def cycle_enabled(self):
+        """."""
+        return bool(self['CycleEnbl-Mon'])
 
     @property
     def cycle_type(self):
