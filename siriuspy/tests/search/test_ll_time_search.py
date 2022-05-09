@@ -37,6 +37,7 @@ class TestLLTimeSearch(TestCase):
         'get_channel_internal_trigger_pvname',
         'get_device_names',
         'get_evg_name',
+        'get_evg2fout_mapping',
         'get_triggersource_devices',
         'get_trigsrc2fout_mapping',
         'get_fout2trigsrc_mapping',
