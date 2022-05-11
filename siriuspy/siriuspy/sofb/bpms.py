@@ -3,8 +3,8 @@ import logging as _log
 import numpy as _np
 
 from ..epics import PV as _PV
-from ..diag.bpm.csdev import Const as _csbpm
-from ..timesys import csdev as _cstime
+from ..diagbeam.bpm.csdev import Const as _csbpm
+from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 
@@ -21,7 +21,7 @@ class BPM(_BaseTimingConfig):
         super().__init__(name[:2], callback)
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
-        pvpref = LL_PREF + self._name + ':'
+        pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
         opt = {'connection_timeout': TIMEOUT}
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
@@ -67,6 +67,7 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 0,
             'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
             'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
             'MonitTagEn': _csbpm.EnbldDsbld.disabled,
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
@@ -100,6 +101,7 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP',
             'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
             'Monit1TagEn': 'Monit1TagEn-Sel',  # Enable Monit1 sync with timing
             'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
             'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
@@ -145,6 +147,7 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB',
             'TbtTagEn': 'TbtTagEn-Sts',
+            'SwTagEn': 'SwTagEn-Sts',
             'Monit1TagEn': 'Monit1TagEn-Sts',
             'MonitTagEn': 'MonitTagEn-Sts',
             'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
@@ -594,6 +597,20 @@ class BPM(_BaseTimingConfig):
             pvobj.put(val, wait=False)
 
     @property
+    def fofb_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['SwTagEn']
+        return pvobj.value if pvobj.connected else None
+
+    @fofb_sync_enbl.setter
+    def fofb_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['SwTagEn']
+        self._config_ok_vals['SwTagEn'] = val
+        if pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
     def monit1_sync_enbl(self):
         """."""
         pvobj = self._config_pvs_rb['Monit1TagEn']
@@ -833,14 +850,13 @@ class TimingConfig(_BaseTimingConfig):
         evg = self._csorb.evg_name
         opt = {'connection_timeout': TIMEOUT}
         self._config_ok_vals = {
-            'NrPulses': 1,
-            'State': _cstime.Const.TrigStates.Enbl}
+            'NrPulses': 1, 'State': _TIConst.TrigStates.Enbl}
         if _HLTimesearch.has_delay_type(trig):
-            self._config_ok_vals['RFDelayType'] = \
-                                    _cstime.Const.TrigDlyTyp.Manual
+            self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
         pref_name = LL_PREF + trig + ':'
         self._config_pvs_rb = {
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
+            'TotalDelay': _PV(pref_name + 'TotalDelay-Mon', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
@@ -887,4 +903,10 @@ class TimingConfig(_BaseTimingConfig):
     def delay(self):
         """."""
         pvobj = self._config_pvs_rb['Delay']
+        return pvobj.value if pvobj.connected else None
+
+    @property
+    def totaldelay(self):
+        """."""
+        pvobj = self._config_pvs_rb['TotalDelay']
         return pvobj.value if pvobj.connected else None

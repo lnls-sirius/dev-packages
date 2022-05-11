@@ -1,0 +1,46 @@
+name: Test siriuspy
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pytest-testinfra
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest-testinfra
+
+      - name: Install eth-bridge-pru-serial485
+        run: |
+          git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
+          cd eth-bridge-pru-serial485/client
+          python setup.py install
+          cd ../../
+
+      - name: Install mathphys
+        run: |
+          git clone https://github.com/lnls-fac/mathphys.git
+          cd mathphys
+          pip install .
+          cd ../
+
+      - name: Install requirements
+        run: |
+          cd siriuspy
+          pip install -r requirements.txt
+
+      - name: Test with pytest
+        run: |
+          cd siriuspy
+          pytest tests/

@@ -6,15 +6,17 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
+from ..util import get_bit as _get_bit
 from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch
-from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet
+from ..pwrsupply.csdev import Const as _PSConst, ETypes as _PSet, \
+    PS_LI_INTLK_THRS as _PS_LI_INTLK
 from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
-    get_trigger_by_psname as _get_trigger_by_psname, \
+    get_trigger_by_psname as _get_trigger_by_psname, Const as _Const, \
     TRIGGER_NAMES as _TRIGGER_NAMES
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
@@ -269,7 +271,8 @@ class Timing:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
-                    VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+                    pvname.substitute(prefix=VACA_PREFIX),
+                    connection_timeout=TIMEOUT_CONNECTION)
 
                 if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
@@ -283,7 +286,7 @@ class Timing:
                 else:
                     continue
                 Timing._pvs[pvname_sts] = _PV(
-                    VACA_PREFIX+pvname_sts,
+                    pvname_sts.substitute(prefix=VACA_PREFIX),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @classmethod
@@ -361,7 +364,7 @@ class PSCycler:
 
     def __init__(self, psname, ramp_config=None):
         """Constructor."""
-        self._psname = psname
+        self._psname = _PVName(psname)
         self._ramp_config = ramp_config
         self._waveform = None
         self._siggen = None
@@ -370,7 +373,7 @@ class PSCycler:
         for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -568,17 +571,17 @@ class PSCycler:
                 self.init_wfm_pulsecnt + DEFAULT_RAMP_NRCYCLES, wait=10.0)
             self.update_wfm_pulsecnt()
             if not status:
-                return 1  # indicate lack of trigger pulses
+                return _Const.CycleEndStatus.LackTriggers
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 2  # indicate cycling not finished yet
+                return _Const.CycleEndStatus.NotFinished
 
         status = self.check_intlks(wait=1.0)
         if not status:
-            return 3  # indicate interlock problems
+            return _Const.CycleEndStatus.Interlock
 
-        return 0
+        return _Const.CycleEndStatus.Ok
 
     def __getitem__(self, prop):
         """Return item."""
@@ -639,20 +642,22 @@ class LinacPSCycler:
     # NOTE: this could be a class derived from one of the Device classes.
 
     properties = [
-        'Current-SP', 'Current-Mon', 'PwrState-Sel', 'StatusIntlk-Mon'
+        'Current-SP', 'Current-Mon', 'PwrState-Sel',
+        'StatusIntlk-Mon', 'IntlkWarn-Mon',
     ]
 
     def __init__(self, psname):
         """Constructor."""
-        self._psname = psname
+        self._psname = _PVName(psname)
         self._waveform = None
         self._cycle_duration = None
         self._times = None
         self._pvs = dict()
+        self.intlkwarn_bit = _PSet.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -692,7 +697,12 @@ class LinacPSCycler:
         """Check interlocks."""
         if not self.connected:
             return False
-        return self['StatusIntlk-Mon'].value < 55
+        intlkval = self['StatusIntlk-Mon'].value
+        if self.psname.dev == 'Spect':
+            intlkwarn = self['IntlkWarn-Mon'].value
+            if _get_bit(intlkwarn, self.intlkwarn_bit):
+                intlkval -= 2**self.intlkwarn_bit
+        return intlkval < _PS_LI_INTLK
 
     def check_on(self):
         """Return whether power supply PS is on."""
@@ -730,8 +740,8 @@ class LinacPSCycler:
         status = self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 4  # indicate interlock problems
-        return 0
+            return _Const.CycleEndStatus.Interlock
+        return _Const.CycleEndStatus.Ok
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""

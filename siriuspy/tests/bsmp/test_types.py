@@ -3,6 +3,7 @@
 """Test type module."""
 
 from unittest import TestCase
+
 from siriuspy.bsmp import Types
 
 

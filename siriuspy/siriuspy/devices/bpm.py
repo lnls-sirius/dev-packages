@@ -1,21 +1,26 @@
 """."""
-
+import time as _time
+from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device
-from ..diag.bpm.csdev import Const as _csbpm
+from .device import Device as _Device, Devices as _Devices
+from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
+from ..namesys import SiriusPVName as _PVName
 
 
 class BPM(_Device):
-    """BPM Device"""
+    """BPM Device."""
 
     _properties = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'RFFEAtt-SP', 'RFFEAtt-RB',
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
+        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
+        'GEN_RawQArrayData',
         'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
         'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
@@ -49,6 +54,7 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
+        'SwTagEn-Sel', 'SwTagEn-Sts',
         'TbtTagEn-Sel', 'TbtTagEn-Sts',
         'Monit1TagEn-Sel', 'Monit1TagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
@@ -62,12 +68,19 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname):
+    def __init__(self, devname, auto_mon=True):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
-        super().__init__(devname, properties=BPM._properties)
+            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
+
+        properties = set(BPM._properties)
+        if _BPMSearch.is_photon_bpm(devname):
+            properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
+        properties = list(properties)
+
+        super().__init__(
+            devname, properties=properties, auto_mon=auto_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -110,6 +123,19 @@ class BPM(_Device):
         okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
         okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
+
+    @property
+    def rffe_att(self):
+        """."""
+        if 'RFFEAtt-RB' not in self._pvs:
+            return None
+        return self['RFFEAtt-RB']
+
+    @rffe_att.setter
+    def rffe_att(self, val):
+        """."""
+        if 'RFFEAtt-SP' in self._pvs:
+            self['RFFEAtt-SP'] = val
 
     @property
     def asyn_state(self):
@@ -191,6 +217,16 @@ class BPM(_Device):
     def tbt_mask_end(self, val):
         """."""
         self['TbtDataMaskSamplesEnd-SP'] = val
+
+    @property
+    def fofb_sync_enbl(self):
+        """."""
+        return self['SwTagEn-Sts']
+
+    @fofb_sync_enbl.setter
+    def fofb_sync_enbl(self, val):
+        """."""
+        self['SwTagEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -465,6 +501,26 @@ class BPM(_Device):
         self['QPosCal-Sel'] = val
 
     @property
+    def mtraw_posx(self):
+        """Multi turn raw X array data."""
+        return self['GEN_RawXArrayData']
+
+    @property
+    def mtraw_posy(self):
+        """Multi turn raw Y array data."""
+        return self['GEN_RawYArrayData']
+
+    @property
+    def mtraw_possum(self):
+        """Multi turn raw sum array data."""
+        return self['GEN_RawSUMArrayData']
+
+    @property
+    def mtraw_posq(self):
+        """Multi turn raw Q array data."""
+        return self['GEN_RawQArrayData']
+
+    @property
     def sp_posx(self):
         """."""
         return self['SPPosX-Mon'] * self.CONV_NM2UM
@@ -669,11 +725,337 @@ class BPM(_Device):
         """."""
         self['ACQShots-SP'] = val
 
+    def wait_acq_finish(self, timeout=10):
+        """Wait Acquisition to finish."""
+        vals = {
+            _csbpm.AcqStates.Idle, _csbpm.AcqStates.Error,
+            _csbpm.AcqStates.Aborted, _csbpm.AcqStates.Too_Many_Samples,
+            _csbpm.AcqStates.Too_Few_Samples, _csbpm.AcqStates.No_Memory,
+            _csbpm.AcqStates.Acq_Overflow}
+        return self._wait(
+            'ACQStatus-Sts', vals, timeout=timeout, comp=lambda x, y: x in y)
+
+    def wait_acq_start(self, timeout=10):
+        """Wait Acquisition to start."""
+        vals = {
+            _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
+            _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
+            _csbpm.AcqStates.Acquiring}
+        return self._wait(
+            'ACQStatus-Sts', vals, timeout=timeout, comp=lambda x, y: x in y)
+
     def cmd_acq_start(self):
+        """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
+        """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
+        """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)
+
+    def cmd_turn_on_switching(self):
+        """Command Turn on Switching."""
+        self.switching_mode = _csbpm.SwModes.switching
+        return self._wait('SwMode-Sts', _csbpm.SwModes.switching)
+
+    def cmd_turn_off_switching(self):
+        """Command Turn off Switching."""
+        self.switching_mode = _csbpm.SwModes.direct
+        return self._wait('SwMode-Sts', _csbpm.SwModes.direct)
+
+    def cmd_sync_tbt(self):
+        """Synchronize TbT acquisitions with Timing System."""
+        self.tbt_sync_enbl = 1
+        _time.sleep(0.1)
+        self.tbt_sync_enbl = 0
+        return self._wait('TbtTagEn-Sts', 0)
+
+    def cmd_sync_fofb(self):
+        """Synchronize FOFB acquisitions with Timing System."""
+        self.fofb_sync_enbl = 1
+        _time.sleep(0.1)
+        self.fofb_sync_enbl = 0
+        return self._wait('SwTagEn-Sts', 0)
+
+    def cmd_sync_monit1(self):
+        """Synchronize Monit1 acquisitions with Timing System."""
+        self.monit1_sync_enbl = 1
+        _time.sleep(0.1)
+        self.monit1_sync_enbl = 0
+        return self._wait('Monit1TagEn-Sts', 0)
+
+    def cmd_sync_monit(self):
+        """Synchronize Monit acquisitions with Timing System."""
+        self.monit_sync_enbl = 1
+        _time.sleep(0.1)
+        self.monit_sync_enbl = 0
+        return self._wait('Monit1TagEn-Sts', 0)
+
+
+class FamBPMs(_Devices):
+    """."""
+
+    TIMEOUT = 10
+    RFFEATT_MAX = 30
+
+    class DEVICES:
+        """."""
+        SI = 'SI-Fam:DI-BPM'
+        BO = 'BO-Fam:DI-BPM'
+        ALL = (BO, SI)
+
+    def __init__(self, devname=None):
+        """."""
+        if devname is None:
+            devname = self.DEVICES.SI
+        if devname not in self.DEVICES.ALL:
+            raise ValueError('Wrong value for devname')
+
+        devname = _PVName(devname)
+        bpm_names = _BPMSearch.get_names(
+            filters={'sec': devname.sec, 'dev': devname.dev})
+        devs = [BPM(dev, auto_mon=False) for dev in bpm_names]
+
+        super().__init__(devname, devs)
+        self.bpm_names = bpm_names
+        self.csbpm = devs[0].csdata
+        propties_to_keep = ['GEN_XArrayData', 'GEN_YArrayData']
+
+        self._mturn_flags = dict()
+        for bpm in devs:
+            for propty in propties_to_keep:
+                bpm.set_auto_monitor(propty, True)
+                pvo = bpm.pv_object(propty)
+                self._mturn_flags[pvo.pvname] = _Flag()
+                pvo.add_callback(self._mturn_set_flag)
+
+    def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
+        """."""
+        for bpm in self:
+            bpm.rffe_att = value
+
+        mstr = ''
+        okall = True
+        t0 = _time.time()
+        for bpm in self:
+            tout = timeout - (_time.time() - t0)
+            if not bpm._wait('RFFEAtt-RB', value, timeout=tout):
+                okall = False
+                mstr += (
+                    f'\n{bpm.devname:<20s}: ' +
+                    f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
+
+        print('RFFE attenuation set confirmed in all BPMs', end='')
+        print(', except:' + mstr if mstr else '.')
+        return okall
+
+    def get_slow_orbit(self):
+        """Get slow orbit vectors.
+
+        Returns:
+            orbx (numpy.ndarray, 160): Horizontal Orbit.
+            orby (numpy.ndarray, 160): Vertical Orbit.
+
+        """
+        orbx, orby = [], []
+        for bpm in self._devices:
+            orbx.append(bpm.posx)
+            orby.append(bpm.posy)
+        orbx = _np.array(orbx)
+        orby = _np.array(orby)
+        return orbx, orby
+
+    def get_mturn_orbit(self):
+        """Get Multiturn orbit matrices.
+
+        Returns:
+            orbx (numpy.ndarray, Nx160): Horizontal Orbit.
+            orby (numpy.ndarray, Nx160): Vertical Orbit.
+
+        """
+        orbx, orby = [], []
+        mini = None
+        for bpm in self._devices:
+            mtx = bpm.mt_posx
+            mty = bpm.mt_posy
+            orbx.append(mtx)
+            orby.append(mty)
+            if mini is None:
+                mini = mtx.size
+            mini = _np.min([mini, mtx.size, mty.size])
+
+        for i, (obx, oby) in enumerate(zip(orbx, orby)):
+            orbx[i] = obx[:mini]
+            orby[i] = oby[:mini]
+        orbx = _np.array(orbx).T
+        orby = _np.array(orby).T
+        return orbx, orby
+
+    @staticmethod
+    def get_sampling_frequency(rf_freq: float, acq_rate='Monit1'):
+        """Return the sampling frequency of the acquisition.
+
+        Args:
+            rf_freq (float): RF frequency.
+            acq_rate (str, optional): acquisition rate. Defaults to 'Monit1'.
+
+        Returns:
+            float: acquisition frequency.
+
+        """
+        fsamp = rf_freq / 864
+        if acq_rate.lower().startswith('tbt'):
+            return fsamp
+        fsamp /= 23
+        if acq_rate.lower().startswith('fofb'):
+            return fsamp
+        fsamp /= 25
+        return fsamp
+
+    def mturn_config_acquisition(
+            self, nr_points_after: int, nr_points_before=0,
+            acq_rate='Monit1', repeat=True, external=True):
+        """Configure acquisition for BPMs.
+
+        Args:
+            nr_points_after (int): number of points after trigger.
+            nr_points_before (int): number of points after trigger.
+                Defaults to 0.
+            acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
+                'Monit1'). Defaults to 'Monit1'.
+            repeat (bool, optional): Whether or not acquisition should be
+                repetitive. Defaults to True.
+            external (bool, optional): Whether or not external trigger should
+                be used. Defaults to True.
+
+        """
+        if acq_rate.lower().startswith('monit1'):
+            acq_rate = self.csbpm.AcqChan.Monit1
+        elif acq_rate.lower().startswith('fofb'):
+            acq_rate = self.csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbt'):
+            acq_rate = self.csbpm.AcqChan.TbT
+        else:
+            raise ValueError(acq_rate + ' is not a valid acquisition rate.')
+
+        if repeat:
+            repeat = self.csbpm.AcqRepeat.Repetitive
+        else:
+            repeat = self.csbpm.AcqRepeat.Normal
+
+        if external:
+            trig = self.csbpm.AcqTrigTyp.External
+        else:
+            trig = self.csbpm.AcqTrigTyp.Now
+
+        self.cmd_mturn_acq_abort()
+
+        for bpm in self._devices:
+            bpm.acq_repeat = repeat
+            bpm.acq_channel = acq_rate
+            bpm.acq_trigger = trig
+            bpm.acq_nrsamples_pre = nr_points_before
+            bpm.acq_nrsamples_post = nr_points_after
+
+        self.cmd_mturn_acq_start()
+
+    def cmd_mturn_acq_abort(self) -> bool:
+        """Abort BPMs acquistion.
+
+        Returns:
+            bool: Whether or not abort was successful.
+
+        """
+        for bpm in self._devices:
+            bpm.acq_ctrl = self.csbpm.AcqEvents.Abort
+
+        for bpm in self._devices:
+            boo = bpm.wait_acq_finish()
+            if not boo:
+                return False
+        return True
+
+    def cmd_mturn_acq_start(self) -> bool:
+        """Start BPMs acquisition.
+
+        Returns:
+            bool: Whether or not start was successful.
+
+        """
+        for bpm in self._devices:
+            bpm.acq_ctrl = self.csbpm.AcqEvents.Start
+
+        for bpm in self._devices:
+            boo = bpm.wait_acq_start()
+            if not boo:
+                return False
+        return True
+
+    def mturn_reset_flags(self):
+        """Reset Multiturn flags to wait for a new orbit update."""
+        for flag in self._mturn_flags.values():
+            flag.clear()
+
+    def mturn_wait_update_flags(self, timeout=10) -> int:
+        """Wait Multiturn orbit update.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                -2: TypeError ocurred
+                -1: Size of X orbit is different than Y orbit.
+                0: Orbit updated.
+                >0: Index of the first BPM which did not updated plus 1.
+
+        """
+        orbx0, orby0 = self.get_mturn_orbit()
+        for i, flag in enumerate(self._mturn_flags.values()):
+            t00 = _time.time()
+            if not flag.wait(timeout=timeout):
+                return (i // 2) + 1
+            timeout -= _time.time() - t00
+            timeout = max(timeout, 0)
+
+        while timeout > 0:
+            t00 = _time.time()
+            orbx, orby = self.get_mturn_orbit()
+            typ = False
+            try:
+                sizx = min(orbx.shape[0], orbx0.shape[0])
+                sizy = min(orby.shape[0], orby0.shape[0])
+                continue_ = sizx != sizy
+                errx = _np.all(
+                    _np.isclose(orbx0[:sizx], orbx[:sizx]), axis=0)
+                erry = _np.all(
+                    _np.isclose(orby0[:sizy], orby[:sizy]), axis=0)
+                continue_ |= _np.any(errx) | _np.any(erry)
+            except TypeError:
+                print('TypeError')
+                typ = True
+                continue_ = True
+            if not continue_:
+                return 0
+            _time.sleep(0.1)
+            timeout -= _time.time() - t00
+
+        if typ:
+            return -1
+        elif sizx != sizy:
+            return -2
+        elif _np.any(errx):
+            return int(errx.nonzero()[0][0])+1
+        elif _np.any(erry):
+            return int(erry.nonzero()[0][0])+1
+        return False
+
+    def _mturn_set_flag(self, pvname, **kwargs):
+        _ = kwargs
+        self._mturn_flags[pvname].set()

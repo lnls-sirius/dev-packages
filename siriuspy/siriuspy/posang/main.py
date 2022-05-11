@@ -1,5 +1,6 @@
 """Main module of AS-AP-PosAng IOC."""
 
+import logging as _log
 import time as _time
 import numpy as _np
 from epics import PV as _PV
@@ -18,7 +19,7 @@ from .utils import HandleConfigNameFile as _HandleConfigNameFile
 
 
 # Constants
-_TIMEOUT_CHECK = 1
+_TIMEOUT_CHECK = 3
 _ALLSET = 0xf
 _ALLCLR = 0x0
 
@@ -44,6 +45,7 @@ class App(_Callback):
             corrv = _PAConst.TB_CORRV_POSANG
 
         self._status = _ALLSET
+        self._ref_check_update = _PAConst.NeedRefUpdate.NeedUpdate
         self._orbx_deltapos = 0
         self._orby_deltapos = 0
         self._orbx_deltaang = 0
@@ -59,6 +61,9 @@ class App(_Callback):
             self._config_name = corrparams[0]
             self._respmat_x = corrparams[1]
             self._respmat_y = corrparams[2]
+        else:
+            raise Exception(
+                "Could not read correction parameters from configdb.")
 
         self._correctors = dict()
         self._correctors['CH1'] = _SiriusPVName(corrh[0])
@@ -97,6 +102,9 @@ class App(_Callback):
         self._corr_ctrlmode_mon_pvs = dict()
         self._corr_refkick = dict()
         self._corr_unit_factor = dict()
+        self._corr_kick_rb_impl = dict()
+        self._corr_last_delta = dict()
+        self._corr_last_delta_impltd = dict()
 
         for corr in self._correctors.values():
             pss = corr.substitute(prefix=_vaca_prefix)
@@ -105,9 +113,13 @@ class App(_Callback):
                 connection_timeout=0.05)
 
             self._corr_refkick[corr] = 0
+            self._corr_last_delta[corr] = 0
+            self._corr_last_delta_impltd[corr] = True
+            self._corr_kick_rb_impl[corr] = 0
             self._corr_kick_rb_pvs[corr] = _PV(
                 pss.substitute(propty_name='Kick', propty_suffix='RB'),
-                callback=self._callback_init_refkick,
+                callback=[self._callback_init_refkick,
+                          self._callback_corr_kick_rb],
                 connection_callback=self._connection_callback_corr_kick_pvs,
                 connection_timeout=0.05)
 
@@ -143,11 +155,14 @@ class App(_Callback):
         self.run_callbacks('ConfigName-RB', self._config_name)
         self.run_callbacks('RespMatX-Mon', self._respmat_x)
         self.run_callbacks('RespMatY-Mon', self._respmat_y)
-        self.run_callbacks('Log-Mon', 'Started.')
         self.run_callbacks('Status-Mon', self._status)
         for corr_id, corr in self._correctors.items():
             self.run_callbacks(
                 'RefKick' + corr_id + '-Mon', self._corr_refkick[corr])
+        self._check_need_update_ref()
+        msg = 'Started.'
+        self.run_callbacks('Log-Mon', msg)
+        _log.info('Log-Mon: ' + msg)
 
     @property
     def pvs_database(self):
@@ -195,6 +210,7 @@ class App(_Callback):
                 self._setnewrefkick_cmd_count += 1
                 self.run_callbacks(
                     'SetNewRefKick-Cmd', self._setnewrefkick_cmd_count)
+                self._check_need_update_ref()
 
         elif reason == 'ConfigPS-Cmd':
             done = self._config_ps()
@@ -216,11 +232,12 @@ class App(_Callback):
                     self._orbx_deltapos, self._orbx_deltaang, 'x')
                 self._update_delta(
                     self._orby_deltapos, self._orby_deltaang, 'y')
-                self.run_callbacks('Log-Mon', 'Updated correction matrices.')
+                msg = 'Updated correction matrices.'
                 status = True
             else:
-                self.run_callbacks(
-                    'Log-Mon', 'ERR:Configuration not found in configdb.')
+                msg = 'ERR:Configuration not found in configdb.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
 
         return status  # return True to invoke super().write of PCASDriver
 
@@ -256,7 +273,9 @@ class App(_Callback):
                 corrs2delta.append((self._correctors['CV4'], 3))
 
         if self._status != _ALLCLR:
-            self.run_callbacks('Log-Mon', 'ERR:Failed on applying new delta.')
+            msg = 'ERR:Failed on applying new delta.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
             return False
 
         # Convert deltas to respm units: pos mm->m and ang mrad->rad
@@ -266,22 +285,26 @@ class App(_Callback):
             umat, smat, vmat = _np.linalg.svd(mat, full_matrices=False)
             invmat = _np.dot(_np.dot(vmat.T, _np.diag(1/smat)), umat.T)
         except _np.linalg.LinAlgError():
-            self.run_callbacks('Log-Mon', 'ERR: Could not calculate SVD.')
+            msg = 'ERR: Could not calculate SVD.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
             return False
         if _np.any(_np.isnan(invmat)) or _np.any(_np.isinf(invmat)):
-            self.run_callbacks(
-                'Log-Mon', 'ERR: Pseudo inverse contains nan or inf.')
+            msg = 'ERR: Pseudo inverse contains nan or inf.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
             return False
         deltas = _np.dot(invmat, deltaposang)
 
         # Convert kicks from rad to correctors units and send values
         sp_check = dict()
-        for cid, idx in corrs2delta:
+        for corr, idx in corrs2delta:
             # delta from rad to urad or mrad
-            dlt = deltas[idx][0]/self._corr_unit_factor[cid]
-            val = self._corr_refkick[cid] + dlt
-            self._corr_kick_sp_pvs[cid].put(val)
-            sp_check.update({cid: [False, val]})
+            dlt = deltas[idx][0]/self._corr_unit_factor[corr]
+            self._corr_last_delta[corr] = dlt
+            val = self._corr_refkick[corr] + dlt
+            self._corr_kick_sp_pvs[corr].put(val)
+            sp_check.update({corr: [False, val]})
 
         # check if SP were accepted
         time0 = _time.time()
@@ -298,14 +321,18 @@ class App(_Callback):
                 break
 
         sp_diff = False
-        for cid in sp_check:
-            if not sp_check[cid][0]:
-                self.run_callbacks(
-                    'Log-Mon', 'ERR: Delta not applied to '+cid+'.')
+        for corr in sp_check:
+            self._corr_last_delta_impltd[corr] = sp_check[corr][0]
+            if not sp_check[corr][0]:
+                msg = 'ERR: Delta not applied to '+corr+'.'
+                self.run_callbacks('Log-Mon', msg)
+                _log.info('Log-Mon: ' + msg)
                 sp_diff = True
         if sp_diff:
             return False
-        self.run_callbacks('Log-Mon', 'Applied new delta.')
+        msg = 'Applied new delta.'
+        self.run_callbacks('Log-Mon', msg)
+        _log.info('Log-Mon: ' + msg)
         return True
 
     def _update_ref(self):
@@ -315,6 +342,7 @@ class App(_Callback):
                 value = self._corr_kick_rb_pvs[corr].get()
                 # Get correctors kick in urad (PS) or mrad (PU).
                 self._corr_refkick[corr] = value
+                self._corr_last_delta[corr] = 0.0
                 self.run_callbacks('RefKick' + corr_id + '-Mon', value)
 
             # the deltas from new kick references are zero
@@ -331,11 +359,13 @@ class App(_Callback):
             self.run_callbacks('DeltaAngY-SP', 0)
             self.run_callbacks('DeltaAngY-RB', 0)
 
-            self.run_callbacks('Log-Mon', 'Updated Kick References.')
+            msg = 'Updated Kick References.'
             updated = True
         else:
-            self.run_callbacks('Log-Mon', 'ERR:Some pv is disconnected.')
+            msg = 'ERR:Some pv is disconnected.'
             updated = False
+        self.run_callbacks('Log-Mon', msg)
+        _log.info('Log-Mon: ' + msg)
         return updated
 
     def _callback_init_refkick(self, pvname, value, cb_info, **kws):
@@ -352,10 +382,13 @@ class App(_Callback):
 
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
+        self._check_need_update_ref()
 
     def _connection_callback_corr_kick_pvs(self, pvname, conn, **kws):
         if not conn:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
+            msg = 'WARN:'+pvname+' disconnected.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_connection[corr_id] = (1 if conn else 0)
@@ -368,7 +401,9 @@ class App(_Callback):
 
     def _callback_corr_pwrstate_sts(self, pvname, value, **kws):
         if value != _PSC.PwrStateSts.On:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not On.')
+            msg = 'WARN:'+pvname+' is not On.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_pwrstate_sts[corr_id] = value
@@ -381,7 +416,9 @@ class App(_Callback):
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_corr_opmode_sts(self, pvname, value, **kws):
-        self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
+        msg = 'WARN:'+pvname+' changed.'
+        self.run_callbacks('Log-Mon', msg)
+        _log.info('Log-Mon: ' + msg)
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_opmode_sts[corr_id] = value
@@ -395,7 +432,9 @@ class App(_Callback):
 
     def _callback_corr_ctrlmode_mon(self, pvname, value, **kws):
         if value != _PSC.Interface.Remote:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
+            msg = 'WARN:'+pvname+' is not Remote.'
+            self.run_callbacks('Log-Mon', msg)
+            _log.info('Log-Mon: ' + msg)
 
         corr_id = self._corrs2id[_SiriusPVName(pvname).device_name]
         self._corr_check_ctrlmode_mon[corr_id] = value
@@ -407,6 +446,23 @@ class App(_Callback):
                         for q in self._corr_check_ctrlmode_mon.values()))
         self.run_callbacks('Status-Mon', self._status)
 
+    def _callback_corr_kick_rb(self, pvname, value, **kws):
+        corr = _SiriusPVName(pvname).device_name
+        self._corr_kick_rb_impl[corr] = value
+        self._check_need_update_ref()
+
+    def _check_need_update_ref(self):
+        self._ref_check_update = _PAConst.NeedRefUpdate.Ok
+        for corr in self._correctors.values():
+            if not self._corr_last_delta_impltd[corr]:
+                continue
+            implemented = self._corr_kick_rb_impl[corr]
+            desired = self._corr_last_delta[corr] + self._corr_refkick[corr]
+            if not _np.isclose(implemented, desired):
+                self._ref_check_update = _PAConst.NeedRefUpdate.NeedUpdate
+                break
+        self.run_callbacks('NeedRefUpdate-Mon', self._ref_check_update)
+
     def _config_ps(self):
         for corr in self._correctors.values():
             if self._corr_pwrstate_sel_pvs[corr].connected:
@@ -414,8 +470,11 @@ class App(_Callback):
                 if 'Sept' not in corr:
                     self._corr_opmode_sel_pvs[corr].put(_PSC.OpMode.SlowRef)
             else:
-                self.run_callbacks(
-                    'Log-Mon', 'ERR:' + corr + ' is disconnected.')
+                msg = 'ERR:'+corr+' is disconnected.'
+                self.run_callbacks('Log-Mon', msg)
+                _log.info('Log-Mon: ' + msg)
                 return False
-        self.run_callbacks('Log-Mon', 'Configuration sent to correctors.')
+        msg = 'Configuration sent to correctors.'
+        self.run_callbacks('Log-Mon', msg)
+        _log.info('Log-Mon: ' + msg)
         return True

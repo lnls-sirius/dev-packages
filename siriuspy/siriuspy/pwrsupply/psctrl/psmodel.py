@@ -31,9 +31,13 @@ class _PSModel:
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        # Scope
+        'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
+        'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
+        'ScopeDuration-RB': _c.V_SCOPE_DURATION,
         }
-    _e2f = {
-        # Epics to BSMP variable with pre-processing
+    _e2r = {
+        # Epics to BSMP variable but with pre/post-processing
         'PwrState-Sts': (_readers.PwrState, _c.V_PS_STATUS),
         'OpMode-Sts': (_readers.OpMode, _c.V_PS_STATUS),
         'CtrlMode-Mon': (_readers.CtrlMode, _c.V_PS_STATUS),
@@ -41,11 +45,11 @@ class _PSModel:
         'Version-Cte': (_readers.Version, _c.V_FIRMWARE_VERSION),
         }
     _e2c = {
-        # Epics to PRUCrontroller property
+        # Epics to PRUController property
         'PRUCtrlQueueSize-Mon': 'queue_length',
         }
     _e2o = {
-        # Epics to field object;
+        # Epics to reader object;
         'TimestampUpdate-Mon': _readers.TimestampUpdate,
         'Wfm-RB': _readers.WfmRBCurve,
         'WfmRef-Mon': _readers.WfmRefMonCurve,
@@ -85,27 +89,27 @@ class _PSModel:
         'ParamPWMMinDutyOpenLoop-Cte': _c.P_PWM_MIN_DUTY_OPEN_LOOP,  # 23
         'ParamPWMLimDutyShare-Cte': _c.P_PWM_LIM_DUTY_SHARE,  # 24
         # ----- class HRADC -----
-        # P_HRADC_NR_BOARDS = 25
-        # P_HRADC_SPI_CLK = 26
-        # P_HRADC_FREQ_SAMPLING = 27
-        # P_HRADC_ENABLE_HEATER = 28
-        # P_HRADC_ENABLE_RAILS_MON = 29
-        # P_HRADC_TRANSDUCER_OUTPUT = 30
-        # P_HRADC_TRANSDUCER_GAIN = 31
-        # P_HRADC_TRANSDUCER_OFFSET = 32
-        # # ----- class SigGen -----
-        # P_SIGGEN_TYPE = 33
-        # P_SIGGEN_NUM_CYCLES = 34
-        # P_SIGGEN_FREQ = 35
-        # P_SIGGEN_AMPLITUDE = 36
-        # P_SIGGEN_OFFSET = 37
-        # P_SIGGEN_AUX_PARAM = 38
-        # # ----- class WfmRef -----
-        # P_WFMREF_ID = 39
-        # P_WFMREF_SYNC_MODE = 40
-        # P_WFMREF_FREQ = 41
-        # P_WFMREF_GAIN = 42
-        # P_WFMREF_OFFSET = 43
+        'ParamHRADCNrBoards-Cte': _c.P_HRADC_NR_BOARDS,  # 25
+        'ParamHRADCSpiClk-Cte': _c.P_HRADC_SPI_CLK,  # 26
+        'ParamHRADCFreqSampling-Cte': _c.P_HRADC_FREQ_SAMPLING,  # 27
+        'ParamHRADCEnableHeater-Cte': _c.P_HRADC_ENABLE_HEATER,  # 28
+        'ParamHRADCEnableRails-Cte': _c.P_HRADC_ENABLE_RAILS_MON,  # 29
+        'ParamHRADCTransducerOutput-Cte': _c.P_HRADC_TRANSDUCER_OUTPUT,  # 30
+        'ParamHRADCTransducerGain-Cte': _c.P_HRADC_TRANSDUCER_GAIN,  # 31
+        'ParamHRADCTransducerOffset-Cte': _c.P_HRADC_TRANSDUCER_OFFSET,  # 32
+        # ----- class SigGen -----
+        'ParamSigGenType-Cte': _c.P_SIGGEN_TYPE,  # 33
+        'ParamSigGenNumCycles-Cte': _c.P_SIGGEN_NUM_CYCLES,  # 34
+        'ParamSigGenFreq-Cte': _c.P_SIGGEN_FREQ,  # 35
+        'ParamSigGenAmplitude-Cte': _c.P_SIGGEN_AMPLITUDE,  # 36
+        'ParamSigGenOffset-Cte': _c.P_SIGGEN_OFFSET,  # 37
+        'ParamSigGenAuxParam-Cte': _c.P_SIGGEN_AUX_PARAM,  # 38
+        # ----- class WfmRef -----
+        'ParamWfmRefId-Cte': _c.P_WFMREF_ID,  # 39
+        'ParamWfmRefSyncMode-Cte': _c.P_WFMREF_SYNC_MODE,  # 40
+        'ParamWfmRefFreq-Cte': _c.P_WFMREF_FREQ,  # 41
+        'ParamWfmRefGain-Cte': _c.P_WFMREF_GAIN,  # 42
+        'ParamWfmRefOffset-Cte': _c.P_WFMREF_OFFSET,  # 43
         # --- Analog Variables ---
         'ParamAnalogMax-Cte': _c.P_ANALOG_MAX,  # 44
         'ParamAnalogMin-Cte': _c.P_ANALOG_MIN,  # 45
@@ -115,8 +119,8 @@ class _PSModel:
         'ParamSoftIntlkDebounceTime-Cte': _c.P_SOFT_INTLK_DEBOUNCE_TIME,  # 48
         'ParamSoftIntlkResetTime-Cte': _c.P_SOFT_INTLK_RESET_TIME,  # 49
         # ---- Scope -----
-        # P_SCOPE_SAMPLING_FREQUENCY = 50
-        # P_SCOPE_DATA_SOURCE = 51
+        'ParamScopeSamplingFreq-Cte': _c.P_SCOPE_SAMPLING_FREQUENCY,  # 50
+        'ParamScopeDataSource-Cte': _c.P_SCOPE_DATA_SOURCE,  # 51
         }
 
     @property
@@ -134,45 +138,45 @@ class _PSModel:
         """PRU Controller parameters."""
         return self._e()
 
-    def field(self, device_id, epics_field, pru_controller):
-        """Return field."""
-        # common field
-        e2f = self._fields_common
-        field = e2f(device_id, epics_field, pru_controller)
-        if field:
-            return field
-        # especific field (bsmp variable)
-        e2f = self._fields_psmodel_specific_bsmp_variables
-        field = e2f(device_id, epics_field, pru_controller)
-        if field:
-            return field
-        # specific field (PRUController property)
-        e2f = self._fields_psmodel_specific_pruc_properties
-        field = e2f(device_id, epics_field, pru_controller)
-        return field
+    def reader(self, device_id, epics_field, pru_controller):
+        """Return reader."""
+        # common reader
+        e2f = self._readers_common
+        reader = e2f(device_id, epics_field, pru_controller)
+        if reader:
+            return reader
+        # especific reader (bsmp variable)
+        e2f = self._readers_psmodel_specific_bsmp_variables
+        reader = e2f(device_id, epics_field, pru_controller)
+        if reader:
+            return reader
+        # specific reader (PRUController property)
+        e2f = self._readers_psmodel_specific_pruc_properties
+        reader = e2f(device_id, epics_field, pru_controller)
+        return reader
 
     @staticmethod
-    def function(device_ids, epics_field, pru_controller, setpoints):
-        """Return function."""
-        function = _PSModel._function_common_sp(
+    def writer(device_ids, epics_field, pru_controller, setpoints):
+        """Return writer."""
+        writer = _PSModel._writer_common_sp(
             device_ids, epics_field, pru_controller, setpoints)
-        if function:
-            return function
+        if writer:
+            return writer
 
-        function = _PSModel._function_common_cmd(
+        writer = _PSModel._writer_common_cmd(
             device_ids, epics_field, pru_controller, setpoints)
-        if function:
-            return function
+        if writer:
+            return writer
 
-        function = _PSModel._function_cfgsiggen(
+        writer = _PSModel._writer_cfgsiggen(
             device_ids, epics_field, pru_controller, setpoints)
-        if function:
-            return function
+        if writer:
+            return writer
 
-        function = _PSModel._function_wfm(
+        writer = _PSModel._writer_wfm(
             device_ids, epics_field, pru_controller, setpoints)
-        if function:
-            return function
+        if writer:
+            return writer
 
         return _writers.BSMPFunctionNull()
 
@@ -183,25 +187,25 @@ class _PSModel:
 
     # --- private methods ---
 
-    def _fields_common(self, device_id, epics_field, pru_controller):
+    def _readers_common(self, device_id, epics_field, pru_controller):
         if epics_field in self._e2v:
             var_id = self._e2v[epics_field]
             return _readers.Variable(pru_controller, device_id, var_id)
         if epics_field in self._e2p:
             param_id = self._e2p[epics_field]
             return _readers.ConstParameter(pru_controller, device_id, param_id)
-        if epics_field in self._e2f:
-            field, var_id = self._e2f[epics_field]
-            return field(_readers.Variable(pru_controller, device_id, var_id))
+        if epics_field in self._e2r:
+            reader, var_id = self._e2r[epics_field]
+            return reader(_readers.Variable(pru_controller, device_id, var_id))
         if epics_field in self._e2c:
             attr = self._e2c[epics_field]
             return _readers.PRUCProperty(pru_controller, attr)
         if epics_field in self._e2o:
-            field = self._e2o[epics_field]
-            return field(pru_controller, device_id)
+            reader = self._e2o[epics_field]
+            return reader(pru_controller, device_id)
         return None
 
-    def _fields_psmodel_specific_bsmp_variables(
+    def _readers_psmodel_specific_bsmp_variables(
             self, device_id, epics_field, pru_controller):
         # Specific fields
         if epics_field in self._bsmp_variables:
@@ -209,31 +213,37 @@ class _PSModel:
             return _readers.Variable(pru_controller, device_id, var_id)
         return None
 
-    def _fields_psmodel_specific_pruc_properties(
+    def _readers_psmodel_specific_pruc_properties(
             self, _, epics_field, pru_controller):
         if epics_field in self._pruc_properties:
             attr = self._pruc_properties[epics_field]
             return _readers.PRUCProperty(pru_controller, attr)
 
     @staticmethod
-    def _function_common_sp(
+    def _writer_common_sp(
             device_ids, epics_field, pru_controller, setpoints):
         _c = _const_psbsmp.ConstPSBSMP
         if epics_field == 'PwrState-Sel':
             return _writers.PSPwrState(device_ids, pru_controller, setpoints)
-        if epics_field == 'OpMode-Sel':
+        elif epics_field == 'OpMode-Sel':
             bsmpfunc = _writers.BSMPFunction(
                 device_ids, pru_controller, _c.F_SELECT_OP_MODE)
             return _writers.PSOpMode(
                 device_ids, bsmpfunc, setpoints)
-        if epics_field == 'CtrlLoop-Sel':
+        elif epics_field == 'CtrlLoop-Sel':
             return _writers.CtrlLoop(device_ids, pru_controller, setpoints)
-        if epics_field == 'Current-SP':
+        elif epics_field == 'Current-SP':
             return _writers.Current(device_ids, pru_controller, setpoints)
+        elif epics_field == 'ScopeFreq-SP':
+            return _writers.ScopeFreq(device_ids, pru_controller, setpoints)
+        elif epics_field == 'ScopeDuration-SP':
+            return _writers.ScopeDuration(device_ids, pru_controller, setpoints)
+        elif epics_field == 'ScopeSrcAddr-SP':
+            return _writers.ScopeSrcAddr(device_ids, pru_controller, setpoints)
         return None
 
     @staticmethod
-    def _function_common_cmd(
+    def _writer_common_cmd(
             device_ids, epics_field, pru_controller, setpoints):
         _c = _const_psbsmp.ConstPSBSMP
         if epics_field == 'Reset-Cmd':
@@ -242,12 +252,14 @@ class _PSModel:
         if epics_field == 'SyncPulse-Cmd':
             return _writers.Command(
                 device_ids, pru_controller, _c.F_SYNC_PULSE, setpoints)
+        if epics_field == 'ParamUpdate-Cmd':
+            return _writers.ParamUpdate(device_ids, pru_controller, setpoints)
         if epics_field == 'Abort-Cmd':
             return _writers.BSMPFunctionNull()
         return None
 
     @staticmethod
-    def _function_cfgsiggen(
+    def _writer_cfgsiggen(
             device_ids, epics_field, pru_controller, setpoints):
         p2i = {
             'CycleType-Sel': 0,
@@ -268,7 +280,7 @@ class _PSModel:
         return None
 
     @staticmethod
-    def _function_wfm(
+    def _writer_wfm(
             device_ids, epics_field, pru_controller, setpoints):
         if epics_field == 'Wfm-SP':
             return _writers.WfmSP(
@@ -313,8 +325,8 @@ class PSModelFBP(_PSModel):
         'SOFBCurrent-Mon': 'sofb_current_mon',
     }
 
-    def function(self, device_ids, epics_field, pru_controller, setpoints):
-        """Return function."""
+    def writer(self, device_ids, epics_field, pru_controller, setpoints):
+        """Return writer."""
         if epics_field == 'SOFBCurrent-SP':
             return _writers.SOFBCurrent(
                 device_ids, pru_controller, setpoints)
@@ -322,7 +334,7 @@ class PSModelFBP(_PSModel):
             return _writers.SOFBMode(pru_controller, setpoints)
         if epics_field == 'SOFBUpdate-Cmd':
             return _writers.SOFBUpdate(pru_controller, setpoints)
-        return super().function(
+        return super().writer(
             device_ids, epics_field, pru_controller, setpoints)
 
 
@@ -468,7 +480,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'BoardTemperatureIIBModA-Mon': _c.V_TEMP_BOARD_IIB_A,
         'RelativeHumidityIIBModA-Mon': _c.V_RH_IIB_A,
         'IntlkIIBModA-Mon': _c.V_IIB_INTERLOCKS_A,
-        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A, 
+        'AlarmsIIBModA-Mon': _c.V_IIB_ALARMS_A,
         'VoltageInputIIBModB-Mon': _c.V_V_INPUT_IIB_B,
         'CurrentInputIIBModB-Mon': _c.V_I_INPUT_IIB_B,
         'CurrentOutputIIBModB-Mon': _c.V_I_OUTPUT_IIB_B,
@@ -565,13 +577,13 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2PWMDutyCycleMod3-Mon': _c.V_DUTY_CYCLE_2_3,
         'IGBT1PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_1_4,
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
-        'VoltageInputMod1-Mon': _c.V_V_INPUT_IIB_1,
-        'VoltageOutputMod1-Mon': _c.V_V_OUTPUT_IIB_1,
-        'IGBT1IIBCurrentMod1-Mon': _c.V_I_IGBT_1_IIB_1,
-        'IGBT2IIBCurrentMod1-Mon': _c.V_I_IGBT_2_IIB_1,
+        'VoltageInputIIBMod1-Mon': _c.V_V_INPUT_IIB_1,
+        'VoltageOutputIIBMod1-Mon': _c.V_V_OUTPUT_IIB_1,
+        'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
+        'IGBT2CurrentIIBMod1-Mon': _c.V_I_IGBT_2_IIB_1,
         'IGBT1TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_1_IIB_1,
         'IGBT2TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_2_IIB_1,
-        'IGBTDriverTemperatureIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
+        'IGBTDriverVoltageIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
         'IGBT1DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_1_IIB_1,
         'IGBT2DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_2_IIB_1,
         'InductorTemperatureIIBMod1-Mon': _c.V_TEMP_INDUCTOR_IIB_1,
@@ -581,13 +593,13 @@ class PSModelFAP_4P(_PSModel):
         'RelativeHumidityIIBMod1-Mon': _c.V_RH_IIB_1,
         'IntlkIIBMod1-Mon': _c.V_IIB_INTERLOCKS_1,
         'AlarmsIIBMod1-Mon': _c.V_IIB_ALARMS_1,
-        'VoltageInputMod2-Mon': _c.V_V_INPUT_IIB_2,
-        'VoltageOutputMod2-Mon': _c.V_V_OUTPUT_IIB_2,
-        'IGBT1IIBCurrentMod2-Mon': _c.V_I_IGBT_1_IIB_2,
-        'IGBT2IIBCurrentMod2-Mon': _c.V_I_IGBT_2_IIB_2,
+        'VoltageInputIIBMod2-Mon': _c.V_V_INPUT_IIB_2,
+        'VoltageOutputIIBMod2-Mon': _c.V_V_OUTPUT_IIB_2,
+        'IGBT1CurrentIIBMod2-Mon': _c.V_I_IGBT_1_IIB_2,
+        'IGBT2CurrentIIBMod2-Mon': _c.V_I_IGBT_2_IIB_2,
         'IGBT1TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_1_IIB_2,
         'IGBT2TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_2_IIB_2,
-        'IGBTDriverTemperatureIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
+        'IGBTDriverVoltageIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
         'IGBT1DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_1_IIB_2,
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
@@ -597,13 +609,13 @@ class PSModelFAP_4P(_PSModel):
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
-        'VoltageInputMod3-Mon': _c.V_V_INPUT_IIB_3,
-        'VoltageOutputMod3-Mon': _c.V_V_OUTPUT_IIB_3,
-        'IGBT1IIBCurrentMod3-Mon': _c.V_I_IGBT_1_IIB_3,
-        'IGBT2IIBCurrentMod3-Mon': _c.V_I_IGBT_2_IIB_3,
+        'VoltageInputIIBMod3-Mon': _c.V_V_INPUT_IIB_3,
+        'VoltageOutputIIBMod3-Mon': _c.V_V_OUTPUT_IIB_3,
+        'IGBT1CurrentIIBMod3-Mon': _c.V_I_IGBT_1_IIB_3,
+        'IGBT2CurrentIIBMod3-Mon': _c.V_I_IGBT_2_IIB_3,
         'IGBT1TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_1_IIB_3,
         'IGBT2TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_2_IIB_3,
-        'IGBTDriverTemperatureIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
+        'IGBTDriverVoltageIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
         'IGBT1DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_1_IIB_3,
         'IGBT2DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_2_IIB_3,
         'InductorTemperatureIIBMod3-Mon': _c.V_TEMP_INDUCTOR_IIB_3,
@@ -613,13 +625,13 @@ class PSModelFAP_4P(_PSModel):
         'RelativeHumidityIIBMod3-Mon': _c.V_RH_IIB_3,
         'IntlkIIBMod3-Mon': _c.V_IIB_INTERLOCKS_3,
         'AlarmsIIBMod3-Mon': _c.V_IIB_ALARMS_3,
-        'VoltageInputMod4-Mon': _c.V_V_INPUT_IIB_4,
-        'VoltageOutputMod4-Mon': _c.V_V_OUTPUT_IIB_4,
-        'IGBT1IIBCurrentMod4-Mon': _c.V_I_IGBT_1_IIB_4,
-        'IGBT2IIBCurrentMod4-Mon': _c.V_I_IGBT_2_IIB_4,
+        'VoltageInputIIBMod4-Mon': _c.V_V_INPUT_IIB_4,
+        'VoltageOutputIIBMod4-Mon': _c.V_V_OUTPUT_IIB_4,
+        'IGBT1CurrentIIBMod4-Mon': _c.V_I_IGBT_1_IIB_4,
+        'IGBT2CurrentIIBMod4-Mon': _c.V_I_IGBT_2_IIB_4,
         'IGBT1TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_1_IIB_4,
         'IGBT2TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_2_IIB_4,
-        'IGBTDriverTemperatureIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,
+        'IGBTDriverVoltageIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,
         'IGBT1DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_1_IIB_4,
         'IGBT2DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_2_IIB_4,
         'InductorTemperatureIIBMod4-Mon': _c.V_TEMP_INDUCTOR_IIB_4,
@@ -676,13 +688,13 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2PWMDutyCycleMod3-Mon': _c.V_DUTY_CYCLE_2_3,
         'IGBT1PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_1_4,
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
-        'VoltageInputMod1-Mon': _c.V_V_INPUT_IIB_1,
-        'VoltageOutputMod1-Mon': _c.V_V_OUTPUT_IIB_1,
-        'IGBT1IIBCurrentMod1-Mon': _c.V_I_IGBT_1_IIB_1,
-        'IGBT2IIBCurrentMod1-Mon': _c.V_I_IGBT_2_IIB_1,
+        'VoltageInputIIBMod1-Mon': _c.V_V_INPUT_IIB_1,
+        'VoltageOutputIIBMod1-Mon': _c.V_V_OUTPUT_IIB_1,
+        'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
+        'IGBT2CurrentIIBMod1-Mon': _c.V_I_IGBT_2_IIB_1,
         'IGBT1TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_1_IIB_1,
         'IGBT2TemperatureIIBMod1-Mon': _c.V_TEMP_IGBT_2_IIB_1,
-        'IGBTDriverTemperatureIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
+        'IGBTDriverVoltageIIBMod1-Mon': _c.V_V_DRIVER_IIB_1,
         'IGBT1DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_1_IIB_1,
         'IGBT2DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_2_IIB_1,
         'InductorTemperatureIIBMod1-Mon': _c.V_TEMP_INDUCTOR_IIB_1,
@@ -692,13 +704,13 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod1-Mon': _c.V_RH_IIB_1,
         'IntlkIIBMod1-Mon': _c.V_IIB_INTERLOCKS_1,
         'AlarmsIIBMod1-Mon': _c.V_IIB_ALARMS_1,
-        'VoltageInputMod2-Mon': _c.V_V_INPUT_IIB_2,
-        'VoltageOutputMod2-Mon': _c.V_V_OUTPUT_IIB_2,
-        'IGBT1IIBCurrentMod2-Mon': _c.V_I_IGBT_1_IIB_2,
-        'IGBT2IIBCurrentMod2-Mon': _c.V_I_IGBT_2_IIB_2,
+        'VoltageInputIIBMod2-Mon': _c.V_V_INPUT_IIB_2,
+        'VoltageOutputIIBMod2-Mon': _c.V_V_OUTPUT_IIB_2,
+        'IGBT1CurrentIIBMod2-Mon': _c.V_I_IGBT_1_IIB_2,
+        'IGBT2CurrentIIBMod2-Mon': _c.V_I_IGBT_2_IIB_2,
         'IGBT1TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_1_IIB_2,
         'IGBT2TemperatureIIBMod2-Mon': _c.V_TEMP_IGBT_2_IIB_2,
-        'IGBTDriverTemperatureIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
+        'IGBTDriverVoltageIIBMod2-Mon': _c.V_V_DRIVER_IIB_2,
         'IGBT1DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_1_IIB_2,
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
@@ -708,13 +720,13 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
-        'VoltageInputMod3-Mon': _c.V_V_INPUT_IIB_3,
-        'VoltageOutputMod3-Mon': _c.V_V_OUTPUT_IIB_3,
-        'IGBT1IIBCurrentMod3-Mon': _c.V_I_IGBT_1_IIB_3,
-        'IGBT2IIBCurrentMod3-Mon': _c.V_I_IGBT_2_IIB_3,
+        'VoltageInputIIBMod3-Mon': _c.V_V_INPUT_IIB_3,
+        'VoltageOutputIIBMod3-Mon': _c.V_V_OUTPUT_IIB_3,
+        'IGBT1CurrentIIBMod3-Mon': _c.V_I_IGBT_1_IIB_3,
+        'IGBT2CurrentIIBMod3-Mon': _c.V_I_IGBT_2_IIB_3,
         'IGBT1TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_1_IIB_3,
         'IGBT2TemperatureIIBMod3-Mon': _c.V_TEMP_IGBT_2_IIB_3,
-        'IGBTDriverTemperatureIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
+        'IGBTDriverVoltageIIBMod3-Mon': _c.V_V_DRIVER_IIB_3,
         'IGBT1DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_1_IIB_3,
         'IGBT2DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_2_IIB_3,
         'InductorTemperatureIIBMod3-Mon': _c.V_TEMP_INDUCTOR_IIB_3,
@@ -724,13 +736,13 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod3-Mon': _c.V_RH_IIB_3,
         'IntlkIIBMod3-Mon': _c.V_IIB_INTERLOCKS_3,
         'AlarmsIIBMod3-Mon': _c.V_IIB_ALARMS_3,
-        'VoltageInputMod4-Mon': _c.V_V_INPUT_IIB_4,
-        'VoltageOutputMod4-Mon': _c.V_V_OUTPUT_IIB_4,
-        'IGBT1IIBCurrentMod4-Mon': _c.V_I_IGBT_1_IIB_4,
-        'IGBT2IIBCurrentMod4-Mon': _c.V_I_IGBT_2_IIB_4,
+        'VoltageInputIIBMod4-Mon': _c.V_V_INPUT_IIB_4,
+        'VoltageOutputIIBMod4-Mon': _c.V_V_OUTPUT_IIB_4,
+        'IGBT1CurrentIIBMod4-Mon': _c.V_I_IGBT_1_IIB_4,
+        'IGBT2CurrentIIBMod4-Mon': _c.V_I_IGBT_2_IIB_4,
         'IGBT1TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_1_IIB_4,
         'IGBT2TemperatureIIBMod4-Mon': _c.V_TEMP_IGBT_2_IIB_4,
-        'IGBTDriverTemperatureIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,
+        'IGBTDriverVoltageIIBMod4-Mon': _c.V_V_DRIVER_IIB_4,
         'IGBT1DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_1_IIB_4,
         'IGBT2DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_2_IIB_4,
         'InductorTemperatureIIBMod4-Mon': _c.V_TEMP_INDUCTOR_IIB_4,
@@ -770,8 +782,8 @@ class PSModelFBP_DCLink(_PSModel):
         'VoltageDig-Mon': _c.V_DIG_POT_TAP,
         }
 
-    def function(self, device_ids, epics_field, pru_controller, setpoints):
-        """Return function."""
+    def writer(self, device_ids, epics_field, pru_controller, setpoints):
+        """Return writer."""
         _c = PSModelFBP_DCLink._c
         if epics_field == 'PwrState-Sel':
             return _writers.PSPwrStateFBP_DCLink(
@@ -841,8 +853,8 @@ class PSModelFAC_2S_ACDC(_PSModel):
         'AlarmsIIBModCmd-Mon': _c.V_IIB_ALARMS_CMD,
         }
 
-    def function(self, device_ids, epics_field, pru_controller, setpoints):
-        """Return function."""
+    def writer(self, device_ids, epics_field, pru_controller, setpoints):
+        """Return writer."""
         _c = PSModelFAC_2S_ACDC._c
         if epics_field == 'PwrState-Sel':
             return _writers.PSPwrState(device_ids, pru_controller, setpoints)

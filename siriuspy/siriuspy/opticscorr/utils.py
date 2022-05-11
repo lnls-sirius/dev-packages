@@ -24,6 +24,7 @@ class HandleConfigNameFile:
             with open(self.fname, 'r') as fil:
                 config_name = fil.read().strip('\n')
         else:
+            _os.makedirs(self.fpath, exist_ok=True)
             config_name = get_default_config_name(self.acc, self.opticsparam)
             with open(self.fname, 'w+') as fil:
                 fil.write(config_name)
@@ -40,12 +41,12 @@ class HandleConfigNameFile:
 def get_default_config_name(acc, opticsparam):
     """Get default config name."""
     if opticsparam == 'tune':
-        if acc == 'BO':
+        if acc.upper() == 'BO':
             return 'BO.V05.04.M0'
         else:
             return 'SI.V24.04_S05.01'
     elif opticsparam == 'chrom':
-        if acc == 'BO':
+        if acc.upper() == 'BO':
             return 'BO.V05.04.M0'
         else:
             return 'SI.V24.04_S05.01'
