@@ -1329,6 +1329,82 @@ def _get_ps_LINAC_propty_database():
     return propty_db
 
 
+def _get_ps_FOFB_propty_database():
+    """This is not a primary source database.
+
+    Primary sources can be found in Fast Orbit Feedback EPICS Support:
+    https://github.com/lnls-dig/fofb-epics-ioc/.
+    """
+    dbase = {
+        # PwsState
+        'PwrState-Sel': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'pwrstate'},
+        'PwrState-Sts': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'pwrstate'},
+        # Ctrl Loop
+        'CtrlLoop-Sel': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'ctrlloop'},
+        'CtrlLoop-Sts': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'ctrlloop'},
+        # Tests (opmode)
+        'TestOpenLoopTriang-Sel': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        'TestOpenLoopTriang-Sts': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        'TestOpenLoopSquare-Sel': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        'TestOpenLoopSquare-Sts': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        'TestClosedLoopSquare-Sel': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        'TestClosedLoopSquare-Sts': {
+            'type': 'enum', 'enums': _et.OFF_ON,
+            'value': Const.OffOn.Off, 'unit': 'state'},
+        # Alarms
+        'PSAmpOverCurrFlagL-Sts': {'type': 'int', 'value': 0.0},
+        'PSAmpOverCurrFlagR-Sts': {'type': 'int', 'value': 0.0},
+        'PSAmpOverTempFlagL-Sts': {'type': 'int', 'value': 0.0},
+        'PSAmpOverTempFlagR-Sts': {'type': 'int', 'value': 0.0},
+        # PI params
+        'CtrlLoopKp-SP': {'type': 'int', 'value': 0.0},
+        'CtrlLoopKp-RB': {'type': 'int', 'value': 0.0},
+        'CtrlLoopTi-SP': {'type': 'int', 'value': 0.0},
+        'CtrlLoopTi-RB': {'type': 'int', 'value': 0.0},
+        # Calibration params
+        'CurrGain-SP': {'type': 'float', 'prec': 15, 'value': 0.0},
+        'CurrGain-RB': {'type': 'float', 'prec': 15, 'value': 0.0},
+        'CurrOffset-SP': {'type': 'int', 'value': 0.0},
+        'CurrOffset-RB': {'type': 'int', 'value': 0.0},
+        'VoltGain-SP': {'type': 'float', 'prec': 15, 'value': 0.0},
+        'VoltGain-RB': {'type': 'float', 'prec': 15, 'value': 0.0},
+        'VoltOffset-SP': {'type': 'int', 'value': 0.0},
+        'VoltOffset-RB': {'type': 'int', 'value': 0.0},
+        # Current
+        'CurrentRaw-SP': {
+            'type': 'int', 'value': 0.0, 'unit': 'count'},
+        'CurrentRaw-RB': {
+            'type': 'int', 'value': 0.0, 'unit': 'count'},
+        'Current-SP': {
+            'type': 'float', 'prec': 15, 'value': 0.0, 'unit': 'A',
+            'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
+            'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
+        'Current-RB': {
+            'type': 'float', 'prec': 15, 'value': 0.0, 'unit': 'A',
+            'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
+            'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
+    }
+    dbase = _csdev.add_pvslist_cte(dbase)
+    return dbase
+
 # --- FBP ---
 
 def _get_ps_FBP_propty_database():
@@ -2710,6 +2786,7 @@ def _get_model_db(psmodel):
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
+        'FOFB_PS': _get_ps_FOFB_propty_database,
         'APU': _get_id_apu_propty_database,
         'REGATRON_DCLink': _get_ps_REGATRON_DCLink_database,
     }
@@ -2807,5 +2884,8 @@ def _insert_strengths(database, pstype):
             del database['KLRef-Mon']
         if 'SLRef-Mon' in database:
             del database['SLRef-Mon']
+    if pstype in ('si-corrector-fch', 'si-corrector-fcv'):
+        del database['KickRef-Mon']
+        del database['Kick-Mon']
 
     return database
