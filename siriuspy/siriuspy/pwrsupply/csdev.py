@@ -2885,7 +2885,8 @@ def _insert_strengths(database, pstype):
         if 'SLRef-Mon' in database:
             del database['SLRef-Mon']
     if pstype in ('si-corrector-fch', 'si-corrector-fcv'):
-        del database['KickRef-Mon']
-        del database['Kick-Mon']
+        if 'KickRef-Mon' in database:
+            del database['KickRef-Mon']
+            del database['Kick-Mon']
 
     return database
