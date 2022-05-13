@@ -21,7 +21,10 @@ class PSDiagApp(_App):
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
-            pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
+            if devname.dev in ['FCH', 'FCV']:
+                pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-RB'
+            else:
+                pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
             pvo = _ComputedPV(
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)
@@ -29,7 +32,21 @@ class PSDiagApp(_App):
 
             # DiagStatus-Mon
             computer = _PSStatusPV()
-            if devname.sec != 'LI':
+            if devname.dev in ['FCH', 'FCV']:
+                pvs = [None]*6
+                pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
+                pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
+
+                alarm_list = [
+                    ':PSAmpOverCurrFlagL-Sts', ':PSAmpOverCurrFlagR-Sts',
+                    ':PSAmpOverTempFlagL-Sts', ':PSAmpOverTempFlagR-Sts',
+                ]
+                computer.ALARM_PVS = list()
+                for idx, alarm in enumerate(alarm_list):
+                    pvidx = idx + computer.CURRT_DIFF + 1
+                    computer.ALARM_PVS.append(pvidx)
+                    pvs[pvidx] = devname + alarm
+            elif devname.sec != 'LI':
                 intlks = _get_ps_interlocks(psname=psname)
                 intlk_list = [':' + ppt for ppt in intlks if 'Intlk' in ppt]
                 alarm_list = [':' + ppt for ppt in intlks if 'Alarm' in ppt]
