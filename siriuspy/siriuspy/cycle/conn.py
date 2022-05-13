@@ -445,8 +445,7 @@ class PSCycler:
 
     def set_current_zero(self):
         """Set PS current to zero ."""
-        status = _pv_conn_put(self['Current-SP'], 0)
-        return status
+        return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self, wait=5):
         """Return whether power supply PS current is zero."""
@@ -726,8 +725,7 @@ class LinacPSCycler:
 
     def is_prepared(self, mode, wait=5):
         """Return whether power supply is ready."""
-        status = self.check_current_zero(wait)
-        return status
+        return self.check_current_zero(wait)
 
     def cycle(self):
         """Cycle. This function may run in a thread."""
@@ -847,8 +845,7 @@ class FOFBPSCycler:
 
     def is_prepared(self, _, wait=5):
         """Return whether power supply is ready."""
-        status = self.check_current_zero(wait)
-        return status
+        return self.check_current_zero(wait)
 
     def set_opmode_slowref(self):
         """Set OpMode to SlowRef, if needed."""
