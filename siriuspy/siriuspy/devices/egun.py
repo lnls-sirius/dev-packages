@@ -658,7 +658,7 @@ class EGun(_Devices):
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
-        if not self.hvps['swstatus'] == self.PWRSTATE.On:
+        if not self.hvps['swstatus'] == self.hvps.PWRSTATE.On:
             self._update_last_status('ERR:HVPS switch is not on.')
             return False
         if value is None:
@@ -674,7 +674,7 @@ class EGun(_Devices):
             return True
 
         # if needed, enable HVPS
-        if not self.hvps['enstatus']:
+        if not self.hvps['enstatus'] == self.hvps.PWRSTATE.On:
             self._update_last_status('Sending enable command to HVPS...')
             _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
             if not self.hvps.cmd_enable(5):
