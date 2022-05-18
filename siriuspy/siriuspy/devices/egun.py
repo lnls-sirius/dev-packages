@@ -658,8 +658,8 @@ class EGun(_Devices):
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
-        if not self.hvps.is_on():
-            self._update_last_status('ERR:HVPS voltage is not on.')
+        if not self.hvps['swstatus'] == self.PWRSTATE.On:
+            self._update_last_status('ERR:HVPS switch is not on.')
             return False
         if value is None:
             value = self._hv_opval
