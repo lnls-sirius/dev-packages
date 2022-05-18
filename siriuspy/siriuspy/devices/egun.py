@@ -193,6 +193,17 @@ class EGHVPS(_Device):
     def voltage(self, value):
         self['voltoutsoft'] = value
 
+    def cmd_enable(self, timeout=DEF_TIMEOUT):
+        """Enable."""
+        if self['enstatus'] == self.PWRSTATE.Off:
+            self['enable'] = self.PWRSTATE.Off
+            _time.sleep(1)
+
+        self['enable'] = self.PWRSTATE.On
+        if not self._wait('enstatus', self.PWRSTATE.On, timeout=timeout):
+            return False
+        return True
+
     def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.On
@@ -220,6 +231,15 @@ class EGHVPS(_Device):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
             if abs(self.voltage - value) < tol:
+                return True
+            _time.sleep(0.1)
+        return False
+
+    def wait_current(self, value, tol=1e-3, timeout=DEF_TIMEOUT):
+        """Wait current setpoint to reach value with tolerance 'tol'."""
+        _t0 = _time.time()
+        while _time.time() - _t0 < timeout:
+            if abs(self['currentoutsoft'] - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
@@ -653,10 +673,24 @@ class EGun(_Devices):
             self.hvps.voltage = value
             return True
 
+        # if needed, enable HVPS
+        if not self.hvps['enstatus']:
+            self._update_last_status('Sending enable command to HVPS...')
+            _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+            if not self.hvps.cmd_enable(5):
+                self._update_last_status('ERR:Could not enable HVPS.')
+                return False
+            self._update_last_status('HVPS enabled.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+
         # before voltage setpoints, set leakage current to suitable value
         self._update_last_status(
             f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
         self.hvps.current = self._hv_leakcurr
+        if not self.hvps.wait_current(self._hv_leakcurr):
+            self._update_last_status(
+                'ERR:Timed out waiting for HVPS leak current.')
+            return False
         _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
 
         # if value is lower, do only one setpoint
