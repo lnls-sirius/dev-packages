@@ -193,6 +193,17 @@ class EGHVPS(_Device):
     def voltage(self, value):
         self['voltoutsoft'] = value
 
+    def cmd_enable(self, timeout=DEF_TIMEOUT):
+        """Enable."""
+        if self['enstatus'] == self.PWRSTATE.Off:
+            self['enable'] = self.PWRSTATE.Off
+            _time.sleep(1)
+
+        self['enable'] = self.PWRSTATE.On
+        if not self._wait('enstatus', self.PWRSTATE.On, timeout=timeout):
+            return False
+        return True
+
     def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.On
@@ -220,6 +231,15 @@ class EGHVPS(_Device):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
             if abs(self.voltage - value) < tol:
+                return True
+            _time.sleep(0.1)
+        return False
+
+    def wait_current(self, value, tol=1e-3, timeout=DEF_TIMEOUT):
+        """Wait current setpoint to reach value with tolerance 'tol'."""
+        _t0 = _time.time()
+        while _time.time() - _t0 < timeout:
+            if abs(self['currentoutsoft'] - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
@@ -428,7 +448,8 @@ class EGun(_Devices):
     HV_TOLERANCE = 1.0  # [kV]
     HV_LEAKCURR_OPVALUE = 0.015  # [mA]
     HV_MAXVALUE = 90.0  # [kV]
-    HV_RAMP_NRPTS = 15
+    HV_RAMPUP_NRPTS = 15
+    HV_RAMPDN_NRPTS = 6
     HV_RAMP_DURATION = 70  # [s]
     FILACURR_OPVALUE = 1.38  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
@@ -638,8 +659,8 @@ class EGun(_Devices):
         if not self._check_status_ok():
             self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
-        if not self.hvps.is_on():
-            self._update_last_status('ERR:HVPS voltage is not on.')
+        if not self.hvps['swstatus'] == self.hvps.PWRSTATE.On:
+            self._update_last_status('ERR:HVPS switch is not on.')
             return False
         if value is None:
             value = self._hv_opval
@@ -653,28 +674,38 @@ class EGun(_Devices):
             self.hvps.voltage = value
             return True
 
+        # if needed, enable HVPS
+        if not self.hvps['enstatus'] == self.hvps.PWRSTATE.On:
+            self._update_last_status('Sending enable command to HVPS...')
+            _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+            if not self.hvps.cmd_enable(5):
+                self._update_last_status('ERR:Could not enable HVPS.')
+                return False
+            self._update_last_status('HVPS enabled.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+
         # before voltage setpoints, set leakage current to suitable value
         self._update_last_status(
             f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
+        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         self.hvps.current = self._hv_leakcurr
+        if not self.hvps.wait_current(self._hv_leakcurr):
+            self._update_last_status(
+                'ERR:Timed out waiting for HVPS leak current.')
+            return False
         _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
 
-        # if value is lower, do only one setpoint
+        # if value is lower, do a ramp down
         if value < self.hvps.voltage:
-            self._update_last_status(f'Setting voltage to {value:.3f}kV...')
-            self.hvps.voltage = value
-            if self.hvps.wait_voltage(value, self._hv_tol, timeout=3*timeout):
-                self._update_last_status('HVPS Ready!')
-                return True
-            self._update_last_status('ERR:Timed out waiting for HVPS voltage.')
-            return False
-
-        # else, do a ramp up
+            nrpts = EGun.HV_RAMPDN_NRPTS
+            power = 1
+        else:  # else, do a ramp up
+            nrpts = EGun.HV_RAMPUP_NRPTS
+            power = 2
         duration = duration if duration is not None else EGun.HV_RAMP_DURATION
-        nrpts = EGun.HV_RAMP_NRPTS
         max_value = EGun.HV_MAXVALUE
         ydata = self._get_ramp(
-            self.hvps.voltage, value, nrpts, max_value)
+            self.hvps.voltage, value, nrpts, max_value, power)
         t_inter = duration / (nrpts-1)
 
         self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
@@ -699,7 +730,7 @@ class EGun(_Devices):
             else:
                 self._update_last_status(
                     'ERR:HVPS Voltage is taking too'
-                    ' long to increase. Aborted.')
+                    ' long to reach setpoint. Aborted.')
                 return False
         self._update_last_status('HVPS Ready!')
         return True
@@ -782,13 +813,18 @@ class EGun(_Devices):
 
     def _get_ramp(self, curr_val, goal, nrpts, max_val, power=2):
         xdata = _np.linspace(0, 1, nrpts)
+        if curr_val > goal:
+            xdata = _np.flip(xdata)
+
         ydata = 1 - (1-xdata)**power
         # ydata = _np.sqrt(1 - (1-xdata)**2)
         # ydata = _np.sin(2*np.pi * xdata/4)
 
         ydata *= max_val
-        ydata = ydata[ydata > curr_val]
-        ydata = ydata[ydata < goal]
+        mini = min(curr_val, goal)
+        maxi = max(curr_val, goal)
+        ydata = ydata[ydata > mini]
+        ydata = ydata[ydata < maxi]
         ydata = _np.r_[curr_val, ydata, goal]
         return ydata
 
