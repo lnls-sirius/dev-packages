@@ -856,13 +856,15 @@ class EpicsCorrectors(BaseCorrectors):
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
 
+        # NOTE: In case there is some problem in the return value, apart from
+        # DSP_TIMEOUT, which we consider not a fatal problem, return code
+        # error -2 so that the loop can be opened:
         res_tim = _np.ones(ref_vals.size, dtype=bool)
         res_tim[:-1] = fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
         res = fret != _ConstPSBSMP.ACK_OK
         res &= res_tim[:-1]
         if _np.any(res):
-            self._print_guilty(
-                ~res, mode='prob_code', fret=fret)
+            self._print_guilty(~res, mode='prob_code', fret=fret)
             return -2
 
         curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)

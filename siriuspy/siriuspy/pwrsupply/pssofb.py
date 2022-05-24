@@ -145,6 +145,7 @@ class PSConnSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
     SOCKET_TIMEOUT_ERR = 255
+    SERIAL_ERR = 254
 
     def __init__(
             self, ethbridgeclnt_class, bbbnames=None, mproc=None,
@@ -414,6 +415,8 @@ class PSConnSOFB:
         except _socket_timeout:
             # update sofb_func_return indicating socket timeout
             self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
+        except _SerialError:
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SERIAL_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -895,9 +898,8 @@ class PSSOFB:
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=_np.int32,
-                                buffer=memoryview(fret)),
-            }
+            'fret': _np.ndarray(
+                shape, dtype=_np.int32, buffer=memoryview(fret))}
         psconnsofb = PSConnSOFB(
             ethbridgeclnt_class, bbbnames, mproc=mproc,
             sofb_update_iocs=sofb_update_iocs, dipoleoff=dipoleoff)
