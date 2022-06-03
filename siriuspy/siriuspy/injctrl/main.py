@@ -291,6 +291,12 @@ class App(_Callback):
             self._update_log(
                 'ERR:Turn off top-up mode before changing inj.type.')
             return False
+        if self._thread_type is not None and self._thread_type.is_alive():
+            self._update_log('ERR:New setpoint received for injection')
+            self._update_log('ERR:type, but still processing the')
+            self._update_log('ERR:previous setpoint. Wait a moment.')
+            return False
+
         self._type = value
         self.run_callbacks('Type-Sts', self._type)
 
@@ -339,6 +345,12 @@ class App(_Callback):
 
     def set_filaopcurr(self, value):
         """Set filament current operation value."""
+        if self._thread_filaps is not None and self._thread_filaps.is_alive():
+            self._update_log('ERR:New setpoint received for FilaPS')
+            self._update_log('ERR:current, but still processing the')
+            self._update_log('ERR:previous setpoint. Wait a moment.')
+            return False
+
         self._egun_dev.fila_current_opvalue = value
         self._filaopcurr = value
         self.run_callbacks('FilaOpCurr-RB', self._filaopcurr)
@@ -355,6 +367,12 @@ class App(_Callback):
 
     def set_hvopvolt(self, value):
         """Set high voltage operation value."""
+        if self._thread_hvps is not None and self._thread_hvps.is_alive():
+            self._update_log('ERR:New setpoint received for HVPS')
+            self._update_log('ERR:voltage, but still processing the')
+            self._update_log('ERR:previous setpoint. Wait a moment.')
+            return False
+
         self._egun_dev.high_voltage_opvalue = value
         self._hvopvolt = value
         self.run_callbacks('HVOpVolt-RB', self._hvopvolt)
