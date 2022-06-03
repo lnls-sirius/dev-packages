@@ -208,7 +208,7 @@ class BeagleBone:
         strec = dict()
         strelims = dict()
         for psname in self.psnames:
-            if 'DCLink' in psname or psname.startswith('IT'):
+            if 'DCLink' in psname or psname[:2] in ['IT', 'ET']:
                 strec[psname] = True
             else:
                 # NOTE: use 'Ref-Mon' proptype for all
@@ -219,7 +219,7 @@ class BeagleBone:
 
     def _update_strengths(self, psname):
         # t0_ = _time.time()
-        if 'DCLink' in psname or psname.startswith('IT'):
+        if 'DCLink' in psname or psname[:2] in ['IT', 'ET']:
             return
         streconv = self._streconvs[psname]
         strelims = self._strelims[psname]
