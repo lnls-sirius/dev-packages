@@ -35,12 +35,15 @@ class App(_Callback):
         self._mode = _Const.InjMode.Decay
         self._type = _Const.InjType.MultiBunch
         self._type_mon = _Const.InjTypeMon.Undefined
+        self._typecmdsts = _Const.IdleRunning.Idle
         self._thread_type = None
         self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
         self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
         self._filaopcurr = EGun.FILACURR_OPVALUE
+        self._filacurcmdsts = _Const.IdleRunning.Idle
         self._thread_filaps = None
         self._hvopvolt = EGun.HV_OPVALUE
+        self._hvvoltcmdsts = _Const.IdleRunning.Idle
         self._thread_hvps = None
         self._thread_wategun = None
         self._target_current = 100.0
@@ -197,14 +200,18 @@ class App(_Callback):
             self._callback_update_type)
         self._egun_dev.trigsingle.pv_object('State-Sts').add_callback(
             self._callback_update_type)
+        self.run_callbacks('TypeCmdSts-Mon', self._typecmdsts)
         self.run_callbacks('SglBunBiasVolt-SP', self._sglbunbiasvolt)
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
         self.run_callbacks('MultBunBiasVolt-SP', self._multbunbiasvolt)
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
+        self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Idle)
         self.run_callbacks('FilaOpCurr-SP', self._filaopcurr)
         self.run_callbacks('FilaOpCurr-RB', self._filaopcurr)
+        self.run_callbacks('FilaOpCurrCmdSts-Mon', self._filacurcmdsts)
         self.run_callbacks('HVOpVolt-SP', self._hvopvolt)
         self.run_callbacks('HVOpVolt-RB', self._hvopvolt)
+        self.run_callbacks('HVOpVoltCmdSts-Mon', self._hvvoltcmdsts)
         self.run_callbacks('TargetCurrent-SP', self._target_current)
         self.run_callbacks('TargetCurrent-RB', self._target_current)
         self.run_callbacks('BucketListStart-SP', self._bucketlist_start)
@@ -305,6 +312,8 @@ class App(_Callback):
             self._egun_dev.cmd_switch_to_multi_bunch
         self._thread_type = _Thread(target=target, daemon=True)
         self._thread_type.start()
+        self._typecmdsts = _Const.IdleRunning.Running
+        self.run_callbacks('TypeCmdSts-Mon', self._typecmdsts)
 
         if self._thread_wategun is None or not self._thread_wategun.is_alive():
             self._thread_wategun = _Thread(
@@ -337,11 +346,15 @@ class App(_Callback):
         return True
 
     def _set_egunbias(self, value):
+        self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
+
         self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
         if not self._egun_dev.bias.set_voltage(value):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
             self._update_log('Set EGun Bias voltage: {}V.'.format(value))
+
+        self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Idle)
 
     def set_filaopcurr(self, value):
         """Set filament current operation value."""
@@ -358,6 +371,8 @@ class App(_Callback):
         self._thread_filaps = _Thread(
             target=self._egun_dev.set_fila_current, daemon=True)
         self._thread_filaps.start()
+        self._filacurcmdsts = _Const.IdleRunning.Running
+        self.run_callbacks('FilaOpCurrCmdSts-Mon', self._filacurcmdsts)
 
         if self._thread_wategun is None or not self._thread_wategun.is_alive():
             self._thread_wategun = _Thread(
@@ -380,6 +395,8 @@ class App(_Callback):
         self._thread_hvps = _Thread(
             target=self._egun_dev.set_hv_voltage, daemon=True)
         self._thread_hvps.start()
+        self._hvvoltcmdsts = _Const.IdleRunning.Running
+        self.run_callbacks('HVOpVoltCmdSts-Mon', self._hvvoltcmdsts)
 
         if self._thread_wategun is None or not self._thread_wategun.is_alive():
             self._thread_wategun = _Thread(
@@ -393,10 +410,22 @@ class App(_Callback):
         while running:
             filarun = self._thread_filaps is not None and \
                 self._thread_filaps.is_alive()
+            if self._filacurcmdsts and not filarun:
+                self._filacurcmdsts = _Const.IdleRunning.Idle
+                self.run_callbacks('FilaOpCurrCmdSts-Mon', self._filacurcmdsts)
+
             hvpsrun = self._thread_hvps is not None and \
                 self._thread_hvps.is_alive()
+            if self._hvvoltcmdsts and not hvpsrun:
+                self._hvvoltcmdsts = _Const.IdleRunning.Idle
+                self.run_callbacks('HVOpVoltCmdSts-Mon', self._hvvoltcmdsts)
+
             typerun = self._thread_type is not None and \
                 self._thread_type.is_alive()
+            if self._typecmdsts and not typerun:
+                self._typecmdsts = _Const.IdleRunning.Idle
+                self.run_callbacks('TypeCmdSts-Mon', self._typecmdsts)
+
             running = filarun | hvpsrun | typerun
 
             if self._egun_dev.has_new_status:
