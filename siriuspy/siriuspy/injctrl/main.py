@@ -398,8 +398,9 @@ class App(_Callback):
             typerun = self._thread_type is not None and \
                 self._thread_type.is_alive()
             running = filarun | hvpsrun | typerun
-            if self._egun_dev.last_status != sts:
-                sts = self._egun_dev.last_status
+
+            if self._egun_dev.has_new_status:
+                sts = self._egun_dev.read_last_status()
                 if 'err:' in sts.lower():
                     sts = sts.split(':')[1]
                     msgs = ['ERR:'+sts[i:i+35] for i in range(0, len(sts), 35)]

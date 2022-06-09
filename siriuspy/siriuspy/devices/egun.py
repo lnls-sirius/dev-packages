@@ -493,6 +493,9 @@ class EGun(_Devices):
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
         self._last_status = ''
         self._print_log = print_log
+        self._new_status_read = _Flag()
+        if not print_log:
+            self._new_status_read.set()
         self._abort_chg_type = _Flag()
         self._abort_rmp_hvps = _Flag()
         self._abort_rmp_fila = _Flag()
@@ -529,7 +532,6 @@ class EGun(_Devices):
     def cmd_switch_to_single_bunch(self):
         """Switch to single bunch mode."""
         self._update_last_status('Switching EGun mode to SingleBunch...')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
 
         if not self.connected:
             self._update_last_status('ERR:EGun device not connected. Aborted.')
@@ -566,7 +568,6 @@ class EGun(_Devices):
     def cmd_switch_to_multi_bunch(self):
         """Switch to multi bunch mode."""
         self._update_last_status('Switching EGun mode to MultiBunch...')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
 
         if not self.connected:
             self._update_last_status('ERR:EGun device not connected. Aborted.')
@@ -625,11 +626,6 @@ class EGun(_Devices):
         return sts
 
     @property
-    def last_status(self):
-        """Return last status log."""
-        return self._last_status
-
-    @property
     def high_voltage_opvalue(self):
         """High voltage operation value."""
         return self._hv_opval
@@ -686,12 +682,11 @@ class EGun(_Devices):
         # if needed, enable HVPS
         if not self.hvps['enstatus'] == self.hvps.PWRSTATE.On:
             self._update_last_status('Sending enable command to HVPS...')
-            _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
             if not self.hvps.cmd_enable(5):
                 self._update_last_status('ERR:Could not enable HVPS.')
                 return False
             self._update_last_status('HVPS enabled.')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+
         if self._abort_rmp_hvps.is_set():
             self.cmd_clr_abort_rmp_hvps()
             return False
@@ -699,13 +694,12 @@ class EGun(_Devices):
         # before voltage setpoints, set leakage current to suitable value
         self._update_last_status(
             f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         self.hvps.current = self._hv_leakcurr
         if not self.hvps.wait_current(self._hv_leakcurr):
             self._update_last_status(
                 'ERR:Timed out waiting for HVPS leak current.')
             return False
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
+
         if self._abort_rmp_hvps.is_set():
             self.cmd_clr_abort_rmp_hvps()
             return False
@@ -724,10 +718,8 @@ class EGun(_Devices):
         t_inter = duration / (nrpts-1)
 
         self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         self._update_last_status(
             f'This process will take about {ydata.size*t_inter:.1f}s.')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         for i, volt in enumerate(ydata[1:]):
             if self._abort_rmp_hvps.is_set():
                 self.cmd_clr_abort_rmp_hvps()
@@ -827,7 +819,6 @@ class EGun(_Devices):
 
         self._update_last_status(
             f'Starting filament ramp to {value:.3f} A.')
-        _time.sleep(0.1)  # needed for InjCtrl IOC to get logs
         for i, cur in enumerate(ydata[1:]):
             if self._abort_rmp_fila.is_set():
                 self.cmd_clr_abort_rmp_fila()
@@ -920,7 +911,27 @@ class EGun(_Devices):
         allok &= self.sys_vac['status'] == 1
         return allok
 
+    # ---------- logging -----------
+
+    @property
+    def has_new_status(self):
+        """Has new status to be read."""
+        return not self._new_status_read.is_set()
+
+    def read_last_status(self):
+        """Return last status and mark as read."""
+        status = self._last_status
+        self._new_status_read.set()
+        return status
+
     def _update_last_status(self, status):
-        self._last_status = status
         if self._print_log:
             print(status)
+        else:
+            _t0 = _time.time()
+            self._new_status_read.wait(1)
+            _dt = _time.time() - _t0
+            if _dt > 0.1:
+                print('DevEG: wait ', _time.time() - _t0, ' to read log...')
+            self._new_status_read.clear()
+        self._last_status = status
