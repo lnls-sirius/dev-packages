@@ -292,10 +292,10 @@ class App(_Callback):
                 'ERR:Turn off top-up mode before changing inj.type.')
             return False
         if self._thread_type is not None and self._thread_type.is_alive():
-            self._update_log('ERR:New setpoint received for injection')
-            self._update_log('ERR:type, but still processing the')
-            self._update_log('ERR:previous setpoint. Wait a moment.')
-            return False
+            self._update_log('WARN:Interrupting type change command..')
+            self._egun_dev.cmd_set_abort_chg_type()
+            self._thread_type.join()
+            self._egun_dev.cmd_clr_abort_chg_type(log=False)
 
         self._type = value
         self.run_callbacks('Type-Sts', self._type)
@@ -346,10 +346,10 @@ class App(_Callback):
     def set_filaopcurr(self, value):
         """Set filament current operation value."""
         if self._thread_filaps is not None and self._thread_filaps.is_alive():
-            self._update_log('ERR:New setpoint received for FilaPS')
-            self._update_log('ERR:current, but still processing the')
-            self._update_log('ERR:previous setpoint. Wait a moment.')
-            return False
+            self._update_log('WARN:Interrupting FilaPS current ramp...')
+            self._egun_dev.cmd_set_abort_rmp_fila()
+            self._thread_filaps.join()
+            self._egun_dev.cmd_clr_abort_rmp_fila(log=False)
 
         self._egun_dev.fila_current_opvalue = value
         self._filaopcurr = value
@@ -368,10 +368,10 @@ class App(_Callback):
     def set_hvopvolt(self, value):
         """Set high voltage operation value."""
         if self._thread_hvps is not None and self._thread_hvps.is_alive():
-            self._update_log('ERR:New setpoint received for HVPS')
-            self._update_log('ERR:voltage, but still processing the')
-            self._update_log('ERR:previous setpoint. Wait a moment.')
-            return False
+            self._update_log('WARN:Interrupting HVPS voltage ramp...')
+            self._egun_dev.cmd_set_abort_rmp_hvps()
+            self._thread_hvps.join()
+            self._egun_dev.cmd_clr_abort_rmp_hvps(log=False)
 
         self._egun_dev.high_voltage_opvalue = value
         self._hvopvolt = value
