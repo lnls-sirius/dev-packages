@@ -20,7 +20,7 @@ from .modltr import LIModltr
 from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
-from .pwrsupply import PowerSupply, PowerSupplyPU
+from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC
 from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
     RFKillBeam
 from .screen import Screen

@@ -617,3 +617,73 @@ class PowerSupplyPU(_PSDev):
         devname = self._devname.substitute(dis='TI')
         device = _Device(devname, PowerSupplyPU._properties_timing)
         return device
+
+
+class PowerSupplyFC(_PSDev):
+
+    class DEVICES:
+        """Devices names."""
+
+    @property
+    def current(self):
+        """."""
+        return self['Current-RB']
+
+    @current.setter
+    def current(self, value):
+        self['Current-SP'] = value
+
+    @property
+    def kick(self):
+        """."""
+        return self['Kick-RB']
+
+    @kick.setter
+    def kick(self, value):
+        """."""
+        self['Kick-SP'] = value
+
+    @property
+    def kick_mon(self):
+        """."""
+        return self['Kick-Mon']
+
+    @property
+    def curr_gain(self):
+        """."""
+        return self['CurrGain-RB']
+
+    @curr_gain.setter
+    def curr_gain(self, value):
+        """."""
+        self['CurrGain-SP'] = value
+
+    @property
+    def curr_offset(self):
+        """."""
+        return self['CurrOffset-RB']
+
+    @curr_offset.setter
+    def curr_offset(self, value):
+        """."""
+        self['CurrOffset-SP'] = value
+
+    @property
+    def volt_gain(self):
+        """."""
+        return self['VoltGain-RB']
+
+    @volt_gain.setter
+    def volt_gain(self, value):
+        """."""
+        self['VoltGain-SP'] = value
+
+    @property
+    def volt_offset(self):
+        """."""
+        return self['VoltOffset-RB']
+
+    @volt_offset.setter
+    def volt_offset(self, value):
+        """."""
+        self['VoltOffset-SP'] = value
