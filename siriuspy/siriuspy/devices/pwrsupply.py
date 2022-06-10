@@ -35,15 +35,14 @@ class _PSDev(_Device):
         'CycleEnbl-Mon',
     )
     _properties_fc = (
-        'CtrlLoop-Sel', 'CtrlLoop-Sts', 'CtrlLoopKp-RB', 'CtrlLoopKp-SP',
-        'CtrlLoopTi-RB', 'CtrlLoopTi-SP', 'CurrGain-RB', 'CurrGain-SP',
-        'CurrOffset-RB', 'CurrOffset-SP', 'Current-RB', 'Current-SP',
-        'CurrentRaw-RB', 'CurrentRaw-SP', 'PSAmpOverCurrFlagL-Sts',
-        'PSAmpOverCurrFlagR-Sts', 'PSAmpOverTempFlagR-Sts',
-        'PSAmpOverTempFlagR-Sts', 'PwrState-Sel', 'PwrState-Sts',
-        'TestClosedLoopSquare-Sel', 'TestClosedLoopSquare-Sts',
-        'TestOpenLoopSquare-Sel', 'TestOpenLoopSquare-Sts',
-        'TestOpenLoopTriang-Sel', 'TestOpenLoopTriang-Sts',
+        'PSStatus-Mon', 'AlarmsAmp-Mon',
+        'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
+        'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
+        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon'
+        'PwrState-Sel', 'PwrState-Sts',
+        'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
+        'TestWavePeriod-RB', 'TestWavePeriod-SP',
+        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon'
         'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
     )
     _properties_pulsed = (
@@ -100,7 +99,7 @@ class _PSDev(_Device):
 
     @property
     def is_fc(self):
-        """Return True if device is a Sirius fast corrector supply"""
+        """Return True if device is a Sirius fast corrector power supply"""
         return self._is_fc
 
     @property
@@ -634,19 +633,14 @@ class PowerSupplyFC(_PSDev):
         self['Current-SP'] = value
 
     @property
-    def kick(self):
+    def current_mon(self):
         """."""
-        return self['Kick-RB']
-
-    @kick.setter
-    def kick(self, value):
-        """."""
-        self['Kick-SP'] = value
+        return self['Current-Mon']
 
     @property
-    def kick_mon(self):
+    def current_ref_mon(self):
         """."""
-        return self['Kick-Mon']
+        return self['CurrentRef-Mon']
 
     @property
     def curr_gain(self):
@@ -667,6 +661,21 @@ class PowerSupplyFC(_PSDev):
     def curr_offset(self, value):
         """."""
         self['CurrOffset-SP'] = value
+
+    @property
+    def voltage(self):
+        """."""
+        return self['Voltage-RB']
+
+    @voltage.setter
+    def voltage(self, value):
+        """."""
+        self['Voltage-SP'] = value
+
+    @property
+    def voltage_mon(self):
+        """."""
+        return self['Voltage-Mon']
 
     @property
     def volt_gain(self):
