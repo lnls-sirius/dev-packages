@@ -34,6 +34,18 @@ class _PSDev(_Device):
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
+    _properties_fc = (
+        'CtrlLoop-Sel', 'CtrlLoop-Sts', 'CtrlLoopKp-RB', 'CtrlLoopKp-SP',
+        'CtrlLoopTi-RB', 'CtrlLoopTi-SP', 'CurrGain-RB', 'CurrGain-SP',
+        'CurrOffset-RB', 'CurrOffset-SP', 'Current-RB', 'Current-SP',
+        'CurrentRaw-RB', 'CurrentRaw-SP', 'PSAmpOverCurrFlagL-Sts',
+        'PSAmpOverCurrFlagR-Sts', 'PSAmpOverTempFlagR-Sts',
+        'PSAmpOverTempFlagR-Sts', 'PwrState-Sel', 'PwrState-Sts',
+        'TestClosedLoopSquare-Sel', 'TestClosedLoopSquare-Sts',
+        'TestOpenLoopSquare-Sel', 'TestOpenLoopSquare-Sts',
+        'TestOpenLoopTriang-Sel', 'TestOpenLoopTriang-Sts',
+        'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
+    )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
@@ -49,8 +61,8 @@ class _PSDev(_Device):
         # power supply type and magnetic function
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed, self._is_magps) = \
-            _PSDev.get_device_type(devname)
+         self._is_linac, self._is_pulsed, self._is_fc,
+         self._is_magps) = _PSDev.get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -83,8 +95,13 @@ class _PSDev(_Device):
 
     @property
     def is_pulsed(self):
-        """Return True if device is a pulsed magnet powet supply."""
+        """Return True if device is a pulsed magnet power supply."""
         return self._is_pulsed
+
+    @property
+    def is_fc(self):
+        """Return True if device is a Sirius fast corrector supply"""
+        return self._is_fc
 
     @property
     def is_magps(self):
@@ -146,10 +163,11 @@ class _PSDev(_Device):
         strength_units = _util.get_strength_units(magfunc, pstype)
         is_linac = devname.sec.endswith('LI')
         is_pulsed = devname.dis == 'PU'
-        is_magps = not is_linac and not is_pulsed
+        is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
+        is_magps = not is_linac and not is_pulsed and not is_fc
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
-                is_linac, is_pulsed, is_magps)
+                is_linac, is_pulsed, is_fc, is_magps)
 
     # --- private methods ---
 
@@ -158,11 +176,12 @@ class _PSDev(_Device):
         properties = _PSDev._properties_common
         if self._is_linac:
             properties += _PSDev._properties_linac
+        elif self._is_pulsed:
+            properties += _PSDev._properties_pulsed
+        elif self._is_fc:
+            properties += _PSDev._properties_fc
         else:
-            if self._is_pulsed:
-                properties += _PSDev._properties_pulsed
-            else:
-                properties += _PSDev._properties_magps
+            properties += _PSDev._properties_magps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
