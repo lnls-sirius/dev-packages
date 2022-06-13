@@ -35,11 +35,10 @@ class _PSDev(_Device):
         'CycleEnbl-Mon',
     )
     _properties_fc = (
-        'PSStatus-Mon', 'AlarmsAmp-Mon',
+        'PSStatus-Mon', 'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
         'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
         'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon'
-        'PwrState-Sel', 'PwrState-Sts',
         'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
         'TestWavePeriod-RB', 'TestWavePeriod-SP',
         'Voltage-RB', 'Voltage-SP', 'Voltage-Mon'
@@ -638,7 +637,7 @@ class PowerSupplyFC(_PSDev):
         return self['Current-Mon']
 
     @property
-    def current_ref_mon(self):
+    def currentref_mon(self):
         """."""
         return self['CurrentRef-Mon']
 
@@ -696,3 +695,28 @@ class PowerSupplyFC(_PSDev):
     def volt_offset(self, value):
         """."""
         self['VoltOffset-SP'] = value
+
+    @property
+    def ctrlloop_kp(self):
+        """."""
+        return self['CtrlLoopKp-RB']
+
+    @ctrlloop_kp.setter
+    def ctrlloop_kp(self, value):
+        """."""
+        self['CtrlLoopKp-SP'] = value
+
+    @property
+    def ctrlloop_ti(self):
+        """."""
+        return self['CtrlLoopTi-RB']
+
+    @ctrlloop_ti.setter
+    def ctrlloop_ti(self, value):
+        """."""
+        self['CtrlLoopTi-SP'] = value
+
+    @property
+    def alarms_amp(self):
+        """."""
+        return self['AlarmsAmp-Mon']
