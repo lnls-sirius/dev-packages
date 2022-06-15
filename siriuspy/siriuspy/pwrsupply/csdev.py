@@ -2714,12 +2714,6 @@ def _get_ps_FAP_2P2S_propty_database():
 
 # --- Others ---
 
-def _get_ps_FBP_FOFB_propty_database():
-    """Return database with FBP_FOFB pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
-
-
 def _get_ps_Commercial_propty_database():
     """Return database with Commercial pwrsupply model PVs."""
     # TODO: implement!!!
@@ -2772,7 +2766,6 @@ def _get_model_db(psmodel):
     psmodel_2_dbfunc = {
         'FBP': _get_ps_FBP_propty_database,
         'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
-        'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
         'FAC_DCDC': _get_ps_FAC_DCDC_propty_database,
         'FAC_2S_DCDC': _get_ps_FAC_2S_DCDC_propty_database,
         'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
