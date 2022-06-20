@@ -760,12 +760,8 @@ class FOFBPSCycler:
     # NOTE: this could be a class derived from one of the Device classes.
 
     properties = [
-        'Current-SP', 'Current-RB', 'PwrState-Sts',
-        'PSAmpOverCurrFlagL-Sts', 'PSAmpOverTempFlagL-Sts',
-        'PSAmpOverCurrFlagR-Sts', 'PSAmpOverTempFlagR-Sts',
-        'TestOpenLoopTriang-Sel', 'TestOpenLoopTriang-Sts',
-        'TestOpenLoopSquare-Sel', 'TestOpenLoopSquare-Sts',
-        'TestClosedLoopSquare-Sel', 'TestClosedLoopSquare-Sts',
+        'Current-SP', 'Current-Mon', 'PwrState-Sts',
+        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
     ]
 
     def __init__(self, psname):
@@ -818,15 +814,11 @@ class FOFBPSCycler:
         """Check interlocks."""
         if not self.connected:
             return False
-        status = (self._pvs['PSAmpOverCurrFlagL-Sts'].value == 1)
-        status &= (self._pvs['PSAmpOverTempFlagL-Sts'].value == 1)
-        status &= (self._pvs['PSAmpOverCurrFlagR-Sts'].value == 1)
-        status &= (self._pvs['PSAmpOverTempFlagR-Sts'].value == 1)
-        return status
+        return _pv_timed_get(self['AlarmsAmp-Mon'], 0, wait=wait)
 
     def check_on(self):
         """Return whether power supply PS is on."""
-        return _pv_timed_get(self['PwrState-Sts'], 1)
+        return _pv_timed_get(self['PwrState-Sts'], _PSConst.OffOn.On)
 
     def set_current_zero(self):
         """Set PS current to zero ."""
@@ -834,7 +826,7 @@ class FOFBPSCycler:
 
     def check_current_zero(self, wait=5):
         """Return whether power supply PS current is zero."""
-        return _pv_timed_get(self['Current-RB'], 0, abs_tol=0.01, wait=wait)
+        return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.01, wait=wait)
 
     def prepare(self, _):
         """Config power supply to cycling mode."""
@@ -848,28 +840,17 @@ class FOFBPSCycler:
         return self.check_current_zero(wait)
 
     def set_opmode_slowref(self):
-        """Set OpMode to SlowRef, if needed."""
+        """Set OpMode to CL_MANUAL, if needed."""
         if self.check_opmode_slowref(wait=1):
             return True
-        sts = _pv_conn_put(
-            self['TestOpenLoopTriang-Sel'], _PSConst.DsblEnbl.Dsbl)
-        sts &= _pv_conn_put(
-            self['TestOpenLoopSquare-Sel'], _PSConst.DsblEnbl.Dsbl)
-        sts &= _pv_conn_put(
-            self['TestClosedLoopSquare-Sel'], _PSConst.DsblEnbl.Dsbl)
+        sts = _pv_conn_put(self['OpMode-Sel'], _PSConst.OpModeFOFB.CL_MANUAL)
         _time.sleep(TIMEOUT_SLEEP)
         return sts
 
     def check_opmode_slowref(self, wait=10):
-        """Check if OpMode is SlowRef."""
-        _wt = wait/3
-        sts = _pv_timed_get(
-            self['TestOpenLoopTriang-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
-        sts &= _pv_timed_get(
-            self['TestOpenLoopSquare-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
-        sts &= _pv_timed_get(
-            self['TestClosedLoopSquare-Sts'], _PSConst.DsblEnbl.Dsbl, wait=_wt)
-        return sts
+        """Check if OpMode is CL_MANUAL."""
+        return _pv_timed_get(
+            self['OpMode-Sts'], _PSConst.OpModeFOFB.CL_MANUAL, wait=wait)
 
     def cycle(self):
         """Cycle. This function may run in a thread."""

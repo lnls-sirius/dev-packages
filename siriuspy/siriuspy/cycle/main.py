@@ -760,7 +760,8 @@ class CycleController:
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            self._update_log(psname+' is not in SlowRef.', error=True)
+            opmdes = 'CL_MANUAL' if 'FC' in psname else 'SlowRef'
+            self._update_log(psname+' is not in '+opmdes+'.', error=True)
             status &= False
         return status
 
@@ -851,7 +852,8 @@ class CycleController:
         self.set_pwrsupplies_slowref(psnames)
         if not self.check_pwrsupplies_slowref(psnames, timeout):
             self._update_log(
-                'There are power supplies not in OpMode SlowRef.', error=True)
+                'There are power supplies not in '
+                'the correct OpMode.', error=True)
             return
         self._update_log('Power supplies OpMode preparation finished!')
 
