@@ -5,10 +5,10 @@ import time as _time
 import logging as _log
 import threading as _thread
 from concurrent.futures import ThreadPoolExecutor
-from epics import PV as _PV
 
 from ..namesys import Filter as _Filter, SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
+from ..epics import PV as _PV
 
 from .conn import Timing, PSCycler, PSCyclerFBP, LinacPSCycler, FOFBPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
@@ -471,12 +471,11 @@ class CycleController:
     def check_egun_off(self):
         """Check egun off."""
         if 'LI-01:PS-Spect' in self.psnames:
-            status = (self._pv_egun.value == 0)
-            if not status:
+            if not self._pv_egun.value == 0:
                 self._update_log(
                     'Linac EGun pulse is enabled! '
                     'Please disable it.', error=True)
-            return status
+            return False
         return True
 
     def set_triggers_state(self, triggers, state):
@@ -504,7 +503,6 @@ class CycleController:
         """Initialize trims cycling process."""
         # initialize dict to check which trim is cycling
         self._is_cycling_dict = {ps: True for ps in trims}
-
         # trigger
         self.trigger_timing()
 
@@ -666,7 +664,7 @@ class CycleController:
         psnames = {
             p for p in psnames if _PSSearch.conv_psname_2_psmodel(p) == 'FBP'}
         if not psnames:
-            return True
+            return
 
         self._update_log('Turning off power supplies SOFBMode...')
         for idx, psname in enumerate(psnames):
@@ -719,7 +717,7 @@ class CycleController:
         """Set power supplies OpMode to SlowRef."""
         psnames = {p for p in psnames if 'LI' not in p}
         if not psnames:
-            return True
+            return
 
         self._update_log('Setting power supplies to SlowRef...')
         with ThreadPoolExecutor(max_workers=100) as executor:
@@ -979,11 +977,8 @@ class CycleController:
 
     def _filter_psnames(self, psnames2filt, filt):
         if psnames2filt:
-            psnames = _Filter.process_filters(
-                psnames2filt, filters=filt)
-        else:
-            psnames = _PSSearch.get_psnames(filt)
-        return psnames
+            return _Filter.process_filters(psnames2filt, filters=filt)
+        return _PSSearch.get_psnames(filt)
 
     def _get_cycler(self, psname):
         if psname in self._cyclers:
