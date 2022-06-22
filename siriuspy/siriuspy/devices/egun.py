@@ -2,9 +2,12 @@
 
 import time as _time
 from threading import Event as _Flag
+from functools import partial as _part
+
 import numpy as _np
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
+from ..callbacks import Callback as _Callback
 
 from .device import Device as _Device, Devices as _Devices, \
     DeviceNC as _DeviceNC
@@ -438,7 +441,7 @@ class EGPulsePS(_Device):
         return self.cmd_turn_on_multi_bunch_switch()
 
 
-class EGun(_Devices):
+class EGun(_Devices, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -458,7 +461,7 @@ class EGun(_Devices):
     FILACURR_RAMP_NRPTS = 10
     FILACURR_RAMP_DURATION = 7*60  # [s]
 
-    def __init__(self, print_log=True):
+    def __init__(self, print_log=True, callback=None):
         """Init."""
         self.bias = EGBias()
         self.fila = EGFilament()
@@ -493,14 +496,12 @@ class EGun(_Devices):
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
         self._last_status = ''
         self._print_log = print_log
-        self._new_status_read = _Flag()
-        if not print_log:
-            self._new_status_read.set()
         self._abort_chg_type = _Flag()
         self._abort_rmp_hvps = _Flag()
         self._abort_rmp_fila = _Flag()
 
-        super().__init__('', devices)
+        _Devices.__init__(self, '', devices)
+        _Callback.__init__(self, callback=callback)
 
     @property
     def multi_bunch_bias_voltage(self):
@@ -531,74 +532,68 @@ class EGun(_Devices):
 
     def cmd_switch_to_single_bunch(self):
         """Switch to single bunch mode."""
-        self._update_last_status('Switching EGun mode to SingleBunch...')
+        self._abort_chg_type.clear()
+        self._update_status('Switching EGun mode to SingleBunch...')
 
         if not self.connected:
-            self._update_last_status('ERR:EGun device not connected. Aborted.')
+            self._update_status('ERR:EGun device not connected. Aborted.')
             return False
 
-        # fun, args, kwargs, msg
+        # fun, msg
         proced = (
-            (self.trigps.cmd_disable_trigger, list(), dict(),
-             'Could not disable EGun Trigger.'),
-            (self.pulse.cmd_turn_off_multi_bunch, list(), dict(),
-             'Could not turn off MultiBunch.'),
-            (self.bias.set_voltage, [self._bias_sb], dict(tol=self._bias_tol),
-             'Could not set EGun Bias voltage to SB operation value.'),
-            (self.trigmultipre.cmd_disable, list(), dict(),
-             'Could not disable MB pre trigger.'),
-            (self.trigmulti.cmd_disable, list(), dict(),
-             'Could not disable MB trigger.'),
-            (self.trigsingle.cmd_enable, list(), dict(),
-             'Could not enable SB trigger.'),
-            (self.pulse.cmd_turn_on_single_bunch, list(), dict(),
-             'Could not turn on SingleBunch.'),
-        )
+            (_part(self.trigps.cmd_disable_trigger), 'disable EGun Trigger.'),
+            (_part(self.pulse.cmd_turn_off_multi_bunch),
+             'turn off MultiBunch.'),
+            (_part(
+                self.bias.set_voltage, self._bias_sb, tol=self._bias_tol),
+             'set EGun Bias voltage to SB operation value.'),
+            (_part(self.trigmultipre.cmd_disable), 'disable MB pre trigger.'),
+            (_part(self.trigmulti.cmd_disable), 'disable MB trigger.'),
+            (_part(self.trigsingle.cmd_enable), 'enable SB trigger.'),
+            (_part(self.pulse.cmd_turn_on_single_bunch),
+             'turn on SingleBunch.'),
+            )
 
-        for fun, args, kwargs, msg in proced:
+        for fun, msg in proced:
             if self._abort_chg_type.is_set():
-                self.cmd_clr_abort_chg_type()
+                self._clr_flag_abort_chg_type()
                 return False
-            if not fun(*args, **kwargs):
-                self._update_last_status('ERR:' + msg)
+            if not fun():
+                self._update_status('ERR:Could not ' + msg)
                 return False
-        self._update_last_status('EGun switched to SingleBunch!')
+        self._update_status('EGun switched to SingleBunch!')
         return True
 
     def cmd_switch_to_multi_bunch(self):
         """Switch to multi bunch mode."""
-        self._update_last_status('Switching EGun mode to MultiBunch...')
+        self._abort_chg_type.clear()
+        self._update_status('Switching EGun mode to MultiBunch...')
 
         if not self.connected:
-            self._update_last_status('ERR:EGun device not connected. Aborted.')
+            self._update_status('ERR:EGun device not connected. Aborted.')
             return False
 
-        # fun, args, kwargs, msg
+        # fun, msg
         proced = (
-            (self.trigps.cmd_disable_trigger, list(), dict(),
-             'Could not disable EGun Trigger.'),
-            (self.pulse.cmd_turn_off_single_bunch, list(), dict(),
-             'Could not turn off SingleBunch.'),
-            (self.bias.set_voltage, [self._bias_mb], dict(tol=self._bias_tol),
-             'Could not set EGun Bias voltage to MB operation value.'),
-            (self.trigsingle.cmd_disable, list(), dict(),
-             'Could not disable SB trigger.'),
-            (self.trigmultipre.cmd_enable, list(), dict(),
-             'Could not disable SB pre trigger.'),
-            (self.trigmulti.cmd_enable, list(), dict(),
-             'Could not enable MB trigger.'),
-            (self.pulse.cmd_turn_on_multi_bunch, list(), dict(),
-             'Could not turn on MultiBunch.'),
+            (_part(self.trigps.cmd_disable_trigger), 'disable EGun Trigger.'),
+            (_part(self.pulse.cmd_turn_off_single_bunch),
+             'turn off SingleBunch.'),
+            (_part(self.bias.set_voltage, self._bias_mb, tol=self._bias_tol),
+             'set EGun Bias voltage to MB operation value.'),
+            (_part(self.trigsingle.cmd_disable), 'disable SB trigger.'),
+            (_part(self.trigmultipre.cmd_enable), 'disable SB pre trigger.'),
+            (_part(self.trigmulti.cmd_enable), 'enable MB trigger.'),
+            (_part(self.pulse.cmd_turn_on_multi_bunch), 'turn on MultiBunch.'),
         )
 
-        for fun, args, kwargs, msg in proced:
+        for fun, msg in proced:
             if self._abort_chg_type.is_set():
-                self.cmd_clr_abort_chg_type()
+                self._clr_flag_abort_chg_type()
                 return False
-            if not fun(*args, **kwargs):
-                self._update_last_status('ERR:' + msg)
+            if not fun():
+                self._update_status('ERR:Could not ' + msg)
                 return False
-        self._update_last_status('EGun configured to MultiBunch!')
+        self._update_status('EGun configured to MultiBunch!')
         return True
 
     @property
@@ -653,15 +648,16 @@ class EGun(_Devices):
 
     def set_hv_voltage(self, value=None, duration=None, timeout=DEF_TIMEOUT):
         """Set HVPS voltage."""
-        self._update_last_status('Setpoint received for HVPS voltage...')
+        self._abort_rmp_hvps.clear()
+        self._update_status('Setpoint received for HVPS voltage...')
         if not self._check_status_ok():
-            self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
+            self._update_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
         if not self.hvps['swstatus'] == self.hvps.PWRSTATE.On:
-            self._update_last_status('ERR:HVPS switch is not on.')
+            self._update_status('ERR:HVPS switch is not on.')
             return False
         if self._abort_rmp_hvps.is_set():
-            self.cmd_clr_abort_rmp_hvps()
+            self._clr_flag_abort_rmp_hvps()
             return False
         if value is None:
             value = self._hv_opval
@@ -670,38 +666,38 @@ class EGun(_Devices):
         cond = abs(self.hvps['voltinsoft'] - value) < self._hv_tol
         cond &= abs(self.hvps['voltoutsoft'] - value) < 1e-4
         if cond:
-            self._update_last_status(
+            self._update_status(
                 f'HVPS Voltage is already at {value:.3f}kV.')
             self.hvps.voltage = value
             return True
 
         if self._abort_rmp_hvps.is_set():
-            self.cmd_clr_abort_rmp_hvps()
+            self._clr_flag_abort_rmp_hvps()
             return False
 
         # if needed, enable HVPS
         if not self.hvps['enstatus'] == self.hvps.PWRSTATE.On:
-            self._update_last_status('Sending enable command to HVPS...')
+            self._update_status('Sending enable command to HVPS...')
             if not self.hvps.cmd_enable(5):
-                self._update_last_status('ERR:Could not enable HVPS.')
+                self._update_status('ERR:Could not enable HVPS.')
                 return False
-            self._update_last_status('HVPS enabled.')
+            self._update_status('HVPS enabled.')
 
         if self._abort_rmp_hvps.is_set():
-            self.cmd_clr_abort_rmp_hvps()
+            self._clr_flag_abort_rmp_hvps()
             return False
 
         # before voltage setpoints, set leakage current to suitable value
-        self._update_last_status(
+        self._update_status(
             f'Setting max. leak current to {self._hv_leakcurr:.3f}mA.')
         self.hvps.current = self._hv_leakcurr
         if not self.hvps.wait_current(self._hv_leakcurr):
-            self._update_last_status(
+            self._update_status(
                 'ERR:Timed out waiting for HVPS leak current.')
             return False
 
         if self._abort_rmp_hvps.is_set():
-            self.cmd_clr_abort_rmp_hvps()
+            self._clr_flag_abort_rmp_hvps()
             return False
 
         # if value is lower, do a ramp down
@@ -717,35 +713,35 @@ class EGun(_Devices):
             self.hvps.voltage, value, nrpts, max_value, power)
         t_inter = duration / (nrpts-1)
 
-        self._update_last_status(f'Starting HVPS ramp to {value:.3f}kV.')
-        self._update_last_status(
+        self._update_status(f'Starting HVPS ramp to {value:.3f}kV.')
+        self._update_status(
             f'This process will take about {ydata.size*t_inter:.1f}s.')
         for i, volt in enumerate(ydata[1:]):
             if self._abort_rmp_hvps.is_set():
-                self.cmd_clr_abort_rmp_hvps()
+                self._clr_flag_abort_rmp_hvps()
                 return False
             self.hvps.voltage = volt
-            self._update_last_status(
+            self._update_status(
                 f'{i+1:02d}/{len(ydata[1:]):02d} -> HV = {volt:.3f}kV')
             _time.sleep(t_inter)
             _t0 = _time.time()
             while _time.time() - _t0 < timeout:
                 if self._abort_rmp_hvps.is_set():
-                    self.cmd_clr_abort_rmp_hvps()
+                    self._clr_flag_abort_rmp_hvps()
                     return False
                 if not self._check_status_ok():
-                    self._update_last_status(
+                    self._update_status(
                         'ERR:MPS or LI Status not ok. Aborted.')
                     return False
                 if abs(self.hvps.voltage - volt) < self._hv_tol:
                     break
                 _time.sleep(0.1)
             else:
-                self._update_last_status(
+                self._update_status(
                     'ERR:HVPS Voltage is taking too '
                     'long to reach setpoint. Aborted.')
                 return False
-        self._update_last_status('HVPS Ready!')
+        self._update_status('HVPS Ready!')
         return True
 
     @property
@@ -768,15 +764,16 @@ class EGun(_Devices):
 
     def set_fila_current(self, value=None):
         """Set filament current."""
-        self._update_last_status('Setpoint received for FilaPS current...')
+        self._abort_rmp_fila.clear()
+        self._update_status('Setpoint received for FilaPS current...')
         if not self._check_status_ok():
-            self._update_last_status('ERR:MPS or LI Status not ok. Aborted.')
+            self._update_status('ERR:MPS or LI Status not ok. Aborted.')
             return False
         if not self.fila.is_on():
-            self._update_last_status('ERR:FilaPS is not on.')
+            self._update_status('ERR:FilaPS is not on.')
             return False
         if self._abort_rmp_fila.is_set():
-            self.cmd_clr_abort_rmp_fila()
+            self._clr_flag_abort_rmp_fila()
             return False
         if value is None:
             value = self._filacurr_opval
@@ -785,28 +782,28 @@ class EGun(_Devices):
         cond = abs(self.fila['currentinsoft'] - value) < self._filacurr_tol
         cond &= abs(self.fila['currentoutsoft'] - value) < 1e-4
         if cond:
-            self._update_last_status(
+            self._update_status(
                 'FilaPS current is already at {0:.3f}A.'.format(value))
             self.fila.current = value
             return True
 
         if self._abort_rmp_fila.is_set():
-            self.cmd_clr_abort_rmp_fila()
+            self._clr_flag_abort_rmp_fila()
             return False
 
         # elif value is lower, do only one setpoint
         if value < self.fila.current:
-            self._update_last_status(f'Setting current to {value:.3f}A...')
+            self._update_status(f'Setting current to {value:.3f}A...')
             self.fila.current = value
             if self.fila.wait_current(value, self._filacurr_tol):
-                self._update_last_status('FilaPS Ready!')
+                self._update_status('FilaPS Ready!')
                 return True
-            self._update_last_status(
+            self._update_status(
                 'ERR:Timed out waiting for FilaPS current.')
             return False
 
         if self._abort_rmp_fila.is_set():
-            self.cmd_clr_abort_rmp_fila()
+            self._clr_flag_abort_rmp_fila()
             return False
 
         # else, do a ramp up
@@ -817,68 +814,62 @@ class EGun(_Devices):
         t_inter = duration / (nrpts-1)
         total_steps_duration = (len(ydata)-1)*t_inter
 
-        self._update_last_status(
+        self._update_status(
             f'Starting filament ramp to {value:.3f} A.')
         for i, cur in enumerate(ydata[1:]):
             if self._abort_rmp_fila.is_set():
-                self.cmd_clr_abort_rmp_fila()
+                self._clr_flag_abort_rmp_fila()
                 return False
             self.fila.current = cur
             dur = total_steps_duration - i*t_inter
-            self._update_last_status(
+            self._update_status(
                 f'{i+1:02d}/{len(ydata[1:]):02d} -> '
                 f'Rem. Time: {dur:03.0f}s  Curr: {cur:.3f} A')
             _time.sleep(t_inter)
 
             if not self._check_status_ok():
-                self._update_last_status(
+                self._update_status(
                     'ERR:MPS or LI Status not ok. Aborted.')
                 return False
-        self._update_last_status('FilaPS Ready!')
+        self._update_status('FilaPS Ready!')
         return True
 
     # -------- thread help methods --------
 
-    def cmd_set_abort_chg_type(self, log=True):
+    def cmd_abort_chg_type(self):
         """Abort injection type change."""
         self._abort_chg_type.set()
-        if log:
-            self._update_last_status('WARN:Abort received for Type change.')
+        self._update_status('WARN:Abort received for Type change.')
         return True
 
-    def cmd_clr_abort_chg_type(self, log=True):
+    def _clr_flag_abort_chg_type(self):
         """Clear abort flag for injection type change."""
         self._abort_chg_type.clear()
-        if log:
-            self._update_last_status('ERR:Aborted Type change.')
+        self._update_status('ERR:Aborted Type change.')
         return True
 
-    def cmd_set_abort_rmp_hvps(self, log=True):
+    def cmd_abort_rmp_hvps(self):
         """Abort set HVPS voltage ramp."""
         self._abort_rmp_hvps.set()
-        if log:
-            self._update_last_status('WARN:Abort received for HVPS ramp.')
+        self._update_status('WARN:Abort received for HVPS ramp.')
         return True
 
-    def cmd_clr_abort_rmp_hvps(self, log=True):
+    def _clr_flag_abort_rmp_hvps(self):
         """Clear abort flag for HVPS voltage ramp."""
         self._abort_rmp_hvps.clear()
-        if log:
-            self._update_last_status('ERR:Aborted HVPS voltage ramp.')
+        self._update_status('ERR:Aborted HVPS voltage ramp.')
         return True
 
-    def cmd_set_abort_rmp_fila(self, log=True):
+    def cmd_abort_rmp_fila(self):
         """Abort FilaPS current ramp."""
         self._abort_rmp_fila.set()
-        if log:
-            self._update_last_status('WARN:Abort received for FilaPS ramp.')
+        self._update_status('WARN:Abort received for FilaPS ramp.')
         return True
 
-    def cmd_clr_abort_rmp_fila(self, log=True):
+    def _clr_flag_abort_rmp_fila(self):
         """Clear abort flag for FilaPS current ramp."""
         self._abort_rmp_fila.clear()
-        if log:
-            self._update_last_status('ERR:Aborted FilaPS current ramp.')
+        self._update_status('ERR:Aborted FilaPS current ramp.')
         return True
 
     # ---------- private methods ----------
@@ -913,25 +904,7 @@ class EGun(_Devices):
 
     # ---------- logging -----------
 
-    @property
-    def has_new_status(self):
-        """Has new status to be read."""
-        return not self._new_status_read.is_set()
-
-    def read_last_status(self):
-        """Return last status and mark as read."""
-        status = self._last_status
-        self._new_status_read.set()
-        return status
-
-    def _update_last_status(self, status):
+    def _update_status(self, status):
         if self._print_log:
             print(status)
-        else:
-            _t0 = _time.time()
-            self._new_status_read.wait(1)
-            _dt = _time.time() - _t0
-            if _dt > 0.1:
-                print('DevEG: wait ', _time.time() - _t0, ' to read log...')
-            self._new_status_read.clear()
-        self._last_status = status
+        self.run_callbacks(status)

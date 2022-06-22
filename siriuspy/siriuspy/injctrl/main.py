@@ -119,7 +119,8 @@ class App(_Callback):
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
         # auxiliary devices
-        self._egun_dev = EGun(print_log=False)
+        self._egun_dev = EGun(
+            print_log=False, callback=self._update_egundev_status)
         self._init_egun = False
         self._egun_dev.trigps.pv_object('enable').add_callback(
             self._callback_watch_eguntrig)
@@ -300,9 +301,8 @@ class App(_Callback):
             return False
         if self._thread_type is not None and self._thread_type.is_alive():
             self._update_log('WARN:Interrupting type change command..')
-            self._egun_dev.cmd_set_abort_chg_type()
+            self._egun_dev.cmd_abort_chg_type()
             self._thread_type.join()
-            self._egun_dev.cmd_clr_abort_chg_type(log=False)
 
         self._type = value
         self.run_callbacks('Type-Sts', self._type)
@@ -360,9 +360,8 @@ class App(_Callback):
         """Set filament current operation value."""
         if self._thread_filaps is not None and self._thread_filaps.is_alive():
             self._update_log('WARN:Interrupting FilaPS current ramp...')
-            self._egun_dev.cmd_set_abort_rmp_fila()
+            self._egun_dev.cmd_abort_rmp_fila()
             self._thread_filaps.join()
-            self._egun_dev.cmd_clr_abort_rmp_fila(log=False)
 
         self._egun_dev.fila_current_opvalue = value
         self._filaopcurr = value
@@ -384,9 +383,8 @@ class App(_Callback):
         """Set high voltage operation value."""
         if self._thread_hvps is not None and self._thread_hvps.is_alive():
             self._update_log('WARN:Interrupting HVPS voltage ramp...')
-            self._egun_dev.cmd_set_abort_rmp_hvps()
+            self._egun_dev.cmd_abort_rmp_hvps()
             self._thread_hvps.join()
-            self._egun_dev.cmd_clr_abort_rmp_hvps(log=False)
 
         self._egun_dev.high_voltage_opvalue = value
         self._hvopvolt = value
@@ -406,7 +404,6 @@ class App(_Callback):
 
     def _watch_egundev(self):
         running = True
-        sts = ''
         while running:
             filarun = self._thread_filaps is not None and \
                 self._thread_filaps.is_alive()
@@ -427,17 +424,16 @@ class App(_Callback):
                 self.run_callbacks('TypeCmdSts-Mon', self._typecmdsts)
 
             running = filarun | hvpsrun | typerun
-
-            if self._egun_dev.has_new_status:
-                sts = self._egun_dev.read_last_status()
-                if 'err:' in sts.lower():
-                    sts = sts.split(':')[1]
-                    msgs = ['ERR:'+sts[i:i+35] for i in range(0, len(sts), 35)]
-                else:
-                    msgs = [sts[i:i+39] for i in range(0, len(sts), 39)]
-                for msg in msgs:
-                    self._update_log(msg)
             _time.sleep(0.05)
+
+    def _update_egundev_status(self, sts):
+        if 'err:' in sts.lower():
+            sts = sts.split(':')[1]
+            msgs = ['ERR:'+sts[i:i+35] for i in range(0, len(sts), 35)]
+        else:
+            msgs = [sts[i:i+39] for i in range(0, len(sts), 39)]
+        for msg in msgs:
+            self._update_log(msg)
 
     def set_target_current(self, value):
         """Set the target injection current value ."""
