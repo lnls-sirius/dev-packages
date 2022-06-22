@@ -426,7 +426,8 @@ class App(_Callback):
             running = filarun | hvpsrun | typerun
             _time.sleep(0.05)
 
-    def _update_egundev_status(self, sts):
+    def _update_egundev_status(self, sts, **kws):
+        _ = kws
         if 'err:' in sts.lower():
             sts = sts.split(':')[1]
             msgs = ['ERR:'+sts[i:i+35] for i in range(0, len(sts), 35)]
