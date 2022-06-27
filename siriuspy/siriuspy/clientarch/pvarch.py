@@ -4,12 +4,12 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
+from mathphys.functions import save_pickle as _save_pickle, \
+    load_pickle as _load_pickle
+
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
-
-from mathphys.functions import save_pickle as _save_pickle, \
-    load_pickle as _load_pickle
 
 
 class _Base:

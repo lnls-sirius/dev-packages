@@ -13,10 +13,15 @@ intervals = [
     [Time(2021, 4, 1, 0, 0), Time(2021, 4, 30, 23, 59)],
     [Time(2021, 5, 1, 0, 0), Time(2021, 5, 31, 23, 59)],
     [Time(2021, 6, 1, 0, 0), Time(2021, 6, 30, 23, 59)],
-    [Time(2021, 7, 1, 0, 0), Time(2021, 7, 30, 23, 59)],
+    [Time(2021, 7, 1, 0, 0), Time(2021, 7, 31, 23, 59)],
     [Time(2021, 8, 1, 0, 0), Time(2021, 8, 31, 23, 59)],
     [Time(2021, 9, 1, 0, 0), Time(2021, 9, 30, 23, 59)],
     [Time(2021, 10, 1, 0, 0), Time(2021, 10, 31, 23, 59)],
+    [Time(2021, 11, 1, 0, 0), Time(2021, 11, 30, 23, 59)],
+    [Time(2021, 12, 1, 0, 0), Time(2021, 12, 31, 23, 59)],
+    [Time(2022, 1, 1, 0, 0), Time(2022, 1, 31, 23, 59)],
+    [Time(2022, 2, 1, 0, 0), Time(2022, 2, 28, 23, 59)],
+    [Time(2022, 3, 1, 0, 0), Time(2022, 3, 31, 23, 59)],
 ]
 
 macreports = dict()
@@ -28,19 +33,38 @@ for intvl in intervals:
     macreports[intvl[0]].update()
 
 mtbfs, mttrs, reliabs = dict(), dict(), dict()
+progrmd, delivd, usertot = dict(), dict(), dict()
+stable, unstable, relstable = dict(), dict(), dict()
 for date, macr in macreports.items():
     mtbfs[date] = macr.usershift_time_between_failures_average
     mttrs[date] = macr.usershift_time_to_recover_average
     reliabs[date] = macr.usershift_beam_reliability
+    progrmd[date] = macr.usershift_progmd_time
+    delivd[date] = macr.usershift_delivd_time
+    usertot[date] = macr.usershift_total_time
+    stable[date] = macr.usershift_total_stable_beam_time
+    unstable[date] = macr.usershift_total_unstable_beam_time
+    relstable[date] = macr.usershift_relative_stable_beam_time
 
-str_ = '{:<12s}    {:<12s}    {:<12s}    {:<12s}'
-print(str_.format('Y-M', 'MTBF', 'MTTR', 'Reliability'))
-str_ = '{:<12s}    {:<9.3f}    {:<9.3f}    {:<9.3f}'
+str_ = '{:<10s}' + '{:>16s}'*9
+print(str_.format(
+    'Y-M', 'MTBF', 'MTTR',
+    'Reliability', 'Progrmd hours', 'Delivd hours', 'Total hours',
+    '% stable hours', 'Stable hours', 'Unstable hours'))
+str_ = '{:<10s}' + '    {:>12.3f}'*9
 for date in macreports:
-    print(str_.format(str(date.year)+'-'+str(date.month),
-                      mtbfs[date],
-                      mttrs[date],
-                      reliabs[date]))
+    print(str_.format(
+        str(date.year)+'-'+str(date.month),
+        mtbfs[date],
+        mttrs[date],
+        reliabs[date],
+        progrmd[date],
+        delivd[date],
+        usertot[date],
+        relstable[date],
+        stable[date],
+        unstable[date],
+    ))
 
 fig, axs = plt.subplots(3, 1, sharex=True)
 fig.set_size_inches(9, 6)
@@ -65,9 +89,19 @@ fig.show()
 # programmed vs. delivered hours
 macr = MacReport()
 macr.connector.timeout = 120
-macr.time_start = Time(2020, 7, 1, 0, 0)
-macr.time_stop = Time(2021, 6, 30, 23, 59)
+macr.time_start = Time(2021, 3, 1, 0, 0)
+macr.time_stop = Time(2022, 3, 31, 23, 59)
 macr.update()
+
+print('MTBF', macr.usershift_time_between_failures_average)
+print('MTTR', macr.usershift_time_to_recover_average)
+print('Reliability', macr.usershift_beam_reliability)
+print('Progrmd hours', macr.usershift_progmd_time)
+print('Delivd hours', macr.usershift_delivd_time)
+print('Total hours', macr.usershift_total_time)
+print('% stable hours', macr.usershift_relative_stable_beam_time)
+print('Stable hours', macr.usershift_total_stable_beam_time)
+print('Unstable hours', macr.usershift_total_unstable_beam_time)
 
 rd = macr.raw_data
 dtimes = np.diff(rd['Timestamp'])
