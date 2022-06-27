@@ -197,8 +197,8 @@ class EntitiesPS(_Entities):
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         # --- undefined variables
-        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         )

@@ -895,6 +895,9 @@ def _get_ps_common_propty_database():
             'type': 'float', 'value': 1.0, 'prec': 4, 'unit': 's',
             'lolo': 1e-2, 'low': 1e-2, 'lolim': 1e-2,
             'hilim': 4096, 'high': 4096, 'hihi': 4096},
+        # Period Sync Pulse
+        'PeriodSyncPulseCount-Mon': {
+            'type': 'int', 'value': 0, 'unit': 'count'},
         # Power Supply Parameters
         # --- PS ---
         'ParamPSName-Cte': {'type': 'char', 'count': 64, 'value': ''},

@@ -175,9 +175,9 @@ class ConstPSBSMP:
     V_SCOPE_FREQUENCY = 25
     V_SCOPE_DURATION = 26
     V_SCOPE_SRC_DATA = 27
+    V_PERIOD_SYNC_PULSE = 28
 
     # --- undefined variables
-    V_UNDEF28 = 28
     V_UNDEF29 = 29
     V_UNDEF30 = 30
 
