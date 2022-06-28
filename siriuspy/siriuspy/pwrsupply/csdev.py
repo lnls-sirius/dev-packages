@@ -766,7 +766,8 @@ class Const(_csdev.Const):
     OpMode = _csdev.Const.register('OpMode', _et.OPMODES)
     CmdAck = _csdev.Const.register('CmdAck', _et.CMD_ACK)
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
-    WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
+    WfmRefSyncMode = _csdev.Const.register(
+        'WfmRefSyncMode', _et.WFMREF_SYNCMODE)
     DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBL_ENBL)
 
 # --- Main power supply database functions ---
@@ -1286,7 +1287,7 @@ def _get_ps_LINAC_propty_database():
             'unit': 'A'},  # 92
         'CurrentFit-Mon': {
             'type': 'float', 'prec': PS_CURRENT_PRECISION,
-            'value': 0.0,},  # f0
+            'value': 0.0},  # f0
         # --- interlocks
         'StatusIntlk-Mon': {
             'type': 'int', 'value': 0, 'hihi': 55, 'unit': 'interlock'},
@@ -2235,11 +2236,11 @@ def _get_ps_FAP_4P_propty_database():
                                       'prec': PS_CURRENT_PRECISION,
                                       'unit': 'p.u.'},
         'VoltageInputIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': PS_CURRENT_PRECISION,
-                                 'unit': 'V'},
+                                    'prec': PS_CURRENT_PRECISION,
+                                    'unit': 'V'},
         'VoltageOutputIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                  'prec': PS_CURRENT_PRECISION,
-                                  'unit': 'V'},
+                                     'prec': PS_CURRENT_PRECISION,
+                                     'unit': 'V'},
         'IGBT1CurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
@@ -2283,11 +2284,11 @@ def _get_ps_FAP_4P_propty_database():
                                     'count': len(_et.IIB_ALARMS_FAP_4P),
                                     'value': _et.IIB_ALARMS_FAP_4P},
         'VoltageInputIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': PS_CURRENT_PRECISION,
-                                 'unit': 'V'},
+                                    'prec': PS_CURRENT_PRECISION,
+                                    'unit': 'V'},
         'VoltageOutputIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                  'prec': PS_CURRENT_PRECISION,
-                                  'unit': 'V'},
+                                     'prec': PS_CURRENT_PRECISION,
+                                     'unit': 'V'},
         'IGBT1CurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
@@ -2631,11 +2632,11 @@ def _get_ps_FAP_2P2S_propty_database():
                                     'count': len(_et.IIB_ALARMS_FAP_2P2S),
                                     'value': _et.IIB_ALARMS_FAP_2P2S},
         'VoltageInputIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': PS_CURRENT_PRECISION,
-                                 'unit': 'V'},
+                                    'prec': PS_CURRENT_PRECISION,
+                                    'unit': 'V'},
         'VoltageOutputIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                  'prec': PS_CURRENT_PRECISION,
-                                  'unit': 'V'},
+                                     'prec': PS_CURRENT_PRECISION,
+                                     'unit': 'V'},
         'IGBT1CurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
@@ -2677,11 +2678,11 @@ def _get_ps_FAP_2P2S_propty_database():
                                     'count': len(_et.IIB_ALARMS_FAP_2P2S),
                                     'value': _et.IIB_ALARMS_FAP_2P2S},
         'VoltageInputIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': PS_CURRENT_PRECISION,
-                                 'unit': 'V'},
+                                    'prec': PS_CURRENT_PRECISION,
+                                    'unit': 'V'},
         'VoltageOutputIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                  'prec': PS_CURRENT_PRECISION,
-                                  'unit': 'V'},
+                                     'prec': PS_CURRENT_PRECISION,
+                                     'unit': 'V'},
         'IGBT1CurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'A'},
