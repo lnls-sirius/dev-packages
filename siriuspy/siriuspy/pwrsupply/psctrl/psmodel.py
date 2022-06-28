@@ -308,16 +308,17 @@ class PSModelFBP(_PSModel):
     _e = _etity_psbsmp.EntitiesFBP
 
     _bsmp_variables = {
-        'IntlkSoft-Mon':  _const_psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon':  _const_psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _const_psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
-        'Current-RB':  _const_psbsmp.ConstFBP.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _const_psbsmp.ConstFBP.V_PS_REFERENCE,
-        'Current-Mon':  _const_psbsmp.ConstFBP.V_I_LOAD,
-        'LoadVoltage-Mon': _const_psbsmp.ConstFBP.V_V_LOAD,
-        'DCLinkVoltage-Mon': _const_psbsmp.ConstFBP.V_V_DCLINK,
-        'SwitchesTemperature-Mon': _const_psbsmp.ConstFBP.V_TEMP_SWITCHES,
-        'PWMDutyCycle-Mon': _const_psbsmp.ConstFBP.V_DUTY_CYCLE,
+        'IntlkSoft-Mon':  _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _c.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
+        'Current-RB':  _c.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _c.V_PS_REFERENCE,
+        'Current-Mon':  _c.V_I_LOAD,
+        'LoadVoltage-Mon': _c.V_V_LOAD,
+        'DCLinkVoltage-Mon': _c.V_V_DCLINK,
+        'SwitchesTemperature-Mon': _c.V_TEMP_SWITCHES,
+        'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
     _pruc_properties = {

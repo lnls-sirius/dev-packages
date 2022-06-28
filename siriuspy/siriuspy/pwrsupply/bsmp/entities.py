@@ -360,8 +360,8 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         # --- undefined Variables
-        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
@@ -400,6 +400,11 @@ class EntitiesFBP(EntitiesPS):
         {'eid': 67, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 68, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 69, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        # ------ V_PS_ALARMS
+        {'eid': 70, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 71, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 72, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 73, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
     )
 
     _ps_curves = (

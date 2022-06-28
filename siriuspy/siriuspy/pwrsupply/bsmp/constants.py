@@ -271,6 +271,7 @@ class ConstFBP(ConstPSBSMP):
     V_V_DCLINK = 35
     V_TEMP_SWITCHES = 36
     V_DUTY_CYCLE = 37  # (float)
+    V_PS_ALARMS = 38
     # --- FBP mirror variables ----
     V_PS_STATUS1 = 46
     V_PS_STATUS2 = 47
@@ -296,6 +297,10 @@ class ConstFBP(ConstPSBSMP):
     V_I_LOAD2 = 67
     V_I_LOAD3 = 68
     V_I_LOAD4 = 69
+    V_PS_ALARMS1 = 70
+    V_PS_ALARMS2 = 71
+    V_PS_ALARMS3 = 72
+    V_PS_ALARMS4 = 73
 
 
 class ConstFAC_DCDC(ConstPSBSMP):

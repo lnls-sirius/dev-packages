@@ -119,6 +119,16 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FBP = (
+        'Alta frequencia de pulsos de sincronismo',
+        'Bit1', 'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FBP_DCLINK = _UNDEF_INTLCK
     HARD_INTLCK_FBP_DCLINK = (
         'Falha na fonte 1', 'Falha na fonte 2', 'Falha na fonte 3',
@@ -1424,6 +1434,11 @@ def _get_ps_FBP_propty_database():
             'count': len(_et.HARD_INTLCK_FBP),
             'value': _et.HARD_INTLCK_FBP,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FBP),
+            'value': _et.ALARMS_FBP},
         'LoadVoltage-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': PS_CURRENT_PRECISION,
