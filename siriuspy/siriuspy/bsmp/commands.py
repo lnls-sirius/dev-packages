@@ -16,7 +16,7 @@ class BSMP:
     _timeout_execute_function: float = 100.0  # [ms]
 
     def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
-        """_cructor."""
+        """Constructor."""
         self._entities: _Entities = entities
         self._channel: _Channel = _Channel(iointerf, slave_address)
 
@@ -440,9 +440,10 @@ class BSMP:
             return ack, None
 
         # unexpected response, raise Exception
+        fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
+        errmsg = fmts.format(cmd, ack)
         if 'print_error' not in kwargs or kwargs['print_error']:
-            fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
-            print(fmts.format(cmd, ack))
+            print(errmsg)
             for key, value in kwargs.items():
                 print('{}: {}'.format(key, value))
-        raise _SerialAnomResp
+        raise _SerialAnomResp(errmsg)
