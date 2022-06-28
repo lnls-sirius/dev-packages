@@ -620,7 +620,7 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # calculate efficiency
-        self._injcurr = value_dq[-1] - value_dq.min()  # mA
+        self._injcurr = value_dq.max() - value_dq.min()  # mA
         self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC
