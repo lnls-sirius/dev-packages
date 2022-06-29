@@ -430,6 +430,7 @@ class ConstFAC_2S_DCDC(ConstPSBSMP):
     V_RH_IIB_2 = 65
     V_IIB_INTERLOCKS_2 = 66
     V_IIB_ALARMS_2 = 67
+    V_PS_ALARMS = 68
 
 
 class ConstFAP(ConstPSBSMP):
