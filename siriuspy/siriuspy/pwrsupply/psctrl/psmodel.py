@@ -723,7 +723,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
         'HeatSinkTemperatureIIBMod2-Mon': _c.V_TEMP_HEATSINK_IIB_2,
-        'LeakageCurrentIIBMod2-Mon': _c.V_I_LEAKAGE_IIB_2,
         'TemperatureIIBMod2-Mon': _c.V_TEMP_BOARD_IIB_2,
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
@@ -760,6 +759,7 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 

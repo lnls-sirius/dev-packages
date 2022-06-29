@@ -749,7 +749,7 @@ class EntitiesFAP_2P2S(EntitiesPS):
         {'eid': 88, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 89, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 90, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 91, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 91, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 92, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 93, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 94, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
@@ -785,7 +785,7 @@ class EntitiesFAP_2P2S(EntitiesPS):
         {'eid': 124, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 125, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 126, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 127, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+        {'eid': 127, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 # --- Entities ACDC ---
