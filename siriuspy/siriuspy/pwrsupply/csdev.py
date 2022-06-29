@@ -608,6 +608,7 @@ class ETypes(_csdev.ETypes):
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
         'Bit30', 'Bit31')
+    ALARMS_FAP_4P = ALARMS_FBP
     IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     IIB_ALARMS_FAP_4P = (
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
@@ -2187,6 +2188,11 @@ def _get_ps_FAP_4P_propty_database():
             'count': len(_et.HARD_INTLCK_FAP_4P),
             'value': _et.HARD_INTLCK_FAP_4P,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAP_4P),
+            'value': _et.ALARMS_FAP_4P},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
