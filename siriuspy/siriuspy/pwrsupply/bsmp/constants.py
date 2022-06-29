@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.36 V0.41u - 09/04/2020'
+__version__ = 'FRWM - V1.39 V0.44 - 24/06/2022'
 
 # maximum number of power supplies controlled with a UDC
 UDC_MAX_NR_DEV = 4
