@@ -543,6 +543,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAP = ALARMS_FBP
     IIB_INTLCK_FAP = (
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
@@ -2097,6 +2098,11 @@ def _get_ps_FAP_propty_database():
             'count': len(_et.HARD_INTLCK_FAP),
             'value': _et.HARD_INTLCK_FAP,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAP),
+            'value': _et.ALARMS_FAP},
         'DCLinkVoltage-Mon': {'type': 'float', 'value': 0.0,
                               'prec': PS_CURRENT_PRECISION,
                               'unit': 'V'},

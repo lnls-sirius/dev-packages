@@ -581,7 +581,8 @@ class EntitiesFAP(EntitiesPS):
         {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
+        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 58, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32})
 
 
 class EntitiesFAP_4P(EntitiesPS):

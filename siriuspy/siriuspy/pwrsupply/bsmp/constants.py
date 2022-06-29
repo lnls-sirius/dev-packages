@@ -465,6 +465,7 @@ class ConstFAP(ConstPSBSMP):
     V_RH_IIB = 55
     V_IIB_INTERLOCKS = 56
     V_IIB_ALARMS = 57
+    V_PS_ALARMS = 58
 
 
 class ConstFAP_4P(ConstPSBSMP):

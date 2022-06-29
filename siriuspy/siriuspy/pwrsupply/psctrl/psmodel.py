@@ -542,6 +542,7 @@ class PSModelFAP(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
