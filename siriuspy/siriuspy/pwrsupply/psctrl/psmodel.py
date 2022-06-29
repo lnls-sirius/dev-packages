@@ -500,6 +500,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'RelativeHumidityIIBModB-Mon': _c.V_RH_IIB_B,
         'IntlkIIBModB-Mon': _c.V_IIB_INTERLOCKS_B,
         'AlarmsIIBModB-Mon': _c.V_IIB_ALARMS_B,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 

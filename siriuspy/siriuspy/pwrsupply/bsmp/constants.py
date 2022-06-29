@@ -387,6 +387,7 @@ class ConstFAC_2P4S_DCDC(ConstPSBSMP):
     V_RH_IIB_B = 79
     V_IIB_INTERLOCKS_B = 80
     V_IIB_ALARMS_B = 81
+    V_PS_ALARMS = 82
 
 
 class ConstFAC_2S_DCDC(ConstPSBSMP):
