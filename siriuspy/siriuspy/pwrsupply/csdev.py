@@ -166,6 +166,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAC_DCDC = ALARMS_FBP
     IIB_INTLCK_FAC_DCDC = (
         'Sobre-tensao de entrada',
         'Sobre-corrente de entrada',
@@ -1521,6 +1522,11 @@ def _get_ps_FAC_DCDC_propty_database():
             'count': len(_et.HARD_INTLCK_FAC_DCDC),
             'value': _et.HARD_INTLCK_FAC_DCDC,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAC_DCDC),
+            'value': _et.ALARMS_FAC_DCDC},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
