@@ -427,7 +427,8 @@ class PSConnSOFB:
         # send signal to IOC to update one power supply state
         if self._sofb_update_iocs:
             pvobj = self._pvobjs[bbbname]
-            pvobj.put(1, wait=False)  # send signal to IOC
+            if pvobj.connected:
+                pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
