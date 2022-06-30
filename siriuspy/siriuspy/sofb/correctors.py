@@ -461,6 +461,7 @@ class EpicsCorrectors(BaseCorrectors):
     def __init__(self, acc, prefix='', callback=None, dipoleoff=False):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
+        self._sofb = None
         self._sync_kicks = False
         self._acq_rate = 2
 
@@ -488,6 +489,15 @@ class EpicsCorrectors(BaseCorrectors):
         self._corrs_thread = _Repeat(
             1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
+
+    @property
+    def sofb(self):
+        """."""
+        return self._sofb
+
+    @sofb.setter
+    def sofb(self, sofb):
+        self._sofb = sofb
 
     @property
     def corrs(self):
@@ -706,7 +716,8 @@ class EpicsCorrectors(BaseCorrectors):
             self.set_timing_delay(self._csorb.CORR_DEF_DELAY)
             self.timing.sync_type = self.timing.CLK
 
-        for corr in self._corrs:
+        corrs = self._get_used_corrs(include_rf=True)
+        for corr in corrs:
             if corr.connected:
                 corr.opmode = val
             else:
@@ -755,7 +766,8 @@ class EpicsCorrectors(BaseCorrectors):
         # and neither why the problem even occurs...
         _time.sleep(0.2)
 
-        for corr in self._corrs[:-1]:
+        chcvs = self._get_used_corrs(include_rf=False)
+        for corr in chcvs:
             if not corr.connected:
                 msg = 'ERR: Failed to configure '
                 msg += corr.name
@@ -779,7 +791,8 @@ class EpicsCorrectors(BaseCorrectors):
 
     def configure_correctors(self, _):
         """Configure correctors method."""
-        for corr in self._corrs:
+        corrs = self._get_used_corrs(include_rf=True)
+        for corr in corrs:
             if not corr.connected:
                 msg = 'ERR: Failed to configure '
                 msg += corr.name
@@ -808,7 +821,8 @@ class EpicsCorrectors(BaseCorrectors):
         elif self.isring:
             status = 0b0011111
 
-        chcvs = self._corrs[:self._csorb.nr_chcv]
+        chcvs = self._get_used_corrs(include_rf=False)
+
         status = _util.update_bit(
             status, bit_pos=0,
             bit_val=not all(corr.connected for corr in chcvs))
@@ -857,18 +871,20 @@ class EpicsCorrectors(BaseCorrectors):
         return True
 
     def _compare_kicks_pssofb(self, values, fret):
+        mask = self._get_mask()
         rfc = self._corrs[-1]
         ref_vals = self._ref_kicks[0]
 
         # NOTE: In case there is some problem in the return value, apart from
         # DSP_TIMEOUT, which we consider not a fatal problem, return code
         # error -2 so that the loop can be opened:
-        res_tim = _np.ones(ref_vals.size, dtype=bool)
-        res_tim[:-1] = fret != _ConstPSBSMP.ACK_DSP_TIMEOUT
-        res = fret != _ConstPSBSMP.ACK_OK
-        res &= res_tim[:-1]
-        if _np.any(res):
-            self._print_guilty(~res, mode='prob_code', fret=fret)
+        timeout = _np.zeros(ref_vals.size, dtype=bool)
+        timeout[:-1] = fret == _ConstPSBSMP.ACK_DSP_TIMEOUT
+        comm_prob = fret != _ConstPSBSMP.ACK_OK
+        comm_prob &= ~timeout[:-1]
+        comm_prob &= mask[:-1]  # If corrector is not in the loop, ignore it.
+        if _np.any(comm_prob):
+            self._print_guilty(~comm_prob, mode='prob_code', fret=fret)
             return -2
 
         curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
@@ -881,6 +897,7 @@ class EpicsCorrectors(BaseCorrectors):
         iszero = _compare_kicks(curr_vals, 0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
+        prob &= mask  # If corrector is not in the loop, ignore it.
         # For debugging:
         # if _np.any(prob):
         #     self._print_guilty(
@@ -896,9 +913,15 @@ class EpicsCorrectors(BaseCorrectors):
                 ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
             return -2
 
-        equl = _compare_kicks(curr_vals, ref_vals)
-        equl |= ~res_tim
-        return _np.sum(~equl)
+        diff = _np.logical_not(_compare_kicks(curr_vals, ref_vals))
+
+        # NOTE: I don't remember why it only matters when differences are due
+        # to Timeout error:
+        diff &= timeout
+
+        # If corrector is not in the loop, ignore it:
+        diff &= mask
+        return _np.sum(diff)
 
     def _print_guilty(
             self, okg, mode='ready', fret=None, currs=None, refs=None):
@@ -917,3 +940,17 @@ class EpicsCorrectors(BaseCorrectors):
                 msg = msg_tmpl.format(mode, corr.name, *args)
                 self._update_log(msg)
                 _log.error(msg[5:])
+
+    def _get_mask(self):
+        if self.sofb is not None and self.sofb.matrix is not None:
+            mask = self.sofb.matrix.corrs_enbllist
+        else:
+            mask = _np.ones(len(self._corrs), dtype=bool)
+        return mask
+
+    def _get_used_corrs(self, include_rf=False):
+        nrc = None if include_rf else self._csorb.nr_chcv
+        corrs = self._corrs[:nrc]
+        mask = self._get_mask()[:nrc]
+        corrs = [corrs[i] for i, m in enumerate(mask) if m]
+        return corrs

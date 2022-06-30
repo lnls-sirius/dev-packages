@@ -128,6 +128,7 @@ class SOFB(_BaseClass):
         if isinstance(orb, _BaseOrbit):
             self._map2write.update(orb.get_map2write())
             self._orbit = orb
+            self._orbit.sofb = self
 
     @property
     def correctors(self):
@@ -140,6 +141,7 @@ class SOFB(_BaseClass):
         if isinstance(corrs, _BaseCorrectors):
             self._map2write.update(corrs.get_map2write())
             self._correctors = corrs
+            self._correctors.sofb = self
 
     @property
     def matrix(self):
@@ -152,6 +154,7 @@ class SOFB(_BaseClass):
         if isinstance(mat, _BaseMatrix):
             self._map2write.update(mat.get_map2write())
             self._matrix = mat
+            self._matrix.sofb = self
 
     @property
     def havebeam(self):
