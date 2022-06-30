@@ -588,7 +588,11 @@ class EpicsCorrectors(BaseCorrectors):
         self._func_ret = func_ret
 
         self._set_ref_kicks(values)
-        self._pssofb.bsmp_sofb_kick_set(self._ref_kicks[-1][:-1])
+        # NOTE: values will contain NaNs when corrector is not in the loop, as
+        # a mean to not communicate with it. Pass them to PSSOFB so it handles
+        # this appropriately (actually it is the PSBSMP class that will handle
+        # NaNs):
+        self._pssofb.bsmp_sofb_kick_set(values[:-1])
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 

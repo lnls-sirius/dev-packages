@@ -393,6 +393,8 @@ class PSConnSOFB:
         indcs_bsmp = self.indcs_bsmp[bbbname]
 
         # get valid current setpoints from sofb array
+        # NOTE: curr_sp may contain NaNs. They will be handled by low level
+        #    classes.
         current = curr_sp[indcs_sofb]
 
         # initialize setpoint
