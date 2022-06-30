@@ -170,15 +170,15 @@ class ExcitationData:
     @staticmethod
     def _calc_interp(xvals, xtab, ytab):
         interp = _np.interp(
-            xvals, xtab, ytab, left=float('nan'), right=float('inf'))
-        nan = _np.isnan(interp)
-        inf = _np.isinf(interp)
-        vec = _util.linear_extrapolation(
-            xvals[nan], xtab[0], xtab[1], ytab[0], ytab[1])
-        interp[nan] = vec
-        vec = _util.linear_extrapolation(
-            xvals[inf], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
-        interp[inf] = vec
+            xvals, xtab, ytab, left=-_np.inf, right=_np.inf)
+        neg = _np.isneginf(interp)
+        pos = _np.isposinf(interp)
+        if neg.any():
+            interp[neg] = _util.linear_extrapolation(
+                xvals[neg], xtab[0], xtab[1], ytab[0], ytab[1])
+        if pos.any():
+            interp[pos] = _util.linear_extrapolation(
+                xvals[pos], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
         return interp
 
     def _process_comment_line(self, line):
