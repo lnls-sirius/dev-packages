@@ -692,6 +692,7 @@ class SOFB(_BaseClass):
 
         wait_orb_error = int(5)
         previous_orb_problem = False
+        tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
@@ -703,14 +704,19 @@ class SOFB(_BaseClass):
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
                 times, rets = [], []
-            tims = []
 
             interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
                 norbs = max(int(bpmsfreq*interval), 1)
+            elif tims:
+                # if not pssofb wait for interval to be satisfied
+                dtime = tims[0] - tims[-1]
+                dtime += interval
+                _sleep(max(dtime, 0))
 
+            tims = []
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
@@ -735,8 +741,14 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
+                # NOTE: The code bellow is the default implementation.
+                #       We decided to use the temporaty work around solution
+                #       implemented above to handle mal-functioning BPMs.
+                # self._loop_state = self._csorb.LoopState.Open
+                # self.run_callbacks('LoopState-Sel', 0)
+                # break
+
                 self.run_callbacks('LoopState-Sts', 0)
-                # NOTE: Assume PSSOFB is active.
                 msg = 'WARN: Skipping iteration.'
                 self._update_log(msg)
                 _log.info(msg)
@@ -750,12 +762,6 @@ class SOFB(_BaseClass):
                 _log.info(msg)
                 previous_orb_problem = True
                 continue
-                # NOTE: The code bellow is the default implementation.
-                #       We decided to use the temporaty work around solution
-                #       implemented above to handle mal-functioning BPMs.
-                # self._loop_state = self._csorb.LoopState.Open
-                # self.run_callbacks('LoopState-Sel', 0)
-                # break
             elif previous_orb_problem:
                 msg = f'WARN: Orbit is Ok now. Resuming correction...'
                 self._update_log(msg)
@@ -788,10 +794,6 @@ class SOFB(_BaseClass):
                 # skip this iteration
                 continue
 
-            dtime = tims[0] - tims[-1]
-            dtime += interval
-            if not use_pssofb and dtime > 0:
-                _sleep(dtime)
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
