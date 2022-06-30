@@ -573,8 +573,24 @@ class FBP(PSBSMP):
 
     def sofb_ps_setpoint_set(self, value):
         """."""
-        self._sofb_ps_setpoint = value
-        ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
+        if self._sofb_ps_setpoint is None:
+            self._sofb_ps_setpoint = _np.zeros(value.size, dtype=float)
+
+        # NOTE: NaNs in current vector are a way to avoid communication with
+        #   udcs. In case only a few inputs are NaN they will be replaced by
+        #   old values or zero. If all of them are NaN, them no communication
+        #   is performed.
+        nan = _np.isnan(value)
+        self._sofb_ps_setpoint[~nan] = value[~nan]
+
+        # NOTE: In case all values are NaN, no communication is made:
+        if nan.all():
+            ack = self.CONST_BSMP.ACK_OK
+            func_resp = self._sofb_ps_readback_ref
+        else:
+            ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(
+                self._sofb_ps_setpoint)
+
         if ack == self.CONST_BSMP.ACK_OK:
             self._sofb_ps_readback_ref = func_resp
             self._sofb_ps_func_return = FBP._ACK_OK
