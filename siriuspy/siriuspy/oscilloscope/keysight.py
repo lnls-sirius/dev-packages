@@ -1,11 +1,6 @@
 
 
-import time
-import matplotlib.pyplot as plt
-# from siriuspy.currinfo.filling_pattern import MeasFillingPattern as MFP
-
-
-"""."""
+"""Keysight oscilloscope classes."""
 
 import socket as _socket
 import time as _time
