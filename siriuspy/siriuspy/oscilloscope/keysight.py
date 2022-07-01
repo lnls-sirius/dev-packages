@@ -1,5 +1,3 @@
-
-
 """Keysight oscilloscope classes."""
 
 import socket as _socket
