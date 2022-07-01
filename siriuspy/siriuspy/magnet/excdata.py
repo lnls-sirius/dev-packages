@@ -96,22 +96,22 @@ class ExcitationData:
             for harm in harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
-                interp = ExcitationData._calc_interp(currents, curr, mpole)
+                interp = _util.linear_interpolation(currents, curr, mpole)
                 multipoles['normal'][harm] = interp[0]
                 # skew component
                 mpole = self.multipoles['skew'][harm]
-                interp = ExcitationData._calc_interp(currents, curr, mpole)
+                interp = _util.linear_interpolation(currents, curr, mpole)
                 multipoles['skew'][harm] = interp[0]
         else:
             currents = _np.array(currents)
             for harm in harmonics:
                 # normal component
                 mpole = self.multipoles['normal'][harm]
-                interp = ExcitationData._calc_interp(currents, curr, mpole)
+                interp = _util.linear_interpolation(currents, curr, mpole)
                 multipoles['normal'][harm] = interp
                 # skew component
                 mpole = self.multipoles['skew'][harm]
-                interp = ExcitationData._calc_interp(currents, curr, mpole)
+                interp = _util.linear_interpolation(currents, curr, mpole)
                 multipoles['skew'][harm] = interp
         return multipoles
 
@@ -126,11 +126,11 @@ class ExcitationData:
         # do conversion
         if _np.isscalar(multipoles):
             multipoles = _np.array([multipoles])
-            interp = ExcitationData._calc_interp(multipoles, mpole, curr)
+            interp = _util.linear_interpolation(multipoles, mpole, curr)
             currents = interp[0]
         else:
             multipoles = _np.array(multipoles)
-            interp = ExcitationData._calc_interp(multipoles, mpole, curr)
+            interp = _util.linear_interpolation(multipoles, mpole, curr)
             currents = interp
         return currents
 
@@ -166,20 +166,6 @@ class ExcitationData:
         return rst
 
     # --- private methods ---
-
-    @staticmethod
-    def _calc_interp(xvals, xtab, ytab):
-        interp = _np.interp(
-            xvals, xtab, ytab, left=-_np.inf, right=_np.inf)
-        neg = _np.isneginf(interp)
-        pos = _np.isposinf(interp)
-        if neg.any():
-            interp[neg] = _util.linear_extrapolation(
-                xvals[neg], xtab[0], xtab[1], ytab[0], ytab[1])
-        if pos.any():
-            interp[pos] = _util.linear_extrapolation(
-                xvals[pos], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
-        return interp
 
     def _process_comment_line(self, line):
         if line[1:].strip():
