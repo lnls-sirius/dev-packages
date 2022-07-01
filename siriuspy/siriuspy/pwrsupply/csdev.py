@@ -738,6 +738,15 @@ class ETypes(_csdev.ETypes):
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
+    FOFB_OPMODES = (
+        'OL_MANUAL', 'OL_TEST_SQR', 'CL_MANUAL', 'CL_TEST_SQR', 'CL_FOFB')
+    FOFB_ALARMS_AMP = (
+        'Amplifier left over current flag',
+        'Amplifier left over temperature flag',
+        'Amplifier right over current flag',
+        'Amplifier right over temperature flag',
+    )
+
 
 _et = ETypes  # syntactic sugar
 
@@ -758,6 +767,7 @@ class Const(_csdev.Const):
     CycleType = _csdev.Const.register('CycleType', _et.CYCLE_TYPES)
     WfmRefSyncMode = _csdev.Const.register('WfmRefSyncMode', _et.WFMREF_SYNCMODE)
     DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBL_ENBL)
+    OpModeFOFB = _csdev.Const.register('OpModeFOFB', _et.FOFB_OPMODES)
 
 # --- Main power supply database functions ---
 
@@ -1343,67 +1353,104 @@ def _get_ps_FOFB_propty_database():
         'PwrState-Sts': {
             'type': 'enum', 'enums': _et.OFF_ON,
             'value': Const.OffOn.Off, 'unit': 'pwrstate'},
-        # Ctrl Loop
-        'CtrlLoop-Sel': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'ctrlloop'},
-        'CtrlLoop-Sts': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'ctrlloop'},
-        # Tests (opmode)
-        'TestOpenLoopTriang-Sel': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        'TestOpenLoopTriang-Sts': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        'TestOpenLoopSquare-Sel': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        'TestOpenLoopSquare-Sts': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        'TestClosedLoopSquare-Sel': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        'TestClosedLoopSquare-Sts': {
-            'type': 'enum', 'enums': _et.OFF_ON,
-            'value': Const.OffOn.Off, 'unit': 'state'},
-        # Alarms
-        'PSAmpOverCurrFlagL-Sts': {'type': 'int', 'value': 0.0},
-        'PSAmpOverCurrFlagR-Sts': {'type': 'int', 'value': 0.0},
-        'PSAmpOverTempFlagL-Sts': {'type': 'int', 'value': 0.0},
-        'PSAmpOverTempFlagR-Sts': {'type': 'int', 'value': 0.0},
+        # OpMode
+        'OpMode-Sel': {
+            'type': 'enum', 'enums': _et.FOFB_OPMODES,
+            'value': Const.OpModeFOFB.OL_MANUAL, 'unit': 'opmodefofb'},
+        'OpMode-Sts': {
+            'type': 'enum', 'enums': _et.FOFB_OPMODES,
+            'value': Const.OpModeFOFB.OL_MANUAL, 'unit': 'opmodefofb'},
+        # Test mode configurations
+        'TestLimA-SP': {
+            'type': 'int', 'value': 0,
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'TestLimA-RB': {
+            'type': 'int', 'value': 0,
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'TestLimB-SP': {
+            'type': 'int', 'value': 0,
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'TestLimB-RB': {
+            'type': 'int', 'value': 0,
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'TestWavePeriod-SP': {
+            'type': 'int', 'value': 0,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 4194303, 'high': 4194303, 'hihi': 4194303},
+        'TestWavePeriod-RB': {
+            'type': 'int', 'value': 0,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 4194303, 'high': 4194303, 'hihi': 4194303},
+        # Status and Alarms
+        'PSStatus-Mon': {'type': 'int', 'value': 0},
+        'AlarmsAmp-Mon': {'type': 'int', 'value': 0},
+        'AlarmsAmpLabels-Cte': {
+            'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
+            'value': _et.FOFB_ALARMS_AMP},
         # PI params
-        'CtrlLoopKp-SP': {'type': 'int', 'value': 0.0},
-        'CtrlLoopKp-RB': {'type': 'int', 'value': 0.0},
-        'CtrlLoopTi-SP': {'type': 'int', 'value': 0.0},
-        'CtrlLoopTi-RB': {'type': 'int', 'value': 0.0},
+        'CtrlLoopKp-SP': {'type': 'int', 'value': 0},
+        'CtrlLoopKp-RB': {'type': 'int', 'value': 0},
+        'CtrlLoopTi-SP': {'type': 'int', 'value': 0},
+        'CtrlLoopTi-RB': {'type': 'int', 'value': 0},
         # Calibration params
-        'CurrGain-SP': {'type': 'float', 'prec': 15, 'value': 0.0},
-        'CurrGain-RB': {'type': 'float', 'prec': 15, 'value': 0.0},
-        'CurrOffset-SP': {'type': 'int', 'value': 0.0},
-        'CurrOffset-RB': {'type': 'int', 'value': 0.0},
-        'VoltGain-SP': {'type': 'float', 'prec': 15, 'value': 0.0},
-        'VoltGain-RB': {'type': 'float', 'prec': 15, 'value': 0.0},
-        'VoltOffset-SP': {'type': 'int', 'value': 0.0},
-        'VoltOffset-RB': {'type': 'int', 'value': 0.0},
+        'CurrGain-SP': {'type': 'float', 'prec': 12, 'value': 0.0},
+        'CurrGain-RB': {'type': 'float', 'prec': 12, 'value': 0.0},
+        'CurrOffset-SP': {'type': 'int', 'value': 0},
+        'CurrOffset-RB': {'type': 'int', 'value': 0},
+        'VoltGain-SP': {'type': 'float', 'prec': 12, 'value': 0.0},
+        'VoltGain-RB': {'type': 'float', 'prec': 12, 'value': 0.0},
+        'VoltOffset-SP': {'type': 'int', 'value': 0},
+        'VoltOffset-RB': {'type': 'int', 'value': 0},
         # Current
         'CurrentRaw-SP': {
             'type': 'int', 'value': 0.0, 'unit': 'count'},
         'CurrentRaw-RB': {
             'type': 'int', 'value': 0.0, 'unit': 'count'},
+        'CurrentRawRef-Mon': {
+            'type': 'int', 'value': 0.0, 'unit': 'count'},
+        'CurrentRaw-Mon': {
+            'type': 'int', 'value': 0.0, 'unit': 'count'},
         'Current-SP': {
-            'type': 'float', 'prec': 15, 'value': 0.0, 'unit': 'A',
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'A',
             'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
             'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
         'Current-RB': {
-            'type': 'float', 'prec': 15, 'value': 0.0, 'unit': 'A',
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'A',
             'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
             'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
+        'CurrentRef-Mon': {
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'A',
+            'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
+            'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
+        'Current-Mon': {
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'A',
+            'lolo': -0.95, 'low': -0.95, 'lolim': -0.95,
+            'hilim': 0.95, 'high': 0.95, 'hihi': 0.95},
+        # Voltage
+        'VoltageRaw-SP': {
+            'type': 'int', 'value': 0.0, 'unit': 'count',
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'VoltageRaw-RB': {
+            'type': 'int', 'value': 0.0, 'unit': 'count',
+            'lolo': -32768, 'low': -32768, 'lolim': -32768,
+            'hilim': 32767, 'high': 32767, 'hihi': 32767},
+        'VoltageRaw-Mon': {
+            'type': 'int', 'value': 0.0, 'unit': 'count'},
+        'Voltage-SP': {
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'V'},
+        'Voltage-RB': {
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'V'},
+        'Voltage-Mon': {
+            'type': 'float', 'prec': 12, 'value': 0.0, 'unit': 'V'},
     }
     dbase = _csdev.add_pvslist_cte(dbase)
     return dbase
+
 
 # --- FBP ---
 
