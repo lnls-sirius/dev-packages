@@ -64,7 +64,7 @@ class ConstTLines(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
-    DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_MAX_ORB_DISTORTION = 50  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
     MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
