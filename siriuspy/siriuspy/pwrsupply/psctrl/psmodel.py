@@ -35,8 +35,8 @@ class _PSModel:
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
         'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
         'ScopeDuration-RB': _c.V_SCOPE_DURATION,
-        # Period Sync Pulse
-        'PeriodSyncPulseCount-Mon': _c.V_PERIOD_SYNC_PULSE,
+        # Trigger pulse diagnostics
+        'NrCtrlCycBtwLastTrigs-Mon': _c.V_PERIOD_SYNC_PULSE,
         }
     _e2r = {
         # Epics to BSMP variable but with pre/post-processing
