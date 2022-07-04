@@ -840,17 +840,21 @@ class FOFBPSCycler:
         return self.check_current_zero(wait)
 
     def set_opmode_slowref(self):
-        """Set OpMode to CL_MANUAL, if needed."""
+        """Set OpMode to closed_loop_manual, if needed."""
         if self.check_opmode_slowref(wait=1):
             return True
-        sts = _pv_conn_put(self['OpMode-Sel'], _PSConst.OpModeFOFB.CL_MANUAL)
+        sts = _pv_conn_put(
+            self['OpMode-Sel'],
+            _PSConst.OpModeFOFB.closed_loop_manual)
         _time.sleep(TIMEOUT_SLEEP)
         return sts
 
     def check_opmode_slowref(self, wait=10):
-        """Check if OpMode is CL_MANUAL."""
+        """Check if OpMode is closed_loop_manual."""
         return _pv_timed_get(
-            self['OpMode-Sts'], _PSConst.OpModeFOFB.CL_MANUAL, wait=wait)
+            self['OpMode-Sts'],
+            _PSConst.OpModeFOFB.closed_loop_manual,
+            wait=wait)
 
     def cycle(self):
         """Cycle. This function may run in a thread."""

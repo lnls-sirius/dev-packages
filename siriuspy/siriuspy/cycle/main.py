@@ -760,7 +760,7 @@ class CycleController:
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            opmdes = 'CL_MANUAL' if 'FC' in psname else 'SlowRef'
+            opmdes = 'closed_loop_manual' if 'FC' in psname else 'SlowRef'
             self._update_log(psname+' is not in '+opmdes+'.', error=True)
             status &= False
         return status

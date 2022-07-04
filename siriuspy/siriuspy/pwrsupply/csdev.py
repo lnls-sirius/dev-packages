@@ -739,7 +739,11 @@ class ETypes(_csdev.ETypes):
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
     FOFB_OPMODES = (
-        'OL_MANUAL', 'OL_TEST_SQR', 'CL_MANUAL', 'CL_TEST_SQR', 'CL_FOFB')
+        'open_loop_manual',
+        'open_loop_test_sqr',
+        'closed_loop_manual',
+        'closed_loop_test_sqr',
+        'closed_loop_fofb')
     FOFB_ALARMS_AMP = (
         'Amplifier left over current flag',
         'Amplifier left over temperature flag',
@@ -1356,10 +1360,12 @@ def _get_ps_FOFB_propty_database():
         # OpMode
         'OpMode-Sel': {
             'type': 'enum', 'enums': _et.FOFB_OPMODES,
-            'value': Const.OpModeFOFB.OL_MANUAL, 'unit': 'opmodefofb'},
+            'value': Const.OpModeFOFB.open_loop_manual,
+            'unit': 'opmodefofb'},
         'OpMode-Sts': {
             'type': 'enum', 'enums': _et.FOFB_OPMODES,
-            'value': Const.OpModeFOFB.OL_MANUAL, 'unit': 'opmodefofb'},
+            'value': Const.OpModeFOFB.open_loop_manual,
+            'unit': 'opmodefofb'},
         # Test mode configurations
         'TestLimA-SP': {
             'type': 'int', 'value': 0,

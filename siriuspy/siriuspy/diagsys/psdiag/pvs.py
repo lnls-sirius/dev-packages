@@ -114,15 +114,15 @@ class PSStatusPV:
                 if psname.dev in ['FCH', 'FCV']:
                     opmode_sel = _ETypes.FOFB_OPMODES[sel]
                     opmode_sts = _ETypes.FOFB_OPMODES[sts]
-                    checkcurrdiff = sts == _PSConst.OpModeFOFB.CL_MANUAL
+                    checkdiff = sts == _PSConst.OpModeFOFB.closed_loop_manual
                 else:
                     opmode_sel = _ETypes.OPMODES[sel]
                     opmode_sts = _ETypes.STATES[sts]
-                    checkcurrdiff = sts == _PSConst.States.SlowRef
+                    checkdiff = sts == _PSConst.States.SlowRef
                 if opmode_sel != opmode_sts:
                     value |= PSStatusPV.BIT_OPMODEDIF
                 # current-diff?
-                if checkcurrdiff:
+                if checkdiff:
                     severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
                     if severity != 0:
                         value |= PSStatusPV.BIT_CURRTDIFF
