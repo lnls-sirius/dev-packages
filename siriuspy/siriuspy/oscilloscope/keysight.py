@@ -62,14 +62,14 @@ class Keysight:
         """."""
         self._socket.close()
 
-    def wfm_init(self):
-        """."""
+    def wfm_enable(self):
+        """Enable scope waveform acquisition."""
         self._socket.sendall(b'*IDN?\r\n')
         ans = self._socket.recv(1024).decode('ascii')
         return ans
 
     def wfm_config(self):
-        """Set waveform format."""
+        """Set scope waveform format."""
         sock = self._socket
         sock.sendall(b":WAVeform:FORMat WORD\n")
         sock.sendall(b":WAVeform:FORMat?\n")
@@ -81,7 +81,7 @@ class Keysight:
         sock.sendall(b':DIG\n')
 
     def wfm_acquire(self, channel):
-        """."""
+        """Acquire scope waveform."""
         if isinstance(channel, tuple):
             channel = channel[2]
         sock = self._socket
@@ -139,13 +139,13 @@ class Keysight:
         return datax, datay, srate, bdw
 
     def wfm_get_data(self, channel=None):
-        """."""
+        """Enable and get sccope waveform data."""
         channel = channel or self.chan
         self.connect()
         wavet = None
         waved = None
         try:
-            self.wfm_init()
+            self.wfm_enable()
             self.wfm_config()
             tini = _time.time()
             print('Acquiring ' + self.chan)
@@ -160,14 +160,14 @@ class Keysight:
 
         return wavet, waved
 
-    def stat_init(self):
+    def stats_enable(self):
         """Enable scope measurement statistics info."""
         sock = self._socket
         # Set bit order to MSB First
         sock.sendall(b":MEASure:STATistics ON\n")
         sock.sendall(b":MEASure:SENDvalid ON\n")
 
-    def stat_acquire(self):
+    def stats_acquire(self):
         """Return a dictionary of scope measurement statistics."""
         sock = self._socket
         sock.sendall(b":MEASure:RESults?\n")
@@ -187,14 +187,14 @@ class Keysight:
             data[label] = datum
         return data
 
-    def stat_get_data(self):
+    def stats_get_data(self):
         """."""
         self.connect()
         try:
-            self.stat_init()
+            self.stats_enable()
             tini = _time.time()
             print('Acquiring ' + self.chan)
-            wavet, waved, srate1, bdw1 = self.stat_acquire()
+            wavet, waved, srate1, bdw1 = self.stats_acquire()
             print('Total acquisition time:', _time.time() - tini)
         except Exception:
             print("Unexpected error:", _sys.exc_info()[0])
