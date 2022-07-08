@@ -574,7 +574,8 @@ class FBP(PSBSMP):
     def sofb_ps_setpoint_set(self, value):
         """."""
         if self._sofb_ps_setpoint is None:
-            self._sofb_ps_setpoint = _np.zeros(value.size, dtype=float)
+            self._sofb_ps_setpoint = _np.zeros(
+                _const_psbsmp.UDC_MAX_NR_DEV, dtype=float)
 
         # NOTE: NaNs in current vector are a way to avoid communication with
         #   udcs. In case only a few inputs are NaN they will be replaced by

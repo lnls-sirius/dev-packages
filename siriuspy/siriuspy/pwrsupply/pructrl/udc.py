@@ -200,9 +200,9 @@ class UDC:
         """Set SOFB Current."""
         if self._is_fbp:
             # set value
-            self._dev_first.sofb_ps_setpoint_set(value[:4])
+            self._dev_first.sofb_ps_setpoint_set(value[:_UDC_MAX_NR_DEV])
             if self._dev_second:
-                self._dev_second.sofb_ps_setpoint_set(value[4:])
+                self._dev_second.sofb_ps_setpoint_set(value[_UDC_MAX_NR_DEV:])
 
     def sofb_update(self):
         """Update sofb."""
