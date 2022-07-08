@@ -92,8 +92,8 @@ class Corrector(_BaseTimingConfig):
         """."""
         val = _PSConst.PwrStateSel.On if boo else _PSConst.PwrStateSel.Off
         pv = self._config_pvs_sp['PwrState']
-        if pv.connected:
-            self._config_ok_vals['PwrState'] = val
+        self._config_ok_vals['PwrState'] = val
+        if self.put_enable and pv.connected:
             pv.put(val, wait=False)
 
     @property
@@ -227,7 +227,7 @@ class CHCV(Corrector):
         """."""
         pvobj = self._config_pvs_sp['OpMode']
         self._config_ok_vals['OpMode'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -252,7 +252,7 @@ class CHCV(Corrector):
         """."""
         pvobj = self._config_pvs_sp['SOFBMode']
         self._config_ok_vals['SOFBMode'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -274,6 +274,9 @@ class CHCV(Corrector):
         """Configure method."""
         if not self.connected:
             return False
+
+        if not self.put_enable:
+            return True
         val = self._config_ok_vals['SOFBMode']
         self.sofbmode = 0
         for k, pvo in self._config_pvs_sp.items():
@@ -325,7 +328,7 @@ class Septum(Corrector):
         """."""
         pv = self._config_pvs_sp['Pulse']
         self._config_ok_vals['Pulse'] = val
-        if pv.connected and pv.value != val:
+        if self.put_enable and pv.connected and pv.value != val:
             pv.put(val, wait=False)
 
     @property
@@ -418,7 +421,7 @@ class TimingConfig(_BaseTimingConfig):
             return
         self._config_ok_vals['Src'] = value
         pvobj = self._config_pvs_sp['Src']
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.value = value
 
     @property
@@ -433,7 +436,7 @@ class TimingConfig(_BaseTimingConfig):
     def delayraw(self, value):
         """."""
         pvobj = self._config_pvs_sp['DelayRaw']
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.value = int(value)
 
     @property
@@ -701,7 +704,7 @@ class EpicsCorrectors(BaseCorrectors):
             _log.error(_traceback.format_exc())
 
     def set_corrs_mode(self, value):
-        """Set mode of CHs and CVs method."""
+        """Set mode of CHs and CVs method. Only called when acc==SI."""
         if value not in self._csorb.CorrSync:
             return False
         self._sync_kicks = value
@@ -716,16 +719,16 @@ class EpicsCorrectors(BaseCorrectors):
             self.set_timing_delay(self._csorb.CORR_DEF_DELAY)
             self.timing.sync_type = self.timing.CLK
 
-        corrs = self._get_used_corrs(include_rf=True)
-        for corr in corrs:
-            if corr.connected:
-                corr.opmode = val
-            else:
+        mask = self._get_mask()
+        for i, corr in enumerate(self._corrs[:-1]):
+            if mask[i] and not corr.connected:
                 msg = 'ERR: Failed to configure '
                 msg += corr.name
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
+            corr.put_enable = mask[i]
+            corr.opmode = val
 
         strsync = self._csorb.CorrSync._fields[self._sync_kicks]
         msg = 'Synchronization set to {0:s}'.format(strsync)
@@ -766,14 +769,15 @@ class EpicsCorrectors(BaseCorrectors):
         # and neither why the problem even occurs...
         _time.sleep(0.2)
 
-        chcvs = self._get_used_corrs(include_rf=False)
-        for corr in chcvs:
-            if not corr.connected:
+        mask = self._get_mask()
+        for i, corr in enumerate(self._corrs[:-1]):
+            if mask[i] and not corr.connected:
                 msg = 'ERR: Failed to configure '
                 msg += corr.name
                 self._update_log(msg)
                 _log.error(msg[5:])
                 continue
+            corr.put_enable = mask[i]
             corr.sofbmode = val
 
         self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
@@ -949,8 +953,11 @@ class EpicsCorrectors(BaseCorrectors):
         return mask
 
     def _get_used_corrs(self, include_rf=False):
+        corrs = []
         nrc = None if include_rf else self._csorb.nr_chcv
-        corrs = self._corrs[:nrc]
         mask = self._get_mask()[:nrc]
-        corrs = [corrs[i] for i, m in enumerate(mask) if m]
+        for i, corr in enumerate(self._corrs[:nrc]):
+            corr.put_enable = mask[i]
+            if mask[i]:
+                corrs.append(corr)
         return corrs
