@@ -166,6 +166,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAC_DCDC = ALARMS_FBP
     IIB_INTLCK_FAC_DCDC = (
         'Sobre-tensao de entrada',
         'Sobre-corrente de entrada',
@@ -235,6 +236,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAC_2S_DCDC = ALARMS_FBP
     IIB_INTLCK_FAC_2S_DCDC = (
         'Sobre-tensao de entrada',
         'Sobre-corrente de entrada',
@@ -405,6 +407,7 @@ class ETypes(_csdev.ETypes):
         'Interlock da placa IIB do modulo 8',
         'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAC_2P4S_DCDC = ALARMS_FBP
     IIB_INTLCK_FAC_2P4S_DCDC = (
         'Sobre-tensao de entrada', 'Sobre-corrente de entrada',
         'Sobre-corrente de saida',
@@ -540,6 +543,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    ALARMS_FAP = ALARMS_FBP
     IIB_INTLCK_FAP = (
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
@@ -604,6 +608,7 @@ class ETypes(_csdev.ETypes):
         'Interlock da placa IIB do modulo 3',
         'Interlock da placa IIB do modulo 4',
         'Bit30', 'Bit31')
+    ALARMS_FAP_4P = ALARMS_FBP
     IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     IIB_ALARMS_FAP_4P = (
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
@@ -667,6 +672,7 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no braco 1',
         'Sobre-corrente no braco 2',
         'Bit31')
+    ALARMS_FAP_2P2S = ALARMS_FBP
     IIB_INTLCK_FAP_2P2S = (
         'Sobre-tensao de entrada',
         'Sobre-tensao de saida',
@@ -1521,6 +1527,11 @@ def _get_ps_FAC_DCDC_propty_database():
             'count': len(_et.HARD_INTLCK_FAC_DCDC),
             'value': _et.HARD_INTLCK_FAC_DCDC,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAC_DCDC),
+            'value': _et.ALARMS_FAC_DCDC},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
@@ -1596,6 +1607,11 @@ def _get_ps_FAC_2S_DCDC_propty_database():
             'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
             'value': _et.HARD_INTLCK_FAC_2S_DCDC,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAC_2S_DCDC),
+            'value': _et.ALARMS_FAC_2S_DCDC},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
@@ -1711,6 +1727,11 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
             'count': len(_et.HARD_INTLCK_FAC_2P4S_DCDC),
             'value': _et.HARD_INTLCK_FAC_2P4S_DCDC,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAC_2P4S_DCDC),
+            'value': _et.ALARMS_FAC_2P4S_DCDC},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
@@ -2079,6 +2100,11 @@ def _get_ps_FAP_propty_database():
             'count': len(_et.HARD_INTLCK_FAP),
             'value': _et.HARD_INTLCK_FAP,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAP),
+            'value': _et.ALARMS_FAP},
         'DCLinkVoltage-Mon': {'type': 'float', 'value': 0.0,
                               'prec': PS_CURRENT_PRECISION,
                               'unit': 'V'},
@@ -2163,6 +2189,11 @@ def _get_ps_FAP_4P_propty_database():
             'count': len(_et.HARD_INTLCK_FAP_4P),
             'value': _et.HARD_INTLCK_FAP_4P,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAP_4P),
+            'value': _et.ALARMS_FAP_4P},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
@@ -2447,6 +2478,11 @@ def _get_ps_FAP_2P2S_propty_database():
             'count': len(_et.HARD_INTLCK_FAP_2P2S),
             'value': _et.HARD_INTLCK_FAP_2P2S,
             'unit': 'interlock'},
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_FAP_2P2S),
+            'value': _et.ALARMS_FAP_2P2S},
         'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': PS_CURRENT_PRECISION,
                          'unit': 'A'},
@@ -2566,13 +2602,13 @@ def _get_ps_FAP_2P2S_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
+        'LeakageCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'IntlkIIBMod1-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod1Labels-Cte':  {
             'type': 'string',
@@ -2614,9 +2650,6 @@ def _get_ps_FAP_2P2S_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod2-Mon': {'type': 'float', 'value': 0.0,
@@ -2660,13 +2693,13 @@ def _get_ps_FAP_2P2S_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
+        'LeakageCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'IntlkIIBMod3-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod3Labels-Cte':  {
             'type': 'string',
@@ -2708,14 +2741,14 @@ def _get_ps_FAP_2P2S_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2,
                                    'unit': 'C'},
         'RelativeHumidityIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
+        'LeakageCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': PS_CURRENT_PRECISION,
+                                      'unit': 'A'},
         'IntlkIIBMod4-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod4Labels-Cte':  {
             'type': 'string',

@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.39 V0.44 - 24/06/2022'
+__version__ = 'FRWM - V1.40 V0.44 - 30/06/2022'
 
 # maximum number of power supplies controlled with a UDC
 UDC_MAX_NR_DEV = 4
@@ -329,6 +329,7 @@ class ConstFAC_DCDC(ConstPSBSMP):
     V_RH_IIB = 50
     V_IIB_INTERLOCKS = 51
     V_IIB_ALARMS = 52
+    V_PS_ALARMS = 53
 
 
 class ConstFAC_2P4S_DCDC(ConstPSBSMP):
@@ -386,6 +387,7 @@ class ConstFAC_2P4S_DCDC(ConstPSBSMP):
     V_RH_IIB_B = 79
     V_IIB_INTERLOCKS_B = 80
     V_IIB_ALARMS_B = 81
+    V_PS_ALARMS = 82
 
 
 class ConstFAC_2S_DCDC(ConstPSBSMP):
@@ -429,6 +431,7 @@ class ConstFAC_2S_DCDC(ConstPSBSMP):
     V_RH_IIB_2 = 65
     V_IIB_INTERLOCKS_2 = 66
     V_IIB_ALARMS_2 = 67
+    V_PS_ALARMS = 68
 
 
 class ConstFAP(ConstPSBSMP):
@@ -462,6 +465,7 @@ class ConstFAP(ConstPSBSMP):
     V_RH_IIB = 55
     V_IIB_INTERLOCKS = 56
     V_IIB_ALARMS = 57
+    V_PS_ALARMS = 58
 
 
 class ConstFAP_4P(ConstPSBSMP):
@@ -559,6 +563,7 @@ class ConstFAP_4P(ConstPSBSMP):
     V_RH_IIB_4 = 119
     V_IIB_INTERLOCKS_4 = 120
     V_IIB_ALARMS_4 = 121
+    V_PS_ALARMS = 122
 
 
 class ConstFAP_2P2S(ConstPSBSMP):
@@ -625,7 +630,7 @@ class ConstFAP_2P2S(ConstPSBSMP):
     V_I_DRIVER_2_IIB_2 = 88
     V_TEMP_INDUCTOR_IIB_2 = 89
     V_TEMP_HEATSINK_IIB_2 = 90
-    V_I_LEAKAGE_IIB_2 = 91
+    V_PS_ALARMS = 91
     V_TEMP_BOARD_IIB_2 = 92
     V_RH_IIB_2 = 93
     V_IIB_INTERLOCKS_2 = 94

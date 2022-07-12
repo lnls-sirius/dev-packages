@@ -382,6 +382,7 @@ class PSModelFAC_DCDC(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
 
@@ -433,6 +434,7 @@ class PSModelFAC_2S_DCDC(_PSModel):
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -498,6 +500,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'RelativeHumidityIIBModB-Mon': _c.V_RH_IIB_B,
         'IntlkIIBModB-Mon': _c.V_IIB_INTERLOCKS_B,
         'AlarmsIIBModB-Mon': _c.V_IIB_ALARMS_B,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -539,6 +542,7 @@ class PSModelFAP(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -644,6 +648,7 @@ class PSModelFAP_4P(_PSModel):
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -718,7 +723,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
         'HeatSinkTemperatureIIBMod2-Mon': _c.V_TEMP_HEATSINK_IIB_2,
-        'LeakageCurrentIIBMod2-Mon': _c.V_I_LEAKAGE_IIB_2,
         'TemperatureIIBMod2-Mon': _c.V_TEMP_BOARD_IIB_2,
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
@@ -755,6 +759,7 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
