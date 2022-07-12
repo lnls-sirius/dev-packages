@@ -12,7 +12,7 @@ from ...bsmp import constants as _const_bsmp
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 
-__version__ = 'FRWM - V1.36 V0.41u - 09/04/2020'
+__version__ = 'FRWM - V1.39 V0.44 - 24/06/2022'
 
 # maximum number of power supplies controlled with a UDC
 UDC_MAX_NR_DEV = 4
@@ -175,9 +175,9 @@ class ConstPSBSMP:
     V_SCOPE_FREQUENCY = 25
     V_SCOPE_DURATION = 26
     V_SCOPE_SRC_DATA = 27
+    V_PERIOD_SYNC_PULSE = 28
 
     # --- undefined variables
-    V_UNDEF28 = 28
     V_UNDEF29 = 29
     V_UNDEF30 = 30
 
@@ -271,6 +271,7 @@ class ConstFBP(ConstPSBSMP):
     V_V_DCLINK = 35
     V_TEMP_SWITCHES = 36
     V_DUTY_CYCLE = 37  # (float)
+    V_PS_ALARMS = 38
     # --- FBP mirror variables ----
     V_PS_STATUS1 = 46
     V_PS_STATUS2 = 47
@@ -296,6 +297,10 @@ class ConstFBP(ConstPSBSMP):
     V_I_LOAD2 = 67
     V_I_LOAD3 = 68
     V_I_LOAD4 = 69
+    V_PS_ALARMS1 = 70
+    V_PS_ALARMS2 = 71
+    V_PS_ALARMS3 = 72
+    V_PS_ALARMS4 = 73
 
 
 class ConstFAC_DCDC(ConstPSBSMP):
