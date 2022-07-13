@@ -17,6 +17,7 @@ class ETypes(_csdev.ETypes):
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
+    IDLERUNNING = ('Idle', 'Running')
 
 
 _et = ETypes
@@ -33,6 +34,7 @@ class Const(_csdev.Const):
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
+    IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
     LI_STATUS_LABELS = ('Egun', 'PS', 'PU', 'RF', 'TI')
@@ -108,6 +110,9 @@ def get_injctrl_propty_database():
         'Type-Mon': {
             'type': 'enum', 'value': _ct.InjTypeMon.Undefined,
             'enums': _et.INJTYPE_MON},
+        'TypeCmdSts-Mon': {
+            'type': 'enum', 'value': _ct.IdleRunning.Idle,
+            'enums': _et.IDLERUNNING},
         'SglBunBiasVolt-SP': {
             'type': 'float', 'value': egsbbias, 'prec': 1,
             'unit': 'V', 'lolim': -150.0, 'hilim': 0.0},
@@ -120,18 +125,27 @@ def get_injctrl_propty_database():
         'MultBunBiasVolt-RB': {
             'type': 'float', 'value': egmbbias, 'prec': 1,
             'unit': 'V', 'lolim': -150.0, 'hilim': 0.0},
+        'BiasVoltCmdSts-Mon': {
+            'type': 'enum', 'value': _ct.IdleRunning.Idle,
+            'enums': _et.IDLERUNNING},
         'FilaOpCurr-SP': {
             'type': 'float', 'value': egfilacurr, 'prec': 3,
             'unit': 'A', 'lolim': 0.0, 'hilim': 1.5},
         'FilaOpCurr-RB': {
             'type': 'float', 'value': egfilacurr, 'prec': 3,
             'unit': 'A', 'lolim': 0.0, 'hilim': 1.5},
+        'FilaOpCurrCmdSts-Mon': {
+            'type': 'enum', 'value': _ct.IdleRunning.Idle,
+            'enums': _et.IDLERUNNING},
         'HVOpVolt-SP': {
             'type': 'float', 'value': eghvolt, 'prec': 3,
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
         'HVOpVolt-RB': {
             'type': 'float', 'value': eghvolt, 'prec': 3,
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
+        'HVOpVoltCmdSts-Mon': {
+            'type': 'enum', 'value': _ct.IdleRunning.Idle,
+            'enums': _et.IDLERUNNING},
         'TargetCurrent-SP': {
             'type': 'float', 'value': 100.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,

@@ -639,7 +639,10 @@ class PRUController:
             except _SerialError as err:
                 # no serial connection !
                 dt_ = _time() - t0_
-                print(f'!!! {err}. it took {dt_*1000:.3f} ms in bsmp_update_variables.')
+                print(
+                    f'!!! {_get_timestamp()}: {err}. '
+                    f'it took {dt_*1000:.3f} ms in bsmp_update_variables.'
+                )
 
     def _bsmp_update_wfm(self, device_id):
         """Read curve from devices."""
@@ -652,7 +655,10 @@ class PRUController:
         except _SerialError as err:
             # no serial connection !
             dt_ = _time() - t0_
-            print(f'!!! {err}. it took {dt_*1000:.3f} ms in bsmp_update_wfm.')
+            print(
+                f'!!! {_get_timestamp()}: {err}. '
+                f'it took {dt_*1000:.3f} ms in bsmp_update_wfm.'
+            )
 
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
