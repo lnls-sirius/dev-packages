@@ -341,14 +341,6 @@ class PSModelFBP(_PSModel):
             device_ids, epics_field, pru_controller, setpoints)
 
 
-class PSModelFBP_FOFB(_PSModel):
-    """FBP_FOFB power supply model."""
-
-    _n = 'FBP_FOFB'
-    _c = _const_psbsmp.ConstFBP
-    _e = _etity_psbsmp.EntitiesFBP
-
-
 class PSModelFAC_DCDC(_PSModel):
     """FAC power supply model."""
 
@@ -941,7 +933,6 @@ class PSModelFactory:
     _psname_2_factory = {
         'FBP': PSModelFBP,
         'FBP_DCLink': PSModelFBP_DCLink,
-        'FBP_FOFB': PSModelFBP,
         'FAC_DCDC': PSModelFAC_DCDC,
         'FAC_2S_DCDC': PSModelFAC_2S_DCDC,
         'FAC_2S_ACDC': PSModelFAC_2S_ACDC,
