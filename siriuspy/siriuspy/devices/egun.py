@@ -494,7 +494,6 @@ class EGun(_Devices, _Callback):
         self._hv_leakcurr = EGun.HV_LEAKCURR_OPVALUE
         self._filacurr_opval = EGun.FILACURR_OPVALUE
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
-        self._last_status = ''
         self._print_log = print_log
         self._abort_chg_type = _Flag()
         self._abort_rmp_hvps = _Flag()
