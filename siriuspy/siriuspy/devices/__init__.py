@@ -13,7 +13,7 @@ from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
-    LILLRFStandbyHandler
+    LILLRFStandbyHandler, InjSysPUModeHandler
 from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
