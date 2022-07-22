@@ -12,7 +12,9 @@ class ETypes(_csdev.ETypes):
 
     INJMODE = ('Decay', 'TopUp')
     INJTYPE = ('SingleBunch', 'MultiBunch')
-    INJTYPE_MON = ('SingleBunch', 'MultiBunch', 'Undefined')
+    INJTYPE_MON = INJTYPE + ('Undefined', )
+    PUMODE = ('Accumulation', 'Optimization', 'OnAxis')
+    PUMODE_MON = PUMODE + ('Undefined', )
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
@@ -31,6 +33,8 @@ class Const(_csdev.Const):
     InjMode = _csdev.Const.register('InjMode', _et.INJMODE)
     InjType = _csdev.Const.register('InjType', _et.INJTYPE)
     InjTypeMon = _csdev.Const.register('InjTypeMon', _et.INJTYPE_MON)
+    PUMode = _csdev.Const.register('PUMode', _et.PUMODE)
+    PUModeMon = _csdev.Const.register('PUModeMon', _et.PUMODE_MON)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
@@ -144,6 +148,18 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': eghvolt, 'prec': 3,
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
         'HVOpVoltCmdSts-Mon': {
+            'type': 'enum', 'value': _ct.IdleRunning.Idle,
+            'enums': _et.IDLERUNNING},
+        'PUMode-Sel': {
+            'type': 'enum', 'value': _ct.PUMode.Accumulation,
+            'enums': _et.PUMODE},
+        'PUMode-Sts': {
+            'type': 'enum', 'value': _ct.PUMode.Accumulation,
+            'enums': _et.PUMODE},
+        'PUMode-Mon': {
+            'type': 'enum', 'value': _ct.PUModeMon.Undefined,
+            'enums': _et.PUMODE_MON},
+        'PUModeCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
             'enums': _et.IDLERUNNING},
         'TargetCurrent-SP': {
