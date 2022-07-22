@@ -817,11 +817,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         """Switch to Accumulation."""
         self._abort.clear()
         self._update_status('Switching to PU Accumulation config...')
-        if not self.pudpk.interlock_ok:
-            self._update_status('ERR: DpK interlocks not ok. Aborted.')
-            return False
-        if not self.punlk.interlock_ok:
-            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+        if not self._check_pu_interlocks():
             return False
         if self._abort.is_set():
             self._clr_flag_abort()
@@ -829,13 +825,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if self.posang.need_ref_update:
-                self.posang.cmd_update_reference()
-            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
             delta = self.posang.delta_angx - self.TS_POSANG_DEFDELTA
-            self.posang.delta_angx = delta
-            if not self._wait(self.posang, 'delta_angx', delta):
-                self._update_status('ERR:Could not do delta AngX.')
+            if not self._do_delta_posang(delta):
                 return False
 
         # set pulsed magnet pwrstate and pulse
@@ -845,14 +836,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
             (self.punlk.cmd_turn_on, 'turn NLK on.'),
             (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
         )
-        for fun, msg in proced:
-            if self._abort.is_set():
-                self._clr_flag_abort()
-                return False
-            if not fun():
-                self._update_status('ERR:Could not ' + msg)
-                return False
-            _time.sleep(0.5)
+        if not self._do_procedures(proced):
+            return False
 
         self._update_status('PU mode switched to Accumulation!')
         return True
@@ -873,11 +858,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         """Switch to Optimization."""
         self._abort.clear()
         self._update_status('Switching to PU Optimization config...')
-        if not self.pudpk.interlock_ok:
-            self._update_status('ERR: DpK interlocks not ok. Aborted.')
-            return False
-        if not self.punlk.interlock_ok:
-            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+        if not self._check_pu_interlocks():
             return False
         if self._abort.is_set():
             self._clr_flag_abort()
@@ -885,37 +866,20 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if self.posang.need_ref_update:
-                self.posang.cmd_update_reference()
-            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
             delta = self.posang.delta_angx - self.TS_POSANG_DEFDELTA
-            self.posang.delta_angx = delta
-            if not self._wait(self.posang, 'delta_angx', delta):
-                self._update_status('ERR:Could not do delta AngX.')
+            if not self._do_delta_posang(delta):
                 return False
 
         if self._abort.is_set():
             self._clr_flag_abort()
             return False
 
-        # set DpK trigger event to NLK trigger event
-        dpk_event = self.trignlk.source
-        self.trigdpk.source = dpk_event
-        if not self._wait(self.trigdpk, 'source', dpk_event):
-            self._update_status('ERR:Could not set DpK trigger event.')
-            return False
-        # set DpK trigger DelayRaw to 0
-        self.trigdpk.delay_raw = self.SI_DPKCKR_DLYR_OPT
-        if not self._wait(self.trigdpk, 'delay_raw', self.SI_DPKCKR_DLYR_OPT):
-            self._update_status('ERR:Could not set DpK trigger delay.')
+        # configure DpK trigger
+        if not self._config_dpk_trigger(delayraw=self.SI_DPKCKR_DLYR_OPT):
             return False
 
         # set DpK Kick
-        self.pudpk.strength = self.SI_DPKCKR_DEFKICK
-        if not self._wait(self.pudpk, 'strength', self.SI_DPKCKR_DEFKICK):
-            self._update_status(
-                'ERR:Could not set DpK Kick to '
-                f'{self.SI_DPKCKR_DEFKICK:.1f}mrad.')
+        if not self._config_dpk_kick():
             return False
 
         # set pulsed magnet pwrstate and pulse
@@ -925,14 +889,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
             (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
             (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
         )
-        for fun, msg in proced:
-            if self._abort.is_set():
-                self._clr_flag_abort()
-                return False
-            if not fun():
-                self._update_status('ERR:Could not ' + msg)
-                return False
-            _time.sleep(0.5)
+        if not self._do_procedures(proced):
+            return False
 
         self._update_status('PU mode switched to Optimization!')
         return True
@@ -954,11 +912,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         """Switch to OnAxis."""
         self._abort.clear()
         self._update_status('Switching to PU OnAxis config...')
-        if not self.pudpk.interlock_ok:
-            self._update_status('ERR: DpK interlocks not ok. Aborted.')
-            return False
-        if not self.punlk.interlock_ok:
-            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+        if not self._check_pu_interlocks():
             return False
         if self._abort.is_set():
             self._clr_flag_abort()
@@ -966,38 +920,21 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if not previously in on-axis, do delta angle x
         if not self.is_onaxis:
-            if self.posang.need_ref_update:
-                self.posang.cmd_update_reference()
-            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
             delta = self.posang.delta_angx + self.TS_POSANG_DEFDELTA
-            self.posang.delta_angx = delta
-            if not self._wait(self.posang, 'delta_angx', delta):
-                self._update_status('ERR:Could not do delta AngX.')
+            if not self._do_delta_posang(delta):
                 return False
 
         if self._abort.is_set():
             self._clr_flag_abort()
             return False
 
-        # set DpK trigger event to NLK trigger event
-        dpk_event = self.trignlk.source
-        self.trigdpk.source = dpk_event
-        if not self._wait(self.trigdpk, 'source', dpk_event):
-            self._update_status('ERR:Could not set DpK trigger event.')
-            return False
-        # set DpK trigger DelayRaw to NLK DelayRaw + increment
-        dpk_delay = self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
-        self.trigdpk.delay_raw = dpk_delay
-        if not self._wait(self.trigdpk, 'delay_raw', dpk_delay):
-            self._update_status('ERR:Could not set DpK trigger delay.')
+        # configure DpK trigger
+        delay = self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
+        if not self._config_dpk_trigger(delayraw=delay):
             return False
 
         # set DpK Kick
-        self.pudpk.strength = self.SI_DPKCKR_DEFKICK
-        if not self._wait(self.pudpk, 'strength', self.SI_DPKCKR_DEFKICK):
-            self._update_status(
-                'ERR:Could not set DpK Kick to '
-                f'{self.SI_DPKCKR_DEFKICK:.1f}mrad.')
+        if not self._config_dpk_kick():
             return False
 
         # set pulsed magnet pwrstate and pulse
@@ -1007,7 +944,56 @@ class InjSysPUModeHandler(_Devices, _Callback):
             (self.pudpk.cmd_turn_on, 'turn DpK on.'),
             (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
         )
-        for fun, msg in proced:
+        if not self._do_procedures(proced):
+            return False
+
+        self._update_status('PU mode switched to OnAxis!')
+        return True
+
+    def _check_pu_interlocks(self):
+        if not self.pudpk.interlock_ok:
+            self._update_status('ERR: DpK interlocks not ok. Aborted.')
+            return False
+        if not self.punlk.interlock_ok:
+            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+            return False
+        return True
+
+    def _do_delta_posang(self, delta):
+        if self.posang.need_ref_update:
+            self.posang.cmd_update_reference()
+        _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
+        self.posang.delta_angx = delta
+        if not self._wait(self.posang, 'delta_angx', delta):
+            self._update_status('ERR:Could not do delta AngX.')
+            return False
+        return True
+
+    def _config_dpk_trigger(self, delayraw):
+        # set DpK trigger event to NLK trigger event
+        dpk_event = self.trignlk.source
+        self.trigdpk.source = dpk_event
+        if not self._wait(self.trigdpk, 'source', dpk_event):
+            self._update_status('ERR:Could not set DpK trigger event.')
+            return False
+        # set DpK trigger DelayRaw
+        self.trigdpk.delay_raw = delayraw
+        if not self._wait(self.trigdpk, 'delay_raw', delayraw):
+            self._update_status('ERR:Could not set DpK trigger delay.')
+            return False
+        return True
+
+    def _config_dpk_kick(self):
+        self.pudpk.strength = self.SI_DPKCKR_DEFKICK
+        if not self._wait(self.pudpk, 'strength', self.SI_DPKCKR_DEFKICK):
+            self._update_status(
+                'ERR:Could not set DpK Kick to '
+                f'{self.SI_DPKCKR_DEFKICK:.1f}mrad.')
+            return False
+        return True
+
+    def _do_procedures(self, procedures):
+        for fun, msg in procedures:
             if self._abort.is_set():
                 self._clr_flag_abort()
                 return False
@@ -1015,8 +1001,6 @@ class InjSysPUModeHandler(_Devices, _Callback):
                 self._update_status('ERR:Could not ' + msg)
                 return False
             _time.sleep(0.5)
-
-        self._update_status('PU mode switched to OnAxis!')
         return True
 
     # -------- thread help methods --------
