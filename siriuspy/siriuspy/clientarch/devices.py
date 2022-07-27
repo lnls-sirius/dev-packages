@@ -8,6 +8,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
 
+from . import exceptions as _exceptions
 from .pvarch import PVDataSet as _PVDataSet
 from .time import Time as _Time
 
@@ -106,7 +107,7 @@ class BaseDevice(_PVDataSet):
                 index = self._devnames.index(index)
                 pvname = self._pvnames[index]
             else:
-                raise IndexError
+                raise _exceptions.IndexError
         pvdata = self._pvdata[pvname]
         return pvdata.timestamp, pvdata.value * Orbit._CONV
 

@@ -9,7 +9,6 @@ class PSBSMPFactory:
     psname_2_psbsmp = {
         'FBP': _cmd_bsmp.FBP,
         'FBP_DCLink': _cmd_bsmp.FBP_DCLink,
-        'FBP_FOFB': _cmd_bsmp.FBP,
         'FAC_DCDC': _cmd_bsmp.FAC_DCDC,
         'FAC_2S_DCDC': _cmd_bsmp.FAC_2S_DCDC,
         'FAC_2S_ACDC': _cmd_bsmp.FAC_2S_ACDC,

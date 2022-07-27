@@ -194,7 +194,7 @@ class PSApplySOFB(_Devices):
         SI = 'SI'
         ALL = (BO, SI)
 
-    def __init__(self, devname, auto_mon=False):
+    def __init__(self, devname, auto_mon=False, dipoleoff=False):
         """."""
         # check if device exists
         if devname not in PSApplySOFB.DEVICES.ALL:
@@ -216,6 +216,9 @@ class PSApplySOFB(_Devices):
         # number of correctors
         self._nr_chs = len(self.psnames_ch)
         self._nr_cvs = len(self.psnames_cv)
+
+        # dipole off: used to convert current<->kick with fixed 3GeV energy
+        self._dipoleoff = dipoleoff
 
     @property
     def psnames_ch(self):
@@ -326,7 +329,11 @@ class PSApplySOFB(_Devices):
         for pstype, index in self._pstype_2_index.items():
             sconv = self._pstype_2_sconv[pstype]
             value = current[index]
-            stren = sconv.conv_current_2_strength(currents=value)
+            if self._dipoleoff:
+                stren = sconv.conv_current_2_strength(
+                    currents=value, strengths_dipole=3.0)
+            else:
+                stren = sconv.conv_current_2_strength(currents=value)
             strength[index] = stren
         return strength
 
@@ -336,7 +343,11 @@ class PSApplySOFB(_Devices):
             sconv = self._pstype_2_sconv[pstype]
             value = strength[index]
             idcs = ~_np.isnan(value)
-            curr = sconv.conv_strength_2_current(strengths=value[idcs])
+            if self._dipoleoff:
+                curr = sconv.conv_strength_2_current(
+                    strengths=value[idcs], strengths_dipole=3.0)
+            else:
+                curr = sconv.conv_strength_2_current(strengths=value[idcs])
             current[index[idcs]] = curr
         return current
 

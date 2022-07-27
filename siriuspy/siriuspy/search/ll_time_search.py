@@ -178,6 +178,16 @@ class LLTimeSearch:
         return cls.get_device_names({'dev': 'EVG'})[0]
 
     @classmethod
+    def get_evg2fout_mapping(cls):
+        fouts = cls.get_device_names({'dev': 'Fout'})
+        link = list(cls.In2OutMap['Fout'])[0]
+        mapp = dict()
+        for fout in fouts:
+            out = cls.get_evg_channel(fout.substitute(propty=link))
+            mapp[out.propty] = fout.device_name
+        return mapp
+
+    @classmethod
     def get_triggersource_devices(cls):
         cls._get_timedata()
         return _dcopy(cls._trig_src_devs)

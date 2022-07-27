@@ -2,7 +2,7 @@
 
 from .bbb import BunchbyBunch
 from .blscreen import BeamlineScreen
-from .bpm import BPM
+from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
@@ -14,14 +14,15 @@ from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
     LILLRFStandbyHandler
-from .lillrf import LILLRF
+from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
-from .orbit_interlock import BPMInterlock
+from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav
+from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
+    RFKillBeam
 from .screen import Screen
 from .sofb import SOFB
 from .syncd import DevicesSync

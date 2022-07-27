@@ -22,10 +22,11 @@ class SOFB(_BaseClass):
 
     def __init__(
             self, acc, prefix='', callback=None, orbit=None, matrix=None,
-            correctors=None):
+            correctors=None, tests=False):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
+        self._tests = tests
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
@@ -33,15 +34,20 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.0, ki=5.0, kd=0.0),
-            cv=dict(kp=0.0, ki=3.75, kd=0.0),
-            rf=dict(kp=0.0, ki=5.0, kd=0.0))
+            ch=dict(kp=0.1, ki=2.0, kd=0.0),
+            cv=dict(kp=0.1, ki=2.0, kd=0.0),
+            rf=dict(kp=0.1, ki=2.0, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 5, 'cv': 5}
         self._meas_respmat_kick = {'ch': 15, 'cv': 15}
+        if self.isring:
+            self._mancorr_gain['rf'] = 1.00
+            self._max_kick['rf'] = 1e12  # a very large value
+            self._max_delta_kick['rf'] = 10
+            self._meas_respmat_kick['rf'] = 80
         if self.acc == 'SI':
             self._drive_divisor = 12
             self._drive_nrcycles = 10
@@ -51,10 +57,6 @@ class SOFB(_BaseClass):
             self._drive_bpm_index = 0
             self._drive_type = self._csorb.DriveType.Sine
             self._drive_state = self._csorb.DriveState.Open
-            self._mancorr_gain['rf'] = 1.00
-            self._max_kick['rf'] = 1e12  # a very large value
-            self._max_delta_kick['rf'] = 10
-            self._meas_respmat_kick['rf'] = 80
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
@@ -95,6 +97,14 @@ class SOFB(_BaseClass):
             'ApplyDelta-Cmd': self.apply_corr,
             }
         if self.isring:
+            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
+            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
+            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
+            dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
+            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            dbase['DeltaKickRF-SP'] = _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.RF)
+            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
@@ -105,14 +115,6 @@ class SOFB(_BaseClass):
             dbase['DriveBPMIndex-SP'] = self.set_drive_bpm_index
             dbase['DriveType-Sel'] = self.set_drive_type
             dbase['DriveState-Sel'] = self.set_drive_state
-            dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
-            dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
-            dbase['LoopPIDKdRF-SP'] = _part(self.set_pid_gain, 'kd', 'rf')
-            dbase['ManCorrGainRF-SP'] = _part(self.set_mancorr_gain, 'rf')
-            dbase['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
-            dbase['DeltaKickRF-SP'] = _part(
-                self.set_delta_kick, self._csorb.ApplyDelta.RF)
-            dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         return dbase
 
     @property
@@ -126,6 +128,7 @@ class SOFB(_BaseClass):
         if isinstance(orb, _BaseOrbit):
             self._map2write.update(orb.get_map2write())
             self._orbit = orb
+            self._orbit.sofb = self
 
     @property
     def correctors(self):
@@ -138,6 +141,7 @@ class SOFB(_BaseClass):
         if isinstance(corrs, _BaseCorrectors):
             self._map2write.update(corrs.get_map2write())
             self._correctors = corrs
+            self._correctors.sofb = self
 
     @property
     def matrix(self):
@@ -150,11 +154,12 @@ class SOFB(_BaseClass):
         if isinstance(mat, _BaseMatrix):
             self._map2write.update(mat.get_map2write())
             self._matrix = mat
+            self._matrix.sofb = self
 
     @property
     def havebeam(self):
         """."""
-        if self.acc != 'SI':
+        if self._tests or self.acc != 'SI':
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
 
@@ -440,7 +445,7 @@ class SOFB(_BaseClass):
             self._dtheta[nr_ch:nr_chcv] = dkicks
             self.run_callbacks('DeltaKickCV-RB', list(dkicks))
             self.run_callbacks('DeltaKickCV-Mon', list(dkicks))
-        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
+        elif self.isring and code == self._csorb.ApplyDelta.RF:
             self._dtheta[-1] = dkicks
             self.run_callbacks('DeltaKickRF-RB', float(dkicks))
             self.run_callbacks('DeltaKickRF-Mon', float(dkicks))
@@ -461,9 +466,9 @@ class SOFB(_BaseClass):
             dkicks[nr_ch:] = 0
         elif code == self._csorb.ApplyDelta.CV:
             dkicks[:nr_ch] = 0
-            if self.acc == 'SI':
+            if self.isring:
                 dkicks[-1] = 0
-        elif self.acc == 'SI' and code == self._csorb.ApplyDelta.RF:
+        elif self.isring and code == self._csorb.ApplyDelta.RF:
             dkicks[:-1] = 0
         msg = f'Applying {self._csorb.ApplyDelta._fields[code]:s} kicks.'
         self._update_log(msg)
@@ -684,31 +689,37 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
-        count = 0
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+
+        wait_orb_error = int(5)
+        previous_orb_problem = False
+        tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if count >= 1000:
+            if len(times) >= 1000:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
                 times, rets = [], []
-                count = 0
-            count += 1
-            tims = []
 
             interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
                 norbs = max(int(bpmsfreq*interval), 1)
+            elif tims:
+                # if not pssofb wait for interval to be satisfied
+                dtime = tims[0] - tims[-1]
+                dtime += interval
+                _sleep(max(dtime, 0))
 
+            tims = []
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
@@ -717,6 +728,13 @@ class SOFB(_BaseClass):
                 if i >= norbs:
                     break
                 orb = self.orbit.get_orbit(synced=True)
+
+            if self._tests:
+                orb *= 0
+                orb += _np.random.rand(orb.size)
+                orb -= orb.mean()  # avoid RF integration error.
+                orb *= 2 * 3  # Maximum orbit distortion of 3 um
+
             tims.append(_time())
 
             self._ref_corr_kicks = self.correctors.get_strength()
@@ -726,12 +744,38 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
-                break
+                # NOTE: The code bellow is the default implementation.
+                #       We decided to use the temporaty work around solution
+                #       implemented above to handle mal-functioning BPMs.
+                # self._loop_state = self._csorb.LoopState.Open
+                # self.run_callbacks('LoopState-Sel', 0)
+                # break
+
+                self.run_callbacks('LoopState-Sts', 0)
+                msg = 'WARN: Skipping iteration.'
+                self._update_log(msg)
+                _log.info(msg)
+                for ii_ in range(wait_orb_error):
+                    msg = f'WARN: waiting {wait_orb_error-ii_:d}s ...'
+                    self._update_log(msg)
+                    _log.info(msg)
+                    _sleep(1)
+                msg = f'WARN: Trying again...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = True
+                continue
+            elif previous_orb_problem:
+                msg = f'WARN: Orbit is Ok now. Resuming correction...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = False
+                self.run_callbacks('LoopState-Sts', 1)
+
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
                 self._ref_corr_kicks, dkicks, apply_gain=False)
+
             tims.append(_time())
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
@@ -753,10 +797,6 @@ class SOFB(_BaseClass):
                 # skip this iteration
                 continue
 
-            dtime = tims[0] - tims[-1]
-            dtime += interval
-            if not use_pssofb and dtime > 0:
-                _sleep(dtime)
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
@@ -774,7 +814,7 @@ class SOFB(_BaseClass):
         errs = self._pid_errs
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
-        if self.acc == 'SI':
+        if self.isring:
             slcs = {
                 'ch': slice(None, nr_ch),
                 'cv': slice(nr_ch, -1),
@@ -785,6 +825,13 @@ class SOFB(_BaseClass):
             kpt = gin['kp']
             kdt = gin['kd']/interval
             kit = gin['ki']*interval
+
+            if self._tests:
+                # Do not use integrators when testing without beam:
+                kit = 0
+                if pln == 'rf':
+                    # Do not use RF when testing without beam:
+                    kpt = kdt = 0
 
             qq0 = kpt + kdt + kit
             qq1 = -kpt - 2*kdt
@@ -800,7 +847,7 @@ class SOFB(_BaseClass):
         ok_ = _np.sum(rets == 0) / rets.size * 100
         tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
-        diff = _np.sum(bo_diff)  / rets.size * 100
+        diff = _np.sum(bo_diff) / rets.size * 100
         _log.info('PERFORMANCE:')
         self.run_callbacks('LoopPerfItersOk-Mon', ok_)
         self.run_callbacks('LoopPerfItersTOut-Mon', tout)
@@ -879,7 +926,7 @@ class SOFB(_BaseClass):
 
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
-        if self.acc == 'SI':
+        if self.isring:
             slcs = {
                 'ch': slice(None, nr_ch),
                 'cv': slice(nr_ch, -1),

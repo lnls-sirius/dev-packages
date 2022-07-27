@@ -28,8 +28,8 @@ class ETypes(_csdev.ETypes):
     SPASS_USE_BG = ('NotUsing', 'Using')
     MTURN_ACQUIRE = ('Idle', 'Acquire')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
+    APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_DELTA_MON = ('Idle', 'Applying', 'Done', 'Error')
-    APPLY_CORR_SI = ('CH', 'CV', 'RF', 'All')
     SI_CORR_SYNC = ('Off', 'Event', 'Clock')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
@@ -42,8 +42,7 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_CORR_TLINES = (
         'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn')
     STS_LBLS_CORR_RINGS = STS_LBLS_CORR_TLINES + (
-        'TimingConnected', 'TimingConfigured')
-    STS_LBLS_CORR_SI = STS_LBLS_CORR_RINGS + ('RFConnected', 'RFPwrStateOn')
+        'TimingConnected', 'TimingConfigured', 'RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
         'BPMsEnabled', 'BPMsConfigured')
@@ -65,7 +64,7 @@ class ConstTLines(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
-    DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_MAX_ORB_DISTORTION = 50  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
     MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
@@ -109,23 +108,22 @@ class ConstRings(ConstTLines):
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
     MTurnAcquire = _csdev.Const.register('MTurnAcquire', _et.MTURN_ACQUIRE)
+    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_RINGS)
+    EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
+    RF_GEN_NAME = 'RF-Gen'
 
 
 class ConstSI(ConstRings):
     """Const class defining rings orbitcorr constants."""
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
-    ApplyDelta = _csdev.Const.register('ApplyDelta', _et.APPLY_CORR_SI)
-    StsLblsCorr = _csdev.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
     CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
     CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
-    RF_GEN_NAME = 'RF-Gen'
-    CORR_DEF_DELAY = 18  # [ms]
-    EnblRF = _csdev.Const.register('EnblRF', _et.ENBL_RF)
+    CORR_DEF_DELAY = 12  # [ms]
 
 
 # --- Database classes ---
@@ -138,6 +136,7 @@ class SOFBTLines(ConstTLines):
         self.acc = acc.upper()
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
+
         # Define the BPMs and correctors:
         self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
         self.ch_names = _PSSearch.get_psnames(
@@ -155,12 +154,14 @@ class SOFBTLines(ConstTLines):
                 lambda x: not x.sub.endswith(id_cors), self.ch_names))
             self.cv_names = list(filter(
                 lambda x: not x.sub.endswith(id_cors), self.cv_names))
+
         # Give them a nickname:
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
         if self.acc == 'TS':
             self.ch_nicknames[0] = 'EjeseptG'
+
         # Find their position along the ring:
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
         self.ch_pos = _MASearch.get_mapositions(map(
@@ -169,12 +170,13 @@ class SOFBTLines(ConstTLines):
         self.cv_pos = _MASearch.get_mapositions(map(
             lambda x: x.substitute(dis='MA' if x.dis == 'PS' else 'PM'),
             self.cv_names))
+
         # Find the total number of BPMs and correctors:
         self.nr_bpms = len(self.bpm_names)
         self.nr_ch = len(self.ch_names)
         self.nr_cv = len(self.cv_names)
         self.nr_chcv = self.nr_ch + self.nr_cv
-        self.nr_corrs = self.nr_chcv + 1 if acc == 'SI' else self.nr_chcv
+        self.nr_corrs = self.nr_chcv + 1 if self.isring else self.nr_chcv
 
         ext = acc.lower() + 'orb'
         ioc_fol = acc.lower() + '-ap-sofb'
@@ -210,7 +212,7 @@ class SOFBTLines(ConstTLines):
         return dbase
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         dbase = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
             'LoopState-Sel': {
@@ -224,28 +226,28 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCH-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 3.75, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -442,7 +444,7 @@ class SOFBTLines(ConstTLines):
         return self._add_prefix(dbase, prefix)
 
     def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB Correctors database."""
         dbase = {
             'KickAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 2,
@@ -683,7 +685,7 @@ class SOFBTLines(ConstTLines):
         return self._add_prefix(dbase, prefix)
 
     def get_respmat_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB respmat database."""
         dbase = {
             'RespMat-SP': {
                 'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
@@ -789,8 +791,47 @@ class SOFBRings(SOFBTLines, ConstRings):
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         db_ring = {
+            'MeasRespMatKickRF-SP': {
+                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'lolim': 1, 'hilim': 1000},
+            'MeasRespMatKickRF-RB': {
+                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'lolim': 1, 'hilim': 1000},
+            'LoopPIDKpRF-SP': {
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpRF-RB': {
+                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-SP': {
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-RB': {
+                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'ManCorrGainRF-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -1000, 'hilim': 1000},
+            'ManCorrGainRF-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'MaxDeltaKickRF-SP': {
+                'type': 'float', 'value': 10, 'unit': 'Hz', 'prec': 2,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-RB': {
+                'type': 'float', 'value': 10, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            'DeltaKickRF-SP': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            'DeltaKickRF-RB': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             'RingSize-SP': {
                 'type': 'int', 'value': 1, 'lolim': 0,
                 'hilim': self.MAX_RINGSZ+1,
@@ -801,6 +842,34 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'unit': 'Nr Times to extend the ring'},
             }
         dbase = super().get_sofb_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
+
+    def get_corrs_database(self, prefix=''):
+        """Return SOFB correctors database."""
+        db_ring = {
+            'KickRF-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
+            'OrbLength-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'm', 'prec': 6},
+            }
+        dbase = super().get_corrs_database(prefix=prefix)
+        dbase.update(self._add_prefix(db_ring, prefix))
+        return dbase
+
+    def get_respmat_database(self, prefix=''):
+        """Return SOFB respmat database."""
+        db_ring = {
+            'RFEnbl-Sel': {
+                'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
+                'unit': 'If RF is used in correction'},
+            'RFEnbl-Sts': {
+                'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
+                'unit': 'If RF is used in correction'},
+            'DeltaKickRF-Mon': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            }
+        dbase = super().get_respmat_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 
@@ -889,47 +958,8 @@ class SOFBSI(SOFBRings, ConstSI):
         self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB database."""
         db_ring = {
-            'MeasRespMatKickRF-SP': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
-                'lolim': 1, 'hilim': 1000},
-            'MeasRespMatKickRF-RB': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
-                'lolim': 1, 'hilim': 1000},
-            'LoopPIDKpRF-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKpRF-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 5.0, 'unit': 'frac.Hz', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdRF-SP': {
-                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'LoopPIDKdRF-RB': {
-                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
-                'lolim': -1000, 'hilim': 1000},
-            'ManCorrGainRF-SP': {
-                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
-            'ManCorrGainRF-RB': {
-                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'MaxDeltaKickRF-SP': {
-                'type': 'float', 'value': 10, 'unit': 'Hz', 'prec': 2,
-                'lolim': 0, 'hilim': 10000},
-            'MaxDeltaKickRF-RB': {
-                'type': 'float', 'value': 10, 'prec': 2, 'unit': 'Hz',
-                'lolim': 0, 'hilim': 10000},
-            'DeltaKickRF-SP': {
-                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
-            'DeltaKickRF-RB': {
-                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
                 'lolim': 0, 'hilim': 1000},
@@ -989,7 +1019,7 @@ class SOFBSI(SOFBRings, ConstSI):
         return dbase
 
     def get_corrs_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
+        """Return SOFB correctors database."""
         db_ring = {
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
@@ -1009,28 +1039,8 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrPSSOFBWait-Sts': {
                 'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
                 'value': self.CorrPSSOFBWait.Off},
-            'KickRF-Mon': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 2},
-            'OrbLength-Mon': {
-                'type': 'float', 'value': 1, 'unit': 'm', 'prec': 6},
             }
         dbase = super().get_corrs_database(prefix=prefix)
-        dbase.update(self._add_prefix(db_ring, prefix))
-        return dbase
-
-    def get_respmat_database(self, prefix=''):
-        """Return OpticsCorr-Chrom Soft IOC database."""
-        db_ring = {
-            'RFEnbl-Sel': {
-                'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
-                'unit': 'If RF is used in correction'},
-            'RFEnbl-Sts': {
-                'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
-                'unit': 'If RF is used in correction'},
-            'DeltaKickRF-Mon': {
-                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
-            }
-        dbase = super().get_respmat_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 

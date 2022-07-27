@@ -16,7 +16,7 @@ class PSDiagApp(_App):
     def _create_computed_pvs(self, psnames):
         self._psnames = psnames
         for psname in self._psnames:
-            devname = SiriusPVName(self._prefix + psname)
+            devname = SiriusPVName(psname).substitute(prefix=self._prefix)
 
             # DiagCurrentDiff-Mon
             pvs = [None, None]
@@ -42,29 +42,32 @@ class PSDiagApp(_App):
                         alarm_list.extend(
                             [aux+':'+alm for alm in intlks if 'Alarm' in alm])
 
-                pvs = [None]*(5+len(intlk_list)+len(alarm_list))
+                nbpvs = 4 if psname.dev in ['FCH', 'FCV'] else 5
+                pvs = [None]*(nbpvs+len(intlk_list)+len(alarm_list))
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
                 pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
-                pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
+                if psname.dev not in ['FCH', 'FCV']:
+                    pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
 
                 computer.INTLK_PVS = list()
                 for idx, intlk in enumerate(intlk_list):
-                    pvidx = idx + computer.WAVFRM_MON + 1
+                    pvidx = idx + nbpvs
                     computer.INTLK_PVS.append(pvidx)
                     pvs[pvidx] = devname + intlk
                 computer.ALARM_PVS = list()
                 for idx, alarm in enumerate(alarm_list):
-                    pvidx = idx + computer.INTLK_PVS[-1] + 1
+                    pvidx = idx + nbpvs + len(intlk_list)
                     computer.ALARM_PVS.append(pvidx)
                     pvs[pvidx] = devname + alarm
             else:
-                pvs = [None]*4
+                pvs = [None]*5
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.INTRLCK_LI] = devname + ':StatusIntlk-Mon'
                 pvs[_PSStatusPV.WARNSTS_LI] = devname + ':IntlkWarn-Mon'
+                pvs[_PSStatusPV.CONNCTD_LI] = devname + ':Connected-Mon'
 
             pvo = _ComputedPV(
                 psname + ':DiagStatus-Mon', computer, self._queue,

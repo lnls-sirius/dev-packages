@@ -48,7 +48,8 @@ class Message:
     def __init__(self, stream: typing.List[str]):
         """Build a BSMP message."""
         if len(stream) < 3:
-            raise _SerialErrMsgShort("BSMP Message too short.")
+            raise _SerialErrMsgShort(
+                f"BSMP Message too short (stream: {stream}).")
         self._stream: typing.List[str] = stream
         self._cmd: int = ord(stream[0])
 
@@ -118,10 +119,11 @@ class Package:
     ):
         """Build a BSMP package."""
         if len(stream) < 5:
-            raise _SerialErrPckgLen("BSMP Package too short.")
+            raise _SerialErrPckgLen(
+                f"BSMP Package too short (stream: {stream}).")
         if not Package.verify_checksum(stream):
             raise _SerialErrCheckSum(
-                "Inconsistent message. Checksum does not check.")
+                f"Inconsistent message. Checksum does not check (stream: {stream}).")
 
         self._stream: typing.List[str] = stream
         self._address: int = ord(stream[0])  # 0 to 31

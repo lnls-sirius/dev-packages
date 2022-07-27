@@ -27,7 +27,7 @@ def get_magfunc_2_multipole_dict():
     """Return multipole dict given the magnetic function.
 
     Conventions:
-        1. harmonics: 0 (dipole), 1 (quadrupole), 2 (sectupole), etc
+        1. harmonics: 0 (dipole), 1 (quadrupole), 2 (sextupole), etc
         2. 'normal' for  normal field and 'skew' for skew field.
     """
     _magfuncs = {
@@ -38,6 +38,7 @@ def get_magfunc_2_multipole_dict():
         'quadrupole-skew': {'type': 'skew', 'harmonic': 1},
         'sextupole': {'type': 'normal', 'harmonic': 2},
         'id-apu': {'type': 'normal', 'harmonic': 0},
+        'lens': {'type': 'normal', 'harmonic': 1},
     }
     return _magfuncs
 
@@ -69,6 +70,21 @@ def get_multipole_si_units(harmonic, power=None, product=None):
     else:
         power = '^' if power is None else power
         return 'T/m{0:s}{1:d}'.format(power, harmonic-1)
+
+
+def linear_interpolation(xvals, xtab, ytab):
+    """Return linear interpolation function value."""
+    interp = _numpy.interp(
+        xvals, xtab, ytab, left=-_numpy.inf, right=_numpy.inf)
+    neg = _numpy.isneginf(interp)
+    pos = _numpy.isposinf(interp)
+    if neg.any():
+        interp[neg] = linear_extrapolation(
+            xvals[neg], xtab[0], xtab[1], ytab[0], ytab[1])
+    if pos.any():
+        interp[pos] = linear_extrapolation(
+            xvals[pos], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
+    return interp
 
 
 def linear_extrapolation(x, x1, x2, y1, y2):

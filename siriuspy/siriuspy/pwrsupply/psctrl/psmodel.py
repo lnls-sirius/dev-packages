@@ -35,6 +35,8 @@ class _PSModel:
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
         'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
         'ScopeDuration-RB': _c.V_SCOPE_DURATION,
+        # Trigger pulse diagnostics
+        'NrCtrlCycBtwLastTrigs-Mon': _c.V_PERIOD_SYNC_PULSE,
         }
     _e2r = {
         # Epics to BSMP variable but with pre/post-processing
@@ -45,7 +47,7 @@ class _PSModel:
         'Version-Cte': (_readers.Version, _c.V_FIRMWARE_VERSION),
         }
     _e2c = {
-        # Epics to PRUCrontroller property
+        # Epics to PRUController property
         'PRUCtrlQueueSize-Mon': 'queue_length',
         }
     _e2o = {
@@ -252,6 +254,8 @@ class _PSModel:
         if epics_field == 'SyncPulse-Cmd':
             return _writers.Command(
                 device_ids, pru_controller, _c.F_SYNC_PULSE, setpoints)
+        if epics_field == 'ParamUpdate-Cmd':
+            return _writers.ParamUpdate(device_ids, pru_controller, setpoints)
         if epics_field == 'Abort-Cmd':
             return _writers.BSMPFunctionNull()
         return None
@@ -304,16 +308,17 @@ class PSModelFBP(_PSModel):
     _e = _etity_psbsmp.EntitiesFBP
 
     _bsmp_variables = {
-        'IntlkSoft-Mon':  _const_psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon':  _const_psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _const_psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
-        'Current-RB':  _const_psbsmp.ConstFBP.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _const_psbsmp.ConstFBP.V_PS_REFERENCE,
-        'Current-Mon':  _const_psbsmp.ConstFBP.V_I_LOAD,
-        'LoadVoltage-Mon': _const_psbsmp.ConstFBP.V_V_LOAD,
-        'DCLinkVoltage-Mon': _const_psbsmp.ConstFBP.V_V_DCLINK,
-        'SwitchesTemperature-Mon': _const_psbsmp.ConstFBP.V_TEMP_SWITCHES,
-        'PWMDutyCycle-Mon': _const_psbsmp.ConstFBP.V_DUTY_CYCLE,
+        'IntlkSoft-Mon':  _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _c.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
+        'Current-RB':  _c.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _c.V_PS_REFERENCE,
+        'Current-Mon':  _c.V_I_LOAD,
+        'LoadVoltage-Mon': _c.V_V_LOAD,
+        'DCLinkVoltage-Mon': _c.V_V_DCLINK,
+        'SwitchesTemperature-Mon': _c.V_TEMP_SWITCHES,
+        'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
     _pruc_properties = {
@@ -334,14 +339,6 @@ class PSModelFBP(_PSModel):
             return _writers.SOFBUpdate(pru_controller, setpoints)
         return super().writer(
             device_ids, epics_field, pru_controller, setpoints)
-
-
-class PSModelFBP_FOFB(_PSModel):
-    """FBP_FOFB power supply model."""
-
-    _n = 'FBP_FOFB'
-    _c = _const_psbsmp.ConstFBP
-    _e = _etity_psbsmp.EntitiesFBP
 
 
 class PSModelFAC_DCDC(_PSModel):
@@ -377,6 +374,7 @@ class PSModelFAC_DCDC(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
 
@@ -428,6 +426,7 @@ class PSModelFAC_2S_DCDC(_PSModel):
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -493,6 +492,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'RelativeHumidityIIBModB-Mon': _c.V_RH_IIB_B,
         'IntlkIIBModB-Mon': _c.V_IIB_INTERLOCKS_B,
         'AlarmsIIBModB-Mon': _c.V_IIB_ALARMS_B,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -534,6 +534,7 @@ class PSModelFAP(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -639,6 +640,7 @@ class PSModelFAP_4P(_PSModel):
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -713,7 +715,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
         'HeatSinkTemperatureIIBMod2-Mon': _c.V_TEMP_HEATSINK_IIB_2,
-        'LeakageCurrentIIBMod2-Mon': _c.V_I_LEAKAGE_IIB_2,
         'TemperatureIIBMod2-Mon': _c.V_TEMP_BOARD_IIB_2,
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
@@ -750,6 +751,7 @@ class PSModelFAP_2P2S(_PSModel):
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -931,7 +933,6 @@ class PSModelFactory:
     _psname_2_factory = {
         'FBP': PSModelFBP,
         'FBP_DCLink': PSModelFBP_DCLink,
-        'FBP_FOFB': PSModelFBP,
         'FAC_DCDC': PSModelFAC_DCDC,
         'FAC_2S_DCDC': PSModelFAC_2S_DCDC,
         'FAC_2S_ACDC': PSModelFAC_2S_ACDC,

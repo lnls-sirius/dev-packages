@@ -8,7 +8,6 @@ from ..epics import PV as _PV
 from ..search import PSSearch as _PSSearch, LLTimeSearch as _LLTimeSearch, \
     MASearch as _MASearch
 from .ramp import BoosterRamp as _BORamp
-from .conn import AuxConvRF
 from .waveform import Waveform as _Waveform, WaveformDipole as _WaveformDipole
 from .magnet import get_magnet as _get_magnet
 
@@ -626,14 +625,15 @@ class BONormListFactory:
 class BORFRampFactory:
     """Class to rebuild RF ramp parameters from machine state."""
 
+    V_2_KV = 1e-3
     _DevName = 'BR-RF-DLLRF-01'
     _ppties = {
         'bottom_duration': _DevName+':RmpTs1-SP',
         'rampup_duration': _DevName+':RmpTs2-SP',
         'top_duration': _DevName+':RmpTs3-SP',
         'rampdown_duration': _DevName+':RmpTs4-SP',
-        'bottom_voltage': _DevName+':mV:RAMP:AMP:BOT-SP',
-        'top_voltage': _DevName+':mV:RAMP:AMP:TOP-SP',
+        'bottom_voltage': 'RA-RaBO01:RF-LLRF:RmpAmpVCavBot-SP',
+        'top_voltage': 'RA-RaBO01:RF-LLRF:RmpAmpVCavTop-SP',
         'bottom_phase': _DevName+':RmpPhsBot-SP',
         'top_phase': _DevName+':RmpPhsTop-SP',
     }
@@ -642,7 +642,6 @@ class BORFRampFactory:
     def __init__(self):
         """."""
         self._rf_params = None
-        self._aux_conv = AuxConvRF()
         self._create_pvs()
 
     @property
@@ -669,10 +668,8 @@ class BORFRampFactory:
         for param in BORFRampFactory._ppties:
             val = BORFRampFactory._PVs[param].value
             if 'voltage' in param:
-                param_val = self._aux_conv.conv_raw_2_vgap(val)
-            else:
-                param_val = val
-            rf_params[param] = param_val
+                val = val*BORFRampFactory.V_2_KV
+            rf_params[param] = val
         return rf_params
 
 

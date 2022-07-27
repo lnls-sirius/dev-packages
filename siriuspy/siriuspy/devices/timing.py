@@ -1,4 +1,5 @@
 """."""
+import time as _time
 
 import numpy as _np
 
@@ -108,10 +109,13 @@ class EVG(_Device):
         """."""
         return self._wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
 
-    def cmd_update_events(self):
+    def cmd_update_events(self, timeout=10):
         """."""
+        val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
-        return True
+        _time.sleep(0.1)
+        return self._wait(
+            propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
     def cmd_turn_on_injection(self, timeout=10):
         """."""
@@ -136,7 +140,7 @@ class EVG(_Device):
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""
         self['RepeatBucketList-SP'] = value
-        return self._wait('RepeatBucketList-RB', value)
+        return self._wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
 class Event(_ProptyDevice):
@@ -222,6 +226,7 @@ class Trigger(_Device):
     """Device trigger."""
 
     STATES = ('Dsbl', 'Enbl')
+    LOCKLL = ('Unlocked', 'Locked')
     POLARITIES = ('Normal', 'Inverse')
 
     def __init__(self, trigname):
@@ -245,6 +250,17 @@ class Trigger(_Device):
         return ', '.join(strs) if strs else 'Ok'
 
     @property
+    def status_labels(self):
+        """Return Status labels of trigger.
+
+        Returns:
+            list: labels describing the possible statuses of the trigger.
+
+        """
+        pvo = self.pv_object('StatusLabels-Cte')
+        return pvo.get(as_string=True).split('\n')
+
+    @property
     def state(self):
         """State."""
         return self['State-Sts']
@@ -257,6 +273,42 @@ class Trigger(_Device):
     def state_str(self):
         """State string."""
         return Trigger.STATES[self['State-Sts']]
+
+    @property
+    def lock_low_level(self):
+        """Lock low level status."""
+        return self['LowLvlLock-Sts']
+
+    @lock_low_level.setter
+    def lock_low_level(self, value):
+        self._enum_setter('LowLvlLock-Sel', value, Trigger.LOCKLL)
+
+    @property
+    def lock_low_level_str(self):
+        """Lock low level status string."""
+        return Trigger.LOCKLL[self['LowLvlLock-Sts']]
+
+    @property
+    def controlled_channels(self):
+        """Return channels controlled by this trigger.
+
+        Returns:
+            list: names of the controlled channels.
+
+        """
+        pvo = self.pv_object('CtrldChannels-Cte')
+        return pvo.get(as_string=True).split('\n')
+
+    @property
+    def low_level_triggers(self):
+        """Return low level triggers controlled by this trigger.
+
+        Returns:
+            list: names of the controlled low level triggers.
+
+        """
+        pvo = self.pv_object('LowLvlTriggers-Cte')
+        return pvo.get(as_string=True).split('\n')
 
     @property
     def source(self):
@@ -324,6 +376,27 @@ class Trigger(_Device):
         return self['TotalDelay-Mon']
 
     @property
+    def delta_delay(self):
+        """Return delta delay array.
+
+        Returns:
+            numpy.ndarray: delta delays.
+
+        """
+        return self['DeltaDelay-RB']
+
+    @delta_delay.setter
+    def delta_delay(self, value):
+        if not isinstance(value, (_np.ndarray, list, tuple)):
+            raise TypeError('Value must be a numpy.ndarray, list or tuple.')
+
+        value = _np.array(value)
+        size = self.delta_delay.size
+        if value.size != size:
+            raise TypeError(f'Size of value must be {size:d}.')
+        self['DeltaDelay-SP'] = value
+
+    @property
     def delay_raw(self):
         """Delay raw."""
         return self['DelayRaw-RB']
@@ -336,6 +409,27 @@ class Trigger(_Device):
     def total_delay_raw(self):
         """Total delay raw."""
         return self['TotalDelayRaw-Mon']
+
+    @property
+    def delta_delay_raw(self):
+        """Return delta delay raw array.
+
+        Returns:
+            numpy.ndarray: delta delays raw.
+
+        """
+        return self['DeltaDelayRaw-RB']
+
+    @delta_delay_raw.setter
+    def delta_delay_raw(self, value):
+        if not isinstance(value, (_np.ndarray, list, tuple)):
+            raise TypeError('Value must be a numpy.ndarray, list or tuple.')
+
+        value = _np.array(value)
+        size = self.delta_delay_raw.size
+        if value.size != size:
+            raise TypeError(f'Size of value must be {size:d}.')
+        self['DeltaDelayRaw-SP'] = value
 
     @property
     def is_in_inj_table(self):
@@ -351,3 +445,13 @@ class Trigger(_Device):
         """Command disable."""
         self.state = 0
         return self._wait('State-Sts', 0, timeout)
+
+    def cmd_lock_low_level(self, timeout=3):
+        """Lock low level IOCs state."""
+        self.lock_low_level = 1
+        return self._wait('LowLvlLock-Sts', 1, timeout)
+
+    def cmd_unlock_low_level(self, timeout=3):
+        """Unlock low level IOCs state."""
+        self.lock_low_level = 0
+        return self._wait('LowLvlLock-Sts', 0, timeout)

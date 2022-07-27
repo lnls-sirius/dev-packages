@@ -9,7 +9,7 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     DIAG_STATUS_LABELS_AS = (
-        'PS Disconnected',
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
@@ -18,7 +18,7 @@ class ETypes(_csdev.ETypes):
         'Reserved')
 
     DIAG_STATUS_LABELS_LI = (
-        'PS Disconnected',
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
@@ -26,8 +26,17 @@ class ETypes(_csdev.ETypes):
         'Reserved',
         'Reserved')
 
-    DIAG_STATUS_LABELS_BO = (
+    DIAG_STATUS_LABELS_FC = (
         'PS Disconnected',
+        'PwrState-Sts Off',
+        'Current-(SP|RB) are different',
+        'Reserved',
+        'Alarms',
+        'OpMode-(Sel|Sts) are different',
+        'Reserved')
+
+    DIAG_STATUS_LABELS_BO = (
+        'PS Disconnected/Comm. Broken',
         'PwrState-Sts Off',
         'Current-(SP|Mon) are different',
         'Interlocks',
@@ -42,6 +51,8 @@ _et = ETypes  # syntactic sugar
 def get_ps_diag_status_labels(psname):
     """Return Diag Status Labels enum."""
     psname = _PVName(psname)
+    if psname.dev in ['FCH', 'FCV']:
+        return _et.DIAG_STATUS_LABELS_FC
     if psname.sec == 'BO':
         return _et.DIAG_STATUS_LABELS_BO
     if psname.sec == 'LI':

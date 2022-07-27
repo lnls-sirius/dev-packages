@@ -21,6 +21,7 @@ class EpicsMatrix(BaseMatrix):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
+        self._sofb = None
         self.select_items = {
             'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
             'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
@@ -33,7 +34,7 @@ class EpicsMatrix(BaseMatrix):
             'bpmx': 'BPMXEnblList-RB',
             'bpmy': 'BPMYEnblList-RB',
             }
-        if self.acc == 'SI':
+        if self.isring:
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
         self._respmat_mode = self._csorb.RespMatMode.Full
@@ -49,6 +50,15 @@ class EpicsMatrix(BaseMatrix):
         self._load_respmat()
 
     @property
+    def sofb(self):
+        """."""
+        return self._sofb
+
+    @sofb.setter
+    def sofb(self, sofb):
+        self._sofb = sofb
+
+    @property
     def bpm_enbllist(self):
         """."""
         sel_ = self.select_items
@@ -59,7 +69,7 @@ class EpicsMatrix(BaseMatrix):
         """."""
         sel_ = self.select_items
         seleccor = _np.hstack([sel_['ch'], sel_['cv']])
-        if self.acc == 'SI':
+        if self.isring:
             seleccor = _np.hstack([seleccor, sel_['rf']])
         return seleccor
 
@@ -75,7 +85,7 @@ class EpicsMatrix(BaseMatrix):
             'MinSingValue-SP': self.set_min_sing_value,
             'TikhonovRegConst-SP': self.set_tikhonov_reg_const,
             }
-        if self.acc == 'SI':
+        if self.isring:
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return dbase
 
@@ -244,7 +254,6 @@ class EpicsMatrix(BaseMatrix):
         kicks *= -1
         _Thread(
             target=self._update_dkicks, args=(kicks, ), daemon=True).start()
-        # self._update_dkicks(kicks)
         return kicks
 
     def _update_dkicks(self, kicks):
@@ -253,7 +262,7 @@ class EpicsMatrix(BaseMatrix):
         nr_chcv = self._csorb.nr_chcv
         self.run_callbacks('DeltaKickCH-Mon', kicks[:nr_ch])
         self.run_callbacks('DeltaKickCV-Mon', kicks[nr_ch:nr_chcv])
-        if self.acc == 'SI':
+        if self.isring:
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
 
     def set_min_sing_value(self, num):
@@ -376,6 +385,5 @@ class EpicsMatrix(BaseMatrix):
 
     def _save_respmat(self, mat):
         path = _os.path.split(self._csorb.respmat_fname)[0]
-        if not _os.path.isdir(path):
-            _os.mkdir(path)
+        _os.makedirs(path, exist_ok=True)
         _np.savetxt(self._csorb.respmat_fname, mat)

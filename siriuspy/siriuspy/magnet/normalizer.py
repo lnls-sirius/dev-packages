@@ -7,10 +7,11 @@ import mathphys as _mp
 
 from .. import util as _util
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..pwrsupply.data import PSData as _PSData
+from ..search import PSSearch as _PSSearch
+from ..search import MASearch as _MASearch
+from ..pwrsupply.csdev import get_ps_propty_database as _get_ps_propty_database
 
 from . import util as _mutil
-from .data import MAData as _MAData
 
 
 # beta(energy) ~ 1 approximation is more computationally efficient.
@@ -33,8 +34,11 @@ class _MagnetNormalizer:
     def __init__(self, maname, magnet_conv_sign=-1):
         """Class constructor."""
         self._maname = _SiriusPVName(maname) if type(maname) == str else maname
-        self._madata = _MAData(maname=maname)
-        self._magfunc = self._madata.magfunc(self._madata.psnames[0])
+        self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
+        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
+        self._pstype = _PSSearch.conv_psname_2_pstype(self._psnames[0])
+        self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
+        self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[0])
         self._magnet_conv_sign = magnet_conv_sign
         self._mfmult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
@@ -72,11 +76,9 @@ class _MagnetNormalizer:
         """Convert strength to current."""
         strengths = self._conv_epicsdb_2_default(strengths)
         intfields = self._conv_strength_2_intfield(strengths, **kwargs)
-        mf = self._mfmult
-        # excdata = self._get_main_excdata()
-        excdata = self._madata.excdata(self._psname)
-        currents = excdata.interp_mult2curr(
-            intfields, mf['harmonic'], mf['type'])
+        mft = self._mfmult
+        currents = self._excdata.interp_mult2curr(
+            intfields, mft['harmonic'], mft['type'])
         return currents
 
     # --- normalizer aux. methods ---
@@ -97,13 +99,12 @@ class _MagnetNormalizer:
             return None
         msum = {}
         if self._magfunc != 'dipole':
-            # for psname in self._madata.psnames:
-            excdata = self._madata.excdata(self._psname)
-            mpoles = excdata.interp_curr2mult(currents, only_main_harmonic)
+            mpoles = \
+                self._excdata.interp_curr2mult(currents, only_main_harmonic)
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         else:
-            excdata = self._madata.excdata(self._psname)
-            mpoles = excdata.interp_curr2mult(currents, only_main_harmonic)
+            mpoles = \
+                self._excdata.interp_curr2mult(currents, only_main_harmonic)
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         return msum
 
@@ -132,8 +133,7 @@ class _MagnetNormalizer:
         return self._conv_values(values, 1.0/self._coef_def2edb)
 
     def _calc_conv_coef(self):
-        psdata = _PSData(self._psname)
-        dbase = psdata.propty_database
+        dbase = _get_ps_propty_database(self._psmodel, self._pstype)
         if 'Energy-SP' in dbase:
             dbase = dbase['Energy-SP']
         elif 'KL-SP' in dbase:
@@ -274,7 +274,7 @@ class DipoleNormalizer(_MagnetNormalizer):
         return strengths
 
     def _power_supplies(self):
-        return self._madata.psnames
+        return self._psnames
 
 
 class MagnetNormalizer(_MagnetNormalizer):
