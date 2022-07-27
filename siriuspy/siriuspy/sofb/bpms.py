@@ -218,7 +218,7 @@ class BPM(_BaseTimingConfig):
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         pvobj = self._config_pvs_sp['asyn.ENBL']
         self._config_ok_vals['asyn.ENBL'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -234,7 +234,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['SwMode']
         self._config_ok_vals['SwMode'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -356,7 +356,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQBPMMode']
         self._config_ok_vals['ACQBPMMode'] = mode
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.value = mode
 
     @property
@@ -461,7 +461,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQTriggerEvent']
         # self._config_ok_vals['ACQCtrl'] = val
         self._config_ok_vals['ACQTriggerEvent'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -475,7 +475,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQChannel']
         self._config_ok_vals['ACQChannel'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -492,7 +492,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQTrigger']
         # self._config_ok_vals['ACQTriggerType'] = val
         self._config_ok_vals['ACQTrigger'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -506,7 +506,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQTriggerRep']
         self._config_ok_vals['ACQTriggerRep'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -523,7 +523,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQDataTrigChan']
         # self._config_ok_vals['ACQTriggerDataChan'] = val
         self._config_ok_vals['ACQDataTrigChan'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -537,7 +537,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQTriggerDataSel']
         self._config_ok_vals['ACQTriggerDataSel'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -551,7 +551,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQTriggerDataThres']
         self._config_ok_vals['ACQTriggerDataThres'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -565,7 +565,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQTriggerDataHyst']
         self._config_ok_vals['ACQTriggerDataHyst'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -579,7 +579,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['ACQTriggerDataPol']
         self._config_ok_vals['ACQTriggerDataPol'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -593,7 +593,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['TbtTagEn']
         self._config_ok_vals['TbtTagEn'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -607,7 +607,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['SwTagEn']
         self._config_ok_vals['SwTagEn'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -620,7 +620,7 @@ class BPM(_BaseTimingConfig):
     def monit1_sync_enbl(self, val):
         """."""
         pvobj = self._config_pvs_sp['Monit1TagEn']
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -633,7 +633,7 @@ class BPM(_BaseTimingConfig):
     def monit_sync_enbl(self, val):
         """."""
         pvobj = self._config_pvs_sp['MonitTagEn']
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -647,7 +647,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['TbtDataMaskEn']
         self._config_ok_vals['TbtDataMaskEn'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -661,7 +661,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['TbtDataMaskSamplesBeg']
         self._config_ok_vals['TbtDataMaskSamplesBeg'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -675,7 +675,7 @@ class BPM(_BaseTimingConfig):
         """."""
         pvobj = self._config_pvs_sp['TbtDataMaskSamplesEnd']
         self._config_ok_vals['TbtDataMaskSamplesEnd'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -692,9 +692,9 @@ class BPM(_BaseTimingConfig):
         pv2 = self._config_pvs_sp['SUMPosCal']
         self._config_ok_vals['XYPosCal'] = val
         self._config_ok_vals['SUMPosCal'] = val
-        if pv1.connected:
+        if self.put_enable and pv1.connected:
             pv1.put(val, wait=False)
-        if pv2.connected:
+        if self.put_enable and pv2.connected:
             pv2.put(val, wait=False)
 
     @property
@@ -711,7 +711,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQSamplesPost']
         # self._config_ok_vals['ACQNrSamplesPost'] = val
         self._config_ok_vals['ACQSamplesPost'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -728,7 +728,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQSamplesPre']
         # self._config_ok_vals['ACQNrSamplesPre'] = val
         self._config_ok_vals['ACQSamplesPre'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
@@ -745,7 +745,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._config_pvs_sp['ACQShots']
         # self._config_ok_vals['ACQNrShots'] = val
         self._config_ok_vals['ACQShots'] = val
-        if pvobj.connected:
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     def calc_sp_multiturn_pos(self, **kwargs):
@@ -889,8 +889,8 @@ class TimingConfig(_BaseTimingConfig):
     def nrpulses(self, val):
         """."""
         pvobj = self._config_pvs_sp['NrPulses']
-        if pvobj.connected:
-            self._config_ok_vals['NrPulses'] = val
+        self._config_ok_vals['NrPulses'] = val
+        if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property

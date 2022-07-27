@@ -24,8 +24,8 @@ class PSDiffPV:
         if disconnected:
             return None
         value_sp = computed_pv.pvs[PSDiffPV.CURRT_SP].value
-        value_rb = computed_pv.pvs[PSDiffPV.CURRT_MON].value
-        diff = value_rb - value_sp
+        value_mon = computed_pv.pvs[PSDiffPV.CURRT_MON].value
+        diff = value_mon - value_sp
         return {'value': diff}
 
 
@@ -62,38 +62,36 @@ class PSStatusPV:
         psname = _PVName(computed_pv.pvs[0].pvname).device_name
         value = 0
         # ps connected?
-        if psname.dev in ['FCH', 'FCV']:
-            disconnected = \
-                not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
-                not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected
-            for alrm in self.ALARM_PVS:
-                disconnected |= not computed_pv.pvs[alrm].connected
-        elif psname.sec != 'LI':
-            disconnected = \
+        if psname.sec != 'LI':
+            disconn = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
-                not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
-                not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
-            for intlk in self.INTLK_PVS:
-                disconnected |= not computed_pv.pvs[intlk].connected
+                not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected
+            if psname.dev not in ['FCH', 'FCV']:
+                disconn |= not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
 
-            if not disconnected:  # comm ok?
+            for intlk in self.INTLK_PVS:
+                disconn |= not computed_pv.pvs[intlk].connected
+            for alarm in self.ALARM_PVS:
+                disconn |= not computed_pv.pvs[alarm].connected
+
+            if not disconn and psname.dev not in ['FCH', 'FCV']:  # comm ok?
                 commsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].status
                 if commsts != 0 or commsts is None:
-                    disconnected = True
+                    disconn = True
         else:
-            disconnected = \
+            disconn = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
                 not computed_pv.pvs[PSStatusPV.INTRLCK_LI].connected
 
-            if not disconnected:  # comm ok?
+            if not disconn:  # comm ok?
                 commval = computed_pv.pvs[PSStatusPV.CONNCTD_LI].value
                 commsts = computed_pv.pvs[PSStatusPV.CONNCTD_LI].status
                 if commval != 0 or commval is None or commsts != 0:
-                    disconnected = True
-        if disconnected:
+                    disconn = True
+        if disconn:
             value |= PSStatusPV.BIT_PSCONNECT
             value |= PSStatusPV.BIT_PWRSTATON
             value |= PSStatusPV.BIT_CURRTDIFF
@@ -108,30 +106,23 @@ class PSStatusPV:
         if pwrsts != _PSConst.PwrStateSts.On or pwrsts is None:
             value |= PSStatusPV.BIT_PWRSTATON
 
-        if psname.dev in ['FCH', 'FCV']:
-            # current-diff?
-            severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
-            if severity != 0:
-                value |= PSStatusPV.BIT_CURRTDIFF
-
-            # alarms?
-            for alarm in self.ALARM_PVS:
-                alarmval = computed_pv.pvs[alarm].value
-                if alarmval != 1 or alarmval is None:
-                    value |= PSStatusPV.BIT_ALARMSSET
-                    break
-
-        elif psname.sec != 'LI':
+        if psname.sec != 'LI':
             # opmode?
             sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
             sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
             if sel is not None and sts is not None:
-                opmode_sel = _ETypes.OPMODES[sel]
-                opmode_sts = _ETypes.STATES[sts]
+                if psname.dev in ['FCH', 'FCV']:
+                    opmode_sel = _ETypes.FOFB_OPMODES[sel]
+                    opmode_sts = _ETypes.FOFB_OPMODES[sts]
+                    checkdiff = sts == _PSConst.OpModeFOFB.closed_loop_manual
+                else:
+                    opmode_sel = _ETypes.OPMODES[sel]
+                    opmode_sts = _ETypes.STATES[sts]
+                    checkdiff = sts == _PSConst.States.SlowRef
                 if opmode_sel != opmode_sts:
                     value |= PSStatusPV.BIT_OPMODEDIF
                 # current-diff?
-                if sts == _PSConst.States.SlowRef:
+                if checkdiff:
                     severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
                     if severity != 0:
                         value |= PSStatusPV.BIT_CURRTDIFF
@@ -142,8 +133,8 @@ class PSStatusPV:
                         pstype = _PSSearch.conv_psname_2_pstype(psname)
                         PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
                             pstype, 'DTOL_WFM')
-                    if not _np.allclose(mon, 0.0,
-                                        atol=PSStatusPV.DTOLWFM_DICT[psname]):
+                    if not _np.allclose(
+                            mon, 0.0, atol=PSStatusPV.DTOLWFM_DICT[psname]):
                         value |= PSStatusPV.BIT_BOWFMDIFF
             else:
                 value |= PSStatusPV.BIT_OPMODEDIF

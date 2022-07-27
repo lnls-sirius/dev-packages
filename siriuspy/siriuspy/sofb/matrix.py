@@ -21,6 +21,7 @@ class EpicsMatrix(BaseMatrix):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
+        self._sofb = None
         self.select_items = {
             'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
             'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
@@ -47,6 +48,15 @@ class EpicsMatrix(BaseMatrix):
         self.respmat_extended = self.respmat.copy()
         self.select_items_extended = _dcopy(self.select_items)
         self._load_respmat()
+
+    @property
+    def sofb(self):
+        """."""
+        return self._sofb
+
+    @sofb.setter
+    def sofb(self, sofb):
+        self._sofb = sofb
 
     @property
     def bpm_enbllist(self):
