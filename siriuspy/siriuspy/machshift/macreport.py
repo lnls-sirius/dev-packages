@@ -1262,8 +1262,7 @@ class MacReport:
         self._raw_data = dict()
 
         # current data
-        _curr_times, _curr_values = \
-            self._get_pv_data('SI-Glob:AP-CurrInfo:Current-Mon')
+        _curr_times, _curr_values = self._get_pv_data(self._current_pv)
         _curr_values[_curr_values < 0] = 0
         _curr_values[_curr_values > 500] = 0
 
@@ -1292,28 +1291,27 @@ class MacReport:
                 psfail_all = _np.logical_or(psfail_all, psfail)
         self._ps_fail_values = 1 * psfail_all
 
-        gamblk_times, gamblk_values = \
-            self._get_pv_data('AS-Glob:PP-GammaShutter:Status-Mon')
+        # gamma
+        gamblk_times, gamblk_values = self._get_pv_data(self._gammashutt_pv)
         self._gamblk_fail_values = _interp1d_previous(
             gamblk_times, gamblk_values, self._curr_times)
         self._raw_data['GammaShutter'] = self._gamblk_fail_values
 
+        # sofb loop
         sofbloop_times, sofbloop_values = \
-            self._get_pv_data('SI-Glob:AP-SOFB:LoopState-Sts')
+            self._get_pv_data(self._sisofbloop_pv)
         sofbloop_fail_rawvalues = _np.array(
             [1*(v == _SOFBCte.LoopState.Open) for v in sofbloop_values])
         self._sofbloop_fail_values = _interp1d_previous(
             sofbloop_times, sofbloop_fail_rawvalues, self._curr_times)
 
         # rf and mps status data
-        siintlk_times, siintlk_values = \
-            self._get_pv_data('RA-RaSIA02:RF-IntlkCtrl:IntlkSirius-Mon')
+        siintlk_times, siintlk_values = self._get_pv_data(self._siintlk_pv)
         self._mps_fail_values = _interp1d_previous(
             siintlk_times, siintlk_values, self._curr_times)
 
         # delivered shift data
-        shift_times, shift_values = \
-            self._get_pv_data('AS-Glob:AP-MachShift:Mode-Sts')
+        shift_times, shift_values = self._get_pv_data(self._macshift_pv)
 
         self._raw_data['Shift'] = dict()
 
@@ -1373,11 +1371,11 @@ class MacReport:
         self._raw_data['UserShiftInitCurr'] = self._user_shift_inicurr_values
 
         # single/multi bunch mode data
-        inj_ts, inj_vs = self._get_pv_data('AS-RaMO:TI-EVG:InjectionEvt-Sts')
+        inj_ts, inj_vs = self._get_pv_data(self._injevt_pv)
         inj_vs = _interp1d_previous(inj_ts, inj_vs, self._curr_times)
-        trig_ts, trig_vs = self._get_pv_data('LI-01:EG-TriggerPS:enablereal')
+        trig_ts, trig_vs = self._get_pv_data(self._egtrgen_pv)
         trig_vs = _interp1d_previous(trig_ts, trig_vs, self._curr_times)
-        sb_ts, sb_vs = self._get_pv_data('LI-01:EG-PulsePS:singleselstatus')
+        sb_ts, sb_vs = self._get_pv_data(self._egpusel_pv)
         sb_vs = _interp1d_previous(sb_ts, sb_vs, self._curr_times)
         idcs1 = _np.where(inj_vs*trig_vs*sb_vs)[0]
         mode_ts = self._curr_times[idcs1]
@@ -1443,8 +1441,7 @@ class MacReport:
 
         # distortions
         self._raw_data['Distortions'] = dict()
-        self._raw_data['Distortions']['SOFBLoop'] = \
-            self._sofbloop_fail_values
+        self._raw_data['Distortions']['SOFBLoop'] = self._sofbloop_fail_values
 
         self._distortions_users = 1 * _np.logical_or.reduce(
             [value for value in self._raw_data['Distortions'].values()]) * \
