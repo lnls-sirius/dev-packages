@@ -455,3 +455,85 @@ class Trigger(_Device):
         """Unlock low level IOCs state."""
         self.lock_low_level = 0
         return self._wait('LowLvlLock-Sts', 0, timeout)
+
+
+class HLTiming(_Devices):
+    """."""
+
+    SEARCH = _HLTimeSearch
+
+    def __init__(self):
+        """."""
+        self.evg = EVG()
+        evs = self.SEARCH.get_configurable_hl_events()
+        self.events = {ev: Event(ev) for ev in evs.keys()}
+        self.triggers = {t: Trigger(t) for t in self.SEARCH.get_hl_triggers()}
+        devs = [self.evg, ]
+        devs += list(self.events.values())
+        devs += list(self.triggers.values())
+        super().__init__('AS-Glob:TI-HLTiming', devs)
+
+    def get_triggers_events(self):
+        """."""
+        map_ = {tn: tr.source_str for tn, tr in self.triggers.items()}
+        inv_map = {ev: list() for ev in set(map_.values())}
+        for tn, ev in map_.items():
+            inv_map[ev].append(tn)
+        return inv_map
+
+    def change_triggers_source(self, trigs, new_src='Linac'):
+        """."""
+        notchanged = list()
+        for tn in trigs:
+            tr = self.triggers[tn]
+
+            if new_src not in tr.source_options:
+                print(f'{tn:25s} -> No Change: {new_src:s} is not an option.')
+                notchanged.append(tn)
+                continue
+
+            dly_newsrc = 0
+            if new_src in self.events:
+                dly_newsrc = self.events[new_src].delay_raw
+
+            dly_oldsrc = 0
+            old_src = tr.source_str
+            if old_src in self.events:
+                dly_oldsrc = self.events[old_src].delay_raw
+
+            dly = tr.delay_raw
+            delta_dly = dly_oldsrc
+            delta_dly -= dly_newsrc
+            dly += delta_dly
+            if dly < 0:
+                notchanged.append(tn)
+                print(f'{tn:25s} -> No Change: total delay not constant!')
+                continue
+
+            tr.delay_raw = dly
+            tr.source = new_src
+            print(f'{tn:25s} -> Change OK: .')
+        return notchanged
+
+    def change_event_delay(self, new_dly, event='Linac'):
+        """."""
+        if event not in self.events:
+            print(f'{event} is not a valid event!')
+            return False
+        new_dly = int(new_dly)
+        old_dly = self.events[event].delay_raw
+        dlt_dly = old_dly - new_dly
+
+        trigs = self.get_triggers_events()[event]
+        for trn in trigs:
+            dly = self.triggers[trn].delay_raw + dlt_dly
+            if dly < 0:
+                print(f'cannot change delay: {trn:s} would change!')
+                return False
+
+        for trn in trigs:
+            self.triggers[trn].delay_raw += dlt_dly
+        self.events[event].delay_raw = new_dly
+
+        print('Delay changed!')
+        return True
