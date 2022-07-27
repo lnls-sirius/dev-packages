@@ -1025,7 +1025,10 @@ class MacReport:
             pvds.time_start = self._time_start
             pvds.time_stop = self._time_stop
 
-        self._update_log('Collecting archiver data...')
+        self._update_log(
+            'Collecting archiver data '
+            f'({self.time_start.get_iso8601()} to'
+            f' {self.time_stop.get_iso8601()})...')
 
         log_msg = 'Query for {0} in archiver took {1:.3f}s'
 
