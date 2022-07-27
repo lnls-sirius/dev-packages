@@ -3,9 +3,13 @@ import time as _time
 
 import numpy as _np
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
+from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
+    Devices as _Devices
 from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
     get_hl_trigger_database as _get_hl_trigger_database
+from ..search import HLTimeSearch as _HLTimeSearch
 from ..util import get_bit as _get_bit
 
 
@@ -13,10 +17,14 @@ class EVG(_Device):
     """Device EVG."""
 
     DEVNAME = 'AS-RaMO:TI-EVG'
+    StateMachine = _get_namedtuple('StateMachine', (
+        'Initializing', 'Stopped', 'Continuous', 'Injection',
+        'Preparing_Continuous', 'Preparing_Injection',
+        'Restarting_Continuous'))
 
     _properties = (
         'InjectionEvt-Sel', 'InjectionEvt-Sts', 'UpdateEvt-Cmd',
-        'ContinuousEvt-Sel', 'ContinuousEvt-Sts',
+        'ContinuousEvt-Sel', 'ContinuousEvt-Sts', 'STATEMACHINE',
         'RepeatBucketList-SP', 'RepeatBucketList-RB',
         'BucketList-SP', 'BucketList-RB', 'BucketList-Mon',
         'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
@@ -65,22 +73,36 @@ class EVG(_Device):
     @property
     def continuous_state(self):
         """."""
-        return self['ContinuousEvt-Sts']
+        return bool(self['ContinuousEvt-Sts'])
 
     @continuous_state.setter
     def continuous_state(self, value):
         """."""
-        self['ContinuousEvt-Sel'] = bool(value)
+        new_val = bool(value)
+        if self.continuous_state != new_val:
+            self['ContinuousEvt-Sel'] = bool(value)
+
+    @property
+    def state_machine(self):
+        """."""
+        return self['STATEMACHINE']
+
+    @property
+    def state_machine_str(self):
+        """."""
+        return self.StateMachine._fields[self.state_machine]
 
     @property
     def injection_state(self):
         """."""
-        return self['InjectionEvt-Sts']
+        return bool(self['InjectionEvt-Sts'])
 
     @injection_state.setter
     def injection_state(self, value):
         """."""
-        self['InjectionEvt-Sel'] = bool(value)
+        new_val = bool(value)
+        if self.injection_state != new_val:
+            self['InjectionEvt-Sel'] = bool(value)
 
     @property
     def injection_count_total(self):
