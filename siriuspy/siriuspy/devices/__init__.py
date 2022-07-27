@@ -26,7 +26,7 @@ from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
 from .screen import Screen
 from .sofb import SOFB
 from .syncd import DevicesSync
-from .timing import EVG, Event, Trigger
+from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 
 del device, bpm, dcct, egun, ict, lillrf, modltr,
