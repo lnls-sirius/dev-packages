@@ -807,6 +807,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
     @property
     def is_accum(self):
         """If configuration is Accumulation."""
+        if not self.connected:
+            return False
         dpk_off = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.Off)
         nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
@@ -845,6 +847,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
     @property
     def is_optim(self):
         """If configuration is Optimization."""
+        if not self.connected:
+            return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = self.trigdpk.delay_raw == self.SI_DPKCKR_DLYR_OPT
         dpk_kck_ok = self.pudpk.strength == self.SI_DPKCKR_DEFKICK
@@ -898,6 +902,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
     @property
     def is_onaxis(self):
         """If configuration is OnAxis."""
+        if not self.connected:
+            return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = self.trigdpk.delay_raw == \
             self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
