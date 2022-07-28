@@ -80,7 +80,7 @@ class EVG(_Device):
         """."""
         new_val = bool(value)
         if self.continuous_state != new_val:
-            self['ContinuousEvt-Sel'] = bool(value)
+            self['ContinuousEvt-Sel'] = int(new_val)
 
     @property
     def state_machine(self):
@@ -102,7 +102,7 @@ class EVG(_Device):
         """."""
         new_val = bool(value)
         if self.injection_state != new_val:
-            self['InjectionEvt-Sel'] = bool(value)
+            self['InjectionEvt-Sel'] = int(new_val)
 
     @property
     def injection_count_total(self):
