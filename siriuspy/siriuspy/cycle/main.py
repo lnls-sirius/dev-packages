@@ -468,11 +468,12 @@ class CycleController:
     def check_egun_off(self):
         """Check egun off."""
         if 'LI-01:PS-Spect' in self.psnames:
-            if not self._pv_egun.value == 0:
+            status = (self._pv_egun.value == 0)
+            if not status:
                 self._update_log(
                     'Linac EGun pulse is enabled! '
                     'Please disable it.', error=True)
-            return False
+            return status
         return True
 
     def set_triggers_state(self, triggers, state):
