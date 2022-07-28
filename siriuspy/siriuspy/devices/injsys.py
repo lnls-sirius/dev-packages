@@ -520,7 +520,9 @@ class InjBOStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # update events
+        _time.sleep(1)
         self.evg.cmd_update_events()
+        _time.sleep(1)
 
         return True, '', []
 
