@@ -591,7 +591,7 @@ class App(_Callback):
         self._callback_autostop()
         return True
 
-    def cmd_injsys_turn_on(self, value):
+    def cmd_injsys_turn_on(self, value=None, wait_finish=False):
         """Set turn on Injection System."""
         run = self._injsys_dev.is_running
         if run:
@@ -602,13 +602,16 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_on(run_in_thread=True)
-        _Thread(target=self._watch_injsys, args=['on', ], daemon=True).start()
+        thr = _Thread(target=self._watch_injsys, args=['on', ], daemon=True)
+        thr.start()
+        if wait_finish:
+            thr.join()
 
         self._injsys_turn_on_count += 1
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
         return False
 
-    def cmd_injsys_turn_off(self, value):
+    def cmd_injsys_turn_off(self, value=None, wait_finish=False):
         """Set turn off Injection System."""
         run = self._injsys_dev.is_running
         if run:
@@ -619,7 +622,10 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_off(run_in_thread=True)
-        _Thread(target=self._watch_injsys, args=['off', ], daemon=True).start()
+        thr = _Thread(target=self._watch_injsys, args=['off', ], daemon=True)
+        thr.start()
+        if wait_finish:
+            thr.join()
 
         self._injsys_turn_off_count += 1
         self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
