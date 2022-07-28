@@ -71,7 +71,7 @@ class App(_Callback):
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnextinjround_count = 0
-        self._topupmaxnrp = 100
+        self._topupnrpulses = 1
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
         self._abort = False
@@ -181,7 +181,7 @@ class App(_Callback):
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
             'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
-            'TopUpMaxNrPulses-SP': self.set_topupmaxnrp,
+            'TopUpNrPulses-SP': self.set_topupnrpulses,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -264,8 +264,8 @@ class App(_Callback):
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks(
             'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
-        self.run_callbacks('TopUpMaxNrPulses-SP', self._topupmaxnrp)
-        self.run_callbacks('TopUpMaxNrPulses-RB', self._topupmaxnrp)
+        self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
+        self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         self.run_callbacks('AutoStop-Sel', self._autostop)
         self.run_callbacks('AutoStop-Sts', self._autostop)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
@@ -555,14 +555,14 @@ class App(_Callback):
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
         return True
 
-    def set_topupmaxnrp(self, value):
-        """Set top-up maximum number of injection pulses."""
+    def set_topupnrpulses(self, value):
+        """Set top-up number of injection pulses."""
         if not 1 <= value <= 1000:
             return False
 
-        self._topupmaxnrp = value
-        self._update_log('Changed top-up max.nr.pulses to '+str(value)+'.')
-        self.run_callbacks('TopUpMaxNrPulses-RB', self._topupmaxnrp)
+        self._topupnrpulses = value
+        self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
+        self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
 
     def cmd_nextinjround(self, value):
@@ -768,7 +768,7 @@ class App(_Callback):
 
         if self._stop_injection():
             self._update_log('Injection Auto Stop done.')
-            self._update_bucket_list()
+            self._update_bucket_list_autostop()
         else:
             self._update_log('Injection Auto Stop failed.')
 
@@ -862,8 +862,8 @@ class App(_Callback):
                         self._update_log('WARN:'+prob)
 
         if self._mode == _Const.InjMode.TopUp:
-            if self._evg_dev.nrpulses != 0:
-                self._update_log('ERR:Aborted. Set RepeatBucketList to 0.')
+            if self._evg_dev.nrpulses == 0:
+                self._update_log('ERR:Aborted. RepeatBucketList cannot be 0.')
                 return False
 
             if self._abort:
@@ -879,21 +879,6 @@ class App(_Callback):
             return False
         self._update_log('Sent turn on to InjectionEvt.')
 
-        # turn on PU Pulse
-        self._update_log('Turning on PU Pulse...')
-        for pudev in self._pu_devs:
-            pudev.pulse = _Const.DsblEnbl.Enbl
-            _time.sleep(0.5)
-        _t0 = _time.time()
-        while _time.time() - _t0 < 3:
-            if all([pud.pulse == _Const.DsblEnbl.Enbl
-                    for pud in self._pu_devs]):
-                self._update_log('Turned on PU Pulse.')
-                break
-        else:
-            self._update_log('ERR:Timed out waiting for PU to be on.')
-            return False
-
         # wait for injectionevt to be ready
         self._update_log('Waiting for InjectionEvt to be on...')
         _t0 = _time.time()
@@ -903,7 +888,7 @@ class App(_Callback):
                 return False
             if self._evg_dev.injection_state:
                 break
-            _time.sleep(0.1)
+            _time.sleep(0.02)
         else:
             self._update_log('ERR:Timed out waiting for InjectionEvt.')
             return False
@@ -925,10 +910,8 @@ class App(_Callback):
                 return False
             # if in TopUp mode and max pulses exceeded, stop injection
             if self._mode == _Const.InjMode.TopUp and \
-                    self._evg_dev.injection_count >= self._topupmaxnrp:
-                self._update_log('ERR:Max.Nr.Pulses exceeded. Stopping.')
-                self._abort_injection()
-                return False
+                    self._evg_dev.injection_count >= self._topupnrpulses:
+                break
             _time.sleep(0.1)
 
         self._update_log('Target current reached!')
@@ -942,24 +925,9 @@ class App(_Callback):
             return False
         self._update_log('Turned off InjectionEvt.')
 
-        if self._mode == _Const.InjMode.Decay:
-            return True
+        return True
 
-        # turn off PU Pulse
-        self._update_log('Turning off PU Pulse...')
-        for pudev in self._pu_devs:
-            pudev.pulse = _Const.DsblEnbl.Dsbl
-            _time.sleep(0.5)
-        _t0 = _time.time()
-        while _time.time() - _t0 < 3:
-            if all([pud.pulse == _Const.DsblEnbl.Dsbl
-                    for pud in self._pu_devs]):
-                self._update_log('Turned off PU Pulse.')
-                return True
-        self._update_log('ERR:Timed out waiting for PU to be off.')
-        return False
-
-    def _update_bucket_list(self):
+    def _update_bucket_list_autostop(self):
         old_bucklist = self._evg_dev.bucketlist_mon
         injcount = self._evg_dev.injection_count
         blistlen = self._evg_dev.bucketlist_len
@@ -970,6 +938,13 @@ class App(_Callback):
             self._update_log('WARN:Could not update BucketList.')
         else:
             self._update_log('Updated BucketList.')
+
+    def _update_bucket_list_topup(self):
+        bucket = _np.arange(self._topupnrpulses) + self._topupnrpulses
+        bucket *= self._bucketlist_step
+        bucket += self._evg_dev.bucketlist_mon[0] - 1
+        bucket %= 864
+        self._evg_dev.bucketlist = bucket + 1
 
     def _abort_injection(self):
         self._update_log('Turning off InjectionEvt...')
@@ -1023,10 +998,7 @@ class App(_Callback):
                     break
 
                 self._update_topupsts(_Const.TopUpSts.TurningOff)
-                self._update_log('Stopping injection...')
-                if not self._stop_injection():
-                    break
-                self._update_bucket_list()
+                self._update_bucket_list_topup()
 
             self._update_topupsts(_Const.TopUpSts.Waiting)
             self._update_log('Waiting for next injection...')
