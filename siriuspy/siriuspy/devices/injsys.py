@@ -826,8 +826,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            delta = self.posang.delta_angx - self.TS_POSANG_DEFDELTA
-            if not self._do_delta_posang(delta):
+            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
                 return False
 
         # set pulsed magnet pwrstate and pulse
@@ -868,8 +867,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            delta = self.posang.delta_angx - self.TS_POSANG_DEFDELTA
-            if not self._do_delta_posang(delta):
+            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
                 return False
 
         if self._check_abort():
@@ -922,8 +920,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if not previously in on-axis, do delta angle x
         if not self.is_onaxis:
-            delta = self.posang.delta_angx + self.TS_POSANG_DEFDELTA
-            if not self._do_delta_posang(delta):
+            if not self._do_delta_posang(self.TS_POSANG_DEFDELTA):
                 return False
 
         if self._check_abort():
@@ -964,7 +961,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if self.posang.need_ref_update:
             self.posang.cmd_update_reference()
         _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
-        self.posang.delta_angx = delta
+        self.posang.delta_angx += delta
         if not self._wait(self.posang, 'delta_angx', delta):
             self._update_status('ERR:Could not do delta AngX.')
             return False
