@@ -196,26 +196,6 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:CycleDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:CycleMode-Sel', 0, 0.0],
 
-    ['AS-RaMO:TI-EVG:DigBODelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigBODelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigBOMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigLIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigLIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigLIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigSIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigSIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigSIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigTBDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigTBDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigTBMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigTSDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigTSDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigTSMode-Sel', 0, 0.0],
-
     ['AS-RaMO:TI-EVG:InjBODelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:InjBODelayType-Sel', 0, 0.0],
     # ['AS-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
@@ -227,14 +207,6 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:LinacDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:LinacDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:LinacMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:MigSIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:MigSIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:MigSIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:OrbBODelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:OrbBODelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:OrbBOMode-Sel', 0, 0.0],
 
     ['AS-RaMO:TI-EVG:OrbSIDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:OrbSIDelayType-Sel', 0, 0.0],
@@ -251,6 +223,10 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:TunSIDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:TunSIDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:TunSIMode-Sel', 0, 0.0],
+
+    ['AS-RaMO:TI-EVG:FOFBSDelayRaw-SP', 0, 0],
+    ['AS-RaMO:TI-EVG:FOFBSDelayType-Sel', 0, 0.0],
+    ['AS-RaMO:TI-EVG:FOFBSMode-Sel', 0, 0.0],
 
     # AMCFPGAEVRs
     ['IA-01RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],

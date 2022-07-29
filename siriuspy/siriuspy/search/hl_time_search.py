@@ -15,6 +15,7 @@ class HLTimeSearch:
 
     _hl_triggers = dict()
     _hl_events = dict()
+    COMMOM_EVTS = ('Dsbld', 'RmpBO', 'Linac', 'Study')
 
     _lock = _Lock()
 
@@ -43,8 +44,8 @@ class HLTimeSearch:
         """Return the default database of the high level trigger."""
         cls._init()
         dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
-        dic_['Src']['enums'] = ('Dsbl', ) + dic_['Src']['enums']
-        dic_['Src']['value'] += 1
+        src = dic_['Src']
+        src['enums'] = cls.COMMOM_EVTS + src['enums']
         return dic_
 
     @classmethod
