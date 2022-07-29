@@ -821,8 +821,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._update_status('Switching to PU Accumulation config...')
         if not self._check_pu_interlocks():
             return False
-        if self._abort.is_set():
-            self._clr_flag_abort()
+        if self._check_abort():
             return False
 
         # if previously in on-axis, do delta angle x
@@ -864,8 +863,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._update_status('Switching to PU Optimization config...')
         if not self._check_pu_interlocks():
             return False
-        if self._abort.is_set():
-            self._clr_flag_abort()
+        if self._check_abort():
             return False
 
         # if previously in on-axis, do delta angle x
@@ -874,8 +872,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
             if not self._do_delta_posang(delta):
                 return False
 
-        if self._abort.is_set():
-            self._clr_flag_abort()
+        if self._check_abort():
             return False
 
         # configure DpK trigger
@@ -920,8 +917,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._update_status('Switching to PU OnAxis config...')
         if not self._check_pu_interlocks():
             return False
-        if self._abort.is_set():
-            self._clr_flag_abort()
+        if self._check_abort():
             return False
 
         # if not previously in on-axis, do delta angle x
@@ -930,8 +926,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
             if not self._do_delta_posang(delta):
                 return False
 
-        if self._abort.is_set():
-            self._clr_flag_abort()
+        if self._check_abort():
             return False
 
         # configure DpK trigger
@@ -1000,8 +995,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     def _do_procedures(self, procedures):
         for fun, msg in procedures:
-            if self._abort.is_set():
-                self._clr_flag_abort()
+            if self._check_abort():
                 return False
             if not fun():
                 self._update_status('ERR:Could not ' + msg)
@@ -1017,8 +1011,10 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._update_status('WARN:Abort received for PU Mode change.')
         return True
 
-    def _clr_flag_abort(self):
+    def _check_abort(self):
         """Clear abort flag."""
+        if not self._abort.is_set():
+            return False
         self._abort.clear()
         self._update_status('ERR:Aborted PU Mode change.')
         return True
