@@ -416,10 +416,7 @@ class LLTimeSearch:
                     cls._add_entry_to_map(
                         which_map='twds', conn=conn,
                         ele1=bpm, ele2=chan.device_name)
-        print(conn_dict.keys() - used)
-        print(conn_dict.keys())
-        print(used)
-        print(conns)
+        # print(conn_dict.keys() - used)
 
     @classmethod
     def _get_crates_mapping(cls):
