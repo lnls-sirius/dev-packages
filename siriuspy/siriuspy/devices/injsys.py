@@ -1000,7 +1000,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         for fun, msg in procedures:
             if self._check_abort():
                 return False
-            if not fun():
+            if not fun(timeout=2):
                 self._update_status('ERR:Could not ' + msg)
                 return False
             _time.sleep(0.5)
