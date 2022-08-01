@@ -59,9 +59,7 @@ class _BaseLL(_Callback):
         self._locked = False
         self._lock_threads_dict = dict()
 
-        evts = _HLSearch.get_hl_events()
-        evts.pop('Dsbl')
-        evts.pop('PsMtn')
+        evts = _HLSearch.get_configurable_hl_events()
         self._events = {evt: _Event(evt) for evt in evts}
 
         evg_name = _PVName(_LLSearch.get_evg_name())
