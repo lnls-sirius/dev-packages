@@ -431,6 +431,7 @@ class _EVROUT(_BaseLL):
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
+            'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             }
         return map_
@@ -574,6 +575,8 @@ class _EVROUT(_BaseLL):
 
     def _set_delay(self, value, raw=False):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
+        if self._config_ok_values.get('RFDelayType', False):
+            dic_['RFDelay'] = 31
         if value is None:
             return dic_
         value = value if raw else round(value / self.base_del)
@@ -709,6 +712,19 @@ class _EVROUT(_BaseLL):
 
         if self._duration is not None:
             dic.update(self._set_duration(self._duration, pul=pul))
+        return dic
+
+    def _set_rfdelaytype(self, value):
+        """Simple setting of Low Level IOC PVs.
+
+        Function called by write when no conversion is needed between
+        high and low level properties.
+        """
+        if value is None:
+            return dict()
+        dic = {'RFDelayType': value, 'RFDelay': 0}
+        if value:
+            dic['RFDelay'] = 31
         return dic
 
 
