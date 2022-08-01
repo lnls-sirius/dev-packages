@@ -25,6 +25,12 @@ class HLTimeSearch:
         return _dcopy(cls._hl_events)
 
     @classmethod
+    def get_configurable_hl_events(cls):
+        """Return a dictionary with configurable high level events."""
+        cls._init()
+        return {e: c for e, c in cls._hl_events.items() if 0 < int(c[3:]) < 64}
+
+    @classmethod
     def get_hl_triggers(cls, filters=None, sorting=None):
         """Return a dictionary with high level triggers."""
         cls._init()

@@ -997,6 +997,23 @@ class FamBPMs(_Devices):
                 return False
         return True
 
+    def set_switching_mode(self, mode='direct'):
+        """Set switching mode of BPMS.
+
+        Args:
+            mode ((str, int), optional): Desired mode, must be in
+                {'direct', 'switching', 1, 3}. Defaults to 'direct'.
+
+        Raises:
+            ValueError: When mode is not in {'direct', 'switching', 1, 3}.
+
+        """
+        if mode not in ('direct', 'switching', 1, 3):
+            raise ValueError('Value must be in ("direct", "switching", 1, 3).')
+
+        for bpm in self._devices:
+            bpm.switching_mode = mode
+
     def mturn_reset_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
         for flag in self._mturn_flags.values():
