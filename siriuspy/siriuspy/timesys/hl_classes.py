@@ -318,10 +318,8 @@ class HLTrigger(_BaseHL):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _update_deltadelay(self, value):
-        if len(value) <= len(self._hldeltadelay):
-            self._hldeltadelay[:len(value)] = value
-        elif len(value) > len(self._hldeltadelay):
-            self._hldeltadelay = value[:len(self._hldelay)]
+        siz = min(value.size, self._hldeltadelay.size)
+        self._hldeltadelay[:siz] = value[:siz]
         mini = self._hldeltadelay.min()
         self._hldelay += mini
         self._hldeltadelay -= mini
