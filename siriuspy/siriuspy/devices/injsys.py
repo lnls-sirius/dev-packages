@@ -512,11 +512,11 @@ class InjBOStandbyHandler(_BaseHandler):
     def cmd_turn_off(self):
         """Turn off."""
         # disable injbo
-        self.injboevt.mode = 'Disabled'
+        self.injboevt.mode = 'Disable'
 
         # wait for injbo to be disabled
         retval = self._wait_devices_propty(
-            self.injboevt, 'Mode-Sts', Event.MODES.index('Disabled'),
+            self.injboevt, 'Mode-Sts', Event.MODES.index('Disable'),
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for InjBO Event to be disabled timed '\
