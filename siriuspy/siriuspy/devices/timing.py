@@ -194,7 +194,10 @@ class Event(_ProptyDevice):
     @property
     def mode_str(self):
         """."""
-        return Event.MODES[self['Mode-Sts']]
+        mode = self['Mode-Sts']
+        if mode is not None:
+            return Event.MODES[mode]
+        return None
 
     @property
     def code(self):
@@ -213,7 +216,10 @@ class Event(_ProptyDevice):
     @property
     def delay_type_str(self):
         """."""
-        return Event.DELAYTYPES[self['DelayType-Sts']]
+        dlytyp = self['DelayType-Sts']
+        if dlytyp is not None:
+            return Event.DELAYTYPES[dlytyp]
+        return None
 
     @property
     def delay(self):

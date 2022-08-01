@@ -1014,7 +1014,7 @@ _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
     ['BR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
-    ['BR-RF-DLLRF-01:PL:REF:S', 0, 0.0],# Deg
+    ['BR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
     ['BR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
@@ -1038,7 +1038,7 @@ _pvs_si_llrf = [
     ['SR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
     ['SR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
     ['SR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
-    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],# Deg
+    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
     ['SR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
     ['SR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
     ['SR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg

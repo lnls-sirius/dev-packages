@@ -567,6 +567,7 @@ class _EVROUT(_BaseLL):
         if src_str in self._events:
             evt = self._events[src_str]
             evt_del = evt.delay_raw if evt.is_in_inj_table else 0
+        evt_del = evt_del or 0  # in case event PV is disconnected
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
         dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
