@@ -13,11 +13,12 @@ from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
-    LILLRFStandbyHandler
+    LILLRFStandbyHandler, InjSysPUModeHandler
 from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
 from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
+from .posang import PosAng
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
 from .pwrsupply import PowerSupply, PowerSupplyPU
@@ -30,6 +31,6 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 
 del device, bpm, dcct, egun, ict, lillrf, modltr,
-del pwrsupply, psconv, pssofb, rf, injsys
+del pwrsupply, posang, psconv, pssofb, rf, injsys
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, blscreen, bbb, machshift

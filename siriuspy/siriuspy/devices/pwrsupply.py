@@ -23,7 +23,7 @@ class _PSDev(_Device):
         'Current-SP', 'Current-RB', 'Current-Mon',
     )
     _properties_magps = (
-        'Current-SP', 'Current-RB', 'Current-Mon',  'CurrentRef-Mon',
+        'Current-SP', 'Current-RB', 'Current-Mon', 'CurrentRef-Mon',
         'OpMode-Sel', 'OpMode-Sts',
         'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
         'CycleType-Sel', 'CycleType-Sts',
@@ -37,6 +37,11 @@ class _PSDev(_Device):
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
+    _properties_pulsed_sept = (
+        'Intlk1-Mon', 'Intlk2-Mon', 'Intlk3-Mon', 'Intlk4-Mon',
+        'Intlk5-Mon', 'Intlk6-Mon', 'Intlk7-Mon',
+    )
+    _properties_pulsed_kckr = _properties_pulsed_sept + ('Intlk8-Mon', )
 
     def __init__(self, devname):
         """."""
@@ -161,6 +166,10 @@ class _PSDev(_Device):
         else:
             if self._is_pulsed:
                 properties += _PSDev._properties_pulsed
+                if self._psmodel == 'FP_KCKR':
+                    properties += _PSDev._properties_pulsed_kckr
+                else:
+                    properties += _PSDev._properties_pulsed_sept
             else:
                 properties += _PSDev._properties_magps
 
@@ -546,6 +555,15 @@ class PowerSupplyPU(_PSDev):
         """Return device PV names."""
         return set(list(super().pvnames) +
                    list(self._dev_timing.pvnames))
+
+    @property
+    def interlock_ok(self):
+        """Return whether all interlocks are in Ok state."""
+        intlks = [p for p in self._properties if 'Intlk' in p]
+        is_ok = True
+        for ilk in intlks:
+            is_ok &= self[ilk] == 1
+        return is_ok
 
     @property
     def connected(self):
