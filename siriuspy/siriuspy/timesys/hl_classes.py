@@ -268,15 +268,15 @@ class HLTrigger(_BaseHL):
         elif prop_name.startswith('DeltaDelayRaw'):
             prop_name = prop_name.replace('DeltaDelayRaw', 'DelayRaw')
             with self._hldelay_lock:
-                value = _np.asarray(value, dtype=int)
+                value = _np.array(value, dtype=int, ndmin=1)
                 self._update_deltadelay(value)
                 value = self._hldelay + self._hldeltadelay
         elif prop_name.startswith('DeltaDelay'):
             prop_name = prop_name.replace('DeltaDelay', 'DelayRaw')
             with self._hldelay_lock:
-                value = _np.asarray(value)
+                value = _np.array(value, ndmin=1)
                 value = _np.round(value / self._ll_objs[0].base_del)
-                value = _np.asarray(value, dtype=int)
+                value = _np.array(value, dtype=int)
                 self._update_deltadelay(value)
                 value = self._hldelay + self._hldeltadelay
         else:
