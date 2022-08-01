@@ -202,12 +202,12 @@ def get_injctrl_propty_database():
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNextInjRound-Cmd': {'type': 'int', 'value': 0},
-        'TopUpMaxNrPulses-SP': {
-            'type': 'int', 'value': 100, 'unit': 'pulses',
-            'lolim': 1, 'hilim': 1000},
-        'TopUpMaxNrPulses-RB': {
-            'type': 'int', 'value': 100, 'unit': 'pulses',
-            'lolim': 1, 'hilim': 1000},
+        'TopUpNrPulses-SP': {
+            'type': 'int', 'value': 1, 'unit': 'pulses',
+            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
+        'TopUpNrPulses-RB': {
+            'type': 'int', 'value': 1, 'unit': 'pulses',
+            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'AutoStop-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'AutoStop-Sts': {

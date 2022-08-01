@@ -147,7 +147,7 @@ class ASPUStandbyHandler(_BaseHandler):
 
         # set pulsed magnet pulse off
         self._set_devices_propty(
-            self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl, wait=0.5)
+            self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl)
 
         # wait for pulsed magnet pulse to be off
         retval = self._wait_devices_propty(
@@ -160,7 +160,7 @@ class ASPUStandbyHandler(_BaseHandler):
 
         # set pulsed magnet power state off
         self._set_devices_propty(
-            self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl, wait=1)
+            self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl)
 
         # wait for pulsed magnet power state to be off
         retval = self._wait_devices_propty(
@@ -170,6 +170,9 @@ class ASPUStandbyHandler(_BaseHandler):
             text = 'Check for pulsed magnet PwrState to be off '\
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
+
+        # wait for modulators trig.out
+        _time.sleep(1)
 
         # turn modulator charge off
         self._set_devices_propty(
@@ -209,22 +212,8 @@ class ASPUStandbyHandler(_BaseHandler):
 
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
-        # set pulsed magnet pulse on
-        self._set_devices_propty(
-            devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl, wait=0.5)
-
-        # wait for pulsed magnet pulse to be on
-        retval = self._wait_devices_propty(
-            devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for pulsed magnet Pulse to be enabled '\
-                   'timed out without success! Verify pulsed magnets!'
-            return [False, text, retval[1]]
-
         # set pulsed magnet power state on
-        self._set_devices_propty(
-            devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl, wait=1)
+        self._set_devices_propty(devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl)
 
         # wait for pulsed magnet power state to be on
         retval = self._wait_devices_propty(
@@ -232,6 +221,21 @@ class ASPUStandbyHandler(_BaseHandler):
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet PwrState to be on '\
+                   'timed out without success! Verify pulsed magnets!'
+            return [False, text, retval[1]]
+
+        # wait a moment for the PU high voltage and modulators charge
+        _time.sleep(1)
+
+        # set pulsed magnet pulse on
+        self._set_devices_propty(devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl)
+
+        # wait for pulsed magnet pulse to be on
+        retval = self._wait_devices_propty(
+            devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for pulsed magnet Pulse to be enabled '\
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
@@ -520,7 +524,9 @@ class InjBOStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # update events
+        _time.sleep(1)
         self.evg.cmd_update_events()
+        _time.sleep(1)
 
         return True, '', []
 

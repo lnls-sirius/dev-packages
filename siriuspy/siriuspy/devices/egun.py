@@ -445,8 +445,8 @@ class EGun(_Devices, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
-    BIAS_MULTI_BUNCH = -46.0  # [V]
-    BIAS_SINGLE_BUNCH = -80.0  # [V]
+    BIAS_MULTI_BUNCH = -56.0  # [V]
+    BIAS_SINGLE_BUNCH = -100.0  # [V]
     BIAS_TOLERANCE = 1.0  # [V]
     HV_OPVALUE = 90.0  # [kV]
     HV_TOLERANCE = 1.0  # [kV]
@@ -455,7 +455,7 @@ class EGun(_Devices, _Callback):
     HV_RAMPUP_NRPTS = 15
     HV_RAMPDN_NRPTS = 6
     HV_RAMP_DURATION = 70  # [s]
-    FILACURR_OPVALUE = 1.38  # [A]
+    FILACURR_OPVALUE = 1.39  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
     FILACURR_MAXVALUE = 1.42  # [A]
     FILACURR_RAMP_NRPTS = 10
