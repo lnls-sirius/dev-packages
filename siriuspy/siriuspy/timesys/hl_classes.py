@@ -265,15 +265,18 @@ class HLTrigger(_BaseHL):
             with self._hldelay_lock:
                 self._hldelay = int(round(value / self._ll_objs[0].base_del))
                 value = self._hldelay + self._hldeltadelay
-        elif prop_name.startswith('DeltaDelay'):
-            prop_name = prop_name.replace('DeltaDelay', 'DelayRaw')
-            with self._hldelay_lock:
-                value = _np.round(value / self._ll_objs[0].base_del)
-                self._update_deltadelay(value)
-                value = self._hldelay + self._hldeltadelay
         elif prop_name.startswith('DeltaDelayRaw'):
             prop_name = prop_name.replace('DeltaDelayRaw', 'DelayRaw')
             with self._hldelay_lock:
+                value = _np.array(value, dtype=int, ndmin=1)
+                self._update_deltadelay(value)
+                value = self._hldelay + self._hldeltadelay
+        elif prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'DelayRaw')
+            with self._hldelay_lock:
+                value = _np.array(value, ndmin=1)
+                value = _np.round(value / self._ll_objs[0].base_del)
+                value = _np.array(value, dtype=int)
                 self._update_deltadelay(value)
                 value = self._hldelay + self._hldeltadelay
         else:
@@ -315,13 +318,8 @@ class HLTrigger(_BaseHL):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _update_deltadelay(self, value):
-        if not hasattr(value, '__len__'):
-            value = _np.array([value, ])
-        value = _np.array(value, dtype=int)
-        if len(value) <= len(self._hldeltadelay):
-            self._hldeltadelay[:len(value)] = value
-        elif len(value) > len(self._hldeltadelay):
-            self._hldeltadelay = value[:len(self._hldelay)]
+        siz = min(value.size, self._hldeltadelay.size)
+        self._hldeltadelay[:siz] = value[:siz]
         mini = self._hldeltadelay.min()
         self._hldelay += mini
         self._hldeltadelay -= mini

@@ -512,11 +512,11 @@ class InjBOStandbyHandler(_BaseHandler):
     def cmd_turn_off(self):
         """Turn off."""
         # disable injbo
-        self.injboevt.mode = 'Disabled'
+        self.injboevt.mode = 'Disable'
 
         # wait for injbo to be disabled
         retval = self._wait_devices_propty(
-            self.injboevt, 'Mode-Sts', Event.MODES.index('Disabled'),
+            self.injboevt, 'Mode-Sts', Event.MODES.index('Disable'),
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for InjBO Event to be disabled timed '\
@@ -1000,7 +1000,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         for fun, msg in procedures:
             if self._check_abort():
                 return False
-            if not fun():
+            if not fun(timeout=2):
                 self._update_status('ERR:Could not ' + msg)
                 return False
             _time.sleep(0.5)
