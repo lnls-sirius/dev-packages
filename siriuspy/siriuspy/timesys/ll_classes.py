@@ -94,7 +94,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -106,7 +107,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         for pv in pvs:
             if not pv.wait_for_connection(timeout=timeout):
                 _log.info(pv.pvname + ' not connected.')
@@ -487,7 +489,6 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        dic_['PVsConn'] &= all([x.connected for x in self._events.values()])
 
         dic_['Intlk'] = 0
         if 'Intlk' not in self._REMOVE_PROPS:
