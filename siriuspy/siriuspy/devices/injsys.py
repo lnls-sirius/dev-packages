@@ -784,7 +784,7 @@ class InjSysStandbyHandler(_Devices):
 class InjSysPUModeHandler(_Devices, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
-    _DEF_TIMEOUT = 5  # [s]
+    _DEF_TIMEOUT = 10 # [s]
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
@@ -1024,10 +1024,10 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     # ---------- check sp -----------
 
-    def _wait(self, device, prop, desired, timeout=_DEF_TIMEOUT):
+    def _wait(self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if getattr(device, prop) == desired:
+            if abs(getattr(device, prop) - desired) < tolerance:
                 return True
             _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
         return False
