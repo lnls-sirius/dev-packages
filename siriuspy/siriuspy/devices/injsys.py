@@ -784,7 +784,7 @@ class InjSysStandbyHandler(_Devices):
 class InjSysPUModeHandler(_Devices, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
-    _DEF_TIMEOUT = 5  # [s]
+    _DEF_TIMEOUT = 10 # [s]
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
