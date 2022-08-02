@@ -1024,10 +1024,10 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     # ---------- check sp -----------
 
-    def _wait(self, device, prop, desired, timeout=_DEF_TIMEOUT):
+    def _wait(self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if getattr(device, prop) == desired:
+            if abs(getattr(device, prop) - desired) < tolerance:
                 return True
             _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
         return False
