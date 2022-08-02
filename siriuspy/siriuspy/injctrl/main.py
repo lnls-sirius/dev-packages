@@ -934,10 +934,13 @@ class App(_Callback):
         proll = int(injcount % blistlen)
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
         self._evg_dev.bucketlist = new_bucklist
-        if not _np.all(self._evg_dev.bucketlist == new_bucklist):
-            self._update_log('WARN:Could not update BucketList.')
-        else:
-            self._update_log('Updated BucketList.')
+        _t0 = _time.time()
+        while _time.time() - _t0 < 2:
+            if _np.all(self._evg_dev.bucketlist == new_bucklist):
+                self._update_log('Updated BucketList.')
+                return True
+        self._update_log('WARN:Could not update BucketList.')
+        return False
 
     def _update_bucket_list_topup(self):
         bucket = _np.arange(self._topupnrpulses) + self._topupnrpulses
