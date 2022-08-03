@@ -114,6 +114,8 @@ def generate_bpm_static_table():
 
     model = pymodels.tb
     acc, *_ = model.create_accelerator()
+    idx = pyaccel.lattice.find_indices(acc, 'fam_name', 'Spect')[0]
+    acc = acc[idx+1:]
     _append_bpm_data(filename, model, acc, 'BO Transport Line', 'TB')
 
     model = pymodels.ts
