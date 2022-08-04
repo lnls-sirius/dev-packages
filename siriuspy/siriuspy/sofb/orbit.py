@@ -86,6 +86,7 @@ class EpicsOrbit(BaseOrbit):
         super().__init__(acc, prefix=prefix, callback=callback)
 
         self._mode = self._csorb.SOFBMode.Offline
+        self._sofb = None
         self._sync_with_inj = False
         self._sloworb_timeout = 0
         self.ref_orbs = {
@@ -130,6 +131,15 @@ class EpicsOrbit(BaseOrbit):
             1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
         self._update_time_vector()
+
+    @property
+    def sofb(self):
+        """."""
+        return self._sofb
+
+    @sofb.setter
+    def sofb(self, sofb):
+        self._sofb = sofb
 
     def _create_processes(self, nrprocs=8):
         # get the start method of the Processes that will be launched:
@@ -426,7 +436,10 @@ class EpicsOrbit(BaseOrbit):
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.tbt_sync_enbl = value
         self.run_callbacks('MTurnSyncTim-Sts', val)
         return True
@@ -436,25 +449,34 @@ class EpicsOrbit(BaseOrbit):
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.tbt_mask_enbl = value
+
         self.run_callbacks('MTurnUseMask-Sts', val)
         return True
 
     def set_mturnmask(self, val, beg=True):
         """."""
         val = int(val) if val > 0 else 0
+        bpms = self._get_used_bpms()
         omsk = \
-            self.bpms[0].tbt_mask_begin if not beg else \
-            self.bpms[0].tbt_mask_end
+            bpms[0].tbt_mask_begin if not beg else \
+            bpms[0].tbt_mask_end
         omsk = omsk or 0
-        maxsz = self.bpms[0].tbtrate - omsk - 2
+        maxsz = bpms[0].tbtrate - omsk - 2
         val = val if val < maxsz else maxsz
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             if beg:
                 bpm.tbt_mask_begin = val
             else:
                 bpm.tbt_mask_end = val
+
         name = 'Beg' if beg else 'End'
         self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
         return True
@@ -648,7 +670,9 @@ class EpicsOrbit(BaseOrbit):
     def acq_config_bpms(self, *args):
         """."""
         _ = args
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             if self.is_multiturn():
                 bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.switching_mode = _csbpm.SwModes.direct
@@ -665,13 +689,13 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def _synchronize_bpms(self):
-        for bpm in self.bpms:
+        for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
         _time.sleep(0.5)
-        for bpm in self.bpms:
+        for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
@@ -683,7 +707,9 @@ class EpicsOrbit(BaseOrbit):
         if value == acqctrl.Start:
             self._wait_bpms()
 
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.ctrl = value
         self.run_callbacks('TrigAcqCtrl-Sts', value)
 
@@ -698,8 +724,12 @@ class EpicsOrbit(BaseOrbit):
             val = _csbpm.AcqChan._fields.index(val)
         except (IndexError, ValueError):
             return False
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_type = val
+
         self.run_callbacks('TrigAcqChan-Sts', value)
         self._update_time_vector(channel=val)
         return True
@@ -709,15 +739,22 @@ class EpicsOrbit(BaseOrbit):
         val = _csbpm.AcqTrigTyp.Data
         if value == self._csorb.TrigAcqTrig.External:
             val = _csbpm.AcqTrigTyp.External
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trigger = val
+
         self.run_callbacks('TrigAcqTrigger-Sts', value)
         return True
 
     def set_trig_acq_repeat(self, value):
         """."""
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_repeat = value
+
         self.run_callbacks('TrigAcqRepeat-Sts', value)
         return True
 
@@ -728,35 +765,47 @@ class EpicsOrbit(BaseOrbit):
             val = _csbpm.AcqChan._fields.index(val)
         except (IndexError, ValueError):
             return False
-        for bpm in self.bpms:
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trig_datatype = val
+
         self.run_callbacks('TrigDataChan-Sts', value)
         return True
 
     def set_trig_acq_datasel(self, value):
         """."""
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trig_datasel = value
         self.run_callbacks('TrigDataSel-Sts', value)
         return True
 
     def set_trig_acq_datathres(self, value):
         """."""
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trig_datathres = value
         self.run_callbacks('TrigDataThres-RB', value)
         return True
 
     def set_trig_acq_datahyst(self, value):
         """."""
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trig_datahyst = value
         self.run_callbacks('TrigDataHyst-RB', value)
         return True
 
     def set_trig_acq_datapol(self, value):
         """."""
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.acq_trig_datapol = value
         self.run_callbacks('TrigDataPol-Sts', value)
         return True
@@ -770,7 +819,9 @@ class EpicsOrbit(BaseOrbit):
         if getattr(self, '_acqtrignrsamples' + oth) == 0 and val == 0:
             return False
         with self._lock_raw_orbs:
-            for bpm in self.bpms:
+            mask = self._get_mask()
+            for i, bpm in enumerate(self.bpms):
+                bpm.put_enable = mask[i]
                 setattr(bpm, 'nrsamples' + suf, val)
             self._reset_orbs()
             setattr(self, '_acqtrignrsamples' + suf, val)
@@ -783,7 +834,9 @@ class EpicsOrbit(BaseOrbit):
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
-            for bpm in self.bpms:
+            mask = self._get_mask()
+            for i, bpm in enumerate(self.bpms):
+                bpm.put_enable = mask[i]
                 bpm.nrshots = val
             self.timing.nrpulses = val
             self._reset_orbs()
@@ -797,7 +850,9 @@ class EpicsOrbit(BaseOrbit):
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
-        for bpm in self.bpms:
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
             bpm.polycal = value
         self.run_callbacks('PolyCalibration-Sts', val)
         return True
@@ -825,7 +880,7 @@ class EpicsOrbit(BaseOrbit):
     def _wait_bpms(self):
         """."""
         for _ in range(40):
-            if all(map(lambda x: x.is_ok, self.bpms)):
+            if all(map(lambda x: x.is_ok, self._get_used_bpms())):
                 break
             _time.sleep(0.1)
         else:
@@ -1111,22 +1166,22 @@ class EpicsOrbit(BaseOrbit):
         status = _util.update_bit(status, bit_pos=0, bit_val=not tim_conn)
         status = _util.update_bit(status, bit_pos=1, bit_val=not tim_conf)
 
+        bpms = self._get_used_bpms()
         if self._mode == self._csorb.SOFBMode.Offline:
             bpm_conn = True
             bpm_stt = True
         else:
-            bpm_conn = all(bpm.connected for bpm in self.bpms)
-            bpm_stt = all(bpm.state for bpm in self.bpms)
+            bpm_conn = all(bpm.connected for bpm in bpms)
+            bpm_stt = all(bpm.state for bpm in bpms)
         status = _util.update_bit(v=status, bit_pos=2, bit_val=not bpm_conn)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
 
         isok = True
         if self.is_trigmode():
-            isok = all(map(lambda x: x.is_ok, self.bpms))
+            isok = all(map(lambda x: x.is_ok, bpms))
         elif self.is_sloworb():
             isok = all(map(
-                lambda x: x.switching_mode == _csbpm.SwModes.switching,
-                self.bpms))
+                lambda x: x.switching_mode == _csbpm.SwModes.switching, bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         self._status = status
@@ -1143,3 +1198,19 @@ class EpicsOrbit(BaseOrbit):
             orby[i::nrb] = bpm.offsety or 0.0
         self.run_callbacks('BPMOffsetX-Mon', orbx)
         self.run_callbacks('BPMOffsetY-Mon', orby)
+
+    def _get_mask(self):
+        if self.sofb is not None and self.sofb.matrix is not None:
+            mask = self.sofb.matrix.bpm_enbllist
+            mask = mask[:mask.size//2] & mask[mask.size//2:]
+            mask = mask[:len(self.bpms)]
+        return mask
+
+    def _get_used_bpms(self):
+        bpms = []
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
+            if mask[i]:
+                bpms.append(bpm)
+        return bpms

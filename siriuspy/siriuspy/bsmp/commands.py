@@ -16,7 +16,7 @@ class BSMP:
     _timeout_execute_function: float = 100.0  # [ms]
 
     def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
-        """_cructor."""
+        """Constructor."""
         self._entities: _Entities = entities
         self._channel: _Channel = _Channel(iointerf, slave_address)
 
@@ -51,11 +51,11 @@ class BSMP:
         payload: typing.List[str] = []
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         # expected response
         if res.cmd == ack:
@@ -84,11 +84,11 @@ class BSMP:
         payload = [chr(group_id)]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         # expected response
         if res.cmd == ack:
@@ -123,11 +123,11 @@ class BSMP:
         payload = [chr(var_id)]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             variable = self.entities.variables[var_id]
@@ -159,11 +159,11 @@ class BSMP:
         payload = [chr(group_id)]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             # expected response
@@ -222,11 +222,11 @@ class BSMP:
         payload = [chr(var_id) for var_id in var_ids]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             if not res.payload:
@@ -256,11 +256,11 @@ class BSMP:
         payload: typing.List[str] = []
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack and not res.payload:
             # expected response
@@ -289,11 +289,11 @@ class BSMP:
         payload = [chr(curve_id), chr(hsb), chr(lsb)]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             data = res.payload[3:]
@@ -340,11 +340,11 @@ class BSMP:
             curve.value_to_load(value)
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             # expected response
@@ -367,11 +367,11 @@ class BSMP:
         payload = [chr(curve_id)]
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout)
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         if res.cmd == ack:
             # expected response
@@ -402,16 +402,16 @@ class BSMP:
         payload = [chr(func_id)] + function.value_to_load(input_val)
 
         # send request package
-        msg = _Message.message(cmd, payload=payload)
-        res = self.channel.request(msg, timeout=timeout, read_flag=read_flag)
+        try:
+            msg = _Message.message(cmd, payload=payload)
+            res = self.channel.request(msg, timeout=timeout)
+        except (TimeoutError, ValueError) as err:
+            raise _SerialError(err)
 
         # TODO: This should be temporary. It is used for ps F_RESET_UDC.
         # PS Firmware should change so that F_RESET_UDC returns ack.
         if not read_flag:
             return None
-
-        if not res:
-            raise _SerialError("Expected response from request, found {}".format(res))
 
         if res.cmd == ack:
             if len(res.payload) == function.o_size:
@@ -440,9 +440,10 @@ class BSMP:
             return ack, None
 
         # unexpected response, raise Exception
+        fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
+        errmsg = fmts.format(cmd, ack)
         if 'print_error' not in kwargs or kwargs['print_error']:
-            fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
-            print(fmts.format(cmd, ack))
+            print(errmsg)
             for key, value in kwargs.items():
                 print('{}: {}'.format(key, value))
-        raise _SerialAnomResp
+        raise _SerialAnomResp(errmsg)

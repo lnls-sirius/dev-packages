@@ -59,9 +59,7 @@ class _BaseLL(_Callback):
         self._locked = False
         self._lock_threads_dict = dict()
 
-        evts = _HLSearch.get_hl_events()
-        evts.pop('Dsbl')
-        evts.pop('PsMtn')
+        evts = _HLSearch.get_configurable_hl_events()
         self._events = {evt: _Event(evt) for evt in evts}
 
         evg_name = _PVName(_LLSearch.get_evg_name())
@@ -96,7 +94,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -108,7 +107,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         for pv in pvs:
             if not pv.wait_for_connection(timeout=timeout):
                 _log.info(pv.pvname + ' not connected.')
@@ -431,6 +431,7 @@ class _EVROUT(_BaseLL):
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
+            'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             }
         return map_
@@ -489,7 +490,6 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        dic_['PVsConn'] &= all([x.connected for x in self._events.values()])
 
         dic_['Intlk'] = 0
         if 'Intlk' not in self._REMOVE_PROPS:
@@ -568,12 +568,15 @@ class _EVROUT(_BaseLL):
         if src_str in self._events:
             evt = self._events[src_str]
             evt_del = evt.delay_raw if evt.is_in_inj_table else 0
+        evt_del = evt_del or 0  # in case event PV is disconnected
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
         dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
 
     def _set_delay(self, value, raw=False):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
+        if self._config_ok_values.get('RFDelayType', False):
+            dic_['RFDelay'] = 31
         if value is None:
             return dic_
         value = value if raw else round(value / self.base_del)
@@ -709,6 +712,19 @@ class _EVROUT(_BaseLL):
 
         if self._duration is not None:
             dic.update(self._set_duration(self._duration, pul=pul))
+        return dic
+
+    def _set_rfdelaytype(self, value):
+        """Simple setting of Low Level IOC PVs.
+
+        Function called by write when no conversion is needed between
+        high and low level properties.
+        """
+        if value is None:
+            return dict()
+        dic = {'RFDelayType': value, 'RFDelay': 0}
+        if value:
+            dic['RFDelay'] = 31
         return dic
 
 

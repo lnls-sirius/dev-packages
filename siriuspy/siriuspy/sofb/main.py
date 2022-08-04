@@ -128,6 +128,7 @@ class SOFB(_BaseClass):
         if isinstance(orb, _BaseOrbit):
             self._map2write.update(orb.get_map2write())
             self._orbit = orb
+            self._orbit.sofb = self
 
     @property
     def correctors(self):
@@ -140,6 +141,7 @@ class SOFB(_BaseClass):
         if isinstance(corrs, _BaseCorrectors):
             self._map2write.update(corrs.get_map2write())
             self._correctors = corrs
+            self._correctors.sofb = self
 
     @property
     def matrix(self):
@@ -152,6 +154,7 @@ class SOFB(_BaseClass):
         if isinstance(mat, _BaseMatrix):
             self._map2write.update(mat.get_map2write())
             self._matrix = mat
+            self._matrix.sofb = self
 
     @property
     def havebeam(self):
@@ -686,31 +689,37 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
-        count = 0
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+
+        wait_orb_error = int(5)
+        previous_orb_problem = False
+        tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if count >= 1000:
+            if len(times) >= 1000:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets), daemon=True).start()
                 times, rets = [], []
-                count = 0
-            count += 1
-            tims = []
 
             interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
             norbs = 1
             if use_pssofb:
                 norbs = max(int(bpmsfreq*interval), 1)
+            elif tims:
+                # if not pssofb wait for interval to be satisfied
+                dtime = tims[0] - tims[-1]
+                dtime += interval
+                _sleep(max(dtime, 0))
 
+            tims = []
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
@@ -735,9 +744,33 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
-                break
+                # NOTE: The code bellow is the default implementation.
+                #       We decided to use the temporaty work around solution
+                #       implemented above to handle mal-functioning BPMs.
+                # self._loop_state = self._csorb.LoopState.Open
+                # self.run_callbacks('LoopState-Sel', 0)
+                # break
+
+                self.run_callbacks('LoopState-Sts', 0)
+                msg = 'WARN: Skipping iteration.'
+                self._update_log(msg)
+                _log.info(msg)
+                for ii_ in range(wait_orb_error):
+                    msg = f'WARN: waiting {wait_orb_error-ii_:d}s ...'
+                    self._update_log(msg)
+                    _log.info(msg)
+                    _sleep(1)
+                msg = f'WARN: Trying again...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = True
+                continue
+            elif previous_orb_problem:
+                msg = f'WARN: Orbit is Ok now. Resuming correction...'
+                self._update_log(msg)
+                _log.info(msg)
+                previous_orb_problem = False
+                self.run_callbacks('LoopState-Sts', 1)
 
             dkicks = self._process_pid(dkicks, interval)
             kicks = self._process_kicks(
@@ -764,10 +797,6 @@ class SOFB(_BaseClass):
                 # skip this iteration
                 continue
 
-            dtime = tims[0] - tims[-1]
-            dtime += interval
-            if not use_pssofb and dtime > 0:
-                _sleep(dtime)
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
