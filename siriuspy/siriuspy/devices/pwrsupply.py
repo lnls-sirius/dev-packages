@@ -38,10 +38,10 @@ class _PSDev(_Device):
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
         'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
-        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon'
+        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
         'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
         'TestWavePeriod-RB', 'TestWavePeriod-SP',
-        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon'
+        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
         'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
     )
     _properties_pulsed = (
