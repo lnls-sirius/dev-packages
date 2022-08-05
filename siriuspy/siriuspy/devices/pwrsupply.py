@@ -35,7 +35,7 @@ class _PSDev(_Device):
         'CycleEnbl-Mon',
     )
     _properties_fc = (
-        'PSStatus-Mon', 'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
+        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
         'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
         'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon'
@@ -639,6 +639,16 @@ class PowerSupplyFC(_PSDev):
 
     class DEVICES:
         """Devices names."""
+
+    @property
+    def opmode(self):
+        """."""
+        return self['OpMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        """."""
+        self['OpMode-Sel'] = value
 
     @property
     def current(self):
