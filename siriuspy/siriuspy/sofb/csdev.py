@@ -191,7 +191,7 @@ class SOFBTLines(ConstTLines):
             self.evt_cor_name = 'Orb' + self.acc
             self.clk_cor_name = 'Clock3'
 
-        self.evt_acq_name = 'Dig' + self.acc
+        self.evt_acq_name = 'Linac'
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.circum = 21.2477 if self.acc == 'TB' else 26.8933  # in meters

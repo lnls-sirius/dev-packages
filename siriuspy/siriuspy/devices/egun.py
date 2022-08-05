@@ -445,8 +445,8 @@ class EGun(_Devices, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
-    BIAS_MULTI_BUNCH = -46.0  # [V]
-    BIAS_SINGLE_BUNCH = -80.0  # [V]
+    BIAS_MULTI_BUNCH = -56.0  # [V]
+    BIAS_SINGLE_BUNCH = -100.0  # [V]
     BIAS_TOLERANCE = 1.0  # [V]
     HV_OPVALUE = 90.0  # [kV]
     HV_TOLERANCE = 1.0  # [kV]
@@ -455,7 +455,7 @@ class EGun(_Devices, _Callback):
     HV_RAMPUP_NRPTS = 15
     HV_RAMPDN_NRPTS = 6
     HV_RAMP_DURATION = 70  # [s]
-    FILACURR_OPVALUE = 1.38  # [A]
+    FILACURR_OPVALUE = 1.39  # [A]
     FILACURR_TOLERANCE = 0.20  # [A]
     FILACURR_MAXVALUE = 1.42  # [A]
     FILACURR_RAMP_NRPTS = 10
@@ -494,7 +494,6 @@ class EGun(_Devices, _Callback):
         self._hv_leakcurr = EGun.HV_LEAKCURR_OPVALUE
         self._filacurr_opval = EGun.FILACURR_OPVALUE
         self._filacurr_tol = EGun.FILACURR_TOLERANCE
-        self._last_status = ''
         self._print_log = print_log
         self._abort_chg_type = _Flag()
         self._abort_rmp_hvps = _Flag()
@@ -599,6 +598,8 @@ class EGun(_Devices, _Callback):
     @property
     def is_single_bunch(self):
         """Is configured to single bunch mode."""
+        if not self.connected:
+            return False
         sts = not self.pulse.multi_bunch_switch
         sts &= not self.pulse.multi_bunch_mode
         sts &= not self.trigmultipre.state
@@ -611,6 +612,8 @@ class EGun(_Devices, _Callback):
     @property
     def is_multi_bunch(self):
         """Is configured to multi bunch mode."""
+        if not self.connected:
+            return False
         sts = not self.pulse.single_bunch_switch
         sts &= not self.pulse.single_bunch_mode
         sts &= not self.trigsingle.state
@@ -642,6 +645,8 @@ class EGun(_Devices, _Callback):
     @property
     def is_hv_on(self):
         """Indicate whether high voltage is on and in operational value."""
+        if not self.hvps.connected:
+            return False
         is_on = self.hvps.is_on()
         is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
         return is_on and is_op
@@ -756,6 +761,8 @@ class EGun(_Devices, _Callback):
     @property
     def is_fila_on(self):
         """Indicate whether filament is on and in operational current."""
+        if not self.fila.connected:
+            return False
         is_on = self.fila.is_on()
         is_op_sp = abs(self.fila['currentoutsoft']-self._filacurr_opval) < 1e-4
         is_op_rb = abs(self.fila['currentinsoft']-self._filacurr_opval) < \
@@ -893,6 +900,8 @@ class EGun(_Devices, _Callback):
 
     def _check_status_ok(self):
         """Check if interlock signals are ok."""
+        if not self.connected:
+            return False
         isok = [self.mps_ccg[ppty] == 0 for ppty in self.mps_ccg.properties]
         allok = all(isok)
         allok &= self.mps_gun['GunPermit'] == 1

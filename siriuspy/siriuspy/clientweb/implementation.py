@@ -134,7 +134,7 @@ def crates_mapping(timeout=_TIMEOUT):
     """Return the crates mapping."""
     url = _DIAG_FOLDER + 'microTCA-vs-BPMs-mapping/'
     text = read_url(url, timeout=timeout)
-    pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
+    pat = _re.compile('"(names_crate[a-zA-Z_0-9]*.cfg)"')
     files = pat.findall(text)
     txt = ''
     for fi in files:

@@ -226,7 +226,7 @@ class Timing:
 
         # disable triggers
         pv_event = Timing._pvs[Timing.evg_name+':CycleMode-Sel']
-        pv_event.value = _TIConst.EvtModes.Disabled
+        pv_event.value = _TIConst.EvtModes.Disable
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
         for trig in triggers:
