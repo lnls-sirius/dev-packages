@@ -636,6 +636,9 @@ class PowerSupplyPU(_PSDev):
 
 
 class PowerSupplyFC(_PSDev):
+    """Fast Correctors Power Supply Device."""
+
+    OPMODE = _Const.OpModeFOFB
 
     class DEVICES:
         """Devices names."""
@@ -648,7 +651,8 @@ class PowerSupplyFC(_PSDev):
     @opmode.setter
     def opmode(self, value):
         """."""
-        self['OpMode-Sel'] = value
+        self._enum_setter(
+            'OpMode-Sel', value, self.OPMODE)
 
     @property
     def current(self):
