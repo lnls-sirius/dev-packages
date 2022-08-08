@@ -915,7 +915,7 @@ class CycleController:
         trims = _PSSearch.get_psnames({
             'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
-        if not self.cycle_trims_subset(trims, timeout=50):
+        if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
@@ -924,7 +924,7 @@ class CycleController:
         trims = _PSSearch.get_psnames({
             'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
             'dev': 'CV'})
-        if not self.cycle_trims_subset(trims, timeout=50):
+        if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
             self._update_log(
                 'There was problems in trims cycling. Stoping.', error=True)
             return
