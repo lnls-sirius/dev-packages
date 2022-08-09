@@ -6,7 +6,7 @@ from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
-from .device import Device, DeviceApp, Devices
+from .device import Device, DeviceApp, Devices, DeviceNC
 from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
 from .ict import ICT, TranspEff

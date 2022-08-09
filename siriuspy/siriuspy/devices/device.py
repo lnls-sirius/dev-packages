@@ -218,12 +218,13 @@ class DeviceNC(Device):
     This device class is to be used for those devices whose
     names and PVs are not compliant to the Sirius naming system.
     """
+    DEVSEP = ':'
 
     def _create_pvs(self, devname):
         pvs = dict()
         devname = devname or ''
         for propty in self._properties:
-            pvname = devname + ':' + propty
+            pvname = devname + self.DEVSEP + propty
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return devname, pvs
