@@ -784,7 +784,7 @@ class InjSysStandbyHandler(_Devices):
 class InjSysPUModeHandler(_Devices, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
-    _DEF_TIMEOUT = 10 # [s]
+    _DEF_TIMEOUT = 10  # [s]
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
@@ -855,7 +855,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = self.trigdpk.delay_raw == self.SI_DPKCKR_DLYR_OPT
-        dpk_kck_ok = self.pudpk.strength == self.SI_DPKCKR_DEFKICK
+        dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
@@ -908,7 +908,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = self.trigdpk.delay_raw == \
             self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
-        dpk_kck_ok = self.pudpk.strength == self.SI_DPKCKR_DEFKICK
+        dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_off = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
