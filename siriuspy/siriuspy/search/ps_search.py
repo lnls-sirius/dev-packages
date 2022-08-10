@@ -355,7 +355,7 @@ class PSSearch:
                        'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC',
                        'FAP', 'FAP_2P2S', 'FAP_4P',
-                       'Commercial', 'LINAC_PS', 'FOFB_PS'):
+                       'LINAC_PS', 'FOFB_PS'):
             return PSSearch._splims_ps_unit
         elif psmodel in ('APU', ):
             return 'mm'

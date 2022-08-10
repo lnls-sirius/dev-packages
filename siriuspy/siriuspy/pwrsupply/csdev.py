@@ -1924,7 +1924,6 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
 
 # --- FAC ACDC ---
 
-
 def _get_ps_FAC_2S_ACDC_propty_database():
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     propty_db = _get_ps_common_propty_database()
@@ -2819,19 +2818,12 @@ def _get_ps_FAP_2P2S_propty_database():
 
 # --- Others ---
 
-def _get_ps_Commercial_propty_database():
-    """Return database with Commercial pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
-
-
 def _get_ps_REGATRON_DCLink_database():
     """Return database with REGATRON DCLink model PVs."""
     # TODO: implement!!!
     return dict()
 
 # --- Aux. ---
-
 
 def _set_limits(pstype, database):
     signals_unit = (
@@ -2879,7 +2871,6 @@ def _get_model_db(psmodel):
         'FAP': _get_ps_FAP_propty_database,
         'FAP_2P2S': _get_ps_FAP_2P2S_propty_database,
         'FAP_4P': _get_ps_FAP_4P_propty_database,
-        'Commercial': _get_ps_Commercial_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
