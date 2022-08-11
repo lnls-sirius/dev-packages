@@ -34,6 +34,16 @@ class _PSDev(_Device):
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
+    _properties_fc = (
+        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
+        'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
+        'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
+        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
+        'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
+        'TestWavePeriod-RB', 'TestWavePeriod-SP',
+        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
+        'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
+    )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
@@ -54,8 +64,8 @@ class _PSDev(_Device):
         # power supply type and magnetic function
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed, self._is_magps) = \
-            _PSDev.get_device_type(devname)
+         self._is_linac, self._is_pulsed, self._is_fc,
+         self._is_magps) = _PSDev.get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -88,8 +98,13 @@ class _PSDev(_Device):
 
     @property
     def is_pulsed(self):
-        """Return True if device is a pulsed magnet powet supply."""
+        """Return True if device is a pulsed magnet power supply."""
         return self._is_pulsed
+
+    @property
+    def is_fc(self):
+        """Return True if device is a Sirius fast corrector power supply"""
+        return self._is_fc
 
     @property
     def is_magps(self):
@@ -151,10 +166,11 @@ class _PSDev(_Device):
         strength_units = _util.get_strength_units(magfunc, pstype)
         is_linac = devname.sec.endswith('LI')
         is_pulsed = devname.dis == 'PU'
-        is_magps = not is_linac and not is_pulsed
+        is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
+        is_magps = not is_linac and not is_pulsed and not is_fc
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
-                is_linac, is_pulsed, is_magps)
+                is_linac, is_pulsed, is_fc, is_magps)
 
     # --- private methods ---
 
@@ -163,15 +179,16 @@ class _PSDev(_Device):
         properties = _PSDev._properties_common
         if self._is_linac:
             properties += _PSDev._properties_linac
-        else:
-            if self._is_pulsed:
-                properties += _PSDev._properties_pulsed
-                if self._psmodel == 'FP_KCKR':
-                    properties += _PSDev._properties_pulsed_kckr
-                else:
-                    properties += _PSDev._properties_pulsed_sept
+        elif self._is_pulsed:
+            properties += _PSDev._properties_pulsed
+            if self._psmodel == 'FP_KCKR':
+                properties += _PSDev._properties_pulsed_kckr
             else:
-                properties += _PSDev._properties_magps
+                properties += _PSDev._properties_pulsed_sept
+        elif self._is_fc:
+            properties += _PSDev._properties_fc
+        else:
+            properties += _PSDev._properties_magps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
@@ -616,3 +633,122 @@ class PowerSupplyPU(_PSDev):
         devname = self._devname.substitute(dis='TI')
         device = _Device(devname, PowerSupplyPU._properties_timing)
         return device
+
+
+class PowerSupplyFC(_PSDev):
+    """Fast Correctors Power Supply Device."""
+
+    OPMODE = _Const.OpModeFOFB
+
+    class DEVICES:
+        """Devices names."""
+
+    @property
+    def opmode(self):
+        """."""
+        return self['OpMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        """."""
+        self._enum_setter(
+            'OpMode-Sel', value, self.OPMODE)
+
+    @property
+    def current(self):
+        """."""
+        return self['Current-RB']
+
+    @current.setter
+    def current(self, value):
+        self['Current-SP'] = value
+
+    @property
+    def current_mon(self):
+        """."""
+        return self['Current-Mon']
+
+    @property
+    def currentref_mon(self):
+        """."""
+        return self['CurrentRef-Mon']
+
+    @property
+    def curr_gain(self):
+        """."""
+        return self['CurrGain-RB']
+
+    @curr_gain.setter
+    def curr_gain(self, value):
+        """."""
+        self['CurrGain-SP'] = value
+
+    @property
+    def curr_offset(self):
+        """."""
+        return self['CurrOffset-RB']
+
+    @curr_offset.setter
+    def curr_offset(self, value):
+        """."""
+        self['CurrOffset-SP'] = value
+
+    @property
+    def voltage(self):
+        """."""
+        return self['Voltage-RB']
+
+    @voltage.setter
+    def voltage(self, value):
+        """."""
+        self['Voltage-SP'] = value
+
+    @property
+    def voltage_mon(self):
+        """."""
+        return self['Voltage-Mon']
+
+    @property
+    def volt_gain(self):
+        """."""
+        return self['VoltGain-RB']
+
+    @volt_gain.setter
+    def volt_gain(self, value):
+        """."""
+        self['VoltGain-SP'] = value
+
+    @property
+    def volt_offset(self):
+        """."""
+        return self['VoltOffset-RB']
+
+    @volt_offset.setter
+    def volt_offset(self, value):
+        """."""
+        self['VoltOffset-SP'] = value
+
+    @property
+    def ctrlloop_kp(self):
+        """."""
+        return self['CtrlLoopKp-RB']
+
+    @ctrlloop_kp.setter
+    def ctrlloop_kp(self, value):
+        """."""
+        self['CtrlLoopKp-SP'] = value
+
+    @property
+    def ctrlloop_ti(self):
+        """."""
+        return self['CtrlLoopTi-RB']
+
+    @ctrlloop_ti.setter
+    def ctrlloop_ti(self, value):
+        """."""
+        self['CtrlLoopTi-SP'] = value
+
+    @property
+    def alarms_amp(self):
+        """."""
+        return self['AlarmsAmp-Mon']
