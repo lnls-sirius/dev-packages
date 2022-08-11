@@ -755,10 +755,6 @@ class PSModelFAP_2P2S(_PSModel):
         }
 
 
-class PSModelCommercial(PSModelFAC_DCDC):
-    """Commercial power supply model."""
-
-
 # --- ACDC ---
 
 
@@ -941,7 +937,6 @@ class PSModelFactory:
         'FAP': PSModelFAP,
         'FAP_2P2S': PSModelFAP_2P2S,
         'FAP_4P': PSModelFAP_4P,
-        'Commercial': PSModelCommercial,
         }
 
     @staticmethod
