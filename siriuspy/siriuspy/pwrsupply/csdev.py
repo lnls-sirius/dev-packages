@@ -1480,6 +1480,7 @@ def _get_ps_FOFB_propty_database():
 
 # --- FBP ---
 
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
@@ -1924,6 +1925,7 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
 
 # --- FAC ACDC ---
 
+
 def _get_ps_FAC_2S_ACDC_propty_database():
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     propty_db = _get_ps_common_propty_database()
@@ -2131,6 +2133,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
 
 
 # --- FAP ---
+
 
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
@@ -2818,12 +2821,15 @@ def _get_ps_FAP_2P2S_propty_database():
 
 # --- Others ---
 
+
 def _get_ps_REGATRON_DCLink_database():
     """Return database with REGATRON DCLink model PVs."""
     # TODO: implement!!!
     return dict()
 
+
 # --- Aux. ---
+
 
 def _set_limits(pstype, database):
     signals_unit = (
