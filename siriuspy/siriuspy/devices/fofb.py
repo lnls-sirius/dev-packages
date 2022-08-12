@@ -20,6 +20,8 @@ class _FOFBCtrlBase:
 class _DCCDevice(_ProptyDevice):
 
     DEF_TIMEOUT = 1
+    DEF_FMC_BPMCNT = 160
+    DEF_P2P_BPMCNT = 8
 
     _properties = (
         'BPMId-Cte', 'BPMCnt-Mon',
@@ -29,6 +31,7 @@ class _DCCDevice(_ProptyDevice):
 
     def __init__(self, devname, dccname):
         """Init."""
+        self.dccname = dccname
         super().__init__(
             devname, dccname, properties=_DCCDevice._properties)
 
@@ -59,6 +62,15 @@ class _DCCDevice(_ProptyDevice):
     @time_frame_len.setter
     def time_frame_len(self, value):
         self['TimeFrameLen-SP'] = value
+
+    @property
+    def is_synced(self):
+        """Is synchronized."""
+        if not self.connected:
+            return False
+        cnt = self.DEF_FMC_BPMCNT if 'FMC' in self.dccname \
+            else self.DEF_P2P_BPMCNT
+        return self['BPMCnt-Mon'] == cnt
 
     def cmd_sync(self, timeout=DEF_TIMEOUT):
         """Synchronize DCC."""
