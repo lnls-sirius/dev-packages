@@ -2,7 +2,7 @@
 
 from .bbb import BunchbyBunch
 from .blscreen import BeamlineScreen
-from .bpm import BPM, FamBPMs
+from .bpm import BPM, FamBPMs, BPMLogicalTrigger
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
