@@ -838,7 +838,7 @@ class FamBPMs(_Devices):
     @property
     def bpm_names(self):
         """Return BPM names."""
-        return self._bsmp_names
+        return self._bpm_names
 
     @property
     def csbpm(self):
