@@ -752,3 +752,27 @@ class PowerSupplyFC(_PSDev):
     def alarms_amp(self):
         """."""
         return self['AlarmsAmp-Mon']
+
+    def cmd_opmode_open_loop_manual(self, timeout=_PSDev._default_timeout):
+        """Set opmode to open_loop_manual."""
+        return self._set_opmode(
+            opmode=self.OPMODE.open_loop_manual, timeout=timeout)
+
+    def cmd_opmode_open_loop_test_sqr(self, timeout=_PSDev._default_timeout):
+        """Set opmode to open_loop_test_sqr."""
+        return self._set_opmode(
+            opmode=self.OPMODE.open_loop_test_sqr, timeout=timeout)
+
+    def cmd_opmode_close_loop_manual(self, timeout=_PSDev._default_timeout):
+        """Set opmode to close_loop_manual."""
+        return self._set_opmode(
+            opmode=self.OPMODE.closed_loop_manual, timeout=timeout)
+
+    def cmd_opmode_close_loop_test_sqr(self, timeout=_PSDev._default_timeout):
+        """Set opmode to close_loop_test_sqr."""
+        return self._set_opmode(
+            opmode=self.OPMODE.close_loop_test_sqr, timeout=timeout)
+
+    def _set_opmode(self, mode, timeout):
+        self['OpMode-Sel'] = mode
+        return self._wait('OpMode-Sts', mode, timeout=timeout)
