@@ -149,8 +149,7 @@ class SOFBTLines(ConstTLines):
         self.ch_names = _PSSearch.get_psnames(filter_ch)
         self.cv_names = _PSSearch.get_psnames(filter_cv)
         if self.acc == 'TS':
-            self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + \
-                self.ch_names
+            self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + self.ch_names
             self.cv_names = [
                 cvn for cvn in self.cv_names
                 if not ('E' in cvn.idx or '0' in cvn.idx)]
