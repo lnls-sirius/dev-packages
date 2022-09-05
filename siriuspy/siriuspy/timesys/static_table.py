@@ -9,8 +9,11 @@ from ..search import LLTimeSearch
 
 _disclaimer = """
 # This file was generated automatically from the data of the
-# excel file Cabos_e_Fibras_Sirius.xlsx by the function
-# siriuspy.timesys.static_table.create_static_table.
+# excel file Cabos_e_Fibras_Sirius.xlsx, located in:
+#   https://docs.google.com/spreadsheets/d/19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI/edit?usp=sharing
+#
+# The function that created this file can be found in:
+#   siriuspy.timesys.static_table.create_static_table.
 #
 # If the mentioned file change, please, run the script
 # again and copy the generated file to replace this one.
