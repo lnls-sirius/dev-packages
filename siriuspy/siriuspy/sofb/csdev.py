@@ -137,23 +137,22 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
 
-        # Define the BPMs and correctors:
+        # Define the BPMs:
         self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
-        self.ch_names = _PSSearch.get_psnames(
-            {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
-        self.cv_names = _PSSearch.get_psnames(
-            {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
+
+        # Define correctors:
+        filter_ch = dict(sec=acc, dis='PS', dev='CH')
+        filter_cv = dict(sec=acc, dis='PS', dev='CV')
+        if self.acc == 'SI':
+            filter_ch.update({'sub': '..(M|C).'})
+            filter_cv.update({'sub': '..(M|C).'})
+        self.ch_names = _PSSearch.get_psnames(filter_ch)
+        self.cv_names = _PSSearch.get_psnames(filter_cv)
         if self.acc == 'TS':
-            self.cv_names = [
-                n for n in self.cv_names
-                if not ('E' in n.idx or '0' in n.idx)]
             self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + self.ch_names
-        elif self.acc == 'SI':
-            id_cors = ('SA', 'SB', 'SP')
-            self.ch_names = list(filter(
-                lambda x: not x.sub.endswith(id_cors), self.ch_names))
-            self.cv_names = list(filter(
-                lambda x: not x.sub.endswith(id_cors), self.cv_names))
+            self.cv_names = [
+                cvn for cvn in self.cv_names
+                if not ('E' in cvn.idx or '0' in cvn.idx)]
 
         # Give them a nickname:
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
