@@ -60,6 +60,11 @@ def _append_mag_data(filename, model, acc, label, section):
     mag_tps.extend(model.families.families_vertical_correctors())
     mag_tps.extend(model.families.families_sextupoles())
     mag_tps.extend(model.families.families_skew_correctors())
+    try:
+        mag_tps.extend(model.families.families_id_correctors())
+    except AttributeError:
+        # NOTE: not all accelerators have ID correctors.
+        pass
 
     mag_data = dict()
     for mag_tp in mag_tps:
