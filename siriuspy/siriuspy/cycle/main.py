@@ -129,7 +129,10 @@ class CycleController:
             cv2_c2 = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'CV', 'idx': '2'})
-            for psn in qs_c2 + cv2_c2:
+            chv_id = _PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+                 'dev': 'C(H|V)'})
+            for psn in qs_c2 + cv2_c2 + chv_id:
                 if psn in self._cyclers.keys():
                     self._aux_cyclers[psn] = self._cyclers.pop(psn)
         else:

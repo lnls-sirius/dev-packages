@@ -32,6 +32,9 @@ def get_psnames(isadv=False):
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'QS'}))
         names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+             'dev': 'C(H|V)'}))
+        names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': 'FC.*'}))
     else:
         names.extend(_PSSearch.get_psnames(
