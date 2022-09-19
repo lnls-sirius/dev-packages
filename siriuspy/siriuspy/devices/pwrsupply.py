@@ -1,5 +1,7 @@
 """Power Supply Devices."""
 
+import numpy as _np
+
 from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -36,13 +38,18 @@ class _PSDev(_Device):
     )
     _properties_fc = (
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
-        'CtrlLoopKp-RB', 'CtrlLoopKp-SP', 'CtrlLoopTi-RB', 'CtrlLoopTi-SP',
+        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
+        'CurrLoopMode-Sts', 'CurrLoopMode-Sel',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
         'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
         'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
         'TestWavePeriod-RB', 'TestWavePeriod-SP',
         'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
         'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
+        'InvRespMatRow-SP', 'InvRespMatRow-RB',
+        'FOFBAccGain-SP', 'FOFBAccGain-RB',
+        'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
+        'FOFBAccClear-Cmd',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -638,25 +645,24 @@ class PowerSupplyPU(_PSDev):
 class PowerSupplyFC(_PSDev):
     """Fast Correctors Power Supply Device."""
 
-    OPMODE = _Const.OpModeFOFB
+    OPMODE_SEL = _Const.OpModeFOFBSel
+    OPMODE_STS = _Const.OpModeFOFBSts
 
     class DEVICES:
         """Devices names."""
 
     @property
     def opmode(self):
-        """."""
+        """OpMode."""
         return self['OpMode-Sts']
 
     @opmode.setter
     def opmode(self, value):
-        """."""
-        self._enum_setter(
-            'OpMode-Sel', value, self.OPMODE)
+        self._enum_setter('OpMode-Sel', value, self.OPMODE_SEL)
 
     @property
     def current(self):
-        """."""
+        """Current setpoint."""
         return self['Current-RB']
 
     @current.setter
@@ -665,32 +671,30 @@ class PowerSupplyFC(_PSDev):
 
     @property
     def current_mon(self):
-        """."""
+        """Implemented current."""
         return self['Current-Mon']
 
     @property
     def currentref_mon(self):
-        """."""
+        """Current reference."""
         return self['CurrentRef-Mon']
 
     @property
     def curr_gain(self):
-        """."""
+        """Current gain for A<->raw unit conversion."""
         return self['CurrGain-RB']
 
     @curr_gain.setter
     def curr_gain(self, value):
-        """."""
         self['CurrGain-SP'] = value
 
     @property
     def curr_offset(self):
-        """."""
+        """Current offset for A<->raw unit conversion."""
         return self['CurrOffset-RB']
 
     @curr_offset.setter
     def curr_offset(self, value):
-        """."""
         self['CurrOffset-SP'] = value
 
     @property
@@ -729,24 +733,31 @@ class PowerSupplyFC(_PSDev):
         self['VoltOffset-SP'] = value
 
     @property
-    def ctrlloop_kp(self):
-        """."""
-        return self['CtrlLoopKp-RB']
+    def currloop_kp(self):
+        """Current control loop Kp parameter."""
+        return self['CurrLoopKp-RB']
 
-    @ctrlloop_kp.setter
-    def ctrlloop_kp(self, value):
-        """."""
-        self['CtrlLoopKp-SP'] = value
+    @currloop_kp.setter
+    def currloop_kp(self, value):
+        self['CurrLoopKp-SP'] = value
 
     @property
-    def ctrlloop_ti(self):
-        """."""
-        return self['CtrlLoopTi-RB']
+    def currloop_ti(self):
+        """Current control loop Ti parameter."""
+        return self['CurrLoopTi-RB']
 
-    @ctrlloop_ti.setter
-    def ctrlloop_ti(self, value):
-        """."""
-        self['CtrlLoopTi-SP'] = value
+    @currloop_ti.setter
+    def currloop_ti(self, value):
+        self['CurrLoopTi-SP'] = value
+
+    @property
+    def currloop_mode(self):
+        """Current control loop mode."""
+        return self['CurrLoopMode-Sts']
+
+    @currloop_mode.setter
+    def currloop_mode(self, value):
+        self['CurrLoopMode-Sel'] = value
 
     @property
     def alarms_amp(self):
@@ -756,23 +767,54 @@ class PowerSupplyFC(_PSDev):
     def cmd_opmode_open_loop_manual(self, timeout=_PSDev._default_timeout):
         """Set opmode to open_loop_manual."""
         return self._set_opmode(
-            opmode=self.OPMODE.open_loop_manual, timeout=timeout)
+            mode=self.OPMODE.open_loop_manual, timeout=timeout)
 
     def cmd_opmode_open_loop_test_sqr(self, timeout=_PSDev._default_timeout):
         """Set opmode to open_loop_test_sqr."""
         return self._set_opmode(
-            opmode=self.OPMODE.open_loop_test_sqr, timeout=timeout)
+            mode=self.OPMODE.open_loop_test_sqr, timeout=timeout)
 
     def cmd_opmode_close_loop_manual(self, timeout=_PSDev._default_timeout):
         """Set opmode to close_loop_manual."""
         return self._set_opmode(
-            opmode=self.OPMODE.closed_loop_manual, timeout=timeout)
+            mode=self.OPMODE.closed_loop_manual, timeout=timeout)
 
     def cmd_opmode_close_loop_test_sqr(self, timeout=_PSDev._default_timeout):
         """Set opmode to close_loop_test_sqr."""
         return self._set_opmode(
-            opmode=self.OPMODE.close_loop_test_sqr, timeout=timeout)
+            mode=self.OPMODE.close_loop_test_sqr, timeout=timeout)
 
     def _set_opmode(self, mode, timeout):
         self['OpMode-Sel'] = mode
         return self._wait('OpMode-Sts', mode, timeout=timeout)
+
+    @property
+    def invrespmat_row(self):
+        """Correction coefficient value."""
+        return self['InvRespMatRow-RB']
+
+    @invrespmat_row.setter
+    def invrespmat_row(self, value):
+        self['InvRespMatRow-SP'] = _np.array(value, dtype=float)
+
+    @property
+    def fofbacc_gain(self):
+        """FOFB accumulator gain."""
+        return self['FOFBAccGain-RB']
+
+    @fofbacc_gain.setter
+    def fofbacc_gain(self, value):
+        self['FOFBAccGain-SP'] = value
+
+    @property
+    def fofbacc_freeze(self):
+        """FOFB accumulator freeze state."""
+        return self['FOFBAccFreeze-Sts']
+
+    @fofbacc_freeze.setter
+    def fofbacc_freeze(self, value):
+        self['FOFBAccFreeze-Sel'] = value
+
+    def cmd_fofbacc_clear(self):
+        """Command to clear FOFB accumulator."""
+        self['FOFBAccClear-Cmd'] = 1

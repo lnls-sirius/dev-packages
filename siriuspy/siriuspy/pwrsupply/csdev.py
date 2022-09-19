@@ -754,7 +754,9 @@ class ETypes(_csdev.ETypes):
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
-    FOFB_OPMODES = (
+    FOFB_OPMODES_SEL = ('manual', 'fofb')
+    FOFB_OPMODES_STS = ('manual', 'fofb', 'unknown')
+    FOFB_CURRLOOPMODES = (
         'open_loop_manual',
         'open_loop_test_sqr',
         'closed_loop_manual',
@@ -788,7 +790,12 @@ class Const(_csdev.Const):
     WfmRefSyncMode = _csdev.Const.register(
         'WfmRefSyncMode', _et.WFMREF_SYNCMODE)
     DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBL_ENBL)
-    OpModeFOFB = _csdev.Const.register('OpModeFOFB', _et.FOFB_OPMODES)
+    OpModeFOFBSel = _csdev.Const.register(
+        'OpModeFOFBSel', _et.FOFB_OPMODES_SEL)
+    OpModeFOFBSts = _csdev.Const.register(
+        'OpModeFOFBSts', _et.FOFB_OPMODES_STS)
+    CurrLoopModeFOFB = _csdev.Const.register(
+        'CurrLoopModeFOFB', _et.FOFB_CURRLOOPMODES)
 
 # --- Main power supply database functions ---
 
@@ -1379,12 +1386,12 @@ def _get_ps_FOFB_propty_database():
             'value': Const.OffOn.Off, 'unit': 'pwrstate'},
         # OpMode
         'OpMode-Sel': {
-            'type': 'enum', 'enums': _et.FOFB_OPMODES,
-            'value': Const.OpModeFOFB.open_loop_manual,
+            'type': 'enum', 'enums': _et.FOFB_OPMODES_SEL,
+            'value': Const.OpModeFOFBSel.manual,
             'unit': 'opmodefofb'},
         'OpMode-Sts': {
-            'type': 'enum', 'enums': _et.FOFB_OPMODES,
-            'value': Const.OpModeFOFB.open_loop_manual,
+            'type': 'enum', 'enums': _et.FOFB_OPMODES_STS,
+            'value': Const.OpModeFOFBSts.manual,
             'unit': 'opmodefofb'},
         # Test mode configurations
         'TestLimA-SP': {
@@ -1417,11 +1424,19 @@ def _get_ps_FOFB_propty_database():
         'AlarmsAmpLabels-Cte': {
             'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
             'value': _et.FOFB_ALARMS_AMP},
-        # PI params
-        'CtrlLoopKp-SP': {'type': 'int', 'value': 0},
-        'CtrlLoopKp-RB': {'type': 'int', 'value': 0},
-        'CtrlLoopTi-SP': {'type': 'int', 'value': 0},
-        'CtrlLoopTi-RB': {'type': 'int', 'value': 0},
+        # PI control
+        'CurrLoopKp-SP': {'type': 'int', 'value': 0},
+        'CurrLoopKp-RB': {'type': 'int', 'value': 0},
+        'CurrLoopTi-SP': {'type': 'int', 'value': 0},
+        'CurrLoopTi-RB': {'type': 'int', 'value': 0},
+        'CurrLoopMode-Sel': {
+            'type': 'enum', 'enums': _et.FOFB_CURRLOOPMODES,
+            'value': Const.CurrLoopModeFOFB.open_loop_manual,
+            'unit': 'currloopmode'},
+        'CurrLoopMode-Sts': {
+            'type': 'enum', 'enums': _et.FOFB_CURRLOOPMODES,
+            'value': Const.CurrLoopModeFOFB.open_loop_manual,
+            'unit': 'currloopmode'},
         # Calibration params
         'CurrGain-SP': {'type': 'float', 'prec': 12, 'value': 0.0},
         'CurrGain-RB': {'type': 'float', 'prec': 12, 'value': 0.0},
