@@ -582,27 +582,25 @@ class App(_Callback):
             self._update_log('ERR: Inverse contains nan or inf.')
             return False
 
-        # reconstruct matrix
+        # reconstruct filtered and regularized matrix in physical units
         matr = _np.dot(_uo*_sp, _vo)
 
         # convert matrix to hardware units
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM
-        matc = matc / self._corrs_dev.strength_2_current_factor[selcorr[:-1]]
-        matc = matc * self._corrs_dev.curr_gain[selcorr[:-1]]
+        matc = matc / self._corrs_dev.strength_2_current_factor[selcorr]
+        matc = matc * self._corrs_dev.curr_gain[selcorr]
 
         # obtain pseudoinverse
         # calculate SVD for converted matrix
         _uc, _sc, _vc = _np.linalg.svd(matc, full_matrices=False)
+        idcs = _sc > 1e-10  # NOTE: test!
+
         # handle singular value selection
         inv_sc = _np.zeros(_so.size, dtype=float)
-        inv_sc[idcs] = 1/_sc
-        _scp = _np.zeros(_so.size, dtype=float)
-        _scp[idcs] = 1/inv_sc[idcs]
+        inv_sc[idcs] = 1/_sc[idcs]
         # calculate pseudoinverse of converted matrix from SVD
         invmatc = _np.dot(_vc.T*inv_sc, _uc.T)
-        # reconstruct converted matrix
-        matrc = _np.dot(_uc*_scp, _vc)
 
         # update internal states and PVs
         sing_vals = _np.zeros(self._const.nr_svals, dtype=float)
@@ -625,11 +623,11 @@ class App(_Callback):
         self._invrespmatconv = _np.zeros(self._respmat.shape, dtype=float).T
         self._invrespmatconv[selmat.T] = invmatc.ravel()
         self.run_callbacks(
-            'InvRespMatLL-Mon', list(self._invrespmatconv.ravel()))
+            'InvRespMatHw-Mon', list(self._invrespmatconv.ravel()))
 
         respmatconv_proc = _np.zeros(self._respmat.shape, dtype=float)
-        respmatconv_proc[selmat] = matrc.ravel()
-        self.run_callbacks('RespMatLL-Mon', list(respmat_proc.ravel()))
+        respmatconv_proc[selmat] = matc.ravel()
+        self.run_callbacks('RespMatHw-Mon', list(respmat_proc.ravel()))
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
@@ -838,24 +836,24 @@ class App(_Callback):
         invmat = self._invrespmatconv[:-1]  # remove RF line
         reso = self._const.ACCGAIN_RESO
         if self._invrespmat_normmode == self._const.GlobIndiv.Global:
-            gain = _np.amax(abs(invmat))
-            gain *= self._loop_gain
-            gain = _np.ceil(gain/reso) * reso
-            coeffs = invmat / (gain/self._loop_gain)
-            gains = gain*_np.ones(self._const.nr_chcv)
+            maxval = _np.amax(abs(invmat))
+            gain = _np.ceil(maxval * self._loop_gain / reso) * reso
+            norm = gain / self._loop_gain
+            coeffs = invmat / norm
+            gains = gain * _np.ones(self._const.nr_chcv)
         elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
-            gains = _np.amax(abs(invmat), axis=1)
-            gains *= self._loop_gain
-            gains = _np.ceil(gains/reso) * reso
-            coeffs = invmat / (gains[:, None]/self._loop_gain)
+            maxval = _np.amax(abs(invmat), axis=1)
+            gains = _np.ceil(maxval * self._loop_gain / reso) * reso
+            norm = gains[:, None] / self._loop_gain
+            coeffs = invmat / norm
 
         # handle FOFB BPM ordering
-        coeffssort = coeffs[:, self._const.orbord_fofb]
-        gainssort = gains[self._const.orbord_fofb]
+        coeffs[:, :160] = _np.roll(coeffs[:, :160], 1, axis=1)
+        coeffs[:, 160:] = _np.roll(coeffs[:, 160:], 1, axis=1)
 
         # set internal states
-        self._pscoeffs = coeffssort
-        self._psgains = gainssort
+        self._pscoeffs = coeffs
+        self._psgains = gains
 
         self._update_log('Done!')
 
