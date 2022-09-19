@@ -88,13 +88,6 @@ class HLFOFBConst(_csdev.Const):
         self.harm_number = 864
         self.rev_per = self.circum / 299792458  # in seconds
 
-        # LLFOFB reforb ordering
-        ord_orig = _np.arange(320)
-        ord_fofb = _np.empty_like(ord_orig)
-        ord_fofb[:160] = _np.roll(ord_orig[:160], 1)
-        ord_fofb[160:] = _np.roll(ord_orig[160:], 1)
-        self.orbord_fofb = ord_fofb
-
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
         pvs_database = {
@@ -240,11 +233,11 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
-            'RespMatLL-Mon': {
+            'RespMatHw-Mon': {
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(nm) x (CH, CV, RF)(counts, Hz)'},
-            'InvRespMatLL-Mon': {
+            'InvRespMatHw-Mon': {
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(counts, Hz) x (BH, BV)(nm)'},
