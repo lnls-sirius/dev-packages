@@ -9,7 +9,8 @@ from .dcct import DCCT
 from .device import Device, DeviceApp, Devices, DeviceNC
 from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
-from .fofb import FOFBCtrlDCC, BPMDCC
+from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
+    FamFastCorrs
 from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
