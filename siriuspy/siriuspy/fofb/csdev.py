@@ -233,6 +233,10 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
+            'SingValuesHw-Mon': {
+                'type': 'float', 'count': self.nr_svals,
+                'value': self.nr_svals*[0],
+                'unit': 'Singular values of the matrix in hardware units'},
             'RespMatHw-Mon': {
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],

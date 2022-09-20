@@ -620,6 +620,10 @@ class App(_Callback):
         respmat_proc[selmat] = matr.ravel()
         self.run_callbacks('RespMat-Mon', list(respmat_proc.ravel()))
 
+        sing_vals = _np.zeros(self._const.nr_svals, dtype=float)
+        sing_vals[:_sc.size] = _sc
+        self.run_callbacks('SingValuesHw-Mon', sing_vals)
+
         self._invrespmatconv = _np.zeros(self._respmat.shape, dtype=float).T
         self._invrespmatconv[selmat.T] = invmatc.ravel()
         self.run_callbacks(
