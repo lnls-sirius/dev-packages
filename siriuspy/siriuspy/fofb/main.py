@@ -837,14 +837,18 @@ class App(_Callback):
         opmode = self._corrs_dev.OPMODE_STS.manual \
             if self._loop_state == self._const.LoopState.Open \
             else self._corrs_dev.OPMODE_STS.fofb
-        is_ok = self._corrs_dev.opmode == opmode
-        idcs = _np.where((self.corr_enbllist[:-1] - is_ok) > 0)[0]
-        if idcs:
+        is_ok = 1 * (self._corrs_dev.opmode == opmode)
+        idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
+        if idcs.size:
             self._update_log('Configuring corrector opmode...')
             self._corrs_dev.set_opmode(opmode, psindices=idcs)
-            self._update_log('Done.')
-        else:
-            self._update_log('All ok.')
+            if self._corrs_dev.check_opmode(opmode, psindices=idcs, timeout=5):
+                self._update_log('Done.')
+                return True
+            self._update_log('ERR:Failed to set corrector opmode.')
+            return False
+        self._update_log('All ok.')
+        return True
 
     def _set_corrs_fofbacc_freeze(self):
         """Configure FOFBAccFreeze state.
