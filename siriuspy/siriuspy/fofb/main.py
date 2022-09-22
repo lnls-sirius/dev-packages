@@ -874,18 +874,21 @@ class App(_Callback):
 
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
+        coeffs = _np.zeros(invmat.shape)
         reso = self._const.ACCGAIN_RESO
         if self._invrespmat_normmode == self._const.GlobIndiv.Global:
             maxval = _np.amax(abs(invmat))
             gain = _np.ceil(maxval * self._loop_gain / reso) * reso
             norm = gain / self._loop_gain
-            coeffs = invmat / norm
+            if norm != 0:
+                coeffs = invmat / norm
             gains = gain * _np.ones(self._const.nr_chcv)
         elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
             maxval = _np.amax(abs(invmat), axis=1)
             gains = _np.ceil(maxval * self._loop_gain / reso) * reso
-            norm = gains[:, None] / self._loop_gain
-            coeffs = invmat / norm
+            norm = gains / self._loop_gain
+            idcs = norm > 0
+            coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
         # handle FOFB BPM ordering
         coeffs[:, :160] = _np.roll(coeffs[:, :160], 1, axis=1)
