@@ -30,6 +30,7 @@ class App(_Callback):
         self._const = _Const()
         self._pvs_database = self._const.get_hlfofb_database()
         self._tests = tests
+        self._init = False
 
         # internal states
         self._loop_state = self._const.LoopState.Open
@@ -204,6 +205,7 @@ class App(_Callback):
         self.run_callbacks('MeasRespMatWait-SP', self._meas_respmat_wait)
         self.run_callbacks('MeasRespMatWait-RB', self._meas_respmat_wait)
         self._update_log('Started.')
+        self._init = True
 
     @property
     def pvs_database(self):
@@ -541,6 +543,10 @@ class App(_Callback):
 
     def _calc_matrices(self):
         self._update_log('Calculating Inverse Matrix...')
+
+        if not self._corrs_dev.connected:
+            self._update_log('ERR:Correctors not connected... aborted.')
+
         selbpm = self.bpm_enbllist
         if not any(selbpm):
             self._update_log('ERR: No BPM selected in EnblList')
@@ -641,7 +647,8 @@ class App(_Callback):
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        if self._init:
+            self._set_corrs_coeffs()
 
         self._update_log('Ok!')
         return True
