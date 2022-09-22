@@ -347,6 +347,8 @@ class FamFastCorrs(_Devices):
     DEF_TIMEOUT = 10  # [s]
     OPMODE_SEL = PowerSupplyFC.OPMODE_SEL
     OPMODE_STS = PowerSupplyFC.OPMODE_STS
+    DEF_ATOL_INVRESPMATROW = 2**-17
+    DEF_ATOL_FOFBACCGAIN = 2**-12
 
     def __init__(self, psnames=None, test=False):
         """Init."""
@@ -470,7 +472,7 @@ class FamFastCorrs(_Devices):
 
     def check_invrespmat_row(
             self, values, psnames=None, psindices=None,
-            rtol=1e-5, atol=1e-8):
+            atol=DEF_ATOL_INVRESPMATROW):
         """Check power supplies correction coefficients."""
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
@@ -479,7 +481,7 @@ class FamFastCorrs(_Devices):
         if not values.shape[0] == len(devs):
             raise ValueError('Values and indices must have the same size.')
         impltd = _np.asarray([d.invrespmat_row for d in devs])
-        if _np.allclose(values, impltd, rtol=rtol, atol=atol):
+        if _np.allclose(values, impltd, atol=atol):
             return True
         return False
 
@@ -494,14 +496,14 @@ class FamFastCorrs(_Devices):
 
     def check_fofbacc_gain(
             self, values, psnames=None, psindices=None,
-            rtol=1e-5, atol=1e-8):
+            atol=DEF_ATOL_FOFBACCGAIN):
         """Check whether power supplies have desired correction gain."""
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         values = _np.asarray(values)
         devs = self._get_devices(psnames, psindices)
         impltd = _np.asarray([d.fofbacc_gain for d in devs])
-        if _np.allclose(values, impltd, rtol=rtol, atol=atol):
+        if _np.allclose(values, impltd, atol=atol):
             return True
         return False
 
