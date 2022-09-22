@@ -348,7 +348,7 @@ class FamFastCorrs(_Devices):
     OPMODE_SEL = PowerSupplyFC.OPMODE_SEL
     OPMODE_STS = PowerSupplyFC.OPMODE_STS
 
-    def __init__(self, psnames, test=False):
+    def __init__(self, psnames=None, test=False):
         """Init."""
         if not psnames:
             chn = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
@@ -356,9 +356,10 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon') for psn in self._psnames]
+        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_mon=True)
+                        for psn in self._psnames]
         self._test = test
-        super().__init__('SI-Glob:PS-FCHV', self._psdevs)
+        super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
 
     @property
     def psnames(self):
