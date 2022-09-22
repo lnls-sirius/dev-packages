@@ -435,7 +435,8 @@ class FamFastCorrs(_Devices):
             self, state, psnames=None, psindices=None):
         """Command to set power supply pwrstate."""
         devs = self._get_devices(psnames, psindices)
-        return self._set_devices_propty(devs, 'PwrState-Sel', state)
+        self._set_devices_propty(devs, 'PwrState-Sel', state)
+        return True
 
     def check_pwrstate(
             self, state, psnames=None, psindices=None,
@@ -449,7 +450,8 @@ class FamFastCorrs(_Devices):
             self, opmode, psnames=None, psindices=None):
         """Command to set power supply opmode."""
         devs = self._get_devices(psnames, psindices)
-        return self._set_devices_propty(devs, 'OpMode-Sel', opmode)
+        self._set_devices_propty(devs, 'OpMode-Sel', opmode)
+        return True
 
     def check_opmode(
             self, opmode, psnames=None, psindices=None,
@@ -535,8 +537,9 @@ class FamFastCorrs(_Devices):
     def _get_devices(self, names, indices):
         if names:
             indices = [self._psnames.index(psn) for psn in names]
-        elif indices and not isinstance(indices, (list, tuple, _np.ndarray)):
+        elif indices is not None and \
+                not isinstance(indices, (list, tuple, _np.ndarray)):
             indices = [indices, ]
-        if not indices:
+        if indices is None:
             indices = [i for i in range(len(self._psnames))]
         return [self._psdevs[i] for i in indices]
