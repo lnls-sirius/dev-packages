@@ -41,13 +41,16 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        self.constants = _Const()
         super().__init__(devname, properties=FOFBCtrlRef._properties)
 
     @property
     def ref(self):
-        """Reference orbit."""
+        """Reference orbit, first half reference for X, second, for Y."""
         return self['RefOrb-RB']
+
+    @ref.setter
+    def ref(self, value):
+        self['RefOrb-SP'] = _np.array(value, dtype=float)
 
     @property
     def refx(self):
@@ -71,17 +74,17 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         var[NR_BPM:] = _np.array(value, dtype=float)
         self.ref = var
 
-    def check_refx(self, value, atol=1e-5, rtol=1e-8):
+    def check_refx(self, value):
         """Check if first half of RefOrb is equal to value."""
-        return self._check_reforbit('x', value, atol, rtol)
+        return self._check_reforbit('x', value)
 
-    def check_refy(self, value, atol=1e-5, rtol=1e-8):
+    def check_refy(self, value):
         """Check if second half of RefOrb is equal to value."""
-        return self._check_reforbit('y', value, atol, rtol)
+        return self._check_reforbit('y', value)
 
-    def _check_reforbit(self, plane, value, atol, rtol):
+    def _check_reforbit(self, plane, value):
         refval = getattr(self, 'ref'+plane.lower())
-        if not _np.allclose(refval, value, rtol=rtol, atol=atol):
+        if not _np.all(refval == value):
             return False
         return True
 
@@ -235,18 +238,18 @@ class FamFOFBControllers(_Devices):
             setattr(ctrl, 'ref'+plane.lower(), value)
         return True
 
-    def check_reforbx(self, value, rtol=1e-5, atol=1e-8):
+    def check_reforbx(self, value):
         """Check whether RefOrbX is equal to value."""
-        return self._check_reforb('x', value, rtol, atol)
+        return self._check_reforb('x', value)
 
-    def check_reforby(self, value, rtol=1e-5, atol=1e-8):
+    def check_reforby(self, value):
         """Check whether RefOrbY is equal to value."""
-        return self._check_reforb('y', value, rtol, atol)
+        return self._check_reforb('y', value)
 
-    def _check_reforb(self, plane, value, rtol, atol):
+    def _check_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
             fun = getattr(ctrl, 'check_ref'+plane.lower())
-            if not fun(value, rtol=rtol, atol=atol):
+            if not fun(value):
                 return False
         return True
 
