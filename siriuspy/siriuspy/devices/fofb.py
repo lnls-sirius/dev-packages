@@ -281,11 +281,13 @@ class FamFOFBControllers(_Devices):
     def cmd_sync_net(self, timeout=DEF_TIMEOUT):
         """Command to synchronize DCCs."""
         devs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
-        self._set_devices_propty(devs, 'CCEnable-SP', 1)
-        if not self._wait_devices_propty(devs, 'CCEnable-RB', 1, timeout/2):
-            return False
         self._set_devices_propty(devs, 'CCEnable-SP', 0)
-        if not self._wait_devices_propty(devs, 'CCEnable-RB', 0, timeout/2):
+        if not self._wait_devices_propty(
+                devs, 'CCEnable-RB', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(devs, 'CCEnable-SP', 1)
+        if not self._wait_devices_propty(
+                devs, 'CCEnable-RB', 1, timeout=timeout/2):
             return False
         self._evt_fofb.cmd_external_trigger()
         return True
