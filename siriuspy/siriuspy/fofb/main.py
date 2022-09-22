@@ -22,6 +22,7 @@ class App(_Callback):
     """High Level FOFB main application."""
 
     SCAN_FREQUENCY = 1  # [Hz]
+    TIMEOUT_CONN = 2  # [s]
 
     def __init__(self, tests=False):
         """Class constructor."""
@@ -89,6 +90,11 @@ class App(_Callback):
         self._rf_dev = _RFGen()
 
         self._llfofb_dev = _FamFOFBCtrls()
+
+        self._sisofb_dev.wait_for_connection(self.TIMEOUT_CONN)
+        self._corrs_dev.wait_for_connection(3*self.TIMEOUT_CONN)
+        self._rf_dev.wait_for_connection(self.TIMEOUT_CONN)
+        self._llfofb_dev.wait_for_connection(self.TIMEOUT_CONN)
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
