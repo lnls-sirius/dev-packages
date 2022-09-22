@@ -609,19 +609,20 @@ class App(_Callback):
         matr = _np.dot(_uo*_sp, _vo)
 
         # convert matrix to hardware units
+        str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
+        currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM
-        matc = matc / self._corrs_dev.strength_2_current_factor[selcorr]
-        matc = matc * self._corrs_dev.curr_gain[selcorr]
+        matc = matc / str2curr[selcorr]
+        matc = matc * currgain[selcorr]
 
         # obtain pseudoinverse
         # calculate SVD for converted matrix
         _uc, _sc, _vc = _np.linalg.svd(matc, full_matrices=False)
-        idcs = _sc > 1e-10  # NOTE: test!
-
         # handle singular value selection
+        idcsc = _sc/_sc.max() >= self._const.SINGVALHW_THRS
         inv_sc = _np.zeros(_so.size, dtype=float)
-        inv_sc[idcs] = 1/_sc[idcs]
+        inv_sc[idcsc] = 1/_sc[idcsc]
         # calculate pseudoinverse of converted matrix from SVD
         invmatc = _np.dot(_vc.T*inv_sc, _uc.T)
 
