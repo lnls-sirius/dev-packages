@@ -308,8 +308,9 @@ class FamFOFBControllers(_Devices):
             self, value=DEF_DCC_TIMEFRAMELEN, timeout=DEF_TIMEOUT):
         """Set DCCs TimeFrameLen."""
         dccs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
-        self._set_devices_propty(dccs, 'RcvSrc-Sel', value)
-        if not self._wait_devices_propty(dccs, 'RcvSrc-Sts', value, timeout):
+        self._set_devices_propty(dccs, 'TimeFrameLen-SP', value)
+        if not self._wait_devices_propty(
+                dccs, 'TimeFrameLen-RB', value, timeout=timeout):
             return False
         return True
 
@@ -326,14 +327,16 @@ class FamFOFBControllers(_Devices):
 
     def cmd_config_bpm_trigs(self, timeout=DEF_TIMEOUT):
         """Command to configure BPM triggers."""
-        devs = self._bpm_trgs.values()
+        devs = list(self._bpm_trgs.values())
         rsrc = self.DEF_BPMTRIG_RCVSRC
         rins = self.DEF_BPMTRIG_RCVIN
         self._set_devices_propty(devs, 'RcvSrc-Sel', rsrc)
-        if not self._wait_devices_propty(devs, 'RcvSrc-Sts', rsrc, timeout/2):
+        if not self._wait_devices_propty(
+                devs, 'RcvSrc-Sts', rsrc, timeout=timeout/2):
             return False
         self._set_devices_propty(devs, 'RcvInSel-SP', rins)
-        if not self._wait_devices_propty(devs, 'RcvInSel-RB', rins, timeout/2):
+        if not self._wait_devices_propty(
+                devs, 'RcvInSel-RB', rins, timeout=timeout/2):
             return False
         return True
 
