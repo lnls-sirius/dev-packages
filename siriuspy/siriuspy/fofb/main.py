@@ -46,8 +46,10 @@ class App(_Callback):
         self._fofbctrl_syncnet_count = 0
         self._fofbctrl_conftframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
-        self._ref_orbx = _np.zeros(self._const.nr_bpms, dtype=float)
-        self._ref_orby = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforbhw_y = _np.zeros(self._const.nr_bpms, dtype=float)
         self._respmat = _np.zeros(
             [2*self._const.nr_bpms, self._const.nr_corrs], dtype=float)
         self._invrespmat = self._respmat.copy().T
@@ -164,10 +166,10 @@ class App(_Callback):
             'FOFBCtrlConfTFrameLen-Cmd', self._fofbctrl_conftframelen_count)
         self.run_callbacks(
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
-        self.run_callbacks('RefOrbX-SP', self._ref_orbx)
-        self.run_callbacks('RefOrbX-RB', self._ref_orbx)
-        self.run_callbacks('RefOrbY-SP', self._ref_orby)
-        self.run_callbacks('RefOrbY-RB', self._ref_orby)
+        self.run_callbacks('RefOrbX-SP', self._reforb_x)
+        self.run_callbacks('RefOrbX-RB', self._reforb_x)
+        self.run_callbacks('RefOrbY-SP', self._reforb_y)
+        self.run_callbacks('RefOrbY-RB', self._reforb_y)
         self.run_callbacks('BPMXEnblList-SP', self._enable_lists['bpmx'])
         self.run_callbacks('BPMXEnblList-RB', self._enable_lists['bpmx'])
         self.run_callbacks('BPMYEnblList-SP', self._enable_lists['bpmy'])
@@ -407,9 +409,15 @@ class App(_Callback):
             return False
 
         # set internal states and LLFOFB reforb
-        llref = _np.roll(ref, 1)  # make BPM 01M1 the first element
-        setattr(self, '_ref_orb'+plane.lower(), llref)
-        setattr(self._llfofb_dev, 'set_reforb'+plane.lower(), llref)
+        # physical units
+        setattr(self, '_reforb_'+plane.lower(), ref)
+        # hardware units
+        refhw = ref * self._const.CONV_UM_2_NM
+        refhw = _np.round(refhw)  # round, low level expect it to be int
+        refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
+        setattr(self, '_reforbhw_'+plane.lower(), refhw)
+        fun = getattr(self._llfofb_dev, 'set_reforb'+plane.lower())
+        fun(refhw)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
@@ -950,8 +958,8 @@ class App(_Callback):
                 if not self._llfofb_dev.net_synced:
                     value = _updt_bit(value, 2, 1)
                 # RefOrbSynced
-                if not self._llfofb_dev.check_reforbx(self._ref_orbx) or \
-                        not self._llfofb_dev.check_reforby(self._ref_orby):
+                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or \
+                        not self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 3, 1)
                 # TimeFrameLenConfigured
                 tframelen = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
