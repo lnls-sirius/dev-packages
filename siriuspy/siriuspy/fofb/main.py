@@ -110,7 +110,7 @@ class App(_Callback):
         self.map_pv2write = {
             'LoopState-Sel': self.set_loopstate,
             'LoopGain-SP': self.set_loopgain,
-            'CorrConfig-Cmd': self.cmd_corr_confall,
+            'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -280,7 +280,7 @@ class App(_Callback):
 
     # --- devices configuration ---
 
-    def cmd_corr_confall(self, _):
+    def cmd_corr_configure(self, _):
         """Configure corrector command."""
         self._update_log('Received configure corrector command...')
 
@@ -346,14 +346,15 @@ class App(_Callback):
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
         self._update_log('Received sync FOFB net command...')
-
-        self._update_log('Checking FOFB Net synchronization...')
+        self._update_log('Checking...')
         if not self._llfofb_dev.net_synced:
-            self._update_log('Syncing FOFB Net...')
-            self._llfofb_dev.cmd_sync_net()
-            self._update_log('FOFB Net synced!')
+            self._update_log('Syncing FOFB net...')
+            if self._llfofb_dev.cmd_sync_net():
+                self._update_log('Sync sent to FOFB net.')
+            else:
+                self._update_log('ERR:Failed to sync FOFB net.')
         else:
-            self._update_log('FOFB Net already synced.')
+            self._update_log('FOFB net already synced.')
 
         self._fofbctrl_syncnet_count += 1
         self.run_callbacks(
@@ -362,14 +363,15 @@ class App(_Callback):
 
     def cmd_fofbctrl_conftframelen(self, _):
         """Configure FOFB controllers TimeFrameLen command."""
-        self._update_log('Received configure FOFBControllers command...')
-
-        self._update_log('Checking if TimeFrameLen are configured...')
+        self._update_log('Received configure FOFB controllers')
+        self._update_log('TimeFrameLen command... Checking...')
         deftimeframe = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
         if not _np.all(self._llfofb_dev.time_frame_len == deftimeframe):
             self._update_log('Configuring TimeFrameLen PVs...')
-            self._llfofb_dev.set_time_frame_len()
-            self._update_log('TimeFrameLen PVs configured!')
+            if self._llfofb_dev.set_time_frame_len():
+                self._update_log('TimeFrameLen PVs configured!')
+            else:
+                self._update_log('ERR:Failed to configure TimeFrameLen.')
         else:
             self._update_log('TimeFrameLen PVs already configured.')
 
@@ -380,14 +382,14 @@ class App(_Callback):
 
     def cmd_fofbctrl_confbpmlogtrg(self, _):
         """Configure BPM logical triggers command."""
-        self._update_log('Received configure BPM Log Trigs cmd...')
-
-        self._update_log('Checking if BPM logical triggers ')
-        self._update_log('are configured...')
+        self._update_log('Received configure BPM Logical')
+        self._update_log('triggers command... Checking...')
         if not self._llfofb_dev.bpm_trigs_configured:
             self._update_log('Configuring BPM logical triggers...')
-            self._llfofb_dev.cmd_config_bpm_trigs()
-            self._update_log('BPM logical triggers configured!')
+            if self._llfofb_dev.cmd_config_bpm_trigs():
+                self._update_log('BPM logical triggers configured!')
+            else:
+                self._update_log('ERR:Failed to configure BPM log.trigs.')
         else:
             self._update_log('BPM logical triggers already configured.')
 
@@ -459,8 +461,9 @@ class App(_Callback):
     def _load_respmat(self):
         filename = self._const.respmat_fname
         if _os.path.isfile(filename):
+            self._update_log('Loading RespMat from file...')
             if self.set_respmat(_np.loadtxt(filename)):
-                msg = 'Loading RespMat from file...'
+                msg = 'Loaded RespMat!'
             else:
                 msg = 'ERR: Problem loading RespMat from file.'
             self._update_log(msg)
@@ -938,12 +941,7 @@ class App(_Callback):
                 if not self._corrs_dev.check_fofbacc_gain(self._psgains):
                     value = _updt_bit(value, 5, 1)
             else:
-                value = _updt_bit(value, 0, 1)
-                value = _updt_bit(value, 1, 1)
-                value = _updt_bit(value, 2, 1)
-                value = _updt_bit(value, 3, 1)
-                value = _updt_bit(value, 4, 1)
-                value = _updt_bit(value, 5, 1)
+                value = 0b111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
@@ -969,12 +967,7 @@ class App(_Callback):
                 if not self._llfofb_dev.bpm_trigs_configured:
                     value = _updt_bit(value, 5, 1)
             else:
-                value = _updt_bit(value, 0, 1)
-                value = _updt_bit(value, 1, 1)
-                value = _updt_bit(value, 2, 1)
-                value = _updt_bit(value, 3, 1)
-                value = _updt_bit(value, 4, 1)
-                value = _updt_bit(value, 5, 1)
+                value = 0b111111
 
             self._fofbctrl_status = value
             self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
