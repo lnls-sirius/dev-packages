@@ -849,12 +849,19 @@ class App(_Callback):
     def _set_corrs_fofbacc_freeze(self):
         """Configure FOFBAccFreeze state.
 
-        Keep correctors in accordance with enable list.
+        Keep in accordance with enable list and loop_state.
         """
         self._update_log('Setting corrector FOFCAccFreeze...')
-        freeze = _np.logical_not(self.corr_enbllist[:-1])
+        freeze = self._get_corrs_fofbacc_freeze_desired()
         self._corrs_dev.set_fofbacc_freeze(freeze)
         self._update_log('Done!')
+
+    def _get_corrs_fofbacc_freeze_desired(self):
+        if self._loop_state == self._const.LoopState.Open:
+            freeze = _np.ones(len(self.corr_enbllist[:-1]))
+        else:
+            freeze = 1 * _np.logical_not(self.corr_enbllist[:-1])
+        return freeze
 
     def _calc_corrs_coeffs(self):
         """Calculate corrector coefficients and gains."""
@@ -932,8 +939,8 @@ class App(_Callback):
                 if not self._corrs_dev.check_opmode(opmode, psindices=idcs):
                     value = _updt_bit(value, 2, 1)
                 # AccFreezeConfigured
-                freezestate = self.corr_enbllist[:-1]
-                if not self._corrs_dev.check_fofbacc_freeze(freezestate):
+                freeze = self._get_corrs_fofbacc_freeze_desired()
+                if not self._corrs_dev.check_fofbacc_freeze(freeze):
                     value = _updt_bit(value, 3, 1)
                 # InvRespMatRowSynced
                 if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
