@@ -88,6 +88,8 @@ class HLFOFBConst(_csdev.Const):
         self.circum = 518.396  # in meter
         self.harm_number = 864
         self.rev_per = self.circum / 299792458  # in seconds
+        self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
+        self.corrgains_size = self.nr_chcv
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -252,6 +254,14 @@ class HLFOFBConst(_csdev.Const):
             'InvRespMatNormMode-Sts': {
                 'type': 'enum', 'enums': _et.GLOB_INDIV,
                 'value': self.GlobIndiv.Global},
+            'CorrCoeffs-Mon': {
+                'type': 'float', 'count': self.corrcoeffs_size,
+                'value': self.corrcoeffs_size*[0],
+                'unit': '(CH, CV) x (BH, BV)'},
+            'CorrGains-Mon': {
+                'type': 'float', 'count': self.corrgains_size,
+                'value': self.corrgains_size*[0],
+                'unit': '(CH, CV)'},
 
             # Response Matrix Measurement
             'MeasRespMat-Cmd': {

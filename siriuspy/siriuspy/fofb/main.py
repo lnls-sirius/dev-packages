@@ -897,6 +897,9 @@ class App(_Callback):
         # set internal states
         self._pscoeffs = coeffs
         self._psgains = gains
+        # update PVs
+        self.run_callbacks('CorrCoeffs-Mon', list(self._pscoeffs.ravel()))
+        self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
 
         self._update_log('Done!')
 
