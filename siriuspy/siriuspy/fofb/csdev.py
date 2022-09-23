@@ -2,7 +2,6 @@
 
 import os as _os
 
-import numpy as _np
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
     BPMSearch as _BPMSearch
