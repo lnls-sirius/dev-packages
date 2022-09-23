@@ -497,7 +497,7 @@ class App(_Callback):
 
         # update readback pv
         if device == 'rf':
-            self.run_callbacks('UseRF-Sts', _Const.UseRF._fields[bool(value)])
+            self.run_callbacks('UseRF-Sts', bool(value))
         else:
             self.run_callbacks(device.upper()+'EnblList-RB', new)
 
@@ -655,7 +655,7 @@ class App(_Callback):
 
         respmatconv_proc = _np.zeros(self._respmat.shape, dtype=float)
         respmatconv_proc[selmat] = matc.ravel()
-        self.run_callbacks('RespMatHw-Mon', list(respmat_proc.ravel()))
+        self.run_callbacks('RespMatHw-Mon', list(respmatconv_proc.ravel()))
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
