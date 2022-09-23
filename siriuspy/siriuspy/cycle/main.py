@@ -764,7 +764,7 @@ class CycleController:
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            opmdes = 'closed_loop_manual' if 'FC' in psname else 'SlowRef'
+            opmdes = 'manual' if 'FC' in psname else 'SlowRef'
             self._update_log(psname+' is not in '+opmdes+'.', error=True)
             status &= False
         return status
@@ -812,6 +812,23 @@ class CycleController:
             self._update_log(psname+' current is not zero.', error=True)
             status &= False
         return status
+
+    def clear_pwrsupplies_fofbacc(self, psnames):
+        """Send clear accumulator command to FOFB power supplies."""
+        psnames = {
+            p for p in psnames
+            if _PSSearch.conv_psname_2_psmodel(p) == 'FOFB_PS'
+        }
+        if not psnames:
+            return
+
+        for idx, psname in enumerate(psnames):
+            cycler = self._get_cycler(psname)
+            cycler.clear_fofbacc()
+            if idx % 5 == 4 or idx == len(psnames)-1:
+                self._update_log(
+                    'Sent clear FOFBAcc command to {0}/{1}'.format(
+                        str(idx+1), str(len(psnames))))
 
     # --- main commands ---
 
@@ -966,6 +983,7 @@ class CycleController:
         self.set_pwrsupplies_slowref(self.psnames)
         if not self.check_pwrsupplies_slowref(self.psnames):
             return False
+        self.clear_pwrsupplies_fofbacc(self.psnames)
 
         # Indicate cycle end
         self._update_log('Cycle finished!')
