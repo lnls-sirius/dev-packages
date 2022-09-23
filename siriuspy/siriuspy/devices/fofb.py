@@ -543,3 +543,341 @@ class FamFastCorrs(_Devices):
         if indices is None:
             indices = [i for i in range(len(self._psnames))]
         return [self._psdevs[i] for i in indices]
+
+
+class HLFOFB(_Device):
+    """Control high level FOFB IOC."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SI = 'SI-Glob:AP-FOFB'
+        ALL = (SI, )
+
+    _properties = (
+        'LoopState-Sel', 'LoopState-Sts',
+        'LoopGain-SP', 'LoopGain-RB',
+        'CorrStatus-Mon', 'CorrConfig-Cmd',
+        'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
+        'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
+        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd',
+        'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
+        'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
+        'BPMXEnblList-SP', 'BPMXEnblList-RB',
+        'BPMYEnblList-SP', 'BPMYEnblList-RB',
+        'CHEnblList-SP', 'CHEnblList-RB',
+        'CVEnblList-SP', 'CVEnblList-RB',
+        'UseRF-Sel', 'UseRF-Sts',
+        'MinSingValue-SP', 'MinSingValue-RB',
+        'TikhonovRegConst-SP', 'TikhonovRegConst-RB',
+        'SingValuesRaw-Mon', 'SingValues-Mon', 'NrSingValues-Mon',
+        'RespMat-SP', 'RespMat-RB', 'RespMat-Mon', 'InvRespMat-Mon',
+        'SingValuesHw-Mon', 'RespMatHw-Mon', 'InvRespMatHw-Mon',
+        'InvRespMatNormMode-Sel', 'InvRespMatNormMode-Sts',
+        'CorrCoeffs-Mon', 'CorrGains-Mon',
+        'MeasRespMat-Cmd', 'MeasRespMat-Mon',
+        'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
+        'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
+        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
+        'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
+    )
+
+    _default_timeout_respm = 2 * 60 * 60  # [s]
+
+    def __init__(self, devname=None):
+        """Init."""
+        # check if device exists
+        if devname is None:
+            devname = HLFOFB.DEVICES.SI
+        if devname not in HLFOFB.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        self._data = _Const()
+
+        # call base class constructor
+        super().__init__(devname, properties=self._properties)
+
+    @property
+    def data(self):
+        """IOC constants."""
+        return self._data
+
+    @property
+    def loop_state(self):
+        """Loop state."""
+        return self['LoopState-Sts']
+
+    @loop_state.setter
+    def loop_state(self, value):
+        self['LoopState-Sel'] = value
+
+    @property
+    def loop_gain(self):
+        """Loop gain."""
+        return self['LoopGain-RB']
+
+    @loop_gain.setter
+    def loop_gain(self, value):
+        self['LoopGain-SP'] = value
+
+    @property
+    def corr_status(self):
+        """Corrector status."""
+        return self['CorrStatus-Mon']
+
+    def cmd_corr_config(self):
+        """Command to configure correctors in use."""
+        self['CorrConfig-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_opmode_manual(self):
+        """Command to set all corrector opmode to manual."""
+        self['CorrSetOpModeManual-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_accfreeze_dsbl(self):
+        """Command to set all corrector FOFBAccFreeze to Dsbl."""
+        self['CorrSetAccFreezeDsbl-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_accfreeze_enbl(self):
+        """Command to set all corrector FOFBAccFreeze to Enbl."""
+        self['CorrSetAccFreezeEnbl-Cmd'] = 1
+        return True
+
+    def cmd_corr_accclear(self):
+        """Command to clear all corrector accumulator."""
+        self['CorrSetAccClear-Cmd'] = 1
+        return True
+
+    @property
+    def fofbctrl_status(self):
+        """FOFB controller status."""
+        return self['FOFBCtrlStatus-Mon']
+
+    def cmd_fofbctrl_syncnet(self):
+        """Command to sync FOFB controller net."""
+        self['FOFBCtrlSyncNet-Cmd'] = 1
+        return True
+
+    def cmd_fofbctrl_conf_timeframelen(self):
+        """Command to configure all FOFB controller TimeFrameLen."""
+        self['FOFBCtrlConfTFrameLen-Cmd'] = 1
+        return True
+
+    def cmd_fofbctrl_conf_bpmlogtrig(self):
+        """Command to configure all BPM logical triggers related to FOFB."""
+        self['FOFBCtrlConfBPMLogTrg-Cmd'] = 1
+        return True
+
+    @property
+    def refx(self):
+        """RefOrb X."""
+        return self['RefOrbX-RB']
+
+    @refx.setter
+    def refx(self, value):
+        self['RefOrbX-SP'] = value
+
+    @property
+    def refy(self):
+        """RefOrb Y."""
+        return self['RefOrbY-RB']
+
+    @refy.setter
+    def refy(self, value):
+        self['RefOrbY-SP'] = value
+
+    @property
+    def bpmxenbl(self):
+        """BPM X enable list."""
+        return self['BPMXEnblList-RB']
+
+    @bpmxenbl.setter
+    def bpmxenbl(self, value):
+        self['BPMXEnblList-SP'] = value
+
+    @property
+    def bpmyenbl(self):
+        """BPM Y enable list."""
+        return self['BPMYEnblList-RB']
+
+    @bpmyenbl.setter
+    def bpmyenbl(self, value):
+        self['BPMYEnblList-SP'] = value
+
+    @property
+    def chenbl(self):
+        """CH enable list."""
+        return self['CHEnblList-RB']
+
+    @chenbl.setter
+    def chenbl(self, value):
+        self['CHEnblList-SP'] = value
+
+    @property
+    def cvenbl(self):
+        """CV enable list."""
+        return self['CVEnblList-RB']
+
+    @cvenbl.setter
+    def cvenbl(self, value):
+        self['CVEnblList-SP'] = value
+
+    @property
+    def rfenbl(self):
+        """Use RF in RespMat calculation."""
+        return self['UseRF-Sts']
+
+    @rfenbl.setter
+    def rfenbl(self, value):
+        self['UseRF-Sel'] = value
+
+    @property
+    def singval_min(self):
+        """Minimum singular value."""
+        return self['MinSingValue-RB']
+
+    @singval_min.setter
+    def singval_min(self, value):
+        self['MinSingValue-SP'] = value
+
+    @property
+    def tikhonov_reg_const(self):
+        """Tikhonov regularization constant."""
+        return self['TikhonovRegConst-RB']
+
+    @tikhonov_reg_const.setter
+    def tikhonov_reg_const(self, value):
+        self['TikhonovRegConst-SP'] = value
+
+    @property
+    def singvalsraw_mon(self):
+        """Raw singular values of physical unit respmat."""
+        return self['SingValuesRaw-Mon']
+
+    @property
+    def singvals_mon(self):
+        """Singular values of physical unit respmat in use."""
+        return self['SingValues-Mon']
+
+    @property
+    def nr_singvals(self):
+        """Number of singular values."""
+        return self['NrSingValues-Mon']
+
+    @property
+    def respmat(self):
+        """RespMat in physical units."""
+        return self['RespMat-RB'].reshape(self._data.nr_bpms*2, -1)
+
+    @respmat.setter
+    def respmat(self, mat):
+        self['RespMat-SP'] = _np.array(mat).ravel()
+
+    @property
+    def respmat_mon(self):
+        """RespMat in physical units in use."""
+        return self['RespMat-Mon'].reshape(self._data.nr_bpms*2, -1)
+
+    @property
+    def invrespmat_mon(self):
+        """InvRespMat in physical units in use."""
+        return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms*2)
+
+    @property
+    def singvalshw_mon(self):
+        """Singular values of hardware unit respmat."""
+        return self['SingValuesHw-Mon']
+
+    @property
+    def respmathw_mon(self):
+        """RespMat in hardware units in use."""
+        return self['RespMatHw-Mon'].reshape(self._data.nr_bpms*2, -1)
+
+    @property
+    def invrespmathw_mon(self):
+        """InvRespMat in physical units in use."""
+        return self['InvRespMatHw-Mon'].reshape(-1, self._data.nr_bpms*2)
+
+    @property
+    def invrespmat_normmode(self):
+        """InvRespMat normalization mode."""
+        return self['InvRespMatNormMode-Sts']
+
+    @invrespmat_normmode.setter
+    def invrespmat_normmode(self, value):
+        self['InvRespMatNormMode-Sel'] = value
+
+    @property
+    def corrcoeffs(self):
+        """InvRespMatRow setpoint for all correctors."""
+        return self['CorrCoeffs-Mon'].reshape(-1, self._data.nr_bpms*2)
+
+    @property
+    def corrgains(self):
+        """FOFBAccGain setpoint for all correctors."""
+        return self['CorrGains-Mon']
+
+    def cmd_measrespmat_start(self):
+        """Command to start response matrix measure."""
+        self['MeasRespMat-Cmd'] = self._data.MeasRespMatCmd.Start
+        return True
+
+    def cmd_measrespmat_stop(self):
+        """Command to stop response matrix measure."""
+        self['MeasRespMat-Cmd'] = self._data.MeasRespMatCmd.Stop
+        return True
+
+    def cmd_measrespmat_reset(self):
+        """Command to reset response matrix measure."""
+        self['MeasRespMat-Cmd'] = self._data.MeasRespMatCmd.Reset
+        return True
+
+    @property
+    def measrespmat_mon(self):
+        """RespMat measure status."""
+        return self['MeasRespMat-Mon']
+
+    @property
+    def measrespmat_kickch(self):
+        """RespMat measure CH kick."""
+        return self['MeasRespMatKickCH-RB']
+
+    @measrespmat_kickch.setter
+    def measrespmat_kickch(self, value):
+        self['MeasRespMatKickCH-SP'] = value
+
+    @property
+    def measrespmat_kickcv(self):
+        """RespMat measure CV kick."""
+        return self['MeasRespMatKickCV-RB']
+
+    @measrespmat_kickcv.setter
+    def measrespmat_kickcv(self, value):
+        self['MeasRespMatKickCV-SP'] = value
+
+    @property
+    def measrespmat_kickrf(self):
+        """RespMat measure RF kick."""
+        return self['MeasRespMatKickRF-RB']
+
+    @measrespmat_kickrf.setter
+    def measrespmat_kickrf(self, value):
+        self['MeasRespMatKickRF-SP'] = value
+
+    @property
+    def measrespmat_wait(self):
+        """RespMat measure wait interval."""
+        return self['MeasRespMatWait-RB']
+
+    @measrespmat_wait.setter
+    def measrespmat_wait(self, value):
+        self['MeasRespMatWait-SP'] = value
+
+    def wait_respm_meas(self, timeout=None):
+        """Wait for response matrix measure."""
+        timeout = timeout or self._default_timeout_respm
+        return self._wait(
+            'MeasRespMat-Mon', self._data.MeasRespMatMon.Measuring,
+            timeout=timeout, comp='ne')
