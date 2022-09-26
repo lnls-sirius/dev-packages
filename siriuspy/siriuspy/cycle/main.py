@@ -111,18 +111,7 @@ class CycleController:
         self._triggers = _get_trigger_by_psname(self._cyclers.keys())
 
         if self._include_sitrims:
-            # trims psnames
-            self.trimnames = _PSSearch.get_psnames(
-                {'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
-                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'})
-
-            # trims triggers
-            self._si_aux_triggers = [
-                'SI-Glob:TI-Mags-Skews', 'SI-Glob:TI-Mags-Corrs',
-                'SI-Glob:TI-Mags-QTrims']
-            self._triggers.update(self._si_aux_triggers)
-
-            # move CV-2 and QS of C2 to trims group, if they are in cyclers
+            # independent fbp magnets
             qs_c2 = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
                  'dev': 'QS'})
@@ -132,9 +121,24 @@ class CycleController:
             chv_id = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
                  'dev': 'C(H|V)'})
-            for psn in qs_c2 + cv2_c2 + chv_id:
+            indfbp = qs_c2 + cv2_c2 + chv_id
+            # trims psnames
+            trimnames = set(_PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
+                 'dev': '(CH|CV|QS|QD.*|QF.*|Q[1-4])'}))
+            self.trimnames = list(trimnames - set(indfbp))
+
+            # trims triggers
+            self._si_aux_triggers = [
+                'SI-Glob:TI-Mags-Skews', 'SI-Glob:TI-Mags-Corrs',
+                'SI-Glob:TI-Mags-QTrims']
+            self._triggers.update(self._si_aux_triggers)
+
+            # move CV-2 and QS of C2 to trims group, if they are in cyclers
+            for psn in indfbp:
                 if psn in self._cyclers.keys():
                     self._aux_cyclers[psn] = self._cyclers.pop(psn)
+                    self.trimnames.append(psn)
         else:
             self.trimnames = list()
 
@@ -933,7 +937,7 @@ class CycleController:
 
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
         trims = _PSSearch.get_psnames({
-            'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
+            'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
             self._update_log(
@@ -942,7 +946,7 @@ class CycleController:
 
         self._update_log('Preparing to cycle CVs...')
         trims = _PSSearch.get_psnames({
-            'sec': 'SI', 'sub': '[0-2][0-9](M|C).*', 'dis': 'PS',
+            'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': 'CV'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
             self._update_log(
