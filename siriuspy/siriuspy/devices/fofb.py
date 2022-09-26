@@ -31,7 +31,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     """FOFB controller device."""
 
     _properties = (
-        'RefOrb-SP', 'RefOrb-RB',
+        'RefOrbit-SP', 'RefOrbit-RB',
     )
 
     def __init__(self, devname):
@@ -46,11 +46,11 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @property
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
-        return self['RefOrb-RB']
+        return self['RefOrbit-RB']
 
     @ref.setter
     def ref(self, value):
-        self['RefOrb-SP'] = _np.array(value, dtype=float)
+        self['RefOrbit-SP'] = _np.array(value, dtype=float)
 
     @property
     def refx(self):
