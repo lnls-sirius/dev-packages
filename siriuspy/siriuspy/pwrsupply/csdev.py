@@ -754,8 +754,8 @@ class ETypes(_csdev.ETypes):
     LINAC_INTLCK_RDSGOUT_MASK = (
         'Bit0', 'Bit1', 'Bit2', 'Bit3', 'Bit4', 'Bit5', 'Bit6', 'Bit7')
 
-    FOFB_OPMODES_SEL = ('manual', 'fofb')
-    FOFB_OPMODES_STS = ('manual', 'fofb', 'unknown')
+    FOFB_OPMODES_SEL = ('fofb', 'manual')
+    FOFB_OPMODES_STS = ('fofb', 'manual', 'unknown')
     FOFB_CURRLOOPMODES = (
         'open_loop_manual',
         'open_loop_test_sqr',
