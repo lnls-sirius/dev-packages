@@ -21,7 +21,7 @@ from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
 class App(_Callback):
     """High Level FOFB main application."""
 
-    SCAN_FREQUENCY = 1  # [Hz]
+    SCAN_FREQUENCY = 0.5  # [Hz]
     TIMEOUT_CONN = 2  # [s]
 
     def __init__(self, tests=False):
@@ -64,7 +64,7 @@ class App(_Callback):
         self._min_sing_val = self._const.MIN_SING_VAL
         self._tikhonov_reg_const = self._const.TIKHONOV_REG_CONST
         self._invrespmat_normmode = self._const.GlobIndiv.Global
-        self._pscoeffs = self._invrespmatconv.copy()
+        self._pscoeffs = self._invrespmatconv[:-1].copy()
         self._psgains = _np.ones(self._const.nr_chcv, dtype=float)
         self._meas_respmat_count = 0
         self._meas_respmat_kick = {
@@ -273,7 +273,7 @@ class App(_Callback):
             return False
         self._loop_gain = value
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        # self._set_corrs_coeffs()
         self._update_log('Changed acc.gain to '+str(value)+'.')
         self.run_callbacks('LoopGain-RB', self._loop_gain)
         return True
@@ -546,7 +546,7 @@ class App(_Callback):
         self._invrespmat_normmode = value
 
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        # self._set_corrs_coeffs()
 
         self.run_callbacks(
             'InvRespMatNormMode-Sts', self._invrespmat_normmode)
@@ -611,6 +611,9 @@ class App(_Callback):
         # convert matrix to hardware units
         str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
         currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
+        if _np.any(str2curr == 0) or _np.any(currgain == 0):
+            self._update_log('ERR:Could not calculate hardware unit matrix.')
+            return False
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM
         matc = matc / str2curr[selcorr]
@@ -659,8 +662,8 @@ class App(_Callback):
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
-        if self._init:
-            self._set_corrs_coeffs()
+        # if self._init:
+        #     self._set_corrs_coeffs()
 
         self._update_log('Ok!')
         return True
@@ -968,7 +971,7 @@ class App(_Callback):
             value = 0
             if self._llfofb_dev.connected:
                 # BPMIdsConfigured
-                if not self._llfofb_dev.bpmids_configured:
+                if not self._llfofb_dev.bpm_id_configured:
                     value = _updt_bit(value, 1, 1)
                 # NetSynced
                 if not self._llfofb_dev.net_synced:
