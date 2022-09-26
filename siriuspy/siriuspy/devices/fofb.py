@@ -254,7 +254,7 @@ class FamFOFBControllers(_Devices):
         return True
 
     @property
-    def bpmids_mon(self):
+    def bpmids(self):
         """Return DCC BPMIds."""
         if not self.connected:
             return False
@@ -325,6 +325,17 @@ class FamFOFBControllers(_Devices):
                 dccs, 'TimeFrameLen-RB', value, timeout=timeout):
             return False
         return True
+
+    @property
+    def bpm_trigs_configuration(self):
+        """Return BPM logical triggers configuration."""
+        if not self.connected:
+            return False
+        conf = dict()
+        for dev in self._bpm_trgs.values():
+            conf[dev.pv_object('RcvSrc-Sts').pvname] = dev.receiver_source
+            conf[dev.pv_object('RcvInSel-RB').pvname] = dev.receiver_in_sel
+        return conf
 
     @property
     def bpm_trigs_configured(self):
