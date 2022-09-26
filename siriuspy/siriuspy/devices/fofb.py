@@ -254,6 +254,18 @@ class FamFOFBControllers(_Devices):
         return True
 
     @property
+    def bpmids_mon(self):
+        """Return DCC BPMIds."""
+        if not self.connected:
+            return False
+        bpmids = dict()
+        for dev in self._ctl_dccs.values():
+            bpmids[dev.pv_object('BPMId-RB').pvname] = dev.bpm_id
+        for dev in self._bpm_dccs.values():
+            bpmids[dev.pv_object('BPMId-RB').pvname] = dev.bpm_id
+        return bpmids
+
+    @property
     def bpmids_configured(self):
         """Check whether DCC BPMIds are configured."""
         if not self.connected:
