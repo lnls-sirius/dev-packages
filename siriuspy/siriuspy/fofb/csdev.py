@@ -84,9 +84,6 @@ class HLFOFBConst(_csdev.Const):
         self.reforb_size = self.nr_bpms
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
-        self.circum = 518.396  # in meter
-        self.harm_number = 864
-        self.rev_per = self.circum / 299792458  # in seconds
         self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
         self.corrgains_size = self.nr_chcv
 

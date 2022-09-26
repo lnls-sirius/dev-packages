@@ -211,7 +211,7 @@ class FamFOFBControllers(_Devices):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             for trig in self.BPM_TRIGS_IDS:
-                trigname = bpm+':TRIGGER' + str(trig)
+                trigname = bpm + ':TRIGGER' + str(trig)
                 self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
         # fofb event
         self._evt_fofb = Event('FOFBS')
