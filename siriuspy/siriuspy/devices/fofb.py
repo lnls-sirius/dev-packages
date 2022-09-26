@@ -146,12 +146,12 @@ class _DCCDevice(_ProptyDevice):
 
     def cmd_sync(self, timeout=DEF_TIMEOUT):
         """Synchronize DCC."""
-        self.cc_enable = 1
-        if not self._wait('CCEnable-RB', 1, timeout/2):
+        self.cc_enable = 0
+        if not self._wait('CCEnable-RB', 0, timeout/2):
             return False
         _time.sleep(1)
-        self.cc_enable = 0
-        return self._wait('CCEnable-RB', 0, timeout/2)
+        self.cc_enable = 1
+        return self._wait('CCEnable-RB', 1, timeout/2)
 
 
 class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
@@ -254,7 +254,7 @@ class FamFOFBControllers(_Devices):
         return True
 
     @property
-    def bpmids(self):
+    def bpm_id(self):
         """Return DCC BPMIds."""
         if not self.connected:
             return False
@@ -266,7 +266,7 @@ class FamFOFBControllers(_Devices):
         return bpmids
 
     @property
-    def bpmids_configured(self):
+    def bpm_id_configured(self):
         """Check whether DCC BPMIds are configured."""
         if not self.connected:
             return False
@@ -277,6 +277,18 @@ class FamFOFBControllers(_Devices):
         for bpm, dev in self._bpm_dccs.items():
             isconf &= dev.bpm_id == self._bpm_ids[bpm]
         return isconf
+
+    @property
+    def bpm_count(self):
+        """Return DCC BPMCnt."""
+        if not self.connected:
+            return False
+        bpmids = dict()
+        for dev in self._ctl_dccs.values():
+            bpmids[dev.pv_object('BPMCnt-Mon').pvname] = dev.bpm_count
+        for dev in self._bpm_dccs.values():
+            bpmids[dev.pv_object('BPMCnt-Mon').pvname] = dev.bpm_count
+        return bpmids
 
     @property
     def net_synced(self):
