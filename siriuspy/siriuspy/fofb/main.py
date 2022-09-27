@@ -612,7 +612,9 @@ class App(_Callback):
         str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
         currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
         if _np.any(str2curr == 0) or _np.any(currgain == 0):
-            self._update_log('ERR:Could not calculate hardware unit matrix.')
+            self._update_log('ERR:Could not calculate hardware unit')
+            self._update_log('ERR:matrix, CurrGain or "urad to A" ')
+            self._update_log('ERR:factor have zero values.')
             return False
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM

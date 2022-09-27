@@ -386,7 +386,7 @@ class FamFastCorrs(_Devices):
     DEF_ATOL_INVRESPMATROW = 2**-17
     DEF_ATOL_FOFBACCGAIN = 2**-12
 
-    def __init__(self, psnames=None, test=False):
+    def __init__(self, psnames=None):
         """Init."""
         if not psnames:
             chn = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
@@ -396,7 +396,6 @@ class FamFastCorrs(_Devices):
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
         self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_mon=True)
                         for psn in self._psnames]
-        self._test = test
         super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
 
     @property
@@ -462,9 +461,8 @@ class FamFastCorrs(_Devices):
             factor (numpy.ndarray, 160):
                 convertion factor for each power supply.
         """
-        strength_dipole = 3.0 if self._test else None
         return _np.array(
-            [p.conv_strength_2_current(1, strengths_dipole=strength_dipole)
+            [p.conv_strength_2_current(1, strengths_dipole=3.0)
              for p in self._psconv])
 
     def set_pwrstate(
