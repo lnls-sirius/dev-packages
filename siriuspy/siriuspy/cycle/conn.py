@@ -760,7 +760,7 @@ class FOFBPSCycler:
     # NOTE: this could be a class derived from one of the Device classes.
 
     properties = [
-        'Current-SP', 'Current-Mon', 'PwrState-Sts',
+        'Current-SP', 'Current-Mon', 'PwrState-Sts', 'FOFBAccClear-Cmd',
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
     ]
 
@@ -840,21 +840,17 @@ class FOFBPSCycler:
         return self.check_current_zero(wait)
 
     def set_opmode_slowref(self):
-        """Set OpMode to closed_loop_manual, if needed."""
+        """Set OpMode-Sel to manual, if needed."""
         if self.check_opmode_slowref(wait=1):
             return True
-        sts = _pv_conn_put(
-            self['OpMode-Sel'],
-            _PSConst.OpModeFOFB.closed_loop_manual)
+        sts = _pv_conn_put(self['OpMode-Sel'], _PSConst.OpModeFOFBSel.manual)
         _time.sleep(TIMEOUT_SLEEP)
         return sts
 
     def check_opmode_slowref(self, wait=10):
-        """Check if OpMode is closed_loop_manual."""
+        """Check if OpMode-Sts is manual."""
         return _pv_timed_get(
-            self['OpMode-Sts'],
-            _PSConst.OpModeFOFB.closed_loop_manual,
-            wait=wait)
+            self['OpMode-Sts'], _PSConst.OpModeFOFBSts.manual, wait=wait)
 
     def cycle(self):
         """Cycle. This function may run in a thread."""
@@ -870,6 +866,11 @@ class FOFBPSCycler:
         if not status:
             return _Const.CycleEndStatus.Interlock
         return _Const.CycleEndStatus.Ok
+
+    def clear_fofbacc(self):
+        """Clear FOFB accumulator."""
+        self['FOFBAccClear-Cmd'].value = 1
+        return True
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""

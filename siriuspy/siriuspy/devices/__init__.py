@@ -2,13 +2,15 @@
 
 from .bbb import BunchbyBunch
 from .blscreen import BeamlineScreen
-from .bpm import BPM, FamBPMs
+from .bpm import BPM, FamBPMs, BPMLogicalTrigger
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
 from .device import Device, DeviceApp, Devices, DeviceNC
 from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
+from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
+    FamFastCorrs, HLFOFB
 from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
