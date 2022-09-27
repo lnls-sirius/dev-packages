@@ -106,6 +106,7 @@ class _DCCDevice(_ProptyDevice):
         self.dccname = dccname
         super().__init__(
             devname, dccname, properties=_DCCDevice._properties)
+        self.set_auto_monitor('BPMCnt-Mon', True)
 
     @property
     def bpm_id(self):
