@@ -50,7 +50,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     @ref.setter
     def ref(self, value):
-        self['RefOrbit-SP'] = _np.array(value, dtype=float)
+        self['RefOrbit-SP'] = _np.array(value, dtype=int)
 
     @property
     def refx(self):
@@ -60,7 +60,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @refx.setter
     def refx(self, value):
         var = self.ref
-        var[:NR_BPM] = _np.array(value, dtype=float)
+        var[:NR_BPM] = _np.array(value, dtype=int)
         self.ref = var
 
     @property
@@ -71,7 +71,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @refy.setter
     def refy(self, value):
         var = self.ref
-        var[NR_BPM:] = _np.array(value, dtype=float)
+        var[NR_BPM:] = _np.array(value, dtype=int)
         self.ref = var
 
     def check_refx(self, value):
