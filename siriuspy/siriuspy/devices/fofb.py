@@ -46,7 +46,13 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @property
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
-        return self['RefOrbit-RB']
+        ref = self['RefOrbit-RB']
+        # handle initial state of RefOrbit PVs
+        if len(ref) < 2*NR_BPM:
+            value = _np.zeros(2*NR_BPM)
+            value[:len(ref)] = ref
+            ref = value
+        return ref
 
     @ref.setter
     def ref(self, value):
