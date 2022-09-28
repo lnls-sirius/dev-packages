@@ -15,7 +15,6 @@ from ..namesys import SiriusPVName as _PVName
 from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
     FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
 
-from .csdev import NR_BPM as _NR_BPM
 from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
 
 
@@ -897,8 +896,9 @@ class App(_Callback):
             coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
         # handle FOFB BPM ordering
-        coeffs[:, :_NR_BPM] = _np.roll(coeffs[:, :_NR_BPM], 1, axis=1)
-        coeffs[:, _NR_BPM:] = _np.roll(coeffs[:, _NR_BPM:], 1, axis=1)
+        nrbpm = self._const.nr_bpms
+        coeffs[:, :nrbpm] = _np.roll(coeffs[:, :nrbpm], 1, axis=1)
+        coeffs[:, nrbpm:] = _np.roll(coeffs[:, nrbpm:], 1, axis=1)
 
         # set internal states
         self._pscoeffs = coeffs
