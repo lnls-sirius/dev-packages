@@ -15,6 +15,7 @@ from ..namesys import SiriusPVName as _PVName
 from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
     FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
 
+from .csdev import NR_BPM as _NR_BPM
 from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
 
 
@@ -400,8 +401,8 @@ class App(_Callback):
 
         # set internal states and LLFOFB reforb
         llref = _np.roll(ref, 1)  # make BPM 01M1 the first element
-        setattr(self, '_ref_orb'+plane.lower(), llref)
-        setattr(self._llfofb_dev, 'set_reforb'+plane.lower(), llref)
+        setattr(self, '_ref_orb' + plane.lower(), llref)
+        setattr(self._llfofb_dev, 'set_reforb' + plane.lower(), llref)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
@@ -848,8 +849,8 @@ class App(_Callback):
             coeffs = invmat / norm
 
         # handle FOFB BPM ordering
-        coeffs[:, :160] = _np.roll(coeffs[:, :160], 1, axis=1)
-        coeffs[:, 160:] = _np.roll(coeffs[:, 160:], 1, axis=1)
+        coeffs[:, :_NR_BPM] = _np.roll(coeffs[:, :_NR_BPM], 1, axis=1)
+        coeffs[:, _NR_BPM:] = _np.roll(coeffs[:, _NR_BPM:], 1, axis=1)
 
         # set internal states
         self._pscoeffs = coeffs

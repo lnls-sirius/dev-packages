@@ -3,9 +3,16 @@
 import os as _os
 
 import numpy as _np
+
+from mathphys.constants import light_speed as _light_speed
+
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
     BPMSearch as _BPMSearch
+from ..optics.constants import SI as _ConstSI
+
+
+NR_BPM = 160
 
 
 # --- Enumeration Types ---
@@ -53,6 +60,8 @@ class HLFOFBConst(_csdev.Const):
 
         # device names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+        if NR_BPM != self.bpm_names:
+            raise ValueError('Inconsistent NR_BPM parameter!')
         self.ch_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
         self.cv_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
 
@@ -68,7 +77,7 @@ class HLFOFBConst(_csdev.Const):
             lambda x: x.substitute(dis='MA'), self.cv_names))
 
         # total number of devices
-        self.nr_bpms = len(self.bpm_names)
+        self.nr_bpms = NR_BPM
         self.nr_ch = len(self.ch_names)
         self.nr_cv = len(self.cv_names)
         self.nr_chcv = self.nr_ch + self.nr_cv
@@ -84,15 +93,15 @@ class HLFOFBConst(_csdev.Const):
         self.reforb_size = self.nr_bpms
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
-        self.circum = 518.396  # in meter
-        self.harm_number = 864
-        self.rev_per = self.circum / 299792458  # in seconds
+        self.circum = _ConstSI.circumference  # [m]
+        self.harm_number = _ConstSI.harmonic_number
+        self.rev_per = self.circum / _light_speed  # [s]
 
         # LLFOFB reforb ordering
-        ord_orig = _np.arange(320)
+        ord_orig = _np.arange(2*self.nr_bpms)
         ord_fofb = _np.empty_like(ord_orig)
-        ord_fofb[:160] = _np.roll(ord_orig[:160], 1)
-        ord_fofb[160:] = _np.roll(ord_orig[160:], 1)
+        ord_fofb[:self.nr_bpms] = _np.roll(ord_orig[:self.nr_bpms], 1)
+        ord_fofb[self.nr_bpms:] = _np.roll(ord_orig[self.nr_bpms:], 1)
         self.orbord_fofb = ord_fofb
 
     def get_hlfofb_database(self):
