@@ -22,7 +22,8 @@ from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
 class App(_Callback):
     """High Level FOFB main application."""
 
-    SCAN_FREQUENCY = 1  # [Hz]
+    SCAN_FREQUENCY = 0.5  # [Hz]
+    TIMEOUT_CONN = 2  # [s]
 
     def __init__(self, tests=False):
         """Class constructor."""
@@ -30,6 +31,7 @@ class App(_Callback):
         self._const = _Const()
         self._pvs_database = self._const.get_hlfofb_database()
         self._tests = tests
+        self._init = False
 
         # internal states
         self._loop_state = self._const.LoopState.Open
@@ -45,8 +47,10 @@ class App(_Callback):
         self._fofbctrl_syncnet_count = 0
         self._fofbctrl_conftframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
-        self._ref_orbx = _np.zeros(self._const.nr_bpms, dtype=float)
-        self._ref_orby = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
+        self._reforbhw_y = _np.zeros(self._const.nr_bpms, dtype=float)
         self._respmat = _np.zeros(
             [2*self._const.nr_bpms, self._const.nr_corrs], dtype=float)
         self._invrespmat = self._respmat.copy().T
@@ -61,7 +65,7 @@ class App(_Callback):
         self._min_sing_val = self._const.MIN_SING_VAL
         self._tikhonov_reg_const = self._const.TIKHONOV_REG_CONST
         self._invrespmat_normmode = self._const.GlobIndiv.Global
-        self._pscoeffs = self._invrespmatconv.copy()
+        self._pscoeffs = self._invrespmatconv[:-1].copy()
         self._psgains = _np.ones(self._const.nr_chcv, dtype=float)
         self._meas_respmat_count = 0
         self._meas_respmat_kick = {
@@ -91,6 +95,11 @@ class App(_Callback):
 
         self._llfofb_dev = _FamFOFBCtrls()
 
+        self._sisofb_dev.wait_for_connection(self.TIMEOUT_CONN)
+        self._corrs_dev.wait_for_connection(3*self.TIMEOUT_CONN)
+        self._rf_dev.wait_for_connection(self.TIMEOUT_CONN)
+        self._llfofb_dev.wait_for_connection(self.TIMEOUT_CONN)
+
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
                 prefix=_vaca_prefix)
@@ -102,7 +111,7 @@ class App(_Callback):
         self.map_pv2write = {
             'LoopState-Sel': self.set_loopstate,
             'LoopGain-SP': self.set_loopgain,
-            'CorrConfig-Cmd': self.cmd_corr_confall,
+            'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -158,10 +167,10 @@ class App(_Callback):
             'FOFBCtrlConfTFrameLen-Cmd', self._fofbctrl_conftframelen_count)
         self.run_callbacks(
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
-        self.run_callbacks('RefOrbX-SP', self._ref_orbx)
-        self.run_callbacks('RefOrbX-RB', self._ref_orbx)
-        self.run_callbacks('RefOrbY-SP', self._ref_orby)
-        self.run_callbacks('RefOrbY-RB', self._ref_orby)
+        self.run_callbacks('RefOrbX-SP', self._reforb_x)
+        self.run_callbacks('RefOrbX-RB', self._reforb_x)
+        self.run_callbacks('RefOrbY-SP', self._reforb_y)
+        self.run_callbacks('RefOrbY-RB', self._reforb_y)
         self.run_callbacks('BPMXEnblList-SP', self._enable_lists['bpmx'])
         self.run_callbacks('BPMXEnblList-RB', self._enable_lists['bpmx'])
         self.run_callbacks('BPMYEnblList-SP', self._enable_lists['bpmy'])
@@ -199,6 +208,7 @@ class App(_Callback):
         self.run_callbacks('MeasRespMatWait-SP', self._meas_respmat_wait)
         self.run_callbacks('MeasRespMatWait-RB', self._meas_respmat_wait)
         self._update_log('Started.')
+        self._init = True
 
     @property
     def pvs_database(self):
@@ -264,14 +274,14 @@ class App(_Callback):
             return False
         self._loop_gain = value
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        # self._set_corrs_coeffs()
         self._update_log('Changed acc.gain to '+str(value)+'.')
         self.run_callbacks('LoopGain-RB', self._loop_gain)
         return True
 
     # --- devices configuration ---
 
-    def cmd_corr_confall(self, _):
+    def cmd_corr_configure(self, _):
         """Configure corrector command."""
         self._update_log('Received configure corrector command...')
 
@@ -337,14 +347,15 @@ class App(_Callback):
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
         self._update_log('Received sync FOFB net command...')
-
-        self._update_log('Checking FOFB Net synchronization...')
+        self._update_log('Checking...')
         if not self._llfofb_dev.net_synced:
-            self._update_log('Syncing FOFB Net...')
-            self._llfofb_dev.cmd_sync_net()
-            self._update_log('FOFB Net synced!')
+            self._update_log('Syncing FOFB net...')
+            if self._llfofb_dev.cmd_sync_net():
+                self._update_log('Sync sent to FOFB net.')
+            else:
+                self._update_log('ERR:Failed to sync FOFB net.')
         else:
-            self._update_log('FOFB Net already synced.')
+            self._update_log('FOFB net already synced.')
 
         self._fofbctrl_syncnet_count += 1
         self.run_callbacks(
@@ -353,14 +364,15 @@ class App(_Callback):
 
     def cmd_fofbctrl_conftframelen(self, _):
         """Configure FOFB controllers TimeFrameLen command."""
-        self._update_log('Received configure FOFBControllers command...')
-
-        self._update_log('Checking if TimeFrameLen are configured...')
+        self._update_log('Received configure FOFB controllers')
+        self._update_log('TimeFrameLen command... Checking...')
         deftimeframe = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
         if not _np.all(self._llfofb_dev.time_frame_len == deftimeframe):
             self._update_log('Configuring TimeFrameLen PVs...')
-            self._llfofb_dev.set_time_frame_len()
-            self._update_log('TimeFrameLen PVs configured!')
+            if self._llfofb_dev.set_time_frame_len():
+                self._update_log('TimeFrameLen PVs configured!')
+            else:
+                self._update_log('ERR:Failed to configure TimeFrameLen.')
         else:
             self._update_log('TimeFrameLen PVs already configured.')
 
@@ -371,14 +383,14 @@ class App(_Callback):
 
     def cmd_fofbctrl_confbpmlogtrg(self, _):
         """Configure BPM logical triggers command."""
-        self._update_log('Received configure BPM Log Trigs cmd...')
-
-        self._update_log('Checking if BPM logical triggers ')
-        self._update_log('are configured...')
+        self._update_log('Received configure BPM Logical')
+        self._update_log('triggers command... Checking...')
         if not self._llfofb_dev.bpm_trigs_configured:
             self._update_log('Configuring BPM logical triggers...')
-            self._llfofb_dev.cmd_config_bpm_trigs()
-            self._update_log('BPM logical triggers configured!')
+            if self._llfofb_dev.cmd_config_bpm_trigs():
+                self._update_log('BPM logical triggers configured!')
+            else:
+                self._update_log('ERR:Failed to configure BPM log.trigs.')
         else:
             self._update_log('BPM logical triggers already configured.')
 
@@ -400,9 +412,15 @@ class App(_Callback):
             return False
 
         # set internal states and LLFOFB reforb
-        llref = _np.roll(ref, 1)  # make BPM 01M1 the first element
-        setattr(self, '_ref_orb' + plane.lower(), llref)
-        setattr(self._llfofb_dev, 'set_reforb' + plane.lower(), llref)
+        # physical units
+        setattr(self, '_reforb_' + plane.lower(), ref)
+        # hardware units
+        refhw = ref * self._const.CONV_UM_2_NM
+        refhw = _np.round(refhw)  # round, low level expect it to be int
+        refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
+        setattr(self, '_reforbhw_' + plane.lower(), refhw)
+        fun = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
+        fun(refhw)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
@@ -444,8 +462,9 @@ class App(_Callback):
     def _load_respmat(self):
         filename = self._const.respmat_fname
         if _os.path.isfile(filename):
+            self._update_log('Loading RespMat from file...')
             if self.set_respmat(_np.loadtxt(filename)):
-                msg = 'Loading RespMat from file...'
+                msg = 'Loaded RespMat!'
             else:
                 msg = 'ERR: Problem loading RespMat from file.'
             self._update_log(msg)
@@ -479,7 +498,7 @@ class App(_Callback):
 
         # update readback pv
         if device == 'rf':
-            self.run_callbacks('UseRF-Sts', _Const.UseRF._fields[bool(value)])
+            self.run_callbacks('UseRF-Sts', bool(value))
         else:
             self.run_callbacks(device.upper()+'EnblList-RB', new)
 
@@ -528,7 +547,7 @@ class App(_Callback):
         self._invrespmat_normmode = value
 
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        # self._set_corrs_coeffs()
 
         self.run_callbacks(
             'InvRespMatNormMode-Sts', self._invrespmat_normmode)
@@ -536,6 +555,10 @@ class App(_Callback):
 
     def _calc_matrices(self):
         self._update_log('Calculating Inverse Matrix...')
+
+        if not self._corrs_dev.connected:
+            self._update_log('ERR:Correctors not connected... aborted.')
+
         selbpm = self.bpm_enbllist
         if not any(selbpm):
             self._update_log('ERR: No BPM selected in EnblList')
@@ -587,19 +610,25 @@ class App(_Callback):
         matr = _np.dot(_uo*_sp, _vo)
 
         # convert matrix to hardware units
+        str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
+        currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
+        if _np.any(str2curr == 0) or _np.any(currgain == 0):
+            self._update_log('ERR:Could not calculate hardware unit')
+            self._update_log('ERR:matrix, CurrGain or "urad to A" ')
+            self._update_log('ERR:factor have zero values.')
+            return False
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM
-        matc = matc / self._corrs_dev.strength_2_current_factor[selcorr]
-        matc = matc * self._corrs_dev.curr_gain[selcorr]
+        matc = matc / str2curr[selcorr]
+        matc = matc * currgain[selcorr]
 
         # obtain pseudoinverse
         # calculate SVD for converted matrix
         _uc, _sc, _vc = _np.linalg.svd(matc, full_matrices=False)
-        idcs = _sc > 1e-10  # NOTE: test!
-
         # handle singular value selection
+        idcsc = _sc/_sc.max() >= self._const.SINGVALHW_THRS
         inv_sc = _np.zeros(_so.size, dtype=float)
-        inv_sc[idcs] = 1/_sc[idcs]
+        inv_sc[idcsc] = 1/_sc[idcsc]
         # calculate pseudoinverse of converted matrix from SVD
         invmatc = _np.dot(_vc.T*inv_sc, _uc.T)
 
@@ -621,6 +650,10 @@ class App(_Callback):
         respmat_proc[selmat] = matr.ravel()
         self.run_callbacks('RespMat-Mon', list(respmat_proc.ravel()))
 
+        sing_vals = _np.zeros(self._const.nr_svals, dtype=float)
+        sing_vals[:_sc.size] = _sc
+        self.run_callbacks('SingValuesHw-Mon', sing_vals)
+
         self._invrespmatconv = _np.zeros(self._respmat.shape, dtype=float).T
         self._invrespmatconv[selmat.T] = invmatc.ravel()
         self.run_callbacks(
@@ -628,11 +661,12 @@ class App(_Callback):
 
         respmatconv_proc = _np.zeros(self._respmat.shape, dtype=float)
         respmatconv_proc[selmat] = matc.ravel()
-        self.run_callbacks('RespMatHw-Mon', list(respmat_proc.ravel()))
+        self.run_callbacks('RespMatHw-Mon', list(respmatconv_proc.ravel()))
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
-        self._set_corrs_coeffs()
+        # if self._init:
+        #     self._set_corrs_coeffs()
 
         self._update_log('Ok!')
         return True
@@ -809,24 +843,35 @@ class App(_Callback):
         opmode = self._corrs_dev.OPMODE_STS.manual \
             if self._loop_state == self._const.LoopState.Open \
             else self._corrs_dev.OPMODE_STS.fofb
-        is_ok = self._corrs_dev.opmode == opmode
-        idcs = _np.where((self.corr_enbllist[:-1] - is_ok) > 0)[0]
-        if idcs:
+        is_ok = 1 * (self._corrs_dev.opmode == opmode)
+        idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
+        if idcs.size:
             self._update_log('Configuring corrector opmode...')
             self._corrs_dev.set_opmode(opmode, psindices=idcs)
-            self._update_log('Done.')
-        else:
-            self._update_log('All ok.')
+            if self._corrs_dev.check_opmode(opmode, psindices=idcs, timeout=5):
+                self._update_log('Done.')
+                return True
+            self._update_log('ERR:Failed to set corrector opmode.')
+            return False
+        self._update_log('All ok.')
+        return True
 
     def _set_corrs_fofbacc_freeze(self):
         """Configure FOFBAccFreeze state.
 
-        Keep correctors in accordance with enable list.
+        Keep in accordance with enable list and loop_state.
         """
         self._update_log('Setting corrector FOFCAccFreeze...')
-        freeze = _np.logical_not(self.corr_enbllist[:-1])
+        freeze = self._get_corrs_fofbacc_freeze_desired()
         self._corrs_dev.set_fofbacc_freeze(freeze)
         self._update_log('Done!')
+
+    def _get_corrs_fofbacc_freeze_desired(self):
+        if self._loop_state == self._const.LoopState.Open:
+            freeze = _np.ones(len(self.corr_enbllist[:-1]))
+        else:
+            freeze = 1 * _np.logical_not(self.corr_enbllist[:-1])
+        return freeze
 
     def _calc_corrs_coeffs(self):
         """Calculate corrector coefficients and gains."""
@@ -835,18 +880,21 @@ class App(_Callback):
 
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
+        coeffs = _np.zeros(invmat.shape)
         reso = self._const.ACCGAIN_RESO
         if self._invrespmat_normmode == self._const.GlobIndiv.Global:
             maxval = _np.amax(abs(invmat))
             gain = _np.ceil(maxval * self._loop_gain / reso) * reso
             norm = gain / self._loop_gain
-            coeffs = invmat / norm
+            if norm != 0:
+                coeffs = invmat / norm
             gains = gain * _np.ones(self._const.nr_chcv)
         elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
             maxval = _np.amax(abs(invmat), axis=1)
             gains = _np.ceil(maxval * self._loop_gain / reso) * reso
-            norm = gains[:, None] / self._loop_gain
-            coeffs = invmat / norm
+            norm = gains / self._loop_gain
+            idcs = norm > 0
+            coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
         # handle FOFB BPM ordering
         coeffs[:, :_NR_BPM] = _np.roll(coeffs[:, :_NR_BPM], 1, axis=1)
@@ -855,6 +903,9 @@ class App(_Callback):
         # set internal states
         self._pscoeffs = coeffs
         self._psgains = gains
+        # update PVs
+        self.run_callbacks('CorrCoeffs-Mon', list(self._pscoeffs.ravel()))
+        self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
 
         self._update_log('Done!')
 
@@ -904,8 +955,8 @@ class App(_Callback):
                 if not self._corrs_dev.check_opmode(opmode, psindices=idcs):
                     value = _updt_bit(value, 2, 1)
                 # AccFreezeConfigured
-                freezestate = self.corr_enbllist[:-1]
-                if not self._corrs_dev.check_fofbacc_freeze(freezestate):
+                freeze = self._get_corrs_fofbacc_freeze_desired()
+                if not self._corrs_dev.check_fofbacc_freeze(freeze):
                     value = _updt_bit(value, 3, 1)
                 # InvRespMatRowSynced
                 if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
@@ -914,12 +965,7 @@ class App(_Callback):
                 if not self._corrs_dev.check_fofbacc_gain(self._psgains):
                     value = _updt_bit(value, 5, 1)
             else:
-                value = _updt_bit(value, 0, 1)
-                value = _updt_bit(value, 1, 1)
-                value = _updt_bit(value, 2, 1)
-                value = _updt_bit(value, 3, 1)
-                value = _updt_bit(value, 4, 1)
-                value = _updt_bit(value, 5, 1)
+                value = 0b111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
@@ -928,14 +974,14 @@ class App(_Callback):
             value = 0
             if self._llfofb_dev.connected:
                 # BPMIdsConfigured
-                if not self._llfofb_dev.bpmids_configured:
+                if not self._llfofb_dev.bpm_id_configured:
                     value = _updt_bit(value, 1, 1)
                 # NetSynced
                 if not self._llfofb_dev.net_synced:
                     value = _updt_bit(value, 2, 1)
                 # RefOrbSynced
-                if not self._llfofb_dev.check_reforbx(self._ref_orbx) or \
-                        not self._llfofb_dev.check_reforby(self._ref_orby):
+                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or \
+                        not self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 3, 1)
                 # TimeFrameLenConfigured
                 tframelen = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
@@ -945,12 +991,7 @@ class App(_Callback):
                 if not self._llfofb_dev.bpm_trigs_configured:
                     value = _updt_bit(value, 5, 1)
             else:
-                value = _updt_bit(value, 0, 1)
-                value = _updt_bit(value, 1, 1)
-                value = _updt_bit(value, 2, 1)
-                value = _updt_bit(value, 3, 1)
-                value = _updt_bit(value, 4, 1)
-                value = _updt_bit(value, 5, 1)
+                value = 0b111111
 
             self._fofbctrl_status = value
             self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)

@@ -764,25 +764,13 @@ class PowerSupplyFC(_PSDev):
         """."""
         return self['AlarmsAmp-Mon']
 
-    def cmd_opmode_open_loop_manual(self, timeout=_PSDev._default_timeout):
-        """Set opmode to open_loop_manual."""
-        return self._set_opmode(
-            mode=self.OPMODE.open_loop_manual, timeout=timeout)
+    def cmd_opmode_manual(self, timeout=_PSDev._default_timeout):
+        """Set opmode to manual."""
+        return self._set_opmode(mode=self.OPMODE_SEL.manual, timeout=timeout)
 
-    def cmd_opmode_open_loop_test_sqr(self, timeout=_PSDev._default_timeout):
-        """Set opmode to open_loop_test_sqr."""
-        return self._set_opmode(
-            mode=self.OPMODE.open_loop_test_sqr, timeout=timeout)
-
-    def cmd_opmode_close_loop_manual(self, timeout=_PSDev._default_timeout):
-        """Set opmode to close_loop_manual."""
-        return self._set_opmode(
-            mode=self.OPMODE.closed_loop_manual, timeout=timeout)
-
-    def cmd_opmode_close_loop_test_sqr(self, timeout=_PSDev._default_timeout):
-        """Set opmode to close_loop_test_sqr."""
-        return self._set_opmode(
-            mode=self.OPMODE.close_loop_test_sqr, timeout=timeout)
+    def cmd_opmode_fofb(self, timeout=_PSDev._default_timeout):
+        """Set opmode to fofb."""
+        return self._set_opmode(mode=self.OPMODE_SEL.fofb, timeout=timeout)
 
     def _set_opmode(self, mode, timeout):
         self['OpMode-Sel'] = mode

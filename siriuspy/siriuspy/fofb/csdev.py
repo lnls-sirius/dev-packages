@@ -2,14 +2,9 @@
 
 import os as _os
 
-import numpy as _np
-
-from mathphys.constants import light_speed as _light_speed
-
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
     BPMSearch as _BPMSearch
-from ..optics.constants import SI as _ConstSI
 
 
 NR_BPM = 160
@@ -45,6 +40,7 @@ class HLFOFBConst(_csdev.Const):
 
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
+    SINGVALHW_THRS = 1e-14
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -93,16 +89,8 @@ class HLFOFBConst(_csdev.Const):
         self.reforb_size = self.nr_bpms
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
-        self.circum = _ConstSI.circumference  # [m]
-        self.harm_number = _ConstSI.harmonic_number
-        self.rev_per = self.circum / _light_speed  # [s]
-
-        # LLFOFB reforb ordering
-        ord_orig = _np.arange(2*self.nr_bpms)
-        ord_fofb = _np.empty_like(ord_orig)
-        ord_fofb[:self.nr_bpms] = _np.roll(ord_orig[:self.nr_bpms], 1)
-        ord_fofb[self.nr_bpms:] = _np.roll(ord_orig[self.nr_bpms:], 1)
-        self.orbord_fofb = ord_fofb
+        self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
+        self.corrgains_size = self.nr_chcv
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -249,11 +237,15 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
-            'RespMatLL-Mon': {
+            'SingValuesHw-Mon': {
+                'type': 'float', 'count': self.nr_svals,
+                'value': self.nr_svals*[0],
+                'unit': 'Singular values of the matrix in hardware units'},
+            'RespMatHw-Mon': {
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(nm) x (CH, CV, RF)(counts, Hz)'},
-            'InvRespMatLL-Mon': {
+            'InvRespMatHw-Mon': {
                 'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(counts, Hz) x (BH, BV)(nm)'},
@@ -263,6 +255,14 @@ class HLFOFBConst(_csdev.Const):
             'InvRespMatNormMode-Sts': {
                 'type': 'enum', 'enums': _et.GLOB_INDIV,
                 'value': self.GlobIndiv.Global},
+            'CorrCoeffs-Mon': {
+                'type': 'float', 'count': self.corrcoeffs_size,
+                'value': self.corrcoeffs_size*[0],
+                'unit': '(CH, CV) x (BH, BV)'},
+            'CorrGains-Mon': {
+                'type': 'float', 'count': self.corrgains_size,
+                'value': self.corrgains_size*[0],
+                'unit': '(CH, CV)'},
 
             # Response Matrix Measurement
             'MeasRespMat-Cmd': {

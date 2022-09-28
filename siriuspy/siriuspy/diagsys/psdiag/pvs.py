@@ -112,9 +112,9 @@ class PSStatusPV:
             sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
             if sel is not None and sts is not None:
                 if psname.dev in ['FCH', 'FCV']:
-                    opmode_sel = _ETypes.FOFB_OPMODES[sel]
-                    opmode_sts = _ETypes.FOFB_OPMODES[sts]
-                    checkdiff = sts == _PSConst.OpModeFOFB.closed_loop_manual
+                    opmode_sel = _ETypes.FOFB_OPMODES_SEL[sel]
+                    opmode_sts = _ETypes.FOFB_OPMODES_STS[sts]
+                    checkdiff = sts == _PSConst.OpModeFOFBSts.manual
                 else:
                     opmode_sel = _ETypes.OPMODES[sel]
                     opmode_sts = _ETypes.STATES[sts]
