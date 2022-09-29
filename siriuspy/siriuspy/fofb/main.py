@@ -946,13 +946,15 @@ class App(_Callback):
                 idcs = _np.where(self.corr_enbllist[:-1] == 1)[0]
                 # PwrStateOn
                 state = self._const.OffOn.On
-                if not self._corrs_dev.check_pwrstate(state, psindices=idcs):
+                if not self._corrs_dev.check_pwrstate(
+                        state, psindices=idcs, timeout=0.2):
                     value = _updt_bit(value, 1, 1)
                 # OpModeConfigured
                 opmode = self._corrs_dev.OPMODE_STS.manual \
                     if self._loop_state == self._const.LoopState.Open \
                     else self._corrs_dev.OPMODE_STS.fofb
-                if not self._corrs_dev.check_opmode(opmode, psindices=idcs):
+                if not self._corrs_dev.check_opmode(
+                        opmode, psindices=idcs, timeout=0.2):
                     value = _updt_bit(value, 2, 1)
                 # AccFreezeConfigured
                 freeze = self._get_corrs_fofbacc_freeze_desired()
