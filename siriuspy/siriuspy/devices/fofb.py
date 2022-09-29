@@ -29,7 +29,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
-        'RefOrbit-SP', 'RefOrbit-RB',
+        'RefOrb-SP', 'RefOrb-RB',
     )
 
     def __init__(self, devname):
@@ -44,8 +44,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @property
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
-        ref = self['RefOrbit-RB']
-        # handle initial state of RefOrbit PVs
+        ref = self['RefOrb-RB']
+        # handle initial state of RefOrb PVs
         if len(ref) < 2*NR_BPM:
             value = _np.zeros(2*NR_BPM)
             value[:len(ref)] = ref
@@ -54,7 +54,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     @ref.setter
     def ref(self, value):
-        self['RefOrbit-SP'] = _np.array(value, dtype=int)
+        self['RefOrb-SP'] = _np.array(value, dtype=int)
 
     @property
     def refx(self):
