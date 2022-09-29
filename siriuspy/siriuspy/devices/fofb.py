@@ -278,13 +278,14 @@ class FamFOFBControllers(_Devices):
         """Check whether DCC BPMIds are configured."""
         if not self.connected:
             return False
-        isconf = True
         for dcc, dev in self._ctl_dccs.items():
             ctl = _PVName(dcc).device_name
-            isconf &= dev.bpm_id == self._ctl_ids[ctl]
+            if not dev.bpm_id == self._ctl_ids[ctl]:
+                return False
         for bpm, dev in self._bpm_dccs.items():
-            isconf &= dev.bpm_id == self._bpm_ids[bpm]
-        return isconf
+            if not dev.bpm_id == self._bpm_ids[bpm]:
+                return False
+        return True
 
     @property
     def bpm_count(self):
@@ -362,11 +363,12 @@ class FamFOFBControllers(_Devices):
         """Check whether all BPM triggers are configured."""
         if not self.connected:
             return False
-        isconf = True
         for dev in self._bpm_trgs.values():
-            isconf &= dev.receiver_source == self.DEF_BPMTRIG_RCVSRC
-            isconf &= dev.receiver_in_sel == self.DEF_BPMTRIG_RCVIN
-        return isconf
+            if not dev.receiver_source == self.DEF_BPMTRIG_RCVSRC:
+                return False
+            if not dev.receiver_in_sel == self.DEF_BPMTRIG_RCVIN:
+                return False
+        return True
 
     def cmd_config_bpm_trigs(self, timeout=DEF_TIMEOUT):
         """Command to configure BPM triggers."""
