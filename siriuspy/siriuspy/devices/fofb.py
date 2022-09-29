@@ -304,12 +304,10 @@ class FamFOFBControllers(_Devices):
         """Check whether DCCs are synchronized."""
         if not self.connected:
             return False
-        issync = True
         for dev in self._ctl_dccs.values():
-            issync &= dev.is_synced
-        for dev in self._bpm_dccs.values():
-            issync &= dev.is_synced
-        return issync
+            if not dev.is_synced:
+                return False
+        return True
 
     def cmd_sync_net(self, timeout=DEF_TIMEOUT):
         """Command to synchronize DCCs."""
