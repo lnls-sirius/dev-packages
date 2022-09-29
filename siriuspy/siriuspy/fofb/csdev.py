@@ -56,7 +56,7 @@ class HLFOFBConst(_csdev.Const):
 
         # device names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
-        if NR_BPM != self.bpm_names:
+        if NR_BPM != len(self.bpm_names):
             raise ValueError('Inconsistent NR_BPM parameter!')
         self.ch_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
         self.cv_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
