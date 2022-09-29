@@ -7,7 +7,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _PVName
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
-from ..fofb.csdev import HLFOFBConst as _Const
+from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
     Devices as _Devices
@@ -15,8 +15,6 @@ from .bpm import BPMLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
-
-NR_BPM = 160
 
 
 class _FOFBCtrlBase:
@@ -28,7 +26,7 @@ class _FOFBCtrlBase:
 
 
 class FOFBCtrlRef(_Device, _FOFBCtrlBase):
-    """FOFB controller device."""
+    """FOFB reference orbit controller device."""
 
     _properties = (
         'RefOrbit-SP', 'RefOrbit-RB',
@@ -96,10 +94,13 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
 
 class _DCCDevice(_ProptyDevice):
+    """FOFB Diamond communication controller device."""
 
     DEF_TIMEOUT = 1
-    DEF_FMC_BPMCNT = 160
+    DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
+
+    _sync_sleep = 1.0  # [s]
 
     _properties = (
         'BPMId-RB', 'BPMCnt-Mon',
@@ -156,7 +157,7 @@ class _DCCDevice(_ProptyDevice):
         self.cc_enable = 0
         if not self._wait('CCEnable-RB', 0, timeout/2):
             return False
-        _time.sleep(1)
+        _time.sleep(_DCCDevice._sync_sleep)
         self.cc_enable = 1
         return self._wait('CCEnable-RB', 1, timeout/2)
 
@@ -208,11 +209,11 @@ class FamFOFBControllers(_Devices):
             self._ctl_ids[ctl] = self.FOFBCTRL_BPMID_OFFSET-1+int(ctl[3:5])
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
             for dcc in FOFBCtrlDCC.PROPDEVICES.ALL:
-                self._ctl_dccs[ctl+':'+dcc] = FOFBCtrlDCC(ctl, dcc)
+                self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
         # BPM DCCs and triggers
         bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
         bpmids = _np.roll(
-            _np.array([i-1 if i % 2 == 1 else i for i in range(160)]), -1)
+            _np.array([i-1 if i % 2 == 1 else i for i in range(NR_BPM)]), -1)
         self._bpm_dccs, self._bpm_trgs, self._bpm_ids = dict(), dict(), dict()
         for idx, bpm in enumerate(bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
@@ -242,7 +243,7 @@ class FamFOFBControllers(_Devices):
 
     def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            setattr(ctrl, 'ref'+plane.lower(), value)
+            setattr(ctrl, 'ref' + plane.lower(), value)
         return True
 
     def check_reforbx(self, value):
@@ -255,7 +256,7 @@ class FamFOFBControllers(_Devices):
 
     def _check_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'check_ref'+plane.lower())
+            fun = getattr(ctrl, 'check_ref' + plane.lower())
             if not fun(value):
                 return False
         return True
@@ -414,7 +415,7 @@ class FamFastCorrs(_Devices):
         """Power State.
 
         Returns:
-            state (numpy.ndarray, 160):
+            state (numpy.ndarray, NR_BPMS):
                 PwrState for each power supply.
         """
         return _np.array([p.pwrstate for p in self._psdevs])
@@ -424,7 +425,7 @@ class FamFastCorrs(_Devices):
         """Operation Mode.
 
         Returns:
-            mode (numpy.ndarray, 160):
+            mode (numpy.ndarray, NR_BPM):
                 OpMode for each power supply.
         """
         return _np.array([p.opmode for p in self._psdevs])
@@ -434,7 +435,7 @@ class FamFastCorrs(_Devices):
         """FOFB pre-accumulator gain.
 
         Returns:
-            gain (numpy.ndarray, 160):
+            gain (numpy.ndarray, NR_BPM):
                 FOFB pre-accumulator gain for each power supply.
         """
         return _np.array([p.fofbacc_gain for p in self._psdevs])
@@ -444,7 +445,7 @@ class FamFastCorrs(_Devices):
         """FOFB pre-accumulator freeze state.
 
         Returns:
-            gain (numpy.ndarray, 160):
+            gain (numpy.ndarray, NR_BPM):
                 FOFB pre-accumulator freeze state for each power supply.
         """
         return _np.array([p.fofbacc_freeze for p in self._psdevs])
@@ -454,7 +455,7 @@ class FamFastCorrs(_Devices):
         """Current gain.
 
         Returns:
-            gain (numpy.ndarray, 160):
+            gain (numpy.ndarray, NR_BPM):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
@@ -464,7 +465,7 @@ class FamFastCorrs(_Devices):
         """Strength to current convertion factor.
 
         Returns:
-            factor (numpy.ndarray, 160):
+            factor (numpy.ndarray, NR_BPM):
                 convertion factor for each power supply.
         """
         return _np.array(

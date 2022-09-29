@@ -7,6 +7,9 @@ from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
     BPMSearch as _BPMSearch
 
 
+NR_BPM = 160
+
+
 # --- Enumeration Types ---
 
 class ETypes(_csdev.ETypes):
@@ -53,6 +56,8 @@ class HLFOFBConst(_csdev.Const):
 
         # device names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+        if NR_BPM != self.bpm_names:
+            raise ValueError('Inconsistent NR_BPM parameter!')
         self.ch_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
         self.cv_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
 
@@ -68,7 +73,7 @@ class HLFOFBConst(_csdev.Const):
             lambda x: x.substitute(dis='MA'), self.cv_names))
 
         # total number of devices
-        self.nr_bpms = len(self.bpm_names)
+        self.nr_bpms = NR_BPM
         self.nr_ch = len(self.ch_names)
         self.nr_cv = len(self.cv_names)
         self.nr_chcv = self.nr_ch + self.nr_cv

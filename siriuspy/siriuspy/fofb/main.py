@@ -412,13 +412,13 @@ class App(_Callback):
 
         # set internal states and LLFOFB reforb
         # physical units
-        setattr(self, '_reforb_'+plane.lower(), ref)
+        setattr(self, '_reforb_' + plane.lower(), ref)
         # hardware units
         refhw = ref * self._const.CONV_UM_2_NM
         refhw = _np.round(refhw)  # round, low level expect it to be int
         refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
-        setattr(self, '_reforbhw_'+plane.lower(), refhw)
-        fun = getattr(self._llfofb_dev, 'set_reforb'+plane.lower())
+        setattr(self, '_reforbhw_' + plane.lower(), refhw)
+        fun = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
         fun(refhw)
 
         # update readback PV
@@ -896,8 +896,9 @@ class App(_Callback):
             coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
         # handle FOFB BPM ordering
-        coeffs[:, :160] = _np.roll(coeffs[:, :160], 1, axis=1)
-        coeffs[:, 160:] = _np.roll(coeffs[:, 160:], 1, axis=1)
+        nrbpm = self._const.nr_bpms
+        coeffs[:, :nrbpm] = _np.roll(coeffs[:, :nrbpm], 1, axis=1)
+        coeffs[:, nrbpm:] = _np.roll(coeffs[:, nrbpm:], 1, axis=1)
 
         # set internal states
         self._pscoeffs = coeffs
