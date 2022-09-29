@@ -10,6 +10,7 @@ from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
 from .device import Device as _Device
 from .device import Devices as _Devices
 from .device import DeviceApp as _DeviceApp
+from .pwrsupply import PowerSupply as _PowerSupply
 from .psconv import StrengthConv as _StrengthConv
 
 
@@ -106,10 +107,35 @@ class APU(_Device):
             _time.sleep(APU._MOVECHECK_SLEEP)
 
 
-class IDCorrectors(_DeviceApp):
-    """."""
+class WIG(_Device):
+    """Wiggler Insertion Device."""
 
-    DEVICES = APU.DEVICES
+    class DEVICES:
+        """."""
+        WIG180_14SB = 'SI-14SB:ID-WIG180'
+        ALL = (WIG180_14SB, )
+
+    # NOTE: IOC yet to be written!
+    _properties = (
+        'Gap-SP', 'Gap-RB', 'Gap-Mon',
+    )
+
+    def __init__(self, devname):
+        """."""
+        devname = _SiriusPVName(devname)
+
+        # check if device exists
+        if devname not in WIG.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=WIG._properties, auto_mon=True)
+
+
+class IDCorrectors(_Devices):
+    """."""
+    class DEVICES(WIG.DEVICES):
+        """."""
 
     def __init__(self, devname):
         """."""
@@ -120,56 +146,53 @@ class IDCorrectors(_DeviceApp):
             raise NotImplementedError(devname)
 
         # get correctors names
-        self._psnames_orb = _IDSearch.conv_idname_2_orbitcorr(devname)
+        self._psnames = _IDSearch.conv_idname_2_orbitcorr(devname)
 
-        # get deviceapp properties
-        properties, \
-            self._orb_sp, self._orb_rb, self._orb_refmon, self._orb_mon = \
-            self._get_properties()
+        # get excdata
+        self._excdata = _IDSearch.conv_idname_2_orbitffwd(devname)
+
+        devices = [_PowerSupply(devname=psname) for psname in self._psnames]
 
         # call base class constructor
-        super().__init__(properties=properties, devname=devname)
+        super().__init__(devname=devname, devices=devices)
 
     @property
-    def orbitcorr_psnames(self):
-        """Return orbit corrector names."""
-        return self._psnames_orb
+    def psnames(self):
+        """Return orbit corrector power supply names."""
+        return self._psnames
 
     @property
-    def orbitcorr_current(self):
-        """Return orbit SOFBCurrent Mon."""
-        return self[self._orb_mon]
+    def id_polarizations(self):
+        """Return list of possible ligh polarizations for the ID."""
+        return tuple(self._excdata.keys())
 
-    @orbitcorr_current.setter
-    def orbitcorr_current(self, value):
-        """Set orbit SOFBCurrent SP."""
-        self[self._orb_sp] = value
+    def get_currents(self, polarization, config):
+        """Return correctors currents for a particular ID config.
 
-    @property
-    def orbitcorr_current_sp(self):
-        """Return orbit SOFBCurrent setpoint."""
-        return self[self._orb_sp]
+        The parameter 'config' can be a gap or phase value, depending on the
+        insertion device.
+        """
+        excdata_dict = self._excdata[polarization]
+        currents = dict()
+        for psname, excdata in excdata_dict.items():
+            mpoles = excdata.interp_curr2mult(config, only_main_harmonic=True)
+            currents[psname] = mpoles['normal'][0]
+        return currents
 
-    @property
-    def orbitcorr_current_rb(self):
-        """Return orbit SOFBCurrent readback."""
-        return self[self._orb_rb]
 
-    @property
-    def orbitcorr_current_mon(self):
-        """Return orbit SOFBCurrent monitor."""
-        return self[self._orb_mon]
+class WIGCorrectors(IDCorrectors):
+    """."""
+    class DEVICES(WIG.DEVICES):
+        """."""
 
-    def _get_properties(self):
-        corrname = self._psnames_orb[0]
-        orb_sp = corrname + ':SOFBCurrent-SP'
-        orb_rb = corrname + ':SOFBCurrent-RB'
-        orb_refmon = corrname + ':SOFBCurrentRef-Mon'
-        orb_mon = corrname + ':SOFBCurrent-Mon'
-        properties = (
-            orb_sp, orb_rb, orb_refmon, orb_mon
-        )
-        return properties, orb_sp, orb_rb, orb_refmon, orb_mon
+    def __init__(self, devname):
+        """."""
+        # call base class constructor
+        super().__init__(devname)
+
+    def get_currents(self, gap):
+        """Return correctors currents for a particular wiggler gap."""
+        return super().get_currents('horizontal', config=gap)
 
 
 class APUFeedForward(_Devices):
