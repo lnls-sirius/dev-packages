@@ -436,7 +436,9 @@ class App(_Callback):
         mat = _np.array(value, dtype=float)
         matb = mat
         if mat.size != self._const.matrix_size:
-            self._update_log('ERR: Wrong RespMat Size.')
+            self._update_log(
+                f'ERR: Wrong RespMat Size ({mat.size}, '
+                f'expected {self._const.matrix_size}).')
             return False
 
         # reshape
