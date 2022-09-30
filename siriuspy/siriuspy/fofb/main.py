@@ -965,7 +965,7 @@ class App(_Callback):
                 # InvRespMatRowSynced
                 if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
                     value = _updt_bit(value, 4, 1)
-                # LoopGainSynced
+                # AccGainSynced
                 if not self._corrs_dev.check_fofbacc_gain(self._psgains):
                     value = _updt_bit(value, 5, 1)
             else:
@@ -983,19 +983,22 @@ class App(_Callback):
                 # NetSynced
                 if not self._llfofb_dev.net_synced:
                     value = _updt_bit(value, 2, 1)
+                # LinkPartnerConnected
+                if not self._llfofb_dev.linkpartners_connected:
+                    value = _updt_bit(value, 3, 1)
                 # RefOrbSynced
                 if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or \
                         not self._llfofb_dev.check_reforby(self._reforbhw_y):
-                    value = _updt_bit(value, 3, 1)
+                    value = _updt_bit(value, 4, 1)
                 # TimeFrameLenConfigured
                 tframelen = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
                 if not _np.all(self._llfofb_dev.time_frame_len == tframelen):
-                    value = _updt_bit(value, 4, 1)
+                    value = _updt_bit(value, 5, 1)
                 # BPMLogTrigsConfigured
                 if not self._llfofb_dev.bpm_trigs_configured:
-                    value = _updt_bit(value, 5, 1)
+                    value = _updt_bit(value, 6, 1)
             else:
-                value = 0b111111
+                value = 0b1111111
 
             self._fofbctrl_status = value
             self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)

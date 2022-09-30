@@ -24,10 +24,10 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'LoopGainSynced')
+        'InvRespMatRowSynced', 'AccGainSynced')
     STS_LBLS_FOFBCTRL = (
-        'Connected', 'BPMIdsConfigured', 'NetSynced', 'RefOrbSynced',
-        'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
+        'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
+        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
 
 
 _et = ETypes  # syntactic sugar
@@ -138,7 +138,7 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
 
             # FOFB Controllers
-            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b111111},
+            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
