@@ -281,6 +281,8 @@ class FamFOFBControllers(_Devices):
         return self._check_reforb('y', value)
 
     def _check_reforb(self, plane, value):
+        if not self.connected:
+            return False
         for ctrl in self._ctl_refs.values():
             fun = getattr(ctrl, 'check_ref' + plane.lower())
             if not fun(value):
@@ -534,6 +536,8 @@ class FamFastCorrs(_Devices):
             self, state, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies are in desired pwrstate."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'PwrState-Sts', state, timeout=timeout)
@@ -549,6 +553,8 @@ class FamFastCorrs(_Devices):
             self, opmode, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies are in desired opmode."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'OpMode-Sts', opmode, timeout=timeout)
@@ -568,6 +574,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_INVRESPMATROW):
         """Check power supplies correction coefficients."""
+        if not self.connected:
+            return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         values = _np.asarray(values)
@@ -592,6 +600,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_FOFBACCGAIN):
         """Check whether power supplies have desired correction gain."""
+        if not self.connected:
+            return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         values = _np.asarray(values)
@@ -614,6 +624,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies have desired freeze state."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'FOFBAccFreeze-Sts', values, timeout=timeout)
