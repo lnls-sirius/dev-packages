@@ -423,7 +423,7 @@ class App(_Callback):
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
-
+        self._update_log('Done!')
         return True
 
     # --- matrix manipulation ---
