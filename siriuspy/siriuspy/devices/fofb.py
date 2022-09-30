@@ -107,13 +107,25 @@ class _DCCDevice(_ProptyDevice):
         'CCEnable-SP', 'CCEnable-RB',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
+    _properties_fmc = (
+        'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+        'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon',
+    )
 
     def __init__(self, devname, dccname):
         """Init."""
         self.dccname = dccname
-        super().__init__(
-            devname, dccname, properties=_DCCDevice._properties)
-        self.set_auto_monitor('BPMCnt-Mon', True)
+
+        properties = _DCCDevice._properties
+        if 'FMC' in self.dccname:
+            properties += _DCCDevice._properties_fmc
+
+        super().__init__(devname, dccname, properties=properties)
+        prop2automon = [
+            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
+        for prop in prop2automon:
+            self.set_auto_monitor(prop, True)
 
     @property
     def bpm_id(self):
@@ -180,6 +192,14 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
             raise NotImplementedError(dccname)
         super().__init__(devname, dccname)
 
+    @property
+    def linkpartners(self):
+        """Return linked partners."""
+        linkpart_props = [
+            'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
+        return set(self[prop] for prop in linkpart_props)
+
 
 class BPMDCC(_DCCDevice):
     """BPM DCC device."""
@@ -204,9 +224,15 @@ class FamFOFBControllers(_Devices):
     def __init__(self):
         """Init."""
         # FOFBCtrl Refs and DCCs
-        self._ctl_refs, self._ctl_dccs, self._ctl_ids = dict(), dict(), dict()
-        for ctl in _FOFBCtrlBase.DEVICES:
-            self._ctl_ids[ctl] = self.FOFBCTRL_BPMID_OFFSET-1+int(ctl[3:5])
+        bpmids = _np.array(
+            [self.FOFBCTRL_BPMID_OFFSET - 1 + i for i in range(1, 21)])
+        lpcw = _np.roll(bpmids, 1)
+        lpaw = _np.roll(bpmids, -1)
+        self._ctl_ids, self._ctl_part = dict(), dict()
+        self._ctl_refs, self._ctl_dccs = dict(), dict()
+        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+            self._ctl_ids[ctl] = bpmids[idx]
+            self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
             for dcc in FOFBCtrlDCC.PROPDEVICES.ALL:
                 self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
@@ -284,6 +310,31 @@ class FamFOFBControllers(_Devices):
                 return False
         for bpm, dev in self._bpm_dccs.items():
             if not dev.bpm_id == self._bpm_ids[bpm]:
+                return False
+        return True
+
+    @property
+    def linkpartners(self):
+        """Return link partners."""
+        if not self.connected:
+            return False
+        partners = dict()
+        for dev in self._ctl_dccs.values():
+            if 'FMC' not in dev.dccname:
+                continue
+            partners[dev.devname] = dev.linkpartners
+        return partners
+
+    @property
+    def linkpartners_connected(self):
+        """Check whether adjacent partners are connected."""
+        if not self.connected:
+            return False
+        for dcc, dev in self._ctl_dccs.items():
+            if 'FMC' not in dev.dccname:
+                continue
+            ctl = _PVName(dcc).device_name
+            if not dev.linkpartners & self._ctl_part[ctl]:
                 return False
         return True
 
