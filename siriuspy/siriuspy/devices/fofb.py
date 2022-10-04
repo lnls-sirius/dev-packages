@@ -664,9 +664,10 @@ class HLFOFB(_Device):
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd',
+        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
+        'GetRefOrbFromSlowOrb-Cmd',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
         'BPMYEnblList-SP', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CHEnblList-RB',
@@ -764,6 +765,11 @@ class HLFOFB(_Device):
         self['FOFBCtrlSyncNet-Cmd'] = 1
         return True
 
+    def cmd_fofbctrl_syncreforb(self):
+        """Command to sync FOFB controller RefOrb."""
+        self['FOFBCtrlSyncRefOrb-Cmd'] = 1
+        return True
+
     def cmd_fofbctrl_conf_timeframelen(self):
         """Command to configure all FOFB controller TimeFrameLen."""
         self['FOFBCtrlConfTFrameLen-Cmd'] = 1
@@ -791,6 +797,11 @@ class HLFOFB(_Device):
     @refy.setter
     def refy(self, value):
         self['RefOrbY-SP'] = value
+
+    def cmd_reforb_fromsloworb(self):
+        """Command to get FOFB controller RefOrb from SlowOrb."""
+        self['GetRefOrbFromSlowOrb-Cmd'] = 1
+        return True
 
     @property
     def bpmxenbl(self):

@@ -143,6 +143,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
             'FOFBCtrlSyncNet-Cmd': {'type': 'int', 'value': 0},
+            'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
 
@@ -159,6 +160,7 @@ class HLFOFBConst(_csdev.Const):
             'RefOrbY-RB': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
+            'GetRefOrbFromSlowOrb-Cmd': {'type': 'int', 'value': 0},
 
             # Response Matrix
             'BPMXEnblList-SP': {
