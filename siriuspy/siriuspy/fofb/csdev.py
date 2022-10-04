@@ -24,10 +24,10 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'LoopGainSynced')
+        'InvRespMatRowSynced', 'AccGainSynced')
     STS_LBLS_FOFBCTRL = (
-        'Connected', 'BPMIdsConfigured', 'NetSynced', 'RefOrbSynced',
-        'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
+        'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
+        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
 
 
 _et = ETypes  # syntactic sugar
@@ -56,7 +56,7 @@ class HLFOFBConst(_csdev.Const):
 
         # device names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
-        if NR_BPM != self.bpm_names:
+        if NR_BPM != len(self.bpm_names):
             raise ValueError('Inconsistent NR_BPM parameter!')
         self.ch_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCH'})
         self.cv_names = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
@@ -138,11 +138,12 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
 
             # FOFB Controllers
-            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b111111},
+            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
             'FOFBCtrlSyncNet-Cmd': {'type': 'int', 'value': 0},
+            'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
 
@@ -159,6 +160,7 @@ class HLFOFBConst(_csdev.Const):
             'RefOrbY-RB': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
+            'GetRefOrbFromSlowOrb-Cmd': {'type': 'int', 'value': 0},
 
             # Response Matrix
             'BPMXEnblList-SP': {

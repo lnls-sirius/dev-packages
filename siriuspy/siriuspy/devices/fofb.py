@@ -29,7 +29,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
-        'RefOrbit-SP', 'RefOrbit-RB',
+        'RefOrb-SP', 'RefOrb-RB',
     )
 
     def __init__(self, devname):
@@ -44,8 +44,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @property
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
-        ref = self['RefOrbit-RB']
-        # handle initial state of RefOrbit PVs
+        ref = self['RefOrb-RB']
+        # handle initial state of RefOrb PVs
         if len(ref) < 2*NR_BPM:
             value = _np.zeros(2*NR_BPM)
             value[:len(ref)] = ref
@@ -54,7 +54,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     @ref.setter
     def ref(self, value):
-        self['RefOrbit-SP'] = _np.array(value, dtype=int)
+        self['RefOrb-SP'] = _np.array(value, dtype=int)
 
     @property
     def refx(self):
@@ -107,13 +107,25 @@ class _DCCDevice(_ProptyDevice):
         'CCEnable-SP', 'CCEnable-RB',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
+    _properties_fmc = (
+        'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+        'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon',
+    )
 
     def __init__(self, devname, dccname):
         """Init."""
         self.dccname = dccname
-        super().__init__(
-            devname, dccname, properties=_DCCDevice._properties)
-        self.set_auto_monitor('BPMCnt-Mon', True)
+
+        properties = _DCCDevice._properties
+        if 'FMC' in self.dccname:
+            properties += _DCCDevice._properties_fmc
+
+        super().__init__(devname, dccname, properties=properties)
+        prop2automon = [
+            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
+        for prop in prop2automon:
+            self.set_auto_monitor(prop, True)
 
     @property
     def bpm_id(self):
@@ -180,6 +192,14 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
             raise NotImplementedError(dccname)
         super().__init__(devname, dccname)
 
+    @property
+    def linkpartners(self):
+        """Return linked partners."""
+        linkpart_props = [
+            'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
+            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
+        return set(self[prop] for prop in linkpart_props)
+
 
 class BPMDCC(_DCCDevice):
     """BPM DCC device."""
@@ -204,9 +224,15 @@ class FamFOFBControllers(_Devices):
     def __init__(self):
         """Init."""
         # FOFBCtrl Refs and DCCs
-        self._ctl_refs, self._ctl_dccs, self._ctl_ids = dict(), dict(), dict()
-        for ctl in _FOFBCtrlBase.DEVICES:
-            self._ctl_ids[ctl] = self.FOFBCTRL_BPMID_OFFSET-1+int(ctl[3:5])
+        bpmids = _np.array(
+            [self.FOFBCTRL_BPMID_OFFSET - 1 + i for i in range(1, 21)])
+        lpcw = _np.roll(bpmids, 1)
+        lpaw = _np.roll(bpmids, -1)
+        self._ctl_ids, self._ctl_part = dict(), dict()
+        self._ctl_refs, self._ctl_dccs = dict(), dict()
+        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+            self._ctl_ids[ctl] = bpmids[idx]
+            self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
             for dcc in FOFBCtrlDCC.PROPDEVICES.ALL:
                 self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
@@ -255,6 +281,8 @@ class FamFOFBControllers(_Devices):
         return self._check_reforb('y', value)
 
     def _check_reforb(self, plane, value):
+        if not self.connected:
+            return False
         for ctrl in self._ctl_refs.values():
             fun = getattr(ctrl, 'check_ref' + plane.lower())
             if not fun(value):
@@ -278,13 +306,39 @@ class FamFOFBControllers(_Devices):
         """Check whether DCC BPMIds are configured."""
         if not self.connected:
             return False
-        isconf = True
         for dcc, dev in self._ctl_dccs.items():
             ctl = _PVName(dcc).device_name
-            isconf &= dev.bpm_id == self._ctl_ids[ctl]
+            if not dev.bpm_id == self._ctl_ids[ctl]:
+                return False
         for bpm, dev in self._bpm_dccs.items():
-            isconf &= dev.bpm_id == self._bpm_ids[bpm]
-        return isconf
+            if not dev.bpm_id == self._bpm_ids[bpm]:
+                return False
+        return True
+
+    @property
+    def linkpartners(self):
+        """Return link partners."""
+        if not self.connected:
+            return False
+        partners = dict()
+        for dev in self._ctl_dccs.values():
+            if 'FMC' not in dev.dccname:
+                continue
+            partners[dev.devname] = dev.linkpartners
+        return partners
+
+    @property
+    def linkpartners_connected(self):
+        """Check whether adjacent partners are connected."""
+        if not self.connected:
+            return False
+        for dcc, dev in self._ctl_dccs.items():
+            if 'FMC' not in dev.dccname:
+                continue
+            ctl = _PVName(dcc).device_name
+            if not dev.linkpartners & self._ctl_part[ctl]:
+                return False
+        return True
 
     @property
     def bpm_count(self):
@@ -303,12 +357,10 @@ class FamFOFBControllers(_Devices):
         """Check whether DCCs are synchronized."""
         if not self.connected:
             return False
-        issync = True
         for dev in self._ctl_dccs.values():
-            issync &= dev.is_synced
-        for dev in self._bpm_dccs.values():
-            issync &= dev.is_synced
-        return issync
+            if not dev.is_synced:
+                return False
+        return True
 
     def cmd_sync_net(self, timeout=DEF_TIMEOUT):
         """Command to synchronize DCCs."""
@@ -362,11 +414,12 @@ class FamFOFBControllers(_Devices):
         """Check whether all BPM triggers are configured."""
         if not self.connected:
             return False
-        isconf = True
         for dev in self._bpm_trgs.values():
-            isconf &= dev.receiver_source == self.DEF_BPMTRIG_RCVSRC
-            isconf &= dev.receiver_in_sel == self.DEF_BPMTRIG_RCVIN
-        return isconf
+            if not dev.receiver_source == self.DEF_BPMTRIG_RCVSRC:
+                return False
+            if not dev.receiver_in_sel == self.DEF_BPMTRIG_RCVIN:
+                return False
+        return True
 
     def cmd_config_bpm_trigs(self, timeout=DEF_TIMEOUT):
         """Command to configure BPM triggers."""
@@ -483,6 +536,8 @@ class FamFastCorrs(_Devices):
             self, state, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies are in desired pwrstate."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'PwrState-Sts', state, timeout=timeout)
@@ -498,6 +553,8 @@ class FamFastCorrs(_Devices):
             self, opmode, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies are in desired opmode."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'OpMode-Sts', opmode, timeout=timeout)
@@ -517,6 +574,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_INVRESPMATROW):
         """Check power supplies correction coefficients."""
+        if not self.connected:
+            return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         values = _np.asarray(values)
@@ -541,6 +600,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_FOFBACCGAIN):
         """Check whether power supplies have desired correction gain."""
+        if not self.connected:
+            return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         values = _np.asarray(values)
@@ -563,6 +624,8 @@ class FamFastCorrs(_Devices):
             self, values, psnames=None, psindices=None,
             timeout=DEF_TIMEOUT):
         """Check whether power supplies have desired freeze state."""
+        if not self.connected:
+            return False
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'FOFBAccFreeze-Sts', values, timeout=timeout)
@@ -601,9 +664,10 @@ class HLFOFB(_Device):
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd',
+        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
+        'GetRefOrbFromSlowOrb-Cmd',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
         'BPMYEnblList-SP', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CHEnblList-RB',
@@ -701,6 +765,11 @@ class HLFOFB(_Device):
         self['FOFBCtrlSyncNet-Cmd'] = 1
         return True
 
+    def cmd_fofbctrl_syncreforb(self):
+        """Command to sync FOFB controller RefOrb."""
+        self['FOFBCtrlSyncRefOrb-Cmd'] = 1
+        return True
+
     def cmd_fofbctrl_conf_timeframelen(self):
         """Command to configure all FOFB controller TimeFrameLen."""
         self['FOFBCtrlConfTFrameLen-Cmd'] = 1
@@ -728,6 +797,11 @@ class HLFOFB(_Device):
     @refy.setter
     def refy(self, value):
         self['RefOrbY-SP'] = value
+
+    def cmd_reforb_fromsloworb(self):
+        """Command to get FOFB controller RefOrb from SlowOrb."""
+        self['GetRefOrbFromSlowOrb-Cmd'] = 1
+        return True
 
     @property
     def bpmxenbl(self):
