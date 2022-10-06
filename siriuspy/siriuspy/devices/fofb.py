@@ -667,7 +667,6 @@ class HLFOFB(_Device):
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
-        'GetRefOrbFromSlowOrb-Cmd',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
         'BPMYEnblList-SP', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CHEnblList-RB',
@@ -797,11 +796,6 @@ class HLFOFB(_Device):
     @refy.setter
     def refy(self, value):
         self['RefOrbY-SP'] = value
-
-    def cmd_reforb_fromsloworb(self):
-        """Command to get FOFB controller RefOrb from SlowOrb."""
-        self['GetRefOrbFromSlowOrb-Cmd'] = 1
-        return True
 
     @property
     def bpmxenbl(self):

@@ -160,7 +160,6 @@ class HLFOFBConst(_csdev.Const):
             'RefOrbY-RB': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
-            'GetRefOrbFromSlowOrb-Cmd': {'type': 'int', 'value': 0},
 
             # Response Matrix
             'BPMXEnblList-SP': {
