@@ -1002,7 +1002,8 @@ class App(_Callback):
                     value = _updt_bit(value, 2, 1)
                 # AccFreezeConfigured
                 freeze = self._get_corrs_fofbacc_freeze_desired()
-                if not self._corrs_dev.check_fofbacc_freeze(freeze):
+                if not self._corrs_dev.check_fofbacc_freeze(
+                        freeze, timeout=0.2):
                     value = _updt_bit(value, 3, 1)
                 # InvRespMatRowSynced
                 if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
