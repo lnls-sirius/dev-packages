@@ -597,6 +597,7 @@ class App(_Callback):
 
         if not self._corrs_dev.connected:
             self._update_log('ERR:Correctors not connected... aborted.')
+            return False
 
         selbpm = self.bpm_enbllist
         if not any(selbpm):
