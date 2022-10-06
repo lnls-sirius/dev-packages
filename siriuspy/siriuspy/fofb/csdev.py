@@ -160,6 +160,12 @@ class HLFOFBConst(_csdev.Const):
             'RefOrbY-RB': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
+            'RefOrbHwX-Mon': {
+                'type': 'int', 'unit': 'nm', 'count': self.nr_bpms,
+                'value': self.nr_bpms*[0]},
+            'RefOrbHwY-Mon': {
+                'type': 'int', 'unit': 'nm', 'count': self.nr_bpms,
+                'value': self.nr_bpms*[0]},
 
             # Response Matrix
             'BPMXEnblList-SP': {

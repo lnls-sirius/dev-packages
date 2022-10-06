@@ -667,6 +667,7 @@ class HLFOFB(_Device):
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
+        'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
         'BPMYEnblList-SP', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CHEnblList-RB',
@@ -789,6 +790,11 @@ class HLFOFB(_Device):
         self['RefOrbX-SP'] = value
 
     @property
+    def refx_hw(self):
+        """RefOrb X in hardware units."""
+        return self['RefOrbHwX-Mon']
+
+    @property
     def refy(self):
         """RefOrb Y."""
         return self['RefOrbY-RB']
@@ -796,6 +802,11 @@ class HLFOFB(_Device):
     @refy.setter
     def refy(self, value):
         self['RefOrbY-SP'] = value
+
+    @property
+    def refy_hw(self):
+        """RefOrb Y in hardware units."""
+        return self['RefOrbHwY-Mon']
 
     @property
     def bpmxenbl(self):

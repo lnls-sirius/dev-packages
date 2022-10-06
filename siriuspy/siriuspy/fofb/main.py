@@ -174,6 +174,8 @@ class App(_Callback):
         self.run_callbacks('RefOrbX-RB', self._reforb_x)
         self.run_callbacks('RefOrbY-SP', self._reforb_y)
         self.run_callbacks('RefOrbY-RB', self._reforb_y)
+        self.run_callbacks('RefOrbHwX-Mon', self._reforbhw_x)
+        self.run_callbacks('RefOrbHwY-Mon', self._reforbhw_y)
         self.run_callbacks('BPMXEnblList-SP', self._enable_lists['bpmx'])
         self.run_callbacks('BPMXEnblList-RB', self._enable_lists['bpmx'])
         self.run_callbacks('BPMYEnblList-SP', self._enable_lists['bpmy'])
@@ -451,6 +453,7 @@ class App(_Callback):
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
+        self.run_callbacks(f'RefOrbHw{plane.upper()}-Mon', refhw)
         self._update_log('Done!')
         return True
 
