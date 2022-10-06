@@ -315,10 +315,12 @@ class App(_Callback):
         return False
 
     def cmd_corr_accfreeze_dsbl(self, _):
-        """Set all corrector accumulator freeze state to off."""
-        self._update_log('Received set corrector AccFreeze to off...')
+        """Set all corrector accumulator freeze state to Dsbl."""
+        self._update_log('Received set corrector AccFreeze to Dsbl...')
 
+        self._update_log('Setting AccFreeze to Dsbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Dsbl)
+        self._update_log('Done.')
 
         self._corr_setaccfreezedsbl_count += 1
         self.run_callbacks(
@@ -326,10 +328,12 @@ class App(_Callback):
         return False
 
     def cmd_corr_accfreeze_enbl(self, _):
-        """Set all corrector accumulator freeze state to on."""
-        self._update_log('Received set corrector AccFreeze to on...')
+        """Set all corrector accumulator freeze state to Enbl."""
+        self._update_log('Received set corrector AccFreeze to Enbl...')
 
+        self._update_log('Setting AccFreeze to Enbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Enbl)
+        self._update_log('Done.')
 
         self._corr_setaccfreezeenbl_count += 1
         self.run_callbacks(
@@ -340,7 +344,9 @@ class App(_Callback):
         """Clear all corrector accumulator."""
         self._update_log('Received clear all corrector accumulator...')
 
+        self._update_log('Sending clear accumulator command...')
         self._corrs_dev.cmd_fofbacc_clear()
+        self._update_log('Done.')
 
         self._corr_setaccclear_count += 1
         self.run_callbacks(
