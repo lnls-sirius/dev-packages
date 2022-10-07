@@ -92,6 +92,14 @@ class App(_Callback):
 
         corrnames = self._const.ch_names + self._const.cv_names
         self._corrs_dev = _FamFastCorrs(corrnames)
+
+        self._kick_buffer = []
+        self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
+        for idx, pso in enumerate(self._corrs_dev._psdevs):
+            self._kick_buffer.append([])
+            pso.pv_object('CurrentRef-Mon').add_callback(
+                _part(self._update_kick_buffer, ps_index=idx))
+
         self._rf_dev = _RFGen()
 
         self._llfofb_dev = _FamFOFBCtrls()
@@ -121,6 +129,7 @@ class App(_Callback):
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
             'FOFBCtrlConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
+            'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'GetRefOrbFromSlowOrb-Cmd': self.cmd_get_reforb_from_sloworb,
@@ -172,6 +181,12 @@ class App(_Callback):
             'FOFBCtrlConfTFrameLen-Cmd', self._fofbctrl_conftframelen_count)
         self.run_callbacks(
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
+        self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
+        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
+        self.run_callbacks(
+            'KickCH-Mon', _np.zeros(self._const.nr_ch, dtype=float))
+        self.run_callbacks(
+            'KickCV-Mon', _np.zeros(self._const.nr_cv, dtype=float))
         self.run_callbacks('RefOrbX-SP', self._reforb_x)
         self.run_callbacks('RefOrbX-RB', self._reforb_x)
         self.run_callbacks('RefOrbY-SP', self._reforb_y)
@@ -224,7 +239,12 @@ class App(_Callback):
 
     def process(self, interval):
         """Sleep."""
-        _time.sleep(interval)
+        t0_ = _time.time()
+        self._update_kicks()
+
+        dtime = interval - (_time.time()-t0_)
+        if dtime > 0:
+            _time.sleep(dtime)
 
     def read(self, reason):
         """Read from IOC database."""
@@ -423,6 +443,46 @@ class App(_Callback):
         self.run_callbacks(
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         return False
+
+    # --- kicks buffer and kicks update ---
+
+    def set_kicker_buffer_size(self, value: int):
+        """Set size of the kick buffer.
+
+        Args:
+            value (int): New value for the buffer size.
+
+        Returns:
+            bool: Whether property was properly set.
+
+        """
+        self._kick_buffer_size = max(1, int(value))
+        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
+        return True
+
+    def _update_kick_buffer(self, pvname, value, ps_index, **kwargs):
+        _ = kwargs, pvname
+        if value is None:
+            return
+        val = self._corrs_dev._psconv[ps_index].conv_current_2_strength(value)
+        self._current_buffer[ps_index].append(val)
+        del self._current_buffer[ps_index][:-self._kick_buffer_size]
+
+    def _update_kicks(self):
+        kickch, kickcv = [], []
+
+        for i in range(self._const.nr_ch):
+            buff = self._kick_buffer[i]
+            val = _np.mean(buff) if buff else 0.0
+            kickch.append(val)
+
+        for i in range(self._const.nr_ch, self._const.nr_chcv):
+            buff = self._kick_buffer[i]
+            val = _np.mean(buff) if buff else 0.0
+            kickcv.append(val)
+
+        self.run_callbacks('KickCH-Mon', kickch)
+        self.run_callbacks('KickCV-Mon', kickcv)
 
     # --- reference orbit ---
 
