@@ -7,6 +7,7 @@ from threading import Thread as _Thread
 import numpy as _np
 
 from ..epics import PV as _PV
+from ..devices import HLFOFB
 
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
@@ -49,6 +50,11 @@ class SOFB(_BaseClass):
             self._max_delta_kick['rf'] = 10
             self._meas_respmat_kick['rf'] = 80
         if self.acc == 'SI':
+            self._fofb = HLFOFB()
+            self._download_fofb_kicks = False
+            self._update_fofb_reforb = False
+            self._donot_affect_fofb_bpms = False
+            self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
             self._drive_nrcycles = 10
             self._drive_amplitude = 5
@@ -473,11 +479,43 @@ class SOFB(_BaseClass):
         msg = f'Applying {self._csorb.ApplyDelta._fields[code]:s} kicks.'
         self._update_log(msg)
         _log.info(msg)
-        kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+
+        kicks, dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if kicks is None:
             self.run_callbacks(
                 'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
             return
+
+        if self.acc == 'SI':
+            # The two ifs below control SOFB <-> FOFB interaction:
+            fofb = self._fofb
+            refx0 = fofb.refx
+            refy0 = fofb.refy
+            if self._update_fofb_reforb and fofb.loop_state:
+                dorb = self.matrix.estimate_orbit_variation(dkicks)
+                # According to my understanding of SOLEIL's paper on this
+                # subject:
+                # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
+                # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
+                # this is what they do there:
+                fofb.refx -= dorb[:dorb.size//2]
+                fofb.refy -= dorb[dorb.size//2:]
+                # But it seems this may also be a possibility:
+                # fofb.refx = refx0 - dorb[:dorb.size//2]
+                # fofb.refy = refy0 - dorb[dorb.size//2:]
+
+            if self._download_fofb_kicks and fofb.loop_state:
+                kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
+                dorb = fofb.respmat_mon @ kicks_fofb
+                dkicks2 = -self.matrix.calc_kicks(dorb)
+
+                kicks, dkicks2 = self._process_kicks(
+                    self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
+                if kicks is None:
+                    self.run_callbacks(
+                        'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                    return
+
         ret = self.correctors.apply_kicks(kicks)
         if ret is None:
             msg = 'ERR: There is some problem with a corrector!'
@@ -692,6 +730,9 @@ class SOFB(_BaseClass):
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+        fofb = self._fofb
+        refx0 = fofb.refx
+        refy0 = fofb.refy
 
         wait_orb_error = int(5)
         previous_orb_problem = False
@@ -740,6 +781,19 @@ class SOFB(_BaseClass):
             self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
 
+            # The two ifs below control SOFB <-> FOFB interaction:
+            if self._donot_affect_fofb_bpms and fofb.loop_state:
+                enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
+                orb[enbllist] = 0.0
+
+            if self._project_onto_fofb_nullspace and fofb.loop_state:
+                # this approach is similar to what is proposed by APS:
+                # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
+                imat_fofb = fofb.invrespmat_mon
+                imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
+                projmat = 1 - _np.dot(fofb.respmat, imat_fofb)
+                orb = _np.dot(projmat, orb)
+
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
@@ -773,14 +827,40 @@ class SOFB(_BaseClass):
                 self.run_callbacks('LoopState-Sts', 1)
 
             dkicks = self._process_pid(dkicks, interval)
-            kicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_gain=False)
 
-            tims.append(_time())
+            kicks, dkicks = self._process_kicks(
+                self._ref_corr_kicks, dkicks, apply_gain=False)
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
                 self.run_callbacks('LoopState-Sel', 0)
                 break
+
+            # The two ifs below control SOFB <-> FOFB interaction:
+            if self._update_fofb_reforb and fofb.loop_state:
+                dorb = self.matrix.estimate_orbit_variation(dkicks)
+                # According to my understanding of SOLEIL's paper on this
+                # subject:
+                # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
+                # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
+                # this is what they do there:
+                fofb.refx -= dorb[:dorb.size//2]
+                fofb.refy -= dorb[dorb.size//2:]
+                # But it seems this may also be a possibility:
+                # fofb.refx = refx0 - dorb[:dorb.size//2]
+                # fofb.refy = refx0 - dorb[dorb.size//2:]
+
+            if self._download_fofb_kicks and fofb.loop_state:
+                kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
+                dorb = fofb.respmat_mon @ kicks_fofb
+                dkicks2 = -self.matrix.calc_kicks(dorb)
+
+                kicks, _ = self._process_kicks(
+                    self._ref_corr_kicks + dkicks, dkicks2, apply_gain=False)
+                if kicks is None:
+                    self._loop_state = self._csorb.LoopState.Open
+                    self.run_callbacks('LoopState-Sel', 0)
+                    break
+            tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
             rets.append(ret)
@@ -903,6 +983,23 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
+
+        if self.acc == 'SI':
+            # The two ifs below control SOFB <-> FOFB interaction:
+            fofb = self._fofb
+
+            if self._donot_affect_fofb_bpms and fofb.loop_state:
+                enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
+                orb[enbllist] = 0.0
+
+            if self._project_onto_fofb_nullspace and fofb.loop_state:
+                # this approach is similar to what is proposed by APS:
+                # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
+                imat_fofb = fofb.invrespmat_mon
+                imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
+                projmat = 1 - _np.dot(fofb.respmat, imat_fofb)
+                orb = _np.dot(projmat, orb)
+
         msg = 'Calculating kicks.'
         self._update_log(msg)
         _log.info(msg)
@@ -991,4 +1088,4 @@ class SOFB(_BaseClass):
             dkicks[slc][idcs_pln] = dk_slc
 
         newkicks[apply_idcs] = kicks[apply_idcs] + dkicks[apply_idcs]
-        return newkicks
+        return newkicks, dkicks
