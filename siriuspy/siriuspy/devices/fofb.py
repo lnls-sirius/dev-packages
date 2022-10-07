@@ -45,9 +45,12 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
         ref = self['RefOrb-RB']
+        if ref is None:
+            return None
+        ref = ref.copy()
         # handle initial state of RefOrb PVs
         if len(ref) < 2*NR_BPM:
-            value = _np.zeros(2*NR_BPM)
+            value = _np.zeros(2*NR_BPM, dtype=int)
             value[:len(ref)] = ref
             ref = value
         return ref
@@ -77,6 +80,16 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         var = self.ref
         var[NR_BPM:] = _np.array(value, dtype=int)
         self.ref = var
+
+    def set_refx(self, value):
+        """Set RefOrb X."""
+        self.refx = value
+        return True
+
+    def set_refy(self, value):
+        """Set RefOrb Y."""
+        self.refy = value
+        return True
 
     def check_refx(self, value):
         """Check if first half of RefOrb is equal to value."""
@@ -269,7 +282,8 @@ class FamFOFBControllers(_Devices):
 
     def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            setattr(ctrl, 'ref' + plane.lower(), value)
+            fun = getattr(ctrl, 'set_ref' + plane.lower())
+            fun(value)
         return True
 
     def check_reforbx(self, value):
