@@ -215,7 +215,7 @@ class FamFOFBControllers(_Devices):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
-    DEF_DCC_TIMEFRAMELEN = 5000
+    DEF_DCC_TIMEFRAMELEN = 6500
     DEF_BPMTRIG_RCVSRC = 0
     DEF_BPMTRIG_RCVIN = 5
     BPM_TRIGS_IDS = [1, 2, 20]
