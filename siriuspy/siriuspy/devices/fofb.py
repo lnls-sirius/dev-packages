@@ -445,6 +445,7 @@ class FamFastCorrs(_Devices):
     OPMODE_STS = PowerSupplyFC.OPMODE_STS
     DEF_ATOL_INVRESPMATROW = 2**-17
     DEF_ATOL_FOFBACCGAIN = 2**-12
+    DEF_ATOL_FOFBACCSAT = 1e-6
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
 
@@ -524,6 +525,28 @@ class FamFastCorrs(_Devices):
                 FOFB pre-accumulator freeze state for each power supply.
         """
         return _np.array([p.fofbacc_freeze for p in self._psdevs])
+
+    @property
+    def fofbacc_satmax(self):
+        """FOFB pre-accumulator maximum saturation current [A].
+
+        Returns:
+            gain (numpy.ndarray, 160):
+                FOFB pre-accumulator maximum saturation current
+                for each power supply.
+        """
+        return _np.array([p.fofbacc_satmax for p in self._psdevs])
+
+    @property
+    def fofbacc_satmin(self):
+        """FOFB pre-accumulator minimum saturation current [A].
+
+        Returns:
+            gain (numpy.ndarray, 160):
+                FOFB pre-accumulator minimum saturation current
+                for each power supply.
+        """
+        return _np.array([p.fofbacc_satmin for p in self._psdevs])
 
     @property
     def curr_gain(self):
@@ -688,6 +711,52 @@ class FamFastCorrs(_Devices):
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'FOFBAccFreeze-Sts', values, timeout=timeout)
+
+    def set_fofbacc_satmax(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator max.saturation current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_satmax = values[i]
+        return True
+
+    def check_fofbacc_satmax(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_FOFBACCSAT):
+        """Check whether power supplies have desired max.saturation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_satmax for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def set_fofbacc_satmin(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator min.saturation current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_satmin = values[i]
+        return True
+
+    def check_fofbacc_satmin(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_FOFBACCSAT):
+        """Check whether power supplies have desired min.saturation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_satmin for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
 
     def cmd_fofbacc_clear(self, psnames=None, psindices=None):
         """Send clear power supplies pre-accumulator."""
