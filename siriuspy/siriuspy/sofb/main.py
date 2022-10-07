@@ -113,6 +113,14 @@ class SOFB(_BaseClass):
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['FOFBDownloadKicks-Sel'] = _part(
+                self.set_fofb_interaction_props, 'downloadkicks')
+            dbase['FOFBUpdateRefOrb-Sel'] = _part(
+                self.set_fofb_interaction_props, 'updatereforb')
+            dbase['FOFBNullSpaceProj-Sel'] = _part(
+                self.set_fofb_interaction_props, 'nullspaceproj')
+            dbase['FOFBZeroDistortionAtBPMs-Sel'] = _part(
+                self.set_fofb_interaction_props, 'zerodistortion')
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
             dbase['DriveNrCycles-SP'] = self.set_drive_nrcycles
             dbase['DriveAmplitude-SP'] = self.set_drive_amplitude
@@ -179,6 +187,34 @@ class SOFB(_BaseClass):
             _sleep(dtime)
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
+
+    def set_fofb_interaction_props(self, prop: str, value: int):
+        """Set properties related to FOFB interaction.
+
+        Args:
+            prop (str): name of the property
+            value (int): value of the property
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = bool(value)
+        if prop.lower().startswith('download'):
+            self._download_fofb_kicks = value
+            self.run_callbacks('FOFBDownloadKicks-Sts', value)
+        elif prop.lower().startswith('update'):
+            self._update_fofb_reforb = value
+            self.run_callbacks('FOFBUpdateRefOrb-Sts', value)
+        elif prop.lower().startswith('null'):
+            self._project_onto_fofb_nullspace = value
+            self.run_callbacks('FOFBNullSpaceProj-Sts', value)
+        elif prop.lower().startswith('zero'):
+            self._donot_affect_fofb_bpms = value
+            self.run_callbacks('FOFBZeroDistortionAtBPMs-Sts', value)
+        else:
+            return False
+        return True
 
     def set_ring_extension(self, val):
         """."""
@@ -448,6 +484,16 @@ class SOFB(_BaseClass):
         self._status = bool(
             self._correctors.status | self._matrix.status | self._orbit.status)
         self.run_callbacks('Status-Mon', self._status)
+
+        # Update PVs related to interaction with FOFB:
+        download = self._download_fofb_kicks and self._fofb.loop_state
+        update = self._update_fofb_reforb and self._fofb.loop_state
+        project = self._project_onto_fofb_nullspace and self._fofb.loop_state
+        donot = self._donot_affect_fofb_bpms and self._fofb.loop_state
+        self.run_callbacks('FOFBDownloadKicks-Mon', download)
+        self.run_callbacks('FOFBUpdateRefOrb-Mon', update)
+        self.run_callbacks('FOFBNullSpaceProj-Mon', project)
+        self.run_callbacks('FOFBZeroDistortionAtBPMs-Mon', donot)
 
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
