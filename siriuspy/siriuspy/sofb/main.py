@@ -263,6 +263,12 @@ class SOFB(_BaseClass):
 
     def set_auto_corr(self, value):
         """."""
+        if self.acc != 'SI':
+            msg = 'ERR: Cannot close loop for this accelerator.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+
         if value == self._csorb.LoopState.Closed:
             if self._loop_state == self._csorb.LoopState.Closed:
                 msg = 'ERR: Loop is Already closed.'
