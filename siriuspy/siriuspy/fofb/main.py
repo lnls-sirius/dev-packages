@@ -42,6 +42,7 @@ class App(_Callback):
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
         self._corr_setcurrzero_count = 0
+        self._corr_maxacccurr = self._pvs_database['CorrAccSatMax-SP']['value']
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
         self._fofbctrl_syncnet_count = 0
@@ -118,6 +119,7 @@ class App(_Callback):
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
             'CorrSetAccClear-Cmd': self.cmd_corr_accclear,
             'CorrSetCurrZero-Cmd': self.cmd_corr_currzero,
+            'CorrAccSatMax-SP': self.set_corr_accsatmax,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
@@ -165,6 +167,8 @@ class App(_Callback):
             'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
         self.run_callbacks(
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
+        self.run_callbacks('CorrAccSatMax-SP', self._corr_maxacccurr)
+        self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
         self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
@@ -371,6 +375,22 @@ class App(_Callback):
         self.run_callbacks(
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
         return False
+
+    def set_corr_accsatmax(self, value):
+        """Set corrector FOFB accumulator saturation limits."""
+        if not 0 <= value <= 0.95:
+            return False
+
+        self._corr_maxacccurr = value
+        self._update_log('Setting corrector saturation limits...')
+        self._corrs_dev.set_fofbacc_satmax(self._corr_maxacccurr)
+        self._corrs_dev.set_fofbacc_satmin(-self._corr_maxacccurr)
+        self._update_log('...done!')
+
+        self._update_log('Changed corrector saturation limits to ')
+        self._update_log(str(value)+'A.')
+        self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
+        return True
 
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
@@ -1021,8 +1041,13 @@ class App(_Callback):
                 # AccGainSynced
                 if not self._corrs_dev.check_fofbacc_gain(self._psgains):
                     value = _updt_bit(value, 5, 1)
+                # AccSatLimsSynced
+                lim = self._corr_maxacccurr
+                if not self._corrs_dev.check_fofbacc_satmax(lim) or \
+                        not self._corrs_dev.check_fofbacc_satmin(-lim):
+                    value = _updt_bit(value, 6, 1)
             else:
-                value = 0b111111
+                value = 0b1111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)

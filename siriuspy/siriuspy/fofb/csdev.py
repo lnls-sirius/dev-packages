@@ -24,7 +24,7 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'AccGainSynced')
+        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
@@ -127,7 +127,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -137,6 +137,12 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
+            'CorrAccSatMax-SP': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
+            'CorrAccSatMax-RB': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
