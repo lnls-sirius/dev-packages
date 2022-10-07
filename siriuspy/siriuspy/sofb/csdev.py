@@ -263,6 +263,18 @@ class SOFBTLines(ConstTLines):
             'LoopPerfItersOk-Mon': {
                 'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
                 'lolim': -1, 'hilim': 100},
+            'LoopEffectiveRate-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 100},
+            'LoopNumIters-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 0,
+                'lolim': 0, 'hilim': 100000},
+            'LoopPrintEveryNumIters-SP': {
+                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
+            'LoopPrintEveryNumIters-RB': {
+                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
             'LoopPerfItersTOut-Mon': {
                 'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
                 'lolim': -1, 'hilim': 100},

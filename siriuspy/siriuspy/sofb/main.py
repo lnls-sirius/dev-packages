@@ -31,6 +31,7 @@ class SOFB(_BaseClass):
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
+        self._loop_print_every_num_iter = 1000
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -78,6 +79,7 @@ class SOFB(_BaseClass):
         dbase = {
             'LoopState-Sel': self.set_auto_corr,
             'LoopFreq-SP': self.set_auto_corr_frequency,
+            'LoopPrintEveryNumIters-SP': self.set_print_every_num_iters,
             'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
             'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
             'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
@@ -187,6 +189,20 @@ class SOFB(_BaseClass):
             _sleep(dtime)
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
+
+    def set_print_every_num_iters(self, value: float) -> bool:
+        """Define number of iterations between loop statistics calculation.
+
+        Args:
+            value (float): number of iterations to wait.
+
+        Returns:
+            bool: whether property was properly set.
+
+        """
+        self._loop_print_every_num_iter = int(value)
+        self.run_callbacks('LoopPrintEveryNumIters-RB', int(value))
+        return True
 
     def set_fofb_interaction_props(self, prop: str, value: int):
         """Set properties related to FOFB interaction.
@@ -762,6 +778,7 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
+        tim0 = _time()
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -778,11 +795,14 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if len(times) >= 1000:
+            iter = len(times)
+            self.run_callbacks('LoopNumIters-Mon', iter)
+            if iter >= self._loop_print_every_num_iter:
                 _Thread(
                     target=self._print_auto_corr_info,
-                    args=(times, rets), daemon=True).start()
+                    args=(times, rets, _time()-tim0), daemon=True).start()
                 times, rets = [], []
+                tim0 = _time()
 
             interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
@@ -926,8 +946,10 @@ class SOFB(_BaseClass):
             dkicks[slc] += qq2*errs[-3][slc]  # pre-previous error
         return dkicks
 
-    def _print_auto_corr_info(self, times, rets):
+    def _print_auto_corr_info(self, times, rets, dtim):
         """."""
+        self.run_callbacks('LoopEffectiveRate-Mon', len(times)/dtim)
+
         rets = _np.array(rets)
         ok_ = _np.sum(rets == 0) / rets.size * 100
         tout = _np.sum(rets == -1) / rets.size * 100
