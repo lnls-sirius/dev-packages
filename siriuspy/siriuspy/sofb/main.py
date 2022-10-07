@@ -202,6 +202,12 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
+        if self.acc == 'BO':
+            msg = 'ERR: Cannot correct orbit for this accelerator.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+
         if self.orbit.mode == self._csorb.SOFBMode.Offline:
             msg = 'ERR: Offline, cannot apply kicks.'
             self._update_log(msg)
