@@ -470,7 +470,7 @@ class FamFastCorrs(_Devices):
         """Power State.
 
         Returns:
-            state (numpy.ndarray, NR_BPMS):
+            state (numpy.ndarray, 160):
                 PwrState for each power supply.
         """
         return _np.array([p.pwrstate for p in self._psdevs])
@@ -480,7 +480,7 @@ class FamFastCorrs(_Devices):
         """Operation Mode.
 
         Returns:
-            mode (numpy.ndarray, NR_BPM):
+            mode (numpy.ndarray, 160):
                 OpMode for each power supply.
         """
         return _np.array([p.opmode for p in self._psdevs])
@@ -510,7 +510,7 @@ class FamFastCorrs(_Devices):
         """FOFB pre-accumulator gain.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 FOFB pre-accumulator gain for each power supply.
         """
         return _np.array([p.fofbacc_gain for p in self._psdevs])
@@ -520,7 +520,7 @@ class FamFastCorrs(_Devices):
         """FOFB pre-accumulator freeze state.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 FOFB pre-accumulator freeze state for each power supply.
         """
         return _np.array([p.fofbacc_freeze for p in self._psdevs])
@@ -530,7 +530,7 @@ class FamFastCorrs(_Devices):
         """Current gain.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
