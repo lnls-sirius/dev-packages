@@ -136,6 +136,7 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeDsbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
 
             # FOFB Controllers
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},

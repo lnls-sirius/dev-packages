@@ -445,6 +445,8 @@ class FamFastCorrs(_Devices):
     OPMODE_STS = PowerSupplyFC.OPMODE_STS
     DEF_ATOL_INVRESPMATROW = 2**-17
     DEF_ATOL_FOFBACCGAIN = 2**-12
+    DEF_ATOL_CURRENT_RB = 1e-6
+    DEF_ATOL_CURRENT_MON = 2e-2
 
     def __init__(self, psnames=None):
         """Init."""
@@ -482,6 +484,26 @@ class FamFastCorrs(_Devices):
                 OpMode for each power supply.
         """
         return _np.array([p.opmode for p in self._psdevs])
+
+    @property
+    def current(self):
+        """Current readback.
+
+        Returns:
+            current (numpy.ndarray, 160):
+                OpMode for each power supply.
+        """
+        return _np.array([p.current for p in self._psdevs])
+
+    @property
+    def current_mon(self):
+        """Implemented current.
+
+        Returns:
+            current (numpy.ndarray, 160):
+                OpMode for each power supply.
+        """
+        return _np.array([p.current_mon for p in self._psdevs])
 
     @property
     def fofbacc_gain(self):
@@ -558,6 +580,43 @@ class FamFastCorrs(_Devices):
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'OpMode-Sts', opmode, timeout=timeout)
+
+    def set_current(self, values, psnames=None, psindices=None):
+        """Set power supply current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.current = values[i]
+        return True
+
+    def check_current(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_RB):
+        """Check whether power supplies have desired current."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.current for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def check_current_mon(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_MON):
+        """Check whether power supplies have desired implemented current."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.current_mon for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
 
     def set_invrespmat_row(self, values, psnames=None, psindices=None):
         """Command to set power supply correction coefficients value."""

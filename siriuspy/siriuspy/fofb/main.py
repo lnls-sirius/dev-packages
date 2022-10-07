@@ -41,6 +41,7 @@ class App(_Callback):
         self._corr_setaccfreezeenbl_count = 0
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
+        self._corr_setcurrzero_count = 0
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
         self._fofbctrl_syncnet_count = 0
@@ -116,6 +117,7 @@ class App(_Callback):
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
             'CorrSetAccClear-Cmd': self.cmd_corr_accclear,
+            'CorrSetCurrZero-Cmd': self.cmd_corr_currzero,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
@@ -161,6 +163,8 @@ class App(_Callback):
             'CorrSetAccFreezeEnbl-Cmd', self._corr_setaccfreezeenbl_count)
         self.run_callbacks(
             'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
+        self.run_callbacks(
+            'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
         self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
@@ -353,6 +357,19 @@ class App(_Callback):
         self._corr_setaccclear_count += 1
         self.run_callbacks(
             'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
+        return False
+
+    def cmd_corr_currzero(self, _):
+        """Set all corrector current to zero."""
+        self._update_log('Received set corrector current to zero...')
+
+        self._update_log('Sending all corrector current to zero...')
+        self._corrs_dev.set_current(0)
+        self._update_log('Done.')
+
+        self._corr_setcurrzero_count += 1
+        self.run_callbacks(
+            'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
         return False
 
     def cmd_fofbctrl_syncnet(self, _):
