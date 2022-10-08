@@ -465,8 +465,8 @@ class App(_Callback):
         if value is None:
             return
         val = self._corrs_dev._psconv[ps_index].conv_current_2_strength(value)
-        self._current_buffer[ps_index].append(val)
-        del self._current_buffer[ps_index][:-self._kick_buffer_size]
+        self._kick_buffer[ps_index].append(val)
+        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
 
     def _update_kicks(self):
         kickch, kickcv = [], []
