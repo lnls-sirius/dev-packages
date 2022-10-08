@@ -802,7 +802,7 @@ class HLFOFB(_Device):
 
     _properties = (
         'LoopState-Sel', 'LoopState-Sts',
-        'LoopGain-SP', 'LoopGain-RB',
+        'LoopGain-SP', 'LoopGain-RB', 'LoopGain-Mon',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
@@ -866,6 +866,11 @@ class HLFOFB(_Device):
     @loop_gain.setter
     def loop_gain(self, value):
         self['LoopGain-SP'] = value
+
+    @property
+    def loop_gain_mon(self):
+        """Implemented loop gain."""
+        return self['LoopGain-Mon']
 
     @property
     def corr_status(self):

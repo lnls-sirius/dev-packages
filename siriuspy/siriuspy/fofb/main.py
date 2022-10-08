@@ -35,6 +35,9 @@ class App(_Callback):
         # internal states
         self._loop_state = self._const.LoopState.Open
         self._loop_gain = 1
+        self._loop_gain_mon = 0
+        self._thread_loopstate = None
+        self._abort_thread = False
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
         self._corr_setopmodemanual_count = 0
@@ -155,6 +158,7 @@ class App(_Callback):
         self.run_callbacks('LoopState-Sts', self._loop_state)
         self.run_callbacks('LoopGain-SP', self._loop_gain)
         self.run_callbacks('LoopGain-RB', self._loop_gain)
+        self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         self.run_callbacks(
@@ -276,19 +280,130 @@ class App(_Callback):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
-        self._loop_state = value
-        self._check_set_corrs_opmode()
-        self.run_callbacks('LoopState-Sts', self._loop_state)
+
+        if value and not self.havebeam:
+            self._update_log('ERR: Do not have stored beam. Aborted.')
+            return False
+
+        if self._thread_loopstate is not None and \
+                self._thread_loopstate.is_alive():
+            self._update_log('WARN:Interrupting Loop Enable thread...')
+            self._abort_thread = True
+            self._thread_loopstate.join()
+
+        self._thread_loopstate = _Thread(
+            target=self._thread_set_loop_state, args=[value, ], daemon=True)
+        self._thread_loopstate.start()
         return True
 
+    def _thread_set_loop_state(self, value):
+        if value:  # closing the loop
+            # set gains to zero, recalculate gains and coeffs
+            self._update_log('Setting Loop Gain to zero...')
+            self._loop_gain_mon = 0
+            self._calc_corrs_coeffs(log=False)
+            # set and wait corrector gains and coeffs to zero
+            self._set_corrs_coeffs(log=False)
+            _t0 = _time.time()
+            while _time.time() - _t0 < self._const.DEF_TIMEOUT:
+                _time.sleep(self._const.DEF_TIMESLEEP)
+                if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
+                        self._corrs_dev.check_fofbacc_gain(self._psgains):
+                    break
+            else:
+                self._update_log('ERR:Timed out waiting for correctors to')
+                self._update_log('ERR:implement gains and coefficients.')
+                self.run_callbacks('LoopState-Sel', self._loop_state)
+                return
+
+            if self._check_abort_thread():
+                return
+
+            # close the loop
+            self._update_log('...done. Closing the loop...')
+            self._loop_state = value
+            if not self._check_set_corrs_opmode():
+                self._loop_state = self._const.LoopState.Open
+                self.run_callbacks('LoopState-Sel', self._loop_state)
+                return
+
+            if self._check_abort_thread():
+                return
+
+            # do ramp up
+            self._update_log('...done. Starting Loop Gain ramp up...')
+            if self._do_loop_gain_ramp(ramp='up'):
+                self._update_log('LoopGain ramp up finished!')
+
+        else:  # opening the loop
+            if self.havebeam:
+                # do ramp down
+                self._update_log('Starting Loop Gain ramp down...')
+                if self._do_loop_gain_ramp(ramp='down'):
+                    self._update_log('Loop Gain ramp down finished!')
+            else:
+                self._loop_gain_mon = 0.0
+                self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+                self._calc_corrs_coeffs()
+                self._set_corrs_coeffs()
+
+            if self._check_abort_thread():
+                return
+
+            # open the loop
+            self._loop_state = value
+            self._check_set_corrs_opmode()
+
+        self.run_callbacks('LoopState-Sts', self._loop_state)
+
+    def _do_loop_gain_ramp(self, ramp='up'):
+        end = self._loop_gain if ramp == 'up' else 0.0
+        steps = _np.linspace(
+            self._loop_gain_mon, end, self._const.LOOPGAIN_RMP_NPTS)
+        for i, val in enumerate(steps):
+            if not self.havebeam:
+                self._update_log('ERR: Do not have stored beam. Aborted.')
+                return False
+            if self._check_abort_thread():
+                return False
+
+            self._loop_gain_mon = val
+            self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+            self._update_log(
+                f'{i+1:02d}/{len(steps):02d} -> Loop Gain = {val:.3f}')
+            self._calc_corrs_coeffs(log=False)
+            self._set_corrs_coeffs(log=False)
+            _time.sleep(1/self._const.LOOPGAIN_RMP_FREQ)
+        return True
+
+    def _check_abort_thread(self):
+        if self._abort_thread:
+            self._update_log('WARN: Loop state thread aborted.')
+            self._abort_thread = False
+            return True
+        return False
+
     def set_loopgain(self, value):
-        """Set loop pre-accumulator gain."""
+        """Set loop gain."""
         if not -2**3 <= value <= 2**3-1:
             return False
+
+        if self._thread_loopstate is not None and \
+                self._thread_loopstate.is_alive():
+            self._update_log('ERR:Wait for Loop Gain ramp before ')
+            self._update_log('ERR:setting new value.')
+            return False
+
         self._loop_gain = value
-        self._calc_corrs_coeffs()
-        # self._set_corrs_coeffs()
-        self._update_log('Changed acc.gain to '+str(value)+'.')
+
+        # if loop closed, calculate new gains and coefficients
+        if self._loop_state:
+            self._loop_gain_mon = value
+            self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+            self._calc_corrs_coeffs()
+            # self._set_corrs_coeffs()
+
+        self._update_log('Changed Loop Gain to '+str(value)+'.')
         self.run_callbacks('LoopGain-RB', self._loop_gain)
         return True
 
@@ -943,29 +1058,31 @@ class App(_Callback):
             freeze = 1 * _np.logical_not(self.corr_enbllist[:-1])
         return freeze
 
-    def _calc_corrs_coeffs(self):
+    def _calc_corrs_coeffs(self, log=True):
         """Calculate corrector coefficients and gains."""
-        self._update_log('Calculating corrector coefficients ')
-        self._update_log('and FOFB pre-accumulator gains...')
+        if log:
+            self._update_log('Calculating corrector coefficients ')
+            self._update_log('and FOFB pre-accumulator gains...')
 
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
         coeffs = _np.zeros(invmat.shape)
-        if self._loop_gain == 0:
+        loop_gain = self._loop_gain_mon
+        if loop_gain == 0:
             gains = _np.zeros(self._const.nr_chcv)
         else:
             reso = self._const.ACCGAIN_RESO
             if self._invrespmat_normmode == self._const.GlobIndiv.Global:
                 maxval = _np.amax(abs(invmat))
-                gain = _np.ceil(maxval * self._loop_gain / reso) * reso
-                norm = gain / self._loop_gain
+                gain = _np.ceil(maxval * loop_gain / reso) * reso
+                norm = gain / loop_gain
                 if norm != 0:
                     coeffs = invmat / norm
                 gains = gain * _np.ones(self._const.nr_chcv)
             elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
                 maxval = _np.amax(abs(invmat), axis=1)
-                gains = _np.ceil(maxval * self._loop_gain / reso) * reso
-                norm = gains / self._loop_gain
+                gains = _np.ceil(maxval * loop_gain / reso) * reso
+                norm = gains / loop_gain
                 idcs = norm > 0
                 coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
@@ -981,16 +1098,17 @@ class App(_Callback):
         self.run_callbacks('CorrCoeffs-Mon', list(self._pscoeffs.ravel()))
         self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
 
-        self._update_log('Done!')
+        if log:
+            self._update_log('Done!')
 
-    def _set_corrs_coeffs(self):
+    def _set_corrs_coeffs(self, log=True):
         """Set corrector coefficients and gains."""
-        self._update_log('Setting FOFB corrector coefficients...')
+        if log:
+            self._update_log('Setting corrector gains and coefficients...')
         self._corrs_dev.set_invrespmat_row(self._pscoeffs)
-        self._update_log('Done!')
-        self._update_log('Setting FOFB pre-accumulator gains...')
         self._corrs_dev.set_fofbacc_gain(self._psgains)
-        self._update_log('Done!')
+        if log:
+            self._update_log('Done!')
 
     # --- auxiliary log methods ---
 

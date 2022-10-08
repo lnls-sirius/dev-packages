@@ -45,6 +45,12 @@ class HLFOFBConst(_csdev.Const):
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
 
+    DEF_TIMEOUT = 10  # [s]
+    DEF_TIMESLEEP = 0.1  # [s]
+    LOOPGAIN_RMP_TIME = 10  # [s]
+    LOOPGAIN_RMP_FREQ = 1  # [Hz]
+    LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
+
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
@@ -112,6 +118,9 @@ class HLFOFBConst(_csdev.Const):
             'LoopGain-RB': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
+                'unit': 'Global FOFB pre-accumulator gain.'},
+            'LoopGain-Mon': {
+                'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'Global FOFB pre-accumulator gain.'},
 
             # Correctors
