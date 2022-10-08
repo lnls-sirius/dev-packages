@@ -161,7 +161,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
                 'value': self.nr_ch*[0]},
             'KickCV-Mon': {
-                'type': 'float', 'unit': 'um', 'count': self.nr_cv,
+                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
                 'value': self.nr_cv*[0]},
 
             # Reference Orbit (same order os SOFB)
