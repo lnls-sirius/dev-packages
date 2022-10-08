@@ -120,27 +120,32 @@ class _PSDev(_Device):
 
     @property
     def strength_property(self):
-        """."""
+        """Return Strength name."""
         return self._strength_propty
 
     @property
     def strength_units(self):
-        """."""
+        """Return Strength units."""
         return self._strength_units
 
     @property
     def strength(self):
-        """."""
+        """Return Strength RB."""
         return self[self._strength_rb_propty]
 
     @strength.setter
     def strength(self, value):
-        """."""
+        """Set Strength SP."""
         self[self._strength_sp_propty] = value
 
     @property
+    def strengthref_mon(self):
+        """Return Strength Ref-Mon."""
+        return self[self._strength_propty + 'Ref-Mon']
+
+    @property
     def strength_mon(self):
-        """."""
+        """Return Strength Mon."""
         return self[self._strength_mon_propty]
 
     @property
@@ -206,6 +211,9 @@ class _PSDev(_Device):
             strength_rb_propty,
             strength_mon_propty,
         )
+        if not self._is_linac and not self._is_pulsed:
+            strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
+            properties += (strengthref_mon_propty, )
 
         ret = (
             strength_sp_propty, strength_rb_propty, strength_mon_propty,
