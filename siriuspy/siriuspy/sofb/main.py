@@ -1027,9 +1027,9 @@ class SOFB(_BaseClass):
             self, kicks, dkicks, refx=None, refy=None):
         fofb = self._fofb
 
-        if refx is None or refy is None:
-            refx = fofb.refx
-            refy = fofb.refy
+        # if refx is None or refy is None:
+        #     refx = fofb.refx
+        #     refy = fofb.refy
 
         if self._update_fofb_reforb and fofb.loop_state:
             dorb = self.matrix.estimate_orbit_variation(dkicks)
