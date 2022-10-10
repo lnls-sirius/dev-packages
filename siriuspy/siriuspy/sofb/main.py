@@ -783,8 +783,10 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         fofb = self._fofb
-        refx0 = fofb.refx
-        refy0 = fofb.refy
+        refx0 = refy0 = None
+        if fofb.connected:
+            refx0 = fofb.refx
+            refy0 = fofb.refy
 
         wait_orb_error = int(5)
         previous_orb_problem = False
