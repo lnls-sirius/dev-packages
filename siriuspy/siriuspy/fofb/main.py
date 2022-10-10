@@ -96,9 +96,10 @@ class App(_Callback):
         self._kick_buffer = []
         self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
         for idx, pso in enumerate(self._corrs_dev._psdevs):
+            pvo = pso.pv_object('CurrentRef-Mon')
+            pvo.auto_monitor = True
             self._kick_buffer.append([])
-            pso.pv_object('KickRef-Mon').add_callback(
-                _part(self._update_kick_buffer, ps_index=idx))
+            pvo.add_callback(_part(self._update_kick_buffer, ps_index=idx))
 
         self._rf_dev = _RFGen()
 
@@ -464,7 +465,10 @@ class App(_Callback):
         _ = kwargs, pvname
         if value is None:
             return
-        self._kick_buffer[ps_index].append(value)
+        val = self._corrs_dev._psconv[ps_index].conv_current_2_strength(value)
+        if val is None:
+            return
+        self._kick_buffer[ps_index].append(val)
         del self._kick_buffer[ps_index][:-self._kick_buffer_size]
 
     def _update_kicks(self):
