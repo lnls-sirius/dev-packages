@@ -44,7 +44,8 @@ class App(_Callback):
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
         self._corr_setcurrzero_count = 0
-        self._corr_maxacccurr = self._pvs_database['CorrAccSatMax-SP']['value']
+        self._corr_maxacccurr = self._pvs_database['CorrAccSatMax-RB']['value']
+        self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
         self._fofbctrl_syncnet_count = 0
@@ -122,6 +123,7 @@ class App(_Callback):
             'CorrSetAccClear-Cmd': self.cmd_corr_accclear,
             'CorrSetCurrZero-Cmd': self.cmd_corr_currzero,
             'CorrAccSatMax-SP': self.set_corr_accsatmax,
+            'TimeFrameLen-SP': self.set_timeframelen,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
@@ -172,6 +174,8 @@ class App(_Callback):
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
         self.run_callbacks('CorrAccSatMax-SP', self._corr_maxacccurr)
         self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
+        self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
+        self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
         self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
@@ -510,6 +514,19 @@ class App(_Callback):
         self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
         return True
 
+    def set_timeframelen(self, value):
+        """Set FOFB controllers TimeFrameLen."""
+        if not 3000 <= value <= 7500:
+            return False
+
+        self._time_frame_len = value
+        self._update_log(f'Setting TimeFrameLen to {value}...')
+        self._llfofb_dev.set_time_frame_len(value=self._time_frame_len)
+        self._update_log('...done!')
+
+        self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
+        return True
+
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
         self._update_log('Received sync FOFB net command...')
@@ -551,10 +568,10 @@ class App(_Callback):
         """Configure FOFB controllers TimeFrameLen command."""
         self._update_log('Received configure FOFB controllers')
         self._update_log('TimeFrameLen command... Checking...')
-        deftimeframe = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
-        if not _np.all(self._llfofb_dev.time_frame_len == deftimeframe):
+        timeframe = self._time_frame_len
+        if not _np.all(self._llfofb_dev.time_frame_len == timeframe):
             self._update_log('Configuring TimeFrameLen PVs...')
-            if self._llfofb_dev.set_time_frame_len():
+            if self._llfofb_dev.set_time_frame_len(timeframe):
                 self._update_log('TimeFrameLen PVs configured!')
             else:
                 self._update_log('ERR:Failed to configure TimeFrameLen.')
@@ -1194,7 +1211,7 @@ class App(_Callback):
                         not self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 4, 1)
                 # TimeFrameLenConfigured
-                tframelen = self._llfofb_dev.DEF_DCC_TIMEFRAMELEN
+                tframelen = self._time_frame_len
                 if not _np.all(self._llfofb_dev.time_frame_len == tframelen):
                     value = _updt_bit(value, 5, 1)
                 # BPMLogTrigsConfigured
