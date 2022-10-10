@@ -1073,13 +1073,13 @@ class SOFB(_BaseClass):
 
     def _process_kicks(self, kicks, dkicks, apply_gain=True):
         if dkicks is None:
-            return None
+            return None, dkicks
 
         # keep track of which dkicks were originally different from zero:
         newkicks = _np.full(dkicks.shape, _np.nan, dtype=float)
         apply_idcs = ~_compare_kicks(dkicks, 0)
         if not apply_idcs.any():
-            return newkicks
+            return newkicks, dkicks
 
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
@@ -1104,7 +1104,7 @@ class SOFB(_BaseClass):
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
-                return None
+                return None, dkicks
 
             # Check if any delta kick is larger the maximum allowed
             max_delta_kick = _np.max(_np.abs(dk_slc))
@@ -1137,7 +1137,7 @@ class SOFB(_BaseClass):
                     msg = f'ERR: Some {pln.upper():s} Corr is saturated.'
                     self._update_log(msg)
                     _log.error(msg[5:])
-                    return None
+                    return None, dkicks
                 dk_slc *= fac3
                 percent = fac1 * fac2 * fac3 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
