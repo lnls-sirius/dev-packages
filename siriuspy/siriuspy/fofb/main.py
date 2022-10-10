@@ -401,7 +401,7 @@ class App(_Callback):
             self._loop_gain_mon = value
             self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
             self._calc_corrs_coeffs()
-            # self._set_corrs_coeffs()
+            self._set_corrs_coeffs()
 
         self._update_log('Changed Loop Gain to '+str(value)+'.')
         self.run_callbacks('LoopGain-RB', self._loop_gain)
@@ -731,7 +731,7 @@ class App(_Callback):
         self._invrespmat_normmode = value
 
         self._calc_corrs_coeffs()
-        # self._set_corrs_coeffs()
+        self._set_corrs_coeffs()
 
         self.run_callbacks(
             'InvRespMatNormMode-Sts', self._invrespmat_normmode)
@@ -850,8 +850,8 @@ class App(_Callback):
 
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
-        # if self._init:
-        #     self._set_corrs_coeffs()
+        if self._init:
+            self._set_corrs_coeffs()
 
         self._update_log('Ok!')
         return True
