@@ -1025,7 +1025,7 @@ class SOFB(_BaseClass):
             self, kicks, dkicks, refx=None, refy=None):
         fofb = self._fofb
 
-        if None in {refx, refy}:
+        if refx is None or refy is None:
             refx = fofb.refx
             refy = fofb.refy
 
