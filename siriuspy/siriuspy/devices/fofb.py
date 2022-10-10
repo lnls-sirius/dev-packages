@@ -45,9 +45,12 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     def ref(self):
         """Reference orbit, first half reference for X, second, for Y."""
         ref = self['RefOrb-RB']
+        if ref is None:
+            return None
+        ref = ref.copy()
         # handle initial state of RefOrb PVs
         if len(ref) < 2*NR_BPM:
-            value = _np.zeros(2*NR_BPM)
+            value = _np.zeros(2*NR_BPM, dtype=int)
             value[:len(ref)] = ref
             ref = value
         return ref
@@ -77,6 +80,16 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         var = self.ref
         var[NR_BPM:] = _np.array(value, dtype=int)
         self.ref = var
+
+    def set_refx(self, value):
+        """Set RefOrb X."""
+        self.refx = value
+        return True
+
+    def set_refy(self, value):
+        """Set RefOrb Y."""
+        self.refy = value
+        return True
 
     def check_refx(self, value):
         """Check if first half of RefOrb is equal to value."""
@@ -215,7 +228,7 @@ class FamFOFBControllers(_Devices):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
-    DEF_DCC_TIMEFRAMELEN = 5000
+    DEF_DCC_TIMEFRAMELEN = 6000
     DEF_BPMTRIG_RCVSRC = 0
     DEF_BPMTRIG_RCVIN = 5
     BPM_TRIGS_IDS = [1, 2, 20]
@@ -269,7 +282,8 @@ class FamFOFBControllers(_Devices):
 
     def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            setattr(ctrl, 'ref' + plane.lower(), value)
+            fun = getattr(ctrl, 'set_ref' + plane.lower())
+            fun(value)
         return True
 
     def check_reforbx(self, value):
@@ -445,6 +459,9 @@ class FamFastCorrs(_Devices):
     OPMODE_STS = PowerSupplyFC.OPMODE_STS
     DEF_ATOL_INVRESPMATROW = 2**-17
     DEF_ATOL_FOFBACCGAIN = 2**-12
+    DEF_ATOL_FOFBACCSAT = 2e-2
+    DEF_ATOL_CURRENT_RB = 1e-6
+    DEF_ATOL_CURRENT_MON = 2e-2
 
     def __init__(self, psnames=None):
         """Init."""
@@ -468,7 +485,7 @@ class FamFastCorrs(_Devices):
         """Power State.
 
         Returns:
-            state (numpy.ndarray, NR_BPMS):
+            state (numpy.ndarray, 160):
                 PwrState for each power supply.
         """
         return _np.array([p.pwrstate for p in self._psdevs])
@@ -478,17 +495,37 @@ class FamFastCorrs(_Devices):
         """Operation Mode.
 
         Returns:
-            mode (numpy.ndarray, NR_BPM):
+            mode (numpy.ndarray, 160):
                 OpMode for each power supply.
         """
         return _np.array([p.opmode for p in self._psdevs])
+
+    @property
+    def current(self):
+        """Current readback.
+
+        Returns:
+            current (numpy.ndarray, 160):
+                OpMode for each power supply.
+        """
+        return _np.array([p.current for p in self._psdevs])
+
+    @property
+    def current_mon(self):
+        """Implemented current.
+
+        Returns:
+            current (numpy.ndarray, 160):
+                OpMode for each power supply.
+        """
+        return _np.array([p.current_mon for p in self._psdevs])
 
     @property
     def fofbacc_gain(self):
         """FOFB pre-accumulator gain.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 FOFB pre-accumulator gain for each power supply.
         """
         return _np.array([p.fofbacc_gain for p in self._psdevs])
@@ -498,17 +535,39 @@ class FamFastCorrs(_Devices):
         """FOFB pre-accumulator freeze state.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 FOFB pre-accumulator freeze state for each power supply.
         """
         return _np.array([p.fofbacc_freeze for p in self._psdevs])
+
+    @property
+    def fofbacc_satmax(self):
+        """FOFB pre-accumulator maximum saturation current [A].
+
+        Returns:
+            gain (numpy.ndarray, 160):
+                FOFB pre-accumulator maximum saturation current
+                for each power supply.
+        """
+        return _np.array([p.fofbacc_satmax for p in self._psdevs])
+
+    @property
+    def fofbacc_satmin(self):
+        """FOFB pre-accumulator minimum saturation current [A].
+
+        Returns:
+            gain (numpy.ndarray, 160):
+                FOFB pre-accumulator minimum saturation current
+                for each power supply.
+        """
+        return _np.array([p.fofbacc_satmin for p in self._psdevs])
 
     @property
     def curr_gain(self):
         """Current gain.
 
         Returns:
-            gain (numpy.ndarray, NR_BPM):
+            gain (numpy.ndarray, 160):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
@@ -558,6 +617,43 @@ class FamFastCorrs(_Devices):
         devs = self._get_devices(psnames, psindices)
         return self._wait_devices_propty(
             devs, 'OpMode-Sts', opmode, timeout=timeout)
+
+    def set_current(self, values, psnames=None, psindices=None):
+        """Set power supply current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.current = values[i]
+        return True
+
+    def check_current(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_RB):
+        """Check whether power supplies have desired current."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.current for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def check_current_mon(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_MON):
+        """Check whether power supplies have desired implemented current."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.current_mon for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
 
     def set_invrespmat_row(self, values, psnames=None, psindices=None):
         """Command to set power supply correction coefficients value."""
@@ -630,6 +726,52 @@ class FamFastCorrs(_Devices):
         return self._wait_devices_propty(
             devs, 'FOFBAccFreeze-Sts', values, timeout=timeout)
 
+    def set_fofbacc_satmax(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator max.saturation current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_satmax = values[i]
+        return True
+
+    def check_fofbacc_satmax(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_FOFBACCSAT):
+        """Check whether power supplies have desired max.saturation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_satmax for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def set_fofbacc_satmin(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator min.saturation current."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_satmin = values[i]
+        return True
+
+    def check_fofbacc_satmin(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_FOFBACCSAT):
+        """Check whether power supplies have desired min.saturation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_satmin for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
     def cmd_fofbacc_clear(self, psnames=None, psindices=None):
         """Send clear power supplies pre-accumulator."""
         for dev in self._get_devices(psnames, psindices):
@@ -660,7 +802,7 @@ class HLFOFB(_Device):
 
     _properties = (
         'LoopState-Sel', 'LoopState-Sts',
-        'LoopGain-SP', 'LoopGain-RB',
+        'LoopGain-SP', 'LoopGain-RB', 'LoopGain-Mon',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
@@ -668,7 +810,7 @@ class HLFOFB(_Device):
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
-        'GetRefOrbFromSlowOrb-Cmd',
+        'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
         'BPMYEnblList-SP', 'BPMYEnblList-RB',
         'CHEnblList-SP', 'CHEnblList-RB',
@@ -725,6 +867,11 @@ class HLFOFB(_Device):
     @loop_gain.setter
     def loop_gain(self, value):
         self['LoopGain-SP'] = value
+
+    @property
+    def loop_gain_mon(self):
+        """Implemented loop gain."""
+        return self['LoopGain-Mon']
 
     @property
     def corr_status(self):
@@ -810,6 +957,11 @@ class HLFOFB(_Device):
         self['RefOrbX-SP'] = value
 
     @property
+    def refx_hw(self):
+        """RefOrb X in hardware units."""
+        return self['RefOrbHwX-Mon']
+
+    @property
     def refy(self):
         """RefOrb Y."""
         return self['RefOrbY-RB']
@@ -818,10 +970,10 @@ class HLFOFB(_Device):
     def refy(self, value):
         self['RefOrbY-SP'] = value
 
-    def cmd_reforb_fromsloworb(self):
-        """Command to get FOFB controller RefOrb from SlowOrb."""
-        self['GetRefOrbFromSlowOrb-Cmd'] = 1
-        return True
+    @property
+    def refy_hw(self):
+        """RefOrb Y in hardware units."""
+        return self['RefOrbHwY-Mon']
 
     @property
     def bpmxenbl(self):

@@ -24,7 +24,7 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'AccGainSynced')
+        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
@@ -45,6 +45,13 @@ class HLFOFBConst(_csdev.Const):
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
+
+    DEF_TIMEOUT = 10  # [s]
+    DEF_TIMESLEEP = 0.1  # [s]
+    DEF_TIMEWAIT = 3  # [s]
+    LOOPGAIN_RMP_TIME = 5  # [s]
+    LOOPGAIN_RMP_FREQ = 1  # [steps/s]
+    LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
@@ -114,6 +121,9 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'Global FOFB pre-accumulator gain.'},
+            'LoopGain-Mon': {
+                'type': 'float', 'value': 0, 'prec': 4,
+                'unit': 'Global FOFB pre-accumulator gain.'},
 
             # Correctors
             'CHPosS-Cte': {
@@ -128,7 +138,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -137,8 +147,19 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeDsbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
+            'CorrAccSatMax-SP': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
+            'CorrAccSatMax-RB': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
+            'TimeFrameLen-SP': {
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
+            'TimeFrameLen-RB': {
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
@@ -177,7 +198,12 @@ class HLFOFBConst(_csdev.Const):
             'RefOrbY-RB': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
-            'GetRefOrbFromSlowOrb-Cmd': {'type': 'int', 'value': 0},
+            'RefOrbHwX-Mon': {
+                'type': 'int', 'unit': 'nm', 'count': self.nr_bpms,
+                'value': self.nr_bpms*[0]},
+            'RefOrbHwY-Mon': {
+                'type': 'int', 'unit': 'nm', 'count': self.nr_bpms,
+                'value': self.nr_bpms*[0]},
 
             # Response Matrix
             'BPMXEnblList-SP': {

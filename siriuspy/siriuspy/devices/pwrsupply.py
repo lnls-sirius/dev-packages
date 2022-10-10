@@ -50,6 +50,8 @@ class _PSDev(_Device):
         'FOFBAccGain-SP', 'FOFBAccGain-RB',
         'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
         'FOFBAccClear-Cmd',
+        'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
+        'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -810,6 +812,24 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_freeze.setter
     def fofbacc_freeze(self, value):
         self['FOFBAccFreeze-Sel'] = value
+
+    @property
+    def fofbacc_satmax(self):
+        """FOFB accumulator maximum saturation."""
+        return self['FOFBAccSatMax-RB']
+
+    @fofbacc_satmax.setter
+    def fofbacc_satmax(self, value):
+        self['FOFBAccSatMax-SP'] = value
+
+    @property
+    def fofbacc_satmin(self):
+        """FOFB accumulator minimum saturation."""
+        return self['FOFBAccSatMin-RB']
+
+    @fofbacc_satmin.setter
+    def fofbacc_satmin(self, value):
+        self['FOFBAccSatMin-SP'] = value
 
     def cmd_fofbacc_clear(self):
         """Command to clear FOFB accumulator."""
