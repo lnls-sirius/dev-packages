@@ -41,6 +41,7 @@ class HLFOFBConst(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
+    DEF_KICK_BUFFER_SIZE = 5
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -146,6 +147,22 @@ class HLFOFBConst(_csdev.Const):
             'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
+
+            # Kicks and Kick buffer configuration:
+            'KickBufferSize-SP': {
+                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
+                'lolim': 1, 'hilim': 1000,
+                'unit': 'Size of the buffer to calculate kicks average.'},
+            'KickBufferSize-RB': {
+                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
+                'lolim': 1, 'hilim': 1000,
+                'unit': 'Size of the buffer to calculate kicks average.'},
+            'KickCH-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
+                'value': self.nr_ch*[0]},
+            'KickCV-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
+                'value': self.nr_cv*[0]},
 
             # Reference Orbit (same order os SOFB)
             'RefOrbX-SP': {

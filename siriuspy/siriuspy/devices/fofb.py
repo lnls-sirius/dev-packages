@@ -666,6 +666,7 @@ class HLFOFB(_Device):
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
+        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
         'GetRefOrbFromSlowOrb-Cmd',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
@@ -779,6 +780,25 @@ class HLFOFB(_Device):
         """Command to configure all BPM logical triggers related to FOFB."""
         self['FOFBCtrlConfBPMLogTrg-Cmd'] = 1
         return True
+
+    @property
+    def kick_buffer_size(self):
+        """Return kicks buffer size."""
+        return self['KickBufferSize-RB']
+
+    @kick_buffer_size.setter
+    def kick_buffer_size(self, value):
+        self['KickBufferSize-SP'] = max(1, int(value))
+
+    @property
+    def kickch(self):
+        """Return average of CH kicks."""
+        return self['KickCH-Mon']
+
+    @property
+    def kickcv(self):
+        """Return average of CV kicks."""
+        return self['KickCV-Mon']
 
     @property
     def refx(self):
