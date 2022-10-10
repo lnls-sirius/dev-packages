@@ -43,6 +43,7 @@ class EpicsMatrix(BaseMatrix):
         self.respmat = _np.zeros(
             [2*self._csorb.nr_bpms, self._csorb.nr_corrs], dtype=float)
         self.inv_respmat = self.respmat.copy().T
+        self.respmat_processed = self.respmat.copy().T
 
         self.ring_extension = 1
         self.respmat_extended = self.respmat.copy()
@@ -256,6 +257,24 @@ class EpicsMatrix(BaseMatrix):
             target=self._update_dkicks, args=(kicks, ), daemon=True).start()
         return kicks
 
+    def estimate_orbit_variation(self, kicks):
+        """Estimate the orbit variation induced by kicks.
+
+        Args:
+            kicks (numpy.ndarray): Correctors kicks that will be used to
+                estimate orbit distortion.
+
+        Returns:
+            dorb (numpy.ndarray): Estimated orbit.
+
+        """
+        if kicks.size != self.respmat.shape[1]:
+            msg = 'ERR: kicks and matrix size not compatible.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return None
+        return _np.dot(self.respmat, kicks)
+
     def _update_dkicks(self, kicks):
         kicks = kicks.copy()
         nr_ch = self._csorb.nr_ch
@@ -363,9 +382,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
-        respmat_proc = _np.zeros(self.respmat.shape, dtype=float)
-        respmat_proc[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
-        self.run_callbacks('RespMat-Mon', list(respmat_proc.ravel()))
+        self.respmat_processed = _np.zeros(self.respmat.shape, dtype=float)
+        self.respmat_processed[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
+        self.run_callbacks('RespMat-Mon', list(self.respmat_processed.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)

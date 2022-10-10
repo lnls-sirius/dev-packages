@@ -7,6 +7,7 @@ from threading import Thread as _Thread
 import numpy as _np
 
 from ..epics import PV as _PV
+from ..devices import HLFOFB
 
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
@@ -30,6 +31,7 @@ class SOFB(_BaseClass):
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
+        self._loop_print_every_num_iter = 1000
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -49,6 +51,11 @@ class SOFB(_BaseClass):
             self._max_delta_kick['rf'] = 10
             self._meas_respmat_kick['rf'] = 80
         if self.acc == 'SI':
+            self._fofb = HLFOFB()
+            self._download_fofb_kicks = False
+            self._update_fofb_reforb = False
+            self._donot_affect_fofb_bpms = False
+            self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
             self._drive_nrcycles = 10
             self._drive_amplitude = 5
@@ -72,6 +79,7 @@ class SOFB(_BaseClass):
         dbase = {
             'LoopState-Sel': self.set_auto_corr,
             'LoopFreq-SP': self.set_auto_corr_frequency,
+            'LoopPrintEveryNumIters-SP': self.set_print_every_num_iters,
             'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
             'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
             'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
@@ -107,6 +115,14 @@ class SOFB(_BaseClass):
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['FOFBDownloadKicks-Sel'] = _part(
+                self.set_fofb_interaction_props, 'downloadkicks')
+            dbase['FOFBUpdateRefOrb-Sel'] = _part(
+                self.set_fofb_interaction_props, 'updatereforb')
+            dbase['FOFBNullSpaceProj-Sel'] = _part(
+                self.set_fofb_interaction_props, 'nullspaceproj')
+            dbase['FOFBZeroDistortionAtBPMs-Sel'] = _part(
+                self.set_fofb_interaction_props, 'zerodistortion')
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
             dbase['DriveNrCycles-SP'] = self.set_drive_nrcycles
             dbase['DriveAmplitude-SP'] = self.set_drive_amplitude
@@ -174,6 +190,48 @@ class SOFB(_BaseClass):
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
 
+    def set_print_every_num_iters(self, value: float) -> bool:
+        """Define number of iterations between loop statistics calculation.
+
+        Args:
+            value (float): number of iterations to wait.
+
+        Returns:
+            bool: whether property was properly set.
+
+        """
+        self._loop_print_every_num_iter = int(value)
+        self.run_callbacks('LoopPrintEveryNumIters-RB', int(value))
+        return True
+
+    def set_fofb_interaction_props(self, prop: str, value: int):
+        """Set properties related to FOFB interaction.
+
+        Args:
+            prop (str): name of the property
+            value (int): value of the property
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = bool(value)
+        if prop.lower().startswith('download'):
+            self._download_fofb_kicks = value
+            self.run_callbacks('FOFBDownloadKicks-Sts', value)
+        elif prop.lower().startswith('update'):
+            self._update_fofb_reforb = value
+            self.run_callbacks('FOFBUpdateRefOrb-Sts', value)
+        elif prop.lower().startswith('null'):
+            self._project_onto_fofb_nullspace = value
+            self.run_callbacks('FOFBNullSpaceProj-Sts', value)
+        elif prop.lower().startswith('zero'):
+            self._donot_affect_fofb_bpms = value
+            self.run_callbacks('FOFBZeroDistortionAtBPMs-Sts', value)
+        else:
+            return False
+        return True
+
     def set_ring_extension(self, val):
         """."""
         val = 1 if val < 1 else int(val)
@@ -196,6 +254,12 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
+        if self.acc == 'BO':
+            msg = 'ERR: Cannot correct orbit for this accelerator.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+
         if self.orbit.mode == self._csorb.SOFBMode.Offline:
             msg = 'ERR: Offline, cannot apply kicks.'
             self._update_log(msg)
@@ -251,6 +315,12 @@ class SOFB(_BaseClass):
 
     def set_auto_corr(self, value):
         """."""
+        if self.acc != 'SI':
+            msg = 'ERR: Cannot close loop for this accelerator.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+
         if value == self._csorb.LoopState.Closed:
             if self._loop_state == self._csorb.LoopState.Closed:
                 msg = 'ERR: Loop is Already closed.'
@@ -431,6 +501,16 @@ class SOFB(_BaseClass):
             self._correctors.status | self._matrix.status | self._orbit.status)
         self.run_callbacks('Status-Mon', self._status)
 
+        # Update PVs related to interaction with FOFB:
+        download = self._download_fofb_kicks and self._fofb.loop_state
+        update = self._update_fofb_reforb and self._fofb.loop_state
+        project = self._project_onto_fofb_nullspace and self._fofb.loop_state
+        donot = self._donot_affect_fofb_bpms and self._fofb.loop_state
+        self.run_callbacks('FOFBDownloadKicks-Mon', download)
+        self.run_callbacks('FOFBUpdateRefOrb-Mon', update)
+        self.run_callbacks('FOFBNullSpaceProj-Mon', project)
+        self.run_callbacks('FOFBZeroDistortionAtBPMs-Mon', donot)
+
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
@@ -473,11 +553,20 @@ class SOFB(_BaseClass):
         msg = f'Applying {self._csorb.ApplyDelta._fields[code]:s} kicks.'
         self._update_log(msg)
         _log.info(msg)
-        kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+
+        kicks, dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if kicks is None:
             self.run_callbacks(
                 'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
             return
+
+        if self.acc == 'SI':
+            kicks = self._interact_with_fofb_in_apply_kicks(kicks, dkicks)
+            if kicks is None:
+                self.run_callbacks(
+                    'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                return
+
         ret = self.correctors.apply_kicks(kicks)
         if ret is None:
             msg = 'ERR: There is some problem with a corrector!'
@@ -689,9 +778,13 @@ class SOFB(_BaseClass):
     def _do_auto_corr(self):
         self.run_callbacks('LoopState-Sts', 1)
         times, rets = [], []
+        tim0 = _time()
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+        fofb = self._fofb
+        refx0 = fofb.refx
+        refy0 = fofb.refy
 
         wait_orb_error = int(5)
         previous_orb_problem = False
@@ -702,11 +795,14 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            if len(times) >= 1000:
+            iter = len(times)
+            self.run_callbacks('LoopNumIters-Mon', iter)
+            if iter >= self._loop_print_every_num_iter:
                 _Thread(
                     target=self._print_auto_corr_info,
-                    args=(times, rets), daemon=True).start()
+                    args=(times, rets, _time()-tim0), daemon=True).start()
                 times, rets = [], []
+                tim0 = _time()
 
             interval = 1/self._loop_freq
             use_pssofb = self.correctors.use_pssofb
@@ -739,6 +835,8 @@ class SOFB(_BaseClass):
 
             self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
+
+            orb = self._interact_with_fofb_in_calc_kicks(orb)
 
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
@@ -773,14 +871,21 @@ class SOFB(_BaseClass):
                 self.run_callbacks('LoopState-Sts', 1)
 
             dkicks = self._process_pid(dkicks, interval)
-            kicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_gain=False)
 
-            tims.append(_time())
+            kicks, dkicks = self._process_kicks(
+                self._ref_corr_kicks, dkicks, apply_gain=False)
             if kicks is None:
                 self._loop_state = self._csorb.LoopState.Open
                 self.run_callbacks('LoopState-Sel', 0)
                 break
+
+            kicks = self._interact_with_fofb_in_apply_kicks(
+                kicks, dkicks, refx0, refy0)
+            if kicks is None:
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
+                break
+            tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
             rets.append(ret)
@@ -841,8 +946,10 @@ class SOFB(_BaseClass):
             dkicks[slc] += qq2*errs[-3][slc]  # pre-previous error
         return dkicks
 
-    def _print_auto_corr_info(self, times, rets):
+    def _print_auto_corr_info(self, times, rets, dtim):
         """."""
+        self.run_callbacks('LoopEffectiveRate-Mon', len(times)/dtim)
+
         rets = _np.array(rets)
         ok_ = _np.sum(rets == 0) / rets.size * 100
         tout = _np.sum(rets == -1) / rets.size * 100
@@ -898,11 +1005,61 @@ class SOFB(_BaseClass):
             return False
         return True
 
+    def _interact_with_fofb_in_calc_kicks(self, orb):
+        fofb = self._fofb
+
+        if self._donot_affect_fofb_bpms and fofb.loop_state:
+            enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
+            orb[enbllist] = 0.0
+
+        if self._project_onto_fofb_nullspace and fofb.loop_state:
+            # this approach is similar to what is proposed by APS:
+            # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
+            imat_fofb = fofb.invrespmat_mon
+            imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
+            projmat = 1 - _np.dot(fofb.respmat, imat_fofb)
+            orb = _np.dot(projmat, orb)
+        return orb
+
+    def _interact_with_fofb_in_apply_kicks(
+            self, kicks, dkicks, refx=None, refy=None):
+        fofb = self._fofb
+
+        if refx is None or refy is None:
+            refx = fofb.refx
+            refy = fofb.refy
+
+        if self._update_fofb_reforb and fofb.loop_state:
+            dorb = self.matrix.estimate_orbit_variation(dkicks)
+            # According to my understanding of SOLEIL's paper on this
+            # subject:
+            # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
+            # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
+            # this is what they do there:
+            fofb.refx -= dorb[:dorb.size//2]
+            fofb.refy -= dorb[dorb.size//2:]
+            # But it seems this may also be a possibility:
+            # fofb.refx = refx - dorb[:dorb.size//2]
+            # fofb.refy = refy - dorb[dorb.size//2:]
+
+        if self._download_fofb_kicks and fofb.loop_state:
+            kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
+            dorb = _np.dot(fofb.respmat, kicks_fofb)
+            dkicks2 = -self.matrix.calc_kicks(dorb)
+
+            kicks, dkicks2 = self._process_kicks(
+                self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
+        return kicks
+
     def _calc_correction(self):
         msg = 'Getting the orbit.'
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
+
+        if self.acc == 'SI':
+            orb = self._interact_with_fofb_in_calc_kicks(orb)
+
         msg = 'Calculating kicks.'
         self._update_log(msg)
         _log.info(msg)
@@ -916,13 +1073,13 @@ class SOFB(_BaseClass):
 
     def _process_kicks(self, kicks, dkicks, apply_gain=True):
         if dkicks is None:
-            return None
+            return None, dkicks
 
         # keep track of which dkicks were originally different from zero:
         newkicks = _np.full(dkicks.shape, _np.nan, dtype=float)
         apply_idcs = ~_compare_kicks(dkicks, 0)
         if not apply_idcs.any():
-            return newkicks
+            return newkicks, dkicks
 
         nr_ch = self._csorb.nr_ch
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
@@ -947,7 +1104,7 @@ class SOFB(_BaseClass):
                 msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
-                return None
+                return None, dkicks
 
             # Check if any delta kick is larger the maximum allowed
             max_delta_kick = _np.max(_np.abs(dk_slc))
@@ -980,7 +1137,7 @@ class SOFB(_BaseClass):
                     msg = f'ERR: Some {pln.upper():s} Corr is saturated.'
                     self._update_log(msg)
                     _log.error(msg[5:])
-                    return None
+                    return None, dkicks
                 dk_slc *= fac3
                 percent = fac1 * fac2 * fac3 * 100
                 msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
@@ -991,4 +1148,4 @@ class SOFB(_BaseClass):
             dkicks[slc][idcs_pln] = dk_slc
 
         newkicks[apply_idcs] = kicks[apply_idcs] + dkicks[apply_idcs]
-        return newkicks
+        return newkicks, dkicks
