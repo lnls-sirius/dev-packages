@@ -533,6 +533,7 @@ class App(_Callback):
                 not self._llfofb_dev.check_reforby(self._reforbhw_y):
             self._update_log('Syncing FOFB RefOrb...')
             self._llfofb_dev.set_reforbx(self._reforbhw_x)
+            _time.sleep(5*self._const.DEF_TIMESLEEP)
             self._llfofb_dev.set_reforby(self._reforbhw_y)
             self._update_log('Sent RefOrb to FOFB controllers.')
         else:
@@ -1006,7 +1007,7 @@ class App(_Callback):
 
     def _sofb_get_orbit(self):
         self._sisofb_dev.cmd_reset()
-        _time.sleep(0.1)
+        _time.sleep(self._const.DEF_TIMESLEEP)
         self._sisofb_dev.wait_buffer()
         orbx, orby = self._sisofb_dev.orbx, self._sisofb_dev.orby
         return _np.hstack([orbx, orby])
