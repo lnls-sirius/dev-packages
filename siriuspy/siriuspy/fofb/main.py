@@ -326,6 +326,7 @@ class App(_Callback):
                 self._loop_state = self._const.LoopState.Open
                 self.run_callbacks('LoopState-Sel', self._loop_state)
                 return
+            self.run_callbacks('LoopState-Sts', self._loop_state)
 
             if self._check_abort_thread():
                 return
@@ -353,8 +354,7 @@ class App(_Callback):
             # open the loop
             self._loop_state = value
             self._check_set_corrs_opmode()
-
-        self.run_callbacks('LoopState-Sts', self._loop_state)
+            self.run_callbacks('LoopState-Sts', self._loop_state)
 
     def _do_loop_gain_ramp(self, ramp='up'):
         end = self._loop_gain if ramp == 'up' else 0.0
