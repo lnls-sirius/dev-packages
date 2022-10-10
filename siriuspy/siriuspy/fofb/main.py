@@ -22,7 +22,6 @@ class App(_Callback):
     """High Level FOFB main application."""
 
     SCAN_FREQUENCY = 0.5  # [Hz]
-    TIMEOUT_CONN = 2  # [s]
 
     def __init__(self, tests=False):
         """Class constructor."""
@@ -100,10 +99,10 @@ class App(_Callback):
 
         self._llfofb_dev = _FamFOFBCtrls()
 
-        self._sisofb_dev.wait_for_connection(self.TIMEOUT_CONN)
-        self._corrs_dev.wait_for_connection(3*self.TIMEOUT_CONN)
-        self._rf_dev.wait_for_connection(self.TIMEOUT_CONN)
-        self._llfofb_dev.wait_for_connection(self.TIMEOUT_CONN)
+        self._sisofb_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
+        self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
+        self._rf_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
+        self._llfofb_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
@@ -537,7 +536,7 @@ class App(_Callback):
                 not self._llfofb_dev.check_reforby(self._reforbhw_y):
             self._update_log('Syncing FOFB RefOrb...')
             self._llfofb_dev.set_reforbx(self._reforbhw_x)
-            _time.sleep(5*self._const.DEF_TIMESLEEP)
+            _time.sleep(self._const.DEF_TIMEWAIT)
             self._llfofb_dev.set_reforby(self._reforbhw_y)
             self._update_log('Sent RefOrb to FOFB controllers.')
         else:
