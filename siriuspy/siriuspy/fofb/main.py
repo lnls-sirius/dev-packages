@@ -357,10 +357,14 @@ class App(_Callback):
             self.run_callbacks('LoopState-Sts', self._loop_state)
 
     def _do_loop_gain_ramp(self, ramp='up'):
-        end = self._loop_gain if ramp == 'up' else 0.0
-        steps = _np.linspace(
-            self._loop_gain_mon, end, self._const.LOOPGAIN_RMP_NPTS)
-        for i, val in enumerate(steps):
+        xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
+        if ramp == 'up':
+            ydata = xdata**3
+            ydata *= self._loop_gain
+        else:
+            ydata = (1-xdata)**3
+            ydata *= self._loop_gain_mon
+        for i, val in enumerate(ydata):
             if not self.havebeam:
                 self._update_log('ERR: Do not have stored beam. Aborted.')
                 return False
@@ -370,7 +374,7 @@ class App(_Callback):
             self._loop_gain_mon = val
             self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
             self._update_log(
-                f'{i+1:02d}/{len(steps):02d} -> Loop Gain = {val:.3f}')
+                f'{i+1:02d}/{len(ydata):02d} -> Loop Gain = {val:.3f}')
             self._calc_corrs_coeffs(log=False)
             self._set_corrs_coeffs(log=False)
             _time.sleep(1/self._const.LOOPGAIN_RMP_FREQ)
