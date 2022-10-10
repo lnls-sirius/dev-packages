@@ -886,7 +886,7 @@ class App(_Callback):
         if self._loop_state == self._const.LoopState.Closed:
             self._update_log('ERR: Open FOFB loop before continue.')
             return False
-        if self._sofb_check_config():
+        if not self._sofb_check_config():
             self._update_log('ERR: Aborted.')
             return False
         if self._measuring_respmat:
@@ -996,7 +996,7 @@ class App(_Callback):
         if not self._sisofb_dev.autocorrsts == _Const.LoopState.Open:
             self._update_log('ERR: Open SOFB loop before continue.')
             return False
-        if not self._sisofb_dev.opmode == 'SlowOrb':
+        if not self._sisofb_dev.opmode_str == 'SlowOrb':
             self._update_log('ERR: SOFBMode is different from SlowOrb.')
             return False
         if not self._sisofb_dev.wait_orb_status_ok(timeout=0.5):
@@ -1005,6 +1005,9 @@ class App(_Callback):
         return True
 
     def _sofb_get_orbit(self):
+        self._sisofb_dev.cmd_reset()
+        _time.sleep(0.1)
+        self._sisofb_dev.wait_buffer()
         orbx, orby = self._sisofb_dev.orbx, self._sisofb_dev.orby
         return _np.hstack([orbx, orby])
 
