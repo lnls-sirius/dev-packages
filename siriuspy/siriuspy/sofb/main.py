@@ -51,7 +51,7 @@ class SOFB(_BaseClass):
             self._max_delta_kick['rf'] = 10
             self._meas_respmat_kick['rf'] = 80
         if self.acc == 'SI':
-            self._fofb = HLFOFB()
+            self.fofb = HLFOFB()
             self._download_fofb_kicks = False
             self._update_fofb_reforb = False
             self._donot_affect_fofb_bpms = False
@@ -502,10 +502,11 @@ class SOFB(_BaseClass):
         self.run_callbacks('Status-Mon', self._status)
 
         # Update PVs related to interaction with FOFB:
-        download = self._download_fofb_kicks and self._fofb.loop_state
-        update = self._update_fofb_reforb and self._fofb.loop_state
-        project = self._project_onto_fofb_nullspace and self._fofb.loop_state
-        donot = self._donot_affect_fofb_bpms and self._fofb.loop_state
+        fofb_state = self.fofb.connected and self.fofb.loop_state
+        download = self._download_fofb_kicks and fofb_state
+        update = self._update_fofb_reforb and fofb_state
+        project = self._project_onto_fofb_nullspace and fofb_state
+        donot = self._donot_affect_fofb_bpms and fofb_state
         self.run_callbacks('FOFBDownloadKicks-Mon', download)
         self.run_callbacks('FOFBUpdateRefOrb-Mon', update)
         self.run_callbacks('FOFBNullSpaceProj-Mon', project)
@@ -782,7 +783,7 @@ class SOFB(_BaseClass):
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
-        fofb = self._fofb
+        fofb = self.fofb
         refx0 = refy0 = None
         if fofb.connected:
             refx0 = fofb.refx
@@ -1008,7 +1009,7 @@ class SOFB(_BaseClass):
         return True
 
     def _interact_with_fofb_in_calc_kicks(self, orb):
-        fofb = self._fofb
+        fofb = self.fofb
 
         if self._donot_affect_fofb_bpms and fofb.loop_state:
             enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
@@ -1025,7 +1026,7 @@ class SOFB(_BaseClass):
 
     def _interact_with_fofb_in_apply_kicks(
             self, kicks, dkicks, refx=None, refy=None):
-        fofb = self._fofb
+        fofb = self.fofb
 
         # if refx is None or refy is None:
         #     refx = fofb.refx
