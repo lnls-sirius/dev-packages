@@ -723,6 +723,9 @@ class FamFastCorrs(_Devices):
         if not self.connected:
             return False
         devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        values = list(values)
         return self._wait_devices_propty(
             devs, 'FOFBAccFreeze-Sts', values, timeout=timeout)
 
