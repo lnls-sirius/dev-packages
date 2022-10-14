@@ -21,7 +21,7 @@ from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
 class App(_Callback):
     """High Level FOFB main application."""
 
-    SCAN_FREQUENCY = 0.5  # [Hz]
+    SCAN_FREQUENCY = 1  # [Hz]
 
     def __init__(self, tests=False):
         """Class constructor."""
