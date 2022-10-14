@@ -81,6 +81,11 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         var[NR_BPM:] = _np.array(value, dtype=int)
         self.ref = var
 
+    def set_ref(self, value):
+        """Set RefOrb."""
+        self.ref = value
+        return True
+
     def set_refx(self, value):
         """Set RefOrb X."""
         self.refx = value
@@ -91,12 +96,18 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self.refy = value
         return True
 
+    def check_ref(self, value):
+        """Check whether RefOrb is equal to value."""
+        if not _np.all(self.ref == value):
+            return False
+        return True
+
     def check_refx(self, value):
-        """Check if first half of RefOrb is equal to value."""
+        """Check whether first half of RefOrb is equal to value."""
         return self._check_reforbit('x', value)
 
     def check_refy(self, value):
-        """Check if second half of RefOrb is equal to value."""
+        """Check whether second half of RefOrb is equal to value."""
         return self._check_reforbit('y', value)
 
     def _check_reforbit(self, plane, value):
@@ -272,6 +283,12 @@ class FamFOFBControllers(_Devices):
 
         super().__init__('SI-Glob:BS-FOFB', devices)
 
+    def set_reforb(self, value):
+        """Set RefOrb for all FOFB controllers."""
+        for ctrl in self._ctl_refs.values():
+            ctrl.set_ref(value)
+        return True
+
     def set_reforbx(self, value):
         """Set RefOrbX for all FOFB controllers."""
         return self._set_reforb('x', value)
@@ -284,6 +301,15 @@ class FamFOFBControllers(_Devices):
         for ctrl in self._ctl_refs.values():
             fun = getattr(ctrl, 'set_ref' + plane.lower())
             fun(value)
+        return True
+
+    def check_reforb(self, value):
+        """Check whether RefOrb is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctl_refs.values():
+            if not ctrl.check_ref(value):
+                return False
         return True
 
     def check_reforbx(self, value):
