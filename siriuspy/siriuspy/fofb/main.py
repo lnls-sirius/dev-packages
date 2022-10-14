@@ -112,10 +112,7 @@ class App(_Callback):
 
         self._llfofb_dev = _FamFOFBCtrls()
 
-        self._sisofb_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
-        self._rf_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
-        self._llfofb_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
@@ -558,7 +555,8 @@ class App(_Callback):
 
         self._time_frame_len = value
         self._update_log(f'Setting TimeFrameLen to {value}...')
-        self._llfofb_dev.set_time_frame_len(value=self._time_frame_len)
+        self._llfofb_dev.set_time_frame_len(
+            value=self._time_frame_len, timeout=self._const.DEF_TIMEWAIT)
         self._update_log('...done!')
 
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
