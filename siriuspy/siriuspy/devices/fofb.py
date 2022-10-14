@@ -262,8 +262,7 @@ class FamFOFBControllers(_Devices):
                 self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
         # BPM DCCs and triggers
         bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
-        bpmids = _np.roll(
-            _np.array([i-1 if i % 2 == 1 else i for i in range(NR_BPM)]), -1)
+        bpmids = [((i + 1) // 2) * 2 % 160 for i in range(NR_BPM)]
         self._bpm_dccs, self._bpm_trgs, self._bpm_ids = dict(), dict(), dict()
         for idx, bpm in enumerate(bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]

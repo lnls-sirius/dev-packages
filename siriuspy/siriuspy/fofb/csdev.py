@@ -174,9 +174,9 @@ class HLFOFBConst(_csdev.Const):
 
             # FOFB Controllers
             'TimeFrameLen-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
             'TimeFrameLen-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
@@ -186,7 +186,7 @@ class HLFOFBConst(_csdev.Const):
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and Kick buffer configuration:
+            # Kicks and Kick buffer configuration
             'KickBufferSize-SP': {
                 'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
                 'lolim': 1, 'hilim': 1000,
@@ -202,7 +202,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
                 'value': self.nr_cv*[0]},
 
-            # Reference Orbit (same order os SOFB)
+            # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
