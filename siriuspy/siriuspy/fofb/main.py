@@ -335,15 +335,8 @@ class App(_Callback):
             self._calc_corrs_coeffs(log=False)
             # set and wait corrector gains and coeffs to zero
             self._set_corrs_coeffs(log=False)
-            _t0 = _time.time()
-            while _time.time() - _t0 < self._const.DEF_TIMEOUT:
-                _time.sleep(self._const.DEF_TIMESLEEP)
-                if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
-                        self._corrs_dev.check_fofbacc_gain(self._psgains):
-                    break
-            else:
-                self._update_log('ERR:Timed out waiting for correctors to')
-                self._update_log('ERR:implement gains and coefficients.')
+            self._update_log('Waiting for coefficients and gains...')
+            if not self._wait_coeffs_and_gains():
                 self.run_callbacks('LoopState-Sel', self._loop_state)
                 return
 
@@ -368,16 +361,10 @@ class App(_Callback):
                 self._update_log('LoopGain ramp up finished!')
 
         else:  # opening the loop
-            if self.havebeam:
-                # do ramp down
-                self._update_log('Starting Loop Gain ramp down...')
-                if self._do_loop_gain_ramp(ramp='down'):
-                    self._update_log('Loop Gain ramp down finished!')
-            else:
-                self._loop_gain_mon = 0.0
-                self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
-                self._calc_corrs_coeffs()
-                self._set_corrs_coeffs()
+            # do ramp down
+            self._update_log('Starting Loop Gain ramp down...')
+            if self._do_loop_gain_ramp(ramp='down'):
+                self._update_log('Loop Gain ramp down finished!')
 
             if self._check_abort_thread():
                 return
@@ -400,6 +387,12 @@ class App(_Callback):
         for i in range(self._const.LOOPGAIN_RMP_NPTS):
             if not self.havebeam:
                 self._update_log('ERR: Do not have stored beam. Aborted.')
+                self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
+                self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
+                self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
+                self._calc_corrs_coeffs()
+                self._set_corrs_coeffs()
+                self._wait_coeffs_and_gains()
                 return False
             if self._check_abort_thread():
                 return False
@@ -413,8 +406,24 @@ class App(_Callback):
                 f'H={ydata_h[i]:.3f}, V={ydata_v[i]:.3f}')
             self._calc_corrs_coeffs(log=False)
             self._set_corrs_coeffs(log=False)
-            _time.sleep(1/self._const.LOOPGAIN_RMP_FREQ)
+            _t0 = _time.time()
+            if not self._wait_coeffs_and_gains():
+                return False
+            _td = 1/self._const.LOOPGAIN_RMP_FREQ - (_time.time() - _t0)
+            if _td > 0:
+                _time.sleep(_td)
         return True
+
+    def _wait_coeffs_and_gains(self):
+        _t0 = _time.time()
+        while _time.time() - _t0 < self._const.DEF_TIMEOUT:
+            _time.sleep(self._const.DEF_TIMESLEEP)
+            if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
+                    self._corrs_dev.check_fofbacc_gain(self._psgains):
+                return True
+        self._update_log('ERR:Timed out waiting for correctors to')
+        self._update_log('ERR:implement gains and coefficients.')
+        return False
 
     def _check_abort_thread(self):
         if self._abort_thread:
