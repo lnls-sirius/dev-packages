@@ -33,8 +33,10 @@ class App(_Callback):
 
         # internal states
         self._loop_state = self._const.LoopState.Open
-        self._loop_gain = 1
-        self._loop_gain_mon = 0
+        self._loop_gain_h = 1
+        self._loop_gain_mon_h = 0
+        self._loop_gain_v = 1
+        self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
@@ -44,7 +46,8 @@ class App(_Callback):
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
         self._corr_setcurrzero_count = 0
-        self._corr_maxacccurr = self._pvs_database['CorrAccSatMax-RB']['value']
+        self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
+        self._cv_maxacccurr = self._pvs_database['CVAccSatMax-RB']['value']
         self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
@@ -124,14 +127,16 @@ class App(_Callback):
         # pvs to write methods
         self.map_pv2write = {
             'LoopState-Sel': self.set_loopstate,
-            'LoopGain-SP': self.set_loopgain,
+            'LoopGainH-SP': _part(self.set_loopgain, 'h'),
+            'LoopGainV-SP': _part(self.set_loopgain, 'v'),
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
             'CorrSetAccClear-Cmd': self.cmd_corr_accclear,
             'CorrSetCurrZero-Cmd': self.cmd_corr_currzero,
-            'CorrAccSatMax-SP': self.set_corr_accsatmax,
+            'CHAccSatMax-SP': _part(self.set_corr_accsatmax, 'ch'),
+            'CVAccSatMax-SP': _part(self.set_corr_accsatmax, 'cv'),
             'TimeFrameLen-SP': self.set_timeframelen,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
@@ -167,9 +172,12 @@ class App(_Callback):
         """Set initial PV values."""
         self.run_callbacks('LoopState-Sel', self._loop_state)
         self.run_callbacks('LoopState-Sts', self._loop_state)
-        self.run_callbacks('LoopGain-SP', self._loop_gain)
-        self.run_callbacks('LoopGain-RB', self._loop_gain)
-        self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+        self.run_callbacks('LoopGainH-SP', self._loop_gain_h)
+        self.run_callbacks('LoopGainH-RB', self._loop_gain_h)
+        self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
+        self.run_callbacks('LoopGainV-SP', self._loop_gain_v)
+        self.run_callbacks('LoopGainV-RB', self._loop_gain_v)
+        self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         self.run_callbacks(
@@ -182,8 +190,10 @@ class App(_Callback):
             'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
         self.run_callbacks(
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
-        self.run_callbacks('CorrAccSatMax-SP', self._corr_maxacccurr)
-        self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
+        self.run_callbacks('CHAccSatMax-SP', self._ch_maxacccurr)
+        self.run_callbacks('CHAccSatMax-RB', self._ch_maxacccurr)
+        self.run_callbacks('CVAccSatMax-SP', self._cv_maxacccurr)
+        self.run_callbacks('CVAccSatMax-RB', self._cv_maxacccurr)
         self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
@@ -324,7 +334,7 @@ class App(_Callback):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
-            self._loop_gain_mon = 0
+            self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
             self._calc_corrs_coeffs(log=False)
             # set and wait corrector gains and coeffs to zero
             self._set_corrs_coeffs(log=False)
@@ -384,21 +394,26 @@ class App(_Callback):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
         if ramp == 'up':
             ydata = xdata**3
-            ydata *= self._loop_gain
+            ydata_h = ydata * self._loop_gain_h
+            ydata_v = ydata * self._loop_gain_v
         else:
             ydata = (1-xdata)**3
-            ydata *= self._loop_gain_mon
-        for i, val in enumerate(ydata):
+            ydata_h = ydata * self._loop_gain_mon_h
+            ydata_v = ydata * self._loop_gain_mon_v
+        for i in range(self._const.LOOPGAIN_RMP_NPTS):
             if not self.havebeam:
                 self._update_log('ERR: Do not have stored beam. Aborted.')
                 return False
             if self._check_abort_thread():
                 return False
 
-            self._loop_gain_mon = val
-            self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+            self._loop_gain_mon_h = ydata_h[i]
+            self._loop_gain_mon_v = ydata_v[i]
+            self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
+            self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
             self._update_log(
-                f'{i+1:02d}/{len(ydata):02d} -> Loop Gain = {val:.3f}')
+                f'{i+1:02d}/{len(ydata):02d} -> Loop Gain: '
+                f'H={ydata_h[i]:.3f}, V={ydata_v[i]:.3f}')
             self._calc_corrs_coeffs(log=False)
             self._set_corrs_coeffs(log=False)
             _time.sleep(1/self._const.LOOPGAIN_RMP_FREQ)
@@ -411,7 +426,7 @@ class App(_Callback):
             return True
         return False
 
-    def set_loopgain(self, value):
+    def set_loopgain(self, plane, value):
         """Set loop gain."""
         if not -2**3 <= value <= 2**3-1:
             return False
@@ -422,17 +437,17 @@ class App(_Callback):
             self._update_log('ERR:setting new value.')
             return False
 
-        self._loop_gain = value
+        setattr(self, '_loop_gain_' + plane, value)
 
         # if loop closed, calculate new gains and coefficients
         if self._loop_state:
-            self._loop_gain_mon = value
-            self.run_callbacks('LoopGain-Mon', self._loop_gain_mon)
+            setattr(self, '_loop_gain_mon_' + plane, value)
+            self.run_callbacks(f'LoopGain{plane.upper()}-Mon', value)
             self._calc_corrs_coeffs()
             self._set_corrs_coeffs()
 
-        self._update_log('Changed Loop Gain to '+str(value)+'.')
-        self.run_callbacks('LoopGain-RB', self._loop_gain)
+        self._update_log(f'Changed Loop Gain {plane.upper()} to {value}.')
+        self.run_callbacks(f'LoopGain{plane.upper()}-RB', value)
         return True
 
     # --- devices configuration ---
@@ -519,20 +534,21 @@ class App(_Callback):
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
         return False
 
-    def set_corr_accsatmax(self, value):
-        """Set corrector FOFB accumulator saturation limits."""
+    def set_corr_accsatmax(self, device, value):
+        """Set device FOFB accumulator saturation limits."""
         if not 0 <= value <= 0.95:
             return False
 
-        self._corr_maxacccurr = value
-        self._update_log('Setting corrector saturation limits...')
-        self._corrs_dev.set_fofbacc_satmax(self._corr_maxacccurr)
-        self._corrs_dev.set_fofbacc_satmin(-self._corr_maxacccurr)
+        setattr(self, '_'+device+'_maxacccurr', value)
+        self._update_log('Setting '+device.upper()+' saturation limits...')
+        psnames = getattr(self._const, device+'_names')
+        self._corrs_dev.set_fofbacc_satmax(value, psnames=psnames)
+        self._corrs_dev.set_fofbacc_satmin(-value, psnames=psnames)
         self._update_log('...done!')
 
-        self._update_log('Changed corrector saturation limits to ')
-        self._update_log(str(value)+'A.')
-        self.run_callbacks('CorrAccSatMax-RB', self._corr_maxacccurr)
+        self._update_log(
+            'Changed '+device.upper()+' saturation limits to '+str(value)+'A.')
+        self.run_callbacks(device.upper()+'AccSatMax-RB', value)
         return True
 
     def set_timeframelen(self, value):
@@ -1150,24 +1166,35 @@ class App(_Callback):
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
         coeffs = _np.zeros(invmat.shape)
-        loop_gain = self._loop_gain_mon
-        if loop_gain == 0:
-            gains = _np.zeros(self._const.nr_chcv)
-        else:
-            reso = self._const.ACCGAIN_RESO
-            if self._invrespmat_normmode == self._const.GlobIndiv.Global:
-                maxval = _np.amax(abs(invmat))
-                gain = _np.ceil(maxval * loop_gain / reso) * reso
-                norm = gain / loop_gain
-                if norm != 0:
-                    coeffs = invmat / norm
-                gains = gain * _np.ones(self._const.nr_chcv)
-            elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
-                maxval = _np.amax(abs(invmat), axis=1)
-                gains = _np.ceil(maxval * loop_gain / reso) * reso
-                norm = gains / loop_gain
-                idcs = norm > 0
-                coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
+        gains = _np.zeros(self._const.nr_chcv)
+
+        loop_gain_h, loop_gain_v = self._loop_gain_mon_h, self._loop_gain_mon_v
+        nrch, nrcv = self._const.nr_ch, self._const.nr_cv
+        slch, slcv = slice(0, nrch), slice(nrch, nrch+nrcv)
+
+        reso = self._const.ACCGAIN_RESO
+
+        if self._invrespmat_normmode == self._const.GlobIndiv.Global:
+            maxval = _np.amax(abs(invmat))
+            gain_h = _np.ceil(maxval * loop_gain_h / reso) * reso
+            if gain_h != 0:
+                norm_h = gain_h / loop_gain_h
+                coeffs[slch, :] = invmat[slch, :] / norm_h
+                gains[slch] = gain_h * _np.ones(nrch)
+            gain_v = _np.ceil(maxval * loop_gain_v / reso) * reso
+            if gain_v != 0:
+                norm_v = gain_v / loop_gain_v
+                coeffs[slcv, :] = invmat[slcv, :] / norm_v
+                gains[slcv] = gain_v * _np.ones(nrcv)
+        elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
+            maxval = _np.amax(abs(invmat), axis=1)
+            gains[slch] = _np.ceil(maxval[slch] * loop_gain_h / reso) * reso
+            gains[slcv] = _np.ceil(maxval[slcv] * loop_gain_v / reso) * reso
+            norm = _np.zeros(self._const.nr_chcv)
+            norm[slch] = gains[slch] / loop_gain_h
+            norm[slcv] = gains[slcv] / loop_gain_v
+            idcs = norm > 0
+            coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
         # handle FOFB BPM ordering
         nrbpm = self._const.nr_bpms
@@ -1243,9 +1270,13 @@ class App(_Callback):
                 if not self._corrs_dev.check_fofbacc_gain(self._psgains):
                     value = _updt_bit(value, 5, 1)
                 # AccSatLimsSynced
-                lim = self._corr_maxacccurr
-                if not self._corrs_dev.check_fofbacc_satmax(lim) or \
-                        not self._corrs_dev.check_fofbacc_satmin(-lim):
+                chn, chl = self._const.ch_names, self._ch_maxacccurr
+                cvn, cvl = self._const.cv_names, self._cv_maxacccurr
+                isok = self._corrs_dev.check_fofbacc_satmax(chl, psnames=chn)
+                isok &= self._corrs_dev.check_fofbacc_satmin(-chl, psnames=chn)
+                isok &= self._corrs_dev.check_fofbacc_satmax(cvl, psnames=cvn)
+                isok &= self._corrs_dev.check_fofbacc_satmin(-cvl, psnames=cvn)
+                if not isok:
                     value = _updt_bit(value, 6, 1)
             else:
                 value = 0b1111111
