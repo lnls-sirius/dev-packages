@@ -703,7 +703,7 @@ class EpicsOrbit(BaseOrbit):
 
         if self.acc == 'SI' and self.sofb.fofb.connected:
             _time.sleep(0.2)
-            self.sofb.fofb.cmd_sync_net()
+            self.sofb.fofb.cmd_fofbctrl_syncnet()
 
     def set_trig_acq_control(self, value):
         """."""
