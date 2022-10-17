@@ -501,6 +501,8 @@ class SOFB(_BaseClass):
             self._correctors.status | self._matrix.status | self._orbit.status)
         self.run_callbacks('Status-Mon', self._status)
 
+        if self.acc != 'SI':
+            return
         # Update PVs related to interaction with FOFB:
         fofb_state = self.fofb.connected and self.fofb.loop_state
         download = self._download_fofb_kicks and fofb_state
