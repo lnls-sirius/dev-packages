@@ -375,7 +375,8 @@ class FamFOFBControllers(_Devices):
             if 'FMC' not in dev.dccname:
                 continue
             ctl = _PVName(dcc).device_name
-            if not dev.linkpartners & self._ctl_part[ctl]:
+            nrpart = len(self._ctl_part[ctl])
+            if not len(dev.linkpartners & self._ctl_part[ctl]) == nrpart:
                 return False
         return True
 
