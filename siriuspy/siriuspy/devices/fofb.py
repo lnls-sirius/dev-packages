@@ -902,7 +902,7 @@ class HLFOFB(_Device):
 
     @property
     def loop_gain_h_mon(self):
-        """Implemented horizotal loop gain."""
+        """Implemented horizontal loop gain."""
         return self['LoopGainH-Mon']
 
     @property
