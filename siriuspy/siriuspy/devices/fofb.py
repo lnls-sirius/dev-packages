@@ -830,10 +830,13 @@ class HLFOFB(_Device):
 
     _properties = (
         'LoopState-Sel', 'LoopState-Sts',
-        'LoopGain-SP', 'LoopGain-RB', 'LoopGain-Mon',
-        'CorrStatus-Mon', 'CorrConfig-Cmd',
+        'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
+        'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
+        'CorrStatus-Mon', 'CorrConfig-Cmd', 'CorrSetCurrZero-Cmd',
         'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
         'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
+        'CHAccSatMax-SP', 'CHAccSatMax-RB',
+        'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickCH-Mon', 'KickCV-Mon',
@@ -888,18 +891,32 @@ class HLFOFB(_Device):
         self['LoopState-Sel'] = value
 
     @property
-    def loop_gain(self):
-        """Loop gain."""
-        return self['LoopGain-RB']
+    def loop_gain_h(self):
+        """Loop gain H."""
+        return self['LoopGainH-RB']
 
-    @loop_gain.setter
-    def loop_gain(self, value):
-        self['LoopGain-SP'] = value
+    @loop_gain_h.setter
+    def loop_gain_h(self, value):
+        self['LoopGainH-SP'] = value
 
     @property
-    def loop_gain_mon(self):
-        """Implemented loop gain."""
-        return self['LoopGain-Mon']
+    def loop_gain_h_mon(self):
+        """Implemented horizotal loop gain."""
+        return self['LoopGainH-Mon']
+
+    @property
+    def loop_gain_v(self):
+        """Loop gain V."""
+        return self['LoopGainV-RB']
+
+    @loop_gain_v.setter
+    def loop_gain_v(self, value):
+        self['LoopGainV-SP'] = value
+
+    @property
+    def loop_gain_v_mon(self):
+        """Implemented vertical loop gain."""
+        return self['LoopGainV-Mon']
 
     @property
     def corr_status(self):
@@ -930,6 +947,29 @@ class HLFOFB(_Device):
         """Command to clear all corrector accumulator."""
         self['CorrSetAccClear-Cmd'] = 1
         return True
+
+    def cmd_corr_set_current_zero(self):
+        """Command to set correctors current to zero."""
+        self['CorrSetCurrZero-Cmd'] = 1
+        return True
+
+    @property
+    def ch_accsatmax(self):
+        """CH accumulator maximum saturation limit."""
+        return self['CHAccSatMax-RB']
+
+    @ch_accsatmax.setter
+    def ch_accsatmax(self, value):
+        self['CHAccSatMax-SP'] = value
+
+    @property
+    def cv_accsatmax(self):
+        """CH accumulator maximum saturation limit."""
+        return self['CVAccSatMax-RB']
+
+    @cv_accsatmax.setter
+    def cv_accsatmax(self, value):
+        self['CVAccSatMax-SP'] = value
 
     @property
     def fofbctrl_status(self):
