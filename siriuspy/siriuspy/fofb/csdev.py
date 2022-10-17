@@ -113,17 +113,28 @@ class HLFOFBConst(_csdev.Const):
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
-            'LoopGain-SP': {
+            'LoopGainH-SP': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Global FOFB pre-accumulator gain.'},
-            'LoopGain-RB': {
+                'unit': 'FOFB pre-accumulator gain.'},
+            'LoopGainH-RB': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Global FOFB pre-accumulator gain.'},
-            'LoopGain-Mon': {
+                'unit': 'FOFB pre-accumulator gain.'},
+            'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
-                'unit': 'Global FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
+            'LoopGainV-SP': {
+                'type': 'float', 'value': 1, 'prec': 4,
+                'lolim': -2**3, 'hilim': 2**3-1,
+                'unit': 'FOFB pre-accumulator gain.'},
+            'LoopGainV-RB': {
+                'type': 'float', 'value': 1, 'prec': 4,
+                'lolim': -2**3, 'hilim': 2**3-1,
+                'unit': 'FOFB pre-accumulator gain.'},
+            'LoopGainV-Mon': {
+                'type': 'float', 'value': 0, 'prec': 4,
+                'unit': 'FOFB pre-accumulator gain.'},
 
             # Correctors
             'CHPosS-Cte': {
@@ -148,18 +159,24 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
-            'CorrAccSatMax-SP': {
+            'CHAccSatMax-SP': {
                 'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
-            'CorrAccSatMax-RB': {
+            'CHAccSatMax-RB': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
+            'CVAccSatMax-SP': {
+                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'lolim': 0, 'hilim': 0.95},
+            'CVAccSatMax-RB': {
                 'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
             'TimeFrameLen-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
             'TimeFrameLen-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500,},
+                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
@@ -169,7 +186,7 @@ class HLFOFBConst(_csdev.Const):
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and Kick buffer configuration:
+            # Kicks and Kick buffer configuration
             'KickBufferSize-SP': {
                 'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
                 'lolim': 1, 'hilim': 1000,
@@ -185,7 +202,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
                 'value': self.nr_cv*[0]},
 
-            # Reference Orbit (same order os SOFB)
+            # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
                 'type': 'float', 'unit': 'um', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0]},
