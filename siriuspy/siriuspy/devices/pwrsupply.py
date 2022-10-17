@@ -368,11 +368,13 @@ class PowerSupply(_PSDev):
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
         """
-        return self['CycleAuxParam-RB']
+        value = self['CycleAuxParam-RB']
+        if value is not None:
+            return value.copy()
+        return None
 
     @cycle_aux_param.setter
     def cycle_aux_param(self, value):
-        """."""
         self['CycleAuxParam-SP'] = value
 
     @property
