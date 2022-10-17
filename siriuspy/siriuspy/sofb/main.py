@@ -1050,7 +1050,7 @@ class SOFB(_BaseClass):
         if self._download_fofb_kicks and fofb.loop_state:
             kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
             dorb = _np.dot(fofb.respmat, kicks_fofb)
-            dkicks2 = -self.matrix.calc_kicks(dorb)
+            dkicks2 = self.matrix.calc_kicks(dorb)
 
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
