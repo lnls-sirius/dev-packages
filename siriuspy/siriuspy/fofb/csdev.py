@@ -116,25 +116,25 @@ class HLFOFBConst(_csdev.Const):
             'LoopGainH-SP': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Horizontal FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Horizontal FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
-                'unit': 'Horizontal FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Vertical FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
                 'type': 'float', 'value': 1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
-                'unit': 'Vertical FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
-                'unit': 'Vertical FOFB pre-accumulator gain.'},
+                'unit': 'FOFB pre-accumulator gain.'},
 
             # Correctors
             'CHPosS-Cte': {
