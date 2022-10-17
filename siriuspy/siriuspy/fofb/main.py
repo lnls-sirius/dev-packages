@@ -689,7 +689,7 @@ class App(_Callback):
 
         self.run_callbacks('KickCH-Mon', kickch)
         self.run_callbacks('KickCV-Mon', kickcv)
-        self.run_callbacks('KickBufferSize-Mon')
+        self.run_callbacks('KickBufferSize-Mon', lenb)
 
     # --- reference orbit ---
 
