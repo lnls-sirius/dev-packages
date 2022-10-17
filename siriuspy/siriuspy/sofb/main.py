@@ -501,6 +501,8 @@ class SOFB(_BaseClass):
             self._correctors.status | self._matrix.status | self._orbit.status)
         self.run_callbacks('Status-Mon', self._status)
 
+        if self.acc != 'SI':
+            return
         # Update PVs related to interaction with FOFB:
         fofb_state = self.fofb.connected and self.fofb.loop_state
         download = self._download_fofb_kicks and fofb_state
@@ -1048,7 +1050,11 @@ class SOFB(_BaseClass):
         if self._download_fofb_kicks and fofb.loop_state:
             kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
             dorb = _np.dot(fofb.respmat, kicks_fofb)
-            dkicks2 = -self.matrix.calc_kicks(dorb)
+            # NOTE: calc_kicks return the kicks to correct dorb, which means
+            # that a minus sign is already applied by this method. To negate
+            # this correction, we need an extra minus sign here:
+            dkicks2 = self.matrix.calc_kicks(dorb)
+            dkicks2 *= -1
 
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)

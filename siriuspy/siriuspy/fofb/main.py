@@ -204,6 +204,7 @@ class App(_Callback):
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
+        self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
         self.run_callbacks(
             'KickCH-Mon', _np.zeros(self._const.nr_ch, dtype=float))
         self.run_callbacks(
@@ -461,6 +462,8 @@ class App(_Callback):
     def cmd_corr_configure(self, _):
         """Configure corrector command."""
         self._update_log('Received configure corrector command...')
+        if not self._check_corr_connection():
+            return False
 
         # opmode
         self._check_set_corrs_opmode()
@@ -478,6 +481,8 @@ class App(_Callback):
     def cmd_corr_opmode_manual(self, _):
         """Set all corrector opmode."""
         self._update_log('Received set corrector opmode to manual...')
+        if not self._check_corr_connection():
+            return False
 
         self._update_log('Setting all corrector opmode to manual...')
         self._corrs_dev.set_opmode(self._corrs_dev.OPMODE_STS.manual)
@@ -491,6 +496,8 @@ class App(_Callback):
     def cmd_corr_accfreeze_dsbl(self, _):
         """Set all corrector accumulator freeze state to Dsbl."""
         self._update_log('Received set corrector AccFreeze to Dsbl...')
+        if not self._check_corr_connection():
+            return False
 
         self._update_log('Setting AccFreeze to Dsbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Dsbl)
@@ -504,6 +511,8 @@ class App(_Callback):
     def cmd_corr_accfreeze_enbl(self, _):
         """Set all corrector accumulator freeze state to Enbl."""
         self._update_log('Received set corrector AccFreeze to Enbl...')
+        if not self._check_corr_connection():
+            return False
 
         self._update_log('Setting AccFreeze to Enbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Enbl)
@@ -517,6 +526,8 @@ class App(_Callback):
     def cmd_corr_accclear(self, _):
         """Clear all corrector accumulator."""
         self._update_log('Received clear all corrector accumulator...')
+        if not self._check_corr_connection():
+            return False
 
         self._update_log('Sending clear accumulator command...')
         self._corrs_dev.cmd_fofbacc_clear()
@@ -530,6 +541,8 @@ class App(_Callback):
     def cmd_corr_currzero(self, _):
         """Set all corrector current to zero."""
         self._update_log('Received set corrector current to zero...')
+        if not self._check_corr_connection():
+            return False
 
         self._update_log('Sending all corrector current to zero...')
         self._corrs_dev.set_current(0)
@@ -542,6 +555,8 @@ class App(_Callback):
 
     def set_corr_accsatmax(self, device, value):
         """Set device FOFB accumulator saturation limits."""
+        if not self._check_corr_connection():
+            return False
         if not 0 <= value <= 0.95:
             return False
 
@@ -559,6 +574,8 @@ class App(_Callback):
 
     def set_timeframelen(self, value):
         """Set FOFB controllers TimeFrameLen."""
+        if not self._check_fofbctrl_connection():
+            return False
         if not 3000 <= value <= 7500:
             return False
 
@@ -574,6 +591,8 @@ class App(_Callback):
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
         self._update_log('Received sync FOFB net command...')
+        if not self._check_fofbctrl_connection():
+            return False
         self._update_log('Checking...')
         if not self._llfofb_dev.net_synced:
             self._update_log('Syncing FOFB net...')
@@ -592,6 +611,8 @@ class App(_Callback):
     def cmd_fofbctrl_syncreforb(self, _):
         """Sync FOFB RefOrb command."""
         self._update_log('Received sync FOFB RefOrb command...')
+        if not self._check_fofbctrl_connection():
+            return False
         self._update_log('Checking...')
         reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
         if not self._llfofb_dev.check_reforb(reforb):
@@ -609,6 +630,8 @@ class App(_Callback):
     def cmd_fofbctrl_conftframelen(self, _):
         """Configure FOFB controllers TimeFrameLen command."""
         self._update_log('Received configure FOFB controllers')
+        if not self._check_fofbctrl_connection():
+            return False
         self._update_log('TimeFrameLen command... Checking...')
         timeframe = self._time_frame_len
         if not _np.all(self._llfofb_dev.time_frame_len == timeframe):
@@ -628,6 +651,8 @@ class App(_Callback):
     def cmd_fofbctrl_confbpmlogtrg(self, _):
         """Configure BPM logical triggers command."""
         self._update_log('Received configure BPM Logical')
+        if not self._check_fofbctrl_connection():
+            return False
         self._update_log('triggers command... Checking...')
         if not self._llfofb_dev.bpm_trigs_configured:
             self._update_log('Configuring BPM logical triggers...')
@@ -667,23 +692,28 @@ class App(_Callback):
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
-        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
+        buff_size = self._kick_buffer_size if self._loop_state else 1
+        del self._kick_buffer[ps_index][:-buff_size]
 
     def _update_kicks(self):
         kickch, kickcv = [], []
+        lenb = 0
 
         for i in range(self._const.nr_ch):
             buff = self._kick_buffer[i]
+            lenb = max(len(buff), lenb)
             val = _np.mean(buff) if buff else 0.0
             kickch.append(val)
 
         for i in range(self._const.nr_ch, self._const.nr_chcv):
             buff = self._kick_buffer[i]
+            lenb = max(len(buff), lenb)
             val = _np.mean(buff) if buff else 0.0
             kickcv.append(val)
 
         self.run_callbacks('KickCH-Mon', kickch)
         self.run_callbacks('KickCV-Mon', kickcv)
+        self.run_callbacks('KickBufferSize-Mon', lenb)
 
     # --- reference orbit ---
 
@@ -843,8 +873,7 @@ class App(_Callback):
     def _calc_matrices(self):
         self._update_log('Calculating Inverse Matrix...')
 
-        if not self._corrs_dev.connected:
-            self._update_log('ERR:Correctors not connected... aborted.')
+        if not self._check_corr_connection():
             return False
 
         selbpm = self.bpm_enbllist
@@ -1125,6 +1154,19 @@ class App(_Callback):
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
+    def _check_corr_connection(self):
+        if self._corrs_dev.connected:
+            return True
+        self._update_log('ERR:Correctors not connected... aborted.')
+        return False
+
+    def _check_fofbctrl_connection(self):
+        if self._llfofb_dev.connected:
+            return True
+        self._update_log('ERR:FOFB Controllers not connected...')
+        self._update_log('ERR:aborted.')
+        return False
+
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
 
@@ -1222,6 +1264,8 @@ class App(_Callback):
         """Set corrector coefficients and gains."""
         if log:
             self._update_log('Setting corrector gains and coefficients...')
+        if not self._check_corr_connection():
+            return False
         self._corrs_dev.set_invrespmat_row(self._pscoeffs)
         self._corrs_dev.set_fofbacc_gain(self._psgains)
         if log:

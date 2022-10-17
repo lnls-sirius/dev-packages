@@ -195,6 +195,10 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
                 'lolim': 1, 'hilim': 1000,
                 'unit': 'Size of the buffer to calculate kicks average.'},
+            'KickBufferSize-Mon': {
+                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
+                'lolim': 1, 'hilim': 1000,
+                'unit': 'Actual buffer size used to calculate kicks average.'},
             'KickCH-Mon': {
                 'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
                 'value': self.nr_ch*[0]},
