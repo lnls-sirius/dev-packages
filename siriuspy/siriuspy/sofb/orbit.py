@@ -701,6 +701,9 @@ class EpicsOrbit(BaseOrbit):
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
 
+        if self.sofb.fofb.connected:
+            self.sofb.fofb.cmd_sync_net()
+
     def set_trig_acq_control(self, value):
         """."""
         acqctrl = self._csorb.TrigAcqCtrl
