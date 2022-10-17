@@ -967,8 +967,9 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if self.posang.need_ref_update:
             self.posang.cmd_update_reference()
         _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
+        desval = self.posang.delta_angx + delta
         self.posang.delta_angx += delta
-        if not self._wait(self.posang, 'delta_angx', delta):
+        if not self._wait(self.posang, 'delta_angx', desval):
             self._update_status('ERR:Could not do delta AngX.')
             return False
         return True
