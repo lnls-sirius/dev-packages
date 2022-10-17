@@ -204,6 +204,7 @@ class App(_Callback):
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
+        self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
         self.run_callbacks(
             'KickCH-Mon', _np.zeros(self._const.nr_ch, dtype=float))
         self.run_callbacks(
@@ -691,23 +692,28 @@ class App(_Callback):
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
-        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
+        buff_size = self._kick_buffer_size if self._loop_state else 1
+        del self._kick_buffer[ps_index][:-buff_size]
 
     def _update_kicks(self):
         kickch, kickcv = [], []
+        lenb = 0
 
         for i in range(self._const.nr_ch):
             buff = self._kick_buffer[i]
+            lenb = max(len(buff), lenb)
             val = _np.mean(buff) if buff else 0.0
             kickch.append(val)
 
         for i in range(self._const.nr_ch, self._const.nr_chcv):
             buff = self._kick_buffer[i]
+            lenb = max(len(buff), lenb)
             val = _np.mean(buff) if buff else 0.0
             kickcv.append(val)
 
         self.run_callbacks('KickCH-Mon', kickch)
         self.run_callbacks('KickCV-Mon', kickcv)
+        self.run_callbacks('KickBufferSize-Mon', lenb)
 
     # --- reference orbit ---
 

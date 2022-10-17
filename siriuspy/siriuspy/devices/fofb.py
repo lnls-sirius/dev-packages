@@ -840,7 +840,8 @@ class HLFOFB(_Device):
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
-        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickCH-Mon', 'KickCV-Mon',
+        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
+        'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
         'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
         'BPMXEnblList-SP', 'BPMXEnblList-RB',
@@ -996,6 +997,11 @@ class HLFOFB(_Device):
         """Command to configure all BPM logical triggers related to FOFB."""
         self['FOFBCtrlConfBPMLogTrg-Cmd'] = 1
         return True
+
+    @property
+    def kick_buffer_size_mon(self):
+        """Return actual kicks buffer size."""
+        return self['KickBufferSize-Mon']
 
     @property
     def kick_buffer_size(self):
