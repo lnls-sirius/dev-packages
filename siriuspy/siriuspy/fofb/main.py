@@ -41,6 +41,7 @@ class App(_Callback):
         self._abort_thread = False
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
+        self._corr_setpwrstateon_count = 0
         self._corr_setopmodemanual_count = 0
         self._corr_setaccfreezeenbl_count = 0
         self._corr_setaccfreezedsbl_count = 0
@@ -127,6 +128,7 @@ class App(_Callback):
             'LoopGainH-SP': _part(self.set_loopgain, 'h'),
             'LoopGainV-SP': _part(self.set_loopgain, 'v'),
             'CorrConfig-Cmd': self.cmd_corr_configure,
+            'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -177,6 +179,8 @@ class App(_Callback):
         self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
+        self.run_callbacks(
+            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
         self.run_callbacks(
             'CorrSetOpModeManual-Cmd', self._corr_setopmodemanual_count)
         self.run_callbacks(
@@ -478,8 +482,23 @@ class App(_Callback):
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         return False
 
+    def cmd_corr_pwrstate_on(self, _):
+        """Set all corrector pwrstate to on."""
+        self._update_log('Received set corrector pwrstate to on...')
+        if not self._check_corr_connection():
+            return False
+
+        self._update_log('Setting all corrector pwrstate to on...')
+        self._corrs_dev.set_pwrstate(self._const.OffOn.On)
+        self._update_log('Done.')
+
+        self._corr_setpwrstateon_count += 1
+        self.run_callbacks(
+            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
+        return False
+
     def cmd_corr_opmode_manual(self, _):
-        """Set all corrector opmode."""
+        """Set all corrector opmode to manual."""
         self._update_log('Received set corrector opmode to manual...')
         if not self._check_corr_connection():
             return False
