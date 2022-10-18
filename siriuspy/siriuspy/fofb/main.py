@@ -692,23 +692,20 @@ class App(_Callback):
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
-        buff_size = self._kick_buffer_size if self._loop_state else 1
-        del self._kick_buffer[ps_index][:-buff_size]
+        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
 
     def _update_kicks(self):
         kickch, kickcv = [], []
-        lenb = 0
+        lenb = self._kick_buffer_size if self._loop_state else 1
 
         for i in range(self._const.nr_ch):
             buff = self._kick_buffer[i]
-            lenb = max(len(buff), lenb)
-            val = _np.mean(buff) if buff else 0.0
+            val = _np.mean(buff[-lenb:]) if buff else 0.0
             kickch.append(val)
 
         for i in range(self._const.nr_ch, self._const.nr_chcv):
             buff = self._kick_buffer[i]
-            lenb = max(len(buff), lenb)
-            val = _np.mean(buff) if buff else 0.0
+            val = _np.mean(buff[-lenb:]) if buff else 0.0
             kickcv.append(val)
 
         self.run_callbacks('KickCH-Mon', kickch)
