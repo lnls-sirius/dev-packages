@@ -127,7 +127,7 @@ class _DCCDevice(_ProptyDevice):
     _sync_sleep = 1.0  # [s]
 
     _properties = (
-        'BPMId-RB', 'BPMCnt-Mon',
+        'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
         'CCEnable-SP', 'CCEnable-RB',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
@@ -155,6 +155,10 @@ class _DCCDevice(_ProptyDevice):
     def bpm_id(self):
         """BPM Id."""
         return self['BPMId-RB']
+
+    @bpm_id.setter
+    def bpm_id(self, value):
+        self['BPMId-SP'] = value
 
     @property
     def bpm_count(self):
@@ -352,6 +356,17 @@ class FamFOFBControllers(_Devices):
         for bpm, dev in self._bpm_dccs.items():
             if not dev.bpm_id == self._bpm_ids[bpm]:
                 return False
+        return True
+
+    def cmd_config_bpm_id(self):
+        """Command to configure DCC BPMIds."""
+        if not self.connected:
+            return False
+        for dcc, dev in self._ctl_dccs.items():
+            ctl = _PVName(dcc).device_name
+            dev.bpm_id = self._ctl_ids[ctl]
+        for bpm, dev in self._bpm_dccs.items():
+            dev.bpm_id = self._bpm_ids[bpm]
         return True
 
     @property
@@ -849,7 +864,8 @@ class HLFOFB(_Device):
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
+        'FOFBCtrlStatus-Mon', 'FOFBCtrlConfBPMId-Cmd',
+        'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -993,6 +1009,11 @@ class HLFOFB(_Device):
     def fofbctrl_status(self):
         """FOFB controller status."""
         return self['FOFBCtrlStatus-Mon']
+
+    def cmd_fofbctrl_conf_bpmid(self):
+        """Command to configure all FOFB DCC BPMIds."""
+        self['FOFBCtrlConfBPMId-Cmd'] = 1
+        return True
 
     def cmd_fofbctrl_syncnet(self):
         """Command to sync FOFB controller net."""

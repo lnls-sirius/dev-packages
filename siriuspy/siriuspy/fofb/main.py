@@ -52,6 +52,7 @@ class App(_Callback):
         self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
+        self._fofbctrl_confbpmid_count = 0
         self._fofbctrl_syncnet_count = 0
         self._fofbctrl_syncref_count = 0
         self._fofbctrl_conftframelen_count = 0
@@ -137,6 +138,7 @@ class App(_Callback):
             'CHAccSatMax-SP': _part(self.set_corr_accsatmax, 'ch'),
             'CVAccSatMax-SP': _part(self.set_corr_accsatmax, 'cv'),
             'TimeFrameLen-SP': self.set_timeframelen,
+            'FOFBCtrlConfBPMId-Cmd': self.cmd_fofbctrl_confbpmid,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
@@ -198,6 +200,8 @@ class App(_Callback):
         self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
+        self.run_callbacks(
+            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
         self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
         self.run_callbacks(
@@ -606,6 +610,26 @@ class App(_Callback):
 
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         return True
+
+    def cmd_fofbctrl_confbpmid(self, _):
+        """Configure FOFB DCC BPMId command."""
+        self._update_log('Received configure FOFB DCC BPMId command...')
+        if not self._check_fofbctrl_connection():
+            return False
+        self._update_log('Checking...')
+        if not self._llfofb_dev.bpm_id_configured:
+            self._update_log('Configuring DCC BPMIds...')
+            if self._llfofb_dev.cmd_config_bpm_id():
+                self._update_log('Sent configuration to DCCs.')
+            else:
+                self._update_log('ERR:Failed to configure DCCs.')
+        else:
+            self._update_log('FOFB DCC BPMIds already configured.')
+
+        self._fofbctrl_confbpmid_count += 1
+        self.run_callbacks(
+            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
+        return False
 
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""

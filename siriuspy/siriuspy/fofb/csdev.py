@@ -182,6 +182,7 @@ class HLFOFBConst(_csdev.Const):
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
+            'FOFBCtrlConfBPMId-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlSyncNet-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
