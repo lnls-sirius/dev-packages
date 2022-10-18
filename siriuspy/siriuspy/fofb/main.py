@@ -698,19 +698,22 @@ class App(_Callback):
         kickch, kickcv = [], []
         lenb = self._kick_buffer_size if self._loop_state else 1
 
+        rlenb = 0
         for i in range(self._const.nr_ch):
-            buff = self._kick_buffer[i]
-            val = _np.mean(buff[-lenb:]) if buff else 0.0
+            buff = self._kick_buffer[i][-lenb:]
+            rlenb = max(rlenb, len(buff))
+            val = _np.mean(buff) if buff else 0.0
             kickch.append(val)
 
         for i in range(self._const.nr_ch, self._const.nr_chcv):
-            buff = self._kick_buffer[i]
-            val = _np.mean(buff[-lenb:]) if buff else 0.0
+            buff = self._kick_buffer[i][-lenb:]
+            rlenb = max(rlenb, len(buff))
+            val = _np.mean(buff) if buff else 0.0
             kickcv.append(val)
 
         self.run_callbacks('KickCH-Mon', kickch)
         self.run_callbacks('KickCV-Mon', kickcv)
-        self.run_callbacks('KickBufferSize-Mon', lenb)
+        self.run_callbacks('KickBufferSize-Mon', rlenb)
 
     # --- reference orbit ---
 
