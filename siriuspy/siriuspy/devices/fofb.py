@@ -507,6 +507,16 @@ class FamFastCorrs(_Devices):
         return list(self._psnames)
 
     @property
+    def psdevs(self):
+        """PS device list."""
+        return self._psdevs
+
+    @property
+    def psconvs(self):
+        """PS conversion device list."""
+        return self._psconv
+
+    @property
     def pwrstate(self):
         """Power State.
 

@@ -102,7 +102,7 @@ class App(_Callback):
 
         self._kick_buffer = []
         self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
-        for idx, pso in enumerate(self._corrs_dev._psdevs):
+        for idx, pso in enumerate(self._corrs_dev.psdevs):
             pvo = pso.pv_object('CurrentRef-Mon')
             pvo.auto_monitor = True
             self._kick_buffer.append([])
@@ -688,7 +688,7 @@ class App(_Callback):
         _ = kwargs, pvname
         if value is None:
             return
-        val = self._corrs_dev._psconv[ps_index].conv_current_2_strength(value)
+        val = self._corrs_dev.psconvs[ps_index].conv_current_2_strength(value)
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
