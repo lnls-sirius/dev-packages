@@ -53,6 +53,7 @@ class SOFB(_BaseClass):
         if self.acc == 'SI':
             self.fofb = HLFOFB()
             self._download_fofb_kicks = False
+            self._download_fofb_kicks_perc = 0.0
             self._update_fofb_reforb = False
             self._donot_affect_fofb_bpms = False
             self._project_onto_fofb_nullspace = False
@@ -115,6 +116,7 @@ class SOFB(_BaseClass):
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
@@ -230,6 +232,21 @@ class SOFB(_BaseClass):
             self.run_callbacks('FOFBZeroDistortionAtBPMs-Sts', value)
         else:
             return False
+        return True
+
+    def set_fofb_download_perc(self, value: float):
+        """Set percentage of kicks to be downloaded from FOFB.
+
+        Args:
+            value (float): percentage of kicks. must be in [0, 100].
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = min(max(value/100, 0), 1)
+        self._download_fofb_kicks_perc = value
+        self.run_callbacks('FOFBDownloadKicksPerc-RB', value)
         return True
 
     def set_ring_extension(self, val):
@@ -1054,7 +1071,7 @@ class SOFB(_BaseClass):
             # that a minus sign is already applied by this method. To negate
             # this correction, we need an extra minus sign here:
             dkicks2 = self.matrix.calc_kicks(dorb)
-            dkicks2 *= -1
+            dkicks2 *= -self._download_fofb_kicks_perc
 
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
