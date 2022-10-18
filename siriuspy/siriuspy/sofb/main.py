@@ -1063,6 +1063,7 @@ class SOFB(_BaseClass):
             # But it seems this may also be a possibility:
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
+            fofb.cmd_fofbctrl_syncreforb()
 
         if self._download_fofb_kicks and fofb.loop_state:
             kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
