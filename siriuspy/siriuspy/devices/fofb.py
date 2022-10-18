@@ -843,9 +843,10 @@ class HLFOFB(_Device):
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
-        'CorrStatus-Mon', 'CorrConfig-Cmd', 'CorrSetCurrZero-Cmd',
-        'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
-        'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
+        'CorrStatus-Mon', 'CorrConfig-Cmd',
+        'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
+        'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
+        'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
@@ -938,6 +939,11 @@ class HLFOFB(_Device):
     def cmd_corr_config(self):
         """Command to configure correctors in use."""
         self['CorrConfig-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_pwrstate_on(self):
+        """Command to set all corrector pwrstate to on."""
+        self['CorrSetCurrZero-Cmd'] = 1
         return True
 
     def cmd_corr_set_opmode_manual(self):
