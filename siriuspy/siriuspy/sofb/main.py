@@ -1039,8 +1039,7 @@ class SOFB(_BaseClass):
             # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
             imat_fofb = fofb.invrespmat_mon
             imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
-            projmat = 1 - _np.dot(fofb.respmat, imat_fofb)
-            orb = _np.dot(projmat, orb)
+            orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
         return orb
 
     def _interact_with_fofb_in_apply_kicks(
