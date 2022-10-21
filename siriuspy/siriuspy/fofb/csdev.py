@@ -181,9 +181,9 @@ class HLFOFBConst(_csdev.Const):
 
             # FOFB Controllers
             'TimeFrameLen-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
+                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 3000, 'hilim': 7500},
+                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
             'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'FOFBCtrlStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),

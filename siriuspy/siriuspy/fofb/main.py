@@ -608,7 +608,7 @@ class App(_Callback):
         """Set FOFB controllers TimeFrameLen."""
         if not self._check_fofbctrl_connection():
             return False
-        if not 3000 <= value <= 7500:
+        if not 500 <= value <= 10000:
             return False
 
         self._time_frame_len = value
