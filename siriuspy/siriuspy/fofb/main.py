@@ -57,6 +57,8 @@ class App(_Callback):
         self._fofbctrl_syncref_count = 0
         self._fofbctrl_conftframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
+        self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
+        self._fofbctrl_syncuseenbllist = 0
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
@@ -143,6 +145,7 @@ class App(_Callback):
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
             'FOFBCtrlConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
+            'FOFBCtrlSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
             'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
@@ -204,6 +207,12 @@ class App(_Callback):
             'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
         self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
+        self.run_callbacks(
+            'FOFBCtrlSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
+        self.run_callbacks(
+            'FOFBCtrlSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
+        self.run_callbacks(
+            'FOFBCtrlSyncEnblList-Mon', self._fofbctrl_syncenbllist)
         self.run_callbacks(
             'FOFBCtrlSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
         self.run_callbacks(
@@ -637,9 +646,10 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        if not self._llfofb_dev.net_synced:
+        bpms = self._get_fofbctrl_bpmdcc_enbl()
+        if not self._llfofb_dev.check_net_synced(bpms=bpms):
             self._update_log('Syncing FOFB net...')
-            if self._llfofb_dev.cmd_sync_net():
+            if self._llfofb_dev.cmd_sync_net(bpms=bpms):
                 self._update_log('Sync sent to FOFB net.')
             else:
                 self._update_log('ERR:Failed to sync FOFB net.')
@@ -710,6 +720,19 @@ class App(_Callback):
         self.run_callbacks(
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         return False
+
+    def set_fofbctrl_syncuseenablelist(self, value):
+        """Set loop state."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        self._fofbctrl_syncuseenbllist = value
+        self._update_fofbctrl_sync_enbllist()
+
+        self._update_log('Changed sync net command to ')
+        self._update_log(('' if value else 'not ')+'use BPM EnableList.')
+        self.run_callbacks('FOFBCtrlSyncUseEnblList-Sts', value)
+        return True
 
     # --- kicks buffer and kicks update ---
 
@@ -855,6 +878,8 @@ class App(_Callback):
         # update corrector AccFreeze state
         if device in ['ch', 'cv']:
             self._set_corrs_fofbacc_freeze()
+        elif device in ['bpmx', 'bpmy']:
+            self._update_fofbctrl_sync_enbllist()
 
         # update readback pv
         if device == 'rf':
@@ -1203,13 +1228,6 @@ class App(_Callback):
         self._update_log('ERR:Correctors not connected... aborted.')
         return False
 
-    def _check_fofbctrl_connection(self):
-        if self._llfofb_dev.connected:
-            return True
-        self._update_log('ERR:FOFB Controllers not connected...')
-        self._update_log('ERR:aborted.')
-        return False
-
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
 
@@ -1314,6 +1332,32 @@ class App(_Callback):
         if log:
             self._update_log('Done!')
 
+    def _check_fofbctrl_connection(self):
+        if self._llfofb_dev.connected:
+            return True
+        self._update_log('ERR:FOFB Controllers not connected...')
+        self._update_log('ERR:aborted.')
+        return False
+
+    def _update_fofbctrl_sync_enbllist(self):
+        if self._fofbctrl_syncuseenbllist:
+            bpmx = self._enable_lists['bpmx']
+            bpmy = self._enable_lists['bpmy']
+            dccenbl = _np.logical_or(bpmx, bpmy)
+            dccenbl[self._const.bpm_dccenbl_idcs] = True
+            self._fofbctrl_syncenbllist = dccenbl
+        else:
+            dccenbl = _np.ones(self._const.nr_bpms, dtype=bool)
+        self._fofbctrl_syncenbllist = dccenbl
+        self.run_callbacks('FOFBCtrlSyncEnblList-Mon', dccenbl)
+
+    def _get_fofbctrl_bpmdcc_enbl(self):
+        bpms = list()
+        for idx, enbl in enumerate(self._fofbctrl_syncenbllist):
+            if enbl:
+                bpms.append(self._const.bpm_names[idx])
+        return bpms
+
     # --- auxiliary log methods ---
 
     def _update_log(self, msg):
@@ -1385,7 +1429,8 @@ class App(_Callback):
                 if not self._llfofb_dev.bpm_id_configured:
                     value = _updt_bit(value, 1, 1)
                 # NetSynced
-                if not self._llfofb_dev.net_synced:
+                bpms = self._get_fofbctrl_bpmdcc_enbl()
+                if not self._llfofb_dev.check_net_synced(bpms=bpms):
                     value = _updt_bit(value, 2, 1)
                 # LinkPartnerConnected
                 if not self._llfofb_dev.linkpartners_connected:

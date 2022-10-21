@@ -192,15 +192,6 @@ class _DCCDevice(_ProptyDevice):
             else self.DEF_P2P_BPMCNT
         return self['BPMCnt-Mon'] == cnt
 
-    def cmd_sync(self, timeout=DEF_TIMEOUT):
-        """Synchronize DCC."""
-        self.cc_enable = 0
-        if not self._wait('CCEnable-RB', 0, timeout/2):
-            return False
-        _time.sleep(_DCCDevice._sync_sleep)
-        self.cc_enable = 1
-        return self._wait('CCEnable-RB', 1, timeout/2)
-
 
 class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
     """FOFBCtrl DCC device."""
@@ -265,10 +256,10 @@ class FamFOFBControllers(_Devices):
             for dcc in FOFBCtrlDCC.PROPDEVICES.ALL:
                 self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
         # BPM DCCs and triggers
-        bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+        self._bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
         bpmids = [((i + 1) // 2) * 2 % 160 for i in range(NR_BPM)]
         self._bpm_dccs, self._bpm_trgs, self._bpm_ids = dict(), dict(), dict()
-        for idx, bpm in enumerate(bpmnames):
+        for idx, bpm in enumerate(self._bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             for trig in self.BPM_TRIGS_IDS:
@@ -407,28 +398,40 @@ class FamFOFBControllers(_Devices):
             bpmids[dev.pv_object('BPMCnt-Mon').pvname] = dev.bpm_count
         return bpmids
 
-    @property
-    def net_synced(self):
+    def cmd_sync_net(self, bpms=None, timeout=DEF_TIMEOUT):
+        """Command to synchronize DCCs."""
+        alldccs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
+        enbdccs = list(self._ctl_dccs.values())
+        if bpms is None:
+            bpms = self._bpmnames
+        for bpm in bpms:
+            enbdccs.append(self._bpm_dccs[bpm])
+
+        self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
+        if not self._wait_devices_propty(
+                alldccs, 'CCEnable-RB', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(enbdccs, 'CCEnable-SP', 1)
+        if not self._wait_devices_propty(
+                enbdccs, 'CCEnable-RB', 1, timeout=timeout/2):
+            return False
+        self._evt_fofb.cmd_external_trigger()
+        return True
+
+    def check_net_synced(self, bpms=None):
         """Check whether DCCs are synchronized."""
         if not self.connected:
             return False
+        if bpms is None:
+            bpms = self._bpmnames
         for dev in self._ctl_dccs.values():
-            if not dev.is_synced:
+            if dev.dccname != 'DCCFMC':
+                continue
+            if not dev.bpm_count == len(bpms):
                 return False
-        return True
-
-    def cmd_sync_net(self, timeout=DEF_TIMEOUT):
-        """Command to synchronize DCCs."""
-        devs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
-        self._set_devices_propty(devs, 'CCEnable-SP', 0)
-        if not self._wait_devices_propty(
-                devs, 'CCEnable-RB', 0, timeout=timeout/2):
-            return False
-        self._set_devices_propty(devs, 'CCEnable-SP', 1)
-        if not self._wait_devices_propty(
-                devs, 'CCEnable-RB', 1, timeout=timeout/2):
-            return False
-        self._evt_fofb.cmd_external_trigger()
+        for bpm in bpms:
+            if not self._bpm_dccs[bpm].cc_enable == 1:
+                return False
         return True
 
     @property
