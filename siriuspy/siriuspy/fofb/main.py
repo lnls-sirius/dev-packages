@@ -41,6 +41,7 @@ class App(_Callback):
         self._abort_thread = False
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
+        self._corr_setpwrstateon_count = 0
         self._corr_setopmodemanual_count = 0
         self._corr_setaccfreezeenbl_count = 0
         self._corr_setaccfreezedsbl_count = 0
@@ -51,10 +52,13 @@ class App(_Callback):
         self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
         self._fofbctrl_status = \
             self._pvs_database['FOFBCtrlStatus-Mon']['value']
+        self._fofbctrl_confbpmid_count = 0
         self._fofbctrl_syncnet_count = 0
         self._fofbctrl_syncref_count = 0
         self._fofbctrl_conftframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
+        self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
+        self._fofbctrl_syncuseenbllist = 0
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
@@ -102,7 +106,7 @@ class App(_Callback):
 
         self._kick_buffer = []
         self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
-        for idx, pso in enumerate(self._corrs_dev._psdevs):
+        for idx, pso in enumerate(self._corrs_dev.psdevs):
             pvo = pso.pv_object('CurrentRef-Mon')
             pvo.auto_monitor = True
             self._kick_buffer.append([])
@@ -127,6 +131,7 @@ class App(_Callback):
             'LoopGainH-SP': _part(self.set_loopgain, 'h'),
             'LoopGainV-SP': _part(self.set_loopgain, 'v'),
             'CorrConfig-Cmd': self.cmd_corr_configure,
+            'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -135,10 +140,12 @@ class App(_Callback):
             'CHAccSatMax-SP': _part(self.set_corr_accsatmax, 'ch'),
             'CVAccSatMax-SP': _part(self.set_corr_accsatmax, 'cv'),
             'TimeFrameLen-SP': self.set_timeframelen,
+            'FOFBCtrlConfBPMId-Cmd': self.cmd_fofbctrl_confbpmid,
             'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
             'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
             'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
             'FOFBCtrlConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
+            'FOFBCtrlSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
             'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
@@ -178,6 +185,8 @@ class App(_Callback):
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         self.run_callbacks(
+            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
+        self.run_callbacks(
             'CorrSetOpModeManual-Cmd', self._corr_setopmodemanual_count)
         self.run_callbacks(
             'CorrSetAccFreezeDsbl-Cmd', self._corr_setaccfreezedsbl_count)
@@ -195,7 +204,15 @@ class App(_Callback):
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
         self.run_callbacks(
+            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
+        self.run_callbacks(
             'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
+        self.run_callbacks(
+            'FOFBCtrlSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
+        self.run_callbacks(
+            'FOFBCtrlSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
+        self.run_callbacks(
+            'FOFBCtrlSyncEnblList-Mon', self._fofbctrl_syncenbllist)
         self.run_callbacks(
             'FOFBCtrlSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
         self.run_callbacks(
@@ -478,8 +495,23 @@ class App(_Callback):
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         return False
 
+    def cmd_corr_pwrstate_on(self, _):
+        """Set all corrector pwrstate to on."""
+        self._update_log('Received set corrector pwrstate to on...')
+        if not self._check_corr_connection():
+            return False
+
+        self._update_log('Setting all corrector pwrstate to on...')
+        self._corrs_dev.set_pwrstate(self._const.OffOn.On)
+        self._update_log('Done.')
+
+        self._corr_setpwrstateon_count += 1
+        self.run_callbacks(
+            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
+        return False
+
     def cmd_corr_opmode_manual(self, _):
-        """Set all corrector opmode."""
+        """Set all corrector opmode to manual."""
         self._update_log('Received set corrector opmode to manual...')
         if not self._check_corr_connection():
             return False
@@ -576,7 +608,7 @@ class App(_Callback):
         """Set FOFB controllers TimeFrameLen."""
         if not self._check_fofbctrl_connection():
             return False
-        if not 3000 <= value <= 7500:
+        if not 500 <= value <= 10000:
             return False
 
         self._time_frame_len = value
@@ -588,15 +620,36 @@ class App(_Callback):
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         return True
 
+    def cmd_fofbctrl_confbpmid(self, _):
+        """Configure FOFB DCC BPMId command."""
+        self._update_log('Received configure FOFB DCC BPMId command...')
+        if not self._check_fofbctrl_connection():
+            return False
+        self._update_log('Checking...')
+        if not self._llfofb_dev.bpm_id_configured:
+            self._update_log('Configuring DCC BPMIds...')
+            if self._llfofb_dev.cmd_config_bpm_id():
+                self._update_log('Sent configuration to DCCs.')
+            else:
+                self._update_log('ERR:Failed to configure DCCs.')
+        else:
+            self._update_log('FOFB DCC BPMIds already configured.')
+
+        self._fofbctrl_confbpmid_count += 1
+        self.run_callbacks(
+            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
+        return False
+
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
         self._update_log('Received sync FOFB net command...')
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        if not self._llfofb_dev.net_synced:
+        bpms = self._get_fofbctrl_bpmdcc_enbl()
+        if not self._llfofb_dev.check_net_synced(bpms=bpms):
             self._update_log('Syncing FOFB net...')
-            if self._llfofb_dev.cmd_sync_net():
+            if self._llfofb_dev.cmd_sync_net(bpms=bpms):
                 self._update_log('Sync sent to FOFB net.')
             else:
                 self._update_log('ERR:Failed to sync FOFB net.')
@@ -668,6 +721,19 @@ class App(_Callback):
             'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         return False
 
+    def set_fofbctrl_syncuseenablelist(self, value):
+        """Set loop state."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        self._fofbctrl_syncuseenbllist = value
+        self._update_fofbctrl_sync_enbllist()
+
+        self._update_log('Changed sync net command to ')
+        self._update_log(('' if value else 'not ')+'use BPM EnableList.')
+        self.run_callbacks('FOFBCtrlSyncUseEnblList-Sts', value)
+        return True
+
     # --- kicks buffer and kicks update ---
 
     def set_kicker_buffer_size(self, value: int):
@@ -688,7 +754,7 @@ class App(_Callback):
         _ = kwargs, pvname
         if value is None:
             return
-        val = self._corrs_dev._psconv[ps_index].conv_current_2_strength(value)
+        val = self._corrs_dev.psconvs[ps_index].conv_current_2_strength(value)
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
@@ -812,6 +878,8 @@ class App(_Callback):
         # update corrector AccFreeze state
         if device in ['ch', 'cv']:
             self._set_corrs_fofbacc_freeze()
+        elif device in ['bpmx', 'bpmy']:
+            self._update_fofbctrl_sync_enbllist()
 
         # update readback pv
         if device == 'rf':
@@ -1160,13 +1228,6 @@ class App(_Callback):
         self._update_log('ERR:Correctors not connected... aborted.')
         return False
 
-    def _check_fofbctrl_connection(self):
-        if self._llfofb_dev.connected:
-            return True
-        self._update_log('ERR:FOFB Controllers not connected...')
-        self._update_log('ERR:aborted.')
-        return False
-
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
 
@@ -1271,6 +1332,32 @@ class App(_Callback):
         if log:
             self._update_log('Done!')
 
+    def _check_fofbctrl_connection(self):
+        if self._llfofb_dev.connected:
+            return True
+        self._update_log('ERR:FOFB Controllers not connected...')
+        self._update_log('ERR:aborted.')
+        return False
+
+    def _update_fofbctrl_sync_enbllist(self):
+        if self._fofbctrl_syncuseenbllist:
+            bpmx = self._enable_lists['bpmx']
+            bpmy = self._enable_lists['bpmy']
+            dccenbl = _np.logical_or(bpmx, bpmy)
+            dccenbl[self._const.bpm_dccenbl_idcs] = True
+            self._fofbctrl_syncenbllist = dccenbl
+        else:
+            dccenbl = _np.ones(self._const.nr_bpms, dtype=bool)
+        self._fofbctrl_syncenbllist = dccenbl
+        self.run_callbacks('FOFBCtrlSyncEnblList-Mon', dccenbl)
+
+    def _get_fofbctrl_bpmdcc_enbl(self):
+        bpms = list()
+        for idx, enbl in enumerate(self._fofbctrl_syncenbllist):
+            if enbl:
+                bpms.append(self._const.bpm_names[idx])
+        return bpms
+
     # --- auxiliary log methods ---
 
     def _update_log(self, msg):
@@ -1342,7 +1429,8 @@ class App(_Callback):
                 if not self._llfofb_dev.bpm_id_configured:
                     value = _updt_bit(value, 1, 1)
                 # NetSynced
-                if not self._llfofb_dev.net_synced:
+                bpms = self._get_fofbctrl_bpmdcc_enbl()
+                if not self._llfofb_dev.check_net_synced(bpms=bpms):
                     value = _updt_bit(value, 2, 1)
                 # LinkPartnerConnected
                 if not self._llfofb_dev.linkpartners_connected:

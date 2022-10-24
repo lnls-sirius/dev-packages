@@ -127,7 +127,7 @@ class _DCCDevice(_ProptyDevice):
     _sync_sleep = 1.0  # [s]
 
     _properties = (
-        'BPMId-RB', 'BPMCnt-Mon',
+        'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
         'CCEnable-SP', 'CCEnable-RB',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
@@ -155,6 +155,10 @@ class _DCCDevice(_ProptyDevice):
     def bpm_id(self):
         """BPM Id."""
         return self['BPMId-RB']
+
+    @bpm_id.setter
+    def bpm_id(self, value):
+        self['BPMId-SP'] = value
 
     @property
     def bpm_count(self):
@@ -187,15 +191,6 @@ class _DCCDevice(_ProptyDevice):
         cnt = self.DEF_FMC_BPMCNT if 'FMC' in self.dccname \
             else self.DEF_P2P_BPMCNT
         return self['BPMCnt-Mon'] == cnt
-
-    def cmd_sync(self, timeout=DEF_TIMEOUT):
-        """Synchronize DCC."""
-        self.cc_enable = 0
-        if not self._wait('CCEnable-RB', 0, timeout/2):
-            return False
-        _time.sleep(_DCCDevice._sync_sleep)
-        self.cc_enable = 1
-        return self._wait('CCEnable-RB', 1, timeout/2)
 
 
 class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
@@ -261,10 +256,10 @@ class FamFOFBControllers(_Devices):
             for dcc in FOFBCtrlDCC.PROPDEVICES.ALL:
                 self._ctl_dccs[ctl + ':' + dcc] = FOFBCtrlDCC(ctl, dcc)
         # BPM DCCs and triggers
-        bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
+        self._bpmnames = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
         bpmids = [((i + 1) // 2) * 2 % 160 for i in range(NR_BPM)]
         self._bpm_dccs, self._bpm_trgs, self._bpm_ids = dict(), dict(), dict()
-        for idx, bpm in enumerate(bpmnames):
+        for idx, bpm in enumerate(self._bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             for trig in self.BPM_TRIGS_IDS:
@@ -354,6 +349,17 @@ class FamFOFBControllers(_Devices):
                 return False
         return True
 
+    def cmd_config_bpm_id(self):
+        """Command to configure DCC BPMIds."""
+        if not self.connected:
+            return False
+        for dcc, dev in self._ctl_dccs.items():
+            ctl = _PVName(dcc).device_name
+            dev.bpm_id = self._ctl_ids[ctl]
+        for bpm, dev in self._bpm_dccs.items():
+            dev.bpm_id = self._bpm_ids[bpm]
+        return True
+
     @property
     def linkpartners(self):
         """Return link partners."""
@@ -392,28 +398,40 @@ class FamFOFBControllers(_Devices):
             bpmids[dev.pv_object('BPMCnt-Mon').pvname] = dev.bpm_count
         return bpmids
 
-    @property
-    def net_synced(self):
+    def cmd_sync_net(self, bpms=None, timeout=DEF_TIMEOUT):
+        """Command to synchronize DCCs."""
+        alldccs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
+        enbdccs = list(self._ctl_dccs.values())
+        if bpms is None:
+            bpms = self._bpmnames
+        for bpm in bpms:
+            enbdccs.append(self._bpm_dccs[bpm])
+
+        self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
+        if not self._wait_devices_propty(
+                alldccs, 'CCEnable-RB', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(enbdccs, 'CCEnable-SP', 1)
+        if not self._wait_devices_propty(
+                enbdccs, 'CCEnable-RB', 1, timeout=timeout/2):
+            return False
+        self._evt_fofb.cmd_external_trigger()
+        return True
+
+    def check_net_synced(self, bpms=None):
         """Check whether DCCs are synchronized."""
         if not self.connected:
             return False
+        if bpms is None:
+            bpms = self._bpmnames
         for dev in self._ctl_dccs.values():
-            if not dev.is_synced:
+            if dev.dccname != 'DCCFMC':
+                continue
+            if not dev.bpm_count == len(bpms):
                 return False
-        return True
-
-    def cmd_sync_net(self, timeout=DEF_TIMEOUT):
-        """Command to synchronize DCCs."""
-        devs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
-        self._set_devices_propty(devs, 'CCEnable-SP', 0)
-        if not self._wait_devices_propty(
-                devs, 'CCEnable-RB', 0, timeout=timeout/2):
-            return False
-        self._set_devices_propty(devs, 'CCEnable-SP', 1)
-        if not self._wait_devices_propty(
-                devs, 'CCEnable-RB', 1, timeout=timeout/2):
-            return False
-        self._evt_fofb.cmd_external_trigger()
+        for bpm in bpms:
+            if not self._bpm_dccs[bpm].cc_enable == 1:
+                return False
         return True
 
     @property
@@ -505,6 +523,16 @@ class FamFastCorrs(_Devices):
     def psnames(self):
         """PS name list."""
         return list(self._psnames)
+
+    @property
+    def psdevs(self):
+        """PS device list."""
+        return self._psdevs
+
+    @property
+    def psconvs(self):
+        """PS conversion device list."""
+        return self._psconv
 
     @property
     def pwrstate(self):
@@ -833,12 +861,14 @@ class HLFOFB(_Device):
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
-        'CorrStatus-Mon', 'CorrConfig-Cmd', 'CorrSetCurrZero-Cmd',
-        'CorrSetOpModeManual-Cmd', 'CorrSetAccFreezeDsbl-Cmd',
-        'CorrSetAccFreezeEnbl-Cmd', 'CorrSetAccClear-Cmd',
+        'CorrStatus-Mon', 'CorrConfig-Cmd',
+        'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
+        'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
+        'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
+        'FOFBCtrlStatus-Mon', 'FOFBCtrlConfBPMId-Cmd',
+        'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
         'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -930,6 +960,11 @@ class HLFOFB(_Device):
         self['CorrConfig-Cmd'] = 1
         return True
 
+    def cmd_corr_set_pwrstate_on(self):
+        """Command to set all corrector pwrstate to on."""
+        self['CorrSetCurrZero-Cmd'] = 1
+        return True
+
     def cmd_corr_set_opmode_manual(self):
         """Command to set all corrector opmode to manual."""
         self['CorrSetOpModeManual-Cmd'] = 1
@@ -977,6 +1012,11 @@ class HLFOFB(_Device):
     def fofbctrl_status(self):
         """FOFB controller status."""
         return self['FOFBCtrlStatus-Mon']
+
+    def cmd_fofbctrl_conf_bpmid(self):
+        """Command to configure all FOFB DCC BPMIds."""
+        self['FOFBCtrlConfBPMId-Cmd'] = 1
+        return True
 
     def cmd_fofbctrl_syncnet(self):
         """Command to sync FOFB controller net."""
