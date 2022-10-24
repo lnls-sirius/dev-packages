@@ -971,6 +971,12 @@ class SOFBSI(SOFBRings, ConstSI):
     def get_sofb_database(self, prefix=''):
         """Return SOFB database."""
         db_ring = {
+            'FOFBDownloadKicksPerc-SP': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100},
+            'FOFBDownloadKicksPerc-RB': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},

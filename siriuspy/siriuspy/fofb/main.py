@@ -758,28 +758,28 @@ class App(_Callback):
         if val is None:
             return
         self._kick_buffer[ps_index].append(val)
-        buff_size = self._kick_buffer_size if self._loop_state else 1
-        del self._kick_buffer[ps_index][:-buff_size]
+        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
 
     def _update_kicks(self):
         kickch, kickcv = [], []
-        lenb = 0
+        lenb = self._kick_buffer_size if self._loop_state else 1
 
+        rlenb = 0
         for i in range(self._const.nr_ch):
-            buff = self._kick_buffer[i]
-            lenb = max(len(buff), lenb)
+            buff = self._kick_buffer[i][-lenb:]
+            rlenb = max(rlenb, len(buff))
             val = _np.mean(buff) if buff else 0.0
             kickch.append(val)
 
         for i in range(self._const.nr_ch, self._const.nr_chcv):
-            buff = self._kick_buffer[i]
-            lenb = max(len(buff), lenb)
+            buff = self._kick_buffer[i][-lenb:]
+            rlenb = max(rlenb, len(buff))
             val = _np.mean(buff) if buff else 0.0
             kickcv.append(val)
 
         self.run_callbacks('KickCH-Mon', kickch)
         self.run_callbacks('KickCV-Mon', kickcv)
-        self.run_callbacks('KickBufferSize-Mon', lenb)
+        self.run_callbacks('KickBufferSize-Mon', rlenb)
 
     # --- reference orbit ---
 

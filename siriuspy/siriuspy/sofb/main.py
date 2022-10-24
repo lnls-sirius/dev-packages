@@ -53,6 +53,7 @@ class SOFB(_BaseClass):
         if self.acc == 'SI':
             self.fofb = HLFOFB()
             self._download_fofb_kicks = False
+            self._download_fofb_kicks_perc = 0.0
             self._update_fofb_reforb = False
             self._donot_affect_fofb_bpms = False
             self._project_onto_fofb_nullspace = False
@@ -115,6 +116,7 @@ class SOFB(_BaseClass):
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
             dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
@@ -230,6 +232,21 @@ class SOFB(_BaseClass):
             self.run_callbacks('FOFBZeroDistortionAtBPMs-Sts', value)
         else:
             return False
+        return True
+
+    def set_fofb_download_perc(self, value: float):
+        """Set percentage of kicks to be downloaded from FOFB.
+
+        Args:
+            value (float): percentage of kicks. must be in [0, 100].
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = min(max(value/100, 0), 1)
+        self._download_fofb_kicks_perc = value
+        self.run_callbacks('FOFBDownloadKicksPerc-RB', value)
         return True
 
     def set_ring_extension(self, val):
@@ -825,8 +842,8 @@ class SOFB(_BaseClass):
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
                 interval = 1/self._loop_freq
-                norbs = max(int(bpmsfreq/interval), 1)
-                if i >= norbs:
+                norbs_up = max(int(bpmsfreq*interval), 1)
+                if i >= norbs_up:
                     break
                 orb = self.orbit.get_orbit(synced=True)
 
@@ -1022,8 +1039,7 @@ class SOFB(_BaseClass):
             # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
             imat_fofb = fofb.invrespmat_mon
             imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
-            projmat = 1 - _np.dot(fofb.respmat, imat_fofb)
-            orb = _np.dot(projmat, orb)
+            orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
         return orb
 
     def _interact_with_fofb_in_apply_kicks(
@@ -1046,6 +1062,7 @@ class SOFB(_BaseClass):
             # But it seems this may also be a possibility:
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
+            fofb.cmd_fofbctrl_syncreforb()
 
         if self._download_fofb_kicks and fofb.loop_state:
             kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
@@ -1054,7 +1071,7 @@ class SOFB(_BaseClass):
             # that a minus sign is already applied by this method. To negate
             # this correction, we need an extra minus sign here:
             dkicks2 = self.matrix.calc_kicks(dorb)
-            dkicks2 *= -1
+            dkicks2 *= -self._download_fofb_kicks_perc
 
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
