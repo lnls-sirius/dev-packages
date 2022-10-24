@@ -75,7 +75,8 @@ class HLFOFBConst(_csdev.Const):
 
         # list of BPMs whose DCCs must always be enabled to bypass a hardware
         # issue (crate 05), so that all BPMs can be reached over the FOFB net
-        self.bpm_dccenbl_nick = ['05C1-1', '05C1-2', '05C3-2', '05C4']
+        self.bpm_dccenbl_nick = [
+            '05C1-1', '05C1-2', '05C2', '05C3-1', '05C3-2', '05C4']
         self.bpm_dccenbl_idcs = [
             self.bpm_nicknames.index(b) for b in self.bpm_dccenbl_nick]
 
