@@ -1,7 +1,6 @@
 """Devices subpackage."""
 
 from .bbb import BunchbyBunch
-from .blscreen import BeamlineScreen
 from .bpm import BPM, FamBPMs, BPMLogicalTrigger
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
@@ -35,4 +34,4 @@ from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 del device, bpm, dcct, egun, ict, lillrf, modltr,
 del pwrsupply, posang, psconv, pssofb, rf, injsys
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, blscreen, bbb, machshift
+del ids, currinfo, bbb, machshift
