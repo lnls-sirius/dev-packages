@@ -14,6 +14,7 @@ public_interface = (
     'HLTimeSearch',
     'LLTimeSearch',
     'IDSearch',
+    'IOCSearch',
 )
 
 
