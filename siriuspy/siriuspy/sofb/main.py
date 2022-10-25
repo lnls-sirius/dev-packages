@@ -1074,7 +1074,7 @@ class SOFB(_BaseClass):
             dkicks2 *= -self._download_fofb_kicks_perc
 
             kicks, dkicks2 = self._process_kicks(
-                self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
+                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False)
         return kicks
 
     def _calc_correction(self):
