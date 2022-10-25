@@ -239,6 +239,13 @@ class FamFOFBControllers(_Devices):
     DEF_BPMTRIG_RCVIN = 5
     BPM_TRIGS_IDS = [1, 2, 20]
     FOFBCTRL_BPMID_OFFSET = 480
+    BPM_DCC_PAIRS = {
+        'M1': 'M2',
+        'C1-1': 'C1-2',
+        'C2': 'C3-1',
+        'C3-2': 'C4',
+    }
+    BPM_DCC_PAIRS.update({bd: bu for bu, bd in BPM_DCC_PAIRS.items()})
 
     def __init__(self):
         """Init."""
@@ -424,15 +431,31 @@ class FamFOFBControllers(_Devices):
             return False
         if bpms is None:
             bpms = self._bpmnames
+        dccfmc_bpmcount = len(self.get_dccfmc_visible_bpms(bpms))
         for dev in self._ctl_dccs.values():
             if dev.dccname != 'DCCFMC':
                 continue
-            if not dev.bpm_count == len(bpms):
+            if not dev.bpm_count == dccfmc_bpmcount:
                 return False
         for bpm in bpms:
             if not self._bpm_dccs[bpm].cc_enable == 1:
                 return False
         return True
+
+    def get_dccfmc_visible_bpms(self, bpms):
+        """Return DCCFMC visible BPMs."""
+        dccenbl = set()
+        for bpm in bpms:
+            name = _PVName(bpm)
+            nick = name.sub[2:] + ('-' + name.idx if name.idx else '')
+            nickpair = self.BPM_DCC_PAIRS[nick]
+            nps = nickpair.split('-')
+            if len(nps) == 1:
+                nps.append('')
+            pair = name.substitute(sub=name.sub[:2] + nps[0], idx=nps[1])
+            dccenbl.add(bpm)
+            dccenbl.add(pair)
+        return dccenbl
 
     @property
     def time_frame_len(self):

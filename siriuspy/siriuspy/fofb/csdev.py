@@ -198,7 +198,7 @@ class HLFOFBConst(_csdev.Const):
                 'value': self.DsblEnbl.Dsbl},
             'FOFBCtrlSyncEnblList-Mon': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1], 'unit': 'BPMs used in correction'},
+                'value': self.nr_bpms*[1], 'unit': 'DCCs used in loop'},
             'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
