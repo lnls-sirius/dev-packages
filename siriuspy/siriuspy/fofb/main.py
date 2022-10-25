@@ -394,12 +394,13 @@ class App(_Callback):
 
     def _do_loop_gain_ramp(self, ramp='up'):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
+        power = 1
         if ramp == 'up':
-            ydata = xdata**3
+            ydata = xdata**power
             ydata_h = ydata * self._loop_gain_h
             ydata_v = ydata * self._loop_gain_v
         else:
-            ydata = (1-xdata)**3
+            ydata = (1-xdata)**power
             ydata_h = ydata * self._loop_gain_mon_h
             ydata_v = ydata * self._loop_gain_mon_v
         for i in range(self._const.LOOPGAIN_RMP_NPTS):

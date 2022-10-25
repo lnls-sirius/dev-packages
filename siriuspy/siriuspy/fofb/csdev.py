@@ -50,7 +50,7 @@ class HLFOFBConst(_csdev.Const):
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
     LOOPGAIN_RMP_TIME = 5  # [s]
-    LOOPGAIN_RMP_FREQ = 1  # [steps/s]
+    LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
