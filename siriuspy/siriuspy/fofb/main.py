@@ -878,7 +878,7 @@ class App(_Callback):
 
         # update corrector AccFreeze state
         if device in ['ch', 'cv']:
-            self._set_corrs_fofbacc_freeze()
+            self._check_set_corrs_opmode()
         elif device in ['bpmx', 'bpmy']:
             self._update_fofbctrl_sync_enbllist()
 
