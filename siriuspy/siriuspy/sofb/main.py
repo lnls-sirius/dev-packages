@@ -833,9 +833,9 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            iter = len(times)
-            self.run_callbacks('LoopNumIters-Mon', iter)
-            if iter >= self._loop_print_every_num_iter:
+            itern = len(times)
+            self.run_callbacks('LoopNumIters-Mon', itern)
+            if itern >= self._loop_print_every_num_iter:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets, _time()-tim0), daemon=True).start()
