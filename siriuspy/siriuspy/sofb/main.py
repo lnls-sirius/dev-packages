@@ -246,7 +246,7 @@ class SOFB(_BaseClass):
         """
         value = min(max(value/100, 0), 1)
         self._download_fofb_kicks_perc = value
-        self.run_callbacks('FOFBDownloadKicksPerc-RB', value)
+        self.run_callbacks('FOFBDownloadKicksPerc-RB', value*100)
         return True
 
     def set_ring_extension(self, val):
