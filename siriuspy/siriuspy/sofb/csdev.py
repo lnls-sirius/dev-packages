@@ -973,10 +973,10 @@ class SOFBSI(SOFBRings, ConstSI):
         db_ring = {
             'FOFBDownloadKicksPerc-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100},
+                'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicksPerc-RB': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100},
+                'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
@@ -986,6 +986,12 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBDownloadKicks-Mon': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
+            'FOFBUpdateRefOrbPerc-SP': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrbPerc-RB': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},

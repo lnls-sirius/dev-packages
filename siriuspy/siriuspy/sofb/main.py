@@ -55,6 +55,7 @@ class SOFB(_BaseClass):
             self._download_fofb_kicks = False
             self._download_fofb_kicks_perc = 0.0
             self._update_fofb_reforb = False
+            self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
             self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
@@ -119,6 +120,7 @@ class SOFB(_BaseClass):
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
+            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_fofb_updatereforb_perc
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
                 self.set_fofb_interaction_props, 'updatereforb')
             dbase['FOFBNullSpaceProj-Sel'] = _part(
@@ -247,6 +249,22 @@ class SOFB(_BaseClass):
         value = min(max(value/100, 0), 1)
         self._download_fofb_kicks_perc = value
         self.run_callbacks('FOFBDownloadKicksPerc-RB', value*100)
+        return True
+
+    def set_fofb_updatereforb_perc(self, value: float):
+        """Set percentage of reference orbit update in FOFB.
+
+        Args:
+            value (float): percentage of calculated orbit.
+                Must be in [-100, 100].
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = min(max(value/100, -1), 1)
+        self._update_fofb_reforb_perc = value
+        self.run_callbacks('FOFBUpdateRefOrbPerc-RB', value*100)
         return True
 
     def set_ring_extension(self, val):
@@ -1052,6 +1070,7 @@ class SOFB(_BaseClass):
 
         if self._update_fofb_reforb and fofb.loop_state:
             dorb = self.matrix.estimate_orbit_variation(dkicks)
+            dorb *= self._update_fofb_reforb_perc
             # According to my understanding of SOLEIL's paper on this
             # subject:
             # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
