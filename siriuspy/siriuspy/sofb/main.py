@@ -882,33 +882,9 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                # NOTE: The code bellow is the default implementation.
-                #       We decided to use the temporaty work around solution
-                #       implemented above to handle mal-functioning BPMs.
-                # self._loop_state = self._csorb.LoopState.Open
-                # self.run_callbacks('LoopState-Sel', 0)
-                # break
-
-                self.run_callbacks('LoopState-Sts', 0)
-                msg = 'WARN: Skipping iteration.'
-                self._update_log(msg)
-                _log.info(msg)
-                for ii_ in range(wait_orb_error):
-                    msg = f'WARN: waiting {wait_orb_error-ii_:d}s ...'
-                    self._update_log(msg)
-                    _log.info(msg)
-                    _sleep(1)
-                msg = f'WARN: Trying again...'
-                self._update_log(msg)
-                _log.info(msg)
-                previous_orb_problem = True
-                continue
-            elif previous_orb_problem:
-                msg = f'WARN: Orbit is Ok now. Resuming correction...'
-                self._update_log(msg)
-                _log.info(msg)
-                previous_orb_problem = False
-                self.run_callbacks('LoopState-Sts', 1)
+                self._loop_state = self._csorb.LoopState.Open
+                self.run_callbacks('LoopState-Sel', 0)
+                break
 
             dkicks = self._process_pid(dkicks, interval)
 
