@@ -36,9 +36,9 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.1, ki=2.0, kd=0.0),
-            cv=dict(kp=0.1, ki=2.0, kd=0.0),
-            rf=dict(kp=0.1, ki=2.0, kd=0.0))
+            ch=dict(kp=0.0, ki=0.5, kd=0.0),
+            cv=dict(kp=0.0, ki=0.5, kd=0.0),
+            rf=dict(kp=0.0, ki=0.5, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
@@ -53,7 +53,7 @@ class SOFB(_BaseClass):
         if self.acc == 'SI':
             self.fofb = HLFOFB()
             self._download_fofb_kicks = False
-            self._download_fofb_kicks_perc = 0.0
+            self._download_fofb_kicks_perc = 0.01
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
