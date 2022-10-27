@@ -826,8 +826,6 @@ class SOFB(_BaseClass):
             refx0 = fofb.refx
             refy0 = fofb.refy
 
-        wait_orb_error = int(5)
-        previous_orb_problem = False
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
