@@ -647,15 +647,7 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        bpms = self._get_fofbctrl_bpmdcc_enbl()
-        if not self._llfofb_dev.check_net_synced(bpms=bpms):
-            self._update_log('Syncing FOFB net...')
-            if self._llfofb_dev.cmd_sync_net(bpms=bpms):
-                self._update_log('Sync sent to FOFB net.')
-            else:
-                self._update_log('ERR:Failed to sync FOFB net.')
-        else:
-            self._update_log('FOFB net already synced.')
+        self._do_fofbctrl_syncnet()
 
         self._fofbctrl_syncnet_count += 1
         self.run_callbacks(
@@ -878,9 +870,12 @@ class App(_Callback):
 
         # update corrector AccFreeze state
         if device in ['ch', 'cv']:
-            self._check_set_corrs_opmode()
+            if self._check_corr_connection():
+                self._check_set_corrs_opmode()
         elif device in ['bpmx', 'bpmy']:
             self._update_fofbctrl_sync_enbllist()
+            if self._check_fofbctrl_connection():
+                self._do_fofbctrl_syncnet()
 
         # update readback pv
         if device == 'rf':
@@ -1357,6 +1352,17 @@ class App(_Callback):
     def _get_fofbctrl_bpmdcc_enbl(self):
         return [self._const.bpm_names[i] for i, s in
                 enumerate(self._fofbctrl_syncenbllist) if s]
+
+    def _do_fofbctrl_syncnet(self):
+        bpms = self._get_fofbctrl_bpmdcc_enbl()
+        if not self._llfofb_dev.check_net_synced(bpms=bpms):
+            self._update_log('Syncing FOFB net...')
+            if self._llfofb_dev.cmd_sync_net(bpms=bpms):
+                self._update_log('Sync sent to FOFB net.')
+            else:
+                self._update_log('ERR:Failed to sync FOFB net.')
+        else:
+            self._update_log('FOFB net already synced.')
 
     # --- auxiliary log methods ---
 
