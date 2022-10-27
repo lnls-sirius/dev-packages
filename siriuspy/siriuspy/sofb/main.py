@@ -883,6 +883,8 @@ class SOFB(_BaseClass):
 
             if not self._check_valid_orbit(orb):
                 self._loop_state = self._csorb.LoopState.Open
+                if fofb.connected and fofb.loop_state:
+                    fofb.loop_state = 0
                 self.run_callbacks('LoopState-Sel', 0)
                 break
 
