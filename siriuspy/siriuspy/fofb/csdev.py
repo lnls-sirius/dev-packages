@@ -122,22 +122,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
