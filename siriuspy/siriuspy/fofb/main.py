@@ -34,9 +34,9 @@ class App(_Callback):
         # internal states
         self._loop_state = self._const.LoopState.Open
         self._loop_state_lastsp = self._const.LoopState.Open
-        self._loop_gain_h = 1
+        self._loop_gain_h = 0.1
         self._loop_gain_mon_h = 0
-        self._loop_gain_v = 1
+        self._loop_gain_v = 0.1
         self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
