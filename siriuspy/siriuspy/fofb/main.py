@@ -1590,7 +1590,7 @@ class App(_Callback):
                 # OrbDistortionDetectionSynced
                 sts = self._loop_max_orb_dist_enbl
                 sts_ok = self._llfofb_dev.max_orb_distortion_enbl == sts
-                thres = self._loop_max_orb_dist
+                thres = self._loop_max_orb_dist*self._const.CONV_UM_2_NM
                 thres_ok = self._llfofb_dev.max_orb_distortion == thres
                 if not _np.all(sts_ok) or not _np.all(thres_ok):
                     value = _updt_bit(value, 7, 1)
