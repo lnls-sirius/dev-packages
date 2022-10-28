@@ -27,7 +27,8 @@ class ETypes(_csdev.ETypes):
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
-        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
+        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
+        'OrbDistortionDetectionSynced', 'InterlockOk')
 
 
 _et = ETypes  # syntactic sugar
@@ -42,6 +43,7 @@ class HLFOFBConst(_csdev.Const):
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
     DEF_KICK_BUFFER_SIZE = 5
+    DEF_MAX_ORB_DISTORTION = 60  # [um]
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -141,6 +143,18 @@ class HLFOFBConst(_csdev.Const):
             'LoopGainV-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
+            'LoopMaxOrbDistortion-SP': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortion-RB': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortionEnbl-Sel': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopMaxOrbDistortionEnbl-Sts': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
 
             # Correctors
             'CHPosS-Cte': {
@@ -202,6 +216,8 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'CtrlrConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and Kick buffer configuration
             'KickBufferSize-SP': {

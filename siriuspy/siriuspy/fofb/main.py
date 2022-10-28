@@ -33,12 +33,15 @@ class App(_Callback):
 
         # internal states
         self._loop_state = self._const.LoopState.Open
+        self._loop_state_lastsp = self._const.LoopState.Open
         self._loop_gain_h = 1
         self._loop_gain_mon_h = 0
         self._loop_gain_v = 1
         self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
+        self._loop_max_orb_dist = self._const.DEF_MAX_ORB_DISTORTION
+        self._loop_max_orb_dist_enbl = self._const.DsblEnbl.Dsbl
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
         self._corr_setpwrstateon_count = 0
@@ -56,6 +59,8 @@ class App(_Callback):
         self._fofbctrl_syncref_count = 0
         self._fofbctrl_synctframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
+        self._fofbctrl_syncmaxorbdist_count = 0
+        self._fofbctrl_reset_count = 0
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
         self._fofbctrl_syncuseenbllist = 0
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
@@ -115,6 +120,12 @@ class App(_Callback):
 
         self._llfofb_dev = _FamFOFBCtrls()
 
+        self._intlk_pvs = dict()
+        for dev in self._llfofb_dev.ctrlrefdevs.values():
+            pvo = dev.pv_object('Intlk-Mon')
+            pvo.auto_monitor = True
+            pvo.add_callback(self._callback_orbintlk)
+
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
         havebeam_pvname = _PVName(
@@ -129,6 +140,8 @@ class App(_Callback):
             'LoopState-Sel': self.set_loop_state,
             'LoopGainH-SP': _part(self.set_loop_gain, 'h'),
             'LoopGainV-SP': _part(self.set_loop_gain, 'v'),
+            'LoopMaxOrbDistortion-SP': self.set_loop_max_orbit_dist,
+            'LoopMaxOrbDistortionEnbl-Sel': self.set_loop_max_orbit_dist_enbl,
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
@@ -145,6 +158,8 @@ class App(_Callback):
             'CtrlrSyncTFrameLen-Cmd': self.cmd_fofbctrl_synctframelen,
             'CtrlrConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
             'CtrlrSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
+            'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
+            'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
             'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
@@ -181,6 +196,12 @@ class App(_Callback):
         self.run_callbacks('LoopGainV-SP', self._loop_gain_v)
         self.run_callbacks('LoopGainV-RB', self._loop_gain_v)
         self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
+        self.run_callbacks('LoopMaxOrbDistortion-SP', self._loop_max_orb_dist)
+        self.run_callbacks('LoopMaxOrbDistortion-RB', self._loop_max_orb_dist)
+        self.run_callbacks(
+            'LoopMaxOrbDistortionEnbl-Sel', self._loop_max_orb_dist_enbl)
+        self.run_callbacks(
+            'LoopMaxOrbDistortionEnbl-Sts', self._loop_max_orb_dist_enbl)
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         self.run_callbacks(
@@ -218,6 +239,9 @@ class App(_Callback):
             'CtrlrSyncTFrameLen-Cmd', self._fofbctrl_synctframelen_count)
         self.run_callbacks(
             'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
+        self.run_callbacks(
+            'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
+        self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
         self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
@@ -329,6 +353,7 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
 
+        self._loop_state_lastsp = value
         if value and not self.havebeam:
             self._update_log('ERR: Do not have stored beam. Aborted.')
             return False
@@ -340,11 +365,11 @@ class App(_Callback):
             self._thread_loopstate.join()
 
         self._thread_loopstate = _Thread(
-            target=self._thread_set_loop_state, args=[value, ], daemon=True)
+            target=self._thread_set_loop_state, args=[value, reset], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value):
+    def _thread_set_loop_state(self, value, reset):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
@@ -391,6 +416,13 @@ class App(_Callback):
             self._loop_state = value
             self._check_set_corrs_opmode()
             self.run_callbacks('LoopState-Sts', self._loop_state)
+
+        if reset:
+            self._update_log('Reseting FOFB controllers...')
+            if self._llfofb_dev.cmd_reset():
+                self._update_log('...done!')
+            else:
+                self._update_log('ERR:Failed to reset controllers.')
 
     def _do_loop_gain_ramp(self, ramp='up'):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
@@ -473,6 +505,42 @@ class App(_Callback):
 
         self._update_log(f'Changed Loop Gain {plane.upper()} to {value}.')
         self.run_callbacks(f'LoopGain{plane.upper()}-RB', value)
+        return True
+
+    def set_loop_max_orbit_dist(self, value):
+        """Set maximum orbit distortion threshold."""
+        if not 0 <= value <= 10000:
+            return False
+        if not self._check_fofbctrl_connection():
+            return False
+
+        self._loop_max_orb_dist = value
+        self._update_log('Setting orbit distortion threshold...')
+        if self._llfofb_dev.set_max_orb_distortion(
+                value=value * self._const.CONV_UM_2_NM,
+                timeout=self._const.DEF_TIMEWAIT):
+            self._update_log('...done!')
+        else:
+            self._update_log('ERR:Failed to set threshold.')
+
+        self.run_callbacks('LoopMaxOrbDistortion-RB', value)
+        return True
+
+    def set_loop_max_orbit_dist_enbl(self, value):
+        """Set orbit distortion threshold verification enable status."""
+        if not self._check_fofbctrl_connection():
+            return False
+
+        act = ('En' if value else 'Dis')
+        self._loop_max_orb_dist_enbl = value
+        self._update_log(act+'abling orbit distortion detection...')
+        if self._llfofb_dev.set_max_orb_distortion_enbl(
+                value=value, timeout=self._const.DEF_TIMEWAIT):
+            self._update_log('...done!')
+        else:
+            self._update_log('ERR:Failed to '+act+'able detection.')
+
+        self.run_callbacks('LoopMaxOrbDistortionEnbl-Sts', value)
         return True
 
     # --- devices configuration ---
@@ -726,6 +794,58 @@ class App(_Callback):
         self._update_log(('' if value else 'not ')+'use BPM EnableList.')
         self.run_callbacks('CtrlrSyncUseEnblList-Sts', value)
         return True
+
+    def cmd_fofbctrl_syncmaxorbdist(self, _):
+        """Sync FOFB controllers orbit distortion detection command."""
+        self._update_log('Received sync FOFB controllers orbit')
+        self._update_log('distortion detection command...Checking...')
+        if not self._check_fofbctrl_connection():
+            return False
+
+        tout = self._const.DEF_TIMEWAIT
+
+        # threshold
+        thres = self._loop_max_orb_dist * self._const.CONV_UM_2_NM
+        if not _np.all(self._llfofb_dev.max_orb_distortion == thres):
+            self._update_log('Setting MaxOrbDistortion PVs...')
+            if self._llfofb_dev.set_max_orb_distortion(thres, timeout=tout):
+                self._update_log('...done!')
+            else:
+                self._update_log('ERR:Failed to sync threshold.')
+        else:
+            self._update_log('MaxOrbDistortion PVs already configured.')
+
+        # enable status
+        sts = self._loop_max_orb_dist_enbl
+        if not _np.all(self._llfofb_dev.max_orb_distortion_enbl == sts):
+            self._update_log('Setting MaxOrbDistortionEnbl PVs...')
+            if self._llfofb_dev.set_max_orb_distortion_enbl(sts, timeout=tout):
+                self._update_log('...done!')
+            else:
+                self._update_log('ERR:Failed to sync enable status.')
+        else:
+            self._update_log('MaxOrbDistortionEnbl PVs already configured.')
+
+        self._fofbctrl_syncmaxorbdist_count += 1
+        self.run_callbacks(
+            'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
+        return False
+
+    def cmd_fofbctrl_reset(self, _):
+        """Reset FOFB controllers interlock command."""
+        self._update_log('Received reset FOFB controllers command...')
+        if not self._check_fofbctrl_connection():
+            return False
+
+        self._update_log('Reseting FOFB controllers...')
+        if self._llfofb_dev.cmd_reset(timeout=self._const.DEF_TIMEWAIT):
+            self._update_log('...done!')
+        else:
+            self._update_log('ERR:Failed to reset controllers.')
+
+        self._fofbctrl_reset_count += 1
+        self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
+        return False
 
     # --- kicks buffer and kicks update ---
 
@@ -1215,6 +1335,21 @@ class App(_Callback):
             self._update_log('FATAL: Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open)
 
+    def _callback_orbintlk(self, pvname, value, **kws):
+        sub = _PVName(pvname).sub[:2]
+        if value != 0:
+            text = ('FATAL' if self._loop_state else 'WARN')
+            text += ': Controller '+sub+' raised interlock!'
+            self._update_log(text)
+            if self._loop_state != self._const.LoopState.Closed:
+                return
+
+            if self._thread_loopstate is not None and \
+                    self._thread_loopstate.is_alive() and \
+                    self._loop_state_lastsp != self._const.LoopState.Open:
+                self._update_log('FATAL: Opening FOFB loop...')
+                self.set_loop_state(self._const.LoopState.Open, reset=True)
+
     # --- auxiliary corrector and fofbcontroller methods ---
 
     def _check_corr_connection(self):
@@ -1451,8 +1586,18 @@ class App(_Callback):
                 # BPMLogTrigsConfigured
                 if not self._llfofb_dev.bpm_trigs_configured:
                     value = _updt_bit(value, 6, 1)
+                # OrbDistortionDetectionSynced
+                sts = self._loop_max_orb_dist_enbl
+                sts_ok = self._llfofb_dev.max_orb_distortion_enbl == sts
+                thres = self._loop_max_orb_dist
+                thres_ok = self._llfofb_dev.max_orb_distortion == thres
+                if not _np.all(sts_ok) or not _np.all(thres_ok):
+                    value = _updt_bit(value, 7, 1)
+                # InterlockOk
+                if not self._llfofb_dev.interlock_ok:
+                    value = _updt_bit(value, 8, 1)
             else:
-                value = 0b1111111
+                value = 0b111111111
 
             self._fofbctrl_status = value
             self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
