@@ -34,7 +34,6 @@ class App(_Callback):
         # internal states
         self._loop_state = self._const.LoopState.Open
         self._loop_state_lastsp = self._const.LoopState.Open
-        self._loop_state_reset = False
         self._loop_gain_h = 1
         self._loop_gain_mon_h = 0
         self._loop_gain_v = 1
@@ -349,7 +348,7 @@ class App(_Callback):
 
     # --- loop control ---
 
-    def set_loop_state(self, value):
+    def set_loop_state(self, value, reset=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
@@ -366,11 +365,11 @@ class App(_Callback):
             self._thread_loopstate.join()
 
         self._thread_loopstate = _Thread(
-            target=self._thread_set_loop_state, args=[value, ], daemon=True)
+            target=self._thread_set_loop_state, args=[value, reset], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value):
+    def _thread_set_loop_state(self, value, reset):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
@@ -418,8 +417,7 @@ class App(_Callback):
             self._check_set_corrs_opmode()
             self.run_callbacks('LoopState-Sts', self._loop_state)
 
-        if self._loop_state_reset:
-            self._loop_state_reset = False
+        if reset:
             self._update_log('Reseting FOFB controllers...')
             if self._llfofb_dev.cmd_reset():
                 self._update_log('...done!')
@@ -1350,8 +1348,7 @@ class App(_Callback):
                     self._thread_loopstate.is_alive() and \
                     self._loop_state_lastsp != self._const.LoopState.Open:
                 self._update_log('FATAL: Opening FOFB loop...')
-                self._loop_state_reset = True
-                self.set_loop_state(self._const.LoopState.Open)
+                self.set_loop_state(self._const.LoopState.Open, reset=True)
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
@@ -1464,6 +1461,7 @@ class App(_Callback):
         self._corrs_dev.set_fofbacc_gain(self._psgains)
         if log:
             self._update_log('...done!')
+        return True
 
     def _check_fofbctrl_connection(self):
         if self._llfofb_dev.connected:
