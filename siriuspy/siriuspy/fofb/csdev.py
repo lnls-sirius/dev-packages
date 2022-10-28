@@ -184,24 +184,24 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
                 'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
-            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
-            'FOFBCtrlStatusLabels-Cte': {
+            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
-            'FOFBCtrlConfBPMId-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlSyncNet-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlSyncUseEnblList-Sel': {
+            'CtrlrConfBPMId-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncNet-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncUseEnblList-Sel': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
-            'FOFBCtrlSyncUseEnblList-Sts': {
+            'CtrlrSyncUseEnblList-Sts': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
-            'FOFBCtrlSyncEnblList-Mon': {
+            'CtrlrSyncEnblList-Mon': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1], 'unit': 'DCCs used in loop'},
-            'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncTFrameLen-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and Kick buffer configuration
             'KickBufferSize-SP': {

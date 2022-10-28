@@ -887,9 +887,9 @@ class HLFOFB(_Device):
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlConfBPMId-Cmd',
-        'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
-        'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
+        'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
+        'CtrlrSyncNet-Cmd', 'CtrlrSyncRefOrb-Cmd',
+        'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
@@ -1031,31 +1031,31 @@ class HLFOFB(_Device):
     @property
     def fofbctrl_status(self):
         """FOFB controller status."""
-        return self['FOFBCtrlStatus-Mon']
+        return self['CtrlrStatus-Mon']
 
     def cmd_fofbctrl_conf_bpmid(self):
         """Command to configure all FOFB DCC BPMIds."""
-        self['FOFBCtrlConfBPMId-Cmd'] = 1
+        self['CtrlrConfBPMId-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_syncnet(self):
         """Command to sync FOFB controller net."""
-        self['FOFBCtrlSyncNet-Cmd'] = 1
+        self['CtrlrSyncNet-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_syncreforb(self):
         """Command to sync FOFB controller RefOrb."""
-        self['FOFBCtrlSyncRefOrb-Cmd'] = 1
+        self['CtrlrSyncRefOrb-Cmd'] = 1
         return True
 
-    def cmd_fofbctrl_conf_timeframelen(self):
-        """Command to configure all FOFB controller TimeFrameLen."""
-        self['FOFBCtrlConfTFrameLen-Cmd'] = 1
+    def cmd_fofbctrl_sync_timeframelen(self):
+        """Command to sync all FOFB controller TimeFrameLen."""
+        self['CtrlrSyncTFrameLen-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_conf_bpmlogtrig(self):
         """Command to configure all BPM logical triggers related to FOFB."""
-        self['FOFBCtrlConfBPMLogTrg-Cmd'] = 1
+        self['CtrlrConfBPMLogTrg-Cmd'] = 1
         return True
 
     @property

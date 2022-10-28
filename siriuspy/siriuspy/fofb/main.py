@@ -50,12 +50,11 @@ class App(_Callback):
         self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
         self._cv_maxacccurr = self._pvs_database['CVAccSatMax-RB']['value']
         self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
-        self._fofbctrl_status = \
-            self._pvs_database['FOFBCtrlStatus-Mon']['value']
+        self._fofbctrl_status = self._pvs_database['CtrlrStatus-Mon']['value']
         self._fofbctrl_confbpmid_count = 0
         self._fofbctrl_syncnet_count = 0
         self._fofbctrl_syncref_count = 0
-        self._fofbctrl_conftframelen_count = 0
+        self._fofbctrl_synctframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
         self._fofbctrl_syncuseenbllist = 0
@@ -140,12 +139,12 @@ class App(_Callback):
             'CHAccSatMax-SP': _part(self.set_corr_accsatmax, 'ch'),
             'CVAccSatMax-SP': _part(self.set_corr_accsatmax, 'cv'),
             'TimeFrameLen-SP': self.set_timeframelen,
-            'FOFBCtrlConfBPMId-Cmd': self.cmd_fofbctrl_confbpmid,
-            'FOFBCtrlSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
-            'FOFBCtrlSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
-            'FOFBCtrlConfTFrameLen-Cmd': self.cmd_fofbctrl_conftframelen,
-            'FOFBCtrlConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
-            'FOFBCtrlSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
+            'CtrlrConfBPMId-Cmd': self.cmd_fofbctrl_confbpmid,
+            'CtrlrSyncNet-Cmd': self.cmd_fofbctrl_syncnet,
+            'CtrlrSyncRefOrb-Cmd': self.cmd_fofbctrl_syncreforb,
+            'CtrlrSyncTFrameLen-Cmd': self.cmd_fofbctrl_synctframelen,
+            'CtrlrConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
+            'CtrlrSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
             'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
@@ -202,23 +201,23 @@ class App(_Callback):
         self.run_callbacks('CVAccSatMax-RB', self._cv_maxacccurr)
         self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
-        self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
+        self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
         self.run_callbacks(
-            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
+            'CtrlrConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
         self.run_callbacks(
-            'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
+            'CtrlrSyncNet-Cmd', self._fofbctrl_syncnet_count)
         self.run_callbacks(
-            'FOFBCtrlSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
+            'CtrlrSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
         self.run_callbacks(
-            'FOFBCtrlSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
+            'CtrlrSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
         self.run_callbacks(
-            'FOFBCtrlSyncEnblList-Mon', self._fofbctrl_syncenbllist)
+            'CtrlrSyncEnblList-Mon', self._fofbctrl_syncenbllist)
         self.run_callbacks(
-            'FOFBCtrlSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
+            'CtrlrSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
         self.run_callbacks(
-            'FOFBCtrlConfTFrameLen-Cmd', self._fofbctrl_conftframelen_count)
+            'CtrlrSyncTFrameLen-Cmd', self._fofbctrl_synctframelen_count)
         self.run_callbacks(
-            'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
+            'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
@@ -639,7 +638,7 @@ class App(_Callback):
 
         self._fofbctrl_confbpmid_count += 1
         self.run_callbacks(
-            'FOFBCtrlConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
+            'CtrlrConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
         return False
 
     def cmd_fofbctrl_syncnet(self, _):
@@ -652,7 +651,7 @@ class App(_Callback):
 
         self._fofbctrl_syncnet_count += 1
         self.run_callbacks(
-            'FOFBCtrlSyncNet-Cmd', self._fofbctrl_syncnet_count)
+            'CtrlrSyncNet-Cmd', self._fofbctrl_syncnet_count)
         return False
 
     def cmd_fofbctrl_syncreforb(self, _):
@@ -671,11 +670,11 @@ class App(_Callback):
 
         self._fofbctrl_syncref_count += 1
         self.run_callbacks(
-            'FOFBCtrlSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
+            'CtrlrSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
         return False
 
-    def cmd_fofbctrl_conftframelen(self, _):
-        """Configure FOFB controllers TimeFrameLen command."""
+    def cmd_fofbctrl_synctframelen(self, _):
+        """Sync FOFB controllers TimeFrameLen command."""
         self._update_log('Received configure FOFB controllers')
         self._update_log('TimeFrameLen command... Checking...')
         if not self._check_fofbctrl_connection():
@@ -690,9 +689,9 @@ class App(_Callback):
         else:
             self._update_log('TimeFrameLen PVs already configured.')
 
-        self._fofbctrl_conftframelen_count += 1
+        self._fofbctrl_synctframelen_count += 1
         self.run_callbacks(
-            'FOFBCtrlConfTFrameLen-Cmd', self._fofbctrl_conftframelen_count)
+            'CtrlrSyncTFrameLen-Cmd', self._fofbctrl_synctframelen_count)
         return False
 
     def cmd_fofbctrl_confbpmlogtrg(self, _):
@@ -712,7 +711,7 @@ class App(_Callback):
 
         self._fofbctrl_confbpmlogtrg_count += 1
         self.run_callbacks(
-            'FOFBCtrlConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
+            'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         return False
 
     def set_fofbctrl_syncuseenablelist(self, value):
@@ -725,7 +724,7 @@ class App(_Callback):
 
         self._update_log('Changed sync net command to ')
         self._update_log(('' if value else 'not ')+'use BPM EnableList.')
-        self.run_callbacks('FOFBCtrlSyncUseEnblList-Sts', value)
+        self.run_callbacks('CtrlrSyncUseEnblList-Sts', value)
         return True
 
     # --- kicks buffer and kicks update ---
@@ -1347,7 +1346,7 @@ class App(_Callback):
         else:
             dccenbl = _np.ones(self._const.nr_bpms, dtype=bool)
         self._fofbctrl_syncenbllist = dccenbl
-        self.run_callbacks('FOFBCtrlSyncEnblList-Mon', dccenbl)
+        self.run_callbacks('CtrlrSyncEnblList-Mon', dccenbl)
 
     def _get_fofbctrl_bpmdcc_enbl(self):
         return [self._const.bpm_names[i] for i, s in
@@ -1456,7 +1455,7 @@ class App(_Callback):
                 value = 0b1111111
 
             self._fofbctrl_status = value
-            self.run_callbacks('FOFBCtrlStatus-Mon', self._fofbctrl_status)
+            self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
 
             ttook = _time.time() - _t0
             tsleep = tplanned - ttook
