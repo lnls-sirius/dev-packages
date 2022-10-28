@@ -127,9 +127,9 @@ class App(_Callback):
 
         # pvs to write methods
         self.map_pv2write = {
-            'LoopState-Sel': self.set_loopstate,
-            'LoopGainH-SP': _part(self.set_loopgain, 'h'),
-            'LoopGainV-SP': _part(self.set_loopgain, 'v'),
+            'LoopState-Sel': self.set_loop_state,
+            'LoopGainH-SP': _part(self.set_loop_gain, 'h'),
+            'LoopGainV-SP': _part(self.set_loop_gain, 'v'),
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
@@ -325,7 +325,7 @@ class App(_Callback):
 
     # --- loop control ---
 
-    def set_loopstate(self, value):
+    def set_loop_state(self, value, reset=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
@@ -352,7 +352,8 @@ class App(_Callback):
             self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
             self._calc_corrs_coeffs(log=False)
             # set and wait corrector gains and coeffs to zero
-            self._set_corrs_coeffs(log=False)
+            if not self._set_corrs_coeffs(log=False):
+                return
             self._update_log('Waiting for coefficients and gains...')
             if not self._wait_coeffs_and_gains():
                 self.run_callbacks('LoopState-Sel', self._loop_state)
@@ -451,7 +452,7 @@ class App(_Callback):
             return True
         return False
 
-    def set_loopgain(self, plane, value):
+    def set_loop_gain(self, plane, value):
         """Set loop gain."""
         if not -2**3 <= value <= 2**3-1:
             return False
@@ -504,7 +505,7 @@ class App(_Callback):
 
         self._update_log('Setting all corrector pwrstate to on...')
         self._corrs_dev.set_pwrstate(self._const.OffOn.On)
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setpwrstateon_count += 1
         self.run_callbacks(
@@ -519,7 +520,7 @@ class App(_Callback):
 
         self._update_log('Setting all corrector opmode to manual...')
         self._corrs_dev.set_opmode(self._corrs_dev.OPMODE_STS.manual)
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setopmodemanual_count += 1
         self.run_callbacks(
@@ -534,7 +535,7 @@ class App(_Callback):
 
         self._update_log('Setting AccFreeze to Dsbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Dsbl)
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setaccfreezedsbl_count += 1
         self.run_callbacks(
@@ -549,7 +550,7 @@ class App(_Callback):
 
         self._update_log('Setting AccFreeze to Enbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Enbl)
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setaccfreezeenbl_count += 1
         self.run_callbacks(
@@ -564,7 +565,7 @@ class App(_Callback):
 
         self._update_log('Sending clear accumulator command...')
         self._corrs_dev.cmd_fofbacc_clear()
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setaccclear_count += 1
         self.run_callbacks(
@@ -579,7 +580,7 @@ class App(_Callback):
 
         self._update_log('Sending all corrector current to zero...')
         self._corrs_dev.set_current(0)
-        self._update_log('Done.')
+        self._update_log('...done!')
 
         self._corr_setcurrzero_count += 1
         self.run_callbacks(
@@ -607,9 +608,9 @@ class App(_Callback):
 
     def set_timeframelen(self, value):
         """Set FOFB controllers TimeFrameLen."""
-        if not self._check_fofbctrl_connection():
-            return False
         if not 500 <= value <= 10000:
+            return False
+        if not self._check_fofbctrl_connection():
             return False
 
         self._time_frame_len = value
@@ -664,7 +665,7 @@ class App(_Callback):
         if not self._llfofb_dev.check_reforb(reforb):
             self._update_log('Syncing FOFB RefOrb...')
             self._llfofb_dev.set_reforb(reforb)
-            self._update_log('Sent RefOrb to FOFB controllers.')
+            self._update_log('...done!')
         else:
             self._update_log('FOFB RefOrb already synced.')
 
@@ -676,14 +677,14 @@ class App(_Callback):
     def cmd_fofbctrl_conftframelen(self, _):
         """Configure FOFB controllers TimeFrameLen command."""
         self._update_log('Received configure FOFB controllers')
+        self._update_log('TimeFrameLen command... Checking...')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('TimeFrameLen command... Checking...')
         timeframe = self._time_frame_len
         if not _np.all(self._llfofb_dev.time_frame_len == timeframe):
             self._update_log('Configuring TimeFrameLen PVs...')
             if self._llfofb_dev.set_time_frame_len(timeframe):
-                self._update_log('TimeFrameLen PVs configured!')
+                self._update_log('...done!')
             else:
                 self._update_log('ERR:Failed to configure TimeFrameLen.')
         else:
@@ -703,7 +704,7 @@ class App(_Callback):
         if not self._llfofb_dev.bpm_trigs_configured:
             self._update_log('Configuring BPM logical triggers...')
             if self._llfofb_dev.cmd_config_bpm_trigs():
-                self._update_log('BPM logical triggers configured!')
+                self._update_log('...done!')
             else:
                 self._update_log('ERR:Failed to configure BPM log.trigs.')
         else:
@@ -715,7 +716,7 @@ class App(_Callback):
         return False
 
     def set_fofbctrl_syncuseenablelist(self, value):
-        """Set loop state."""
+        """Set whether to use or not BPMEnblList in sync."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
@@ -798,7 +799,7 @@ class App(_Callback):
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
         self.run_callbacks(f'RefOrbHw{plane.upper()}-Mon', refhw)
-        self._update_log('Done!')
+        self._update_log('...done!')
         return True
 
     # --- matrix manipulation ---
@@ -1213,8 +1214,7 @@ class App(_Callback):
         if not value and self._loop_state == self._const.LoopState.Closed:
             self._update_log('FATAL: We do not have stored beam!')
             self._update_log('FATAL: Opening FOFB loop...')
-            self.set_loopstate(self._const.LoopState.Open)
-            self._update_log('Done.')
+            self.set_loop_state(self._const.LoopState.Open)
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
@@ -1239,7 +1239,7 @@ class App(_Callback):
             self._update_log('Configuring corrector opmode...')
             self._corrs_dev.set_opmode(opmode, psindices=idcs)
             if self._corrs_dev.check_opmode(opmode, psindices=idcs, timeout=5):
-                self._update_log('Done.')
+                self._update_log('...done!')
                 return True
             self._update_log('ERR:Failed to set corrector opmode.')
             return False
@@ -1254,7 +1254,7 @@ class App(_Callback):
         self._update_log('Setting corrector FOFCAccFreeze...')
         freeze = self._get_corrs_fofbacc_freeze_desired()
         self._corrs_dev.set_fofbacc_freeze(freeze)
-        self._update_log('Done!')
+        self._update_log('...done!')
 
     def _get_corrs_fofbacc_freeze_desired(self):
         if self._loop_state == self._const.LoopState.Open:
@@ -1315,7 +1315,7 @@ class App(_Callback):
         self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
 
         if log:
-            self._update_log('Done!')
+            self._update_log('...done!')
 
     def _set_corrs_coeffs(self, log=True):
         """Set corrector coefficients and gains."""
@@ -1326,7 +1326,7 @@ class App(_Callback):
         self._corrs_dev.set_invrespmat_row(self._pscoeffs)
         self._corrs_dev.set_fofbacc_gain(self._psgains)
         if log:
-            self._update_log('Done!')
+            self._update_log('...done!')
 
     def _check_fofbctrl_connection(self):
         if self._llfofb_dev.connected:
@@ -1445,7 +1445,7 @@ class App(_Callback):
                 reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
                 if not self._llfofb_dev.check_reforb(reforb):
                     value = _updt_bit(value, 4, 1)
-                # TimeFrameLenConfigured
+                # TimeFrameLenSynced
                 tframelen = self._time_frame_len
                 if not _np.all(self._llfofb_dev.time_frame_len == tframelen):
                     value = _updt_bit(value, 5, 1)

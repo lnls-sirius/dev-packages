@@ -1,6 +1,5 @@
 """FOFB devices."""
 
-import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -123,8 +122,6 @@ class _DCCDevice(_ProptyDevice):
     DEF_TIMEOUT = 1
     DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
-
-    _sync_sleep = 1.0  # [s]
 
     _properties = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
