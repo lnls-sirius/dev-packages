@@ -1351,6 +1351,7 @@ class App(_Callback):
                      self._thread_loopstate.is_alive() and
                      self._loop_state_lastsp != self._const.LoopState.Open):
                 self._update_log('FATAL: Opening FOFB loop...')
+                self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
                 self.set_loop_state(self._const.LoopState.Open, reset=True)
 
