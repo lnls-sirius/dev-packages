@@ -1344,9 +1344,12 @@ class App(_Callback):
             if self._loop_state != self._const.LoopState.Closed:
                 return
 
-            if self._thread_loopstate is not None and \
-                    self._thread_loopstate.is_alive() and \
-                    self._loop_state_lastsp != self._const.LoopState.Open:
+            if self._thread_loopstate is None or \
+                    (self._thread_loopstate is not None and
+                     not self._thread_loopstate.is_alive()) or \
+                    (self._thread_loopstate is not None and
+                     self._thread_loopstate.is_alive() and
+                     self._loop_state_lastsp != self._const.LoopState.Open):
                 self._update_log('FATAL: Opening FOFB loop...')
                 self.set_loop_state(self._const.LoopState.Open, reset=True)
 
