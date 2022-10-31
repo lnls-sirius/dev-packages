@@ -42,7 +42,7 @@ class HLFOFBConst(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
-    DEF_KICK_BUFFER_SIZE = 5
+    DEF_KICK_BUFFER_SIZE = 1
     DEF_MAX_ORB_DISTORTION = 60  # [um]
 
     CONV_UM_2_NM = 1e3
