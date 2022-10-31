@@ -1524,6 +1524,7 @@ _pvs_si_ps_fam = [
 
 
 _pvs_si_ps_ch = [
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
     ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
@@ -1648,6 +1649,7 @@ _pvs_si_ps_ch = [
 
 
 _pvs_si_ps_cv = [
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
     ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
