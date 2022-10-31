@@ -2564,13 +2564,8 @@ _pvs_si_ps_qn = [
 _pvs_si_ps_ids = [
     ['SI-14SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-14SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-14SB:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-14SB:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
-    
     ['SI-14SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
     ['SI-14SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-14SB:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-14SB:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
     ]
 
 
