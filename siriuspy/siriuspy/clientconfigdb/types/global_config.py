@@ -2561,6 +2561,19 @@ _pvs_si_ps_qn = [
     ]
 
 
+_pvs_si_ps_ids = [
+    ['SI-14SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14SB:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14SB:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    
+    ['SI-14SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-14SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-14SB:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-14SB:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
+    ]
+
+
 _template_dict = {
     'pvs':
     _pvs_as_ti +
@@ -2571,5 +2584,6 @@ _template_dict = {
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
     _pvs_si_ps_ch + _pvs_si_ps_cv +
-    _pvs_si_ps_qs + _pvs_si_ps_qn
+    _pvs_si_ps_qs + _pvs_si_ps_qn +
+    _pvs_si_ps_ids
     }
