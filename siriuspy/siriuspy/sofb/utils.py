@@ -71,7 +71,6 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
     vec = _np.array([psx, agx, psy, agy])
     pos_bpm = _np.dot(BUMP_MATRICES[subname], vec)
 
-    # NOTE: does this not work for subsec '01SA' ?
     bpm1 = sec * 8 + bpmidcs[subname] - 1
     bpm2 = sec * 8 + bpmidcs[subname]
 
