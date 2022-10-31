@@ -1346,7 +1346,7 @@ class App(_Callback):
         sub = _PVName(pvname).sub[:2]
         if value != 0:
             text = ('FATAL' if self._loop_state else 'WARN')
-            text += ': Controller '+sub+' raised interlock!'
+            text += ':Ctrlr.'+sub+' detected large orb.dist.!'
             self._update_log(text)
             if self._loop_state != self._const.LoopState.Closed:
                 return
@@ -1606,7 +1606,7 @@ class App(_Callback):
                 thres_ok = self._llfofb_dev.max_orb_distortion == thres
                 if not _np.all(sts_ok) or not _np.all(thres_ok):
                     value = _updt_bit(value, 7, 1)
-                # InterlockOk
+                # LoopInterlockOk
                 if not self._llfofb_dev.interlock_ok:
                     value = _updt_bit(value, 8, 1)
             else:
