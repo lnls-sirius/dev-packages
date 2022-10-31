@@ -882,31 +882,50 @@ class FamBPMs(_Devices):
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_orbit(self):
+    def get_mturn_orbit(self, return_sum=False):
         """Get Multiturn orbit matrices.
+
+        Args:
+            return_sum (bool, optional): Whether or not to return BPMs sum.
+                Defaults to False.
 
         Returns:
             orbx (numpy.ndarray, Nx160): Horizontal Orbit.
             orby (numpy.ndarray, Nx160): Vertical Orbit.
+            possum (numpy.ndarray, Nx160): BPMs Sum signal.
 
         """
         orbx, orby = [], []
+        if return_sum:
+            possum = []
+
         mini = None
         for bpm in self._devices:
             mtx = bpm.mt_posx
             mty = bpm.mt_posy
             orbx.append(mtx)
             orby.append(mty)
+
             if mini is None:
                 mini = mtx.size
             mini = _np.min([mini, mtx.size, mty.size])
 
+            if return_sum:
+                mts = bpm.mt_possum
+                possum.append(mts)
+                mini = min(mini, mts.size)
+
         for i, (obx, oby) in enumerate(zip(orbx, orby)):
             orbx[i] = obx[:mini]
             orby[i] = oby[:mini]
+            if return_sum:
+                possum[i] = possum[i][:mini]
         orbx = _np.array(orbx).T
         orby = _np.array(orby).T
-        return orbx, orby
+
+        if not return_sum:
+            return orbx, orby
+        return orbx, orby, _np.array(possum).T
 
     @staticmethod
     def get_sampling_frequency(rf_freq: float, acq_rate='Monit1'):
