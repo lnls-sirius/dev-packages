@@ -1,6 +1,5 @@
 """FOFB devices."""
 
-import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -30,6 +29,9 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     _properties = (
         'RefOrb-SP', 'RefOrb-RB',
+        'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
+        'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
+        'Intlk-Mon', 'Reset-Cmd',
     )
 
     def __init__(self, devname):
@@ -116,6 +118,34 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
             return False
         return True
 
+    @property
+    def max_orb_distortion(self):
+        """Orbit distortion threshold [nm]."""
+        return self['MaxOrbDistortion-RB']
+
+    @max_orb_distortion.setter
+    def max_orb_distortion(self, value):
+        self['MaxOrbDistortion-SP'] = value
+
+    @property
+    def max_orb_distortion_enbl(self):
+        """Orbit distortion above threshold detection enable status."""
+        return self['MaxOrbDistortionEnbl-Sts']
+
+    @max_orb_distortion_enbl.setter
+    def max_orb_distortion_enbl(self, value):
+        self['MaxOrbDistortionEnbl-Sel'] = value
+
+    @property
+    def interlock(self):
+        """Interlock status."""
+        return self['Intlk-Mon']
+
+    def cmd_reset(self):
+        """Reset interlocks."""
+        self['Reset-Cmd'] = 1
+        return True
+
 
 class _DCCDevice(_ProptyDevice):
     """FOFB Diamond communication controller device."""
@@ -123,8 +153,6 @@ class _DCCDevice(_ProptyDevice):
     DEF_TIMEOUT = 1
     DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
-
-    _sync_sleep = 1.0  # [s]
 
     _properties = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
@@ -239,6 +267,13 @@ class FamFOFBControllers(_Devices):
     DEF_BPMTRIG_RCVIN = 5
     BPM_TRIGS_IDS = [1, 2, 20]
     FOFBCTRL_BPMID_OFFSET = 480
+    BPM_DCC_PAIRS = {
+        'M1': 'M2',
+        'C1-1': 'C1-2',
+        'C2': 'C3-1',
+        'C3-2': 'C4',
+    }
+    BPM_DCC_PAIRS.update({bd: bu for bu, bd in BPM_DCC_PAIRS.items()})
 
     def __init__(self):
         """Init."""
@@ -276,6 +311,31 @@ class FamFOFBControllers(_Devices):
         devices.append(self._evt_fofb)
 
         super().__init__('SI-Glob:BS-FOFB', devices)
+
+    @property
+    def ctrlrefdevs(self):
+        """FOFBCtrlRef device list."""
+        return self._ctl_refs
+
+    @property
+    def ctrldccdevs(self):
+        """FOFBCtrlDCC device list."""
+        return self._ctl_dccs
+
+    @property
+    def bpmdccdevs(self):
+        """BPMDCC device list."""
+        return self._bpm_dccs
+
+    @property
+    def bpmtrigdevs(self):
+        """BPMLogicalTrigger device list."""
+        return self._bpm_trgs
+
+    @property
+    def fofbevtdev(self):
+        """FOFBS Event device."""
+        return self._evt_fofb
 
     def set_reforb(self, value):
         """Set RefOrb for all FOFB controllers."""
@@ -321,6 +381,73 @@ class FamFOFBControllers(_Devices):
             fun = getattr(ctrl, 'check_ref' + plane.lower())
             if not fun(value):
                 return False
+        return True
+
+    @property
+    def max_orb_distortion(self):
+        """Orbit distortion threshold [nm].
+
+        Returns:
+            threshold (numpy.ndarray, 20):
+                orbit distortion threshold for each FOFB controller.
+        """
+        devs = self._ctl_refs.values()
+        return _np.array([d.max_orb_distortion for d in devs])
+
+    def set_max_orb_distortion(self, value, timeout=DEF_TIMEOUT):
+        """Set orbit distortion threshold [nm]."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'MaxOrbDistortion-SP', value)
+        if not self._wait_devices_propty(
+                devs, 'MaxOrbDistortion-RB', value, timeout=timeout):
+            return False
+        return True
+
+    @property
+    def max_orb_distortion_enbl(self):
+        """Orbit distortion above threshold detection enable status.
+
+        Returns:
+            status (numpy.ndarray, 20):
+                orbit distortion detection status for each FOFB controller.
+        """
+        devs = self._ctl_refs.values()
+        return _np.array([d.max_orb_distortion_enbl for d in devs])
+
+    def set_max_orb_distortion_enbl(self, value, timeout=DEF_TIMEOUT):
+        """Set orbit distortion above threshold detection enable status."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'MaxOrbDistortionEnbl-Sel', value)
+        if not self._wait_devices_propty(
+                devs, 'MaxOrbDistortionEnbl-Sts', value, timeout=timeout):
+            return False
+        return True
+
+    @property
+    def interlock(self):
+        """Interlock status.
+
+        Returns:
+            status (numpy.ndarray, 20):
+                interlock status for each FOFB controller.
+        """
+        devs = self._ctl_refs.values()
+        return _np.array([d.interlock for d in devs])
+
+    @property
+    def interlock_ok(self):
+        """Interlock ok status."""
+        if not self.connected:
+            return False
+        return _np.all(self.interlock == 0)
+
+    def cmd_reset(self, timeout=DEF_TIMEOUT):
+        """Send reset interlock command for all FOFB controllers."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'Reset-Cmd', 1)
+        if not self._wait_devices_propty(
+                devs, 'Intlk-Mon', 0, timeout=timeout):
+            return False
         return True
 
     @property
@@ -424,15 +551,31 @@ class FamFOFBControllers(_Devices):
             return False
         if bpms is None:
             bpms = self._bpmnames
+        dccfmc_bpmcount = len(self.get_dccfmc_visible_bpms(bpms))
         for dev in self._ctl_dccs.values():
             if dev.dccname != 'DCCFMC':
                 continue
-            if not dev.bpm_count == len(bpms):
+            if not dev.bpm_count == dccfmc_bpmcount:
                 return False
         for bpm in bpms:
             if not self._bpm_dccs[bpm].cc_enable == 1:
                 return False
         return True
+
+    def get_dccfmc_visible_bpms(self, bpms):
+        """Return DCCFMC visible BPMs."""
+        dccenbl = set()
+        for bpm in bpms:
+            name = _PVName(bpm)
+            nick = name.sub[2:] + ('-' + name.idx if name.idx else '')
+            nickpair = self.BPM_DCC_PAIRS[nick]
+            nps = nickpair.split('-')
+            if len(nps) == 1:
+                nps.append('')
+            pair = name.substitute(sub=name.sub[:2] + nps[0], idx=nps[1])
+            dccenbl.add(bpm)
+            dccenbl.add(pair)
+        return dccenbl
 
     @property
     def time_frame_len(self):
@@ -861,15 +1004,18 @@ class HLFOFB(_Device):
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
+        'LoopMaxOrbDistortion-SP', 'LoopMaxOrbDistortion-RB',
+        'LoopMaxOrbDistortionEnbl-Sel', 'LoopMaxOrbDistortionEnbl-Sts',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
-        'FOFBCtrlStatus-Mon', 'FOFBCtrlConfBPMId-Cmd',
-        'FOFBCtrlSyncNet-Cmd', 'FOFBCtrlSyncRefOrb-Cmd',
-        'FOFBCtrlConfTFrameLen-Cmd', 'FOFBCtrlConfBPMLogTrg-Cmd',
+        'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
+        'CtrlrSyncNet-Cmd', 'CtrlrSyncRefOrb-Cmd',
+        'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
+        'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrReset-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
@@ -951,6 +1097,24 @@ class HLFOFB(_Device):
         return self['LoopGainV-Mon']
 
     @property
+    def loop_max_orb_dist(self):
+        """Loop orbit distortion threshold."""
+        return self['LoopMaxOrbDistortion-RB']
+
+    @loop_max_orb_dist.setter
+    def loop_max_orb_dist(self, value):
+        self['LoopMaxOrbDistortion-SP'] = value
+
+    @property
+    def loop_max_orb_dist_enbl(self):
+        """Loop state."""
+        return self['LoopMaxOrbDistortionEnbl-Sts']
+
+    @loop_max_orb_dist_enbl.setter
+    def loop_max_orb_dist_enbl(self, value):
+        self['LoopMaxOrbDistortionEnbl-Sel'] = value
+
+    @property
     def corr_status(self):
         """Corrector status."""
         return self['CorrStatus-Mon']
@@ -1011,31 +1175,41 @@ class HLFOFB(_Device):
     @property
     def fofbctrl_status(self):
         """FOFB controller status."""
-        return self['FOFBCtrlStatus-Mon']
+        return self['CtrlrStatus-Mon']
 
     def cmd_fofbctrl_conf_bpmid(self):
         """Command to configure all FOFB DCC BPMIds."""
-        self['FOFBCtrlConfBPMId-Cmd'] = 1
+        self['CtrlrConfBPMId-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_syncnet(self):
         """Command to sync FOFB controller net."""
-        self['FOFBCtrlSyncNet-Cmd'] = 1
+        self['CtrlrSyncNet-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_syncreforb(self):
         """Command to sync FOFB controller RefOrb."""
-        self['FOFBCtrlSyncRefOrb-Cmd'] = 1
+        self['CtrlrSyncRefOrb-Cmd'] = 1
         return True
 
-    def cmd_fofbctrl_conf_timeframelen(self):
-        """Command to configure all FOFB controller TimeFrameLen."""
-        self['FOFBCtrlConfTFrameLen-Cmd'] = 1
+    def cmd_fofbctrl_sync_timeframelen(self):
+        """Command to sync all FOFB controller TimeFrameLen."""
+        self['CtrlrSyncTFrameLen-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_conf_bpmlogtrig(self):
         """Command to configure all BPM logical triggers related to FOFB."""
-        self['FOFBCtrlConfBPMLogTrg-Cmd'] = 1
+        self['CtrlrConfBPMLogTrg-Cmd'] = 1
+        return True
+
+    def cmd_fofbctrl_sync_maxorbdist(self):
+        """Command to sync all FOFB controllers orbit distortion threshold."""
+        self['CtrlrSyncMaxOrbDist-Cmd'] = 1
+        return True
+
+    def cmd_fofbctrl_reset(self):
+        """Command to reset interlocks of all FOFB controllers."""
+        self['CtrlrReset-Cmd'] = 1
         return True
 
     @property
