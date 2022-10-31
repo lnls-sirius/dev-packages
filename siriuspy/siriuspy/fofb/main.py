@@ -120,11 +120,12 @@ class App(_Callback):
 
         self._llfofb_dev = _FamFOFBCtrls()
 
-        self._intlk_pvs = dict()
+        self._intlk_pvs = list()
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('Intlk-Mon')
             pvo.auto_monitor = True
             pvo.add_callback(self._callback_orbintlk)
+            self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
@@ -354,9 +355,14 @@ class App(_Callback):
             return False
 
         self._loop_state_lastsp = value
-        if value and not self.havebeam:
-            self._update_log('ERR: Do not have stored beam. Aborted.')
-            return False
+        if value:
+            if not self.havebeam:
+                self._update_log('ERR: Do not have stored beam. Aborted.')
+                return False
+            if _np.any([pvo.value for pvo in self._intlk_pvs]):
+                self._update_log('ERR: Reset interlocks before closing')
+                self._update_log('ERR: the loop.')
+                return False
 
         if self._thread_loopstate is not None and \
                 self._thread_loopstate.is_alive():
@@ -365,7 +371,8 @@ class App(_Callback):
             self._thread_loopstate.join()
 
         self._thread_loopstate = _Thread(
-            target=self._thread_set_loop_state, args=[value, reset], daemon=True)
+            target=self._thread_set_loop_state,
+            args=[value, reset], daemon=True)
         self._thread_loopstate.start()
         return True
 
