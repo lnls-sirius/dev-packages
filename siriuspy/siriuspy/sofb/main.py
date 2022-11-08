@@ -1047,7 +1047,7 @@ class SOFB(_BaseClass):
         if self._update_fofb_reforb and fofb.loop_state:
             dorb = self.matrix.estimate_orbit_variation(dkicks)
             dorb *= self._update_fofb_reforb_perc
-            # According to my understanding of SOLEIL's paper on this
+            # NOTE: According to my understanding of SOLEIL's paper on this
             # subject:
             # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
             # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
@@ -1060,7 +1060,13 @@ class SOFB(_BaseClass):
             fofb.cmd_fofbctrl_syncreforb()
 
         if self._download_fofb_kicks and fofb.loop_state:
-            kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
+            # NOTE: Do not download kicks from correctors not in the loop:
+            kickch = fofb.kickch.copy()
+            kickcv = fofb.kickcv.copy()
+            kickch[~fofb.chenbl] = 0
+            kickcv[~fofb.cvenbl] = 0
+
+            kicks_fofb = _np.r_[kickch, kickcv, 0]
             dorb = _np.dot(fofb.respmat, kicks_fofb)
             # NOTE: calc_kicks return the kicks to correct dorb, which means
             # that a minus sign is already applied by this method. To negate
