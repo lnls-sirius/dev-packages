@@ -20,13 +20,13 @@ class DVF(_DeviceNC):
 
     _default_timeout = 10  # [s]
 
-    # NOTE: for DVF2 preliminary bem bump measurements show that
-    # the conversion pixel -> source size is close to nominal 1.0
-    # within 10%
+    #   DVF device :       ((sizey, sizex), pixel_size_um mag_factor
     _DEV2PROPTIES = {
-        # DVF device       ((sizey, sizex), conv_pixel_2_srcsize
-        DEVICES.CAX_DVF1 : ((1024, 1280), None),  # NOTE: not implemented
-        DEVICES.CAX_DVF2 : ((1024, 1280), 1.0),
+        # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
+        DEVICES.CAX_DVF1 : ((1024, 1280), 4.8, 0.5),
+        # DVF2 Today: pixel size 4.8 um; magnification factor 5.0
+        # DVF2 Future HiFi: pixel size 2.4 um; magnification factor 5.0
+        DEVICES.CAX_DVF2 : ((1024, 1280), 4.8, 5.0),
     }
 
     _properties = (
@@ -96,10 +96,24 @@ class DVF(_DeviceNC):
         return image
 
     @property
+    def image_pixel_size(self):
+        """Image pixel size [um]."""
+        _, pixel_size, *_ = DVF._DEV2PROPTIES[self.devname]
+        return pixel_size
+
+    @property
+    def image_magnefication_factor(self):
+        """Source to image magnefication factor."""
+        _, _, mag_factor, *_ = DVF._DEV2PROPTIES[self.devname]
+        return mag_factor
+
+    @property
     def conv_pixel_2_srcsize(self):
-        """Image horizontal size (pixels)."""
-        _, conv_pixel_2_physize, *_ = DVF._DEV2PROPTIES[self.devname]
-        return conv_pixel_2_physize
+        """Pixel to source size convertion factor."""
+        pixel_size = self.image_pixel_size
+        mag_factor = self.image_magnefication_factor
+        pixel2srcsize = pixel_size / mag_factor
+        return pixel2srcsize
 
     def reset_device(self):
         """Reset DVF to a standard configuration."""
