@@ -19,9 +19,13 @@ class DVF(_DeviceNC):
     DEF_ACQUISITION_PERIOD = MIN_ACQUISITION_PERIOD
 
     _default_timeout = 10  # [s]
+
+    # NOTE: for DVF2 preliminary bem bump measurements show that
+    # the conversion pixel -> source size is close to nominal 1.0
+    # within 10%
     _DEV2PROPTIES = {
-        # DSF device       ((sizey, sizex), conv_pixel_2_physize
-        DEVICES.CAX_DVF1 : ((1024, 1280), None),
+        # DVF device       ((sizey, sizex), conv_pixel_2_srcsize
+        DEVICES.CAX_DVF1 : ((1024, 1280), None),  # NOTE: not implemented
         DEVICES.CAX_DVF2 : ((1024, 1280), 1.0),
     }
 
@@ -92,7 +96,7 @@ class DVF(_DeviceNC):
         return image
 
     @property
-    def conv_pixel_2_physize(self):
+    def conv_pixel_2_srcsize(self):
         """Image horizontal size (pixels)."""
         _, conv_pixel_2_physize, *_ = DVF._DEV2PROPTIES[self.devname]
         return conv_pixel_2_physize
