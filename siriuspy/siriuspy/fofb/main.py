@@ -1487,7 +1487,6 @@ class App(_Callback):
             bpmx = self._enable_lists['bpmx']
             bpmy = self._enable_lists['bpmy']
             dccenbl = _np.logical_or(bpmx, bpmy)
-            dccenbl[self._const.bpm_dccenbl_idcs] = True
             bpms = self._llfofb_dev.get_dccfmc_visible_bpms([
                 self._const.bpm_names[i] for i, s in enumerate(dccenbl) if s])
             dccenbl = _np.array([b in bpms for b in self._const.bpm_names])

@@ -75,12 +75,6 @@ class HLFOFBConst(_csdev.Const):
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
 
-        # list of BPMs whose DCCs must always be enabled to bypass a hardware
-        # issue (crate 05), so that all BPMs can be reached over the FOFB net
-        self.bpm_dccenbl_nick = ['05C1-1', '05C1-2', '05C3-2', '05C4']
-        self.bpm_dccenbl_idcs = [
-            self.bpm_nicknames.index(b) for b in self.bpm_dccenbl_nick]
-
         # device position along the ring
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
         self.ch_pos = _MASearch.get_mapositions(map(
