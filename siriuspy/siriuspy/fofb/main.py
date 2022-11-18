@@ -1556,9 +1556,10 @@ class App(_Callback):
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
         coeffs = _np.zeros(invmat.shape)
-        gains = _np.zeros(self._const.nr_chcv)
+        gains_mon = _np.zeros(self._const.nr_chcv)
 
-        loop_gain_h, loop_gain_v = self._loop_gain_mon_h, self._loop_gain_mon_v
+        lgain_h, lgain_h_mon = self._loop_gain_h, self._loop_gain_mon_h
+        lgain_v, lgain_v_mon = self._loop_gain_v, self._loop_gain_mon_v
         nrch, nrcv = self._const.nr_ch, self._const.nr_cv
         slch, slcv = slice(0, nrch), slice(nrch, nrch+nrcv)
 
@@ -1566,23 +1567,33 @@ class App(_Callback):
 
         if self._invrespmat_normmode == self._const.GlobIndiv.Global:
             maxval = _np.amax(abs(invmat))
-            gain_h = _np.ceil(maxval * loop_gain_h / reso) * reso
+
+            gain_h_mon = _np.ceil(maxval * lgain_h_mon / reso) * reso
+            gain_h = _np.ceil(maxval * lgain_h / reso) * reso
             if gain_h != 0:
-                norm_h = gain_h / loop_gain_h
+                norm_h = gain_h / lgain_h
                 coeffs[slch, :] = invmat[slch, :] / norm_h
-                gains[slch] = gain_h * _np.ones(nrch)
-            gain_v = _np.ceil(maxval * loop_gain_v / reso) * reso
+                gains_mon[slch] = gain_h_mon * _np.ones(nrch)
+
+            gain_v_mon = _np.ceil(maxval * lgain_v_mon / reso) * reso
+            gain_v = _np.ceil(maxval * lgain_v / reso) * reso
             if gain_v != 0:
-                norm_v = gain_v / loop_gain_v
+                norm_v = gain_v / lgain_v
                 coeffs[slcv, :] = invmat[slcv, :] / norm_v
-                gains[slcv] = gain_v * _np.ones(nrcv)
+                gains_mon[slcv] = gain_v_mon * _np.ones(nrcv)
+
         elif self._invrespmat_normmode == self._const.GlobIndiv.Individual:
             maxval = _np.amax(abs(invmat), axis=1)
-            gains[slch] = _np.ceil(maxval[slch] * loop_gain_h / reso) * reso
-            gains[slcv] = _np.ceil(maxval[slcv] * loop_gain_v / reso) * reso
+
+            gains_mon[slch] = _np.ceil(maxval[slch] * lgain_h_mon/reso) * reso
+            gains_mon[slcv] = _np.ceil(maxval[slcv] * lgain_v_mon/reso) * reso
+
+            gains = _np.zeros(self._const.nr_chcv)
+            gains[slch] = _np.ceil(maxval[slch] * lgain_h / reso) * reso
+            gains[slcv] = _np.ceil(maxval[slcv] * lgain_v / reso) * reso
             norm = _np.zeros(self._const.nr_chcv)
-            norm[slch] = gains[slch] / loop_gain_h
-            norm[slcv] = gains[slcv] / loop_gain_v
+            norm[slch] = gains[slch] / lgain_h
+            norm[slcv] = gains[slcv] / lgain_v
             idcs = norm > 0
             coeffs[idcs] = invmat[idcs] / norm[idcs][:, None]
 
@@ -1593,7 +1604,7 @@ class App(_Callback):
 
         # set internal states
         self._pscoeffs = coeffs
-        self._psgains = gains
+        self._psgains = gains_mon
         # update PVs
         self.run_callbacks('CorrCoeffs-Mon', list(self._pscoeffs.ravel()))
         self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
@@ -1607,7 +1618,8 @@ class App(_Callback):
             self._update_log('Setting corrector gains and coefficients...')
         if not self._check_corr_connection():
             return False
-        self._corrs_dev.set_invrespmat_row(self._pscoeffs)
+        if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
+            self._corrs_dev.set_invrespmat_row(self._pscoeffs)
         self._corrs_dev.set_fofbacc_gain(self._psgains)
         if log:
             self._update_log('...done!')
