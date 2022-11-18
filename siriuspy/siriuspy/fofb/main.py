@@ -7,7 +7,7 @@ from functools import partial as _part
 from threading import Thread as _Thread
 import numpy as _np
 
-from ..util import update_bit as _updt_bit
+from ..util import update_bit as _updt_bit, get_bit as _get_bit
 from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
@@ -42,6 +42,7 @@ class App(_Callback):
         self._abort_thread = False
         self._loop_max_orb_dist = self._const.DEF_MAX_ORB_DISTORTION
         self._loop_max_orb_dist_enbl = self._const.DsblEnbl.Dsbl
+        self._loop_packloss_detec_enbl = self._const.DsblEnbl.Dsbl
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
         self._corr_setpwrstateon_count = 0
@@ -60,7 +61,9 @@ class App(_Callback):
         self._fofbctrl_synctframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
         self._fofbctrl_syncmaxorbdist_count = 0
+        self._fofbctrl_syncpackloss_count = 0
         self._fofbctrl_reset_count = 0
+        self._thread_reset = None
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
         self._fofbctrl_syncuseenbllist = 0
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
@@ -78,6 +81,8 @@ class App(_Callback):
             'cv': _np.ones(self._const.nr_cv, dtype=bool),
             'rf': _np.ones(1, dtype=bool),
         }
+        self._thread_enbllist = None
+        self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
         self._tikhonov_reg_const = self._const.TIKHONOV_REG_CONST
         self._invrespmat_normmode = self._const.GlobIndiv.Global
@@ -121,8 +126,10 @@ class App(_Callback):
         self._llfofb_dev = _FamFOFBCtrls()
 
         self._intlk_pvs = list()
+        self._intlk_values = dict()
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('LoopIntlk-Mon')
+            self._intlk_values[pvo.pvname] = 0
             pvo.auto_monitor = True
             pvo.add_callback(self._callback_loopintlk)
             self._intlk_pvs.append(pvo)
@@ -143,6 +150,7 @@ class App(_Callback):
             'LoopGainV-SP': _part(self.set_loop_gain, 'v'),
             'LoopMaxOrbDistortion-SP': self.set_loop_max_orbit_dist,
             'LoopMaxOrbDistortionEnbl-Sel': self.set_loop_max_orbit_dist_enbl,
+            'LoopPacketLossDetecEnbl-Sel': self.set_loop_packloss_detec_enbl,
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
@@ -160,6 +168,7 @@ class App(_Callback):
             'CtrlrConfBPMLogTrg-Cmd': self.cmd_fofbctrl_confbpmlogtrg,
             'CtrlrSyncUseEnblList-Sel': self.set_fofbctrl_syncuseenablelist,
             'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
+            'CtrlrSyncPacketLossDetec-Cmd': self.cmd_fofbctrl_syncpacklossdet,
             'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
             'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
@@ -203,6 +212,10 @@ class App(_Callback):
             'LoopMaxOrbDistortionEnbl-Sel', self._loop_max_orb_dist_enbl)
         self.run_callbacks(
             'LoopMaxOrbDistortionEnbl-Sts', self._loop_max_orb_dist_enbl)
+        self.run_callbacks(
+            'LoopPacketLossDetecEnbl-Sel', self._loop_packloss_detec_enbl)
+        self.run_callbacks(
+            'LoopPacketLossDetecEnbl-Sts', self._loop_packloss_detec_enbl)
         self.run_callbacks('CorrStatus-Mon', self._corr_status)
         self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
         self.run_callbacks(
@@ -242,6 +255,8 @@ class App(_Callback):
             'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
         self.run_callbacks(
             'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
+        self.run_callbacks(
+            'CtrlrSyncPacketLossDetec-Cmd', self._fofbctrl_syncpackloss_count)
         self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
         self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
         self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
@@ -425,11 +440,7 @@ class App(_Callback):
             self.run_callbacks('LoopState-Sts', self._loop_state)
 
         if reset:
-            self._update_log('Reseting FOFB controllers...')
-            if self._llfofb_dev.cmd_reset():
-                self._update_log('...done!')
-            else:
-                self._update_log('ERR:Failed to reset controllers.')
+            self._do_fofbctrl_reset()
 
     def _do_loop_gain_ramp(self, ramp='up', abort=False):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
@@ -535,7 +546,7 @@ class App(_Callback):
         return True
 
     def set_loop_max_orbit_dist_enbl(self, value):
-        """Set orbit distortion threshold verification enable status."""
+        """Set orbit distortion detection enable status."""
         if not self._check_fofbctrl_connection():
             return False
 
@@ -549,6 +560,23 @@ class App(_Callback):
             self._update_log('ERR:Failed to '+act+'able detection.')
 
         self.run_callbacks('LoopMaxOrbDistortionEnbl-Sts', value)
+        return True
+
+    def set_loop_packloss_detec_enbl(self, value):
+        """Set packet loss detection enable status."""
+        if not self._check_fofbctrl_connection():
+            return False
+
+        act = ('En' if value else 'Dis')
+        self._loop_packloss_detec_enbl = value
+        self._update_log(act+'abling packet loss detection...')
+        if self._llfofb_dev.set_min_bpm_count_enbl(
+                value=value, timeout=self._const.DEF_TIMEWAIT):
+            self._update_log('...done!')
+        else:
+            self._update_log('ERR:Failed to '+act+'able detection.')
+
+        self.run_callbacks('LoopPacketLossDetecEnbl-Sts', value)
         return True
 
     # --- devices configuration ---
@@ -792,11 +820,14 @@ class App(_Callback):
 
     def set_fofbctrl_syncuseenablelist(self, value):
         """Set whether to use or not BPMEnblList in sync."""
+        if not self._check_fofbctrl_connection():
+            return False
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
         self._fofbctrl_syncuseenbllist = value
         self._update_fofbctrl_sync_enbllist()
+        self._conf_fofbctrl_packetlossdetec()
 
         self._update_log('Changed sync net command to ')
         self._update_log(('' if value else 'not ')+'use BPM EnableList.')
@@ -839,17 +870,27 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
         return False
 
+    def cmd_fofbctrl_syncpacklossdet(self, _):
+        """Sync FOFB controllers packet loss detection command."""
+        self._update_log('Received sync FOFB controllers packet')
+        self._update_log('loss detection command...Checking...')
+        if not self._check_fofbctrl_connection():
+            return False
+
+        self._conf_fofbctrl_packetlossdetec()
+
+        self._fofbctrl_syncpackloss_count += 1
+        self.run_callbacks(
+            'CtrlrSyncPacketLossDetec-Cmd', self._fofbctrl_syncpackloss_count)
+        return False
+
     def cmd_fofbctrl_reset(self, _):
         """Reset FOFB controllers interlock command."""
         self._update_log('Received reset FOFB controllers command...')
         if not self._check_fofbctrl_connection():
             return False
 
-        self._update_log('Reseting FOFB controllers...')
-        if self._llfofb_dev.cmd_reset(timeout=self._const.DEF_TIMEWAIT):
-            self._update_log('...done!')
-        else:
-            self._update_log('ERR:Failed to reset controllers.')
+        self._do_fofbctrl_reset()
 
         self._fofbctrl_reset_count += 1
         self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
@@ -970,7 +1011,7 @@ class App(_Callback):
             if self.set_respmat(_np.loadtxt(filename)):
                 msg = 'Loaded RespMat!'
             else:
-                msg = 'ERR: Problem loading RespMat from file.'
+                msg = 'ERR:Problem loading RespMat from file.'
             self._update_log(msg)
 
     def _save_respmat(self, mat):
@@ -980,6 +1021,13 @@ class App(_Callback):
 
     def set_enbllist(self, device, value):
         """Set enable list for device."""
+        if self._loop_state:
+            self._update_log('ERR:Open loop before continuing.')
+            return False
+        if self._thread_enbllist is not None and \
+                self._thread_enbllist.is_alive():
+            self._abort_thread_enbllist = True
+            self._thread_enbllist.join()
         self._update_log('Setting {0:s} EnblList'.format(device.upper()))
 
         # check size
@@ -996,14 +1044,11 @@ class App(_Callback):
             self._enable_lists[device] = bkup
             return False
 
-        # update corrector AccFreeze state
-        if device in ['ch', 'cv']:
-            if self._check_corr_connection():
-                self._check_set_corrs_opmode()
-        elif device in ['bpmx', 'bpmy']:
-            self._update_fofbctrl_sync_enbllist()
-            if self._check_fofbctrl_connection():
-                self._do_fofbctrl_syncnet()
+        # handle devices enable configuration
+        self._thread_enbllist = _Thread(
+            target=self._handle_devices_enblconfig, args=[device, ],
+            daemon=True)
+        self._thread_enbllist.start()
 
         # update readback pv
         if device == 'rf':
@@ -1012,6 +1057,32 @@ class App(_Callback):
             self.run_callbacks(device.upper()+'EnblList-RB', new)
 
         return True
+
+    def _handle_devices_enblconfig(self, device):
+        if device in ['ch', 'cv']:
+            if self._check_corr_connection():
+                self._check_set_corrs_opmode()
+        elif device in ['bpmx', 'bpmy']:
+            self._update_fofbctrl_sync_enbllist()
+            if self._check_fofbctrl_connection():
+                steps = [
+                    self._dsbl_fofbctrl_minbpmcnt_enbl,
+                    self._do_fofbctrl_syncnet,
+                    self._wait_fofbctrl_netsync,
+                    self._conf_fofbctrl_minbpmcnt,
+                    self._conf_fofbctrl_minbpmcnt_enbl,
+                ]
+                for func in steps:
+                    if self._check_thread_enbllist_abort():
+                        break
+                    if not func():
+                        break
+
+    def _check_thread_enbllist_abort(self):
+        if self._abort_thread_enbllist:
+            self._abort_thread_enbllist = False
+            return True
+        return False
 
     @property
     def bpm_enbllist(self):
@@ -1345,10 +1416,18 @@ class App(_Callback):
 
     def _callback_loopintlk(self, pvname, value, **kws):
         sub = _PVName(pvname).sub[:2]
+        old = self._intlk_values[pvname]
+        orbdis = _get_bit(value, 0) and not _get_bit(old, 0)
+        paclos = _get_bit(value, 1) and not _get_bit(old, 1)
+        self._intlk_values[pvname] = value
         if value != 0:
-            text = ('FATAL' if self._loop_state else 'WARN')
-            text += ':Ctrlr.'+sub+' detected large orb.dist.!'
-            self._update_log(text)
+            pref = ('FATAL' if self._loop_state else 'WARN') + \
+                ':Ctrlr.' + sub + ' detected '
+            if orbdis:
+                self._update_log(pref + 'large orb.dist.!')
+            if paclos:
+                self._update_log(pref + 'packet loss!')
+
             if self._loop_state != self._const.LoopState.Closed:
                 return
 
@@ -1503,14 +1582,96 @@ class App(_Callback):
 
     def _do_fofbctrl_syncnet(self):
         bpms = self._get_fofbctrl_bpmdcc_enbl()
-        if not self._llfofb_dev.check_net_synced(bpms=bpms):
-            self._update_log('Syncing FOFB net...')
-            if self._llfofb_dev.cmd_sync_net(bpms=bpms):
-                self._update_log('Sync sent to FOFB net.')
+        self._update_log('Syncing FOFB net...')
+        if self._llfofb_dev.cmd_sync_net(bpms=bpms):
+            self._update_log('Sync sent to FOFB net.')
+            return True
+        self._update_log('ERR:Failed to sync FOFB net.')
+        return False
+
+    def _wait_fofbctrl_netsync(self):
+        bpms = self._get_fofbctrl_bpmdcc_enbl()
+        _t0 = _time.time()
+        while _time.time() - _t0 < self._const.DEF_TIMEMINWAIT:
+            if self._llfofb_dev.check_net_synced(bpms=bpms):
+                self._update_log('Net synced, continuing...')
+                return True
+        self._update_log('ERR:Net not synced.')
+        return False
+
+    def _conf_fofbctrl_packetlossdetec(self):
+        # disable enable status
+        self._dsbl_fofbctrl_minbpmcnt_enbl()
+        # set minimum packet count
+        self._conf_fofbctrl_minbpmcnt()
+        # return enable status
+        self._conf_fofbctrl_minbpmcnt_enbl()
+
+    def _dsbl_fofbctrl_minbpmcnt_enbl(self):
+        timeout = self._const.DEF_TIMEWAIT
+        self._update_log('Disabling packet loss detection...')
+        self._llfofb_dev.set_min_bpm_count_enbl(0, timeout=timeout)
+        self._update_log('...done!')
+        return True
+
+    def _conf_fofbctrl_minbpmcnt(self):
+        timeout = self._const.DEF_TIMEWAIT
+        count = int(_np.sum(self._fofbctrl_syncenbllist))
+        if not _np.all(self._llfofb_dev.min_bpm_count == count):
+            self._update_log('Setting MinBPMCnt PVs...')
+            if self._llfofb_dev.set_min_bpm_count(count, timeout=timeout):
+                self._update_log('...done!')
             else:
-                self._update_log('ERR:Failed to sync FOFB net.')
+                self._update_log('ERR:Failed to sync MinBPMCnt.')
         else:
-            self._update_log('FOFB net already synced.')
+            self._update_log('MinBPMCnt PVs already configured.')
+        return True
+
+    def _conf_fofbctrl_minbpmcnt_enbl(self):
+        timeout = self._const.DEF_TIMEWAIT
+        sts = self._loop_packloss_detec_enbl
+        if not _np.all(self._llfofb_dev.min_bpm_count_enbl == sts):
+            self._update_log('Setting MinBPMCntEnbl PVs...')
+            if self._llfofb_dev.set_min_bpm_count_enbl(sts, timeout=timeout):
+                self._update_log('...done!')
+            else:
+                self._update_log('ERR:Failed to sync enable status.')
+        else:
+            self._update_log('MinBPMCntEnbl PVs already configured.')
+        return True
+
+    def _do_fofbctrl_reset(self):
+        if self._thread_reset is not None and \
+                self._thread_reset.is_alive():
+            self._update_log('ERR: reset already in progress.')
+            return False
+
+        self._thread_reset = _Thread(
+            target=self._thread_fofbctrl_reset, daemon=True)
+        self._thread_reset.start()
+        return True
+
+    def _thread_fofbctrl_reset(self):
+        self._update_log('Reseting FOFB loop...')
+
+        # disabling packet loss detection
+        self._dsbl_fofbctrl_minbpmcnt_enbl()
+
+        # reset interlock
+        self._update_log('Sending reset to FOFB controllers...')
+        if self._llfofb_dev.cmd_reset():
+            self._update_log('...done!')
+        else:
+            self._update_log('ERR:Failed to reset controllers.')
+            return
+
+        # wait for packet count to be correct
+        if not self._wait_fofbctrl_netsync():
+            return
+
+        # return packet loss detection to correct status
+        self._update_log('Reconfiguring packet loss detection...')
+        self._conf_fofbctrl_minbpmcnt_enbl()
 
     # --- auxiliary log methods ---
 
@@ -1607,11 +1768,18 @@ class App(_Callback):
                 thres_ok = self._llfofb_dev.max_orb_distortion == thres
                 if not _np.all(sts_ok) or not _np.all(thres_ok):
                     value = _updt_bit(value, 7, 1)
+                # PacketLossDetectionSynced
+                sts = self._loop_packloss_detec_enbl
+                sts_ok = self._llfofb_dev.min_bpm_count_enbl == sts
+                count = int(_np.sum(self._fofbctrl_syncenbllist))
+                count_ok = self._llfofb_dev.min_bpm_count == count
+                if not _np.all(sts_ok) or not _np.all(count_ok):
+                    value = _updt_bit(value, 8, 1)
                 # LoopInterlockOk
                 if not self._llfofb_dev.interlock_ok:
-                    value = _updt_bit(value, 8, 1)
+                    value = _updt_bit(value, 9, 1)
             else:
-                value = 0b111111111
+                value = 0b1111111111
 
             self._fofbctrl_status = value
             self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)

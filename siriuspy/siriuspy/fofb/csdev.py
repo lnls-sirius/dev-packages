@@ -28,7 +28,8 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
-        'OrbDistortionDetectionSynced', 'LoopInterlockOk')
+        'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
+        'LoopInterlockOk')
 
 
 _et = ETypes  # syntactic sugar
@@ -51,6 +52,7 @@ class HLFOFBConst(_csdev.Const):
     DEF_TIMEOUT = 10  # [s]
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
+    DEF_TIMEMINWAIT = 1  # [s]
     LOOPGAIN_RMP_TIME = 5  # [s]
     LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
@@ -149,6 +151,12 @@ class HLFOFBConst(_csdev.Const):
             'LoopMaxOrbDistortionEnbl-Sts': {
                 'type': 'enum', 'enums': _et.DSBLD_ENBLD,
                 'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sel': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sts': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
 
             # Correctors
             'CHPosS-Cte': {
@@ -211,6 +219,7 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'CtrlrConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and Kick buffer configuration
