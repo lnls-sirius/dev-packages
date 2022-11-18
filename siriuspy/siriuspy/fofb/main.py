@@ -380,11 +380,11 @@ class App(_Callback):
         self._loop_state_lastsp = value
         if value:
             if not self.havebeam:
-                self._update_log('ERR: Do not have stored beam. Aborted.')
+                self._update_log('ERR:Do not have stored beam. Aborted.')
                 return False
             if _np.any([pvo.value for pvo in self._intlk_pvs]):
-                self._update_log('ERR: Reset interlocks before closing')
-                self._update_log('ERR: the loop.')
+                self._update_log('ERR:Reset interlocks before closing')
+                self._update_log('ERR:the loop.')
                 return False
 
         if self._thread_loopstate is not None and \
@@ -463,8 +463,10 @@ class App(_Callback):
             ydata_v = ydata * self._loop_gain_mon_v
         for i in range(self._const.LOOPGAIN_RMP_NPTS):
             if not self.havebeam or abort:
-                self._update_log('WARN: Gain ramp aborted.')
-                self._update_log('WARN: Setting gain to zero.')
+                if not self.havebeam:
+                    self._update_log('ERR:There is no beam stored.')
+                self._update_log('WARN:Gain ramp aborted.')
+                self._update_log('WARN:Setting gain to zero.')
                 self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
                 self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
                 self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
@@ -505,7 +507,7 @@ class App(_Callback):
 
     def _check_abort_thread(self):
         if self._abort_thread:
-            self._update_log('WARN: Loop state thread aborted.')
+            self._update_log('WARN:Loop state thread aborted.')
             self._abort_thread = False
             return True
         return False
