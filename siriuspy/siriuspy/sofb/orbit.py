@@ -707,6 +707,7 @@ class EpicsOrbit(BaseOrbit):
 
         self._thread_sync = Thread(
             target=self._synchronize_bpms, daemon=True)
+        self._thread_sync.start()
 
     def _synchronize_bpms(self):
         msg = 'Syncing BPMs...'
