@@ -130,6 +130,7 @@ class EpicsOrbit(BaseOrbit):
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
+        self._thread_sync = None
         self._update_time_vector()
 
     @property
@@ -214,6 +215,7 @@ class EpicsOrbit(BaseOrbit):
             'OrbAcqRate-SP': self.set_orbit_acq_rate,
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
+            'SyncBPMs-Cmd': self.sync_bpms,
             }
         if not self.isring:
             return dbase
@@ -685,8 +687,18 @@ class EpicsOrbit(BaseOrbit):
                 self.timing.configure()
             elif self.is_sloworb():
                 bpm.switching_mode = _csbpm.SwModes.switching
-        Thread(target=self._synchronize_bpms, daemon=True).start()
+        self.sync_bpms(None)
         return True
+
+    def sync_bpms(self, *args):
+        """Synchronize BPMs."""
+        _ = args
+        if self._thread_sync is not None and \
+                self._thread_sync.is_alive():
+            self._thread_sync.join()
+
+        self._thread_sync = Thread(
+            target=self._synchronize_bpms, daemon=True)
 
     def _synchronize_bpms(self):
         for bpm in self._get_used_bpms():

@@ -72,6 +72,7 @@ class TLSOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
         'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
+        'SyncBPMs-Cmd',
         )
 
     _default_timeout = 10  # [s]
@@ -566,6 +567,11 @@ class TLSOFB(_Device):
     def wait_orb_status_ok(self, timeout=10):
         """."""
         return self._wait('OrbStatus-Mon', 0, timeout=timeout)
+
+    def cmd_sync_bpms(self):
+        """Synchronize BPMs."""
+        self['SyncBPMs-Cmd'] = 1
+        return True
 
 
 class BOSOFB(TLSOFB):
