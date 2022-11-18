@@ -56,6 +56,7 @@ class HLFOFBConst(_csdev.Const):
     LOOPGAIN_RMP_TIME = 5  # [s]
     LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
+    CURRZERO_RMP_FREQ = 2  # [steps/s]
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
@@ -182,6 +183,12 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetCurrZeroDuration-SP': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
+            'CorrSetCurrZeroDuration-RB': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
                 'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},

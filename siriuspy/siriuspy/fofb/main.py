@@ -51,6 +51,9 @@ class App(_Callback):
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
         self._corr_setcurrzero_count = 0
+        self._corr_setcurrzero_dur = 0
+        self._thread_currzero = None
+        self._abort_thread_currzero = False
         self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
         self._cv_maxacccurr = self._pvs_database['CVAccSatMax-RB']['value']
         self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
@@ -158,6 +161,7 @@ class App(_Callback):
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
             'CorrSetAccClear-Cmd': self.cmd_corr_accclear,
             'CorrSetCurrZero-Cmd': self.cmd_corr_currzero,
+            'CorrSetCurrZeroDuration-SP': self.set_corr_currzero_duration,
             'CHAccSatMax-SP': _part(self.set_corr_accsatmax, 'ch'),
             'CVAccSatMax-SP': _part(self.set_corr_accsatmax, 'cv'),
             'TimeFrameLen-SP': self.set_timeframelen,
@@ -230,6 +234,10 @@ class App(_Callback):
             'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
         self.run_callbacks(
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
+        self.run_callbacks(
+            'CorrSetCurrZeroDuration-SP', self._corr_setcurrzero_dur)
+        self.run_callbacks(
+            'CorrSetCurrZeroDuration-RB', self._corr_setcurrzero_dur)
         self.run_callbacks('CHAccSatMax-SP', self._ch_maxacccurr)
         self.run_callbacks('CHAccSatMax-RB', self._ch_maxacccurr)
         self.run_callbacks('CVAccSatMax-SP', self._cv_maxacccurr)
@@ -680,14 +688,61 @@ class App(_Callback):
         self._update_log('Received set corrector current to zero...')
         if not self._check_corr_connection():
             return False
+        if self._thread_currzero is not None and \
+                self._thread_currzero.is_alive():
+            self._update_log('ERR:Current ramp down already in progress.')
+            return False
 
-        self._update_log('Sending all corrector current to zero...')
-        self._corrs_dev.set_current(0)
-        self._update_log('...done!')
+        self._thread_currzero = _Thread(target=self._thread_corr_currzero)
+        self._thread_currzero.start()
 
         self._corr_setcurrzero_count += 1
         self.run_callbacks(
             'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
+        return False
+
+    def set_corr_currzero_duration(self, value):
+        """Set corrector ramp down current duration."""
+        if not 0 <= value <= 1000:
+            return False
+
+        self._corr_setcurrzero_dur = value
+        self._update_log('Changed corrector current ramp duration.')
+        if self._thread_currzero is not None and \
+                self._thread_currzero.is_alive():
+            self._abort_thread_currzero = True
+            self._thread_currzero.join()
+            self._thread_currzero = _Thread(target=self._thread_corr_currzero)
+            self._thread_currzero.start()
+        self.run_callbacks('CorrSetCurrZeroDuration-RB', value)
+        return True
+
+    def _thread_corr_currzero(self):
+        if self._corrs_dev.check_current(0):
+            self._update_log('Current of all correctors already zeroed.')
+            return
+
+        self._update_log('Sending all corrector current to zero...')
+
+        init_curr = self._corrs_dev.current
+        npts = int(self._corr_setcurrzero_dur*self._const.CURRZERO_RMP_FREQ)
+        if npts != 0:
+            xdata = _np.linspace(1, 0, npts)
+            for step in xdata:
+                curr = init_curr * step
+                if self._check_thread_currzero_abort():
+                    self._update_log('...aborted.')
+                    return
+                self._corrs_dev.set_current(curr)
+                _time.sleep(1/self._const.CURRZERO_RMP_FREQ)
+
+        self._corrs_dev.set_current(0)
+        self._update_log('...done!')
+
+    def _check_thread_currzero_abort(self):
+        if self._abort_thread_currzero:
+            self._abort_thread_currzero = False
+            return True
         return False
 
     def set_corr_accsatmax(self, device, value):
