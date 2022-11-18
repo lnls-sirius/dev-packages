@@ -349,7 +349,7 @@ class App(_Callback):
 
     # --- loop control ---
 
-    def set_loop_state(self, value, reset=False):
+    def set_loop_state(self, value, reset=False, abort=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
@@ -372,11 +372,11 @@ class App(_Callback):
 
         self._thread_loopstate = _Thread(
             target=self._thread_set_loop_state,
-            args=[value, reset], daemon=True)
+            args=[value, reset, abort], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value, reset):
+    def _thread_set_loop_state(self, value, reset, abort):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
@@ -413,7 +413,7 @@ class App(_Callback):
         else:  # opening the loop
             # do ramp down
             self._update_log('Starting Loop Gain ramp down...')
-            if self._do_loop_gain_ramp(ramp='down'):
+            if self._do_loop_gain_ramp(ramp='down', abort=abort):
                 self._update_log('Loop Gain ramp down finished!')
 
             if self._check_abort_thread():
@@ -431,7 +431,7 @@ class App(_Callback):
             else:
                 self._update_log('ERR:Failed to reset controllers.')
 
-    def _do_loop_gain_ramp(self, ramp='up'):
+    def _do_loop_gain_ramp(self, ramp='up', abort=False):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
         power = 1
         if ramp == 'up':
@@ -443,8 +443,9 @@ class App(_Callback):
             ydata_h = ydata * self._loop_gain_mon_h
             ydata_v = ydata * self._loop_gain_mon_v
         for i in range(self._const.LOOPGAIN_RMP_NPTS):
-            if not self.havebeam:
-                self._update_log('ERR: Do not have stored beam. Aborted.')
+            if not self.havebeam or abort:
+                self._update_log('WARN: Gain ramp aborted.')
+                self._update_log('WARN: Setting gain to zero.')
                 self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
                 self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
                 self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
@@ -1340,7 +1341,7 @@ class App(_Callback):
         if not value and self._loop_state == self._const.LoopState.Closed:
             self._update_log('FATAL: We do not have stored beam!')
             self._update_log('FATAL: Opening FOFB loop...')
-            self.set_loop_state(self._const.LoopState.Open)
+            self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     def _callback_loopintlk(self, pvname, value, **kws):
         sub = _PVName(pvname).sub[:2]
@@ -1360,7 +1361,8 @@ class App(_Callback):
                 self._update_log('FATAL: Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
-                self.set_loop_state(self._const.LoopState.Open, reset=True)
+                self.set_loop_state(
+                    self._const.LoopState.Open, reset=True, abort=True)
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
