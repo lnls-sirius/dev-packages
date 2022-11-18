@@ -693,14 +693,25 @@ class EpicsOrbit(BaseOrbit):
     def sync_bpms(self, *args):
         """Synchronize BPMs."""
         _ = args
+
+        msg = 'Received sync BPMs command...'
+        self._update_log(msg)
+        _log.info(msg)
+
         if self._thread_sync is not None and \
                 self._thread_sync.is_alive():
+            msg = 'Waiting for previous sync to end...'
+            self._update_log(msg)
+            _log.info(msg)
             self._thread_sync.join()
 
         self._thread_sync = Thread(
             target=self._synchronize_bpms, daemon=True)
 
     def _synchronize_bpms(self):
+        msg = 'Syncing BPMs...'
+        self._update_log(msg)
+        _log.info(msg)
         for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
@@ -715,7 +726,14 @@ class EpicsOrbit(BaseOrbit):
 
         if self.acc == 'SI' and self.sofb.fofb.connected:
             _time.sleep(0.2)
+            msg = 'Syncing FOFB Net...'
+            self._update_log(msg)
+            _log.info(msg)
             self.sofb.fofb.cmd_fofbctrl_syncnet()
+
+        msg = '...done!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def set_trig_acq_control(self, value):
         """."""
