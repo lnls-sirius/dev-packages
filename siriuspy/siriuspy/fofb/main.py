@@ -60,6 +60,7 @@ class App(_Callback):
         self._fofbctrl_status = self._pvs_database['CtrlrStatus-Mon']['value']
         self._fofbctrl_confbpmid_count = 0
         self._fofbctrl_syncnet_count = 0
+        self._thread_syncnet = None
         self._fofbctrl_syncref_count = 0
         self._fofbctrl_synctframelen_count = 0
         self._fofbctrl_confbpmlogtrg_count = 0
@@ -808,12 +809,31 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        self._do_fofbctrl_syncnet()
+
+        if self._thread_syncnet is not None and \
+                self._thread_syncnet.is_alive():
+            self._update_log('ERR:Net sync already in progress.')
+            return False
+
+        self._thread_syncnet = _Thread(
+            target=self._thread_fofbctrl_syncnet, daemon=True)
+        self._thread_syncnet.start()
 
         self._fofbctrl_syncnet_count += 1
         self.run_callbacks(
             'CtrlrSyncNet-Cmd', self._fofbctrl_syncnet_count)
         return False
+
+    def _thread_fofbctrl_syncnet(self):
+        steps = [
+            self._dsbl_fofbctrl_minbpmcnt_enbl,
+            self._do_fofbctrl_syncnet,
+            self._wait_fofbctrl_netsync,
+            self._conf_fofbctrl_minbpmcnt_enbl,
+        ]
+        for func in steps:
+            if not func():
+                break
 
     def cmd_fofbctrl_syncreforb(self, _):
         """Sync FOFB RefOrb command."""
