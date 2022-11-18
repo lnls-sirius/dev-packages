@@ -122,9 +122,9 @@ class App(_Callback):
 
         self._intlk_pvs = list()
         for dev in self._llfofb_dev.ctrlrefdevs.values():
-            pvo = dev.pv_object('Intlk-Mon')
+            pvo = dev.pv_object('LoopIntlk-Mon')
             pvo.auto_monitor = True
-            pvo.add_callback(self._callback_orbintlk)
+            pvo.add_callback(self._callback_loopintlk)
             self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
@@ -1342,7 +1342,7 @@ class App(_Callback):
             self._update_log('FATAL: Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open)
 
-    def _callback_orbintlk(self, pvname, value, **kws):
+    def _callback_loopintlk(self, pvname, value, **kws):
         sub = _PVName(pvname).sub[:2]
         if value != 0:
             text = ('FATAL' if self._loop_state else 'WARN')

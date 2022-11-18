@@ -31,7 +31,7 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         'RefOrb-SP', 'RefOrb-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
         'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
-        'Intlk-Mon', 'Reset-Cmd',
+        'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
     )
 
     def __init__(self, devname):
@@ -139,11 +139,11 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @property
     def interlock(self):
         """Interlock status."""
-        return self['Intlk-Mon']
+        return self['LoopIntlk-Mon']
 
     def cmd_reset(self):
         """Reset interlocks."""
-        self['Reset-Cmd'] = 1
+        self['LoopIntlkReset-Cmd'] = 1
         return True
 
 
@@ -444,9 +444,9 @@ class FamFOFBControllers(_Devices):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """Send reset interlock command for all FOFB controllers."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'Reset-Cmd', 1)
+        self._set_devices_propty(devs, 'LoopIntlkReset-Cmd', 1)
         if not self._wait_devices_propty(
-                devs, 'Intlk-Mon', 0, timeout=timeout):
+                devs, 'LoopIntlk-Mon', 0, timeout=timeout):
             return False
         return True
 
