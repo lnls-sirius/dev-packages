@@ -60,7 +60,7 @@ def _append_mag_data(filename, model, acc, label, section):
     mag_tps.extend(model.families.families_vertical_correctors())
     mag_tps.extend(model.families.families_sextupoles())
     mag_tps.extend(model.families.families_skew_correctors())
-    if acc.lower().startswith('si'):
+    if section.lower().startswith('si'):
         mag_tps.extend(model.families.families_id_correctors())
 
     mag_data = dict()
