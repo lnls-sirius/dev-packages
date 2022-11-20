@@ -115,7 +115,7 @@ class DVF(_DeviceNC):
         pixel2srcsize = pixel_size / mag_factor
         return pixel2srcsize
 
-    def cmd_reset_device(self, timeout=None):
+    def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
         props_values = {
             'cam1:EnableCallbacks': 1,  # Enable
