@@ -2,6 +2,8 @@
 
 import numpy as _np
 
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
 from .device import DeviceNC as _DeviceNC
 
 
@@ -14,20 +16,29 @@ class DVF(_DeviceNC):
         CAX_DVF2 = 'CAX:B:BASLER01'
         ALL = (CAX_DVF1, CAX_DVF2)
 
-    MIN_ACQUISITION_PERIOD = 0.5  # [s]
-    DEF_EXPOSURE_TIME = 0.005  # [s]
-    DEF_ACQUISITION_PERIOD = MIN_ACQUISITION_PERIOD
-
     _default_timeout = 10  # [s]
 
+    _dvfparam_fields = (
+        'ACQUISITION_TIME_MIN',  # [s]
+        'ACQUISITION_TIME_DEFAULT',  # [s]
+        'EXPOSURE_TIME_DEFAULT',  # [s]
+        'IMAGE_SIZE_V',  # [pixel]
+        'IMAGE_SIZE_H',  # [pixel]
+        'IMAGE_PIXEL_SIZE',  # [um]
+        'OPTICS_MAGNIFICATION_FACTOR',  # source to image
+    )
     #   DVF device :       ((sizey, sizex), pixel_size_um mag_factor
-    _DEV2PROPTIES = {
-        # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
-        DEVICES.CAX_DVF1 : ((1024, 1280), 4.8, 0.5),
-        # DVF2 Today: pixel size 4.8 um; magnification factor 5.0
-        # DVF2 Future HiFi: pixel size 2.4 um; magnification factor 5.0
-        DEVICES.CAX_DVF2 : ((1024, 1280), 4.8, 5.0),
-    }
+    _dev2params = {
+        DEVICES.CAX_DVF1 :
+            # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
+            _get_namedtuple('DVFParameters',
+            _dvfparam_fields, (0.5, 0.5, 0.005, 1024, 1280, 4.8, 0.5)),
+        DEVICES.CAX_DVF2 :
+            # DVF2 today: pixel size 4.8 um; magnification factor 5.0
+            # DVF2 future hifi: pixel size 2.4 um; magnification factor 5.0
+            _get_namedtuple('DVFParameters',
+            _dvfparam_fields, (0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
+        }
 
     _properties = (
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
@@ -48,6 +59,10 @@ class DVF(_DeviceNC):
         # call base class constructor
         super().__init__(devname, properties=DVF._properties)
 
+    def parameters(self):
+        """Return DVF parameters."""
+        return self._dev2params[self.devname]
+
     @property
     def exposure_time(self):
         """Camera exposure time [s]."""
@@ -60,14 +75,15 @@ class DVF(_DeviceNC):
         self['cam1:AcquireTime'] = value
 
     @property
-    def acquisition_period(self):
-        """Camera acquisition period [s]."""
+    def acquisition_time(self):
+        """Camera acquisition time [s]."""
         return self['cam1:AcquirePeriod']
 
-    @acquisition_period.setter
-    def acquisition_period(self, value):
-        """Camera acquisition period [s]."""
-        value = max(value, DVF.MIN_ACQUISITION_PERIOD)
+    @acquisition_time.setter
+    def acquisition_time(self, value):
+        """Camera acquisition time [s]."""
+        params = self.parameters
+        value = max(value, params.ACQUISITION_TIME_MIN)
         self['cam1:AcquirePeriod'] = value
 
     @property
@@ -76,42 +92,43 @@ class DVF(_DeviceNC):
         return self['cam1:Acquire']
 
     @property
-    def image_sizex(self):
+    def image_sizeh(self):
         """Image horizontal size (pixels)."""
-        shape, *_ = DVF._DEV2PROPTIES[self.devname]
-        return shape[1]
+        params = self.parameters
+        return params.IMAGE_SIZE_H
 
     @property
-    def image_sizey(self):
+    def image_sizev(self):
         """Image vertical size (pixels)."""
-        shape, *_ = DVF._DEV2PROPTIES[self.devname]
-        return shape[0]
+        params = self.parameters
+        return params.IMAGE_SIZE_V
 
     @property
     def image(self):
         """Return DVF image formatted as a (sizey, sizex) matriz."""
+        params = self.parameters
+        shape = (params.IMAGE_SIZE_V, params.IMAGE_SIZE_H)
         data = self['image1:ArrayData']
-        shape, *_ = DVF._DEV2PROPTIES[self.devname]
         image = _np.reshape(data, shape)
         return image
 
     @property
     def image_pixel_size(self):
         """Image pixel size [um]."""
-        _, pixel_size, *_ = DVF._DEV2PROPTIES[self.devname]
-        return pixel_size
+        params = self.parameters
+        return params.IMAGE_PIXEL_SIZE
 
     @property
-    def image_magnefication_factor(self):
+    def optics_magnefication_factor(self):
         """Source to image magnefication factor."""
-        _, _, mag_factor, *_ = DVF._DEV2PROPTIES[self.devname]
-        return mag_factor
+        params = self.parameters
+        return params.OPTICS_MAGNIFICATION_FACTOR
 
     @property
     def conv_pixel_2_srcsize(self):
         """Pixel to source size convertion factor."""
         pixel_size = self.image_pixel_size
-        mag_factor = self.image_magnefication_factor
+        mag_factor = self.optics_magnefication_factor
         pixel2srcsize = pixel_size / mag_factor
         return pixel2srcsize
 
@@ -125,8 +142,9 @@ class DVF(_DeviceNC):
         }
         for propty, value in props_values.items():
             self[propty] = value
-        self.exposure_time = DVF.DEF_EXPOSURE_TIME
-        self.acquisition_period = DVF.DEF_ACQUISITION_PERIOD
+        params = self.parameters
+        self.exposure_time = params.EXPOSURE_TIME_DEFAULT
+        self.acquisition_time = params.ACQUISITION_TIME_DEFAULT
         for propty, value in props_values.items():
             self._wait(propty, value, timeout=timeout, comp='eq')
 
