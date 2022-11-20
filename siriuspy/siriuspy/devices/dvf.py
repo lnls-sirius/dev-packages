@@ -115,14 +115,20 @@ class DVF(_DeviceNC):
         pixel2srcsize = pixel_size / mag_factor
         return pixel2srcsize
 
-    def reset_device(self):
+    def cmd_reset_device(self, timeout=None):
         """Reset DVF to a standard configuration."""
-        self['cam1:EnableCallbacks'] = 1  # Enable
-        self['image1:EnableCallbacks'] = 1  # Enable
-        self['ffmstream1:EnableCallbacks'] = 1  # Enable
-        self['Trans1:EnableCallbacks'] = 1  # Enable
+        props_values = {
+            'cam1:EnableCallbacks': 1,  # Enable
+            'image1:EnableCallbacks': 1,  # Enable
+            'ffmstream1:EnableCallbacks': 1,  # Enable
+            'Trans1:EnableCallbacks': 1,  # Enable    
+        }
+        for propty, value in props_values.items():
+            self[propty] = value
         self.exposure_time = DVF.DEF_EXPOSURE_TIME
         self.acquisition_period = DVF.DEF_ACQUISITION_PERIOD
+        for propty, value in props_values.items():
+            self._wait(propty, value, timeout=timeout, comp='eq')
 
     def cmd_acquire_on(self, timeout=None):
         """Tune IOC image acquisition on."""
