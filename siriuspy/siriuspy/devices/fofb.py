@@ -1343,7 +1343,7 @@ class HLFOFB(_Device):
     @property
     def bpmxenbl(self):
         """BPM X enable list."""
-        return self['BPMXEnblList-RB']
+        return _np.array(self['BPMXEnblList-RB'], dtype=bool)
 
     @bpmxenbl.setter
     def bpmxenbl(self, value):
@@ -1352,7 +1352,7 @@ class HLFOFB(_Device):
     @property
     def bpmyenbl(self):
         """BPM Y enable list."""
-        return self['BPMYEnblList-RB']
+        return _np.array(self['BPMYEnblList-RB'], dtype=bool)
 
     @bpmyenbl.setter
     def bpmyenbl(self, value):
@@ -1361,7 +1361,7 @@ class HLFOFB(_Device):
     @property
     def chenbl(self):
         """CH enable list."""
-        return self['CHEnblList-RB']
+        return _np.array(self['CHEnblList-RB'], dtype=bool)
 
     @chenbl.setter
     def chenbl(self, value):
@@ -1370,7 +1370,7 @@ class HLFOFB(_Device):
     @property
     def cvenbl(self):
         """CV enable list."""
-        return self['CVEnblList-RB']
+        return _np.array(self['CVEnblList-RB'], dtype=bool)
 
     @cvenbl.setter
     def cvenbl(self, value):
@@ -1379,7 +1379,7 @@ class HLFOFB(_Device):
     @property
     def rfenbl(self):
         """Use RF in RespMat calculation."""
-        return self['UseRF-Sts']
+        return bool(self['UseRF-Sts'])
 
     @rfenbl.setter
     def rfenbl(self, value):

@@ -269,7 +269,7 @@ class TLSOFB(_Device):
     @property
     def bpmxenbl(self):
         """."""
-        return self['BPMXEnblList-RB']
+        return _np.array(self['BPMXEnblList-RB'], dtype=bool)
 
     @bpmxenbl.setter
     def bpmxenbl(self, value):
@@ -279,7 +279,7 @@ class TLSOFB(_Device):
     @property
     def bpmyenbl(self):
         """."""
-        return self['BPMYEnblList-RB']
+        return _np.array(self['BPMYEnblList-RB'], dtype=bool)
 
     @bpmyenbl.setter
     def bpmyenbl(self, value):
@@ -289,7 +289,7 @@ class TLSOFB(_Device):
     @property
     def chenbl(self):
         """."""
-        return self['CHEnblList-RB']
+        return _np.array(self['CHEnblList-RB'], dtype=bool)
 
     @chenbl.setter
     def chenbl(self, value):
@@ -299,7 +299,7 @@ class TLSOFB(_Device):
     @property
     def cvenbl(self):
         """."""
-        return self['CVEnblList-RB']
+        return _np.array(self['CVEnblList-RB'], dtype=bool)
 
     @cvenbl.setter
     def cvenbl(self, value):
@@ -800,8 +800,8 @@ class SISOFB(BOSOFB):
     @property
     def rfenbl(self):
         """."""
-        dta = self._data
-        return self['RFEnbl-Sts'] if dta.acc_idx == dta.Rings.SI else None
+        if self._data.acc_idx == self._data.Rings.SI:
+            return bool(self['RFEnbl-Sts'])
 
     @rfenbl.setter
     def rfenbl(self, value):

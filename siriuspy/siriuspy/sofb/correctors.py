@@ -898,7 +898,7 @@ class EpicsCorrectors(BaseCorrectors):
         # NOTE: If the return value is zero, it might mean the corrector had a
         # problem. In this case we return -2 so the main correction loop can
         # exit and give back the control to the IOC.
-        iszero = _compare_kicks(curr_vals, 0, atol=1e-6)
+        iszero = _np.equal(curr_vals, 0.0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
         prob &= mask  # If corrector is not in the loop, ignore it.
