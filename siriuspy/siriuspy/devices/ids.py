@@ -3,6 +3,8 @@
 import time as _time
 import numpy as _np
 
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
 from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
@@ -104,6 +106,249 @@ class APU(_Device):
         _time.sleep(APU._MOVECHECK_SLEEP)
         while self.is_moving:
             _time.sleep(APU._MOVECHECK_SLEEP)
+
+
+class EPU(_Device):
+    """."""
+
+    class DEVICES:
+        """."""
+        EPU50_10SB = 'SI-10SB:ID-EPU50'
+        ALL = (EPU50_10SB, )
+
+    _idparam_fields = (
+        'PERIOD',  # [mm]
+        'PHASE_MIN',  # [mm]
+        'PHASE_MAX',  # [mm]
+        'PHASE_PARK',  # [mm]
+        'GAP_MIN',   # [mm]
+        'GAP_MAX',  # [mm]
+        'GAP_PARK',  # [mm]
+        )
+
+    _dev2params = {
+        DEVICES.EPU50_10SB :
+            _get_namedtuple('IDParameters',
+                _idparam_fields, (50.0, -50.0/4, 50/4, 0, 22.0, 300.0, 300.0)),
+        }
+                
+    _default_timeout = 5  # [s]
+
+    _properties = (
+        'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
+        'EnblPwrAll-Cmd', 'PwrPhase-Mon', 'PwrGap-Mon',
+        'EnblAndReleasePhase-Sel', 'EnblAndReleasePhase-Sts',
+        'AllowedToChangePhase-Mon',
+        'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
+        'AllowedToChangeGap-Mon',
+        'Phase-SP', 'Phase-RB', 'Phase-Mon',
+        'PhaseSpeed-SP', 'PhaseSpeed-RB', 'PhaseSpeed-Mon',
+        'Gap-SP', 'Gap-RB', 'Gap-Mon',
+        'GapSpeed-SP', 'GapSpeed-RB', 'GapSpeed-Mon',
+        'Stop-Cmd', 'Moving-Mon', 'IsBusy-Mon',
+    )
+
+    def __init__(self, devname):
+        """."""
+        devname = _SiriusPVName(devname)
+
+        # check if device exists
+        if devname not in EPU.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, properties=EPU._properties, auto_mon=True)
+
+    @property
+    def parameters(self):
+        """."""
+        return EPU._dev2params[self.devname]
+
+    @property
+    def speed_phase(self):
+        """Phase speed [mm/s]."""
+        return self['PhaseSpeed-Mon']
+
+    @speed_phase.setter
+    def speed_phase(self, value):
+        """[mm/s]."""
+        self['PhaseSpeed-SP'] = value
+
+    @property
+    def speed_gap(self):
+        """[mm/s]."""
+        return self['GapSpeed-Mon']
+
+    @speed_gap.setter
+    def speed_gap(self, value):
+        """[mm/s]."""
+        self['GapSpeed-SP'] = value
+
+    @property
+    def phase(self):
+        """[mm]."""
+        return self['Phase-Mon']
+
+    @phase.setter
+    def phase(self, value):
+        """[mm]."""
+        self['Phase-Mon'] = value
+
+    @property
+    def gap(self):
+        """[mm]."""
+        return self['Gap-Mon']
+
+    @gap.setter
+    def gap(self, value):
+        """[mm]."""
+        self['Gap-Mon'] = value
+
+    @property
+    def is_drives_powered(self):
+        """."""
+        status = True
+        status &= self['PwrPhase-Mon'] != 0
+        status &= self['PwrGap-Mon'] != 0
+        return status
+
+    @property
+    def is_move_enabled(self):
+        """."""
+        status = True
+        status &= self['AllowedToChangePhase-Mon'] != 0
+        status &= self['AllowedToChangeGap-Mon'] != 0
+        return status
+
+    @property
+    def is_moving(self):
+        """."""
+        return self['Moving-Mon'] != 0
+
+    @property
+    def is_busy(self):
+        """."""
+        return self['IsBusy-Mon'] != 0
+
+    @property
+    def beamline_ctrl_enabled(self):
+        """."""
+        return self['BeamLineCtrlEnbl-Sts'] != 0
+
+    def cmd_beamline_ctrl_disable(self, timeout):
+        """."""
+        props_values = {'BeamLineCtrlEnbl-Sel': 0}
+        return self._set_and_wait(props_values, timeout=timeout, comp='eq')
+
+    def cmd_beamline_ctrl_enable(self, timeout):
+        """."""
+        # value compared to in 'not equal' operation
+        props_values = {'BeamLineCtrlEnbl-Sel': 0}
+        return self._set_and_wait(props_values, timeout=timeout, comp='ne')
+
+    def cmd_drive_turn_on(self, timeout=None):
+        """."""
+        self['EnblPwrAll-Cmd'] = 1
+        props_values = {
+            'PwrPhase-Mon': 0,  # value compared to in 'not equal' operation
+            'PwrGap-Mon': 0,  # value compared to in 'not equal' operation
+            }
+        return self._set_and_wait(props_values, timeout=timeout, comp='ne')
+
+    def cmd_move_enable(self, timeout=None):
+        """."""
+        return self._move_enable_or_disable(state=1, timeout=timeout)
+
+    def cmd_move_disable(self, timeout=None):
+        """."""
+        return self._move_enable_or_disable(state=0, timeout=timeout)
+        
+    def cmd_reset(self, timeout=None):
+        """."""
+        success = True
+        success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
+        success &= self.cmd_drive_turn_on(timeout=timeout)
+        success &= self.cmd_move_enable(timeout=timeout)
+        return success
+        
+    def cmd_move_stop(self, timeout=None):
+        """."""
+        self['Stop-Cmd'] = 1
+        success = True
+        props_values = {'Moving-Mon': 0}
+        success = self._set_and_wait(props_values, timeout=timeout)
+        # value compared to in 'not equal' operation
+        props_values = {'isBusy-Mon': 0}
+        success = self._set_and_wait(props_values, timeout=timeout, cmp='ne')
+        return success
+
+    def cmd_move_start(self, timeout=None):
+        """."""
+        if self.is_busy:
+            return False
+        self.cmd_drive_turn_on()
+        self.cmd_move_enable()
+        self['ChangeGap-Cmd'] = 1
+        self['ChangePhase-Cmd'] = 1
+        # value compared to in 'not equal' operation
+        props_values = {'Moving-Mon': 0}
+        success = self._set_and_wait(props_values, timeout=timeout, cmp='ne')
+        return success
+
+    def cmd_move(self, phase, gap, timeout=None):
+        """."""
+        if self.is_busy:
+            return False
+        
+        dtime_tol = 1.2  # additional percentual ETA
+        dtime_phase = abs(phase - self.phase) / self.speed_phase
+        dtime_gap = abs(gap - self.gap) / self.speed_gap
+        dtime_max = max(dtime_phase, dtime_gap)
+        
+        # command move start
+        self.phase, self.gap = phase, gap,
+        success = self.cmd_move_start(timeout=timeout)
+        if not success:
+            return
+
+        # wait for moviment within reasonable time
+        time_init = _time.time()
+        while self.is_moving or self.is_busy:
+            if _time.time() - time_init > dtime_tol * dtime_max:
+                return False
+            _time.sleep(0.1)
+
+        # successfull movement at this point
+        return True
+        
+    def cmd_move_park(self, timeout=None):
+        """."""
+        if self.is_busy:
+            return False
+        params = self.parameters
+        return self.cmd_move(
+            params.PHASE_PARK, params.GAP_PARK, timeout=timeout)
+
+    # --- private methods ---
+
+    def _move_enable_or_disable(self, state, timeout=None):
+        """."""
+        props_values = {
+            'EnblAndReleasePhase-Sel': state,
+            'EnblAndReleaseGap-Sel': state,
+            }
+        return self._set_and_wait(props_values, timeout=timeout)
+
+    def _set_and_wait(self, props_values, timeout=None, comp='eq'):
+        timeout = timeout or self._default_timeout
+        for propty, value in props_values.items():
+            self[propty] = value
+        success = True
+        for propty, value in props_values.items():
+            propty_sts = propty.replace('-Sel', '-Sts')
+            success &= self._wait(
+                propty_sts, value, timeout=timeout, comp=comp)
+        return success
 
 
 class IDCorrectors(_DeviceApp):
