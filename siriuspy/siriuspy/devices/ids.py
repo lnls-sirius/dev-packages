@@ -113,6 +113,7 @@ class EPU(_Device):
 
     class DEVICES:
         """."""
+
         EPU50_10SB = 'SI-10SB:ID-EPU50'
         ALL = (EPU50_10SB, )
 
@@ -127,11 +128,11 @@ class EPU(_Device):
         )
 
     _dev2params = {
-        DEVICES.EPU50_10SB :
+        DEVICES.EPU50_10SB:
             _get_namedtuple('IDParameters',
                 _idparam_fields, (50.0, -50.0/4, 50/4, 0, 22.0, 300.0, 300.0)),
         }
-                
+
     _default_timeout = 5  # [s]
 
     _properties = (
@@ -142,9 +143,10 @@ class EPU(_Device):
         'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
         'AllowedToChangeGap-Mon',
         'Phase-SP', 'Phase-RB', 'Phase-Mon',
-        'PhaseSpeed-SP', 'PhaseSpeed-RB', 'PhaseSpeed-Mon',
+        'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
         'Gap-SP', 'Gap-RB', 'Gap-Mon',
         'GapSpeed-SP', 'GapSpeed-RB', 'GapSpeed-Mon',
+        'MaxGapSpeed-SP', 'MaxGapSpeed-RB',
         'Stop-Cmd', 'Moving-Mon', 'IsBusy-Mon',
     )
 
@@ -175,6 +177,16 @@ class EPU(_Device):
         self['PhaseSpeed-SP'] = value
 
     @property
+    def max_speed_phase(self):
+        """Max phase speed [mm/s]."""
+        return self['MaxPhaseSpeed-RB']
+
+    @max_speed_phase.setter
+    def max_speed_phase(self, value):
+        """Max phase speed [mm/s]."""
+        self['MaxPhaseSpeed-SP'] = value
+
+    @property
     def speed_gap(self):
         """[mm/s]."""
         return self['GapSpeed-Mon']
@@ -183,6 +195,16 @@ class EPU(_Device):
     def speed_gap(self, value):
         """[mm/s]."""
         self['GapSpeed-SP'] = value
+
+    @property
+    def max_speed_gap(self):
+        """Max gap speed [mm/s]."""
+        return self['MaxGapSpeed-RB']
+
+    @max_speed_gap.setter
+    def max_speed_gap(self, value):
+        """Max gap speed [mm/s]."""
+        self['MaxGapSpeed-SP'] = value
 
     @property
     def phase(self):
@@ -262,7 +284,7 @@ class EPU(_Device):
     def cmd_move_disable(self, timeout=None):
         """."""
         return self._move_enable_or_disable(state=0, timeout=timeout)
-        
+
     def cmd_reset(self, timeout=None):
         """."""
         success = True
@@ -270,7 +292,7 @@ class EPU(_Device):
         success &= self.cmd_drive_turn_on(timeout=timeout)
         success &= self.cmd_move_enable(timeout=timeout)
         return success
-        
+
     def cmd_move_stop(self, timeout=None):
         """."""
         self['Stop-Cmd'] = 1
@@ -299,12 +321,12 @@ class EPU(_Device):
         """."""
         if self.is_busy:
             return False
-        
+
         dtime_tol = 1.2  # additional percentual ETA
         dtime_phase = abs(phase - self.phase) / self.speed_phase
         dtime_gap = abs(gap - self.gap) / self.speed_gap
         dtime_max = max(dtime_phase, dtime_gap)
-        
+
         # command move start
         self.phase, self.gap = phase, gap,
         success = self.cmd_move_start(timeout=timeout)
@@ -320,7 +342,7 @@ class EPU(_Device):
 
         # successfull movement at this point
         return True
-        
+
     def cmd_move_park(self, timeout=None):
         """."""
         if self.is_busy:
