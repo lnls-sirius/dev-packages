@@ -143,12 +143,15 @@ class EPU(_Device):
         'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
         'AllowedToChangeGap-Mon',
         'Phase-SP', 'Phase-RB', 'Phase-Mon',
+        'PhaseSpeed-SP', 'PhaseSpeed-RB', 'PhaseSpeed-Mon',
         'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
+        'ChangePhase-Cmd',
         'Gap-SP', 'Gap-RB', 'Gap-Mon',
         'GapSpeed-SP', 'GapSpeed-RB', 'GapSpeed-Mon',
         'MaxGapSpeed-SP', 'MaxGapSpeed-RB',
+        'ChangeGap-Cmd',
         'Stop-Cmd', 'Moving-Mon', 'IsBusy-Mon',
-    )
+        )
 
     def __init__(self, devname):
         """."""
@@ -167,64 +170,64 @@ class EPU(_Device):
         return EPU._dev2params[self.devname]
 
     @property
-    def speed_phase(self):
+    def phase_drive_power_on(self):
+        """."""
+        return self['PwrPhase-Mon'] != 0
+
+    @property
+    def gap_drive_power_on(self):
+        """."""
+        return self['PwrGap-Mon'] != 0
+
+    @property
+    def phase_speed(self):
+        """Phase speed [mm/s]."""
+        return self['PhaseSpeed-RB']
+
+    @property
+    def phase_speed_mon(self):
         """Phase speed [mm/s]."""
         return self['PhaseSpeed-Mon']
 
-    @speed_phase.setter
-    def speed_phase(self, value):
-        """[mm/s]."""
-        self['PhaseSpeed-SP'] = value
-
     @property
-    def max_speed_phase(self):
+    def phase_speed_max(self):
         """Max phase speed [mm/s]."""
         return self['MaxPhaseSpeed-RB']
 
-    @max_speed_phase.setter
-    def max_speed_phase(self, value):
-        """Max phase speed [mm/s]."""
-        self['MaxPhaseSpeed-SP'] = value
+    @property
+    def gap_speed(self):
+        """[mm/s]."""
+        return self['GapSpeed-RB']
 
     @property
-    def speed_gap(self):
+    def gap_speed_mon(self):
         """[mm/s]."""
         return self['GapSpeed-Mon']
 
-    @speed_gap.setter
-    def speed_gap(self, value):
-        """[mm/s]."""
-        self['GapSpeed-SP'] = value
-
     @property
-    def max_speed_gap(self):
+    def gap_speed_max(self):
         """Max gap speed [mm/s]."""
         return self['MaxGapSpeed-RB']
-
-    @max_speed_gap.setter
-    def max_speed_gap(self, value):
-        """Max gap speed [mm/s]."""
-        self['MaxGapSpeed-SP'] = value
 
     @property
     def phase(self):
         """[mm]."""
-        return self['Phase-Mon']
+        return self['Phase-RB']
 
-    @phase.setter
-    def phase(self, value):
+    @property
+    def phase_mon(self):
         """[mm]."""
-        self['Phase-Mon'] = value
+        return self['Phase-Mon']
 
     @property
     def gap(self):
         """[mm]."""
-        return self['Gap-Mon']
+        return self['Gap-RB']
 
-    @gap.setter
-    def gap(self, value):
+    @property
+    def gap_mon(self):
         """[mm]."""
-        self['Gap-Mon'] = value
+        return self['Gap-Mon']
 
     @property
     def is_drives_powered(self):
@@ -235,11 +238,21 @@ class EPU(_Device):
         return status
 
     @property
+    def is_move_phase_enabled(self):
+        """."""
+        return self['AllowedToChangePhase-Mon'] != 0
+
+    @property
+    def is_move_gap_enabled(self):
+        """."""
+        return self['AllowedToChangeGap-Mon'] != 0
+
+    @property
     def is_move_enabled(self):
         """."""
         status = True
-        status &= self['AllowedToChangePhase-Mon'] != 0
-        status &= self['AllowedToChangeGap-Mon'] != 0
+        status &= self.is_move_phase_enabled
+        status &= self.is_move_gap_enabled
         return status
 
     @property
@@ -257,85 +270,165 @@ class EPU(_Device):
         """."""
         return self['BeamLineCtrlEnbl-Sts'] != 0
 
-    def cmd_beamline_ctrl_disable(self, timeout):
-        """."""
-        props_values = {'BeamLineCtrlEnbl-Sel': 0}
-        return self._set_and_wait(props_values, timeout=timeout, comp='eq')
+    # --- cmd_wait
 
-    def cmd_beamline_ctrl_enable(self, timeout):
+    def cmd_wait_while_busy(self, timeout=None):
         """."""
-        # value compared to in 'not equal' operation
-        props_values = {'BeamLineCtrlEnbl-Sel': 0}
-        return self._set_and_wait(props_values, timeout=timeout, comp='ne')
+        timeout = timeout or self._default_timeout
+        time_init = _time.time()
+        while self.is_busy:
+            _time.sleep(min(0.1, timeout))
+            if _time.time() - time_init > timeout:
+                return False
+        return True
+
+    # --- cmd_beamline and cmd_drive
 
     def cmd_drive_turn_on(self, timeout=None):
         """."""
+        if self.phase_drive_power_on and self.gap_drive_power_on:
+            return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {
             'PwrPhase-Mon': 0,  # value compared to in 'not equal' operation
             'PwrGap-Mon': 0,  # value compared to in 'not equal' operation
             }
-        return self._set_and_wait(props_values, timeout=timeout, comp='ne')
+        return self._wait(props_values, timeout=timeout, comp='ne')
+
+    def cmd_beamline_ctrl_enable(self, timeout=None):
+        """."""
+        # props_values = {'BeamLineCtrlEnbl-Sel': 1}
+        # return self._set_and_wait(props_values, timeout=timeout, comp='eq')
+        return self._set_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
+
+    def cmd_beamline_ctrl_disable(self, timeout=None):
+        """."""
+        # props_values = {'BeamLineCtrlEnbl-Sel': 0}
+        # return self._set_and_wait(props_values, timeout=timeout, comp='eq')
+        return self._set_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
+
+    # --- cmd_set ---
+
+    def cmd_set_phase(self, phase, timeout=None):
+        """."""
+        return self._set_sp('Phase-SP', phase, timeout)
+
+    def cmd_set_gap(self, gap, timeout=None):
+        """."""
+        return self._set_sp('Gap-SP', gap, timeout)
+
+    def cmd_set_phase_speed(self, phase_speed, timeout=None):
+        """."""
+        return self._set_sp('PhaseSpeed-SP', phase_speed, timeout)
+
+    def cmd_set_gap_speed(self, gap_speed, timeout=None):
+        """."""
+        return self._set_sp('GapSpeed-SP', gap_speed, timeout)
+
+    def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
+        """."""
+        return self._set_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
+
+    def cmd_set_gap_speed_max(self, gap_speed_max, timeout=None):
+        """."""
+        return self._set_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
+
+    # --- cmd_move disable/enable ---
+
+    # NOTE: not working. PVs not consistent!
+
+    def cmd_move_phase_enable(self, timeout=None):
+        """."""
+        # return self._set_sp('EnblAndReleasePhase-Sel', 1, timeout)
+        self['EnblAndReleasePhase-Sel'] = 1
+        return True
+
+    def cmd_move_phase_disable(self, timeout=None):
+        """."""
+        # return self._set_sp('EnblAndReleasePhase-Sel', 0, timeout)
+        self['EnblAndReleasePhase-Sel'] = 0
+        return True
+
+    def cmd_move_gap_enable(self, timeout=None):
+        """."""
+        # return self._set_sp('EnblAndReleaseGap-Sel', 1, timeout)
+        self['EnblAndReleaseGap-Sel'] = 1
+        return True
+
+    def cmd_move_gap_disable(self, timeout=None):
+        """."""
+        # return self._set_sp('EnblAndReleaseGap-Sel', 0, timeout)
+        self['EnblAndReleaseGap-Sel'] = 1
+        return True
 
     def cmd_move_enable(self, timeout=None):
         """."""
-        return self._move_enable_or_disable(state=1, timeout=timeout)
+        success = True
+        success &= self.cmd_move_phase_enable(timeout=timeout)
+        success &= self.cmd_move_gap_enable(timeout=timeout)
+        return success
 
     def cmd_move_disable(self, timeout=None):
         """."""
-        return self._move_enable_or_disable(state=0, timeout=timeout)
-
-    def cmd_reset(self, timeout=None):
-        """."""
         success = True
-        success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
-        success &= self.cmd_drive_turn_on(timeout=timeout)
-        success &= self.cmd_move_enable(timeout=timeout)
+        success &= self.cmd_move_phase_disable(timeout=timeout)
+        success &= self.cmd_move_gap_disable(timeout=timeout)
         return success
+
+    # -- cmd_move
 
     def cmd_move_stop(self, timeout=None):
         """."""
-        self['Stop-Cmd'] = 1
-        success = True
-        props_values = {'Moving-Mon': 0}
-        success = self._set_and_wait(props_values, timeout=timeout)
-        # value compared to in 'not equal' operation
-        props_values = {'isBusy-Mon': 0}
-        success = self._set_and_wait(props_values, timeout=timeout, cmp='ne')
-        return success
+        timeout = timeout or self._default_timeout
 
-    def cmd_move_start(self, timeout=None):
-        """."""
-        if self.is_busy:
+        # wait for not busy state
+        if self.cmd_wait_while_busy(timeout=timeout):
             return False
-        self.cmd_drive_turn_on()
-        self.cmd_move_enable()
-        self['ChangeGap-Cmd'] = 1
-        self['ChangePhase-Cmd'] = 1
-        # value compared to in 'not equal' operation
-        props_values = {'Moving-Mon': 0}
-        success = self._set_and_wait(props_values, timeout=timeout, cmp='ne')
-        return success
+
+        # send stop command
+        self['Stop-Cmd'] = 1
+
+        # check for successful stop
+        success = True
+        if self.cmd_wait_while_busy(timeout=timeout):
+            return False
+        success &= super()._wait('Moving-Mon', 0, tiemout=timeout)
+        success &= super()._wait('IsBusy-Mon', 0, tiemout=timeout)
+        if not success:
+            return False
+
+        # enable movement again
+        return self.cmd_move_enable(timeout=timeout)
+
+    def cmd_move_phase_start(self, timeout=None):
+        """."""
+        return self._move_start('ChangePhase-Cmd', timeout=timeout)
+
+    def cmd_move_gap_start(self, timeout=None):
+        """."""
+        return self._move_start('ChangeGap-Cmd', timeout=timeout)
 
     def cmd_move(self, phase, gap, timeout=None):
         """."""
-        if self.is_busy:
-            return False
-
-        dtime_tol = 1.2  # additional percentual ETA
-        dtime_phase = abs(phase - self.phase) / self.speed_phase
-        dtime_gap = abs(gap - self.gap) / self.speed_gap
+        dtime_tol = 1.4  # additional percentual ETA
+        dtime_phase = abs(phase - self.phase) / self.phase_speed
+        dtime_gap = abs(gap - self.gap) / self.gap_speed
         dtime_max = max(dtime_phase, dtime_gap)
 
         # command move start
-        self.phase, self.gap = phase, gap,
-        success = self.cmd_move_start(timeout=timeout)
-        if not success:
-            return
+        self.cmd_set_phase(phase=phase, timeout=timeout)
+        self.cmd_set_gap(gap=gap, timeout=timeout)
 
-        # wait for moviment within reasonable time
+        success = self.cmd_move_phase_start(timeout=timeout)
+        if not success:
+            return False
+        success = self.cmd_move_gap_start(timeout=timeout)
+        if not success:
+            return False
+
+        # wait for movement within reasonable time
         time_init = _time.time()
-        while self.is_moving or self.is_busy:
+        while self.is_moving:
             if _time.time() - time_init > dtime_tol * dtime_max:
                 return False
             _time.sleep(0.1)
@@ -345,31 +438,58 @@ class EPU(_Device):
 
     def cmd_move_park(self, timeout=None):
         """."""
-        if self.is_busy:
-            return False
         params = self.parameters
         return self.cmd_move(
             params.PHASE_PARK, params.GAP_PARK, timeout=timeout)
 
+    # --- cmd_reset
+
+    def cmd_reset(self, timeout=None):
+        """."""
+        success = True
+        success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
+        success &= self.cmd_drive_turn_on(timeout=timeout)
+        success &= self.cmd_move_enable(timeout=timeout)
+        return success
+
     # --- private methods ---
 
-    def _move_enable_or_disable(self, state, timeout=None):
+    def _move_start(self, cmd_propty, timeout=None):
         """."""
-        props_values = {
-            'EnblAndReleasePhase-Sel': state,
-            'EnblAndReleaseGap-Sel': state,
-            }
-        return self._set_and_wait(props_values, timeout=timeout)
-
-    def _set_and_wait(self, props_values, timeout=None, comp='eq'):
         timeout = timeout or self._default_timeout
-        for propty, value in props_values.items():
-            self[propty] = value
+
+        # wait for not busy state
+        if self.cmd_wait_while_busy(timeout=timeout):
+            return False
+
+        # send move command
+        self[cmd_propty] = 1
+
+        return True
+
+    def _set_sp(self, propties_sp, values, timeout=None):
+        timeout = timeout or self._default_timeout
+        success = True
+        if isinstance(propties_sp, str):
+            propties_sp = (propties_sp, )
+            values = (values, )
+        for propty_sp, value in zip(propties_sp, values):
+            if value == self[propty_sp]:
+                continue
+            if not self.cmd_wait_while_busy(timeout=timeout):
+                return False
+            self[propty_sp] = value
+            propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            success &= super()._wait(
+                propty_rb, value, timeout=timeout, comp='eq')
+        return success
+
+    def _wait(self, props_values, timeout=None, comp='eq'):
+        timeout = timeout or self._default_timeout
         success = True
         for propty, value in props_values.items():
-            propty_sts = propty.replace('-Sel', '-Sts')
-            success &= self._wait(
-                propty_sts, value, timeout=timeout, comp=comp)
+            success &= super()._wait(
+                propty, value, timeout=timeout, comp=comp)
         return success
 
 
