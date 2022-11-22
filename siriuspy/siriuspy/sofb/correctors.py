@@ -869,12 +869,13 @@ class EpicsCorrectors(BaseCorrectors):
                     okg[i] = True
                     continue
                 val = corr.value if mode == 'ready' else corr.refvalue
-                if val is not None:
-                    if isinstance(corr, RFCtrl):
-                        okg[i] = _compare_kicks(
-                            values[i], val, atol=RFCtrl.TINY_VAR)
-                    else:
-                        okg[i] = _compare_kicks(values[i], val)
+                if val is None:
+                    continue
+                if isinstance(corr, RFCtrl):
+                    okg[i] = _compare_kicks(
+                        values[i], val, atol=RFCtrl.TINY_VAR)
+                else:
+                    okg[i] = _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
