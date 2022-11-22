@@ -692,6 +692,7 @@ class SOFBTLines(ConstTLines):
                 'value': self.StsLblsOrb._fields},
             'SlowOrbTimeout-Mon': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1001},
+            'SyncBPMs-Cmd': {'type': 'int', 'value': 0},
             })
         return self._add_prefix(dbase, prefix)
 

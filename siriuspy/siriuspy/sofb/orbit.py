@@ -130,6 +130,7 @@ class EpicsOrbit(BaseOrbit):
         self._orbit_thread = _Repeat(
             1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
+        self._thread_sync = None
         self._update_time_vector()
 
     @property
@@ -214,6 +215,7 @@ class EpicsOrbit(BaseOrbit):
             'OrbAcqRate-SP': self.set_orbit_acq_rate,
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
+            'SyncBPMs-Cmd': self.sync_bpms,
             }
         if not self.isring:
             return dbase
@@ -685,10 +687,32 @@ class EpicsOrbit(BaseOrbit):
                 self.timing.configure()
             elif self.is_sloworb():
                 bpm.switching_mode = _csbpm.SwModes.switching
-        Thread(target=self._synchronize_bpms, daemon=True).start()
+        self.sync_bpms(None)
         return True
 
+    def sync_bpms(self, *args):
+        """Synchronize BPMs."""
+        _ = args
+
+        msg = 'Received sync BPMs command...'
+        self._update_log(msg)
+        _log.info(msg)
+
+        if self._thread_sync is not None and \
+                self._thread_sync.is_alive():
+            msg = 'Waiting for previous sync to end...'
+            self._update_log(msg)
+            _log.info(msg)
+            self._thread_sync.join()
+
+        self._thread_sync = Thread(
+            target=self._synchronize_bpms, daemon=True)
+        self._thread_sync.start()
+
     def _synchronize_bpms(self):
+        msg = 'Syncing BPMs...'
+        self._update_log(msg)
+        _log.info(msg)
         for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
@@ -703,7 +727,14 @@ class EpicsOrbit(BaseOrbit):
 
         if self.acc == 'SI' and self.sofb.fofb.connected:
             _time.sleep(0.2)
+            msg = 'Syncing FOFB Net...'
+            self._update_log(msg)
+            _log.info(msg)
             self.sofb.fofb.cmd_fofbctrl_syncnet()
+
+        msg = '...done!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def set_trig_acq_control(self, value):
         """."""

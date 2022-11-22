@@ -641,8 +641,10 @@ class _EVROUT(_BaseLL):
             source = ''
         if not source:
             return {'Src': invalid}
-        elif source.startswith(('Dsbl', 'Clock')):
+        elif source.startswith('Clock'):
             return {'Src': self._source_enums.index(source)}
+        elif source.startswith('Dsbl'):
+            return {'Src': self._source_enums.index('Dsbld')}
 
     def _set_source(self, value):
         if value is None:
