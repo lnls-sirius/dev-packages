@@ -273,8 +273,9 @@ class BPMDCC(_DCCDevice):
 
     def __init__(self, devname):
         """Init."""
-        if not _BPMSearch.is_valid_devname(devname):
-            raise NotImplementedError(devname)
+        # Temporarily remove this check to control new 10SB BPMs
+        # if not _BPMSearch.is_valid_devname(devname):
+        #     raise NotImplementedError(devname)
         super().__init__(devname, 'DCCP2P')
 
 
@@ -320,6 +321,10 @@ class FamFOFBControllers(_Devices):
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
                 self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
+        bpm2dsbl = ['SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2']
+        self._bpmdcc2dsbl = dict()
+        for bpm in bpm2dsbl:
+            self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
         # fofb event
         self._evt_fofb = Event('FOFBS')
 
@@ -593,6 +598,13 @@ class FamFOFBControllers(_Devices):
             bpms = self._bpmnames
         for bpm in bpms:
             enbdccs.append(self._bpm_dccs[bpm])
+
+        # temporary solution: disable BPM DCCs that are not in FOFB network
+        dcc2dsbl = list(self._bpmdcc2dsbl.values())
+        self._set_devices_propty(dcc2dsbl, 'CCEnable-SP', 0)
+        if not self._wait_devices_propty(
+                dcc2dsbl, 'CCEnable-RB', 0, timeout=timeout/2):
+            return False
 
         self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
         if not self._wait_devices_propty(
