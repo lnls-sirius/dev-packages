@@ -8,6 +8,7 @@ from threading import Thread as _Thread
 import asyncio as _asyncio
 import urllib as _urllib
 import ssl as _ssl
+import logging as _log
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
 
@@ -219,7 +220,7 @@ class ClientArchiver:
             pvn2idcs[pvname_orig[i]] = _np.arange(ini, end)
 
         resps = self._make_request(all_urls, return_json=True)
-        if resps is None:
+        if not resps:
             return None
 
         pvn2resp = dict()
@@ -339,15 +340,26 @@ class ClientArchiver:
                 if any([not r.ok for r in response]):
                     return None
                 if return_json:
-                    response = await _asyncio.gather(
-                        *[r.json() for r in response])
+                    jsons = list()
+                    for res in response:
+                        try:
+                            data = await res.json()
+                            jsons.append(data)
+                        except ValueError:
+                            _log.error(f'Error with URL {res.url}')
+                            jsons.append(None)
+                    response = jsons
             else:
                 response = await session.get(
                     url, ssl=False, timeout=self._timeout)
                 if not response.ok:
                     return None
                 if return_json:
-                    response = await response.json()
+                    try:
+                        response = await response.json()
+                    except ValueError:
+                        _log.error(f'Error with URL {response.url}')
+                        response = None
         except _asyncio.TimeoutError as err_msg:
             raise _exceptions.TimeoutError(err_msg)
         return response

@@ -104,16 +104,18 @@ class BaseTimingConfig(_Callback):
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}
+        self.put_enable = True
 
     @property
     def connected(self):
         """Status connected."""
         conn = True
-        for k, pv in self._config_pvs_rb.items():
+        for pv in self._config_pvs_rb.values():
             if not pv.connected:
                 _log.debug('NOT CONN: ' + pv.pvname)
             conn &= pv.connected
-        for k, pv in self._config_pvs_sp.items():
+
+        for pv in self._config_pvs_sp.values():
             if not pv.connected:
                 _log.debug('NOT CONN: ' + pv.pvname)
             conn &= pv.connected
@@ -146,14 +148,17 @@ class BaseTimingConfig(_Callback):
         """Configure method."""
         if not self.connected:
             return False
+
+        if not self.put_enable:
+            return True
         for k, pvo in self._config_pvs_sp.items():
             if k in self._config_ok_vals:
                 pvo.put(self._config_ok_vals[k], wait=False)
         return True
 
 
-def compare_kicks(val1, val2):
+def compare_kicks(val1, val2, atol=_ConstTLines.TINY_KICK, rtol=0):
     """."""
     if isinstance(val1, _np.ndarray) or isinstance(val2, _np.ndarray):
-        return _np.isclose(val1, val2, atol=_ConstTLines.TINY_KICK)
-    return _math.isclose(val1, val2, abs_tol=_ConstTLines.TINY_KICK)
+        return _np.isclose(val1, val2, atol=atol, rtol=rtol)
+    return _math.isclose(val1, val2, abs_tol=atol, rel_tol=rtol)

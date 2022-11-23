@@ -441,9 +441,9 @@ class SICurrInfoApp(_CurrInfoApp):
             self._prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_13c4_pv, time_window=0.5, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_14c4_pv, time_window=0.5, use_pv_timestamp=False)
 
         self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
         self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
@@ -620,7 +620,7 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # calculate efficiency
-        self._injcurr = value_dq[-1] - value_dq.min()  # mA
+        self._injcurr = value_dq.max() - value_dq.min()  # mA
         self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC

@@ -32,12 +32,17 @@ def get_psnames(isadv=False):
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'QS'}))
         names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+             'dev': '(CH|CV|QS)'}))
+        names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': 'FC.*'}))
     else:
         names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q.*|S.*|C.*|FC.*)'}))
 
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
+    to_remove.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '10SB', 'dev': '(CH|CV|QS)'}))
     for name in to_remove:
         names.remove(name)
     return names
