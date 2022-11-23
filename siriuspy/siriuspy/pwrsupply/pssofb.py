@@ -392,19 +392,11 @@ class PSConnSOFB:
         indcs_sofb = self.indcs_sofb[bbbname]
         indcs_bsmp = self.indcs_bsmp[bbbname]
 
-        # get valid current setpoints from sofb array
-        current = curr_sp[indcs_sofb]
-
         # initialize setpoint
-        # read last setpoint already stored in PSBSMP object:
-        readback = udc.sofb_current_rb_get()
-        if readback is None:
-            setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
-        else:
-            setpoint = _np.asarray(readback)
-
-        # update setpoint
-        setpoint[indcs_bsmp] = current
+        # NOTE: curr_sp may contain NaNs. They will be handled by low level
+        #    classes.
+        setpoint = _np.full(PSConnSOFB.MAX_NR_DEVS, _np.nan)
+        setpoint[indcs_bsmp] = curr_sp[indcs_sofb]
 
         # --- bsmp communication ---
         try:
@@ -427,7 +419,8 @@ class PSConnSOFB:
         # send signal to IOC to update one power supply state
         if self._sofb_update_iocs:
             pvobj = self._pvobjs[bbbname]
-            pvobj.put(1, wait=False)  # send signal to IOC
+            if pvobj.connected and not pvobj.status:
+                pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""

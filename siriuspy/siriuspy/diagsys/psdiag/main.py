@@ -21,10 +21,7 @@ class PSDiagApp(_App):
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
-            if devname.dev in ['FCH', 'FCV']:
-                pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-RB'
-            else:
-                pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
+            pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
             pvo = _ComputedPV(
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)
@@ -32,21 +29,7 @@ class PSDiagApp(_App):
 
             # DiagStatus-Mon
             computer = _PSStatusPV()
-            if devname.dev in ['FCH', 'FCV']:
-                pvs = [None]*6
-                pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
-                pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
-
-                alarm_list = [
-                    ':PSAmpOverCurrFlagL-Sts', ':PSAmpOverCurrFlagR-Sts',
-                    ':PSAmpOverTempFlagL-Sts', ':PSAmpOverTempFlagR-Sts',
-                ]
-                computer.ALARM_PVS = list()
-                for idx, alarm in enumerate(alarm_list):
-                    pvidx = idx + computer.CURRT_DIFF + 1
-                    computer.ALARM_PVS.append(pvidx)
-                    pvs[pvidx] = devname + alarm
-            elif devname.sec != 'LI':
+            if devname.sec != 'LI':
                 intlks = _get_ps_interlocks(psname=psname)
                 intlk_list = [':' + ppt for ppt in intlks if 'Intlk' in ppt]
                 alarm_list = [':' + ppt for ppt in intlks if 'Alarm' in ppt]
@@ -59,21 +42,23 @@ class PSDiagApp(_App):
                         alarm_list.extend(
                             [aux+':'+alm for alm in intlks if 'Alarm' in alm])
 
-                pvs = [None]*(5+len(intlk_list)+len(alarm_list))
+                nbpvs = 4 if psname.dev in ['FCH', 'FCV'] else 5
+                pvs = [None]*(nbpvs+len(intlk_list)+len(alarm_list))
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
                 pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
                 pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
-                pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
+                if psname.dev not in ['FCH', 'FCV']:
+                    pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
 
                 computer.INTLK_PVS = list()
                 for idx, intlk in enumerate(intlk_list):
-                    pvidx = idx + computer.WAVFRM_MON + 1
+                    pvidx = idx + nbpvs
                     computer.INTLK_PVS.append(pvidx)
                     pvs[pvidx] = devname + intlk
                 computer.ALARM_PVS = list()
                 for idx, alarm in enumerate(alarm_list):
-                    pvidx = idx + computer.INTLK_PVS[-1] + 1
+                    pvidx = idx + nbpvs + len(intlk_list)
                     computer.ALARM_PVS.append(pvidx)
                     pvs[pvidx] = devname + alarm
             else:

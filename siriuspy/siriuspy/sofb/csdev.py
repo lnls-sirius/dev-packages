@@ -64,7 +64,7 @@ class ConstTLines(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
-    DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_MAX_ORB_DISTORTION = 50  # [um]
     MAX_TRIGMODE_RATE = 2  # [Hz]
     MIN_SLOWORB_RATE = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
@@ -137,23 +137,22 @@ class SOFBTLines(ConstTLines):
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
 
-        # Define the BPMs and correctors:
+        # Define the BPMs:
         self.bpm_names = _BPMSearch.get_names({'sec': acc, 'dev': 'BPM'})
-        self.ch_names = _PSSearch.get_psnames(
-            {'sec': acc, 'dis': 'PS', 'dev': 'CH'})
-        self.cv_names = _PSSearch.get_psnames(
-            {'sec': acc, 'dis': 'PS', 'dev': 'CV'})
+
+        # Define correctors:
+        filter_ch = dict(sec=acc, dis='PS', dev='CH')
+        filter_cv = dict(sec=acc, dis='PS', dev='CV')
+        if self.acc == 'SI':
+            filter_ch.update({'sub': '..(M|C).'})
+            filter_cv.update({'sub': '..(M|C).'})
+        self.ch_names = _PSSearch.get_psnames(filter_ch)
+        self.cv_names = _PSSearch.get_psnames(filter_cv)
         if self.acc == 'TS':
-            self.cv_names = [
-                n for n in self.cv_names
-                if not ('E' in n.idx or '0' in n.idx)]
             self.ch_names = [_PVName('TS-01:PU-EjeSeptG'), ] + self.ch_names
-        elif self.acc == 'SI':
-            id_cors = ('SA', 'SB', 'SP')
-            self.ch_names = list(filter(
-                lambda x: not x.sub.endswith(id_cors), self.ch_names))
-            self.cv_names = list(filter(
-                lambda x: not x.sub.endswith(id_cors), self.cv_names))
+            self.cv_names = [
+                cvn for cvn in self.cv_names
+                if not ('E' in cvn.idx or '0' in cvn.idx)]
 
         # Give them a nickname:
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
@@ -191,7 +190,7 @@ class SOFBTLines(ConstTLines):
             self.evt_cor_name = 'Orb' + self.acc
             self.clk_cor_name = 'Clock3'
 
-        self.evt_acq_name = 'Dig' + self.acc
+        self.evt_acq_name = 'Linac'
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.circum = 21.2477 if self.acc == 'TB' else 26.8933  # in meters
@@ -226,28 +225,28 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCH-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -264,6 +263,18 @@ class SOFBTLines(ConstTLines):
             'LoopPerfItersOk-Mon': {
                 'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
                 'lolim': -1, 'hilim': 100},
+            'LoopEffectiveRate-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 100},
+            'LoopNumIters-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 0,
+                'lolim': 0, 'hilim': 100000},
+            'LoopPrintEveryNumIters-SP': {
+                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
+            'LoopPrintEveryNumIters-RB': {
+                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
             'LoopPerfItersTOut-Mon': {
                 'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
                 'lolim': -1, 'hilim': 100},
@@ -681,6 +692,7 @@ class SOFBTLines(ConstTLines):
                 'value': self.StsLblsOrb._fields},
             'SlowOrbTimeout-Mon': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1001},
+            'SyncBPMs-Cmd': {'type': 'int', 'value': 0},
             })
         return self._add_prefix(dbase, prefix)
 
@@ -800,16 +812,16 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'LoopPIDKpRF-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpRF-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdRF-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -960,6 +972,54 @@ class SOFBSI(SOFBRings, ConstSI):
     def get_sofb_database(self, prefix=''):
         """Return SOFB database."""
         db_ring = {
+            'FOFBDownloadKicksPerc-SP': {
+                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
+            'FOFBDownloadKicksPerc-RB': {
+                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
+            'FOFBDownloadKicks-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBDownloadKicks-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBDownloadKicks-Mon': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBUpdateRefOrbPerc-SP': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrbPerc-RB': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrb-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBUpdateRefOrb-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBUpdateRefOrb-Mon': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBNullSpaceProj-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBNullSpaceProj-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBNullSpaceProj-Mon': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBZeroDistortionAtBPMs-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBZeroDistortionAtBPMs-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'FOFBZeroDistortionAtBPMs-Mon': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
                 'lolim': 0, 'hilim': 1000},

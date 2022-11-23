@@ -3,7 +3,8 @@
 import time as _time
 import operator as _opr
 
-from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
+    CASeverityException as _CASeverityException
 import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
@@ -123,8 +124,8 @@ class Device:
         pvobj = self._pvs[propty]
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
-        except _ChannelAccessGetFailure:
-            # This is raised in a Virtual Circuit Disconnect (192)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
             print('Could not get value of {}'.format(pvobj.pvname))
             value = None
@@ -218,12 +219,13 @@ class DeviceNC(Device):
     This device class is to be used for those devices whose
     names and PVs are not compliant to the Sirius naming system.
     """
+    DEVSEP = ':'
 
     def _create_pvs(self, devname):
         pvs = dict()
         devname = devname or ''
         for propty in self._properties:
-            pvname = devname + ':' + propty
+            pvname = devname + self.DEVSEP + propty
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return devname, pvs
