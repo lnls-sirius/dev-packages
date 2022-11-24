@@ -7,6 +7,7 @@ from functools import partial as _part
 import numpy as _np
 
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
+from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
 from .device import Device as _Device, Devices as _Devices, \
@@ -445,17 +446,17 @@ class EGun(_Devices, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
-    BIAS_MULTI_BUNCH = -56.0  # [V]
-    BIAS_SINGLE_BUNCH = -100.0  # [V]
+    BIAS_MULTI_BUNCH = _InjConst.BIAS_MULTI_BUNCH
+    BIAS_SINGLE_BUNCH = _InjConst.BIAS_SINGLE_BUNCH
     BIAS_TOLERANCE = 1.0  # [V]
-    HV_OPVALUE = 90.0  # [kV]
+    HV_OPVALUE = _InjConst.HV_OPVALUE
     HV_TOLERANCE = 1.0  # [kV]
     HV_LEAKCURR_OPVALUE = 0.015  # [mA]
     HV_MAXVALUE = 90.0  # [kV]
     HV_RAMPUP_NRPTS = 15
     HV_RAMPDN_NRPTS = 6
     HV_RAMP_DURATION = 70  # [s]
-    FILACURR_OPVALUE = 1.39  # [A]
+    FILACURR_OPVALUE = _InjConst.FILACURR_OPVALUE
     FILACURR_TOLERANCE = 0.20  # [A]
     FILACURR_MAXVALUE = 1.42  # [A]
     FILACURR_RAMP_NRPTS = 10
