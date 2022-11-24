@@ -1,8 +1,8 @@
 """Injection Control App."""
 
 from .. import csdev as _csdev
-from ..devices import InjSysStandbyHandler as _InjSysHandler, \
-    EGun as _EGun
+from ..devices.injsys import InjSysStandbyHandler as _InjSysHandler
+from ..devices.egun import EGun as _EGun
 
 
 # --- Enumeration Types ---

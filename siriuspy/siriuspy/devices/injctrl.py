@@ -3,10 +3,17 @@
 from .device import Device as _Device
 
 from ..clientarch import Time
+from ..injctrl.csdev import Const as _Const
 
 
 class InjCtrl(_Device):
     """Injection Control IOC device."""
+
+    InjMode = _Const.InjMode
+    InjType = _Const.InjType
+    InjTypeMon = _Const.InjTypeMon
+    PUMode = _Const.PUMode
+    PUModeMon = _Const.PUModeMon
 
     _properties = (
         'Mode-Sel', 'Mode-Sts',
@@ -56,7 +63,12 @@ class InjCtrl(_Device):
 
     @injmode.setter
     def injmode(self, value):
-        self['Mode-Sel'] = value
+        self._enum_setter('Mode-Sel', value, self.InjMode)
+
+    @property
+    def injmode_str(self):
+        """Injection mode string (Decay or TopUp)."""
+        return self.InjMode._fields[self['Mode-Sts']]
 
     @property
     def injtype(self):
@@ -65,7 +77,12 @@ class InjCtrl(_Device):
 
     @injtype.setter
     def injtype(self, value):
-        self['Type-Sel'] = value
+        self._enum_setter('Type-Sel', value, self.InjType)
+
+    @property
+    def injtype_str(self):
+        """Injection mode string (SingleBunch or MultiBunch)."""
+        return self.InjType._fields[self['Type-Sts']]
 
     @property
     def injtype_mon(self):
@@ -79,7 +96,12 @@ class InjCtrl(_Device):
 
     @pumode.setter
     def pumode(self, value):
-        self['PUMode-Sel'] = value
+        self._enum_setter('PUMode-Sel', value, self.PUMode)
+
+    @property
+    def pumode_str(self):
+        """PU mode string (Accumulation, Optimization or OnAxis)."""
+        return self.PUMode._fields[self['PUMode-Sts']]
 
     @property
     def pumode_mon(self):
