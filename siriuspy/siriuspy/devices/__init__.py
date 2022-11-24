@@ -32,7 +32,7 @@ from .syncd import DevicesSync
 from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 
-del device, bpm, dcct, egun, ict, lillrf, modltr,
-del pwrsupply, posang, psconv, pssofb, rf, injsys
+del device, bpm, dcct, egun, ict, lillrf, modltr
+del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, bbb, machshift
