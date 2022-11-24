@@ -12,6 +12,7 @@ from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
 from .ict import ICT, TranspEff
 from .ids import IDCorrectors, APU, APUFeedForward
+from .injctrl import InjCtrl
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
     LILLRFStandbyHandler, InjSysPUModeHandler
