@@ -116,6 +116,10 @@ class Corrector(_BaseTimingConfig):
 class RFCtrl(Corrector):
     """RF control class."""
 
+    TINY_VAR = 0.01  # [Hz]
+    LARGE_VAR = 10000  # [Hz]
+    MAX_DELTA = 200  # [Hz]
+
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
@@ -139,14 +143,13 @@ class RFCtrl(Corrector):
     @value.setter
     def value(self, freq):
         """."""
-        delta_max = 200  # Hz
         freq0 = self.value
         if freq0 is None or freq is None:
             return
         delta = abs(freq-freq0)
-        if delta < 0.1 or delta > 10000:
+        if delta < self.TINY_VAR or delta > self.LARGE_VAR:
             return
-        npoints = int(delta//delta_max) + 2
+        npoints = int(delta//self.MAX_DELTA) + 2
         freq_span = _np.linspace(freq0, freq, npoints)[1:]
         for i, freq in enumerate(freq_span, 1):
             self._sp.put(freq, wait=False)
@@ -866,7 +869,13 @@ class EpicsCorrectors(BaseCorrectors):
                     okg[i] = True
                     continue
                 val = corr.value if mode == 'ready' else corr.refvalue
-                okg[i] = val is not None and _compare_kicks(values[i], val)
+                if val is None:
+                    continue
+                if isinstance(corr, RFCtrl):
+                    okg[i] = _compare_kicks(
+                        values[i], val, atol=RFCtrl.TINY_VAR)
+                else:
+                    okg[i] = _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
@@ -898,7 +907,7 @@ class EpicsCorrectors(BaseCorrectors):
         # NOTE: If the return value is zero, it might mean the corrector had a
         # problem. In this case we return -2 so the main correction loop can
         # exit and give back the control to the IOC.
-        iszero = _compare_kicks(curr_vals, 0, atol=1e-6)
+        iszero = _np.equal(curr_vals, 0.0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
         prob &= mask  # If corrector is not in the loop, ignore it.

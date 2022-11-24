@@ -31,7 +31,9 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         'RefOrb-SP', 'RefOrb-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
         'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
-        'Intlk-Mon', 'Reset-Cmd',
+        'MinBPMCnt-SP', 'MinBPMCnt-RB',
+        'MinBPMCntEnbl-Sel', 'MinBPMCntEnbl-Sts',
+        'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
     )
 
     def __init__(self, devname):
@@ -137,13 +139,31 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self['MaxOrbDistortionEnbl-Sel'] = value
 
     @property
+    def min_bpm_count(self):
+        """Minimum BPM packet count."""
+        return self['MinBPMCnt-RB']
+
+    @min_bpm_count.setter
+    def min_bpm_count(self, value):
+        self['MinBPMCnt-SP'] = value
+
+    @property
+    def min_bpm_count_enbl(self):
+        """Packet loss detection enable status."""
+        return self['MinBPMCntEnbl-Sts']
+
+    @min_bpm_count_enbl.setter
+    def min_bpm_count_enbl(self, value):
+        self['MinBPMCntEnbl-Sel'] = value
+
+    @property
     def interlock(self):
         """Interlock status."""
-        return self['Intlk-Mon']
+        return self['LoopIntlk-Mon']
 
     def cmd_reset(self):
         """Reset interlocks."""
-        self['Reset-Cmd'] = 1
+        self['LoopIntlkReset-Cmd'] = 1
         return True
 
 
@@ -253,8 +273,9 @@ class BPMDCC(_DCCDevice):
 
     def __init__(self, devname):
         """Init."""
-        if not _BPMSearch.is_valid_devname(devname):
-            raise NotImplementedError(devname)
+        # Temporarily remove this check to control new 10SB BPMs
+        # if not _BPMSearch.is_valid_devname(devname):
+        #     raise NotImplementedError(devname)
         super().__init__(devname, 'DCCP2P')
 
 
@@ -300,6 +321,10 @@ class FamFOFBControllers(_Devices):
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
                 self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
+        bpm2dsbl = ['SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2']
+        self._bpmdcc2dsbl = dict()
+        for bpm in bpm2dsbl:
+            self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
         # fofb event
         self._evt_fofb = Event('FOFBS')
 
@@ -424,6 +449,46 @@ class FamFOFBControllers(_Devices):
         return True
 
     @property
+    def min_bpm_count(self):
+        """Minimum BPM packet count.
+
+        Returns:
+            minimum (numpy.ndarray, 20):
+                minimum BPM packet count for each FOFB controller.
+        """
+        devs = self._ctl_refs.values()
+        return _np.array([d.min_bpm_count for d in devs])
+
+    def set_min_bpm_count(self, value, timeout=DEF_TIMEOUT):
+        """Set minimum BPM packet count."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'MinBPMCnt-SP', value)
+        if not self._wait_devices_propty(
+                devs, 'MinBPMCnt-RB', value, timeout=timeout):
+            return False
+        return True
+
+    @property
+    def min_bpm_count_enbl(self):
+        """Packet loss detection enable status.
+
+        Returns:
+            status (numpy.ndarray, 20):
+                packet loss detection status for each FOFB controller.
+        """
+        devs = self._ctl_refs.values()
+        return _np.array([d.min_bpm_count_enbl for d in devs])
+
+    def set_min_bpm_count_enbl(self, value, timeout=DEF_TIMEOUT):
+        """Set orbit distortion above threshold detection enable status."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'MinBPMCntEnbl-Sel', value)
+        if not self._wait_devices_propty(
+                devs, 'MinBPMCntEnbl-Sts', value, timeout=timeout):
+            return False
+        return True
+
+    @property
     def interlock(self):
         """Interlock status.
 
@@ -444,9 +509,9 @@ class FamFOFBControllers(_Devices):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """Send reset interlock command for all FOFB controllers."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'Reset-Cmd', 1)
+        self._set_devices_propty(devs, 'LoopIntlkReset-Cmd', 1)
         if not self._wait_devices_propty(
-                devs, 'Intlk-Mon', 0, timeout=timeout):
+                devs, 'LoopIntlk-Mon', 0, timeout=timeout):
             return False
         return True
 
@@ -533,6 +598,13 @@ class FamFOFBControllers(_Devices):
             bpms = self._bpmnames
         for bpm in bpms:
             enbdccs.append(self._bpm_dccs[bpm])
+
+        # temporary solution: disable BPM DCCs that are not in FOFB network
+        dcc2dsbl = list(self._bpmdcc2dsbl.values())
+        self._set_devices_propty(dcc2dsbl, 'CCEnable-SP', 0)
+        if not self._wait_devices_propty(
+                dcc2dsbl, 'CCEnable-RB', 0, timeout=timeout/2):
+            return False
 
         self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
         if not self._wait_devices_propty(
@@ -1006,6 +1078,7 @@ class HLFOFB(_Device):
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
         'LoopMaxOrbDistortion-SP', 'LoopMaxOrbDistortion-RB',
         'LoopMaxOrbDistortionEnbl-Sel', 'LoopMaxOrbDistortionEnbl-Sts',
+        'LoopPacketLossDetecEnbl-Sel', 'LoopPacketLossDetecEnbl-Sts',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
         'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
@@ -1015,7 +1088,8 @@ class HLFOFB(_Device):
         'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
         'CtrlrSyncNet-Cmd', 'CtrlrSyncRefOrb-Cmd',
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
-        'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrReset-Cmd',
+        'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
+        'CtrlrReset-Cmd',
         'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
@@ -1107,12 +1181,21 @@ class HLFOFB(_Device):
 
     @property
     def loop_max_orb_dist_enbl(self):
-        """Loop state."""
+        """Loop orbit distortion detection enable status."""
         return self['LoopMaxOrbDistortionEnbl-Sts']
 
     @loop_max_orb_dist_enbl.setter
     def loop_max_orb_dist_enbl(self, value):
         self['LoopMaxOrbDistortionEnbl-Sel'] = value
+
+    @property
+    def loop_packloss_detec_enbl(self):
+        """Loop packet loss detection enable status."""
+        return self['LoopPacketLossDetecEnbl-Sts']
+
+    @loop_packloss_detec_enbl.setter
+    def loop_packloss_detec_enbl(self, value):
+        self['LoopPacketLossDetecEnbl-Sel'] = value
 
     @property
     def corr_status(self):
@@ -1203,8 +1286,13 @@ class HLFOFB(_Device):
         return True
 
     def cmd_fofbctrl_sync_maxorbdist(self):
-        """Command to sync all FOFB controllers orbit distortion threshold."""
+        """Command to sync all FOFB controllers orbit distortion detection."""
         self['CtrlrSyncMaxOrbDist-Cmd'] = 1
+        return True
+
+    def cmd_fofbctrl_sync_packlossdet(self):
+        """Command to sync all FOFB controllers packet loss detection."""
+        self['CtrlrSyncPacketLossDetec-Cmd'] = 1
         return True
 
     def cmd_fofbctrl_reset(self):
@@ -1267,7 +1355,7 @@ class HLFOFB(_Device):
     @property
     def bpmxenbl(self):
         """BPM X enable list."""
-        return self['BPMXEnblList-RB']
+        return _np.array(self['BPMXEnblList-RB'], dtype=bool)
 
     @bpmxenbl.setter
     def bpmxenbl(self, value):
@@ -1276,7 +1364,7 @@ class HLFOFB(_Device):
     @property
     def bpmyenbl(self):
         """BPM Y enable list."""
-        return self['BPMYEnblList-RB']
+        return _np.array(self['BPMYEnblList-RB'], dtype=bool)
 
     @bpmyenbl.setter
     def bpmyenbl(self, value):
@@ -1285,7 +1373,7 @@ class HLFOFB(_Device):
     @property
     def chenbl(self):
         """CH enable list."""
-        return self['CHEnblList-RB']
+        return _np.array(self['CHEnblList-RB'], dtype=bool)
 
     @chenbl.setter
     def chenbl(self, value):
@@ -1294,7 +1382,7 @@ class HLFOFB(_Device):
     @property
     def cvenbl(self):
         """CV enable list."""
-        return self['CVEnblList-RB']
+        return _np.array(self['CVEnblList-RB'], dtype=bool)
 
     @cvenbl.setter
     def cvenbl(self, value):
@@ -1303,7 +1391,7 @@ class HLFOFB(_Device):
     @property
     def rfenbl(self):
         """Use RF in RespMat calculation."""
-        return self['UseRF-Sts']
+        return bool(self['UseRF-Sts'])
 
     @rfenbl.setter
     def rfenbl(self, value):
