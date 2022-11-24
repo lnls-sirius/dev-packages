@@ -93,6 +93,10 @@ class Device:
         """Return PV object for a given device property."""
         return self._pvs[propty]
 
+    def pv_ctrlvars(self, propty):
+        """Return PV object control variable."""
+        return self._pvs[propty].get_ctrlvars()
+
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
         attributes = dict()
