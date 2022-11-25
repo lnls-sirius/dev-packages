@@ -206,10 +206,10 @@ def get_injctrl_propty_database():
         'TopUpPeriod-RB': {
             'type': 'int', 'value': 5, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
-        'TopUpStartTimeOffset-SP': {
+        'TopUpHeadStartTime-SP': {
             'type': 'int', 'value': 0, 'unit': 's',
             'lolim': 0, 'hilim': 10*60},
-        'TopUpStartTimeOffset-RB': {
+        'TopUpHeadStartTime-RB': {
             'type': 'int', 'value': 0, 'unit': 's',
             'lolim': 0, 'hilim': 10*60},
         'TopUpNextInj-Mon': {
