@@ -59,6 +59,7 @@ class Const(_csdev.Const):
 
     RF_RMP_TIMEOUT = 3*60  # [s]
     TI_INJ_TIMEOUT = 3*60  # [s]
+    MAX_INJTIMEOUT = 3*60  # [s]
 
     BIAS_SINGLE_BUNCH = -100.0  # [V]
     BIAS_MULTI_BUNCH = -56.0  # [V]

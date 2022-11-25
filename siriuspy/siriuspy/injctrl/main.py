@@ -853,8 +853,8 @@ class App(_Callback):
                         self._update_log('WARN:'+prob)
 
         if self._mode == _Const.InjMode.TopUp:
-            if self._evg_dev.nrpulses == 0:
-                self._update_log('ERR:Aborted. RepeatBucketList cannot be 0.')
+            if self._evg_dev.nrpulses != 1:
+                self._update_log('ERR:Aborted. RepeatBucketList must be 1.')
                 return False
 
             if self._abort:
@@ -888,24 +888,25 @@ class App(_Callback):
         return True
 
     def _wait_injection(self):
-        init_mode = self._mode
-        init_autostop = self._autostop
-        while self._currinfo_dev.current < self._target_current:
-            # if there are problems, abort injection
-            if not self._check_allok_2_inject(show_warn=False):
-                self._abort_injection()
-                return False
+        init_mode, init_autostop = self._mode, self._autostop
+        if init_mode == _Const.InjMode.TopUp:
+            # if in TopUp mode, wait for injectionevt to be off (done)
+            _t0 = _time.time()
+            while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
+                if not self._check_allok_2_inject(show_warn=False):
+                    self._abort_injection()
+                    return False
+                if not self._evg_dev.injection_state:
+                    break
+            _time.sleep(0.02)
+        else:
             # if in decay mode and autostop is turned off, interrupt wait
-            if init_mode == _Const.InjMode.Decay and \
-                    init_autostop and not self._autostop:
-                return False
-            # if in TopUp mode and max pulses exceeded, stop injection
-            if self._mode == _Const.InjMode.TopUp and \
-                    self._evg_dev.injection_count >= self._topupnrpulses:
-                break
-            _time.sleep(0.1)
-
-        self._update_log('Target current reached!')
+            while self._currinfo_dev.current < self._target_current:
+                if init_mode == _Const.InjMode.Decay and \
+                        init_autostop and not self._autostop:
+                    return False
+                _time.sleep(0.1)
+            self._update_log('Target current reached!')
         return True
 
     def _stop_injection(self):
@@ -977,29 +978,27 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 break
 
-            self._topupnext += self._topupperiod
-            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-
-            if self._currinfo_dev.current <= self._target_current:
-                self._update_topupsts(_Const.TopUpSts.TurningOn)
-                self._update_log('Starting injection...')
-                if not self._start_injection():
-                    break
-
-                self._update_topupsts(_Const.TopUpSts.Injecting)
-                self._update_log('Injecting...')
-                if not self._wait_injection():
-                    break
-
-                self._update_topupsts(_Const.TopUpSts.TurningOff)
-                self._update_bucket_list_topup()
-
             self._update_topupsts(_Const.TopUpSts.Waiting)
             self._update_log('Waiting for next injection...')
-
             if not self._wait_topup_period():
                 break
+
             self._update_log('Top-up period elapsed. Preparing...')
+            self._update_topupsts(_Const.TopUpSts.TurningOn)
+            self._update_log('Starting injection...')
+            if not self._start_injection():
+                break
+
+            self._update_topupsts(_Const.TopUpSts.Injecting)
+            self._update_log('Injecting...')
+            if not self._wait_injection():
+                break
+
+            self._update_topupsts(_Const.TopUpSts.TurningOff)
+            self._update_bucket_list_topup()
+
+            self._topupnext += self._topupperiod
+            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
@@ -1021,8 +1020,7 @@ class App(_Callback):
             if elapsed % 60 == 0:
                 _log.info(text)
 
-            if self._currinfo_dev.current < self._target_current and \
-                    _time.time() > self._topupnext - self._get_adv_estim():
+            if _time.time() > self._topupnext - self._get_adv_estim():
                 return True
 
         self._update_log('Remaining time: 0s')
