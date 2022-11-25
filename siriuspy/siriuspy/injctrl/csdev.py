@@ -200,14 +200,13 @@ def get_injctrl_propty_database():
         'TopUpState-Sts': {
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 15*60, 'unit': 's',
-            'lolim': 30, 'hilim': 6*60*60},
+            'type': 'int', 'value': 5, 'unit': 'min',
+            'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 15*60, 'unit': 's',
-            'lolim': 30, 'hilim': 6*60*60},
+            'type': 'int', 'value': 5, 'unit': 'min',
+            'lolim': 1, 'hilim': 6*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
-        'TopUpNextInjRound-Cmd': {'type': 'int', 'value': 0},
         'TopUpNrPulses-SP': {
             'type': 'int', 'value': 1, 'unit': 'pulses',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},

@@ -67,10 +67,9 @@ class App(_Callback):
 
         self._topupstate_sel = _Const.OffOn.Off
         self._topupstate_sts = _Const.TopUpSts.Off
-        self._topupperiod = 15*60
+        self._topupperiod = 5*60  # [s]
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
-        self._topupnextinjround_count = 0
         self._topupnrpulses = 1
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
@@ -259,11 +258,9 @@ class App(_Callback):
         self.run_callbacks('BucketListStep-RB', self._bucketlist_step)
         self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
         self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
-        self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self.run_callbacks('TopUpPeriod-SP', self._topupperiod/60)
+        self.run_callbacks('TopUpPeriod-RB', self._topupperiod/60)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         self.run_callbacks('AutoStop-Sel', self._autostop)
@@ -526,14 +523,17 @@ class App(_Callback):
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
                 return
-            if self._topup_thread and not self._topup_thread.is_alive()\
-                    or not self._topup_thread:
-                self._topupnext = _Time.now().timestamp()
+            if self._topup_thread is not None and \
+                    not self._topup_thread.is_alive() or\
+                    self._topup_thread is None:
+                now, period = _Time.now().timestamp(), self._topupperiod
+                self._topupnext = now - (now % period) + period
                 self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
-            if self._topup_thread and self._topup_thread.is_alive():
+            if self._topup_thread is not None and \
+                    self._topup_thread.is_alive():
                 self._stop_topup_thread()
                 now = _Time.now().timestamp()
                 self._topupnext = now - (now % (24*60*60)) + 3*60*60
@@ -542,17 +542,19 @@ class App(_Callback):
         return True
 
     def set_topupperiod(self, value):
-        """Set top-up period."""
-        if not 30 <= value <= 6*60*60:
+        """Set top-up period [min]."""
+        if not 1 <= value <= 6*60:
             return False
 
+        sec = value*60
         if self._topupstate_sts != _Const.TopUpSts.Off:
-            self._topupnext = self._topupnext - self._topupperiod + value
+            now = _Time.now().timestamp()
+            self._topupnext = now - (now % sec) + sec
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
-        self._topupperiod = value
-        self._update_log('Changed top-up period to '+str(value)+'s.')
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self._topupperiod = sec
+        self._update_log('Changed top-up period to '+str(value)+'min.')
+        self.run_callbacks('TopUpPeriod-RB', value)
         return True
 
     def set_topupnrpulses(self, value):
@@ -564,17 +566,6 @@ class App(_Callback):
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
-
-    def cmd_nextinjround(self, value):
-        """Round next injection time instant to smallest minute nearest."""
-        nextinj = self._topupnext
-        self._topupnext = nextinj - (nextinj % 60)
-        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-
-        self._topupnextinjround_count += 1
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
-        return False
 
     def set_autostop(self, value):
         """Set Auto Stop."""
