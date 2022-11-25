@@ -68,6 +68,7 @@ class App(_Callback):
         self._topupstate_sel = _Const.OffOn.Off
         self._topupstate_sts = _Const.TopUpSts.Off
         self._topupperiod = 5*60  # [s]
+        self._topuptimeoffset = 0
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnrpulses = 1
@@ -179,7 +180,7 @@ class App(_Callback):
             'BucketListStep-SP': self.set_bucketlist_step,
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
-            'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
+            'TopUpStartTimeOffset-SP': self.set_topuptimeoffset,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
@@ -260,6 +261,8 @@ class App(_Callback):
         self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
         self.run_callbacks('TopUpPeriod-SP', self._topupperiod/60)
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod/60)
+        self.run_callbacks('TopUpStartTimeOffset-SP', self._topuptimeoffset)
+        self.run_callbacks('TopUpStartTimeOffset-RB', self._topuptimeoffset)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
@@ -1024,15 +1027,11 @@ class App(_Callback):
             if elapsed % 60 == 0:
                 _log.info(text)
 
-            if _time.time() > self._topupnext - self._get_adv_estim():
+            if _time.time() >= self._topupnext - self._topuptimeoffset:
                 return True
 
         self._update_log('Remaining time: 0s')
         return True
-
-    def _get_adv_estim(self):
-        return 0 if self._evg_dev.bucketlist_len is None \
-            else self._evg_dev.bucketlist_len
 
     # --- auxiliary log methods ---
 
