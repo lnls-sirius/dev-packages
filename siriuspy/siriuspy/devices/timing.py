@@ -501,7 +501,7 @@ class HLTiming(_Devices):
         devs += list(self.triggers.values())
         super().__init__('AS-Glob:TI-HLTiming', devs)
 
-    def get_triggers_events(self):
+    def get_mapping_events2triggers(self) -> dict:
         """."""
         map_ = {tn: tr.source_str for tn, tr in self.triggers.items()}
         inv_map = {ev: list() for ev in set(map_.values())}
