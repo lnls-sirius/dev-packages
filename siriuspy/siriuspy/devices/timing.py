@@ -560,7 +560,7 @@ class HLTiming(_Devices):
         old_dly = self.events[event].delay_raw
         dlt_dly = old_dly - new_dly
 
-        trigs = self.get_triggers_events()[event]
+        trigs = self.get_mapping_events2triggers()[event]
         for trn in trigs:
             dly = self.triggers[trn].delay_raw + dlt_dly
             if dly < 0:
@@ -573,3 +573,29 @@ class HLTiming(_Devices):
 
         print('Delay changed!')
         return True
+
+    def print_injtable_mapping(self, only_enabled=False):
+        """."""
+        map_evt2trig = self.get_mapping_events2triggers()
+        map_table2evt = self.get_mapping_injtable2events()
+        tabs = {'Continuous', 'Injection', 'OneShot'}
+        tabs &= map_table2evt.keys()
+        tabs = sorted(tabs)
+
+        dlys = []
+        for tab in tabs:
+            for evt in map_table2evt[tab]:
+                for name in map_evt2trig.get(evt, []):
+                    obj = self.triggers[name]
+                    if only_enabled and not obj.enabled:
+                        continue
+                    dlys.append([obj.total_delay, name, evt, tab])
+        dlys = sorted(dlys)
+
+        tmpl = ' {:^30s} |' * len(tabs)
+        print(('{:^12s} |' + tmpl).format('Delay [ms]', *tabs))
+        print('-'*(12+33*len(tabs) + 2))
+        for dly, trg, evt, tab in dlys:
+            stgs = [''] * len(tabs)
+            stgs[tabs.index(tab)] = trg
+            print(('{:>12.6f} |' + tmpl).format(dly/1e3, *stgs))
