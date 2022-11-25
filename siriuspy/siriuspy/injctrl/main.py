@@ -560,6 +560,17 @@ class App(_Callback):
         self.run_callbacks('TopUpPeriod-RB', value)
         return True
 
+    def set_topuptimeoffset(self, value):
+        """Set top-up start time offset [s]."""
+        if not 0 <= value <= 10*60:
+            return False
+
+        self._topuptimeoffset = value
+        self._update_log(
+            'Changed top-up start time offset to '+str(value)+'s.')
+        self.run_callbacks('TopUpStartTimeOffset-RB', self._topuptimeoffset)
+        return True
+
     def set_topupnrpulses(self, value):
         """Set top-up number of injection pulses."""
         if not 1 <= value <= 1000:
