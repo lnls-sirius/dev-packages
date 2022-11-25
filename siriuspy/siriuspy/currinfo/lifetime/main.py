@@ -110,9 +110,7 @@ class SILifetimeApp(_Callback):
             ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
                 ts_dqorg, val_dqorg, ts_abs_dqorg, first_smpl, last_smpl)
 
-            if ts_dq.size == 0:
-                setattr(self, lt_name, 0)
-            else:
+            if ts_dq.size != 0:
                 if first_smpl != ts_abs_dq[0]:
                     setattr(self, first_name, ts_abs_dq[0])
                     self.run_callbacks(
@@ -128,9 +126,7 @@ class SILifetimeApp(_Callback):
                 if len(val_dq) > 100:
                     fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
                     value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
-                else:
-                    value = 0
-                setattr(self, lt_name, value)
+                    setattr(self, lt_name, value)
 
             # update pvs
             self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
@@ -220,8 +216,7 @@ class SILifetimeApp(_Callback):
 
     def _buffautorst_check(self):
         """Check situations to clear internal buffer.
-        If BuffAutoRst == DCurrCheck, check abrupt variation of current by
-        a factor of 20 times the DCCT fluctuation/resolution.
+        If BuffAutoRst == DCurrCheck, check abrupt variation of current.
         """
         if self._buffautorst_mode == _Const.BuffAutoRst.Off:
             return
@@ -249,11 +244,6 @@ class SILifetimeApp(_Callback):
         self.run_callbacks('LastSplTime-RB', self._last_smpl_ts_dcct)
         self.run_callbacks('FrstSplTimeBPM-RB', self._frst_smpl_ts_bpm)
         self.run_callbacks('LastSplTimeBPM-RB', self._last_smpl_ts_bpm)
-
-        self._lifetime_bpm = 0
-        self._lifetime = 0
-        self.run_callbacks('Lifetime-Mon', self._lifetime)
-        self.run_callbacks('LifetimeBPM-Mon', self._lifetime_bpm)
 
     def _filter_buffer(self, timestamp, value, abs_timestamp, first, last):
         ts_arrayorg = _np.asarray(timestamp)
