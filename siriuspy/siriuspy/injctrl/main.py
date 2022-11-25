@@ -925,21 +925,25 @@ class App(_Callback):
         blistlen = self._evg_dev.bucketlist_len
         proll = int(injcount % blistlen)
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
-        self._evg_dev.bucketlist = new_bucklist
+        return self._set_bucket_list(new_bucklist)
+
+    def _update_bucket_list_topup(self):
+        bucket = _np.arange(self._topupnrpulses) + 1
+        bucket *= self._bucketlist_step
+        bucket += self._evg_dev.bucketlist_mon[-1] - 1
+        bucket %= 864
+        bucket += 1
+        return self._set_bucket_list(bucket)
+
+    def _set_bucket_list(self, value):
+        self._evg_dev.bucketlist = value
         _t0 = _time.time()
-        while _time.time() - _t0 < 2:
-            if _np.all(self._evg_dev.bucketlist == new_bucklist):
+        while _time.time() - _t0 < 5:
+            if _np.all(self._evg_dev.bucketlist == value):
                 self._update_log('Updated BucketList.')
                 return True
         self._update_log('WARN:Could not update BucketList.')
         return False
-
-    def _update_bucket_list_topup(self):
-        bucket = _np.arange(self._topupnrpulses) + self._topupnrpulses
-        bucket *= self._bucketlist_step
-        bucket += self._evg_dev.bucketlist_mon[0] - 1
-        bucket %= 864
-        self._evg_dev.bucketlist = bucket + 1
 
     def _abort_injection(self):
         self._update_log('Turning off InjectionEvt...')
