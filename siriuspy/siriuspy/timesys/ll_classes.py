@@ -4,6 +4,7 @@ import re as _re
 from functools import partial as _partial
 import logging as _log
 from threading import Thread as _ThreadBase
+
 from epics.ca import CASeverityException as _CASeverityException
 
 from ..util import update_bit as _update_bit, get_bit as _get_bit
@@ -349,7 +350,7 @@ class _BaseLL(_Callback):
         return {hl_prop: val}
 
 
-class _EVROUT(_BaseLL):
+class _BASETRIG(_BaseLL):
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, source_enums):
@@ -373,6 +374,8 @@ class _EVROUT(_BaseLL):
             # Stop using FineDelay and RF Delay to ease consistency:
             self._config_ok_values['FineDelay'] = 0
             self._config_ok_values['RFDelay'] = 0
+        elif self.channel.propty.startswith(('FMC', 'CRT')):
+            self._config_ok_values['Dir'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -398,6 +401,7 @@ class _EVROUT(_BaseLL):
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'DelayRaw-RB',
+            'Dir': self.prefix + intlb + 'Dir-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelayRaw-RB',
@@ -444,6 +448,7 @@ class _EVROUT(_BaseLL):
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
+            'Dir': _partial(self._get_simple, 'Dir'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
@@ -730,9 +735,13 @@ class _EVROUT(_BaseLL):
         return dic
 
 
-class _EVROTP(_EVROUT):
+class _EVROUT(_BASETRIG):
+    _REMOVE_PROPS = {'Dir', }
+
+
+class _EVROTP(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los'}
+        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los', 'Dir'}
 
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
@@ -775,11 +784,11 @@ class _EVEOTP(_EVROTP):
     pass
 
 
-class _EVEOUT(_EVROUT):
-    _REMOVE_PROPS = {'Los', }
+class _EVEOUT(_BASETRIG):
+    _REMOVE_PROPS = {'Los', 'Dir'}
 
 
-class _AMCFPGAEVRAMC(_EVROUT):
+class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
 
