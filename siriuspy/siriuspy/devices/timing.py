@@ -509,7 +509,15 @@ class HLTiming(_Devices):
             inv_map[ev].append(tn)
         return inv_map
 
-    def change_triggers_source(self, trigs, new_src='Linac'):
+    def get_mapping_injtable2events(self) -> dict:
+        """."""
+        map_evt2table = {n: o.mode_str for n, o in self.events.items()}
+        map_table2evt = {}
+        for k, v in map_evt2table.items():
+            map_table2evt[v] = map_table2evt.get(v, []) + [k]
+        return map_table2evt
+
+    def change_triggers_source(self, trigs, new_src='Linac') -> list:
         """."""
         notchanged = list()
         for tn in trigs:
