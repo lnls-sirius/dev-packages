@@ -38,8 +38,8 @@ class SILifetimeApp(_Callback):
         self._sampling_interval = 500.0
         self._min_intvl_btw_spl = 0.0
         self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = _Const.BuffAutoRst.Off
-        self._buffautorst_dcurr = 0.1
+        self._buffautorst_mode = _Const.BuffAutoRst.DCurrCheck
+        self._buffautorst_dcurr = 0.01
         self._is_stored = 0
         self._lifetime = 0
         self._lifetime_bpm = 0
