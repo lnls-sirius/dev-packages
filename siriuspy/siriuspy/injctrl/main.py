@@ -1006,18 +1006,23 @@ class App(_Callback):
                 break
 
             self._update_log('Top-up period elapsed. Preparing...')
-            self._update_topupsts(_Const.TopUpSts.TurningOn)
-            self._update_log('Starting injection...')
-            if not self._start_injection():
-                break
+            if self._currinfo_dev.current < 102.0:
+                self._update_topupsts(_Const.TopUpSts.TurningOn)
+                self._update_log('Starting injection...')
+                if not self._start_injection():
+                    break
 
-            self._update_topupsts(_Const.TopUpSts.Injecting)
-            self._update_log('Injecting...')
-            if not self._wait_injection():
-                break
+                self._update_topupsts(_Const.TopUpSts.Injecting)
+                self._update_log('Injecting...')
+                if not self._wait_injection():
+                    break
 
-            self._update_topupsts(_Const.TopUpSts.TurningOff)
-            self._update_bucket_list_topup()
+                self._update_topupsts(_Const.TopUpSts.TurningOff)
+                self._update_bucket_list_topup()
+            else:
+                self._update_topupsts(_Const.TopUpSts.Skipping)
+                self._update_log('Skippingg injection...')
+                _time.sleep(2)
 
             self._topupnext += self._topupperiod
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)

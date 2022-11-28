@@ -14,7 +14,7 @@ class ETypes(_csdev.ETypes):
     PUMODE = ('Accumulation', 'Optimization', 'OnAxis')
     PUMODE_MON = PUMODE + ('Undefined', )
     TOPUPSTS = (
-        'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
+        'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff', 'Skipping')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
