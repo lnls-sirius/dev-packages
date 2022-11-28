@@ -207,11 +207,11 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 5, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpHeadStartTime-SP': {
-            'type': 'int', 'value': 0, 'unit': 's',
-            'lolim': 0, 'hilim': 10*60},
+            'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
+            'lolim': 0, 'hilim': 2*60},
         'TopUpHeadStartTime-RB': {
-            'type': 'int', 'value': 0, 'unit': 's',
-            'lolim': 0, 'hilim': 10*60},
+            'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
+            'lolim': 0, 'hilim': 2*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNrPulses-SP': {
