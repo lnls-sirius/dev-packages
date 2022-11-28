@@ -894,7 +894,6 @@ class App(_Callback):
             if self._evg_dev.injection_state:
                 break
             _time.sleep(0.02)
-            break
         else:
             self._update_log('ERR:Timed out waiting for InjectionEvt.')
             return False
