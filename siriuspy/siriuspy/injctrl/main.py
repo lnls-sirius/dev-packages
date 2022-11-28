@@ -894,6 +894,7 @@ class App(_Callback):
             if self._evg_dev.injection_state:
                 break
             _time.sleep(0.02)
+            break
         else:
             self._update_log('ERR:Timed out waiting for InjectionEvt.')
             return False
@@ -992,6 +993,10 @@ class App(_Callback):
         self._abort = False
 
     def _do_topup(self):
+        # update bucket list before continue
+        self._update_bucket_list_topup()
+
+        # do top-up
         while self._mode == _Const.InjMode.TopUp:
             if not self._check_allok_2_inject():
                 break
