@@ -107,6 +107,7 @@ class APU(_Device):
         while self.is_moving:
             _time.sleep(APU._MOVECHECK_SLEEP)
 
+
 class EPU(_Device):
     """."""
 
@@ -280,7 +281,7 @@ class EPU(_Device):
         return self['IsBusy-Mon'] != 0
 
     @property
-    def beamline_ctrl_enabled(self):
+    def is_beamline_ctrl_enabled(self):
         """Return beamline control enabled state (True|False)."""
         return self['BeamLineCtrlEnbl-Sts'] != 0
 
@@ -300,7 +301,7 @@ class EPU(_Device):
 
     def cmd_drive_turn_on(self, timeout=None):
         """Command turn phase and gap drives on."""
-        if self.phase_drive_power_on and self.gap_drive_power_on:
+        if self.is_phase_drive_powered and self.is_gap_drive_powered:
             return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {
