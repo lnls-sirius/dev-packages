@@ -87,8 +87,6 @@ class ASPUStandbyHandler(_BaseHandler):
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
                 'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'TRIG_Norm': 1,
-                'Pulse_Current': 1,
                 'CPS_ALL': 1,
             }
         self._on_values[self._limps] = {
