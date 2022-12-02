@@ -540,18 +540,12 @@ class App(_Callback):
             if self._topup_thread is not None and \
                     not self._topup_thread.is_alive() or\
                     self._topup_thread is None:
-                now, period = _Time.now().timestamp(), self._topupperiod
-                self._topupnext = now - (now % period) + period
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
             if self._topup_thread is not None and \
                     self._topup_thread.is_alive():
                 self._stop_topup_thread()
-                now = _Time.now().timestamp()
-                self._topupnext = now - (now % (24*60*60)) + 3*60*60
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
         return True
 
@@ -577,8 +571,7 @@ class App(_Callback):
             return False
 
         self._topupheadstarttime = value
-        self._update_log(
-            'Changed top-up head start time to '+str(value)+'s.')
+        self._update_log('Changed top-up head start time to '+str(value)+'s.')
         self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
         return True
 
@@ -1020,11 +1013,20 @@ class App(_Callback):
         self._update_log('Stopped top-up thread.')
         self._abort = False
 
+        # reset next injection schedule
+        now = _Time.now().timestamp()
+        self._topupnext = now - (now % (24*60*60)) + 3*60*60
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
     def _do_topup(self):
-        # update bucket list before continue
+        # update bucket list according to settings
         self._update_bucket_list_topup()
 
-        # do top-up
+        # update next injection schedule
+        now, period = _Time.now().timestamp(), self._topupperiod
+        self._topupnext = now - (now % period) + period
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
         while self._mode == _Const.InjMode.TopUp:
             if not self._check_allok_2_inject():
                 break
@@ -1063,17 +1065,15 @@ class App(_Callback):
             self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _wait_topup_period(self):
-        _t0 = _time.time()
         while _time.time() < self._topupnext:
             if not self._check_allok_2_inject(show_warn=False):
                 return False
             _time.sleep(1)
 
-            elapsed = int(_time.time() - _t0)
-            remaining = int(self._topupnext - _time.time())
+            remaining = round(self._topupnext - _time.time())
             text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
-            if elapsed % 60 == 0:
+            if remaining % 60 == 0:
                 _log.info(text)
 
             if _time.time() >= self._topupnext - self._topupheadstarttime:
