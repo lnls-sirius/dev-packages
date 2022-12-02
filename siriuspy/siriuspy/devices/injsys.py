@@ -742,6 +742,27 @@ class InjSysStandbyHandler(_Devices):
         """Turn off."""
         return self._command_base('off', run_in_thread)
 
+    def get_dev_state(self, devnames):
+        """
+        Return the state, on (True) or off (False), for each device in
+        devnames.
+
+        Parameters
+        ----------
+        devnames: list [str]
+            A list of strings with the names of the handler devices
+
+        Returns
+        -------
+        states: list [bool]
+            A list of booleans with the state of each handler devices
+        """
+        states = list()
+        for devname in devnames:
+            dev = self._dev_refs[devname]
+            states.append(dev.is_on)
+        return states
+
     # --- private methods ---
 
     def _command_base(self, cmmtype, run_in_thread):

@@ -69,6 +69,8 @@ class Const(_csdev.Const):
     INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
     INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
 
+    PU_VOLTAGE_UP_TIME = 30  # [s]
+
 
 _ct = Const
 
@@ -212,6 +214,12 @@ def get_injctrl_propty_database():
         'TopUpHeadStartTime-RB': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
             'lolim': 0, 'hilim': 2*60},
+        'TopUpPUStandbyEnbl-Sel': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL},
+        'TopUpPUStandbyEnbl-Sts': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNrPulses-SP': {
