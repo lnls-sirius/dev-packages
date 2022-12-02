@@ -318,7 +318,9 @@ class App(_Callback):
 
         if value == _Const.InjMode.TopUp and \
                 self._topupstate_sts == _Const.TopUpSts.Off:
-            self._update_log('Waiting to start top-up.')
+            self._update_log('Configuring EVG RepeatBucketList...')
+            self._evg_dev['RepeatBucketList-SP'] = 1
+            self._update_log('...done. Waiting to start top-up.')
         else:
             if self._topup_thread and self._topup_thread.is_alive():
                 self._stop_topup_thread()
@@ -843,6 +845,9 @@ class App(_Callback):
 
     def _callback_watch_repeatbucketlist(self, value, **kws):
         if self._mode == _Const.InjMode.TopUp:
+            if value != 1:
+                self._update_log('WARN:RepeatBucketList is diff. from 1.')
+                self._update_log('WARN:Aborting top-up...')
             return
         if self._autostop == _Const.OffOn.On and value != 0:
             self._autostop = _Const.OffOn.Off
