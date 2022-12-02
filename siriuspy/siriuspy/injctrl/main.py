@@ -67,10 +67,10 @@ class App(_Callback):
 
         self._topupstate_sel = _Const.OffOn.Off
         self._topupstate_sts = _Const.TopUpSts.Off
-        self._topupperiod = 15*60
+        self._topupperiod = 5*60  # [s]
+        self._topupheadstarttime = 0
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
-        self._topupnextinjround_count = 0
         self._topupnrpulses = 1
         self._topup_thread = None
         self._autostop = _Const.OffOn.Off
@@ -180,7 +180,7 @@ class App(_Callback):
             'BucketListStep-SP': self.set_bucketlist_step,
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
-            'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
+            'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
@@ -259,11 +259,11 @@ class App(_Callback):
         self.run_callbacks('BucketListStep-RB', self._bucketlist_step)
         self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
         self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
-        self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self.run_callbacks('TopUpPeriod-SP', self._topupperiod/60)
+        self.run_callbacks('TopUpPeriod-RB', self._topupperiod/60)
+        self.run_callbacks('TopUpHeadStartTime-SP', self._topupheadstarttime)
+        self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         self.run_callbacks('AutoStop-Sel', self._autostop)
@@ -526,14 +526,17 @@ class App(_Callback):
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
                 return
-            if self._topup_thread and not self._topup_thread.is_alive()\
-                    or not self._topup_thread:
-                self._topupnext = _Time.now().timestamp()
+            if self._topup_thread is not None and \
+                    not self._topup_thread.is_alive() or\
+                    self._topup_thread is None:
+                now, period = _Time.now().timestamp(), self._topupperiod
+                self._topupnext = now - (now % period) + period
                 self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
-            if self._topup_thread and self._topup_thread.is_alive():
+            if self._topup_thread is not None and \
+                    self._topup_thread.is_alive():
                 self._stop_topup_thread()
                 now = _Time.now().timestamp()
                 self._topupnext = now - (now % (24*60*60)) + 3*60*60
@@ -542,17 +545,30 @@ class App(_Callback):
         return True
 
     def set_topupperiod(self, value):
-        """Set top-up period."""
-        if not 30 <= value <= 6*60*60:
+        """Set top-up period [min]."""
+        if not 1 <= value <= 6*60:
             return False
 
+        sec = value*60
         if self._topupstate_sts != _Const.TopUpSts.Off:
-            self._topupnext = self._topupnext - self._topupperiod + value
+            now = _Time.now().timestamp()
+            self._topupnext = now - (now % sec) + sec
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
-        self._topupperiod = value
-        self._update_log('Changed top-up period to '+str(value)+'s.')
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self._topupperiod = sec
+        self._update_log('Changed top-up period to '+str(value)+'min.')
+        self.run_callbacks('TopUpPeriod-RB', value)
+        return True
+
+    def set_topupheadstarttime(self, value):
+        """Set top-up head start time [s]."""
+        if not 0 <= value <= 10*60:
+            return False
+
+        self._topupheadstarttime = value
+        self._update_log(
+            'Changed top-up head start time to '+str(value)+'s.')
+        self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
         return True
 
     def set_topupnrpulses(self, value):
@@ -564,17 +580,6 @@ class App(_Callback):
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
-
-    def cmd_nextinjround(self, value):
-        """Round next injection time instant to smallest minute nearest."""
-        nextinj = self._topupnext
-        self._topupnext = nextinj - (nextinj % 60)
-        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-
-        self._topupnextinjround_count += 1
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
-        return False
 
     def set_autostop(self, value):
         """Set Auto Stop."""
@@ -862,8 +867,8 @@ class App(_Callback):
                         self._update_log('WARN:'+prob)
 
         if self._mode == _Const.InjMode.TopUp:
-            if self._evg_dev.nrpulses == 0:
-                self._update_log('ERR:Aborted. RepeatBucketList cannot be 0.')
+            if self._evg_dev.nrpulses != 1:
+                self._update_log('ERR:Aborted. RepeatBucketList must be 1.')
                 return False
 
             if self._abort:
@@ -897,24 +902,25 @@ class App(_Callback):
         return True
 
     def _wait_injection(self):
-        init_mode = self._mode
-        init_autostop = self._autostop
-        while self._currinfo_dev.current < self._target_current:
-            # if there are problems, abort injection
-            if not self._check_allok_2_inject(show_warn=False):
-                self._abort_injection()
-                return False
+        init_mode, init_autostop = self._mode, self._autostop
+        if init_mode == _Const.InjMode.TopUp:
+            # if in TopUp mode, wait for injectionevt to be off (done)
+            _t0 = _time.time()
+            while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
+                if not self._check_allok_2_inject(show_warn=False):
+                    self._abort_injection()
+                    return False
+                if not self._evg_dev.injection_state:
+                    break
+            _time.sleep(0.02)
+        else:
             # if in decay mode and autostop is turned off, interrupt wait
-            if init_mode == _Const.InjMode.Decay and \
-                    init_autostop and not self._autostop:
-                return False
-            # if in TopUp mode and max pulses exceeded, stop injection
-            if self._mode == _Const.InjMode.TopUp and \
-                    self._evg_dev.injection_count >= self._topupnrpulses:
-                break
-            _time.sleep(0.1)
-
-        self._update_log('Target current reached!')
+            while self._currinfo_dev.current < self._target_current:
+                if init_mode == _Const.InjMode.Decay and \
+                        init_autostop and not self._autostop:
+                    return False
+                _time.sleep(0.1)
+            self._update_log('Target current reached!')
         return True
 
     def _stop_injection(self):
@@ -933,21 +939,25 @@ class App(_Callback):
         blistlen = self._evg_dev.bucketlist_len
         proll = int(injcount % blistlen)
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
-        self._evg_dev.bucketlist = new_bucklist
+        return self._set_bucket_list(new_bucklist)
+
+    def _update_bucket_list_topup(self):
+        bucket = _np.arange(self._topupnrpulses) + 1
+        bucket *= self._bucketlist_step
+        bucket += self._evg_dev.bucketlist_mon[-1] - 1
+        bucket %= 864
+        bucket += 1
+        return self._set_bucket_list(bucket)
+
+    def _set_bucket_list(self, value):
+        self._evg_dev.bucketlist = value
         _t0 = _time.time()
-        while _time.time() - _t0 < 2:
-            if _np.all(self._evg_dev.bucketlist == new_bucklist):
+        while _time.time() - _t0 < 5:
+            if _np.all(self._evg_dev.bucketlist == value):
                 self._update_log('Updated BucketList.')
                 return True
         self._update_log('WARN:Could not update BucketList.')
         return False
-
-    def _update_bucket_list_topup(self):
-        bucket = _np.arange(self._topupnrpulses) + self._topupnrpulses
-        bucket *= self._bucketlist_step
-        bucket += self._evg_dev.bucketlist_mon[0] - 1
-        bucket %= 864
-        self._evg_dev.bucketlist = bucket + 1
 
     def _abort_injection(self):
         self._update_log('Turning off InjectionEvt...')
@@ -982,14 +992,21 @@ class App(_Callback):
         self._abort = False
 
     def _do_topup(self):
+        # update bucket list before continue
+        self._update_bucket_list_topup()
+
+        # do top-up
         while self._mode == _Const.InjMode.TopUp:
             if not self._check_allok_2_inject():
                 break
 
-            self._topupnext += self._topupperiod
-            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+            self._update_topupsts(_Const.TopUpSts.Waiting)
+            self._update_log('Waiting for next injection...')
+            if not self._wait_topup_period():
+                break
 
-            if self._currinfo_dev.current <= self._target_current:
+            self._update_log('Top-up period elapsed. Preparing...')
+            if self._currinfo_dev.current < 102.0:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
                 if not self._start_injection():
@@ -1002,13 +1019,13 @@ class App(_Callback):
 
                 self._update_topupsts(_Const.TopUpSts.TurningOff)
                 self._update_bucket_list_topup()
+            else:
+                self._update_topupsts(_Const.TopUpSts.Skipping)
+                self._update_log('Skippingg injection...')
+                _time.sleep(2)
 
-            self._update_topupsts(_Const.TopUpSts.Waiting)
-            self._update_log('Waiting for next injection...')
-
-            if not self._wait_topup_period():
-                break
-            self._update_log('Top-up period elapsed. Preparing...')
+            self._topupnext += self._topupperiod
+            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
@@ -1030,16 +1047,11 @@ class App(_Callback):
             if elapsed % 60 == 0:
                 _log.info(text)
 
-            if self._currinfo_dev.current < self._target_current and \
-                    _time.time() > self._topupnext - self._get_adv_estim():
+            if _time.time() >= self._topupnext - self._topupheadstarttime:
                 return True
 
         self._update_log('Remaining time: 0s')
         return True
-
-    def _get_adv_estim(self):
-        return 0 if self._evg_dev.bucketlist_len is None \
-            else self._evg_dev.bucketlist_len
 
     # --- auxiliary log methods ---
 

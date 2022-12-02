@@ -1,8 +1,6 @@
 """Injection Control App."""
 
 from .. import csdev as _csdev
-from ..devices import InjSysStandbyHandler as _InjSysHandler, \
-    EGun as _EGun
 
 
 # --- Enumeration Types ---
@@ -16,7 +14,7 @@ class ETypes(_csdev.ETypes):
     PUMODE = ('Accumulation', 'Optimization', 'OnAxis')
     PUMODE_MON = PUMODE + ('Undefined', )
     TOPUPSTS = (
-        'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff')
+        'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff', 'Skipping')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
@@ -61,6 +59,15 @@ class Const(_csdev.Const):
 
     RF_RMP_TIMEOUT = 3*60  # [s]
     TI_INJ_TIMEOUT = 3*60  # [s]
+    MAX_INJTIMEOUT = 3*60  # [s]
+
+    BIAS_SINGLE_BUNCH = -100.0  # [V]
+    BIAS_MULTI_BUNCH = -56.0  # [V]
+    FILACURR_OPVALUE = 1.39  # [A]
+    HV_OPVALUE = 90.0  # [kV]
+
+    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
+    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
 
 
 _ct = Const
@@ -87,13 +94,13 @@ def get_status_labels(sec=''):
 def get_injctrl_propty_database():
     """Return property database of injection control IOC."""
     # injsys properties
-    injsys_onorder = ','.join(_InjSysHandler.DEF_ON_ORDER)
-    injsys_offorder = ','.join(_InjSysHandler.DEF_OFF_ORDER)
+    injsys_onorder = ','.join(_ct.INJSYS_DEF_ON_ORDER)
+    injsys_offorder = ','.join(_ct.INJSYS_DEF_OFF_ORDER)
     # egun properties
-    egsbbias = _EGun.BIAS_SINGLE_BUNCH
-    egmbbias = _EGun.BIAS_MULTI_BUNCH
-    egfilacurr = _EGun.FILACURR_OPVALUE
-    eghvolt = _EGun.HV_OPVALUE
+    egsbbias = _ct.BIAS_SINGLE_BUNCH
+    egmbbias = _ct.BIAS_MULTI_BUNCH
+    egfilacurr = _ct.FILACURR_OPVALUE
+    eghvolt = _ct.HV_OPVALUE
 
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
@@ -194,14 +201,19 @@ def get_injctrl_propty_database():
         'TopUpState-Sts': {
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 15*60, 'unit': 's',
-            'lolim': 30, 'hilim': 6*60*60},
+            'type': 'int', 'value': 5, 'unit': 'min',
+            'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 15*60, 'unit': 's',
-            'lolim': 30, 'hilim': 6*60*60},
+            'type': 'int', 'value': 5, 'unit': 'min',
+            'lolim': 1, 'hilim': 6*60},
+        'TopUpHeadStartTime-SP': {
+            'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpHeadStartTime-RB': {
+            'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
+            'lolim': 0, 'hilim': 2*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
-        'TopUpNextInjRound-Cmd': {'type': 'int', 'value': 0},
         'TopUpNrPulses-SP': {
             'type': 'int', 'value': 1, 'unit': 'pulses',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
