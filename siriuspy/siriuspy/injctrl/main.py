@@ -789,6 +789,14 @@ class App(_Callback):
                 if self._injsys_dev.is_on:
                     self._update_log('Inj.System is on.')
                     break
+                else:
+                    # handle a timing configuration that do not use InjBO evt
+                    states = self._injsys_dev.get_dev_state(
+                        ['bo_rf', 'as_pu', 'bo_ps', 'li_rf'])
+                    if all(states):
+                        self._update_log('Ignoring InjBO event off state...')
+                        self._update_log('...Inj.System is on.')
+                        break
             else:
                 self._update_log('ERR:Timed out waiting for Inj.Sys.')
                 return False
