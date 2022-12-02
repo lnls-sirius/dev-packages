@@ -502,10 +502,19 @@ class App(_Callback):
         """Set bucketlist_step."""
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
-        start = self._bucketlist_start
-        stop = self._bucketlist_stop
-        if not self._cmd_bucketlist_fill(stop, start, step):
-            return False
+        if self._mode == _Const.InjMode.TopUp:
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            if not self._set_bucket_list(bucket):
+                return False
+        else:
+            start = self._bucketlist_start
+            stop = self._bucketlist_stop
+            if not self._cmd_bucketlist_fill(stop, start, step):
+                return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
         return True
@@ -579,6 +588,13 @@ class App(_Callback):
             return False
 
         self._topupnrpulses = value
+        if self._mode == _Const.InjMode.TopUp:
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= self._bucketlist_step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            self._set_bucket_list(bucket)
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
