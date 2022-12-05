@@ -1086,7 +1086,7 @@ class App(_Callback):
                 break
 
             self._update_log('Top-up period elapsed. Preparing...')
-            if self._currinfo_dev.current < self._target_current:
+            if self._currinfo_dev.current < self._target_current * 1.02:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
                 if not self._start_injection():
