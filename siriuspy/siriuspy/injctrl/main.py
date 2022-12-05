@@ -1098,7 +1098,7 @@ class App(_Callback):
                 self._update_bucket_list_topup()
             else:
                 self._update_topupsts(_Const.TopUpSts.Skipping)
-                self._update_log('Skippingg injection...')
+                self._update_log('Skipping injection...')
                 _time.sleep(2)
 
             self._prepare_topup('standby')
