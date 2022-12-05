@@ -165,6 +165,7 @@ class App(_Callback):
             {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
         self._pu_refvolt = list()
+        self._topup_puref_ignore  = False
         for dev in self._pu_devs:
             pvo = dev.pv_object('Voltage-SP')
             self._pu_refvolt.append(pvo.value)
@@ -902,6 +903,8 @@ class App(_Callback):
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
             return
+        if self._topup_puref_ignore:
+            return
         devname = _PVName(pvname).device_name
         index = self._pu_names.index(devname)
         self._pu_refvolt[index] = value
@@ -1140,6 +1143,7 @@ class App(_Callback):
     def _prepare_topup(self, state='inject'):
         if not self._topuppustandbyenbl:
             return
+        self._topup_puref_ignore = True
         if state == 'inject':
             self._topup_pu_prepared = True
             self._update_log('Setting PU Voltage to 100%...')
@@ -1152,6 +1156,8 @@ class App(_Callback):
             for idx, dev in enumerate(self._pu_devs):
                 dev.voltage = self._pu_refvolt[idx] * 0.5
             self._update_log('...done.')
+        _time.sleep(1)
+        self._topup_puref_ignore = False
 
     def _update_topup_pu_refvolt(self):
         # get PU voltage reference
