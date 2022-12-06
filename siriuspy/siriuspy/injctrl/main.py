@@ -1,7 +1,7 @@
 """Main module of Machine Shift Application."""
 import time as _time
-from threading import Thread as _Thread
 import logging as _log
+import epics as _epics
 import numpy as _np
 
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
@@ -91,6 +91,9 @@ class App(_Callback):
         self._status['All'] = self._pvs_database['DiagStatus-Mon']['value']
         self._status_problems = set()
         self._injstatus = self._pvs_database['InjStatus-Mon']['value']
+
+        # use pyepics recommendations for threading
+        _epics.ca.use_initial_context()
 
         # auxiliary diagnosis pvs
         self._pvs_diag = dict()
@@ -202,10 +205,10 @@ class App(_Callback):
         # status scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_diagstatus = _Thread(
+        self.thread_check_diagstatus = _epics.ca.CAThread(
             target=self._update_diagstatus, daemon=True)
         self.thread_check_diagstatus.start()
-        self.thread_check_injstatus = _Thread(
+        self.thread_check_injstatus = _epics.ca.CAThread(
             target=self._update_injstatus, daemon=True)
         self.thread_check_injstatus.start()
 
@@ -360,7 +363,8 @@ class App(_Callback):
         target = self._egun_dev.cmd_switch_to_single_bunch \
             if value == _Const.InjType.SingleBunch else \
             self._egun_dev.cmd_switch_to_multi_bunch
-        self._p2w['Type']['watcher'] = _Thread(target=target, daemon=True)
+        self._p2w['Type']['watcher'] = _epics.ca.CAThread(
+            target=target, daemon=True)
         self._p2w['Type']['watcher'].start()
         self._p2w['Type']['status'] = _Const.IdleRunning.Running
         self.run_callbacks('TypeCmdSts-Mon', self._p2w['Type']['status'])
@@ -376,8 +380,8 @@ class App(_Callback):
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
 
         if self._type == _Const.InjType.SingleBunch:
-            _Thread(target=self._set_egunbias,
-                    args=[value, ], daemon=True).start()
+            _epics.ca.CAThread(
+                target=self._set_egunbias, args=[value, ], daemon=True).start()
         return True
 
     def set_multbunbiasvolt(self, value):
@@ -388,8 +392,8 @@ class App(_Callback):
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
 
         if self._type == _Const.InjType.MultiBunch:
-            _Thread(target=self._set_egunbias,
-                    args=[value, ], daemon=True).start()
+            _epics.ca.CAThread(
+                target=self._set_egunbias, args=[value, ], daemon=True).start()
         return True
 
     def _set_egunbias(self, value):
@@ -415,7 +419,7 @@ class App(_Callback):
         self._filaopcurr = value
         self.run_callbacks('FilaOpCurr-RB', self._filaopcurr)
 
-        self._p2w['FilaOpCurr']['watcher'] = _Thread(
+        self._p2w['FilaOpCurr']['watcher'] = _epics.ca.CAThread(
             target=self._egun_dev.set_fila_current, daemon=True)
         self._p2w['FilaOpCurr']['watcher'].start()
         self._p2w['FilaOpCurr']['status'] = _Const.IdleRunning.Running
@@ -437,7 +441,7 @@ class App(_Callback):
         self._hvopvolt = value
         self.run_callbacks('HVOpVolt-RB', self._hvopvolt)
 
-        self._p2w['HVOpVolt']['watcher'] = _Thread(
+        self._p2w['HVOpVolt']['watcher'] = _epics.ca.CAThread(
             target=self._egun_dev.set_hv_voltage, daemon=True)
         self._p2w['HVOpVolt']['watcher'].start()
         self._p2w['HVOpVolt']['status'] = _Const.IdleRunning.Running
@@ -469,7 +473,8 @@ class App(_Callback):
             self._pumode_dev.cmd_switch_to_optim \
             if value == _Const.PUMode.Optimization else \
             self._pumode_dev.cmd_switch_to_onaxis
-        self._p2w['PUMode']['watcher'] = _Thread(target=target, daemon=True)
+        self._p2w['PUMode']['watcher'] = _epics.ca.CAThread(
+            target=target, daemon=True)
         self._p2w['PUMode']['watcher'].start()
         self._p2w['PUMode']['status'] = _Const.IdleRunning.Running
         self.run_callbacks('PUModeCmdSts-Mon', self._p2w['PUMode']['status'])
@@ -645,7 +650,8 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_on(run_in_thread=True)
-        thr = _Thread(target=self._watch_injsys, args=['on', ], daemon=True)
+        thr = _epics.ca.CAThread(
+            target=self._watch_injsys, args=['on', ], daemon=True)
         thr.start()
         if wait_finish:
             thr.join()
@@ -665,7 +671,8 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_off(run_in_thread=True)
-        thr = _Thread(target=self._watch_injsys, args=['off', ], daemon=True)
+        thr = _epics.ca.CAThread(
+            target=self._watch_injsys, args=['off', ], daemon=True)
         thr.start()
         if wait_finish:
             thr.join()
@@ -731,7 +738,7 @@ class App(_Callback):
         self._update_log('Received RFKillBeam Command...')
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Kill
         self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
-        _Thread(target=self._watch_rfkillbeam, daemon=True).start()
+        _epics.ca.CAThread(target=self._watch_rfkillbeam, daemon=True).start()
 
         self._rfkillbeam_count += 1
         self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
@@ -756,8 +763,8 @@ class App(_Callback):
             return
         if self._mode == _Const.InjMode.TopUp:
             return
-        _Thread(target=self._watch_eguntrig,
-                args=[value, ], daemon=True).start()
+        _epics.ca.CAThread(
+            target=self._watch_eguntrig, args=[value, ], daemon=True).start()
 
     def _watch_eguntrig(self, value, **kws):
         cmd = 'on' if value else 'off'
@@ -777,7 +784,8 @@ class App(_Callback):
             return
         if self._mode == _Const.InjMode.TopUp:
             return
-        _Thread(target=self._watch_injti, args=[value, ], daemon=True).start()
+        _epics.ca.CAThread(
+            target=self._watch_injti, args=[value, ], daemon=True).start()
 
     def _watch_injti(self, value, timeout=_Const.TI_INJ_TIMEOUT):
         cmd = 'on' if value else 'off'
@@ -801,7 +809,7 @@ class App(_Callback):
         if not self._egun_dev.trigps.is_on():
             return
 
-        _Thread(target=self._run_autostop, daemon=True).start()
+        _epics.ca.CAThread(target=self._run_autostop, daemon=True).start()
 
     def _run_autostop(self):
         self._update_log('Injection Auto Stop activated...')
@@ -1036,7 +1044,8 @@ class App(_Callback):
         while self._abort:
             _time.sleep(0.1)
         self._update_log('Launchig top-up thread...')
-        self._topup_thread = _Thread(target=self._do_topup, daemon=True)
+        self._topup_thread = _epics.ca.CAThread(
+            target=self._do_topup, daemon=True)
         self._topup_thread.start()
 
     def _stop_topup_thread(self):
@@ -1175,7 +1184,7 @@ class App(_Callback):
 
     def _launch_watch_dev_thread(self):
         if self._thread_watdev is None or not self._thread_watdev.is_alive():
-            self._thread_watdev = _Thread(
+            self._thread_watdev = _epics.ca.CAThread(
                 target=self._watch_dev_process, daemon=True)
             self._thread_watdev.start()
 
