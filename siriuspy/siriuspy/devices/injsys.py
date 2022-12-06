@@ -87,8 +87,6 @@ class ASPUStandbyHandler(_BaseHandler):
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
                 'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'TRIG_Norm': 1,
-                'Pulse_Current': 1,
                 'CPS_ALL': 1,
             }
         self._on_values[self._limps] = {
@@ -741,6 +739,27 @@ class InjSysStandbyHandler(_Devices):
     def cmd_turn_off(self, run_in_thread=False):
         """Turn off."""
         return self._command_base('off', run_in_thread)
+
+    def get_dev_state(self, devnames):
+        """
+        Return the state, on (True) or off (False), for each device in
+        devnames.
+
+        Parameters
+        ----------
+        devnames: list [str]
+            A list of strings with the names of the handler devices
+
+        Returns
+        -------
+        states: list [bool]
+            A list of booleans with the state of each handler devices
+        """
+        states = list()
+        for devname in devnames:
+            dev = self._dev_refs[devname]
+            states.append(dev.is_on)
+        return states
 
     # --- private methods ---
 

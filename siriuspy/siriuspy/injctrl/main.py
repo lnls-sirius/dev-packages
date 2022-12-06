@@ -69,10 +69,12 @@ class App(_Callback):
         self._topupstate_sts = _Const.TopUpSts.Off
         self._topupperiod = 5*60  # [s]
         self._topupheadstarttime = 0
+        self._topuppustandbyenbl = _Const.DsblEnbl.Dsbl
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnrpulses = 1
         self._topup_thread = None
+        self._topup_pu_prepared = False
         self._autostop = _Const.OffOn.Off
         self._abort = False
 
@@ -159,9 +161,15 @@ class App(_Callback):
 
         self._currinfo_dev = CurrInfoSI()
 
-        punames = _PSSearch.get_psnames(
-            {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
-        self._pu_devs = [PowerSupplyPU(pun) for pun in punames]
+        self._pu_names = _PSSearch.get_psnames(
+            {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
+        self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
+        self._pu_refvolt = list()
+        self._topup_puref_ignore  = False
+        for dev in self._pu_devs:
+            pvo = dev.pv_object('Voltage-SP')
+            self._pu_refvolt.append(pvo.value)
+            pvo.add_callback(self._callback_update_pu_refvolt)
 
         self._rfkillbeam = RFKillBeam()
 
@@ -181,6 +189,7 @@ class App(_Callback):
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
             'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
+            'TopUpPUStandbyEnbl-Sel': self.set_topuppustandbyenbl,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
             'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
@@ -263,6 +272,8 @@ class App(_Callback):
         self.run_callbacks('TopUpPeriod-RB', self._topupperiod/60)
         self.run_callbacks('TopUpHeadStartTime-SP', self._topupheadstarttime)
         self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
+        self.run_callbacks('TopUpPUStandbyEnbl-Sel', self._topuppustandbyenbl)
+        self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
@@ -318,7 +329,9 @@ class App(_Callback):
 
         if value == _Const.InjMode.TopUp and \
                 self._topupstate_sts == _Const.TopUpSts.Off:
-            self._update_log('Waiting to start top-up.')
+            self._update_log('Configuring EVG RepeatBucketList...')
+            self._evg_dev['RepeatBucketList-SP'] = 1
+            self._update_log('...done. Waiting to start top-up.')
         else:
             if self._topup_thread and self._topup_thread.is_alive():
                 self._stop_topup_thread()
@@ -500,10 +513,19 @@ class App(_Callback):
         """Set bucketlist_step."""
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
-        start = self._bucketlist_start
-        stop = self._bucketlist_stop
-        if not self._cmd_bucketlist_fill(stop, start, step):
-            return False
+        if self._mode == _Const.InjMode.TopUp:
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            if not self._set_bucket_list(bucket):
+                return False
+        else:
+            start = self._bucketlist_start
+            stop = self._bucketlist_stop
+            if not self._cmd_bucketlist_fill(stop, start, step):
+                return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
         return True
@@ -529,18 +551,12 @@ class App(_Callback):
             if self._topup_thread is not None and \
                     not self._topup_thread.is_alive() or\
                     self._topup_thread is None:
-                now, period = _Time.now().timestamp(), self._topupperiod
-                self._topupnext = now - (now % period) + period
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
             if self._topup_thread is not None and \
                     self._topup_thread.is_alive():
                 self._stop_topup_thread()
-                now = _Time.now().timestamp()
-                self._topupnext = now - (now % (24*60*60)) + 3*60*60
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
         return True
 
@@ -566,9 +582,24 @@ class App(_Callback):
             return False
 
         self._topupheadstarttime = value
-        self._update_log(
-            'Changed top-up head start time to '+str(value)+'s.')
+        self._update_log('Changed top-up head start time to '+str(value)+'s.')
         self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
+        return True
+
+    def set_topuppustandbyenbl(self, value):
+        """Set PU standby between top-up injections."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if value:
+            if not self._update_topup_pu_refvolt():
+                return False
+        else:
+            self._prepare_topup('inject')
+        self._topuppustandbyenbl = value
+        text = 'En' if value else 'Dis'
+        self._update_log(text+'abled PU standby between injections.')
+        self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
         return True
 
     def set_topupnrpulses(self, value):
@@ -577,6 +608,13 @@ class App(_Callback):
             return False
 
         self._topupnrpulses = value
+        if self._mode == _Const.InjMode.TopUp:
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= self._bucketlist_step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            self._set_bucket_list(bucket)
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
@@ -787,6 +825,14 @@ class App(_Callback):
                 if self._injsys_dev.is_on:
                     self._update_log('Inj.System is on.')
                     break
+                else:
+                    # handle a timing configuration that do not use InjBO evt
+                    states = self._injsys_dev.get_dev_state(
+                        ['bo_rf', 'as_pu', 'bo_ps', 'li_rf'])
+                    if all(states):
+                        self._update_log('Ignoring InjBO event off state...')
+                        self._update_log('...Inj.System is on.')
+                        break
             else:
                 self._update_log('ERR:Timed out waiting for Inj.Sys.')
                 return False
@@ -843,6 +889,9 @@ class App(_Callback):
 
     def _callback_watch_repeatbucketlist(self, value, **kws):
         if self._mode == _Const.InjMode.TopUp:
+            if value != 1:
+                self._update_log('WARN:RepeatBucketList is diff. from 1.')
+                self._update_log('WARN:Aborting top-up...')
             return
         if self._autostop == _Const.OffOn.On and value != 0:
             self._autostop = _Const.OffOn.Off
@@ -850,6 +899,15 @@ class App(_Callback):
             self.run_callbacks('AutoStop-Sts', self._autostop)
             self._update_log('WARN:RepeatBucketList is diff. from 0.')
             self._update_log('WARN:Turned Off Auto Stop.')
+
+    def _callback_update_pu_refvolt(self, pvname, value, **kws):
+        if value is None:
+            return
+        if self._topup_puref_ignore:
+            return
+        devname = _PVName(pvname).device_name
+        index = self._pu_names.index(devname)
+        self._pu_refvolt[index] = value
 
     # --- auxiliary injection methods ---
 
@@ -991,11 +1049,33 @@ class App(_Callback):
         self._update_log('Stopped top-up thread.')
         self._abort = False
 
+        # reset next injection schedule
+        now = _Time.now().timestamp()
+        self._topupnext = now - (now % (24*60*60)) + 3*60*60
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
     def _do_topup(self):
-        # update bucket list before continue
+        # update bucket list according to settings
         self._update_bucket_list_topup()
 
-        # do top-up
+        # update next injection schedule
+        now, period = _Time.now().timestamp(), self._topupperiod
+        self._topupnext = now - (now % period) + period
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
+        # if PU standby is enabled
+        if self._topuppustandbyenbl:
+            if not self._update_topup_pu_refvolt():
+                self._update_log('ERR:...aborted top-up loop.')
+                return
+
+            # if remaining time is lower than wait time, do not set PU voltage
+            if self._topupnext - _time.time() <= _Const.PU_VOLTAGE_UP_TIME:
+                self._topup_pu_prepared = True
+            else:
+                # else, set PU voltage to 50%
+                self._prepare_topup('standby')
+
         while self._mode == _Const.InjMode.TopUp:
             if not self._check_allok_2_inject():
                 break
@@ -1006,7 +1086,7 @@ class App(_Callback):
                 break
 
             self._update_log('Top-up period elapsed. Preparing...')
-            if self._currinfo_dev.current < 102.0:
+            if self._currinfo_dev.current < self._target_current * 1.02:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
                 if not self._start_injection():
@@ -1021,12 +1101,17 @@ class App(_Callback):
                 self._update_bucket_list_topup()
             else:
                 self._update_topupsts(_Const.TopUpSts.Skipping)
-                self._update_log('Skippingg injection...')
+                self._update_log('Skipping injection...')
                 _time.sleep(2)
+
+            self._prepare_topup('standby')
 
             self._topupnext += self._topupperiod
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
+        self._prepare_topup('inject')
+
+        # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
         if not self._abort:
@@ -1034,23 +1119,56 @@ class App(_Callback):
             self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _wait_topup_period(self):
-        _t0 = _time.time()
         while _time.time() < self._topupnext:
             if not self._check_allok_2_inject(show_warn=False):
                 return False
             _time.sleep(1)
 
-            elapsed = int(_time.time() - _t0)
-            remaining = int(self._topupnext - _time.time())
+            remaining = round(self._topupnext - _time.time())
             text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
-            if elapsed % 60 == 0:
+            if remaining % 60 == 0:
                 _log.info(text)
+
+            if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
+                    not self._topup_pu_prepared:
+                self._prepare_topup('inject')
 
             if _time.time() >= self._topupnext - self._topupheadstarttime:
                 return True
 
         self._update_log('Remaining time: 0s')
+        return True
+
+    def _prepare_topup(self, state='inject'):
+        if not self._topuppustandbyenbl:
+            return
+        self._topup_puref_ignore = True
+        if state == 'inject':
+            self._topup_pu_prepared = True
+            self._update_log('Setting PU Voltage to 100%...')
+            for idx, dev in enumerate(self._pu_devs):
+                dev.voltage = self._pu_refvolt[idx]
+            self._update_log('...done.')
+        elif state == 'standby':
+            self._topup_pu_prepared = False
+            self._update_log('Setting PU Voltage to 50%...')
+            for idx, dev in enumerate(self._pu_devs):
+                dev.voltage = self._pu_refvolt[idx] * 0.5
+            self._update_log('...done.')
+        _time.sleep(1)
+        self._topup_puref_ignore = False
+
+    def _update_topup_pu_refvolt(self):
+        # get PU voltage reference
+        for idx, dev in enumerate(self._pu_devs):
+            spv = dev['Voltage-SP']
+            if spv is None:
+                self._update_topupsts(_Const.TopUpSts.Off)
+                self._update_log('ERR:Could not read voltage of')
+                self._update_log('ERR:'+dev.devname+'...')
+                return False
+            self._pu_refvolt[idx] = dev['Voltage-SP']
         return True
 
     # --- auxiliary log methods ---
