@@ -43,16 +43,21 @@ class EGBias(_Device):
         super().__init__(devname, properties=EGBias._properties)
 
     @property
-    def voltage(self):
+    def voltage_mon(self):
         """."""
         return self['voltinsoft']
+
+    @property
+    def voltage(self):
+        """."""
+        return self['voltoutsoft']
 
     @voltage.setter
     def voltage(self, value):
         self['voltoutsoft'] = value
 
     @property
-    def current(self):
+    def current_mon(self):
         """."""
         return self['currentinsoft']
 
@@ -75,7 +80,7 @@ class EGBias(_Device):
         self.voltage = value
         nrp = int(timeout / 0.1)
         for _ in range(nrp):
-            if abs(self.voltage - value) < tol:
+            if abs(self.voltage_mon - value) < tol:
                 return True
             _time.sleep(0.1)
         print('timed out waiting for EGBias voltage to reach ',
@@ -111,14 +116,19 @@ class EGFilament(_Device):
         super().__init__(devname, properties=EGFilament._properties)
 
     @property
-    def voltage(self):
+    def voltage_mon(self):
         """."""
         return self['voltinsoft']
 
     @property
-    def current(self):
+    def current_mon(self):
         """."""
         return self['currentinsoft']
+
+    @property
+    def current(self):
+        """."""
+        return self['currentoutsoft']
 
     @current.setter
     def current(self, value):
@@ -143,7 +153,7 @@ class EGFilament(_Device):
         """Wait current to reach value with tolerance 'tol'."""
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if abs(self.current - value) < tol:
+            if abs(self.current_mon - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
@@ -180,9 +190,14 @@ class EGHVPS(_Device):
         super().__init__(devname, properties=EGHVPS._properties)
 
     @property
-    def current(self):
+    def current_mon(self):
         """."""
         return self['currentinsoft']
+
+    @property
+    def current(self):
+        """."""
+        return self['currentoutsoft']
 
     @current.setter
     def current(self, value):
@@ -190,9 +205,14 @@ class EGHVPS(_Device):
         self['currentoutsoft'] = value
 
     @property
-    def voltage(self):
+    def voltage_mon(self):
         """."""
         return self['voltinsoft']
+
+    @property
+    def voltage(self):
+        """."""
+        return self['voltoutsoft']
 
     @voltage.setter
     def voltage(self, value):
@@ -235,7 +255,7 @@ class EGHVPS(_Device):
         """Wait voltage to reach value with tolerance 'tol'."""
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if abs(self.voltage - value) < tol:
+            if abs(self.voltage_mon - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
@@ -244,7 +264,7 @@ class EGHVPS(_Device):
         """Wait current setpoint to reach value with tolerance 'tol'."""
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if abs(self['currentoutsoft'] - value) < tol:
+            if abs(self.current_mon - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
@@ -369,9 +389,14 @@ class EGPulsePS(_Device):
         self['multiswitch'] = value
 
     @property
-    def power(self):
-        """Power."""
+    def power_mon(self):
+        """Power monitor."""
         return self['powerinsoft']
+
+    @property
+    def power(self):
+        """Power readback."""
+        return self['poweroutsoft']
 
     @power.setter
     def power(self, value):
@@ -649,7 +674,7 @@ class EGun(_Devices, _Callback):
         if not self.hvps.connected:
             return False
         is_on = self.hvps.is_on()
-        is_op = abs(self.hvps.voltage - self._hv_opval) < self._hv_tol
+        is_op = abs(self.hvps.voltage_mon - self._hv_opval) < self._hv_tol
         return is_on and is_op
 
     def set_hv_voltage(self, value=None, duration=None, timeout=DEF_TIMEOUT):
@@ -707,7 +732,7 @@ class EGun(_Devices, _Callback):
             return False
 
         # if value is lower, do a ramp down
-        if value < self.hvps.voltage:
+        if value < self.hvps.voltage_mon:
             nrpts = EGun.HV_RAMPDN_NRPTS
             power = 1
         else:  # else, do a ramp up
@@ -716,7 +741,7 @@ class EGun(_Devices, _Callback):
         duration = duration if duration is not None else EGun.HV_RAMP_DURATION
         max_value = EGun.HV_MAXVALUE
         ydata = self._get_ramp(
-            self.hvps.voltage, value, nrpts, max_value, power)
+            self.hvps.voltage_mon, value, nrpts, max_value, power)
         t_inter = duration / (nrpts-1)
 
         self._update_status(f'Starting HVPS ramp to {value:.3f}kV.')
@@ -739,7 +764,7 @@ class EGun(_Devices, _Callback):
                     self._update_status(
                         'ERR:MPS or LI Status not ok. Aborted.')
                     return False
-                if abs(self.hvps.voltage - volt) < self._hv_tol:
+                if abs(self.hvps.voltage_mon - volt) < self._hv_tol:
                     break
                 _time.sleep(0.1)
             else:
@@ -800,7 +825,7 @@ class EGun(_Devices, _Callback):
             return False
 
         # elif value is lower, do only one setpoint
-        if value < self.fila.current:
+        if value < self.fila.current_mon:
             self._update_status(f'Setting current to {value:.3f}A...')
             self.fila.current = value
             if self.fila.wait_current(value, self._filacurr_tol):
@@ -818,7 +843,7 @@ class EGun(_Devices, _Callback):
         duration = EGun.FILACURR_RAMP_DURATION
         nrpts = EGun.FILACURR_RAMP_NRPTS
         max_value = EGun.FILACURR_MAXVALUE
-        ydata = self._get_ramp(self.fila.current, value, nrpts, max_value)
+        ydata = self._get_ramp(self.fila.current_mon, value, nrpts, max_value)
         t_inter = duration / (nrpts-1)
         total_steps_duration = (len(ydata)-1)*t_inter
 
