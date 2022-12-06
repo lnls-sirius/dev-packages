@@ -14,7 +14,7 @@ from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
+from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, \
     PowerSupplyPU, RFKillBeam, InjSysPUModeHandler
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
