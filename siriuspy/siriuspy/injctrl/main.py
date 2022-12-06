@@ -989,7 +989,7 @@ class App(_Callback):
                     return False
                 if not self._evg_dev.injection_state:
                     break
-            _time.sleep(0.02)
+                _time.sleep(0.02)
         else:
             # if in decay mode, wait for target current to be reached
             while True:
