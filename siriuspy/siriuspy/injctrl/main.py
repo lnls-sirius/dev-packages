@@ -11,7 +11,7 @@ from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
 
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
-from ..diagsys.lidiag.csdev import Const as _LIDiagConst
+from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
 from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
@@ -1223,9 +1223,16 @@ class App(_Callback):
 
     def _update_diagstatus(self):
         """Run as a thread scanning PVs."""
-        tplanned = 1.0/App.SCAN_FREQUENCY
+        # constants of alarms to ignore
         psdiag = _PSDiagEnum.DIAG_STATUS_LABELS_AS
         psalrm = int(1 << len(psdiag)) - 1 - int(1 << psdiag.index('Alarms'))
+        lipudiag = _LIDiagEnum.DIAG_STATUS_LABELS_PU
+        lipualrm = int(1 << len(lipudiag)) - 1
+        lipualrm -= int(1 << lipudiag.index('TRIG_Norm not ok'))
+        lipualrm -= int(1 << lipudiag.index('Pulse_Current not ok'))
+
+        # scan
+        tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
             if not self.scanning:
                 _time.sleep(tplanned)
@@ -1234,8 +1241,9 @@ class App(_Callback):
             _t0 = _time.time()
 
             # update sections status
-            self._status_problems = set()
+            status_problems = set()
             for sec, sub2pvs in self._pvs_diag.items():
+                status_sec = 0
                 lbls = _get_sts_lbls(sec)
                 for sub, d2pv in sub2pvs.items():
                     if sub not in lbls:
@@ -1244,29 +1252,36 @@ class App(_Callback):
                     problems = set()
                     for pvo in d2pv.values():
                         if pvo.connected:
-                            if sub == 'PS':  # disregard alarms
-                                value = _np.bitwise_and(int(pvo.value), psalrm)
-                                nok = value > 0
-                            else:
-                                nok = pvo.value > 0
+                            value = pvo.value
+                            # disregard alarms
+                            if sub == 'PS':
+                                value = _np.bitwise_and(int(value), psalrm)
+                            elif self._mode == _Const.InjMode.TopUp and \
+                                    sec == 'LI' and sub == 'PU':
+                                value = _np.bitwise_and(int(value), lipualrm)
+                            nok = value > 0
                         else:
                             nok = True
                         if nok:
                             problems.add(_PVName(pvo.pvname).device_name)
                     val = 1 if problems else 0
-                    self._status[sec] = _updt_bit(self._status[sec], bit, val)
+                    status_sec = _updt_bit(status_sec, bit, val)
                     if len(problems) > 1:
-                        self._status_problems.add(sec+' '+sub)
+                        status_problems.add(sec+' '+sub)
                     else:
-                        self._status_problems.update(problems)
-                self.run_callbacks('DiagStatus'+sec+'-Mon', self._status[sec])
+                        status_problems.update(problems)
+                self._status[sec] = status_sec
+                self.run_callbacks('DiagStatus'+sec+'-Mon', status_sec)
+            self._status_problems = status_problems
 
             # compile general status
             lbls = _get_sts_lbls()
+            status_all = 0
             for bit, sec in enumerate(lbls):
                 val = self._status[sec] != 0
-                self._status['All'] = _updt_bit(self._status['All'], bit, val)
-            self.run_callbacks('DiagStatus-Mon', self._status['All'])
+                status_all = _updt_bit(status_all, bit, val)
+            self._status['All'] = status_all
+            self.run_callbacks('DiagStatus-Mon', status_all)
 
             ttook = _time.time() - _t0
             tsleep = tplanned - ttook
@@ -1294,9 +1309,10 @@ class App(_Callback):
             value = _updt_bit(value, 0, val)
 
             # BucketList not synced
-            val = 1 if not self._evg_dev.connected else \
-                self._evg_dev.bucketlist_sync != 1
-            value = _updt_bit(value, 1, val)
+            if self._mode != _Const.InjMode.TopUp:
+                val = 1 if not self._evg_dev.connected else \
+                    self._evg_dev.bucketlist_sync != 1
+                value = _updt_bit(value, 1, val)
 
             if self._egun_dev.connected:
                 # EGBiasPS voltage diff. from desired
