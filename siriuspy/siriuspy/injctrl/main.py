@@ -35,10 +35,6 @@ class App(_Callback):
         self._mode = _Const.InjMode.Decay
         self._type = _Const.InjType.MultiBunch
         self._type_mon = _Const.InjTypeMon.Undefined
-        self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
-        self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
-        self._filaopcurr = EGun.FILACURR_OPVALUE
-        self._hvopvolt = EGun.HV_OPVALUE
         self._pumode = _Const.PUMode.Accumulation
         self._pumode_mon = _Const.PUModeMon.Undefined
         self._p2w = {
@@ -209,6 +205,30 @@ class App(_Callback):
         self.thread_check_injstatus = _epics.ca.CAThread(
             target=self._update_injstatus, daemon=True)
         self.thread_check_injstatus.start()
+
+        # initialize default operation values with implemented values
+        self._egun_dev.wait_for_connection()
+        biasvolt = self._egun_dev.bias.voltage
+        if biasvolt is None:
+            self._sglbunbiasvolt = _Const.BIAS_SINGLE_BUNCH
+            self._multbunbiasvolt = _Const.BIAS_MULTI_BUNCH
+        else:
+            self._sglbunbiasvolt = biasvolt
+            self._multbunbiasvolt = biasvolt
+            self._egun_dev.single_bunch_bias_voltage = biasvolt
+            self._egun_dev.multi_bunch_bias_voltage = biasvolt
+        filacurr = self._egun_dev.fila.current
+        if filacurr is None:
+            self._filaopcurr = _Const.FILACURR_OPVALUE
+        else:
+            self._filaopcurr = filacurr
+            self._egun_dev.fila_current_opvalue = filacurr
+        hvvolt = self._egun_dev.hvps.voltage
+        if hvvolt is None:
+            self._hvopvolt = _Const.HV_OPVALUE
+        else:
+            self._hvopvolt = hvvolt
+            self._egun_dev.high_voltage_opvalue = hvvolt
 
     def init_database(self):
         """Set initial PV values."""
