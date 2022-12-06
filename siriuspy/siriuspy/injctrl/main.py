@@ -160,8 +160,6 @@ class App(_Callback):
 
         self._injsys_dev = InjSysStandbyHandler()
 
-        self._macshift_dev = MachShift()
-
         self._currinfo_dev = CurrInfoSI()
 
         self._pu_names = _PSSearch.get_psnames(
