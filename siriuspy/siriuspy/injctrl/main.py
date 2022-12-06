@@ -517,6 +517,10 @@ class App(_Callback):
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
         if self._mode == _Const.InjMode.TopUp:
+            if not self._evg_dev.connected:
+                self._update_log('ERR:Could not update bucket list,')
+                self._update_log('ERR:EVG is disconnected.')
+                return False
             bucket = _np.arange(self._topupnrpulses) + 1
             bucket *= step
             bucket += self._evg_dev.bucketlist[0] - 1
@@ -535,6 +539,10 @@ class App(_Callback):
 
     def _cmd_bucketlist_fill(self, stop, start, step):
         """Set bucket list PV."""
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
         if self._evg_dev.fill_bucketlist(stop, start, step, timeout=3):
             self._update_log('Updated BucketList.')
             return True
@@ -612,12 +620,17 @@ class App(_Callback):
 
         self._topupnrpulses = value
         if self._mode == _Const.InjMode.TopUp:
+            if not self._evg_dev.connected:
+                self._update_log('ERR:Could not update bucket list,')
+                self._update_log('ERR:EVG is disconnected.')
+                return False
             bucket = _np.arange(self._topupnrpulses) + 1
             bucket *= self._bucketlist_step
             bucket += self._evg_dev.bucketlist[0] - 1
             bucket %= 864
             bucket += 1
-            self._set_bucket_list(bucket)
+            if not self._set_bucket_list(bucket):
+                return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
@@ -978,8 +991,14 @@ class App(_Callback):
                     break
             _time.sleep(0.02)
         else:
-            # if in decay mode and autostop is turned off, interrupt wait
-            while self._currinfo_dev.current < self._target_current:
+            # if in decay mode, wait for target current to be reached
+            while True:
+                if not self._currinfo_dev.connected:
+                    self._update_log('ERR:CurrInfo device disconnected.')
+                    return False
+                if self._currinfo_dev.current >= self._target_current:
+                    break
+                # if autostop is turned off, interrupt wait
                 if init_mode == _Const.InjMode.Decay and \
                         init_autostop and not self._autostop:
                     return False
@@ -998,6 +1017,10 @@ class App(_Callback):
         return True
 
     def _update_bucket_list_autostop(self):
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
         old_bucklist = self._evg_dev.bucketlist_mon
         injcount = self._evg_dev.injection_count
         blistlen = self._evg_dev.bucketlist_len
@@ -1006,6 +1029,10 @@ class App(_Callback):
         return self._set_bucket_list(new_bucklist)
 
     def _update_bucket_list_topup(self):
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
         bucket = _np.arange(self._topupnrpulses) + 1
         bucket *= self._bucketlist_step
         bucket += self._evg_dev.bucketlist_mon[-1] - 1
@@ -1093,6 +1120,9 @@ class App(_Callback):
                 break
 
             self._update_log('Top-up period elapsed. Preparing...')
+            if not self._currinfo_dev.connected:
+                self._update_log('ERR:CurrInfo device disconnected.')
+                break
             if self._currinfo_dev.current < self._target_current * 1.02:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
@@ -1155,12 +1185,18 @@ class App(_Callback):
             self._topup_pu_prepared = True
             self._update_log('Setting PU Voltage to 100%...')
             for idx, dev in enumerate(self._pu_devs):
+                if not dev.connected:
+                    self._update_log('WARN:'+dev.devname+' disconnected.')
+                    continue
                 dev.voltage = self._pu_refvolt[idx]
             self._update_log('...done.')
         elif state == 'standby':
             self._topup_pu_prepared = False
             self._update_log('Setting PU Voltage to 50%...')
             for idx, dev in enumerate(self._pu_devs):
+                if not dev.connected:
+                    self._update_log('WARN:'+dev.devname+' disconnected.')
+                    continue
                 dev.voltage = self._pu_refvolt[idx] * 0.5
             self._update_log('...done.')
         _time.sleep(1)
