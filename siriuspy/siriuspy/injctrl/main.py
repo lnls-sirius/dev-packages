@@ -1069,8 +1069,8 @@ class App(_Callback):
                 self._update_log('ERR:...aborted top-up loop.')
                 return
 
-            # if remaining time is lower than wait time, do not set PU voltage
-            if self._topupnext - _time.time() <= _Const.PU_VOLTAGE_UP_TIME:
+            # if remaining time is short, do not handle PU voltage
+            if self._topupnext - _time.time() <= _Const.PU_VOLTAGE_UP_TIME*2:
                 self._topup_pu_prepared = True
             else:
                 # else, set PU voltage to 50%
