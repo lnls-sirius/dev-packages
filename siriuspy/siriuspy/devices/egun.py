@@ -560,7 +560,7 @@ class EGun(_Devices, _Callback):
         self._abort_chg_type.clear()
         self._update_status('Switching EGun mode to SingleBunch...')
 
-        if not self.connected:
+        if not self.wait_for_connection(1):
             self._update_status('ERR:EGun device not connected. Aborted.')
             return False
 
@@ -594,7 +594,7 @@ class EGun(_Devices, _Callback):
         self._abort_chg_type.clear()
         self._update_status('Switching EGun mode to MultiBunch...')
 
-        if not self.connected:
+        if not self.wait_for_connection(1):
             self._update_status('ERR:EGun device not connected. Aborted.')
             return False
 
@@ -624,7 +624,7 @@ class EGun(_Devices, _Callback):
     @property
     def is_single_bunch(self):
         """Is configured to single bunch mode."""
-        if not self.connected:
+        if not self.wait_for_connection(1):
             return False
         sts = not self.pulse.multi_bunch_switch
         sts &= not self.pulse.multi_bunch_mode
@@ -638,7 +638,7 @@ class EGun(_Devices, _Callback):
     @property
     def is_multi_bunch(self):
         """Is configured to multi bunch mode."""
-        if not self.connected:
+        if not self.wait_for_connection(1):
             return False
         sts = not self.pulse.single_bunch_switch
         sts &= not self.pulse.single_bunch_mode
@@ -671,7 +671,7 @@ class EGun(_Devices, _Callback):
     @property
     def is_hv_on(self):
         """Indicate whether high voltage is on and in operational value."""
-        if not self.hvps.connected:
+        if not self.hvps.wait_for_connection(1):
             return False
         is_on = self.hvps.is_on()
         is_op = abs(self.hvps.voltage_mon - self._hv_opval) < self._hv_tol
@@ -787,7 +787,7 @@ class EGun(_Devices, _Callback):
     @property
     def is_fila_on(self):
         """Indicate whether filament is on and in operational current."""
-        if not self.fila.connected:
+        if not self.fila.wait_for_connection(1):
             return False
         is_on = self.fila.is_on()
         is_op_sp = abs(self.fila['currentoutsoft']-self._filacurr_opval) < 1e-4
@@ -926,7 +926,7 @@ class EGun(_Devices, _Callback):
 
     def _check_status_ok(self):
         """Check if interlock signals are ok."""
-        if not self.connected:
+        if not self.wait_for_connection(1):
             return False
         isok = [self.mps_ccg[ppty] == 0 for ppty in self.mps_ccg.properties]
         allok = all(isok)
