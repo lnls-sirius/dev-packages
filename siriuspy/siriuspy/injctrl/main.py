@@ -165,7 +165,7 @@ class App(_Callback):
             {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
         self._pu_refvolt = list()
-        self._topup_puref_ignore  = False
+        self._topup_puref_ignore = False
         for dev in self._pu_devs:
             pvo = dev.pv_object('Voltage-SP')
             self._pu_refvolt.append(pvo.value)
