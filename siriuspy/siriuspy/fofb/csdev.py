@@ -28,7 +28,8 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
-        'OrbDistortionDetectionSynced', 'LoopInterlockOk')
+        'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
+        'LoopInterlockOk')
 
 
 _et = ETypes  # syntactic sugar
@@ -51,9 +52,11 @@ class HLFOFBConst(_csdev.Const):
     DEF_TIMEOUT = 10  # [s]
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
+    DEF_TIMEMINWAIT = 1  # [s]
     LOOPGAIN_RMP_TIME = 5  # [s]
     LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
+    CURRZERO_RMP_FREQ = 2  # [steps/s]
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
@@ -74,12 +77,6 @@ class HLFOFBConst(_csdev.Const):
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
-
-        # list of BPMs whose DCCs must always be enabled to bypass a hardware
-        # issue (crate 05), so that all BPMs can be reached over the FOFB net
-        self.bpm_dccenbl_nick = ['05C1-1', '05C1-2', '05C3-2', '05C4']
-        self.bpm_dccenbl_idcs = [
-            self.bpm_nicknames.index(b) for b in self.bpm_dccenbl_nick]
 
         # device position along the ring
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
@@ -155,6 +152,12 @@ class HLFOFBConst(_csdev.Const):
             'LoopMaxOrbDistortionEnbl-Sts': {
                 'type': 'enum', 'enums': _et.DSBLD_ENBLD,
                 'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sel': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sts': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
 
             # Correctors
             'CHPosS-Cte': {
@@ -180,6 +183,12 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetCurrZeroDuration-SP': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
+            'CorrSetCurrZeroDuration-RB': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
                 'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
@@ -217,6 +226,7 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncTFrameLen-Cmd': {'type': 'int', 'value': 0},
             'CtrlrConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and Kick buffer configuration

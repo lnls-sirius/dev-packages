@@ -12,7 +12,7 @@ from ..epics import PV as _PV
 
 from .conn import Timing, PSCycler, PSCyclerFBP, LinacPSCycler, FOFBPSCycler
 from .bo_cycle_data import DEFAULT_RAMP_DURATION
-from .util import Const as _Const, \
+from .util import Const as _Const, get_psnames as _get_psnames, \
     get_trigger_by_psname as _get_trigger_by_psname
 
 TIMEOUT_SLEEP = 0.1
@@ -81,8 +81,7 @@ class CycleController:
                 psnames = _PSSearch.get_psnames({'sec': 'BO', 'dis': 'PS'})
                 self._mode = 'Ramp'
             else:
-                psnames = _PSSearch.get_psnames(
-                    {'sec': '(LI|TB|TS|SI)', 'dis': 'PS'})
+                psnames = _get_psnames(isadv=self._isadv)
                 self._mode = 'Cycle'
             new_cyclers = dict()
             for name in psnames:
@@ -121,7 +120,10 @@ class CycleController:
             chv_id = _PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
                  'dev': 'C(H|V)'})
-            indfbp = qs_c2 + cv2_c2 + chv_id
+            qs_id = _PSSearch.get_psnames(
+                {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+                 'dev': 'QS'})
+            indfbp = qs_c2 + cv2_c2 + chv_id + qs_id
             # trims psnames
             trimnames = set(_PSSearch.get_psnames(
                 {'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
@@ -936,7 +938,7 @@ class CycleController:
         self.create_trims_cyclers()
 
         self._update_log('Preparing to cycle CHs, QSs and QTrims...')
-        trims = _PSSearch.get_psnames({
+        trims = _Filter.process_filters(self.trimnames, {
             'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
@@ -945,7 +947,7 @@ class CycleController:
             return
 
         self._update_log('Preparing to cycle CVs...')
-        trims = _PSSearch.get_psnames({
+        trims = _Filter.process_filters(self.trimnames, {
             'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': 'CV'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
