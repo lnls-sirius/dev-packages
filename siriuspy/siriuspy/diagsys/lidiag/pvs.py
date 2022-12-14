@@ -143,14 +143,18 @@ class LIPUStatusPV:
         ['DISCONN', 'RUNSTOP', 'PREHEAT', 'CHRALLW', 'TRGALLW',
          'EMRSTOP', 'CPS_ALL', 'THYHEAT', 'KLYHEAT', 'LVRDYOK',
          'HVRDYOK', 'TRRDYOK', 'SELFFLT', 'SYS_RDY', 'TRGNORM',
-         'PLSCURR', 'VLTDIFF', 'CRRDIFF'])
+         'PLSCURR', 'VLTDIFF', 'CRRDIFF', 'CHARGES', 'TRIGOUT'])
 
     PV = _Const.register(
         'PV',
-        ['RUNSTOP', 'PREHEAT', 'CHRALLW', 'TRGALLW', 'EMRSTOP',
-         'CPS_ALL', 'THYHEAT', 'KLYHEAT', 'LVRDYOK', 'HVRDYOK',
-         'TRRDYOK', 'SELFFLT', 'SYS_RDY', 'TRGNORM', 'PLSCURR',
-         'VLTDIFF', 'CRRDIFF'])
+        ['CHARGES', 'TRIGOUT', 'RUNSTOP', 'PREHEAT', 'CHRALLW',
+         'TRGALLW', 'EMRSTOP', 'CPS_ALL', 'THYHEAT', 'KLYHEAT',
+         'LVRDYOK', 'HVRDYOK', 'TRRDYOK', 'SELFFLT', 'SYS_RDY',
+         'TRGNORM', 'PLSCURR', 'VLTDIFF', 'CRRDIFF'])
+
+    PVS_OFF_IGNORE = [
+        'CHRALLW', 'TRGALLW', 'CPS_ALL', 'TRRDYOK', 'SELFFLT',
+        'SYS_RDY', 'TRGNORM', 'PLSCURR']
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute Status PV."""
@@ -163,12 +167,17 @@ class LIPUStatusPV:
             value = (1 << len(LIPUStatusPV.BIT)+1)-1
             return {'value': value}
 
+        chrgsts = computed_pv.pvs[LIPUStatusPV.PV.CHARGES].value
+        trigsts = computed_pv.pvs[LIPUStatusPV.PV.TRIGOUT].value
         for pvi, attr in enumerate(LIPUStatusPV.PV._fields):
             bit = getattr(LIPUStatusPV.BIT, attr)
             if 'DIFF' in attr:
                 sts = computed_pv.pvs[pvi].severity
                 value = _update_bit(value, bit, sts != 0)
             else:
+                if (not chrgsts or not trigsts) and \
+                        attr in LIPUStatusPV.PVS_OFF_IGNORE:
+                    continue
                 sts = computed_pv.pvs[pvi].value
                 value = _update_bit(value, bit, sts != 1 or sts is None)
 

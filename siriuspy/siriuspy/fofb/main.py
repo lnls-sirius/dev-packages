@@ -4,7 +4,7 @@ import os as _os
 import logging as _log
 import time as _time
 from functools import partial as _part
-from threading import Thread as _Thread
+import epics as _epics
 import numpy as _np
 
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
@@ -102,6 +102,9 @@ class App(_Callback):
         self._meas_respmat_thread = None
         self._measuring_respmat = False
 
+        # use pyepics recommendations for threading
+        _epics.ca.use_initial_context()
+
         # devices and connections
         self._sisofb_dev = _SOFB(_SOFB.DEVICES.SI)
         ppties_automon_off = [
@@ -197,7 +200,7 @@ class App(_Callback):
         # configuration scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_configs = _Thread(
+        self.thread_check_configs = _epics.ca.CAThread(
             target=self._check_configs, daemon=True)
         self.thread_check_configs.start()
 
@@ -394,7 +397,7 @@ class App(_Callback):
             self._abort_thread = True
             self._thread_loopstate.join()
 
-        self._thread_loopstate = _Thread(
+        self._thread_loopstate = _epics.ca.CAThread(
             target=self._thread_set_loop_state,
             args=[value, reset, abort], daemon=True)
         self._thread_loopstate.start()
@@ -696,7 +699,8 @@ class App(_Callback):
             self._update_log('ERR:Current ramp down already in progress.')
             return False
 
-        self._thread_currzero = _Thread(target=self._thread_corr_currzero)
+        self._thread_currzero = _epics.ca.CAThread(
+            target=self._thread_corr_currzero, daemon=True)
         self._thread_currzero.start()
 
         self._corr_setcurrzero_count += 1
@@ -715,7 +719,8 @@ class App(_Callback):
                 self._thread_currzero.is_alive():
             self._abort_thread_currzero = True
             self._thread_currzero.join()
-            self._thread_currzero = _Thread(target=self._thread_corr_currzero)
+            self._thread_currzero = _epics.ca.CAThread(
+                target=self._thread_corr_currzero, daemon=True)
             self._thread_currzero.start()
         self.run_callbacks('CorrSetCurrZeroDuration-RB', value)
         return True
@@ -815,7 +820,7 @@ class App(_Callback):
             self._update_log('ERR:Net sync already in progress.')
             return False
 
-        self._thread_syncnet = _Thread(
+        self._thread_syncnet = _epics.ca.CAThread(
             target=self._thread_fofbctrl_syncnet, daemon=True)
         self._thread_syncnet.start()
 
@@ -1122,7 +1127,7 @@ class App(_Callback):
             return False
 
         # handle devices enable configuration
-        self._thread_enbllist = _Thread(
+        self._thread_enbllist = _epics.ca.CAThread(
             target=self._handle_devices_enblconfig, args=[device, ],
             daemon=True)
         self._thread_enbllist.start()
@@ -1369,7 +1374,7 @@ class App(_Callback):
             return False
         self._update_log('Starting RespMat measurement.')
         self._measuring_respmat = True
-        self._meas_respmat_thread = _Thread(
+        self._meas_respmat_thread = _epics.ca.CAThread(
             target=self._do_meas_respmat, daemon=True)
         self._meas_respmat_thread.start()
         return True
@@ -1735,7 +1740,7 @@ class App(_Callback):
             self._update_log('ERR: reset already in progress.')
             return False
 
-        self._thread_reset = _Thread(
+        self._thread_reset = _epics.ca.CAThread(
             target=self._thread_fofbctrl_reset, daemon=True)
         self._thread_reset.start()
         return True
