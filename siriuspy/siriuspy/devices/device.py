@@ -3,7 +3,8 @@
 import time as _time
 import operator as _opr
 
-from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
+    CASeverityException as _CASeverityException
 import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
@@ -92,6 +93,10 @@ class Device:
         """Return PV object for a given device property."""
         return self._pvs[propty]
 
+    def pv_ctrlvars(self, propty):
+        """Return PV object control variable."""
+        return self._pvs[propty].get_ctrlvars()
+
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
         attributes = dict()
@@ -123,8 +128,8 @@ class Device:
         pvobj = self._pvs[propty]
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
-        except _ChannelAccessGetFailure:
-            # This is raised in a Virtual Circuit Disconnect (192)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
             print('Could not get value of {}'.format(pvobj.pvname))
             value = None
@@ -154,16 +159,23 @@ class Device:
 
     def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """."""
-        if isinstance(comp, str):
-            comp = getattr(_opr, comp)
-        ntrials = int(timeout/_TINY_INTERVAL)
-        for _ in range(ntrials):
-            boo = comp(self[propty], value)
+        def comp_(val):
+            boo = comp(self[propty], val)
             if isinstance(boo, _np.ndarray):
                 boo = _np.all(boo)
-            if boo:
-                return True
+            return boo
+
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
+
+        if comp_(value):
+            return True
+
+        ntrials = int(timeout/_TINY_INTERVAL)
+        for _ in range(ntrials):
             _time.sleep(_TINY_INTERVAL)
+            if comp_(value):
+                return True
         return False
 
     def _get_pvname(self, devname, propty):
@@ -211,12 +223,13 @@ class DeviceNC(Device):
     This device class is to be used for those devices whose
     names and PVs are not compliant to the Sirius naming system.
     """
+    DEVSEP = ':'
 
     def _create_pvs(self, devname):
         pvs = dict()
         devname = devname or ''
         for propty in self._properties:
-            pvname = devname + ':' + propty
+            pvname = devname + self.DEVSEP + propty
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return devname, pvs

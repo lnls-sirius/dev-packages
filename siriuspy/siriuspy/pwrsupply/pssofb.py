@@ -145,6 +145,7 @@ class PSConnSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
     SOCKET_TIMEOUT_ERR = 255
+    SERIAL_ERR = 254
 
     def __init__(
             self, ethbridgeclnt_class, bbbnames=None, mproc=None,
@@ -391,19 +392,11 @@ class PSConnSOFB:
         indcs_sofb = self.indcs_sofb[bbbname]
         indcs_bsmp = self.indcs_bsmp[bbbname]
 
-        # get valid current setpoints from sofb array
-        current = curr_sp[indcs_sofb]
-
         # initialize setpoint
-        # read last setpoint already stored in PSBSMP object:
-        readback = udc.sofb_current_rb_get()
-        if readback is None:
-            setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
-        else:
-            setpoint = _np.asarray(readback)
-
-        # update setpoint
-        setpoint[indcs_bsmp] = current
+        # NOTE: curr_sp may contain NaNs. They will be handled by low level
+        #    classes.
+        setpoint = _np.full(PSConnSOFB.MAX_NR_DEVS, _np.nan)
+        setpoint[indcs_bsmp] = curr_sp[indcs_sofb]
 
         # --- bsmp communication ---
         try:
@@ -414,6 +407,8 @@ class PSConnSOFB:
         except _socket_timeout:
             # update sofb_func_return indicating socket timeout
             self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
+        except _SerialError:
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SERIAL_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -424,7 +419,8 @@ class PSConnSOFB:
         # send signal to IOC to update one power supply state
         if self._sofb_update_iocs:
             pvobj = self._pvobjs[bbbname]
-            pvobj.put(1, wait=False)  # send signal to IOC
+            if pvobj.connected and not pvobj.status:
+                pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
@@ -895,9 +891,8 @@ class PSSOFB:
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=_np.int32,
-                                buffer=memoryview(fret)),
-            }
+            'fret': _np.ndarray(
+                shape, dtype=_np.int32, buffer=memoryview(fret))}
         psconnsofb = PSConnSOFB(
             ethbridgeclnt_class, bbbnames, mproc=mproc,
             sofb_update_iocs=sofb_update_iocs, dipoleoff=dipoleoff)

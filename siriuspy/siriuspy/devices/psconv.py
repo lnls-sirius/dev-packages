@@ -60,6 +60,8 @@ class PSProperty(_DevicesSync):
             pvobj.lower_alarm_limit,
             pvobj.lower_warning_limit,
             pvobj.lower_disp_limit,
+            pvobj.lower_ctrl_limit,
+            pvobj.upper_ctrl_limit,
             pvobj.upper_disp_limit,
             pvobj.upper_warning_limit,
             pvobj.upper_alarm_limit)

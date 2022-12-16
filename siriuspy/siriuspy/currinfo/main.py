@@ -367,7 +367,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
     HARMNUM = 864
     HARMNUM_RATIO = 864 / 828
-    CURR_THRESHOLD = 0.06  # [mA]
+    CURR_THRESHOLD = 0.02  # [mA]
     MAX_CURRENT = 1.0  # [A]
 
     def __init__(self):
@@ -441,9 +441,9 @@ class SICurrInfoApp(_CurrInfoApp):
             self._prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_13c4_pv, time_window=0.5, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_14c4_pv, time_window=0.5, use_pv_timestamp=False)
 
         self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
         self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
@@ -597,15 +597,16 @@ class SICurrInfoApp(_CurrInfoApp):
 
     def _update_injeff(self):
         # Sleep some time here to ensure SI DCCT will have been updated
-        _time.sleep(0.11)
+        _time.sleep(0.21)
 
         # get booster current
         bo_curr = self._bo_curr3gev_pv.value
 
         # choose current PV
-        buffer = self._current_13c4_buffer \
-            if self._dcct_mode == _Const.DCCT.DCCT13C4 \
-            else self._current_14c4_buffer
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
+            buffer = self._current_13c4_buffer
+        else:
+            buffer = self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
         timestamp_dq = _np.asarray(timestamp_dq)
         value_dq = _np.asarray(value_dq)
@@ -619,7 +620,7 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         # calculate efficiency
-        self._injcurr = value_dq[-1] - _np.min(value_dq)  # mA
+        self._injcurr = value_dq.max() - value_dq.min()  # mA
         self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC

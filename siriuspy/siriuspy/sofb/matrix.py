@@ -21,6 +21,7 @@ class EpicsMatrix(BaseMatrix):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
+        self._sofb = None
         self.select_items = {
             'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
             'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
@@ -33,7 +34,7 @@ class EpicsMatrix(BaseMatrix):
             'bpmx': 'BPMXEnblList-RB',
             'bpmy': 'BPMYEnblList-RB',
             }
-        if self.acc == 'SI':
+        if self.isring:
             self.select_items['rf'] = _np.zeros(1, dtype=bool)
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
         self._respmat_mode = self._csorb.RespMatMode.Full
@@ -42,11 +43,21 @@ class EpicsMatrix(BaseMatrix):
         self.respmat = _np.zeros(
             [2*self._csorb.nr_bpms, self._csorb.nr_corrs], dtype=float)
         self.inv_respmat = self.respmat.copy().T
+        self.respmat_processed = self.respmat.copy().T
 
         self.ring_extension = 1
         self.respmat_extended = self.respmat.copy()
         self.select_items_extended = _dcopy(self.select_items)
         self._load_respmat()
+
+    @property
+    def sofb(self):
+        """."""
+        return self._sofb
+
+    @sofb.setter
+    def sofb(self, sofb):
+        self._sofb = sofb
 
     @property
     def bpm_enbllist(self):
@@ -59,7 +70,7 @@ class EpicsMatrix(BaseMatrix):
         """."""
         sel_ = self.select_items
         seleccor = _np.hstack([sel_['ch'], sel_['cv']])
-        if self.acc == 'SI':
+        if self.isring:
             seleccor = _np.hstack([seleccor, sel_['rf']])
         return seleccor
 
@@ -75,7 +86,7 @@ class EpicsMatrix(BaseMatrix):
             'MinSingValue-SP': self.set_min_sing_value,
             'TikhonovRegConst-SP': self.set_tikhonov_reg_const,
             }
-        if self.acc == 'SI':
+        if self.isring:
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return dbase
 
@@ -244,8 +255,25 @@ class EpicsMatrix(BaseMatrix):
         kicks *= -1
         _Thread(
             target=self._update_dkicks, args=(kicks, ), daemon=True).start()
-        # self._update_dkicks(kicks)
         return kicks
+
+    def estimate_orbit_variation(self, kicks):
+        """Estimate the orbit variation induced by kicks.
+
+        Args:
+            kicks (numpy.ndarray): Correctors kicks that will be used to
+                estimate orbit distortion.
+
+        Returns:
+            dorb (numpy.ndarray): Estimated orbit.
+
+        """
+        if kicks.size != self.respmat.shape[1]:
+            msg = 'ERR: kicks and matrix size not compatible.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return None
+        return _np.dot(self.respmat, kicks)
 
     def _update_dkicks(self, kicks):
         kicks = kicks.copy()
@@ -253,7 +281,7 @@ class EpicsMatrix(BaseMatrix):
         nr_chcv = self._csorb.nr_chcv
         self.run_callbacks('DeltaKickCH-Mon', kicks[:nr_ch])
         self.run_callbacks('DeltaKickCV-Mon', kicks[nr_ch:nr_chcv])
-        if self.acc == 'SI':
+        if self.isring:
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
 
     def set_min_sing_value(self, num):
@@ -354,9 +382,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
-        respmat_proc = _np.zeros(self.respmat.shape, dtype=float)
-        respmat_proc[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
-        self.run_callbacks('RespMat-Mon', list(respmat_proc.ravel()))
+        self.respmat_processed = _np.zeros(self.respmat.shape, dtype=float)
+        self.respmat_processed[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
+        self.run_callbacks('RespMat-Mon', list(self.respmat_processed.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)

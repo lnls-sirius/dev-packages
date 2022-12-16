@@ -4,12 +4,12 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
+from mathphys.functions import save_pickle as _save_pickle, \
+    load_pickle as _load_pickle
+
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
-
-from mathphys.functions import save_pickle as _save_pickle, \
-    load_pickle as _load_pickle
 
 
 class _Base:
@@ -46,6 +46,16 @@ class _Base:
         else:
             raise TypeError(
                 'Variable conn must be a str or ClientArchiver object.')
+
+    @property
+    def timeout(self):
+        """Connection timeout."""
+        return self.connector.timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        """Set connection timeout."""
+        self.connector.timeout = float(value)
 
     @property
     def connected(self):
@@ -296,10 +306,12 @@ class PVData(_Base):
 
     def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
-        self._timestamp = _np.asarray(timestamp)
-        self._value = _np.asarray(value)
-        self._status = _np.asarray(status)
-        self._severity = _np.asarray(severity)
+        self._timestamp = self._value = self._status = self._severity = None
+        if timestamp is not None:
+            self._timestamp = _np.asarray(timestamp)
+            self._value = _np.asarray(value)
+            self._status = _np.asarray(status)
+            self._severity = _np.asarray(severity)
 
     def to_dict(self):
         """Return dictionary with PV properties.

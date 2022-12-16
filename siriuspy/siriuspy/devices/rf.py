@@ -1,12 +1,11 @@
-"""."""
+"""RF devices."""
 
 import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import DeviceNC as _DeviceNC
-from .device import Devices as _Devices
+from .device import DeviceNC as _DeviceNC, Devices as _Devices
 
 
 class RFGen(_DeviceNC):
@@ -571,13 +570,14 @@ class ASLLRF(_DeviceNC):
 
     _properties = (
         'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
-        'mV:AL:REF-SP', 'SL:REF:AMP', 'SL:INP:AMP',
+        'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
         'FF:ON', 'FF', 'FF:S', 'FF:POS', 'FF:POS:S',
         'FF:GAIN:CELL2', 'FF:GAIN:CELL2:S', 'FF:GAIN:CELL4', 'FF:GAIN:CELL4:S',
         'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
+        'AMPREF:INCRATE', 'AMPREF:INCRATE:S',
         )
 
     def __init__(self, devname):
@@ -615,7 +615,7 @@ class ASLLRF(_DeviceNC):
 
     @phase_top.setter
     def phase_top(self, value):
-        self['RmpPhsTop-SP'] = value
+        self['RmpPhsTop-SP'] = self._wrap_phase(value)
 
     @property
     def phase_bottom(self):
@@ -624,7 +624,7 @@ class ASLLRF(_DeviceNC):
 
     @phase_bottom.setter
     def phase_bottom(self, value):
-        self['RmpPhsBot-SP'] = value
+        self['RmpPhsBot-SP'] = self._wrap_phase(value)
 
     @property
     def phase_mon(self):
@@ -638,7 +638,7 @@ class ASLLRF(_DeviceNC):
 
     @phase.setter
     def phase(self, value):
-        self['PL:REF:S'] = value
+        self['PL:REF:S'] = self._wrap_phase(value)
 
     @property
     def voltage_mon(self):
@@ -738,6 +738,11 @@ class ASLLRF(_DeviceNC):
         """Return the amplitude error in [mV]."""
         return self['FF:ERR']
 
+    @staticmethod
+    def _wrap_phase(phase):
+        """Phase must be in [-180, +180] interval."""
+        return (phase + 180) % 360 - 180
+
 
 class BORFCavMonitor(_DeviceNC):
     """."""
@@ -752,6 +757,7 @@ class BORFCavMonitor(_DeviceNC):
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
         'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
+        'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
         )
 
     def __init__(self):
@@ -844,6 +850,16 @@ class BORFCavMonitor(_DeviceNC):
     def temp_cell5(self):
         """."""
         return self['Cylin5T-Mon']
+
+    @property
+    def gap_voltage_bottom(self):
+        """Gap Voltage in [V]."""
+        return self['RmpAmpVCavBot-Mon']
+
+    @property
+    def gap_voltage_top(self):
+        """Gap Voltage in [V]."""
+        return self['RmpAmpVCavTop-Mon']
 
 
 class SIRFCavMonitor(_DeviceNC):
@@ -1052,4 +1068,77 @@ class RFCav(_Devices):
             else:
                 raise Exception(
                     'Set RF property (phase, voltage or frequency)')
+        return False
+
+
+class RFKillBeam(_Devices):
+    """RF Kill Beam Button."""
+
+    TIMEOUT_WAIT = 3.0  # [s]
+    INCRATE_VALUE = 14  # 50 mV/s
+    REFMIN_VALUE = 60  # Minimum Amplitude Reference
+
+    def __init__(self):
+        """Init."""
+
+        rfdev = ASLLRF(ASLLRF.DEVICES.SI)
+        devices = (rfdev, )
+
+        # call base class constructor
+        super().__init__('SI-Glob:RF-KillBeam', devices)
+
+    @property
+    def dev_llrf(self):
+        """Device SILLRF."""
+        return self.devices[0]
+
+    def cmd_kill_beam(self):
+        """Kill beam."""
+        # get initial Amplitude Increase Rate
+        aincrate_init = self.dev_llrf['AMPREF:INCRATE']
+        if aincrate_init is None:
+            return [False, 'Could not read RF Amplitude Increase Rate PV'
+                           '(SR-RF-DLLRF-01:AMPREF:INCRATE)!']
+
+        # get initial Amplitude Reference
+        alref_init = self.dev_llrf['mV:AL:REF-RB']
+        if alref_init is None:
+            return [False, 'Could not read Amplitude Reference PV'
+                           '(SR-RF-DLLRF-01:mV:AL:REF-RB)!']
+
+        # set Amplitude Increase Rate to 50 mV/s and wait
+        self._pv_put('AMPREF:INCRATE:S', RFKillBeam.INCRATE_VALUE)
+
+        if not self.dev_llrf._wait(
+                'AMPREF:INCRATE:S', RFKillBeam.INCRATE_VALUE,
+                timeout=RFKillBeam.TIMEOUT_WAIT):
+            return [False, 'Could not set RF Amplitude Increase Rate PV'
+                           '(SR-RF-DLLRF-01:AMPREF:INCRATE:S)!']
+
+        # waiting time
+        wait_time = int((alref_init - RFKillBeam.REFMIN_VALUE)/50)
+
+        # set Amplitude Reference to 60mV and wait for wait_time seconds
+        if not self._pv_put('mV:AL:REF-SP', RFKillBeam.REFMIN_VALUE):
+            return [False, 'Could not set Amplitude Reference PV'
+                           '(SR-RF-DLLRF-01:mV:AL:REF-SP)!']
+        _time.sleep(wait_time)
+
+        # set Amplitude Reference to initial value
+        if not self._pv_put('mV:AL:REF-SP', alref_init):
+            return [False, 'Could not set Amplitude Reference PV'
+                           '(SR-RF-DLLRF-01:mV:AL:REF-SP)!']
+        _time.sleep(wait_time)
+
+        # set Amplitude Increase Rate to initial value
+        if not self._pv_put('AMPREF:INCRATE:S', aincrate_init):
+            return [False, 'Could not set RF Amplitude Increase Rate PV'
+                           '(SR-RF-DLLRF-01:AMPREF:INCRATE:S)!']
+
+        return [True, '']
+
+    def _pv_put(self, propty, value):
+        pvo = self.dev_llrf.pv_object(propty)
+        if pvo.wait_for_connection():
+            return pvo.put(value)
         return False

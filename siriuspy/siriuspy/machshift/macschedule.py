@@ -93,7 +93,8 @@ class MacScheduleData:
         new_tags = _interp1d_previous(times, tags, new_timestamp)
 
         fig = _plt.figure()
-        _plt.plot_date(new_datetimes, new_tags, '-')
+        _plt.gca().xaxis.axis_date()
+        _plt.plot(new_datetimes, new_tags, '-')
         _plt.title('Machine Schedule - ' + str(year))
         return fig
 

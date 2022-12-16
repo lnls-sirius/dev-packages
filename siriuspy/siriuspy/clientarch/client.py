@@ -8,6 +8,7 @@ from threading import Thread as _Thread
 import asyncio as _asyncio
 import urllib as _urllib
 import ssl as _ssl
+import logging as _log
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
 
@@ -17,19 +18,18 @@ from .. import envars as _envars
 from . import exceptions as _exceptions
 
 
-_TIMEOUT = 5.0  # [seconds]
-
-
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
+    DEFAULT_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
 
-    def __init__(self, server_url=None):
+    def __init__(self, server_url=None, timeout=None):
         """Initialize."""
+        timeout = timeout or ClientArchiver.DEFAULT_TIMEOUT
         self.session = None
-        self.timeout = _TIMEOUT
+        self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._ret = None
         # print('urllib3 InsecureRequestWarning disabled!')
@@ -40,11 +40,21 @@ class ClientArchiver:
         """Connected."""
         try:
             status = _urllib.request.urlopen(
-                self._url, timeout=self.timeout,
+                self._url, timeout=self._timeout,
                 context=_ssl.SSLContext()).status
             return status == 200
         except _urllib.error.URLError:
             return False
+
+    @property
+    def timeout(self):
+        """Connection timeout."""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        """Set connection timeout."""
+        self._timeout = float(value)
 
     @property
     def server_url(self):
@@ -210,12 +220,12 @@ class ClientArchiver:
             pvn2idcs[pvname_orig[i]] = _np.arange(ini, end)
 
         resps = self._make_request(all_urls, return_json=True)
-        if resps is None:
+        if not resps:
             return None
 
         pvn2resp = dict()
         for pvn, idcs in pvn2idcs.items():
-            _ts, _vs = _np.array([]), _np.array([])
+            _ts, _vs = _np.array([]), list()
             _st, _sv = _np.array([]), _np.array([])
             for idx in idcs:
                 resp = resps[idx]
@@ -223,15 +233,17 @@ class ClientArchiver:
                     continue
                 data = resp[0]['data']
                 _ts = _np.r_[_ts, [v['secs'] + v['nanos']/1.0e9 for v in data]]
-                _vs = _np.r_[_vs, [v['val'] for v in data]]
+                for val in data:
+                    _vs.append(val['val'])
                 _st = _np.r_[_st, [v['status'] for v in data]]
                 _sv = _np.r_[_sv, [v['severity'] for v in data]]
             if not _ts.size:
                 timestamp, value, status, severity = [None, None, None, None]
             else:
                 _, _tsidx = _np.unique(_ts, return_index=True)
-                timestamp, value, status, severity = \
-                    _ts[_tsidx], _vs[_tsidx], _st[_tsidx], _sv[_tsidx]
+                timestamp, status, severity = \
+                    _ts[_tsidx], _st[_tsidx], _sv[_tsidx]
+                value = [_vs[i] for i in _tsidx]
 
             pvn2resp[pvn] = dict(
                 timestamp=timestamp, value=value, status=status,
@@ -286,18 +298,23 @@ class ClientArchiver:
 
     def _thread_run_async_event_loop(self, func, *args, **kwargs):
         """Get event loop."""
+        close = False
         try:
             loop = _asyncio.get_event_loop()
         except RuntimeError as error:
             if 'no current event loop' in str(error):
                 loop = _asyncio.new_event_loop()
                 _asyncio.set_event_loop(loop)
+                close = True
             else:
                 raise error
         try:
             self._ret = loop.run_until_complete(func(*args, **kwargs))
         except _asyncio.TimeoutError:
-            self._ret = None
+            raise _exceptions.TimeoutError
+
+        if close:
+            loop.close()
 
     async def _handle_request(
             self, url, return_json=False, need_login=False):
@@ -318,20 +335,31 @@ class ClientArchiver:
         try:
             if isinstance(url, list):
                 response = await _asyncio.gather(
-                    *[session.get(u, ssl=False, timeout=self.timeout)
+                    *[session.get(u, ssl=False, timeout=self._timeout)
                       for u in url])
                 if any([not r.ok for r in response]):
                     return None
                 if return_json:
-                    response = await _asyncio.gather(
-                        *[r.json() for r in response])
+                    jsons = list()
+                    for res in response:
+                        try:
+                            data = await res.json()
+                            jsons.append(data)
+                        except ValueError:
+                            _log.error(f'Error with URL {res.url}')
+                            jsons.append(None)
+                    response = jsons
             else:
                 response = await session.get(
-                    url, ssl=False, timeout=self.timeout)
+                    url, ssl=False, timeout=self._timeout)
                 if not response.ok:
                     return None
                 if return_json:
-                    response = await response.json()
+                    try:
+                        response = await response.json()
+                    except ValueError:
+                        _log.error(f'Error with URL {response.url}')
+                        response = None
         except _asyncio.TimeoutError as err_msg:
             raise _exceptions.TimeoutError(err_msg)
         return response
@@ -341,7 +369,7 @@ class ClientArchiver:
         session = _ClientSession()
         async with session.post(
                 url, headers=headers, data=payload, ssl=ssl,
-                timeout=self.timeout) as response:
+                timeout=self._timeout) as response:
             content = await response.content.read()
             authenticated = b"authenticated" in content
         return session, authenticated

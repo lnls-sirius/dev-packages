@@ -3,7 +3,8 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, Devices as _Devices, \
+    ProptyDevice as _ProptyDevice
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -19,6 +20,8 @@ class BPM(_Device):
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
+        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
+        'GEN_RawQArrayData',
         'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
         'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
@@ -70,7 +73,7 @@ class BPM(_Device):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is no a valid BPM or PBPM name.')
+            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
 
         properties = set(BPM._properties)
         if _BPMSearch.is_photon_bpm(devname):
@@ -499,6 +502,26 @@ class BPM(_Device):
         self['QPosCal-Sel'] = val
 
     @property
+    def mtraw_posx(self):
+        """Multi turn raw X array data."""
+        return self['GEN_RawXArrayData']
+
+    @property
+    def mtraw_posy(self):
+        """Multi turn raw Y array data."""
+        return self['GEN_RawYArrayData']
+
+    @property
+    def mtraw_possum(self):
+        """Multi turn raw sum array data."""
+        return self['GEN_RawSUMArrayData']
+
+    @property
+    def mtraw_posq(self):
+        """Multi turn raw Q array data."""
+        return self['GEN_RawQArrayData']
+
+    @property
     def sp_posx(self):
         """."""
         return self['SPPosX-Mon'] * self.CONV_NM2UM
@@ -779,6 +802,9 @@ class BPM(_Device):
 class FamBPMs(_Devices):
     """."""
 
+    TIMEOUT = 10
+    RFFEATT_MAX = 30
+
     class DEVICES:
         """."""
         SI = 'SI-Fam:DI-BPM'
@@ -798,8 +824,8 @@ class FamBPMs(_Devices):
         devs = [BPM(dev, auto_mon=False) for dev in bpm_names]
 
         super().__init__(devname, devs)
-        self.bpm_names = bpm_names
-        self.csbpm = devs[0].csdata
+        self._bpm_names = bpm_names
+        self._csbpm = devs[0].csdata
         propties_to_keep = ['GEN_XArrayData', 'GEN_YArrayData']
 
         self._mturn_flags = dict()
@@ -809,6 +835,36 @@ class FamBPMs(_Devices):
                 pvo = bpm.pv_object(propty)
                 self._mturn_flags[pvo.pvname] = _Flag()
                 pvo.add_callback(self._mturn_set_flag)
+
+    @property
+    def bpm_names(self):
+        """Return BPM names."""
+        return self._bpm_names
+
+    @property
+    def csbpm(self):
+        """Return control system BPM constants class."""
+        return self._csbpm
+
+    def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
+        """."""
+        for bpm in self:
+            bpm.rffe_att = value
+
+        mstr = ''
+        okall = True
+        t0 = _time.time()
+        for bpm in self:
+            tout = timeout - (_time.time() - t0)
+            if not bpm._wait('RFFEAtt-RB', value, timeout=tout):
+                okall = False
+                mstr += (
+                    f'\n{bpm.devname:<20s}: ' +
+                    f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
+
+        print('RFFE attenuation set confirmed in all BPMs', end='')
+        print(', except:' + mstr if mstr else '.')
+        return okall
 
     def get_slow_orbit(self):
         """Get slow orbit vectors.
@@ -826,31 +882,50 @@ class FamBPMs(_Devices):
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_orbit(self):
+    def get_mturn_orbit(self, return_sum=False):
         """Get Multiturn orbit matrices.
+
+        Args:
+            return_sum (bool, optional): Whether or not to return BPMs sum.
+                Defaults to False.
 
         Returns:
             orbx (numpy.ndarray, Nx160): Horizontal Orbit.
             orby (numpy.ndarray, Nx160): Vertical Orbit.
+            possum (numpy.ndarray, Nx160): BPMs Sum signal.
 
         """
         orbx, orby = [], []
+        if return_sum:
+            possum = []
+
         mini = None
         for bpm in self._devices:
             mtx = bpm.mt_posx
             mty = bpm.mt_posy
             orbx.append(mtx)
             orby.append(mty)
+
             if mini is None:
                 mini = mtx.size
             mini = _np.min([mini, mtx.size, mty.size])
 
+            if return_sum:
+                mts = bpm.mt_possum
+                possum.append(mts)
+                mini = min(mini, mts.size)
+
         for i, (obx, oby) in enumerate(zip(orbx, orby)):
             orbx[i] = obx[:mini]
             orby[i] = oby[:mini]
+            if return_sum:
+                possum[i] = possum[i][:mini]
         orbx = _np.array(orbx).T
         orby = _np.array(orby).T
-        return orbx, orby
+
+        if not return_sum:
+            return orbx, orby
+        return orbx, orby, _np.array(possum).T
 
     @staticmethod
     def get_sampling_frequency(rf_freq: float, acq_rate='Monit1'):
@@ -891,19 +966,23 @@ class FamBPMs(_Devices):
 
         """
         if acq_rate.lower().startswith('monit1'):
-            acq_rate = self.csbpm.AcqChan.Monit1
+            acq_rate = self._csbpm.AcqChan.Monit1
+        elif acq_rate.lower().startswith('fofb'):
+            acq_rate = self._csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbt'):
+            acq_rate = self._csbpm.AcqChan.TbT
         else:
-            acq_rate = self.csbpm.AcqChan.FOFB
+            raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
         if repeat:
-            repeat = self.csbpm.AcqRepeat.Repetitive
+            repeat = self._csbpm.AcqRepeat.Repetitive
         else:
-            repeat = self.csbpm.AcqRepeat.Normal
+            repeat = self._csbpm.AcqRepeat.Normal
 
         if external:
-            trig = self.csbpm.AcqTrigTyp.External
+            trig = self._csbpm.AcqTrigTyp.External
         else:
-            trig = self.csbpm.AcqTrigTyp.Now
+            trig = self._csbpm.AcqTrigTyp.Now
 
         self.cmd_mturn_acq_abort()
 
@@ -924,7 +1003,7 @@ class FamBPMs(_Devices):
 
         """
         for bpm in self._devices:
-            bpm.acq_ctrl = self.csbpm.AcqEvents.Abort
+            bpm.acq_ctrl = self._csbpm.AcqEvents.Abort
 
         for bpm in self._devices:
             boo = bpm.wait_acq_finish()
@@ -940,13 +1019,30 @@ class FamBPMs(_Devices):
 
         """
         for bpm in self._devices:
-            bpm.acq_ctrl = self.csbpm.AcqEvents.Start
+            bpm.acq_ctrl = self._csbpm.AcqEvents.Start
 
         for bpm in self._devices:
             boo = bpm.wait_acq_start()
             if not boo:
                 return False
         return True
+
+    def set_switching_mode(self, mode='direct'):
+        """Set switching mode of BPMS.
+
+        Args:
+            mode ((str, int), optional): Desired mode, must be in
+                {'direct', 'switching', 1, 3}. Defaults to 'direct'.
+
+        Raises:
+            ValueError: When mode is not in {'direct', 'switching', 1, 3}.
+
+        """
+        if mode not in ('direct', 'switching', 1, 3):
+            raise ValueError('Value must be in ("direct", "switching", 1, 3).')
+
+        for bpm in self._devices:
+            bpm.switching_mode = mode
 
     def mturn_reset_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
@@ -1010,3 +1106,60 @@ class FamBPMs(_Devices):
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
+
+
+class BPMLogicalTrigger(_ProptyDevice):
+    """BPM Logical Trigger device."""
+
+    _properties = (
+        'RcvSrc-Sel', 'RcvSrc-Sts',
+        'RcvInSel-SP', 'RcvInSel-RB',
+        'TrnSrc-Sel', 'TrnSrc-Sts',
+        'TrnOutSel-SP', 'TrnOutSel-RB',
+    )
+
+    def __init__(self, bpmname, index):
+        """Init."""
+        if not _BPMSearch.is_valid_devname(bpmname):
+            raise NotImplementedError(bpmname)
+        if not 0 <= int(index) <= 23:
+            raise NotImplementedError(index)
+        super().__init__(
+            bpmname, 'TRIGGER'+str(index),
+            properties=BPMLogicalTrigger._properties)
+
+    @property
+    def receiver_source(self):
+        """Receiver source."""
+        return self['RcvSrc-Sts']
+
+    @receiver_source.setter
+    def receiver_source(self, value):
+        self['RcvSrc-Sel'] = value
+
+    @property
+    def receiver_in_sel(self):
+        """Receiver in selection."""
+        return self['RcvInSel-RB']
+
+    @receiver_in_sel.setter
+    def receiver_in_sel(self, value):
+        self['RcvInSel-SP'] = value
+
+    @property
+    def transmitter_source(self):
+        """Transmitter source."""
+        return self['TrnSrc-Sts']
+
+    @transmitter_source.setter
+    def transmitter_source(self, value):
+        self['TrnSrc-Sel'] = value
+
+    @property
+    def transmitter_out_sel(self):
+        """Transmitter out selection."""
+        return self['TrnOutSel-RB']
+
+    @transmitter_out_sel.setter
+    def transmitter_out_sel(self, value):
+        self['TrnOutSel-SP'] = value

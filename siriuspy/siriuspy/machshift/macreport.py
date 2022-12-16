@@ -1025,7 +1025,10 @@ class MacReport:
             pvds.time_start = self._time_start
             pvds.time_stop = self._time_stop
 
-        self._update_log('Collecting archiver data...')
+        self._update_log(
+            'Collecting archiver data '
+            f'({self.time_start.get_iso8601()} to'
+            f' {self.time_stop.get_iso8601()})...')
 
         log_msg = 'Query for {0} in archiver took {1:.3f}s'
 
@@ -1065,73 +1068,85 @@ class MacReport:
         fig.subplots_adjust(top=0.96, left=0.08, bottom=0.05, right=0.96)
         axs[0].set_title('Raw data', fontsize=12)
 
-        axs[0].plot_date(
+        axs[0].xaxis.axis_date()
+        axs[0].plot(
             datetimes, self._raw_data['Current'], '-',
             color='blue', label='Current')
         axs[0].legend(loc='upper left', fontsize=9)
         axs[0].grid()
 
-        axs[1].plot_date(
+        axs[1].xaxis.axis_date()
+        axs[1].plot(
             datetimes, self._raw_data['UserShiftInitCurr'], '-',
             color='blue', label='User Shifts - Initial Current')
         axs[1].legend(loc='upper left', fontsize=9)
         axs[1].grid()
 
-        axs[2].plot_date(
+        axs[2].xaxis.axis_date()
+        axs[2].plot(
             datetimes, self._raw_data['UserShiftProgmd'], '-',
             color='gold', label='User Shifts - Programmed')
         axs[2].legend(loc='upper left', fontsize=9)
         axs[2].grid()
 
-        axs[3].plot_date(
+        axs[3].xaxis.axis_date()
+        axs[3].plot(
             datetimes, self._raw_data['UserShiftDelivd'], '-',
             color='gold', label='User Shifts - Delivered')
         axs[3].legend(loc='upper left', fontsize=9)
         axs[3].grid()
 
-        axs[4].plot_date(
+        axs[4].xaxis.axis_date()
+        axs[4].plot(
             datetimes, self._raw_data['UserShiftStable'], '-',
             color='gold', label='User Shifts - Delivered Without Distortions')
         axs[4].legend(loc='upper left', fontsize=9)
         axs[4].grid()
 
-        axs[5].plot_date(
+        axs[5].xaxis.axis_date()
+        axs[5].plot(
             datetimes, self._raw_data['UserShiftTotal'], '-',
             color='gold', label='User Shifts - Total')
         axs[5].legend(loc='upper left', fontsize=9)
         axs[5].grid()
 
-        axs[6].plot_date(
+        axs[6].xaxis.axis_date()
+        axs[6].plot(
             datetimes, self._raw_data['Failures']['NoEBeam'], '-',
             color='red', label='Failures - NoEBeam')
         axs[6].legend(loc='upper left', fontsize=9)
         axs[6].grid()
 
-        axs[7].plot_date(
+        axs[7].xaxis.axis_date()
+        axs[7].plot(
             datetimes, self._raw_data['GammaShutter'], '-',
             color='red', label='Failures - Gamma Shutter Closed')
         axs[7].legend(loc='upper left', fontsize=9)
         axs[7].grid()
 
-        axs[8].plot_date(
+        axs[8].xaxis.axis_date()
+        axs[8].plot(
             datetimes, self._raw_data['Failures']['WrongShift'], '-',
             color='red', label='Failures - WrongShift')
         axs[8].legend(loc='upper left', fontsize=9)
         axs[8].grid()
 
-        axs[9].plot_date(
+        axs[9].xaxis.axis_date()
+        axs[9].plot(
             datetimes, self._raw_data['Failures']['SubsystemsNOk'], '-',
             color='red', label='Failures - PS, RF and MPS')
         axs[9].legend(loc='upper left', fontsize=9)
         axs[9].grid()
 
-        axs[10].plot_date(
+        axs[10].xaxis.axis_date()
+        axs[10].plot(
             datetimes, self._raw_data['Distortions']['SOFBLoop'], '-',
             color='orangered', label='Distortions - SOFB Loop Open')
         axs[10].legend(loc='upper left', fontsize=9)
         axs[10].grid()
 
-        axs[11].plot_date(
+        axs[11].xaxis.axis_date()
+        axs[11].plot(
             datetimes, self._raw_data['Shift']['Injection'], '-',
             color='lightsalmon', label='Injection Shifts')
         axs[11].legend(loc='upper left', fontsize=9)
@@ -1145,7 +1160,8 @@ class MacReport:
         for shift, auxdata in shift2color.items():
             ydata = self._raw_data['Shift'][shift]
 
-            axs[12].plot_date(
+            axs[12].xaxis.axis_date()
+            axs[12].plot(
                 datetimes, ydata, '-',
                 color=auxdata[1], label=auxdata[0])
         axs[12].legend(loc='upper left', ncol=4, fontsize=9)
@@ -1157,7 +1173,8 @@ class MacReport:
         for egmode, color in egmodes2color.items():
             ydata = self._raw_data['EgunModes'][egmode]
 
-            axs[13].plot_date(
+            axs[13].xaxis.axis_date()
+            axs[13].plot(
                 datetimes, ydata, '-',
                 color=color, label=egmode)
         axs[13].legend(loc='upper left', ncol=2, fontsize=9)
@@ -1185,8 +1202,9 @@ class MacReport:
 
         fig = _plt.figure()
         axs = _plt.gca()
-        axs.plot_date(datetimes, cum_progmd, '-', label='Programmed')
-        axs.plot_date(datetimes, cum_deliv, '-', label='Delivered')
+        axs.xaxis.axis_date()
+        axs.plot(datetimes, cum_progmd, '-', label='Programmed')
+        axs.plot(datetimes, cum_deliv, '-', label='Delivered')
         axs.grid()
         axs.set_ylabel('Integrated Hours')
         _plt.legend(loc=4)
@@ -1244,10 +1262,17 @@ class MacReport:
         self._raw_data = dict()
 
         # current data
-        self._curr_times, self._curr_values = \
-            self._get_pv_data('SI-Glob:AP-CurrInfo:Current-Mon')
-        self._curr_values[self._curr_values < 0] = 0
-        self._curr_values[self._curr_values > 500] = 0
+        _curr_times, _curr_values = self._get_pv_data(self._current_pv)
+        _curr_values[_curr_values < 0] = 0
+        _curr_values[_curr_values > 500] = 0
+
+        # resample current data, from 1 pt in 60s, to 1pt in 5s
+        new_len = (len(_curr_times)-1)*12 + 1
+        new_times = _np.linspace(_curr_times[0], _curr_times[-1], new_len)
+        self._curr_times = new_times
+        self._curr_values = _np.interp(
+            new_times, _curr_times, _curr_values)
+
         self._raw_data['Timestamp'] = self._curr_times
         self._raw_data['Current'] = self._curr_values
 
@@ -1266,28 +1291,27 @@ class MacReport:
                 psfail_all = _np.logical_or(psfail_all, psfail)
         self._ps_fail_values = 1 * psfail_all
 
-        gamblk_times, gamblk_values = \
-            self._get_pv_data('AS-Glob:PP-GammaShutter:Status-Mon')
+        # gamma
+        gamblk_times, gamblk_values = self._get_pv_data(self._gammashutt_pv)
         self._gamblk_fail_values = _interp1d_previous(
             gamblk_times, gamblk_values, self._curr_times)
         self._raw_data['GammaShutter'] = self._gamblk_fail_values
 
+        # sofb loop
         sofbloop_times, sofbloop_values = \
-            self._get_pv_data('SI-Glob:AP-SOFB:LoopState-Sts')
+            self._get_pv_data(self._sisofbloop_pv)
         sofbloop_fail_rawvalues = _np.array(
             [1*(v == _SOFBCte.LoopState.Open) for v in sofbloop_values])
         self._sofbloop_fail_values = _interp1d_previous(
             sofbloop_times, sofbloop_fail_rawvalues, self._curr_times)
 
         # rf and mps status data
-        siintlk_times, siintlk_values = \
-            self._get_pv_data('RA-RaSIA02:RF-IntlkCtrl:IntlkSirius-Mon')
+        siintlk_times, siintlk_values = self._get_pv_data(self._siintlk_pv)
         self._mps_fail_values = _interp1d_previous(
             siintlk_times, siintlk_values, self._curr_times)
 
         # delivered shift data
-        shift_times, shift_values = \
-            self._get_pv_data('AS-Glob:AP-MachShift:Mode-Sts')
+        shift_times, shift_values = self._get_pv_data(self._macshift_pv)
 
         self._raw_data['Shift'] = dict()
 
@@ -1347,11 +1371,11 @@ class MacReport:
         self._raw_data['UserShiftInitCurr'] = self._user_shift_inicurr_values
 
         # single/multi bunch mode data
-        inj_ts, inj_vs = self._get_pv_data('AS-RaMO:TI-EVG:InjectionEvt-Sts')
+        inj_ts, inj_vs = self._get_pv_data(self._injevt_pv)
         inj_vs = _interp1d_previous(inj_ts, inj_vs, self._curr_times)
-        trig_ts, trig_vs = self._get_pv_data('LI-01:EG-TriggerPS:enablereal')
+        trig_ts, trig_vs = self._get_pv_data(self._egtrgen_pv)
         trig_vs = _interp1d_previous(trig_ts, trig_vs, self._curr_times)
-        sb_ts, sb_vs = self._get_pv_data('LI-01:EG-PulsePS:singleselstatus')
+        sb_ts, sb_vs = self._get_pv_data(self._egpusel_pv)
         sb_vs = _interp1d_previous(sb_ts, sb_vs, self._curr_times)
         idcs1 = _np.where(inj_vs*trig_vs*sb_vs)[0]
         mode_ts = self._curr_times[idcs1]
@@ -1392,8 +1416,18 @@ class MacReport:
             self._gamblk_fail_values.astype(int)
         self._raw_data['Failures']['NoEBeam'] = \
             _np.logical_not(self._is_stored_users)
-        self._raw_data['Failures']['WrongShift'] = \
+
+        # # # ignore wrong shift failures shorter than 60s
+        wrong_shift = \
             1 * ((self._user_shift_progmd_values-self._user_shift_values) > 0)
+        ignore_wrong_shift = _np.zeros(wrong_shift.shape)
+        for i, val in enumerate(wrong_shift):
+            if i >= len(wrong_shift)-12:
+                break
+            if val == 1 and not _np.sum(wrong_shift[(i-12):(i+12)]) >= 12:
+                ignore_wrong_shift[i] = 1
+        consider_wrong_shift = wrong_shift - ignore_wrong_shift
+        self._raw_data['Failures']['WrongShift'] = consider_wrong_shift
 
         self._failures_users = 1 * _np.logical_or.reduce(
             [value for value in self._raw_data['Failures'].values()]) * \
@@ -1407,8 +1441,7 @@ class MacReport:
 
         # distortions
         self._raw_data['Distortions'] = dict()
-        self._raw_data['Distortions']['SOFBLoop'] = \
-            self._sofbloop_fail_values
+        self._raw_data['Distortions']['SOFBLoop'] = self._sofbloop_fail_values
 
         self._distortions_users = 1 * _np.logical_or.reduce(
             [value for value in self._raw_data['Distortions'].values()]) * \

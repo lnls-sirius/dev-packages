@@ -60,6 +60,8 @@ def _append_mag_data(filename, model, acc, label, section):
     mag_tps.extend(model.families.families_vertical_correctors())
     mag_tps.extend(model.families.families_sextupoles())
     mag_tps.extend(model.families.families_skew_correctors())
+    if section.lower().startswith('si'):
+        mag_tps.extend(model.families.families_id_correctors())
 
     mag_data = dict()
     for mag_tp in mag_tps:
@@ -95,54 +97,59 @@ def generate_bpm_static_table():
         "#\n"\
         "# If the data in the mentioned subfolder change, please, run the\n"\
         "# script again and copy the generated file to replace this one.\n"
+
     filename = 'bpms-data.txt'
     with open(filename, 'w') as f:
         f.write(disclaimer)
         f.write('\n\n#BPMs data \n')
         f.write('#-----------')
 
-    crates = _get_crates_mapping()
+    all_bpms = _get_all_bpms()
 
     model = pymodels.si
     acc = model.create_accelerator()
-    _append_bpm_data_bl(filename, acc, crates, 'Beam Lines (BL)')
-    _append_bpm_data(filename, model, acc, crates, 'Storage Ring (SR)', 'SI')
+    _append_bpm_data_bl(filename, acc, all_bpms, 'Beam Lines (BL)')
+    label = 'Storage Ring (SR)'
+    _append_bpm_data(filename, model, acc, label, 'SI', fam='BPM')
+    label = 'Storage Ring IDs (SR)'
+    _append_bpm_data(filename, model, acc, label, 'SI', fam='IDBPM')
 
     model = pymodels.bo
     acc = model.create_accelerator()
-    _append_bpm_data(filename, model, acc, crates, 'Booster (BO)', 'BO')
+    _append_bpm_data(filename, model, acc, 'Booster (BO)', 'BO')
 
     model = pymodels.tb
     acc, *_ = model.create_accelerator()
-    _append_bpm_data(filename, model, acc, crates, 'BO Transport Line', 'TB')
+    idx = pyaccel.lattice.find_indices(acc, 'fam_name', 'Spect')[0]
+    acc = acc[idx+1:]
+    _append_bpm_data(filename, model, acc, 'BO Transport Line', 'TB')
 
     model = pymodels.ts
     acc, *_ = model.create_accelerator()
-    _append_bpm_data(filename, model, acc, crates, 'SR Transport Line', 'TS')
+    _append_bpm_data(filename, model, acc, 'SR Transport Line', 'TS')
 
 
-def _append_bpm_data(filename, model, acc, crates, label, section):
+def _append_bpm_data(filename, model, acc, label, section, fam='BPM'):
     fam_data = model.get_family_data(acc)
     pos = pyaccel.lattice.find_spos(acc)
 
-    inds = [i[0] for i in fam_data['BPM']['index']]
-    subs = fam_data['BPM']['subsection']
-    insts = fam_data['BPM']['instance']
-    bpms, tims, bpos = [], [], []
+    bpm_data = fam_data[fam]
+    inds = [i[0] for i in bpm_data['index']]
+    subs = bpm_data['subsection']
+    insts = bpm_data['instance']
+    bpms, bpos = [], []
     for ind, inst, sub in zip(inds, insts, subs):
         name = _join_name(sec=section, dis='DI', dev='BPM', sub=sub, idx=inst)
         bpms.append(name)
-        tims.append(crates[name])
         bpos.append(pos[ind])
-    _write_to_file(filename, bpms, bpos, tims, label)
+    _write_to_file(filename, bpms, bpos, label)
 
-
-def _append_bpm_data_bl(filename, acc, crates, label):
+def _append_bpm_data_bl(filename, acc, all_bpms, label):
     pos = pyaccel.lattice.find_spos(acc)
 
     mcs = pyaccel.lattice.find_indices(acc, 'fam_name', 'mc')
 
-    bpms_bc = [bpm for bpm in crates if bpm.sub.endswith('BCFE')]
+    bpms_bc = [bpm for bpm in all_bpms if bpm.sub.endswith('BCFE')]
     secs = [int(bpm.sub[:2]) for bpm in bpms_bc]
     bpos_bc = [pos[mcs[ss-1]] for ss in secs]
 
@@ -152,7 +159,7 @@ def _append_bpm_data_bl(filename, acc, crates, label):
     mis = sorted(mia + mib + mip)
 
     end = ('SAFE', 'SBFE', 'SPFE')
-    bpms_mi = sorted([bpm for bpm in crates if bpm.sub.endswith(end)])
+    bpms_mi = sorted([bpm for bpm in all_bpms if bpm.sub.endswith(end)])
     secs = [int(bpm.sub[:2]) for bpm in bpms_mi]
     bpos_mi = [pos[mis[ss-1]] for ss in secs]
 
@@ -160,39 +167,29 @@ def _append_bpm_data_bl(filename, acc, crates, label):
     bpos = bpos_mi + bpos_bc
     data = sorted(zip(bpos, bpms))
     bpos, bpms = list(zip(*data))
-    tims = [crates[b] for b in bpms]
-    _write_to_file(filename, bpms, bpos, tims, label)
+    _write_to_file(filename, bpms, bpos, label)
 
 
-def _get_crates_mapping():
+def _get_all_bpms():
     data = _crates_mapping()
-    crates = dict()
-    mapping = dict()
+    bpms = set()
     for line in data.splitlines():
         line = line.strip()
         if not line or line[0] == '#':
             continue  # empty line
-        crate, dev, *_ = line.split()
+        _, dev, *_ = line.split()
         dev = _PVName(dev)
-        if crate not in mapping and dev.dev == 'AMCFPGAEVR':
-            crates[crate] = dev
-            mapping[crates[crate]] = list()
-        else:
-            mapping[crates[crate]].append(dev)
-
-    inv_mapping = dict()
-    for k, values in mapping.items():
-        for value in values:
-            inv_mapping[value] = k
-    return inv_mapping
+        if dev.dev in ('BPM', 'PBPM'):
+            bpms.add(dev)
+    return bpms
 
 
-def _write_to_file(fname, bpms, pos, tims, label):
+def _write_to_file(fname, bpms, pos, label):
     with open(fname, 'a') as fil:
         fil.write('\n\n\n# '+label+'\n')
         fil.write('#'+57*'-' + '\n')
-        fil.write("#{bpm:20s} {pos:^15s} {timing:20s}\n".format(
-            bpm='Name', pos='Position [m]', timing='Timing'))
+        fil.write("#{bpm:20s} {pos:^15s}\n".format(
+            bpm='Name', pos='Position [m]'))
         fil.write('#'+57*'-' + '\n')
-        for bpm, p, t in zip(bpms, pos, tims):
-            fil.write(f"{bpm:20s} {p:^15.4f} {t:20s}\n")
+        for bpm, p in zip(bpms, pos):
+            fil.write(f"{bpm:20s} {p:^15.4f}\n")

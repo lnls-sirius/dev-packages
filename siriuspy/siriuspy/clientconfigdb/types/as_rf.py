@@ -3,7 +3,8 @@ from copy import deepcopy as _dcopy
 
 # NOTE: absolute imports are necessary here due to how
 # CONFIG_TYPES in __init__.py is built.
-from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf
+from siriuspy.clientconfigdb.types.global_config import _pvs_as_rf, \
+    _pvs_li_llrf
 
 
 def get_dict():
@@ -21,7 +22,6 @@ def get_dict():
 # the list of PVs should be processed in the same order they are stored
 # in the configuration. The second numeric parameter in the pair is the
 # delay [s] the client should wait before setting the next PV.
-
 
 _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:ILK:REVSSA1:S', 0.0, 0.0],  # Interlock disable
@@ -134,7 +134,7 @@ _pvs_bo_llrf = [
     ['BR-RF-DLLRF-01:TUNE:FILT:S', 0, 0.0],
     ['BR-RF-DLLRF-01:TUNE:TRIG:S', 0, 0.0],
     ['BR-RF-DLLRF-01:TUNE:TOPRAMP:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FF:POS:S', 0, 0.0], # Field Flatness loop config
+    ['BR-RF-DLLRF-01:FF:POS:S', 0, 0.0],  # Field Flatness loop config
     ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # [%]
     ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
@@ -438,10 +438,10 @@ _pvs_si_llrf = [
     ['SR-RF-DLLRF-01:RmpTs2-SP', 0, 0.0],  # [ms]
     ['SR-RF-DLLRF-01:RmpTs3-SP', 0, 0.0],  # [ms]
     ['SR-RF-DLLRF-01:RmpTs4-SP', 0, 0.0],  # [ms]
-    ['SR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # [mV]
-    ['SR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # [°]
     ['SR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP', 0, 0.0],  # [mV]
     ['SR-RF-DLLRF-01:RmpPhsTop-SP', 0, 0.0],  # [°]
+    ['SR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # [mV]
+    ['SR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # [°]
     ['SR-RF-DLLRF-01:RmpIncTs-SP', 0, 0.0],  # [min]
     ['SR-RF-DLLRF-01:DisableRampDown:S', 0, 0.0],
     ['SR-RF-DLLRF-01:FDL:FrameQty-SP', 0, 0.0],
@@ -452,7 +452,7 @@ _pvs_si_llrf = [
 
 
 _pvs_si_rfssa = [
-    ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr 1
+    ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr1
     ['RA-ToSIA01:OffsetConfig:UpperReflectedPower', 0, 0.0],
     ['RA-ToSIA01:OffsetConfig:LowerIncidentPower', 0, 0.0],
     ['RA-ToSIA01:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -474,7 +474,7 @@ _pvs_si_rfssa = [
     ['RA-ToSIA01:AlarmConfig:CurrentLimHigh', 0, 0.0],
     ['RA-ToSIA01:AlarmConfig:CurrentLimLow', 0, 0.0],
     ['RA-ToSIA01:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr 2
+    ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr2
     ['RA-ToSIA02:OffsetConfig:UpperReflectedPower', 0, 0.0],
     ['RA-ToSIA02:OffsetConfig:LowerIncidentPower', 0, 0.0],
     ['RA-ToSIA02:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -652,6 +652,6 @@ _pvs_si_rfcal = [
 _template_dict = {
     'pvs':
     _pvs_as_rf +
-    _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
+    _pvs_li_llrf + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
     _pvs_si_llrf + _pvs_si_rfssa + _pvs_si_rfcav + _pvs_si_rfcal
     }

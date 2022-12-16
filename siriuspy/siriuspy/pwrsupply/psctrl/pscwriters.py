@@ -200,7 +200,7 @@ class PSPwrStateFBP_DCLink(Function):
                 self.turn_off.execute()
 
 
-# NOTE: writers below may be implemented as a general class 
+# NOTE: writers below may be implemented as a general class
 # with the BMSP Function ID as an argument.
 
 
@@ -273,12 +273,13 @@ class Current(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             self.set_current.execute(value)
 
+
 class Voltage(Function):
     """Command to set voltage in DCLink type PS."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set voltage."""
-        self.device_ids = device_ids
+        self._device_ids = device_ids
         func_id = _const_psbsmp.F_SET_SLOWREF
         self.set_voltage = BSMPFunction(device_ids, pru_controller, func_id)
         self.setpoints = setpoints
@@ -409,6 +410,22 @@ class SOFBUpdate(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.sofb_update_variables_state()
+
+
+class ParamUpdate(Function):
+    """ParamUpdate Function."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """Create command to update parameters."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.update_parameters(self._device_ids)
 
 
 class Setpoint:
