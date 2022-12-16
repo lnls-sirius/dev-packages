@@ -17,6 +17,7 @@ from ..search import PSSearch, HLTimeSearch
 from ..csdev import Const as _Const
 from ..timesys.csdev import Const as _TIConst
 from ..pwrsupply.csdev import Const as _PSConst
+from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
 
@@ -86,8 +87,6 @@ class ASPUStandbyHandler(_BaseHandler):
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
                 'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'TRIG_Norm': 1,
-                'Pulse_Current': 1,
                 'CPS_ALL': 1,
             }
         self._on_values[self._limps] = {
@@ -640,8 +639,8 @@ class LILLRFStandbyHandler(_BaseHandler):
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
 
-    DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
+    DEF_OFF_ORDER = _InjConst.INJSYS_DEF_OFF_ORDER
     HANDLER_DESC = {
         'as_pu': 'AS PU (Septa, Kickers and Modulators)',
         'bo_ps': 'BO PS Ramp',
@@ -740,6 +739,27 @@ class InjSysStandbyHandler(_Devices):
     def cmd_turn_off(self, run_in_thread=False):
         """Turn off."""
         return self._command_base('off', run_in_thread)
+
+    def get_dev_state(self, devnames):
+        """
+        Return the state, on (True) or off (False), for each device in
+        devnames.
+
+        Parameters
+        ----------
+        devnames: list [str]
+            A list of strings with the names of the handler devices
+
+        Returns
+        -------
+        states: list [bool]
+            A list of booleans with the state of each handler devices
+        """
+        states = list()
+        for devname in devnames:
+            dev = self._dev_refs[devname]
+            states.append(dev.is_on)
+        return states
 
     # --- private methods ---
 

@@ -225,28 +225,28 @@ class SOFBTLines(ConstTLines):
                 'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCH-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpCV-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -692,6 +692,7 @@ class SOFBTLines(ConstTLines):
                 'value': self.StsLblsOrb._fields},
             'SlowOrbTimeout-Mon': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1001},
+            'SyncBPMs-Cmd': {'type': 'int', 'value': 0},
             })
         return self._add_prefix(dbase, prefix)
 
@@ -811,16 +812,16 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'LoopPIDKpRF-SP': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKpRF-RB': {
-                'type': 'float', 'value': 0.1, 'unit': 'frac', 'prec': 3,
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 2.0, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdRF-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -972,11 +973,11 @@ class SOFBSI(SOFBRings, ConstSI):
         """Return SOFB database."""
         db_ring = {
             'FOFBDownloadKicksPerc-SP': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100},
+                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicksPerc-RB': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100},
+                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
@@ -986,6 +987,12 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBDownloadKicks-Mon': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},
+            'FOFBUpdateRefOrbPerc-SP': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrbPerc-RB': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
                 'enums': self.EnbldDsbld._fields},

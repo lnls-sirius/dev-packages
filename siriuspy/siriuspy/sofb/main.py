@@ -36,9 +36,9 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.1, ki=2.0, kd=0.0),
-            cv=dict(kp=0.1, ki=2.0, kd=0.0),
-            rf=dict(kp=0.1, ki=2.0, kd=0.0))
+            ch=dict(kp=0.0, ki=0.5, kd=0.0),
+            cv=dict(kp=0.0, ki=0.5, kd=0.0),
+            rf=dict(kp=0.0, ki=0.5, kd=0.0))
         self._measuring_respmat = False
         self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
@@ -53,8 +53,9 @@ class SOFB(_BaseClass):
         if self.acc == 'SI':
             self.fofb = HLFOFB()
             self._download_fofb_kicks = False
-            self._download_fofb_kicks_perc = 0.0
+            self._download_fofb_kicks_perc = 0.01
             self._update_fofb_reforb = False
+            self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
             self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
@@ -119,6 +120,7 @@ class SOFB(_BaseClass):
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
+            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_fofb_updatereforb_perc
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
                 self.set_fofb_interaction_props, 'updatereforb')
             dbase['FOFBNullSpaceProj-Sel'] = _part(
@@ -246,7 +248,23 @@ class SOFB(_BaseClass):
         """
         value = min(max(value/100, 0), 1)
         self._download_fofb_kicks_perc = value
-        self.run_callbacks('FOFBDownloadKicksPerc-RB', value)
+        self.run_callbacks('FOFBDownloadKicksPerc-RB', value*100)
+        return True
+
+    def set_fofb_updatereforb_perc(self, value: float):
+        """Set percentage of reference orbit update in FOFB.
+
+        Args:
+            value (float): percentage of calculated orbit.
+                Must be in [-100, 100].
+
+        Returns:
+            bool: Whether property was set.
+
+        """
+        value = min(max(value/100, -1), 1)
+        self._update_fofb_reforb_perc = value
+        self.run_callbacks('FOFBUpdateRefOrbPerc-RB', value*100)
         return True
 
     def set_ring_extension(self, val):
@@ -808,8 +826,6 @@ class SOFB(_BaseClass):
             refx0 = fofb.refx
             refy0 = fofb.refy
 
-        wait_orb_error = int(5)
-        previous_orb_problem = False
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
@@ -817,9 +833,9 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
                 break
-            iter = len(times)
-            self.run_callbacks('LoopNumIters-Mon', iter)
-            if iter >= self._loop_print_every_num_iter:
+            itern = len(times)
+            self.run_callbacks('LoopNumIters-Mon', itern)
+            if itern >= self._loop_print_every_num_iter:
                 _Thread(
                     target=self._print_auto_corr_info,
                     args=(times, rets, _time()-tim0), daemon=True).start()
@@ -864,33 +880,11 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                # NOTE: The code bellow is the default implementation.
-                #       We decided to use the temporaty work around solution
-                #       implemented above to handle mal-functioning BPMs.
-                # self._loop_state = self._csorb.LoopState.Open
-                # self.run_callbacks('LoopState-Sel', 0)
-                # break
-
-                self.run_callbacks('LoopState-Sts', 0)
-                msg = 'WARN: Skipping iteration.'
-                self._update_log(msg)
-                _log.info(msg)
-                for ii_ in range(wait_orb_error):
-                    msg = f'WARN: waiting {wait_orb_error-ii_:d}s ...'
-                    self._update_log(msg)
-                    _log.info(msg)
-                    _sleep(1)
-                msg = f'WARN: Trying again...'
-                self._update_log(msg)
-                _log.info(msg)
-                previous_orb_problem = True
-                continue
-            elif previous_orb_problem:
-                msg = f'WARN: Orbit is Ok now. Resuming correction...'
-                self._update_log(msg)
-                _log.info(msg)
-                previous_orb_problem = False
-                self.run_callbacks('LoopState-Sts', 1)
+                self._loop_state = self._csorb.LoopState.Open
+                if fofb.connected and fofb.loop_state:
+                    fofb.loop_state = 0
+                self.run_callbacks('LoopState-Sel', 0)
+                break
 
             dkicks = self._process_pid(dkicks, interval)
 
@@ -1052,7 +1046,8 @@ class SOFB(_BaseClass):
 
         if self._update_fofb_reforb and fofb.loop_state:
             dorb = self.matrix.estimate_orbit_variation(dkicks)
-            # According to my understanding of SOLEIL's paper on this
+            dorb *= self._update_fofb_reforb_perc
+            # NOTE: According to my understanding of SOLEIL's paper on this
             # subject:
             # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
             # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
@@ -1065,7 +1060,13 @@ class SOFB(_BaseClass):
             fofb.cmd_fofbctrl_syncreforb()
 
         if self._download_fofb_kicks and fofb.loop_state:
-            kicks_fofb = _np.r_[fofb.kickch, fofb.kickcv, 0]
+            # NOTE: Do not download kicks from correctors not in the loop:
+            kickch = fofb.kickch.copy()
+            kickcv = fofb.kickcv.copy()
+            kickch[~fofb.chenbl] = 0
+            kickcv[~fofb.cvenbl] = 0
+
+            kicks_fofb = _np.r_[kickch, kickcv, 0]
             dorb = _np.dot(fofb.respmat, kicks_fofb)
             # NOTE: calc_kicks return the kicks to correct dorb, which means
             # that a minus sign is already applied by this method. To negate
@@ -1074,7 +1075,7 @@ class SOFB(_BaseClass):
             dkicks2 *= -self._download_fofb_kicks_perc
 
             kicks, dkicks2 = self._process_kicks(
-                self._ref_corr_kicks+dkicks, dkicks2, apply_gain=False)
+                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False)
         return kicks
 
     def _calc_correction(self):

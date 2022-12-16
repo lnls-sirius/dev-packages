@@ -27,7 +27,9 @@ class ETypes(_csdev.ETypes):
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
-        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured')
+        'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
+        'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
+        'LoopInterlockOk')
 
 
 _et = ETypes  # syntactic sugar
@@ -41,7 +43,8 @@ class HLFOFBConst(_csdev.Const):
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
-    DEF_KICK_BUFFER_SIZE = 5
+    DEF_KICK_BUFFER_SIZE = 1
+    DEF_MAX_ORB_DISTORTION = 60  # [um]
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -49,9 +52,11 @@ class HLFOFBConst(_csdev.Const):
     DEF_TIMEOUT = 10  # [s]
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
+    DEF_TIMEMINWAIT = 1  # [s]
     LOOPGAIN_RMP_TIME = 5  # [s]
-    LOOPGAIN_RMP_FREQ = 1  # [steps/s]
+    LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
+    CURRZERO_RMP_FREQ = 2  # [steps/s]
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
@@ -72,12 +77,6 @@ class HLFOFBConst(_csdev.Const):
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
-
-        # list of BPMs whose DCCs must always be enabled to bypass a hardware
-        # issue (crate 05), so that all BPMs can be reached over the FOFB net
-        self.bpm_dccenbl_nick = ['05C1-1', '05C1-2', '05C3-2', '05C4']
-        self.bpm_dccenbl_idcs = [
-            self.bpm_nicknames.index(b) for b in self.bpm_dccenbl_nick]
 
         # device position along the ring
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
@@ -120,27 +119,45 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 1, 'prec': 4,
+                'type': 'float', 'value': 0.1, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
+            'LoopMaxOrbDistortion-SP': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortion-RB': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortionEnbl-Sel': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopMaxOrbDistortionEnbl-Sts': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sel': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
+            'LoopPacketLossDetecEnbl-Sts': {
+                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'value': self.DsblEnbl.Dsbl},
 
             # Correctors
             'CHPosS-Cte': {
@@ -166,6 +183,12 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetCurrZeroDuration-SP': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
+            'CorrSetCurrZeroDuration-RB': {
+                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
                 'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
@@ -184,24 +207,27 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
                 'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
-            'FOFBCtrlStatus-Mon': {'type': 'int', 'value': 0b1111111},
-            'FOFBCtrlStatusLabels-Cte': {
+            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
-            'FOFBCtrlConfBPMId-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlSyncNet-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlSyncUseEnblList-Sel': {
+            'CtrlrConfBPMId-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncNet-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncUseEnblList-Sel': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
-            'FOFBCtrlSyncUseEnblList-Sts': {
+            'CtrlrSyncUseEnblList-Sts': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
-            'FOFBCtrlSyncEnblList-Mon': {
+            'CtrlrSyncEnblList-Mon': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1], 'unit': 'BPMs used in correction'},
-            'FOFBCtrlSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlConfTFrameLen-Cmd': {'type': 'int', 'value': 0},
-            'FOFBCtrlConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
+                'value': self.nr_bpms*[1], 'unit': 'DCCs used in loop'},
+            'CtrlrSyncRefOrb-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncTFrameLen-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrConfBPMLogTrg-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and Kick buffer configuration
             'KickBufferSize-SP': {
