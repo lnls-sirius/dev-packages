@@ -85,6 +85,9 @@ class _PSDev(_Device):
         # call base class constructor
         super().__init__(devname, properties=properties)
 
+        # private attribute with strength setpoint pv object
+        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
+
     @property
     def pstype(self):
         """Return type of magnet(s) excited by power supply device."""
@@ -149,6 +152,46 @@ class _PSDev(_Device):
     def strength_mon(self):
         """Return Strength Mon."""
         return self[self._strength_mon_propty]
+
+    @property
+    def strength_upper_ctrl_limit(self):
+        """Return Strength SP upper control limit."""
+        return self._strength_sp_pv.upper_ctrl_limit
+
+    @property
+    def strength_lower_ctrl_limit(self):
+        """Return Strength SP lower control limit."""
+        return self._strength_sp_pv.lower_ctrl_limit
+
+    @property
+    def strength_upper_alarm_limit(self):
+        """Return Strength SP upper alarm limit."""
+        return self._strength_sp_pv.upper_alarm_limit
+
+    @property
+    def strength_lower_alarm_limit(self):
+        """Return Strength SP lower alarm limit."""
+        return self._strength_sp_pv.lower_alarm_limit
+
+    @property
+    def strength_upper_warning_limit(self):
+        """Return Strength SP upper warning limit."""
+        return self._strength_sp_pv.upper_warning_limit
+
+    @property
+    def strength_lower_warning_limit(self):
+        """Return Strength SP lower warning limit."""
+        return self._strength_sp_pv.lower_warning_limit
+
+    @property
+    def strength_upper_disp_limit(self):
+        """Return Strength SP upper display limit."""
+        return self._strength_sp_pv.upper_disp_limit
+
+    @property
+    def strength_lower_disp_limit(self):
+        """Return Strength SP lower display limit."""
+        return self._strength_sp_pv.lower_disp_limit
 
     @property
     def pwrstate(self):
