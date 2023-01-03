@@ -18,12 +18,12 @@ _INT_TYPES = {int}
 _FLOAT_TYPES = {float}
 
 
-for key, typ in _np.typeDict.items():
+for key, typ in _np.sctypeDict.items():
     if isinstance(key, str) and key.startswith('int'):
         _INT_TYPES.add(typ)
 
 
-for key, typ in _np.typeDict.items():
+for key, typ in _np.sctypeDict.items():
     if isinstance(key, str) and key.startswith('float'):
         _FLOAT_TYPES.add(typ)
 
