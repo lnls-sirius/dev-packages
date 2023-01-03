@@ -736,11 +736,13 @@ class App(_Callback):
         npts = int(self._corr_setcurrzero_dur*self._const.CURRZERO_RMP_FREQ)
         if npts != 0:
             xdata = _np.linspace(1, 0, npts)
-            for step in xdata:
+            for idx, step in enumerate(xdata):
                 curr = init_curr * step
                 if self._check_thread_currzero_abort():
                     self._update_log('...aborted.')
                     return
+                self._update_log(
+                    f'{idx+1:02d}/{len(xdata):02d} -> Current={100*step:.1f}%')
                 self._corrs_dev.set_current(curr)
                 _time.sleep(1/self._const.CURRZERO_RMP_FREQ)
 
