@@ -505,6 +505,8 @@ class App(_Callback):
             if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
                     self._corrs_dev.check_fofbacc_gain(self._psgains):
                 return True
+            if self._check_abort_thread():
+                return False
         self._update_log('ERR:Timed out waiting for correctors to')
         self._update_log('ERR:implement gains and coefficients.')
         return False
