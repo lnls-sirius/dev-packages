@@ -1494,8 +1494,8 @@ class App(_Callback):
 
     def _callback_havebeam(self, value, **kws):
         if not value and self._loop_state == self._const.LoopState.Closed:
-            self._update_log('FATAL: We do not have stored beam!')
-            self._update_log('FATAL: Opening FOFB loop...')
+            self._update_log('FATAL:We do not have stored beam!')
+            self._update_log('FATAL:Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     def _callback_loopintlk(self, pvname, value, **kws):
@@ -1521,7 +1521,7 @@ class App(_Callback):
                     (self._thread_loopstate is not None and
                      self._thread_loopstate.is_alive() and
                      self._loop_state_lastsp != self._const.LoopState.Open):
-                self._update_log('FATAL: Opening FOFB loop...')
+                self._update_log('FATAL:Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
                 self.set_loop_state(
