@@ -108,7 +108,6 @@ class ConstSI(ConstRings):
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
     CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
-    CorrPSSOFBWait = _csdev.Const.register('CorrPSSOFBWait', _et.OFF_ON)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
@@ -869,6 +868,15 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',
                 'lolim': 0, 'hilim': 10000},
+            'CorrPSSOFBEnbl-Sel': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBEnbl-Sts': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
+            'CorrPSSOFBEnbl-Mon': {
+                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
+                'value': self.CorrPSSOFBEnbl.Dsbld},
             'FOFBDownloadKicksPerc-SP': {
                 'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
@@ -984,18 +992,6 @@ class SOFBSI(SOFBRings, ConstSI):
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
-            'CorrPSSOFBEnbl-Sel': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbld},
-            'CorrPSSOFBEnbl-Sts': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbld},
-            'CorrPSSOFBWait-Sel': {
-                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
-                'value': self.CorrPSSOFBWait.Off},
-            'CorrPSSOFBWait-Sts': {
-                'type': 'enum', 'enums': self.CorrPSSOFBWait._fields,
-                'value': self.CorrPSSOFBWait.Off},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
