@@ -59,7 +59,6 @@ class ConstTLines(_csdev.Const):
 
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
-    MAX_RINGSZ = 5
     MAX_DRIVE_DATA = 3 * 5000
     MIN_SING_VAL = 0.2
     TIKHONOV_REG_CONST = 0
@@ -501,8 +500,7 @@ class SOFBTLines(ConstTLines):
             ]
         dbase = dict()
         prop = {
-            'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
-            'value': nbpm*[0]}
+            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
         for k in pvs:
             dbase[k] = _dcopy(prop)
 
@@ -677,11 +675,11 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'value': self.SPassUseBg.NotUsing,
                 'enums': self.SPassUseBg._fields},
             'BPMPosS-Mon': {
-                'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
+                'type': 'float', 'unit': 'm', 'count': nbpm,
                 'value': self.bpm_pos, 'prec': 2},
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
-                'count': self.MAX_RINGSZ*nbpm, 'value': self.bpm_nicknames},
+                'count': nbpm, 'value': self.bpm_nicknames},
             'OrbStatus-Mon': {'type': 'int', 'value': 0b00000},
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
@@ -696,19 +694,19 @@ class SOFBTLines(ConstTLines):
         """Return SOFB respmat database."""
         dbase = {
             'RespMat-SP': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'RespMat-RB': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'RespMat-Mon': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'InvRespMat-Mon': {
-                'type': 'float', 'count': self.MAX_RINGSZ*self.matrix_size,
+                'type': 'float', 'count': self.matrix_size,
                 'value': self.matrix_size*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'RespMatMode-Sel': {
@@ -738,19 +736,19 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'count': self.nr_cv, 'value': self.nr_cv*[1],
                 'unit': 'CVs used in correction'},
             'BPMXEnblList-SP': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMX used in correction'},
             'BPMXEnblList-RB': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMX used in correction'},
             'BPMYEnblList-SP': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
             'BPMYEnblList-RB': {
-                'type': 'int', 'count': self.MAX_RINGSZ*self.nr_bpms,
+                'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPMY used in correction'},
             'MinSingValue-SP': {
@@ -840,14 +838,6 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             'DeltaKickRF-RB': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
-            'RingSize-SP': {
-                'type': 'int', 'value': 1, 'lolim': 0,
-                'hilim': self.MAX_RINGSZ+1,
-                'unit': 'Nr Times to extend the ring'},
-            'RingSize-RB': {
-                'type': 'int', 'value': 1, 'lolim': 0,
-                'hilim': self.MAX_RINGSZ+1,
-                'unit': 'Nr Times to extend the ring'},
             }
         dbase = super().get_sofb_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
@@ -890,8 +880,7 @@ class SOFBRings(SOFBTLines, ConstRings):
             ]
         db_ring = dict()
         prop = {
-            'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
-            'value': nbpm*[0]}
+            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
@@ -1106,8 +1095,7 @@ class SOFBSI(SOFBRings, ConstSI):
         pvs_ring = ['SlowOrbX-Mon', 'SlowOrbY-Mon']
         db_ring = dict()
         prop = {
-            'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
-            'value': nbpm*[0]}
+            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         dbase = super().get_orbit_database(prefix=prefix)

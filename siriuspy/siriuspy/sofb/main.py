@@ -40,7 +40,6 @@ class SOFB(_BaseClass):
             cv=dict(kp=0.0, ki=0.5, kd=0.0),
             rf=dict(kp=0.0, ki=0.5, kd=0.0))
         self._measuring_respmat = False
-        self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 5, 'cv': 5}
@@ -115,7 +114,6 @@ class SOFB(_BaseClass):
             dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
-            dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
@@ -265,26 +263,6 @@ class SOFB(_BaseClass):
         value = min(max(value/100, -1), 1)
         self._update_fofb_reforb_perc = value
         self.run_callbacks('FOFBUpdateRefOrbPerc-RB', value*100)
-        return True
-
-    def set_ring_extension(self, val):
-        """."""
-        val = 1 if val < 1 else int(val)
-        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
-        if val == self._ring_extension:
-            return True
-        okay = self.orbit.set_ring_extension(val)
-        if not okay:
-            return False
-        okay &= self.matrix.set_ring_extension(val)
-        if not okay:
-            return False
-        self._ring_extension = val
-        self.run_callbacks('RingSize-RB', val)
-        bpms = _np.array(self._csorb.bpm_pos)
-        bpm_pos = [bpms + i*self._csorb.circum for i in range(val)]
-        bpm_pos = _np.hstack(bpm_pos)
-        self.run_callbacks('BPMPosS-Mon', bpm_pos)
         return True
 
     def apply_corr(self, code):

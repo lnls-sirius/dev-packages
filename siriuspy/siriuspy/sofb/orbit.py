@@ -115,7 +115,6 @@ class EpicsOrbit(BaseOrbit):
         self._multiturnidx = 0
         self._mturndownsample = 1
         self._timevector = None
-        self._ring_extension = 1
         self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
         self.new_orbit = _Event()
@@ -262,39 +261,9 @@ class EpicsOrbit(BaseOrbit):
         """Check is mode or self._mode is in any of the Triggered modes."""
         return self.is_singlepass(mode) or self.is_multiturn(mode)
 
-    def set_ring_extension(self, val):
-        """."""
-        maval = self._csorb.MAX_RINGSZ
-        val = 1 if val < 1 else int(val)
-        val = maval if val > maval else val
-        if val == self._ring_extension:
-            return True
-        with self._lock_raw_orbs:
-            self._spass_average = 1
-            self.run_callbacks('SPassAvgNrTurns-SP', 1)
-            self.run_callbacks('SPassAvgNrTurns-RB', 1)
-            self._mturndownsample = 1
-            self.run_callbacks('MTurnDownSample-SP', 1)
-            self.run_callbacks('MTurnDownSample-RB', 1)
-            self._reset_orbs()
-            self._ring_extension = val
-            nrb = val * self._csorb.nr_bpms
-            for pln in self.ref_orbs:
-                orb = self.ref_orbs[pln]
-                if orb.size < nrb:
-                    nrep = _ceil(nrb/orb.size)
-                    orb2 = _np.tile(orb, nrep)
-                    orb = orb2[:nrb]
-                self.ref_orbs[pln] = orb
-                self.run_callbacks('RefOrb'+pln+'-RB', orb[:nrb])
-                self.run_callbacks('RefOrb'+pln+'-SP', orb[:nrb])
-        self._save_ref_orbits()
-        Thread(target=self._prepare_mode, daemon=True).start()
-        return True
-
     def get_orbit(self, reset=False, synced=False, timeout=1/10):
         """Return the orbit distortion."""
-        nrb = self._ring_extension * self._csorb.nr_bpms
+        nrb = self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
 
@@ -486,11 +455,6 @@ class EpicsOrbit(BaseOrbit):
 
     def set_spass_average(self, val):
         """."""
-        if self._ring_extension != 1 and val != 1:
-            msg = 'ERR: Cannot set SPassAvgNrTurns > 1 when RingSize > 1.'
-            self._update_log(msg)
-            _log.warning(msg[5:])
-            return False
         val = int(val) if val > 1 else 1
         with self._lock_raw_orbs:
             self._spass_average = val
@@ -511,7 +475,7 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        nrb = self._csorb.nr_bpms * self._ring_extension
+        nrb = self._csorb.nr_bpms
         if orb.size % self._csorb.nr_bpms:
             msg = 'ERR: Wrong RefOrb Size.'
             self._update_log(msg)
@@ -591,15 +555,14 @@ class EpicsOrbit(BaseOrbit):
             self.acq_config_bpms()
             return True
 
-        points = self._ring_extension
         if self.is_singlepass():
             chan = self._csorb.TrigAcqChan.ADCSwp
             rep = self._csorb.TrigAcqRepeat.Repetitive
-            points *= self._spass_average * self.bpms[0].tbtrate
+            points = self._spass_average * self.bpms[0].tbtrate
         elif self.is_multiturn():
             chan = self._csorb.TrigAcqChan.TbT
             rep = self._csorb.TrigAcqRepeat.Repetitive
-            points *= self._mturndownsample
+            points = self._mturndownsample
 
         if self._mode != oldmode:
             self.run_callbacks('TrigAcqChan-Sel', chan)
@@ -857,11 +820,6 @@ class EpicsOrbit(BaseOrbit):
 
     def set_mturndownsample(self, val):
         """."""
-        if self._ring_extension != 1 and val != 1:
-            msg = 'ERR: Cannot set DownSample > 1 when RingSize > 1.'
-            self._update_log(msg)
-            _log.warning(msg[5:])
-            return False
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
@@ -899,7 +857,7 @@ class EpicsOrbit(BaseOrbit):
             dtime = self.bpms[0].fofbperiod
         else:
             dtime = self.bpms[0].tbtperiod
-        mult = self._mturndownsample * self._ring_extension
+        mult = self._mturndownsample
         dtime *= mult
         nrptpst = self.acqtrignrsamples // mult
         offset = self._acqtrignrsamplespre / mult
@@ -985,9 +943,6 @@ class EpicsOrbit(BaseOrbit):
         nany = _np.isnan(posy)
         posx[nanx] = self.ref_orbs['X'][nanx]
         posy[nany] = self.ref_orbs['Y'][nany]
-        if self._ring_extension > 1:
-            posx = _np.tile(posx, (self._ring_extension, ))
-            posy = _np.tile(posy, (self._ring_extension, ))
         orbs = {'X': posx, 'Y': posy}
 
         for plane in ('X', 'Y'):
@@ -1035,21 +990,18 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_multiturn_orbits(self):
         """."""
-        if self._ring_extension != 1 and self._mturndownsample != 1:
-            return
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to ensure consistency
             samp = self.acqtrignrsamples
             down = self._mturndownsample
-            ringsz = self._ring_extension
-            samp -= samp % (ringsz*down)
+            samp -= samp % down
             if samp < 1:
                 msg = 'ERR: Actual nr_samples in MTurn orb calc. is < 1.'
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return
             samp *= self._acqtrignrshots
-            orbsz = self._csorb.nr_bpms * ringsz
+            orbsz = self._csorb.nr_bpms
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
                 pos = bpm.mtposx
@@ -1104,7 +1056,7 @@ class EpicsOrbit(BaseOrbit):
                 'MTurnIdx' + name + '-Mon', orb[idx, :].ravel())
             if pln == 'Sum':
                 continue
-            nrb = self._ring_extension * self._csorb.nr_bpms
+            nrb = self._csorb.nr_bpms
             dorb = orb[idx, :].ravel() - self.ref_orbs[pln][:nrb]
             self.run_callbacks(f'DeltaOrb{pln:s}Avg-Mon', _bn.nanmean(dorb))
             self.run_callbacks(f'DeltaOrb{pln:s}Std-Mon', _bn.nanstd(dorb))
@@ -1113,10 +1065,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_singlepass_orbits(self):
         """."""
-        if self._ring_extension != 1 and self._spass_average != 1:
-            return
         orbs = {'X': [], 'Y': [], 'Sum': []}
-        ringsz = self._ring_extension
         down = self._spass_average
         use_bg = self._spass_usebg == self._csorb.SPassUseBg.Using
         use_bg &= bool(self._spass_bgs[-1])  # check if there is a BG saved
@@ -1127,7 +1076,7 @@ class EpicsOrbit(BaseOrbit):
             dic = {
                 'maskbeg': self._spass_mask[0],
                 'maskend': self._spass_mask[1],
-                'nturns': ringsz * down}
+                'nturns': down}
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
                 dic.update({
@@ -1191,7 +1140,7 @@ class EpicsOrbit(BaseOrbit):
     def _update_bpmoffsets(self):
         """."""
         nrb = self._csorb.nr_bpms
-        orbx = _np.zeros(nrb * self._ring_extension, dtype=float)
+        orbx = _np.zeros(nrb, dtype=float)
         orby = orbx.copy()
         for i, bpm in enumerate(self.bpms):
             orbx[i::nrb] = bpm.offsetx or 0.0
