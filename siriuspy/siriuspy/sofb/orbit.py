@@ -104,9 +104,6 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_meth = self._csorb.SmoothMeth.Average
         self._spass_mask = [0, 0]
         self._spass_average = 1
-        self._spass_th_acqbg = None
-        self._spass_bgs = [dict() for _ in range(self._csorb.nr_bpms)]
-        self._spass_usebg = self._csorb.SPassUseBg.NotUsing
         self._acqtrignrsamplespre = 0
         self._acqtrignrsamplespost = 360
         self._acqtrignrshots = 1
@@ -201,8 +198,6 @@ class EpicsOrbit(BaseOrbit):
             'SmoothReset-Cmd': self.set_smooth_reset,
             'SPassMaskSplBeg-SP': _part(self.set_spass_mask, beg=True),
             'SPassMaskSplEnd-SP': _part(self.set_spass_mask, beg=False),
-            'SPassBgCtrl-Cmd': self.set_spass_bg,
-            'SPassUseBg-Sel': self.set_spass_usebg,
             'SPassAvgNrTurns-SP': self.set_spass_average,
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
@@ -338,30 +333,6 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
         return True
 
-    def set_spass_bg(self, val):
-        """."""
-        if val == self._csorb.SPassBgCtrl.Acquire:
-            trh = self._spass_th_acqbg
-            if trh is None or not trh.is_alive():
-                self._spass_th_acqbg = Thread(
-                    target=self._do_acquire_spass_bg, daemon=True)
-                self._spass_th_acqbg.start()
-            else:
-                msg = 'WARN: SPassBg is already being acquired.'
-                self._update_log(msg)
-                _log.warning(msg[6:])
-        elif val == self._csorb.SPassBgCtrl.Reset:
-            self.run_callbacks(
-                'SPassUseBg-Sts', self._csorb.SPassUseBg.NotUsing)
-            self._spass_bgs = [dict() for _ in range(len(self.bpms))]
-            self.run_callbacks('SPassBgSts-Mon', self._csorb.SPassBgSts.Empty)
-        else:
-            msg = 'ERR: SPassBg Control not recognized.'
-            self._update_log(msg)
-            _log.warning(msg[5:])
-            return False
-        return True
-
     def set_mturn_sync(self, val):
         """."""
         value = _csbpm.EnbldDsbld.enabled
@@ -410,44 +381,6 @@ class EpicsOrbit(BaseOrbit):
 
         name = 'Beg' if beg else 'End'
         self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
-        return True
-
-    def _do_acquire_spass_bg(self):
-        """."""
-        self.run_callbacks('SPassBgSts-Mon', self._csorb.SPassBgSts.Acquiring)
-        self._spass_bgs = [dict() for _ in range(len(self.bpms))]
-        ants = {'A': [], 'B': [], 'C': [], 'D': []}
-        bgs = [_dcopy(ants) for _ in range(len(self.bpms))]
-        # Acquire the samples
-        for _ in range(self._smooth_npts):
-            for i, bpm in enumerate(self.bpms):
-                bgs[i]['A'].append(bpm.arraya)
-                bgs[i]['B'].append(bpm.arrayb)
-                bgs[i]['C'].append(bpm.arrayc)
-                bgs[i]['D'].append(bpm.arrayd)
-            _time.sleep(1/self._csorb.ACQRATE_TRIGMODE)
-        # Make the smoothing
-        try:
-            for i, bpm in enumerate(self.bpms):
-                for k, val in bgs[i].items():
-                    if self._smooth_meth == self._csorb.SmoothMeth.Average:
-                        bgs[i][k] = _np.mean(val, axis=0)
-                    else:
-                        bgs[i][k] = _np.median(val, axis=0)
-                    if not _np.all(_np.isfinite(bgs[i][k])):
-                        raise ValueError('there was some nans or infs.')
-            self._spass_bgs = bgs
-            self.run_callbacks(
-                'SPassBgSts-Mon', self._csorb.SPassBgSts.Acquired)
-        except (ValueError, TypeError) as err:
-            msg = 'ERR: SPassBg Acq ' + str(err)
-            self._update_log(msg)
-            _log.error(msg[5:])
-            self.run_callbacks('SPassBgSts-Mon', self._csorb.SPassBgSts.Empty)
-
-    def set_spass_usebg(self, val):
-        """."""
-        self._spass_usebg = int(val)
         return True
 
     def set_spass_average(self, val):
@@ -1036,11 +969,6 @@ class EpicsOrbit(BaseOrbit):
         """."""
         orbs = {'X': [], 'Y': [], 'Sum': []}
         down = self._spass_average
-        use_bg = self._spass_usebg == self._csorb.SPassUseBg.Using
-        use_bg &= bool(self._spass_bgs[-1])  # check if there is a BG saved
-        pvv = self._csorb.SPassUseBg
-        self.run_callbacks(
-            'SPassUseBg-Sts', pvv.Using if use_bg else pvv.NotUsing)
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
             dic = {
                 'maskbeg': self._spass_mask[0],
@@ -1050,8 +978,7 @@ class EpicsOrbit(BaseOrbit):
             for i, bpm in enumerate(self.bpms):
                 dic.update({
                     'refx': self.ref_orbs['X'][i],
-                    'refy': self.ref_orbs['Y'][i],
-                    'bg': self._spass_bgs[i] if use_bg else dict()})
+                    'refy': self.ref_orbs['Y'][i]})
                 orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)

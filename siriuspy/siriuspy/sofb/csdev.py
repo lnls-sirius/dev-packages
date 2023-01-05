@@ -23,9 +23,6 @@ class ETypes(_csdev.ETypes):
     SMOOTH_METH = ('Average', 'Median')
     RESPMAT_MODE = ('Mxx', 'Myy', 'NoCoup', 'Full')
     SPASS_METHOD = ('FromBPMs', 'Calculated')
-    SPASS_BG_CTRL = ('Acquire', 'Reset')
-    SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
-    SPASS_USE_BG = ('NotUsing', 'Using')
     MTURN_ACQUIRE = ('Idle', 'Acquire')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
@@ -78,9 +75,6 @@ class ConstTLines(_csdev.Const):
     TrigAcqTrig = _csdev.Const.register('TrigAcqTrig', ('External', 'Data'))
     SmoothMeth = _csdev.Const.register('SmoothMeth', _et.SMOOTH_METH)
     RespMatMode = _csdev.Const.register('RespMatMode', _et.RESPMAT_MODE)
-    SPassBgCtrl = _csdev.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
-    SPassBgSts = _csdev.Const.register('SPassBgSts', _et.SPASS_BG_STS)
-    SPassUseBg = _csdev.Const.register('SPassUseBg', _et.SPASS_USE_BG)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     TransportLines = _csdev.Const.register(
@@ -650,18 +644,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
             'SPassAvgNrTurns-RB': {
                 'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
-            'SPassBgCtrl-Cmd': {
-                'type': 'enum', 'value': self.SPassBgCtrl.Acquire,
-                'enums': self.SPassBgCtrl._fields},
-            'SPassBgSts-Mon': {
-                'type': 'enum', 'value': self.SPassBgSts.Empty,
-                'enums': self.SPassBgSts._fields},
-            'SPassUseBg-Sel': {
-                'type': 'enum', 'value': self.SPassUseBg.NotUsing,
-                'enums': self.SPassUseBg._fields},
-            'SPassUseBg-Sts': {
-                'type': 'enum', 'value': self.SPassUseBg.NotUsing,
-                'enums': self.SPassUseBg._fields},
             'BPMPosS-Mon': {
                 'type': 'float', 'unit': 'm', 'count': nbpm,
                 'value': self.bpm_pos, 'prec': 2},

@@ -756,7 +756,6 @@ class BPM(_BaseTimingConfig):
         refsum = kwargs.get('refsum', 0.0)
         maskbeg = kwargs.get('maskbeg', 0)
         maskend = kwargs.get('maskend', 0)
-        bgd = kwargs.get('bg', dict())
 
         wsize = self.tbtrate
         maskbeg = min(maskbeg, wsize - 2)
@@ -776,8 +775,6 @@ class BPM(_BaseTimingConfig):
                 break
             nzrs = val.size
             siz = nzrs if siz is None else min(siz, nzrs)
-            if bgd and bgd[key].size >= val.size:
-                vals[key] -= bgd[key][:val.size]
 
         x_cal = _np.full(nturns, refx)
         y_cal = _np.full(nturns, refy)
