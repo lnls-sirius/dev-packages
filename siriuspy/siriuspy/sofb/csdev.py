@@ -64,8 +64,8 @@ class ConstTLines(_csdev.Const):
     TIKHONOV_REG_CONST = 0
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 50  # [um]
-    MAX_TRIGMODE_RATE = 2  # [Hz]
-    MIN_SLOWORB_RATE = 60  # [Hz]
+    ACQRATE_TRIGMODE = 2  # [Hz]
+    ACQRATE_SLOWORB = 60  # [Hz]
     BPMsFreq = 25.14  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
@@ -456,12 +456,6 @@ class SOFBTLines(ConstTLines):
     def get_corrs_database(self, prefix=''):
         """Return SOFB Correctors database."""
         dbase = {
-            'KickAcqRate-SP': {
-                'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 10, 'lolim': 0.01, 'prec': 2},
-            'KickAcqRate-RB': {
-                'type': 'float', 'unit': 'Hz', 'value': 2,
-                'hilim': 10, 'lolim': 0.01, 'prec': 2},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
@@ -626,12 +620,6 @@ class SOFBTLines(ConstTLines):
             'PolyCalibration-Sts': {
                 'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
-            'OrbAcqRate-SP': {
-                'type': 'float', 'unit': 'Hz', 'value': self.MIN_SLOWORB_RATE,
-                'hilim': 100, 'lolim': self.MIN_SLOWORB_RATE, 'prec': 2},
-            'OrbAcqRate-RB': {
-                'type': 'float', 'unit': 'Hz', 'value': self.MIN_SLOWORB_RATE,
-                'hilim': 100, 'lolim': self.MIN_SLOWORB_RATE, 'prec': 2},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
