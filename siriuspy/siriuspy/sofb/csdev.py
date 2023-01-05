@@ -68,11 +68,7 @@ class ConstTLines(_csdev.Const):
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
     TrigAcqChan = _csdev.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
-    TrigAcqDataChan = _csbpm.AcqChan
-    TrigAcqDataSel = _csbpm.AcqDataTyp
-    TrigAcqDataPol = _csbpm.Polarity
     TrigAcqRepeat = _csbpm.AcqRepeat
-    TrigAcqTrig = _csdev.Const.register('TrigAcqTrig', ('External', 'Data'))
     SmoothMeth = _csdev.Const.register('SmoothMeth', _et.SMOOTH_METH)
     RespMatMode = _csdev.Const.register('RespMatMode', _et.RESPMAT_MODE)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
@@ -534,22 +530,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
                 'value': self.TrigAcqChan.ADC,
                 'enums': self.TrigAcqChan._fields},
-            'TrigDataChan-Sel': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.TrigAcqDataChan.ADC,
-                'enums': self.TrigAcqDataChan._fields},
-            'TrigDataChan-Sts': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.TrigAcqDataChan.ADC,
-                'enums': self.TrigAcqDataChan._fields},
-            'TrigAcqTrigger-Sel': {
-                'type': 'enum', 'unit': 'If trigger is external or by data.',
-                'value': self.TrigAcqTrig.External,
-                'enums': self.TrigAcqTrig._fields},
-            'TrigAcqTrigger-Sts': {
-                'type': 'enum', 'unit': 'If trigger is external or by data.',
-                'value': self.TrigAcqTrig.External,
-                'enums': self.TrigAcqTrig._fields},
             'TrigAcqRepeat-Sel': {
                 'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
                 'value': self.TrigAcqRepeat.Normal,
@@ -576,38 +556,6 @@ class SOFBTLines(ConstTLines):
             'TrigNrSamplesPost-RB': {
                 'type': 'int', 'unit': '', 'value': 360,
                 'hilim': 20000, 'lolim': 0},
-            'TrigDataSel-Sel': {
-                'type': 'enum', 'unit': 'Set Data trigger Selection.',
-                'value': self.TrigAcqDataSel.A,
-                'enums': self.TrigAcqDataSel._fields},
-            'TrigDataSel-Sts': {
-                'type': 'enum', 'unit': 'Set Data trigger Selection.',
-                'value': self.TrigAcqDataSel.A,
-                'enums': self.TrigAcqDataSel._fields},
-            'TrigDataThres-SP': {
-                'type': 'int', 'value': 1,
-                'unit': 'set data trigger threshold',
-                'lolim': -1000, 'hilim': 2**31-1},
-            'TrigDataThres-RB': {
-                'type': 'int', 'value': 1,
-                'unit': 'set data trigger threshold',
-                'lolim': -1000, 'hilim': 2**31-1},
-            'TrigDataHyst-SP': {
-                'type': 'int', 'value': 0,
-                'unit': 'set data trigger hysteresis',
-                'lolim': 0, 'hilim': 2**31-1},
-            'TrigDataHyst-RB': {
-                'type': 'int', 'value': 0,
-                'unit': 'set data trigger hysteresis',
-                'lolim': 0, 'hilim': 2**31-1},
-            'TrigDataPol-Sel': {
-                'type': 'enum', 'unit': 'Set Data trigger Polarity.',
-                'value': self.TrigAcqDataPol.Positive,
-                'enums': self.TrigAcqDataPol._fields},
-            'TrigDataPol-Sts': {
-                'type': 'enum', 'unit': 'Set Data trigger Polarity.',
-                'value': self.TrigAcqDataPol.Positive,
-                'enums': self.TrigAcqDataPol._fields},
             'PolyCalibration-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},

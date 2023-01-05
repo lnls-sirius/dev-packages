@@ -182,13 +182,7 @@ class EpicsOrbit(BaseOrbit):
             'TrigAcqConfig-Cmd': self.acq_config_bpms,
             'TrigAcqCtrl-Sel': self.set_trig_acq_control,
             'TrigAcqChan-Sel': self.set_trig_acq_channel,
-            'TrigDataChan-Sel': self.set_trig_acq_datachan,
-            'TrigAcqTrigger-Sel': self.set_trig_acq_trigger,
             'TrigAcqRepeat-Sel': self.set_trig_acq_repeat,
-            'TrigDataSel-Sel': self.set_trig_acq_datasel,
-            'TrigDataThres-SP': self.set_trig_acq_datathres,
-            'TrigDataHyst-SP': self.set_trig_acq_datahyst,
-            'TrigDataPol-Sel': self.set_trig_acq_datapol,
             'TrigNrSamplesPre-SP': _part(self.set_acq_nrsamples, ispost=False),
             'TrigNrSamplesPost-SP': _part(self.set_acq_nrsamples, ispost=True),
             'RefOrbX-SP': _part(self.set_reforb, 'X'),
@@ -597,20 +591,6 @@ class EpicsOrbit(BaseOrbit):
         self._update_time_vector(channel=val)
         return True
 
-    def set_trig_acq_trigger(self, value):
-        """."""
-        val = _csbpm.AcqTrigTyp.Data
-        if value == self._csorb.TrigAcqTrig.External:
-            val = _csbpm.AcqTrigTyp.External
-
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trigger = val
-
-        self.run_callbacks('TrigAcqTrigger-Sts', value)
-        return True
-
     def set_trig_acq_repeat(self, value):
         """."""
         mask = self._get_mask()
@@ -619,58 +599,6 @@ class EpicsOrbit(BaseOrbit):
             bpm.acq_repeat = value
 
         self.run_callbacks('TrigAcqRepeat-Sts', value)
-        return True
-
-    def set_trig_acq_datachan(self, value):
-        """."""
-        try:
-            val = self._csorb.TrigAcqDataChan._fields[value]
-            val = _csbpm.AcqChan._fields.index(val)
-        except (IndexError, ValueError):
-            return False
-
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trig_datatype = val
-
-        self.run_callbacks('TrigDataChan-Sts', value)
-        return True
-
-    def set_trig_acq_datasel(self, value):
-        """."""
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trig_datasel = value
-        self.run_callbacks('TrigDataSel-Sts', value)
-        return True
-
-    def set_trig_acq_datathres(self, value):
-        """."""
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trig_datathres = value
-        self.run_callbacks('TrigDataThres-RB', value)
-        return True
-
-    def set_trig_acq_datahyst(self, value):
-        """."""
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trig_datahyst = value
-        self.run_callbacks('TrigDataHyst-RB', value)
-        return True
-
-    def set_trig_acq_datapol(self, value):
-        """."""
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.acq_trig_datapol = value
-        self.run_callbacks('TrigDataPol-Sts', value)
         return True
 
     def set_acq_nrsamples(self, val, ispost=True):
