@@ -107,8 +107,6 @@ class EpicsOrbit(BaseOrbit):
         self._spass_th_acqbg = None
         self._spass_bgs = [dict() for _ in range(self._csorb.nr_bpms)]
         self._spass_usebg = self._csorb.SPassUseBg.NotUsing
-        self._acqrate = self._csorb.MIN_SLOWORB_RATE
-        self._oldacqrate = self._acqrate
         self._acqtrignrsamplespre = 0
         self._acqtrignrsamplespost = 360
         self._acqtrignrshots = 1
@@ -124,7 +122,7 @@ class EpicsOrbit(BaseOrbit):
             self._mypipes_send = []
             self._create_processes(nrprocs=16)
         self._orbit_thread = _Repeat(
-            1/self._acqrate, self._update_orbits, niter=0)
+            1/self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0)
         self._orbit_thread.start()
         self._thread_sync = None
         self._update_time_vector()
@@ -206,7 +204,6 @@ class EpicsOrbit(BaseOrbit):
             'SPassBgCtrl-Cmd': self.set_spass_bg,
             'SPassUseBg-Sel': self.set_spass_usebg,
             'SPassAvgNrTurns-SP': self.set_spass_average,
-            'OrbAcqRate-SP': self.set_orbit_acq_rate,
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
             'SyncBPMs-Cmd': self.sync_bpms,
@@ -270,7 +267,7 @@ class EpicsOrbit(BaseOrbit):
         if reset:
             with self._lock_raw_orbs:
                 self._reset_orbs()
-            _time.sleep(self._smooth_npts/self._acqrate)
+            _time.sleep(self._smooth_npts/self._csorb.ACQRATE_SLOWORB)
 
         if self.is_multiturn():
             orbs = self.smooth_mtorb
@@ -288,13 +285,13 @@ class EpicsOrbit(BaseOrbit):
             raws = self.raw_orbs
             getorb = self._get_orbit_online
 
-        for _ in range(2 * self._smooth_npts):
+        for _ in range(3 * self._smooth_npts):
             with self._lock_raw_orbs:
                 isempty = orbs['X'] is None or orbs['Y'] is None
                 if not isempty and len(raws['X']) >= self._smooth_npts:
                     orbx, orby = getorb(orbs)
                     break
-            _time.sleep(1/self._acqrate)
+            _time.sleep(1/self._csorb.ACQRATE_SLOWORB)
         else:
             msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)
@@ -428,7 +425,7 @@ class EpicsOrbit(BaseOrbit):
                 bgs[i]['B'].append(bpm.arrayb)
                 bgs[i]['C'].append(bpm.arrayc)
                 bgs[i]['D'].append(bpm.arrayd)
-            _time.sleep(1/self._acqrate)
+            _time.sleep(1/self._csorb.ACQRATE_TRIGMODE)
         # Make the smoothing
         try:
             for i, bpm in enumerate(self.bpms):
@@ -495,44 +492,16 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
         return True
 
-    def set_orbit_acq_rate(self, value):
-        """."""
-        if self.is_trigmode() and value > self._csorb.MAX_TRIGMODE_RATE:
-            msg = 'ERR: In triggered mode cannot set rate > {:d}.'.format(
-                self._csorb.MAX_TRIGMODE_RATE)
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        elif self.is_sloworb() and value < self._csorb.MIN_SLOWORB_RATE:
-            msg = 'ERR: In SlowOrb cannot set rate < {:d}.'.format(
-                self._csorb.MIN_SLOWORB_RATE)
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        self._acqrate = value
-        self._orbit_thread.interval = 1/value
-        self.run_callbacks('OrbAcqRate-RB', value)
-        return True
-
     def set_orbit_mode(self, value):
         """."""
-        bo1 = self.is_trigmode()
-        bo2 = not self.is_trigmode(value)
         omode = self._mode
-        if not bo2:
-            acqrate = self._csorb.MAX_TRIGMODE_RATE
-            dic = {'lolim': 0.01, 'hilim': acqrate}
-        else:
-            acqrate = self._oldacqrate
-            dic = {'lolim': self._csorb.MIN_SLOWORB_RATE, 'hilim': 100}
-        self.run_callbacks('OrbAcqRate-SP', acqrate, **dic)
-        self.run_callbacks('OrbAcqRate-RB', acqrate, **dic)
+        acqrate = self._csorb.ACQRATE_SLOWORB
+        if self.is_trigmode(value):
+            acqrate = self._csorb.ACQRATE_TRIGMODE
 
         with self._lock_raw_orbs:
             self._mode = value
-            if bo1 == bo2:
-                self._oldacqrate = self._acqrate
-                self.set_orbit_acq_rate(acqrate)
+            self._orbit_thread.interval = 1/acqrate
             self._reset_orbs()
         Thread(
             target=self._prepare_mode,

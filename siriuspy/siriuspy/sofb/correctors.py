@@ -463,13 +463,13 @@ class EpicsCorrectors(BaseCorrectors):
     NUM_TIMEOUT = 1000
     PSSOFB_USE_IOC = False
     MAX_PROB = 5
+    ACQRATE = 2
 
     def __init__(self, acc, prefix='', callback=None, dipoleoff=False):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
         self._sync_kicks = False
-        self._acq_rate = 2
 
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
@@ -493,7 +493,7 @@ class EpicsCorrectors(BaseCorrectors):
                     'SI', auto_mon=True, dipoleoff=dipoleoff)
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
-            1/self._acq_rate, self._update_corrs_strength, niter=0)
+            1/self.ACQRATE, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
 
     @property
@@ -526,10 +526,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        dbase = {
-            'CorrConfig-Cmd': self.configure_correctors,
-            'KickAcqRate-SP': self.set_kick_acq_rate,
-            }
+        dbase = {'CorrConfig-Cmd': self.configure_correctors}
         if self.acc == 'SI':
             dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
             dbase['CorrPSSOFBWait-Sel'] = self.set_wait_pssofb
@@ -680,13 +677,6 @@ class EpicsCorrectors(BaseCorrectors):
                 self._update_log(msg)
                 _log.error(msg[5:])
         return corr_values
-
-    def set_kick_acq_rate(self, value):
-        """Set kick caq rate method."""
-        self._acq_rate = value
-        self._corrs_thread.interval = 1/value
-        self.run_callbacks('KickAcqRate-RB', value)
-        return True
 
     def _update_corrs_strength(self):
         try:
