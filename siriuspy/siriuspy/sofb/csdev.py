@@ -499,12 +499,6 @@ class SOFBTLines(ConstTLines):
             dbase[k] = _dcopy(prop)
 
         dbase.update({
-            'SOFBMode-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
-                'value': 0, 'enums': self.SOFBMode._fields},
-            'SOFBMode-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
-                'value': 0, 'enums': self.SOFBMode._fields},
             'SyncWithInjection-Sel': {
                 'type': 'enum', 'unit': 'Sync orbit acq. with injection',
                 'value': self.SyncWithInj.Off,
@@ -1016,6 +1010,14 @@ class SOFBSI(SOFBRings, ConstSI):
             'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
+        db_ring.update({
+            'SOFBMode-Sel': {
+                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+                'value': 0, 'enums': self.SOFBMode._fields},
+            'SOFBMode-Sts': {
+                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+                'value': 0, 'enums': self.SOFBMode._fields},
+            })
         dbase = super().get_orbit_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
