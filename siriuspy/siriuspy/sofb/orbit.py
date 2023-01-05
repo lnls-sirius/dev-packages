@@ -322,27 +322,27 @@ class EpicsOrbit(BaseOrbit):
 
         if self.is_multiturn():
             orbs = self.smooth_mtorb
-            raw_orbs = self.raw_mtorbs
+            raws = self.raw_mtorbs
             getorb = self._get_orbit_multiturn
         elif self.is_singlepass():
             orbs = self.smooth_sporb
-            raw_orbs = self.raw_sporbs
+            raws = self.raw_sporbs
             getorb = self._get_orbit_singlepass
         elif self.is_sloworb():
             if synced:
                 self.new_orbit.wait(timeout=timeout)
                 self.new_orbit.clear()
             orbs = self.smooth_orb
-            raw_orbs = self.raw_orbs
+            raws = self.raw_orbs
             getorb = self._get_orbit_online
 
-        for _ in range(3 * self._smooth_npts):
-            isnone = orbs['X'] is None or orbs['Y'] is None
-            if isnone or len(raw_orbs['X']) < self._smooth_npts:
-                _time.sleep(1/self._acqrate)
-                continue
-            orbx, orby = getorb(orbs)
-            break
+        for _ in range(2 * self._smooth_npts):
+            with self._lock_raw_orbs:
+                isempty = orbs['X'] is None or orbs['Y'] is None
+                if not isempty and len(raws['X']) >= self._smooth_npts:
+                    orbx, orby = getorb(orbs)
+                    break
+            _time.sleep(1/self._acqrate)
         else:
             msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)
@@ -981,12 +981,18 @@ class EpicsOrbit(BaseOrbit):
 
     def _reset_orbs(self):
         """."""
-        self.raw_orbs = {'X': [], 'Y': []}
-        self.smooth_orb = {'X': None, 'Y': None}
-        self.raw_sporbs = {'X': [], 'Y': [], 'Sum': []}
-        self.smooth_sporb = {'X': None, 'Y': None, 'Sum': None}
-        self.raw_mtorbs = {'X': [], 'Y': [], 'Sum': []}
-        self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
+        raw = self.raw_orbs
+        smt = self.smooth_orb
+        raw['X'], raw['Y'] = [], []
+        smt['X'], smt['Y'] = None, None
+        raw = self.raw_sporbs
+        smt = self.smooth_sporb
+        raw['X'], raw['Y'], raw['Sum'] = [], [], []
+        smt['X'], smt['Y'], smt['Sum'] = None, None, None
+        raw = self.raw_mtorbs
+        smt = self.smooth_mtorb
+        raw['X'], raw['Y'], raw['Sum'] = [], [], []
+        smt['X'], smt['Y'], smt['Sum'] = None, None, None
         self.run_callbacks('BufferCount-Mon', 0)
 
     def _update_orbits(self):
@@ -1032,7 +1038,7 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(raws[plane], axis=0)
                 else:
                     orb = _np.median(raws[plane], axis=0)
-            self.smooth_orb[plane] = orb
+                self.smooth_orb[plane] = orb
         self.new_orbit.set()
 
         self._sloworb_timeout += nok
