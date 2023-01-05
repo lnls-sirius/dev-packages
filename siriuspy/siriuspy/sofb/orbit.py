@@ -338,7 +338,7 @@ class EpicsOrbit(BaseOrbit):
 
         for _ in range(3 * self._smooth_npts):
             isnone = orbs['X'] is None or orbs['Y'] is None
-            if isnone or len(raw_orbs['X']) < self._smooth_meth:
+            if isnone or len(raw_orbs['X']) < self._smooth_npts:
                 _time.sleep(1/self._acqrate)
                 continue
             orbx, orby = getorb(orbs)
