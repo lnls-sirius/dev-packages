@@ -85,7 +85,7 @@ class EpicsOrbit(BaseOrbit):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
 
-        self._mode = self._csorb.SOFBMode.Offline
+        self._mode = 0  # first mode of the list
         self._sofb = None
         self._sync_with_inj = False
         self._sloworb_timeout = 0
@@ -100,9 +100,6 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_orb = {'X': None, 'Y': None}
         self.smooth_sporb = {'X': None, 'Y': None, 'Sum': None}
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
-        self.offline_orbit = {
-            'X': _np.zeros(self._csorb.nr_bpms),
-            'Y': _np.zeros(self._csorb.nr_bpms)}
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
         self._spass_mask = [0, 0]
@@ -202,8 +199,6 @@ class EpicsOrbit(BaseOrbit):
             'TrigNrSamplesPost-SP': _part(self.set_acq_nrsamples, ispost=True),
             'RefOrbX-SP': _part(self.set_reforb, 'X'),
             'RefOrbY-SP': _part(self.set_reforb, 'Y'),
-            'OfflineOrbX-SP': _part(self.set_offlineorb, 'X'),
-            'OfflineOrbY-SP': _part(self.set_offlineorb, 'Y'),
             'SmoothNrPts-SP': self.set_smooth_npts,
             'SmoothMethod-Sel': self.set_smooth_method,
             'SmoothReset-Cmd': self.set_smooth_reset,
@@ -284,7 +279,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
             self._ring_extension = val
             nrb = val * self._csorb.nr_bpms
-            for pln in self.offline_orbit:
+            for pln in self.ref_orbs:
                 orb = self.ref_orbs[pln]
                 if orb.size < nrb:
                     nrep = _ceil(nrb/orb.size)
@@ -293,14 +288,6 @@ class EpicsOrbit(BaseOrbit):
                 self.ref_orbs[pln] = orb
                 self.run_callbacks('RefOrb'+pln+'-RB', orb[:nrb])
                 self.run_callbacks('RefOrb'+pln+'-SP', orb[:nrb])
-                orb = self.offline_orbit[pln]
-                if orb.size < nrb:
-                    orb2 = self.ref_orbs[pln].copy()
-                    orb2[:orb.size] = orb
-                    orb = orb2
-                self.offline_orbit[pln] = orb
-                self.run_callbacks('OfflineOrb'+pln+'-RB', orb[:nrb])
-                self.run_callbacks('OfflineOrb'+pln+'-SP', orb[:nrb])
         self._save_ref_orbits()
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
@@ -310,10 +297,6 @@ class EpicsOrbit(BaseOrbit):
         nrb = self._ring_extension * self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
-        if self._mode == self._csorb.SOFBMode.Offline:
-            orbx = self.offline_orbit['X'][:nrb]
-            orby = self.offline_orbit['Y'][:nrb]
-            return _np.hstack([orbx-refx, orby-refy])
 
         if reset:
             with self._lock_raw_orbs:
@@ -365,26 +348,6 @@ class EpicsOrbit(BaseOrbit):
         """."""
         idx = self._multiturnidx
         return orbs['X'][idx, :], orbs['Y'][idx, :]
-
-    def set_offlineorb(self, plane, orb):
-        """."""
-        msg = 'Setting New Offline Orbit.'
-        self._update_log(msg)
-        _log.info(msg)
-        orb = _np.array(orb, dtype=float)
-        nrb = self._ring_extension * self._csorb.nr_bpms
-        if orb.size % self._csorb.nr_bpms:
-            msg = 'ERR: Wrong OfflineOrb Size.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        elif orb.size < nrb:
-            orb2 = _np.zeros(nrb, dtype=float)
-            orb2[:orb.size] = orb
-            orb = orb2
-        self.offline_orbit[plane] = orb
-        self.run_callbacks('OfflineOrb'+plane+'-RB', orb[:nrb])
-        return True
 
     def set_smooth_npts(self, num):
         """."""
@@ -1208,12 +1171,8 @@ class EpicsOrbit(BaseOrbit):
         status = _util.update_bit(status, bit_pos=1, bit_val=not tim_conf)
 
         bpms = self._get_used_bpms()
-        if self._mode == self._csorb.SOFBMode.Offline:
-            bpm_conn = True
-            bpm_stt = True
-        else:
-            bpm_conn = all(bpm.connected for bpm in bpms)
-            bpm_stt = all(bpm.state for bpm in bpms)
+        bpm_conn = all(bpm.connected for bpm in bpms)
+        bpm_stt = all(bpm.state for bpm in bpms)
         status = _util.update_bit(v=status, bit_pos=2, bit_val=not bpm_conn)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
 

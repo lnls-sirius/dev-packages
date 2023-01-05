@@ -295,11 +295,6 @@ class SOFB(_BaseClass):
             _log.error(msg[5:])
             return False
 
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Offline, cannot apply kicks.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._thread and self._thread.is_alive():
             msg = 'ERR: Loop is Closed or MeasRespMat is On.'
             self._update_log(msg)
@@ -652,11 +647,6 @@ class SOFB(_BaseClass):
         return True
 
     def _start_meas_respmat(self):
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Cannot Meas Respmat in Offline Mode'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._measuring_respmat:
             msg = 'ERR: Measurement already in process.'
             self._update_log(msg)

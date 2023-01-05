@@ -17,9 +17,9 @@ class ETypes(_csdev.ETypes):
 
     ENBL_RF = _csdev.ETypes.OFF_ON
     OPEN_CLOSED = ('Open', 'Closed')
-    ORB_MODE_SI = ('Offline', 'SlowOrb', 'MultiTurn', 'SinglePass')
-    ORB_MODE_RINGS = ('Offline', 'MultiTurn', 'SinglePass')
-    ORB_MODE_TLINES = ('Offline', 'SinglePass')
+    ORB_MODE_SI = ('SlowOrb', 'MultiTurn', 'SinglePass')
+    ORB_MODE_RINGS = ('MultiTurn', 'SinglePass')
+    ORB_MODE_TLINES = ('SinglePass', )
     SMOOTH_METH = ('Average', 'Median')
     RESPMAT_MODE = ('Mxx', 'Myy', 'NoCoup', 'Full')
     SPASS_METHOD = ('FromBPMs', 'Calculated')
@@ -497,8 +497,6 @@ class SOFBTLines(ConstTLines):
             'RefOrbY-SP', 'RefOrbY-RB',
             'SPassOrbX-Mon', 'SPassOrbY-Mon',
             'SPassSum-Mon',
-            'OfflineOrbX-SP', 'OfflineOrbX-RB',
-            'OfflineOrbY-SP', 'OfflineOrbY-RB',
             'BPMOffsetX-Mon', 'BPMOffsetY-Mon',
             ]
         dbase = dict()
@@ -521,12 +519,10 @@ class SOFBTLines(ConstTLines):
         dbase.update({
             'SOFBMode-Sel': {
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
-                'value': self.SOFBMode.Offline,
-                'enums': self.SOFBMode._fields},
+                'value': 0, 'enums': self.SOFBMode._fields},
             'SOFBMode-Sts': {
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
-                'value': self.SOFBMode.Offline,
-                'enums': self.SOFBMode._fields},
+                'value': 0, 'enums': self.SOFBMode._fields},
             'SyncWithInjection-Sel': {
                 'type': 'enum', 'unit': 'Sync orbit acq. with injection',
                 'value': self.SyncWithInj.Off,
