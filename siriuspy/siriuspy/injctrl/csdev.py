@@ -228,10 +228,6 @@ def get_injctrl_propty_database():
         'TopUpNrPulses-RB': {
             'type': 'int', 'value': 1, 'unit': 'pulses',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
-        'AutoStop-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
-        'AutoStop-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
 
         'InjSysTurnOn-Cmd': {'type': 'int', 'value': 0},
         'InjSysTurnOff-Cmd': {'type': 'int', 'value': 0},
