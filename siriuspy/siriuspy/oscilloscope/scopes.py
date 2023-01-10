@@ -14,7 +14,7 @@ class Scopes:
 
 class ScopeSignals:
     """Mapping of physical signals to scope channels."""
-    
+
     SI_FILL_PATTERN = (Scopes.AS_DI_FPMDIG, 5025, 'CHAN1')
     BO_FILL_PATTERN = (Scopes.AS_DI_FPMDIG, 5025, 'CHAN2')
     TS_EJESEPTG_PULSE = (Scopes.TS_PU_OSC_EJEBO, 5025, 'CHAN1')
@@ -30,7 +30,3 @@ class ScopeSignals:
                 scope_ip = getattr(Scopes, symb)
                 if scope_ip == scopesignal[0] or scope_ip == scope_ip:
                     return symb
-
-
-
-
