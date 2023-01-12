@@ -505,6 +505,8 @@ class App(_Callback):
             if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
                     self._corrs_dev.check_fofbacc_gain(self._psgains):
                 return True
+            if self._check_abort_thread():
+                return False
         self._update_log('ERR:Timed out waiting for correctors to')
         self._update_log('ERR:implement gains and coefficients.')
         return False
@@ -736,11 +738,13 @@ class App(_Callback):
         npts = int(self._corr_setcurrzero_dur*self._const.CURRZERO_RMP_FREQ)
         if npts != 0:
             xdata = _np.linspace(1, 0, npts)
-            for step in xdata:
+            for idx, step in enumerate(xdata):
                 curr = init_curr * step
                 if self._check_thread_currzero_abort():
                     self._update_log('...aborted.')
                     return
+                self._update_log(
+                    f'{idx+1:02d}/{len(xdata):02d} -> Current={100*step:.1f}%')
                 self._corrs_dev.set_current(curr)
                 _time.sleep(1/self._const.CURRZERO_RMP_FREQ)
 
@@ -1492,8 +1496,8 @@ class App(_Callback):
 
     def _callback_havebeam(self, value, **kws):
         if not value and self._loop_state == self._const.LoopState.Closed:
-            self._update_log('FATAL: We do not have stored beam!')
-            self._update_log('FATAL: Opening FOFB loop...')
+            self._update_log('FATAL:We do not have stored beam!')
+            self._update_log('FATAL:Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     def _callback_loopintlk(self, pvname, value, **kws):
@@ -1519,7 +1523,7 @@ class App(_Callback):
                     (self._thread_loopstate is not None and
                      self._thread_loopstate.is_alive() and
                      self._loop_state_lastsp != self._const.LoopState.Open):
-                self._update_log('FATAL: Opening FOFB loop...')
+                self._update_log('FATAL:Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
                 self.set_loop_state(
