@@ -148,6 +148,7 @@ class EPU(_Device):
         'MaxGapSpeed-SP', 'MaxGapSpeed-RB',
         'ChangeGap-Cmd',
         'Stop-Cmd', 'Moving-Mon', 'IsBusy-Mon',
+        'Status-Mon',
         )
 
     def __init__(self, devname):
@@ -165,6 +166,11 @@ class EPU(_Device):
     def parameters(self):
         """Return EPU parameters."""
         return EPU._dev2params[self.devname]
+
+    @property
+    def status(self):
+        """EPU status."""
+        return self['Status-Mon']
 
     @property
     def phase_speed(self):
@@ -369,7 +375,7 @@ class EPU(_Device):
     def cmd_move_gap_disable(self, timeout=None):
         """Command to disable and break EPU gap movement."""
         # return self._set_sp('EnblAndReleaseGap-Sel', 0, timeout)
-        self['EnblAndReleaseGap-Sel'] = 1
+        self['EnblAndReleaseGap-Sel'] = 0
         return True
 
     def cmd_move_enable(self, timeout=None):
@@ -422,17 +428,22 @@ class EPU(_Device):
     def cmd_move(self, phase, gap, timeout=None):
         """Command to set and start phase and gap movements."""
         # calc ETA
-        dtime_phase = abs(phase - self.phase) / self.phase_speed
-        dtime_gap = abs(gap - self.gap) / self.gap_speed
+        dtime_phase = abs(phase - self.phase_mon) / self.phase_speed
+        dtime_gap = abs(gap - self.gap_mon) / self.gap_speed
         dtime_max = max(dtime_phase, dtime_gap)
 
         # additional percentual in ETA
-        dtime_tol = 40  # [%]
-        tol_factor = (1 + dtime_tol/100)
+        tol_gap = 0.002  # [mm]
+        tol_phase = 0.002  # [mm]
+        tol_dtime = 100  # [%]
+        tol_factor = (1 + tol_dtime/100)
+        tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        self.cmd_set_phase(phase=phase, timeout=timeout)
-        self.cmd_set_gap(gap=gap, timeout=timeout)
+        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+            return False
+        if not self.cmd_set_gap(gap=gap, timeout=timeout):
+            return False
 
         # command move start
         if not self.cmd_move_phase_start(timeout=timeout):
@@ -442,8 +453,14 @@ class EPU(_Device):
 
         # wait for movement within reasonable time
         time_init = _time.time()
-        while self.is_moving:
-            if _time.time() - time_init > tol_factor * dtime_max:
+        while \
+                abs(self.gap_mon - gap) > tol_gap or \
+                abs(self.phase_mon - phase) > tol_phase or \
+                self.is_moving:
+            if _time.time() - time_init > tol_total:
+                print(f'tol_total: {tol_total:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
                 return False
             _time.sleep(EPU._short_shut_eye)
 
@@ -458,7 +475,7 @@ class EPU(_Device):
 
     # --- cmd_reset
 
-    def cmd_reset(self, timeout=None):
+    def cmd_device_reset(self, timeout=None):
         """Command to reset EPU to a standard movement state."""
         success = True
         success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
@@ -473,7 +490,7 @@ class EPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if self.cmd_wait_while_busy(timeout=timeout):
+        if not self.cmd_wait_while_busy(timeout=timeout):
             return False
 
         # send move command
