@@ -71,7 +71,6 @@ class App(_Callback):
         self._topupnrpulses = 1
         self._topup_thread = None
         self._topup_pu_prepared = False
-        self._autostop = _Const.OffOn.Off
         self._abort = False
 
         self._injsys_turn_on_count = 0
@@ -139,8 +138,6 @@ class App(_Callback):
         self._init_egun = False
         self._egun_dev.trigps.pv_object('enable').add_callback(
             self._callback_watch_eguntrig)
-        self._egun_dev.trigps.pv_object('enablereal').add_callback(
-            self._callback_autostop)
 
         self._pumode_dev = InjSysPUModeHandler(
             print_log=False, callback=self._update_dev_status)
@@ -149,14 +146,15 @@ class App(_Callback):
         self._init_injevt = False
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_watch_injectionevt)
-        self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
-            self._callback_autostop)
         self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
             self._callback_watch_repeatbucketlist)
 
         self._injsys_dev = InjSysStandbyHandler()
 
         self._currinfo_dev = CurrInfoSI()
+        curr_pvo = self._currinfo_dev.pv_object('Current-Mon')
+        curr_pvo.add_callback(self._callback_autostop)
+        curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
         self._pu_names = _PSSearch.get_psnames(
             {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
@@ -188,7 +186,6 @@ class App(_Callback):
             'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
             'TopUpPUStandbyEnbl-Sel': self.set_topuppustandbyenbl,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
-            'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
             'InjSysTurnOnOrder-SP': self.set_injsys_on_order,
@@ -298,8 +295,6 @@ class App(_Callback):
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
-        self.run_callbacks('AutoStop-Sel', self._autostop)
-        self.run_callbacks('AutoStop-Sts', self._autostop)
         self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
         self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
         self.run_callbacks(
@@ -655,21 +650,6 @@ class App(_Callback):
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
         return True
 
-    def set_autostop(self, value):
-        """Set Auto Stop."""
-        if not 0 <= value < len(_ETypes.OFF_ON):
-            return False
-        if self._evg_dev.nrpulses != 0:
-            self._update_log('ERR:Could not turn on AutoStop. Set ')
-            self._update_log('ERR:RepeatBucketList to 0 to continue.')
-            return False
-        self._autostop = value
-        self.run_callbacks('AutoStop-Sts', self._autostop)
-        self._update_log(
-            'Turned '+_ETypes.OFF_ON[value]+' Auto Stop.')
-        self._callback_autostop()
-        return True
-
     def cmd_injsys_turn_on(self, value=None, wait_finish=False):
         """Set turn on Injection System."""
         run = self._injsys_dev.is_running
@@ -830,67 +810,35 @@ class App(_Callback):
             msg = 'WARN:Timed out in turn '+cmd+' InjectionEvt.'
         self._update_log(msg)
 
-    def _callback_autostop(self, **kws):
+    def _callback_autostop(self, value, **kws):
         if self._mode == _Const.InjMode.TopUp:
             return
-        if self._autostop == _Const.OffOn.Off:
+        if value is None or value < self._target_current:
             return
         if not self._evg_dev['InjectionEvt-Sel']:
             return
         if not self._egun_dev.trigps.is_on():
             return
+        self._update_log('Target current reached!')
+        self._run_autostop()
 
-        _epics.ca.CAThread(target=self._run_autostop, daemon=True).start()
+    def _callback_conn_autostop(self, conn, **kws):
+        if not self._evg_dev['InjectionEvt-Sel']:
+            return
+        if not self._egun_dev.trigps.is_on():
+            return
+        if conn:
+            return
+        self._update_log('ERR:Current PV disconnected.')
+        self._run_autostop()
 
     def _run_autostop(self):
-        self._update_log('Injection Auto Stop activated...')
-        if not self._wait_autostop():
-            self._update_log('Injection Auto Stop Routine aborted.')
-            return
-
+        self._update_log('Running Auto Stop...')
         if self._stop_injection():
             self._update_log('Injection Auto Stop done.')
             self._update_bucket_list_autostop()
         else:
             self._update_log('Injection Auto Stop failed.')
-
-    def _wait_autostop(self):
-        if not self._injsys_dev.is_on:
-            self._update_log('Waiting for Inj.System to be on...')
-            _t0 = _time.time()
-            while _time.time() - _t0 < _Const.RF_RMP_TIMEOUT:
-                if self._autostop == _Const.OffOn.Off:
-                    return False
-                if self._injsys_dev.is_on:
-                    self._update_log('Inj.System is on.')
-                    break
-                else:
-                    # handle a timing configuration that do not use InjBO evt
-                    states = self._injsys_dev.get_dev_state(
-                        ['bo_rf', 'as_pu', 'bo_ps', 'li_rf'])
-                    if all(states):
-                        self._update_log('Ignoring InjBO event off state...')
-                        self._update_log('...Inj.System is on.')
-                        break
-            else:
-                self._update_log('ERR:Timed out waiting for Inj.Sys.')
-                return False
-
-        self._update_log('Waiting for InjectionEvt to be on...')
-        _t0 = _time.time()
-        while _time.time() - _t0 < _Const.TI_INJ_TIMEOUT:
-            if self._autostop == _Const.OffOn.Off \
-                    or not self._evg_dev['InjectionEvt-Sel']:
-                return False
-            if self._evg_dev.injection_state:
-                self._update_log('InjectionEvt is on.')
-                break
-        else:
-            self._update_log('ERR:Timed out waiting for InjectionEvt.')
-            return False
-
-        self._update_log('Waiting for current to reach target value...')
-        return self._wait_injection()
 
     def _callback_update_type(self, **kws):
         if self._egun_dev.is_single_bunch:
@@ -932,12 +880,6 @@ class App(_Callback):
                 self._update_log('WARN:RepeatBucketList is diff. from 1.')
                 self._update_log('WARN:Aborting top-up...')
             return
-        if self._autostop == _Const.OffOn.On and value != 0:
-            self._autostop = _Const.OffOn.Off
-            self.run_callbacks('AutoStop-Sel', self._autostop)
-            self.run_callbacks('AutoStop-Sts', self._autostop)
-            self._update_log('WARN:RepeatBucketList is diff. from 0.')
-            self._update_log('WARN:Turned Off Auto Stop.')
 
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
@@ -986,7 +928,7 @@ class App(_Callback):
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.TI_INJ_TIMEOUT:
             if not self._check_allok_2_inject(show_warn=False):
-                self._abort_injection()
+                self._stop_injection()
                 return False
             if self._evg_dev.injection_state:
                 break
@@ -999,42 +941,30 @@ class App(_Callback):
         return True
 
     def _wait_injection(self):
-        init_mode, init_autostop = self._mode, self._autostop
-        if init_mode == _Const.InjMode.TopUp:
-            # if in TopUp mode, wait for injectionevt to be off (done)
-            _t0 = _time.time()
-            while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
-                if not self._check_allok_2_inject(show_warn=False):
-                    self._abort_injection()
-                    return False
-                if not self._evg_dev.injection_state:
-                    break
-                _time.sleep(0.02)
-        else:
-            # if in decay mode, wait for target current to be reached
-            while True:
-                if not self._currinfo_dev.connected:
-                    self._update_log('ERR:CurrInfo device disconnected.')
-                    return False
-                if self._currinfo_dev.current >= self._target_current:
-                    break
-                # if autostop is turned off, interrupt wait
-                if init_mode == _Const.InjMode.Decay and \
-                        init_autostop and not self._autostop:
-                    return False
-                _time.sleep(0.1)
-            self._update_log('Target current reached!')
+        # wait for injectionevt to be off (done)
+        _t0 = _time.time()
+        while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
+            if not self._check_allok_2_inject(show_warn=False):
+                self._stop_injection()
+                return False
+            if not self._evg_dev.injection_state:
+                break
+            _time.sleep(0.02)
         return True
 
     def _stop_injection(self):
-        # turn off injectionevt
-        self._update_log('Sending turn off command to InjectionEvt...')
-        if not self._evg_dev.cmd_turn_off_injection():
-            self._update_log('ERR:Timed out waiting for InjectionEvt.')
-            return False
-        self._update_log('Turned off InjectionEvt.')
-
-        return True
+        self._update_log('Turning off InjectionEvt...')
+        if self._evg_dev.cmd_turn_off_injection():
+            msg = 'Turned off InjectionEvt.'
+        else:
+            self._update_log('ERR:Failed to turn off InjectionEvt.')
+            self._update_log('Turning off EGun TriggerPS...')
+            if self._egun_dev.trigps.cmd_disable_trigger():
+                msg = 'Turned off EGun TriggerPS.'
+            else:
+                msg = 'ERR:Failed to turn off EGun TriggerPS.'
+        self._update_log(msg)
+        return 'ERR' not in msg
 
     def _update_bucket_list_autostop(self):
         if not self._evg_dev.connected:
@@ -1069,19 +999,6 @@ class App(_Callback):
                 return True
         self._update_log('WARN:Could not update BucketList.')
         return False
-
-    def _abort_injection(self):
-        self._update_log('Turning off InjectionEvt...')
-        if self._evg_dev.cmd_turn_off_injection():
-            msg = 'Turned off InjectionEvt.'
-        else:
-            self._update_log('ERR:Failed to turn off InjectionEvt.')
-            self._update_log('Turning off EGun TriggerPS...')
-            if self._egun_dev.trigps.cmd_disable_trigger():
-                msg = 'Turned off EGun TriggerPS.'
-            else:
-                msg = 'ERR:Failed to turn off EGun TriggerPS.'
-        self._update_log(msg)
 
     # --- auxiliary top-up methods ---
 

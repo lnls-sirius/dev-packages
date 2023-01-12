@@ -35,7 +35,6 @@ class InjCtrl(_Device):
         'TopUpHeadStartTime-SP', 'TopUpHeadStartTime-RB',
         'TopUpNextInj-Mon',
         'TopUpNrPulses-SP', 'TopUpNrPulses-RB',
-        'AutoStop-Sel', 'AutoStop-Sts',
         'InjSysTurnOn-Cmd', 'InjSysTurnOff-Cmd', 'InjSysCmdSts-Mon',
         'InjSysTurnOnOrder-SP', 'InjSysTurnOnOrder-RB',
         'InjSysTurnOffOrder-SP', 'InjSysTurnOffOrder-RB',
@@ -262,15 +261,6 @@ class InjCtrl(_Device):
     def topup_nextinj_time(self):
         """Next topup scheduled injection Time object."""
         return Time.fromtimestamp(self['TopUpNextInj-Mon'])
-
-    @property
-    def auto_stop(self):
-        """Auto stop state (Off or On)."""
-        return self['AutoStop-Sts']
-
-    @auto_stop.setter
-    def auto_stop(self, value):
-        self._enum_setter('AutoStop-Sel', value, self.OffOn)
 
     # ----- injection system properties -----
 
