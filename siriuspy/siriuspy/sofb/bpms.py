@@ -62,10 +62,6 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': _csbpm.AcqRepeat.Normal,
             # 'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
             'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
-            'ACQTriggerDataThres': 1,
-            'ACQTriggerDataPol': _csbpm.Polarity.Positive,
-            'ACQTriggerDataHyst': 0,
             'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
             'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
             'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
@@ -95,11 +91,6 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sel',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
-            # 'ACQTriggerDataSel': 'ACQTriggerDataSel-Sel',
-            'ACQTriggerDataSel': 'ACQTriggerDataSel-SP',
-            'ACQTriggerDataThres': 'ACQTriggerDataThres-SP',
-            'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
-            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP',
             'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
             'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
             'Monit1TagEn': 'Monit1TagEn-Sel',  # Enable Monit1 sync with timing
@@ -141,11 +132,6 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
-            # 'ACQTriggerDataSel': 'ACQTriggerDataSel-Sts',
-            'ACQTriggerDataSel': 'ACQTriggerDataSel-RB',
-            'ACQTriggerDataThres': 'ACQTriggerDataThres-RB',
-            'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
-            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB',
             'TbtTagEn': 'TbtTagEn-Sts',
             'SwTagEn': 'SwTagEn-Sts',
             'Monit1TagEn': 'Monit1TagEn-Sts',
@@ -527,62 +513,6 @@ class BPM(_BaseTimingConfig):
             pvobj.put(val, wait=False)
 
     @property
-    def acq_trig_datasel(self):
-        """."""
-        pvobj = self._config_pvs_rb['ACQTriggerDataSel']
-        return pvobj.value if pvobj.connected else None
-
-    @acq_trig_datasel.setter
-    def acq_trig_datasel(self, val):
-        """."""
-        pvobj = self._config_pvs_sp['ACQTriggerDataSel']
-        self._config_ok_vals['ACQTriggerDataSel'] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
-
-    @property
-    def acq_trig_datathres(self):
-        """."""
-        pvobj = self._config_pvs_rb['ACQTriggerDataThres']
-        return pvobj.value if pvobj.connected else None
-
-    @acq_trig_datathres.setter
-    def acq_trig_datathres(self, val):
-        """."""
-        pvobj = self._config_pvs_sp['ACQTriggerDataThres']
-        self._config_ok_vals['ACQTriggerDataThres'] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
-
-    @property
-    def acq_trig_datahyst(self):
-        """."""
-        pvobj = self._config_pvs_rb['ACQTriggerDataHyst']
-        return pvobj.value if pvobj.connected else None
-
-    @acq_trig_datahyst.setter
-    def acq_trig_datahyst(self, val):
-        """."""
-        pvobj = self._config_pvs_sp['ACQTriggerDataHyst']
-        self._config_ok_vals['ACQTriggerDataHyst'] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
-
-    @property
-    def acq_trig_datapol(self):
-        """."""
-        pvobj = self._config_pvs_rb['ACQTriggerDataPol']
-        return pvobj.value if pvobj.connected else None
-
-    @acq_trig_datapol.setter
-    def acq_trig_datapol(self, val):
-        """."""
-        pvobj = self._config_pvs_sp['ACQTriggerDataPol']
-        self._config_ok_vals['ACQTriggerDataPol'] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
-
-    @property
     def tbt_sync_enbl(self):
         """."""
         pvobj = self._config_pvs_rb['TbtTagEn']
@@ -756,7 +686,6 @@ class BPM(_BaseTimingConfig):
         refsum = kwargs.get('refsum', 0.0)
         maskbeg = kwargs.get('maskbeg', 0)
         maskend = kwargs.get('maskend', 0)
-        bgd = kwargs.get('bg', dict())
 
         wsize = self.tbtrate
         maskbeg = min(maskbeg, wsize - 2)
@@ -776,8 +705,6 @@ class BPM(_BaseTimingConfig):
                 break
             nzrs = val.size
             siz = nzrs if siz is None else min(siz, nzrs)
-            if bgd and bgd[key].size >= val.size:
-                vals[key] -= bgd[key][:val.size]
 
         x_cal = _np.full(nturns, refx)
         y_cal = _np.full(nturns, refy)

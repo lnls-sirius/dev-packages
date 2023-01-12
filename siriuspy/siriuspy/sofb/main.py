@@ -32,6 +32,7 @@ class SOFB(_BaseClass):
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
         self._loop_print_every_num_iter = 1000
+        self._loop_use_pssofb = False
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -40,7 +41,6 @@ class SOFB(_BaseClass):
             cv=dict(kp=0.0, ki=0.5, kd=0.0),
             rf=dict(kp=0.0, ki=0.5, kd=0.0))
         self._measuring_respmat = False
-        self._ring_extension = 1
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 5, 'cv': 5}
@@ -115,8 +115,8 @@ class SOFB(_BaseClass):
             dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
-            dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
+            dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
@@ -194,6 +194,25 @@ class SOFB(_BaseClass):
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
 
+    def set_use_pssofb(self, val):
+        """Set whether or not closed loop will use PSSOFB.
+
+        Args:
+            val (bool): desired state.
+
+        Returns:
+            bool: Whether setting was successful.
+
+        """
+        if self._thread and self._thread.is_alive():
+            msg = 'ERR: Performing some task. Cannot change PSSOFB state!'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        self._loop_use_pssofb = bool(val)
+        self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
+        return True
+
     def set_print_every_num_iters(self, value: float) -> bool:
         """Define number of iterations between loop statistics calculation.
 
@@ -267,26 +286,6 @@ class SOFB(_BaseClass):
         self.run_callbacks('FOFBUpdateRefOrbPerc-RB', value*100)
         return True
 
-    def set_ring_extension(self, val):
-        """."""
-        val = 1 if val < 1 else int(val)
-        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
-        if val == self._ring_extension:
-            return True
-        okay = self.orbit.set_ring_extension(val)
-        if not okay:
-            return False
-        okay &= self.matrix.set_ring_extension(val)
-        if not okay:
-            return False
-        self._ring_extension = val
-        self.run_callbacks('RingSize-RB', val)
-        bpms = _np.array(self._csorb.bpm_pos)
-        bpm_pos = [bpms + i*self._csorb.circum for i in range(val)]
-        bpm_pos = _np.hstack(bpm_pos)
-        self.run_callbacks('BPMPosS-Mon', bpm_pos)
-        return True
-
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
         if self.acc == 'BO':
@@ -295,11 +294,6 @@ class SOFB(_BaseClass):
             _log.error(msg[5:])
             return False
 
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Offline, cannot apply kicks.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._thread and self._thread.is_alive():
             msg = 'ERR: Loop is Closed or MeasRespMat is On.'
             self._update_log(msg)
@@ -652,11 +646,6 @@ class SOFB(_BaseClass):
         return True
 
     def _start_meas_respmat(self):
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Cannot Meas Respmat in Offline Mode'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._measuring_respmat:
             msg = 'ERR: Measurement already in process.'
             self._update_log(msg)
@@ -826,6 +815,25 @@ class SOFB(_BaseClass):
             refx0 = fofb.refx
             refy0 = fofb.refy
 
+        if self._loop_use_pssofb:
+            msg = 'Turning on PSSOFB...'
+            self._update_log(msg)
+            _log.info(msg)
+            self.correctors.use_pssofb = True
+            msg = 'PSSOFB ready!'
+            self._update_log(msg)
+            _log.info(msg)
+
+            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+                msg = 'Setting Trigger to listen to EVG Clock...'
+                self._update_log(msg)
+                _log.info(msg)
+                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
+                self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
+                msg = 'Trigger ready!'
+                self._update_log(msg)
+                _log.info(msg)
+
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
@@ -915,6 +923,25 @@ class SOFB(_BaseClass):
                 # means that correctors are not ready yet
                 # skip this iteration
                 continue
+
+        if self._loop_use_pssofb:
+            msg = 'Turning off PSSOFB...'
+            self._update_log(msg)
+            _log.info(msg)
+            self.correctors.use_pssofb = False
+            msg = 'PSSOFB is off!'
+            self._update_log(msg)
+            _log.info(msg)
+
+            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+                msg = 'Setting Trigger to listen to Event...'
+                self._update_log(msg)
+                _log.info(msg)
+                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
+                self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
+                msg = 'Trigger ready!'
+                self._update_log(msg)
+                _log.info(msg)
 
         msg = 'Loop opened!'
         self._update_log(msg)
