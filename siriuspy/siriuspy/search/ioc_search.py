@@ -106,14 +106,14 @@ class IOCSearch:
             text = _web.doc_services_read()
             data = _yaml.load(text)
             service_2_ioc_dict = dict()
-            ioc_2_prefixes_dict = dict()
+            ioc_2_prefix_dict = dict()
             for service, ioc2pref in data.items():
                 service_2_ioc_dict[service] = [ioc for ioc in ioc2pref]
-                ioc_2_prefixes_dict.update(ioc2pref)
+                ioc_2_prefix_dict.update(ioc2pref)
             IOCSearch._service_2_ioc_dict = service_2_ioc_dict
-            IOCSearch._ioc_2_prefixes_dict = ioc_2_prefixes_dict
+            IOCSearch._ioc_2_prefix_dict = ioc_2_prefix_dict
             IOCSearch._service_list = sorted(list(service_2_ioc_dict.keys()))
-            IOCSearch._ioc_list = sorted(list(ioc_2_prefixes_dict.keys()))
+            IOCSearch._ioc_list = sorted(list(ioc_2_prefix_dict.keys()))
 
             ioc_2_service_dict = dict()
             for serv, iocs in IOCSearch._service_2_ioc_dict.items():
