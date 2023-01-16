@@ -136,6 +136,7 @@ class App(_Callback):
         self._egun_dev = EGun(
             print_log=False, callback=self._update_dev_status)
         self._init_egun = False
+        self._egun_dev.trigps.set_auto_monitor('enable', True)
         self._egun_dev.trigps.pv_object('enable').add_callback(
             self._callback_watch_eguntrig)
 
@@ -144,6 +145,7 @@ class App(_Callback):
 
         self._evg_dev = EVG()
         self._init_injevt = False
+        self._evg_dev.set_auto_monitor('InjectionEvt-Sel', True)
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_watch_injectionevt)
         self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
@@ -152,6 +154,7 @@ class App(_Callback):
         self._injsys_dev = InjSysStandbyHandler()
 
         self._currinfo_dev = CurrInfoSI()
+        self._currinfo_dev.set_auto_monitor('Current-Mon', True)
         curr_pvo = self._currinfo_dev.pv_object('Current-Mon')
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
@@ -838,7 +841,7 @@ class App(_Callback):
             self._update_log('Injection Auto Stop done.')
             self._update_bucket_list_autostop()
         else:
-            self._update_log('Injection Auto Stop failed.')
+            self._update_log('ERR:Injection Auto Stop failed.')
 
     def _callback_update_type(self, **kws):
         if self._egun_dev.is_single_bunch:
