@@ -79,6 +79,8 @@ class App(_Callback):
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
         self._rfkillbeam_count = 0
 
+        self._thread_autostop = None
+
         secs = ['LI', 'TB', 'BO', 'TS', 'SI', 'AS']
         self._status = {
             s: self._pvs_database['DiagStatus'+s+'-Mon']['value']
@@ -814,25 +816,34 @@ class App(_Callback):
         self._update_log(msg)
 
     def _callback_autostop(self, value, **kws):
-        if self._mode == _Const.InjMode.TopUp:
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
             return
-        if value is None or value < self._target_current:
-            return
-        if not self._evg_dev['InjectionEvt-Sel']:
-            return
-        if not self._egun_dev.trigps.is_on():
-            return
-        self._update_log('Target current reached!')
-        self._run_autostop()
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[value, 'cb_val'])
 
     def _callback_conn_autostop(self, conn, **kws):
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
+            return
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[conn, 'cb_conn'])
+
+    def _thread_run_autostop(self, value, cb_type):
+        if self._mode == _Const.InjMode.TopUp:
+            return
+        if cb_type == 'cb_val':
+            if value is None or value < self._target_current:
+                return
+            self._update_log('Target current reached!')
+        else:
+            if value:
+                return
+            self._update_log('ERR:Current PV disconnected.')
         if not self._evg_dev['InjectionEvt-Sel']:
             return
         if not self._egun_dev.trigps.is_on():
             return
-        if conn:
-            return
-        self._update_log('ERR:Current PV disconnected.')
         self._run_autostop()
 
     def _run_autostop(self):
