@@ -108,7 +108,7 @@ class EpicsMatrix(BaseMatrix):
         _log.info(msg)
         if mat is None:
             return False
-        mat = _np.reshape(mat, [-1, self._csorb.NR_CORRS])
+        mat = _np.reshape(mat, [-1, self._csorb.nr_corrs])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
