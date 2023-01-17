@@ -79,6 +79,8 @@ class App(_Callback):
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
         self._rfkillbeam_count = 0
 
+        self._thread_autostop = None
+
         secs = ['LI', 'TB', 'BO', 'TS', 'SI', 'AS']
         self._status = {
             s: self._pvs_database['DiagStatus'+s+'-Mon']['value']
@@ -152,6 +154,7 @@ class App(_Callback):
         self._injsys_dev = InjSysStandbyHandler()
 
         self._currinfo_dev = CurrInfoSI()
+        self._currinfo_dev.set_auto_monitor('Current-Mon', True)
         curr_pvo = self._currinfo_dev.pv_object('Current-Mon')
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
@@ -811,25 +814,37 @@ class App(_Callback):
         self._update_log(msg)
 
     def _callback_autostop(self, value, **kws):
-        if self._mode == _Const.InjMode.TopUp:
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
             return
-        if value is None or value < self._target_current:
-            return
-        if not self._evg_dev['InjectionEvt-Sel']:
-            return
-        if not self._egun_dev.trigps.is_on():
-            return
-        self._update_log('Target current reached!')
-        self._run_autostop()
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[value, 'cb_val'])
+        self._thread_autostop.start()
 
     def _callback_conn_autostop(self, conn, **kws):
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
+            return
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[conn, 'cb_conn'])
+        self._thread_autostop.start()
+
+    def _thread_run_autostop(self, value, cb_type):
+        if self._mode == _Const.InjMode.TopUp:
+            return
+        if cb_type == 'cb_val':
+            if value is None or value < self._target_current:
+                return
+            msg = 'Target current reached!'
+        else:
+            if value:
+                return
+            msg = 'ERR:Current PV disconnected.'
+        self._update_log(msg)
         if not self._evg_dev['InjectionEvt-Sel']:
             return
         if not self._egun_dev.trigps.is_on():
             return
-        if conn:
-            return
-        self._update_log('ERR:Current PV disconnected.')
         self._run_autostop()
 
     def _run_autostop(self):
@@ -838,7 +853,7 @@ class App(_Callback):
             self._update_log('Injection Auto Stop done.')
             self._update_bucket_list_autostop()
         else:
-            self._update_log('Injection Auto Stop failed.')
+            self._update_log('ERR:Injection Auto Stop failed.')
 
     def _callback_update_type(self, **kws):
         if self._egun_dev.is_single_bunch:
