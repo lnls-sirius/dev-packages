@@ -457,7 +457,6 @@ class EpicsCorrectors(BaseCorrectors):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
-        self.sync_kicks = self._csorb.CorrSync.Off
 
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
@@ -466,6 +465,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         self._use_pssofb = False
         if self.acc == 'SI':
+            self.sync_kicks = self._csorb.CorrSync.Off
             self._ref_kicks = None
             self._ret_kicks = None
             self._func_ret = None
