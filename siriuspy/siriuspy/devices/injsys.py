@@ -808,8 +808,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
-    SI_DPKCKR_DLYR_ONAXINC = 28  # [count]
-    SI_DPKCKR_DLYR_OPT = 0  # [count]
+    SI_DPKCKR_DLYREF = 36.8e6  # [count]
 
     def __init__(self, print_log=True, callback=None):
         """Init."""
@@ -829,6 +828,11 @@ class InjSysPUModeHandler(_Devices, _Callback):
         # call super init
         _Devices.__init__(self, '', devices)
         _Callback.__init__(self, callback=callback)
+
+    @property
+    def is_trigdpk_onaxis(self):
+        """Whether DpK trigger delay raw is above SI_DPKCKR_DLYREF."""
+        return self.trigdpk.delay_raw < self.SI_DPKCKR_DLYREF
 
     @property
     def is_accum(self):
@@ -874,7 +878,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if not self.connected:
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
-        dpk_dly_ok = self.trigdpk.delay_raw == self.SI_DPKCKR_DLYR_OPT
+        dpk_dly_ok = not self.is_trigdpk_onaxis
         dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
@@ -900,8 +904,10 @@ class InjSysPUModeHandler(_Devices, _Callback):
             return False
 
         # configure DpK trigger
-        if not self._config_dpk_trigger(delayraw=self.SI_DPKCKR_DLYR_OPT):
-            return False
+        if self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw + self.SI_DPKCKR_DLYREF
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
 
         # set DpK Kick
         if not self._config_dpk_kick():
@@ -926,8 +932,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if not self.connected:
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
-        dpk_dly_ok = self.trigdpk.delay_raw == \
-            self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
+        dpk_dly_ok = self.is_trigdpk_onaxis
         dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
@@ -953,9 +958,10 @@ class InjSysPUModeHandler(_Devices, _Callback):
             return False
 
         # configure DpK trigger
-        delay = self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
-        if not self._config_dpk_trigger(delayraw=delay):
-            return False
+        if not self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw - self.SI_DPKCKR_DLYREF
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
 
         # set DpK Kick
         if not self._config_dpk_kick():
@@ -1045,7 +1051,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     # ---------- check sp -----------
 
-    def _wait(self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
+    def _wait(
+            self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
             if abs(getattr(device, prop) - desired) < tolerance:
