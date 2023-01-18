@@ -44,12 +44,12 @@ class SOFB(_BaseClass):
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 5, 'cv': 5}
-        self._meas_respmat_kick = {'ch': 15, 'cv': 15}
+        self._meas_respmat_kick = {'ch': 15, 'cv': 22.5}
         if self.isring:
             self._mancorr_gain['rf'] = 1.00
             self._max_kick['rf'] = 1e12  # a very large value
             self._max_delta_kick['rf'] = 10
-            self._meas_respmat_kick['rf'] = 80
+            self._meas_respmat_kick['rf'] = 75
         if self.acc == 'SI':
             self.fofb = HLFOFB()
             self._download_fofb_kicks = False

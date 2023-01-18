@@ -95,8 +95,8 @@ class App(_Callback):
         self._meas_respmat_count = 0
         self._meas_respmat_kick = {
             'ch': 15,  # [urad]
-            'cv': 15,  # [urad]
-            'rf': 80,  # [Hz]
+            'cv': 22.5,  # [urad]
+            'rf': 75,  # [Hz]
         }
         self._meas_respmat_wait = 1  # [s]
         self._meas_respmat_thread = None

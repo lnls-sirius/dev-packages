@@ -387,16 +387,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickCV-SP': {
-                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickCV-RB': {
-                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickRF-SP': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'MeasRespMatKickRF-RB': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'MeasRespMatWait-SP': {
                 'type': 'float', 'value': 1, 'unit': 's', 'prec': 3,
