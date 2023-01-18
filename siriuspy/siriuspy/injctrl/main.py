@@ -832,6 +832,10 @@ class App(_Callback):
     def _thread_run_autostop(self, value, cb_type):
         if self._mode == _Const.InjMode.TopUp:
             return
+        if not self._evg_dev['InjectionEvt-Sel']:
+            return
+        if not self._egun_dev.trigps.is_on():
+            return
         if cb_type == 'cb_val':
             if value is None or value < self._target_current:
                 return
@@ -841,10 +845,6 @@ class App(_Callback):
                 return
             msg = 'ERR:Current PV disconnected.'
         self._update_log(msg)
-        if not self._evg_dev['InjectionEvt-Sel']:
-            return
-        if not self._egun_dev.trigps.is_on():
-            return
         self._run_autostop()
 
     def _run_autostop(self):
