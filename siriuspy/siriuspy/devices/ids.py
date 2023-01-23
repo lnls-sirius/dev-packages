@@ -119,8 +119,8 @@ class EPU(_Device):
 
     _idparam_fields = (
         'PERIOD',  # [mm]
-        'PHASE_REFERENCE',  # [mm]
-        'GAP_REFERENCE',  # [mm]
+        'PHASE_PARK',  # [mm]
+        'GAP_PARK',  # [mm]
         )
 
     _dev2params = {
@@ -172,6 +172,8 @@ class EPU(_Device):
         """EPU status."""
         return self['Status-Mon']
 
+    # --- speeds ----
+
     @property
     def phase_speed(self):
         """Return phase speed readback [mm/s]."""
@@ -202,6 +204,8 @@ class EPU(_Device):
         """Return max gap speed readback [mm/s]."""
         return self['MaxGapSpeed-RB']
 
+    # --- phase ---
+
     @property
     def phase(self):
         """Return EPU phase readback [mm]."""
@@ -223,6 +227,8 @@ class EPU(_Device):
     def phase_mon(self):
         """Return EPU phase monitor [mm]."""
         return self['Phase-Mon']
+
+    # --- gap ---
 
     @property
     def gap(self):
@@ -246,6 +252,8 @@ class EPU(_Device):
         """Return EPU gap monitor [mm]."""
         return self['Gap-Mon']
 
+    # --- drive checks ---
+
     @property
     def is_phase_drive_powered(self):
         """Return phase driver power state on (True|False)."""
@@ -260,6 +268,8 @@ class EPU(_Device):
     def is_drives_powered(self):
         """Return phase & gap drives powered state on (True|False)."""
         return self.is_phase_drive_powered and self.is_gap_drive_powered
+
+    # --- movement checks ---
 
     @property
     def is_move_phase_enabled(self):
@@ -280,6 +290,8 @@ class EPU(_Device):
     def is_moving(self):
         """Return is moving state (True|False)."""
         return self['Moving-Mon'] != 0
+
+    # --- other checks ---
 
     @property
     def is_busy(self):
@@ -351,8 +363,6 @@ class EPU(_Device):
         return self._set_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
 
     # --- cmd_move disable/enable ---
-
-    # TODO: not working. IOC with Sel/Sts PVs that are not consistent!
 
     def cmd_move_phase_enable(self, timeout=None):
         """Command to release and enable EPU phase movement."""
@@ -471,7 +481,7 @@ class EPU(_Device):
         """Command to set and start EPU movement reference config."""
         params = self.parameters
         return self.cmd_move(
-            params.PHASE_REFERENCE, params.GAP_REFERENCE, timeout=timeout)
+            params.PHASE_PARK, params.GAP_PARK, timeout=timeout)
 
     # --- cmd_reset
 
