@@ -478,7 +478,7 @@ class EPU(_Device):
         return True
 
     def cmd_move_park(self, timeout=None):
-        """Command to set and start EPU movement reference config."""
+        """Command to set and start EPU movement to parked config."""
         params = self.parameters
         return self.cmd_move(
             params.PHASE_PARK, params.GAP_PARK, timeout=timeout)
