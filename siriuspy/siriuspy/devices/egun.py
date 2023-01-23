@@ -264,7 +264,7 @@ class EGHVPS(_Device):
         """Wait current setpoint to reach value with tolerance 'tol'."""
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if abs(self.current_mon - value) < tol:
+            if abs(self.current - value) < tol:
                 return True
             _time.sleep(0.1)
         return False
