@@ -18,6 +18,7 @@ class ETypes(_csdev.ETypes):
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
+    BIASFB_MODEL_TYPES = ('Linear', 'GaussianProcess')
 
 
 _et = ETypes
@@ -37,6 +38,8 @@ class Const(_csdev.Const):
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
+    BiasFBModelTypes = _csdev.Const.register(
+        'ModelTypes', _et.BIASFB_MODEL_TYPES)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
     LI_STATUS_LABELS = ('Egun', 'PS', 'PU', 'RF', 'TI')
@@ -70,6 +73,9 @@ class Const(_csdev.Const):
     INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
 
     PU_VOLTAGE_UP_TIME = 30  # [s]
+
+    BIASFB_AHEADSETIME = 10  # [s]
+    BIASFB_MINIMUM_LIFETIME = 1800  # [s]
 
 
 _ct = Const
