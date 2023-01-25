@@ -178,6 +178,7 @@ class HLFOFBConst(_csdev.Const):
                 'value': _et.STS_LBLS_CORR},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
             'CorrSetPwrStateOn-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetPwrStateOff-Cmd': {'type': 'int', 'value': 0},
             'CorrSetOpModeManual-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeDsbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},

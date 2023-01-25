@@ -46,6 +46,7 @@ class App(_Callback):
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
         self._corr_setpwrstateon_count = 0
+        self._corr_setpwrstateoff_count = 0
         self._corr_setopmodemanual_count = 0
         self._corr_setaccfreezeenbl_count = 0
         self._corr_setaccfreezedsbl_count = 0
@@ -160,6 +161,7 @@ class App(_Callback):
             'LoopPacketLossDetecEnbl-Sel': self.set_loop_packloss_detec_enbl,
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
+            'CorrSetPwrStateOff-Cmd': self.cmd_corr_pwrstate_off,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -640,6 +642,21 @@ class App(_Callback):
         self._corr_setpwrstateon_count += 1
         self.run_callbacks(
             'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
+        return False
+
+    def cmd_corr_pwrstate_off(self, _):
+        """Set all corrector pwrstate to off."""
+        self._update_log('Received set corrector pwrstate to off...')
+        if not self._check_corr_connection():
+            return False
+
+        self._update_log('Setting all corrector pwrstate to off...')
+        self._corrs_dev.set_pwrstate(self._const.OffOn.Off)
+        self._update_log('...done!')
+
+        self._corr_setpwrstateoff_count += 1
+        self.run_callbacks(
+            'CorrSetPwrStateOff-Cmd', self._corr_setpwrstateoff_count)
         return False
 
     def cmd_corr_opmode_manual(self, _):
