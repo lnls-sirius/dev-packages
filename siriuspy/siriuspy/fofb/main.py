@@ -603,6 +603,17 @@ class App(_Callback):
         if not self._check_corr_connection():
             return False
 
+        # saturation limits
+        self._update_log('Setting corrector saturation limits...')
+        chn, chl = self._const.ch_names, self._ch_maxacccurr
+        cvn, cvl = self._const.cv_names, self._cv_maxacccurr
+        self._corrs_dev.set_fofbacc_satmax(chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmin(-chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmax(cvl, psnames=cvn)
+        self._corrs_dev.set_fofbacc_satmin(-cvl, psnames=cvn)
+        self._update_log('...done!')
+        # pwrstate
+        self._check_set_corrs_pwrstate()
         # opmode
         self._check_set_corrs_opmode()
         # fofbacc_freeze
@@ -1536,6 +1547,27 @@ class App(_Callback):
             return True
         self._update_log('ERR:Correctors not connected... aborted.')
         return False
+
+    def _check_set_corrs_pwrstate(self):
+        """Check and configure pwrstate.
+
+        Control only correctors that are in the enable list.
+        """
+        self._update_log('Checking corrector pwrstate...')
+        pwrstate = _Const.OffOn.On
+        is_ok = 1 * (self._corrs_dev.pwrstate == pwrstate)
+        idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
+        if idcs.size:
+            self._update_log('Configuring corrector pwrstate...')
+            self._corrs_dev.set_pwrstate(pwrstate, psindices=idcs)
+            if self._corrs_dev.check_pwrstate(
+                    pwrstate, psindices=idcs, timeout=5):
+                self._update_log('...done!')
+                return True
+            self._update_log('ERR:Failed to set corrector pwrstate.')
+            return False
+        self._update_log('All ok.')
+        return True
 
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
