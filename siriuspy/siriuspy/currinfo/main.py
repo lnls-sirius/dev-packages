@@ -611,17 +611,12 @@ class SICurrInfoApp(_CurrInfoApp):
         timestamp_dq = _np.asarray(timestamp_dq)
         value_dq = _np.asarray(value_dq)
 
-        # check buffer not empty
-        if not timestamp_dq.size:
-            return
-
-        # check if there is valid current in Booster
-        if bo_curr < self.CURR_THRESHOLD:
-            return
-
-        # calculate efficiency
-        self._injcurr = value_dq.max() - value_dq.min()  # mA
-        self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
+        self._injcurr = 0.0
+        self._injeff = 0.0
+        # check if buffer not empty and if there is valid current in Booster
+        if timestamp_dq.size and bo_curr >= self.CURR_THRESHOLD:
+            self._injcurr = value_dq.max() - value_dq.min()  # mA
+            self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC
         self._injcharge = 1e6*self._injcurr*self.HARMNUM/self._rffreq_pv.value
