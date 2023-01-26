@@ -76,6 +76,7 @@ class Const(_csdev.Const):
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
+    BIASFB_PROPTY_PREFIX = 'BiasFB'
 
 
 _ct = Const
@@ -295,3 +296,174 @@ def get_injctrl_propty_database():
     }
     dbase = _csdev.add_pvslist_cte(dbase)
     return dbase
+
+
+def get_biasfb_database():
+    """."""
+    dbase = {
+        'LoopState-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'LoopState-Sts': {
+            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
+        'MinVoltage-SP': {
+            'type': 'float', 'value': -52, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+        'MinVoltage-RB': {
+            'type': 'float', 'value': -52, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+        'MaxVoltage-SP': {
+            'type': 'float', 'value': -52, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+        'MaxVoltage-RB': {
+            'type': 'float', 'value': -52, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+
+        'ModelType-Sel': {
+            'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
+            'enums': _et.BIASFB_MODEL_TYPES},
+        'ModelType-Sts': {
+            'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
+            'enums': _et.BIASFB_MODEL_TYPES},
+        'ModelMaxNumPts-SP': {
+            'type': 'int', 'value': 20, 'unit': '#',
+            'lolim': 2, 'low': 2, 'lolo': 2,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelMaxNumPts-RB': {
+            'type': 'int', 'value': 20, 'unit': '#',
+            'lolim': 0, 'low': 0, 'lolo': 0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelNumPts-Mon': {
+            'type': 'int', 'value': 20, 'unit': '#',
+            'lolim': 2, 'low': 2, 'lolo': 2,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
+        'ModelAutoFitParams-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'ModelAutoFitParams-Sts': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'ModelAutoFitEveryNumPts-SP': {
+            'type': 'int', 'value': 10, 'unit': '#',
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelAutoFitEveryNumPts-RB': {
+            'type': 'int', 'value': 10, 'unit': '#',
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelNumPtsAfterFit-Mon': {
+            'type': 'int', 'value': 10, 'unit': '#',
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'ModelUpdateData-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'ModelUpdateData-Sts': {
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+        'ModelDataBias-SP': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+        'ModelDataBias-RB': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+        'ModelDataBias-Mon': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+        'ModelDataInjCurr-SP': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+        'ModelDataInjCurr-RB': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+        'ModelDataInjCurr-Mon': {
+            'type': 'float', 'count': 1000, 'value': [0]*1000},
+
+        'LinModAngCoeff-SP': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
+            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+        'LinModAngCoeff-RB': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
+            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+        'LinModAngCoeff-Mon': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
+            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+        'LinModOffCoeff-SP': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+        'LinModOffCoeff-RB': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+        'LinModOffCoeff-Mon': {
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
+            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+
+        # These are used to give the model inference about the bias
+        # Generally ploted in Injcurr X Bias graphs
+        'LinModInferenceInjCurr-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        'LinModInferenceBias-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+
+        # These are used to give the model prediction about current
+        # Generally ploted in Bias x InjCurr graphs to check model sanity
+        'LinModPredBias-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        'LinModPredInjCurrAvg-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+
+        'GPModNoiseVar-SP': {
+            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
+            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
+        'GPModNoiseVar-RB': {
+            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
+            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModNoiseVar-Mon': {
+            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
+            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModKernVar-SP': {
+            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
+            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModKernVar-RB': {
+            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
+            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModKernVar-Mon': {
+            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
+            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModKernLenScl-SP': {
+            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 10, 'high': 10, 'hihi': 10},
+        'GPModKernLenScl-RB': {
+            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 10, 'high': 10, 'hihi': 10},
+        'GPModKernLenScl-Mon': {
+            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
+            'lolim': 1, 'low': 1, 'lolo': 1,
+            'hilim': 10, 'high': 10, 'hihi': 10},
+
+        # These are used to give the model inference about the bias
+        # Generally ploted in Injcurr X Bias graphs
+        'GPModInferenceInjCurr-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        'GPModInferenceBias-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+
+        # These are used to give the model prediction about current
+        # Generally ploted in Bias x InjCurr graphs to check model sanity
+        'GPModPredBias-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        'GPModPredInjCurrAvg-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        'GPModPredInjCurrStd-Mon': {
+            'type': 'float', 'count': 100, 'value': [0]*100},
+        }
+    return {_ct.BIASFB_PROPTY_PREFIX+k: v for k, v in dbase.items()}

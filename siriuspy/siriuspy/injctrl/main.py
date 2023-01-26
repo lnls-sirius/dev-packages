@@ -1075,6 +1075,7 @@ class App(_Callback):
             self._update_log('Waiting for next injection...')
             if not self._wait_topup_period():
                 break
+            self._bias_feedback.already_set = False
 
             self._update_log('Top-up period elapsed. Preparing...')
             if not self.currinfo_dev.connected:
@@ -1129,6 +1130,7 @@ class App(_Callback):
             if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
                     not self._topup_pu_prepared:
                 self._prepare_topup('inject')
+                continue
 
             cond = remaining <= _Const.BIASFB_AHEADSETIME
             cond &= bool(self._bias_feedback.loop_state)
@@ -1140,7 +1142,9 @@ class App(_Callback):
                     curr_now=self.currinfo_dev.current,
                     ltime=self.currinfo_dev.lifetime)
                 bias = self._bias_feedback.get_bias_voltage(dcur)
-                self.egun_dev.bias.voltage = bias
+                self.run_callbacks('MultBunBiasVolt-SP', bias)
+                self.set_multbunbiasvolt(bias)
+                self._bias_feedback.already_set = True
 
             if _time.time() >= self._topupnext - self._topupheadstarttime:
                 return True

@@ -7,7 +7,7 @@ import GPy as gpy
 
 from ..epics import PV as _PV
 
-from .csdev import Const as _Const
+from .csdev import Const as _Const, get_biasfb_database as _get_database
 
 _np_poly = _np.polynomial.polynomial
 
@@ -17,33 +17,55 @@ class BiasFeedback():
 
     def __init__(self, injctrl):
         """."""
+        db_ = _get_database()
+        self.database = db_
         self._injctrl = injctrl
-        self.loop_state = False
+        self.loop_state = db_['BiasFBLoopState-Sel']['value']
         self.already_set = False
 
-        self.min_bias_voltage = -52  # [V]
-        self.max_bias_voltage = -40  # [V]
-        self.linmodel_angcoeff = 10  # [V/mA]
-        self.model_type = _Const.BiasFBModelTypes.GaussianProcess
-        self.model_max_num_points = 20
-        self.model_opt_each_pts = 10
+        self.min_bias_voltage = db_['BiasFBMinVoltage-SP']['value']  # [V]
+        self.max_bias_voltage = db_['BiasFBMaxVoltage-SP']['value']  # [V]
 
-        self._num_points_after_opt = 0
+        self.model_type = db_['BiasFBModelType-Sel']['value']
+        self.model_max_num_points = db_['BiasFBModelMaxNumPts-SP']['value']
+        self.model_auto_fit_rate = db_['ModelAutoFitEveryNumPts-SP']['value']
+        self.model_auto_fit = db_['ModelAutoFitParams-Sel']['value']
+        self.model_update_data = db_['ModelUpdateData-Sel']['value']
+
+        self.linmodel_angcoeff = db_['LinModAngCoeff-SP']['value']  # [V/mA]
+        self.linmodel_offcoeff = db_['LinModOffCoeff-SP']['value']  # [V]
+
+        self._npts_after_fit = 0
 
         self.bias_data = None
-        self.dcur_data = None
+        self.injc_data = None
         self.gpmodel = None
         self.initialize_models()
 
         self.do_update_models = False
-        self.curr3gev_pv = _PV(
-            'BO-Glob:AP-CurrInfo:Current3GeV-Mon', auto_monitor=True,
-            callback=self._callback_to_thread)
+        pv_ = self._injctrl.currinfo_dev.pv_object('InjCurr-Mon')
+        pv_.auto_monitor = True
+        pv_.add_callback(self._callback_to_thread)
 
-    @property
-    def model_type_str(self):
-        """."""
-        return _Const.BiasFBModelTypes._fields[self.model_type]
+        # pvname to write method map
+        self.map_pv2write = {
+            'LoopState-Sel': self.set_loop_state,
+            'MinVoltage-SP': self.set_min_voltage,
+            'MaxVoltage-SP': self.set_max_voltage,
+            'ModelType-Sel': self.set_model_type,
+            'ModelMaxNumPts-SP': self.set_max_num_pts,
+            'ModelFitParamsNow-Cmd': self.cmd_fit_params,
+            'ModelAutoFitParams-Sel': self.set_auto_fit,
+            'ModelAutoFitEveryNumPts-SP': self.set_auto_fit_rate,
+            'ModelUpdateData-Sel': self.set_update_data,
+            'ModelDataBias-SP': self.set_data_bias,
+            'ModelDataInjCurr-SP': self.set_data_injcurr,
+            'LinModAngCoeff-SP': self.set_lin_ang_coeff,
+            'LinModOffCoeff-SP': self.set_lin_off_coeff,
+            'GPModNoiseVar-SP': self.set_gp_noise_var,
+            'GPModKernVar-SP': self.set_gp_kern_var,
+            'GPModKernLenScl-SP': self.set_gp_kern_leng,
+            }
 
     @property
     def use_gaussproc_model(self):
@@ -54,8 +76,15 @@ class BiasFeedback():
     def linmodel_coeffs(self):
         """."""
         ang = self.linmodel_angcoeff
-        off = self.min_bias_voltage
+        off = self.linmodel_offcoeff
         return (off, ang)
+
+    @property
+    def linmodel_coeffs_inverse(self):
+        """."""
+        ang = self.linmodel_angcoeff
+        off = self.linmodel_offcoeff
+        return (-off/ang, 1/ang)
 
     def initialize_models(self):
         """."""
@@ -65,13 +94,25 @@ class BiasFeedback():
             self.model_max_num_points)
 
         off, ang = self.linmodel_coeffs
-        self.dcur_data = _np_poly.polyval(self.bias_data, (-off/ang, 1/ang))
+        self.injc_data = _np_poly.polyval(self.bias_data, (-off/ang, 1/ang))
 
         y = self.bias_data[:, None].copy()
-        x = self.dcur_data[:, None].copy()
+        x = self.injc_data[:, None].copy()
 
         kernel = gpy.kern.RBF(input_dim=1)
-        self.gpmodel = gpy.models.GPRegression(x, y, kernel)
+        db_ = self.database['GPModKernVar-RB']
+        kernel.variance.constrain_bounded(db_['low'], db_['high'])
+        kernel.variance = db_['value']
+        db_ = self.database['GPModKernLenScl-RB']
+        kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
+        kernel.lengthscale = db_['value']
+
+        gpmodel = gpy.models.GPRegression(x, y, kernel)
+        db_ = self.database['GPModLikehdVar-RB']
+        gpmodel.likelihood.variance.constrain_bounded(db_['low'], db_['high'])
+        gpmodel.likelihood.variance = db_['value']
+        self.gpmodel = gpmodel
+        self._update_predictions()
 
     def get_delta_current_per_pulse(
             self, per=1, nrpul=1, curr_avg=100, curr_now=99.5, ltime=17*3600):
@@ -83,62 +124,137 @@ class BiasFeedback():
 
     def get_bias_voltage(self, dcurr):
         """."""
+        dcurr = max(0, dcurr)
         if self.use_gaussproc_model:
             return self._get_bias_voltage_gpmodel(dcurr)
         return self._get_bias_voltage_linear_model(dcurr)
 
-    # ############ Auxiliary Methods ############
-    def _run(self):
+    def run_callbacks(self, name, *args, **kwd):
         """."""
-        print('Starting measurement:')
-        if self._stopevt.is_set():
+        name = _Const.BIASFB_PROPTY_PREFIX + name
+        if self._injctrl.has_callbacks:
+            self._injctrl.run_callbacks(name, *args, **kwd)
             return
-        egun = self.devices['egun']
-        injctrl = self.devices['injctrl']
-        currinfo = self.devices['currinfo']
+        self.database[name]['value'] = kwd['value']
 
-        self.data['dcurr'] = []
-        self.data['bias'] = []
+    # ###################### Setter methods for IOC ######################
 
-        pvo = currinfo.bo.pv_object('Current3GeV-Mon')
-        pvo.auto_monitor = True
-        cbv = pvo.add_callback(self._callback_to_thread)
+    def set_loop_state(self, value):
+        """."""
+        self.loop_state = bool(value)
+        self.run_callbacks('LoopState-Sts', value)
+        return True
 
-        self.already_set = False
-        while not self._stopevt.is_set():
-            if injctrl.topup_state == injctrl.TopUpSts.Off:
-                print('Topup is Off. Exiting...')
-                break
-            _time.sleep(2)
-            next_inj = injctrl.topup_nextinj_timestamp
-            dtim = next_inj - _time.time()
-            if self.already_set or dtim > self.ahead_set_time:
-                continue
-            dcurr = self.get_delta_current_per_pulse()
-            bias = self.get_bias_voltage(dcurr)
-            egun.bias.set_voltage(bias)
-            print(f'dcurr = {dcurr:.3f}, bias = {bias:.2f}')
-            self.already_set = True
-        pvo.remove_callback(cbv)
-        print('Finished!')
+    def set_min_voltage(self, value):
+        """."""
+        self.min_bias_voltage = value
+        self._update_models()
+        self.run_callbacks('MinVoltage-RB', value)
+        return True
 
+    def set_max_voltage(self, value):
+        """."""
+        self.max_bias_voltage = value
+        self._update_models()
+        self.run_callbacks('MaxVoltage-RB', value)
+        return True
+
+    def set_model_type(self, value):
+        """."""
+        self.model_type = value
+        self.run_callbacks('ModelType-Sts', value)
+        return True
+
+    def set_max_num_pts(self, value):
+        """."""
+        self.model_max_num_points = int(value)
+        self._update_models()
+        self.run_callbacks('ModelMaxNumPts-RB', value)
+        return True
+
+    def cmd_fit_params(self, value):
+        """."""
+        self._update_models(force_optimize=True)
+        return True
+
+    def set_auto_fit(self, value):
+        """."""
+        self.model_auto_fit = bool(value)
+        self.run_callbacks('ModelAutoFitParams-Sts', value)
+        return True
+
+    def set_auto_fit_rate(self, value):
+        """."""
+        self.model_auto_fit_rate = int(value)
+        self.run_callbacks('ModelAutoFitEveryNumPts-RB', value)
+        return True
+
+    def set_update_data(self, value):
+        """."""
+        self.model_update_data = bool(value)
+        self.run_callbacks('ModelUpdateData-Sts', value)
+        return True
+
+    def set_data_bias(self, value):
+        """."""
+        self.bias_data = _np.array(value)
+        self._update_models()
+        self.run_callbacks('ModelDataBias-RB', value)
+        return True
+
+    def set_data_injcurr(self, value):
+        """."""
+        self.injc_data = _np.array(value)
+        self._update_models()
+        self.run_callbacks('ModelDataInjCurr-RB', value)
+        return True
+
+    def set_lin_ang_coeff(self, value):
+        """."""
+        self.linmodel_angcoeff = value
+        self._update_models()
+        self.run_callbacks('LinModAngCoeff-RB', value)
+        return True
+
+    def set_lin_off_coeff(self, value):
+        """."""
+        self.linmodel_offcoeff = value
+        self._update_models()
+        self.run_callbacks('LinModOffCoeff-RB', value)
+        return True
+
+    def set_gp_noise_var(self, value):
+        """."""
+        self.gpmodel.likelihood.variance = value
+        self._update_models()
+        self.run_callbacks('GPModNoiseVar-RB', value)
+        return True
+
+    def set_gp_kern_var(self, value):
+        """."""
+        self.gpmodel.kern.variance = value
+        self._update_models()
+        self.run_callbacks('GPModKernVar-RB', value)
+        return True
+
+    def set_gp_kern_leng(self, value):
+        """."""
+        self.gpmodel.kern.lengthscale = value
+        self._update_models()
+        self.run_callbacks('GPModKernLenScl-RB', value)
+        return True
+
+    # ############ Auxiliary Methods ############
     def _callback_to_thread(self, **kwgs):
-        if not self.do_update_models:
+        if not self.do_update_models or not self.model_update_data:
             return
-        _Thread(target=self._update_models, kwargs=kwgs, daemon=True).start()
+        _Thread(target=self._update_data, kwargs=kwgs, daemon=True).start()
 
-    def _update_models(self, **kwgs):
-        _time.sleep(0.3)
-
+    def _update_data(self, **kwgs):
         bias = self._injctrl.egun_dev.bias.voltage
-        dcurr = self._injctrl.currinfo_dev.injcurr
+        dcurr = kwgs['value']
         if None in {bias, dcurr}:
             return
-
-        self.bias_data = _np.r_[self.bias_data, bias]
-        self.dcur_data = _np.r_[self.dcur_data, dcurr]
-        self.bias_data = self.bias_data[-self.model_max_num_points:]
-        self.dcur_data = self.dcur_data[-self.model_max_num_points:]
 
         # Do not overload data with repeated points:
         xun, cnts = _np.unique(self.bias_data, return_counts=True)
@@ -146,23 +262,33 @@ class BiasFeedback():
             idx = (xun == bias).nonzero()[0][0]
             if cnts[idx] >= max(2, self.bias_data.size // 5):
                 return
-        self._num_points_after_opt += 1
+        self._npts_after_fit += 1
 
-        opt = self.model_opt_each_pts
-        do_opt = opt and not (self._num_points_after_opt % opt)
+        # Update models data
+        self.bias_data = _np.r_[self.bias_data, bias]
+        self.injc_data = _np.r_[self.injc_data, dcurr]
+        self._update_models()
+
+    def _update_models(self, force_optimize=False):
+        self.bias_data = self.bias_data[-self.model_max_num_points:]
+        self.injc_data = self.injc_data[-self.model_max_num_points:]
+
+        x = _np.r_[self.bias_data, self.min_bias_voltage]
+        y = _np.r_[self.injc_data, 0]
+
+        fit_rate = self.model_auto_fit_rate
+        do_opt = self.model_auto_fit
+        do_opt &= not (self._npts_after_fit % fit_rate)
+        do_opt |= force_optimize
 
         # Optimize Linear Model
         if do_opt and not self.use_gaussproc_model:
             self.linmodel_angcoeff = _np_poly.polyfit(
-                self.dcur_data, self.bias_data - self.min_bias_voltage,
-                deg=[1, ])[1]
-            self._num_points_after_opt = 0
+                y, x - self.min_bias_voltage, deg=[1, ])[1]
+            self._npts_after_fit = 0
+            self._injctrl.run_callbacks()
 
         # update Gaussian Process Model data
-        x = self.bias_data.copy()
-        y = self.dcur_data.copy()
-        x = _np.r_[x, self.min_bias_voltage]
-        y = _np.r_[y, 0]
         x.shape = (x.size, 1)
         y.shape = (y.size, 1)
         self.gpmodel.set_XY(x, y)
@@ -170,9 +296,39 @@ class BiasFeedback():
         # Optimize Gaussian Process Model
         if do_opt and self.use_gaussproc_model:
             self.gpmodel.optimize_restarts(num_restarts=2, verbose=False)
-            self._num_points_after_opt = 0
+            self._npts_after_fit = 0
 
-        self.already_set = False
+        self.run_callbacks('ModelNumPtsAfterFit-Mon', self._npts_after_fit)
+        self._update_predictions()
+
+    def _update_predictions(self):
+        gp_ = self.gpmodel
+        self.run_callbacks('GPModNoiseVar-Mon', float(gp_.likelihood.variance))
+        self.run_callbacks('GPModKernVar-Mon', float(gp_.kern.variance))
+        self.run_callbacks('GPModKernLenScl-Mon', float(gp_.kern.lengthscale))
+        self.run_callbacks('LinModAngCoeff-Mon', self.linmodel_angcoeff)
+        self.run_callbacks('LinModOffCoeff-Mon', self.linmodel_offcoeff)
+
+        self.run_callbacks('ModelDataBias-Mon', self.gpmodel.X.ravel())
+        self.run_callbacks('ModelDataInjCurr-Mon', self.gpmodel.Y.ravel())
+        self.run_callbacks('ModelNumPts-Mon', self.gpmodel.Y.size-1)
+
+        injcurr = _np.linspace(0, 1, 100)
+        bias_lin = self._get_bias_voltage_linear_model(injcurr)
+        bias_gp = self._get_bias_voltage_gpmodel(injcurr)
+        self.run_callbacks('LinModInferenceInjCurr-Mon', injcurr)
+        self.run_callbacks('LinModInferenceBias-Mon', bias_lin)
+        self.run_callbacks('GPModInferenceInjCurr-Mon', injcurr)
+        self.run_callbacks('GPModInferenceBias-Mon', bias_gp)
+
+        bias = _np.linspace(self.min_bias_voltage, self.max_bias_voltage, 100)
+        injc_lin = _np_poly.polyval(bias, self.linmodel_coeffs_inverse)
+        injca_gp, injcs_gp = self._gpmodel_predict(bias)
+        self.run_callbacks('LinModPredBias-Mon', bias)
+        self.run_callbacks('LinModPredInjCurrAvg-Mon', injc_lin)
+        self.run_callbacks('GpModPredBias-Mon', bias)
+        self.run_callbacks('GpModPredInjCurrAvg-Mon', injca_gp.ravel())
+        self.run_callbacks('GpModPredInjCurrStd-Mon', injcs_gp.ravel())
 
     def _get_bias_voltage_gpmodel(self, dcurr):
         bias = self._gpmodel_infer_newx(_np.array(dcurr, ndmin=1))
