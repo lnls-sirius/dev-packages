@@ -1457,6 +1457,7 @@ class App(_Callback):
 
             if i < self._const.nr_ch + self._const.nr_cv:
                 dev = self._corrs_dev[i]
+                conv = self._corrs_dev.psconvs[i]
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
                     i+1, sum_enbld, dev.devname))
 
@@ -1464,16 +1465,19 @@ class App(_Callback):
                 delta = self._meas_respmat_kick[corrtype]
 
                 orig_kick = dev.strength
+                orig_curr = dev.current
 
-                dev.strength = orig_kick + delta/2
+                kickp = orig_kick + delta/2
+                dev.current = conv.conv_strength_2_current(kickp)
                 _time.sleep(self._meas_respmat_wait)
                 orbp = self._sofb_get_orbit()
 
-                dev.strength = orig_kick - delta/2
+                kickn = orig_kick - delta/2
+                dev.current = conv.conv_strength_2_current(kickn)
                 _time.sleep(self._meas_respmat_wait)
                 orbn = self._sofb_get_orbit()
 
-                dev.strength = orig_kick
+                dev.current = orig_curr
             elif i < self._const.nr_corrs:
                 dev = self.rf_dev
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
