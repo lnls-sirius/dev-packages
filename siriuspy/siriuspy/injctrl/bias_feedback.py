@@ -95,8 +95,8 @@ class BiasFeedback():
             self.max_bias_voltage,
             self.model_max_num_points)
 
-        off, ang = self.linmodel_coeffs
-        self.injc_data = _np_poly.polyval(self.bias_data, (-off/ang, 1/ang))
+        self.injc_data = _np_poly.polyval(
+            self.bias_data, self.linmodel_coeffs_inverse)
 
         y = self.bias_data[:, None].copy()
         x = self.injc_data[:, None].copy()
