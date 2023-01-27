@@ -119,7 +119,7 @@ class BiasFeedback():
     def get_delta_current_per_pulse(
             self, per=1, nrpul=1, curr_avg=100, curr_now=99.5, ltime=17*3600):
         """."""
-        ltime = max(self._MINIMUM_LIFETIME, ltime)
+        ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, ltime)
         curr_tar = curr_avg / (1 - per*60/2/ltime)
         dcurr = (curr_tar - curr_now) / nrpul
         return dcurr
@@ -280,6 +280,10 @@ class BiasFeedback():
         if bias in xun:
             idx = (xun == bias).nonzero()[0][0]
             if cnts[idx] >= max(2, self.bias_data.size // 5):
+                msg = 'WARN: Too many data with this abscissa. '
+                msg += 'Discarding point.'
+                _log.warn(msg)
+                self.update_log(msg)
                 return
         self._npts_after_fit += 1
 
@@ -308,7 +312,7 @@ class BiasFeedback():
         if x.size < 2:
             msg = 'ERR: Too few data points. '
             msg += 'Skipping Model update.'
-            _log.warn(msg)
+            _log.error(msg)
             self.update_log(msg)
             return
 
@@ -320,9 +324,8 @@ class BiasFeedback():
         # Optimize Linear Model
         if do_opt and not self.use_gaussproc_model:
             self.linmodel_angcoeff = _np_poly.polyfit(
-                y, x - self.min_bias_voltage, deg=[1, ])[1]
+                y, x - self.linmodel_offcoeff, deg=[1, ])[1]
             self._npts_after_fit = 0
-            self._injctrl.run_callbacks()
 
         # update Gaussian Process Model data
         x.shape = (x.size, 1)
