@@ -42,7 +42,7 @@ class BiasFeedback():
         self.injc_data = _np.array(
             db_['ModelDataInjCurr-Mon']['value'], dtype=float)
         self.gpmodel = None
-        self.initialize_models()
+        self._initialize_models()
 
         self.do_update_models = False
         pv_ = self._injctrl.currinfo_dev.pv_object('InjCurr-Mon')
@@ -87,34 +87,6 @@ class BiasFeedback():
         ang = self.linmodel_angcoeff
         off = self.linmodel_offcoeff
         return (-off/ang, 1/ang)
-
-    def initialize_models(self):
-        """."""
-        self.bias_data = _np.linspace(
-            self.min_bias_voltage,
-            self.max_bias_voltage,
-            self.model_max_num_points)
-
-        self.injc_data = _np_poly.polyval(
-            self.bias_data, self.linmodel_coeffs_inverse)
-
-        x = self.bias_data[:, None].copy()
-        y = self.injc_data[:, None].copy()
-
-        kernel = gpy.kern.RBF(input_dim=1)
-        db_ = self.database['GPModKernVar-RB']
-        kernel.variance.constrain_bounded(db_['low'], db_['high'])
-        kernel.variance = db_['value']
-        db_ = self.database['GPModKernLenScl-RB']
-        kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
-        kernel.lengthscale = db_['value']
-
-        gpmodel = gpy.models.GPRegression(x, y, kernel)
-        db_ = self.database['GPModLikehdVar-RB']
-        gpmodel.likelihood.variance.constrain_bounded(db_['low'], db_['high'])
-        gpmodel.likelihood.variance = db_['value']
-        self.gpmodel = gpmodel
-        self._update_predictions()
 
     def get_delta_current_per_pulse(
             self, per=1, nrpul=1, curr_avg=100, curr_now=99.5, ltime=17*3600):
@@ -268,6 +240,34 @@ class BiasFeedback():
         if not self.do_update_models or not self.model_update_data:
             return
         _Thread(target=self._update_data, kwargs=kwgs, daemon=True).start()
+
+    def _initialize_models(self):
+        """."""
+        self.bias_data = _np.linspace(
+            self.min_bias_voltage,
+            self.max_bias_voltage,
+            self.model_max_num_points)
+
+        self.injc_data = _np_poly.polyval(
+            self.bias_data, self.linmodel_coeffs_inverse)
+
+        x = self.bias_data[:, None].copy()
+        y = self.injc_data[:, None].copy()
+
+        kernel = gpy.kern.RBF(input_dim=1)
+        db_ = self.database['GPModKernVar-RB']
+        kernel.variance.constrain_bounded(db_['low'], db_['high'])
+        kernel.variance = db_['value']
+        db_ = self.database['GPModKernLenScl-RB']
+        kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
+        kernel.lengthscale = db_['value']
+
+        gpmodel = gpy.models.GPRegression(x, y, kernel)
+        db_ = self.database['GPModLikehdVar-RB']
+        gpmodel.likelihood.variance.constrain_bounded(db_['low'], db_['high'])
+        gpmodel.likelihood.variance = db_['value']
+        self.gpmodel = gpmodel
+        self._update_predictions()
 
     def _update_data(self, **kwgs):
         bias = self._injctrl.egun_dev.bias.voltage
