@@ -98,8 +98,8 @@ class BiasFeedback():
         self.injc_data = _np_poly.polyval(
             self.bias_data, self.linmodel_coeffs_inverse)
 
-        y = self.bias_data[:, None].copy()
-        x = self.injc_data[:, None].copy()
+        x = self.bias_data[:, None].copy()
+        y = self.injc_data[:, None].copy()
 
         kernel = gpy.kern.RBF(input_dim=1)
         db_ = self.database['GPModKernVar-RB']
