@@ -70,7 +70,7 @@ class BiasFeedback():
             }
 
     @property
-    def use_gaussproc_model(self):
+    def use_gpmodel(self):
         """."""
         return self.model_type == _Const.BiasFBModelTypes.GaussianProcess
 
@@ -99,7 +99,7 @@ class BiasFeedback():
     def get_bias_voltage(self, dcurr):
         """."""
         dcurr = max(0, dcurr)
-        if self.use_gaussproc_model:
+        if self.use_gpmodel:
             return self._get_bias_voltage_gpmodel(dcurr)
         return self._get_bias_voltage_linear_model(dcurr)
 
@@ -322,7 +322,7 @@ class BiasFeedback():
         do_opt |= force_optimize
 
         # Optimize Linear Model
-        if do_opt and not self.use_gaussproc_model:
+        if do_opt and not self.use_gpmodel:
             self.linmodel_angcoeff = _np_poly.polyfit(
                 y, x - self.linmodel_offcoeff, deg=[1, ])[1]
             self._npts_after_fit = 0
@@ -333,7 +333,7 @@ class BiasFeedback():
         self.gpmodel.set_XY(x, y)
 
         # Optimize Gaussian Process Model
-        if do_opt and self.use_gaussproc_model:
+        if do_opt and self.use_gpmodel:
             self.gpmodel.optimize_restarts(num_restarts=2, verbose=False)
             self._npts_after_fit = 0
 
