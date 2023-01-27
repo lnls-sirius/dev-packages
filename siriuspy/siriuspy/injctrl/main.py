@@ -74,11 +74,7 @@ class App(_Callback):
         self._topup_pu_prepared = False
         self._abort = False
 
-        self._injsys_turn_on_count = 0
-        self._injsys_turn_off_count = 0
-
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
-        self._rfkillbeam_count = 0
 
         self._thread_autostop = None
 
@@ -304,12 +300,9 @@ class App(_Callback):
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
-        self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
-        self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
-        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
         self.run_callbacks('RFKillBeam-Mon', _Const.RFKillBeamMon.Idle)
         self.run_callbacks('DiagStatusLI-Mon', self._status['LI'])
         self.run_callbacks('DiagStatusTB-Mon', self._status['TB'])
@@ -675,10 +668,7 @@ class App(_Callback):
         thr.start()
         if wait_finish:
             thr.join()
-
-        self._injsys_turn_on_count += 1
-        self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
-        return False
+        return True
 
     def cmd_injsys_turn_off(self, value=None, wait_finish=False):
         """Set turn off Injection System."""
@@ -696,10 +686,7 @@ class App(_Callback):
         thr.start()
         if wait_finish:
             thr.join()
-
-        self._injsys_turn_off_count += 1
-        self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
-        return False
+        return True
 
     def _watch_injsys(self, cmd, timeout=_Const.RF_RMP_TIMEOUT):
         self.run_callbacks(
@@ -759,10 +746,7 @@ class App(_Callback):
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Kill
         self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
         _epics.ca.CAThread(target=self._watch_rfkillbeam, daemon=True).start()
-
-        self._rfkillbeam_count += 1
-        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
-        return False
+        return True
 
     def _watch_rfkillbeam(self):
         ret = self._rfkillbeam.cmd_kill_beam()
