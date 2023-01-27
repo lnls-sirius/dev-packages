@@ -357,9 +357,11 @@ class BiasFeedback():
             x: infered x's.
 
         """
-        x = _np.linspace(self.min_bias_voltage, self.max_bias_voltage, 100)
+        x = _np.linspace(self.min_bias_voltage, self.max_bias_voltage, 300)
         ys, _ = self._gpmodel_predict(x)
-        idx = _np.argmin(_np.abs(ys - y[None, :]), axis=0)
+        ys[ys < 0] = 0
+        idm = ys[:, 0].argmax()
+        idx = _np.argmin(_np.abs(ys[:idm] - y[None, :]), axis=0)
         return x[idx, 0]
 
     def _gpmodel_predict(self, x):
