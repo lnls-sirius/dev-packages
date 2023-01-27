@@ -77,6 +77,7 @@ class Const(_csdev.Const):
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
     BIASFB_PROPTY_PREFIX = 'BiasFB'
+    BIASFB_MAX_DATA_SIZE = 1000
 
 
 _ct = Const
@@ -331,15 +332,21 @@ def get_biasfb_database():
         'ModelMaxNumPts-SP': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 2, 'low': 2, 'lolo': 2,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelMaxNumPts-RB': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 0, 'low': 0, 'lolo': 0,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNumPts-Mon': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 2, 'low': 2, 'lolo': 2,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
         'ModelAutoFitParams-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
@@ -348,31 +355,43 @@ def get_biasfb_database():
         'ModelAutoFitEveryNumPts-SP': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelAutoFitEveryNumPts-RB': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNumPtsAfterFit-Mon': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
+            'high': _ct.BIASFB_MAX_DATA_SIZE,
+            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelUpdateData-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'ModelUpdateData-Sts': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'ModelDataBias-SP': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
         'ModelDataBias-RB': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
         'ModelDataBias-Mon': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
         'ModelDataInjCurr-SP': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
         'ModelDataInjCurr-RB': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
         'ModelDataInjCurr-Mon': {
-            'type': 'float', 'count': 1000, 'value': [0]*1000},
+            'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
 
         'LinModAngCoeff-SP': {
             'type': 'float', 'value': 10, 'unit': 'V/mA',

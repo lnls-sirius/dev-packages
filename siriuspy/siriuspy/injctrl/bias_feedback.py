@@ -1,5 +1,5 @@
 """."""
-import time as _time
+import logging as _log
 
 from epics.ca import CAThread as _Thread
 import numpy as _np
@@ -37,8 +37,10 @@ class BiasFeedback():
 
         self._npts_after_fit = 0
 
-        self.bias_data = None
-        self.injc_data = None
+        self.bias_data = _np.array(
+            db_['ModelDataBias-Mon']['value'], dtype=float)
+        self.injc_data = _np.array(
+            db_['ModelDataInjCurr-Mon']['value'], dtype=float)
         self.gpmodel = None
         self.initialize_models()
 
@@ -137,8 +139,11 @@ class BiasFeedback():
             return
         self.database[name]['value'] = kwd['value']
 
-    # ###################### Setter methods for IOC ######################
+    def update_log(self, msg):
+        """."""
+        self._injctrl.run_callbacks('Log-Mon', msg)
 
+    # ###################### Setter methods for IOC ######################
     def set_loop_state(self, value):
         """."""
         self.loop_state = bool(value)
@@ -198,6 +203,13 @@ class BiasFeedback():
     def set_data_bias(self, value):
         """."""
         self.bias_data = _np.array(value)
+        max_ = _Const.BIASFB_MAX_DATA_SIZE
+        if self.bias_data.size > max_:
+            msg = f'WARN: Bias data is too big (>{max_:d}). '
+            msg += 'Trimming first points.'
+            _log.warn(msg)
+            self.update_log(msg)
+            self.bias_data = self.bias_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataBias-RB', value)
         return True
@@ -205,6 +217,13 @@ class BiasFeedback():
     def set_data_injcurr(self, value):
         """."""
         self.injc_data = _np.array(value)
+        max_ = _Const.BIASFB_MAX_DATA_SIZE
+        if self.injc_data.size > max_:
+            msg = f'WARN: InjCurr data is too big (>{max_:d}). '
+            msg += 'Trimming first points.'
+            _log.warn(msg)
+            self.update_log(msg)
+            self.injc_data = self.injc_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataInjCurr-RB', value)
         return True
@@ -267,14 +286,31 @@ class BiasFeedback():
         # Update models data
         self.bias_data = _np.r_[self.bias_data, bias]
         self.injc_data = _np.r_[self.injc_data, dcurr]
+        self.bias_data = self.bias_data[-_Const.BIASFB_MAX_DATA_SIZE:]
+        self.injc_data = self.injc_data[-_Const.BIASFB_MAX_DATA_SIZE:]
         self._update_models()
 
     def _update_models(self, force_optimize=False):
-        self.bias_data = self.bias_data[-self.model_max_num_points:]
-        self.injc_data = self.injc_data[-self.model_max_num_points:]
-
-        x = _np.r_[self.bias_data, self.min_bias_voltage]
+        x = _np.r_[self.bias_data, self.linmodel_offcoeff]
         y = _np.r_[self.injc_data, 0]
+        x = x[-self.model_max_num_points:]
+        y = y[-self.model_max_num_points:]
+        if x.size != y.size:
+            msg = 'WARN: Arrays with incompatible sizes. '
+            msg += 'Trimming first points of '
+            msg += 'bias.' if x.size > y.size else 'injcurr.'
+            _log.warn(msg)
+            self.update_log(msg)
+            siz = min(x.size, y.size)
+            x = x[-siz:]
+            y = y[-siz:]
+
+        if x.size < 2:
+            msg = 'ERR: Too few data points. '
+            msg += 'Skipping Model update.'
+            _log.warn(msg)
+            self.update_log(msg)
+            return
 
         fit_rate = self.model_auto_fit_rate
         do_opt = self.model_auto_fit
@@ -311,7 +347,7 @@ class BiasFeedback():
 
         self.run_callbacks('ModelDataBias-Mon', self.gpmodel.X.ravel())
         self.run_callbacks('ModelDataInjCurr-Mon', self.gpmodel.Y.ravel())
-        self.run_callbacks('ModelNumPts-Mon', self.gpmodel.Y.size-1)
+        self.run_callbacks('ModelNumPts-Mon', self.gpmodel.Y.size)
 
         injcurr = _np.linspace(0, 1, 100)
         bias_lin = self._get_bias_voltage_linear_model(injcurr)
