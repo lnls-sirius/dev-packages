@@ -135,8 +135,6 @@ class App(_Callback):
                     n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
-        self._bias_feedback = _BiasFeedback(self)
-
         # auxiliary devices
         self.egun_dev = EGun(
             print_log=False, callback=self._update_dev_status)
@@ -232,6 +230,11 @@ class App(_Callback):
         else:
             self._hvopvolt = hvvolt
             self.egun_dev.high_voltage_opvalue = hvvolt
+
+        # Create object to make bias feedback:
+        self._bias_feedback = _BiasFeedback(self)
+        self._pvs_database.update(self._bias_feedback.database)
+        self.map_pv2write.update(self._bias_feedback.map_pv2write)
 
     def init_database(self):
         """Set initial PV values."""
