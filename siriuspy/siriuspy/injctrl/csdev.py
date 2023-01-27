@@ -376,22 +376,22 @@ def get_biasfb_database():
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
         'ModelDataBias-SP': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'V'},
         'ModelDataBias-RB': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'V'},
         'ModelDataBias-Mon': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'V'},
         'ModelDataInjCurr-SP': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
         'ModelDataInjCurr-RB': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
         'ModelDataInjCurr-Mon': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
-            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE},
+            'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
 
         'LinModAngCoeff-SP': {
             'type': 'float', 'value': 10, 'unit': 'V/mA',
@@ -421,16 +421,16 @@ def get_biasfb_database():
         # These are used to give the model inference about the bias
         # Generally ploted in Injcurr X Bias graphs
         'LinModInferenceInjCurr-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
         'LinModInferenceBias-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'V'},
 
         # These are used to give the model prediction about current
         # Generally ploted in Bias x InjCurr graphs to check model sanity
         'LinModPredBias-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'V'},
         'LinModPredInjCurrAvg-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
 
         'GPModNoiseVar-SP': {
             'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
@@ -472,17 +472,17 @@ def get_biasfb_database():
         # These are used to give the model inference about the bias
         # Generally ploted in Injcurr X Bias graphs
         'GPModInferenceInjCurr-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
         'GPModInferenceBias-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'V'},
 
         # These are used to give the model prediction about current
         # Generally ploted in Bias x InjCurr graphs to check model sanity
         'GPModPredBias-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'V'},
         'GPModPredInjCurrAvg-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
         'GPModPredInjCurrStd-Mon': {
-            'type': 'float', 'count': 100, 'value': [0]*100},
+            'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
         }
     return {_ct.BIASFB_PROPTY_PREFIX+k: v for k, v in dbase.items()}
