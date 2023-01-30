@@ -27,8 +27,8 @@ class BaseOrbit(_BaseClass):
 
 def run_subprocess(pvs, send_pipe, recv_pipe):
     """Run subprocesses."""
-    max_spread = 25/1000  # in [s]
-    timeout = 50/1000  # in [s]
+    max_spread = 40/1000  # in [s]
+    timeout = 110/1000  # in [s]
 
     ready_evt = _Event()
 
