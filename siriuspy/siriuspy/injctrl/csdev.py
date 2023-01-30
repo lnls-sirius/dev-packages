@@ -118,22 +118,22 @@ def get_injctrl_propty_database():
 
         'Mode-Sel': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
         'Mode-Sts': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
         'Type-Sel': {
             'type': 'enum', 'value': _ct.InjType.MultiBunch,
-            'enums': _et.INJTYPE},
+            'enums': _et.INJTYPE, 'unit': 'SB_MB'},
         'Type-Sts': {
             'type': 'enum', 'value': _ct.InjType.MultiBunch,
-            'enums': _et.INJTYPE},
+            'enums': _et.INJTYPE, 'unit': 'SB_MB'},
         'Type-Mon': {
             'type': 'enum', 'value': _ct.InjTypeMon.Undefined,
-            'enums': _et.INJTYPE_MON},
+            'enums': _et.INJTYPE_MON, 'unit': 'SB_MB_Und'},
         'TypeCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
-            'enums': _et.IDLERUNNING},
+            'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
         'SglBunBiasVolt-SP': {
             'type': 'float', 'value': egsbbias, 'prec': 1,
             'unit': 'V', 'lolim': -150.0, 'hilim': 0.0},
@@ -148,7 +148,7 @@ def get_injctrl_propty_database():
             'unit': 'V', 'lolim': -150.0, 'hilim': 0.0},
         'BiasVoltCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
-            'enums': _et.IDLERUNNING},
+            'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
         'FilaOpCurr-SP': {
             'type': 'float', 'value': egfilacurr, 'prec': 3,
             'unit': 'A', 'lolim': 0.0, 'hilim': 1.5},
@@ -157,7 +157,7 @@ def get_injctrl_propty_database():
             'unit': 'A', 'lolim': 0.0, 'hilim': 1.5},
         'FilaOpCurrCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
-            'enums': _et.IDLERUNNING},
+            'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
         'HVOpVolt-SP': {
             'type': 'float', 'value': eghvolt, 'prec': 3,
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
@@ -166,19 +166,19 @@ def get_injctrl_propty_database():
             'unit': 'kV', 'lolim': 0.0, 'hilim': 95.0},
         'HVOpVoltCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
-            'enums': _et.IDLERUNNING},
+            'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
         'PUMode-Sel': {
             'type': 'enum', 'value': _ct.PUMode.Accumulation,
-            'enums': _et.PUMODE},
+            'enums': _et.PUMODE, 'unit': 'Acq_Opt_OnA'},
         'PUMode-Sts': {
             'type': 'enum', 'value': _ct.PUMode.Accumulation,
-            'enums': _et.PUMODE},
+            'enums': _et.PUMODE, 'unit': 'Acq_Opt_OnA'},
         'PUMode-Mon': {
             'type': 'enum', 'value': _ct.PUModeMon.Undefined,
-            'enums': _et.PUMODE_MON},
+            'enums': _et.PUMODE_MON, 'unit': 'Acq_Opt_OnA_Und'},
         'PUModeCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
-            'enums': _et.IDLERUNNING},
+            'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
         'TargetCurrent-SP': {
             'type': 'float', 'value': 100.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
@@ -207,9 +207,10 @@ def get_injctrl_propty_database():
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
 
         'TopUpState-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON, 'unit': 'Off_On'},
         'TopUpState-Sts': {
-            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
+            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
+            'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
         'TopUpPeriod-SP': {
             'type': 'int', 'value': 5, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
@@ -224,10 +225,10 @@ def get_injctrl_propty_database():
             'lolim': 0, 'hilim': 2*60},
         'TopUpPUStandbyEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
-            'enums': _et.DSBL_ENBL},
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpPUStandbyEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
-            'enums': _et.DSBL_ENBL},
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNrPulses-SP': {
@@ -249,48 +250,56 @@ def get_injctrl_propty_database():
         'InjSysTurnOffOrder-SP': {'type': 'string', 'value': injsys_offorder},
         'InjSysTurnOffOrder-RB': {'type': 'string', 'value': injsys_offorder},
 
-        'RFKillBeam-Cmd': {'type': 'int', 'value': 0},
+        'RFKillBeam-Cmd': {'type': 'int', 'value': 0, 'unit': '#'},
         'RFKillBeam-Mon': {
             'type': 'enum', 'value': _ct.RFKillBeamMon.Idle,
-            'enums': _et.RFKILLBEAMMON},
+            'enums': _et.RFKILLBEAMMON, 'unit': 'Idle_Kill'},
 
         'DiagStatusLI-Mon': {
-            'type': 'int', 'value': 2**len(_ct.LI_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.LI_STATUS_LABELS)-1,
+            'unit': '2^_Eg_PS_PU_RF_TI'},
         'DiagStatusLILabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.LI_STATUS_LABELS)},
         'DiagStatusTB-Mon': {
-            'type': 'int', 'value': 2**len(_ct.TL_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.TL_STATUS_LABELS)-1,
+            'unit': '2^_PS_PU_TI'},
         'DiagStatusTBLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.TL_STATUS_LABELS)},
         'DiagStatusBO-Mon': {
-            'type': 'int', 'value': 2**len(_ct.SR_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.SR_STATUS_LABELS)-1,
+            'unit': '2^_PS_PU_RF_TI'},
         'DiagStatusBOLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.SR_STATUS_LABELS)},
         'DiagStatusTS-Mon': {
-            'type': 'int', 'value': 2**len(_ct.TL_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.TL_STATUS_LABELS)-1,
+            'unit': '2^_PS_PU_TI'},
         'DiagStatusTSLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.TL_STATUS_LABELS)},
         'DiagStatusSI-Mon': {
-            'type': 'int', 'value': 2**len(_ct.SR_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.SR_STATUS_LABELS)-1,
+            'unit': '2^_PS_PU_RF_TI'},
         'DiagStatusSILabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.SR_STATUS_LABELS)},
         'DiagStatusAS-Mon': {
-            'type': 'int', 'value': 2**len(_ct.AS_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.AS_STATUS_LABELS)-1,
+            'unit': '2^_TI'},
         'DiagStatusASLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.AS_STATUS_LABELS)},
         'DiagStatus-Mon': {
-            'type': 'int', 'value': 2**len(_ct.GEN_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.GEN_STATUS_LABELS)-1,
+            'unit': '2^_LI_TB_BO_TS_SI_AS'},
         'DiagStatusLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.GEN_STATUS_LABELS)},
         'InjStatus-Mon': {
-            'type': 'int', 'value': 2**len(_ct.INJ_STATUS_LABELS)-1},
+            'type': 'int', 'value': 2**len(_ct.INJ_STATUS_LABELS)-1,
+            'unit': '2^Evt_BucL_Bias_Fila_HV_Pulse_Trig_InjS'},
         'InjStatusLabels-Cte': {
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.INJ_STATUS_LABELS)},
@@ -303,9 +312,11 @@ def get_biasfb_database():
     """."""
     dbase = {
         'LoopState-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'LoopState-Sts': {
-            'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'MinVoltage-SP': {
             'type': 'float', 'value': -52, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
@@ -325,10 +336,10 @@ def get_biasfb_database():
 
         'ModelType-Sel': {
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
-            'enums': _et.BIASFB_MODEL_TYPES},
+            'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
         'ModelType-Sts': {
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
-            'enums': _et.BIASFB_MODEL_TYPES},
+            'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
         'ModelMaxNumPts-SP': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 2, 'low': 2, 'lolo': 2,
@@ -349,9 +360,11 @@ def get_biasfb_database():
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
         'ModelAutoFitParams-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'ModelAutoFitParams-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'ModelAutoFitEveryNumPts-SP': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
@@ -371,9 +384,11 @@ def get_biasfb_database():
             'high': _ct.BIASFB_MAX_DATA_SIZE,
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelUpdateData-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'ModelUpdateData-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON},
+            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'unit': 'Off_On'},
         'ModelDataBias-SP': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
             'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'V'},
