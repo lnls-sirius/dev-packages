@@ -1,4 +1,4 @@
-"""SI Insertion device feedforward configuration.
+"""SI Insertion Device Feedforward Configuration.
 
 Values in _template_dict are arbitrary. They are used just to compare with
 corresponding values when a new configuration is tried to be inserted in the
