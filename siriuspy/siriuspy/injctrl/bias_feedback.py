@@ -401,7 +401,7 @@ class BiasFeedback():
         ys, _ = self._gpmodel_predict(x)
         ys[ys < 0] = 0
         idm = ys[:, 0].argmax()
-        idm = _np.max(1, idm)
+        idm += 1
         idx = _np.argmin(_np.abs(ys[:idm] - y[None, :]), axis=0)
         return x[idx, 0]
 
