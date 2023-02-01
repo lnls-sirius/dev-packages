@@ -11,7 +11,7 @@ from .energy import Energy
 from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
 from .ict import ICT, TranspEff
-from .ids import APU, WIG, EPU, IDCorrectors, WIGCorrectors, APUFeedForward
+from .ids import APU, WIG, EPU, IDFFCorrectors, WIGCorrectors, APUFeedForward
 from .injctrl import InjCtrl
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
