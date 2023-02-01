@@ -28,19 +28,20 @@ class BiasFeedback():
 
         self.model_type = db_['BiasFBModelType-Sel']['value']
         self.model_max_num_points = db_['BiasFBModelMaxNumPts-SP']['value']
-        self.model_auto_fit_rate = db_['ModelAutoFitEveryNumPts-SP']['value']
-        self.model_auto_fit = db_['ModelAutoFitParams-Sel']['value']
-        self.model_update_data = db_['ModelUpdateData-Sel']['value']
+        self.model_auto_fit_rate = db_[
+            'BiasFBModelAutoFitEveryNumPts-SP']['value']
+        self.model_auto_fit = db_['BiasFBModelAutoFitParams-Sel']['value']
+        self.model_update_data = db_['BiasFBModelUpdateData-Sel']['value']
 
-        self.linmodel_angcoeff = db_['LinModAngCoeff-SP']['value']  # [V/mA]
-        self.linmodel_offcoeff = db_['LinModOffCoeff-SP']['value']  # [V]
+        self.linmodel_angcoeff = db_['BiasFBLinModAngCoeff-SP']['value']  # [V/mA]
+        self.linmodel_offcoeff = db_['BiasFBLinModOffCoeff-SP']['value']  # [V]
 
         self._npts_after_fit = 0
 
         self.bias_data = _np.array(
-            db_['ModelDataBias-Mon']['value'], dtype=float)
+            db_['BiasFBModelDataBias-Mon']['value'], dtype=float)
         self.injc_data = _np.array(
-            db_['ModelDataInjCurr-Mon']['value'], dtype=float)
+            db_['BiasFBModelDataInjCurr-Mon']['value'], dtype=float)
         self.gpmodel = None
         self._initialize_models()
 
@@ -255,15 +256,15 @@ class BiasFeedback():
         y = self.injc_data[:, None].copy()
 
         kernel = gpy.kern.RBF(input_dim=1)
-        db_ = self.database['GPModKernVar-RB']
+        db_ = self.database['BiasFBGPModKernVar-RB']
         kernel.variance.constrain_bounded(db_['low'], db_['high'])
         kernel.variance = db_['value']
-        db_ = self.database['GPModKernLenScl-RB']
+        db_ = self.database['BiasFBGPModKernLenScl-RB']
         kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
         kernel.lengthscale = db_['value']
 
         gpmodel = gpy.models.GPRegression(x, y, kernel)
-        db_ = self.database['GPModLikehdVar-RB']
+        db_ = self.database['BiasFBGPModNoiseVar-RB']
         gpmodel.likelihood.variance.constrain_bounded(db_['low'], db_['high'])
         gpmodel.likelihood.variance = db_['value']
         self.gpmodel = gpmodel
@@ -365,9 +366,9 @@ class BiasFeedback():
         injca_gp, injcs_gp = self._gpmodel_predict(bias)
         self.run_callbacks('LinModPredBias-Mon', bias)
         self.run_callbacks('LinModPredInjCurrAvg-Mon', injc_lin)
-        self.run_callbacks('GpModPredBias-Mon', bias)
-        self.run_callbacks('GpModPredInjCurrAvg-Mon', injca_gp.ravel())
-        self.run_callbacks('GpModPredInjCurrStd-Mon', injcs_gp.ravel())
+        self.run_callbacks('GPModPredBias-Mon', bias)
+        self.run_callbacks('GPModPredInjCurrAvg-Mon', injca_gp.ravel())
+        self.run_callbacks('GPModPredInjCurrStd-Mon', injcs_gp.ravel())
 
     def _get_bias_voltage_gpmodel(self, dcurr):
         bias = self._gpmodel_infer_newx(_np.array(dcurr, ndmin=1))
