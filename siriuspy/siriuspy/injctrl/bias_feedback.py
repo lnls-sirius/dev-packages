@@ -110,7 +110,7 @@ class BiasFeedback():
         if self._injctrl.has_callbacks:
             self._injctrl.run_callbacks(name, *args, **kwd)
             return
-        self.database[name]['value'] = kwd['value']
+        self.database[name]['value'] = args[0]
 
     def update_log(self, msg):
         """."""
