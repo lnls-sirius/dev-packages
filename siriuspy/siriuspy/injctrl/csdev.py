@@ -421,15 +421,15 @@ def get_biasfb_database():
             'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
             'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
         'LinModOffCoeff-SP': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'type': 'float', 'value': -52, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
         'LinModOffCoeff-RB': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'type': 'float', 'value': -52, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
         'LinModOffCoeff-Mon': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
+            'type': 'float', 'value': -52, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
 
