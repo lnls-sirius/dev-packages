@@ -102,6 +102,12 @@ class IDSearch:
     def conv_idnames_2_idff_qs(idname):
         return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
 
+    @staticmethod
+    def conv_idnames_2_polarizations(idname):
+        """Return ID light polarizations."""
+        polarizations = IDSearch._idname_2_polarizations(idname)
+        return polarizations
+
     # --- private ----
 
     @staticmethod

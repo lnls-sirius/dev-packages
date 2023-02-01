@@ -13,13 +13,16 @@ class APUFFWDCalc:
     def __init__(self, idname):
         """."""
         # get correctors names
-        self._psnames_orb = _IDSearch.conv_idname_2_orbitcorr(idname)
-        # NOTE: assumes same number of CHs and CVs
-        self._nr_chs = len(self._psnames_orb) // 2
-        self._nr_cvs = self._nr_chs
+        self._chnames = _IDSearch.conv_idnames_2_idff_ch(idname)
+        self._cvnames = _IDSearch.conv_idnames_2_idff_cv(idname)
+        self._qsnames = _IDSearch.conv_idnames_2_idff_qs(idname)
+
+        self._nr_chs = len(self._chnames)
+        self._nr_cvs = len(self._cvnames)
+        self._nr_qss = len(self._qsnames)
 
         # get corr spos
-        self._orbcorr_spos = self._get_corr_spos()
+        self._ch_spos, self._cv_spos, self._qs_spos = self._get_corr_spos()
 
         # get orbit fftable from idname:
         self._orbitffwd = _IDSearch.conv_idname_2_orbitffwd(idname)
@@ -35,17 +38,29 @@ class APUFFWDCalc:
         return self._nr_cvs
 
     @property
-    def orbitcorr_psnames(self):
-        """Return orbit corrector names."""
-        return self._psnames_orb
+    def chnames(self):
+        """Return orbit CH corrector names."""
+        return self._chnames
+
+    @property
+    def cvnames(self):
+        """Return orbit CV corrector names."""
+        return self._cvnames
+
+    @property
+    def qsnames(self):
+        """Return orbit QS corrector names."""
+        return self._qsnames
 
     def conv_phase_2_orbcorr_currents(self, phase):
         """Return orbit correctors currents for a given ID phase."""
-        ffwd = self._orbitffwd.interp_curr2mult(phase)
-        chs = [ffwd['normal'][i] for i in range(self.nr_chs)]
-        cvs = [ffwd['skew'][i] for i in range(self.nr_cvs)]
-        currents = _np.array(chs + cvs)
-        return currents
+        # ffwd = self._orbitffwd.interp_curr2mult(phase)
+        # chs = [ffwd['normal'][i] for i in range(self.nr_chs)]
+        # cvs = [ffwd['skew'][i] for i in range(self.nr_cvs)]
+        # currents = _np.array(chs + cvs)
+        # return currents
+        # NOTE: not implemented
+        return None
 
     def conv_posang2kick(
             self, posx=0, angx=0, posy=0, angy=0):
@@ -56,7 +71,7 @@ class APUFFWDCalc:
         len2 = 0.5*(spos[2] - spos[1])
         kickx = APUFFWDCalc._calc_kicks(len1, len2, posx, angx)
         kicky = APUFFWDCalc._calc_kicks(len1, len2, posy, angy)
-        return _np.asarray(kickx + kicky)
+        return kickx, kicky
 
     # --- private methods ---
 
@@ -81,7 +96,14 @@ class APUFFWDCalc:
         return kicks
 
     def _get_corr_spos(self):
+
         manames = [psname.replace(':PS-', ':MA-') for
-                   psname in self._psnames_orb]
-        spos = _MASearch.get_mapositions(names=manames)
-        return spos
+                   psname in self._chnames]
+        ch_spos = _MASearch.get_mapositions(names=manames)
+        manames = [psname.replace(':PS-', ':MA-') for
+                   psname in self._cvnames]
+        cv_spos = _MASearch.get_mapositions(names=manames)
+        manames = [psname.replace(':PS-', ':MA-') for
+                   psname in self._qsnames]
+        qs_spos = _MASearch.get_mapositions(names=manames)
+        return ch_spos, cv_spos, qs_spos

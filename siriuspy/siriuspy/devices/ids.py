@@ -11,7 +11,6 @@ from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
 
 from .device import Device as _Device
 from .device import Devices as _Devices
-from .device import DeviceApp as _DeviceApp
 from .pwrsupply import PowerSupply as _PowerSupply
 from .psconv import StrengthConv as _StrengthConv
 
@@ -560,7 +559,7 @@ class WIG(_Device):
         super().__init__(devname, properties=WIG._properties, auto_mon=True)
 
 
-class IDCorrectors(_Devices):
+class IDFFCorrectors(_Devices):
     """."""
     class DEVICES:
         """."""
@@ -581,29 +580,44 @@ class IDCorrectors(_Devices):
         devname = _SiriusPVName(devname)
 
         # check if device exists
-        if devname not in IDCorrectors.DEVICES.ALL:
+        if devname not in IDFFCorrectors.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # get correctors names
-        self._psnames = _IDSearch.conv_idname_2_orbitcorr(devname)
+        self._chnames = _IDSearch.conv_idname_2_idff_ch(devname)
+        self._cvnames = _IDSearch.conv_idname_2_idff_cv(devname)
+        self._qsnames = _IDSearch.conv_idname_2_idff_qs(devname)
 
         # get ffwd
-        self._ffwd = _IDSearch.conv_idname_2_orbitffwd(devname)
+        self._ffwd = None
 
-        devices = [_PowerSupply(devname=psname) for psname in self._psnames]
+        devices = list()
+        devices.append([_PowerSupply(devname=dev) for dev in self._chnames])
+        devices.append([_PowerSupply(devname=dev) for dev in self._cvnames])
+        devices.append([_PowerSupply(devname=dev) for dev in self._qsnames])
 
         # call base class constructor
         super().__init__(devname=devname, devices=devices)
 
     @property
-    def psnames(self):
-        """Return corrector power supply names."""
-        return self._psnames
+    def chnames(self):
+        """Return CH corrector power supply names."""
+        return self._chnames
+
+    @property
+    def cvnames(self):
+        """Return CV corrector power supply names."""
+        return self._cvnames
+
+    @property
+    def qsnames(self):
+        """Return QS corrector power supply names."""
+        return self._qsnames
 
     @property
     def id_polarizations(self):
         """Return list of possible ligh polarizations for the ID."""
-        return tuple(self._ffwd.keys())
+        return IDFFCorrectors.conv_idnames_2_polarizations[self.devname]
 
     def get_currents(self, polarization, config):
         """Return correctors currents for a particular ID config.
@@ -611,15 +625,11 @@ class IDCorrectors(_Devices):
         The parameter 'config' can be a gap or phase value, depending on the
         insertion device.
         """
-        ffwd_dict = self._ffwd[polarization]
+        # NOTE: not implemented yet
         currents = dict()
-        for psname, ffwd in ffwd_dict.items():
-            mpoles = ffwd.interp_curr2mult(config, only_main_harmonic=True)
-            currents[psname] = mpoles['normal'][0]
         return currents
 
-
-class WIGCorrectors(IDCorrectors):
+class WIGCorrectors(IDFFCorrectors):
     """."""
     class DEVICES(WIG.DEVICES):
         """."""
@@ -629,13 +639,9 @@ class WIGCorrectors(IDCorrectors):
         # call base class constructor
         super().__init__(devname)
 
-    def get_currents(self, gap):
-        """Return correctors currents for a particular wiggler gap."""
-        return super().get_currents('horizontal', config=gap)
-
-
 class APUFeedForward(_Devices):
     """Insertion Device APU FeedForward."""
+    # NOTE: deprecated! needs revision!
 
     DEVICES = APU.DEVICES
 
@@ -645,18 +651,19 @@ class APUFeedForward(_Devices):
         self._apu = APU(devname)
 
         # create IDCorrectors
-        self._idcorrs = IDCorrectors(devname)
+        # self._idcorrs = IDCorrectors(devname)
 
         # create FFWDCalc
         self._ffwdcalc = _APUFFWDCalc(devname)
 
         # create normalizers
-        self._strenconv_chs, self._strenconv_cvs = self._create_strenconv()
+        # self._strenconv_chs, self._strenconv_cvs = self._create_strenconv()
 
         # call base class constructor
-        devices = (
-            self._apu, self._idcorrs,
-            self._strenconv_chs, self._strenconv_cvs)
+        # devices = (
+        #     self._apu, self._idcorrs,
+        #     self._strenconv_chs, self._strenconv_cvs)
+        devices = (self._apu, )
         super().__init__(devname, devices)
 
         # bumps
@@ -668,10 +675,10 @@ class APUFeedForward(_Devices):
         """Return APU device."""
         return self._apu
 
-    @property
-    def correctors(self):
-        """Return IDCorrectors device."""
-        return self._idcorrs
+    # @property
+    # def correctors(self):
+    #     """Return IDCorrectors device."""
+    #     return self._idcorrs
 
     @property
     def ffwdcalc(self):
@@ -718,22 +725,18 @@ class APUFeedForward(_Devices):
         """Return angy bump value."""
         self._angy = value
 
-    def conv_orbitcorr_kick2curr(self, kicks):
+    def conv_orbitcorr_kick2curr(self, kickx, kicky):
         """."""
-        # 127 µs ± 1.01 µs per loop
-        kickx = kicks[:self.ffwdcalc.nr_chs]
-        kicky = kicks[self.ffwdcalc.nr_chs:]
         curr_chs = self._strenconv_chs.conv_strength_2_current(kickx)
         curr_cvs = self._strenconv_cvs.conv_strength_2_current(kicky)
-        currs = _np.hstack((curr_chs, curr_cvs))
-        return currs
+        return curr_chs, curr_cvs
 
     def bump_get_orbitcorr_current(self):
         """Return bump orbit correctors currents."""
-        kicks = self.ffwdcalc.conv_posang2kick(
+        kickx, kicky = self.ffwdcalc.conv_posang2kick(
             self.posx, self.angx, self.posy, self.angy)
-        currents = self.conv_orbitcorr_kick2curr(kicks)
-        return currents
+        curr_chs, curr_cvs = self.conv_orbitcorr_kick2curr(kickx, kicky)
+        return curr_chs, curr_cvs
 
     def ffwd_get_orbitcorr_current(self, phase=None):
         """Return feedforward orbitcorr currents for a given ID phase."""
@@ -746,7 +749,7 @@ class APUFeedForward(_Devices):
     def ffwd_update_orbitcorr(self, phase=None):
         """Update orbit feedforward."""
         currents_ffwd = self.ffwd_get_orbitcorr_current(phase)
-        currents_bump = self.bump_get_orbitcorr_current()
+        curr_bump_ch, curr_bump_cv = self.bump_get_orbitcorr_current()
         self.correctors.orbitcorr_current = currents_ffwd + currents_bump
 
     def ffwd_update(self, phase=None):
@@ -763,15 +766,15 @@ class APUFeedForward(_Devices):
         # NOTE: we could initialize posang with corrector values.
         return posx, angx, posy, angy
 
-    def _create_strenconv(self):
-        """."""
-        psnames = self.correctors.orbitcorr_psnames
+    # def _create_strenconv(self):
+    #     """."""
+    #     psnames = self.correctors.orbitcorr_psnames
 
-        maname = psnames[0].replace(':PS-', ':MA-')
-        strenconv_chs = _StrengthConv(
-            maname, proptype='Ref-Mon', auto_mon=True)
-        maname = psnames[self.ffwdcalc.nr_chs].replace(':PS-', ':MA-')
-        strenconv_cvs = _StrengthConv(
-            maname, proptype='Ref-Mon', auto_mon=True)
+    #     maname = psnames[0].replace(':PS-', ':MA-')
+    #     strenconv_chs = _StrengthConv(
+    #         maname, proptype='Ref-Mon', auto_mon=True)
+    #     maname = psnames[self.ffwdcalc.nr_chs].replace(':PS-', ':MA-')
+    #     strenconv_cvs = _StrengthConv(
+    #         maname, proptype='Ref-Mon', auto_mon=True)
 
-        return strenconv_chs, strenconv_cvs
+    #     return strenconv_chs, strenconv_cvs
