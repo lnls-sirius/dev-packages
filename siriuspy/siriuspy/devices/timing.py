@@ -501,7 +501,7 @@ class HLTiming(_Devices):
         devs += list(self.triggers.values())
         super().__init__('AS-Glob:TI-HLTiming', devs)
 
-    def get_triggers_events(self):
+    def get_mapping_events2triggers(self) -> dict:
         """."""
         map_ = {tn: tr.source_str for tn, tr in self.triggers.items()}
         inv_map = {ev: list() for ev in set(map_.values())}
@@ -509,7 +509,15 @@ class HLTiming(_Devices):
             inv_map[ev].append(tn)
         return inv_map
 
-    def change_triggers_source(self, trigs, new_src='Linac'):
+    def get_mapping_injtable2events(self) -> dict:
+        """."""
+        map_evt2table = {n: o.mode_str for n, o in self.events.items()}
+        map_table2evt = {}
+        for k, v in map_evt2table.items():
+            map_table2evt[v] = map_table2evt.get(v, []) + [k]
+        return map_table2evt
+
+    def change_triggers_source(self, trigs, new_src='Linac') -> list:
         """."""
         notchanged = list()
         for tn in trigs:
@@ -552,7 +560,7 @@ class HLTiming(_Devices):
         old_dly = self.events[event].delay_raw
         dlt_dly = old_dly - new_dly
 
-        trigs = self.get_triggers_events()[event]
+        trigs = self.get_mapping_events2triggers()[event]
         for trn in trigs:
             dly = self.triggers[trn].delay_raw + dlt_dly
             if dly < 0:
@@ -565,3 +573,29 @@ class HLTiming(_Devices):
 
         print('Delay changed!')
         return True
+
+    def print_injtable_mapping(self, only_enabled=False):
+        """."""
+        map_evt2trig = self.get_mapping_events2triggers()
+        map_table2evt = self.get_mapping_injtable2events()
+        tabs = {'Continuous', 'Injection', 'OneShot'}
+        tabs &= map_table2evt.keys()
+        tabs = sorted(tabs)
+
+        dlys = []
+        for tab in tabs:
+            for evt in map_table2evt[tab]:
+                for name in map_evt2trig.get(evt, []):
+                    obj = self.triggers[name]
+                    if only_enabled and not obj.enabled:
+                        continue
+                    dlys.append([obj.total_delay, name, evt, tab])
+        dlys = sorted(dlys)
+
+        tmpl = ' {:^30s} |' * len(tabs)
+        print(('{:^12s} |' + tmpl).format('Delay [ms]', *tabs))
+        print('-'*(12+33*len(tabs) + 2))
+        for dly, trg, evt, tab in dlys:
+            stgs = [''] * len(tabs)
+            stgs[tabs.index(tab)] = trg
+            print(('{:>12.6f} |' + tmpl).format(dly/1e3, *stgs))

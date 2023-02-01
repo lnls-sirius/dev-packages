@@ -50,6 +50,8 @@ class _PSDev(_Device):
         'FOFBAccGain-SP', 'FOFBAccGain-RB',
         'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
         'FOFBAccClear-Cmd',
+        'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
+        'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -82,6 +84,9 @@ class _PSDev(_Device):
 
         # call base class constructor
         super().__init__(devname, properties=properties)
+
+        # private attribute with strength setpoint pv object
+        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
 
     @property
     def pstype(self):
@@ -120,28 +125,73 @@ class _PSDev(_Device):
 
     @property
     def strength_property(self):
-        """."""
+        """Return Strength name."""
         return self._strength_propty
 
     @property
     def strength_units(self):
-        """."""
+        """Return Strength units."""
         return self._strength_units
 
     @property
     def strength(self):
-        """."""
+        """Return Strength RB."""
         return self[self._strength_rb_propty]
 
     @strength.setter
     def strength(self, value):
-        """."""
+        """Set Strength SP."""
         self[self._strength_sp_propty] = value
 
     @property
+    def strengthref_mon(self):
+        """Return Strength Ref-Mon."""
+        return self[self._strength_propty + 'Ref-Mon']
+
+    @property
     def strength_mon(self):
-        """."""
+        """Return Strength Mon."""
         return self[self._strength_mon_propty]
+
+    @property
+    def strength_upper_ctrl_limit(self):
+        """Return Strength SP upper control limit."""
+        return self._strength_sp_pv.upper_ctrl_limit
+
+    @property
+    def strength_lower_ctrl_limit(self):
+        """Return Strength SP lower control limit."""
+        return self._strength_sp_pv.lower_ctrl_limit
+
+    @property
+    def strength_upper_alarm_limit(self):
+        """Return Strength SP upper alarm limit."""
+        return self._strength_sp_pv.upper_alarm_limit
+
+    @property
+    def strength_lower_alarm_limit(self):
+        """Return Strength SP lower alarm limit."""
+        return self._strength_sp_pv.lower_alarm_limit
+
+    @property
+    def strength_upper_warning_limit(self):
+        """Return Strength SP upper warning limit."""
+        return self._strength_sp_pv.upper_warning_limit
+
+    @property
+    def strength_lower_warning_limit(self):
+        """Return Strength SP lower warning limit."""
+        return self._strength_sp_pv.lower_warning_limit
+
+    @property
+    def strength_upper_disp_limit(self):
+        """Return Strength SP upper display limit."""
+        return self._strength_sp_pv.upper_disp_limit
+
+    @property
+    def strength_lower_disp_limit(self):
+        """Return Strength SP lower display limit."""
+        return self._strength_sp_pv.lower_disp_limit
 
     @property
     def pwrstate(self):
@@ -206,6 +256,9 @@ class _PSDev(_Device):
             strength_rb_propty,
             strength_mon_propty,
         )
+        if not self._is_linac and not self._is_pulsed:
+            strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
+            properties += (strengthref_mon_propty, )
 
         ret = (
             strength_sp_propty, strength_rb_propty, strength_mon_propty,
@@ -358,11 +411,13 @@ class PowerSupply(_PSDev):
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
         """
-        return self['CycleAuxParam-RB']
+        value = self['CycleAuxParam-RB']
+        if value is not None:
+            return value.copy()
+        return None
 
     @cycle_aux_param.setter
     def cycle_aux_param(self, value):
-        """."""
         self['CycleAuxParam-SP'] = value
 
     @property
@@ -802,6 +857,24 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_freeze.setter
     def fofbacc_freeze(self, value):
         self['FOFBAccFreeze-Sel'] = value
+
+    @property
+    def fofbacc_satmax(self):
+        """FOFB accumulator maximum saturation."""
+        return self['FOFBAccSatMax-RB']
+
+    @fofbacc_satmax.setter
+    def fofbacc_satmax(self, value):
+        self['FOFBAccSatMax-SP'] = value
+
+    @property
+    def fofbacc_satmin(self):
+        """FOFB accumulator minimum saturation."""
+        return self['FOFBAccSatMin-RB']
+
+    @fofbacc_satmin.setter
+    def fofbacc_satmin(self, value):
+        self['FOFBAccSatMin-SP'] = value
 
     def cmd_fofbacc_clear(self):
         """Command to clear FOFB accumulator."""

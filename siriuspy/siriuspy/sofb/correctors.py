@@ -16,7 +16,6 @@ from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 from ..namesys import SiriusPVName as _PVName
-from ..devices import PSApplySOFB as _PSSOFBIOC
 
 from ..pwrsupply.pssofb import PSSOFB as _PSSOFB
 
@@ -116,6 +115,10 @@ class Corrector(_BaseTimingConfig):
 class RFCtrl(Corrector):
     """RF control class."""
 
+    TINY_VAR = 0.01  # [Hz]
+    LARGE_VAR = 10000  # [Hz]
+    MAX_DELTA = 200  # [Hz]
+
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
@@ -126,9 +129,7 @@ class RFCtrl(Corrector):
         self._rb = _PV(pvpref+':GeneralFreq-RB', **opt)
         self._config_ok_vals = {'PwrState': 1}
         self._config_pvs_sp = dict()
-        #     'PwrState': _PV(pvpref+':PwrState-Sel', **opt)}
         self._config_pvs_rb = dict()
-        #     'PwrState': _PV(pvpref+':PwrState-Sts', **opt)}
 
     @property
     def value(self):
@@ -139,14 +140,13 @@ class RFCtrl(Corrector):
     @value.setter
     def value(self, freq):
         """."""
-        delta_max = 200  # Hz
         freq0 = self.value
         if freq0 is None or freq is None:
             return
         delta = abs(freq-freq0)
-        if delta < 0.1 or delta > 10000:
+        if delta < self.TINY_VAR or delta > self.LARGE_VAR:
             return
-        npoints = int(delta//delta_max) + 2
+        npoints = int(delta//self.MAX_DELTA) + 2
         freq_span = _np.linspace(freq0, freq, npoints)[1:]
         for i, freq in enumerate(freq_span, 1):
             self._sp.put(freq, wait=False)
@@ -156,21 +156,12 @@ class RFCtrl(Corrector):
     @property
     def state(self):
         """State."""
-        # TODO: database of RF GEN
         return True
-        # pv = self._config_pvs_rb['PwrState']
-        # return pv.value == 1 if pv.connected else False
 
     @state.setter
     def state(self, boo):
         """."""
-        # TODO: database of RF GEN
         return
-        # val = 1 if boo else 0
-        # pv = self._config_pvs_sp['PwrState']
-        # if pv.connected:
-        #     self._config_ok_vals['PwrState'] = val
-        #     pv.put(val, wait=False)
 
 
 class CHCV(Corrector):
@@ -458,15 +449,14 @@ class EpicsCorrectors(BaseCorrectors):
 
     TINY_INTERVAL = 0.005
     NUM_TIMEOUT = 1000
-    PSSOFB_USE_IOC = False
     MAX_PROB = 5
+    ACQRATE = 2
+    WAIT_PSSOFB = True
 
     def __init__(self, acc, prefix='', callback=None, dipoleoff=False):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
-        self._sync_kicks = False
-        self._acq_rate = 2
 
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
@@ -474,23 +464,19 @@ class EpicsCorrectors(BaseCorrectors):
             self._corrs.append(RFCtrl(self.acc))
 
         self._use_pssofb = False
-        self._wait_pssofb = False
         if self.acc == 'SI':
+            self.sync_kicks = self._csorb.CorrSync.Off
             self._ref_kicks = None
             self._ret_kicks = None
             self._func_ret = None
             self._prob = None
-            if not EpicsCorrectors.PSSOFB_USE_IOC:
-                self._pssofb = _PSSOFB(
-                    EthBridgeClient, nr_procs=8, asynchronous=True,
-                    sofb_update_iocs=True, dipoleoff=dipoleoff)
-                self._pssofb.processes_start()
-            else:
-                self._pssofb = _PSSOFBIOC(
-                    'SI', auto_mon=True, dipoleoff=dipoleoff)
+            self._pssofb = _PSSOFB(
+                EthBridgeClient, nr_procs=8, asynchronous=True,
+                sofb_update_iocs=True, dipoleoff=dipoleoff)
+            self._pssofb.processes_start()
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
-            1/self._acq_rate, self._update_corrs_strength, niter=0)
+            1/self.ACQRATE, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
 
     @property
@@ -523,13 +509,8 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_map2write(self):
         """Get the write methods of the class."""
-        dbase = {
-            'CorrConfig-Cmd': self.configure_correctors,
-            'KickAcqRate-SP': self.set_kick_acq_rate,
-            }
+        dbase = {'CorrConfig-Cmd': self.configure_correctors}
         if self.acc == 'SI':
-            dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
-            dbase['CorrPSSOFBWait-Sel'] = self.set_wait_pssofb
             dbase['CorrSync-Sel'] = self.set_corrs_mode
         return dbase
 
@@ -609,7 +590,7 @@ class EpicsCorrectors(BaseCorrectors):
         if not _np.isnan(values[-1]):
             self.put_value_in_corr(self._corrs[-1], values[-1])
 
-        if self._wait_pssofb and not self._pssofb.wait(timeout=1):
+        if self.WAIT_PSSOFB and not self._pssofb.wait(timeout=1):
             msg = 'ERR: PSSOFB timed out: Worker is not Done!'
             self._update_log(msg)
             _log.error(msg[5:])
@@ -648,7 +629,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def send_evt(self):
         """Send event method."""
-        if self.acc != 'SI' or self._sync_kicks != self._csorb.CorrSync.Event:
+        if self.acc != 'SI' or self.sync_kicks != self._csorb.CorrSync.Event:
             return
         if not self.timing.connected:
             msg = 'ERR: timing disconnected.'
@@ -678,13 +659,6 @@ class EpicsCorrectors(BaseCorrectors):
                 _log.error(msg[5:])
         return corr_values
 
-    def set_kick_acq_rate(self, value):
-        """Set kick caq rate method."""
-        self._acq_rate = value
-        self._corrs_thread.interval = 1/value
-        self.run_callbacks('KickAcqRate-RB', value)
-        return True
-
     def _update_corrs_strength(self):
         try:
             corr_vals = self.get_strength()
@@ -707,7 +681,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
         if value not in self._csorb.CorrSync:
             return False
-        self._sync_kicks = value
+        self.sync_kicks = value
         val = _PSConst.OpMode.SlowRefSync
         if value == self._csorb.CorrSync.Off:
             self.set_timing_delay(0)
@@ -730,7 +704,7 @@ class EpicsCorrectors(BaseCorrectors):
             corr.put_enable = mask[i]
             corr.opmode = val
 
-        strsync = self._csorb.CorrSync._fields[self._sync_kicks]
+        strsync = self._csorb.CorrSync._fields[self.sync_kicks]
         msg = 'Synchronization set to {0:s}'.format(strsync)
         self._update_log(msg)
         _log.info(msg)
@@ -780,17 +754,7 @@ class EpicsCorrectors(BaseCorrectors):
             corr.put_enable = mask[i]
             corr.sofbmode = val
 
-        self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
-        return True
-
-    def set_wait_pssofb(self, val):
-        """."""
-        if self.acc != 'SI':
-            return False
-        if val not in self._csorb.CorrPSSOFBWait:
-            return False
-        self._wait_pssofb = val
-        self.run_callbacks('CorrPSSOFBWait-Sts', val)
+        self.run_callbacks('CorrPSSOFBEnbl-Mon', val)
         return True
 
     def configure_correctors(self, _):
@@ -811,7 +775,7 @@ class EpicsCorrectors(BaseCorrectors):
         if not self.isring:
             return True
 
-        if self.acc == 'SI' and self._sync_kicks != self._csorb.CorrSync.Off:
+        if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
@@ -840,7 +804,7 @@ class EpicsCorrectors(BaseCorrectors):
         status = _util.update_bit(
             status, bit_pos=2,
             bit_val=not all(corr.state for corr in chcvs))
-        if self.acc == 'SI' and self._sync_kicks != self._csorb.CorrSync.Off:
+        if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             tim_conn = self.timing.connected
             tim_conf = self.timing.is_ok
         else:
@@ -866,7 +830,13 @@ class EpicsCorrectors(BaseCorrectors):
                     okg[i] = True
                     continue
                 val = corr.value if mode == 'ready' else corr.refvalue
-                okg[i] = val is not None and _compare_kicks(values[i], val)
+                if val is None:
+                    continue
+                if isinstance(corr, RFCtrl):
+                    okg[i] = _compare_kicks(
+                        values[i], val, atol=RFCtrl.TINY_VAR)
+                else:
+                    okg[i] = _compare_kicks(values[i], val)
             if all(okg):
                 return False
             _time.sleep(self.TINY_INTERVAL)
@@ -898,7 +868,7 @@ class EpicsCorrectors(BaseCorrectors):
         # NOTE: If the return value is zero, it might mean the corrector had a
         # problem. In this case we return -2 so the main correction loop can
         # exit and give back the control to the IOC.
-        iszero = _compare_kicks(curr_vals, 0)
+        iszero = _np.equal(curr_vals, 0.0)
         iszero_ref = _compare_kicks(ref_vals, 0)
         prob = iszero & ~(iszero_ref)
         prob &= mask  # If corrector is not in the loop, ignore it.

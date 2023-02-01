@@ -3,7 +3,8 @@
 import time as _time
 import operator as _opr
 
-from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
+    CASeverityException as _CASeverityException
 import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
@@ -92,6 +93,10 @@ class Device:
         """Return PV object for a given device property."""
         return self._pvs[propty]
 
+    def pv_ctrlvars(self, propty):
+        """Return PV object control variable."""
+        return self._pvs[propty].get_ctrlvars()
+
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
         attributes = dict()
@@ -123,8 +128,8 @@ class Device:
         pvobj = self._pvs[propty]
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
-        except _ChannelAccessGetFailure:
-            # This is raised in a Virtual Circuit Disconnect (192)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
             print('Could not get value of {}'.format(pvobj.pvname))
             value = None

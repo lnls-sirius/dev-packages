@@ -43,10 +43,7 @@ class EpicsMatrix(BaseMatrix):
         self.respmat = _np.zeros(
             [2*self._csorb.nr_bpms, self._csorb.nr_corrs], dtype=float)
         self.inv_respmat = self.respmat.copy().T
-
-        self.ring_extension = 1
-        self.respmat_extended = self.respmat.copy()
-        self.select_items_extended = _dcopy(self.select_items)
+        self.respmat_processed = self.respmat.copy().T
         self._load_respmat()
 
     @property
@@ -109,138 +106,43 @@ class EpicsMatrix(BaseMatrix):
         msg = 'Setting New RespMat.'
         self._update_log(msg)
         _log.info(msg)
-        mat, matb = self._set_respmat(mat)
         if mat is None:
             return False
+        mat = _np.reshape(mat, [-1, self._csorb.nr_corrs])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
             self.respmat = old_
             return False
-        self.respmat_extended = matb
-        self._save_respmat(matb)
+        self._save_respmat(mat)
         self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
         return True
-
-    def _set_respmat(self, mat):
-        mat = _np.array(mat, dtype=float)
-        nrc = self._csorb.nr_corrs
-        nrb = self._csorb.nr_bpms
-        rext = self.ring_extension
-        mat_rext = (mat.size // self._csorb.matrix_size)
-        if mat.size % self._csorb.matrix_size:
-            msg = 'ERR: Wrong RespMat Size.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return None, None
-        elif mat_rext < rext:
-            mat2 = _np.zeros([2, rext*self._csorb.nr_bpms, nrc], dtype=float)
-            mat = mat.reshape(2, -1, nrc)
-            mat2[:, :(mat_rext*nrb), :] = mat
-            mat = mat2.reshape(-1)
-            matb = mat
-        elif mat_rext > rext:
-            matb = mat
-            mat = mat.reshape(2, -1, nrc)
-            mat = mat[:, :(rext*nrb), :]
-            mat = mat.reshape(-1)
-        else:
-            matb = mat
-        mat = _np.reshape(mat, [-1, nrc])
-        return mat, matb
 
     def set_enbllist(self, key, val):
         """."""
         msg = 'Setting {0:s} EnblList'.format(key.upper())
         self._update_log(msg)
         _log.info(msg)
-        if key in {'bpmx', 'bpmy'}:
-            new, newb = self._set_enbllist_bpms(key, val)
-        elif key in {'ch', 'cv', 'rf'}:
-            new, newb = self._set_enbllist(key, val)
-        else:
-            return False
+
         bkup = self.select_items[key]
-        self.select_items[key] = new
+        new_ = _np.array(val, dtype=bool)
+        if key == 'rf':
+            pass
+        elif new_.size >= bkup.size:
+            new_ = new_[:bkup.size]
+        else:
+            new2_ = bkup.copy()
+            new2_[:new_.size] = new_
+            new_ = new2_
+        self.select_items[key] = new_
 
         if not self._calc_matrices():
             self.select_items[key] = bkup
             return False
-        self.select_items_extended[key] = newb
-        if new.size == 1:  # Deal with RF
-            self.run_callbacks(self.selection_pv_names[key], bool(new))
+        if new_.size == 1:  # Deal with RF
+            self.run_callbacks(self.selection_pv_names[key], bool(new_))
         else:
-            self.run_callbacks(self.selection_pv_names[key], new)
-        return True
-
-    def _set_enbllist(self, key, val):
-        bkup = self.select_items_extended[key]
-        new = _np.array(val, dtype=bool)
-        if key == 'rf':
-            pass
-        elif new.size >= bkup.size:
-            new = new[:bkup.size]
-        else:
-            new2 = bkup.copy()
-            new2[:new.size] = new
-            new = new2
-        return new, new.copy()
-
-    def _set_enbllist_bpms(self, key, val):
-        bkup = self.select_items_extended[key]
-        new = _np.array(val, dtype=bool)
-        if new.size < bkup.size:
-            new2 = bkup.copy()
-            new2[:new.size] = new
-            new = new2
-        nrb = self._csorb.nr_bpms
-        nrb *= self.ring_extension
-        if new.size < nrb:
-            new2 = _np.zeros(nrb, dtype=bool)
-            new2[:new.size] = new
-            newb = new2
-            new = new2.copy()
-        elif new.size > nrb:
-            newb = new
-            new = new[:nrb]
-        else:
-            newb = new
-        return new, newb
-
-    def set_ring_extension(self, val):
-        """."""
-        val = 1 if val < 1 else int(val)
-        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
-        if val == self.ring_extension:
-            return True
-        bkup = self.ring_extension
-        self.ring_extension = val
-        mat, matb = self._set_respmat(self.respmat_extended)
-        self.respmat = mat
-        selbs = dict()
-        sellist = ('bpmx', 'bpmy')
-        for k in sellist:
-            val = self.select_items_extended[k]
-            sel, selbs[k] = self._set_enbllist_bpms(k, val)
-            self.select_items[k] = sel
-
-        if not self._calc_matrices():
-            self.ring_extension = bkup
-            self.respmat, _ = self._set_respmat(self.respmat_extended)
-            for k in sellist:
-                val = self.select_items_extended[k]
-                self.select_items[k], _ = self._set_enbllist_bpms(k, val)
-            return False
-
-        self.respmat_extended = matb
-        self.select_items_extended.update(selbs)
-        self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
-        for k in sellist:
-            val = self.select_items[k]
-            pvname = self.selection_pv_names[k]
-            self.run_callbacks(pvname, val)
-            pvname = pvname.replace('-RB', '-SP')
-            self.run_callbacks(pvname, val)
+            self.run_callbacks(self.selection_pv_names[key], new_)
         return True
 
     def calc_kicks(self, orbit):
@@ -255,6 +157,24 @@ class EpicsMatrix(BaseMatrix):
         _Thread(
             target=self._update_dkicks, args=(kicks, ), daemon=True).start()
         return kicks
+
+    def estimate_orbit_variation(self, kicks):
+        """Estimate the orbit variation induced by kicks.
+
+        Args:
+            kicks (numpy.ndarray): Correctors kicks that will be used to
+                estimate orbit distortion.
+
+        Returns:
+            dorb (numpy.ndarray): Estimated orbit.
+
+        """
+        if kicks.size != self.respmat.shape[1]:
+            msg = 'ERR: kicks and matrix size not compatible.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return None
+        return _np.dot(self.respmat, kicks)
 
     def _update_dkicks(self, kicks):
         kicks = kicks.copy()
@@ -363,9 +283,9 @@ class EpicsMatrix(BaseMatrix):
         self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.ravel()
         self.run_callbacks('InvRespMat-Mon', list(self.inv_respmat.ravel()))
-        respmat_proc = _np.zeros(self.respmat.shape, dtype=float)
-        respmat_proc[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
-        self.run_callbacks('RespMat-Mon', list(respmat_proc.ravel()))
+        self.respmat_processed = _np.zeros(self.respmat.shape, dtype=float)
+        self.respmat_processed[sel_mat] = _np.dot(uuu*singp, vvv).ravel()
+        self.run_callbacks('RespMat-Mon', list(self.respmat_processed.ravel()))
         msg = 'Ok!'
         self._update_log(msg)
         _log.info(msg)

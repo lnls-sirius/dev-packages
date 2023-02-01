@@ -1272,7 +1272,7 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         return angx, angy
 
     def _handle_thres_input(self, value):
-        if isinstance(value, (int, float, _np.int, _np.float)):
+        if isinstance(value, (int, float, _np.int_, _np.float_)):
             return [value, ] * len(self.BPM_NAMES)
         if len(value) != len(self.devices):
             raise ValueError(

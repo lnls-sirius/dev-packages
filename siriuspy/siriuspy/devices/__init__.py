@@ -1,7 +1,6 @@
 """Devices subpackage."""
 
 from .bbb import BunchbyBunch
-from .blscreen import BeamlineScreen
 from .bpm import BPM, FamBPMs, BPMLogicalTrigger
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
@@ -12,7 +11,8 @@ from .energy import Energy
 from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
 from .ict import ICT, TranspEff
-from .ids import APU, WIG, IDCorrectors, WIGCorrectors, APUFeedForward
+from .ids import APU, WIG, EPU, IDCorrectors, WIGCorrectors, APUFeedForward
+from .injctrl import InjCtrl
 from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
     LILLRFStandbyHandler, InjSysPUModeHandler
@@ -31,8 +31,9 @@ from .sofb import SOFB
 from .syncd import DevicesSync
 from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
+from .dvf import DVF
 
-del device, bpm, dcct, egun, ict, lillrf, modltr,
-del pwrsupply, posang, psconv, pssofb, rf, injsys
+del device, bpm, dcct, egun, ict, lillrf, modltr
+del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, blscreen, bbb, machshift
+del ids, currinfo, bbb, machshift, dvf
