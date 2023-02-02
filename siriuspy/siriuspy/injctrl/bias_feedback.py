@@ -5,8 +5,6 @@ from epics.ca import CAThread as _Thread
 import numpy as _np
 import GPy as gpy
 
-from ..epics import PV as _PV
-
 from .csdev import Const as _Const, get_biasfb_database as _get_database
 
 _np_poly = _np.polynomial.polynomial
