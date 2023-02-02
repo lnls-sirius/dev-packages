@@ -326,11 +326,11 @@ def get_biasfb_database():
             'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
         'MaxVoltage-SP': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -40, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
         'MaxVoltage-RB': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -40, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
             'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
 
@@ -452,13 +452,13 @@ def get_biasfb_database():
             'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
             'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
         'GPModNoiseVar-RB': {
-            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
-            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
+            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
         'GPModNoiseVar-Mon': {
-            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
-            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
+            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
+            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
         'GPModKernVar-SP': {
             'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
             'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
