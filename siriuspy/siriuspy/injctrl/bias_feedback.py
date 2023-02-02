@@ -364,6 +364,7 @@ class BiasFeedback():
         bias = _np.linspace(self.min_bias_voltage, self.max_bias_voltage, 100)
         injc_lin = _np_poly.polyval(bias, self.linmodel_coeffs_inverse)
         injca_gp, injcs_gp = self._gpmodel_predict(bias)
+        injcs_gp = _np.sqrt(injcs_gp)
         self.run_callbacks('LinModPredBias-Mon', bias)
         self.run_callbacks('LinModPredInjCurrAvg-Mon', injc_lin)
         self.run_callbacks('GPModPredBias-Mon', bias)
