@@ -6,6 +6,7 @@ from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
 
 from .device import Devices as _Devices
 from .pwrsupply import PowerSupply as _PowerSupply
+from .ids import WIG as _WIG
 
 
 class IDFF(_Devices):
@@ -81,7 +82,7 @@ class IDFF(_Devices):
 
 class WIGIDFF(IDFF):
     """."""
-    class DEVICES(WIG.DEVICES):
+    class DEVICES(_WIG.DEVICES):
         """."""
 
     def __init__(self, devname):
