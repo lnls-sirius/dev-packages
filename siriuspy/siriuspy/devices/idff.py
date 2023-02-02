@@ -6,7 +6,7 @@ from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
 
 from .device import Devices as _Devices
 from .pwrsupply import PowerSupply as _PowerSupply
-from .ids import WIG as _WIG
+from .ids import WIG as _WIG, APU as _APU
 
 
 class IDFF(_Devices):
@@ -95,7 +95,8 @@ class APUIDFF(_Devices):
     """Insertion Device APU FeedForward."""
     # NOTE: deprecated! needs revision!
 
-    DEVICES = APU.DEVICES
+    class DEVICES(_APU.DEVICES):
+        """."""
 
     def __init__(self, devname):
         """."""
