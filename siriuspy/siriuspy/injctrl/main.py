@@ -313,6 +313,7 @@ class App(_Callback):
         self.run_callbacks('DiagStatusSI-Mon', self._status['SI'])
         self.run_callbacks('DiagStatus-Mon', self._status['AS'])
         self.run_callbacks('InjStatus-Mon', self._injstatus)
+        self._bias_feedback.init_database()
         self.run_callbacks('Log-Mon', 'Started.')
 
     @property

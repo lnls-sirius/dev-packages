@@ -70,6 +70,12 @@ class BiasFeedback():
             'GPModKernLenScl-SP': self.set_gp_kern_leng,
             }
 
+    def init_database(self):
+        """Set initial PV values."""
+        for key, pvdbase in self.database.items():
+            pvname = key.split(_Const.BIASFB_PROPTY_PREFIX)[1]
+            self.run_callbacks(pvname, pvdbase['value'])
+
     @property
     def use_gpmodel(self):
         """."""
