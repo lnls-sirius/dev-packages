@@ -447,30 +447,30 @@ def get_biasfb_database():
         'LinModPredInjCurrAvg-Mon': {
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
 
-        'GPModNoiseVar-SP': {
-            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
-            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
-        'GPModNoiseVar-RB': {
-            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
-            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
-        'GPModNoiseVar-Mon': {
-            'type': 'float', 'value': 0.05**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.005**2, 'low': 0.005**2, 'lolo': 0.005**2,
-            'hilim': 0.5**2, 'high': 0.5**2, 'hihi': 0.5**2},
-        'GPModKernVar-SP': {
-            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
-            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
-        'GPModKernVar-RB': {
-            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
-            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
-        'GPModKernVar-Mon': {
-            'type': 'float', 'value': 0.4**2, 'unit': 'mA^2', 'prec': 6,
-            'lolim': 0.05**2, 'low': 0.05**2, 'lolo': 0.05**2,
-            'hilim': 1**2, 'high': 1**2, 'hihi': 1**2},
+        'GPModNoiseStd-SP': {
+            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
+            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+        'GPModNoiseStd-RB': {
+            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
+            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+        'GPModNoiseStd-Mon': {
+            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
+            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+        'GPModKernStd-SP': {
+            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
+            'hilim': 1, 'high': 1, 'hihi': 1},
+        'GPModKernStd-RB': {
+            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
+            'hilim': 1, 'high': 1, 'hihi': 1},
+        'GPModKernStd-Mon': {
+            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
+            'hilim': 1, 'high': 1, 'hihi': 1},
         'GPModKernLenScl-SP': {
             'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
             'lolim': 1, 'low': 1, 'lolo': 1,

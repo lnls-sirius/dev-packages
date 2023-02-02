@@ -63,8 +63,8 @@ class BiasFeedback():
             'ModelDataInjCurr-SP': self.set_data_injcurr,
             'LinModAngCoeff-SP': self.set_lin_ang_coeff,
             'LinModOffCoeff-SP': self.set_lin_off_coeff,
-            'GPModNoiseVar-SP': self.set_gp_noise_var,
-            'GPModKernVar-SP': self.set_gp_kern_var,
+            'GPModNoiseStd-SP': self.set_gp_noise_std,
+            'GPModKernStd-SP': self.set_gp_kern_std,
             'GPModKernLenScl-SP': self.set_gp_kern_leng,
             }
 
@@ -219,18 +219,18 @@ class BiasFeedback():
         self.run_callbacks('LinModOffCoeff-RB', value)
         return True
 
-    def set_gp_noise_var(self, value):
+    def set_gp_noise_std(self, value):
         """."""
-        self.gpmodel.likelihood.variance = value
+        self.gpmodel.likelihood.variance = value**2
         self._update_models()
-        self.run_callbacks('GPModNoiseVar-RB', value)
+        self.run_callbacks('GPModNoiseStd-RB', value)
         return True
 
-    def set_gp_kern_var(self, value):
+    def set_gp_kern_std(self, value):
         """."""
-        self.gpmodel.kern.variance = value
+        self.gpmodel.kern.variance = value**2
         self._update_models()
-        self.run_callbacks('GPModKernVar-RB', value)
+        self.run_callbacks('GPModKernStd-RB', value)
         return True
 
     def set_gp_kern_leng(self, value):
@@ -260,17 +260,18 @@ class BiasFeedback():
         y = self.injc_data[:, None].copy()
 
         kernel = gpy.kern.RBF(input_dim=1)
-        db_ = self.database['BiasFBGPModKernVar-RB']
-        kernel.variance.constrain_bounded(db_['low'], db_['high'])
-        kernel.variance = db_['value']
+        db_ = self.database['BiasFBGPModKernStd-RB']
+        kernel.variance.constrain_bounded(db_['low']**2, db_['high']**2)
+        kernel.variance = db_['value']**2
         db_ = self.database['BiasFBGPModKernLenScl-RB']
         kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
         kernel.lengthscale = db_['value']
 
         gpmodel = gpy.models.GPRegression(x, y, kernel)
-        db_ = self.database['BiasFBGPModNoiseVar-RB']
-        gpmodel.likelihood.variance.constrain_bounded(db_['low'], db_['high'])
-        gpmodel.likelihood.variance = db_['value']
+        db_ = self.database['BiasFBGPModNoiseStd-RB']
+        gpmodel.likelihood.variance.constrain_bounded(
+            db_['low']**2, db_['high']**2)
+        gpmodel.likelihood.variance = db_['value']**2
         self.gpmodel = gpmodel
         self._update_predictions()
 
@@ -347,8 +348,9 @@ class BiasFeedback():
 
     def _update_predictions(self):
         gp_ = self.gpmodel
-        self.run_callbacks('GPModNoiseVar-Mon', float(gp_.likelihood.variance))
-        self.run_callbacks('GPModKernVar-Mon', float(gp_.kern.variance))
+        self.run_callbacks(
+            'GPModNoiseStd-Mon', float(gp_.likelihood.variance)**0.5)
+        self.run_callbacks('GPModKernStd-Mon', float(gp_.kern.variance)**0.5)
         self.run_callbacks('GPModKernLenScl-Mon', float(gp_.kern.lengthscale))
         self.run_callbacks('LinModAngCoeff-Mon', self.linmodel_angcoeff)
         self.run_callbacks('LinModOffCoeff-Mon', self.linmodel_offcoeff)
