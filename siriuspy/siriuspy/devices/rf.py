@@ -640,6 +640,12 @@ class ASLLRF(_DeviceNC):
     def phase(self, value):
         self['PL:REF:S'] = self._wrap_phase(value)
 
+    def set_phase(self, value, tol=0.2, timeout=10):
+        """Set RF phase and wait until it gets there."""
+        self.phase = value
+        return self._wait_float(
+            'SL:REF:PHS', value, abs_tol=tol, timeout=timeout)
+
     @property
     def voltage_mon(self):
         """."""
