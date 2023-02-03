@@ -142,22 +142,16 @@ class TLSOFB(_Device):
     @property
     def trajx(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_trajx_idx
         return self.sp_trajx
 
     @property
     def trajy(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_trajy_idx
         return self.sp_trajy
 
     @property
     def sum(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_sum_idx
         return self.sp_sum
 
     @property
@@ -560,6 +554,21 @@ class BOSOFB(TLSOFB):
         """."""
         return self['MTurnIdxSum-Mon'] if self._data.isring else None
 
+    @property
+    def trajx(self):
+        """."""
+        return self.mt_trajx_idx
+
+    @property
+    def trajy(self):
+        """."""
+        return self.mt_trajy_idx
+
+    @property
+    def sum(self):
+        """."""
+        return self.mt_sum_idx
+
     def cmd_mturn_acquire(self):
         """."""
         self['MTurnAcquire-Cmd'] = 1
@@ -847,3 +856,24 @@ class SISOFB(BOSOFB):
         """."""
         return _si_calculate_bump(
             orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy)
+
+    @property
+    def trajx(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajx_idx
+        return self.sp_trajx
+
+    @property
+    def trajy(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajy_idx
+        return self.sp_trajy
+
+    @property
+    def sum(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_sum_idx
+        return self.sp_sum
