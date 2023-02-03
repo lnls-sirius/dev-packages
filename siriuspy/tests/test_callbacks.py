@@ -27,6 +27,7 @@ class TestCallbackClass(TestCase):
 
     public_interface = (
         'add_callback',
+        'has_callbacks',
         'remove_callback',
         'clear_callbacks',
         'run_callbacks',
