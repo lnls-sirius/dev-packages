@@ -340,19 +340,19 @@ def get_biasfb_database():
         'ModelType-Sts': {
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
             'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
-        'ModelMaxNumPts-SP': {
+        'ModelMaxNrPts-SP': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 2, 'low': 2, 'lolo': 2,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,
             'high': _ct.BIASFB_MAX_DATA_SIZE,
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
-        'ModelMaxNumPts-RB': {
+        'ModelMaxNrPts-RB': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 0, 'low': 0, 'lolo': 0,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,
             'high': _ct.BIASFB_MAX_DATA_SIZE,
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
-        'ModelNumPts-Mon': {
+        'ModelNrPts-Mon': {
             'type': 'int', 'value': 20, 'unit': '#',
             'lolim': 2, 'low': 2, 'lolo': 2,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,
@@ -365,19 +365,19 @@ def get_biasfb_database():
         'ModelAutoFitParams-Sts': {
             'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
-        'ModelAutoFitEveryNumPts-SP': {
+        'ModelAutoFitEveryNrPts-SP': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,
             'high': _ct.BIASFB_MAX_DATA_SIZE,
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
-        'ModelAutoFitEveryNumPts-RB': {
+        'ModelAutoFitEveryNrPts-RB': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,
             'high': _ct.BIASFB_MAX_DATA_SIZE,
             'hihi': _ct.BIASFB_MAX_DATA_SIZE},
-        'ModelNumPtsAfterFit-Mon': {
+        'ModelNrPtsAfterFit-Mon': {
             'type': 'int', 'value': 10, 'unit': '#',
             'lolim': 1, 'low': 1, 'lolo': 1,
             'hilim': _ct.BIASFB_MAX_DATA_SIZE,

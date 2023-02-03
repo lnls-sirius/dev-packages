@@ -25,9 +25,9 @@ class BiasFeedback():
         self.max_bias_voltage = db_['BiasFBMaxVoltage-SP']['value']  # [V]
 
         self.model_type = db_['BiasFBModelType-Sel']['value']
-        self.model_max_num_points = db_['BiasFBModelMaxNumPts-SP']['value']
+        self.model_max_num_points = db_['BiasFBModelMaxNrPts-SP']['value']
         self.model_auto_fit_rate = db_[
-            'BiasFBModelAutoFitEveryNumPts-SP']['value']
+            'BiasFBModelAutoFitEveryNrPts-SP']['value']
         self.model_auto_fit = db_['BiasFBModelAutoFitParams-Sel']['value']
         self.model_update_data = db_['BiasFBModelUpdateData-Sel']['value']
 
@@ -54,10 +54,10 @@ class BiasFeedback():
             'MinVoltage-SP': self.set_min_voltage,
             'MaxVoltage-SP': self.set_max_voltage,
             'ModelType-Sel': self.set_model_type,
-            'ModelMaxNumPts-SP': self.set_max_num_pts,
+            'ModelMaxNrPts-SP': self.set_max_num_pts,
             'ModelFitParamsNow-Cmd': self.cmd_fit_params,
             'ModelAutoFitParams-Sel': self.set_auto_fit,
-            'ModelAutoFitEveryNumPts-SP': self.set_auto_fit_rate,
+            'ModelAutoFitEveryNrPts-SP': self.set_auto_fit_rate,
             'ModelUpdateData-Sel': self.set_update_data,
             'ModelDataBias-SP': self.set_data_bias,
             'ModelDataInjCurr-SP': self.set_data_injcurr,
@@ -151,7 +151,7 @@ class BiasFeedback():
         """."""
         self.model_max_num_points = int(value)
         self._update_models()
-        self.run_callbacks('ModelMaxNumPts-RB', value)
+        self.run_callbacks('ModelMaxNrPts-RB', value)
         return True
 
     def cmd_fit_params(self, value):
@@ -168,7 +168,7 @@ class BiasFeedback():
     def set_auto_fit_rate(self, value):
         """."""
         self.model_auto_fit_rate = int(value)
-        self.run_callbacks('ModelAutoFitEveryNumPts-RB', value)
+        self.run_callbacks('ModelAutoFitEveryNrPts-RB', value)
         return True
 
     def set_update_data(self, value):
@@ -343,7 +343,7 @@ class BiasFeedback():
             self.gpmodel.optimize_restarts(num_restarts=2, verbose=False)
             self._npts_after_fit = 0
 
-        self.run_callbacks('ModelNumPtsAfterFit-Mon', self._npts_after_fit)
+        self.run_callbacks('ModelNrPtsAfterFit-Mon', self._npts_after_fit)
         self._update_predictions()
 
     def _update_predictions(self):
@@ -357,7 +357,7 @@ class BiasFeedback():
 
         self.run_callbacks('ModelDataBias-Mon', self.gpmodel.X.ravel())
         self.run_callbacks('ModelDataInjCurr-Mon', self.gpmodel.Y.ravel())
-        self.run_callbacks('ModelNumPts-Mon', self.gpmodel.Y.size)
+        self.run_callbacks('ModelNrPts-Mon', self.gpmodel.Y.size)
 
         injcurr = _np.linspace(0, 1, 100)
         bias_lin = self._get_bias_voltage_linear_model(injcurr)
