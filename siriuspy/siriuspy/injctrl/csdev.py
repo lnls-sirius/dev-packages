@@ -207,7 +207,8 @@ def get_injctrl_propty_database():
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
 
         'TopUpState-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON, 'unit': 'Off_On'},
+            'type': 'enum', 'value': _ct.OffOn.Off,
+            'enums': _et.OFF_ON, 'unit': 'Off_On'},
         'TopUpState-Sts': {
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
             'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},

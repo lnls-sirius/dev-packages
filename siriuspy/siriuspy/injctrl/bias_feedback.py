@@ -3,11 +3,10 @@ import logging as _log
 
 from epics.ca import CAThread as _Thread
 import numpy as _np
+from numpy.polynomial import polynomial as _np_poly
 import GPy as gpy
 
 from .csdev import Const as _Const, get_biasfb_database as _get_database
-
-_np_poly = _np.polynomial.polynomial
 
 
 class BiasFeedback():
@@ -31,8 +30,10 @@ class BiasFeedback():
         self.model_auto_fit = db_['BiasFBModelAutoFitParams-Sel']['value']
         self.model_update_data = db_['BiasFBModelUpdateData-Sel']['value']
 
-        self.linmodel_angcoeff = db_['BiasFBLinModAngCoeff-SP']['value']  # [V/mA]
-        self.linmodel_offcoeff = db_['BiasFBLinModOffCoeff-SP']['value']  # [V]
+        self.linmodel_angcoeff = db_[
+            'BiasFBLinModAngCoeff-SP']['value']  # [V/mA]
+        self.linmodel_offcoeff = db_[
+            'BiasFBLinModOffCoeff-SP']['value']  # [V]
 
         self._npts_after_fit = 0
 
@@ -184,7 +185,7 @@ class BiasFeedback():
         if self.bias_data.size > max_:
             msg = f'WARN: Bias data is too big (>{max_:d}). '
             msg += 'Trimming first points.'
-            _log.warn(msg)
+            _log.warning(msg)
             self.update_log(msg)
             self.bias_data = self.bias_data[-max_:]
         self._update_models()
@@ -198,7 +199,7 @@ class BiasFeedback():
         if self.injc_data.size > max_:
             msg = f'WARN: InjCurr data is too big (>{max_:d}). '
             msg += 'Trimming first points.'
-            _log.warn(msg)
+            _log.warning(msg)
             self.update_log(msg)
             self.injc_data = self.injc_data[-max_:]
         self._update_models()
@@ -288,7 +289,7 @@ class BiasFeedback():
             if cnts[idx] >= max(2, self.bias_data.size // 5):
                 msg = 'WARN: Too many data with this abscissa. '
                 msg += 'Discarding point.'
-                _log.warn(msg)
+                _log.warning(msg)
                 self.update_log(msg)
                 return
         self._npts_after_fit += 1
@@ -309,7 +310,7 @@ class BiasFeedback():
             msg = 'WARN: Arrays with incompatible sizes. '
             msg += 'Trimming first points of '
             msg += 'bias.' if x.size > y.size else 'injcurr.'
-            _log.warn(msg)
+            _log.warning(msg)
             self.update_log(msg)
             siz = min(x.size, y.size)
             x = x[-siz:]
