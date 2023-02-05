@@ -31,28 +31,37 @@ class IDSearch:
         'SI-08SB:ID-APU22': dict(),
         'SI-09SA:ID-APU22': dict(),
         'SI-10SB:ID-EPU50': {
-            'k-parameter': 'SI-10SB:ID-EPU:Gap-Mon',
+            'polarizations': ('horizontal', 'vertical', 'circular', ),
+            'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-10SB:PS-CV-1:Current-SP',
-            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
             'cv2': 'SI-10SB:PS-CV-2:Current-SP',
+            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-11SP:ID-APU58': dict(),
         'SI-14SB:ID-WIG180': {
-            'k-parameter': 'SI-14SB:ID-WIG180:Gap-Mon',
+            'polarizations': ('horizontal', ),
+            'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
             'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
         },
     }
 
-    _idname_2_polarizations = {
-        'SI-14SB:ID-WIG180':
-            ('horizontal', ),
-        'SI-10SB:ID-EPU50':
-            ('horizontal', 'vertical', 'circular', ),
-    }
+    @staticmethod
+    def get_idnames(filters=None):
+        """Return a sorted and filtered list of all ID names."""
+        idnames_list = list(IDSearch._idname2beamline.keys())
+        idnames = _Filter.process_filters(idnames_list, filters=filters)
+        return sorted(idnames)
+
+    @staticmethod
+    def get_beamlines(filters=None):
+        """Return a sorted and filtered list of all ID beamlines."""
+        beamlines_list = list(IDSearch._idname2beamline.values())
+        beamlines = _Filter.process_filters(beamlines_list, filters=filters)
+        return sorted(beamlines)
 
     @staticmethod
     def conv_idname_2_beamline(idname):
@@ -79,33 +88,36 @@ class IDSearch:
         return IDSearch._beamline2idname.copy()
 
     @staticmethod
-    def get_idnames(filters=None):
-        """Return a sorted and filtered list of all ID names."""
-        idnames_list = list(IDSearch._idname2beamline.keys())
-        idnames = _Filter.process_filters(idnames_list, filters=filters)
-        return sorted(idnames)
-
-    @staticmethod
     def conv_idname_2_idff(idname):
-        """Return the ID ffwd dictionary for a given ID name."""
+        """Return the IDFF dictionary for a given ID name."""
         return dict(IDSearch._idname_2_idff[idname])
 
     @staticmethod
-    def conv_idnames_2_idff_ch(idname):
+    def conv_idname_2_kparameter_propty(idname):
+        """."""
+        idff = IDSearch.conv_idname_2_idff(idname)
+        pvname = _SiriusPVName(idff['kparameter'])
+        return pvname.propty
+
+    @staticmethod
+    def conv_idname_2_idff_chnames(idname):
+        """."""
         return IDSearch._get_devname_from_idff(idname, ('ch1', 'ch2'))
-    
+
     @staticmethod
-    def conv_idnames_2_idff_cv(idname):
+    def conv_idname_2_idff_cvnames(idname):
+        """."""
         return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
 
     @staticmethod
-    def conv_idnames_2_idff_qs(idname):
-        return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+    def conv_idname_2_idff_qsnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
 
     @staticmethod
-    def conv_idnames_2_polarizations(idname):
+    def conv_idname_2_polarizations(idname):
         """Return ID light polarizations."""
-        polarizations = IDSearch._idname_2_polarizations(idname)
+        polarizations = IDSearch._idname_2_idff[idname]['polarizations']
         return polarizations
 
     # --- private ----

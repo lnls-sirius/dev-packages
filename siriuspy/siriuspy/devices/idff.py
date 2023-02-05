@@ -1,10 +1,11 @@
-"""Define Insertion Devices."""
+"""Insertion Devices Feedforward Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
 from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
+from ..idff.config import IDFFConfig as _IDFFConfig
 
-from .device import Devices as _Devices
+from .device import Device as _Device, Devices as _Devices
 from .pwrsupply import PowerSupply as _PowerSupply
 from .ids import WIG as _WIG, APU as _APU
 
@@ -33,51 +34,98 @@ class IDFF(_Devices):
         if devname not in IDFF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        # get correctors names
-        self._chnames = _IDSearch.conv_idname_2_idff_ch(devname)
-        self._cvnames = _IDSearch.conv_idname_2_idff_cv(devname)
-        self._qsnames = _IDSearch.conv_idname_2_idff_qs(devname)
+        self._idffconfig = _IDFFConfig()
 
-        # get ffwd
-        self._ffwd = None
+        self._kparametername = \
+            _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        devices = list()
-        devices.append([_PowerSupply(devname=dev) for dev in self._chnames])
-        devices.append([_PowerSupply(devname=dev) for dev in self._cvnames])
-        devices.append([_PowerSupply(devname=dev) for dev in self._qsnames])
+        self._devkp, self._devsch, self._devscv, self._devsqs = \
+            self._create_devices(devname)
 
         # call base class constructor
+        devices = [self._devkp, ]
+        devices += self._devsch
+        devices += self._devscv
+        devices += self._devsqs
         super().__init__(devname=devname, devices=devices)
 
     @property
     def chnames(self):
         """Return CH corrector power supply names."""
-        return self._chnames
+        return _IDSearch.conv_idname_2_idff_chnames(self.devname)
 
     @property
     def cvnames(self):
         """Return CV corrector power supply names."""
-        return self._cvnames
+        return _IDSearch.conv_idname_2_idff_cvnames(self.devname)
 
     @property
     def qsnames(self):
         """Return QS corrector power supply names."""
-        return self._qsnames
+        return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
-    def id_polarizations(self):
-        """Return list of possible ligh polarizations for the ID."""
-        return IDFF.conv_idnames_2_polarizations[self.devname]
+    def kparametername(self):
+        """Return corresponding to ID kparameter."""
+        return self._kparametername
 
-    def get_currents(self, polarization, config):
-        """Return correctors currents for a particular ID config.
+    @property
+    def polarizations(self):
+        """Return list of possible light polarizations for the ID."""
+        return _IDSearch.conv_idname_2_polarizations(self.devname)
+
+    @property
+    def kparameter(self):
+        """Return kparameter value."""
+        return self._devkp[self._kparametername]
+
+    @property
+    def idffconfig(self):
+        """."""
+        return self._idffconfig
+
+    def load_idffconfig(self, name):
+        """Load IDFF configuration"""
+        self._idffconfig.load_config(name=name)
+        if not self._config_is_ok():
+            raise ValueError('Config is incompatible with ID config type.')
+
+    @property
+    def kparameter_pvname(self):
+        """Return pvname corresponding to ID kparameter pvname."""
+        return self._idffconfig.kparameter_pvname
+
+
+    def get_correctors_setpoints(self, polarization):
+        """Return correctors setpoints for a particular ID config.
 
         The parameter 'config' can be a gap or phase value, depending on the
         insertion device.
         """
-        # NOTE: not implemented yet
-        currents = dict()
-        return currents
+        if not self._idffconfig:
+            ValueError('IDFFConfig is not loaded!')
+
+        if polarization not in self.idconfig. polarizations:
+            raise ValueError('Polarization is not compatible with ID.')
+        kppvname = self.kparameter_pvname
+        kparameter = self[kppvname]
+        setpoints = self.idffconfig.interpolate_setpoints(
+            polarization, kparameter)
+        return kparameter, setpoints
+
+    def _create_devices(self, devname):
+        kparm_auto_mon = False
+        devkp = _Device(devname=devname,
+            properties=(self._kparametername, ), auto_mon=kparm_auto_mon)
+        devsch = [_PowerSupply(devname=dev) for dev in self.chnames]
+        devscv = [_PowerSupply(devname=dev) for dev in self.cvnames]
+        devsqs = [_PowerSupply(devname=dev) for dev in self.qsnames]
+
+        return devkp, devsch, devscv, devsqs
+
+    def _config_is_ok(self):
+        # TODO: to be implemented
+        return True
 
 
 class WIGIDFF(IDFF):
@@ -89,6 +137,11 @@ class WIGIDFF(IDFF):
         """."""
         # call base class constructor
         super().__init__(devname)
+
+    @property
+    def gap_mon(self):
+        """."""
+        return self.kparameter
 
 
 class APUIDFF(_Devices):
