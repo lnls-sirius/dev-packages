@@ -205,6 +205,21 @@ class InjCtrl(_Device):
         """PU mode command status (Idle or Running)."""
         return self['PUModeCmdSts-Mon']
 
+    def cmd_change_pumode_to_onaxis(self, timeout=10):
+        """Change PUMode to On-Axis injection."""
+        self.pumode = self.PUMode.OnAxis
+        self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
+
+    def cmd_change_pumode_to_accumulation(self, timeout=10):
+        """Change PUMode to accumulation."""
+        self.pumode = self.PUMode.Accumulation
+        self._wait('PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
+
+    def cmd_change_pumode_to_optimization(self, timeout=10):
+        """Change PUMode to optimization."""
+        self.pumode = self.PUMode.Optimization
+        self._wait('PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
+
     @property
     def target_current(self):
         """Target current value."""

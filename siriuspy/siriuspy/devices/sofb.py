@@ -22,6 +22,7 @@ class SOFB(_Device):
         ALL = (TB, BO, TS, SI)
 
     def __new__(cls, devname):
+        """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
@@ -40,7 +41,6 @@ class TLSOFB(_Device):
     """SOFB Device."""
 
     _properties = (
-        'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
         'RespMat-SP', 'RespMat-RB', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -64,7 +64,6 @@ class TLSOFB(_Device):
         'TrigNrSamplesPre-RB',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
         'MeasRespMat-Cmd', 'MeasRespMat-Mon',
         'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
@@ -94,21 +93,6 @@ class TLSOFB(_Device):
     def data(self):
         """."""
         return self._data
-
-    @property
-    def opmode(self):
-        """."""
-        return self['SOFBMode-Sts']
-
-    @opmode.setter
-    def opmode(self, value):
-        self._enum_setter(
-            'SOFBMode-Sel', value, self._data.SOFBMode)
-
-    @property
-    def opmode_str(self):
-        """."""
-        return self._data.SOFBMode._fields[self['SOFBMode-Sts']]
 
     @property
     def trigchannel(self):
@@ -158,22 +142,16 @@ class TLSOFB(_Device):
     @property
     def trajx(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_trajx_idx
         return self.sp_trajx
 
     @property
     def trajy(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_trajy_idx
         return self.sp_trajy
 
     @property
     def sum(self):
         """."""
-        if self._data.isring and self.opmode == self._data.SOFBMode.MultiTurn:
-            return self.mt_sum_idx
         return self.sp_sum
 
     @property
@@ -406,26 +384,6 @@ class TLSOFB(_Device):
         self['MeasRespMat-Cmd'] = 2
         return True
 
-    def cmd_change_opmode_to_multiturn(self, timeout=10):
-        """."""
-        mode = self._data.SOFBMode.MultiTurn
-        self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
-        if not ret:
-            return False
-        _time.sleep(1)  # Status PV updates at 2Hz
-        return self.wait_orb_status_ok(timeout=timeout)
-
-    def cmd_change_opmode_to_sloworb(self, timeout=10):
-        """."""
-        mode = self._data.SOFBMode.SlowOrb
-        self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
-        if not ret:
-            return False
-        _time.sleep(0.6)  # Status PV updates at 2Hz
-        return self.wait_orb_status_ok(timeout=timeout)
-
     def cmd_trigacq_start(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Start'
@@ -498,11 +456,6 @@ class TLSOFB(_Device):
     def measrespmat_wait(self, value):
         self['MeasRespMatWait-SP'] = value
 
-    @property
-    def autocorrsts(self):
-        """."""
-        return self['LoopState-Sts']
-
     def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
         self.cmd_turn_off_autocorr()
@@ -523,24 +476,6 @@ class TLSOFB(_Device):
             self.cmd_reset()
             self.wait_buffer()
         return i, resx, resy
-
-    def cmd_turn_on_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or self._default_timeout
-        if self.autocorrsts == self._data.LoopState.Closed:
-            return True
-        self['LoopState-Sel'] = self._data.LoopState.Closed
-        return self._wait(
-            'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout)
-
-    def cmd_turn_off_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or self._default_timeout
-        if self.autocorrsts == self._data.LoopState.Open:
-            return True
-        self['LoopState-Sel'] = self._data.LoopState.Open
-        return self._wait(
-            'LoopState-Sts', self._data.LoopState.Open, timeout=timeout)
 
     def wait_buffer(self, timeout=None):
         """."""
@@ -619,6 +554,21 @@ class BOSOFB(TLSOFB):
         """."""
         return self['MTurnIdxSum-Mon'] if self._data.isring else None
 
+    @property
+    def trajx(self):
+        """."""
+        return self.mt_trajx_idx
+
+    @property
+    def trajy(self):
+        """."""
+        return self.mt_trajy_idx
+
+    @property
+    def sum(self):
+        """."""
+        return self.mt_sum_idx
+
     def cmd_mturn_acquire(self):
         """."""
         self['MTurnAcquire-Cmd'] = 1
@@ -629,6 +579,7 @@ class SISOFB(BOSOFB):
     """SOFB Device."""
 
     _properties = BOSOFB._properties + (
+        'SOFBMode-Sel', 'SOFBMode-Sts',
         'KickRF-Mon',
         'DeltaKickRF-Mon', 'DeltaKickRF-SP',
         'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
@@ -636,6 +587,7 @@ class SISOFB(BOSOFB):
         'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
         'RFEnbl-Sel', 'RFEnbl-Sts',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'LoopState-Sts', 'LoopState-Sel',
         'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
         'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
         'DriveAmplitude-SP', 'DriveAmplitude-RB',
@@ -646,6 +598,41 @@ class SISOFB(BOSOFB):
         'DriveState-Sel', 'DriveState-Sts',
         'DriveData-Mon',
         )
+
+    @property
+    def opmode(self):
+        """."""
+        return self['SOFBMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        self._enum_setter(
+            'SOFBMode-Sel', value, self._data.SOFBMode)
+
+    @property
+    def opmode_str(self):
+        """."""
+        return self._data.SOFBMode._fields[self['SOFBMode-Sts']]
+
+    def cmd_change_opmode_to_multiturn(self, timeout=10):
+        """."""
+        mode = self._data.SOFBMode.MultiTurn
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(1)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_change_opmode_to_sloworb(self, timeout=10):
+        """."""
+        mode = self._data.SOFBMode.SlowOrb
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
 
     @property
     def drivests(self):
@@ -818,6 +805,29 @@ class SISOFB(BOSOFB):
     def measrespmat_kickrf(self, value):
         self['MeasRespMatKickRF-SP'] = value
 
+    @property
+    def autocorrsts(self):
+        """."""
+        return self['LoopState-Sts']
+
+    def cmd_turn_on_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or self._default_timeout
+        if self.autocorrsts == self._data.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = self._data.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or self._default_timeout
+        if self.autocorrsts == self._data.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = self._data.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', self._data.LoopState.Open, timeout=timeout)
+
     def cmd_turn_on_drive(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
@@ -846,3 +856,24 @@ class SISOFB(BOSOFB):
         """."""
         return _si_calculate_bump(
             orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy)
+
+    @property
+    def trajx(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajx_idx
+        return self.sp_trajx
+
+    @property
+    def trajy(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajy_idx
+        return self.sp_trajy
+
+    @property
+    def sum(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_sum_idx
+        return self.sp_sum
