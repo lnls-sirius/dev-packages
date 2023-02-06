@@ -13,8 +13,7 @@ class LIEnergy(_Device):
         ALL = (LI, )
 
     _properties = (
-        'Dispersion-SP', 'Angle-SP', 'Spectrometer-SP',
-        'Dispersion-RB', 'Angle-RB', 'Spectrometer-RB',
+        'Dispersion-SP', 'Dispersion-RB',
         'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
         'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
 
@@ -35,15 +34,6 @@ class LIEnergy(_Device):
     @dispersion.setter
     def dispersion(self, val):
         self['Dispersion-SP'] = val
-
-    @property
-    def angle(self):
-        """."""
-        return self['Angle-RB']
-
-    @angle.setter
-    def angle(self, val):
-        self['Angle-SP'] = val
 
     @property
     def spectrometer(self):
@@ -74,10 +64,12 @@ class LIEnergy(_Device):
         """."""
         return self['MeasureCtrl-Sts']
 
-    def cmd_turn_on_measurement(self):
+    def cmd_turn_on_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 1
+        return self._wait('MeasureCtrl-Sts', 1, timeout=timeout)
 
-    def cmd_turn_off_measurement(self):
+    def cmd_turn_off_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 0
+        return self._wait('MeasureCtrl-Sts', 0, timeout=timeout)
