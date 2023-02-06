@@ -1080,7 +1080,8 @@ class HLFOFB(_Device):
         'LoopMaxOrbDistortionEnbl-Sel', 'LoopMaxOrbDistortionEnbl-Sts',
         'LoopPacketLossDetecEnbl-Sel', 'LoopPacketLossDetecEnbl-Sts',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
-        'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
+        'CorrSetPwrStateOn-Cmd', 'CorrSetPwrStateOff-Cmd',
+        'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
@@ -1209,7 +1210,12 @@ class HLFOFB(_Device):
 
     def cmd_corr_set_pwrstate_on(self):
         """Command to set all corrector pwrstate to on."""
-        self['CorrSetCurrZero-Cmd'] = 1
+        self['CorrSetPwrStateOn-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_pwrstate_off(self):
+        """Command to set all corrector pwrstate to off."""
+        self['CorrSetPwrStateOff-Cmd'] = 1
         return True
 
     def cmd_corr_set_opmode_manual(self):

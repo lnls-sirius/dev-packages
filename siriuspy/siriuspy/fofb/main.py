@@ -46,6 +46,7 @@ class App(_Callback):
         self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
         self._corr_confall_count = 0
         self._corr_setpwrstateon_count = 0
+        self._corr_setpwrstateoff_count = 0
         self._corr_setopmodemanual_count = 0
         self._corr_setaccfreezeenbl_count = 0
         self._corr_setaccfreezedsbl_count = 0
@@ -160,6 +161,7 @@ class App(_Callback):
             'LoopPacketLossDetecEnbl-Sel': self.set_loop_packloss_detec_enbl,
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
+            'CorrSetPwrStateOff-Cmd': self.cmd_corr_pwrstate_off,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -603,6 +605,17 @@ class App(_Callback):
         if not self._check_corr_connection():
             return False
 
+        # saturation limits
+        self._update_log('Setting corrector saturation limits...')
+        chn, chl = self._const.ch_names, self._ch_maxacccurr
+        cvn, cvl = self._const.cv_names, self._cv_maxacccurr
+        self._corrs_dev.set_fofbacc_satmax(chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmin(-chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmax(cvl, psnames=cvn)
+        self._corrs_dev.set_fofbacc_satmin(-cvl, psnames=cvn)
+        self._update_log('...done!')
+        # pwrstate
+        self._check_set_corrs_pwrstate()
         # opmode
         self._check_set_corrs_opmode()
         # fofbacc_freeze
@@ -629,6 +642,21 @@ class App(_Callback):
         self._corr_setpwrstateon_count += 1
         self.run_callbacks(
             'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
+        return False
+
+    def cmd_corr_pwrstate_off(self, _):
+        """Set all corrector pwrstate to off."""
+        self._update_log('Received set corrector pwrstate to off...')
+        if not self._check_corr_connection():
+            return False
+
+        self._update_log('Setting all corrector pwrstate to off...')
+        self._corrs_dev.set_pwrstate(self._const.OffOn.Off)
+        self._update_log('...done!')
+
+        self._corr_setpwrstateoff_count += 1
+        self.run_callbacks(
+            'CorrSetPwrStateOff-Cmd', self._corr_setpwrstateoff_count)
         return False
 
     def cmd_corr_opmode_manual(self, _):
@@ -1429,6 +1457,7 @@ class App(_Callback):
 
             if i < self._const.nr_ch + self._const.nr_cv:
                 dev = self._corrs_dev[i]
+                conv = self._corrs_dev.psconvs[i]
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
                     i+1, sum_enbld, dev.devname))
 
@@ -1436,16 +1465,19 @@ class App(_Callback):
                 delta = self._meas_respmat_kick[corrtype]
 
                 orig_kick = dev.strength
+                orig_curr = dev.current
 
-                dev.strength = orig_kick + delta/2
+                kickp = orig_kick + delta/2
+                dev.current = conv.conv_strength_2_current(kickp)
                 _time.sleep(self._meas_respmat_wait)
                 orbp = self._sofb_get_orbit()
 
-                dev.strength = orig_kick - delta/2
+                kickn = orig_kick - delta/2
+                dev.current = conv.conv_strength_2_current(kickn)
                 _time.sleep(self._meas_respmat_wait)
                 orbn = self._sofb_get_orbit()
 
-                dev.strength = orig_kick
+                dev.current = orig_curr
             elif i < self._const.nr_corrs:
                 dev = self.rf_dev
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
@@ -1536,6 +1568,27 @@ class App(_Callback):
             return True
         self._update_log('ERR:Correctors not connected... aborted.')
         return False
+
+    def _check_set_corrs_pwrstate(self):
+        """Check and configure pwrstate.
+
+        Control only correctors that are in the enable list.
+        """
+        self._update_log('Checking corrector pwrstate...')
+        pwrstate = _Const.OffOn.On
+        is_ok = 1 * (self._corrs_dev.pwrstate == pwrstate)
+        idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
+        if idcs.size:
+            self._update_log('Configuring corrector pwrstate...')
+            self._corrs_dev.set_pwrstate(pwrstate, psindices=idcs)
+            if self._corrs_dev.check_pwrstate(
+                    pwrstate, psindices=idcs, timeout=5):
+                self._update_log('...done!')
+                return True
+            self._update_log('ERR:Failed to set corrector pwrstate.')
+            return False
+        self._update_log('All ok.')
+        return True
 
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
