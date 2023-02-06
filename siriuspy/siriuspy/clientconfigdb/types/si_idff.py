@@ -20,14 +20,14 @@ def get_dict():
 
 # IDFF corrector table
 #
-# 1st-level keys: 
-#   - 'pvnames': its value is a dict with 
+# 1st-level keys:
+#   - 'pvnames': its value is a dict with
 #       ('kparameter', 'ch1', 'ch2', ... 'qs1', 'qs2') as
 #       keys and corresponding pvname values for
 #       ID k-variation parameter readout and correctors setpoints.
 #   - 'polarizations': its value is a dict with
 #       ('horizontal', 'vertical', ...) light polarization configs of the ID
-#       as keys and dicts with kparameter and correctors 
+#       as keys and dicts with kparameter and correctors
 #       IDFF tables as lists.
 
 _template_dict = {

@@ -131,4 +131,3 @@ class IDSearch:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs
-

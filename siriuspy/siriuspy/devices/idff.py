@@ -11,9 +11,11 @@ from .ids import WIG as _WIG, APU as _APU
 
 
 class IDFF(_Devices):
-    """."""
+    """Insertion Device Feedforward Device."""
+
     class DEVICES:
         """."""
+
         APU22_06SB = 'SI-06SB:ID-APU22'
         APU22_07SP = 'SI-07SP:ID-APU22'
         APU22_08SB = 'SI-08SB:ID-APU22'
@@ -34,6 +36,7 @@ class IDFF(_Devices):
         if devname not in IDFF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
+        self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
         self._kparametername = \
@@ -84,19 +87,18 @@ class IDFF(_Devices):
         """."""
         return self._idffconfig
 
-    def load_idffconfig(self, name):
-        """Load IDFF configuration"""
+    def load_config(self, name):
+        """Load IDFF configuration."""
         self._idffconfig.load_config(name=name)
         if not self._config_is_ok():
-            raise ValueError('Config is incompatible with ID config type.')
+            raise ValueError('Config is incompatible with ID configdb type.')
 
     @property
     def kparameter_pvname(self):
         """Return pvname corresponding to ID kparameter pvname."""
         return self._idffconfig.kparameter_pvname
 
-
-    def get_correctors_setpoints(self, polarization):
+    def interpolate_setpoints(self, polarization):
         """Return correctors setpoints for a particular ID config.
 
         The parameter 'config' can be a gap or phase value, depending on the
@@ -105,17 +107,29 @@ class IDFF(_Devices):
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
-        if polarization not in self.idconfig. polarizations:
+        if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
-        kppvname = self.kparameter_pvname
-        kparameter = self[kppvname]
+        kparameter = self.kparameter
         setpoints = self.idffconfig.interpolate_setpoints(
             polarization, kparameter)
-        return kparameter, setpoints
+        return polarization, setpoints
+
+    def implement_setpoints(self, polarization, setpoints=None):
+        """Implement setpoints in correctors."""
+        if not setpoints:
+            _, setpoints = self.interpolate_setpoints(polarization)
+        corrs = self._devsch + self._devscv
+        for pvname, value in setpoints.items():
+            for dev in corrs:
+                if dev.devname in pvname:
+                    *_, propty = pvname.split(':')
+                    dev[propty] = value
+                    break
 
     def _create_devices(self, devname):
         kparm_auto_mon = False
-        devkp = _Device(devname=devname,
+        devkp = _Device(
+            devname=devname,
             properties=(self._kparametername, ), auto_mon=kparm_auto_mon)
         devsch = [_PowerSupply(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupply(devname=dev) for dev in self.cvnames]
@@ -130,6 +144,7 @@ class IDFF(_Devices):
 
 class WIGIDFF(IDFF):
     """."""
+
     class DEVICES(_WIG.DEVICES):
         """."""
 
@@ -146,6 +161,7 @@ class WIGIDFF(IDFF):
 
 class APUIDFF(_Devices):
     """Insertion Device APU FeedForward."""
+
     # NOTE: deprecated! needs revision!
 
     class DEVICES(_APU.DEVICES):
@@ -154,7 +170,7 @@ class APUIDFF(_Devices):
     def __init__(self, devname):
         """."""
         # create APU device
-        self._apu = APU(devname)
+        self._apu = _APU(devname)
 
         # create IDCorrectors
         # self._idcorrs = IDCorrectors(devname)
@@ -252,16 +268,16 @@ class APUIDFF(_Devices):
         currents = self.ffwdcalc.conv_phase_2_orbcorr_currents(phase)
         return currents
 
-    def ffwd_update_orbitcorr(self, phase=None):
-        """Update orbit feedforward."""
-        currents_ffwd = self.ffwd_get_orbitcorr_current(phase)
-        curr_bump_ch, curr_bump_cv = self.bump_get_orbitcorr_current()
-        self.correctors.orbitcorr_current = currents_ffwd + currents_bump
+    # def ffwd_update_orbitcorr(self, phase=None):
+    #     """Update orbit feedforward."""
+    #     currents_ffwd = self.ffwd_get_orbitcorr_current(phase)
+    #     curr_bump_ch, curr_bump_cv = self.bump_get_orbitcorr_current()
+    #     self.correctors.orbitcorr_current = currents_ffwd + currents_bump
 
-    def ffwd_update(self, phase=None):
-        """Update feedforward with bump."""
-        # 305 µs ± 45.5 µs per loop
-        self.ffwd_update_orbitcorr(phase)
+    # def ffwd_update(self, phase=None):
+    #     """Update feedforward with bump."""
+    #     # 305 µs ± 45.5 µs per loop
+    #     self.ffwd_update_orbitcorr(phase)
 
     # --- private methods ---
 

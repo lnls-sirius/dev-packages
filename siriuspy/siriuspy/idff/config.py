@@ -1,24 +1,27 @@
 """Insertion Device Feedforward Configuration."""
 
+import numpy as _np
+
 from ..search import IDSearch as _IDSearch
 from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 
 
 class IDFFConfig:
     """."""
+
     CONFIGDB_TYPE = 'si_idff'
 
     def __init__(self, name=None):
-        """."""    
+        """."""
         self._name = None
         self._configdbdoc = None
         self._value = None
         if name:
-            self.load_config(name=self._name)
+            self.load_config(name=name)
 
     @property
     def name(self):
-        """Configuration name."""
+        """Return configuration name."""
         return self._name
 
     @name.setter
@@ -31,11 +34,11 @@ class IDFFConfig:
         """Return IR kparameter pvname."""
         config = self._value
         if config:
-            pvnames = config['kparameter']
-            kparm = pvnames.get('kparameter')
+            # print(config)
+            kparm = config['pvnames']['kparameter']
+            return kparm
         else:
             raise ValueError('Configuration not loaded!')
-        return kparm
 
     @property
     def ch_pvnames(self):
@@ -56,7 +59,7 @@ class IDFFConfig:
     def polarizations(self):
         """Return list of light polarizations in the IDFF config."""
         if self._value:
-            return list(self._values['polarizations'].keys())
+            return list(self._value['polarizations'].keys())
         else:
             raise ValueError('Configuration not loaded!')
 
@@ -77,21 +80,33 @@ class IDFFConfig:
         The parameter 'kparameter' can be a gap or phase value,
         depending on the insertion device.
         """
-        # NOTE: not implemented yet
-        setpoints = dict()
-        return setpoints
+        # NOTE: finish implementation
+        if self._value:
+            setpoints = dict()
+            idff = self._value['polarizations'][polarization]
+            kparameters = idff['kparameter']
+            # interpolate
+            setpoints = dict()
+            for key, value in idff.items():
+                if key != 'kparameter':
+                    setpoint = _np.interp(kparameter, kparameters, value)
+                    corr_pvname = self._value['pvnames'][key]
+                    setpoints[corr_pvname] = setpoint
+            return setpoints
+        else:
+            raise ValueError('Configuration not loaded!')
 
     @staticmethod
     def create_config(idname):
         """Create a template configuration for a given ID type."""
         idff = _IDSearch.conv_idname_2_idff(idname)
-        
+
         # build value for pvnames key
         pvnames = dict()
         for key, corr_pvname in idff.items():
             if key != 'polarizations':
                 pvnames[key] = corr_pvname
-        
+
         # build value for polarizations key
         table = dict(kparameter=[0, ])
         for pvname in pvnames:
@@ -99,7 +114,7 @@ class IDFFConfig:
         polarizations = dict()
         for polarization in idff['polarizations']:
             polarizations[polarization] = dict(table)
-        
+
         template_config = dict(pvnames=pvnames, polarizations=polarizations)
         return template_config
 
@@ -129,7 +144,3 @@ class IDFFConfig:
             return corr1, corr2
         else:
             raise ValueError('Configuration not loaded!')
-        
-
-    
-
