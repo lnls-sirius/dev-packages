@@ -146,18 +146,6 @@ class WIGIDFF(IDFF):
         return self.kparameter
 
 
-class WIGIDFF(IDFF):
-    """Wiggler Feedforward."""
-
-    class DEVICES(_WIG.DEVICES):
-        """."""
-
-    @property
-    def gap_mon(self):
-        """."""
-        return self.kparameter
-
-
 class EPUIDFF(IDFF):
     """EPU Feedforward."""
 
