@@ -28,6 +28,9 @@ class InjCtrl(_Device):
         'FilaOpCurr-SP', 'FilaOpCurr-RB', 'FilaOpCurrCmdSts-Mon',
         'HVOpVolt-SP', 'HVOpVolt-RB', 'HVOpVoltCmdSts-Mon',
         'PUMode-Sel', 'PUMode-Sts', 'PUMode-Mon', 'PUModeCmdSts-Mon',
+        'PUModeDeltaPosAng-SP', 'PUModeDeltaPosAng-RB',
+        'PUModeDpKckrDlyRef-SP', 'PUModeDpKckrDlyRef-RB',
+        'PUModeDpKckrKick-SP', 'PUModeDpKckrKick-RB',
         'TargetCurrent-SP', 'TargetCurrent-RB',
         'BucketListStart-SP', 'BucketListStart-RB',
         'BucketListStop-SP', 'BucketListStop-RB',
@@ -180,6 +183,33 @@ class InjCtrl(_Device):
     def hvolt_cmdsts(self):
         """EGun high voltage setpoint command status (Idle or Running)."""
         return self['HVOpVoltCmdSts-Mon']
+
+    @property
+    def pumode_delta_posang(self):
+        """."""
+        return self['PUModeDeltaPosAng-RB']
+
+    @pumode_delta_posang.setter
+    def pumode_delta_posang(self, value):
+        self['PUModeDeltaPosAng-SP'] = value
+
+    @property
+    def pumode_dpkckr_dlyref(self):
+        """."""
+        return self['PuModeDpKckrDlyRef-RB']
+
+    @pumode_dpkckr_dlyref.setter
+    def pumode_dpkckr_dlyref(self, value):
+        self['PUModeDpKckrDlyRef-SP'] = value
+
+    @property
+    def pumode_dpkckr_kick(self):
+        """."""
+        return self['PUModeDpKckrKick-RB']
+
+    @pumode_dpkckr_kick.setter
+    def pumode_dpkckr_kick(self, value):
+        self['PUModeDpKckrKick-SP'] = value
 
     @property
     def pumode(self):

@@ -177,6 +177,9 @@ class App(_Callback):
             'FilaOpCurr-SP': self.set_filaopcurr,
             'HVOpVolt-SP': self.set_hvopvolt,
             'PUMode-Sel': self.set_pumode,
+            'PUModeDeltaPosAng-SP': self.set_pumode_delta_posang,
+            'PUModeDpKckrDlyRef-SP': self.set_pumode_dpkckr_dlyref,
+            'PUModeDpKckrKick-SP': self.set_pumode_dpkckr_kick,
             'TargetCurrent-SP': self.set_target_current,
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
@@ -282,6 +285,16 @@ class App(_Callback):
             self._callback_update_pumode)
         self._pumode_dev.punlk.pv_object('Pulse-Sts').add_callback(
             self._callback_update_pumode)
+        self.run_callbacks(
+            'PUModeDeltaPosAng-SP', self._pumode_dev.delta_posang)
+        self.run_callbacks(
+            'PUModeDeltaPosAng-RB', self._pumode_dev.delta_posang)
+        self.run_callbacks(
+            'PUModeDpKckrDlyRef-SP', self._pumode_dev.dpkckr_dlyref)
+        self.run_callbacks(
+            'PUModeDpKckrDlyRef-RB', self._pumode_dev.dpkckr_dlyref)
+        self.run_callbacks('PUModeDpKckrKick-SP', self._pumode_dev.dpkckr_kick)
+        self.run_callbacks('PUModeDpKckrKick-RB', self._pumode_dev.dpkckr_kick)
         self.run_callbacks('PUModeCmdSts-Mon', self._p2w['PUMode']['status'])
         self.run_callbacks('TargetCurrent-SP', self._target_current)
         self.run_callbacks('TargetCurrent-RB', self._target_current)
@@ -498,6 +511,24 @@ class App(_Callback):
         self.run_callbacks('PUModeCmdSts-Mon', self._p2w['PUMode']['status'])
 
         self._launch_watch_dev_thread()
+        return True
+
+    def set_pumode_delta_posang(self, value):
+        """Set PU mode delta posang"""
+        self._pumode_dev.delta_posang = value
+        self.run_callbacks('PUModeDeltaPosAng-RB', value)
+        return True
+
+    def set_pumode_dpkckr_dlyref(self, value):
+        """Set PU mode DpKckr delay."""
+        self._pumode_dev.dpkckr_dlyref = value
+        self.run_callbacks('PUModeDpKckrDlyRef-RB', value)
+        return True
+
+    def set_pumode_dpkckr_kick(self, value):
+        """Set PU mode DpKckr kick."""
+        self._pumode_dev.dpkckr_kick = value
+        self.run_callbacks('PUModeDpKckrKick-RB', value)
         return True
 
     def set_target_current(self, value):

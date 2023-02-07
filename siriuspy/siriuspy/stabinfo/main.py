@@ -190,11 +190,12 @@ class App(_Callback):
                     harmn = self._const.SI_HARMNUM
                     calib = getattr(self, '_bbb'+pln.lower()+'_calibfactor')
                     thres = getattr(self, '_bbb'+pln.lower()+'_oscamp_thres')
+                    cthres = self._const.CURR_THRES
                     oscamp_db = dev['SRAM_PEAK1']
                     if oscamp_db is not None:
                         oscamp_phy = 10**(oscamp_db/20) * harmn / curr / calib
                         self.run_callbacks('BbB'+pln+'OscAmp-Mon', oscamp_phy)
-                        status = oscamp_phy > thres
+                        status = curr > cthres and oscamp_phy > thres
                         self.run_callbacks('BbB'+pln+'Status-Mon', int(status))
 
             ttook = _time.time() - _t0
