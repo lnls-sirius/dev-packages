@@ -196,11 +196,11 @@ def get_injctrl_propty_database():
             'prec': 0, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 37.0e6, 'high': 37.0e6, 'hihi': 37.0e6},
         'PUModeDpKckrKick-SP': {
-            'type': 'float', 'value': -6.7, 'unit': 'hard',
+            'type': 'float', 'value': -6.7, 'unit': 'mrad',
             'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
             'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
         'PUModeDpKckrKick-RB': {
-            'type': 'float', 'value': -6.7, 'unit': 'hard',
+            'type': 'float', 'value': -6.7, 'unit': 'mrad',
             'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
             'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
         'TargetCurrent-SP': {
