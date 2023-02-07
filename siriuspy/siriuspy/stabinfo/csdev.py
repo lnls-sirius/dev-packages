@@ -25,6 +25,8 @@ class StabInfoConst(_csdev.Const):
 
     SI_HARMNUM = 864
 
+    CURR_THRES = 5  # [mA]
+
     DEF_BBBH_CALIBFACTOR = 1.718  # [counts/mA/um]
     DEF_BBBV_CALIBFACTOR = 4.917  # [counts/mA/um]
     DEF_BBBL_CALIBFACTOR = 1000  # [counts/mA/degree]
