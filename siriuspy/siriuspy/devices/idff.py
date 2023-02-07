@@ -93,8 +93,8 @@ class IDFF(_Devices):
     def calculate_setpoints(self, polarization):
         """Return correctors setpoints for a particular ID config.
 
-        The parameter 'config' can be a gap or phase value, depending on the
-        insertion device.
+        polarization - a string defining the required polarization for
+        setpoint calculation.
         """
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
@@ -109,13 +109,13 @@ class IDFF(_Devices):
     def implement_setpoints(self, polarization, setpoints=None):
         """Implement setpoints in correctors."""
         if not setpoints:
-            _, setpoints = self.interpolate_setpoints(polarization)
+            _, setpoints = self.calculate_setpoints(polarization)
         corrs = self._devsch + self._devscv
         for pvname, value in setpoints.items():
             for dev in corrs:
                 if dev.devname in pvname:
-                    *_, propty = pvname.split(':')
-                    dev[propty] = value
+                    pvname = _SiriusPVName(pvname)
+                    dev[pvname.propty] = value
                     break
 
     def _create_devices(self, devname):

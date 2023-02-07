@@ -26,10 +26,10 @@ class IDSearch:
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
 
     _idname_2_idff = {
-        'SI-06SB:ID-APU22': dict(),
-        'SI-07SP:ID-APU22': dict(),
-        'SI-08SB:ID-APU22': dict(),
-        'SI-09SA:ID-APU22': dict(),
+        'SI-06SB:ID-APU22': None,
+        'SI-07SP:ID-APU22': None,
+        'SI-08SB:ID-APU22': None,
+        'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations': ('horizontal', 'vertical', 'circular', ),
             'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
@@ -40,7 +40,7 @@ class IDSearch:
             'qs1': 'SI-10SB:PS-QS-1:Current-SP',
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
         },
-        'SI-11SP:ID-APU58': dict(),
+        'SI-11SP:ID-APU58': None,
         'SI-14SB:ID-WIG180': {
             'polarizations': ('horizontal', ),
             'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
