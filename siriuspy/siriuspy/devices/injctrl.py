@@ -28,9 +28,9 @@ class InjCtrl(_Device):
         'FilaOpCurr-SP', 'FilaOpCurr-RB', 'FilaOpCurrCmdSts-Mon',
         'HVOpVolt-SP', 'HVOpVolt-RB', 'HVOpVoltCmdSts-Mon',
         'PUMode-Sel', 'PUMode-Sts', 'PUMode-Mon', 'PUModeCmdSts-Mon',
-        'PuModeDeltaPosAng-SP', 'PuModeDeltaPosAng-RB',
-        'PuModeDpKckrDlyRef-SP', 'PuModeDpKckrDlyRef-RB',
-        'PuModeDpKckrKick-SP', 'PuModeDpKckrKick-RB',
+        'PUModeDeltaPosAng-SP', 'PUModeDeltaPosAng-RB',
+        'PUModeDpKckrDlyRef-SP', 'PUModeDpKckrDlyRef-RB',
+        'PUModeDpKckrKick-SP', 'PUModeDpKckrKick-RB',
         'TargetCurrent-SP', 'TargetCurrent-RB',
         'BucketListStart-SP', 'BucketListStart-RB',
         'BucketListStop-SP', 'BucketListStop-RB',
@@ -187,11 +187,11 @@ class InjCtrl(_Device):
     @property
     def pumode_delta_posang(self):
         """."""
-        return self['PuModeDeltaPosAng-RB']
+        return self['PUModeDeltaPosAng-RB']
 
     @pumode_delta_posang.setter
     def pumode_delta_posang(self, value):
-        self['PuModeDeltaPosAng-SP'] = value
+        self['PUModeDeltaPosAng-SP'] = value
 
     @property
     def pumode_dpkckr_dlyref(self):
@@ -200,16 +200,16 @@ class InjCtrl(_Device):
 
     @pumode_dpkckr_dlyref.setter
     def pumode_dpkckr_dlyref(self, value):
-        self['PuModeDpKckrDlyRef-SP'] = value
+        self['PUModeDpKckrDlyRef-SP'] = value
 
     @property
     def pumode_dpkckr_kick(self):
         """."""
-        return self['PuModeDpKckrKick-RB']
+        return self['PUModeDpKckrKick-RB']
 
     @pumode_dpkckr_kick.setter
     def pumode_dpkckr_kick(self, value):
-        self['PuModeDpKckrKick-SP'] = value
+        self['PUModeDpKckrKick-SP'] = value
 
     @property
     def pumode(self):
