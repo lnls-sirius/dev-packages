@@ -34,7 +34,6 @@ class IDFFConfig:
         """Return IR kparameter pvname."""
         config = self._value
         if config:
-            # print(config)
             kparm = config['pvnames']['kparameter']
             return kparm
         else:
@@ -74,21 +73,20 @@ class IDFFConfig:
         # TODO: check dictionary
         self._value = value
 
-    def interpolate_setpoints(self, polarization, kparameter):
+    def calculate_setpoints(self, polarization, kparameter):
         """Return correctors setpoints for a particular ID config.
 
         The parameter 'kparameter' can be a gap or phase value,
         depending on the insertion device.
         """
-        # NOTE: finish implementation
         if self._value:
             setpoints = dict()
             idff = self._value['polarizations'][polarization]
             kparameters = idff['kparameter']
-            # interpolate
             setpoints = dict()
             for key, value in idff.items():
                 if key != 'kparameter':
+                    # linear interpolation
                     setpoint = _np.interp(kparameter, kparameters, value)
                     corr_pvname = self._value['pvnames'][key]
                     setpoints[corr_pvname] = setpoint
