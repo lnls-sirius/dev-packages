@@ -522,37 +522,37 @@ class BOSOFB(TLSOFB):
     @property
     def mt_trajx(self):
         """."""
-        return self['MTurnOrbX-Mon'] if self._data.isring else None
+        return self['MTurnOrbX-Mon']
 
     @property
     def mt_trajy(self):
         """."""
-        return self['MTurnOrbY-Mon'] if self._data.isring else None
+        return self['MTurnOrbY-Mon']
 
     @property
     def mt_sum(self):
         """."""
-        return self['MTurnSum-Mon'] if self._data.isring else None
+        return self['MTurnSum-Mon']
 
     @property
     def mt_time(self):
         """."""
-        return self['MTurnTime-Mon'] if self._data.isring else None
+        return self['MTurnTime-Mon']
 
     @property
     def mt_trajx_idx(self):
         """."""
-        return self['MTurnIdxOrbX-Mon'] if self._data.isring else None
+        return self['MTurnIdxOrbX-Mon']
 
     @property
     def mt_trajy_idx(self):
         """."""
-        return self['MTurnIdxOrbY-Mon'] if self._data.isring else None
+        return self['MTurnIdxOrbY-Mon']
 
     @property
     def mt_sum_idx(self):
         """."""
-        return self['MTurnIdxSum-Mon'] if self._data.isring else None
+        return self['MTurnIdxSum-Mon']
 
     @property
     def trajx(self):
