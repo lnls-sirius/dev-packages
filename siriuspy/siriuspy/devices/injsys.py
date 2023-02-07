@@ -808,7 +808,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
-    SI_DPKCKR_DLYREF = 36.8e6  # [count]
+    SI_DPKCKR_DLYREF = 36800000  # [count]
 
     def __init__(self, print_log=True, callback=None):
         """Init."""
@@ -832,7 +832,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
     @property
     def is_trigdpk_onaxis(self):
         """Whether DpK trigger delay raw is above SI_DPKCKR_DLYREF."""
-        return self.trigdpk.delay_raw < self.SI_DPKCKR_DLYREF
+        return self.trigdpk.delay_raw > self.SI_DPKCKR_DLYREF
 
     @property
     def is_accum(self):
@@ -905,7 +905,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # configure DpK trigger
         if self.is_trigdpk_onaxis:
-            delay = self.trigdpk.delay_raw + self.SI_DPKCKR_DLYREF
+            delay = self.trigdpk.delay_raw - self.SI_DPKCKR_DLYREF
             if not self._config_dpk_trigger(delayraw=delay):
                 return False
 
@@ -959,7 +959,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # configure DpK trigger
         if not self.is_trigdpk_onaxis:
-            delay = self.trigdpk.delay_raw - self.SI_DPKCKR_DLYREF
+            delay = self.trigdpk.delay_raw + self.SI_DPKCKR_DLYREF
             if not self._config_dpk_trigger(delayraw=delay):
                 return False
 
