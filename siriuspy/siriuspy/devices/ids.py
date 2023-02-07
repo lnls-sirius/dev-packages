@@ -11,7 +11,7 @@ from .device import Device as _Device
 
 
 class APU(_Device):
-    """Insertion Device APU."""
+    """APU Insertion Device."""
 
     class DEVICES:
         """."""
@@ -104,7 +104,7 @@ class APU(_Device):
 
 
 class EPU(_Device):
-    """."""
+    """EPU Insertion Device."""
 
     class DEVICES:
         """."""
