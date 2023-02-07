@@ -179,6 +179,30 @@ def get_injctrl_propty_database():
         'PUModeCmdSts-Mon': {
             'type': 'enum', 'value': _ct.IdleRunning.Idle,
             'enums': _et.IDLERUNNING, 'unit': 'Idle_Run'},
+        'PUModeDeltaPosAng-SP': {
+            'type': 'float', 'value': 2.5, 'unit': 'mrad',
+            'prec': 3, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+            'hilim': 5.0, 'high': 5.0, 'hihi': 5.0},
+        'PUModeDeltaPosAng-RB': {
+            'type': 'float', 'value': 2.5, 'unit': 'mrad',
+            'prec': 3, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+            'hilim': 5.0, 'high': 5.0, 'hihi': 5.0},
+        'PUModeDpKckrDlyRef-SP': {
+            'type': 'float', 'value': 36.8e6, 'unit': 'hard',
+            'prec': 0, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+            'hilim': 37.0e6, 'high': 37.0e6, 'hihi': 37.0e6},
+        'PUModeDpKckrDlyRef-RB': {
+            'type': 'float', 'value': 36.8e6, 'unit': 'hard',
+            'prec': 0, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+            'hilim': 37.0e6, 'high': 37.0e6, 'hihi': 37.0e6},
+        'PUModeDpKckrKick-SP': {
+            'type': 'float', 'value': -6.7, 'unit': 'hard',
+            'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
+            'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
+        'PUModeDpKckrKick-RB': {
+            'type': 'float', 'value': -6.7, 'unit': 'hard',
+            'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
+            'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
         'TargetCurrent-SP': {
             'type': 'float', 'value': 100.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
