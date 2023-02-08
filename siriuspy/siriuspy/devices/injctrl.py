@@ -238,17 +238,19 @@ class InjCtrl(_Device):
     def cmd_change_pumode_to_onaxis(self, timeout=10):
         """Change PUMode to On-Axis injection."""
         self.pumode = self.PUMode.OnAxis
-        self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
+        return self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
 
     def cmd_change_pumode_to_accumulation(self, timeout=10):
         """Change PUMode to accumulation."""
         self.pumode = self.PUMode.Accumulation
-        self._wait('PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
+        return self._wait(
+            'PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
 
     def cmd_change_pumode_to_optimization(self, timeout=10):
         """Change PUMode to optimization."""
         self.pumode = self.PUMode.Optimization
-        self._wait('PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
+        return self._wait(
+            'PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
 
     @property
     def target_current(self):
