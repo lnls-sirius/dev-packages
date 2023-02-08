@@ -19,6 +19,8 @@ class BPM(_BaseTimingConfig):
     def __init__(self, name, callback=None):
         """."""
         super().__init__(name[:2], callback)
+        self.needs_update = True
+
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
         pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
@@ -28,7 +30,7 @@ class BPM(_BaseTimingConfig):
         self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
         self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
         self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
-        opt['auto_monitor'] = False
+        opt['callback'] = self._set_needs_update
         self._arraya = _PV(pvpref + 'GEN_AArrayData', **opt)
         self._arrayb = _PV(pvpref + 'GEN_BArrayData', **opt)
         self._arrayc = _PV(pvpref + 'GEN_CArrayData', **opt)
@@ -36,7 +38,7 @@ class BPM(_BaseTimingConfig):
         self._arrayx = _PV(pvpref + 'GEN_XArrayData', **opt)
         self._arrayy = _PV(pvpref + 'GEN_YArrayData', **opt)
         self._arrays = _PV(pvpref + 'GEN_SUMArrayData', **opt)
-        opt.pop('auto_monitor')
+        opt.pop('callback')
         self._offsetx = _PV(pvpref + 'PosXOffset-RB', **opt)
         self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
@@ -737,6 +739,10 @@ class BPM(_BaseTimingConfig):
             th5*(pol[9] + ot2*pol[10] + ot4*pol[11]) +
             th7*(pol[12] + ot2*pol[13]) +
             th9*pol[14])
+
+    def _set_needs_update(self, *args, **kwargs):
+        _ = args, kwargs
+        self.needs_update = True
 
 
 class TimingConfig(_BaseTimingConfig):
