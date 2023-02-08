@@ -852,7 +852,7 @@ class EpicsOrbit(BaseOrbit):
                 orbs['Y'].append(posy)
                 orbs['Sum'].append(psum)
 
-            # NOTE: Only update orbit when at leat one BPM has news
+            # NOTE: Only update orbit when at least one BPM has news
             if not do_update:
                 return
 
