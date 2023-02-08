@@ -26,9 +26,6 @@ class BPM(_BaseTimingConfig):
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
         self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
-        self._spposx = _PV(pvpref + 'SPPosX-Mon', **opt)
-        self._spposy = _PV(pvpref + 'SPPosY-Mon', **opt)
-        self._spsum = _PV(pvpref + 'SPSum-Mon', **opt)
         self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
         self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
         opt['auto_monitor'] = False
@@ -154,7 +151,6 @@ class BPM(_BaseTimingConfig):
         """."""
         conn = super().connected
         pvs = (
-            self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
             self._polyx, self._polyx,
@@ -344,30 +340,6 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals['ACQBPMMode'] = mode
         if self.put_enable and pvobj.connected:
             pvobj.value = mode
-
-    @property
-    def spposx(self):
-        """."""
-        pvobj = self._spposx
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def spposy(self):
-        """."""
-        pvobj = self._spposy
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def spsum(self):
-        """."""
-        pvobj = self._spsum
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return val
 
     @property
     def arraya(self):
