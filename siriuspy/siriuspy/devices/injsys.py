@@ -865,7 +865,6 @@ class InjSysPUModeHandler(_Devices, _Callback):
         # set pulsed magnet pwrstate and pulse
         proced = (
             (self.pudpk.cmd_turn_off_pulse, 'turn DpK pulse off.'),
-            (self.pudpk.cmd_turn_off, 'turn DpK off.'),
             (self.punlk.cmd_turn_on, 'turn NLK on.'),
             (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
         )
@@ -973,7 +972,6 @@ class InjSysPUModeHandler(_Devices, _Callback):
         # set pulsed magnet pwrstate and pulse
         proced = (
             (self.punlk.cmd_turn_off_pulse, 'turn NLK pulse off.'),
-            (self.punlk.cmd_turn_off, 'turn NLK off.'),
             (self.pudpk.cmd_turn_on, 'turn DpK on.'),
             (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
         )
