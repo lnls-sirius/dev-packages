@@ -932,8 +932,7 @@ class FamBPMs(_Devices):
             return orbx, orby
         return orbx, orby, _np.array(possum).T
 
-    @staticmethod
-    def get_sampling_frequency(rf_freq: float, acq_rate='FAcq'):
+    def get_sampling_frequency(self, rf_freq: float, acq_rate='FAcq') -> float:
         """Return the sampling frequency of the acquisition.
 
         Args:
@@ -944,14 +943,15 @@ class FamBPMs(_Devices):
             float: acquisition frequency.
 
         """
-        fsamp = rf_freq / 864
+        bpm = self._devices[0]
+        fadc = rf_freq / bpm.harmonic_number * bpm.tbt_rate
         if acq_rate.lower().startswith('tbt'):
-            return fsamp
-        fsamp /= 23
-        if acq_rate.lower().startswith('fofb'):
-            return fsamp
-        fsamp /= 25
-        return fsamp
+            return fadc / bpm.tbt_rate
+        elif acq_rate.lower().startswith('fofb'):
+            return fadc / bpm.fofb_rate
+        elif acq_rate.lower().startswith('monit'):
+            return fadc / bpm.monit_rate
+        return fadc / bpm.facq_rate
 
     def mturn_config_acquisition(
             self, nr_points_after: int, nr_points_before=0,
