@@ -2,8 +2,11 @@
 
 import time as _time
 import operator as _opr
+import math as _math
+from functools import partial as _partial
 
-from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
+from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
+    CASeverityException as _CASeverityException
 import numpy as _np
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
@@ -92,6 +95,10 @@ class Device:
         """Return PV object for a given device property."""
         return self._pvs[propty]
 
+    def pv_ctrlvars(self, propty):
+        """Return PV object control variable."""
+        return self._pvs[propty].get_ctrlvars()
+
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
         attributes = dict()
@@ -123,8 +130,8 @@ class Device:
         pvobj = self._pvs[propty]
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
-        except _ChannelAccessGetFailure:
-            # This is raised in a Virtual Circuit Disconnect (192)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
             print('Could not get value of {}'.format(pvobj.pvname))
             value = None
@@ -173,6 +180,13 @@ class Device:
                 return True
         return False
 
+    def _wait_float(
+            self, propty, value, rel_tol=0.0, abs_tol=0.1,
+            timeout=_DEF_TIMEOUT):
+        """Wait until float value gets close enough of desired value."""
+        func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
+        return self._wait(propty, value, comp=func, timeout=timeout)
+
     def _get_pvname(self, devname, propty):
         if devname:
             func = devname.substitute
@@ -218,12 +232,13 @@ class DeviceNC(Device):
     This device class is to be used for those devices whose
     names and PVs are not compliant to the Sirius naming system.
     """
+    DEVSEP = ':'
 
     def _create_pvs(self, devname):
         pvs = dict()
         devname = devname or ''
         for propty in self._properties:
-            pvname = devname + ':' + propty
+            pvname = devname + self.DEVSEP + propty
             auto_monitor = not pvname.endswith('-Mon')
             pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
         return devname, pvs

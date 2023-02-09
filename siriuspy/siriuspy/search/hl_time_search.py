@@ -15,6 +15,7 @@ class HLTimeSearch:
 
     _hl_triggers = dict()
     _hl_events = dict()
+    COMMOM_EVTS = ('Dsbld', 'RmpBO', 'Linac', 'Study')
 
     _lock = _Lock()
 
@@ -23,6 +24,12 @@ class HLTimeSearch:
         """Return a dictionary with high level events."""
         cls._init()
         return _dcopy(cls._hl_events)
+
+    @classmethod
+    def get_configurable_hl_events(cls):
+        """Return a dictionary with configurable high level events."""
+        cls._init()
+        return {e: c for e, c in cls._hl_events.items() if 0 < int(c[3:]) < 64}
 
     @classmethod
     def get_hl_triggers(cls, filters=None, sorting=None):
@@ -37,8 +44,8 @@ class HLTimeSearch:
         """Return the default database of the high level trigger."""
         cls._init()
         dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
-        dic_['Src']['enums'] = ('Dsbl', ) + dic_['Src']['enums']
-        dic_['Src']['value'] += 1
+        src = dic_['Src']
+        src['enums'] = cls.COMMOM_EVTS + src['enums']
         return dic_
 
     @classmethod

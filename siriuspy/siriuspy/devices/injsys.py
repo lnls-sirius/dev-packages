@@ -2,7 +2,7 @@
 
 import time as _time
 from copy import deepcopy as _dcopy
-from threading import Thread
+from threading import Thread as _Thread, Event as _Flag
 import logging as _log
 
 from .device import Devices as _Devices, DeviceNC as _DeviceNC
@@ -11,11 +11,14 @@ from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
 from .timing import EVG, Event, Trigger
 from .rf import ASLLRF
+from .posang import PosAng
 
 from ..search import PSSearch, HLTimeSearch
 from ..csdev import Const as _Const
 from ..timesys.csdev import Const as _TIConst
 from ..pwrsupply.csdev import Const as _PSConst
+from ..injctrl.csdev import Const as _InjConst
+from ..callbacks import Callback as _Callback
 
 
 class _BaseHandler(_Devices):
@@ -84,8 +87,6 @@ class ASPUStandbyHandler(_BaseHandler):
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
                 'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'TRIG_Norm': 1,
-                'Pulse_Current': 1,
                 'CPS_ALL': 1,
             }
         self._on_values[self._limps] = {
@@ -145,7 +146,7 @@ class ASPUStandbyHandler(_BaseHandler):
 
         # set pulsed magnet pulse off
         self._set_devices_propty(
-            self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl, wait=0.5)
+            self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl)
 
         # wait for pulsed magnet pulse to be off
         retval = self._wait_devices_propty(
@@ -158,7 +159,7 @@ class ASPUStandbyHandler(_BaseHandler):
 
         # set pulsed magnet power state off
         self._set_devices_propty(
-            self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl, wait=1)
+            self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl)
 
         # wait for pulsed magnet power state to be off
         retval = self._wait_devices_propty(
@@ -168,6 +169,9 @@ class ASPUStandbyHandler(_BaseHandler):
             text = 'Check for pulsed magnet PwrState to be off '\
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
+
+        # wait for modulators trig.out
+        _time.sleep(1)
 
         # turn modulator charge off
         self._set_devices_propty(
@@ -207,22 +211,8 @@ class ASPUStandbyHandler(_BaseHandler):
 
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
-        # set pulsed magnet pulse on
-        self._set_devices_propty(
-            devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl, wait=0.5)
-
-        # wait for pulsed magnet pulse to be on
-        retval = self._wait_devices_propty(
-            devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for pulsed magnet Pulse to be enabled '\
-                   'timed out without success! Verify pulsed magnets!'
-            return [False, text, retval[1]]
-
         # set pulsed magnet power state on
-        self._set_devices_propty(
-            devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl, wait=1)
+        self._set_devices_propty(devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl)
 
         # wait for pulsed magnet power state to be on
         retval = self._wait_devices_propty(
@@ -230,6 +220,21 @@ class ASPUStandbyHandler(_BaseHandler):
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet PwrState to be on '\
+                   'timed out without success! Verify pulsed magnets!'
+            return [False, text, retval[1]]
+
+        # wait a moment for the PU high voltage and modulators charge
+        _time.sleep(1)
+
+        # set pulsed magnet pulse on
+        self._set_devices_propty(devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl)
+
+        # wait for pulsed magnet pulse to be on
+        retval = self._wait_devices_propty(
+            devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for pulsed magnet Pulse to be enabled '\
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
@@ -506,11 +511,11 @@ class InjBOStandbyHandler(_BaseHandler):
     def cmd_turn_off(self):
         """Turn off."""
         # disable injbo
-        self.injboevt.mode = 'Disabled'
+        self.injboevt.mode = 'Disable'
 
         # wait for injbo to be disabled
         retval = self._wait_devices_propty(
-            self.injboevt, 'Mode-Sts', Event.MODES.index('Disabled'),
+            self.injboevt, 'Mode-Sts', Event.MODES.index('Disable'),
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for InjBO Event to be disabled timed '\
@@ -518,7 +523,9 @@ class InjBOStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # update events
+        _time.sleep(1)
         self.evg.cmd_update_events()
+        _time.sleep(1)
 
         return True, '', []
 
@@ -632,8 +639,8 @@ class LILLRFStandbyHandler(_BaseHandler):
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
 
-    DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
+    DEF_OFF_ORDER = _InjConst.INJSYS_DEF_OFF_ORDER
     HANDLER_DESC = {
         'as_pu': 'AS PU (Septa, Kickers and Modulators)',
         'bo_ps': 'BO PS Ramp',
@@ -733,6 +740,27 @@ class InjSysStandbyHandler(_Devices):
         """Turn off."""
         return self._command_base('off', run_in_thread)
 
+    def get_dev_state(self, devnames):
+        """
+        Return the state, on (True) or off (False), for each device in
+        devnames.
+
+        Parameters
+        ----------
+        devnames: list [str]
+            A list of strings with the names of the handler devices
+
+        Returns
+        -------
+        states: list [bool]
+            A list of booleans with the state of each handler devices
+        """
+        states = list()
+        for devname in devnames:
+            dev = self._dev_refs[devname]
+            states.append(dev.is_on)
+        return states
+
     # --- private methods ---
 
     def _command_base(self, cmmtype, run_in_thread):
@@ -742,7 +770,7 @@ class InjSysStandbyHandler(_Devices):
 
         if run_in_thread:
             self._is_running = cmmtype
-            self._thread = Thread(
+            self._thread = _Thread(
                 target=self._command_target, args=[cmmtype, ], daemon=True)
             self._thread.start()
             return
@@ -771,3 +799,273 @@ class InjSysStandbyHandler(_Devices):
         self._result = retval
 
         self._is_running = ''
+
+
+class InjSysPUModeHandler(_Devices, _Callback):
+    """Device to control pulsed magnets configuration for injection."""
+
+    _DEF_TIMEOUT = 10  # [s]
+    _DEF_SLEEP = 0.1  # [s]
+    SI_DPKCKR_DEFKICK = -6.7  # [mrad]
+    TS_POSANG_DEFDELTA = 2.5  # [mrad]
+    SI_DPKCKR_DLYREF = 36800000  # [count]
+
+    def __init__(self, print_log=True, callback=None):
+        """Init."""
+        self.pudpk = PowerSupplyPU(PowerSupplyPU.DEVICES.SI_INJ_DPKCKR)
+        self.punlk = PowerSupplyPU(PowerSupplyPU.DEVICES.SI_INJ_NLKCKR)
+        self.trigdpk = Trigger('SI-01SA:TI-InjDpKckr')
+        self.trignlk = Trigger('SI-01SA:TI-InjNLKckr')
+        self.posang = PosAng(PosAng.DEVICES.TS)
+        self.delta_posang = self.TS_POSANG_DEFDELTA
+        self.dpkckr_dlyref = self.SI_DPKCKR_DLYREF
+        self.dpkckr_kick = self.SI_DPKCKR_DEFKICK
+        devices = (
+            self.pudpk, self.punlk,
+            self.trigdpk, self.trignlk,
+            self.posang,
+        )
+        self._print_log = print_log
+        self._abort = _Flag()
+
+        # call super init
+        _Devices.__init__(self, '', devices)
+        _Callback.__init__(self, callback=callback)
+
+    @property
+    def is_trigdpk_onaxis(self):
+        """Whether DpK trigger delay raw is above dpkckr_dlyref."""
+        return self.trigdpk.delay_raw > self.dpkckr_dlyref
+
+    @property
+    def is_accum(self):
+        """If configuration is Accumulation."""
+        if not self.connected:
+            return False
+        dpk_off = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
+            (self.pudpk.pulse == PowerSupplyPU.PULSTATE.Off)
+        nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
+            (self.punlk.pulse == PowerSupplyPU.PULSTATE.On)
+        return dpk_off & nlk_on
+
+    def cmd_switch_to_accum(self):
+        """Switch to Accumulation."""
+        self._abort.clear()
+        self._update_status('Switching to PU Accumulation config...')
+        if not self._check_pu_interlocks():
+            return False
+        if self._check_abort():
+            return False
+
+        # if previously in on-axis, do delta angle x
+        if self.is_onaxis:
+            if not self._do_delta_posang(-self.delta_posang):
+                return False
+
+        # set pulsed magnet pwrstate and pulse
+        proced = (
+            (self.pudpk.cmd_turn_off_pulse, 'turn DpK pulse off.'),
+            (self.pudpk.cmd_turn_off, 'turn DpK off.'),
+            (self.punlk.cmd_turn_on, 'turn NLK on.'),
+            (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
+        )
+        if not self._do_procedures(proced):
+            return False
+
+        self._update_status('PU mode switched to Accumulation!')
+        return True
+
+    @property
+    def is_optim(self):
+        """If configuration is Optimization."""
+        if not self.connected:
+            return False
+        dpk_evt_ok = self.trigdpk.source == self.trignlk.source
+        dpk_dly_ok = not self.is_trigdpk_onaxis
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
+        dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
+            (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
+        nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
+            (self.punlk.pulse == PowerSupplyPU.PULSTATE.On)
+        return dpk_evt_ok & dpk_dly_ok & dpk_kck_ok & dpk_on & nlk_on
+
+    def cmd_switch_to_optim(self):
+        """Switch to Optimization."""
+        self._abort.clear()
+        self._update_status('Switching to PU Optimization config...')
+        if not self._check_pu_interlocks():
+            return False
+        if self._check_abort():
+            return False
+
+        # if previously in on-axis, do delta angle x
+        if self.is_onaxis:
+            if not self._do_delta_posang(-self.delta_posang):
+                return False
+
+        if self._check_abort():
+            return False
+
+        # configure DpK trigger
+        if self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw - self.dpkckr_dlyref
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
+
+        # set DpK Kick
+        if not self._config_dpk_kick():
+            return False
+
+        # set pulsed magnet pwrstate and pulse
+        proced = (
+            (self.pudpk.cmd_turn_on, 'turn DpK on.'),
+            (self.punlk.cmd_turn_on, 'turn NLK on.'),
+            (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
+            (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
+        )
+        if not self._do_procedures(proced):
+            return False
+
+        self._update_status('PU mode switched to Optimization!')
+        return True
+
+    @property
+    def is_onaxis(self):
+        """If configuration is OnAxis."""
+        if not self.connected:
+            return False
+        dpk_evt_ok = self.trigdpk.source == self.trignlk.source
+        dpk_dly_ok = self.is_trigdpk_onaxis
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
+        dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
+            (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
+        nlk_off = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
+            (self.punlk.pulse == PowerSupplyPU.PULSTATE.Off)
+        return dpk_evt_ok & dpk_dly_ok & dpk_kck_ok & dpk_on & nlk_off
+
+    def cmd_switch_to_onaxis(self):
+        """Switch to OnAxis."""
+        self._abort.clear()
+        self._update_status('Switching to PU OnAxis config...')
+        if not self._check_pu_interlocks():
+            return False
+        if self._check_abort():
+            return False
+
+        # if not previously in on-axis, do delta angle x
+        if not self.is_onaxis:
+            if not self._do_delta_posang(self.delta_posang):
+                return False
+
+        if self._check_abort():
+            return False
+
+        # configure DpK trigger
+        if not self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw + self.dpkckr_dlyref
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
+
+        # set DpK Kick
+        if not self._config_dpk_kick():
+            return False
+
+        # set pulsed magnet pwrstate and pulse
+        proced = (
+            (self.punlk.cmd_turn_off_pulse, 'turn NLK pulse off.'),
+            (self.punlk.cmd_turn_off, 'turn NLK off.'),
+            (self.pudpk.cmd_turn_on, 'turn DpK on.'),
+            (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
+        )
+        if not self._do_procedures(proced):
+            return False
+
+        self._update_status('PU mode switched to OnAxis!')
+        return True
+
+    def _check_pu_interlocks(self):
+        if not self.pudpk.interlock_ok:
+            self._update_status('ERR: DpK interlocks not ok. Aborted.')
+            return False
+        if not self.punlk.interlock_ok:
+            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+            return False
+        return True
+
+    def _do_delta_posang(self, delta):
+        if self.posang.need_ref_update:
+            self.posang.cmd_update_reference()
+        _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
+        desval = self.posang.delta_angx + delta
+        self.posang.delta_angx += delta
+        if not self._wait(self.posang, 'delta_angx', desval):
+            self._update_status('ERR:Could not do delta AngX.')
+            return False
+        return True
+
+    def _config_dpk_trigger(self, delayraw):
+        # set DpK trigger event to NLK trigger event
+        dpk_event = self.trignlk.source
+        self.trigdpk.source = dpk_event
+        if not self._wait(self.trigdpk, 'source', dpk_event):
+            self._update_status('ERR:Could not set DpK trigger event.')
+            return False
+        # set DpK trigger DelayRaw
+        self.trigdpk.delay_raw = delayraw
+        if not self._wait(self.trigdpk, 'delay_raw', delayraw):
+            self._update_status('ERR:Could not set DpK trigger delay.')
+            return False
+        return True
+
+    def _config_dpk_kick(self):
+        self.pudpk.strength = self.dpkckr_kick
+        if not self._wait(self.pudpk, 'strength', self.dpkckr_kick):
+            self._update_status(
+                'ERR:Could not set DpK Kick to '
+                f'{self.dpkckr_kick:.1f}mrad.')
+            return False
+        return True
+
+    def _do_procedures(self, procedures):
+        for fun, msg in procedures:
+            if self._check_abort():
+                return False
+            if not fun(timeout=2):
+                self._update_status('ERR:Could not ' + msg)
+                return False
+            _time.sleep(0.5)
+        return True
+
+    # -------- thread help methods --------
+
+    def cmd_abort(self):
+        """Abort PU mode change."""
+        self._abort.set()
+        self._update_status('WARN:Abort received for PU Mode change.')
+        return True
+
+    def _check_abort(self):
+        """Clear abort flag."""
+        if not self._abort.is_set():
+            return False
+        self._abort.clear()
+        self._update_status('ERR:Aborted PU Mode change.')
+        return True
+
+    # ---------- check sp -----------
+
+    def _wait(
+            self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
+        _t0 = _time.time()
+        while _time.time() - _t0 < timeout:
+            if abs(getattr(device, prop) - desired) < tolerance:
+                return True
+            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
+        return False
+
+    # ---------- logging -----------
+
+    def _update_status(self, status):
+        if self._print_log:
+            print(status)
+        self.run_callbacks(status)

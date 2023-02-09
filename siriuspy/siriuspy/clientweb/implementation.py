@@ -14,6 +14,7 @@ _PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
 _DIAG_FOLDER = '/diagnostics/'
 _TIMESYS_FOLDER = '/timesys/'
 _MAC_SCHEDULE_FOLDER = '/macschedule/'
+_DOC_SERV_FOLDER = '/documentation/services/'
 
 
 def read_url(url, timeout=_TIMEOUT):
@@ -134,7 +135,7 @@ def crates_mapping(timeout=_TIMEOUT):
     """Return the crates mapping."""
     url = _DIAG_FOLDER + 'microTCA-vs-BPMs-mapping/'
     text = read_url(url, timeout=timeout)
-    pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
+    pat = _re.compile('"(names_crate[a-zA-Z_0-9]*.cfg)"')
     files = pat.findall(text)
     txt = ''
     for fi in files:
@@ -178,3 +179,16 @@ def mac_schedule_read(year, timeout=_TIMEOUT):
     """Read machine schedule data."""
     url = _MAC_SCHEDULE_FOLDER + str(year) + '.txt'
     return read_url(url, timeout=timeout)
+
+
+def doc_services_read(timeout=_TIMEOUT):
+    """Read service documentation data."""
+    url = _DOC_SERV_FOLDER
+    text = read_url(url, timeout=timeout)
+    pattern = _re.compile('"([a-zA-Z_0-9]*.yml)"')
+    files = pattern.findall(text)
+    text = ''
+    for file in files:
+        text += read_url(url + file, timeout=timeout)
+        text += '\n\n'
+    return text

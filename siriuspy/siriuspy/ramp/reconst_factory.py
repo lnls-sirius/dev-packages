@@ -685,8 +685,7 @@ class BOTIRampFactory:
     }
     _events = {
         _EVG+':Linac', _EVG+':InjBO', _EVG+':RmpBO', _EVG+':InjSI',
-        _EVG+':DigLI', _EVG+':DigTB', _EVG+':DigBO', _EVG+':DigTS',
-        _EVG+':DigSI', _EVG+':Study',
+        _EVG+':Study',
     }
     _PVs = dict()
 

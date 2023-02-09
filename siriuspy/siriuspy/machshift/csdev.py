@@ -11,7 +11,7 @@ class ETypes(_csdev.ETypes):
     MACHSHIFT = (
         'Users', 'Commissioning', 'Conditioning',
         'Injection', 'MachineStudy', 'Maintenance',
-        'Standby', 'Shutdown')
+        'Standby', 'Shutdown', 'MachineStartup')
     PROGMD_USERS_SHIFT = ('No', 'Yes')
 
 
