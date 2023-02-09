@@ -143,7 +143,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # Habilita interlock de órbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
-        # Minimum sum threshold (em contagens da Soma da taxa Monit1):
+        # Minimum sum threshold (em contagens da Soma da taxa FAcq):
         'IntlkLmtMinSum-SP', 'IntlkLmtMinSum-RB',
         # Status Instantâneo:
         # Interlock instântaneo, dificilmente será detectado com
@@ -171,7 +171,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkTransEn-Sel', 'IntlkTransEn-Sts',
         # Translation interlock clear:
         'IntlkTransClr-Sel',
-        # Thresholds (em nm da taxa Monit1):
+        # Thresholds (em nm da taxa FAcq):
         'IntlkLmtTransMaxX-SP', 'IntlkLmtTransMaxX-RB',
         'IntlkLmtTransMinX-SP', 'IntlkLmtTransMinX-RB',
         'IntlkLmtTransMaxY-SP', 'IntlkLmtTransMaxY-RB',
@@ -206,7 +206,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkAngEn-Sel', 'IntlkAngEn-Sts',
         # Angulation interlock clear:
         'IntlkAngClr-Sel',
-        # Thresholds (em rad.nm da taxa Monit1).
+        # Thresholds (em rad.nm da taxa FAcq).
         #  Thresholds devem ser calculados como ângulo (em rad)
         #  entre os 2 BPMs adjacentes * distância (em nm) entre eles):
         'IntlkLmtAngMaxX-SP', 'IntlkLmtAngMaxX-RB',
@@ -299,7 +299,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     @property
     def minsumthres(self):
-        """Minimum sum threshold [sum count, Monit1 rate]."""
+        """Minimum sum threshold [sum count, FAcq rate]."""
         return self['IntlkLmtMinSum-RB']
 
     @minsumthres.setter
@@ -670,8 +670,8 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
     # for each BPM, folowing BPM_NAMES indices
-    # a, b: monit = a*monit1 + b
-    CONV_POLY_MONIT1_2_MONIT = _np.vstack([_av, _bv])
+    # a, b: monit = a*facq + b
+    CONV_POLY_FACQ_2_MONIT = _np.vstack([_av, _bv])
 
     class DEVICES:
         """."""

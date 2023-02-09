@@ -20,7 +20,7 @@ class ETypes(_csdev.ETypes):
         'ADC', 'ADCSwap', 'MixerIQ', 'Unconnected', 'TbTIQ',
         'Unconnected2', 'TbTAmp', 'TbTPha', 'TbTPos', 'FOFBIQ',
         'Unconnected3', 'FOFBAmp', 'FOFBPha', 'FOFBPos', 'MonitAmp',
-        'MonitPos', 'Monit1Pos', 'FMCTrigOut', 'Unconnected4', 'Unconnected5',
+        'MonitPos', 'FAcqPos', 'FMCTrigOut', 'Unconnected4', 'Unconnected5',
         'Unconnected6', 'Unconnected7', 'Unconnected8', 'Unconnected9')
     SWMODES = ('rffe_switching', 'direct', 'inverted', 'switching')
     SWTAGENBL = ('disabled', 'enabled')
@@ -35,7 +35,7 @@ class ETypes(_csdev.ETypes):
     ACQREPEAT = ('Normal', 'Repetitive')
     ACQEVENTS = ('Start', 'Stop', 'Abort')
     ACQDATATYP = ('A', 'B', 'C', 'D')
-    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'Monit1')
+    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
         'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
@@ -101,9 +101,9 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
             'INFOMONITRate-RB': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOMONIT1Rate-SP': {
+            'INFOFAcqRate-SP': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOMONIT1Rate-RB': {
+            'INFOFAcqRate-RB': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
             'INFOTBTRate-SP': {
                 'type': 'int', 'value': 382, 'low': 0, 'high': 2**31-1},

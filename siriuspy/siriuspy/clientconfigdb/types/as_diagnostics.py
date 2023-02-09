@@ -620,7 +620,7 @@ _bpm_propts = [
     [':INFOTBTRate-SP', 382, 0.0],
     [':INFOFOFBRate-SP', 8786, 0.0],
     [':INFOMONITRate-SP', 21929856, 0.0],
-    [':INFOMONIT1Rate-SP', 230346, 0.0],
+    [':INFOFAcqRate-SP', 230346, 0.0],
     [':PosKx-SP', 21389980, 0.0],
     [':PosKy-SP', 21389980, 0.0],
     [':PosKq-SP', 21389980, 0.0],
