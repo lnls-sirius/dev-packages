@@ -176,7 +176,7 @@ class BPM(_Device):
 
     @property
     def tbt_rate(self):
-        """."""
+        """Divisor or TbT in relation to ADC."""
         return self['INFOTBTRate-RB']
 
     @property
@@ -236,7 +236,7 @@ class BPM(_Device):
 
     @property
     def fofb_rate(self):
-        """."""
+        """Divisor or FOFB in relation to ADC."""
         return self['INFOFOFBRate-RB']
 
     @property
@@ -246,7 +246,7 @@ class BPM(_Device):
 
     @property
     def facq_rate(self):
-        """."""
+        """Divisor or FAcq in relation to ADC."""
         return self['INFOFAcqRate-RB']
 
     @property
@@ -266,7 +266,7 @@ class BPM(_Device):
 
     @property
     def monit_rate(self):
-        """."""
+        """Divisor or Monit in relation to ADC."""
         return self['INFOMONITRate-RB']
 
     @property
