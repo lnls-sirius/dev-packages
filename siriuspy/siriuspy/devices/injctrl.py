@@ -578,6 +578,7 @@ class InjCtrl(_Device):
     def cmd_injsys_turn_on(self):
         """Injection system turn on command."""
         self['InjSysTurnOn-Cmd'] = 1
+        return True
 
     @property
     def injsys_turn_on_order(self):
@@ -599,6 +600,7 @@ class InjCtrl(_Device):
     def cmd_injsys_turn_off(self):
         """Injection system turn off command."""
         self['InjSysTurnOff-Cmd'] = 1
+        return True
 
     @property
     def injsys_turn_off_order(self):
@@ -627,6 +629,7 @@ class InjCtrl(_Device):
     def cmd_rfkillbeam(self):
         """RF Kill Beam command."""
         self['RFKillBeam-Cmd'] = 1
+        return True
 
     @property
     def rfkillbeam_cmdsts(self):
