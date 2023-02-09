@@ -79,8 +79,13 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
         self.resource_manager = resource_manager
-        # open communication with Oscilloscope
-        self.osc_socket = resource_manager.open_resource(
+
+        self.osc_socket = None
+        self.open()
+
+    def open(self):
+        """."""
+        self.osc_socket = self.resource_manager.open_resource(
             'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
 
     def close(self):
@@ -104,19 +109,9 @@ class _ASCurrInfoApp(_CurrInfoApp):
             meas = self.osc_socket.query(":MEASure:RESults?")
             self._meas = meas.split(',')
         except Exception as err:
-            errst = str(err)
-            _log.error('Problem reading data: {:s}'.format(errst))
-            if 'wrong xid in reply' in errst:
-                # NOTE: this is a workaround suggested in
-                # https://github.com/pyvisa/pyvisa-py/issues/172
-                # for a similar problem.
-                _log.info('Trying to fix error, reseting lastxid...')
-                xid = int(errst.split()[4])
-                rsman = self.resource_manager
-                soc = self.osc_socket
-                rsman.visalib.sessions[soc.session].interface.lastxid = xid
-            self._meas = None
-            return
+            _log.error(str(err))
+            self.close()
+            self.open()
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
