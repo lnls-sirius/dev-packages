@@ -4,6 +4,7 @@ import re as _re
 from functools import partial as _partial
 import logging as _log
 from threading import Thread as _ThreadBase
+
 from epics.ca import CASeverityException as _CASeverityException
 
 from ..util import update_bit as _update_bit, get_bit as _get_bit
@@ -59,14 +60,12 @@ class _BaseLL(_Callback):
         self._locked = False
         self._lock_threads_dict = dict()
 
-        evts = _HLSearch.get_hl_events()
-        evts.pop('Dsbl')
-        evts.pop('PsMtn')
+        evts = _HLSearch.get_configurable_hl_events()
         self._events = {evt: _Event(evt) for evt in evts}
 
-        evg_name = _LLSearch.get_evg_name()
+        evg_name = _PVName(_LLSearch.get_evg_name())
         self._base_freq_pv = _PV(
-            LL_PREFIX + evg_name + ':FPGAClk-Cte')
+            evg_name.substitute(prefix=LL_PREFIX, propty='FPGAClk-Cte'))
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
@@ -85,10 +84,10 @@ class _BaseLL(_Callback):
                 self._readpvs[prop] = pvo
             if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 pvo = _PV(pvnamesp)
+                self._writepvs[prop] = pvo
                 pvo.initialized = False
                 pvo.add_callback(self._on_change_writepv)
                 pvo.connection_callbacks.append(self._on_connection_writepv)
-                self._writepvs[prop] = pvo
         self._initialized = True
 
     @property
@@ -96,7 +95,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -108,7 +108,8 @@ class _BaseLL(_Callback):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
-        pvs += list(self._events.values())
+        for evt in self._events.values():
+            pvs += [evt.pv_object(p) for p in evt.properties]
         for pv in pvs:
             if not pv.wait_for_connection(timeout=timeout):
                 _log.info(pv.pvname + ' not connected.')
@@ -255,7 +256,9 @@ class _BaseLL(_Callback):
         prop = self._dict_convert_pv2prop[pvname]
         my_val = self._config_ok_values.get(prop)
         pvo = self._writepvs.get(prop)
-        if my_val is None or pvo is None:
+        if pvo is None:
+            return
+        if my_val is None:
             timer.stop()
         value = self._get_from_pvs(False, prop)
         if value is None:
@@ -347,7 +350,7 @@ class _BaseLL(_Callback):
         return {hl_prop: val}
 
 
-class _EVROUT(_BaseLL):
+class _BASETRIG(_BaseLL):
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, source_enums):
@@ -358,7 +361,8 @@ class _EVROUT(_BaseLL):
         self._source_enums = source_enums
         self._duration = None  # I keep this to avoid rounding errors
 
-        prefix = LL_PREFIX + _PVName(channel).device_name + ':'
+        prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
+        prefix += _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
         # self._config_ok_values['DevEnbl'] = 1
         # self._config_ok_values['FoutDevEnbl'] = 1
@@ -370,6 +374,8 @@ class _EVROUT(_BaseLL):
             # Stop using FineDelay and RF Delay to ease consistency:
             self._config_ok_values['FineDelay'] = 0
             self._config_ok_values['RFDelay'] = 0
+        elif self.channel.propty.startswith(('FMC', 'CRT')):
+            self._config_ok_values['Dir'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -383,10 +389,11 @@ class _EVROUT(_BaseLL):
         intlb = intlb.propty
         outlb = outlb.propty
 
+        prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
         evg_chan = _LLSearch.get_evg_channel(self.channel)
-        _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
+        _evg_prefix = prefix + evg_chan.device_name + ':'
         fout_chan = _LLSearch.get_fout_channel(self.channel)
-        _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
+        _fout_prefix = prefix + fout_chan.device_name + ':'
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',
@@ -394,6 +401,7 @@ class _EVROUT(_BaseLL):
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'DelayRaw-RB',
+            'Dir': self.prefix + intlb + 'Dir-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelayRaw-RB',
@@ -427,6 +435,7 @@ class _EVROUT(_BaseLL):
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
+            'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             }
         return map_
@@ -439,6 +448,7 @@ class _EVROUT(_BaseLL):
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
+            'Dir': _partial(self._get_simple, 'Dir'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
@@ -485,7 +495,6 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        dic_['PVsConn'] &= all([x.connected for x in self._events.values()])
 
         dic_['Intlk'] = 0
         if 'Intlk' not in self._REMOVE_PROPS:
@@ -564,12 +573,15 @@ class _EVROUT(_BaseLL):
         if src_str in self._events:
             evt = self._events[src_str]
             evt_del = evt.delay_raw if evt.is_in_inj_table else 0
+        evt_del = evt_del or 0  # in case event PV is disconnected
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
         dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
 
     def _set_delay(self, value, raw=False):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
+        if self._config_ok_values.get('RFDelayType', False):
+            dic_['RFDelay'] = 31
         if value is None:
             return dic_
         value = value if raw else round(value / self.base_del)
@@ -634,8 +646,10 @@ class _EVROUT(_BaseLL):
             source = ''
         if not source:
             return {'Src': invalid}
-        elif source.startswith(('Dsbl', 'Clock')):
+        elif source.startswith('Clock'):
             return {'Src': self._source_enums.index(source)}
+        elif source.startswith('Dsbl'):
+            return {'Src': self._source_enums.index('Dsbld')}
 
     def _set_source(self, value):
         if value is None:
@@ -707,10 +721,27 @@ class _EVROUT(_BaseLL):
             dic.update(self._set_duration(self._duration, pul=pul))
         return dic
 
+    def _set_rfdelaytype(self, value):
+        """Simple setting of Low Level IOC PVs.
 
-class _EVROTP(_EVROUT):
+        Function called by write when no conversion is needed between
+        high and low level properties.
+        """
+        if value is None:
+            return dict()
+        dic = {'RFDelayType': value, 'RFDelay': 0}
+        if value:
+            dic['RFDelay'] = 31
+        return dic
+
+
+class _EVROUT(_BASETRIG):
+    _REMOVE_PROPS = {'Dir', }
+
+
+class _EVROTP(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los'}
+        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los', 'Dir'}
 
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
@@ -753,11 +784,11 @@ class _EVEOTP(_EVROTP):
     pass
 
 
-class _EVEOUT(_EVROUT):
-    _REMOVE_PROPS = {'Los', }
+class _EVEOUT(_BASETRIG):
+    _REMOVE_PROPS = {'Los', 'Dir'}
 
 
-class _AMCFPGAEVRAMC(_EVROUT):
+class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
 

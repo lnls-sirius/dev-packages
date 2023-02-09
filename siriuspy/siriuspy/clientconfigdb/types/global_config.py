@@ -196,26 +196,6 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:CycleDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:CycleMode-Sel', 0, 0.0],
 
-    ['AS-RaMO:TI-EVG:DigBODelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigBODelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigBOMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigLIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigLIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigLIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigSIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigSIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigSIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigTBDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigTBDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigTBMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:DigTSDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:DigTSDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:DigTSMode-Sel', 0, 0.0],
-
     ['AS-RaMO:TI-EVG:InjBODelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:InjBODelayType-Sel', 0, 0.0],
     # ['AS-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
@@ -227,14 +207,6 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:LinacDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:LinacDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:LinacMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:MigSIDelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:MigSIDelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:MigSIMode-Sel', 0, 0.0],
-
-    ['AS-RaMO:TI-EVG:OrbBODelayRaw-SP', 0, 0],
-    ['AS-RaMO:TI-EVG:OrbBODelayType-Sel', 0, 0.0],
-    ['AS-RaMO:TI-EVG:OrbBOMode-Sel', 0, 0.0],
 
     ['AS-RaMO:TI-EVG:OrbSIDelayRaw-SP', 0, 0],
     ['AS-RaMO:TI-EVG:OrbSIDelayType-Sel', 0, 0.0],
@@ -252,6 +224,33 @@ _pvs_as_ti = [
     ['AS-RaMO:TI-EVG:TunSIDelayType-Sel', 0, 0.0],
     ['AS-RaMO:TI-EVG:TunSIMode-Sel', 0, 0.0],
 
+    ['AS-RaMO:TI-EVG:FOFBSDelayRaw-SP', 0, 0],
+    ['AS-RaMO:TI-EVG:FOFBSDelayType-Sel', 0, 0.0],
+    ['AS-RaMO:TI-EVG:FOFBSMode-Sel', 0, 0.0],
+
+    # AMCFPGAEVRs
+    ['IA-01RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-02RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-03RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-04RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-05RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-06RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-07RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-08RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-09RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-10RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-11RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-12RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-13RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-14RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-15RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-16RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-17RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-18RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-19RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-20RaBPM:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+    ['IA-20RaBPMTL:TI-AMCFPGAEVR:FPGAClk-Cte', 124916500, 0.0],
+
     # Triggers
     ['AS-Fam:TI-Scrn-TBBO:DelayRaw-SP', 0, 0],
     ['AS-Fam:TI-Scrn-TBBO:Duration-SP', 0, 0.0],  # [us]
@@ -260,7 +259,7 @@ _pvs_as_ti = [
     ['AS-Fam:TI-Scrn-TBBO:RFDelayType-Sel', 0, 0.0],
     ['AS-Fam:TI-Scrn-TBBO:Src-Sel', 0, 0.0],
     ['AS-Fam:TI-Scrn-TBBO:State-Sel', 0, 0.0],
-    ['AS-Fam:TI-Scrn-TBBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Fam:TI-Scrn-TBBO:LowLvlLock-Sel', 0, 0.0],
 
     ['AS-Glob:TI-FCT:DelayRaw-SP', 0, 0],
@@ -270,7 +269,7 @@ _pvs_as_ti = [
     ['AS-Glob:TI-FCT:RFDelayType-Sel', 0, 0.0],
     ['AS-Glob:TI-FCT:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-FCT:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-FCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Glob:TI-FCT:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Glob:TI-FCT:LowLvlLock-Sel', 0, 0.0],
 
     ['AS-Glob:TI-FillPtrnMon:DelayRaw-SP', 0, 0],
@@ -280,7 +279,7 @@ _pvs_as_ti = [
     ['AS-Glob:TI-FillPtrnMon:RFDelayType-Sel', 0, 0.0],
     ['AS-Glob:TI-FillPtrnMon:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-FillPtrnMon:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-FillPtrnMon:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Glob:TI-FillPtrnMon:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Glob:TI-FillPtrnMon:LowLvlLock-Sel', 0, 0.0],
 
     ['AS-Glob:TI-Osc-EjeBO:DelayRaw-SP', 0, 0],
@@ -290,7 +289,7 @@ _pvs_as_ti = [
     ['AS-Glob:TI-Osc-EjeBO:RFDelayType-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-EjeBO:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-EjeBO:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-EjeBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Glob:TI-Osc-EjeBO:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Glob:TI-Osc-EjeBO:LowLvlLock-Sel', 0, 0.0],
 
     ['AS-Glob:TI-Osc-InjBO:DelayRaw-SP', 0, 0],
@@ -299,7 +298,7 @@ _pvs_as_ti = [
     ['AS-Glob:TI-Osc-InjBO:Polarity-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjBO:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjBO:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Glob:TI-Osc-InjBO:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Glob:TI-Osc-InjBO:LowLvlLock-Sel', 0, 0.0],
 
     ['AS-Glob:TI-Osc-InjSI:DelayRaw-SP', 0, 0],
@@ -308,7 +307,7 @@ _pvs_as_ti = [
     ['AS-Glob:TI-Osc-InjSI:Polarity-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjSI:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjSI:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjSI:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['AS-Glob:TI-Osc-InjSI:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['AS-Glob:TI-Osc-InjSI:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-01D:TI-InjKckr:DelayRaw-SP', 0, 0],
@@ -317,7 +316,7 @@ _pvs_as_ti = [
     ['BO-01D:TI-InjKckr:Polarity-Sel', 0, 0.0],
     ['BO-01D:TI-InjKckr:Src-Sel', 0, 0.0],
     ['BO-01D:TI-InjKckr:State-Sel', 0, 0.0],
-    ['BO-01D:TI-InjKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-01D:TI-InjKckr:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-01D:TI-InjKckr:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-35D:TI-DCCT:DelayRaw-SP', 0, 0],
@@ -327,7 +326,7 @@ _pvs_as_ti = [
     ['BO-35D:TI-DCCT:RFDelayType-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:Src-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:State-Sel', 0, 0.0],
-    ['BO-35D:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-35D:TI-DCCT:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-35D:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-48D:TI-EjeKckr:DelayRaw-SP', 0, 0],
@@ -337,7 +336,7 @@ _pvs_as_ti = [
     ['BO-48D:TI-EjeKckr:RFDelayType-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Src-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:State-Sel', 0, 0.0],
-    ['BO-48D:TI-EjeKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-48D:TI-EjeKckr:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-48D:TI-EjeKckr:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-50U:TI-VLightCam:DelayRaw-SP', 0, 0],
@@ -347,7 +346,7 @@ _pvs_as_ti = [
     ['BO-50U:TI-VLightCam:RFDelayType-Sel', 0, 0.0],
     ['BO-50U:TI-VLightCam:Src-Sel', 0, 0.0],
     ['BO-50U:TI-VLightCam:State-Sel', 0, 0.0],
-    ['BO-50U:TI-VLightCam:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-50U:TI-VLightCam:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-50U:TI-VLightCam:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Fam:TI-BPM:DelayRaw-SP', 0, 0],
@@ -356,7 +355,7 @@ _pvs_as_ti = [
     ['BO-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
     ['BO-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['BO-Fam:TI-BPM:State-Sel', 0, 0.0],
-    ['BO-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
@@ -365,7 +364,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-LLRF-PsMtn:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Glob:TI-LLRF-PsMtn:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],
@@ -374,7 +373,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-LLRF-Rmp:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Glob:TI-LLRF-Rmp:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],
@@ -383,7 +382,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Corrs:Src-Sel', 0, 0.0],
     # ['BO-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-Mags-Corrs:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-Mags-Fams:DelayRaw-SP', 0, 0],
@@ -392,7 +391,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-Mags-Fams:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags-Fams:Src-Sel', 0, 0.0],
     # ['BO-Glob:TI-Mags-Fams:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-Mags-Fams:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-Mags-Fams:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Glob:TI-Mags-Fams:LowLvlLock-Sel', 0, 0.0],
 
     ['BO-Glob:TI-TuneProc:DelayRaw-SP', 0, 0],
@@ -402,7 +401,7 @@ _pvs_as_ti = [
     ['BO-Glob:TI-TuneProc:RFDelayType-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:State-Sel', 0, 0.0],
-    ['BO-Glob:TI-TuneProc:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['BO-Glob:TI-TuneProc:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Glob:TI-TuneProc:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-Osc-Modltr:DelayRaw-SP', 0, 0],
@@ -411,7 +410,7 @@ _pvs_as_ti = [
     ['LI-01:TI-Osc-Modltr:Polarity-Sel', 0, 0.0],
     ['LI-01:TI-Osc-Modltr:Src-Sel', 0, 0.0],
     ['LI-01:TI-Osc-Modltr:State-Sel', 0, 0.0],
-    ['LI-01:TI-Osc-Modltr:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-Osc-Modltr:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-Osc-Modltr:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-EGun-MultBun:DelayRaw-SP', 0, 0],
@@ -421,7 +420,7 @@ _pvs_as_ti = [
     ['LI-01:TI-EGun-MultBun:RFDelayType-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBun:Src-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBun:State-Sel', 0, 0.0],
-    ['LI-01:TI-EGun-MultBun:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-EGun-MultBun:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-EGun-MultBun:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-EGun-MultBunPre:DelayRaw-SP', 0, 0],
@@ -431,7 +430,7 @@ _pvs_as_ti = [
     ['LI-01:TI-EGun-MultBunPre:RFDelayType-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBunPre:Src-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBunPre:State-Sel', 0, 0.0],
-    ['LI-01:TI-EGun-MultBunPre:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-EGun-MultBunPre:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-EGun-MultBunPre:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-EGun-SglBun:DelayRaw-SP', 0, 0],
@@ -441,7 +440,7 @@ _pvs_as_ti = [
     ['LI-01:TI-EGun-SglBun:RFDelayType-Sel', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:Src-Sel', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:State-Sel', 0, 0.0],
-    ['LI-01:TI-EGun-SglBun:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-EGun-SglBun:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-EGun-SglBun:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-Modltr-1:DelayRaw-SP', 0, 0],
@@ -450,7 +449,7 @@ _pvs_as_ti = [
     ['LI-01:TI-Modltr-1:Polarity-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-1:Src-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-1:State-Sel', 0, 0.0],
-    ['LI-01:TI-Modltr-1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-Modltr-1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-Modltr-1:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-01:TI-Modltr-2:DelayRaw-SP', 0, 0],
@@ -459,7 +458,7 @@ _pvs_as_ti = [
     ['LI-01:TI-Modltr-2:Polarity-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-2:Src-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-2:State-Sel', 0, 0.0],
-    ['LI-01:TI-Modltr-2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-01:TI-Modltr-2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-01:TI-Modltr-2:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Fam:TI-BPM:DelayRaw-SP', 0, 0],
@@ -469,7 +468,7 @@ _pvs_as_ti = [
     ['LI-Fam:TI-BPM:RFDelayType-Sel', 0, 0.0],
     ['LI-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-BPM:State-Sel', 0, 0.0],
-    ['LI-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Fam:TI-ICT:DelayRaw-SP', 0, 0],
@@ -479,7 +478,7 @@ _pvs_as_ti = [
     ['LI-Fam:TI-ICT:RFDelayType-Sel', 0, 0.0],
     ['LI-Fam:TI-ICT:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-ICT:State-Sel', 0, 0.0],
-    ['LI-Fam:TI-ICT:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Fam:TI-ICT:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Fam:TI-ICT:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Fam:TI-Scrn:DelayRaw-SP', 0, 0],
@@ -489,7 +488,7 @@ _pvs_as_ti = [
     ['LI-Fam:TI-Scrn:RFDelayType-Sel', 0, 0.0],
     ['LI-Fam:TI-Scrn:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-Scrn:State-Sel', 0, 0.0],
-    ['LI-Fam:TI-Scrn:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Fam:TI-Scrn:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Fam:TI-Scrn:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-LLRF-Kly1:DelayRaw-SP', 0, 0],
@@ -498,7 +497,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-LLRF-Kly1:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly1:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly1:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-LLRF-Kly1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-LLRF-Kly1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-LLRF-Kly1:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-LLRF-Kly2:DelayRaw-SP', 0, 0],
@@ -507,7 +506,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-LLRF-Kly2:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly2:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly2:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-LLRF-Kly2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-LLRF-Kly2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-LLRF-Kly2:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-LLRF-SHB:DelayRaw-SP', 0, 0],
@@ -516,7 +515,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-LLRF-SHB:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-SHB:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-SHB:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-LLRF-SHB:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-LLRF-SHB:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-LLRF-SHB:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-SSAmp-Kly1:DelayRaw-SP', 0, 0],
@@ -525,7 +524,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-SSAmp-Kly1:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-SSAmp-Kly1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-SSAmp-Kly1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-SSAmp-Kly1:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-SSAmp-Kly2:DelayRaw-SP', 0, 0],
@@ -534,7 +533,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-SSAmp-Kly2:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-SSAmp-Kly2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-SSAmp-Kly2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-SSAmp-Kly2:LowLvlLock-Sel', 0, 0.0],
 
     ['LI-Glob:TI-SSAmp-SHB:DelayRaw-SP', 0, 0],
@@ -543,7 +542,7 @@ _pvs_as_ti = [
     ['LI-Glob:TI-SSAmp-SHB:Polarity-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-SHB:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-SHB:State-Sel', 0, 0.0],
-    ['LI-Glob:TI-SSAmp-SHB:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['LI-Glob:TI-SSAmp-SHB:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['LI-Glob:TI-SSAmp-SHB:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-01SA:TI-InjDpKckr:DelayRaw-SP', 0, 0],
@@ -552,7 +551,7 @@ _pvs_as_ti = [
     ['SI-01SA:TI-InjDpKckr:Polarity-Sel', 0, 0.0],
     ['SI-01SA:TI-InjDpKckr:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-InjDpKckr:State-Sel', 0, 0.0],
-    ['SI-01SA:TI-InjDpKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-01SA:TI-InjDpKckr:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-01SA:TI-InjDpKckr:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-01SA:TI-InjNLKckr:DelayRaw-SP', 0, 0],
@@ -561,7 +560,7 @@ _pvs_as_ti = [
     ['SI-01SA:TI-InjNLKckr:Polarity-Sel', 0, 0.0],
     ['SI-01SA:TI-InjNLKckr:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-InjNLKckr:State-Sel', 0, 0.0],
-    ['SI-01SA:TI-InjNLKckr:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-01SA:TI-InjNLKckr:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-01SA:TI-InjNLKckr:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-01SA:TI-PingH:DelayRaw-SP', 0, 0],
@@ -570,7 +569,7 @@ _pvs_as_ti = [
     ['SI-01SA:TI-PingH:Polarity-Sel', 0, 0.0],
     ['SI-01SA:TI-PingH:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-PingH:State-Sel', 0, 0.0],
-    ['SI-01SA:TI-PingH:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-01SA:TI-PingH:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-01SA:TI-PingH:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-13C4:TI-DCCT:DelayRaw-SP', 0, 0],
@@ -580,7 +579,7 @@ _pvs_as_ti = [
     ['SI-13C4:TI-DCCT:RFDelayType-Sel', 0, 0.0],
     ['SI-13C4:TI-DCCT:Src-Sel', 0, 0.0],
     ['SI-13C4:TI-DCCT:State-Sel', 0, 0.0],
-    ['SI-13C4:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-13C4:TI-DCCT:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-13C4:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-14C4:TI-DCCT:DelayRaw-SP', 0, 0],
@@ -590,7 +589,7 @@ _pvs_as_ti = [
     ['SI-14C4:TI-DCCT:RFDelayType-Sel', 0, 0.0],
     ['SI-14C4:TI-DCCT:Src-Sel', 0, 0.0],
     ['SI-14C4:TI-DCCT:State-Sel', 0, 0.0],
-    ['SI-14C4:TI-DCCT:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-14C4:TI-DCCT:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-14C4:TI-DCCT:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-19C4:TI-PingV:DelayRaw-SP', 0, 0],
@@ -600,7 +599,7 @@ _pvs_as_ti = [
     ['SI-19C4:TI-PingV:RFDelayType-Sel', 0, 0.0],
     ['SI-19C4:TI-PingV:Src-Sel', 0, 0.0],
     ['SI-19C4:TI-PingV:State-Sel', 0, 0.0],
-    ['SI-19C4:TI-PingV:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-19C4:TI-PingV:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-19C4:TI-PingV:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Fam:TI-BPM:DelayRaw-SP', 0, 0],
@@ -609,8 +608,17 @@ _pvs_as_ti = [
     ['SI-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
     ['SI-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['SI-Fam:TI-BPM:State-Sel', 0, 0.0],
-    ['SI-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
+
+    ['SI-Fam:TI-FOFB:DelayRaw-SP', 0, 0],
+    ['SI-Fam:TI-FOFB:Duration-SP', 0, 0.0],  # [us]
+    ['SI-Fam:TI-FOFB:NrPulses-SP', 0, 0.0],
+    ['SI-Fam:TI-FOFB:Polarity-Sel', 0, 0.0],
+    ['SI-Fam:TI-FOFB:Src-Sel', 0, 0.0],
+    ['SI-Fam:TI-FOFB:State-Sel', 0, 0.0],
+    ['SI-Fam:TI-FOFB:DeltaDelayRaw-SP', 30*[0, ], 0],
+    ['SI-Fam:TI-FOFB:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcH-Fid:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # [us]
@@ -619,7 +627,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcH-Fid:RFDelayType-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcH-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcH-Fid:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcH-Trig1:DelayRaw-SP', 0, 0],
@@ -628,7 +636,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcH-Trig1:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcH-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcH-Trig1:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcH-Trig2:DelayRaw-SP', 0, 0],
@@ -637,7 +645,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcH-Trig2:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcH-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcH-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcL-Fid:DelayRaw-SP', 0, 0],
@@ -647,7 +655,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcL-Fid:RFDelayType-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcL-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcL-Fid:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcL-Trig1:DelayRaw-SP', 0, 0],
@@ -656,7 +664,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcL-Trig1:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcL-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcL-Trig1:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcL-Trig2:DelayRaw-SP', 0, 0],
@@ -665,7 +673,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcL-Trig2:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcL-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcL-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcV-Fid:DelayRaw-SP', 0, 0],
@@ -675,7 +683,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcV-Fid:RFDelayType-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcV-Fid:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcV-Fid:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcV-Trig1:DelayRaw-SP', 0, 0],
@@ -684,7 +692,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcV-Trig1:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcV-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcV-Trig1:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-BbBProcV-Trig2:DelayRaw-SP', 0, 0],
@@ -693,7 +701,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcV-Trig2:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-BbBProcV-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcV-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
@@ -702,7 +710,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-LLRF-PsMtn:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-LLRF-PsMtn:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-LLRF-PsMtn:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-LLRF-PsMtn:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-LLRF-Rmp:DelayRaw-SP', 0, 0],
@@ -711,7 +719,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-LLRF-Rmp:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-LLRF-Rmp:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-LLRF-Rmp:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-Bends:DelayRaw-SP', 0, 0],
@@ -720,7 +728,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Bends:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Bends:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Bends:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-Bends:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-Bends:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-Bends:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-Corrs:DelayRaw-SP', 0, 0],
@@ -729,7 +737,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Corrs:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Corrs:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Corrs:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-Corrs:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-Corrs:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-Corrs:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-Quads:DelayRaw-SP', 0, 0],
@@ -738,7 +746,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Quads:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Quads:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Quads:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-Quads:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-Quads:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-Quads:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-QTrims:DelayRaw-SP', 0, 0],
@@ -747,7 +755,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-QTrims:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-QTrims:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-QTrims:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-QTrims:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-QTrims:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-QTrims:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-Sexts:DelayRaw-SP', 0, 0],
@@ -756,7 +764,7 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Sexts:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Sexts:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Sexts:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-Sexts:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-Sexts:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-Sexts:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Mags-Skews:DelayRaw-SP', 0, 0],
@@ -765,29 +773,29 @@ _pvs_as_ti = [
     ['SI-Glob:TI-Mags-Skews:Polarity-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Skews:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Mags-Skews:State-Sel', 0, 0.0],
-    ['SI-Glob:TI-Mags-Skews:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['SI-Glob:TI-Mags-Skews:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-Mags-Skews:LowLvlLock-Sel', 0, 0.0],
 
-# NOTE: This trigger is not present yet in timing IOC:
-#     ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
-#     ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:DeltaDelay-SP', 30*[0.0, ], 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
+    # NOTE: This trigger is not present yet in timing IOC:
+    # ['SI-Glob:TI-StrkCam-Trig1:DelayRaw-SP', 0, 0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # [us]
+    # ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig1:DeltaDelayRaw-SP', 30*[0, ], 0],
+    # ['SI-Glob:TI-StrkCam-Trig1:LowLvlLock-Sel', 0, 0.0],
 
-#     ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
-#     ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:DeltaDelay-SP', 30*[0.0, ], 0.0],
-#     ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:DelayRaw-SP', 0, 0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # [us]
+    # ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
+    # ['SI-Glob:TI-StrkCam-Trig2:DeltaDelayRaw-SP', 30*[0, ], 0],
+    # ['SI-Glob:TI-StrkCam-Trig2:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-04:TI-InjSept:DelayRaw-SP', 0, 0],
     ['TB-04:TI-InjSept:Duration-SP', 0, 0.0],  # [us]
@@ -795,7 +803,7 @@ _pvs_as_ti = [
     ['TB-04:TI-InjSept:Polarity-Sel', 0, 0.0],
     ['TB-04:TI-InjSept:Src-Sel', 0, 0.0],
     ['TB-04:TI-InjSept:State-Sel', 0, 0.0],
-    ['TB-04:TI-InjSept:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TB-04:TI-InjSept:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TB-04:TI-InjSept:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-Fam:TI-BPM:DelayRaw-SP', 0, 0],
@@ -804,7 +812,7 @@ _pvs_as_ti = [
     ['TB-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
     ['TB-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['TB-Fam:TI-BPM:State-Sel', 0, 0.0],
-    ['TB-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TB-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TB-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],
@@ -813,7 +821,7 @@ _pvs_as_ti = [
     ['TB-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
-    ['TB-Fam:TI-ICT-Digit:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TB-Fam:TI-ICT-Digit:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TB-Fam:TI-ICT-Digit:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],
@@ -822,7 +830,7 @@ _pvs_as_ti = [
     ['TB-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
-    ['TB-Fam:TI-ICT-Integ:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TB-Fam:TI-ICT-Integ:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TB-Fam:TI-ICT-Integ:LowLvlLock-Sel', 0, 0.0],
 
     ['TB-Glob:TI-Mags:DelayRaw-SP', 0, 0],
@@ -831,7 +839,7 @@ _pvs_as_ti = [
     ['TB-Glob:TI-Mags:Polarity-Sel', 0, 0.0],
     ['TB-Glob:TI-Mags:Src-Sel', 0, 0.0],
     ['TB-Glob:TI-Mags:State-Sel', 0, 0.0],
-    ['TB-Glob:TI-Mags:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TB-Glob:TI-Mags:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TB-Glob:TI-Mags:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-01:TI-EjeSeptF:DelayRaw-SP', 0, 0],
@@ -841,7 +849,7 @@ _pvs_as_ti = [
     ['TS-01:TI-EjeSeptF:RFDelayType-Sel', 0, 0.0],
     ['TS-01:TI-EjeSeptF:Src-Sel', 0, 0.0],
     ['TS-01:TI-EjeSeptF:State-Sel', 0, 0.0],
-    ['TS-01:TI-EjeSeptF:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-01:TI-EjeSeptF:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-01:TI-EjeSeptF:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-01:TI-EjeSeptG:DelayRaw-SP', 0, 0],
@@ -851,7 +859,7 @@ _pvs_as_ti = [
     ['TS-01:TI-EjeSeptG:RFDelayType-Sel', 0, 0.0],
     ['TS-01:TI-EjeSeptG:Src-Sel', 0, 0.0],
     ['TS-01:TI-EjeSeptG:State-Sel', 0, 0.0],
-    ['TS-01:TI-EjeSeptG:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-01:TI-EjeSeptG:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-01:TI-EjeSeptG:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-04:TI-InjSeptF:DelayRaw-SP', 0, 0],
@@ -860,7 +868,7 @@ _pvs_as_ti = [
     ['TS-04:TI-InjSeptF:Polarity-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptF:Src-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptF:State-Sel', 0, 0.0],
-    ['TS-04:TI-InjSeptF:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-04:TI-InjSeptF:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-04:TI-InjSeptF:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-04:TI-InjSeptG-1:DelayRaw-SP', 0, 0],
@@ -869,7 +877,7 @@ _pvs_as_ti = [
     ['TS-04:TI-InjSeptG-1:Polarity-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptG-1:Src-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptG-1:State-Sel', 0, 0.0],
-    ['TS-04:TI-InjSeptG-1:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-04:TI-InjSeptG-1:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-04:TI-InjSeptG-1:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-04:TI-InjSeptG-2:DelayRaw-SP', 0, 0],
@@ -878,7 +886,7 @@ _pvs_as_ti = [
     ['TS-04:TI-InjSeptG-2:Polarity-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptG-2:Src-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptG-2:State-Sel', 0, 0.0],
-    ['TS-04:TI-InjSeptG-2:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-04:TI-InjSeptG-2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-04:TI-InjSeptG-2:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-Fam:TI-BPM:DelayRaw-SP', 0, 0],
@@ -887,7 +895,7 @@ _pvs_as_ti = [
     ['TS-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
     ['TS-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-BPM:State-Sel', 0, 0.0],
-    ['TS-Fam:TI-BPM:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-Fam:TI-ICT-Digit:DelayRaw-SP', 0, 0],
@@ -896,7 +904,7 @@ _pvs_as_ti = [
     ['TS-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
-    ['TS-Fam:TI-ICT-Digit:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-Fam:TI-ICT-Digit:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-Fam:TI-ICT-Digit:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-Fam:TI-ICT-Integ:DelayRaw-SP', 0, 0],
@@ -905,7 +913,7 @@ _pvs_as_ti = [
     ['TS-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
-    ['TS-Fam:TI-ICT-Integ:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-Fam:TI-ICT-Integ:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-Fam:TI-ICT-Integ:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-Fam:TI-Scrn:DelayRaw-SP', 0, 0],
@@ -915,7 +923,7 @@ _pvs_as_ti = [
     ['TS-Fam:TI-Scrn:RFDelayType-Sel', 0, 0.0],
     ['TS-Fam:TI-Scrn:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-Scrn:State-Sel', 0, 0.0],
-    ['TS-Fam:TI-Scrn:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-Fam:TI-Scrn:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-Fam:TI-Scrn:LowLvlLock-Sel', 0, 0.0],
 
     ['TS-Glob:TI-Mags:DelayRaw-SP', 0, 0],
@@ -924,7 +932,7 @@ _pvs_as_ti = [
     ['TS-Glob:TI-Mags:Polarity-Sel', 0, 0.0],
     ['TS-Glob:TI-Mags:Src-Sel', 0, 0.0],
     ['TS-Glob:TI-Mags:State-Sel', 0, 0.0],
-    ['TS-Glob:TI-Mags:DeltaDelay-SP', 30*[0.0, ], 0.0],
+    ['TS-Glob:TI-Mags:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['TS-Glob:TI-Mags:LowLvlLock-Sel', 0, 0.0],
 
     ]
@@ -997,6 +1005,283 @@ _pvs_as_pu = [
 _pvs_as_rf = [
     ['RF-Gen:FreqPhsCont-Sel', 0, 0.0],
     ['RF-Gen:GeneralFreq-SP', 0.0, 0.0],  # [Hz]
+    ]
+
+
+_pvs_bo_llrf = [
+    ['BR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+    ['BR-RF-DLLRF-01:RmpTs1-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs2-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs3-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpTs4-SP', 0, 0.0],  # ms
+    ['BR-RF-DLLRF-01:RmpPhsTop-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # Deg
+    ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP', 0, 0.0],  # mV
+    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # mV
+    ]
+
+
+_pvs_si_llrf = [
+    ['SR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
+    ['SR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
+    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
+    ['SR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
+    ['SR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+    ]
+
+
+_pvs_tb_di = [
+    ['TB-01:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['TB-01:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['TB-02:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['TB-02:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['TB-03:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['TB-04:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ]
+
+
+_pvs_bo_di = [
+    ['BO-02U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-03U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-04U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-05U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-06U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-07U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-08U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-09U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-10U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-11U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-12U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-13U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-14U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-15U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-16U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-17U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-18U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-19U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-20U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-21U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-22U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-23U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-24U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-25U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-26U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-27U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-28U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-29U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-30U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-31U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-32U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-33U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-34U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-35U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-36U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-37U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-38U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-39U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-40U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-41U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-42U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-43U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-44U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-45U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-46U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-47U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-48U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-49U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-50U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['BO-01U:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ]
+
+
+_pvs_ts_di = [
+    ['TS-01:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['TS-02:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['TS-03:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['TS-04:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['TS-04:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ]
+
+
+_pvs_si_di = [
+    ['SI-01M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-02C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-03C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-04C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-05C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-06C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-07C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-08C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-09C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-10C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-11C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-12C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-13C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-14C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-15C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-16C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-17C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-18C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-19C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20M1:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20M2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C1:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C1:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C2:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C3:DI-BPM-1:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C3:DI-BPM-2:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-20C4:DI-BPM:RFFEAtt-SP', 0.0, 0.0],
+    ['SI-01M1:DI-BPM:RFFEAtt-SP ', 0.0, 0.0],
     ]
 
 
@@ -1239,6 +1524,7 @@ _pvs_si_ps_fam = [
 
 
 _pvs_si_ps_ch = [
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
     ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
@@ -1363,6 +1649,7 @@ _pvs_si_ps_ch = [
 
 
 _pvs_si_ps_cv = [
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
     ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
@@ -2276,14 +2563,36 @@ _pvs_si_ps_qn = [
     ]
 
 
+_pvs_si_ps_ids = [
+    ['SI-14SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-QS-1:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-10SB:PS-QS-2:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-14SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-14SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-QS-1:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-10SB:PS-QS-2:Current-SP', 0.0, 0.0],  # [A]
+    ]
+
+
 _template_dict = {
     'pvs':
     _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_as_rf +
+    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf +
+    _pvs_tb_di + _pvs_bo_di + _pvs_ts_di + _pvs_si_di +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
     _pvs_si_ps_ch + _pvs_si_ps_cv +
-    _pvs_si_ps_qs + _pvs_si_ps_qn
+    _pvs_si_ps_qs + _pvs_si_ps_qn +
+    _pvs_si_ps_ids
     }

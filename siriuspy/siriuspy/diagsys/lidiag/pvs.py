@@ -3,6 +3,7 @@
 
 import numpy as _np
 
+from ...util import update_bit as _update_bit
 from .csdev import Const as _Const
 
 
@@ -130,6 +131,55 @@ class LIRFStatusPV:
         severity = computed_pv.pvs[LIRFStatusPV.PV_IXQDIF].severity
         if severity != 0:
             value |= LIRFStatusPV.BIT_IXQDIFF
+
+        return {'value': value}
+
+
+class LIPUStatusPV:
+    """LI PU Status PV."""
+
+    BIT = _Const.register(
+        'BIT',
+        ['DISCONN', 'RUNSTOP', 'PREHEAT', 'CHRALLW', 'TRGALLW',
+         'EMRSTOP', 'CPS_ALL', 'THYHEAT', 'KLYHEAT', 'LVRDYOK',
+         'HVRDYOK', 'TRRDYOK', 'SELFFLT', 'SYS_RDY', 'TRGNORM',
+         'PLSCURR', 'VLTDIFF', 'CRRDIFF', 'CHARGES', 'TRIGOUT'])
+
+    PV = _Const.register(
+        'PV',
+        ['CHARGES', 'TRIGOUT', 'RUNSTOP', 'PREHEAT', 'CHRALLW',
+         'TRGALLW', 'EMRSTOP', 'CPS_ALL', 'THYHEAT', 'KLYHEAT',
+         'LVRDYOK', 'HVRDYOK', 'TRRDYOK', 'SELFFLT', 'SYS_RDY',
+         'TRGNORM', 'PLSCURR', 'VLTDIFF', 'CRRDIFF'])
+
+    PVS_OFF_IGNORE = [
+        'CHRALLW', 'TRGALLW', 'CPS_ALL', 'TRRDYOK', 'SELFFLT',
+        'SYS_RDY', 'TRGNORM', 'PLSCURR']
+
+    def compute_update(self, computed_pv, updated_pv_name, value):
+        """Compute Status PV."""
+        value = 0
+
+        # connected?
+        disconnected = \
+            any([not computed_pv.pvs[i].connected for i in LIPUStatusPV.PV])
+        if disconnected:
+            value = (1 << len(LIPUStatusPV.BIT)+1)-1
+            return {'value': value}
+
+        chrgsts = computed_pv.pvs[LIPUStatusPV.PV.CHARGES].value
+        trigsts = computed_pv.pvs[LIPUStatusPV.PV.TRIGOUT].value
+        for pvi, attr in enumerate(LIPUStatusPV.PV._fields):
+            bit = getattr(LIPUStatusPV.BIT, attr)
+            if 'DIFF' in attr:
+                sts = computed_pv.pvs[pvi].severity
+                value = _update_bit(value, bit, sts != 0)
+            else:
+                if (not chrgsts or not trigsts) and \
+                        attr in LIPUStatusPV.PVS_OFF_IGNORE:
+                    continue
+                sts = computed_pv.pvs[pvi].value
+                value = _update_bit(value, bit, sts != 1 or sts is None)
 
         return {'value': value}
 

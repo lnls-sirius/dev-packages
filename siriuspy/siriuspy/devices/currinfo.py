@@ -211,8 +211,10 @@ class CurrInfoSI(_Device):
 
     _properties = (
         'Charge-Mon', 'Current-Mon',
-        'InjEff-Mon', 'Lifetime-Mon', 'LifetimeBPM-Mon',
+        'InjEff-Mon', 'InjCurr-Mon', 'InjCharge-Mon',
+        'Lifetime-Mon', 'LifetimeBPM-Mon',
         'StoredEBeam-Mon',
+        'BufferValue-Mon', 'BufferTimestamp-Mon',
     )
 
     def __init__(self):
@@ -232,8 +234,18 @@ class CurrInfoSI(_Device):
 
     @property
     def injeff(self):
-        """."""
+        """Efficiency of last injection pulse."""
         return self['InjEff-Mon']
+
+    @property
+    def injcurr(self):
+        """Current of last injection pulse."""
+        return self['InjCurr-Mon']
+
+    @property
+    def injcharge(self):
+        """Charge of last injection pulse."""
+        return self['InjCharge-Mon']
 
     @property
     def lifetime(self):

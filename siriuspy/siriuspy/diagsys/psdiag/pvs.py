@@ -24,8 +24,8 @@ class PSDiffPV:
         if disconnected:
             return None
         value_sp = computed_pv.pvs[PSDiffPV.CURRT_SP].value
-        value_rb = computed_pv.pvs[PSDiffPV.CURRT_MON].value
-        diff = value_rb - value_sp
+        value_mon = computed_pv.pvs[PSDiffPV.CURRT_MON].value
+        diff = value_mon - value_sp
         return {'value': diff}
 
 
@@ -44,6 +44,7 @@ class PSStatusPV:
     CURRT_DIFF = 1
     INTRLCK_LI = 2
     WARNSTS_LI = 3
+    CONNCTD_LI = 4
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
@@ -62,20 +63,35 @@ class PSStatusPV:
         value = 0
         # ps connected?
         if psname.sec != 'LI':
-            disconnected = \
+            disconn = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
                 not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
-                not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
-                not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
+                not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected
+            if psname.dev not in ['FCH', 'FCV']:
+                disconn |= not computed_pv.pvs[PSStatusPV.WAVFRM_MON].connected
+
             for intlk in self.INTLK_PVS:
-                disconnected |= not computed_pv.pvs[intlk].connected
+                disconn |= not computed_pv.pvs[intlk].connected
+            for alarm in self.ALARM_PVS:
+                disconn |= not computed_pv.pvs[alarm].connected
+
+            if not disconn and psname.dev not in ['FCH', 'FCV']:  # comm ok?
+                commsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].status
+                if commsts != 0 or commsts is None:
+                    disconn = True
         else:
-            disconnected = \
+            disconn = \
                 not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
                 not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
                 not computed_pv.pvs[PSStatusPV.INTRLCK_LI].connected
-        if disconnected:
+
+            if not disconn:  # comm ok?
+                commval = computed_pv.pvs[PSStatusPV.CONNCTD_LI].value
+                commsts = computed_pv.pvs[PSStatusPV.CONNCTD_LI].status
+                if commval != 0 or commval is None or commsts != 0:
+                    disconn = True
+        if disconn:
             value |= PSStatusPV.BIT_PSCONNECT
             value |= PSStatusPV.BIT_PWRSTATON
             value |= PSStatusPV.BIT_CURRTDIFF
@@ -95,12 +111,18 @@ class PSStatusPV:
             sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
             sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
             if sel is not None and sts is not None:
-                opmode_sel = _ETypes.OPMODES[sel]
-                opmode_sts = _ETypes.STATES[sts]
+                if psname.dev in ['FCH', 'FCV']:
+                    opmode_sel = _ETypes.FOFB_OPMODES_SEL[sel]
+                    opmode_sts = _ETypes.FOFB_OPMODES_STS[sts]
+                    checkdiff = sts == _PSConst.OpModeFOFBSts.manual
+                else:
+                    opmode_sel = _ETypes.OPMODES[sel]
+                    opmode_sts = _ETypes.STATES[sts]
+                    checkdiff = sts == _PSConst.States.SlowRef
                 if opmode_sel != opmode_sts:
                     value |= PSStatusPV.BIT_OPMODEDIF
                 # current-diff?
-                if sts == _PSConst.States.SlowRef:
+                if checkdiff:
                     severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
                     if severity != 0:
                         value |= PSStatusPV.BIT_CURRTDIFF
@@ -111,8 +133,8 @@ class PSStatusPV:
                         pstype = _PSSearch.conv_psname_2_pstype(psname)
                         PSStatusPV.DTOLWFM_DICT[psname] = _PSSearch.get_splims(
                             pstype, 'DTOL_WFM')
-                    if not _np.allclose(mon, 0.0,
-                                        atol=PSStatusPV.DTOLWFM_DICT[psname]):
+                    if not _np.allclose(
+                            mon, 0.0, atol=PSStatusPV.DTOLWFM_DICT[psname]):
                         value |= PSStatusPV.BIT_BOWFMDIFF
             else:
                 value |= PSStatusPV.BIT_OPMODEDIF

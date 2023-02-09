@@ -7,7 +7,6 @@ from threading import Lock as _Lock
 from .. import clientweb as _web
 from ..namesys import SiriusPVName as _PVName, Filter as _Filter
 
-from .bpms_search import BPMSearch as _BPMSearch
 from .ps_search import PSSearch as _PSSearch
 
 _TIMEOUT = 1.0
@@ -178,6 +177,16 @@ class LLTimeSearch:
         return cls.get_device_names({'dev': 'EVG'})[0]
 
     @classmethod
+    def get_evg2fout_mapping(cls):
+        fouts = cls.get_device_names({'dev': 'Fout'})
+        link = list(cls.In2OutMap['Fout'])[0]
+        mapp = dict()
+        for fout in fouts:
+            out = cls.get_evg_channel(fout.substitute(propty=link))
+            mapp[out.propty] = fout.device_name
+        return mapp
+
+    @classmethod
     def get_triggersource_devices(cls):
         cls._get_timedata()
         return _dcopy(cls._trig_src_devs)
@@ -270,6 +279,18 @@ class LLTimeSearch:
 
     @classmethod
     def has_clock(cls, ll_trigger):
+        """Check whether a low level trigger has access to EVG clocks.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Raises:
+            Exception: When trigger receiver is not recognized.
+
+        Returns:
+            bool: True or False.
+
+        """
         name = _PVName(ll_trigger)
         if name.dev == 'AMCFPGAEVR':
             return True
@@ -280,11 +301,21 @@ class LLTimeSearch:
 
     @classmethod
     def has_delay_type(cls, ll_trigger):
+        """Check whether a low level trigger has delay type.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
         name = _PVName(ll_trigger)
         return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
 
     @classmethod
     def get_trigger_name(cls, channel):
+        """Get name of the trigger associated with channel."""
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
             if up_chan.device_name in cls._trig_src_devs:
@@ -292,6 +323,7 @@ class LLTimeSearch:
 
     @classmethod
     def get_fout_channel(cls, channel):
+        """Get name of the FOUT channel associated with channel."""
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
             if up_chan.device_name in cls._fout_devs:
@@ -299,6 +331,7 @@ class LLTimeSearch:
 
     @classmethod
     def get_evg_channel(cls, channel):
+        """Get name of the EVG channel associated with channel."""
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
             if up_chan.device_name in cls._evg_devs:
@@ -367,7 +400,7 @@ class LLTimeSearch:
         conns = tuple(cls.In2OutMap['AMCFPGAEVR'].values())[0]
         conns = [v for v in conns if not v.startswith('FMC')]
 
-        conn_dict = _BPMSearch.get_timing_mapping()
+        conn_dict = cls._get_crates_mapping()
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
@@ -384,6 +417,24 @@ class LLTimeSearch:
                         which_map='twds', conn=conn,
                         ele1=bpm, ele2=chan.device_name)
         # print(conn_dict.keys() - used)
+
+    @classmethod
+    def _get_crates_mapping(cls):
+        data = _web.crates_mapping()
+        crates = dict()
+        mapping = dict()
+        for line in data.splitlines():
+            line = line.strip()
+            if not line or line[0] == '#':
+                continue  # empty line
+            crate, dev, *_ = line.split()
+            dev = _PVName(dev)
+            if crate not in mapping and dev.dev == 'AMCFPGAEVR':
+                crates[crate] = dev
+                mapping[crates[crate]] = list()
+            else:
+                mapping[crates[crate]].append(dev)
+        return mapping
 
     @classmethod
     def _add_udc_info(cls):

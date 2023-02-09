@@ -144,6 +144,10 @@ def get_si_currinfo_database():
 
     pvs_db[dev+'InjEff-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%'}
+    pvs_db[dev+'InjCurr-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'mA'}
+    pvs_db[dev+'InjCharge-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 'nC'}
 
     dev = 'AS-Glob:AP-CurrInfo:'
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
@@ -189,16 +193,16 @@ def get_lifetime_database():
         'BuffRst-Cmd': {'type': 'int', 'value': 0},
         'BuffAutoRst-Sel': {
             'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-            'value': _c.BuffAutoRst.Off},
+            'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRst-Sts': {
             'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-            'value': _c.BuffAutoRst.Off},
+            'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRstDCurr-SP': {
-            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
         'BuffAutoRstDCurr-RB': {
-            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
 

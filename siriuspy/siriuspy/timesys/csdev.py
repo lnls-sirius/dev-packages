@@ -15,7 +15,7 @@ from ..search import HLTimeSearch as _HLTimeSearch
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    EVT_MODES = ('Disabled', 'Continuous', 'Injection', 'OneShot', 'External')
+    EVT_MODES = ('Disable', 'Continuous', 'Injection', 'OneShot', 'External')
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
@@ -66,10 +66,10 @@ class Const(_csdev.Const):
     __EvtHL2LLMap = None
     __EvtLL2HLMap = None
 
-    evt_ll_codes = list(range(64)) + [124]
+    evt_ll_codes = list(range(64)) + [117, 124]
     evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
     EvtLL = _csdev.Const.register(
-                    'EventsLL', evt_ll_names, values=evt_ll_codes)
+        'EventsLL', evt_ll_names, values=evt_ll_codes)
     del evt_ll_codes, evt_ll_names  # cleanup class namespace
 
     ClkHL2LLMap = {
@@ -513,8 +513,8 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3,
-        'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
-        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+        'lolim': 0.008, 'low': 0.008, 'lolo': 0.008,
+        'hilim': 17e6, 'high': 17e6, 'hihi': 17e6}
     dic_.update(trig_db['Duration'])
     dbase['Duration-RB'] = _dcopy(dic_)
     dbase['Duration-SP'] = dic_
@@ -532,10 +532,12 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['NrPulses-RB'] = _dcopy(dic_)
     dbase['NrPulses-SP'] = dic_
 
+    max_dly_raw = 2123400000
+    max_dly = 17e6
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
     dic_.update(trig_db['Delay'])
     dbase['Delay-RB'] = _dcopy(dic_)
     dbase['Delay-SP'] = dic_
@@ -543,34 +545,43 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
     dic_.update(trig_db.get('DelayRaw', dict()))
     dbase['DelayRaw-RB'] = _dcopy(dic_)
     dbase['DelayRaw-SP'] = dic_
 
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
     dbase['TotalDelay-Mon'] = dic_
 
     # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
+        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
     dbase['TotalDelayRaw-Mon'] = dic_
 
     siz = len(ll_trig_names)
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3,
         'count': siz, 'value': _np.zeros(siz),
-        'lolo': -5e8, 'low': -10e8, 'lolim': -10e8,
-        'hilim': 5e8, 'high': 10e8, 'hihi': 10e8}
+        'lolim': -max_dly, 'low': -max_dly, 'lolo': -max_dly,
+        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
     dic_.update(trig_db.get('DeltaDelay', dict()))
     dbase['DeltaDelay-RB'] = _dcopy(dic_)
     dbase['DeltaDelay-SP'] = dic_
+
+    dic_ = {
+        'type': 'float', 'unit': 'hard', 'prec': 0,
+        'count': siz, 'value': _np.zeros(siz),
+        'lolim': -max_dly_raw, 'low': -max_dly_raw, 'lolo': -max_dly_raw,
+        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
+    dic_.update(trig_db.get('DeltaDelayRaw', dict()))
+    dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
+    dbase['DeltaDelayRaw-SP'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
     dbase['LowLvlLock-Sts'] = _dcopy(dic_)

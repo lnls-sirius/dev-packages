@@ -169,7 +169,7 @@ class TestBSMPChannel(TestCase):
 
     api = (
         'LOCK',
-        'pru',
+        'iointerf',
         'address',
         'size_counter',
         'size_counter_reset',

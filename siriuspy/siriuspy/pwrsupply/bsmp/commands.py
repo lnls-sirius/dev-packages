@@ -9,10 +9,14 @@ import time as _time
 import numpy as _np
 
 from ...bsmp import constants as _const_bsmp
-from ...bsmp import BSMP as _BSMP
+from ...bsmp import (
+    BSMP as _BSMP,
+    IOInterface as _IOInterface,
+)
 
 from . import constants as _const_psbsmp
 from . import entities as _etity_psbsmp
+from . entities import EntitiesPS as _EntitiesPS
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
@@ -59,14 +63,15 @@ class PSBSMP(_BSMP):
             CONST.V_WFMREF1_IDX),
     }
 
-    def __init__(self, slave_address, entities, pru=None):
+    def __init__(self, slave_address: int, entities: _EntitiesPS, pru: _IOInterface):
         """Init BSMP."""
-        self.pru = pru
+        self.pru: _IOInterface = pru
+        self.entities: _EntitiesPS
         super().__init__(self.pru, slave_address, entities)
         self._wfmref_check_entities_consistency()
 
     @staticmethod
-    def parse_firmware_version(version):
+    def parse_firmware_version(version) -> str:
         """Process firmware version from BSMP device."""
         version = version[:version.index(b'\x00')]
         version = ''.join([chr(ord(v)) for v in version])
@@ -97,13 +102,6 @@ class PSBSMP(_BSMP):
             timeout=_timeout_execute_function,
             read_flag=True, print_error=True):
         """."""
-        # execute function
-        # print('--- execute_function ---')
-        # print('func_id: ', func_id)
-        # print('input_val: ', input_val)
-        # print('timeout: ', timeout)
-        # print('read_flag: ', read_flag)
-
         if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
                        PSBSMP.CONST.F_RESET_UDC):
             # NOTE: this is necessary while PS BSMP spec is
@@ -177,53 +175,61 @@ class PSBSMP(_BSMP):
         return ack, data
 
     # --- pwrsupply parameters ---
+    def _parameter_read_ps_name(self, count):
+        # PS_NAME parameter
+        value = _np.zeros(count)
+        for index in range(count):
+            value[index] = self._read_parm(PSBSMP.CONST.P_PS_NAME, index)
+            if value[index] == 0.0:
+                # TODO: this end-of-string convention is
+                # yet to be implemented!
+                value = value[:index]
+                break
+        return ''.join([chr(int(v)) for v in value]).strip()
 
     def parameter_read(self, eid, index=None):
         """Return power supply parameter."""
 
         parameter = self.entities.parameters[eid]
         count = parameter['count']
+
         if eid == PSBSMP.CONST.P_PS_NAME:
             # PS_NAME parameter
+            return self._parameter_read_ps_name(count=count)
+
+        # other parameters
+        if index is None:
             value = _np.zeros(count)
-            for index in range(count):
-                value[index] = self._read_parm(eid, index)
-                if value[index] == 0.0:
-                    # TODO: this end-of-string convention is
-                    # yet to be implemented!
-                    value = value[:index]
-                    break
-            value = ''.join([chr(int(v)) for v in value]).strip()
-        else:
-            # other parameters
-            if index is None:
-                value = _np.zeros(count)
-                for idx in range(count):
-                    val = self._read_parm(eid, idx)
-                    if val is None:
-                        return None
-                    value[idx] = val
-                if count == 1:
-                    value = value[0]
-            else:
-                value = self._read_parm(eid, index)
-                if value is None:
+            for idx in range(count):
+                val = self._read_parm(eid, idx)
+                if val is None:
                     return None
+                value[idx] = val
+            if count == 1:
+                value = value[0]
+        else:
+            value = self._read_parm(eid, index)
+            if value is None:
+                return None
         return value
 
-    def parameter_write(self, eid, value, index=0):
+    def _parameter_write_ps_name(self, count, val):
+        value = _np.zeros(count)
+        value[:len(val)] = [float(ord(c)) for c in val]
+        for index, value_datum in enumerate(value):
+            self.execute_function(
+                func_id=PSBSMP.CONST.F_SET_PARAM,
+                input_val=(PSBSMP.CONST.P_PS_NAME, index, value_datum),
+            )
+
+    def parameter_write(self, eid, value, index=0) -> None:
         """Set power supply parameter."""
         parameter = self.entities.parameters[eid]
         count = parameter['count']
         val = value[:count]
         if eid == PSBSMP.CONST.P_PS_NAME:
             # PS_NAME parameter
-            value = _np.zeros(count)
-            value[:len(val)] = [float(ord(c)) for c in val]
-            for index, value_datum in enumerate(value):
-                self.execute_function(
-                    func_id=PSBSMP.CONST.F_SET_PARAM,
-                    input_val=(eid, index, value_datum))
+            self._parameter_write_ps_name(count=count, val=val)
         else:
             self.execute_function(
                 func_id=PSBSMP.CONST.F_SET_PARAM,
@@ -527,7 +533,7 @@ class FBP(PSBSMP):
     CONST = _const_psbsmp.ConstFBP
     _ACK_OK = _np.zeros(_const_psbsmp.UDC_MAX_NR_DEV, dtype=int)
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFBP(), pru=pru)
@@ -568,8 +574,25 @@ class FBP(PSBSMP):
 
     def sofb_ps_setpoint_set(self, value):
         """."""
-        self._sofb_ps_setpoint = value
-        ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(value)
+        if self._sofb_ps_setpoint is None:
+            self._sofb_ps_setpoint = _np.zeros(
+                _const_psbsmp.UDC_MAX_NR_DEV, dtype=float)
+
+        # NOTE: NaNs in current vector are a way to avoid communication with
+        #   udcs. In case only a few inputs are NaN they will be replaced by
+        #   old values or zero. If all of them are NaN, them no communication
+        #   is performed.
+        nan = _np.isnan(value)
+        self._sofb_ps_setpoint[~nan] = value[~nan]
+
+        # NOTE: In case all values are NaN, no communication is made:
+        if nan.all():
+            ack = self.CONST_BSMP.ACK_OK
+            func_resp = self._sofb_ps_readback_ref
+        else:
+            ack, func_resp = self.ps_function_set_slowref_fbp_readback_ref(
+                self._sofb_ps_setpoint)
+
         if ack == self.CONST_BSMP.ACK_OK:
             self._sofb_ps_readback_ref = func_resp
             self._sofb_ps_func_return = FBP._ACK_OK
@@ -613,7 +636,7 @@ class FAC_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_DCDC(), pru=pru)
@@ -625,7 +648,7 @@ class FAC_2P4S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2P4S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_DCDC(),
@@ -638,7 +661,7 @@ class FAC_2S_DCDC(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAC_2S_DCDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2S_DCDC(), pru=pru)
@@ -650,7 +673,7 @@ class FAP(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP(), pru=pru)
@@ -662,7 +685,7 @@ class FAP_4P(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_4P
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP_4P(), pru=pru)
@@ -674,7 +697,7 @@ class FAP_2P2S(PSBSMP):
     IS_DCLINK = False
     CONST = _const_psbsmp.ConstFAP_2P2S
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
@@ -689,7 +712,7 @@ class FBP_DCLink(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFBP_DCLink
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFBP_DCLink(), pru=pru)
@@ -701,7 +724,7 @@ class FAC_2P4S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2P4S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2P4S_ACDC(),
@@ -714,7 +737,7 @@ class FAC_2S_ACDC(PSBSMP):
     IS_DCLINK = True
     CONST = _const_psbsmp.ConstFAC_2S_ACDC
 
-    def __init__(self, slave_address, pru=None):
+    def __init__(self, slave_address: int, pru: _IOInterface):
         """Init BSMP."""
         PSBSMP.__init__(
             self, slave_address, _etity_psbsmp.EntitiesFAC_2S_ACDC(), pru=pru)

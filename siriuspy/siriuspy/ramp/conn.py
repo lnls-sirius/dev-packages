@@ -42,14 +42,12 @@ class ConnTI(_EpicsPropsList):
         """Properties names."""
 
         BO_HarmNum = 828
-        EVG_RFDiv = 4
 
         # EVG PVs
         EVG = _LLTimeSearch.get_evg_name()
         EVG_DevEnbl = EVG + ':DevEnbl-Sel'
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
-        EVG_FPGAClk = EVG + ':FPGAClk-Cte'
         EVG_UpdateEvt = EVG + ':UpdateEvt-Cmd'
 
         # Linac Egun mode properties
@@ -59,17 +57,15 @@ class ConnTI(_EpicsPropsList):
         # Interlock PV
         Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
 
+        # RFFreq
+        RFFreq = 'RF-Gen:GeneralFreq-RB'
+
     # Add events properties to Const
     _events = {
         'EvtLinac': Const.EVG + ':Linac',
         'EvtInjBO': Const.EVG + ':InjBO',
         'EvtInjSI': Const.EVG + ':InjSI',
         'EvtRmpBO': Const.EVG + ':RmpBO',
-        'EvtDigLI': Const.EVG + ':DigLI',
-        'EvtDigTB': Const.EVG + ':DigTB',
-        'EvtDigBO': Const.EVG + ':DigBO',
-        'EvtDigTS': Const.EVG + ':DigTS',
-        'EvtDigSI': Const.EVG + ':DigSI',
         'EvtStudy': Const.EVG + ':Study'}
 
     evt_propties = ('Mode-Sel', 'DelayType-Sel', 'Delay-SP')
@@ -216,19 +212,20 @@ class ConnTI(_EpicsPropsList):
             return
 
         c = ConnTI.Const
-        evg_base_time = 1e6 / self.get_readback(c.EVG_FPGAClk)
-        bo_rev = evg_base_time * c.BO_HarmNum/c.EVG_RFDiv
+        bo_rev = 1e6 * c.BO_HarmNum / self.get_readback(c.RFFreq)
 
         # Injection
         injection_time = self._ramp_config.ti_params_injection_time*1e3
-        egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
-            if self.get_readback(c.LinacEgun_SglBun_State) \
-            else self.get_readback(c.TrgEGunMultBun_Delay)
+        if self.get_readback(c.LinacEgun_SglBun_State):
+            egun_dly = self.get_readback(c.TrgEGunSglBun_Delay)
+            egun_src = self.get_readback_string(c.TrgEGunSglBun_Src)
+        else:
+            egun_dly = self.get_readback(c.TrgEGunMultBun_Delay)
+            egun_src = self.get_readback_string(c.TrgEGunMultBun_Src)
         delay_inj = injection_time - egun_dly
 
-        # curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        dlt_inj_dly = delay_inj - curr_injbo_dly
+        curr_dly = self.get_readback(getattr(c, 'Evt'+egun_src+'_Delay'))
+        dlt_inj_dly = delay_inj - curr_dly
         dlt_inj_dly = int(dlt_inj_dly/bo_rev)*bo_rev
 
         # Ejection
@@ -337,11 +334,6 @@ class ConnTI(_EpicsPropsList):
             c.EvtInjBO_Delay: None,          # [us]
             c.EvtRmpBO_Delay: None,          # [us]
             c.EvtInjSI_Delay: None,          # [us]
-            c.EvtDigLI_Delay: None,          # [us]
-            c.EvtDigTB_Delay: None,          # [us]
-            c.EvtDigBO_Delay: None,          # [us]
-            c.EvtDigTS_Delay: None,          # [us]
-            c.EvtDigSI_Delay: None,          # [us]
             c.EvtStudy_Delay: None,          # [us]
             c.TrgInjKckr_Delay: None,        # [us]
             # Mags trigger
@@ -358,9 +350,11 @@ class ConnTI(_EpicsPropsList):
 
         self._reading_propties = {
             # EGun trigger delays
-            c.EVG_FPGAClk: 0,
+            c.RFFreq: None,
             c.TrgEGunSglBun_Delay: 0,     # [us]
+            c.TrgEGunSglBun_Src: None,
             c.TrgEGunMultBun_Delay: 0,    # [us]
+            c.TrgEGunMultBun_Src: None,
             # EjeKckr trigger delay
             c.TrgEjeKckr_Delay: 0,        # [us]
             # LinacEgun Mode
@@ -568,14 +562,15 @@ class ConnRF(_EpicsPropsList):
     class Const(_csdev.Const):
         """Properties names."""
 
+        KV_2_V = 1e3
         DevName = 'BR-RF-DLLRF-01'
         Rmp_Enbl = DevName + ':RmpEnbl-Sel'
         Rmp_Ts1 = DevName + ':RmpTs1-SP'
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_VoltBot = DevName + ':mV:RAMP:AMP:BOT-SP'
-        Rmp_VoltTop = DevName + ':mV:RAMP:AMP:TOP-SP'
+        Rmp_VoltBot = 'RA-RaBO01:RF-LLRF:RmpAmpVCavBot-SP'
+        Rmp_VoltTop = 'RA-RaBO01:RF-LLRF:RmpAmpVCavTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
         Rmp_PhsTop = DevName + ':RmpPhsTop-SP'
         Rmp_Intlk = DevName + ':Intlk-Mon'
@@ -588,7 +583,6 @@ class ConnRF(_EpicsPropsList):
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
-        self._aux_conv = AuxConvRF()
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
@@ -683,11 +677,9 @@ class ConnRF(_EpicsPropsList):
         dic[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
         dic[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
         dic[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
-        dic[c.Rmp_VoltBot] = self._aux_conv.conv_vgap_2_raw(
-            self._ramp_config.rf_ramp_bottom_voltage)
+        dic[c.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage*c.KV_2_V
         dic[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
-        dic[c.Rmp_VoltTop] = self._aux_conv.conv_vgap_2_raw(
-            self._ramp_config.rf_ramp_top_voltage)
+        dic[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage*c.KV_2_V
         return dic
 
     # --- private methods ---
@@ -722,55 +714,6 @@ class ConnRF(_EpicsPropsList):
             if not self.get_readback(name) == value:
                 return False
         return True
-
-
-class AuxConvRF:
-    """Class to handle VGap [kV] <-> FPGA units [mV] RF convertions."""
-
-    class Const(_csdev.Const):
-        """Properties names."""
-
-        BO_Rsh = 15*1e6
-
-        Conv_U2Raw_C0 = -2.51e-2
-        Conv_U2Raw_C1 = 2.02
-        Conv_U2Raw_C2 = 0.00
-        Conv_U2Raw_C3 = 0.00
-        Conv_U2Raw_C4 = 0.00
-
-        Conv_Raw2U_C0 = 1.31e-2
-        Conv_Raw2U_C1 = 4.95e-1
-        Conv_Raw2U_C2 = 0
-        Conv_Raw2U_C3 = 0
-        Conv_Raw2U_C4 = 0
-
-    @staticmethod
-    def conv_vgap_2_raw(vgap):
-        """Convert VGap to FPGA units."""
-        c = AuxConvRF.Const
-        _c0 = c.Conv_U2Raw_C0
-        _c1 = c.Conv_U2Raw_C1
-        _c2 = c.Conv_U2Raw_C2
-        _c3 = c.Conv_U2Raw_C3
-        _c4 = c.Conv_U2Raw_C4
-
-        aux = 1000 * vgap/_np.sqrt(2 * c.BO_Rsh)
-        raw = _c0 + _c1*aux + _c2*aux**2 + _c3*aux**3 + _c4*aux**4
-        return raw
-
-    @staticmethod
-    def conv_raw_2_vgap(raw):
-        """Convert FPGA units to VGap."""
-        c = AuxConvRF.Const
-        _c0 = c.Conv_Raw2U_C0
-        _c1 = c.Conv_Raw2U_C1
-        _c2 = c.Conv_Raw2U_C2
-        _c3 = c.Conv_Raw2U_C3
-        _c4 = c.Conv_Raw2U_C4
-
-        aux = (_c0 + _c1*raw + _c2*raw**2 + _c3*raw**3 + _c4*raw**4)
-        vgap = aux * _np.sqrt(2 * c.BO_Rsh) / 1000
-        return vgap
 
 
 class ConnSOFB(_EpicsPropsList):

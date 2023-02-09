@@ -16,11 +16,12 @@ from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 
 from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put, \
-    get_trigger_by_psname as _get_trigger_by_psname, \
+    get_trigger_by_psname as _get_trigger_by_psname, Const as _Const, \
     TRIGGER_NAMES as _TRIGGER_NAMES
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
 from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
+from .fc_cycle_data import fc_get_default_waveform as _fc_get_default_waveform
 
 
 TIMEOUT_SLEEP = 0.1
@@ -225,7 +226,7 @@ class Timing:
 
         # disable triggers
         pv_event = Timing._pvs[Timing.evg_name+':CycleMode-Sel']
-        pv_event.value = _TIConst.EvtModes.Disabled
+        pv_event.value = _TIConst.EvtModes.Disable
         pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
         for trig in triggers:
@@ -271,7 +272,8 @@ class Timing:
                     continue
                 pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
-                    VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
+                    pvname.substitute(prefix=VACA_PREFIX),
+                    connection_timeout=TIMEOUT_CONNECTION)
 
                 if pvname.propty_suffix in ('Cmd', 'Mon'):
                     continue
@@ -285,7 +287,7 @@ class Timing:
                 else:
                     continue
                 Timing._pvs[pvname_sts] = _PV(
-                    VACA_PREFIX+pvname_sts,
+                    pvname_sts.substitute(prefix=VACA_PREFIX),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @classmethod
@@ -372,7 +374,7 @@ class PSCycler:
         for prop in self.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -443,8 +445,7 @@ class PSCycler:
 
     def set_current_zero(self):
         """Set PS current to zero ."""
-        status = _pv_conn_put(self['Current-SP'], 0)
-        return status
+        return _pv_conn_put(self['Current-SP'], 0)
 
     def check_current_zero(self, wait=5):
         """Return whether power supply PS current is zero."""
@@ -570,17 +571,17 @@ class PSCycler:
                 self.init_wfm_pulsecnt + DEFAULT_RAMP_NRCYCLES, wait=10.0)
             self.update_wfm_pulsecnt()
             if not status:
-                return 1  # indicate lack of trigger pulses
+                return _Const.CycleEndStatus.LackTriggers
         else:
             status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
-                return 2  # indicate cycling not finished yet
+                return _Const.CycleEndStatus.NotFinished
 
         status = self.check_intlks(wait=1.0)
         if not status:
-            return 3  # indicate interlock problems
+            return _Const.CycleEndStatus.Interlock
 
-        return 0
+        return _Const.CycleEndStatus.Ok
 
     def __getitem__(self, prop):
         """Return item."""
@@ -656,7 +657,7 @@ class LinacPSCycler:
         for prop in LinacPSCycler.properties:
             if prop not in self._pvs.keys():
                 self._pvs[prop] = _PV(
-                    VACA_PREFIX + self._psname + ':' + prop,
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
                     connection_timeout=TIMEOUT_CONNECTION)
 
     @property
@@ -724,8 +725,7 @@ class LinacPSCycler:
 
     def is_prepared(self, mode, wait=5):
         """Return whether power supply is ready."""
-        status = self.check_current_zero(wait)
-        return status
+        return self.check_current_zero(wait)
 
     def cycle(self):
         """Cycle. This function may run in a thread."""
@@ -739,12 +739,142 @@ class LinacPSCycler:
         status = self.check_on()
         status &= self.check_intlks()
         if not status:
-            return 4  # indicate interlock problems
-        return 0
+            return _Const.CycleEndStatus.Interlock
+        return _Const.CycleEndStatus.Ok
 
     def _get_duration_and_waveform(self):
         """Get duration and waveform."""
         time, wfm = _li_get_default_waveform(psname=self.psname)
+        self._times = time
+        self._cycle_duration = max(time)
+        self._waveform = wfm
+
+    def __getitem__(self, prop):
+        """Return item."""
+        return self._pvs[prop]
+
+
+class FOFBPSCycler:
+    """Handle FOFB power supply properties to cycle."""
+
+    # NOTE: this could be a class derived from one of the Device classes.
+
+    properties = [
+        'Current-SP', 'Current-Mon', 'PwrState-Sts', 'FOFBAccClear-Cmd',
+        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
+    ]
+
+    def __init__(self, psname):
+        """Constructor."""
+        self._psname = _PVName(psname)
+        self._waveform = None
+        self._cycle_duration = None
+        self._times = None
+        self._pvs = dict()
+        for prop in FOFBPSCycler.properties:
+            if prop not in self._pvs.keys():
+                self._pvs[prop] = _PV(
+                    self._psname.substitute(prefix=VACA_PREFIX, propty=prop),
+                    connection_timeout=TIMEOUT_CONNECTION)
+
+    @property
+    def psname(self):
+        """Power supply name."""
+        return self._psname
+
+    @property
+    def connected(self):
+        """Return connected state."""
+        for prop in FOFBPSCycler.properties:
+            if not self[prop].connected:
+                return False
+        return True
+
+    def wait_for_connection(self, timeout=0.5):
+        """Wait for connection."""
+        for pvobj in self._pvs.values():
+            if not pvobj.wait_for_connection(timeout):
+                return False
+        return True
+
+    @property
+    def waveform(self):
+        """Return waveform."""
+        if self._waveform is None:
+            self._get_duration_and_waveform()
+        return self._waveform
+
+    def cycle_duration(self, _):
+        """Return the duration of the cycling in seconds."""
+        if self._cycle_duration is None:
+            self._get_duration_and_waveform()
+        return self._cycle_duration
+
+    def check_intlks(self, wait=2):
+        """Check interlocks."""
+        if not self.connected:
+            return False
+        return _pv_timed_get(self['AlarmsAmp-Mon'], 0, wait=wait)
+
+    def check_on(self):
+        """Return whether power supply PS is on."""
+        return _pv_timed_get(self['PwrState-Sts'], _PSConst.OffOn.On)
+
+    def set_current_zero(self):
+        """Set PS current to zero ."""
+        return _pv_conn_put(self['Current-SP'], 0)
+
+    def check_current_zero(self, wait=5):
+        """Return whether power supply PS current is zero."""
+        return _pv_timed_get(self['Current-Mon'], 0, abs_tol=0.01, wait=wait)
+
+    def prepare(self, _):
+        """Config power supply to cycling mode."""
+        status = True
+        if not self.check_current_zero(wait=0.5):
+            status &= self.set_current_zero()
+        return status
+
+    def is_prepared(self, _, wait=5):
+        """Return whether power supply is ready."""
+        return self.check_current_zero(wait)
+
+    def set_opmode_slowref(self):
+        """Set OpMode-Sel to manual, if needed."""
+        if self.check_opmode_slowref(wait=1):
+            return True
+        sts = _pv_conn_put(self['OpMode-Sel'], _PSConst.OpModeFOFBSel.manual)
+        _time.sleep(TIMEOUT_SLEEP)
+        return sts
+
+    def check_opmode_slowref(self, wait=10):
+        """Check if OpMode-Sts is manual."""
+        return _pv_timed_get(
+            self['OpMode-Sts'], _PSConst.OpModeFOFBSts.manual, wait=wait)
+
+    def cycle(self):
+        """Cycle. This function may run in a thread."""
+        for i in range(len(self._waveform)-1):
+            self['Current-SP'].value = self._waveform[i]
+            _time.sleep(self._times[i+1] - self._times[i])
+        self['Current-SP'].value = self._waveform[-1]
+
+    def check_final_state(self, _):
+        """Check state after Cycle."""
+        status = self.check_on()
+        status &= self.check_intlks()
+        if not status:
+            return _Const.CycleEndStatus.Interlock
+        return _Const.CycleEndStatus.Ok
+
+    def clear_fofbacc(self):
+        """Clear FOFB accumulator."""
+        self['FOFBAccClear-Cmd'].value = 1
+        return True
+
+    def _get_duration_and_waveform(self):
+        """Get duration and waveform."""
+        time, wfm = _fc_get_default_waveform(psname=self.psname)
         self._times = time
         self._cycle_duration = max(time)
         self._waveform = wfm
