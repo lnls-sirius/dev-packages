@@ -14,7 +14,8 @@ class ETypes(_csdev.ETypes):
         'Feedback Off',
         'Amp-(SP|RB) are different',
         'Phase-(SP|RB) are different',
-        'IxQ (SP|Mon) are different')
+        'IxQ (SP|Mon) are different',
+    )
 
     DIAG_STATUS_LABELS_PU = (
         'Disconnected',
@@ -34,18 +35,23 @@ class ETypes(_csdev.ETypes):
         'TRIG_Norm not ok',
         'Pulse_Current not ok',
         'Voltage-(SP|RB) are different',
-        'Current-(SP|RB) are different')
+        'Current-(SP|RB) are different',
+        'CHARGE is off',
+        'TRIGOUT is off',
+    )
 
     DIAG_STATUS_LABELS_EG_HVPS = (
         'Disconnected',
         'Swicth Status Off',
         'Enable Status Off',
-        'Voltage (SP|Mon) are different')
+        'Voltage (SP|Mon) are different',
+    )
 
     DIAG_STATUS_LABELS_EG_FILA = (
         'Disconnected',
         'Swicth Status Off',
-        'Current-(SP|Mon) are different')
+        'Current-(SP|Mon) are different',
+    )
 
 
 _et = ETypes  # syntactic sugar

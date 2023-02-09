@@ -22,9 +22,9 @@ class IDSearch:
         'CATERETE': 'SI-07SP:ID-APU22',
         'EMA':      'SI-08SB:ID-APU22',
         'MANACA':   'SI-09SA:ID-APU22',
-        'SABIA':    'SI-10SB:ID-Delta52',
+        'SABIA':    'SI-10SB:ID-EPU50',
         'IPE':      'SI-11SP:ID-APU58',
-        # 'PAINEIRA': 'SI-14SB:ID-???',
+        # 'PAINEIRA': 'SI-14SB:ID-WIG180',
         # 'SAPUCAIA': 'SI-17SA:ID-???',
     }
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}

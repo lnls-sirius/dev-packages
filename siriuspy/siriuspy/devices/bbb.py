@@ -732,6 +732,7 @@ class Acquisition(_ProptyDevice):
 
         pvo = self.pv_object('RAW')
         self._update_data_evt = _Event()
+        pvo.auto_monitor = True
         pvo.add_callback(self._update_evt)
 
     # ########### Acquisition Config Properties ###########

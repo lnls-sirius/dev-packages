@@ -80,7 +80,8 @@ class TestClientWeb(TestCase):
         'high_level_triggers',
         'high_level_events',
         'bsmp_dclink_mapping',
-        'mac_schedule_read'
+        'mac_schedule_read',
+        'doc_services_read',
     }
 
     def test_public_interface(self, mock_read):
