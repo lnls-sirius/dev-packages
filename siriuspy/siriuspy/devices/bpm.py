@@ -831,8 +831,10 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
-        propties_to_keep = ['GEN_XArrayData', 'GEN_YArrayData']
+        propties_to_keep = [
+            'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData']
 
+        self._initial_orbs = None
         self._mturn_flags = dict()
         for bpm in devs:
             for propty in propties_to_keep:
@@ -998,7 +1000,7 @@ class FamBPMs(_Devices):
             bpm.acq_nrsamples_pre = nr_points_before
             bpm.acq_nrsamples_post = nr_points_after
 
-        self.cmd_mturn_acq_start()
+        return self.cmd_mturn_acq_start()
 
     def cmd_mturn_acq_abort(self) -> bool:
         """Abort BPMs acquistion.
@@ -1050,47 +1052,80 @@ class FamBPMs(_Devices):
             bpm.switching_mode = mode
 
     def mturn_reset_flags(self):
-        """Reset Multiturn flags to wait for a new orbit update."""
-        for flag in self._mturn_flags.values():
-            flag.clear()
+        """Call this method before acquisition to reset flags."""
+        _ = [flag.clear() for flag in self._mturn_flags.values()]
+
+    def mturn_update_initial_orbit(self, consider_sum=False):
+        """Call this method before acquisition to get orbit for comparison."""
+        self._initial_orbs = self.get_mturn_orbit(return_sum=consider_sum)
+
+    def mturn_reset_before_acquistion(self, consider_sum=False):
+        """Combine mturn_update_initial_orbit and mturn_reset_flags."""
+        self.mturn_reset_flags()
+        self.mturn_update_initial_orbit(consider_sum)
 
     def mturn_wait_update_flags(self, timeout=10) -> int:
-        """Wait Multiturn orbit update.
+        """Call this method after acquisition to check if flags were updated.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
+            consider_sum (bool, optional): Whether to also wait for sum signal
+                to be updated. Defaults to False.
 
         Returns:
             int: code describing what happened:
-                -2: TypeError ocurred
-                -1: Size of X orbit is different than Y orbit.
                 0: Orbit updated.
                 >0: Index of the first BPM which did not updated plus 1.
 
         """
-        orbx0, orby0 = self.get_mturn_orbit()
+        div = len(self._mturn_flags) // len(self._devices)
         for i, flag in enumerate(self._mturn_flags.values()):
             t00 = _time.time()
             if not flag.wait(timeout=timeout):
-                return (i // 2) + 1
+                return (i // div) + 1
             timeout -= _time.time() - t00
             timeout = max(timeout, 0)
+        return 0
 
+    def mturn_wait_update_orbit(self, timeout=10, consider_sum=False) -> int:
+        """Call this method after acquisition to check if orbit was updated.
+
+        For this method to work it is necessary to call
+            mturn_update_initial_orbit
+        before the acquisition starts, so that a reference for comparison is
+        created.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+            consider_sum (bool, optional): Whether to also wait for sum signal
+                to be updated. Defaults to False.
+
+        Returns:
+            int: code describing what happened:
+                -4: unknown error;
+                -3: initial orbit was not acquired before acquisition;
+                -2: TypeError ocurred (maybe because some of them are None);
+                -1: Orbits have different sizes;
+                0: Orbit updated.
+                >0: Index of the first BPM which did not updated plus 1.
+
+        """
+        orbs0, self._initial_orbs = self._initial_orbs, None
+        if orbs0 is None:
+            return -3
         while timeout > 0:
             t00 = _time.time()
-            orbx, orby = self.get_mturn_orbit()
+            orbs = self.get_mturn_orbit(return_sum=consider_sum)
             typ = False
             try:
-                sizx = min(orbx.shape[0], orbx0.shape[0])
-                sizy = min(orby.shape[0], orby0.shape[0])
-                continue_ = sizx != sizy
-                errx = _np.all(
-                    _np.isclose(orbx0[:sizx], orbx[:sizx]), axis=0)
-                erry = _np.all(
-                    _np.isclose(orby0[:sizy], orby[:sizy]), axis=0)
-                continue_ |= _np.any(errx) | _np.any(erry)
+                sizes = [
+                    min(o.shape[0], o0.shape[0]) for o, o0 in zip(orbs, orbs0)]
+                continue_ = max(sizes) != min(sizes)
+                errs = _np.any([
+                    _np.all(_np.isclose(o[:s], o0[:s]), axis=0)
+                    for o, o0, s in zip(orbs, orbs0, sizes)], axis=0)
+                continue_ |= _np.any(errs)
             except TypeError:
-                print('TypeError')
                 typ = True
                 continue_ = True
             if not continue_:
@@ -1100,13 +1135,37 @@ class FamBPMs(_Devices):
 
         if typ:
             return -1
-        elif sizx != sizy:
+        elif max(sizes) != min(sizes):
             return -2
-        elif _np.any(errx):
-            return int(errx.nonzero()[0][0])+1
-        elif _np.any(erry):
-            return int(erry.nonzero()[0][0])+1
-        return False
+        elif _np.any(errs):
+            return int(errs.nonzero()[0][0])+1
+        return -4
+
+    def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
+        """Combine mturn_wait_update_flags and mturn_wait_update_orbit.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+            consider_sum (bool, optional): Whether to also wait for sum signal
+                to be updated. Defaults to False.
+
+        Returns:
+            int: code describing what happened:
+                -4: unknown error;
+                -3: initial orbit was not acquired before acquisition;
+                -2: TypeError ocurred (maybe because some of them are None);
+                -1: Orbits have different sizes;
+                0: Orbit updated.
+                >0: Index of the first BPM which did not updated plus 1.
+
+        """
+        t00 = _time.time()
+        ret = self.mturn_wait_update_flags(timeout)
+        if ret > 0:
+            return ret
+        timeout -= _time.time() - t00
+
+        return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
 
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
