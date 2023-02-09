@@ -1,7 +1,7 @@
 """Main module of Machine Shift Application."""
 import time as _time
-from threading import Thread as _Thread
 import logging as _log
+import epics as _epics
 import numpy as _np
 
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
@@ -11,15 +11,16 @@ from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
 
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
-from ..diagsys.lidiag.csdev import Const as _LIDiagConst
+from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, MachShift, \
+from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, \
     PowerSupplyPU, RFKillBeam, InjSysPUModeHandler
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
     get_status_labels as _get_sts_lbls
+from .bias_feedback import BiasFeedback as _BiasFeedback
 
 
 class App(_Callback):
@@ -35,10 +36,6 @@ class App(_Callback):
         self._mode = _Const.InjMode.Decay
         self._type = _Const.InjType.MultiBunch
         self._type_mon = _Const.InjTypeMon.Undefined
-        self._sglbunbiasvolt = EGun.BIAS_SINGLE_BUNCH
-        self._multbunbiasvolt = EGun.BIAS_MULTI_BUNCH
-        self._filaopcurr = EGun.FILACURR_OPVALUE
-        self._hvopvolt = EGun.HV_OPVALUE
         self._pumode = _Const.PUMode.Accumulation
         self._pumode_mon = _Const.PUModeMon.Undefined
         self._p2w = {
@@ -67,20 +64,19 @@ class App(_Callback):
 
         self._topupstate_sel = _Const.OffOn.Off
         self._topupstate_sts = _Const.TopUpSts.Off
-        self._topupperiod = 15*60
+        self._topupperiod = 5*60  # [s]
+        self._topupheadstarttime = 0
+        self._topuppustandbyenbl = _Const.DsblEnbl.Dsbl
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
-        self._topupnextinjround_count = 0
         self._topupnrpulses = 1
         self._topup_thread = None
-        self._autostop = _Const.OffOn.Off
+        self._topup_pu_prepared = False
         self._abort = False
 
-        self._injsys_turn_on_count = 0
-        self._injsys_turn_off_count = 0
-
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
-        self._rfkillbeam_count = 0
+
+        self._thread_autostop = None
 
         secs = ['LI', 'TB', 'BO', 'TS', 'SI', 'AS']
         self._status = {
@@ -89,6 +85,9 @@ class App(_Callback):
         self._status['All'] = self._pvs_database['DiagStatus-Mon']['value']
         self._status_problems = set()
         self._injstatus = self._pvs_database['InjStatus-Mon']['value']
+
+        # use pyepics recommendations for threading
+        _epics.ca.use_initial_context()
 
         # auxiliary diagnosis pvs
         self._pvs_diag = dict()
@@ -133,13 +132,11 @@ class App(_Callback):
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
         # auxiliary devices
-        self._egun_dev = EGun(
+        self.egun_dev = EGun(
             print_log=False, callback=self._update_dev_status)
         self._init_egun = False
-        self._egun_dev.trigps.pv_object('enable').add_callback(
+        self.egun_dev.trigps.pv_object('enable').add_callback(
             self._callback_watch_eguntrig)
-        self._egun_dev.trigps.pv_object('enablereal').add_callback(
-            self._callback_autostop)
 
         self._pumode_dev = InjSysPUModeHandler(
             print_log=False, callback=self._update_dev_status)
@@ -148,20 +145,26 @@ class App(_Callback):
         self._init_injevt = False
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_watch_injectionevt)
-        self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
-            self._callback_autostop)
         self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
             self._callback_watch_repeatbucketlist)
 
         self._injsys_dev = InjSysStandbyHandler()
 
-        self._macshift_dev = MachShift()
+        self.currinfo_dev = CurrInfoSI()
+        self.currinfo_dev.set_auto_monitor('Current-Mon', True)
+        curr_pvo = self.currinfo_dev.pv_object('Current-Mon')
+        curr_pvo.add_callback(self._callback_autostop)
+        curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._currinfo_dev = CurrInfoSI()
-
-        punames = _PSSearch.get_psnames(
-            {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
-        self._pu_devs = [PowerSupplyPU(pun) for pun in punames]
+        self._pu_names = _PSSearch.get_psnames(
+            {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
+        self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
+        self._pu_refvolt = list()
+        self._topup_puref_ignore = False
+        for dev in self._pu_devs:
+            pvo = dev.pv_object('Voltage-SP')
+            self._pu_refvolt.append(pvo.value)
+            pvo.add_callback(self._callback_update_pu_refvolt)
 
         self._rfkillbeam = RFKillBeam()
 
@@ -174,15 +177,18 @@ class App(_Callback):
             'FilaOpCurr-SP': self.set_filaopcurr,
             'HVOpVolt-SP': self.set_hvopvolt,
             'PUMode-Sel': self.set_pumode,
+            'PUModeDeltaPosAng-SP': self.set_pumode_delta_posang,
+            'PUModeDpKckrDlyRef-SP': self.set_pumode_dpkckr_dlyref,
+            'PUModeDpKckrKick-SP': self.set_pumode_dpkckr_kick,
             'TargetCurrent-SP': self.set_target_current,
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
             'TopUpState-Sel': self.set_topupstate,
             'TopUpPeriod-SP': self.set_topupperiod,
-            'TopUpNextInjRound-Cmd': self.cmd_nextinjround,
+            'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
+            'TopUpPUStandbyEnbl-Sel': self.set_topuppustandbyenbl,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
-            'AutoStop-Sel': self.set_autostop,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
             'InjSysTurnOnOrder-SP': self.set_injsys_on_order,
@@ -193,31 +199,62 @@ class App(_Callback):
         # status scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_diagstatus = _Thread(
+        self.thread_check_diagstatus = _epics.ca.CAThread(
             target=self._update_diagstatus, daemon=True)
         self.thread_check_diagstatus.start()
-        self.thread_check_injstatus = _Thread(
+        self.thread_check_injstatus = _epics.ca.CAThread(
             target=self._update_injstatus, daemon=True)
         self.thread_check_injstatus.start()
+
+        # initialize default operation values with implemented values
+        self.egun_dev.wait_for_connection()
+        biasvolt = self.egun_dev.bias.voltage
+        if biasvolt is None:
+            self._sglbunbiasvolt = _Const.BIAS_SINGLE_BUNCH
+            self._multbunbiasvolt = _Const.BIAS_MULTI_BUNCH
+        else:
+            self._sglbunbiasvolt = biasvolt
+            self._multbunbiasvolt = biasvolt
+            self.egun_dev.single_bunch_bias_voltage = biasvolt
+            self.egun_dev.multi_bunch_bias_voltage = biasvolt
+        filacurr = self.egun_dev.fila.current
+        if filacurr is None:
+            self._filaopcurr = _Const.FILACURR_OPVALUE
+        else:
+            self._filaopcurr = filacurr
+            self.egun_dev.fila_current_opvalue = filacurr
+        hvvolt = self.egun_dev.hvps.voltage
+        if hvvolt is None:
+            self._hvopvolt = _Const.HV_OPVALUE
+        else:
+            self._hvopvolt = hvvolt
+            self.egun_dev.high_voltage_opvalue = hvvolt
+
+        # Create object to make bias feedback:
+        self._bias_feedback = _BiasFeedback(self)
+        self._pvs_database.update(self._bias_feedback.database)
+        for prop, write in self._bias_feedback.map_pv2write.items():
+            pvname = _Const.BIASFB_PROPTY_PREFIX + prop
+            self.map_pv2write[pvname] = write
 
     def init_database(self):
         """Set initial PV values."""
         self.run_callbacks('Mode-Sel', self._mode)
         self.run_callbacks('Mode-Sts', self._mode)
         self._callback_update_type(init=True)
-        self._egun_dev.pulse.pv_object('multiselstatus').add_callback(
+        self.egun_dev.pulse.pv_object('multiselstatus').add_callback(
             self._callback_update_type)
-        self._egun_dev.pulse.pv_object('multiswstatus').add_callback(
+        self.egun_dev.pulse.pv_object('multiswstatus').add_callback(
             self._callback_update_type)
-        self._egun_dev.pulse.pv_object('singleselstatus').add_callback(
+        self.egun_dev.pulse.pv_object('singleselstatus').add_callback(
             self._callback_update_type)
-        self._egun_dev.pulse.pv_object('singleswstatus').add_callback(
+        self.egun_dev.pulse.pv_object('singleswstatus').add_callback(
             self._callback_update_type)
-        self._egun_dev.trigmultipre.pv_object('State-Sts').add_callback(
+        self.egun_dev.trigmultipre.pv_object('State-Sts').add_callback(
             self._callback_update_type)
-        self._egun_dev.trigmulti.pv_object('State-Sts').add_callback(
+        self.egun_dev.trigmulti.pv_object('State-Sts').add_callback(
             self._callback_update_type)
-        self._egun_dev.trigsingle.pv_object('State-Sts').add_callback(
+        self.egun_dev.trigsingle.pv_object('State-Sts').add_callback(
             self._callback_update_type)
         self.run_callbacks('TypeCmdSts-Mon', self._p2w['Type']['status'])
         self.run_callbacks('SglBunBiasVolt-SP', self._sglbunbiasvolt)
@@ -248,6 +285,16 @@ class App(_Callback):
             self._callback_update_pumode)
         self._pumode_dev.punlk.pv_object('Pulse-Sts').add_callback(
             self._callback_update_pumode)
+        self.run_callbacks(
+            'PUModeDeltaPosAng-SP', self._pumode_dev.delta_posang)
+        self.run_callbacks(
+            'PUModeDeltaPosAng-RB', self._pumode_dev.delta_posang)
+        self.run_callbacks(
+            'PUModeDpKckrDlyRef-SP', self._pumode_dev.dpkckr_dlyref)
+        self.run_callbacks(
+            'PUModeDpKckrDlyRef-RB', self._pumode_dev.dpkckr_dlyref)
+        self.run_callbacks('PUModeDpKckrKick-SP', self._pumode_dev.dpkckr_kick)
+        self.run_callbacks('PUModeDpKckrKick-RB', self._pumode_dev.dpkckr_kick)
         self.run_callbacks('PUModeCmdSts-Mon', self._p2w['PUMode']['status'])
         self.run_callbacks('TargetCurrent-SP', self._target_current)
         self.run_callbacks('TargetCurrent-RB', self._target_current)
@@ -259,21 +306,18 @@ class App(_Callback):
         self.run_callbacks('BucketListStep-RB', self._bucketlist_step)
         self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
         self.run_callbacks('TopUpState-Sts', self._topupstate_sts)
-        self.run_callbacks('TopUpPeriod-SP', self._topupperiod)
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self.run_callbacks('TopUpPeriod-SP', self._topupperiod/60)
+        self.run_callbacks('TopUpPeriod-RB', self._topupperiod/60)
+        self.run_callbacks('TopUpHeadStartTime-SP', self._topupheadstarttime)
+        self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
+        self.run_callbacks('TopUpPUStandbyEnbl-Sel', self._topuppustandbyenbl)
+        self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
-        self.run_callbacks('AutoStop-Sel', self._autostop)
-        self.run_callbacks('AutoStop-Sts', self._autostop)
-        self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
-        self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
-        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
         self.run_callbacks('RFKillBeam-Mon', _Const.RFKillBeamMon.Idle)
         self.run_callbacks('DiagStatusLI-Mon', self._status['LI'])
         self.run_callbacks('DiagStatusTB-Mon', self._status['TB'])
@@ -282,6 +326,7 @@ class App(_Callback):
         self.run_callbacks('DiagStatusSI-Mon', self._status['SI'])
         self.run_callbacks('DiagStatus-Mon', self._status['AS'])
         self.run_callbacks('InjStatus-Mon', self._injstatus)
+        self._bias_feedback.init_database()
         self.run_callbacks('Log-Mon', 'Started.')
 
     @property
@@ -318,7 +363,9 @@ class App(_Callback):
 
         if value == _Const.InjMode.TopUp and \
                 self._topupstate_sts == _Const.TopUpSts.Off:
-            self._update_log('Waiting to start top-up.')
+            self._update_log('Configuring EVG RepeatBucketList...')
+            self._evg_dev['RepeatBucketList-SP'] = 1
+            self._update_log('...done. Waiting to start top-up.')
         else:
             if self._topup_thread and self._topup_thread.is_alive():
                 self._stop_topup_thread()
@@ -338,16 +385,17 @@ class App(_Callback):
         if self._p2w['Type']['watcher'] is not None and \
                 self._p2w['Type']['watcher'].is_alive():
             self._update_log('WARN:Interrupting type change command..')
-            self._egun_dev.cmd_abort_chg_type()
+            self.egun_dev.cmd_abort_chg_type()
             self._p2w['Type']['watcher'].join()
 
         self._type = value
         self.run_callbacks('Type-Sts', self._type)
 
-        target = self._egun_dev.cmd_switch_to_single_bunch \
+        target = self.egun_dev.cmd_switch_to_single_bunch \
             if value == _Const.InjType.SingleBunch else \
-            self._egun_dev.cmd_switch_to_multi_bunch
-        self._p2w['Type']['watcher'] = _Thread(target=target, daemon=True)
+            self.egun_dev.cmd_switch_to_multi_bunch
+        self._p2w['Type']['watcher'] = _epics.ca.CAThread(
+            target=target, daemon=True)
         self._p2w['Type']['watcher'].start()
         self._p2w['Type']['status'] = _Const.IdleRunning.Running
         self.run_callbacks('TypeCmdSts-Mon', self._p2w['Type']['status'])
@@ -358,32 +406,32 @@ class App(_Callback):
     def set_sglbunbiasvolt(self, value):
         """Set single bunch bias voltage."""
         self._update_log('Received setpoint to SB Bias voltage.')
-        self._egun_dev.single_bunch_bias_voltage = value
+        self.egun_dev.single_bunch_bias_voltage = value
         self._sglbunbiasvolt = value
         self.run_callbacks('SglBunBiasVolt-RB', self._sglbunbiasvolt)
 
         if self._type == _Const.InjType.SingleBunch:
-            _Thread(target=self._set_egunbias,
-                    args=[value, ], daemon=True).start()
+            _epics.ca.CAThread(
+                target=self._set_egunbias, args=[value, ], daemon=True).start()
         return True
 
     def set_multbunbiasvolt(self, value):
         """Set multi bunch bias voltage."""
         self._update_log('Received setpoint to MB Bias voltage.')
-        self._egun_dev.multi_bunch_bias_voltage = value
+        self.egun_dev.multi_bunch_bias_voltage = value
         self._multbunbiasvolt = value
         self.run_callbacks('MultBunBiasVolt-RB', self._multbunbiasvolt)
 
         if self._type == _Const.InjType.MultiBunch:
-            _Thread(target=self._set_egunbias,
-                    args=[value, ], daemon=True).start()
+            _epics.ca.CAThread(
+                target=self._set_egunbias, args=[value, ], daemon=True).start()
         return True
 
     def _set_egunbias(self, value):
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
 
         self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
-        if not self._egun_dev.bias.set_voltage(value):
+        if not self.egun_dev.bias.set_voltage(value):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
             self._update_log('Set EGun Bias voltage: {}V.'.format(value))
@@ -395,15 +443,15 @@ class App(_Callback):
         if self._p2w['FilaOpCurr']['watcher'] is not None and \
                 self._p2w['FilaOpCurr']['watcher'].is_alive():
             self._update_log('WARN:Interrupting FilaPS current ramp...')
-            self._egun_dev.cmd_abort_rmp_fila()
+            self.egun_dev.cmd_abort_rmp_fila()
             self._p2w['FilaOpCurr']['watcher'].join()
 
-        self._egun_dev.fila_current_opvalue = value
+        self.egun_dev.fila_current_opvalue = value
         self._filaopcurr = value
         self.run_callbacks('FilaOpCurr-RB', self._filaopcurr)
 
-        self._p2w['FilaOpCurr']['watcher'] = _Thread(
-            target=self._egun_dev.set_fila_current, daemon=True)
+        self._p2w['FilaOpCurr']['watcher'] = _epics.ca.CAThread(
+            target=self.egun_dev.set_fila_current, daemon=True)
         self._p2w['FilaOpCurr']['watcher'].start()
         self._p2w['FilaOpCurr']['status'] = _Const.IdleRunning.Running
         self.run_callbacks(
@@ -417,15 +465,15 @@ class App(_Callback):
         if self._p2w['HVOpVolt']['watcher'] is not None and \
                 self._p2w['HVOpVolt']['watcher'].is_alive():
             self._update_log('WARN:Interrupting HVPS voltage ramp...')
-            self._egun_dev.cmd_abort_rmp_hvps()
+            self.egun_dev.cmd_abort_rmp_hvps()
             self._p2w['HVOpVolt']['watcher'].join()
 
-        self._egun_dev.high_voltage_opvalue = value
+        self.egun_dev.high_voltage_opvalue = value
         self._hvopvolt = value
         self.run_callbacks('HVOpVolt-RB', self._hvopvolt)
 
-        self._p2w['HVOpVolt']['watcher'] = _Thread(
-            target=self._egun_dev.set_hv_voltage, daemon=True)
+        self._p2w['HVOpVolt']['watcher'] = _epics.ca.CAThread(
+            target=self.egun_dev.set_hv_voltage, daemon=True)
         self._p2w['HVOpVolt']['watcher'].start()
         self._p2w['HVOpVolt']['status'] = _Const.IdleRunning.Running
         self.run_callbacks(
@@ -456,12 +504,31 @@ class App(_Callback):
             self._pumode_dev.cmd_switch_to_optim \
             if value == _Const.PUMode.Optimization else \
             self._pumode_dev.cmd_switch_to_onaxis
-        self._p2w['PUMode']['watcher'] = _Thread(target=target, daemon=True)
+        self._p2w['PUMode']['watcher'] = _epics.ca.CAThread(
+            target=target, daemon=True)
         self._p2w['PUMode']['watcher'].start()
         self._p2w['PUMode']['status'] = _Const.IdleRunning.Running
         self.run_callbacks('PUModeCmdSts-Mon', self._p2w['PUMode']['status'])
 
         self._launch_watch_dev_thread()
+        return True
+
+    def set_pumode_delta_posang(self, value):
+        """Set PU mode delta posang"""
+        self._pumode_dev.delta_posang = value
+        self.run_callbacks('PUModeDeltaPosAng-RB', value)
+        return True
+
+    def set_pumode_dpkckr_dlyref(self, value):
+        """Set PU mode DpKckr delay."""
+        self._pumode_dev.dpkckr_dlyref = value
+        self.run_callbacks('PUModeDpKckrDlyRef-RB', value)
+        return True
+
+    def set_pumode_dpkckr_kick(self, value):
+        """Set PU mode DpKckr kick."""
+        self._pumode_dev.dpkckr_kick = value
+        self.run_callbacks('PUModeDpKckrKick-RB', value)
         return True
 
     def set_target_current(self, value):
@@ -500,16 +567,33 @@ class App(_Callback):
         """Set bucketlist_step."""
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
-        start = self._bucketlist_start
-        stop = self._bucketlist_stop
-        if not self._cmd_bucketlist_fill(stop, start, step):
-            return False
+        if self._mode == _Const.InjMode.TopUp:
+            if not self._evg_dev.connected:
+                self._update_log('ERR:Could not update bucket list,')
+                self._update_log('ERR:EVG is disconnected.')
+                return False
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            if not self._set_bucket_list(bucket):
+                return False
+        else:
+            start = self._bucketlist_start
+            stop = self._bucketlist_stop
+            if not self._cmd_bucketlist_fill(stop, start, step):
+                return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
         return True
 
     def _cmd_bucketlist_fill(self, stop, start, step):
         """Set bucket list PV."""
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
         if self._evg_dev.fill_bucketlist(stop, start, step, timeout=3):
             self._update_log('Updated BucketList.')
             return True
@@ -526,33 +610,58 @@ class App(_Callback):
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
                 return
-            if self._topup_thread and not self._topup_thread.is_alive()\
-                    or not self._topup_thread:
-                self._topupnext = _Time.now().timestamp()
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+            if self._topup_thread is not None and \
+                    not self._topup_thread.is_alive() or\
+                    self._topup_thread is None:
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
-            if self._topup_thread and self._topup_thread.is_alive():
+            if self._topup_thread is not None and \
+                    self._topup_thread.is_alive():
                 self._stop_topup_thread()
-                now = _Time.now().timestamp()
-                self._topupnext = now - (now % (24*60*60)) + 3*60*60
-                self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
         return True
 
     def set_topupperiod(self, value):
-        """Set top-up period."""
-        if not 30 <= value <= 6*60*60:
+        """Set top-up period [min]."""
+        if not 1 <= value <= 6*60:
             return False
 
+        sec = value*60
         if self._topupstate_sts != _Const.TopUpSts.Off:
-            self._topupnext = self._topupnext - self._topupperiod + value
+            now = _Time.now().timestamp()
+            self._topupnext = now - (now % sec) + sec
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
-        self._topupperiod = value
-        self._update_log('Changed top-up period to '+str(value)+'s.')
-        self.run_callbacks('TopUpPeriod-RB', self._topupperiod)
+        self._topupperiod = sec
+        self._update_log('Changed top-up period to '+str(value)+'min.')
+        self.run_callbacks('TopUpPeriod-RB', value)
+        return True
+
+    def set_topupheadstarttime(self, value):
+        """Set top-up head start time [s]."""
+        if not 0 <= value <= 10*60:
+            return False
+
+        self._topupheadstarttime = value
+        self._update_log('Changed top-up head start time to '+str(value)+'s.')
+        self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
+        return True
+
+    def set_topuppustandbyenbl(self, value):
+        """Set PU standby between top-up injections."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if value:
+            if not self._update_topup_pu_refvolt():
+                return False
+        else:
+            self._prepare_topup('inject')
+        self._topuppustandbyenbl = value
+        text = 'En' if value else 'Dis'
+        self._update_log(text+'abled PU standby between injections.')
+        self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
         return True
 
     def set_topupnrpulses(self, value):
@@ -561,34 +670,20 @@ class App(_Callback):
             return False
 
         self._topupnrpulses = value
+        if self._mode == _Const.InjMode.TopUp:
+            if not self._evg_dev.connected:
+                self._update_log('ERR:Could not update bucket list,')
+                self._update_log('ERR:EVG is disconnected.')
+                return False
+            bucket = _np.arange(self._topupnrpulses) + 1
+            bucket *= self._bucketlist_step
+            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket %= 864
+            bucket += 1
+            if not self._set_bucket_list(bucket):
+                return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
-        return True
-
-    def cmd_nextinjround(self, value):
-        """Round next injection time instant to smallest minute nearest."""
-        nextinj = self._topupnext
-        self._topupnext = nextinj - (nextinj % 60)
-        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
-
-        self._topupnextinjround_count += 1
-        self.run_callbacks(
-            'TopUpNextInjRound-Cmd', self._topupnextinjround_count)
-        return False
-
-    def set_autostop(self, value):
-        """Set Auto Stop."""
-        if not 0 <= value < len(_ETypes.OFF_ON):
-            return False
-        if self._evg_dev.nrpulses != 0:
-            self._update_log('ERR:Could not turn on AutoStop. Set ')
-            self._update_log('ERR:RepeatBucketList to 0 to continue.')
-            return False
-        self._autostop = value
-        self.run_callbacks('AutoStop-Sts', self._autostop)
-        self._update_log(
-            'Turned '+_ETypes.OFF_ON[value]+' Auto Stop.')
-        self._callback_autostop()
         return True
 
     def cmd_injsys_turn_on(self, value=None, wait_finish=False):
@@ -602,14 +697,12 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_on(run_in_thread=True)
-        thr = _Thread(target=self._watch_injsys, args=['on', ], daemon=True)
+        thr = _epics.ca.CAThread(
+            target=self._watch_injsys, args=['on', ], daemon=True)
         thr.start()
         if wait_finish:
             thr.join()
-
-        self._injsys_turn_on_count += 1
-        self.run_callbacks('InjSysTurnOn-Cmd', self._injsys_turn_on_count)
-        return False
+        return True
 
     def cmd_injsys_turn_off(self, value=None, wait_finish=False):
         """Set turn off Injection System."""
@@ -622,14 +715,12 @@ class App(_Callback):
         self.run_callbacks(
             'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self._injsys_dev.cmd_turn_off(run_in_thread=True)
-        thr = _Thread(target=self._watch_injsys, args=['off', ], daemon=True)
+        thr = _epics.ca.CAThread(
+            target=self._watch_injsys, args=['off', ], daemon=True)
         thr.start()
         if wait_finish:
             thr.join()
-
-        self._injsys_turn_off_count += 1
-        self.run_callbacks('InjSysTurnOff-Cmd', self._injsys_turn_off_count)
-        return False
+        return True
 
     def _watch_injsys(self, cmd, timeout=_Const.RF_RMP_TIMEOUT):
         self.run_callbacks(
@@ -688,11 +779,8 @@ class App(_Callback):
         self._update_log('Received RFKillBeam Command...')
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Kill
         self.run_callbacks('RFKillBeam-Mon', self._rfkillbeam_mon)
-        _Thread(target=self._watch_rfkillbeam, daemon=True).start()
-
-        self._rfkillbeam_count += 1
-        self.run_callbacks('RFKillBeam-Cmd', self._rfkillbeam_count)
-        return False
+        _epics.ca.CAThread(target=self._watch_rfkillbeam, daemon=True).start()
+        return True
 
     def _watch_rfkillbeam(self):
         ret = self._rfkillbeam.cmd_kill_beam()
@@ -713,14 +801,14 @@ class App(_Callback):
             return
         if self._mode == _Const.InjMode.TopUp:
             return
-        _Thread(target=self._watch_eguntrig,
-                args=[value, ], daemon=True).start()
+        _epics.ca.CAThread(
+            target=self._watch_eguntrig, args=[value, ], daemon=True).start()
 
     def _watch_eguntrig(self, value, **kws):
         cmd = 'on' if value else 'off'
         _t0 = _time.time()
         while _time.time() - _t0 < 10:
-            if self._egun_dev.trigps.is_on() == value:
+            if self.egun_dev.trigps.is_on() == value:
                 msg = 'Turned '+cmd+' EGun.'
                 break
             _time.sleep(0.1)
@@ -734,7 +822,8 @@ class App(_Callback):
             return
         if self._mode == _Const.InjMode.TopUp:
             return
-        _Thread(target=self._watch_injti, args=[value, ], daemon=True).start()
+        _epics.ca.CAThread(
+            target=self._watch_injti, args=[value, ], daemon=True).start()
 
     def _watch_injti(self, value, timeout=_Const.TI_INJ_TIMEOUT):
         cmd = 'on' if value else 'off'
@@ -748,64 +837,52 @@ class App(_Callback):
             msg = 'WARN:Timed out in turn '+cmd+' InjectionEvt.'
         self._update_log(msg)
 
-    def _callback_autostop(self, **kws):
-        if self._mode == _Const.InjMode.TopUp:
+    def _callback_autostop(self, value, **kws):
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
             return
-        if self._autostop == _Const.OffOn.Off:
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[value, 'cb_val'])
+        self._thread_autostop.start()
+
+    def _callback_conn_autostop(self, conn, **kws):
+        if self._thread_autostop is not None and \
+                self._thread_autostop.is_alive():
+            return
+        self._thread_autostop = _epics.ca.CAThread(
+            target=self._thread_run_autostop, args=[conn, 'cb_conn'])
+        self._thread_autostop.start()
+
+    def _thread_run_autostop(self, value, cb_type):
+        if self._mode == _Const.InjMode.TopUp:
             return
         if not self._evg_dev['InjectionEvt-Sel']:
             return
-        if not self._egun_dev.trigps.is_on():
+        if not self.egun_dev.trigps.is_on():
             return
-
-        _Thread(target=self._run_autostop, daemon=True).start()
+        if cb_type == 'cb_val':
+            if value is None or value < self._target_current:
+                return
+            msg = 'Target current reached!'
+        else:
+            if value:
+                return
+            msg = 'ERR:Current PV disconnected.'
+        self._update_log(msg)
+        self._run_autostop()
 
     def _run_autostop(self):
-        self._update_log('Injection Auto Stop activated...')
-        if not self._wait_autostop():
-            self._update_log('Injection Auto Stop Routine aborted.')
-            return
-
+        self._update_log('Running Auto Stop...')
         if self._stop_injection():
             self._update_log('Injection Auto Stop done.')
             self._update_bucket_list_autostop()
         else:
-            self._update_log('Injection Auto Stop failed.')
-
-    def _wait_autostop(self):
-        if not self._injsys_dev.is_on:
-            self._update_log('Waiting for Inj.System to be on...')
-            _t0 = _time.time()
-            while _time.time() - _t0 < _Const.RF_RMP_TIMEOUT:
-                if self._autostop == _Const.OffOn.Off:
-                    return False
-                if self._injsys_dev.is_on:
-                    self._update_log('Inj.System is on.')
-                    break
-            else:
-                self._update_log('ERR:Timed out waiting for Inj.Sys.')
-                return False
-
-        self._update_log('Waiting for InjectionEvt to be on...')
-        _t0 = _time.time()
-        while _time.time() - _t0 < _Const.TI_INJ_TIMEOUT:
-            if self._autostop == _Const.OffOn.Off \
-                    or not self._evg_dev['InjectionEvt-Sel']:
-                return False
-            if self._evg_dev.injection_state:
-                self._update_log('InjectionEvt is on.')
-                break
-        else:
-            self._update_log('ERR:Timed out waiting for InjectionEvt.')
-            return False
-
-        self._update_log('Waiting for current to reach target value...')
-        return self._wait_injection()
+            self._update_log('ERR:Injection Auto Stop failed.')
 
     def _callback_update_type(self, **kws):
-        if self._egun_dev.is_single_bunch:
+        if self.egun_dev.is_single_bunch:
             self._type_mon = _Const.InjTypeMon.SingleBunch
-        elif self._egun_dev.is_multi_bunch:
+        elif self.egun_dev.is_multi_bunch:
             self._type_mon = _Const.InjTypeMon.MultiBunch
         else:
             self._type_mon = _Const.InjTypeMon.Undefined
@@ -838,13 +915,19 @@ class App(_Callback):
 
     def _callback_watch_repeatbucketlist(self, value, **kws):
         if self._mode == _Const.InjMode.TopUp:
+            if value != 1:
+                self._update_log('WARN:RepeatBucketList is diff. from 1.')
+                self._update_log('WARN:Aborting top-up...')
             return
-        if self._autostop == _Const.OffOn.On and value != 0:
-            self._autostop = _Const.OffOn.Off
-            self.run_callbacks('AutoStop-Sel', self._autostop)
-            self.run_callbacks('AutoStop-Sts', self._autostop)
-            self._update_log('WARN:RepeatBucketList is diff. from 0.')
-            self._update_log('WARN:Turned Off Auto Stop.')
+
+    def _callback_update_pu_refvolt(self, pvname, value, **kws):
+        if value is None:
+            return
+        if self._topup_puref_ignore:
+            return
+        devname = _PVName(pvname).device_name
+        index = self._pu_names.index(devname)
+        self._pu_refvolt[index] = value
 
     # --- auxiliary injection methods ---
 
@@ -862,8 +945,8 @@ class App(_Callback):
                         self._update_log('WARN:'+prob)
 
         if self._mode == _Const.InjMode.TopUp:
-            if self._evg_dev.nrpulses == 0:
-                self._update_log('ERR:Aborted. RepeatBucketList cannot be 0.')
+            if self._evg_dev.nrpulses != 1:
+                self._update_log('ERR:Aborted. RepeatBucketList must be 1.')
                 return False
 
             if self._abort:
@@ -884,7 +967,7 @@ class App(_Callback):
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.TI_INJ_TIMEOUT:
             if not self._check_allok_2_inject(show_warn=False):
-                self._abort_injection()
+                self._stop_injection()
                 return False
             if self._evg_dev.injection_state:
                 break
@@ -897,70 +980,64 @@ class App(_Callback):
         return True
 
     def _wait_injection(self):
-        init_mode = self._mode
-        init_autostop = self._autostop
-        while self._currinfo_dev.current < self._target_current:
-            # if there are problems, abort injection
+        # wait for injectionevt to be off (done)
+        _t0 = _time.time()
+        while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
             if not self._check_allok_2_inject(show_warn=False):
-                self._abort_injection()
+                self._stop_injection()
                 return False
-            # if in decay mode and autostop is turned off, interrupt wait
-            if init_mode == _Const.InjMode.Decay and \
-                    init_autostop and not self._autostop:
-                return False
-            # if in TopUp mode and max pulses exceeded, stop injection
-            if self._mode == _Const.InjMode.TopUp and \
-                    self._evg_dev.injection_count >= self._topupnrpulses:
+            if not self._evg_dev.injection_state:
                 break
-            _time.sleep(0.1)
-
-        self._update_log('Target current reached!')
+            _time.sleep(0.02)
         return True
 
     def _stop_injection(self):
-        # turn off injectionevt
-        self._update_log('Sending turn off command to InjectionEvt...')
-        if not self._evg_dev.cmd_turn_off_injection():
-            self._update_log('ERR:Timed out waiting for InjectionEvt.')
-            return False
-        self._update_log('Turned off InjectionEvt.')
-
-        return True
-
-    def _update_bucket_list_autostop(self):
-        old_bucklist = self._evg_dev.bucketlist_mon
-        injcount = self._evg_dev.injection_count
-        blistlen = self._evg_dev.bucketlist_len
-        proll = int(injcount % blistlen)
-        new_bucklist = _np.roll(old_bucklist, -1 * proll)
-        self._evg_dev.bucketlist = new_bucklist
-        _t0 = _time.time()
-        while _time.time() - _t0 < 2:
-            if _np.all(self._evg_dev.bucketlist == new_bucklist):
-                self._update_log('Updated BucketList.')
-                return True
-        self._update_log('WARN:Could not update BucketList.')
-        return False
-
-    def _update_bucket_list_topup(self):
-        bucket = _np.arange(self._topupnrpulses) + self._topupnrpulses
-        bucket *= self._bucketlist_step
-        bucket += self._evg_dev.bucketlist_mon[0] - 1
-        bucket %= 864
-        self._evg_dev.bucketlist = bucket + 1
-
-    def _abort_injection(self):
         self._update_log('Turning off InjectionEvt...')
         if self._evg_dev.cmd_turn_off_injection():
             msg = 'Turned off InjectionEvt.'
         else:
             self._update_log('ERR:Failed to turn off InjectionEvt.')
             self._update_log('Turning off EGun TriggerPS...')
-            if self._egun_dev.trigps.cmd_disable_trigger():
+            if self.egun_dev.trigps.cmd_disable_trigger():
                 msg = 'Turned off EGun TriggerPS.'
             else:
                 msg = 'ERR:Failed to turn off EGun TriggerPS.'
         self._update_log(msg)
+        return 'ERR' not in msg
+
+    def _update_bucket_list_autostop(self):
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
+        old_bucklist = self._evg_dev.bucketlist_mon
+        injcount = self._evg_dev.injection_count
+        blistlen = self._evg_dev.bucketlist_len
+        proll = int(injcount % blistlen)
+        new_bucklist = _np.roll(old_bucklist, -1 * proll)
+        return self._set_bucket_list(new_bucklist)
+
+    def _update_bucket_list_topup(self):
+        if not self._evg_dev.connected:
+            self._update_log('ERR:Could not update bucket list,')
+            self._update_log('ERR:EVG is disconnected.')
+            return False
+        bucket = _np.arange(self._topupnrpulses) + 1
+        bucket *= self._bucketlist_step
+        bucket += self._evg_dev.bucketlist_mon[-1] - 1
+        bucket %= 864
+        bucket += 1
+        return self._set_bucket_list(bucket)
+
+    def _set_bucket_list(self, value):
+        self._evg_dev.bucketlist = value
+        _t0 = _time.time()
+        while _time.time() - _t0 < 5:
+            if _np.all(self._evg_dev.bucketlist == value):
+                self._update_log('Updated BucketList.')
+                return True
+        self._update_log('WARN:Could not update BucketList.')
+        return False
 
     # --- auxiliary top-up methods ---
 
@@ -968,7 +1045,8 @@ class App(_Callback):
         while self._abort:
             _time.sleep(0.1)
         self._update_log('Launchig top-up thread...')
-        self._topup_thread = _Thread(target=self._do_topup, daemon=True)
+        self._topup_thread = _epics.ca.CAThread(
+            target=self._do_topup, daemon=True)
         self._topup_thread.start()
 
     def _stop_topup_thread(self):
@@ -981,15 +1059,50 @@ class App(_Callback):
         self._update_log('Stopped top-up thread.')
         self._abort = False
 
+        # reset next injection schedule
+        now = _Time.now().timestamp()
+        self._topupnext = now - (now % (24*60*60)) + 3*60*60
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
     def _do_topup(self):
+        # update bucket list according to settings
+        self._update_bucket_list_topup()
+
+        # update next injection schedule
+        now, period = _Time.now().timestamp(), self._topupperiod
+        self._topupnext = now - (now % period) + period
+        self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+
+        # if PU standby is enabled
+        if self._topuppustandbyenbl:
+            if not self._update_topup_pu_refvolt():
+                self._update_log('ERR:...aborted top-up loop.')
+                return
+
+            # if remaining time is short, do not handle PU voltage
+            if self._topupnext - _time.time() <= _Const.PU_VOLTAGE_UP_TIME*2:
+                self._topup_pu_prepared = True
+            else:
+                # else, set PU voltage to 50%
+                self._prepare_topup('standby')
+
+        self._bias_feedback.do_update_models = True
+
         while self._mode == _Const.InjMode.TopUp:
             if not self._check_allok_2_inject():
                 break
 
-            self._topupnext += self._topupperiod
-            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
+            self._update_topupsts(_Const.TopUpSts.Waiting)
+            self._update_log('Waiting for next injection...')
+            if not self._wait_topup_period():
+                break
+            self._bias_feedback.already_set = False
 
-            if self._currinfo_dev.current <= self._target_current:
+            self._update_log('Top-up period elapsed. Preparing...')
+            if not self.currinfo_dev.connected:
+                self._update_log('ERR:CurrInfo device disconnected.')
+                break
+            if self.currinfo_dev.current < self._target_current * 1.02:
                 self._update_topupsts(_Const.TopUpSts.TurningOn)
                 self._update_log('Starting injection...')
                 if not self._start_injection():
@@ -1002,14 +1115,21 @@ class App(_Callback):
 
                 self._update_topupsts(_Const.TopUpSts.TurningOff)
                 self._update_bucket_list_topup()
+            else:
+                self._update_topupsts(_Const.TopUpSts.Skipping)
+                self._update_log('Skipping injection...')
+                _time.sleep(2)
 
-            self._update_topupsts(_Const.TopUpSts.Waiting)
-            self._update_log('Waiting for next injection...')
+            self._prepare_topup('standby')
 
-            if not self._wait_topup_period():
-                break
-            self._update_log('Top-up period elapsed. Preparing...')
+            self._topupnext += self._topupperiod
+            self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
+        self._prepare_topup('inject')
+
+        self._bias_feedback.do_update_models = False
+
+        # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
         if not self._abort:
@@ -1017,35 +1137,84 @@ class App(_Callback):
             self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
     def _wait_topup_period(self):
-        _t0 = _time.time()
         while _time.time() < self._topupnext:
             if not self._check_allok_2_inject(show_warn=False):
                 return False
             _time.sleep(1)
 
-            elapsed = int(_time.time() - _t0)
-            remaining = int(self._topupnext - _time.time())
+            remaining = round(self._topupnext - _time.time())
             text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
-            if elapsed % 60 == 0:
+            if remaining % 60 == 0:
                 _log.info(text)
 
-            if self._currinfo_dev.current < self._target_current and \
-                    _time.time() > self._topupnext - self._get_adv_estim():
+            if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
+                    not self._topup_pu_prepared:
+                self._prepare_topup('inject')
+                continue
+
+            cond = remaining <= _Const.BIASFB_AHEADSETIME
+            cond &= bool(self._bias_feedback.loop_state)
+            cond &= not self._bias_feedback.already_set
+            if cond and self.currinfo_dev.connected:
+                dcur = self._bias_feedback.get_delta_current_per_pulse(
+                    per=self._topupperiod, nrpul=self._topupnrpulses,
+                    curr_avg=self._target_current,
+                    curr_now=self.currinfo_dev.current,
+                    ltime=self.currinfo_dev.lifetime)
+                bias = self._bias_feedback.get_bias_voltage(dcur)
+                self.run_callbacks('MultBunBiasVolt-SP', bias)
+                self.set_multbunbiasvolt(bias)
+                self._bias_feedback.already_set = True
+
+            if _time.time() >= self._topupnext - self._topupheadstarttime:
                 return True
 
         self._update_log('Remaining time: 0s')
         return True
 
-    def _get_adv_estim(self):
-        return 0 if self._evg_dev.bucketlist_len is None \
-            else self._evg_dev.bucketlist_len
+    def _prepare_topup(self, state='inject'):
+        if not self._topuppustandbyenbl:
+            return
+        self._topup_puref_ignore = True
+        if state == 'inject':
+            self._topup_pu_prepared = True
+            self._update_log('Setting PU Voltage to 100%...')
+            for idx, dev in enumerate(self._pu_devs):
+                if not dev.connected:
+                    self._update_log('WARN:'+dev.devname+' disconnected.')
+                    continue
+                dev.voltage = self._pu_refvolt[idx]
+            self._update_log('...done.')
+        elif state == 'standby':
+            self._topup_pu_prepared = False
+            self._update_log('Setting PU Voltage to 50%...')
+            for idx, dev in enumerate(self._pu_devs):
+                if not dev.connected:
+                    self._update_log('WARN:'+dev.devname+' disconnected.')
+                    continue
+                dev.voltage = self._pu_refvolt[idx] * 0.5
+            self._update_log('...done.')
+        _time.sleep(1)
+        self._topup_puref_ignore = False
+
+    def _update_topup_pu_refvolt(self):
+        # get PU voltage reference
+        for idx, dev in enumerate(self._pu_devs):
+            spv = dev['Voltage-SP']
+            if spv is None:
+                self._update_topupsts(_Const.TopUpSts.Off)
+                self._update_log('ERR:Could not read voltage of')
+                self._update_log('ERR:'+dev.devname+'...')
+                return False
+            self._pu_refvolt[idx] = dev['Voltage-SP']
+        return True
 
     # --- auxiliary log methods ---
 
     def _launch_watch_dev_thread(self):
         if self._thread_watdev is None or not self._thread_watdev.is_alive():
-            self._thread_watdev = _Thread(
+            self._thread_watdev = _epics.ca.CAThread(
                 target=self._watch_dev_process, daemon=True)
             self._thread_watdev.start()
 
@@ -1093,9 +1262,16 @@ class App(_Callback):
 
     def _update_diagstatus(self):
         """Run as a thread scanning PVs."""
-        tplanned = 1.0/App.SCAN_FREQUENCY
+        # constants of alarms to ignore
         psdiag = _PSDiagEnum.DIAG_STATUS_LABELS_AS
         psalrm = int(1 << len(psdiag)) - 1 - int(1 << psdiag.index('Alarms'))
+        lipudiag = _LIDiagEnum.DIAG_STATUS_LABELS_PU
+        lipualrm = int(1 << len(lipudiag)) - 1
+        lipualrm -= int(1 << lipudiag.index('TRIG_Norm not ok'))
+        lipualrm -= int(1 << lipudiag.index('Pulse_Current not ok'))
+
+        # scan
+        tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
             if not self.scanning:
                 _time.sleep(tplanned)
@@ -1104,8 +1280,9 @@ class App(_Callback):
             _t0 = _time.time()
 
             # update sections status
-            self._status_problems = set()
+            status_problems = set()
             for sec, sub2pvs in self._pvs_diag.items():
+                status_sec = 0
                 lbls = _get_sts_lbls(sec)
                 for sub, d2pv in sub2pvs.items():
                     if sub not in lbls:
@@ -1114,29 +1291,36 @@ class App(_Callback):
                     problems = set()
                     for pvo in d2pv.values():
                         if pvo.connected:
-                            if sub == 'PS':  # disregard alarms
-                                value = _np.bitwise_and(int(pvo.value), psalrm)
-                                nok = value > 0
-                            else:
-                                nok = pvo.value > 0
+                            value = pvo.value
+                            # disregard alarms
+                            if sub == 'PS':
+                                value = _np.bitwise_and(int(value), psalrm)
+                            elif self._mode == _Const.InjMode.TopUp and \
+                                    sec == 'LI' and sub == 'PU':
+                                value = _np.bitwise_and(int(value), lipualrm)
+                            nok = value > 0
                         else:
                             nok = True
                         if nok:
                             problems.add(_PVName(pvo.pvname).device_name)
                     val = 1 if problems else 0
-                    self._status[sec] = _updt_bit(self._status[sec], bit, val)
+                    status_sec = _updt_bit(status_sec, bit, val)
                     if len(problems) > 1:
-                        self._status_problems.add(sec+' '+sub)
+                        status_problems.add(sec+' '+sub)
                     else:
-                        self._status_problems.update(problems)
-                self.run_callbacks('DiagStatus'+sec+'-Mon', self._status[sec])
+                        status_problems.update(problems)
+                self._status[sec] = status_sec
+                self.run_callbacks('DiagStatus'+sec+'-Mon', status_sec)
+            self._status_problems = status_problems
 
             # compile general status
             lbls = _get_sts_lbls()
+            status_all = 0
             for bit, sec in enumerate(lbls):
                 val = self._status[sec] != 0
-                self._status['All'] = _updt_bit(self._status['All'], bit, val)
-            self.run_callbacks('DiagStatus-Mon', self._status['All'])
+                status_all = _updt_bit(status_all, bit, val)
+            self._status['All'] = status_all
+            self.run_callbacks('DiagStatus-Mon', status_all)
 
             ttook = _time.time() - _t0
             tsleep = tplanned - ttook
@@ -1164,25 +1348,26 @@ class App(_Callback):
             value = _updt_bit(value, 0, val)
 
             # BucketList not synced
-            val = 1 if not self._evg_dev.connected else \
-                self._evg_dev.bucketlist_sync != 1
-            value = _updt_bit(value, 1, val)
+            if self._mode != _Const.InjMode.TopUp:
+                val = 1 if not self._evg_dev.connected else \
+                    self._evg_dev.bucketlist_sync != 1
+                value = _updt_bit(value, 1, val)
 
-            if self._egun_dev.connected:
+            if self.egun_dev.connected:
                 # EGBiasPS voltage diff. from desired
                 volt = self._sglbunbiasvolt \
                     if self._type == _Const.InjType.SingleBunch \
                     else self._multbunbiasvolt
-                val = abs(self._egun_dev.bias.voltage - volt) > \
-                    self._egun_dev.bias_voltage_tol
+                val = abs(self.egun_dev.bias.voltage_mon - volt) > \
+                    self.egun_dev.bias_voltage_tol
                 value = _updt_bit(value, 2, val)
 
                 # EGFilaPS current diff. from nominal
-                val = not self._egun_dev.is_fila_on
+                val = not self.egun_dev.is_fila_on
                 value = _updt_bit(value, 3, val)
 
                 # EGHVPS voltage diff. from nominal
-                val = not self._egun_dev.is_hv_on
+                val = not self.egun_dev.is_hv_on
                 value = _updt_bit(value, 4, val)
 
                 # EGPulsePS setup is diff. from desired
@@ -1191,7 +1376,7 @@ class App(_Callback):
                 value = _updt_bit(value, 5, val)
 
                 # EGTriggerPS is off
-                val = not self._egun_dev.trigps.is_on()
+                val = not self.egun_dev.trigps.is_on()
                 value = _updt_bit(value, 6, val)
             else:
                 value = _updt_bit(value, 2, 1)

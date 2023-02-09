@@ -60,6 +60,8 @@ def _append_mag_data(filename, model, acc, label, section):
     mag_tps.extend(model.families.families_vertical_correctors())
     mag_tps.extend(model.families.families_sextupoles())
     mag_tps.extend(model.families.families_skew_correctors())
+    if section.lower().startswith('si'):
+        mag_tps.extend(model.families.families_id_correctors())
 
     mag_data = dict()
     for mag_tp in mag_tps:
@@ -95,6 +97,7 @@ def generate_bpm_static_table():
         "#\n"\
         "# If the data in the mentioned subfolder change, please, run the\n"\
         "# script again and copy the generated file to replace this one.\n"
+
     filename = 'bpms-data.txt'
     with open(filename, 'w') as f:
         f.write(disclaimer)
@@ -106,7 +109,10 @@ def generate_bpm_static_table():
     model = pymodels.si
     acc = model.create_accelerator()
     _append_bpm_data_bl(filename, acc, all_bpms, 'Beam Lines (BL)')
-    _append_bpm_data(filename, model, acc, 'Storage Ring (SR)', 'SI')
+    label = 'Storage Ring (SR)'
+    _append_bpm_data(filename, model, acc, label, 'SI', fam='BPM')
+    label = 'Storage Ring IDs (SR)'
+    _append_bpm_data(filename, model, acc, label, 'SI', fam='IDBPM')
 
     model = pymodels.bo
     acc = model.create_accelerator()
@@ -123,20 +129,20 @@ def generate_bpm_static_table():
     _append_bpm_data(filename, model, acc, 'SR Transport Line', 'TS')
 
 
-def _append_bpm_data(filename, model, acc, label, section):
+def _append_bpm_data(filename, model, acc, label, section, fam='BPM'):
     fam_data = model.get_family_data(acc)
     pos = pyaccel.lattice.find_spos(acc)
 
-    inds = [i[0] for i in fam_data['BPM']['index']]
-    subs = fam_data['BPM']['subsection']
-    insts = fam_data['BPM']['instance']
+    bpm_data = fam_data[fam]
+    inds = [i[0] for i in bpm_data['index']]
+    subs = bpm_data['subsection']
+    insts = bpm_data['instance']
     bpms, bpos = [], []
     for ind, inst, sub in zip(inds, insts, subs):
         name = _join_name(sec=section, dis='DI', dev='BPM', sub=sub, idx=inst)
         bpms.append(name)
         bpos.append(pos[ind])
     _write_to_file(filename, bpms, bpos, label)
-
 
 def _append_bpm_data_bl(filename, acc, all_bpms, label):
     pos = pyaccel.lattice.find_spos(acc)

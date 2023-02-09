@@ -17,6 +17,7 @@ from ..search import PSSearch, HLTimeSearch
 from ..csdev import Const as _Const
 from ..timesys.csdev import Const as _TIConst
 from ..pwrsupply.csdev import Const as _PSConst
+from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
 
@@ -86,8 +87,6 @@ class ASPUStandbyHandler(_BaseHandler):
             self._on_values[mdev] = {
                 'CHARGE': _TIConst.DsblEnbl.Enbl,
                 'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'TRIG_Norm': 1,
-                'Pulse_Current': 1,
                 'CPS_ALL': 1,
             }
         self._on_values[self._limps] = {
@@ -640,8 +639,8 @@ class LILLRFStandbyHandler(_BaseHandler):
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
 
-    DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
+    DEF_OFF_ORDER = _InjConst.INJSYS_DEF_OFF_ORDER
     HANDLER_DESC = {
         'as_pu': 'AS PU (Septa, Kickers and Modulators)',
         'bo_ps': 'BO PS Ramp',
@@ -741,6 +740,27 @@ class InjSysStandbyHandler(_Devices):
         """Turn off."""
         return self._command_base('off', run_in_thread)
 
+    def get_dev_state(self, devnames):
+        """
+        Return the state, on (True) or off (False), for each device in
+        devnames.
+
+        Parameters
+        ----------
+        devnames: list [str]
+            A list of strings with the names of the handler devices
+
+        Returns
+        -------
+        states: list [bool]
+            A list of booleans with the state of each handler devices
+        """
+        states = list()
+        for devname in devnames:
+            dev = self._dev_refs[devname]
+            states.append(dev.is_on)
+        return states
+
     # --- private methods ---
 
     def _command_base(self, cmmtype, run_in_thread):
@@ -784,12 +804,11 @@ class InjSysStandbyHandler(_Devices):
 class InjSysPUModeHandler(_Devices, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
-    _DEF_TIMEOUT = 10 # [s]
+    _DEF_TIMEOUT = 10  # [s]
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
-    SI_DPKCKR_DLYR_ONAXINC = 28  # [count]
-    SI_DPKCKR_DLYR_OPT = 0  # [count]
+    SI_DPKCKR_DLYREF = 36800000  # [count]
 
     def __init__(self, print_log=True, callback=None):
         """Init."""
@@ -798,6 +817,9 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self.trigdpk = Trigger('SI-01SA:TI-InjDpKckr')
         self.trignlk = Trigger('SI-01SA:TI-InjNLKckr')
         self.posang = PosAng(PosAng.DEVICES.TS)
+        self.delta_posang = self.TS_POSANG_DEFDELTA
+        self.dpkckr_dlyref = self.SI_DPKCKR_DLYREF
+        self.dpkckr_kick = self.SI_DPKCKR_DEFKICK
         devices = (
             self.pudpk, self.punlk,
             self.trigdpk, self.trignlk,
@@ -809,6 +831,11 @@ class InjSysPUModeHandler(_Devices, _Callback):
         # call super init
         _Devices.__init__(self, '', devices)
         _Callback.__init__(self, callback=callback)
+
+    @property
+    def is_trigdpk_onaxis(self):
+        """Whether DpK trigger delay raw is above dpkckr_dlyref."""
+        return self.trigdpk.delay_raw > self.dpkckr_dlyref
 
     @property
     def is_accum(self):
@@ -832,7 +859,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(-self.delta_posang):
                 return False
 
         # set pulsed magnet pwrstate and pulse
@@ -854,8 +881,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if not self.connected:
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
-        dpk_dly_ok = self.trigdpk.delay_raw == self.SI_DPKCKR_DLYR_OPT
-        dpk_kck_ok = self.pudpk.strength == self.SI_DPKCKR_DEFKICK
+        dpk_dly_ok = not self.is_trigdpk_onaxis
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
@@ -873,15 +900,17 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(-self.delta_posang):
                 return False
 
         if self._check_abort():
             return False
 
         # configure DpK trigger
-        if not self._config_dpk_trigger(delayraw=self.SI_DPKCKR_DLYR_OPT):
-            return False
+        if self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw - self.dpkckr_dlyref
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
 
         # set DpK Kick
         if not self._config_dpk_kick():
@@ -906,9 +935,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if not self.connected:
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
-        dpk_dly_ok = self.trigdpk.delay_raw == \
-            self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
-        dpk_kck_ok = self.pudpk.strength == self.SI_DPKCKR_DEFKICK
+        dpk_dly_ok = self.is_trigdpk_onaxis
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_off = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
@@ -926,16 +954,17 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if not previously in on-axis, do delta angle x
         if not self.is_onaxis:
-            if not self._do_delta_posang(self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(self.delta_posang):
                 return False
 
         if self._check_abort():
             return False
 
         # configure DpK trigger
-        delay = self.trignlk.delay_raw + self.SI_DPKCKR_DLYR_ONAXINC
-        if not self._config_dpk_trigger(delayraw=delay):
-            return False
+        if not self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw + self.dpkckr_dlyref
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
 
         # set DpK Kick
         if not self._config_dpk_kick():
@@ -967,8 +996,9 @@ class InjSysPUModeHandler(_Devices, _Callback):
         if self.posang.need_ref_update:
             self.posang.cmd_update_reference()
         _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
+        desval = self.posang.delta_angx + delta
         self.posang.delta_angx += delta
-        if not self._wait(self.posang, 'delta_angx', delta):
+        if not self._wait(self.posang, 'delta_angx', desval):
             self._update_status('ERR:Could not do delta AngX.')
             return False
         return True
@@ -988,11 +1018,11 @@ class InjSysPUModeHandler(_Devices, _Callback):
         return True
 
     def _config_dpk_kick(self):
-        self.pudpk.strength = self.SI_DPKCKR_DEFKICK
-        if not self._wait(self.pudpk, 'strength', self.SI_DPKCKR_DEFKICK):
+        self.pudpk.strength = self.dpkckr_kick
+        if not self._wait(self.pudpk, 'strength', self.dpkckr_kick):
             self._update_status(
                 'ERR:Could not set DpK Kick to '
-                f'{self.SI_DPKCKR_DEFKICK:.1f}mrad.')
+                f'{self.dpkckr_kick:.1f}mrad.')
             return False
         return True
 
@@ -1024,7 +1054,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     # ---------- check sp -----------
 
-    def _wait(self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
+    def _wait(
+            self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
             if abs(getattr(device, prop) - desired) < tolerance:

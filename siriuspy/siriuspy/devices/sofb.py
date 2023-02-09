@@ -22,6 +22,7 @@ class SOFB(_Device):
         ALL = (TB, BO, TS, SI)
 
     def __new__(cls, devname):
+        """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
@@ -40,7 +41,6 @@ class TLSOFB(_Device):
     """SOFB Device."""
 
     _properties = (
-        'SOFBMode-Sel', 'SOFBMode-Sts',
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
         'RespMat-SP', 'RespMat-RB', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -64,7 +64,6 @@ class TLSOFB(_Device):
         'TrigNrSamplesPre-RB',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'LoopState-Sts', 'LoopState-Sel',
         'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
         'MeasRespMat-Cmd', 'MeasRespMat-Mon',
         'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
@@ -72,6 +71,7 @@ class TLSOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
         'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
         'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
+        'SyncBPMs-Cmd',
         )
 
     _default_timeout = 10  # [s]
@@ -85,24 +85,14 @@ class TLSOFB(_Device):
             raise NotImplementedError(devname)
 
         # SOFB object
-        self.data = data or SOFBFactory.create(devname[:2])
+        self._data = data or SOFBFactory.create(devname[:2])
         # call base class constructor
         super().__init__(devname, properties=self._properties)
 
     @property
-    def opmode(self):
+    def data(self):
         """."""
-        return self['SOFBMode-Sts']
-
-    @opmode.setter
-    def opmode(self, value):
-        self._enum_setter(
-            'SOFBMode-Sel', value, self.data.SOFBMode)
-
-    @property
-    def opmode_str(self):
-        """."""
-        return self.data.SOFBMode._fields[self['SOFBMode-Sts']]
+        return self._data
 
     @property
     def trigchannel(self):
@@ -112,12 +102,12 @@ class TLSOFB(_Device):
     @trigchannel.setter
     def trigchannel(self, value):
         self._enum_setter(
-            'TrigAcqChan-Sel', value, self.data.TrigAcqChan)
+            'TrigAcqChan-Sel', value, self._data.TrigAcqChan)
 
     @property
     def respmat(self):
         """."""
-        return self['RespMat-RB'].reshape(self.data.nr_bpms*2, -1)
+        return self['RespMat-RB'].reshape(self._data.nr_bpms*2, -1)
 
     @respmat.setter
     def respmat(self, mat):
@@ -127,12 +117,12 @@ class TLSOFB(_Device):
     @property
     def invrespmat(self):
         """."""
-        return self['InvRespMat-Mon'].reshape(-1, self.data.nr_bpms*2)
+        return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms*2)
 
     @property
     def trigchannel_str(self):
         """."""
-        return self.data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+        return self._data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
 
     @property
     def sp_trajx(self):
@@ -152,22 +142,16 @@ class TLSOFB(_Device):
     @property
     def trajx(self):
         """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_trajx_idx
         return self.sp_trajx
 
     @property
     def trajy(self):
         """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_trajy_idx
         return self.sp_trajy
 
     @property
     def sum(self):
         """."""
-        if self.data.isring and self.opmode == self.data.SOFBMode.MultiTurn:
-            return self.mt_sum_idx
         return self.sp_sum
 
     @property
@@ -263,7 +247,7 @@ class TLSOFB(_Device):
     @property
     def bpmxenbl(self):
         """."""
-        return self['BPMXEnblList-RB']
+        return _np.array(self['BPMXEnblList-RB'], dtype=bool)
 
     @bpmxenbl.setter
     def bpmxenbl(self, value):
@@ -273,7 +257,7 @@ class TLSOFB(_Device):
     @property
     def bpmyenbl(self):
         """."""
-        return self['BPMYEnblList-RB']
+        return _np.array(self['BPMYEnblList-RB'], dtype=bool)
 
     @bpmyenbl.setter
     def bpmyenbl(self, value):
@@ -283,7 +267,7 @@ class TLSOFB(_Device):
     @property
     def chenbl(self):
         """."""
-        return self['CHEnblList-RB']
+        return _np.array(self['CHEnblList-RB'], dtype=bool)
 
     @chenbl.setter
     def chenbl(self, value):
@@ -293,7 +277,7 @@ class TLSOFB(_Device):
     @property
     def cvenbl(self):
         """."""
-        return self['CVEnblList-RB']
+        return _np.array(self['CVEnblList-RB'], dtype=bool)
 
     @cvenbl.setter
     def cvenbl(self, value):
@@ -367,22 +351,22 @@ class TLSOFB(_Device):
 
     def cmd_applycorr_ch(self):
         """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CH
+        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.CH
         return True
 
     def cmd_applycorr_cv(self):
         """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.CV
+        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.CV
         return True
 
     def cmd_applycorr_rf(self):
         """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.RF
+        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.RF
         return True
 
     def cmd_applycorr_all(self):
         """."""
-        self['ApplyDelta-Cmd'] = self.data.ApplyDelta.All
+        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.All
         return True
 
     def cmd_measrespmat_start(self):
@@ -400,31 +384,11 @@ class TLSOFB(_Device):
         self['MeasRespMat-Cmd'] = 2
         return True
 
-    def cmd_change_opmode_to_multiturn(self, timeout=10):
-        """."""
-        mode = self.data.SOFBMode.MultiTurn
-        self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
-        if not ret:
-            return False
-        _time.sleep(1)  # Status PV updates at 2Hz
-        return self.wait_orb_status_ok(timeout=timeout)
-
-    def cmd_change_opmode_to_sloworb(self, timeout=10):
-        """."""
-        mode = self.data.SOFBMode.SlowOrb
-        self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
-        if not ret:
-            return False
-        _time.sleep(0.6)  # Status PV updates at 2Hz
-        return self.wait_orb_status_ok(timeout=timeout)
-
     def cmd_trigacq_start(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Start'
         ret = self._wait(
-            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Start, timeout=timeout)
+            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Start, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -434,7 +398,7 @@ class TLSOFB(_Device):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Stop'
         ret = self._wait(
-            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Stop, timeout=timeout)
+            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Stop, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -444,7 +408,7 @@ class TLSOFB(_Device):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Abort'
         ret = self._wait(
-            'TrigAcqCtrl-Sts', self.data.TrigAcqCtrl.Abort, timeout=timeout)
+            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Abort, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -492,11 +456,6 @@ class TLSOFB(_Device):
     def measrespmat_wait(self, value):
         self['MeasRespMatWait-SP'] = value
 
-    @property
-    def autocorrsts(self):
-        """."""
-        return self['LoopState-Sts']
-
     def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
         self.cmd_turn_off_autocorr()
@@ -518,24 +477,6 @@ class TLSOFB(_Device):
             self.wait_buffer()
         return i, resx, resy
 
-    def cmd_turn_on_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or self._default_timeout
-        if self.autocorrsts == self.data.LoopState.Closed:
-            return True
-        self['LoopState-Sel'] = self.data.LoopState.Closed
-        return self._wait(
-            'LoopState-Sts', self.data.LoopState.Closed, timeout=timeout)
-
-    def cmd_turn_off_autocorr(self, timeout=None):
-        """."""
-        timeout = timeout or self._default_timeout
-        if self.autocorrsts == self.data.LoopState.Open:
-            return True
-        self['LoopState-Sel'] = self.data.LoopState.Open
-        return self._wait(
-            'LoopState-Sts', self.data.LoopState.Open, timeout=timeout)
-
     def wait_buffer(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
@@ -548,19 +489,24 @@ class TLSOFB(_Device):
         def_timeout = max(self._default_timeout_kick_apply, def_timeout)
         timeout = timeout or def_timeout
         return self._wait(
-            'ApplyDelta-Mon', self.data.ApplyDeltaMon.Applying,
+            'ApplyDelta-Mon', self._data.ApplyDeltaMon.Applying,
             timeout=timeout, comp='ne')
 
     def wait_respm_meas(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout_respm
         return self._wait(
-            'MeasRespMat-Mon', self.data.MeasRespMatMon.Measuring,
+            'MeasRespMat-Mon', self._data.MeasRespMatMon.Measuring,
             timeout=timeout, comp='ne')
 
     def wait_orb_status_ok(self, timeout=10):
         """."""
         return self._wait('OrbStatus-Mon', 0, timeout=timeout)
+
+    def cmd_sync_bpms(self):
+        """Synchronize BPMs."""
+        self['SyncBPMs-Cmd'] = 1
+        return True
 
 
 class BOSOFB(TLSOFB):
@@ -576,37 +522,52 @@ class BOSOFB(TLSOFB):
     @property
     def mt_trajx(self):
         """."""
-        return self['MTurnOrbX-Mon'] if self.data.isring else None
+        return self['MTurnOrbX-Mon']
 
     @property
     def mt_trajy(self):
         """."""
-        return self['MTurnOrbY-Mon'] if self.data.isring else None
+        return self['MTurnOrbY-Mon']
 
     @property
     def mt_sum(self):
         """."""
-        return self['MTurnSum-Mon'] if self.data.isring else None
+        return self['MTurnSum-Mon']
 
     @property
     def mt_time(self):
         """."""
-        return self['MTurnTime-Mon'] if self.data.isring else None
+        return self['MTurnTime-Mon']
 
     @property
     def mt_trajx_idx(self):
         """."""
-        return self['MTurnIdxOrbX-Mon'] if self.data.isring else None
+        return self['MTurnIdxOrbX-Mon']
 
     @property
     def mt_trajy_idx(self):
         """."""
-        return self['MTurnIdxOrbY-Mon'] if self.data.isring else None
+        return self['MTurnIdxOrbY-Mon']
 
     @property
     def mt_sum_idx(self):
         """."""
-        return self['MTurnIdxSum-Mon'] if self.data.isring else None
+        return self['MTurnIdxSum-Mon']
+
+    @property
+    def trajx(self):
+        """."""
+        return self.mt_trajx_idx
+
+    @property
+    def trajy(self):
+        """."""
+        return self.mt_trajy_idx
+
+    @property
+    def sum(self):
+        """."""
+        return self.mt_sum_idx
 
     def cmd_mturn_acquire(self):
         """."""
@@ -618,6 +579,7 @@ class SISOFB(BOSOFB):
     """SOFB Device."""
 
     _properties = BOSOFB._properties + (
+        'SOFBMode-Sel', 'SOFBMode-Sts',
         'KickRF-Mon',
         'DeltaKickRF-Mon', 'DeltaKickRF-SP',
         'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
@@ -625,6 +587,7 @@ class SISOFB(BOSOFB):
         'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
         'RFEnbl-Sel', 'RFEnbl-Sts',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
+        'LoopState-Sts', 'LoopState-Sel',
         'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
         'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
         'DriveAmplitude-SP', 'DriveAmplitude-RB',
@@ -635,6 +598,41 @@ class SISOFB(BOSOFB):
         'DriveState-Sel', 'DriveState-Sts',
         'DriveData-Mon',
         )
+
+    @property
+    def opmode(self):
+        """."""
+        return self['SOFBMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        self._enum_setter(
+            'SOFBMode-Sel', value, self._data.SOFBMode)
+
+    @property
+    def opmode_str(self):
+        """."""
+        return self._data.SOFBMode._fields[self['SOFBMode-Sts']]
+
+    def cmd_change_opmode_to_multiturn(self, timeout=10):
+        """."""
+        mode = self._data.SOFBMode.MultiTurn
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(1)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
+
+    def cmd_change_opmode_to_sloworb(self, timeout=10):
+        """."""
+        mode = self._data.SOFBMode.SlowOrb
+        self.opmode = mode
+        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        if not ret:
+            return False
+        _time.sleep(0.6)  # Status PV updates at 2Hz
+        return self.wait_orb_status_ok(timeout=timeout)
 
     @property
     def drivests(self):
@@ -649,12 +647,12 @@ class SISOFB(BOSOFB):
     @drivetype.setter
     def drivetype(self, value):
         self._enum_setter(
-            'DriveType-Sel', value, self.data.DriveType)
+            'DriveType-Sel', value, self._data.DriveType)
 
     @property
     def drivetype_str(self):
         """."""
-        return self.data.DriveType._fields[self['DriveType-Sts']]
+        return self._data.DriveType._fields[self['DriveType-Sts']]
 
     @property
     def drivefreqdivisor(self):
@@ -744,12 +742,12 @@ class SISOFB(BOSOFB):
     @property
     def orbx(self):
         """."""
-        return self['SlowOrbX-Mon'] if self.data.isring else None
+        return self['SlowOrbX-Mon'] if self._data.isring else None
 
     @property
     def orby(self):
         """."""
-        return self['SlowOrbY-Mon'] if self.data.isring else None
+        return self['SlowOrbY-Mon'] if self._data.isring else None
 
     @property
     def kickrf(self):
@@ -789,13 +787,13 @@ class SISOFB(BOSOFB):
     @property
     def rfenbl(self):
         """."""
-        dta = self.data
-        return self['RFEnbl-Sts'] if dta.acc_idx == dta.Rings.SI else None
+        if self._data.acc_idx == self._data.Rings.SI:
+            return bool(self['RFEnbl-Sts'])
 
     @rfenbl.setter
     def rfenbl(self, value):
         """."""
-        if self.data.acc_idx == self.data.Rings.SI:
+        if self._data.acc_idx == self._data.Rings.SI:
             self['RFEnbl-Sel'] = value
 
     @property
@@ -807,31 +805,75 @@ class SISOFB(BOSOFB):
     def measrespmat_kickrf(self, value):
         self['MeasRespMatKickRF-SP'] = value
 
+    @property
+    def autocorrsts(self):
+        """."""
+        return self['LoopState-Sts']
+
+    def cmd_turn_on_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or self._default_timeout
+        if self.autocorrsts == self._data.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = self._data.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_autocorr(self, timeout=None):
+        """."""
+        timeout = timeout or self._default_timeout
+        if self.autocorrsts == self._data.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = self._data.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', self._data.LoopState.Open, timeout=timeout)
+
     def cmd_turn_on_drive(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
-        if self.drivests == self.data.DriveState.Closed:
+        if self.drivests == self._data.DriveState.Closed:
             return True
-        self['DriveState-Sel'] = self.data.DriveState.Closed
+        self['DriveState-Sel'] = self._data.DriveState.Closed
         return self._wait(
-            'DriveState-Sts', self.data.DriveState.Closed, timeout=timeout)
+            'DriveState-Sts', self._data.DriveState.Closed, timeout=timeout)
 
     def cmd_turn_off_drive(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
-        if self.drivests == self.data.DriveState.Open:
+        if self.drivests == self._data.DriveState.Open:
             return True
-        self['DriveState-Sel'] = self.data.DriveState.Open
+        self['DriveState-Sel'] = self._data.DriveState.Open
         return self.wait_drive(timeout=timeout)
 
     def wait_drive(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout_respm
         return self._wait(
-            'DriveState-Sts', self.data.DriveState.Open, timeout=timeout)
+            'DriveState-Sts', self._data.DriveState.Open, timeout=timeout)
 
     @staticmethod
     def si_calculate_bumps(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
         """."""
         return _si_calculate_bump(
             orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy)
+
+    @property
+    def trajx(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajx_idx
+        return self.sp_trajx
+
+    @property
+    def trajy(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_trajy_idx
+        return self.sp_trajy
+
+    @property
+    def sum(self):
+        """."""
+        if self.opmode == self._data.SOFBMode.MultiTurn:
+            return self.mt_sum_idx
+        return self.sp_sum

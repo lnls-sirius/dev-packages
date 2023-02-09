@@ -1,5 +1,7 @@
 """Power Supply Devices."""
 
+import numpy as _np
+
 from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -34,6 +36,23 @@ class _PSDev(_Device):
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
+    _properties_fc = (
+        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
+        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
+        'CurrLoopMode-Sts', 'CurrLoopMode-Sel',
+        'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
+        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
+        'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
+        'TestWavePeriod-RB', 'TestWavePeriod-SP',
+        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
+        'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
+        'InvRespMatRow-SP', 'InvRespMatRow-RB',
+        'FOFBAccGain-SP', 'FOFBAccGain-RB',
+        'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
+        'FOFBAccClear-Cmd',
+        'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
+        'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
+    )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
         'Pulse-Sel', 'Pulse-Sts')
@@ -54,8 +73,8 @@ class _PSDev(_Device):
         # power supply type and magnetic function
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed, self._is_magps) = \
-            _PSDev.get_device_type(devname)
+         self._is_linac, self._is_pulsed, self._is_fc,
+         self._is_magps) = _PSDev.get_device_type(devname)
 
         # set attributes
         (self._strength_sp_propty,
@@ -65,6 +84,9 @@ class _PSDev(_Device):
 
         # call base class constructor
         super().__init__(devname, properties=properties)
+
+        # private attribute with strength setpoint pv object
+        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
 
     @property
     def pstype(self):
@@ -88,8 +110,13 @@ class _PSDev(_Device):
 
     @property
     def is_pulsed(self):
-        """Return True if device is a pulsed magnet powet supply."""
+        """Return True if device is a pulsed magnet power supply."""
         return self._is_pulsed
+
+    @property
+    def is_fc(self):
+        """Return True if device is a Sirius fast corrector power supply"""
+        return self._is_fc
 
     @property
     def is_magps(self):
@@ -98,28 +125,73 @@ class _PSDev(_Device):
 
     @property
     def strength_property(self):
-        """."""
+        """Return Strength name."""
         return self._strength_propty
 
     @property
     def strength_units(self):
-        """."""
+        """Return Strength units."""
         return self._strength_units
 
     @property
     def strength(self):
-        """."""
+        """Return Strength RB."""
         return self[self._strength_rb_propty]
 
     @strength.setter
     def strength(self, value):
-        """."""
+        """Set Strength SP."""
         self[self._strength_sp_propty] = value
 
     @property
+    def strengthref_mon(self):
+        """Return Strength Ref-Mon."""
+        return self[self._strength_propty + 'Ref-Mon']
+
+    @property
     def strength_mon(self):
-        """."""
+        """Return Strength Mon."""
         return self[self._strength_mon_propty]
+
+    @property
+    def strength_upper_ctrl_limit(self):
+        """Return Strength SP upper control limit."""
+        return self._strength_sp_pv.upper_ctrl_limit
+
+    @property
+    def strength_lower_ctrl_limit(self):
+        """Return Strength SP lower control limit."""
+        return self._strength_sp_pv.lower_ctrl_limit
+
+    @property
+    def strength_upper_alarm_limit(self):
+        """Return Strength SP upper alarm limit."""
+        return self._strength_sp_pv.upper_alarm_limit
+
+    @property
+    def strength_lower_alarm_limit(self):
+        """Return Strength SP lower alarm limit."""
+        return self._strength_sp_pv.lower_alarm_limit
+
+    @property
+    def strength_upper_warning_limit(self):
+        """Return Strength SP upper warning limit."""
+        return self._strength_sp_pv.upper_warning_limit
+
+    @property
+    def strength_lower_warning_limit(self):
+        """Return Strength SP lower warning limit."""
+        return self._strength_sp_pv.lower_warning_limit
+
+    @property
+    def strength_upper_disp_limit(self):
+        """Return Strength SP upper display limit."""
+        return self._strength_sp_pv.upper_disp_limit
+
+    @property
+    def strength_lower_disp_limit(self):
+        """Return Strength SP lower display limit."""
+        return self._strength_sp_pv.lower_disp_limit
 
     @property
     def pwrstate(self):
@@ -151,10 +223,11 @@ class _PSDev(_Device):
         strength_units = _util.get_strength_units(magfunc, pstype)
         is_linac = devname.sec.endswith('LI')
         is_pulsed = devname.dis == 'PU'
-        is_magps = not is_linac and not is_pulsed
+        is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
+        is_magps = not is_linac and not is_pulsed and not is_fc
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
-                is_linac, is_pulsed, is_magps)
+                is_linac, is_pulsed, is_fc, is_magps)
 
     # --- private methods ---
 
@@ -163,15 +236,16 @@ class _PSDev(_Device):
         properties = _PSDev._properties_common
         if self._is_linac:
             properties += _PSDev._properties_linac
-        else:
-            if self._is_pulsed:
-                properties += _PSDev._properties_pulsed
-                if self._psmodel == 'FP_KCKR':
-                    properties += _PSDev._properties_pulsed_kckr
-                else:
-                    properties += _PSDev._properties_pulsed_sept
+        elif self._is_pulsed:
+            properties += _PSDev._properties_pulsed
+            if self._psmodel == 'FP_KCKR':
+                properties += _PSDev._properties_pulsed_kckr
             else:
-                properties += _PSDev._properties_magps
+                properties += _PSDev._properties_pulsed_sept
+        elif self._is_fc:
+            properties += _PSDev._properties_fc
+        else:
+            properties += _PSDev._properties_magps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
@@ -182,6 +256,9 @@ class _PSDev(_Device):
             strength_rb_propty,
             strength_mon_propty,
         )
+        if not self._is_linac and not self._is_pulsed:
+            strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
+            properties += (strengthref_mon_propty, )
 
         ret = (
             strength_sp_propty, strength_rb_propty, strength_mon_propty,
@@ -334,11 +411,13 @@ class PowerSupply(_PSDev):
          - AuxParams[2] --> rampdown time [s]
          - AuxParams[3] --> not used
         """
-        return self['CycleAuxParam-RB']
+        value = self['CycleAuxParam-RB']
+        if value is not None:
+            return value.copy()
+        return None
 
     @cycle_aux_param.setter
     def cycle_aux_param(self, value):
-        """."""
         self['CycleAuxParam-SP'] = value
 
     @property
@@ -486,7 +565,7 @@ class PowerSupplyPU(_PSDev):
             SI_PING_H, SI_PING_V,
         )
 
-    _properties_timing = ('Delay-SP', 'Delay-RB')
+    _properties_timing = ('Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB')
 
     def __init__(self, devname):
         """."""
@@ -523,6 +602,16 @@ class PowerSupplyPU(_PSDev):
     def delay(self, value):
         """."""
         self._dev_timing['Delay-SP'] = value
+
+    @property
+    def delay_raw(self):
+        """."""
+        return self._dev_timing['DelayRaw-RB']
+
+    @delay_raw.setter
+    def delay_raw(self, value):
+        """."""
+        self._dev_timing['DelayRaw-SP'] = value
 
     @property
     def pulse(self):
@@ -616,3 +705,187 @@ class PowerSupplyPU(_PSDev):
         devname = self._devname.substitute(dis='TI')
         device = _Device(devname, PowerSupplyPU._properties_timing)
         return device
+
+
+class PowerSupplyFC(_PSDev):
+    """Fast Correctors Power Supply Device."""
+
+    OPMODE_SEL = _Const.OpModeFOFBSel
+    OPMODE_STS = _Const.OpModeFOFBSts
+
+    class DEVICES:
+        """Devices names."""
+
+    @property
+    def opmode(self):
+        """OpMode."""
+        return self['OpMode-Sts']
+
+    @opmode.setter
+    def opmode(self, value):
+        self._enum_setter('OpMode-Sel', value, self.OPMODE_SEL)
+
+    @property
+    def current(self):
+        """Current setpoint."""
+        return self['Current-RB']
+
+    @current.setter
+    def current(self, value):
+        self['Current-SP'] = value
+
+    @property
+    def current_mon(self):
+        """Implemented current."""
+        return self['Current-Mon']
+
+    @property
+    def currentref_mon(self):
+        """Current reference."""
+        return self['CurrentRef-Mon']
+
+    @property
+    def curr_gain(self):
+        """Current gain for A<->raw unit conversion."""
+        return self['CurrGain-RB']
+
+    @curr_gain.setter
+    def curr_gain(self, value):
+        self['CurrGain-SP'] = value
+
+    @property
+    def curr_offset(self):
+        """Current offset for A<->raw unit conversion."""
+        return self['CurrOffset-RB']
+
+    @curr_offset.setter
+    def curr_offset(self, value):
+        self['CurrOffset-SP'] = value
+
+    @property
+    def voltage(self):
+        """."""
+        return self['Voltage-RB']
+
+    @voltage.setter
+    def voltage(self, value):
+        """."""
+        self['Voltage-SP'] = value
+
+    @property
+    def voltage_mon(self):
+        """."""
+        return self['Voltage-Mon']
+
+    @property
+    def volt_gain(self):
+        """."""
+        return self['VoltGain-RB']
+
+    @volt_gain.setter
+    def volt_gain(self, value):
+        """."""
+        self['VoltGain-SP'] = value
+
+    @property
+    def volt_offset(self):
+        """."""
+        return self['VoltOffset-RB']
+
+    @volt_offset.setter
+    def volt_offset(self, value):
+        """."""
+        self['VoltOffset-SP'] = value
+
+    @property
+    def currloop_kp(self):
+        """Current control loop Kp parameter."""
+        return self['CurrLoopKp-RB']
+
+    @currloop_kp.setter
+    def currloop_kp(self, value):
+        self['CurrLoopKp-SP'] = value
+
+    @property
+    def currloop_ti(self):
+        """Current control loop Ti parameter."""
+        return self['CurrLoopTi-RB']
+
+    @currloop_ti.setter
+    def currloop_ti(self, value):
+        self['CurrLoopTi-SP'] = value
+
+    @property
+    def currloop_mode(self):
+        """Current control loop mode."""
+        return self['CurrLoopMode-Sts']
+
+    @currloop_mode.setter
+    def currloop_mode(self, value):
+        self['CurrLoopMode-Sel'] = value
+
+    @property
+    def alarms_amp(self):
+        """."""
+        return self['AlarmsAmp-Mon']
+
+    def cmd_opmode_manual(self, timeout=_PSDev._default_timeout):
+        """Set opmode to manual."""
+        return self._set_opmode(mode=self.OPMODE_SEL.manual, timeout=timeout)
+
+    def cmd_opmode_fofb(self, timeout=_PSDev._default_timeout):
+        """Set opmode to fofb."""
+        return self._set_opmode(mode=self.OPMODE_SEL.fofb, timeout=timeout)
+
+    def _set_opmode(self, mode, timeout):
+        self['OpMode-Sel'] = mode
+        return self._wait('OpMode-Sts', mode, timeout=timeout)
+
+    @property
+    def invrespmat_row(self):
+        """Correction coefficient value."""
+        return self['InvRespMatRow-RB']
+
+    @invrespmat_row.setter
+    def invrespmat_row(self, value):
+        self['InvRespMatRow-SP'] = _np.array(value, dtype=float)
+
+    @property
+    def fofbacc_gain(self):
+        """FOFB accumulator gain."""
+        return self['FOFBAccGain-RB']
+
+    @fofbacc_gain.setter
+    def fofbacc_gain(self, value):
+        self['FOFBAccGain-SP'] = value
+
+    @property
+    def fofbacc_freeze(self):
+        """FOFB accumulator freeze state."""
+        return self['FOFBAccFreeze-Sts']
+
+    @fofbacc_freeze.setter
+    def fofbacc_freeze(self, value):
+        self['FOFBAccFreeze-Sel'] = value
+
+    @property
+    def fofbacc_satmax(self):
+        """FOFB accumulator maximum saturation."""
+        return self['FOFBAccSatMax-RB']
+
+    @fofbacc_satmax.setter
+    def fofbacc_satmax(self, value):
+        self['FOFBAccSatMax-SP'] = value
+
+    @property
+    def fofbacc_satmin(self):
+        """FOFB accumulator minimum saturation."""
+        return self['FOFBAccSatMin-RB']
+
+    @fofbacc_satmin.setter
+    def fofbacc_satmin(self, value):
+        self['FOFBAccSatMin-SP'] = value
+
+    def cmd_fofbacc_clear(self):
+        """Command to clear FOFB accumulator."""
+        self['FOFBAccClear-Cmd'] = 1
