@@ -2,6 +2,8 @@
 
 import time as _time
 import operator as _opr
+import math as _math
+from functools import partial as _partial
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
@@ -177,6 +179,13 @@ class Device:
             if comp_(value):
                 return True
         return False
+
+    def _wait_float(
+            self, propty, value, rel_tol=0.0, abs_tol=0.1,
+            timeout=_DEF_TIMEOUT):
+        """Wait until float value gets close enough of desired value."""
+        func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
+        return self._wait(propty, value, comp=func, timeout=timeout)
 
     def _get_pvname(self, devname, propty):
         if devname:
