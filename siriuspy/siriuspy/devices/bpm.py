@@ -165,6 +165,11 @@ class BPM(_Device):
         self['SwMode-Sel'] = val
 
     @property
+    def harmonic_number(self):
+        """."""
+        return self['INFOHarmonicNumber-RB']
+
+    @property
     def adcfreq(self):
         """."""
         return self['INFOClkFreq-RB']
