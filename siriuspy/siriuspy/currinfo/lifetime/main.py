@@ -37,7 +37,6 @@ class SILifetimeApp(_Callback):
         self._last_ts_set = 'last'
         self._sampling_interval = 500.0
         self._min_intvl_btw_spl = 0.0
-        self._rstbuff_cmd_count = 0
         self._buffautorst_mode = _Const.BuffAutoRst.DCurrCheck
         self._buffautorst_dcurr = 0.01
         self._is_stored = 0
@@ -163,9 +162,7 @@ class SILifetimeApp(_Callback):
             self.run_callbacks('CurrOffset-RB', value)
             status = True
         elif reason == 'BuffRst-Cmd':
-            self._rstbuff_cmd_count += 1
             self._reset_buff()
-            self.run_callbacks('BuffRst-Cmd', self._rstbuff_cmd_count)
             status = True
         elif reason == 'BuffAutoRst-Sel':
             self._buffautorst_mode = value

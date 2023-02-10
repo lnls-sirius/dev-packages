@@ -808,7 +808,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
     _DEF_SLEEP = 0.1  # [s]
     SI_DPKCKR_DEFKICK = -6.7  # [mrad]
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
-    SI_DPKCKR_DLYREF = 36.8e6  # [count]
+    SI_DPKCKR_DLYREF = 36800000  # [count]
 
     def __init__(self, print_log=True, callback=None):
         """Init."""
@@ -817,6 +817,9 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self.trigdpk = Trigger('SI-01SA:TI-InjDpKckr')
         self.trignlk = Trigger('SI-01SA:TI-InjNLKckr')
         self.posang = PosAng(PosAng.DEVICES.TS)
+        self.delta_posang = self.TS_POSANG_DEFDELTA
+        self.dpkckr_dlyref = self.SI_DPKCKR_DLYREF
+        self.dpkckr_kick = self.SI_DPKCKR_DEFKICK
         devices = (
             self.pudpk, self.punlk,
             self.trigdpk, self.trignlk,
@@ -831,8 +834,8 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
     @property
     def is_trigdpk_onaxis(self):
-        """Whether DpK trigger delay raw is above SI_DPKCKR_DLYREF."""
-        return self.trigdpk.delay_raw < self.SI_DPKCKR_DLYREF
+        """Whether DpK trigger delay raw is above dpkckr_dlyref."""
+        return self.trigdpk.delay_raw > self.dpkckr_dlyref
 
     @property
     def is_accum(self):
@@ -856,13 +859,12 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(-self.delta_posang):
                 return False
 
         # set pulsed magnet pwrstate and pulse
         proced = (
             (self.pudpk.cmd_turn_off_pulse, 'turn DpK pulse off.'),
-            (self.pudpk.cmd_turn_off, 'turn DpK off.'),
             (self.punlk.cmd_turn_on, 'turn NLK on.'),
             (self.punlk.cmd_turn_on_pulse, 'turn NLK pulse on.'),
         )
@@ -879,7 +881,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = not self.is_trigdpk_onaxis
-        dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_on = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
@@ -897,7 +899,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if previously in on-axis, do delta angle x
         if self.is_onaxis:
-            if not self._do_delta_posang(-self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(-self.delta_posang):
                 return False
 
         if self._check_abort():
@@ -905,7 +907,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # configure DpK trigger
         if self.is_trigdpk_onaxis:
-            delay = self.trigdpk.delay_raw + self.SI_DPKCKR_DLYREF
+            delay = self.trigdpk.delay_raw - self.dpkckr_dlyref
             if not self._config_dpk_trigger(delayraw=delay):
                 return False
 
@@ -933,7 +935,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
             return False
         dpk_evt_ok = self.trigdpk.source == self.trignlk.source
         dpk_dly_ok = self.is_trigdpk_onaxis
-        dpk_kck_ok = abs(self.pudpk.strength - self.SI_DPKCKR_DEFKICK) < 1e-3
+        dpk_kck_ok = abs(self.pudpk.strength - self.dpkckr_kick) < 1e-3
         dpk_on = (self.pudpk.pwrstate == PowerSupplyPU.PWRSTATE.On) and \
             (self.pudpk.pulse == PowerSupplyPU.PULSTATE.On)
         nlk_off = (self.punlk.pwrstate == PowerSupplyPU.PWRSTATE.Off) or \
@@ -951,7 +953,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # if not previously in on-axis, do delta angle x
         if not self.is_onaxis:
-            if not self._do_delta_posang(self.TS_POSANG_DEFDELTA):
+            if not self._do_delta_posang(self.delta_posang):
                 return False
 
         if self._check_abort():
@@ -959,7 +961,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
 
         # configure DpK trigger
         if not self.is_trigdpk_onaxis:
-            delay = self.trigdpk.delay_raw - self.SI_DPKCKR_DLYREF
+            delay = self.trigdpk.delay_raw + self.dpkckr_dlyref
             if not self._config_dpk_trigger(delayraw=delay):
                 return False
 
@@ -970,7 +972,6 @@ class InjSysPUModeHandler(_Devices, _Callback):
         # set pulsed magnet pwrstate and pulse
         proced = (
             (self.punlk.cmd_turn_off_pulse, 'turn NLK pulse off.'),
-            (self.punlk.cmd_turn_off, 'turn NLK off.'),
             (self.pudpk.cmd_turn_on, 'turn DpK on.'),
             (self.pudpk.cmd_turn_on_pulse, 'turn DpK pulse on.'),
         )
@@ -1015,11 +1016,11 @@ class InjSysPUModeHandler(_Devices, _Callback):
         return True
 
     def _config_dpk_kick(self):
-        self.pudpk.strength = self.SI_DPKCKR_DEFKICK
-        if not self._wait(self.pudpk, 'strength', self.SI_DPKCKR_DEFKICK):
+        self.pudpk.strength = self.dpkckr_kick
+        if not self._wait(self.pudpk, 'strength', self.dpkckr_kick):
             self._update_status(
                 'ERR:Could not set DpK Kick to '
-                f'{self.SI_DPKCKR_DEFKICK:.1f}mrad.')
+                f'{self.dpkckr_kick:.1f}mrad.')
             return False
         return True
 

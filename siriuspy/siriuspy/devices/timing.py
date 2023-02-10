@@ -139,25 +139,29 @@ class EVG(_Device):
         return self._wait(
             propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
-    def cmd_turn_on_injection(self, timeout=10):
+    def cmd_turn_on_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 1
-        return self._wait(propty='InjectionEvt-Sel', value=1, timeout=timeout)
+        pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
+        return self._wait(propty=pv2wait, value=1, timeout=timeout)
 
-    def cmd_turn_off_injection(self, timeout=10):
+    def cmd_turn_off_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 0
-        return self._wait(propty='InjectionEvt-Sel', value=0, timeout=timeout)
+        pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
+        return self._wait(propty=pv2wait, value=0, timeout=timeout)
 
-    def cmd_turn_on_continuous(self, timeout=10):
+    def cmd_turn_on_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 1
-        return self._wait(propty='ContinuousEvt-Sel', value=1, timeout=timeout)
+        pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
+        return self._wait(propty=pv2wait, value=1, timeout=timeout)
 
-    def cmd_turn_off_continuous(self, timeout=10):
+    def cmd_turn_off_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 0
-        return self._wait(propty='ContinuousEvt-Sel', value=0, timeout=timeout)
+        pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
+        return self._wait(propty=pv2wait, value=0, timeout=timeout)
 
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""

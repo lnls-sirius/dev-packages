@@ -369,11 +369,11 @@ class SOFBTLines(ConstTLines):
                 'enums': self.TrigAcqChan._fields},
             'TrigAcqRepeat-Sel': {
                 'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
-                'value': self.TrigAcqRepeat.Normal,
+                'value': self.TrigAcqRepeat.Repetitive,
                 'enums': self.TrigAcqRepeat._fields},
             'TrigAcqRepeat-Sts': {
                 'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
-                'value': self.TrigAcqRepeat.Normal,
+                'value': self.TrigAcqRepeat.Repetitive,
                 'enums': self.TrigAcqRepeat._fields},
             'TrigNrShots-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
@@ -388,10 +388,10 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'unit': '', 'value': 0,
                 'hilim': 20000, 'lolim': -1},
             'TrigNrSamplesPost-SP': {
-                'type': 'int', 'unit': '', 'value': 360,
+                'type': 'int', 'unit': '', 'value': 382,
                 'hilim': 20000, 'lolim': 0},
             'TrigNrSamplesPost-RB': {
-                'type': 'int', 'unit': '', 'value': 360,
+                'type': 'int', 'unit': '', 'value': 382,
                 'hilim': 20000, 'lolim': 0},
             'PolyCalibration-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Enbld,
