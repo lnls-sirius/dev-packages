@@ -67,7 +67,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
     INDICES = _get_namedtuple(
         'Indices',
-        ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
+        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
     OSC = _Scopes.LI_DI_ICTOSC
     ACC = ''
@@ -151,6 +151,11 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
+
+    # TS scope does not returns STT.
+    INDICES = _get_namedtuple(
+        'Indices',
+        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
     OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
