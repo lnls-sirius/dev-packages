@@ -16,6 +16,7 @@ from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
+from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
 
 from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
@@ -68,29 +69,18 @@ class _ASCurrInfoApp(_CurrInfoApp):
         'Indices',
         ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
 
-    OSC_IP = 'scope-dig-linac-ict'
+    OSC = _Scopes.LI_DI_ICTOSC
     ACC = ''
     ICT1 = ''
     ICT2 = ''
     CHARGE_THRESHOLD = 0.05  # [nC]
 
-    def __init__(self, resource_manager):
+    def __init__(self):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
-        self.resource_manager = resource_manager
 
-        self.osc_socket = None
-        self.open()
-
-    def open(self):
-        """."""
-        self.osc_socket = self.resource_manager.open_resource(
-            'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
-
-    def close(self):
-        """."""
-        self.osc_socket.close()
+        self.osc_obj = _Keysight(scope=self.OSC)
 
     def process(self, interval):
         """."""
@@ -106,12 +96,13 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
     def _get_measurement(self):
         try:
-            meas = self.osc_socket.query(":MEASure:RESults?")
+            self.osc_obj.connect()
+            meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
             self._meas = meas.split(',')
         except Exception as err:
             _log.error(str(err))
-            self.close()
-            self.open()
+        finally:
+            self.osc_obj.close()
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
@@ -161,7 +152,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC_IP = 'as-di-fctdig'
+    OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -170,7 +161,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = 'li-di-ictosc'
+    OSC_IP = _Scopes.LI_DI_ICTOSC
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'
