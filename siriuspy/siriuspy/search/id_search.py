@@ -1,11 +1,7 @@
 """ID Search module."""
 
-from threading import Lock as _Lock
-
-from .. import clientweb as _web
-from ..magnet.excdata import ExcitationData as _ExcitationData
-
-from .ps_search import PSSearch as _PSSearch
+from ..namesys import Filter as _Filter
+from ..namesys import SiriusPVName as _SiriusPVName
 
 
 class IDSearch:
@@ -24,18 +20,48 @@ class IDSearch:
         'MANACA':   'SI-09SA:ID-APU22',
         'SABIA':    'SI-10SB:ID-EPU50',
         'IPE':      'SI-11SP:ID-APU58',
-        # 'PAINEIRA': 'SI-14SB:ID-WIG180',
-        # 'SAPUCAIA': 'SI-17SA:ID-???',
+        'PAINEIRA': 'SI-14SB:ID-WIG180',
     }
+
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
 
-    _idname_2_orbitcorr = {}
+    _idname_2_idff = {
+        'SI-06SB:ID-APU22': None,
+        'SI-07SP:ID-APU22': None,
+        'SI-08SB:ID-APU22': None,
+        'SI-09SA:ID-APU22': None,
+        'SI-10SB:ID-EPU50': {
+            'polarizations': ('horizontal', 'vertical', 'circular', ),
+            'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
+            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
+            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
+            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
+            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+        },
+        'SI-11SP:ID-APU58': None,
+        'SI-14SB:ID-WIG180': {
+            'polarizations': ('horizontal', ),
+            'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
+            'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
+            'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
+        },
+    }
 
-    _idname_2_orbitffwd_fname = {}
+    @staticmethod
+    def get_idnames(filters=None):
+        """Return a sorted and filtered list of all ID names."""
+        idnames_list = list(IDSearch._idname2beamline.keys())
+        idnames = _Filter.process_filters(idnames_list, filters=filters)
+        return sorted(idnames)
 
-    _idname_2_orbitffwd_dict = dict()
-
-    _lock = _Lock()
+    @staticmethod
+    def get_beamlines(filters=None):
+        """Return a sorted and filtered list of all ID beamlines."""
+        beamlines_list = list(IDSearch._idname2beamline.values())
+        beamlines = _Filter.process_filters(beamlines_list, filters=filters)
+        return sorted(beamlines)
 
     @staticmethod
     def conv_idname_2_beamline(idname):
@@ -62,36 +88,46 @@ class IDSearch:
         return IDSearch._beamline2idname.copy()
 
     @staticmethod
-    def get_idnames(filters=None):
-        """Return a sorted and filtered list of all ID names."""
-        filters_ = dict()
-        if filters:
-            filters_.update(filters)
-        filters_['dis'] = 'ID'
-        return _PSSearch.get_psnames(filters_)
+    def conv_idname_2_idff(idname):
+        """Return the IDFF dictionary for a given ID name."""
+        return dict(IDSearch._idname_2_idff[idname])
 
     @staticmethod
-    def conv_idname_2_orbitcorr(idname):
-        """Return list of orbit correctors of a given ID."""
-        return IDSearch._idname_2_orbitcorr[idname]
+    def conv_idname_2_kparameter_propty(idname):
+        """."""
+        idff = IDSearch.conv_idname_2_idff(idname)
+        pvname = _SiriusPVName(idff['kparameter'])
+        return pvname.propty
 
     @staticmethod
-    def conv_idname_2_orbitffwd(idname):
-        """Convert idname to orbit feedforward excdata."""
-        IDSearch._reload_idname_2_orbitffwd_dict(idname)
-        return IDSearch._idname_2_orbitffwd_dict[idname]
-
-    # --- private methods ---
+    def conv_idname_2_idff_chnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('ch1', 'ch2'))
 
     @staticmethod
-    def _reload_idname_2_orbitffwd_dict(idname):
-        """Load ID ffwd data."""
-        with IDSearch._lock:
-            if idname in IDSearch._idname_2_orbitffwd_dict:
-                return
-            if not _web.server_online():
-                raise Exception(
-                    'could not read "' + str(idname) + '" from web server!')
-            ffwd_fname = IDSearch._idname_2_orbitffwd_fname[idname]
-            IDSearch._idname_2_orbitffwd_dict[idname] = \
-                _ExcitationData(filename_web=ffwd_fname + '.txt')
+    def conv_idname_2_idff_cvnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+
+    @staticmethod
+    def conv_idname_2_idff_qsnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
+
+    @staticmethod
+    def conv_idname_2_polarizations(idname):
+        """Return ID light polarizations."""
+        polarizations = IDSearch._idname_2_idff[idname]['polarizations']
+        return polarizations
+
+    # --- private ----
+
+    @staticmethod
+    def _get_devname_from_idff(idname, correctors):
+        idff = IDSearch.conv_idname_2_idff(idname)
+        corrs = list()
+        for corr in correctors:
+            if corr in idff:
+                pvname = _SiriusPVName(idff[corr])
+                corrs.append(pvname.device_name)
+        return corrs
