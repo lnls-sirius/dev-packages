@@ -22,7 +22,7 @@ class RFGen(_DeviceNC):
 
     """
 
-    RF_DELTA_MIN = 0.1  # [Hz]
+    RF_DELTA_MIN = 0.01  # [Hz]
     RF_DELTA_MAX = 15000.0  # [Hz]
     RF_DELTA_RMP = 200  # [Hz]
 
@@ -128,6 +128,12 @@ class RFGen(_DeviceNC):
             _time.sleep(1.0)
             self._pvs['GeneralFreq-SP'].put(freq, wait=False)
         self['GeneralFreq-SP'] = value
+
+    def set_frequency(self, value, tol=1, timeout=10):
+        """Set RF phase and wait until it gets there."""
+        self.frequency = value
+        return self._wait_float(
+            'GeneralFreq-RB', value, abs_tol=tol, timeout=timeout)
 
     @property
     def freq_opmode(self):
@@ -560,6 +566,13 @@ class RFGen(_DeviceNC):
 
 class ASLLRF(_DeviceNC):
     """AS LLRF."""
+    VoltIncRates = _get_namedtuple('VoltIncRates', (
+        'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
+        'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
+        'vel_20p0', 'vel_30p0', 'vel_50p0', 'Immediately'))
+    PhsIncRates = _get_namedtuple('PhsIncRates', (
+        'vel_0p1', 'vel_0p2', 'vel_0p5', 'vel_1p0', 'vel_2p0', 'vel_5p0',
+        'vel_10p0', 'Immediately'))
 
     class DEVICES:
         """Devices names."""
@@ -569,7 +582,7 @@ class ASLLRF(_DeviceNC):
         ALL = (BO, SI)
 
     _properties = (
-        'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
+        'PL:REF', 'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
         'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
@@ -578,6 +591,7 @@ class ASLLRF(_DeviceNC):
         'FF:GAIN:CELL2', 'FF:GAIN:CELL2:S', 'FF:GAIN:CELL4', 'FF:GAIN:CELL4:S',
         'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
         'AMPREF:INCRATE', 'AMPREF:INCRATE:S',
+        'PHSREF:INCRATE', 'PHSREF:INCRATE:S',
         )
 
     def __init__(self, devname):
@@ -632,19 +646,39 @@ class ASLLRF(_DeviceNC):
         return self['SL:INP:PHS']
 
     @property
-    def phase(self):
+    def phase_ref(self):
         """."""
         return self['SL:REF:PHS']
+
+    @property
+    def phase(self):
+        """."""
+        return self['PL:REF']
 
     @phase.setter
     def phase(self, value):
         self['PL:REF:S'] = self._wrap_phase(value)
 
-    def set_phase(self, value, tol=0.2, timeout=10):
+    @property
+    def phase_incrate_str(self):
+        """."""
+        return self.PhsIncRates._fields[self['PHSREF:INCRATE']]
+
+    @property
+    def phase_incrate(self):
+        """."""
+        return self['PHSREF:INCRATE']
+
+    @phase_incrate.setter
+    def phase_incrate(self, value):
+        if int(value) in self.PhsIncRates:
+            self['PHSREF:INCRATE:S'] = int(value)
+
+    def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
         self.phase = value
-        return self._wait_float(
-            'SL:REF:PHS', value, abs_tol=tol, timeout=timeout)
+        pv2wait = 'SL:INP:PHS' if wait_mon else 'SL:REF:PHS'
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_mon(self):
@@ -652,13 +686,39 @@ class ASLLRF(_DeviceNC):
         return self['SL:INP:AMP']
 
     @property
-    def voltage(self):
+    def voltage_ref(self):
         """."""
         return self['SL:REF:AMP']
+
+    @property
+    def voltage(self):
+        """."""
+        return self['mV:AL:REF-RB']
 
     @voltage.setter
     def voltage(self, value):
         self['mV:AL:REF-SP'] = value
+
+    @property
+    def voltage_incrate_str(self):
+        """."""
+        return self.VoltIncRates._fields[self['AMPREF:INCRATE']]
+
+    @property
+    def voltage_incrate(self):
+        """."""
+        return self['AMPREF:INCRATE']
+
+    @voltage_incrate.setter
+    def voltage_incrate(self, value):
+        if int(value) in self.VoltIncRates:
+            self['AMPREF:INCRATE:S'] = int(value)
+
+    def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
+        """Set RF phase and wait until it gets there."""
+        self.voltage = value
+        pv2wait = 'SL:INP:AMP' if wait_mon else 'SL:REF:AMP'
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def detune(self):
@@ -997,14 +1057,14 @@ class RFCav(_Devices):
         if devname not in RFCav.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        rfgen = RFGen()
+        self.dev_rfgen = RFGen()
         if devname == RFCav.DEVICES.SI:
-            llrf = ASLLRF(ASLLRF.DEVICES.SI)
-            rfmon = SIRFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI)
+            self.dev_cavmon = SIRFCavMonitor()
         elif devname == RFCav.DEVICES.BO:
-            llrf = ASLLRF(ASLLRF.DEVICES.BO)
-            rfmon = BORFCavMonitor()
-        devices = (rfgen, llrf, rfmon)
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO)
+            self.dev_cavmon = BORFCavMonitor()
+        devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
         # call base class constructor
         super().__init__(devname, devices)
@@ -1019,132 +1079,64 @@ class RFCav(_Devices):
         """."""
         return self.dev_cavmon.get_power(self.is_cw)
 
-    @property
-    def dev_rfgen(self):
-        """Return RFGen device."""
-        return self.devices[0]
-
-    @property
-    def dev_llrf(self):
-        """Return LLRF device."""
-        return self.devices[1]
-
-    @property
-    def dev_cavmon(self):
-        """Return RFPoweMon device."""
-        return self.devices[2]
-
-    def set_voltage(self, value, timeout=10):
+    def set_voltage(self, value, timeout=10, tol=1, wait_mon=False):
         """."""
-        self.dev_llrf.voltage = value
-        return self._wait('voltage', timeout=timeout)
+        return self.dev_llrf.set_voltage(
+            value, tol=tol, timeout=timeout, wait_mon=wait_mon)
 
-    def set_phase(self, value, timeout=10):
+    def set_phase(self, value, timeout=10, tol=0.2, wait_mon=False):
         """."""
-        self.dev_llrf.phase = value
-        return self._wait('phase', timeout=timeout)
+        return self.dev_llrf.set_phase(
+            value, tol=tol, timeout=timeout, wait_mon=wait_mon)
 
-    def set_frequency(self, value, timeout=10):
+    def set_frequency(self, value, timeout=10, tol=0.05):
         """."""
-        self.dev_rfgen.frequency = value
-        return self._wait('frequency', timeout=timeout)
-
-    # --- private methods ---
-
-    def _wait(self, propty, timeout=10):
-        """."""
-        nrp = int(timeout / 0.1)
-        for _ in range(nrp):
-            _time.sleep(0.1)
-            if propty == 'phase':
-                if self.is_cw:
-                    phase_sp = self.dev_llrf['PL:REF:S']
-                else:
-                    phase_sp = self.dev_llrf['RmpPhsBot-SP']
-                if abs(self.dev_llrf.phase - phase_sp) < 0.1:
-                    return True
-            elif propty == 'voltage':
-                voltage_sp = self.dev_llrf['mV:AL:REF-SP']
-                if abs(self.dev_llrf.voltage - voltage_sp) < 0.1:
-                    return True
-            elif propty == 'frequency':
-                freq_sp = self.dev_rfgen['GeneralFreq-SP']
-                if abs(self.dev_rfgen.frequency - freq_sp) < 0.1:
-                    return True
-            else:
-                raise Exception(
-                    'Set RF property (phase, voltage or frequency)')
-        return False
+        return self.dev_rfgen.set_frequency(value, tol=tol, timeout=timeout)
 
 
-class RFKillBeam(_Devices):
+class RFKillBeam(ASLLRF):
     """RF Kill Beam Button."""
-
-    TIMEOUT_WAIT = 3.0  # [s]
-    INCRATE_VALUE = 14  # 50 mV/s
-    REFMIN_VALUE = 60  # Minimum Amplitude Reference
+    TIMEOUT_WAIT = 5.0  # [s]
+    INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
+    REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]
 
     def __init__(self):
         """Init."""
-
-        rfdev = ASLLRF(ASLLRF.DEVICES.SI)
-        devices = (rfdev, )
-
-        # call base class constructor
-        super().__init__('SI-Glob:RF-KillBeam', devices)
-
-    @property
-    def dev_llrf(self):
-        """Device SILLRF."""
-        return self.devices[0]
+        super().__init__(ASLLRF.DEVICES.SI)
 
     def cmd_kill_beam(self):
         """Kill beam."""
-        # get initial Amplitude Increase Rate
-        aincrate_init = self.dev_llrf['AMPREF:INCRATE']
-        if aincrate_init is None:
-            return [False, 'Could not read RF Amplitude Increase Rate PV'
-                           '(SR-RF-DLLRF-01:AMPREF:INCRATE)!']
+        if not self.wait_for_connection(self.TIMEOUT_WAIT):
+            return [False, 'Could not read RF PVs.']
 
-        # get initial Amplitude Reference
-        alref_init = self.dev_llrf['mV:AL:REF-RB']
-        if alref_init is None:
-            return [False, 'Could not read Amplitude Reference PV'
-                           '(SR-RF-DLLRF-01:mV:AL:REF-RB)!']
+        # get initial values
+        amp_incrate_init = self.voltage_incrate
+        amp_init = self.voltage
 
         # set Amplitude Increase Rate to 50 mV/s and wait
-        self._pv_put('AMPREF:INCRATE:S', RFKillBeam.INCRATE_VALUE)
+        self.voltage_incrate = self.INCRATE_VALUE
+        if not self._wait(
+                'AMPREF:INCRATE', self.INCRATE_VALUE,
+                timeout=self.TIMEOUT_WAIT):
+            return [False, 'Could not set RF Amplitude Increase Rate.']
 
-        if not self.dev_llrf._wait(
-                'AMPREF:INCRATE:S', RFKillBeam.INCRATE_VALUE,
-                timeout=RFKillBeam.TIMEOUT_WAIT):
-            return [False, 'Could not set RF Amplitude Increase Rate PV'
-                           '(SR-RF-DLLRF-01:AMPREF:INCRATE:S)!']
-
-        # waiting time
-        wait_time = int((alref_init - RFKillBeam.REFMIN_VALUE)/50)
-
-        # set Amplitude Reference to 60mV and wait for wait_time seconds
-        if not self._pv_put('mV:AL:REF-SP', RFKillBeam.REFMIN_VALUE):
-            return [False, 'Could not set Amplitude Reference PV'
-                           '(SR-RF-DLLRF-01:mV:AL:REF-SP)!']
-        _time.sleep(wait_time)
+        # set Amplitude Reference to 60mV and wait
+        self.voltage = self.REFMIN_VALUE
+        if not self._wait_float(
+                'SL:INP:AMP', self.REFMIN_VALUE, abs_tol=1,
+                timeout=self.TIMEOUT_WAIT):
+            return [False, 'Could not set RF Voltage to low value.']
 
         # set Amplitude Reference to initial value
-        if not self._pv_put('mV:AL:REF-SP', alref_init):
-            return [False, 'Could not set Amplitude Reference PV'
-                           '(SR-RF-DLLRF-01:mV:AL:REF-SP)!']
-        _time.sleep(wait_time)
+        self.voltage = amp_init
+        if not self._wait_float(
+                'SL:INP:AMP', amp_init, abs_tol=1, timeout=self.TIMEOUT_WAIT):
+            return [False, 'Could not set RF Voltage back to original value.']
 
         # set Amplitude Increase Rate to initial value
-        if not self._pv_put('AMPREF:INCRATE:S', aincrate_init):
-            return [False, 'Could not set RF Amplitude Increase Rate PV'
-                           '(SR-RF-DLLRF-01:AMPREF:INCRATE:S)!']
-
+        self.voltage_incrate = amp_incrate_init
+        if not self._wait(
+                'AMPREF:INCRATE', self.INCRATE_VALUE,
+                timeout=self.TIMEOUT_WAIT):
+            return [False, 'Could not set RF Amplitude Increase Rate back.']
         return [True, '']
-
-    def _pv_put(self, propty, value):
-        pvo = self.dev_llrf.pv_object(propty)
-        if pvo.wait_for_connection():
-            return pvo.put(value)
-        return False
