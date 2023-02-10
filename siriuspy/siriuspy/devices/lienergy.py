@@ -15,8 +15,7 @@ class LIEnergy(_Device):
     _properties = (
         'Dispersion-SP', 'Dispersion-RB',
         'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
-        'MeasureCtrl-Sel', 'MeasureCtrl-Sts',
-        'Spectrometer-SP', 'Spectrometer-RB')
+        'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
 
     def __init__(self, devname=None):
         """."""
@@ -36,15 +35,6 @@ class LIEnergy(_Device):
     @dispersion.setter
     def dispersion(self, val):
         self['Dispersion-SP'] = val
-
-    @property
-    def spectrometer(self):
-        """."""
-        return self['Spectrometer-RB']
-
-    @spectrometer.setter
-    def spectrometer(self, val):
-        self['Spectrometer-SP'] = val
 
     @property
     def intdipole(self):
