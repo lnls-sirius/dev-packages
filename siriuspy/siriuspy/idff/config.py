@@ -31,7 +31,7 @@ class IDFFConfig:
 
     @property
     def kparameter_pvname(self):
-        """Return IR kparameter pvname."""
+        """Return ID kparameter pvname."""
         config = self._value
         if config:
             kparm = config['pvnames']['kparameter']
@@ -95,7 +95,7 @@ class IDFFConfig:
             raise ValueError('Configuration not loaded!')
 
     @staticmethod
-    def create_config(idname):
+    def create_template_config(idname):
         """Create a template configuration for a given ID type."""
         idff = _IDSearch.conv_idname_2_idff(idname)
 
