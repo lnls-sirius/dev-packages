@@ -15,11 +15,13 @@ class LIEnergy(_Device):
     _properties = (
         'Dispersion-SP', 'Dispersion-RB',
         'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
-        'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
+        'MeasureCtrl-Sel', 'MeasureCtrl-Sts',
+        'Spectrometer-SP', 'Spectrometer-RB')
 
-    def __init__(self, devname):
+    def __init__(self, devname=None):
         """."""
         # check if device exists
+        devname = devname if devname else self.DEVICES.LI
         if devname not in LIEnergy.DEVICES.ALL:
             raise NotImplementedError(devname)
 
