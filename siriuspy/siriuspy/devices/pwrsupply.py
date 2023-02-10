@@ -889,3 +889,4 @@ class PowerSupplyFC(_PSDev):
     def cmd_fofbacc_clear(self):
         """Command to clear FOFB accumulator."""
         self['FOFBAccClear-Cmd'] = 1
+        return True
