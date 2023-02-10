@@ -238,17 +238,19 @@ class InjCtrl(_Device):
     def cmd_change_pumode_to_onaxis(self, timeout=10):
         """Change PUMode to On-Axis injection."""
         self.pumode = self.PUMode.OnAxis
-        self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
+        return self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
 
     def cmd_change_pumode_to_accumulation(self, timeout=10):
         """Change PUMode to accumulation."""
         self.pumode = self.PUMode.Accumulation
-        self._wait('PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
+        return self._wait(
+            'PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
 
     def cmd_change_pumode_to_optimization(self, timeout=10):
         """Change PUMode to optimization."""
         self.pumode = self.PUMode.Optimization
-        self._wait('PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
+        return self._wait(
+            'PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
 
     @property
     def target_current(self):
@@ -576,6 +578,7 @@ class InjCtrl(_Device):
     def cmd_injsys_turn_on(self):
         """Injection system turn on command."""
         self['InjSysTurnOn-Cmd'] = 1
+        return True
 
     @property
     def injsys_turn_on_order(self):
@@ -597,6 +600,7 @@ class InjCtrl(_Device):
     def cmd_injsys_turn_off(self):
         """Injection system turn off command."""
         self['InjSysTurnOff-Cmd'] = 1
+        return True
 
     @property
     def injsys_turn_off_order(self):
@@ -625,6 +629,7 @@ class InjCtrl(_Device):
     def cmd_rfkillbeam(self):
         """RF Kill Beam command."""
         self['RFKillBeam-Cmd'] = 1
+        return True
 
     @property
     def rfkillbeam_cmdsts(self):
