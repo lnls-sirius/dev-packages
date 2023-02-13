@@ -1096,7 +1096,7 @@ class RFCav(_Devices):
 
 class RFKillBeam(ASLLRF):
     """RF Kill Beam Button."""
-    TIMEOUT_WAIT = 5.0  # [s]
+    TIMEOUT_WAIT = 20.0  # [s]
     INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
     REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]
 

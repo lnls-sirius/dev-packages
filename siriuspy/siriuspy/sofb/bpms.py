@@ -31,6 +31,7 @@ class BPM(_BaseTimingConfig):
         self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
         self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
         opt['callback'] = self._set_needs_update
+        opt['auto_monitor'] = True
         self._arraya = _PV(pvpref + 'GEN_AArrayData', **opt)
         self._arrayb = _PV(pvpref + 'GEN_BArrayData', **opt)
         self._arrayc = _PV(pvpref + 'GEN_CArrayData', **opt)
@@ -39,6 +40,7 @@ class BPM(_BaseTimingConfig):
         self._arrayy = _PV(pvpref + 'GEN_YArrayData', **opt)
         self._arrays = _PV(pvpref + 'GEN_SUMArrayData', **opt)
         opt.pop('callback')
+        opt.pop('auto_monitor')
         self._offsetx = _PV(pvpref + 'PosXOffset-RB', **opt)
         self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
