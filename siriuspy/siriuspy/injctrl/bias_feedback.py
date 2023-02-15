@@ -98,7 +98,7 @@ class BiasFeedback():
             self, per=1, nrpul=1, curr_avg=100, curr_now=99.5, ltime=17*3600):
         """."""
         ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, ltime)
-        curr_tar = curr_avg / (1 - per*60/2/ltime)
+        curr_tar = curr_avg / (1 - per/2/ltime)
         dcurr = (curr_tar - curr_now) / nrpul
         return dcurr
 
