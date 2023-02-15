@@ -574,7 +574,7 @@ class App(_Callback):
                 return False
             bucket = _np.arange(self._topupnrpulses) + 1
             bucket *= step
-            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket += self._evg_dev.bucketlist_mon[-1] - 1
             bucket %= 864
             bucket += 1
             if not self._set_bucket_list(bucket):
@@ -677,7 +677,7 @@ class App(_Callback):
                 return False
             bucket = _np.arange(self._topupnrpulses) + 1
             bucket *= self._bucketlist_step
-            bucket += self._evg_dev.bucketlist[0] - 1
+            bucket += self._evg_dev.bucketlist_mon[-1] - 1
             bucket %= 864
             bucket += 1
             if not self._set_bucket_list(bucket):
