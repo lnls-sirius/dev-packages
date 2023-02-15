@@ -430,11 +430,11 @@ class App(_Callback):
     def _set_egunbias(self, value):
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
 
-        self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
+        self._update_log(f'Setting EGun Bias voltage to {value:.3f}V...')
         if not self.egun_dev.bias.set_voltage(value):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
-            self._update_log('Set EGun Bias voltage: {}V.'.format(value))
+            self._update_log(f'Set EGun Bias voltage: {value:.3f}V.')
 
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Idle)
 
@@ -1085,6 +1085,8 @@ class App(_Callback):
             else:
                 # else, set PU voltage to 50%
                 self._prepare_topup('standby')
+        else:
+            self._topup_pu_prepared = True
 
         self._bias_feedback.do_update_models = True
 
@@ -1151,7 +1153,6 @@ class App(_Callback):
             if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
                     not self._topup_pu_prepared:
                 self._prepare_topup('inject')
-                continue
 
             cond = remaining <= _Const.BIASFB_AHEADSETIME
             cond &= bool(self._bias_feedback.loop_state)
@@ -1162,6 +1163,7 @@ class App(_Callback):
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
                     ltime=self.currinfo_dev.lifetime)
+                self._update_log(f'BiasFB Ideal InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
                 self.set_multbunbiasvolt(bias)
