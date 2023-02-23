@@ -17,10 +17,13 @@ def get_dict():
     }
     return _dict
 
-# Put description later
+# This configuration contains the positions and size of windows, that were open at the configuration save.
 
 _template_dict = {
-    'lnls449-linux': [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
-    'lnls451-linux': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-}
+    'computer': 'computername',
+    'config': [
+        {'window': 'windowname',
+         'size': [0, 0],
+         'position': [0, 0]},
+         ],
+    }
