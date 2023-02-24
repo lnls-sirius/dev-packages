@@ -11,6 +11,8 @@ from ..search import PSSearch as _PSSearch
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \
     PVData as _PVData, PVDataSet as _PVDataSet
 from ..sofb.csdev import ConstTLines as _SOFBCte
+from ..fofb.csdev import HLFOFBConst as _FOFBCte
+from ..stabinfo.csdev import StabInfoConst as _StabCte
 from .csdev import Const as _Cte
 from .macschedule import MacScheduleData as _MacScheduleData
 from .utils import interp1d_previous as _interp1d_previous
@@ -1073,7 +1075,7 @@ class MacReport:
 
         datetimes = _np.array([_Time(t) for t in self._raw_data['Timestamp']])
 
-        fig, axs = _plt.subplots(14, 1, sharex=True)
+        fig, axs = _plt.subplots(16, 1, sharex=True)
         fig.set_size_inches(9, 10)
         fig.subplots_adjust(top=0.96, left=0.08, bottom=0.05, right=0.96)
         axs[0].set_title('Raw data', fontsize=12)
@@ -1157,10 +1159,33 @@ class MacReport:
 
         axs[11].xaxis.axis_date()
         axs[11].plot(
-            datetimes, self._raw_data['Shift']['Injection'], '-',
-            color='lightsalmon', label='Injection Shifts')
+            datetimes, self._raw_data['Distortions']['FOFBLoop'], '-',
+            color='orangered', label='Distortions - FOFB Loop Open')
         axs[11].legend(loc='upper left', fontsize=9)
         axs[11].grid()
+
+        axs[12].xaxis.axis_date()
+        axs[12].plot(
+            datetimes[0], 0, '.', color='white',
+            label='Distortions - BbB Instabilities:')
+        axs[12].plot(
+            datetimes, self._raw_data['Distortions']['BbBHStab'], '-',
+            color='blue', label='H')
+        axs[12].plot(
+            datetimes, self._raw_data['Distortions']['BbBVStab'], '-',
+            color='red', label='V')
+        axs[12].plot(
+            datetimes, self._raw_data['Distortions']['BbBLStab'], '-',
+            color='green', label='L')
+        axs[12].legend(loc='upper left', fontsize=9, ncol=4)
+        axs[12].grid()
+
+        axs[13].xaxis.axis_date()
+        axs[13].plot(
+            datetimes, self._raw_data['Shift']['Injection'], '-',
+            color='lightsalmon', label='Injection Shifts')
+        axs[13].legend(loc='upper left', fontsize=9)
+        axs[13].grid()
 
         shift2color = {
             'MachineStudy': ['MacStudy', 'skyblue'],
@@ -1170,26 +1195,26 @@ class MacReport:
         for shift, auxdata in shift2color.items():
             ydata = self._raw_data['Shift'][shift]
 
-            axs[12].xaxis.axis_date()
-            axs[12].plot(
+            axs[14].xaxis.axis_date()
+            axs[14].plot(
                 datetimes, ydata, '-',
                 color=auxdata[1], label=auxdata[0])
-        axs[12].legend(loc='upper left', ncol=4, fontsize=9)
-        axs[12].set_ylim(0.0, 2.0)
-        axs[12].grid()
+        axs[14].legend(loc='upper left', ncol=4, fontsize=9)
+        axs[14].set_ylim(0.0, 2.0)
+        axs[14].grid()
 
         egmodes2color = {
             'MultiBunch': 'orangered', 'SingleBunch': 'orange'}
         for egmode, color in egmodes2color.items():
             ydata = self._raw_data['EgunModes'][egmode]
 
-            axs[13].xaxis.axis_date()
-            axs[13].plot(
+            axs[15].xaxis.axis_date()
+            axs[15].plot(
                 datetimes, ydata, '-',
                 color=color, label=egmode)
-        axs[13].legend(loc='upper left', ncol=2, fontsize=9)
-        axs[13].set_ylim(0.0, 2.0)
-        axs[13].grid()
+        axs[15].legend(loc='upper left', ncol=2, fontsize=9)
+        axs[15].set_ylim(0.0, 2.0)
+        axs[15].grid()
 
         return fig
 
@@ -1232,18 +1257,31 @@ class MacReport:
         self._gammashutt_pv = 'AS-Glob:PP-GammaShutter:Status-Mon'
         self._siintlk_pv = 'RA-RaSIA02:RF-IntlkCtrl:IntlkSirius-Mon'
         self._sisofbloop_pv = 'SI-Glob:AP-SOFB:LoopState-Sts'
+        self._sifofbloop_pv = 'SI-Glob:AP-FOFB:LoopState-Sts'
+        self._sibbbhstab_pv = 'SI-Glob:AP-StabilityInfo:BbBHStatus-Mon'
+        self._sibbbvstab_pv = 'SI-Glob:AP-StabilityInfo:BbBVStatus-Mon'
+        self._sibbblstab_pv = 'SI-Glob:AP-StabilityInfo:BbBLStatus-Mon'
         self._pvnames = [
             self._current_pv, self._macshift_pv,
             self._egtrgen_pv, self._egpusel_pv, self._injevt_pv,
             self._gammashutt_pv, self._siintlk_pv,
-            self._sisofbloop_pv]
+            self._sisofbloop_pv, self._sifofbloop_pv,
+            self._sibbbhstab_pv, self._sibbbvstab_pv, self._sibbblstab_pv]
 
         self._pvdata = dict()
         self._pv2default = dict()
+        self._pv2tstart = dict()
         for pvname in self._pvnames:
             self._pvdata[pvname] = _PVData(pvname, self._connector)
-            self._pv2default[pvname] = 0.0 if pvname != self._macshift_pv\
-                else _Cte.MachShift.Commissioning
+            defval = _FOFBCte.LoopState.Closed if 'FOFB' in pvname else \
+                _SOFBCte.LoopState.Closed if 'SOFB' in pvname else \
+                _Cte.MachShift.Commissioning if pvname == self._macshift_pv \
+                else _StabCte.StabUnstab.Stable if 'Stability' in pvname \
+                else 0.0
+            self._pv2default[pvname] = defval
+            tstart = _Time(2022, 11, 1, 0, 0) if 'FOFB' in pvname \
+                else _Time(2021, 1, 1, 0, 0)
+            self._pv2tstart[pvname] = tstart
 
         self._si_fams_psnames = _PSSearch.get_psnames(
             {'sec': 'SI', 'sub': 'Fam', 'dev': '(B|Q|S).*'})
@@ -1267,6 +1305,7 @@ class MacReport:
             for pvn in pvnames:
                 self._pvdata[pvn] = self._pvdataset[group][pvn]
                 self._pv2default[pvn] = 0.0
+                self._pv2tstart[pvn] = _Time(2021, 1, 1, 0, 0)
 
     def _compute_stats(self):
         # will populate the following dict
@@ -1333,8 +1372,15 @@ class MacReport:
         # get pvs data and calculate distortions
         # - correction loops
         self._raw_data['Distortions'] = dict()
-        sofbfail = self._get_orbcorr_data()
+        sofbfail, fofbfail = self._get_orbcorr_data()
         self._raw_data['Distortions']['SOFBLoop'] = sofbfail
+        self._raw_data['Distortions']['FOFBLoop'] = fofbfail
+
+        # - stability indicators
+        bbbfaildata = self._get_stabinfo_data()
+        self._raw_data['Distortions']['BbBHStab'] = bbbfaildata['h']
+        self._raw_data['Distortions']['BbBVStab'] = bbbfaildata['v']
+        self._raw_data['Distortions']['BbBLStab'] = bbbfaildata['l']
 
         # calculate statistics
         self._calc_beam_for_users_stats()
@@ -1444,7 +1490,14 @@ class MacReport:
         sofb_fail_values = _interp1d_previous(
             sofb_times, sofb_fail_rawvalues, self._curr_times)
 
-        return sofb_fail_values
+        # fofb
+        fofb_times, fofb_values = self._get_pv_data(self._sifofbloop_pv)
+        fofb_fail_rawvalues = _np.array(
+            [1*(v == _FOFBCte.LoopState.Open) for v in fofb_values])
+        fofb_fail_values = _interp1d_previous(
+            fofb_times, fofb_fail_rawvalues, self._curr_times)
+
+        return sofb_fail_values, fofb_fail_values
 
     def _get_stabinfo_data(self):
         # stability indicators
@@ -1687,6 +1740,7 @@ class MacReport:
         t_start = self._time_start.timestamp()
         data = self._pvdata[pvname]
         defv = self._pv2default[pvname]
+        tstr = self._pv2tstart[pvname]
         if data.timestamp is None:
             times = _np.array([t_start, ])
             values = _np.array([defv, ])
@@ -1696,6 +1750,8 @@ class MacReport:
             if times[0] > t_start + MacReport.QUERY_AVG_TIME:
                 times = _np.r_[t_start, times]
                 values = _np.r_[defv, values]
+            idcsdefv = _np.where(times <= tstr.timestamp())[0]
+            values[idcsdefv] = defv
         return times, values
 
     def _calc_current_stats(self, dtimes):
