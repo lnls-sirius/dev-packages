@@ -826,15 +826,6 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
-        propties_to_keep = ['GEN_XArrayData', 'GEN_YArrayData']
-
-        self._mturn_flags = dict()
-        for bpm in devs:
-            for propty in propties_to_keep:
-                bpm.set_auto_monitor(propty, True)
-                pvo = bpm.pv_object(propty)
-                self._mturn_flags[pvo.pvname] = _Flag()
-                pvo.add_callback(self._mturn_set_flag)
 
     @property
     def bpm_names(self):
@@ -1044,11 +1035,6 @@ class FamBPMs(_Devices):
         for bpm in self._devices:
             bpm.switching_mode = mode
 
-    def mturn_reset_flags(self):
-        """Reset Multiturn flags to wait for a new orbit update."""
-        for flag in self._mturn_flags.values():
-            flag.clear()
-
     def mturn_wait_update_flags(self, timeout=10) -> int:
         """Wait Multiturn orbit update.
 
@@ -1064,13 +1050,6 @@ class FamBPMs(_Devices):
 
         """
         orbx0, orby0 = self.get_mturn_orbit()
-        for i, flag in enumerate(self._mturn_flags.values()):
-            t00 = _time.time()
-            if not flag.wait(timeout=timeout):
-                return (i // 2) + 1
-            timeout -= _time.time() - t00
-            timeout = max(timeout, 0)
-
         while timeout > 0:
             t00 = _time.time()
             orbx, orby = self.get_mturn_orbit()
@@ -1102,10 +1081,6 @@ class FamBPMs(_Devices):
         elif _np.any(erry):
             return int(erry.nonzero()[0][0])+1
         return False
-
-    def _mturn_set_flag(self, pvname, **kwargs):
-        _ = kwargs
-        self._mturn_flags[pvname].set()
 
 
 class BPMLogicalTrigger(_ProptyDevice):
