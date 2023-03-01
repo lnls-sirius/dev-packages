@@ -63,7 +63,7 @@ class ConstTLines(_csdev.Const):
     DEF_MAX_ORB_DISTORTION = 50  # [um]
     ACQRATE_TRIGMODE = 2  # [Hz]
     ACQRATE_SLOWORB = 60  # [Hz]
-    BPMsFreq = 10.0  # [Hz]
+    BPMsFreq = 10.48  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
