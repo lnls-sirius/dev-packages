@@ -62,13 +62,13 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
             # 'ACQTriggerDataChan': _csbpm.AcqChan.FAcq,
             'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'TbTTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
             'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
             'FAcqTagEn': _csbpm.EnbldDsbld.disabled,
             'MonitTagEn': _csbpm.EnbldDsbld.disabled,
-            'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
-            'TbtDataMaskSamplesBeg': 0,
-            'TbtDataMaskSamplesEnd': 0,
+            'TbTDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
+            'TbTDataMaskSamplesBeg': 0,
+            'TbTDataMaskSamplesEnd': 0,
             'XYPosCal': _csbpm.EnbldDsbld.enabled,
             'SUMPosCal': _csbpm.EnbldDsbld.enabled}
         pvs = {
@@ -91,13 +91,13 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sel',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
-            'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'TbTTagEn': 'TbTTagEn-Sel',  # Enable TbT sync with timing
             'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
             'FAcqTagEn': 'FAcqTagEn-Sel',  # Enable FAcq sync with timing
             'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
-            'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
-            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP',
+            'TbTDataMaskEn': 'TbTDataMaskEn-Sel',  # Enable use of mask
+            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-SP',
+            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-SP',
             'XYPosCal': 'XYPosCal-Sel',
             'SUMPosCal': 'SUMPosCal-Sel'}
 
@@ -108,7 +108,7 @@ class BPM(_BaseTimingConfig):
             'asyn.CNCT': 'asyn.CNCT',
             'INFOClkFreq': 'INFOClkFreq-RB',
             'INFOHarmonicNumber': 'INFOHarmonicNumber-RB',
-            'INFOTBTRate': 'INFOTBTRate-RB',
+            'INFOTbTRate': 'INFOTbTRate-RB',
             'INFOFOFBRate': 'INFOFOFBRate-RB',
             'INFOMONITRate': 'INFOMONITRate-RB',
             'INFOFAcqRate': 'INFOFAcqRate-RB',
@@ -132,13 +132,13 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
-            'TbtTagEn': 'TbtTagEn-Sts',
+            'TbTTagEn': 'TbTTagEn-Sts',
             'SwTagEn': 'SwTagEn-Sts',
             'FAcqTagEn': 'FAcqTagEn-Sts',
             'MonitTagEn': 'MonitTagEn-Sts',
-            'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
-            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB',
+            'TbTDataMaskEn': 'TbTDataMaskEn-Sts',
+            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-RB',
+            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-RB',
             'XYPosCal': 'XYPosCal-Sts',
             'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
@@ -235,7 +235,7 @@ class BPM(_BaseTimingConfig):
     def tbtrate(self):
         """."""
         defv = 362 if self._csorb.acc == 'BO' else 382
-        pvobj = self._config_pvs_rb['INFOTBTRate']
+        pvobj = self._config_pvs_rb['INFOTbTRate']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -515,14 +515,14 @@ class BPM(_BaseTimingConfig):
     @property
     def tbt_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtTagEn']
+        pvobj = self._config_pvs_rb['TbTTagEn']
         return pvobj.value if pvobj.connected else None
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtTagEn']
-        self._config_ok_vals['TbtTagEn'] = val
+        pvobj = self._config_pvs_sp['TbTTagEn']
+        self._config_ok_vals['TbTTagEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -569,42 +569,42 @@ class BPM(_BaseTimingConfig):
     @property
     def tbt_mask_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskEn']
+        pvobj = self._config_pvs_rb['TbTDataMaskEn']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskEn']
-        self._config_ok_vals['TbtDataMaskEn'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskEn']
+        self._config_ok_vals['TbTDataMaskEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_begin(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskSamplesBeg']
+        pvobj = self._config_pvs_rb['TbTDataMaskSamplesBeg']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_begin.setter
     def tbt_mask_begin(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskSamplesBeg']
-        self._config_ok_vals['TbtDataMaskSamplesBeg'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskSamplesBeg']
+        self._config_ok_vals['TbTDataMaskSamplesBeg'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_end(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskSamplesEnd']
+        pvobj = self._config_pvs_rb['TbTDataMaskSamplesEnd']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskSamplesEnd']
-        self._config_ok_vals['TbtDataMaskSamplesEnd'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskSamplesEnd']
+        self._config_ok_vals['TbTDataMaskSamplesEnd'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 

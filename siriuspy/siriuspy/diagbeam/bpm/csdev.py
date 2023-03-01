@@ -105,9 +105,9 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
             'INFOFAcqRate-RB': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOTBTRate-SP': {
+            'INFOTbTRate-SP': {
                 'type': 'int', 'value': 382, 'low': 0, 'high': 2**31-1},
-            'INFOTBTRate-RB': {
+            'INFOTbTRate-RB': {
                 'type': 'int', 'value': 382, 'low': 0, 'high': 2**31-1},
             }
 
@@ -463,25 +463,25 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TriggerDataHyst-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtTagEn-Sel': {
+            'TbTTagEn-Sel': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtTagEn-Sts': {
+            'TbTTagEn-Sts': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtTagDly-SP': {
+            'TbTTagDly-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtTagDly-RB': {
+            'TbTTagDly-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskEn-Sel': {
+            'TbTDataMaskEn-Sel': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtDataMaskEn-Sts': {
+            'TbTDataMaskEn-Sts': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtDataMaskSamplesBeg-SP': {
+            'TbTDataMaskSamplesBeg-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesBeg-RB': {
+            'TbTDataMaskSamplesBeg-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesEnd-SP': {
+            'TbTDataMaskSamplesEnd-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesEnd-RB': {
+            'TbTDataMaskSamplesEnd-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             }
         return {prefix + k: v for k, v in dbase.items()}

@@ -26,7 +26,7 @@ class BPM(_Device):
         'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
         'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
-        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTBTRate-RB',
+        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
         'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
         'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
         'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
@@ -56,12 +56,12 @@ class BPM(_Device):
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
         'SwTagEn-Sel', 'SwTagEn-Sts',
-        'TbtTagEn-Sel', 'TbtTagEn-Sts',
+        'TbTTagEn-Sel', 'TbTTagEn-Sts',
         'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
-        'TbtDataMaskEn-Sel', 'TbtDataMaskEn-Sts',
-        'TbtDataMaskSamplesBeg-SP', 'TbtDataMaskSamplesBeg-RB',
-        'TbtDataMaskSamplesEnd-SP', 'TbtDataMaskSamplesEnd-RB',
+        'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
+        'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
+        'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
         'XYPosCal-Sel', 'XYPosCal-Sts',
         'SUMPosCal-Sel', 'SUMPosCal-Sts',
         'QPosCal-Sel', 'QPosCal-Sts',
@@ -177,7 +177,7 @@ class BPM(_Device):
     @property
     def tbt_rate(self):
         """Divisor or TbT in relation to ADC."""
-        return self['INFOTBTRate-RB']
+        return self['INFOTbTRate-RB']
 
     @property
     def tbt_period(self):
@@ -187,42 +187,42 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbtTagEn-Sts']
+        return self['TbTTagEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbtTagEn-Sel'] = val
+        self['TbTTagEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
         """."""
-        return self['TbtDataMaskEn-Sts']
+        return self['TbTDataMaskEn-Sts']
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
         """."""
-        self['TbtDataMaskEn-Sel'] = val
+        self['TbTDataMaskEn-Sel'] = val
 
     @property
     def tbt_mask_beg(self):
         """."""
-        return self['TbtDataMaskSamplesBeg-RB']
+        return self['TbTDataMaskSamplesBeg-RB']
 
     @tbt_mask_beg.setter
     def tbt_mask_beg(self, val):
         """."""
-        self['TbtDataMaskSamplesBeg-SP'] = val
+        self['TbTDataMaskSamplesBeg-SP'] = val
 
     @property
     def tbt_mask_end(self):
         """."""
-        return self['TbtDataMaskSamplesEnd-RB']
+        return self['TbTDataMaskSamplesEnd-RB']
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
         """."""
-        self['TbtDataMaskSamplesEnd-SP'] = val
+        self['TbTDataMaskSamplesEnd-SP'] = val
 
     @property
     def fofb_sync_enbl(self):
@@ -780,7 +780,7 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbtTagEn-Sts', 0)
+        return self._wait('TbTTagEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
