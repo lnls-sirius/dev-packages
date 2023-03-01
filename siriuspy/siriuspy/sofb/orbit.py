@@ -920,9 +920,9 @@ class EpicsOrbit(BaseOrbit):
                         'refy': self.ref_orbs['Y'][i]})
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
                 else:
-                    orbx = self.raw_sporbs['X'][-1][:, i].copy()
-                    orby = self.raw_sporbs['Y'][-1][:, i].copy()
-                    summ = self.raw_sporbs['Sum'][-1][:, i].copy()
+                    orbx = self.raw_sporbs['X'][-1][i].copy()
+                    orby = self.raw_sporbs['Y'][-1][i].copy()
+                    summ = self.raw_sporbs['Sum'][-1][i].copy()
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)
                 orbs['Sum'].append(summ)
