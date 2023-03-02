@@ -508,8 +508,13 @@ class PVDataSet(_Base):
         data = self.connector.getData(
             self._pvnames, timestamp_start, timestamp_stop,
             process_type=process_type, interval=mean_sec)
+
         if not data:
             return
+        if len(self._pvnames) == 1:
+            pvname = self._pvnames[0]
+            data = dict(pvname=data)
+
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
