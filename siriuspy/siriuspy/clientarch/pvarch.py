@@ -513,8 +513,7 @@ class PVDataSet(_Base):
             return
         if len(self._pvnames) == 1:
             pvname = self._pvnames[0]
-            data = dict(pvname=data)
-
+            data = {pvname: data}
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
