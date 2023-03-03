@@ -831,17 +831,6 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
-        propties_to_keep = [
-            'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData']
-
-        self._initial_orbs = None
-        self._mturn_flags = dict()
-        for bpm in devs:
-            for propty in propties_to_keep:
-                bpm.set_auto_monitor(propty, True)
-                pvo = bpm.pv_object(propty)
-                self._mturn_flags[pvo.pvname] = _Flag()
-                pvo.add_callback(self._mturn_set_flag)
 
     @property
     def bpm_names(self):
@@ -957,7 +946,7 @@ class FamBPMs(_Devices):
 
     def mturn_config_acquisition(
             self, nr_points_after: int, nr_points_before=0,
-            acq_rate='FAcq', repeat=True, external=True):
+            acq_rate='FAcq', repeat=True, external=True) -> int:
         """Configure acquisition for BPMs.
 
         Args:
@@ -970,6 +959,12 @@ class FamBPMs(_Devices):
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
                 be used. Defaults to True.
+
+        Returns:
+            int: code describing what happened:
+                =0: BPMs are ready.
+                <0: Index of the first BPM which did not stop last acq. plus 1.
+                >0: Index of the first BPM which is not ready for acq. plus 1.
 
         """
         if acq_rate.lower().startswith('facq'):
@@ -991,7 +986,9 @@ class FamBPMs(_Devices):
         else:
             trig = self._csbpm.AcqTrigTyp.Now
 
-        self.cmd_mturn_acq_abort()
+        ret = self.cmd_mturn_acq_abort()
+        if ret > 0:
+            return -ret
 
         for bpm in self._devices:
             bpm.acq_repeat = repeat
@@ -1002,37 +999,84 @@ class FamBPMs(_Devices):
 
         return self.cmd_mturn_acq_start()
 
-    def cmd_mturn_acq_abort(self) -> bool:
+    def cmd_mturn_acq_abort(self, wait=True, timeout=10) -> int:
         """Abort BPMs acquistion.
 
+        Args:
+            wait (bool, optional): whether or not to wait BPMs get ready.
+                Defaults to True.
+            timeout (int, optional): Time to wait. Defaults to 10.
+
         Returns:
-            bool: Whether or not abort was successful.
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not updated plus 1.
 
         """
         for bpm in self._devices:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Abort
 
-        for bpm in self._devices:
-            boo = bpm.wait_acq_finish()
-            if not boo:
-                return False
-        return True
+        if wait:
+            return self.wait_acquisition_finish(timeout=timeout)
+        return 0
 
-    def cmd_mturn_acq_start(self) -> bool:
-        """Start BPMs acquisition.
+    def wait_acquisition_finish(self, timeout=10) -> int:
+        """Wait for all BPMs to be ready for acquisition.
+
+        Args:
+            timeout (int, optional): Time to wait. Defaults to 10.
 
         Returns:
-            bool: Whether or not start was successful.
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not updated plus 1.
+
+        """
+        for i, bpm in enumerate(self._devices):
+            t0_ = _time.time()
+            if not bpm.wait_acq_finish(timeout):
+                return i + 1
+            timeout -= _time.time() - t0_
+        return 0
+
+    def cmd_mturn_acq_start(self, wait=True, timeout=10) -> int:
+        """Start BPMs acquisition.
+
+        Args:
+            wait (bool, optional): whether or not to wait BPMs get ready.
+                Defaults to True.
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not updated plus 1.
 
         """
         for bpm in self._devices:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Start
+        if wait:
+            return self.wait_acquisition_start(timeout=timeout)
+        return 0
 
-        for bpm in self._devices:
-            boo = bpm.wait_acq_start()
-            if not boo:
-                return False
-        return True
+    def wait_acquisition_start(self, timeout=10) -> bool:
+        """Wait for all BPMs to be ready for acquisition.
+
+        Args:
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not updated plus 1.
+
+        """
+        for i, bpm in enumerate(self._devices):
+            t0_ = _time.time()
+            if not bpm.wait_acq_start(timeout):
+                return i + 1
+            timeout -= _time.time() - t0_
+        return 0
 
     def set_switching_mode(self, mode='direct'):
         """Set switching mode of BPMS.
@@ -1051,41 +1095,9 @@ class FamBPMs(_Devices):
         for bpm in self._devices:
             bpm.switching_mode = mode
 
-    def mturn_reset_flags(self):
-        """Call this method before acquisition to reset flags."""
-        _ = [flag.clear() for flag in self._mturn_flags.values()]
-
     def mturn_update_initial_orbit(self, consider_sum=False):
         """Call this method before acquisition to get orbit for comparison."""
         self._initial_orbs = self.get_mturn_orbit(return_sum=consider_sum)
-
-    def mturn_reset_before_acquistion(self, consider_sum=False):
-        """Combine mturn_update_initial_orbit and mturn_reset_flags."""
-        self.mturn_reset_flags()
-        self.mturn_update_initial_orbit(consider_sum)
-
-    def mturn_wait_update_flags(self, timeout=10) -> int:
-        """Call this method after acquisition to check if flags were updated.
-
-        Args:
-            timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
-
-        Returns:
-            int: code describing what happened:
-                0: Orbit updated.
-                >0: Index of the first BPM which did not updated plus 1.
-
-        """
-        div = len(self._mturn_flags) // len(self._devices)
-        for i, flag in enumerate(self._mturn_flags.values()):
-            t00 = _time.time()
-            if not flag.wait(timeout=timeout):
-                return (i // div) + 1
-            timeout -= _time.time() - t00
-            timeout = max(timeout, 0)
-        return 0
 
     def mturn_wait_update_orbit(self, timeout=10, consider_sum=False) -> int:
         """Call this method after acquisition to check if orbit was updated.
@@ -1106,7 +1118,7 @@ class FamBPMs(_Devices):
                 -3: initial orbit was not acquired before acquisition;
                 -2: TypeError ocurred (maybe because some of them are None);
                 -1: Orbits have different sizes;
-                0: Orbit updated.
+                =0: Orbit updated.
                 >0: Index of the first BPM which did not updated plus 1.
 
         """
@@ -1142,7 +1154,7 @@ class FamBPMs(_Devices):
         return -4
 
     def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
-        """Combine mturn_wait_update_flags and mturn_wait_update_orbit.
+        """Combine wait_acquistion_finish and mturn_wait_update_orbit.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
@@ -1155,21 +1167,17 @@ class FamBPMs(_Devices):
                 -3: initial orbit was not acquired before acquisition;
                 -2: TypeError ocurred (maybe because some of them are None);
                 -1: Orbits have different sizes;
-                0: Orbit updated.
+                =0: Orbit updated.
                 >0: Index of the first BPM which did not updated plus 1.
 
         """
         t00 = _time.time()
-        ret = self.mturn_wait_update_flags(timeout)
+        ret = self.wait_acquisition_finish(timeout)
         if ret > 0:
             return ret
         timeout -= _time.time() - t00
 
         return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
-
-    def _mturn_set_flag(self, pvname, **kwargs):
-        _ = kwargs
-        self._mturn_flags[pvname].set()
 
 
 class BPMLogicalTrigger(_ProptyDevice):
