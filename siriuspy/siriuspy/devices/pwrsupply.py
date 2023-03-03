@@ -204,9 +204,9 @@ class _PSDev(_Device):
         self['PwrState-Sel'] = value
 
     def set_strength(self, value, tol=0.2, timeout=10, wait_mon=False):
-        """Set RF phase and wait until it gets there."""
+        """Set strength and wait until it gets there."""
         self.strength = value
-        pv2wait = self._strength_rb_propty if wait_mon \
+        pv2wait = self._strength_mon_propty if wait_mon \
             else self._strength_rb_propty
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 

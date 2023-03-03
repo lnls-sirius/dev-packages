@@ -1011,7 +1011,7 @@ class FamBPMs(_Devices):
         Returns:
             int: code describing what happened:
                 =0: BPMs are ready.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         for bpm in self._devices:
@@ -1030,7 +1030,7 @@ class FamBPMs(_Devices):
         Returns:
             int: code describing what happened:
                 =0: BPMs are ready.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         for i, bpm in enumerate(self._devices):
@@ -1051,7 +1051,7 @@ class FamBPMs(_Devices):
         Returns:
             int: code describing what happened:
                 =0: BPMs are ready.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         for bpm in self._devices:
@@ -1069,7 +1069,7 @@ class FamBPMs(_Devices):
         Returns:
             int: code describing what happened:
                 =0: BPMs are ready.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         for i, bpm in enumerate(self._devices):
@@ -1120,7 +1120,7 @@ class FamBPMs(_Devices):
                 -2: TypeError ocurred (maybe because some of them are None);
                 -1: Orbits have different sizes;
                 =0: Orbit updated.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         orbs0, self._initial_orbs = self._initial_orbs, None
@@ -1169,7 +1169,7 @@ class FamBPMs(_Devices):
                 -2: TypeError ocurred (maybe because some of them are None);
                 -1: Orbits have different sizes;
                 =0: Orbit updated.
-                >0: Index of the first BPM which did not updated plus 1.
+                >0: Index of the first BPM which did not update plus 1.
 
         """
         t00 = _time.time()
