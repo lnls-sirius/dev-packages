@@ -15,11 +15,12 @@ TIMEOUT = 0.05
 
 class BPM(_BaseTimingConfig):
     """."""
+    MAX_UPT_CNT = 20  # equivalent of 10s of orbit update after Acq. PV update
 
     def __init__(self, name, callback=None):
         """."""
         super().__init__(name[:2], callback)
-        self.needs_update = True
+        self.needs_update_cnt = self.MAX_UPT_CNT
 
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
@@ -141,7 +142,8 @@ class BPM(_BaseTimingConfig):
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
         self._config_pvs_rb['ACQStatus'].auto_monitor = True
-        self._config_pvs_rb['ACQStatus'].add_callback(self._set_needs_update)
+        self._config_pvs_rb['ACQStatus'].add_callback(
+            self._reset_needs_update_cnt)
 
     @property
     def name(self):
@@ -740,9 +742,9 @@ class BPM(_BaseTimingConfig):
             th7*(pol[12] + ot2*pol[13]) +
             th9*pol[14])
 
-    def _set_needs_update(self, *args, **kwargs):
+    def _reset_needs_update_cnt(self, *args, **kwargs):
         _ = args, kwargs
-        self.needs_update = True
+        self.needs_update_cnt = self.MAX_UPT_CNT
 
 
 class TimingConfig(_BaseTimingConfig):

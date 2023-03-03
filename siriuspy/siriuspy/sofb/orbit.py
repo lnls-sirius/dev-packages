@@ -836,8 +836,8 @@ class EpicsOrbit(BaseOrbit):
             nr_pts = self._smooth_npts
             do_update = False
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update:
-                    bpm.needs_update = False
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
                     do_update = True
                     posx = self._get_pos(
                         bpm.mtposx, self.ref_orbs['X'][i], samp)
@@ -912,8 +912,8 @@ class EpicsOrbit(BaseOrbit):
             nr_pts = self._smooth_npts
             do_update = False
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update:
-                    bpm.needs_update = False
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
                     do_update = True
                     dic.update({
                         'refx': self.ref_orbs['X'][i],
