@@ -42,7 +42,7 @@ class EVG(_Device):
     @nrpulses.setter
     def nrpulses(self, value):
         """Set number of pulses to repeat Bucket List."""
-        self['RepeatBucketList-SP'] = bool(value)
+        self['RepeatBucketList-SP'] = value
 
     @property
     def bucketlist_len(self):
