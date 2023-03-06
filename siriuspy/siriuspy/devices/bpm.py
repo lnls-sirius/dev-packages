@@ -76,7 +76,7 @@ class BPM(_Device):
             raise ValueError(devname + ' is not a valid BPM or PBPM name.')
 
         self._ispost_mortem = ispost_mortem
-        properties = {self._get_postmorten_prop(p) for p in BPM._properties}
+        properties = {self._get_propname(p) for p in BPM._properties}
 
         if _BPMSearch.is_photon_bpm(devname):
             properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
@@ -401,97 +401,97 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_XArrayData')
+        prop = self._get_propname('GEN_XArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_YArrayData')
+        prop = self._get_propname('GEN_YArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_SUMArrayData')
+        prop = self._get_propname('GEN_SUMArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_posq(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_QArrayData')
+        prop = self._get_propname('GEN_QArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_ampla(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_AArrayData')
+        prop = self._get_propname('GEN_AArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_amplb(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_BArrayData')
+        prop = self._get_propname('GEN_BArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_amplc(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_CArrayData')
+        prop = self._get_propname('GEN_CArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_ampld(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_DArrayData')
+        prop = self._get_propname('GEN_DArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mt_polyx(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyXArrayCoeff-RB')
+        prop = self._get_propname('GEN_PolyXArrayCoeff-RB')
         return self[prop] * self.CONV_NM2UM
 
     @mt_polyx.setter
     def mt_polyx(self, value):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyXArrayCoeff-SP')
+        prop = self._get_propname('GEN_PolyXArrayCoeff-SP')
         self[prop] = _np.array(value)
 
     @property
     def mt_polyy(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyYArrayCoeff-RB')
+        prop = self._get_propname('GEN_PolyYArrayCoeff-RB')
         return self[prop] * self.CONV_NM2UM
 
     @mt_polyy.setter
     def mt_polyy(self, value):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyYArrayCoeff-SP')
+        prop = self._get_propname('GEN_PolyYArrayCoeff-SP')
         self[prop] = _np.array(value)
 
     @property
     def mt_polysum(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolySUMArrayCoeff-RB')
+        prop = self._get_propname('GEN_PolySUMArrayCoeff-RB')
         return self[prop] * self.CONV_NM2UM
 
     @mt_polysum.setter
     def mt_polysum(self, value):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolySUMArrayCoeff-SP')
+        prop = self._get_propname('GEN_PolySUMArrayCoeff-SP')
         self[prop] = _np.array(value)
 
     @property
     def mt_polyq(self):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyQArrayCoeff-RB')
+        prop = self._get_propname('GEN_PolyQArrayCoeff-RB')
         return self[prop] * self.CONV_NM2UM
 
     @mt_polyq.setter
     def mt_polyq(self, value):
         """."""
-        prop = self._get_postmorten_prop('GEN_PolyQArrayCoeff-SP')
+        prop = self._get_propname('GEN_PolyQArrayCoeff-SP')
         self[prop] = _np.array(value)
 
     @property
@@ -527,25 +527,25 @@ class BPM(_Device):
     @property
     def mtraw_posx(self):
         """Multi turn raw X array data."""
-        prop = self._get_postmorten_prop('GEN_RawXArrayData')
+        prop = self._get_propname('GEN_RawXArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mtraw_posy(self):
         """Multi turn raw Y array data."""
-        prop = self._get_postmorten_prop('GEN_RawYArrayData')
+        prop = self._get_propname('GEN_RawYArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mtraw_possum(self):
         """Multi turn raw sum array data."""
-        prop = self._get_postmorten_prop('GEN_RawSUMArrayData')
+        prop = self._get_propname('GEN_RawSUMArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
-        prop = self._get_postmorten_prop('GEN_RawQArrayData')
+        prop = self._get_propname('GEN_RawQArrayData')
         return self[prop] * self.CONV_NM2UM
 
     @property
@@ -611,162 +611,162 @@ class BPM(_Device):
     @property
     def acq_mode(self):
         """."""
-        prop = self._get_postmorten_prop('ACQBPMMode-Sts')
+        prop = self._get_propname('ACQBPMMode-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_mode.setter
     def acq_mode(self, mode):
         """."""
-        self[self._get_postmorten_prop('ACQBPMMode-Sel')] = mode
+        self[self._get_propname('ACQBPMMode-Sel')] = mode
 
     @property
     def acq_ctrl(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerEvent-Sts')
+        prop = self._get_propname('ACQTriggerEvent-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerEvent-Sel')] = val
+        self[self._get_propname('ACQTriggerEvent-Sel')] = val
 
     @property
     def acq_status(self):
         """."""
-        prop = self._get_postmorten_prop('ACQStatus-Sts')
+        prop = self._get_propname('ACQStatus-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @property
     def acq_channel(self):
         """."""
-        prop = self._get_postmorten_prop('ACQChannel-Sts')
+        prop = self._get_propname('ACQChannel-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_channel.setter
     def acq_channel(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQChannel-Sel')] = val
+        self[self._get_propname('ACQChannel-Sel')] = val
 
     @property
     def acq_trigger(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTrigger-Sts')
+        prop = self._get_propname('ACQTrigger-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTrigger-Sel')] = val
+        self[self._get_propname('ACQTrigger-Sel')] = val
 
     @property
     def acq_repeat(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerRep-Sts')
+        prop = self._get_propname('ACQTriggerRep-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerRep-Sel')] = val
+        self[self._get_propname('ACQTriggerRep-Sel')] = val
 
     @property
     def acq_update_time(self):
         """."""
-        prop = self._get_postmorten_prop('ACQUpdateTime-RB') / 1e3
+        prop = self._get_propname('ACQUpdateTime-RB') / 1e3
         return self[prop] * self.CONV_NM2UM
 
     @acq_update_time.setter
     def acq_update_time(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQUpdateTime-SP')] = val * 1e3
+        self[self._get_propname('ACQUpdateTime-SP')] = val * 1e3
 
     @property
     def acq_trig_datachan(self):
         """."""
-        prop = self._get_postmorten_prop('ACQDataTrigChan-Sts')
+        prop = self._get_propname('ACQDataTrigChan-Sts')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQDataTrigChan-Sel')] = val
+        self[self._get_propname('ACQDataTrigChan-Sel')] = val
 
     @property
     def acq_trig_datasel(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerDataSel-RB')
+        prop = self._get_propname('ACQTriggerDataSel-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerDataSel-SP')] = val
+        self[self._get_propname('ACQTriggerDataSel-SP')] = val
 
     @property
     def acq_trig_datathres(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerDataThres-RB')
+        prop = self._get_propname('ACQTriggerDataThres-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerDataThres-SP')] = val
+        self[self._get_propname('ACQTriggerDataThres-SP')] = val
 
     @property
     def acq_trig_datahyst(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerDataHyst-RB')
+        prop = self._get_propname('ACQTriggerDataHyst-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerDataHyst-SP')] = val
+        self[self._get_propname('ACQTriggerDataHyst-SP')] = val
 
     @property
     def acq_trig_datapol(self):
         """."""
-        prop = self._get_postmorten_prop('ACQTriggerDataPol-RB')
+        prop = self._get_propname('ACQTriggerDataPol-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQTriggerDataPol-SP')] = val
+        self[self._get_propname('ACQTriggerDataPol-SP')] = val
 
     @property
     def acq_nrsamples_post(self):
         """."""
-        prop = self._get_postmorten_prop('ACQSamplesPost-RB')
+        prop = self._get_propname('ACQSamplesPost-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQSamplesPost-SP')] = val
+        self[self._get_propname('ACQSamplesPost-SP')] = val
 
     @property
     def acq_nrsamples_pre(self):
         """."""
-        prop = self._get_postmorten_prop('ACQSamplesPre-RB')
+        prop = self._get_propname('ACQSamplesPre-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQSamplesPre-SP')] = val
+        self[self._get_propname('ACQSamplesPre-SP')] = val
 
     @property
     def acq_nrshots(self):
         """."""
-        prop = self._get_postmorten_prop('ACQShots-RB')
+        prop = self._get_propname('ACQShots-RB')
         return self[prop] * self.CONV_NM2UM
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
         """."""
-        self[self._get_postmorten_prop('ACQShots-SP')] = val
+        self[self._get_propname('ACQShots-SP')] = val
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
@@ -775,7 +775,7 @@ class BPM(_Device):
             _csbpm.AcqStates.Aborted, _csbpm.AcqStates.Too_Many_Samples,
             _csbpm.AcqStates.Too_Few_Samples, _csbpm.AcqStates.No_Memory,
             _csbpm.AcqStates.Acq_Overflow}
-        prop = self._get_postmorten_prop('ACQStatus-Sts')
+        prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
             prop, vals, timeout=timeout, comp=lambda x, y: x in y)
 
@@ -785,26 +785,26 @@ class BPM(_Device):
             _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
             _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
             _csbpm.AcqStates.Acquiring}
-        prop = self._get_postmorten_prop('ACQStatus-Sts')
+        prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
             prop, vals, timeout=timeout, comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        prop = self._get_postmorten_prop('ACQTriggerEvent-Sts')
+        prop = self._get_propname('ACQTriggerEvent-Sts')
         return self._wait(prop, _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        prop = self._get_postmorten_prop('ACQTriggerEvent-Sts')
+        prop = self._get_propname('ACQTriggerEvent-Sts')
         return self._wait(prop, _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
         """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
-        prop = self._get_postmorten_prop('ACQTriggerEvent-Sts')
+        prop = self._get_propname('ACQTriggerEvent-Sts')
         return self._wait(prop, _csbpm.AcqEvents.Abort)
 
     def cmd_turn_on_switching(self):
@@ -845,7 +845,7 @@ class BPM(_Device):
         self.monit_sync_enbl = 0
         return self._wait('Monit1TagEn-Sts', 0)
 
-    def _get_postmorten_prop(self, prop):
+    def _get_propname(self, prop):
         if not self._ispost_mortem:
             return prop
         if prop.startswith('GEN'):
