@@ -38,6 +38,7 @@ class BPM(_BaseTimingConfig):
         self._arrayx = _PV(pvpref + 'GEN_XArrayData', **opt)
         self._arrayy = _PV(pvpref + 'GEN_YArrayData', **opt)
         self._arrays = _PV(pvpref + 'GEN_SUMArrayData', **opt)
+        opt.pop('auto_monitor')
         self._offsetx = _PV(pvpref + 'PosXOffset-RB', **opt)
         self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
         self._config_ok_vals = {
