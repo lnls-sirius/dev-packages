@@ -430,11 +430,11 @@ class App(_Callback):
     def _set_egunbias(self, value):
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
 
-        self._update_log('Setting EGun Bias voltage to {}V...'.format(value))
+        self._update_log(f'Setting EGun Bias voltage to {value:.2f}V...')
         if not self.egun_dev.bias.set_voltage(value):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
-            self._update_log('Set EGun Bias voltage: {}V.'.format(value))
+            self._update_log(f'Set EGun Bias voltage: {value:.2f}V.')
 
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Idle)
 
@@ -568,16 +568,7 @@ class App(_Callback):
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
         if self._mode == _Const.InjMode.TopUp:
-            if not self._evg_dev.connected:
-                self._update_log('ERR:Could not update bucket list,')
-                self._update_log('ERR:EVG is disconnected.')
-                return False
-            bucket = _np.arange(self._topupnrpulses) + 1
-            bucket *= step
-            bucket += self._evg_dev.bucketlist[0] - 1
-            bucket %= 864
-            bucket += 1
-            if not self._set_bucket_list(bucket):
+            if not self._update_bucket_list_topup(step=step):
                 return False
         else:
             start = self._bucketlist_start
@@ -671,16 +662,7 @@ class App(_Callback):
 
         self._topupnrpulses = value
         if self._mode == _Const.InjMode.TopUp:
-            if not self._evg_dev.connected:
-                self._update_log('ERR:Could not update bucket list,')
-                self._update_log('ERR:EVG is disconnected.')
-                return False
-            bucket = _np.arange(self._topupnrpulses) + 1
-            bucket *= self._bucketlist_step
-            bucket += self._evg_dev.bucketlist[0] - 1
-            bucket %= 864
-            bucket += 1
-            if not self._set_bucket_list(bucket):
+            if not self._update_bucket_list_topup():
                 return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
@@ -1017,14 +999,22 @@ class App(_Callback):
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
         return self._set_bucket_list(new_bucklist)
 
-    def _update_bucket_list_topup(self):
+    def _update_bucket_list_topup(self, step=None):
         if not self._evg_dev.connected:
             self._update_log('ERR:Could not update bucket list,')
             self._update_log('ERR:EVG is disconnected.')
             return False
+
+        if step is None:
+            step = self._bucketlist_step
+
+        lastfilledbucket = self._evg_dev.bucketlist_mon[-1]
+        if not _Const.MIN_BKT <= lastfilledbucket <= _Const.MAX_BKT:
+            lastfilledbucket = 1
+
         bucket = _np.arange(self._topupnrpulses) + 1
-        bucket *= self._bucketlist_step
-        bucket += self._evg_dev.bucketlist_mon[-1] - 1
+        bucket *= step
+        bucket += lastfilledbucket - 1
         bucket %= 864
         bucket += 1
         return self._set_bucket_list(bucket)
@@ -1085,6 +1075,8 @@ class App(_Callback):
             else:
                 # else, set PU voltage to 50%
                 self._prepare_topup('standby')
+        else:
+            self._topup_pu_prepared = True
 
         self._bias_feedback.do_update_models = True
 
@@ -1151,7 +1143,6 @@ class App(_Callback):
             if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
                     not self._topup_pu_prepared:
                 self._prepare_topup('inject')
-                continue
 
             cond = remaining <= _Const.BIASFB_AHEADSETIME
             cond &= bool(self._bias_feedback.loop_state)
@@ -1162,6 +1153,7 @@ class App(_Callback):
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
                     ltime=self.currinfo_dev.lifetime)
+                self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
                 self.set_multbunbiasvolt(bias)

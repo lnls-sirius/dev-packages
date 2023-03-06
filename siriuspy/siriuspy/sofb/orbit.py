@@ -836,8 +836,8 @@ class EpicsOrbit(BaseOrbit):
             nr_pts = self._smooth_npts
             do_update = False
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update:
-                    bpm.needs_update = False
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
                     do_update = True
                     posx = self._get_pos(
                         bpm.mtposx, self.ref_orbs['X'][i], samp)
@@ -912,17 +912,17 @@ class EpicsOrbit(BaseOrbit):
             nr_pts = self._smooth_npts
             do_update = False
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update:
-                    bpm.needs_update = False
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
                     do_update = True
                     dic.update({
                         'refx': self.ref_orbs['X'][i],
                         'refy': self.ref_orbs['Y'][i]})
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
                 else:
-                    orbx = self.raw_sporbs['X'][-1][:, i].copy()
-                    orby = self.raw_sporbs['Y'][-1][:, i].copy()
-                    summ = self.raw_sporbs['Sum'][-1][:, i].copy()
+                    orbx = self.raw_sporbs['X'][-1][i].copy()
+                    orby = self.raw_sporbs['Y'][-1][i].copy()
+                    summ = self.raw_sporbs['Sum'][-1][i].copy()
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)
                 orbs['Sum'].append(summ)
