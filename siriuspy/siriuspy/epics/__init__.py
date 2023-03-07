@@ -8,8 +8,10 @@ from .pv import PV
 from .pv_time_serie import *
 from .properties import *
 from .multiproc import CAProcessSpawn
+from .threading import CAThread
 
 del pv
 del pv_time_serie
 del properties
 del multiproc
+del threading
