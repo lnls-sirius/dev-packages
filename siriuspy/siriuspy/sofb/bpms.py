@@ -1,5 +1,6 @@
 """Module to deal with orbit acquisition."""
 import logging as _log
+
 import numpy as _np
 
 from ..epics import PV as _PV
