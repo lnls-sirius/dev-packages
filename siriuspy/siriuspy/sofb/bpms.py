@@ -15,23 +15,22 @@ TIMEOUT = 0.05
 
 class BPM(_BaseTimingConfig):
     """."""
+    MAX_UPT_CNT = 20  # equivalent of 10s of orbit update after Acq. PV update
 
     def __init__(self, name, callback=None):
         """."""
         super().__init__(name[:2], callback)
+        self.needs_update_cnt = self.MAX_UPT_CNT
+
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
         pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
-        opt = {'connection_timeout': TIMEOUT}
+        opt = {'connection_timeout': TIMEOUT, 'auto_monitor': False}
         self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
         self._posky = _PV(pvpref + 'PosKy-RB', **opt)
         self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
-        self._spposx = _PV(pvpref + 'SPPosX-Mon', **opt)
-        self._spposy = _PV(pvpref + 'SPPosY-Mon', **opt)
-        self._spsum = _PV(pvpref + 'SPSum-Mon', **opt)
         self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
         self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
-        opt['auto_monitor'] = False
         self._arraya = _PV(pvpref + 'GEN_AArrayData', **opt)
         self._arrayb = _PV(pvpref + 'GEN_BArrayData', **opt)
         self._arrayc = _PV(pvpref + 'GEN_CArrayData', **opt)
@@ -143,6 +142,9 @@ class BPM(_BaseTimingConfig):
             'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
+        self._config_pvs_rb['ACQStatus'].auto_monitor = True
+        self._config_pvs_rb['ACQStatus'].add_callback(
+            self._reset_needs_update_cnt)
 
     @property
     def name(self):
@@ -154,7 +156,6 @@ class BPM(_BaseTimingConfig):
         """."""
         conn = super().connected
         pvs = (
-            self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
             self._offsetx, self._offsety,
             self._polyx, self._polyx,
@@ -344,30 +345,6 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals['ACQBPMMode'] = mode
         if self.put_enable and pvobj.connected:
             pvobj.value = mode
-
-    @property
-    def spposx(self):
-        """."""
-        pvobj = self._spposx
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def spposy(self):
-        """."""
-        pvobj = self._spposy
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return self._orb_conv_unit*val
-
-    @property
-    def spsum(self):
-        """."""
-        pvobj = self._spsum
-        val = pvobj.value if pvobj.connected else None
-        if val is not None:
-            return val
 
     @property
     def arraya(self):
@@ -765,6 +742,10 @@ class BPM(_BaseTimingConfig):
             th5*(pol[9] + ot2*pol[10] + ot4*pol[11]) +
             th7*(pol[12] + ot2*pol[13]) +
             th9*pol[14])
+
+    def _reset_needs_update_cnt(self, *args, **kwargs):
+        _ = args, kwargs
+        self.needs_update_cnt = self.MAX_UPT_CNT
 
 
 class TimingConfig(_BaseTimingConfig):

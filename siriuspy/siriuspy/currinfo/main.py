@@ -16,6 +16,7 @@ from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
+from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
 
 from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
@@ -66,26 +67,20 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
     INDICES = _get_namedtuple(
         'Indices',
-        ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
+        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
-    OSC_IP = 'scope-dig-linac-ict'
+    OSC = _Scopes.LI_DI_ICTOSC
     ACC = ''
     ICT1 = ''
     ICT2 = ''
     CHARGE_THRESHOLD = 0.05  # [nC]
 
-    def __init__(self, resource_manager):
+    def __init__(self):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
-        self.resource_manager = resource_manager
-        # open communication with Oscilloscope
-        self.osc_socket = resource_manager.open_resource(
-            'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
 
-    def close(self):
-        """."""
-        self.osc_socket.close()
+        self.osc_obj = _Keysight(scope=self.OSC)
 
     def process(self, interval):
         """."""
@@ -101,22 +96,13 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
     def _get_measurement(self):
         try:
-            meas = self.osc_socket.query(":MEASure:RESults?")
+            self.osc_obj.connect()
+            meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
             self._meas = meas.split(',')
         except Exception as err:
-            errst = str(err)
-            _log.error('Problem reading data: {:s}'.format(errst))
-            if 'wrong xid in reply' in errst:
-                # NOTE: this is a workaround suggested in
-                # https://github.com/pyvisa/pyvisa-py/issues/172
-                # for a similar problem.
-                _log.info('Trying to fix error, reseting lastxid...')
-                xid = int(errst.split()[4])
-                rsman = self.resource_manager
-                soc = self.osc_socket
-                rsman.visalib.sessions[soc.session].interface.lastxid = xid
-            self._meas = None
-            return
+            _log.error(str(err))
+        finally:
+            self.osc_obj.close()
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
@@ -166,7 +152,12 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC_IP = 'as-di-fctdig'
+    # TS scope does not returns STT.
+    INDICES = _get_namedtuple(
+        'Indices',
+        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
+
+    OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -175,7 +166,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = 'li-di-ictosc'
+    OSC_IP = _Scopes.LI_DI_ICTOSC
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'

@@ -1,5 +1,6 @@
 """Oscilloscopes and scope psignals."""
 
+
 class Scopes:
     """Keysight oscilloscopes names and IPs."""
 

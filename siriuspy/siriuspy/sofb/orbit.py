@@ -822,6 +822,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to ensure consistency
+            leng = len(self.raw_mtorbs['X'])
             samp = self.acqtrignrsamples
             down = self._mturndownsample
             samp -= samp % down
@@ -833,34 +834,27 @@ class EpicsOrbit(BaseOrbit):
             samp *= self._acqtrignrshots
             orbsz = self._csorb.nr_bpms
             nr_pts = self._smooth_npts
+            do_update = False
             for i, bpm in enumerate(self.bpms):
-                pos = bpm.mtposx
-                if pos is None:
-                    posx = _np.full(samp, self.ref_orbs['X'][i])
-                elif pos.size < samp:
-                    posx = _np.full(samp, self.ref_orbs['X'][i])
-                    posx[:pos.size] = pos
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
+                    do_update = True
+                    posx = self._get_pos(
+                        bpm.mtposx, self.ref_orbs['X'][i], samp)
+                    posy = self._get_pos(
+                        bpm.mtposy, self.ref_orbs['Y'][i], samp)
+                    psum = self._get_pos(bpm.mtsum, 0, samp)
                 else:
-                    posx = pos[:samp]
-                pos = bpm.mtposy
-                if pos is None:
-                    posy = _np.full(samp, self.ref_orbs['Y'][i])
-                elif pos.size < samp:
-                    posy = _np.full(samp, self.ref_orbs['Y'][i])
-                    posy[:pos.size] = pos
-                else:
-                    posy = pos[:samp]
-                pos = bpm.mtsum
-                if pos is None:
-                    psum = _np.full(samp, 0)
-                elif pos.size < samp:
-                    psum = _np.full(samp, 0)
-                    psum[:pos.size] = pos
-                else:
-                    psum = pos[:samp]
+                    posx = self.raw_mtorbs['X'][-1][:, i].copy()
+                    posy = self.raw_mtorbs['Y'][-1][:, i].copy()
+                    psum = self.raw_mtorbs['Sum'][-1][:, i].copy()
                 orbs['X'].append(posx)
                 orbs['Y'].append(posy)
                 orbs['Sum'].append(psum)
+
+            # NOTE: Only update orbit when at least one BPM has news
+            if not do_update:
+                return
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
@@ -878,6 +872,7 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(orb.reshape(-1, down, orbsz), axis=1)
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
+
         idx = min(self._multiturnidx, orb.shape[0])
         for pln, orb in orbs.items():
             name = ('Orb' if pln != 'Sum' else '') + pln
@@ -893,24 +888,48 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(f'DeltaOrb{pln:s}Min-Mon', _bn.nanmin(dorb))
             self.run_callbacks(f'DeltaOrb{pln:s}Max-Mon', _bn.nanmax(dorb))
 
+    @staticmethod
+    def _get_pos(pos, ref, samp):
+        if pos is None:
+            posi = _np.full(samp, ref)
+        elif pos.size < samp:
+            posi = _np.full(samp, ref)
+            posi[:pos.size] = pos
+        else:
+            posi = pos[:samp]
+        return posi
+
     def _update_singlepass_orbits(self):
         """."""
         orbs = {'X': [], 'Y': [], 'Sum': []}
         down = self._spass_average
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
+            leng = len(self.raw_sporbs['X'])
             dic = {
                 'maskbeg': self._spass_mask[0],
                 'maskend': self._spass_mask[1],
                 'nturns': down}
             nr_pts = self._smooth_npts
+            do_update = False
             for i, bpm in enumerate(self.bpms):
-                dic.update({
-                    'refx': self.ref_orbs['X'][i],
-                    'refy': self.ref_orbs['Y'][i]})
-                orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
+                if not leng or bpm.needs_update_cnt > 0:
+                    bpm.needs_update_cnt -= 1
+                    do_update = True
+                    dic.update({
+                        'refx': self.ref_orbs['X'][i],
+                        'refy': self.ref_orbs['Y'][i]})
+                    orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
+                else:
+                    orbx = self.raw_sporbs['X'][-1][i].copy()
+                    orby = self.raw_sporbs['Y'][-1][i].copy()
+                    summ = self.raw_sporbs['Sum'][-1][i].copy()
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)
                 orbs['Sum'].append(summ)
+
+            # NOTE: only update orbits when there are news from BPMs.
+            if not do_update:
+                return
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
@@ -927,8 +946,10 @@ class EpicsOrbit(BaseOrbit):
                 if down > 1:
                     orb = _np.mean(orb.reshape(down, -1), axis=0)
                 self.smooth_sporb[pln] = orb
-                name = ('Orb' if pln != 'Sum' else '') + pln
-                self.run_callbacks('SPass' + name + '-Mon', list(orb))
+
+        for pln, orb in self.smooth_sporb.items():
+            name = ('Orb' if pln != 'Sum' else '') + pln
+            self.run_callbacks('SPass' + name + '-Mon', orb)
 
     def _update_status(self):
         """."""

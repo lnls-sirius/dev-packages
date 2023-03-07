@@ -138,7 +138,7 @@ class DVF(_DeviceNC):
             'cam1:EnableCallbacks': 1,  # Enable
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 1,  # Enable
-            'Trans1:EnableCallbacks': 1,  # Enable    
+            'Trans1:EnableCallbacks': 1,  # Enable
         }
         for propty, value in props_values.items():
             self[propty] = value
@@ -146,19 +146,20 @@ class DVF(_DeviceNC):
         self.exposure_time = params.EXPOSURE_TIME_DEFAULT
         self.acquisition_time = params.ACQUISITION_TIME_DEFAULT
         for propty, value in props_values.items():
-            self._wait(propty, value, timeout=timeout, comp='eq')
+            if not self._wait(propty, value, timeout=timeout):
+                return False
+        return True
 
     def cmd_acquire_on(self, timeout=None):
         """Tune IOC image acquisition on."""
-        self._set_and_wait('cam1:Acquire', 1, timeout=timeout)
+        return self._set_and_wait('cam1:Acquire', 1, timeout=timeout)
 
     def cmd_acquire_off(self, timeout=None):
         """Tune IOC image acquisition off."""
-        self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
+        return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
 
     def _set_and_wait(self, propty, value, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
         self[propty] = value
-        self._wait(propty + '_RBV', value, timeout=timeout, comp='eq')
-
+        return self._wait(propty + '_RBV', value, timeout=timeout)
