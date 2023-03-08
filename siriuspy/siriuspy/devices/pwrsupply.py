@@ -6,7 +6,9 @@ from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
-from ..pwrsupply.csdev import Const as _Const
+from ..pwrsupply.csdev import Const as _Const, \
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
+    MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
@@ -30,6 +32,7 @@ class _PSDev(_Device):
         'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
         'CycleType-Sel', 'CycleType-Sts',
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
+        'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
         'CycleFreq-SP', 'CycleFreq-RB',
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
@@ -505,6 +508,30 @@ class PowerSupply(_PSDev):
         var = self.cycle_aux_param
         var[2] = value
         self.cycle_aux_param = var
+
+    @property
+    def wfm(self):
+        """."""
+        return self['Wfm-RB'].copy()
+
+    @wfm.setter
+    def wfm(self, value):
+        """."""
+        value = _np.array(value).ravel()
+        max_size = _MAX_WFMSIZE_OTHERS
+        if self.psmodel == 'FBP':
+            max_size = _MAX_WFMSIZE_FBP
+        self['Wfm-SP'] = value[:max_size]
+
+    @property
+    def wfm_mon(self):
+        """."""
+        return self['Wfm-Mon'].copy()
+
+    @property
+    def wfmref_mon(self):
+        """."""
+        return self['WfmRef-Mon'].copy()
 
     @property
     def wfm_update_auto(self):
