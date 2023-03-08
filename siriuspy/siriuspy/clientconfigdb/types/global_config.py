@@ -2583,6 +2583,18 @@ _pvs_si_ps_ids = [
     ]
 
 
+_pvs_si_septff = [
+    ['SI-01M1:PS-FFCH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-FFCV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M2:PS-FFCH:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M2:PS-FFCV:OpMode-Sel', _SLOWREF, 0.0],
+    ['SI-01M1:PS-FFCH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['SI-01M1:PS-FFCV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['SI-01M2:PS-FFCH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['SI-01M2:PS-FFCV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+]
+
+
 _template_dict = {
     'pvs':
     _pvs_as_ti +
@@ -2594,5 +2606,5 @@ _template_dict = {
     _pvs_si_ps_fam +
     _pvs_si_ps_ch + _pvs_si_ps_cv +
     _pvs_si_ps_qs + _pvs_si_ps_qn +
-    _pvs_si_ps_ids
+    _pvs_si_ps_ids + _pvs_si_septff
     }
