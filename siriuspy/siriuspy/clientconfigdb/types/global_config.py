@@ -2592,6 +2592,10 @@ _pvs_si_septff = [
     ['SI-01M1:PS-FFCV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['SI-01M2:PS-FFCH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['SI-01M2:PS-FFCV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['SI-01M1:PS-FFCH:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-01M1:PS-FFCV:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-01M2:PS-FFCH:Current-SP', 0.0, 0.0],  # [A]
+    ['SI-01M2:PS-FFCV:Current-SP', 0.0, 0.0],  # [A]
 ]
 
 
