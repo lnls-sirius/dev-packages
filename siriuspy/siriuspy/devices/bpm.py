@@ -13,6 +13,17 @@ from ..namesys import SiriusPVName as _PVName
 class BPM(_Device):
     """BPM Device."""
 
+    ACQSTATES_NOTOK = {
+            _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
+            _csbpm.AcqStates.Too_Few_Samples,
+            _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
+    ACQSTATES_STARTED = {
+        _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
+        _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
+        _csbpm.AcqStates.Acquiring}
+    ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
+    ACQSTATES_FINISHED |= ACQSTATES_NOTOK
+
     _properties = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
@@ -119,10 +130,7 @@ class BPM(_Device):
     @property
     def is_ok(self):
         """."""
-        stts = _csbpm.AcqStates
-        okay = self.acq_status not in {
-            stts.Error, stts.No_Memory, stts.Too_Few_Samples,
-            stts.Too_Many_Samples, stts.Acq_Overflow}
+        okay = self.acq_status not in self.ACQSTATES_NOTOK
         okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
         okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
@@ -770,24 +778,17 @@ class BPM(_Device):
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
-        vals = {
-            _csbpm.AcqStates.Idle, _csbpm.AcqStates.Error,
-            _csbpm.AcqStates.Aborted, _csbpm.AcqStates.Too_Many_Samples,
-            _csbpm.AcqStates.Too_Few_Samples, _csbpm.AcqStates.No_Memory,
-            _csbpm.AcqStates.Acq_Overflow}
         prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
-            prop, vals, timeout=timeout, comp=lambda x, y: x in y)
+            prop, self.ACQSTATES_FINISHED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
-        vals = {
-            _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
-            _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
-            _csbpm.AcqStates.Acquiring}
         prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
-            prop, vals, timeout=timeout, comp=lambda x, y: x in y)
+            prop, self.ACQSTATES_STARTED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
