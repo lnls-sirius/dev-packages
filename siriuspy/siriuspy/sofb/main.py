@@ -3,10 +3,10 @@
 from time import time as _time, sleep as _sleep
 import logging as _log
 from functools import partial as _part
-from threading import Thread as _Thread
+
 import numpy as _np
 
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CAThread as _Thread
 from ..devices import HLFOFB
 
 from .matrix import BaseMatrix as _BaseMatrix
