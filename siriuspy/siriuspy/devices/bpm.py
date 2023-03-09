@@ -971,7 +971,7 @@ class FamBPMs(_Devices):
         Args:
             rf_freq (float): RF frequency.
             acq_rate (str, optional): acquisition rate. Defaults to ''.
-            If None, it gets the configured acq. rate on BPMs
+            If empty string, it gets the configured acq. rate on BPMs
 
         Returns:
             float: acquisition frequency.
