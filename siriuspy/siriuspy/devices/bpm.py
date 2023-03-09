@@ -967,18 +967,20 @@ class FamBPMs(_Devices):
         return orbx, orby, _np.array(possum).T
 
     def get_sampling_frequency(
-            self, rf_freq: float, acq_rate='Monit1') -> float:
+            self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
 
         Args:
             rf_freq (float): RF frequency.
-            acq_rate (str, optional): acquisition rate. Defaults to 'Monit1'.
+            acq_rate (str, optional): acquisition rate. Defaults to ''.
+            If None, it gets the configured acq. rate on BPMs
 
         Returns:
             float: acquisition frequency.
 
         """
         bpm = self._devices[0]
+        acq_rate = bpm.acq_channel_str if not acq_rate else acq_rate
         fadc = rf_freq / bpm.harmonic_number * bpm.tbt_rate
         if acq_rate.lower().startswith('tbt'):
             return fadc / bpm.tbt_rate
