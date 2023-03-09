@@ -409,98 +409,82 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        prop = self._get_propname('GEN_XArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_XArrayData')] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        prop = self._get_propname('GEN_YArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_YArrayData')] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        prop = self._get_propname('GEN_SUMArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_SUMArrayData')]
 
     @property
     def mt_posq(self):
         """."""
-        prop = self._get_propname('GEN_QArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_QArrayData')]
 
     @property
     def mt_ampla(self):
         """."""
-        prop = self._get_propname('GEN_AArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_AArrayData')]
 
     @property
     def mt_amplb(self):
         """."""
-        prop = self._get_propname('GEN_BArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_BArrayData')]
 
     @property
     def mt_amplc(self):
         """."""
-        prop = self._get_propname('GEN_CArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_CArrayData')]
 
     @property
     def mt_ampld(self):
         """."""
-        prop = self._get_propname('GEN_DArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_DArrayData')]
 
     @property
     def mt_polyx(self):
         """."""
-        prop = self._get_propname('GEN_PolyXArrayCoeff-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_PolyXArrayCoeff-RB')]
 
     @mt_polyx.setter
     def mt_polyx(self, value):
         """."""
-        prop = self._get_propname('GEN_PolyXArrayCoeff-SP')
-        self[prop] = _np.array(value)
+        self[self._get_propname('GEN_PolyXArrayCoeff-SP')] = _np.array(value)
 
     @property
     def mt_polyy(self):
         """."""
-        prop = self._get_propname('GEN_PolyYArrayCoeff-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_PolyYArrayCoeff-RB')]
 
     @mt_polyy.setter
     def mt_polyy(self, value):
         """."""
-        prop = self._get_propname('GEN_PolyYArrayCoeff-SP')
-        self[prop] = _np.array(value)
+        self[self._get_propname('GEN_PolyYArrayCoeff-SP')] = _np.array(value)
 
     @property
     def mt_polysum(self):
         """."""
-        prop = self._get_propname('GEN_PolySUMArrayCoeff-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_PolySUMArrayCoeff-RB')]
 
     @mt_polysum.setter
     def mt_polysum(self, value):
         """."""
-        prop = self._get_propname('GEN_PolySUMArrayCoeff-SP')
-        self[prop] = _np.array(value)
+        self[self._get_propname('GEN_PolySUMArrayCoeff-SP')] = _np.array(value)
 
     @property
     def mt_polyq(self):
         """."""
-        prop = self._get_propname('GEN_PolyQArrayCoeff-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_PolyQArrayCoeff-RB')]
 
     @mt_polyq.setter
     def mt_polyq(self, value):
         """."""
-        prop = self._get_propname('GEN_PolyQArrayCoeff-SP')
-        self[prop] = _np.array(value)
+        self[self._get_propname('GEN_PolyQArrayCoeff-SP')] = _np.array(value)
 
     @property
     def mt_polyxy_enbl(self):
@@ -535,26 +519,22 @@ class BPM(_Device):
     @property
     def mtraw_posx(self):
         """Multi turn raw X array data."""
-        prop = self._get_propname('GEN_RawXArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_RawXArrayData')] * self.CONV_NM2UM
 
     @property
     def mtraw_posy(self):
         """Multi turn raw Y array data."""
-        prop = self._get_propname('GEN_RawYArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_RawYArrayData')] * self.CONV_NM2UM
 
     @property
     def mtraw_possum(self):
         """Multi turn raw sum array data."""
-        prop = self._get_propname('GEN_RawSUMArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_RawSUMArrayData')]
 
     @property
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
-        prop = self._get_propname('GEN_RawQArrayData')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('GEN_RawQArrayData')]
 
     @property
     def sp_posx(self):
@@ -619,8 +599,7 @@ class BPM(_Device):
     @property
     def acq_mode(self):
         """."""
-        prop = self._get_propname('ACQBPMMode-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQBPMMode-Sts')]
 
     @acq_mode.setter
     def acq_mode(self, mode):
@@ -630,8 +609,7 @@ class BPM(_Device):
     @property
     def acq_ctrl(self):
         """."""
-        prop = self._get_propname('ACQTriggerEvent-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerEvent-Sts')]
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
@@ -641,14 +619,12 @@ class BPM(_Device):
     @property
     def acq_status(self):
         """."""
-        prop = self._get_propname('ACQStatus-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQStatus-Sts')]
 
     @property
     def acq_channel(self):
         """."""
-        prop = self._get_propname('ACQChannel-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQChannel-Sts')]
 
     @acq_channel.setter
     def acq_channel(self, val):
@@ -658,8 +634,7 @@ class BPM(_Device):
     @property
     def acq_trigger(self):
         """."""
-        prop = self._get_propname('ACQTrigger-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTrigger-Sts')]
 
     @acq_trigger.setter
     def acq_trigger(self, val):
@@ -669,8 +644,7 @@ class BPM(_Device):
     @property
     def acq_repeat(self):
         """."""
-        prop = self._get_propname('ACQTriggerRep-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerRep-Sts')]
 
     @acq_repeat.setter
     def acq_repeat(self, val):
@@ -680,8 +654,7 @@ class BPM(_Device):
     @property
     def acq_update_time(self):
         """."""
-        prop = self._get_propname('ACQUpdateTime-RB') / 1e3
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQUpdateTime-RB')]  / 1e3
 
     @acq_update_time.setter
     def acq_update_time(self, val):
@@ -691,8 +664,7 @@ class BPM(_Device):
     @property
     def acq_trig_datachan(self):
         """."""
-        prop = self._get_propname('ACQDataTrigChan-Sts')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQDataTrigChan-Sts')]
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
@@ -702,8 +674,7 @@ class BPM(_Device):
     @property
     def acq_trig_datasel(self):
         """."""
-        prop = self._get_propname('ACQTriggerDataSel-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerDataSel-RB')]
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
@@ -713,8 +684,7 @@ class BPM(_Device):
     @property
     def acq_trig_datathres(self):
         """."""
-        prop = self._get_propname('ACQTriggerDataThres-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerDataThres-RB')]
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
@@ -724,8 +694,7 @@ class BPM(_Device):
     @property
     def acq_trig_datahyst(self):
         """."""
-        prop = self._get_propname('ACQTriggerDataHyst-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerDataHyst-RB')]
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
@@ -735,8 +704,7 @@ class BPM(_Device):
     @property
     def acq_trig_datapol(self):
         """."""
-        prop = self._get_propname('ACQTriggerDataPol-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQTriggerDataPol-RB')]
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
@@ -746,8 +714,7 @@ class BPM(_Device):
     @property
     def acq_nrsamples_post(self):
         """."""
-        prop = self._get_propname('ACQSamplesPost-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQSamplesPost-RB')]
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
@@ -757,8 +724,7 @@ class BPM(_Device):
     @property
     def acq_nrsamples_pre(self):
         """."""
-        prop = self._get_propname('ACQSamplesPre-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQSamplesPre-RB')]
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
@@ -768,8 +734,7 @@ class BPM(_Device):
     @property
     def acq_nrshots(self):
         """."""
-        prop = self._get_propname('ACQShots-RB')
-        return self[prop] * self.CONV_NM2UM
+        return self[self._get_propname('ACQShots-RB')]
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
@@ -778,35 +743,33 @@ class BPM(_Device):
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
-        prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
-            prop, self.ACQSTATES_FINISHED, timeout=timeout,
-            comp=lambda x, y: x in y)
+            self._get_propname('ACQStatus-Sts'), self.ACQSTATES_FINISHED,
+            timeout=timeout, comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
-        prop = self._get_propname('ACQStatus-Sts')
         return self._wait(
-            prop, self.ACQSTATES_STARTED, timeout=timeout,
-            comp=lambda x, y: x in y)
+            self._get_propname('ACQStatus-Sts'), self.ACQSTATES_STARTED,
+            timeout=timeout, comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        prop = self._get_propname('ACQTriggerEvent-Sts')
-        return self._wait(prop, _csbpm.AcqEvents.Start)
+        return self._wait(
+            self._get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        prop = self._get_propname('ACQTriggerEvent-Sts')
-        return self._wait(prop, _csbpm.AcqEvents.Stop)
+        return self._wait(
+            self._get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
         """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
-        prop = self._get_propname('ACQTriggerEvent-Sts')
-        return self._wait(prop, _csbpm.AcqEvents.Abort)
+        return self._wait(
+            self._get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Abort)
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
