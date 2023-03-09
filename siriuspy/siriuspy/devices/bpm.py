@@ -177,8 +177,7 @@ class BPM(_Device):
     @property
     def switching_mode_str(self):
         """."""
-        idx = self['SwMode-Sts']
-        return _csbpm.SwModes._fields[idx]
+        return _csbpm.SwModes._fields[self.switching_mode]
 
     @property
     def harmonic_number(self):
@@ -645,8 +644,7 @@ class BPM(_Device):
     @property
     def acq_channel_str(self):
         """."""
-        idx = self['ACQChannel-Sts']
-        return _csbpm.AcqChan._fields[idx]
+        return _csbpm.AcqChan._fields[self.acq_channel]
 
     @property
     def acq_trigger(self):
