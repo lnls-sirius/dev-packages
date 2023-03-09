@@ -31,8 +31,10 @@ _KCOEFF = _mp.constants.elementary_charge / \
 class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
 
-    def __init__(self, maname, magnet_conv_sign=-1):
+    def __init__(
+            self, maname, magnet_conv_sign=-1, default_strengths_dipole=None):
         """Class constructor."""
+        self.default_strengths_dipole = default_strengths_dipole  # [GeV]
         self._maname = _SiriusPVName(maname) if type(maname) == str else maname
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
@@ -82,6 +84,19 @@ class _MagnetNormalizer:
         return currents
 
     # --- normalizer aux. methods ---
+
+    def _get_brho(self, strengths_dipole=None, **kwargs):
+        """Calculate appropriate brho."""
+        _ = kwargs
+        if strengths_dipole is None:
+            strengths_dipole = self.default_strengths_dipole
+        if strengths_dipole is None:
+            raise ValueError(
+                "Missing input 'strengths_dipole' and no default value is "
+                "set in attribute 'default_strengths_dipole'.")
+
+        brho, *_ = _util.beam_rigidity(strengths_dipole)
+        return brho
 
     def _conv_current_2_intfield(self, currents):
         mpoles = self._conv_current_2_multipoles(
@@ -295,14 +310,16 @@ class MagnetNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         intfields = self._magnet_conv_sign * brho * strengths
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         if isinstance(brho, _np.ndarray):
             with _np.errstate(divide='ignore', invalid='ignore'):
                 strengths = self._magnet_conv_sign * intfields / brho
@@ -363,14 +380,16 @@ class TrimNormalizer(_MagnetNormalizer):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
         strengths_fam = kwargs['strengths_family']
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         intfields = self._magnet_conv_sign * brho * (strengths - strengths_fam)
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, (list, tuple)):
             intfields = _np.array(intfields)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         if brho == 0:
             return 0 * intfields
         strengths_trim = self._magnet_conv_sign * intfields / brho
