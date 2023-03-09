@@ -175,6 +175,12 @@ class BPM(_Device):
         self['SwMode-Sel'] = val
 
     @property
+    def switching_mode_str(self):
+        """."""
+        idx = self['SwMode-Sts']
+        return _csbpm.SwModes._fields[idx]
+
+    @property
     def harmonic_number(self):
         """."""
         return self['INFOHarmonicNumber-RB']
@@ -635,6 +641,12 @@ class BPM(_Device):
     def acq_channel(self, val):
         """."""
         self[self._get_propname('ACQChannel-Sel')] = val
+
+    @property
+    def acq_channel_str(self):
+        """."""
+        idx = self['ACQChannel-Sts']
+        return _csbpm.AcqChan._fields[idx]
 
     @property
     def acq_trigger(self):
