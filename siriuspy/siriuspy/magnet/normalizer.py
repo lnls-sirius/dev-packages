@@ -355,8 +355,7 @@ class TrimNormalizer(_MagnetNormalizer):
 
     TYPE = 'TrimNormalizer'
 
-    def __init__(self, maname, magnet_conv_sign=-1.0,
-                 **kwargs):
+    def __init__(self, maname, **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
 
