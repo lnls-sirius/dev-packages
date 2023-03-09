@@ -20,8 +20,6 @@ if not _BETA_APPROXIMATION:
     _GAMMA_2_GEV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
 
 _MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
-_IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
-_IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 _KCOEFF = _mp.constants.elementary_charge / \
           _mp.constants.light_speed / \
           _mp.constants.electron_mass / \
