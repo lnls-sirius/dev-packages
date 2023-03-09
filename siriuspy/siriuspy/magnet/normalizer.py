@@ -32,6 +32,8 @@ class _MagnetNormalizer:
     def __init__(
             self, maname, magnet_conv_sign=-1, default_strengths_dipole=None):
         """Class constructor."""
+        self._default_strengths_dipole = None
+        self._brho = None
         self.default_strengths_dipole = default_strengths_dipole  # [GeV]
         self._maname = _SiriusPVName(maname) if type(maname) == str else maname
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
@@ -43,6 +45,16 @@ class _MagnetNormalizer:
         self._mfmult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
+
+    @property
+    def default_strengths_dipole(self):
+        return self._default_strengths_dipole
+
+    @default_strengths_dipole.setter
+    def default_strengths_dipole(self, value):
+        self._default_strengths_dipole = value
+        if value is not None:
+            self._brho = self._get_brho(value)
 
     @property
     def magfunc(self):
@@ -86,9 +98,9 @@ class _MagnetNormalizer:
     def _get_brho(self, strengths_dipole=None, **kwargs):
         """Calculate appropriate brho."""
         _ = kwargs
-        if strengths_dipole is None:
-            strengths_dipole = self.default_strengths_dipole
-        if strengths_dipole is None:
+        if strengths_dipole is None and self._brho is not None:
+            return self._brho
+        elif strengths_dipole is None:
             raise ValueError(
                 "Missing input 'strengths_dipole' and no default value is "
                 "set in attribute 'default_strengths_dipole'.")
