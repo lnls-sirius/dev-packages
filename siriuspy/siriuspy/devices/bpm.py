@@ -851,6 +851,13 @@ class FamBPMs(_Devices):
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
 
+        self._mturn_flags = dict()
+        for bpm in devs:
+            pvo = bpm.pv_object('ACQStatus-Sts')
+            pvo.auto_monitor = True
+            self._mturn_flags[pvo.pvname] = _Flag()
+            pvo.add_callback(self._mturn_set_flag)
+
     @property
     def bpm_names(self):
         """Return BPM names."""
@@ -1119,6 +1126,36 @@ class FamBPMs(_Devices):
         """Call this method before acquisition to get orbit for comparison."""
         self._initial_orbs = self.get_mturn_orbit(return_sum=consider_sum)
 
+    def mturn_reset_flags(self):
+        """Reset Multiturn flags to wait for a new orbit update."""
+        for flag in self._mturn_flags.values():
+            flag.clear()
+
+    def mturn_reset_flags_and_update_initial_orbit(self, consider_sum=False):
+        """Set initial state to wait for orbit acquisition to start."""
+        self.mturn_reset_flags()
+        self.mturn_update_initial_orbit(consider_sum)
+
+    def mturn_wait_update_flags(self, timeout=10):
+        """Wait for all acquisition flags to be updated.
+
+        Args:
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not update plus 1.
+
+        """
+        for i, flag in enumerate(self._mturn_flags.values()):
+            t00 = _time.time()
+            if not flag.wait(timeout=timeout):
+                return i + 1
+            timeout -= _time.time() - t00
+            timeout = max(timeout, 0)
+        return 0
+
     def mturn_wait_update_orbit(self, timeout=10, consider_sum=False) -> int:
         """Call this method after acquisition to check if orbit was updated.
 
@@ -1192,12 +1229,17 @@ class FamBPMs(_Devices):
 
         """
         t00 = _time.time()
-        ret = self.wait_acquisition_finish(timeout)
+        ret = self.mturn_wait_update_flags(timeout)
         if ret > 0:
             return ret
         timeout -= _time.time() - t00
 
         return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
+
+    def _mturn_set_flag(self, pvname, value, **kwargs):
+        _ = kwargs
+        if value in BPM.ACQSTATES_FINISHED:
+            self._mturn_flags[pvname].set()
 
 
 class BPMLogicalTrigger(_ProptyDevice):
