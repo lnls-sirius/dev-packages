@@ -58,7 +58,7 @@ class BPM(_Device):
         'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
         'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
         'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-        'ACQStatus-Sts',
+        'ACQStatus-Sts', 'ACQCount-Mon',
         'ACQTrigger-Sel', 'ACQTrigger-Sts',
         'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
         'ACQDataTrigChan-Sel', 'ACQDataTrigChan-Sts',
@@ -622,6 +622,11 @@ class BPM(_Device):
         return self[self._get_propname('ACQStatus-Sts')]
 
     @property
+    def acq_count(self):
+        """Counter of number of acquisitions so far."""
+        return self[self._get_propname('ACQCount-Mon')]
+
+    @property
     def acq_channel(self):
         """."""
         return self[self._get_propname('ACQChannel-Sts')]
@@ -853,7 +858,7 @@ class FamBPMs(_Devices):
 
         self._mturn_flags = dict()
         for bpm in devs:
-            pvo = bpm.pv_object('ACQStatus-Sts')
+            pvo = bpm.pv_object('ACQCount-Mon')
             pvo.auto_monitor = True
             self._mturn_flags[pvo.pvname] = _Flag()
             pvo.add_callback(self._mturn_set_flag)
@@ -1236,10 +1241,9 @@ class FamBPMs(_Devices):
 
         return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
 
-    def _mturn_set_flag(self, pvname, value, **kwargs):
+    def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
-        if value in BPM.ACQSTATES_FINISHED:
-            self._mturn_flags[pvname].set()
+        self._mturn_flags[pvname].set()
 
 
 class BPMLogicalTrigger(_ProptyDevice):
