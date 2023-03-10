@@ -66,7 +66,7 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts',
+        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
         'TbtTagEn-Sel', 'TbtTagEn-Sts',
         'Monit1TagEn-Sel', 'Monit1TagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
@@ -178,6 +178,16 @@ class BPM(_Device):
     def switching_mode_str(self):
         """."""
         return _csbpm.SwModes._fields[self.switching_mode]
+
+    @property
+    def switching_rate(self):
+        """."""
+        return self['SwDivClk-RB'] * 2
+
+    @property
+    def switching_period(self):
+        """."""
+        return self.switching_rate / self.adcfreq
 
     @property
     def harmonic_number(self):
@@ -987,6 +997,20 @@ class FamBPMs(_Devices):
         elif acq_rate.lower().startswith('monit1'):
             return fadc / bpm.monit1_rate
         return fadc / bpm.monit_rate
+
+    def get_switching_frequency(self, rf_freq: float) -> float:
+        """Return the switching frequency.
+
+        Args:
+            rf_freq (float): RF frequency.
+
+        Returns:
+            float: switching frequency.
+
+        """
+        bpm = self._devices[0]
+        fadc = rf_freq / bpm.harmonic_number * bpm.tbt_rate
+        return fadc / bpm.switching_rate
 
     def mturn_config_acquisition(
             self, nr_points_after: int, nr_points_before=0,
