@@ -25,8 +25,8 @@ class BaseOrbit(_BaseClass):
 
 def run_subprocess(pvs, send_pipe, recv_pipe):
     """Run subprocesses."""
-    max_spread = 25/1000  # in [s]
-    timeout = 50/1000  # in [s]
+    max_spread = 40/1000  # in [s]
+    timeout = 110/1000  # in [s]
 
     ready_evt = _Event()
 
@@ -600,14 +600,14 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
-            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.facq_sync_enbl = _csbpm.EnbldDsbld.enabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
         _time.sleep(0.5)
         for bpm in self._get_used_bpms():
             bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
             bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
-            bpm.monit1_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.facq_sync_enbl = _csbpm.EnbldDsbld.disabled
 
         if self.acc == 'SI' and self.sofb.fofb.connected:
             _time.sleep(0.2)
@@ -773,8 +773,8 @@ class EpicsOrbit(BaseOrbit):
         channel = channel or self.bpms[0].acq_type or 0
 
         # revolution period in s
-        if channel == _csbpm.AcqChan.Monit1:
-            dtime = self.bpms[0].monit1period
+        if channel == _csbpm.AcqChan.FAcq:
+            dtime = self.bpms[0].facqperiod
         elif channel == _csbpm.AcqChan.FOFB:
             dtime = self.bpms[0].fofbperiod
         else:
