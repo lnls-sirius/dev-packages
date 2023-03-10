@@ -1,11 +1,9 @@
 """Module to deal with orbit acquisition."""
 import os as _os
 import time as _time
-from math import ceil as _ceil
 import logging as _log
 from functools import partial as _part
-from copy import deepcopy as _dcopy
-from threading import Lock, Thread, Event as _Event
+from threading import Lock, Event as _Event
 import multiprocessing as _mp
 import traceback as _traceback
 
@@ -15,7 +13,7 @@ import bottleneck as _bn
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV, CAProcessSpawn as _Process
+from ..epics import PV as _PV, CAProcessSpawn as _Process, CAThread as _Thread
 
 from .base_class import BaseClass as _BaseClass
 from .bpms import BPM, TimingConfig, TIMEOUT
@@ -316,8 +314,15 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SmoothMethod-Sts', meth)
         return True
 
-    def set_spass_mask(self, val, beg=True):
+    def set_spass_mask(self, val, beg=True, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_spass_mask,
+                args=(val, ), kwargs={'beg': beg, 'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 0 else 0
         other_mask = self._spass_mask[1 if beg else 0]
         maxsz = self.bpms[0].tbtrate - other_mask - 2
@@ -325,10 +330,16 @@ class EpicsOrbit(BaseOrbit):
         self._spass_mask[0 if beg else 1] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
-        return True
 
-    def set_mturn_sync(self, val):
+    def set_mturn_sync(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_mturn_sync,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
@@ -338,10 +349,16 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.tbt_sync_enbl = value
         self.run_callbacks('MTurnSyncTim-Sts', val)
-        return True
 
-    def set_mturn_usemask(self, val):
+    def set_mturn_usemask(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_mturn_usemask,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
@@ -352,10 +369,16 @@ class EpicsOrbit(BaseOrbit):
             bpm.tbt_mask_enbl = value
 
         self.run_callbacks('MTurnUseMask-Sts', val)
-        return True
 
-    def set_mturnmask(self, val, beg=True):
+    def set_mturnmask(self, val, beg=True, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_mturnmask,
+                args=(val, ), kwargs={'beg': beg, 'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 0 else 0
         bpms = self._get_used_bpms()
         omsk = \
@@ -375,17 +398,22 @@ class EpicsOrbit(BaseOrbit):
 
         name = 'Beg' if beg else 'End'
         self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
-        return True
 
-    def set_spass_average(self, val):
+    def set_spass_average(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_spass_average,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 1 else 1
         with self._lock_raw_orbs:
             self._spass_average = val
             self._reset_orbs()
         self.run_callbacks('SPassAvgNrTurns-RB', val)
-        Thread(target=self._prepare_mode, daemon=True).start()
-        return True
+        self._prepare_mode()
 
     def set_smooth_reset(self, _):
         """."""
@@ -393,8 +421,15 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         return True
 
-    def set_reforb(self, plane, orb):
+    def set_reforb(self, plane, orb, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_reforb,
+                args=(plane, orb), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         msg = 'Setting New Reference Orbit.'
         self._update_log(msg)
         _log.info(msg)
@@ -404,7 +439,8 @@ class EpicsOrbit(BaseOrbit):
             msg = 'ERR: Wrong RefOrb Size.'
             self._update_log(msg)
             _log.error(msg[5:])
-            return False
+            self.run_callbacks(
+                'RefOrb'+plane+'-SP', self.ref_orbs[plane][:nrb])
         elif orb.size < nrb:
             msg = 'WARN: Orb Size is too small. Replicating...'
             self._update_log(msg)
@@ -417,10 +453,16 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._reset_orbs()
         self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
-        return True
 
-    def set_orbit_mode(self, value):
+    def set_orbit_mode(self, value, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_orbit_mode,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         omode = self._mode
         acqrate = self._csorb.ACQRATE_SLOWORB
         if self.is_trigmode(value):
@@ -430,11 +472,8 @@ class EpicsOrbit(BaseOrbit):
             self._mode = value
             self._orbit_thread.interval = 1/acqrate
             self._reset_orbs()
-        Thread(
-            target=self._prepare_mode,
-            kwargs={'oldmode': omode, }, daemon=True).start()
         self.run_callbacks('SOFBMode-Sts', value)
-        return True
+        self._prepare_mode(oldmode=omode)
 
     def set_sync_with_injection(self, boo):
         """."""
@@ -445,10 +484,11 @@ class EpicsOrbit(BaseOrbit):
     def _prepare_mode(self, oldmode=None):
         """."""
         oldmode = self._mode if oldmode is None else oldmode
-        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
+        self.set_trig_acq_control(
+            self._csorb.TrigAcqCtrl.Abort, is_thread=True)
 
         if not self.is_trigmode():
-            self.acq_config_bpms()
+            self.acq_config_bpms(is_thread=True)
             return True
 
         if self.is_singlepass():
@@ -462,21 +502,29 @@ class EpicsOrbit(BaseOrbit):
 
         if self._mode != oldmode:
             self.run_callbacks('TrigAcqChan-Sel', chan)
-            self.set_trig_acq_channel(chan)
+            self.set_trig_acq_channel(chan, is_thread=True)
             self.run_callbacks('TrigAcqRepeat-Sel', rep)
-            self.set_trig_acq_repeat(rep)
+            self.set_trig_acq_repeat(rep, is_thread=True)
             if self.acqtrignrsamples < points:
                 pts = points - self._acqtrignrsamplespre
                 self.run_callbacks('TrigNrSamplesPost-SP', pts)
-                self.set_acq_nrsamples(pts, ispost=True)
+                self.set_acq_nrsamples(pts, ispost=True, is_thread=True)
         self._update_time_vector()
-        self.acq_config_bpms()
+        self.acq_config_bpms(is_thread=True)
 
-        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
+        self.set_trig_acq_control(
+            self._csorb.TrigAcqCtrl.Start, is_thread=True)
         return True
 
-    def set_orbit_multiturn_idx(self, value):
+    def set_orbit_multiturn_idx(self, value, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_orbit_multiturn_idx,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         maxidx = self.acqtrignrsamples // self._mturndownsample
         maxidx *= self._acqtrignrshots
         if value >= maxidx:
@@ -489,11 +537,22 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('MTurnIdx-RB', self._multiturnidx)
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
-        return True
+        self._update_multiturn_orbit_pvs()
 
-    def acq_config_bpms(self, *args):
+    def acq_config_bpms(self, *args, is_thread=False):
         """."""
         _ = args
+        if not is_thread:
+            _Thread(
+                self.acq_config_bpms,
+                kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
+        msg = 'Configuring BPMs...'
+        self._update_log(msg)
+        _log.info(msg)
+
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]
@@ -510,29 +569,32 @@ class EpicsOrbit(BaseOrbit):
             elif self.is_sloworb():
                 bpm.switching_mode = _csbpm.SwModes.switching
         self.sync_bpms(None)
-        return True
+        msg = 'Done configuring BPMs!'
+        self._update_log(msg)
+        _log.info(msg)
 
     def sync_bpms(self, *args):
         """Synchronize BPMs."""
         _ = args
 
-        msg = 'Received sync BPMs command...'
+        msg = 'Received sync BPMs command.'
         self._update_log(msg)
         _log.info(msg)
 
         if self._thread_sync is not None and \
                 self._thread_sync.is_alive():
-            msg = 'Waiting for previous sync to end...'
+            msg = 'WARN: Previous sync. of BPMs still running.'
             self._update_log(msg)
-            _log.info(msg)
-            self._thread_sync.join()
+            _log.warning(msg)
+            return False
 
-        self._thread_sync = Thread(
+        self._thread_sync = _Thread(
             target=self._synchronize_bpms, daemon=True)
         self._thread_sync.start()
+        return True
 
     def _synchronize_bpms(self):
-        msg = 'Syncing BPMs...'
+        msg = 'Syncing BPMs.'
         self._update_log(msg)
         _log.info(msg)
         for bpm in self._get_used_bpms():
@@ -554,15 +616,18 @@ class EpicsOrbit(BaseOrbit):
             _log.info(msg)
             self.sofb.fofb.cmd_fofbctrl_syncnet()
 
-        msg = '...done!'
+        msg = 'Syncing BPMs is done!'
         self._update_log(msg)
         _log.info(msg)
 
-    def set_trig_acq_control(self, value):
+    def set_trig_acq_control(self, value, is_thread=False):
         """."""
-        acqctrl = self._csorb.TrigAcqCtrl
-        if value == acqctrl.Start:
-            self._wait_bpms()
+        if not is_thread:
+            _Thread(
+                self.set_trig_acq_control,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
 
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
@@ -570,12 +635,15 @@ class EpicsOrbit(BaseOrbit):
             bpm.ctrl = value
         self.run_callbacks('TrigAcqCtrl-Sts', value)
 
-        if value in {acqctrl.Stop, acqctrl.Abort}:
-            self._wait_bpms()
-        return True
-
-    def set_trig_acq_channel(self, value):
+    def set_trig_acq_channel(self, value, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_trig_acq_channel,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         try:
             val = self._csorb.TrigAcqChan._fields[value]
             val = _csbpm.AcqChan._fields.index(val)
@@ -589,26 +657,39 @@ class EpicsOrbit(BaseOrbit):
 
         self.run_callbacks('TrigAcqChan-Sts', value)
         self._update_time_vector(channel=val)
-        return True
 
-    def set_trig_acq_repeat(self, value):
+    def set_trig_acq_repeat(self, value, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_trig_acq_repeat,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]
             bpm.acq_repeat = value
-
         self.run_callbacks('TrigAcqRepeat-Sts', value)
-        return True
 
-    def set_acq_nrsamples(self, val, ispost=True):
+    def set_acq_nrsamples(self, val, ispost=True, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_acq_nrsamples,
+                args=(val, ), kwargs={'ispost': ispost, 'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 0 else 0
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
         oth = 'post' if not ispost else 'pre'
         if getattr(self, '_acqtrignrsamples' + oth) == 0 and val == 0:
-            return False
+            self.run_callbacks(
+                'TrigNrSamples'+suf.title()+'-SP',
+                getattr(self, '_acqtrignrsamples' + suf))
         with self._lock_raw_orbs:
             mask = self._get_mask()
             for i, bpm in enumerate(self.bpms):
@@ -618,10 +699,16 @@ class EpicsOrbit(BaseOrbit):
             setattr(self, '_acqtrignrsamples' + suf, val)
         self.run_callbacks('TrigNrSamples'+suf.title()+'-RB', val)
         self._update_time_vector()
-        return True
 
-    def set_trig_acq_nrshots(self, val):
+    def set_trig_acq_nrshots(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_trig_acq_nrshots,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
@@ -634,10 +721,16 @@ class EpicsOrbit(BaseOrbit):
             self._acqtrignrshots = val
         self.run_callbacks('TrigNrShots-RB', val)
         self._update_time_vector()
-        return True
 
-    def set_poly_calibration(self, val):
+    def set_poly_calibration(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_poly_calibration,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         value = _csbpm.EnbldDsbld.enabled
         if val == self._csorb.EnbldDsbld.Dsbld:
             value = _csbpm.EnbldDsbld.disabled
@@ -646,31 +739,30 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.polycal = value
         self.run_callbacks('PolyCalibration-Sts', val)
-        return True
 
-    def set_mturndownsample(self, val):
+    def set_mturndownsample(self, val, is_thread=False):
         """."""
+        if not is_thread:
+            _Thread(
+                self.set_mturndownsample,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
             self._mturndownsample = val
             self._reset_orbs()
         self.run_callbacks('MTurnDownSample-RB', val)
-        Thread(target=self._prepare_mode, daemon=True).start()
-        return True
+        self._prepare_mode()
 
     def acquire_mturn_orbit(self, _):
         """Acquire Multiturn data from BPMs."""
-        Thread(target=self._update_multiturn_orbits, daemon=True).start()
-
-    def _wait_bpms(self):
-        """."""
-        for _ in range(40):
-            if all(map(lambda x: x.is_ok, self._get_used_bpms())):
-                break
-            _time.sleep(0.1)
-        else:
-            _log.warning('Timeout waiting BPMs.')
+        _Thread(
+            target=self._update_multiturn_orbits,
+            kwargs=dict(force_update=True), daemon=True).start()
+        return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
         """."""
@@ -697,7 +789,7 @@ class EpicsOrbit(BaseOrbit):
         vect = dly + dur/nrst*shots[:, None] + dtime*pts[None, :]
         self._timevector = vect.ravel()
         self.run_callbacks('MTurnTime-Mon', self._timevector)
-        self.set_orbit_multiturn_idx(self._multiturnidx)
+        self.set_orbit_multiturn_idx(self._multiturnidx, is_thread=True)
 
     def _load_ref_orbs(self):
         """."""
@@ -751,7 +843,7 @@ class EpicsOrbit(BaseOrbit):
         try:
             count = 0
             if self.is_multiturn():
-                self._update_multiturn_orbits()
+                self._update_multiturn_orbits(force_update=False)
                 count = len(self.raw_mtorbs['X'])
             elif self.is_singlepass():
                 self._update_singlepass_orbits()
@@ -818,7 +910,7 @@ class EpicsOrbit(BaseOrbit):
         orby = _np.array(out[nr_bpms:], dtype=float)
         return orbx, orby, any(nok)
 
-    def _update_multiturn_orbits(self):
+    def _update_multiturn_orbits(self, force_update=True):
         """."""
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to ensure consistency
@@ -834,7 +926,7 @@ class EpicsOrbit(BaseOrbit):
             samp *= self._acqtrignrshots
             orbsz = self._csorb.nr_bpms
             nr_pts = self._smooth_npts
-            do_update = False
+            do_update = force_update
             for i, bpm in enumerate(self.bpms):
                 if not leng or bpm.needs_update_cnt > 0:
                     bpm.needs_update_cnt -= 1
@@ -872,9 +964,13 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(orb.reshape(-1, down, orbsz), axis=1)
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
+        self._update_multiturn_orbit_pvs()
 
+    def _update_multiturn_orbit_pvs(self):
         idx = min(self._multiturnidx, orb.shape[0])
-        for pln, orb in orbs.items():
+        for pln, orb in self.smooth_mtorb.items():
+            if orb is None:
+                continue
             name = ('Orb' if pln != 'Sum' else '') + pln
             self.run_callbacks('MTurn' + name + '-Mon', orb.ravel())
             self.run_callbacks(
