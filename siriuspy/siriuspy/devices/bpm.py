@@ -840,6 +840,42 @@ class BPM(_Device):
         self.monit_sync_enbl = 0
         return self._wait('Monit1TagEn-Sts', 0)
 
+    def get_sampling_frequency(
+            self, rf_freq: float, acq_rate='') -> float:
+        """Return the sampling frequency of the acquisition.
+
+        Args:
+            rf_freq (float): RF frequency.
+            acq_rate (str, optional): acquisition rate. Defaults to ''.
+            If empty string, it gets the configured acq. rate on BPMs
+
+        Returns:
+            float: acquisition frequency.
+
+        """
+        acq_rate = self.acq_channel_str if not acq_rate else acq_rate
+        fadc = rf_freq / self.harmonic_number * self.tbt_rate
+        if acq_rate.lower().startswith('tbt'):
+            return fadc / self.tbt_rate
+        elif acq_rate.lower().startswith('fofb'):
+            return fadc / self.fofb_rate
+        elif acq_rate.lower().startswith('monit1'):
+            return fadc / self.monit1_rate
+        return fadc / self.monit_rate
+
+    def get_switching_frequency(self, rf_freq: float) -> float:
+        """Return the switching frequency.
+
+        Args:
+            rf_freq (float): RF frequency.
+
+        Returns:
+            float: switching frequency.
+
+        """
+        fadc = rf_freq / self.harmonic_number * self.tbt_rate
+        return fadc / self.switching_rate
+
     def _get_propname(self, prop):
         if not self._ispost_mortem:
             return prop
@@ -993,16 +1029,14 @@ class FamBPMs(_Devices):
             float: acquisition frequency.
 
         """
-        bpm = self._devices[0]
-        acq_rate = bpm.acq_channel_str if not acq_rate else acq_rate
-        fadc = rf_freq / bpm.harmonic_number * bpm.tbt_rate
-        if acq_rate.lower().startswith('tbt'):
-            return fadc / bpm.tbt_rate
-        elif acq_rate.lower().startswith('fofb'):
-            return fadc / bpm.fofb_rate
-        elif acq_rate.lower().startswith('monit1'):
-            return fadc / bpm.monit1_rate
-        return fadc / bpm.monit_rate
+        fs_bpms = set([
+            dev.get_sampling_frequency(rf_freq, acq_rate)
+            for dev in self.devices])
+        if len(fs_bpms) == 1:
+            return fs_bpms.pop()
+        else:
+            print('BPMs are not configured with the same ACQChannel.')
+            return None
 
     def get_switching_frequency(self, rf_freq: float) -> float:
         """Return the switching frequency.
@@ -1014,9 +1048,13 @@ class FamBPMs(_Devices):
             float: switching frequency.
 
         """
-        bpm = self._devices[0]
-        fadc = rf_freq / bpm.harmonic_number * bpm.tbt_rate
-        return fadc / bpm.switching_rate
+        fsw_bpms = set([
+            dev.get_switching_frequency(rf_freq) for dev in self.devices])
+        if len(fsw_bpms) == 1:
+            return fsw_bpms.pop()
+        else:
+            print('BPMs are not configured with the same SwMode.')
+            return None
 
     def mturn_config_acquisition(
             self, nr_points_after: int, nr_points_before=0,
