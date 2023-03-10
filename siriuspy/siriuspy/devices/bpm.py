@@ -181,12 +181,18 @@ class BPM(_Device):
 
     @property
     def switching_rate(self):
-        """."""
+        """Switching rate manifested at BPM readings.
+
+        NOTE: Actually this property maps the rate of the effect of
+        switching on the orbit, which is twice the switching rate,
+        because the switching has two states.
+
+        """
         return self['SwDivClk-RB'] * 2
 
     @property
     def switching_period(self):
-        """."""
+        """Switching period manifested at BPM readings."""
         return self.switching_rate / self.adcfreq
 
     @property
