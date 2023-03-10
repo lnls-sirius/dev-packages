@@ -269,6 +269,22 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             'SwDataMaskSamples-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
+            'SwDirGainA-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainB-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainC-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainD-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainA-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainB-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainC-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainD-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
             }
         return {prefix + k: v for k, v in dbase.items()}
 

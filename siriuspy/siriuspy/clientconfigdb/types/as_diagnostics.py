@@ -635,6 +635,14 @@ _bpm_propts = [
     [':SwTagEn-Sel', 0, 0.0],
     [':SwDataMaskEn-Sel', 0, 0.0],
     [':SwDataMaskSamples-SP', 1910, 0.0],
+    [':SwDirGainA-SP', 1.0, 0.0],
+    [':SwDirGainB-SP', 1.0, 0.0],
+    [':SwDirGainC-SP', 1.0, 0.0],
+    [':SwDirGainD-SP', 1.0, 0.0],
+    [':SwInvGainA-SP', 1.0, 0.0],
+    [':SwInvGainB-SP', 1.0, 0.0],
+    [':SwInvGainC-SP', 1.0, 0.0],
+    [':SwInvGainD-SP', 1.0, 0.0],
 ]
 _bpm_pvs = list()
 for dev in _bpms:
