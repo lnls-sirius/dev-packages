@@ -1029,9 +1029,9 @@ class FamBPMs(_Devices):
             float: acquisition frequency.
 
         """
-        fs_bpms = set([
+        fs_bpms = {
             dev.get_sampling_frequency(rf_freq, acq_rate)
-            for dev in self.devices])
+            for dev in self.devices}
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
@@ -1048,8 +1048,8 @@ class FamBPMs(_Devices):
             float: switching frequency.
 
         """
-        fsw_bpms = set([
-            dev.get_switching_frequency(rf_freq) for dev in self.devices])
+        fsw_bpms = {
+            dev.get_switching_frequency(rf_freq) for dev in self.devices}
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
@@ -1296,7 +1296,7 @@ class FamBPMs(_Devices):
         return -4
 
     def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
-        """Combine wait_acquistion_finish and mturn_wait_update_orbit.
+        """Combine mturn_wait_update_flags and mturn_wait_update_orbit.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
