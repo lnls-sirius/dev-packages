@@ -22,8 +22,8 @@ class DVF(_DeviceNC):
         'ACQUISITION_TIME_MIN',  # [s]
         'ACQUISITION_TIME_DEFAULT',  # [s]
         'EXPOSURE_TIME_DEFAULT',  # [s]
-        'IMAGE_SIZE_V',  # [pixel]
-        'IMAGE_SIZE_H',  # [pixel]
+        'IMAGE_SIZE_Y',  # [pixel]
+        'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
     )
@@ -46,7 +46,7 @@ class DVF(_DeviceNC):
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
-        'cam1:Acquire',
+        'cam1:Acquire', 'cam1:Acquire_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArrayData',
         )
@@ -59,9 +59,10 @@ class DVF(_DeviceNC):
         # call base class constructor
         super().__init__(devname, properties=DVF._properties)
 
+    @property
     def parameters(self):
         """Return DVF parameters."""
-        return self._dev2params[self.devname]
+        return DVF._dev2params[self.devname]
 
     @property
     def exposure_time(self):
@@ -92,22 +93,22 @@ class DVF(_DeviceNC):
         return self['cam1:Acquire']
 
     @property
-    def image_sizeh(self):
-        """Image horizontal size (pixels)."""
+    def image_sizex(self):
+        """Image second dimension size (pixels)."""
         params = self.parameters
-        return params.IMAGE_SIZE_H
+        return params.IMAGE_SIZE_X
 
     @property
-    def image_sizev(self):
-        """Image vertical size (pixels)."""
+    def image_sizey(self):
+        """Image first dimension size (pixels)."""
         params = self.parameters
-        return params.IMAGE_SIZE_V
+        return params.IMAGE_SIZE_Y
 
     @property
     def image(self):
-        """Return DVF image formatted as a (sizey, sizex) matriz."""
+        """Return DVF image formatted as a (sizey, sizex) matrix."""
         params = self.parameters
-        shape = (params.IMAGE_SIZE_V, params.IMAGE_SIZE_H)
+        shape = (params.IMAGE_SIZE_Y, params.IMAGE_SIZE_X)
         data = self['image1:ArrayData']
         image = _np.reshape(data, shape)
         return image
@@ -119,8 +120,8 @@ class DVF(_DeviceNC):
         return params.IMAGE_PIXEL_SIZE
 
     @property
-    def optics_magnefication_factor(self):
-        """Source to image magnefication factor."""
+    def optics_magnification_factor(self):
+        """Source to image magnification factor."""
         params = self.parameters
         return params.OPTICS_MAGNIFICATION_FACTOR
 
