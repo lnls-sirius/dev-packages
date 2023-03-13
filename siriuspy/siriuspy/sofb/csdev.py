@@ -28,7 +28,7 @@ class ETypes(_csdev.ETypes):
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_DELTA_MON = ('Idle', 'Applying', 'Done', 'Error')
     SI_CORR_SYNC = ('Off', 'Event', 'Clock')
-    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
+    ORB_ACQ_CHAN = ('FAcq', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     DRIVE_TYPE = ('Sine', 'Square', 'Impulse')
@@ -63,7 +63,7 @@ class ConstTLines(_csdev.Const):
     DEF_MAX_ORB_DISTORTION = 50  # [um]
     ACQRATE_TRIGMODE = 2  # [Hz]
     ACQRATE_SLOWORB = 60  # [Hz]
-    BPMsFreq = 25.14  # [Hz]
+    BPMsFreq = 10.48  # [Hz]
 
     EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents

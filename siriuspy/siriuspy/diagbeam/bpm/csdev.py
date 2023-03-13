@@ -20,7 +20,7 @@ class ETypes(_csdev.ETypes):
         'ADC', 'ADCSwap', 'MixerIQ', 'Unconnected', 'TbTIQ',
         'Unconnected2', 'TbTAmp', 'TbTPha', 'TbTPos', 'FOFBIQ',
         'Unconnected3', 'FOFBAmp', 'FOFBPha', 'FOFBPos', 'MonitAmp',
-        'MonitPos', 'Monit1Pos', 'FMCTrigOut', 'Unconnected4', 'Unconnected5',
+        'MonitPos', 'FAcqPos', 'FMCTrigOut', 'Unconnected4', 'Unconnected5',
         'Unconnected6', 'Unconnected7', 'Unconnected8', 'Unconnected9')
     SWMODES = ('rffe_switching', 'direct', 'inverted', 'switching')
     SWTAGENBL = ('disabled', 'enabled')
@@ -35,7 +35,7 @@ class ETypes(_csdev.ETypes):
     ACQREPEAT = ('Normal', 'Repetitive')
     ACQEVENTS = ('Start', 'Stop', 'Abort')
     ACQDATATYP = ('A', 'B', 'C', 'D')
-    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'Monit1')
+    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
         'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
@@ -101,13 +101,13 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
             'INFOMONITRate-RB': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOMONIT1Rate-SP': {
+            'INFOFAcqRate-SP': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOMONIT1Rate-RB': {
+            'INFOFAcqRate-RB': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
-            'INFOTBTRate-SP': {
+            'INFOTbTRate-SP': {
                 'type': 'int', 'value': 382, 'low': 0, 'high': 2**31-1},
-            'INFOTBTRate-RB': {
+            'INFOTbTRate-RB': {
                 'type': 'int', 'value': 382, 'low': 0, 'high': 2**31-1},
             }
 
@@ -269,6 +269,22 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             'SwDataMaskSamples-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
+            'SwDirGainA-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainB-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainC-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwDirGainD-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainA-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainB-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainC-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
+            'SwInvGainD-SP': {
+                'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
             }
         return {prefix + k: v for k, v in dbase.items()}
 
@@ -463,25 +479,25 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TriggerDataHyst-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtTagEn-Sel': {
+            'TbTTagEn-Sel': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtTagEn-Sts': {
+            'TbTTagEn-Sts': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtTagDly-SP': {
+            'TbTTagDly-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtTagDly-RB': {
+            'TbTTagDly-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskEn-Sel': {
+            'TbTDataMaskEn-Sel': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtDataMaskEn-Sts': {
+            'TbTDataMaskEn-Sts': {
                 'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
-            'TbtDataMaskSamplesBeg-SP': {
+            'TbTDataMaskSamplesBeg-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesBeg-RB': {
+            'TbTDataMaskSamplesBeg-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesEnd-SP': {
+            'TbTDataMaskSamplesEnd-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbtDataMaskSamplesEnd-RB': {
+            'TbTDataMaskSamplesEnd-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             }
         return {prefix + k: v for k, v in dbase.items()}

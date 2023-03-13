@@ -37,8 +37,8 @@ class BPM(_Device):
         'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
         'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
-        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTBTRate-RB',
-        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOMONIT1Rate-RB',
+        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
+        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
         'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
         'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
         'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
@@ -66,13 +66,13 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
-        'TbtTagEn-Sel', 'TbtTagEn-Sts',
-        'Monit1TagEn-Sel', 'Monit1TagEn-Sts',
+        'SwTagEn-Sel', 'SwTagEn-Sts',  'SwDivClk-RB',
+        'TbTTagEn-Sel', 'TbTTagEn-Sts',
+        'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
-        'TbtDataMaskEn-Sel', 'TbtDataMaskEn-Sts',
-        'TbtDataMaskSamplesBeg-SP', 'TbtDataMaskSamplesBeg-RB',
-        'TbtDataMaskSamplesEnd-SP', 'TbtDataMaskSamplesEnd-RB',
+        'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
+        'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
+        'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
         'XYPosCal-Sel', 'XYPosCal-Sts',
         'SUMPosCal-Sel', 'SUMPosCal-Sts',
         'QPosCal-Sel', 'QPosCal-Sts',
@@ -208,7 +208,7 @@ class BPM(_Device):
     @property
     def tbt_rate(self):
         """Divisor or TbT in relation to ADC."""
-        return self['INFOTBTRate-RB']
+        return self['INFOTbTRate-RB']
 
     @property
     def tbt_period(self):
@@ -218,42 +218,42 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbtTagEn-Sts']
+        return self['TbTTagEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbtTagEn-Sel'] = val
+        self['TbTTagEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
         """."""
-        return self['TbtDataMaskEn-Sts']
+        return self['TbTDataMaskEn-Sts']
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
         """."""
-        self['TbtDataMaskEn-Sel'] = val
+        self['TbTDataMaskEn-Sel'] = val
 
     @property
     def tbt_mask_beg(self):
         """."""
-        return self['TbtDataMaskSamplesBeg-RB']
+        return self['TbTDataMaskSamplesBeg-RB']
 
     @tbt_mask_beg.setter
     def tbt_mask_beg(self, val):
         """."""
-        self['TbtDataMaskSamplesBeg-SP'] = val
+        self['TbTDataMaskSamplesBeg-SP'] = val
 
     @property
     def tbt_mask_end(self):
         """."""
-        return self['TbtDataMaskSamplesEnd-RB']
+        return self['TbTDataMaskSamplesEnd-RB']
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
         """."""
-        self['TbtDataMaskSamplesEnd-SP'] = val
+        self['TbTDataMaskSamplesEnd-SP'] = val
 
     @property
     def fofb_sync_enbl(self):
@@ -276,24 +276,24 @@ class BPM(_Device):
         return self.fofb_rate / self.adcfreq
 
     @property
-    def monit1_rate(self):
-        """."""
-        return self['INFOMONIT1Rate-RB']
+    def facq_rate(self):
+        """Divisor or FAcq in relation to ADC."""
+        return self['INFOFAcqRate-RB']
 
     @property
-    def monit1_period(self):
+    def facq_period(self):
         """."""
-        return self.monit1_rate / self.adcfreq
+        return self.facq_rate / self.adcfreq
 
     @property
-    def monit1_sync_enbl(self):
+    def facq_sync_enbl(self):
         """."""
-        return self['Monit1TagEn']
+        return self['FAcqTagEn']
 
-    @monit1_sync_enbl.setter
-    def monit1_sync_enbl(self, val):
+    @facq_sync_enbl.setter
+    def facq_sync_enbl(self, val):
         """."""
-        self['Monit1TagEn-Sel'] = val
+        self['FAcqTagEn-Sel'] = val
 
     @property
     def monit_rate(self):
@@ -817,7 +817,7 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbtTagEn-Sts', 0)
+        return self._wait('TbTTagEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
@@ -826,19 +826,55 @@ class BPM(_Device):
         self.fofb_sync_enbl = 0
         return self._wait('SwTagEn-Sts', 0)
 
-    def cmd_sync_monit1(self):
-        """Synchronize Monit1 acquisitions with Timing System."""
-        self.monit1_sync_enbl = 1
+    def cmd_sync_facq(self):
+        """Synchronize FAcq acquisitions with Timing System."""
+        self.facq_sync_enbl = 1
         _time.sleep(0.1)
-        self.monit1_sync_enbl = 0
-        return self._wait('Monit1TagEn-Sts', 0)
+        self.facq_sync_enbl = 0
+        return self._wait('FAcqTagEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('Monit1TagEn-Sts', 0)
+        return self._wait('FAcqTagEn-Sts', 0)
+
+    def get_sampling_frequency(
+            self, rf_freq: float, acq_rate='') -> float:
+        """Return the sampling frequency of the acquisition.
+
+        Args:
+            rf_freq (float): RF frequency.
+            acq_rate (str, optional): acquisition rate. Defaults to ''.
+            If empty string, it gets the configured acq. rate on BPMs
+
+        Returns:
+            float: acquisition frequency.
+
+        """
+        acq_rate = self.acq_channel_str if not acq_rate else acq_rate
+        fadc = rf_freq / self.harmonic_number * self.tbt_rate
+        if acq_rate.lower().startswith('tbt'):
+            return fadc / self.tbt_rate
+        elif acq_rate.lower().startswith('fofb'):
+            return fadc / self.fofb_rate
+        elif acq_rate.lower().startswith('monit1'):
+            return fadc / self.monit1_rate
+        return fadc / self.monit_rate
+
+    def get_switching_frequency(self, rf_freq: float) -> float:
+        """Return the switching frequency.
+
+        Args:
+            rf_freq (float): RF frequency.
+
+        Returns:
+            float: switching frequency.
+
+        """
+        fadc = rf_freq / self.harmonic_number * self.tbt_rate
+        return fadc / self.switching_rate
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
@@ -1016,8 +1052,7 @@ class FamBPMs(_Devices):
             return orbx, orby
         return orbx, orby, _np.array(possum).T
 
-    def get_sampling_frequency(
-            self, rf_freq: float, acq_rate='') -> float:
+    def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
 
         Args:
@@ -1058,7 +1093,7 @@ class FamBPMs(_Devices):
 
     def mturn_config_acquisition(
             self, nr_points_after: int, nr_points_before=0,
-            acq_rate='Monit1', repeat=True, external=True) -> int:
+            acq_rate='FAcq', repeat=True, external=True) -> int:
         """Configure acquisition for BPMs.
 
         Args:
@@ -1066,7 +1101,7 @@ class FamBPMs(_Devices):
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
             acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
-                'Monit1'). Defaults to 'Monit1'.
+                'FAcq'). Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
@@ -1079,8 +1114,8 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which is not ready for acq. plus 1.
 
         """
-        if acq_rate.lower().startswith('monit1'):
-            acq_rate = self._csbpm.AcqChan.Monit1
+        if acq_rate.lower().startswith('facq'):
+            acq_rate = self._csbpm.AcqChan.FAcq
         elif acq_rate.lower().startswith('fofb'):
             acq_rate = self._csbpm.AcqChan.FOFB
         elif acq_rate.lower().startswith('tbt'):

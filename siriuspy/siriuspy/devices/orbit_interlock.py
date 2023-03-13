@@ -143,7 +143,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # Habilita interlock de órbita apenas quando threshold da soma
         # ultrapassar o valor em "IntlkLmtMinSum-SP"
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
-        # Minimum sum threshold (em contagens da Soma da taxa Monit1):
+        # Minimum sum threshold (em contagens da Soma da taxa FAcq):
         'IntlkLmtMinSum-SP', 'IntlkLmtMinSum-RB',
         # Status Instantâneo:
         # Interlock instântaneo, dificilmente será detectado com
@@ -204,8 +204,8 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkAngEn-Sel', 'IntlkAngEn-Sts',
         # Angulation interlock clear:
         'IntlkAngClr-Cmd',
-        # Thresholds (em rad.nm da taxa Monit1).
-        #  Thresholds devem ser calculados como ângulo (em rad)
+        # Thresholds (em rad.nm da taxa FAcq).
+        # Thresholds devem ser calculados como ângulo (em rad)
         #  entre os 2 BPMs adjacentes * distância (em nm) entre eles):
         'IntlkLmtAngMaxX-SP', 'IntlkLmtAngMaxX-RB',
         'IntlkLmtAngMinX-SP', 'IntlkLmtAngMinX-RB',
@@ -295,7 +295,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     @property
     def minsumthres(self):
-        """Minimum sum threshold [sum count, Monit1 rate]."""
+        """Minimum sum threshold [sum count, FAcq rate]."""
         return self['IntlkLmtMinSum-RB']
 
     @minsumthres.setter
