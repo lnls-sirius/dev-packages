@@ -537,7 +537,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('MTurnIdx-RB', self._multiturnidx)
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
-        self._update_multiturn_orbit_pvs()
+        # self._update_multiturn_orbit_pvs()
 
     def acq_config_bpms(self, *args, is_thread=False):
         """."""
@@ -964,9 +964,9 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(orb.reshape(-1, down, orbsz), axis=1)
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
-        self._update_multiturn_orbit_pvs()
+        self._update_multiturn_orbit_pvs(orb)
 
-    def _update_multiturn_orbit_pvs(self):
+    def _update_multiturn_orbit_pvs(self, orb):
         idx = min(self._multiturnidx, orb.shape[0])
         for pln, orb in self.smooth_mtorb.items():
             if orb is None:
