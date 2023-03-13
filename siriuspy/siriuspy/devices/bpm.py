@@ -66,7 +66,7 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts',  'SwDivClk-RB',
+        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
         'TbTTagEn-Sel', 'TbTTagEn-Sts',
         'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
         'MonitTagEn-Sel', 'MonitTagEn-Sts',
@@ -859,44 +859,8 @@ class BPM(_Device):
             return fadc / self.tbt_rate
         elif acq_rate.lower().startswith('fofb'):
             return fadc / self.fofb_rate
-        elif acq_rate.lower().startswith('monit1'):
-            return fadc / self.monit1_rate
-        return fadc / self.monit_rate
-
-    def get_switching_frequency(self, rf_freq: float) -> float:
-        """Return the switching frequency.
-
-        Args:
-            rf_freq (float): RF frequency.
-
-        Returns:
-            float: switching frequency.
-
-        """
-        fadc = rf_freq / self.harmonic_number * self.tbt_rate
-        return fadc / self.switching_rate
-
-    def get_sampling_frequency(
-            self, rf_freq: float, acq_rate='') -> float:
-        """Return the sampling frequency of the acquisition.
-
-        Args:
-            rf_freq (float): RF frequency.
-            acq_rate (str, optional): acquisition rate. Defaults to ''.
-            If empty string, it gets the configured acq. rate on BPMs
-
-        Returns:
-            float: acquisition frequency.
-
-        """
-        acq_rate = self.acq_channel_str if not acq_rate else acq_rate
-        fadc = rf_freq / self.harmonic_number * self.tbt_rate
-        if acq_rate.lower().startswith('tbt'):
-            return fadc / self.tbt_rate
-        elif acq_rate.lower().startswith('fofb'):
-            return fadc / self.fofb_rate
-        elif acq_rate.lower().startswith('monit1'):
-            return fadc / self.monit1_rate
+        elif acq_rate.lower().startswith('facq'):
+            return fadc / self.facq_rate
         return fadc / self.monit_rate
 
     def get_switching_frequency(self, rf_freq: float) -> float:
