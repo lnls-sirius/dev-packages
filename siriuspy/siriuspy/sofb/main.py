@@ -370,8 +370,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.info(msg)
             self._loop_state = value
-            self._thread = _Thread(
-                target=self._do_auto_corr, daemon=True)
+            self._thread = _Thread(target=self._do_auto_corr, daemon=True)
             self._thread.start()
         elif value == self._csorb.LoopState.Open:
             msg = 'Opening the Loop.'

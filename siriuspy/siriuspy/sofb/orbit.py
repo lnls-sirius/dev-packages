@@ -318,7 +318,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_spass_mask,
+                target=self.set_spass_mask,
                 args=(val, ), kwargs={'beg': beg, 'is_thread': True},
                 daemon=True).start()
             return True
@@ -335,7 +335,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_mturn_sync,
+                target=self.set_mturn_sync,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -354,7 +354,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_mturn_usemask,
+                target=self.set_mturn_usemask,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -374,7 +374,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_mturnmask,
+                target=self.set_mturnmask,
                 args=(val, ), kwargs={'beg': beg, 'is_thread': True},
                 daemon=True).start()
             return True
@@ -403,7 +403,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_spass_average,
+                target=self.set_spass_average,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -425,7 +425,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_reforb,
+                target=self.set_reforb,
                 args=(plane, orb), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -458,9 +458,9 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_orbit_mode,
+                target=self.set_orbit_mode,
                 args=(value, ), kwargs={'is_thread': True},
-                daemon=True).start()
+                daemon=True, ).start()
             return True
 
         omode = self._mode
@@ -520,7 +520,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_orbit_multiturn_idx,
+                target=self.set_orbit_multiturn_idx,
                 args=(value, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -544,7 +544,7 @@ class EpicsOrbit(BaseOrbit):
         _ = args
         if not is_thread:
             _Thread(
-                self.acq_config_bpms,
+                target=self.acq_config_bpms,
                 kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -624,7 +624,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_trig_acq_control,
+                target=self.set_trig_acq_control,
                 args=(value, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -639,7 +639,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_trig_acq_channel,
+                target=self.set_trig_acq_channel,
                 args=(value, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -662,7 +662,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_trig_acq_repeat,
+                target=self.set_trig_acq_repeat,
                 args=(value, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -677,7 +677,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_acq_nrsamples,
+                target=self.set_acq_nrsamples,
                 args=(val, ), kwargs={'ispost': ispost, 'is_thread': True},
                 daemon=True).start()
             return True
@@ -704,7 +704,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_trig_acq_nrshots,
+                target=self.set_trig_acq_nrshots,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -726,7 +726,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_poly_calibration,
+                target=self.set_poly_calibration,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -744,7 +744,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         if not is_thread:
             _Thread(
-                self.set_mturndownsample,
+                target=self.set_mturndownsample,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -967,10 +967,10 @@ class EpicsOrbit(BaseOrbit):
         self._update_multiturn_orbit_pvs()
 
     def _update_multiturn_orbit_pvs(self):
-        idx = min(self._multiturnidx, orb.shape[0])
         for pln, orb in self.smooth_mtorb.items():
             if orb is None:
                 continue
+            idx = min(self._multiturnidx, orb.shape[0])
             name = ('Orb' if pln != 'Sum' else '') + pln
             self.run_callbacks('MTurn' + name + '-Mon', orb.ravel())
             self.run_callbacks(

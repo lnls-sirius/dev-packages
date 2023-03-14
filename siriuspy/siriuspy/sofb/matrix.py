@@ -89,7 +89,7 @@ class EpicsMatrix(BaseMatrix):
         """Set the response matrix mode."""
         if not is_thread:
             _Thread(
-                self.set_respmat_mode,
+                target=self.set_respmat_mode,
                 args=(mode, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -112,7 +112,7 @@ class EpicsMatrix(BaseMatrix):
         """Set the response matrix in memory and save it in file."""
         if not is_thread:
             _Thread(
-                self.set_respmat,
+                target=self.set_respmat,
                 args=(mat, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -137,7 +137,7 @@ class EpicsMatrix(BaseMatrix):
         """."""
         if not is_thread:
             _Thread(
-                self.set_enbllist,
+                target=self.set_enbllist,
                 args=(key, val), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -211,7 +211,7 @@ class EpicsMatrix(BaseMatrix):
         """."""
         if not is_thread:
             _Thread(
-                self.set_min_sing_value,
+                target=self.set_min_sing_value,
                 args=(num, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -228,7 +228,7 @@ class EpicsMatrix(BaseMatrix):
         """."""
         if not is_thread:
             _Thread(
-                self.set_tikhonov_reg_const,
+                target=self.set_tikhonov_reg_const,
                 args=(num, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
