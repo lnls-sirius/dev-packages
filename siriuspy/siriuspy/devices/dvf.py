@@ -51,13 +51,13 @@ class DVF(_DeviceNC):
         'image1:ArrayData',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, *args, **kwargs):
         """Init."""
         # check if device exists
         if devname not in DVF.DEVICES.ALL:
             raise NotImplementedError(devname)
         # call base class constructor
-        super().__init__(devname, properties=DVF._properties)
+        super().__init__(devname, properties=self._properties, *args, **kwargs)
 
     @property
     def parameters(self):
