@@ -679,7 +679,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
         if not is_thread:
             _Thread(
-                self.set_corrs_mode,
+                target=self.set_corrs_mode,
                 args=(value, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
@@ -766,7 +766,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Configure correctors method."""
         if not is_thread:
             _Thread(
-                self.configure_correctors,
+                target=self.configure_correctors,
                 args=(val, ), kwargs={'is_thread': True},
                 daemon=True).start()
             return True
