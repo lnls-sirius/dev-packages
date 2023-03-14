@@ -1,6 +1,7 @@
 """Definition module."""
 import math as _math
 import logging as _log
+
 import numpy as _np
 
 from ..callbacks import Callback as _Callback
