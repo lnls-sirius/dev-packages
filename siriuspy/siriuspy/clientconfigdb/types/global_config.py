@@ -620,6 +620,15 @@ _pvs_as_ti = [
     ['SI-Fam:TI-FOFB:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Fam:TI-FOFB:LowLvlLock-Sel', 0, 0.0],
 
+    ['SI-01:TI-Mags-FFCorrs:DelayRaw-SP', 0, 0],
+    ['SI-01:TI-Mags-FFCorrs:Duration-SP', 0, 0.0],  # [us]
+    ['SI-01:TI-Mags-FFCorrs:NrPulses-SP', 0, 0.0],
+    ['SI-01:TI-Mags-FFCorrs:Polarity-Sel', 0, 0.0],
+    ['SI-01:TI-Mags-FFCorrs:Src-Sel', 0, 0.0],
+    ['SI-01:TI-Mags-FFCorrs:State-Sel', 0, 0.0],
+    ['SI-01:TI-Mags-FFCorrs:DeltaDelayRaw-SP', 30*[0, ], 0],
+    ['SI-01:TI-Mags-FFCorrs:LowLvlLock-Sel', 0, 0.0],
+
     ['SI-Glob:TI-BbBProcH-Fid:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # [us]
     ['SI-Glob:TI-BbBProcH-Fid:NrPulses-SP', 0, 0.0],
