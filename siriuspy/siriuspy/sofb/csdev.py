@@ -65,7 +65,6 @@ class ConstTLines(_csdev.Const):
     ACQRATE_SLOWORB = 60  # [Hz]
     BPMsFreq = 10.48  # [Hz]
 
-    EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
     TrigAcqChan = _csdev.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
     TrigAcqRepeat = _csbpm.AcqRepeat
@@ -107,7 +106,7 @@ class ConstSI(ConstRings):
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
-    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBLD_ENBLD)
+    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBL_ENBL)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
@@ -394,11 +393,11 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'unit': '', 'value': 382,
                 'hilim': 20000, 'lolim': 0},
             'PolyCalibration-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
             'PolyCalibration-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
             'SmoothNrPts-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
@@ -625,17 +624,17 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'enum', 'value': 0,
                 'enums': self.MTurnAcquire._fields},
             'MTurnSyncTim-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'MTurnSyncTim-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'MTurnUseMask-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'MTurnUseMask-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'MTurnMaskSplBeg-SP': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
             'MTurnMaskSplBeg-RB': {
@@ -870,13 +869,13 @@ class SOFBSI(SOFBRings, ConstSI):
                 'lolim': 0, 'hilim': 10000},
             'CorrPSSOFBEnbl-Sel': {
                 'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbld},
+                'value': self.CorrPSSOFBEnbl.Dsbl},
             'CorrPSSOFBEnbl-Sts': {
                 'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbld},
+                'value': self.CorrPSSOFBEnbl.Dsbl},
             'CorrPSSOFBEnbl-Mon': {
                 'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbld},
+                'value': self.CorrPSSOFBEnbl.Dsbl},
             'FOFBDownloadKicksPerc-SP': {
                 'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
@@ -884,14 +883,14 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicks-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicks-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicks-Mon': {
-                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrbPerc-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
                 'lolim': -100.1, 'hilim': 100.1},
@@ -899,32 +898,32 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
                 'lolim': -100.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Mon': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBNullSpaceProj-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBNullSpaceProj-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBNullSpaceProj-Mon': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBZeroDistortionAtBPMs-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBZeroDistortionAtBPMs-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'FOFBZeroDistortionAtBPMs-Mon': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
-                'enums': self.EnbldDsbld._fields},
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
                 'lolim': 0, 'hilim': 1000},

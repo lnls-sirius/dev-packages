@@ -30,7 +30,7 @@ class ETypes(_csdev.ETypes):
     OPMODES = ('MultiBunch', 'SinglePass')
     POLARITY = ('Positive', 'Negative')
     ENBLTYP = ('Disable', 'Enable')
-    ENBLDDSBLD = ('disabled', 'enabled')
+    DSBLDENBLD = ('disabled', 'enabled')
     CONNTYP = _csdev.ETypes.DISCONN_CONN
     ACQREPEAT = ('Normal', 'Repetitive')
     ACQEVENTS = ('Start', 'Stop', 'Abort')
@@ -68,7 +68,7 @@ class Const(_csdev.Const):
     OpModes = _csdev.Const.register('OpModes', _et.OPMODES)
     Polarity = _csdev.Const.register('Polarity', _et.POLARITY)
     EnblTyp = _csdev.Const.register('EnblTyp', _et.ENBLTYP)
-    EnbldDsbld = _csdev.Const.register('EnbldDsbld', _et.ENBLDDSBLD)
+    DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBLDENBLD)
     ConnTyp = _csdev.Const.register('ConnTyp', _et.CONNTYP)
     AcqRepeat = _csdev.Const.register('AcqRepeat', _et.ACQREPEAT)
     AcqEvents = _csdev.Const.register('AcqEvents', _et.ACQEVENTS)
@@ -480,17 +480,17 @@ class Const(_csdev.Const):
             'TriggerDataHyst-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TbTTagEn-Sel': {
-                'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
+                'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
             'TbTTagEn-Sts': {
-                'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
+                'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
             'TbTTagDly-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TbTTagDly-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TbTDataMaskEn-Sel': {
-                'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
+                'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
             'TbTDataMaskEn-Sts': {
-                'type': 'enum', 'enums': Const.EnbldDsbld._fields, 'value': 0},
+                'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
             'TbTDataMaskSamplesBeg-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TbTDataMaskSamplesBeg-RB': {

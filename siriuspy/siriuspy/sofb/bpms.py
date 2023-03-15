@@ -62,15 +62,15 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
             # 'ACQTriggerDataChan': _csbpm.AcqChan.FAcq,
             'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'TbTTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
-            'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
-            'FAcqTagEn': _csbpm.EnbldDsbld.disabled,
-            'MonitTagEn': _csbpm.EnbldDsbld.disabled,
-            'TbTDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
+            'TbTTagEn': _csbpm.DsblEnbl.disabled,  # Enable TbT sync Timing
+            'SwTagEn': _csbpm.DsblEnbl.disabled,  # Enable FOFB sync Timing
+            'FAcqTagEn': _csbpm.DsblEnbl.disabled,
+            'MonitTagEn': _csbpm.DsblEnbl.disabled,
+            'TbTDataMaskEn': _csbpm.DsblEnbl.disabled,  # Enable use of mask
             'TbTDataMaskSamplesBeg': 0,
             'TbTDataMaskSamplesEnd': 0,
-            'XYPosCal': _csbpm.EnbldDsbld.enabled,
-            'SUMPosCal': _csbpm.EnbldDsbld.enabled}
+            'XYPosCal': _csbpm.DsblEnbl.enabled,
+            'SUMPosCal': _csbpm.DsblEnbl.enabled}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'SwMode': 'SwMode-Sel',
@@ -595,7 +595,7 @@ class BPM(_BaseTimingConfig):
     @polycal.setter
     def polycal(self, val):
         """."""
-        val = _csbpm.EnbldDsbld.enabled if val else _csbpm.EnbldDsbld.disabled
+        val = _csbpm.DsblEnbl.enabled if val else _csbpm.DsblEnbl.disabled
         pv1 = self._config_pvs_sp['XYPosCal']
         pv2 = self._config_pvs_sp['SUMPosCal']
         self._config_ok_vals['XYPosCal'] = val
@@ -705,7 +705,7 @@ class BPM(_BaseTimingConfig):
         diff2 = (vals['D'][zero2] - vals['B'][zero2]) / sum2[zero2]
         x_uncal = (diff1 + diff2) / 2
         y_uncal = (diff1 - diff2) / 2
-        if self._config_ok_vals['XYPosCal'] == _csbpm.EnbldDsbld.disabled:
+        if self._config_ok_vals['XYPosCal'] == _csbpm.DsblEnbl.disabled:
             x_cal[:rnts][zero1] = x_uncal * self.poskx
             y_cal[:rnts][zero2] = y_uncal * self.posky
         else:

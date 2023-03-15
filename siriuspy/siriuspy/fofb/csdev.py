@@ -147,16 +147,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
             'LoopMaxOrbDistortionEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopMaxOrbDistortionEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
 
             # Correctors
