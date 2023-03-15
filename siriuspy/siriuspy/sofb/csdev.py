@@ -717,16 +717,16 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-SP': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCH-RB': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-SP': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiCV-RB': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdCH-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -747,10 +747,10 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-SP': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKiRF-RB': {
-                'type': 'float', 'value': 0.5, 'unit': 'frac.Hz', 'prec': 3,
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
                 'lolim': -1000, 'hilim': 1000},
             'LoopPIDKdRF-SP': {
                 'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
@@ -878,10 +878,10 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
                 'value': self.CorrPSSOFBEnbl.Dsbld},
             'FOFBDownloadKicksPerc-SP': {
-                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicksPerc-RB': {
-                'type': 'float', 'value': 1.0, 'prec': 2, 'unit': '%',
+                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
