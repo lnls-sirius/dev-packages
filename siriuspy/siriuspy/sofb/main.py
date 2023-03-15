@@ -52,7 +52,7 @@ class SOFB(_BaseClass):
             self._meas_respmat_kick['rf'] = 75
         if self.acc == 'SI':
             self.fofb = HLFOFB()
-            self._download_fofb_kicks = False
+            self._download_fofb_kicks = True
             self._download_fofb_kicks_perc = 0.04
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0

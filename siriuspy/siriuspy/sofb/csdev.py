@@ -884,13 +884,13 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
             'FOFBDownloadKicks-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'FOFBDownloadKicks-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'FOFBDownloadKicks-Mon': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'FOFBUpdateRefOrbPerc-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
