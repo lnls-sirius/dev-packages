@@ -111,9 +111,9 @@ class PVsConfig(_ConfigDBDocument):
             return False, pvs_not_set
         return True, []
 
-    def load_and_apply(self, timeout=_TIMEOUT):
+    def load_and_apply(self, timeout=_TIMEOUT, discarded=False):
         """Load from server, apply to machine and check if implemented."""
-        self.load()
+        self.load(discarded=discarded)
         status_ok, failed_list = self.apply(timeout=timeout)
         if not status_ok:
             return False, failed_list
