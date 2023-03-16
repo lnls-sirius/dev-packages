@@ -512,7 +512,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Src-Sel'] = dic_
 
     max_dur = 17e6
-    max_wid_raw = 2123400000
+    max_wid_raw = 2**31 - 1
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3,
         'lolim': 0.008, 'hilim': max_dur}
@@ -539,7 +539,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['NrPulses-RB'] = _dcopy(dic_)
     dbase['NrPulses-SP'] = dic_
 
-    max_dly_raw = 2123400000
+    max_dly_raw = 2**31 - 1
     max_dly = 17e6
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
