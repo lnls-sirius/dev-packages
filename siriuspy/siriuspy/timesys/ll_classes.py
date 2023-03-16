@@ -589,7 +589,7 @@ class _BASETRIG(_BaseLL):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
         if self._config_ok_values.get('RFDelayType', False):
             dic_['RFDelay'] = 31
-        if value is None:
+        if value is None or value < 0:
             return dic_
         value = value if raw else round(value / self.base_del)
         dic_['Delay'] = int(value)
@@ -764,6 +764,8 @@ class _EVROTP(_BASETRIG):
         return dic
 
     def _set_delay(self, value, raw=False):
+        if value is None or value < 0:
+            return dict()
         return {'Delay': int(value if raw else round(value / self.base_del))}
 
     def _process_source(self, prop, is_sp, val=None):
