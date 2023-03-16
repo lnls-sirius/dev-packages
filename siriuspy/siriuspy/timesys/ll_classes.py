@@ -361,7 +361,7 @@ class _BASETRIG(_BaseLL):
         evg_chan = _LLSearch.get_evg_channel(channel)
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
-        self._duration_raw = None  # I keep this to avoid rounding errors
+        self._duration = None  # I keep this to avoid rounding errors
 
         prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
         prefix += _PVName(channel).device_name + ':'
@@ -382,9 +382,10 @@ class _BASETRIG(_BaseLL):
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
         if prop == 'Duration':
-            self._duration_raw = value / self.base_del
-        elif prop == 'DurationRaw':
-            self._duration_raw = value
+            self._duration = value
+        elif prop == 'WidthRaw':
+            pul = self._config_ok_values.get('NrPulses') or 1
+            self._duration = 2 * value * pul * self.base_del
         return super().write(prop, value)
 
     def _define_convertion_prop2pv(self):
@@ -434,7 +435,7 @@ class _BASETRIG(_BaseLL):
             'State': _partial(self._set_simple, 'State'),
             'Src': self._set_source,
             'Duration': _partial(self._set_duration, raw=False),
-            'DurationRaw': _partial(self._set_duration, raw=True),
+            'WidthRaw': _partial(self._set_duration, raw=True),
             'Polarity': _partial(self._set_simple, 'Polarity'),
             'NrPulses': self._set_nrpulses,
             'Delay': _partial(self._set_delay, raw=False),
@@ -477,7 +478,7 @@ class _BASETRIG(_BaseLL):
         map_ = {
             'State': _partial(self._get_simple, 'State'),
             'Duration': _partial(self._get_duration_pulses, ''),
-            'DurationRaw': _partial(self._get_duration_pulses, ''),
+            'WidthRaw': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
@@ -698,19 +699,19 @@ class _BASETRIG(_BaseLL):
         if any(map(lambda x: x is None, dic_.values())):
             return dict()
         return {
-            'DurationRaw': 2*dic_['Width']*dic_['NrPulses'],
+            'WidthRaw': dic_['Width'],
             'Duration': 2*dic_['Width']*dic_['NrPulses']*self.base_del,
             'NrPulses': dic_['NrPulses'],
             }
 
-    def _set_duration(self, value, pul=None, raw=True):
-        if value is None:
+    def _set_duration(self, wid, pul=None, raw=False):
+        if wid is None:
             return dict()
         if not raw:
-            value /= self.base_del
-        pul = pul or self._config_ok_values.get('NrPulses')
-        pul = pul or 1  # BUG: handle cases where LL sets this value to 0
-        wid = value / pul / 2
+            wid /= self.base_del
+            pul = pul or self._config_ok_values.get('NrPulses')
+            pul = pul or 1  # BUG: handle cases where LL sets this value to 0
+            wid = wid / pul / 2
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
 
@@ -721,13 +722,13 @@ class _BASETRIG(_BaseLL):
         dic = {'NrPulses': pul}
 
         # at initialization, try to set _duration_raw
-        if self._duration_raw is None:
+        if self._duration is None:
             # BUG: handle cases where LL sets these value to 0
             wid = self._config_ok_values.get('Width') or 1
-            self._duration_raw = wid * pul * 2
+            self._duration = 2 * wid * pul * self.base_del
 
-        if self._duration_raw is not None:
-            dic.update(self._set_duration(self._duration_raw, pul=pul))
+        if self._duration is not None:
+            dic.update(self._set_duration(self._duration, pul=pul))
         return dic
 
     def _set_rfdelaytype(self, value):
