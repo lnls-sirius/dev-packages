@@ -511,13 +511,24 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Src-Sts'] = _dcopy(dic_)
     dbase['Src-Sel'] = dic_
 
+    max_dur = 17e6
+    max_dur_raw = 2123400000
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3,
         'lolim': 0.008, 'low': 0.008, 'lolo': 0.008,
-        'hilim': 17e6, 'high': 17e6, 'hihi': 17e6}
+        'hilim': max_dur, 'high': max_dur, 'hihi': max_dur}
     dic_.update(trig_db['Duration'])
     dbase['Duration-RB'] = _dcopy(dic_)
     dbase['Duration-SP'] = dic_
+
+    # Have to be float for spinbox to work properly
+    dic_ = {
+        'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
+        'lolim': 1.0, 'low': 1.0, 'lolo': 1.0,
+        'hilim': max_dur_raw, 'high': max_dur_raw, 'hihi': max_dur_raw}
+    dic_.update(trig_db.get('DurationRaw', dict()))
+    dbase['DurationRaw-RB'] = _dcopy(dic_)
+    dbase['DurationRaw-SP'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.NORM_INV}
     dic_.update(trig_db['Polarity'])
