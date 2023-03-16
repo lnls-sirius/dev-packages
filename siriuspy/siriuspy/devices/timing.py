@@ -371,6 +371,15 @@ class Trigger(_Device):
         self['Duration-SP'] = value
 
     @property
+    def duration_raw(self):
+        """Duration."""
+        return self['DurationRaw-RB']
+
+    @duration_raw.setter
+    def duration_raw(self, value):
+        self['DurationRaw-SP'] = value
+
+    @property
     def polarity(self):
         """Polarity."""
         return self['Polarity-Sts']
