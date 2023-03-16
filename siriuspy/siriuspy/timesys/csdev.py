@@ -515,8 +515,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     max_wid_raw = 2123400000
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3,
-        'lolim': 0.008, 'low': 0.008, 'lolo': 0.008,
-        'hilim': max_dur, 'high': max_dur, 'hihi': max_dur}
+        'lolim': 0.008, 'hilim': max_dur}
     dic_.update(trig_db['Duration'])
     dbase['Duration-RB'] = _dcopy(dic_)
     dbase['Duration-SP'] = dic_
@@ -524,8 +523,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolim': 1.0, 'low': 1.0, 'lolo': 1.0,
-        'hilim': max_wid_raw, 'high': max_wid_raw, 'hihi': max_wid_raw}
+        'lolim': 1.0, 'hilim': max_wid_raw}
     dic_.update(trig_db.get('WidthRaw', dict()))
     dbase['WidthRaw-RB'] = _dcopy(dic_)
     dbase['WidthRaw-SP'] = dic_
@@ -536,9 +534,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Polarity-Sel'] = dic_
 
     dic_ = {
-        'type': 'int', 'unit': 'pulses',
-        # 'lolo': 1, 'low': 1, 'lolim': 1,
-        'hilim': 100000, 'high': 100000, 'hihi': 100000}
+        'type': 'int', 'unit': 'pulses', 'lolim': 1, 'hilim': 100000}
     dic_.update(trig_db['NrPulses'])
     dbase['NrPulses-RB'] = _dcopy(dic_)
     dbase['NrPulses-SP'] = dic_
@@ -547,8 +543,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     max_dly = 17e6
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0,
-        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
+        'lolim': 0.0, 'hilim': max_dly}
     dic_.update(trig_db['Delay'])
     dbase['Delay-RB'] = _dcopy(dic_)
     dbase['Delay-SP'] = dic_
@@ -556,31 +551,26 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
+        'lolim': 0.0, 'hilim': max_dly_raw}
     dic_.update(trig_db.get('DelayRaw', dict()))
     dbase['DelayRaw-RB'] = _dcopy(dic_)
     dbase['DelayRaw-SP'] = dic_
 
     dic_ = {
         'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
-        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
+        'lolim': 0.0, 'hilim': max_dly}
     dbase['TotalDelay-Mon'] = dic_
 
     # Have to be float for spinbox to work properly
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0, 'value': 0,
-        'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
-        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
+        'lolim': 0.0, 'hilim': max_dly_raw}
     dbase['TotalDelayRaw-Mon'] = dic_
 
     siz = len(ll_trig_names)
     dic_ = {
-        'type': 'float', 'unit': 'us', 'prec': 3,
-        'count': siz, 'value': _np.zeros(siz),
-        'lolim': -max_dly, 'low': -max_dly, 'lolo': -max_dly,
-        'hilim': max_dly, 'high': max_dly, 'hihi': max_dly}
+        'type': 'float', 'unit': 'us', 'prec': 3, 'count': siz,
+        'value': _np.zeros(siz), 'lolim': -max_dly, 'hilim': max_dly}
     dic_.update(trig_db.get('DeltaDelay', dict()))
     dbase['DeltaDelay-RB'] = _dcopy(dic_)
     dbase['DeltaDelay-SP'] = dic_
@@ -588,8 +578,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_ = {
         'type': 'float', 'unit': 'hard', 'prec': 0,
         'count': siz, 'value': _np.zeros(siz),
-        'lolim': -max_dly_raw, 'low': -max_dly_raw, 'lolo': -max_dly_raw,
-        'hilim': max_dly_raw, 'high': max_dly_raw, 'hihi': max_dly_raw}
+        'lolim': -max_dly_raw, 'hilim': max_dly_raw}
     dic_.update(trig_db.get('DeltaDelayRaw', dict()))
     dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
     dbase['DeltaDelayRaw-SP'] = dic_
