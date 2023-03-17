@@ -65,9 +65,13 @@ class _CurrInfoApp(_Callback):
 class _ASCurrInfoApp(_CurrInfoApp):
     """."""
 
-    INDICES = _get_namedtuple(
-        'Indices',
+    INDICES1 = _get_namedtuple(
+        'Indices1',
         ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
+    # Some scopes does not return STT.
+    INDICES2 = _get_namedtuple(
+        'Indices2',
+        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
     OSC = _Scopes.LI_DI_ICTOSC
     ACC = ''
@@ -91,8 +95,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         if dtim <= interval:
             _time.sleep(interval - dtim)
         else:
-            _log.warning(
-                'IOC took {0:.3f} ms in update loop.'.format(dtim*1000))
+            _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
 
     def _get_measurement(self):
         try:
@@ -107,25 +110,50 @@ class _ASCurrInfoApp(_CurrInfoApp):
     def _update_pvs(self, acc, ict1, ict2):
         """."""
         meas = self._meas
-        if meas is None:
+        if not meas:
+            _log.warning('Measurement list is empty.')
             return
+
+        # Check if measurement for each ICT has the length we expect:
+        if not len(meas) % len(self.INDICES1):
+            indcs = self.INDICES1
+        elif not len(meas) % len(self.INDICES2):
+            indcs = self.INDICES2
+        else:
+            _log.warning(
+                'Measurement list size does not match required length.')
+            return
+
         name = acc + '-ICT1'
-        idxict1 = [i for i, val in enumerate(meas) if name in val].pop()
-        chg1 = float(meas[idxict1 + self.INDICES.CURR]) * 1e9
-        ave1 = float(meas[idxict1 + self.INDICES.AVG]) * 1e9
-        min1 = float(meas[idxict1 + self.INDICES.MIN]) * 1e9
-        max1 = float(meas[idxict1 + self.INDICES.MAX]) * 1e9
-        std1 = float(meas[idxict1 + self.INDICES.STD]) * 1e9
-        cnt1 = int(float(meas[idxict1 + self.INDICES.COUNT]))
+        idxict1 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict1:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict1 = idxict1.pop()
 
         name = acc + '-ICT2'
-        idxict2 = [i for i, val in enumerate(meas) if name in val].pop()
-        chg2 = float(meas[idxict2 + self.INDICES.CURR]) * 1e9
-        ave2 = float(meas[idxict2 + self.INDICES.AVG]) * 1e9
-        min2 = float(meas[idxict2 + self.INDICES.MIN]) * 1e9
-        max2 = float(meas[idxict2 + self.INDICES.MAX]) * 1e9
-        std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
-        cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
+        idxict2 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict2:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict2 = idxict2.pop()
+
+        try:
+            chg1 = float(meas[idxict1 + indcs.CURR]) * 1e9
+            ave1 = float(meas[idxict1 + indcs.AVG]) * 1e9
+            min1 = float(meas[idxict1 + indcs.MIN]) * 1e9
+            max1 = float(meas[idxict1 + indcs.MAX]) * 1e9
+            std1 = float(meas[idxict1 + indcs.STD]) * 1e9
+            cnt1 = int(float(meas[idxict1 + indcs.COUNT]))
+            chg2 = float(meas[idxict2 + indcs.CURR]) * 1e9
+            ave2 = float(meas[idxict2 + indcs.AVG]) * 1e9
+            min2 = float(meas[idxict2 + indcs.MIN]) * 1e9
+            max2 = float(meas[idxict2 + indcs.MAX]) * 1e9
+            std2 = float(meas[idxict2 + indcs.STD]) * 1e9
+            cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
+        except IndexError:
+            _log.warning('Problem reading data.')
+            return
 
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
         effave = 0 if ave1 == 0 else 100 * ave2/ave1
@@ -151,11 +179,6 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
-
-    # TS scope does not returns STT.
-    INDICES = _get_namedtuple(
-        'Indices',
-        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
     OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
