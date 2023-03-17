@@ -54,6 +54,8 @@ class _BaseLL(_Callback):
             val: key for key, val in self._dict_convert_prop2pv.items()}
         self._config_ok_values = dict()
         self._base_freq = _RFFREQ / _RFDIV
+        self.base_del = 1 / self._base_freq / _US2SEC
+        self._rf_del = self.base_del / 5
 
         self._writepvs = dict()
         self._readpvs = dict()
@@ -381,6 +383,9 @@ class _BASETRIG(_BaseLL):
         # keep this info for recalculating Width whenever necessary
         if prop == 'Duration':
             self._duration = value
+        elif prop == 'WidthRaw':
+            pul = self._config_ok_values.get('NrPulses') or 1
+            self._duration = 2 * value * pul * self.base_del
         return super().write(prop, value)
 
     def _define_convertion_prop2pv(self):
@@ -429,7 +434,8 @@ class _BASETRIG(_BaseLL):
             # 'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'Src': self._set_source,
-            'Duration': self._set_duration,
+            'Duration': _partial(self._set_duration, raw=False),
+            'WidthRaw': _partial(self._set_duration, raw=True),
             'Polarity': _partial(self._set_simple, 'Polarity'),
             'NrPulses': self._set_nrpulses,
             'Delay': _partial(self._set_delay, raw=False),
@@ -472,6 +478,7 @@ class _BASETRIG(_BaseLL):
         map_ = {
             'State': _partial(self._get_simple, 'State'),
             'Duration': _partial(self._get_duration_pulses, ''),
+            'WidthRaw': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
@@ -582,7 +589,7 @@ class _BASETRIG(_BaseLL):
         dic_ = {'RFDelay': 0, 'FineDelay': 0}
         if self._config_ok_values.get('RFDelayType', False):
             dic_['RFDelay'] = 31
-        if value is None:
+        if value is None or value < 0:
             return dic_
         value = value if raw else round(value / self.base_del)
         dic_['Delay'] = int(value)
@@ -692,16 +699,19 @@ class _BASETRIG(_BaseLL):
         if any(map(lambda x: x is None, dic_.values())):
             return dict()
         return {
-            'Duration': 2*dic_['Width']*self.base_del*dic_['NrPulses'],
+            'WidthRaw': dic_['Width'],
+            'Duration': 2*dic_['Width']*dic_['NrPulses']*self.base_del,
             'NrPulses': dic_['NrPulses'],
             }
 
-    def _set_duration(self, value, pul=None):
-        if value is None:
+    def _set_duration(self, wid, pul=None, raw=False):
+        if wid is None:
             return dict()
-        pul = pul or self._config_ok_values.get('NrPulses')
-        pul = pul or 1  # BUG: handle cases where LL sets this value to 0
-        wid = value / self.base_del / pul / 2
+        if not raw:
+            wid /= self.base_del
+            pul = pul or self._config_ok_values.get('NrPulses')
+            pul = pul or 1  # BUG: handle cases where LL sets this value to 0
+            wid = wid / pul / 2
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
 
@@ -711,11 +721,11 @@ class _BASETRIG(_BaseLL):
         pul = int(pul)
         dic = {'NrPulses': pul}
 
-        # at initialization, try to set _duration
+        # at initialization, try to set _duration_raw
         if self._duration is None:
             # BUG: handle cases where LL sets these value to 0
             wid = self._config_ok_values.get('Width') or 1
-            self._duration = wid * pul * 2 * self.base_del
+            self._duration = 2 * wid * pul * self.base_del
 
         if self._duration is not None:
             dic.update(self._set_duration(self._duration, pul=pul))
@@ -754,6 +764,8 @@ class _EVROTP(_BASETRIG):
         return dic
 
     def _set_delay(self, value, raw=False):
+        if value is None or value < 0:
+            return dict()
         return {'Delay': int(value if raw else round(value / self.base_del))}
 
     def _process_source(self, prop, is_sp, val=None):
