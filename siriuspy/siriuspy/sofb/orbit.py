@@ -340,9 +340,9 @@ class EpicsOrbit(BaseOrbit):
                 daemon=True).start()
             return True
 
-        value = _csbpm.EnbldDsbld.enabled
-        if val == self._csorb.EnbldDsbld.Dsbld:
-            value = _csbpm.EnbldDsbld.disabled
+        value = _csbpm.DsblEnbl.enabled
+        if val == self._csorb.DsblEnbl.Dsbl:
+            value = _csbpm.DsblEnbl.disabled
 
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
@@ -359,9 +359,9 @@ class EpicsOrbit(BaseOrbit):
                 daemon=True).start()
             return True
 
-        value = _csbpm.EnbldDsbld.enabled
-        if val == self._csorb.EnbldDsbld.Dsbld:
-            value = _csbpm.EnbldDsbld.disabled
+        value = _csbpm.DsblEnbl.enabled
+        if val == self._csorb.DsblEnbl.Dsbl:
+            value = _csbpm.DsblEnbl.disabled
 
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
@@ -598,16 +598,16 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         for bpm in self._get_used_bpms():
-            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.enabled
-            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.enabled
-            bpm.facq_sync_enbl = _csbpm.EnbldDsbld.enabled
-            bpm.monit_sync_enbl = _csbpm.EnbldDsbld.enabled
+            bpm.tbt_sync_enbl = _csbpm.DsblEnbl.enabled
+            bpm.fofb_sync_enbl = _csbpm.DsblEnbl.enabled
+            bpm.facq_sync_enbl = _csbpm.DsblEnbl.enabled
+            bpm.monit_sync_enbl = _csbpm.DsblEnbl.enabled
         _time.sleep(0.5)
         for bpm in self._get_used_bpms():
-            bpm.tbt_sync_enbl = _csbpm.EnbldDsbld.disabled
-            bpm.fofb_sync_enbl = _csbpm.EnbldDsbld.disabled
-            bpm.monit_sync_enbl = _csbpm.EnbldDsbld.disabled
-            bpm.facq_sync_enbl = _csbpm.EnbldDsbld.disabled
+            bpm.tbt_sync_enbl = _csbpm.DsblEnbl.disabled
+            bpm.fofb_sync_enbl = _csbpm.DsblEnbl.disabled
+            bpm.monit_sync_enbl = _csbpm.DsblEnbl.disabled
+            bpm.facq_sync_enbl = _csbpm.DsblEnbl.disabled
 
         if self.acc == 'SI' and self.sofb.fofb.connected:
             _time.sleep(0.2)
@@ -731,9 +731,9 @@ class EpicsOrbit(BaseOrbit):
                 daemon=True).start()
             return True
 
-        value = _csbpm.EnbldDsbld.enabled
-        if val == self._csorb.EnbldDsbld.Dsbld:
-            value = _csbpm.EnbldDsbld.disabled
+        value = _csbpm.DsblEnbl.enabled
+        if val == self._csorb.DsblEnbl.Dsbl:
+            value = _csbpm.DsblEnbl.disabled
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]

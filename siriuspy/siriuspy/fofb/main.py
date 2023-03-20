@@ -34,9 +34,9 @@ class App(_Callback):
         # internal states
         self._loop_state = self._const.LoopState.Open
         self._loop_state_lastsp = self._const.LoopState.Open
-        self._loop_gain_h = 0.1
+        self._loop_gain_h = 0.0520
         self._loop_gain_mon_h = 0
-        self._loop_gain_v = 0.1
+        self._loop_gain_v = 0.0520
         self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
@@ -52,7 +52,7 @@ class App(_Callback):
         self._corr_setaccfreezedsbl_count = 0
         self._corr_setaccclear_count = 0
         self._corr_setcurrzero_count = 0
-        self._corr_setcurrzero_dur = 0
+        self._corr_setcurrzero_dur = 5
         self._thread_currzero = None
         self._abort_thread_currzero = False
         self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
@@ -70,7 +70,7 @@ class App(_Callback):
         self._fofbctrl_reset_count = 0
         self._thread_reset = None
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
-        self._fofbctrl_syncuseenbllist = 0
+        self._fofbctrl_syncuseenbllist = self._const.DsblEnbl.Enbl
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
