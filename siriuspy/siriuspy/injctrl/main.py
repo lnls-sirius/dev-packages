@@ -106,8 +106,9 @@ class App(_Callback):
                     {'sec': sec, 'dis': 'PS', 'dev': '(B|Q.*|S.*|CH|CV)'})}
 
             if sec != 'LI':
-                punames = _PSSearch.get_psnames(
-                    {'sec': sec, 'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
+                punames = _PSSearch.get_psnames({
+                    'sec': sec, 'dis': 'PU', 'dev': '.*(Kckr|Sept)',
+                    'propty_name': '(?!:CCoil).*'})
                 if sec == 'SI':
                     punames.remove('SI-01SA:PU-InjDpKckr')
                 self._pvs_diag[sec]['PU'] = {
@@ -156,8 +157,9 @@ class App(_Callback):
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = _PSSearch.get_psnames(
-            {'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)'})
+        self._pu_names = _PSSearch.get_psnames({
+            'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)',
+            'propty_name': '(?!:CCoil).*'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
         self._pu_refvolt = list()
         self._topup_puref_ignore = False

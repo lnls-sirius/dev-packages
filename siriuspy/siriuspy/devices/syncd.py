@@ -1,5 +1,6 @@
 """Synchronized Devices."""
 
+from ..namesys import SiriusPVName as _SiriusPVName
 from .device import DeviceApp as _DeviceApp
 
 
@@ -10,7 +11,7 @@ class DevicesSync(_DeviceApp):
             self, devnames, propty_sync, propty_async=None,
             devname=None, auto_mon=False):
         """."""
-        self._devnames = devnames
+        self._devnames = [_SiriusPVName(dev) for dev in devnames]
         self._props_sync = list(propty_sync)
         self._props_async = [] if propty_async is None else propty_async
 
@@ -72,7 +73,7 @@ class DevicesSync(_DeviceApp):
         prop2prop = dict()
         for devname in self._devnames:
             for propty in self._props_sync + self._props_async:
-                pvname = devname + ':' + propty
+                pvname = devname.substitute(propty=devname.propty_name+propty)
                 if propty not in prop2prop:
                     prop2prop[propty] = [pvname]
                 else:

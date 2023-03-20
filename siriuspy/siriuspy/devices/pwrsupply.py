@@ -64,6 +64,10 @@ class _PSDev(_Device):
         'Intlk5-Mon', 'Intlk6-Mon', 'Intlk7-Mon',
     )
     _properties_pulsed_kckr = _properties_pulsed_sept + ('Intlk8-Mon', )
+    _properties_pulsed_nlkckr = _properties_pulsed_kckr + (
+        'CCoilHVoltage-SP', 'CCoilHVoltage-RB', 'CCoilHVoltage-Mon',
+        'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
+    )
 
     def __init__(self, devname):
         """."""
@@ -83,7 +87,7 @@ class _PSDev(_Device):
         (self._strength_sp_propty,
          self._strength_rb_propty,
          self._strength_mon_propty,
-         properties) = self._set_attributes_properties()
+         properties) = self._set_attributes_properties(devname)
 
         # call base class constructor
         super().__init__(devname, properties=properties)
@@ -241,7 +245,7 @@ class _PSDev(_Device):
 
     # --- private methods ---
 
-    def _set_attributes_properties(self):
+    def _set_attributes_properties(self, devname):
 
         properties = _PSDev._properties_common
         if self._is_linac:
@@ -252,6 +256,8 @@ class _PSDev(_Device):
                 properties += _PSDev._properties_pulsed_kckr
             else:
                 properties += _PSDev._properties_pulsed_sept
+            if 'NLKckr' in devname:
+                properties += _PSDev._properties_pulsed_nlkckr
         elif self._is_fc:
             properties += _PSDev._properties_fc
         else:
@@ -626,6 +632,34 @@ class PowerSupplyPU(_PSDev):
     def voltage_mon(self):
         """."""
         return self['Voltage-Mon']
+
+    @property
+    def ccoilh_voltage(self):
+        """."""
+        return self['CCoilHVoltage-RB']
+
+    @ccoilh_voltage.setter
+    def ccoilh_voltage(self, value):
+        self['CCoilHVoltage-SP'] = value
+
+    @property
+    def ccoilh_voltage_mon(self):
+        """."""
+        return self['CCoilHVoltage-Mon']
+
+    @property
+    def ccoilv_voltage(self):
+        """."""
+        return self['CCoilVVoltage-RB']
+
+    @ccoilv_voltage.setter
+    def ccoilv_voltage(self, value):
+        self['CCoilVVoltage-SP'] = value
+
+    @property
+    def ccoilv_voltage_mon(self):
+        """."""
+        return self['CCoilVVoltage-Mon']
 
     @property
     def delay(self):

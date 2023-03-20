@@ -1265,6 +1265,19 @@ def _get_pu_FP_KCKR_propty_database():
     return _get_pu_common_propty_database()
 
 
+def _get_pu_FP_KCKRCCOIL_propty_database():
+    """."""
+    dbase = {
+        'Voltage-SP': {'type': 'float', 'value': 0.0,
+                       'prec': PU_VOLTAGE_PRECISION},
+        'Voltage-RB': {'type': 'float', 'value': 0.0,
+                       'prec': PU_VOLTAGE_PRECISION},
+        'Voltage-Mon': {'type': 'float', 'value': 0.0,
+                        'prec': PU_VOLTAGE_PRECISION},
+    }
+    return dbase
+
+
 def _get_pu_FP_PINGER_propty_database():
     """."""
     return _get_pu_common_propty_database()
@@ -2894,6 +2907,7 @@ def _get_model_db(psmodel):
         'FAP_4P': _get_ps_FAP_4P_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
+        'FP_KCKRCCOIL': _get_pu_FP_KCKRCCOIL_propty_database,
         'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
         'FOFB_PS': _get_ps_FOFB_propty_database,
@@ -2919,7 +2933,8 @@ def _insert_strengths(database, pstype):
         'bo-injkicker', 'bo-ejekicker',
         'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
         'ts-injseptum-thin', 'ts-injseptum-thick',
-        'si-injdpk', 'si-injnlk', 'si-hping', 'si-vping')
+        'si-injdpk', 'si-injnlk', 'si-injnlk-ccoilh', 'si-injnlk-ccoilv',
+        'si-hping', 'si-vping')
 
     # pulsed
     if pstype in pulsed_pstypes:
