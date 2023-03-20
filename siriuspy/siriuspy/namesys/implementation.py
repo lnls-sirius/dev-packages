@@ -446,6 +446,8 @@ class Filter:
                        fil['dis'] + '-' + fil['dev'])
             if 'idx' in fil:
                 pattern += '-' + fil['idx']
+            if 'propty_name' in fil:
+                pattern += fil['propty_name']
             regexp = _re.compile(pattern)
             fs.append(regexp)
 
