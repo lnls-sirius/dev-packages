@@ -49,7 +49,7 @@ class ASPUStandbyHandler(_BaseHandler):
     def __init__(self):
         """Init."""
         self._punames = PSSearch.get_psnames(
-            {'dis': 'PU', 'dev': '.*(Kckr|Sept)'})
+            {'dis': 'PU', 'dev': '.*(Kckr|Sept)((?!:CCoil).)*$'})
         self._trignames = [
             dev.replace('PU', 'TI') for dev in self._punames]
         self._modnames = LIModltr.DEVICES.ALL
