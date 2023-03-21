@@ -3,10 +3,10 @@
 from time import time as _time, sleep as _sleep
 import logging as _log
 from functools import partial as _part
-from threading import Thread as _Thread
+
 import numpy as _np
 
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CAThread as _Thread
 from ..devices import HLFOFB
 
 from .matrix import BaseMatrix as _BaseMatrix
@@ -37,9 +37,9 @@ class SOFB(_BaseClass):
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.0, ki=0.5, kd=0.0),
-            cv=dict(kp=0.0, ki=0.5, kd=0.0),
-            rf=dict(kp=0.0, ki=0.5, kd=0.0))
+            ch=dict(kp=0.0, ki=0.2, kd=0.0),
+            cv=dict(kp=0.0, ki=0.2, kd=0.0),
+            rf=dict(kp=0.0, ki=0.2, kd=0.0))
         self._measuring_respmat = False
         self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
@@ -52,8 +52,8 @@ class SOFB(_BaseClass):
             self._meas_respmat_kick['rf'] = 75
         if self.acc == 'SI':
             self.fofb = HLFOFB()
-            self._download_fofb_kicks = False
-            self._download_fofb_kicks_perc = 0.01
+            self._download_fofb_kicks = True
+            self._download_fofb_kicks_perc = 0.04
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
@@ -370,8 +370,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.info(msg)
             self._loop_state = value
-            self._thread = _Thread(
-                target=self._do_auto_corr, daemon=True)
+            self._thread = _Thread(target=self._do_auto_corr, daemon=True)
             self._thread.start()
         elif value == self._csorb.LoopState.Open:
             msg = 'Opening the Loop.'

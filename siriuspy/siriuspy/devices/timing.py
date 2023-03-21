@@ -371,6 +371,15 @@ class Trigger(_Device):
         self['Duration-SP'] = value
 
     @property
+    def width_raw(self):
+        """Width of one pulse in hardware units."""
+        return self['WidthRaw-RB']
+
+    @width_raw.setter
+    def width_raw(self, value):
+        self['WidthRaw-SP'] = value
+
+    @property
     def polarity(self):
         """Polarity."""
         return self['Polarity-Sts']

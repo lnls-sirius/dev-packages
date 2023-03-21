@@ -6,7 +6,9 @@ from .. import util as _util
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
-from ..pwrsupply.csdev import Const as _Const
+from ..pwrsupply.csdev import Const as _Const, \
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
+    MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
@@ -30,6 +32,7 @@ class _PSDev(_Device):
         'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
         'CycleType-Sel', 'CycleType-Sts',
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
+        'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
         'CycleFreq-SP', 'CycleFreq-RB',
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
@@ -61,6 +64,10 @@ class _PSDev(_Device):
         'Intlk5-Mon', 'Intlk6-Mon', 'Intlk7-Mon',
     )
     _properties_pulsed_kckr = _properties_pulsed_sept + ('Intlk8-Mon', )
+    _properties_pulsed_nlkckr = _properties_pulsed_kckr + (
+        'CCoilHVoltage-SP', 'CCoilHVoltage-RB', 'CCoilHVoltage-Mon',
+        'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
+    )
 
     def __init__(self, devname):
         """."""
@@ -80,7 +87,7 @@ class _PSDev(_Device):
         (self._strength_sp_propty,
          self._strength_rb_propty,
          self._strength_mon_propty,
-         properties) = self._set_attributes_properties()
+         properties) = self._set_attributes_properties(devname)
 
         # call base class constructor
         super().__init__(devname, properties=properties)
@@ -238,7 +245,7 @@ class _PSDev(_Device):
 
     # --- private methods ---
 
-    def _set_attributes_properties(self):
+    def _set_attributes_properties(self, devname):
 
         properties = _PSDev._properties_common
         if self._is_linac:
@@ -249,6 +256,8 @@ class _PSDev(_Device):
                 properties += _PSDev._properties_pulsed_kckr
             else:
                 properties += _PSDev._properties_pulsed_sept
+            if 'NLKckr' in devname:
+                properties += _PSDev._properties_pulsed_nlkckr
         elif self._is_fc:
             properties += _PSDev._properties_fc
         else:
@@ -507,6 +516,30 @@ class PowerSupply(_PSDev):
         self.cycle_aux_param = var
 
     @property
+    def wfm(self):
+        """."""
+        return self['Wfm-RB'].copy()
+
+    @wfm.setter
+    def wfm(self, value):
+        """."""
+        value = _np.array(value).ravel()
+        max_size = _MAX_WFMSIZE_OTHERS
+        if self.psmodel == 'FBP':
+            max_size = _MAX_WFMSIZE_FBP
+        self['Wfm-SP'] = value[:max_size]
+
+    @property
+    def wfm_mon(self):
+        """."""
+        return self['Wfm-Mon'].copy()
+
+    @property
+    def wfmref_mon(self):
+        """."""
+        return self['WfmRef-Mon'].copy()
+
+    @property
     def wfm_update_auto(self):
         """Waveform auto update."""
         return self['WfmUpdateAuto-Sts']
@@ -599,6 +632,34 @@ class PowerSupplyPU(_PSDev):
     def voltage_mon(self):
         """."""
         return self['Voltage-Mon']
+
+    @property
+    def ccoilh_voltage(self):
+        """."""
+        return self['CCoilHVoltage-RB']
+
+    @ccoilh_voltage.setter
+    def ccoilh_voltage(self, value):
+        self['CCoilHVoltage-SP'] = value
+
+    @property
+    def ccoilh_voltage_mon(self):
+        """."""
+        return self['CCoilHVoltage-Mon']
+
+    @property
+    def ccoilv_voltage(self):
+        """."""
+        return self['CCoilVVoltage-RB']
+
+    @ccoilv_voltage.setter
+    def ccoilv_voltage(self, value):
+        self['CCoilVVoltage-SP'] = value
+
+    @property
+    def ccoilv_voltage_mon(self):
+        """."""
+        return self['CCoilVVoltage-Mon']
 
     @property
     def delay(self):

@@ -44,7 +44,7 @@ class HLFOFBConst(_csdev.Const):
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
     DEF_KICK_BUFFER_SIZE = 1
-    DEF_MAX_ORB_DISTORTION = 60  # [um]
+    DEF_MAX_ORB_DISTORTION = 200  # [um]
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -119,22 +119,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.0520, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.0520, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.0520, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.0520, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
@@ -147,16 +147,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
             'LoopMaxOrbDistortionEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopMaxOrbDistortionEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
 
             # Correctors
@@ -185,29 +185,29 @@ class HLFOFBConst(_csdev.Const):
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZeroDuration-SP': {
-                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CorrSetCurrZeroDuration-RB': {
-                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CHAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
             'TimeFrameLen-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
+                'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
+                'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
             'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
             'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
@@ -216,10 +216,10 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncNet-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncUseEnblList-Sel': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl},
+                'value': self.DsblEnbl.Enbl},
             'CtrlrSyncUseEnblList-Sts': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl},
+                'value': self.DsblEnbl.Enbl},
             'CtrlrSyncEnblList-Mon': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1], 'unit': 'DCCs used in loop'},

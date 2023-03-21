@@ -1,5 +1,6 @@
 """Module to deal with orbit acquisition."""
 import logging as _log
+
 import numpy as _np
 
 from ..epics import PV as _PV
@@ -59,17 +60,17 @@ class BPM(_BaseTimingConfig):
             # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
             'ACQTrigger': _csbpm.AcqTrigTyp.External,
             'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
-            # 'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
+            # 'ACQTriggerDataChan': _csbpm.AcqChan.FAcq,
             'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
-            'SwTagEn': _csbpm.EnbldDsbld.disabled,  # Enable FOFB sync Timing
-            'Monit1TagEn': _csbpm.EnbldDsbld.disabled,
-            'MonitTagEn': _csbpm.EnbldDsbld.disabled,
-            'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
-            'TbtDataMaskSamplesBeg': 0,
-            'TbtDataMaskSamplesEnd': 0,
-            'XYPosCal': _csbpm.EnbldDsbld.enabled,
-            'SUMPosCal': _csbpm.EnbldDsbld.enabled}
+            'TbTTagEn': _csbpm.DsblEnbl.disabled,  # Enable TbT sync Timing
+            'SwTagEn': _csbpm.DsblEnbl.disabled,  # Enable FOFB sync Timing
+            'FAcqTagEn': _csbpm.DsblEnbl.disabled,
+            'MonitTagEn': _csbpm.DsblEnbl.disabled,
+            'TbTDataMaskEn': _csbpm.DsblEnbl.disabled,  # Enable use of mask
+            'TbTDataMaskSamplesBeg': 0,
+            'TbTDataMaskSamplesEnd': 0,
+            'XYPosCal': _csbpm.DsblEnbl.enabled,
+            'SUMPosCal': _csbpm.DsblEnbl.enabled}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'SwMode': 'SwMode-Sel',
@@ -90,13 +91,13 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sel',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
-            'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'TbTTagEn': 'TbTTagEn-Sel',  # Enable TbT sync with timing
             'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
-            'Monit1TagEn': 'Monit1TagEn-Sel',  # Enable Monit1 sync with timing
+            'FAcqTagEn': 'FAcqTagEn-Sel',  # Enable FAcq sync with timing
             'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
-            'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
-            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP',
+            'TbTDataMaskEn': 'TbTDataMaskEn-Sel',  # Enable use of mask
+            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-SP',
+            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-SP',
             'XYPosCal': 'XYPosCal-Sel',
             'SUMPosCal': 'SUMPosCal-Sel'}
 
@@ -107,10 +108,10 @@ class BPM(_BaseTimingConfig):
             'asyn.CNCT': 'asyn.CNCT',
             'INFOClkFreq': 'INFOClkFreq-RB',
             'INFOHarmonicNumber': 'INFOHarmonicNumber-RB',
-            'INFOTBTRate': 'INFOTBTRate-RB',
+            'INFOTbTRate': 'INFOTbTRate-RB',
             'INFOFOFBRate': 'INFOFOFBRate-RB',
             'INFOMONITRate': 'INFOMONITRate-RB',
-            'INFOMONIT1Rate': 'INFOMONIT1Rate-RB',
+            'INFOFAcqRate': 'INFOFAcqRate-RB',
             'SwMode': 'SwMode-Sts',
             'ACQBPMMode': 'ACQBPMMode-Sts',
             'ACQChannel': 'ACQChannel-Sts',
@@ -131,13 +132,13 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
-            'TbtTagEn': 'TbtTagEn-Sts',
+            'TbTTagEn': 'TbTTagEn-Sts',
             'SwTagEn': 'SwTagEn-Sts',
-            'Monit1TagEn': 'Monit1TagEn-Sts',
+            'FAcqTagEn': 'FAcqTagEn-Sts',
             'MonitTagEn': 'MonitTagEn-Sts',
-            'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
-            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
-            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB',
+            'TbTDataMaskEn': 'TbTDataMaskEn-Sts',
+            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-RB',
+            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-RB',
             'XYPosCal': 'XYPosCal-Sts',
             'SUMPosCal': 'SUMPosCal-Sts'}
         self._config_pvs_rb = {
@@ -236,7 +237,7 @@ class BPM(_BaseTimingConfig):
     def tbtrate(self):
         """."""
         defv = 362 if self._csorb.acc == 'BO' else 382
-        pvobj = self._config_pvs_rb['INFOTBTRate']
+        pvobj = self._config_pvs_rb['INFOTbTRate']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -272,17 +273,17 @@ class BPM(_BaseTimingConfig):
         return self.monitrate / self.adcfreq
 
     @property
-    def monit1rate(self):
+    def facqrate(self):
         """."""
         defv = (362 if self._csorb.acc == 'BO' else 382) * 603
-        pvobj = self._config_pvs_rb['INFOMONIT1Rate']
+        pvobj = self._config_pvs_rb['INFOFAcqRate']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
     @property
-    def monit1period(self):
+    def facqperiod(self):
         """."""
-        return self.monit1rate / self.adcfreq
+        return self.facqrate / self.adcfreq
 
     @property
     def poskx(self):
@@ -492,14 +493,14 @@ class BPM(_BaseTimingConfig):
     @property
     def tbt_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtTagEn']
+        pvobj = self._config_pvs_rb['TbTTagEn']
         return pvobj.value if pvobj.connected else None
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtTagEn']
-        self._config_ok_vals['TbtTagEn'] = val
+        pvobj = self._config_pvs_sp['TbTTagEn']
+        self._config_ok_vals['TbTTagEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -518,15 +519,15 @@ class BPM(_BaseTimingConfig):
             pvobj.put(val, wait=False)
 
     @property
-    def monit1_sync_enbl(self):
+    def facq_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['Monit1TagEn']
+        pvobj = self._config_pvs_rb['FAcqTagEn']
         return pvobj.value if pvobj.connected else None
 
-    @monit1_sync_enbl.setter
-    def monit1_sync_enbl(self, val):
+    @facq_sync_enbl.setter
+    def facq_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['Monit1TagEn']
+        pvobj = self._config_pvs_sp['FAcqTagEn']
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -546,42 +547,42 @@ class BPM(_BaseTimingConfig):
     @property
     def tbt_mask_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskEn']
+        pvobj = self._config_pvs_rb['TbTDataMaskEn']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskEn']
-        self._config_ok_vals['TbtDataMaskEn'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskEn']
+        self._config_ok_vals['TbTDataMaskEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_begin(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskSamplesBeg']
+        pvobj = self._config_pvs_rb['TbTDataMaskSamplesBeg']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_begin.setter
     def tbt_mask_begin(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskSamplesBeg']
-        self._config_ok_vals['TbtDataMaskSamplesBeg'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskSamplesBeg']
+        self._config_ok_vals['TbTDataMaskSamplesBeg'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_end(self):
         """."""
-        pvobj = self._config_pvs_rb['TbtDataMaskSamplesEnd']
+        pvobj = self._config_pvs_rb['TbTDataMaskSamplesEnd']
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbtDataMaskSamplesEnd']
-        self._config_ok_vals['TbtDataMaskSamplesEnd'] = val
+        pvobj = self._config_pvs_sp['TbTDataMaskSamplesEnd']
+        self._config_ok_vals['TbTDataMaskSamplesEnd'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -594,7 +595,7 @@ class BPM(_BaseTimingConfig):
     @polycal.setter
     def polycal(self, val):
         """."""
-        val = _csbpm.EnbldDsbld.enabled if val else _csbpm.EnbldDsbld.disabled
+        val = _csbpm.DsblEnbl.enabled if val else _csbpm.DsblEnbl.disabled
         pv1 = self._config_pvs_sp['XYPosCal']
         pv2 = self._config_pvs_sp['SUMPosCal']
         self._config_ok_vals['XYPosCal'] = val
@@ -704,7 +705,7 @@ class BPM(_BaseTimingConfig):
         diff2 = (vals['D'][zero2] - vals['B'][zero2]) / sum2[zero2]
         x_uncal = (diff1 + diff2) / 2
         y_uncal = (diff1 - diff2) / 2
-        if self._config_ok_vals['XYPosCal'] == _csbpm.EnbldDsbld.disabled:
+        if self._config_ok_vals['XYPosCal'] == _csbpm.DsblEnbl.disabled:
             x_cal[:rnts][zero1] = x_uncal * self.poskx
             y_cal[:rnts][zero2] = y_uncal * self.posky
         else:

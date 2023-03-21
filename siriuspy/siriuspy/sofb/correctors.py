@@ -8,7 +8,7 @@ import numpy as _np
 from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
-from ..epics import PV as _PV
+from ..epics import PV as _PV, CAThread as _Thread
 from ..thread import RepeaterThread as _Repeat
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
@@ -16,9 +16,7 @@ from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 from ..namesys import SiriusPVName as _PVName
-
 from ..pwrsupply.pssofb import PSSOFB as _PSSOFB
-
 
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
@@ -677,8 +675,15 @@ class EpicsCorrectors(BaseCorrectors):
             self._update_log('ERR: ' + str(err))
             _log.error(_traceback.format_exc())
 
-    def set_corrs_mode(self, value):
+    def set_corrs_mode(self, value, is_thread=False):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
+        if not is_thread:
+            _Thread(
+                target=self.set_corrs_mode,
+                args=(value, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         if value not in self._csorb.CorrSync:
             return False
         self.sync_kicks = value
@@ -724,7 +729,7 @@ class EpicsCorrectors(BaseCorrectors):
             return False
         if val not in self._csorb.CorrPSSOFBEnbl:
             return False
-        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbld:
+        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbl:
             kicks = self.get_strength()
             self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
             self._prob = _np.zeros(kicks.size, dtype=_np.int8)
@@ -757,8 +762,15 @@ class EpicsCorrectors(BaseCorrectors):
         self.run_callbacks('CorrPSSOFBEnbl-Mon', val)
         return True
 
-    def configure_correctors(self, _):
+    def configure_correctors(self, val, is_thread=False):
         """Configure correctors method."""
+        if not is_thread:
+            _Thread(
+                target=self.configure_correctors,
+                args=(val, ), kwargs={'is_thread': True},
+                daemon=True).start()
+            return True
+
         corrs = self._get_used_corrs(include_rf=True)
         for corr in corrs:
             if not corr.connected:
@@ -773,14 +785,12 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.configure()
         if not self.isring:
-            return True
-
+            return
         if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
                 _log.error(msg[5:])
-        return True
 
     def _update_status(self):
         status = 0b0000111

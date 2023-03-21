@@ -39,10 +39,12 @@ class PVsConfig(_ConfigDBDocument):
 
     @property
     def pvs(self):
-        """Return dict with PVs and values."""
-        pvslist = self._value['pvs']
-        pvsdict = {item[0]: item[1] for item in pvslist}
-        return pvsdict
+        """Return dict with PVs as keys and (values, delay) as value."""
+        if self._value is None:
+            pvslist = self.get_value_from_template()
+        else:
+            pvslist = self._value['pvs']
+        return {item[0]: item[1:] for item in pvslist}
 
     def read(self, timeout=_TIMEOUT):
         """Read machine state."""
@@ -80,15 +82,18 @@ class PVsConfig(_ConfigDBDocument):
         self.save(new_name)
         return True, []
 
-    def apply(self, timeout=_TIMEOUT):
+    def apply(self, pvsdict=None, timeout=_TIMEOUT):
         """Apply current config value to machine and check if implemented."""
+        if not pvsdict:
+            pvsdict = self.pvs
+
         # connect
         self.connect()
 
         pvs_not_set = set()
 
         # set
-        for pvn, value, delay in self._value['pvs']:
+        for pvn, (value, delay) in pvsdict.items():
             pvobj = self._get_pv(pvn)
             try:
                 pvobj.put(value)
@@ -100,7 +105,7 @@ class PVsConfig(_ConfigDBDocument):
         _time.sleep(2.0)
 
         # check
-        for pvn, value, delay in self._value['pvs']:
+        for pvn, (value, delay) in pvsdict.items():
             if pvn in pvs_not_set:
                 continue
             equal = self._check_pv(pvn, value, timeout=timeout)
@@ -111,9 +116,9 @@ class PVsConfig(_ConfigDBDocument):
             return False, pvs_not_set
         return True, []
 
-    def load_and_apply(self, timeout=_TIMEOUT):
+    def load_and_apply(self, timeout=_TIMEOUT, discarded=False):
         """Load from server, apply to machine and check if implemented."""
-        self.load()
+        self.load(discarded=discarded)
         status_ok, failed_list = self.apply(timeout=timeout)
         if not status_ok:
             return False, failed_list
@@ -129,8 +134,8 @@ class PVsConfig(_ConfigDBDocument):
             self.PVs[pvname] = pvobj
         return pvobj
 
-    def _check_pv(self, pvname, value, timeout=_TIMEOUT,
-                  rel_tol=1e-06, abs_tol=0.0):
+    def _check_pv(
+            self, pvname, value, timeout=_TIMEOUT, rel_tol=1e-06, abs_tol=0.0):
         """Check PV value."""
         pvobj = self._get_pv(pvname)
         pvobj.wait_for_connection(timeout)
