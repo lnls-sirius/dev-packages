@@ -729,7 +729,7 @@ class EpicsCorrectors(BaseCorrectors):
             return False
         if val not in self._csorb.CorrPSSOFBEnbl:
             return False
-        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbld:
+        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbl:
             kicks = self.get_strength()
             self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
             self._prob = _np.zeros(kicks.size, dtype=_np.int8)
