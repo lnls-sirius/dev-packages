@@ -145,7 +145,7 @@ class DVF(_DeviceNC):
         """Reset DVF to a standard configuration."""
         props_values = {
             'cam1:ArrayCallbacks': 1,  # Enable
-            'cam1:ImageMode': 2,  # Continuos
+            'cam1:ImageMode': 2,  # Continuous
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 1,  # Enable
             'HDF1:EnableCallbacks': 1,  # Enable
