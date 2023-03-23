@@ -47,8 +47,16 @@ class DVF(_DeviceNC):
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
         'cam1:Acquire', 'cam1:Acquire_RBV',
+        'cam1:ImageMode', 'cam1:ImageMode_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArrayData',
+        'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
+        'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
+        'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
+        'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
+        'CC1:FalseColor', 'CC1:FalseColor_RBV',
+        'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
+        # 'Trans1:Type',
         )
 
     def __init__(self, devname, *args, **kwargs):
@@ -136,19 +144,32 @@ class DVF(_DeviceNC):
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
         props_values = {
-            'cam1:EnableCallbacks': 1,  # Enable
+            'cam1:ArrayCallbacks': 1,  # Enable
+            'cam1:ImageMode': 2,  # Continuous
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 1,  # Enable
-            'Trans1:EnableCallbacks': 1,  # Enable
+            'HDF1:EnableCallbacks': 1,  # Enable
+            'Trans1:EnableCallbacks': 0,  # Disable
+            'Over1:EnableCallbacks': 0,  # Disable
+            'CC1:EnableCallbacks': 0,  # Disable
+            'CC1:ColorModeOut': 0,  # Mono
+            'CC1:FalseColor': 0,  # None
+            'DimFei1:EnableCallbacks': 0,  # Disable
         }
+
+        # set properties
         for propty, value in props_values.items():
             self[propty] = value
+
+        # check readback values
+        for propty, value in props_values.items():
+            if not self._wait(propty + '_RBV', value, timeout=timeout):
+                return False
+
+        # configure image acquisition parameters
         params = self.parameters
         self.exposure_time = params.EXPOSURE_TIME_DEFAULT
         self.acquisition_time = params.ACQUISITION_TIME_DEFAULT
-        for propty, value in props_values.items():
-            if not self._wait(propty, value, timeout=timeout):
-                return False
         return True
 
     def cmd_acquire_on(self, timeout=None):
