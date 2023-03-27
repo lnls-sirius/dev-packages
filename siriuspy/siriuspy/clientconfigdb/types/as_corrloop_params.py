@@ -272,6 +272,26 @@ _si_fofb = [
 ]
 
 
+_si_injbiasfb = [
+    ['AS-Glob:AP-InjCtrl:BiasFBLoopState-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMinVoltage-SP', -52.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMaxVoltage-SP', -40.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelType-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelMaxNrPts-SP', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelAutoFitParams-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelAutoFitEveryNrPts-SP', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelUpdateData-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelDataBias-SP', [0]*1000, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelDataInjCurr-SP', [0]*1000, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBLinModAngCoeff-SP', 10.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBLinModOffCoeff-SP', -52.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStd-SP', 0.05, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStd-SP', 0.4, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenScl-SP', 5, 0.0],
+]
+
+
 pvs = _si_sofb + _si_fofb
 pvs += _si_bbb_frontbackend + _si_bbb_l + _si_bbb_h + _si_bbb_v
+pvs += _si_injbiasfb
 _template_dict = {'pvs': pvs}
