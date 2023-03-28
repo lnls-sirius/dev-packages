@@ -73,6 +73,7 @@ class Const(_csdev.Const):
     INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
 
     PU_VOLTAGE_UP_TIME = 30  # [s]
+    LI_STDBY_CONF_TIME = 30  # [s]
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
@@ -252,6 +253,12 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpPUStandbyEnbl-Sts': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpLIStandbyEnbl-Sel': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpLIStandbyEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpNextInj-Mon': {

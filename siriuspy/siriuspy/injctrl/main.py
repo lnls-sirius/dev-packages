@@ -15,7 +15,7 @@ from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
 from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, \
-    PowerSupplyPU, RFKillBeam, InjSysPUModeHandler
+    PowerSupplyPU, RFKillBeam, InjSysPUModeHandler, Trigger, HLTiming
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -67,6 +67,7 @@ class App(_Callback):
         self._topupperiod = 5*60  # [s]
         self._topupheadstarttime = 0
         self._topuppustandbyenbl = _Const.DsblEnbl.Dsbl
+        self._topuplistandbyenbl = _Const.DsblEnbl.Dsbl
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnrpulses = 1
@@ -170,6 +171,11 @@ class App(_Callback):
 
         self._rfkillbeam = RFKillBeam()
 
+        self._li_trig_names = _HLTimeSearch.get_hl_triggers(
+            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
+        self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
+        self._hlti_dev = HLTiming()
+
         # pvname to write method map
         self.map_pv2write = {
             'Mode-Sel': self.set_mode,
@@ -190,6 +196,7 @@ class App(_Callback):
             'TopUpPeriod-SP': self.set_topupperiod,
             'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
             'TopUpPUStandbyEnbl-Sel': self.set_topuppustandbyenbl,
+            'TopUpLIStandbyEnbl-Sel': self.set_topuplistandbyenbl,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -314,6 +321,8 @@ class App(_Callback):
         self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
         self.run_callbacks('TopUpPUStandbyEnbl-Sel', self._topuppustandbyenbl)
         self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
+        self.run_callbacks('TopUpLIStandbyEnbl-Sel', self._topuplistandbyenbl)
+        self.run_callbacks('TopUpLIStandbyEnbl-Sts', self._topuplistandbyenbl)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
@@ -650,11 +659,24 @@ class App(_Callback):
             if not self._update_topup_pu_refvolt():
                 return False
         else:
-            self._prepare_topup('inject')
+            self._handle_topup_puvoltage('inject')
         self._topuppustandbyenbl = value
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled PU standby between injections.')
         self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
+        return True
+
+    def set_topuplistandbyenbl(self, value):
+        """Set LI standby between top-up injections."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if value == _Const.DsblEnbl.Dsbl:
+            self._handle_topup_linac_timing(state='inject')
+        self._topuplistandbyenbl = value
+        text = 'En' if value else 'Dis'
+        self._update_log(text+'abled LI standby between injections.')
+        self.run_callbacks('TopUpLIStandbyEnbl-Sts', self._topuplistandbyenbl)
         return True
 
     def set_topupnrpulses(self, value):
@@ -1076,9 +1098,13 @@ class App(_Callback):
                 self._topup_pu_prepared = True
             else:
                 # else, set PU voltage to 50%
-                self._prepare_topup('standby')
+                self._handle_topup_puvoltage('standby')
         else:
             self._topup_pu_prepared = True
+
+        # handle LI timing
+        if self._topupnext - _time.time() > _Const.LI_STDBY_CONF_TIME*2:
+            self._handle_topup_linac_timing(state='standby')
 
         self._bias_feedback.do_update_models = True
 
@@ -1114,12 +1140,14 @@ class App(_Callback):
                 self._update_log('Skipping injection...')
                 _time.sleep(2)
 
-            self._prepare_topup('standby')
+            self._handle_topup_puvoltage('standby')
+            self._handle_topup_linac_timing('standby')
 
             self._topupnext += self._topupperiod
             self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
 
-        self._prepare_topup('inject')
+        self._handle_topup_puvoltage('inject')
+        self._handle_topup_linac_timing('inject')
 
         self._bias_feedback.do_update_models = False
 
@@ -1144,7 +1172,10 @@ class App(_Callback):
 
             if remaining <= _Const.PU_VOLTAGE_UP_TIME and \
                     not self._topup_pu_prepared:
-                self._prepare_topup('inject')
+                self._handle_topup_puvoltage('inject')
+
+            if remaining <= _Const.LI_STDBY_CONF_TIME:
+                self._handle_topup_linac_timing('inject')
 
             cond = remaining <= _Const.BIASFB_AHEADSETIME
             cond &= bool(self._bias_feedback.loop_state)
@@ -1167,7 +1198,7 @@ class App(_Callback):
         self._update_log('Remaining time: 0s')
         return True
 
-    def _prepare_topup(self, state='inject'):
+    def _handle_topup_puvoltage(self, state='inject'):
         if not self._topuppustandbyenbl:
             return
         self._topup_puref_ignore = True
@@ -1203,6 +1234,22 @@ class App(_Callback):
                 return False
             self._pu_refvolt[idx] = dev['Voltage-SP']
         return True
+
+    def _handle_topup_linac_timing(self, state='inject'):
+        if not self._topuplistandbyenbl:
+            return
+        event = 'RmpBO' if state == 'inject' else 'Linac'
+        allok = all([trig.source_str == event for trig in self._li_trig_devs])
+        if allok:
+            return
+        self._update_log('Configuring LI timing...')
+        # move triggers to new event
+        self._hlti_dev.change_triggers_source(
+            self._li_trig_names, new_src=event, printlog=False)
+        # update events
+        self._evg_dev.cmd_update_events()
+        self._update_log('...done.')
+        return
 
     # --- auxiliary log methods ---
 
