@@ -1003,6 +1003,8 @@ _pvs_as_pu = [
     ['BO-48D:PU-EjeKckr:Voltage-SP', 0.0, 0.0],  # [V]
     ['SI-01SA:PU-InjDpKckr:Voltage-SP', 0.0, 0.0],  # [V]
     ['SI-01SA:PU-InjNLKckr:Voltage-SP', 0.0, 0.0],  # [V]
+    ['SI-01SA:PU-InjNLKckr:CCoilHVoltage-SP', 0.0, 0.0],  # [V]
+    ['SI-01SA:PU-InjNLKckr:CCoilVVoltage-SP', 0.0, 0.0],  # [V]
     ['TS-04:PU-InjSeptG-1:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-04:PU-InjSeptG-2:Voltage-SP', 0.0, 0.0],  # [V]
     ['TS-04:PU-InjSeptF:Voltage-SP', 0.0, 0.0],  # [V]
