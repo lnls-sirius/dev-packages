@@ -919,11 +919,6 @@ class FamBPMs(_Devices):
         self._csbpm = devs[0].csdata
 
         self._mturn_flags = dict()
-        for bpm in devs:
-            pvo = bpm.pv_object(bpm.get_propname('ACQCount-Mon'))
-            pvo.auto_monitor = True
-            self._mturn_flags[pvo.pvname] = _Flag()
-            pvo.add_callback(self._mturn_set_flag)
 
     @property
     def bpm_names(self):
