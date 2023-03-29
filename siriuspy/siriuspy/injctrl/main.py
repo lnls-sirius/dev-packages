@@ -1243,11 +1243,8 @@ class App(_Callback):
         if allok:
             return
         self._update_log('Configuring LI timing...')
-        # move triggers to new event
         self._hlti_dev.change_triggers_source(
             self._li_trig_names, new_src=event, printlog=False)
-        # update events
-        self._evg_dev.cmd_update_events()
         self._update_log('...done.')
         return
 
