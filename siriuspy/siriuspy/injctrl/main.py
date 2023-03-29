@@ -67,7 +67,7 @@ class App(_Callback):
         self._topupperiod = 5*60  # [s]
         self._topupheadstarttime = 0
         self._topuppustandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topuplistandbyenbl = _Const.DsblEnbl.Dsbl
+        self._topupliwarmupenbl = _Const.DsblEnbl.Dsbl
         now = _Time.now().timestamp()
         self._topupnext = now - (now % (24*60*60)) + 3*60*60
         self._topupnrpulses = 1
@@ -196,7 +196,7 @@ class App(_Callback):
             'TopUpPeriod-SP': self.set_topupperiod,
             'TopUpHeadStartTime-SP': self.set_topupheadstarttime,
             'TopUpPUStandbyEnbl-Sel': self.set_topuppustandbyenbl,
-            'TopUpLIStandbyEnbl-Sel': self.set_topuplistandbyenbl,
+            'TopUpLIWarmUpEnbl-Sel': self.set_topupliwarmupenbl,
             'TopUpNrPulses-SP': self.set_topupnrpulses,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -321,8 +321,8 @@ class App(_Callback):
         self.run_callbacks('TopUpHeadStartTime-RB', self._topupheadstarttime)
         self.run_callbacks('TopUpPUStandbyEnbl-Sel', self._topuppustandbyenbl)
         self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
-        self.run_callbacks('TopUpLIStandbyEnbl-Sel', self._topuplistandbyenbl)
-        self.run_callbacks('TopUpLIStandbyEnbl-Sts', self._topuplistandbyenbl)
+        self.run_callbacks('TopUpLIWarmUpEnbl-Sel', self._topupliwarmupenbl)
+        self.run_callbacks('TopUpLIWarmUpEnbl-Sts', self._topupliwarmupenbl)
         self.run_callbacks('TopUpNextInj-Mon', self._topupnext)
         self.run_callbacks('TopUpNrPulses-SP', self._topupnrpulses)
         self.run_callbacks('TopUpNrPulses-RB', self._topupnrpulses)
@@ -666,17 +666,17 @@ class App(_Callback):
         self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topuppustandbyenbl)
         return True
 
-    def set_topuplistandbyenbl(self, value):
-        """Set LI standby between top-up injections."""
+    def set_topupliwarmupenbl(self, value):
+        """Set LI warm up before top-up injections."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
         if value == _Const.DsblEnbl.Dsbl:
             self._handle_topup_linac_timing(state='inject')
-        self._topuplistandbyenbl = value
+        self._topupliwarmupenbl = value
         text = 'En' if value else 'Dis'
-        self._update_log(text+'abled LI standby between injections.')
-        self.run_callbacks('TopUpLIStandbyEnbl-Sts', self._topuplistandbyenbl)
+        self._update_log(text+'abled LI warm up before injections.')
+        self.run_callbacks('TopUpLIWarmUpEnbl-Sts', self._topupliwarmupenbl)
         return True
 
     def set_topupnrpulses(self, value):
@@ -1236,7 +1236,7 @@ class App(_Callback):
         return True
 
     def _handle_topup_linac_timing(self, state='inject'):
-        if not self._topuplistandbyenbl:
+        if not self._topupliwarmupenbl:
             return
         event = 'RmpBO' if state == 'inject' else 'Linac'
         allok = all([trig.source_str == event for trig in self._li_trig_devs])

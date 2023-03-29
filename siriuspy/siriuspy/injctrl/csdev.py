@@ -255,10 +255,10 @@ def get_injctrl_propty_database():
         'TopUpPUStandbyEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpLIStandbyEnbl-Sel': {
+        'TopUpLIWarmUpEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpLIStandbyEnbl-Sts': {
+        'TopUpLIWarmUpEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpNextInj-Mon': {
