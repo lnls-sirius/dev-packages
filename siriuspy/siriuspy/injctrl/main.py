@@ -74,6 +74,7 @@ class App(_Callback):
         self._topup_thread = None
         self._topup_pu_prepared = False
         self._abort = False
+        self._setting_mode = False
 
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
 
@@ -379,7 +380,9 @@ class App(_Callback):
             self._update_log('...done. Waiting to start top-up.')
         else:
             if self._topup_thread and self._topup_thread.is_alive():
+                self._setting_mode = True
                 self._stop_topup_thread()
+                self._setting_mode = False
 
         self._mode = value
         self.run_callbacks('Mode-Sts', self._mode)
@@ -605,13 +608,13 @@ class App(_Callback):
     def set_topupstate(self, value):
         """Set top-up state."""
         if self._mode != _Const.InjMode.TopUp:
-            return
+            return False
 
         self._topupstate_sel = value
         if value == _Const.OffOn.On:
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
-                return
+                return False
             if self._topup_thread is not None and \
                     not self._topup_thread.is_alive() or\
                     self._topup_thread is None:
@@ -1154,7 +1157,7 @@ class App(_Callback):
         # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
-        if not self._abort:
+        if not self._abort or self._setting_mode:
             self._topupstate_sel = _Const.OffOn.Off
             self.run_callbacks('TopUpState-Sel', self._topupstate_sel)
 
