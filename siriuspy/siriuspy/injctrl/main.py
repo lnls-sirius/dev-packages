@@ -67,12 +67,21 @@ class App(_Callback):
         self._topup_period = 5*60  # [s]
         self._topup_headstarttime = 0
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
+        self._topup_puwarmuptime = 30
+        self._topup_pu_prepared = True
         self._topup_liwarmupenbl = _Const.DsblEnbl.Dsbl
+        self._topup_liwarmuptime = 30
+        self._topup_li_prepared = True
+        self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
+        self._topup_bopswarmuptime = 10
+        self._topup_bops_prepared = True
+        self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
+        self._topup_borfwarmuptime = 10
+        self._topup_borf_prepared = True
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
         self._topup_thread = None
-        self._topup_pu_prepared = False
         self._abort = False
         self._setting_mode = False
 
@@ -175,6 +184,15 @@ class App(_Callback):
         self._li_trig_names = _HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
         self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
+
+        self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
+            {'sec': 'BO', 'dev': 'Mags'})
+        self._bops_trig_devs = [Trigger(tin) for tin in self._bops_trig_names]
+
+        self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
+            {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
+        self._borf_trig_devs = [Trigger(tin) for tin in self._borf_trig_names]
+
         self._hlti_dev = HLTiming()
 
         # pvname to write method map
@@ -197,7 +215,13 @@ class App(_Callback):
             'TopUpPeriod-SP': self.set_topup_period,
             'TopUpHeadStartTime-SP': self.set_topup_headstarttime,
             'TopUpPUStandbyEnbl-Sel': self.set_topup_pustandbyenbl,
+            'TopUpPUWarmUpTime-SP': self.set_topup_puwarmuptime,
             'TopUpLIWarmUpEnbl-Sel': self.set_topup_liwarmupenbl,
+            'TopUpLIWarmUpTime-SP': self.set_topup_liwarmuptime,
+            'TopUpBOPSStandbyEnbl-Sel': self.set_topup_bopsstandbyenbl,
+            'TopUpBOPSWarmUpTime-SP': self.set_topup_bopswarmuptime,
+            'TopUpBORFStandbyEnbl-Sel': self.set_topup_borfstandbyenbl,
+            'TopUpBORFWarmUpTime-SP': self.set_topup_borfwarmuptime,
             'TopUpNrPulses-SP': self.set_topup_nrpulses,
             'InjSysTurnOn-Cmd': self.cmd_injsys_turn_on,
             'InjSysTurnOff-Cmd': self.cmd_injsys_turn_off,
@@ -287,8 +311,20 @@ class App(_Callback):
             'TopUpHeadStartTime-RB': self._topup_headstarttime,
             'TopUpPUStandbyEnbl-Sel': self._topup_pustandbyenbl,
             'TopUpPUStandbyEnbl-Sts': self._topup_pustandbyenbl,
+            'TopUpPUWarmUpTime-SP': self._topup_puwarmuptime,
+            'TopUpPUWarmUpTime-RB': self._topup_puwarmuptime,
             'TopUpLIWarmUpEnbl-Sel': self._topup_liwarmupenbl,
             'TopUpLIWarmUpEnbl-Sts': self._topup_liwarmupenbl,
+            'TopUpLIWarmUpTime-SP': self._topup_liwarmuptime,
+            'TopUpLIWarmUpTime-RB': self._topup_liwarmuptime,
+            'TopUpBOPSStandbyEnbl-Sel': self._topup_bopsstandbyenbl,
+            'TopUpBOPSStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
+            'TopUpBOPSWarmUpTime-SP': self._topup_bopswarmuptime,
+            'TopUpBOPSWarmUpTime-RB': self._topup_bopswarmuptime,
+            'TopUpBORFStandbyEnbl-Sel': self._topup_bopsstandbyenbl,
+            'TopUpBORFStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
+            'TopUpBORFWarmUpTime-SP': self._topup_bopswarmuptime,
+            'TopUpBORFWarmUpTime-RB': self._topup_bopswarmuptime,
             'TopUpNextInj-Mon': self._topup_next,
             'TopUpNrPulses-SP': self._topup_nrpulses,
             'TopUpNrPulses-RB': self._topup_nrpulses,
@@ -650,6 +686,21 @@ class App(_Callback):
         self._topup_headstarttime = value
         self._update_log('Changed top-up head start time to '+str(value)+'s.')
         self.run_callbacks('TopUpHeadStartTime-RB', self._topup_headstarttime)
+
+        minwut = _np.ceil(value+1)
+        self._topup_puwarmuptime = max(minwut, self._topup_puwarmuptime)
+        self._topup_liwarmuptime = max(minwut, self._topup_liwarmuptime)
+        self._topup_bopswarmuptime = max(minwut, self._topup_bopswarmuptime)
+        self._topup_borfwarmuptime = max(minwut, self._topup_borfwarmuptime)
+        pvn2val = {
+            'TopUpPUWarmUpTime-': self._topup_puwarmuptime,
+            'TopUpLIWarmUpTime-': self._topup_liwarmuptime,
+            'TopUpBOPSWarmUpTime-': self._topup_bopswarmuptime,
+            'TopUpBORFWarmUpTime-': self._topup_borfwarmuptime,
+        }
+        for pvn, val in pvn2val.items():
+            self.run_callbacks(pvn+'SP', val)
+            self.run_callbacks(pvn+'RB', val)
         return True
 
     def set_topup_pustandbyenbl(self, value):
@@ -668,8 +719,16 @@ class App(_Callback):
         self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topup_pustandbyenbl)
         return True
 
+    def set_topup_puwarmuptime(self, value):
+        """Set PU warm up time before top-up injections."""
+        if not self._topup_headstarttime+1 <= value < 2*60:
+            return False
+        self._topup_puwarmuptime = value
+        self.run_callbacks('TopUpPUWarmUpTime-RB', self._topup_puwarmuptime)
+        return True
+
     def set_topup_liwarmupenbl(self, value):
-        """Set LI warm up before top-up injections."""
+        """Enable/disable LI warm up before top-up injections."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
@@ -679,6 +738,60 @@ class App(_Callback):
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled LI warm up before injections.')
         self.run_callbacks('TopUpLIWarmUpEnbl-Sts', self._topup_liwarmupenbl)
+        return True
+
+    def set_topup_liwarmuptime(self, value):
+        """Set LI warm up time before top-up injections."""
+        if not self._topup_headstarttime+1 <= value < 2*60:
+            return False
+        self._topup_liwarmuptime = value
+        self.run_callbacks('TopUpLIWarmUpTime-RB', self._topup_liwarmuptime)
+        return True
+
+    def set_topup_bopsstandbyenbl(self, value):
+        """Enable/disable BO PS standby between top-up injections."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if value == _Const.DsblEnbl.Dsbl:
+            self._handle_topup_bops_timing(state=_Const.StandbyInject.Inject)
+        self._topup_bopsstandbyenbl = value
+        text = 'En' if value else 'Dis'
+        self._update_log(text+'abled BO PS standby between injections.')
+        self.run_callbacks(
+            'TopUpBOPSStandbyEnbl-Sts', self._topup_bopsstandbyenbl)
+        return True
+
+    def set_topup_bopswarmuptime(self, value):
+        """Set BO PS warm up time before top-up injections."""
+        if not self._topup_headstarttime+1 <= value < 2*60:
+            return False
+        self._topup_bopswarmuptime = value
+        self.run_callbacks(
+            'TopUpBOPSWarmUpTime-RB', self._topup_bopswarmuptime)
+        return True
+
+    def set_topup_borfstandbyenbl(self, value):
+        """Enable/disable BO RF standby between top-up injections."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if value == _Const.DsblEnbl.Dsbl:
+            self._handle_topup_borf_timing(state=_Const.StandbyInject.Inject)
+        self._topup_borfstandbyenbl = value
+        text = 'En' if value else 'Dis'
+        self._update_log(text+'abled BO RF standby between injections.')
+        self.run_callbacks(
+            'TopUpBORFStandbyEnbl-Sts', self._topup_borfstandbyenbl)
+        return True
+
+    def set_topup_borfwarmuptime(self, value):
+        """Set BO RF warm up time before top-up injections."""
+        if not self._topup_headstarttime+1 <= value < 2*60:
+            return False
+        self._topup_borfwarmuptime = value
+        self.run_callbacks(
+            'TopUpBORFWarmUpTime-RB', self._topup_borfwarmuptime)
         return True
 
     def set_topup_nrpulses(self, value):
@@ -1128,12 +1241,16 @@ class App(_Callback):
 
             self._handle_topup_pu_voltage(_Const.StandbyInject.Standby)
             self._handle_topup_linac_timing(_Const.StandbyInject.Standby)
+            self._handle_topup_bops_timing(_Const.StandbyInject.Standby)
+            self._handle_topup_borf_timing(_Const.StandbyInject.Standby)
 
             self._topup_next += self._topup_period
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
         self._handle_topup_pu_voltage(_Const.StandbyInject.Inject)
         self._handle_topup_linac_timing(_Const.StandbyInject.Inject)
+        self._handle_topup_bops_timing(_Const.StandbyInject.Inject)
+        self._handle_topup_borf_timing(_Const.StandbyInject.Inject)
 
         self._bias_feedback.do_update_models = False
 
@@ -1157,10 +1274,14 @@ class App(_Callback):
                 _log.info(text)
 
             # prepare subsystems
-            if remaining <= _Const.PU_VOLTAGE_UP_TIME:
+            if remaining <= self._topup_puwarmuptime:
                 self._handle_topup_pu_voltage(_Const.StandbyInject.Inject)
-            if remaining <= _Const.LI_STDBY_CONF_TIME:
+            if remaining <= self._topup_liwarmuptime:
                 self._handle_topup_linac_timing(_Const.StandbyInject.Inject)
+            if remaining <= self._topup_bopswarmuptime:
+                self._handle_topup_bops_timing(_Const.StandbyInject.Inject)
+            if remaining <= self._topup_borfwarmuptime:
+                self._handle_topup_borf_timing(_Const.StandbyInject.Inject)
 
             # bias fb
             cond = remaining <= _Const.BIASFB_AHEADSETIME
@@ -1191,13 +1312,25 @@ class App(_Callback):
                 self._update_log('ERR:...aborted top-up loop.')
                 return
             # set PU voltage standby if remaining time is not too short
-            if self._topup_next - _time.time() > _Const.PU_VOLTAGE_UP_TIME*2:
+            if self._topup_next - _time.time() > self._topup_puwarmuptime*2:
                 self._handle_topup_pu_voltage(_Const.StandbyInject.Standby)
 
         # LI
         if self._topup_liwarmupenbl:
-            if self._topup_next - _time.time() > _Const.LI_STDBY_CONF_TIME*2:
+            if self._topup_next - _time.time() > self._topup_liwarmuptime*2:
                 self._handle_topup_linac_timing(
+                    state=_Const.StandbyInject.Standby)
+
+        # BO PS
+        if self._topup_bopsstandbyenbl:
+            if self._topup_next - _time.time() > self._topup_bopswarmuptime*2:
+                self._handle_topup_bops_timing(
+                    state=_Const.StandbyInject.Standby)
+
+        # BO RF
+        if self._topup_borfstandbyenbl:
+            if self._topup_next - _time.time() > self._topup_borfwarmuptime*2:
+                self._handle_topup_borf_timing(
                     state=_Const.StandbyInject.Standby)
 
     def _handle_topup_pu_voltage(self, state):
@@ -1242,6 +1375,32 @@ class App(_Callback):
         self._hlti_dev.change_triggers_source(
             self._li_trig_names, new_src=event, printlog=False)
         self._update_log('LI timing configured.')
+        return
+
+    def _handle_topup_bops_timing(self, state):
+        if not self._topup_bopsstandbyenbl:
+            return
+        is_inj = state == _Const.StandbyInject.Inject
+        if is_inj and self._topup_bops_prepared:
+            return
+        self._topup_bops_prepared = is_inj
+        trigstate = int(is_inj)
+        for trig in self._bops_trig_devs:
+            trig.state = trigstate
+        self._update_log('BO PS timing configured.')
+        return
+
+    def _handle_topup_borf_timing(self, state):
+        if not self._topup_borfstandbyenbl:
+            return
+        is_inj = state == _Const.StandbyInject.Inject
+        if is_inj and self._topup_borf_prepared:
+            return
+        self._topup_borf_prepared = is_inj
+        trigstate = int(is_inj)
+        for trig in self._borf_trig_devs:
+            trig.state = trigstate
+        self._update_log('BO RF timing configured.')
         return
 
     # --- auxiliary log methods ---
