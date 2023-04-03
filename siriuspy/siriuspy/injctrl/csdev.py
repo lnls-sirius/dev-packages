@@ -19,6 +19,7 @@ class ETypes(_csdev.ETypes):
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
     BIASFB_MODEL_TYPES = ('Linear', 'GaussianProcess')
+    STANDBY_INJECT = ('Standby', 'Inject')
 
 
 _et = ETypes
@@ -40,6 +41,7 @@ class Const(_csdev.Const):
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
     BiasFBModelTypes = _csdev.Const.register(
         'ModelTypes', _et.BIASFB_MODEL_TYPES)
+    StandbyInject = _csdev.Const.register('StandbyInject', _et.STANDBY_INJECT)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
     LI_STATUS_LABELS = ('Egun', 'PS', 'PU', 'RF', 'TI')
