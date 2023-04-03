@@ -401,6 +401,16 @@ class PVDataSet(_Base):
         """PV names."""
         return _dcopy(self._pvnames)
 
+    @pvnames.setter
+    def pvnames(self, new_pvnames):
+        self._pvnames = new_pvnames
+        self._pvdata = self._init_pvdatas(new_pvnames, self.connector)
+        for pvname in self._pvnames:
+            self._pvdata[pvname].time_start = self._time_start
+            self._pvdata[pvname].time_stop = self._time_stop
+            self._pvdata[pvname].parallel_query_bin_interval = \
+                self._parallel_query_bin_interval
+
     @property
     def is_archived(self):
         """Is archived."""
