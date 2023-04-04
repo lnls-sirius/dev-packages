@@ -405,11 +405,6 @@ class PVDataSet(_Base):
     def pvnames(self, new_pvnames):
         self._pvnames = new_pvnames
         self._pvdata = self._init_pvdatas(new_pvnames, self.connector)
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_start = self._time_start
-            self._pvdata[pvname].time_stop = self._time_stop
-            self._pvdata[pvname].parallel_query_bin_interval = \
-                self._parallel_query_bin_interval
 
     @property
     def is_archived(self):
@@ -527,11 +522,16 @@ class PVDataSet(_Base):
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
-    @staticmethod
-    def _init_pvdatas(pvnames, connector):
+    def _init_pvdatas(self, pvnames, connector):
         pvdata = dict()
         for pvname in pvnames:
             pvdata[pvname] = PVData(pvname, connector)
+            pvdata[pvname].parallel_query_bin_interval = \
+                self._parallel_query_bin_interval
+            if self._time_start is not None:
+                pvdata[pvname].time_start = self._time_start
+            if self._time_stop is not None:
+                pvdata[pvname].time_stop = self._time_stop
         return pvdata
 
     def __getitem__(self, val):
