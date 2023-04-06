@@ -28,7 +28,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
-        'RefOrb-SP', 'RefOrb-RB',
+        'RefOrbX-SP', 'RefOrbX-RB',
+        'RefOrbY-SP', 'RefOrbY-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
         'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
         'MinBPMCnt-SP', 'MinBPMCnt-RB',
@@ -46,77 +47,32 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         super().__init__(devname, properties=FOFBCtrlRef._properties)
 
     @property
-    def ref(self):
-        """Reference orbit, first half reference for X, second, for Y."""
-        ref = self['RefOrb-RB']
-        if ref is None:
-            return None
-        ref = ref.copy()
-        # handle initial state of RefOrb PVs
-        if len(ref) < 2*NR_BPM:
-            value = _np.zeros(2*NR_BPM, dtype=int)
-            value[:len(ref)] = ref
-            ref = value
-        return ref
-
-    @ref.setter
-    def ref(self, value):
-        self['RefOrb-SP'] = _np.array(value, dtype=int)
-
-    @property
     def refx(self):
         """Reference orbit X."""
-        return self.ref[:NR_BPM]
+        return self['RefOrbX-RB']
 
     @refx.setter
     def refx(self, value):
-        var = self.ref
-        var[:NR_BPM] = _np.array(value, dtype=int)
-        self.ref = var
+        self['RefOrbX-SP'] = _np.array(value, dtype=int)
 
     @property
     def refy(self):
         """Reference orbit Y."""
-        return self.ref[NR_BPM:]
+        return self['RefOrbY-RB']
 
     @refy.setter
     def refy(self, value):
-        var = self.ref
-        var[NR_BPM:] = _np.array(value, dtype=int)
-        self.ref = var
-
-    def set_ref(self, value):
-        """Set RefOrb."""
-        self.ref = value
-        return True
-
-    def set_refx(self, value):
-        """Set RefOrb X."""
-        self.refx = value
-        return True
-
-    def set_refy(self, value):
-        """Set RefOrb Y."""
-        self.refy = value
-        return True
-
-    def check_ref(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not _np.all(self.ref == value):
-            return False
-        return True
+        self['RefOrbY-SP'] = _np.array(value, dtype=int)
 
     def check_refx(self, value):
         """Check whether first half of RefOrb is equal to value."""
-        return self._check_reforbit('x', value)
+        if not _np.all(self.refx == value):
+            return False
+        return True
 
     def check_refy(self, value):
         """Check whether second half of RefOrb is equal to value."""
-        return self._check_reforbit('y', value)
-
-    def _check_reforbit(self, plane, value):
-        refval = getattr(self, 'ref'+plane.lower())
-        if not _np.all(refval == value):
+        if not _np.all(self.refy == value):
             return False
         return True
 
@@ -176,7 +132,7 @@ class _DCCDevice(_ProptyDevice):
 
     _properties = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
-        'CCEnable-SP', 'CCEnable-RB',
+        'CCEnable-Sel', 'CCEnable-Sts',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
     _properties_fmc = (
@@ -216,11 +172,11 @@ class _DCCDevice(_ProptyDevice):
     @property
     def cc_enable(self):
         """Communication enable."""
-        return self['CCEnable-RB']
+        return self['CCEnable-Sts']
 
     @cc_enable.setter
     def cc_enable(self, value):
-        self['CCEnable-SP'] = value
+        self['CCEnable-Sel'] = value
 
     @property
     def time_frame_len(self):
@@ -362,49 +318,33 @@ class FamFOFBControllers(_Devices):
         """FOFBS Event device."""
         return self._evt_fofb
 
-    def set_reforb(self, value):
-        """Set RefOrb for all FOFB controllers."""
-        for ctrl in self._ctl_refs.values():
-            ctrl.set_ref(value)
-        return True
-
     def set_reforbx(self, value):
         """Set RefOrbX for all FOFB controllers."""
-        return self._set_reforb('x', value)
+        for ctrl in self._ctl_refs.values():
+            ctrl.refx = value
+        return True
 
     def set_reforby(self, value):
         """Set RefOrbY for all FOFB controllers."""
-        return self._set_reforb('y', value)
-
-    def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'set_ref' + plane.lower())
-            fun(value)
-        return True
-
-    def check_reforb(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not self.connected:
-            return False
-        for ctrl in self._ctl_refs.values():
-            if not ctrl.check_ref(value):
-                return False
+            ctrl.refy = value
         return True
 
     def check_reforbx(self, value):
         """Check whether RefOrbX is equal to value."""
-        return self._check_reforb('x', value)
-
-    def check_reforby(self, value):
-        """Check whether RefOrbY is equal to value."""
-        return self._check_reforb('y', value)
-
-    def _check_reforb(self, plane, value):
         if not self.connected:
             return False
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'check_ref' + plane.lower())
-            if not fun(value):
+            if not ctrl.check_refx(value):
+                return False
+        return True
+
+    def check_reforby(self, value):
+        """Check whether RefOrbY is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctl_refs.values():
+            if not ctrl.check_refy(value):
                 return False
         return True
 

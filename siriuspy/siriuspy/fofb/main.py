@@ -878,10 +878,11 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-        if not self._llfofb_dev.check_reforb(reforb):
+        if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not \
+                self._llfofb_dev.check_reforby(self._reforbhw_y):
             self._update_log('Syncing FOFB RefOrb...')
-            self._llfofb_dev.set_reforb(reforb)
+            self._llfofb_dev.set_reforbx(self._reforbhw_x)
+            self._llfofb_dev.set_reforby(self._reforbhw_y)
             self._update_log('...done!')
         else:
             self._update_log('FOFB RefOrb already synced.')
@@ -1077,6 +1078,9 @@ class App(_Callback):
         refhw = _np.round(refhw)  # round, low level expect it to be int
         refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
         setattr(self, '_reforbhw_' + plane.lower(), refhw)
+
+        # set reforb to FOFB controllers
+        setattr(self._llfofb_dev, 'set_reforb' + plane.lower(), refhw)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
@@ -1902,8 +1906,8 @@ class App(_Callback):
                 if not self._llfofb_dev.linkpartners_connected:
                     value = _updt_bit(value, 3, 1)
                 # RefOrbSynced
-                reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-                if not self._llfofb_dev.check_reforb(reforb):
+                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not\
+                        self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 4, 1)
                 # TimeFrameLenSynced
                 tframelen = self._time_frame_len
