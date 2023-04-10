@@ -869,10 +869,13 @@ class FamFastCorrs(_Devices):
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values and indices must have the same size.')
         if any([len(v) != 2*NR_BPM for v in values]):
             raise ValueError(f'Value must have size {2*NR_BPM}.')
         for i, dev in enumerate(devs):
-            dev.invrespmat_row = values[i]
+            dev.invrespmat_row_x = values[i][:NR_BPM]
+            dev.invrespmat_row_y = values[i][NR_BPM:]
         return True
 
     def check_invrespmat_row(
@@ -887,7 +890,9 @@ class FamFastCorrs(_Devices):
         devs = self._get_devices(psnames, psindices)
         if not values.shape[0] == len(devs):
             raise ValueError('Values and indices must have the same size.')
-        impltd = _np.asarray([d.invrespmat_row for d in devs])
+        impltd = _np.asarray([
+            _np.hstack([d.invrespmat_row_x, d.invrespmat_row_y])
+            for d in devs])
         if _np.allclose(values, impltd, atol=atol):
             return True
         return False
