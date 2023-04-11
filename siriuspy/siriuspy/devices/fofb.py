@@ -65,13 +65,13 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self['RefOrbY-SP'] = _np.array(value, dtype=int)
 
     def check_refx(self, value):
-        """Check whether first half of RefOrb is equal to value."""
+        """Check whether RefOrbX is equal to value."""
         if not _np.all(self.refx == value):
             return False
         return True
 
     def check_refy(self, value):
-        """Check whether second half of RefOrb is equal to value."""
+        """Check whether RefOrbY is equal to value."""
         if not _np.all(self.refy == value):
             return False
         return True
