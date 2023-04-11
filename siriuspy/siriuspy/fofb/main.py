@@ -127,7 +127,9 @@ class App(_Callback):
             pvo = pso.pv_object('CurrentRef-Mon')
             pvo.auto_monitor = True
             self._kick_buffer.append([])
-            pvo.add_callback(_part(self._update_kick_buffer, ps_index=idx))
+            pvo.add_callback(
+                _part(self._update_kick_buffer, ps_index=idx),
+                with_ctrlvars=False)
 
         self._rf_dev = _RFGen()
 
@@ -139,7 +141,8 @@ class App(_Callback):
             pvo = dev.pv_object('LoopIntlk-Mon')
             self._intlk_values[pvo.pvname] = 0
             pvo.auto_monitor = True
-            pvo.add_callback(self._callback_loopintlk)
+            pvo.add_callback(
+                self._callback_loopintlk, with_ctrlvars=False)
             self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
