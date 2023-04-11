@@ -541,18 +541,18 @@ class FamFOFBControllers(_Devices):
 
         # temporary solution: disable BPM DCCs that are not in FOFB network
         dcc2dsbl = list(self._bpmdcc2dsbl.values())
-        self._set_devices_propty(dcc2dsbl, 'CCEnable-SP', 0)
+        self._set_devices_propty(dcc2dsbl, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                dcc2dsbl, 'CCEnable-RB', 0, timeout=timeout/2):
+                dcc2dsbl, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
 
-        self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
+        self._set_devices_propty(alldccs, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                alldccs, 'CCEnable-RB', 0, timeout=timeout/2):
+                alldccs, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
-        self._set_devices_propty(enbdccs, 'CCEnable-SP', 1)
+        self._set_devices_propty(enbdccs, 'CCEnable-Sel', 1)
         if not self._wait_devices_propty(
-                enbdccs, 'CCEnable-RB', 1, timeout=timeout/2):
+                enbdccs, 'CCEnable-Sts', 1, timeout=timeout/2):
             return False
         self._evt_fofb.cmd_external_trigger()
         return True
