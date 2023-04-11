@@ -205,9 +205,12 @@ class App(_Callback):
         # configuration scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_configs = _epics.ca.CAThread(
-            target=self._check_configs, daemon=True)
-        self.thread_check_configs.start()
+        self.thread_check_corrs_configs = _epics.ca.CAThread(
+            target=self._check_corrs_configs, daemon=True)
+        self.thread_check_corrs_configs.start()
+        self.thread_check_ctrls_configs = _epics.ca.CAThread(
+            target=self._check_ctrls_configs, daemon=True)
+        self.thread_check_ctrls_configs.start()
 
     def init_database(self):
         """Set initial PV values."""
@@ -1845,7 +1848,7 @@ class App(_Callback):
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
 
-    def _check_configs(self):
+    def _check_corrs_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
             if not self.scanning:
@@ -1895,6 +1898,24 @@ class App(_Callback):
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
+
+            ttook = _time.time() - _t0
+            tsleep = tplanned - ttook
+            if tsleep > 0:
+                _time.sleep(tsleep)
+            else:
+                _log.warning(
+                    'Corrector configuration check took more than planned... '
+                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+
+    def _check_ctrls_configs(self):
+        tplanned = 1.0/App.SCAN_FREQUENCY
+        while not self.quit:
+            if not self.scanning:
+                _time.sleep(tplanned)
+                continue
+
+            _t0 = _time.time()
 
             # FOFB controllers status
             value = 0
@@ -1949,5 +1970,5 @@ class App(_Callback):
                 _time.sleep(tsleep)
             else:
                 _log.warning(
-                    'Configuration check took more than planned... '
+                    'Controllers configuration check took more than planned... '
                     '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
