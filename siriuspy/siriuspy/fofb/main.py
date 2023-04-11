@@ -1083,7 +1083,8 @@ class App(_Callback):
         setattr(self, '_reforbhw_' + plane.lower(), refhw)
 
         # set reforb to FOFB controllers
-        setattr(self._llfofb_dev, 'set_reforb' + plane.lower(), refhw)
+        func = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
+        func(refhw)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
