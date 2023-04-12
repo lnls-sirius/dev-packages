@@ -886,16 +886,14 @@ class FamFastCorrs(_Devices):
             return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
-        values = _np.asarray(values)
         devs = self._get_devices(psnames, psindices)
-        if not values.shape[0] == len(devs):
+        if not len(values) == len(devs):
             raise ValueError('Values and indices must have the same size.')
-        impltd = _np.asarray([
-            _np.hstack([d.invrespmat_row_x, d.invrespmat_row_y])
-            for d in devs])
-        if _np.allclose(values, impltd, atol=atol):
-            return True
-        return False
+        for i, dev in enumerate(devs):
+            impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if not _np.allclose(values[i], impltd, atol=atol):
+                return False
+        return True
 
     def set_fofbacc_gain(self, values, psnames=None, psindices=None):
         """Command to set power supply correction gain."""
