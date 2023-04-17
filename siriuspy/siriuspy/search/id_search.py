@@ -31,7 +31,10 @@ class IDSearch:
         'SI-08SB:ID-APU22': None,
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
-            'polarizations': ('horizontal', 'vertical', 'circular', ),
+            'polarizations': (
+                'none', 'circularn', 'horizontal', 'circulap', 'vertical',
+                ),
+            'pparameter': 'SI-10SB:ID-EPU:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
@@ -43,6 +46,7 @@ class IDSearch:
         'SI-11SP:ID-APU58': None,
         'SI-14SB:ID-WIG180': {
             'polarizations': ('horizontal', ),
+            'pparameter': None,
             'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
             'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
