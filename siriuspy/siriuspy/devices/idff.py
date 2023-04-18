@@ -63,6 +63,21 @@ class IDFF(_Devices):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
+    def chdevs(self):
+        """Return CH corrector power supply devices."""
+        return self._devsch
+
+    @property
+    def cvdevs(self):
+        """Return CV corrector power supply devices."""
+        return self._devscv
+
+    @property
+    def qsdevs(self):
+        """Return QS corrector power supply names."""
+        return self._devsqs
+
+    @property
     def pparametername(self):
         """Return corresponding to ID pparameter."""
         return self._pparametername
@@ -78,12 +93,12 @@ class IDFF(_Devices):
         return _IDSearch.conv_idname_2_polarizations(self.devname)
 
     @property
-    def pparameter(self):
+    def pparameter_mon(self):
         """Return pparameter value."""
         return self._devpp[self._pparametername]
 
     @property
-    def kparameter(self):
+    def kparameter_mon(self):
         """Return kparameter value."""
         return self._devkp[self._kparametername]
 
@@ -116,13 +131,15 @@ class IDFF(_Devices):
             polarization, kparameter)
         return polarization, setpoints
 
-    def implement_setpoints(self, polarization, setpoints=None):
+    def implement_setpoints(self, polarization, setpoints=None, corrdevs=None):
         """Implement setpoints in correctors."""
         if not setpoints:
             _, setpoints = self.calculate_setpoints(polarization)
-        corrs = self._devsch + self._devscv
+        if corrdevs is None:
+            corrdevs = self._devsch + self._devscv
         for pvname, value in setpoints.items():
-            for dev in corrs:
+            # find corrdev corresponding to pvname
+            for dev in corrdevs:
                 if dev.devname in pvname:
                     pvname = _SiriusPVName(pvname)
                     dev[pvname.propty] = value
