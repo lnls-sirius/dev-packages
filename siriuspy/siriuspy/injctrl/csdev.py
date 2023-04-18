@@ -19,6 +19,7 @@ class ETypes(_csdev.ETypes):
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
     BIASFB_MODEL_TYPES = ('Linear', 'GaussianProcess')
+    STANDBY_INJECT = ('Standby', 'Inject')
 
 
 _et = ETypes
@@ -40,6 +41,7 @@ class Const(_csdev.Const):
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
     BiasFBModelTypes = _csdev.Const.register(
         'ModelTypes', _et.BIASFB_MODEL_TYPES)
+    StandbyInject = _csdev.Const.register('StandbyInject', _et.STANDBY_INJECT)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
     LI_STATUS_LABELS = ('Egun', 'PS', 'PU', 'RF', 'TI')
@@ -71,9 +73,6 @@ class Const(_csdev.Const):
 
     INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
     INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
-
-    PU_VOLTAGE_UP_TIME = 30  # [s]
-    LI_STDBY_CONF_TIME = 30  # [s]
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
@@ -255,12 +254,48 @@ def get_injctrl_propty_database():
         'TopUpPUStandbyEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpLIStandbyEnbl-Sel': {
+        'TopUpPUWarmUpTime-SP': {
+            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpPUWarmUpTime-RB': {
+            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpLIWarmUpEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpLIStandbyEnbl-Sts': {
+        'TopUpLIWarmUpEnbl-Sts': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpLIWarmUpTime-SP': {
+            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpLIWarmUpTime-RB': {
+            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpBOPSStandbyEnbl-Sel': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpBOPSStandbyEnbl-Sts': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpBOPSWarmUpTime-SP': {
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpBOPSWarmUpTime-RB': {
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpBORFStandbyEnbl-Sel': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpBORFStandbyEnbl-Sts': {
+            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+        'TopUpBORFWarmUpTime-SP': {
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
+        'TopUpBORFWarmUpTime-RB': {
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'lolim': 0, 'hilim': 2*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
         'TopUpNrPulses-SP': {
