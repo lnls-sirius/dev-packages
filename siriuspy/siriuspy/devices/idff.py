@@ -92,15 +92,13 @@ class IDFF(_Devices):
         """."""
         return self._idffconfig
 
+    def find_configs(self):
+        """Find si_idff configurations in configdb."""
+        return self._idffconfig.configdbclient.find_configs()
+
     def load_config(self, name):
         """Load IDFF configuration."""
-        self._idffconfig.load_config(name=name)
-        self.check_config_consistency(self._value)
-
-    @property
-    def kparameter_pvname(self):
-        """Return pvname corresponding to ID kparameter pvname."""
-        return self._idffconfig.kparameter_pvname
+        self._idffconfig.load(name=name)
 
     def calculate_setpoints(self, polarization):
         """Return correctors setpoints for a particular ID config.
