@@ -32,7 +32,7 @@ class IDSearch:
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations': (
-                'none', 'circularn', 'horizontal', 'circulap', 'vertical',
+                'none', 'circularn', 'horizontal', 'circularp', 'vertical',
                 ),
             'pparameter': 'SI-10SB:ID-EPU:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
@@ -95,6 +95,13 @@ class IDSearch:
     def conv_idname_2_idff(idname):
         """Return the IDFF dictionary for a given ID name."""
         return dict(IDSearch._idname_2_idff[idname])
+
+    @staticmethod
+    def conv_idname_2_pparameter_propty(idname):
+        """."""
+        idff = IDSearch.conv_idname_2_idff(idname)
+        pvname = _SiriusPVName(idff['pparameter'])
+        return pvname.propty
 
     @staticmethod
     def conv_idname_2_kparameter_propty(idname):
