@@ -258,18 +258,6 @@ class EPUIDFF(IDFF):
         """."""
         return self.kparameter_mon
 
-    def find_polarization(self, pparameter_value=None, kparameter_value=None):
-        """."""
-        TOL = 0.1  # [mm]
-        self.idffconfig.value.polarizations
-        VPN, CPN, HP, CPP = -25.0,   # [mm]
-        VPP = 25.0  # [mm]
-        if pparameter_value is None:
-            pparameter_value = self.pparameter_mon
-        if kparameter_value is None:
-            kparameter_value = self.kparameter_mon
-        if pparameter_value
-
 
 class APUIDFF(_Devices):
     """APU Feedforward."""
