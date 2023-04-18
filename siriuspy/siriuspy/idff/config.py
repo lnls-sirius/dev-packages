@@ -6,18 +6,16 @@ from ..search import IDSearch as _IDSearch
 from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 
 
-class IDFFConfig:
-    """."""
+class IDFFConfig(_ConfigDBDocument):
+    """Insertion Device Feedforward Configuration."""
 
     CONFIGDB_TYPE = 'si_idff'
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, url=None):
         """."""
-        self._name = None
-        self._configdbdoc = None
-        self._value = None
-        if name:
-            self.load_config(name=name)
+        name = name or 'idff_' + self.generate_config_name()
+        super().__init__(
+            config_type=IDFFConfig.CONFIGDB_TYPE, name=name, url=url)
 
     @property
     def name(self):
@@ -27,7 +25,19 @@ class IDFFConfig:
     @name.setter
     def name(self, value):
         """Set configuration name."""
-        self._name = value
+        if self.configdbclient.check_valid_configname(value):
+            self._name = value
+            self.load()
+
+    @property
+    def pparameter_pvname(self):
+        """Return ID pparameter pvname."""
+        config = self._value
+        if config:
+            kparm = config['pvnames']['pparameter']
+            return kparm
+        else:
+            raise ValueError('Configuration not loaded!')
 
     @property
     def kparameter_pvname(self):
@@ -62,18 +72,7 @@ class IDFFConfig:
         else:
             raise ValueError('Configuration not loaded!')
 
-    @property
-    def value(self):
-        """Return ID feedforward table."""
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        """Set ID feedforward table."""
-        # TODO: check dictionary
-        self._value = value
-
-    def calculate_setpoints(self, polarization, kparameter):
+    def calculate_setpoints(self, polarization, kparameter_value):
         """Return correctors setpoints for a particular ID config.
 
         The parameter 'kparameter' can be a gap or phase value,
@@ -82,13 +81,14 @@ class IDFFConfig:
         if self._value:
             setpoints = dict()
             idff = self._value['polarizations'][polarization]
-            kparameters = idff['kparameter']
+            kparameter_values = idff['kparameter']
             setpoints = dict()
-            for key, value in idff.items():
-                if key != 'kparameter':
+            for corrlabel, table in idff.items():
+                if corrlabel not in ('pparameter', 'kparameter'):
                     # linear interpolation
-                    setpoint = _np.interp(kparameter, kparameters, value)
-                    corr_pvname = self._value['pvnames'][key]
+                    setpoint = _np.interp(
+                        kparameter_value, kparameter_values, table)
+                    corr_pvname = self._value['pvnames'][corrlabel]
                     setpoints[corr_pvname] = setpoint
             return setpoints
         else:
@@ -99,6 +99,9 @@ class IDFFConfig:
         """Create a template configuration for a given ID type."""
         idff = _IDSearch.conv_idname_2_idff(idname)
 
+        # description
+        description = 'Config created with IDFFConfig.create_template_config'
+
         # build value for pvnames key
         pvnames = dict()
         for key, corr_pvname in idff.items():
@@ -106,33 +109,27 @@ class IDFFConfig:
                 pvnames[key] = corr_pvname
 
         # build value for polarizations key
-        table = dict(kparameter=[0, ])
+        ctable = dict()
         for pvname in pvnames:
-            table[pvname] = [0, ]
+            ctable[pvname] = [0, 0]
+        ptable = dict(ctable)
+        ptable['pparameter'] = [0, 0]
+        ptable['kparameter'] = 0
+        ktable = dict(ctable)
+        ktable['pparameter'] = 0
+        ktable['kparameter'] = [0, 0]
+
         polarizations = dict()
         for polarization in idff['polarizations']:
-            polarizations[polarization] = dict(table)
+            if polarization == 'none':
+                polarizations[polarization] = dict(ptable)
+            else:
+                polarizations[polarization] = dict(ktable)
 
-        template_config = dict(pvnames=pvnames, polarizations=polarizations)
+        template_config = dict(
+            description=description, pvnames=pvnames,
+            polarizations=polarizations)
         return template_config
-
-    def load_config(self, name=None):
-        """Load IDFF configuration."""
-        if name is not None:
-            self._name = name
-        self._configdbdoc = _ConfigDBDocument(
-            config_type=IDFFConfig.CONFIGDB_TYPE, name=self._name)
-        self._configdbdoc.load()
-        self._value = self._configdbdoc.value
-
-    def save_config(self, name=None):
-        """Save IDFF configuration."""
-        if name is not None:
-            self._name = name
-        self._configdbdoc = _ConfigDBDocument(
-            config_type=IDFFConfig.CONFIGDB_TYPE, name=self._name)
-        self._configdbdoc.value = self._value
-        self._configdbdoc.save()
 
     def _get_corr_pvnames(self, cname1, cname2):
         """Return corrector power supply pvnames."""
