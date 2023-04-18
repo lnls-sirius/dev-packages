@@ -13,9 +13,10 @@ class IDFFConfig(_ConfigDBDocument):
 
     def __init__(self, name=None, url=None):
         """."""
-        name = name or 'idff_' + self.generate_config_name()
+        name_ = name or 'idff_' + self.generate_config_name()
+        self._polarization_definitions = None
         super().__init__(
-            config_type=IDFFConfig.CONFIGDB_TYPE, name=name, url=url)
+            config_type=IDFFConfig.CONFIGDB_TYPE, name=name_, url=url)
 
     @property
     def name(self):
@@ -27,7 +28,6 @@ class IDFFConfig(_ConfigDBDocument):
         """Set configuration name."""
         if self.configdbclient.check_valid_configname(value):
             self._name = value
-            self.load()
 
     @property
     def pparameter_pvname(self):
@@ -131,6 +131,18 @@ class IDFFConfig(_ConfigDBDocument):
             polarizations=polarizations)
         return template_config
 
+    def load(self, discarded=False):
+        """."""
+        super().load(discarded=discarded)
+        data = self._value['polarizations']
+        poldefs = dict()
+        for pol, tab in data.items():
+            if pol != 'none':
+                poldefs[pol] = tab['pparameter']
+            else:
+                poldefs[pol] = tab['kparameter']
+        self._polarization_definitions = poldefs
+
     def _get_corr_pvnames(self, cname1, cname2):
         """Return corrector power supply pvnames."""
         if self._value:
@@ -139,3 +151,17 @@ class IDFFConfig(_ConfigDBDocument):
             return corr1, corr2
         else:
             raise ValueError('Configuration not loaded!')
+
+    def get_polarization_state(self, pparameter, kparameter):
+        """Return polarization state based on ID parameteres."""
+        PPARAM_TOL = 0.1
+        KPARAM_TOL = 0.1
+        poldefs = self._polarization_definitions
+        for pol, val in poldefs.items():
+            if pol == 'none':
+                continue
+            if abs(pparameter - val) < PPARAM_TOL:
+                return pol
+        if abs(kparameter - poldefs['none']) < KPARAM_TOL:
+                return 'none'
+        return 'not_defined'

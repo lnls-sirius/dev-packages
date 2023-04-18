@@ -206,6 +206,15 @@ class IDFF(_Devices):
 
         return True
 
+    def get_polarization_state(self, pparameter_value=None, kparameter_value=None):
+        """."""
+        if pparameter_value is None:
+            pparameter_value = self.pparameter_mon
+        if kparameter_value is None:
+            kparameter_value = self.kparameter_mon
+        return self.idffconfig.get_polarization_state(
+            pparameter=pparameter_value, kparameter=kparameter_value)
+
     def _create_devices(self, devname):
         param_auto_mon = False
         devkp = _Device(
@@ -240,9 +249,26 @@ class EPUIDFF(IDFF):
         """."""
 
     @property
+    def phase_mon(self):
+        """."""
+        return self.pparameter_mon
+
+    @property
     def gap_mon(self):
         """."""
         return self.kparameter_mon
+
+    def find_polarization(self, pparameter_value=None, kparameter_value=None):
+        """."""
+        TOL = 0.1  # [mm]
+        self.idffconfig.value.polarizations
+        VPN, CPN, HP, CPP = -25.0,   # [mm]
+        VPP = 25.0  # [mm]
+        if pparameter_value is None:
+            pparameter_value = self.pparameter_mon
+        if kparameter_value is None:
+            kparameter_value = self.kparameter_mon
+        if pparameter_value
 
 
 class APUIDFF(_Devices):
