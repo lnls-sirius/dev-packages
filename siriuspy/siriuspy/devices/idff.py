@@ -98,7 +98,7 @@ class IDFF(_Devices):
 
     def load_config(self, name):
         """Load IDFF configuration."""
-        self._idffconfig.load(name=name)
+        self._idffconfig.name = name
 
     def calculate_setpoints(self, polarization):
         """Return correctors setpoints for a particular ID config.
