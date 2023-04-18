@@ -107,7 +107,7 @@ class ConfigDBDocument():
 
     def save(self, new_name=None):
         """Save configuration to ConfigServer."""
-        # if config is syncronyzed, it is not necessary to save an identical
+        # if config is syncronized, it is not necessary to save an identical
         # one in server
         if self.exist() and self._synchronized and not new_name:
             return
