@@ -115,7 +115,7 @@ class IDFF(_Devices):
         """Load IDFF configuration."""
         self._idffconfig.name = name
 
-    def calculate_setpoints(self, polarization):
+    def calculate_setpoints(self, polarization, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
@@ -126,9 +126,10 @@ class IDFF(_Devices):
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
-        kparameter = self.kparameter
+        if kparameter_value is None:
+            kparameter_value = self.kparameter_mon
         setpoints = self.idffconfig.calculate_setpoints(
-            polarization, kparameter)
+            polarization, kparameter_value)
         return polarization, setpoints
 
     def implement_setpoints(self, polarization, setpoints=None, corrdevs=None):
@@ -229,7 +230,7 @@ class WIGIDFF(IDFF):
     @property
     def gap_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon
 
 
 class EPUIDFF(IDFF):
@@ -241,7 +242,7 @@ class EPUIDFF(IDFF):
     @property
     def gap_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon
 
 
 class APUIDFF(_Devices):
@@ -253,4 +254,4 @@ class APUIDFF(_Devices):
     @property
     def phase_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon
