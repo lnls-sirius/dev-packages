@@ -31,10 +31,13 @@ class IDFF(_Devices):
         self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
+        self._pparametername = \
+            _IDSearch.conv_idname_2_pparameter_propty(devname)
+
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        self._devkp, self._devsch, self._devscv, self._devsqs = \
+        self._devpp, self._devkp, self._devsch, self._devscv, self._devsqs = \
             self._create_devices(devname)
 
         # call base class constructor
@@ -60,6 +63,11 @@ class IDFF(_Devices):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
+    def pparametername(self):
+        """Return corresponding to ID pparameter."""
+        return self._pparametername
+
+    @property
     def kparametername(self):
         """Return corresponding to ID kparameter."""
         return self._kparametername
@@ -68,6 +76,11 @@ class IDFF(_Devices):
     def polarizations(self):
         """Return list of possible light polarizations for the ID."""
         return _IDSearch.conv_idname_2_polarizations(self.devname)
+
+    @property
+    def pparameter(self):
+        """Return pparameter value."""
+        return self._devpp[self._pparametername]
 
     @property
     def kparameter(self):
@@ -82,8 +95,7 @@ class IDFF(_Devices):
     def load_config(self, name):
         """Load IDFF configuration."""
         self._idffconfig.load_config(name=name)
-        if not self._config_is_ok():
-            raise ValueError('Config is incompatible with ID configdb type.')
+        self.check_config_consistency(self._value)
 
     @property
     def kparameter_pvname(self):
@@ -118,20 +130,79 @@ class IDFF(_Devices):
                     dev[pvname.propty] = value
                     break
 
+    def check_valid_value(self, value):
+        """Check consistency of SI_IDFF configuration."""
+        if not super().check_valid_value(value):
+            raise ValueError('Value incompatible with config template')
+
+        configs = value['polarizations']
+        pvnames = {key: value for key, value in value['pvnames'] \
+            if key not in ('pparameters', 'kparameters')}
+        corrlabels = set(pvnames.keys())
+
+        # check pvnames in configs
+        pvsconfig = set(pvnames.values())
+        pvsidsearch = set(self.chnames + self.cvnames + self.qsnames)
+        symm_diff = pvsconfig ^ pvsidsearch
+        if symm_diff:
+            raise ValueError('List of pvnames in config is not consistent')
+
+        # check polarizations in configs
+        pconfig = set(configs.keys())
+        pidsearch = set(_IDSearch.conv_idname_2_polarizations(self.devname))
+        symm_diff = pconfig ^ pidsearch
+        if symm_diff:
+            raise ValueError(
+                'List of polarizations in config is not consistent')
+
+        # check polarization tables consistency
+        for polarization, table in configs.items():
+            corrtable = {key: value for key, value in table \
+                if key not in ('pparameters', 'kparameters')}
+
+            # check 'pparameter'
+            if 'pparameter' not in table:
+                raise ValueError(
+                    'Missing pparameter in polarization configuration.')
+
+            # check 'kparameter'
+            if 'kparameter' not in table:
+                raise ValueError(
+                    'Missing pparameter in polarization configuration.')
+
+            # check corr label list
+            corrlabels_config = set(corrtable.keys())
+            symm_diff = corrlabels ^ corrlabels_config
+            if symm_diff:
+                raise ValueError(
+                    'List of corrlabels in config is not consistent')
+
+            # check nrpts in tables
+            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            nrpts_corrtables = set([len(table) for table in corrtable.values()])
+            nrpts_kparameter = set([len(table[param]), ])
+            symm_diff = nrpts_corrtables ^ nrpts_kparameter
+            if symm_diff:
+                msg = (
+                    'Corrector tables and kparameter list in config'
+                    ' are not consistent')
+                raise ValueError(msg)
+
+        return True
+
     def _create_devices(self, devname):
-        kparm_auto_mon = False
+        param_auto_mon = False
         devkp = _Device(
             devname=devname,
-            properties=(self._kparametername, ), auto_mon=kparm_auto_mon)
+            properties=(self._kparametername, ), auto_mon=param_auto_mon)
+        devpp = _Device(
+            devname=devname,
+            properties=(self._pparametername, ), auto_mon=param_auto_mon)
         devsch = [_PowerSupply(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupply(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupply(devname=dev) for dev in self.qsnames]
 
-        return devkp, devsch, devscv, devsqs
-
-    def _config_is_ok(self):
-        # TODO: to be implemented
-        return True
+        return devpp, devkp, devsch, devscv, devsqs
 
 
 class WIGIDFF(IDFF):
