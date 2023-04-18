@@ -940,6 +940,74 @@ def get_ps_modules(psmodel=None, psname=None):
     return sorted(modules)
 
 
+def get_ps_scopesourcemap(psname):
+    """Return PS modules for a power supply model."""
+    psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+    psudcindex = _PSSearch.conv_psname_2_udcindex(psname)
+    if psmodel == 'FBP':
+        return {
+            'Output current [A]': 0xD000 + 2*psudcindex,
+            'Output voltage [V]': 0xC008 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD008 + 2*psudcindex,
+            'DCLink voltage [V]': 0xC000 + 2*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAC_DCDC':
+        return {
+            'Output current [A]': 0xD006,
+            'Output voltage [V]': 0xC000,
+            'Tracking error [A or V]': 0xD008,
+            'DCLink voltage [V]': 0xD004,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2S_DCDC':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2S_ACDC':
+        return {
+            'Output voltage [V]': 0xD000 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD00C + 14*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAC_2P4S_DCDC':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2P4S_ACDC':
+        return {
+            'Output voltage [V]': 0xD000 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD00C + 14*psudcindex,
+            'DCLink voltage [V]': 0xC000 + 2*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAP':
+        return {
+            'Output current [A]': 0xD006,
+            'Output voltage [V]': 0xC004,
+            'Tracking error [A or V]': 0xD008,
+            'DCLink voltage [V]': 0xD004,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAP_2P2S':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAP_4P':
+        return {
+            'Output current [A]': 0xD006,
+            'Tracking error [A or V]': 0xD008,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    return dict()
+
+
 # --- Auxiliary functions ---
 
 
@@ -1506,7 +1574,6 @@ def _get_ps_FOFB_propty_database():
             'lolo': 0, 'low': 0, 'lolim': 0,
             'hilim': 4194303, 'high': 4194303, 'hihi': 4194303},
         # Status and Alarms
-        'PSStatus-Mon': {'type': 'int', 'value': 0},
         'AlarmsAmp-Mon': {'type': 'int', 'value': 0},
         'AlarmsAmpLabels-Cte': {
             'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
