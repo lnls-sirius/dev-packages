@@ -114,6 +114,10 @@ class IDFF(_Devices):
     def load_config(self, name):
         """Load IDFF configuration."""
         self._idffconfig.name = name
+        if self._idffconfig.name == name:
+            self._idffconfig.load()
+        else:
+            raise ValueError('Could not load configuration.')
 
     def calculate_setpoints(self, polarization, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
