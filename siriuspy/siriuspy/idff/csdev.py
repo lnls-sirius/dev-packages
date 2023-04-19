@@ -1,4 +1,4 @@
-"""Beam stability info database."""
+"""ID feedforward database."""
 
 import os as _os
 
