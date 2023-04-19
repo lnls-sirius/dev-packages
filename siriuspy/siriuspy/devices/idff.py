@@ -141,7 +141,7 @@ class IDFF(_Devices):
         if not setpoints:
             _, setpoints = self.calculate_setpoints(polarization)
         if corrdevs is None:
-            corrdevs = self._devsch + self._devscv
+            corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
