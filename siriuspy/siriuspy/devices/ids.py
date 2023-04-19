@@ -112,6 +112,7 @@ class EPU(_Device):
         EPU50_10SB = 'SI-10SB:ID-EPU50'
         ALL = (EPU50_10SB, )
 
+    # NOTE: move this info to IDSearch?
     _idparam_fields = (
         'PERIOD',  # [mm]
         'PHASE_PARK',  # [mm]
@@ -120,8 +121,8 @@ class EPU(_Device):
 
     _dev2params = {
         DEVICES.EPU50_10SB:
-            _get_namedtuple('IDParameters',
-                _idparam_fields, (50.0, 0, 300.0)),
+            _get_namedtuple(
+                'IDParameters', _idparam_fields, (50.0, 0, 300.0)),
         }
 
     _short_shut_eye = 0.1  # [s]
@@ -185,6 +186,13 @@ class EPU(_Device):
         return self['MaxPhaseSpeed-RB']
 
     @property
+    def phase_speed_max_lims(self):
+        """."""
+        ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    @property
     def gap_speed(self):
         """Return gap speed readback [mm/s]."""
         return self['GapSpeed-RB']
@@ -198,6 +206,13 @@ class EPU(_Device):
     def gap_speed_max(self):
         """Return max gap speed readback [mm/s]."""
         return self['MaxGapSpeed-RB']
+
+    @property
+    def gap_speed_max_lims(self):
+        """."""
+        ctrl = self.pv_ctrlvars('MaxGapSpeed-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
 
     # --- phase ---
 
@@ -312,76 +327,73 @@ class EPU(_Device):
 
     # --- cmd_beamline and cmd_drive
 
-    def cmd_drive_turn_on(self, timeout=None):
+    def cmd_drive_turn_power_on(self, timeout=None):
         """Command turn phase and gap drives on."""
         if self.is_phase_drive_powered and self.is_gap_drive_powered:
             return True
         self['EnblPwrAll-Cmd'] = 1
-        props_values = {
-            'PwrPhase-Mon': 0,  # value compared to in 'not equal' operation
-            'PwrGap-Mon': 0,  # value compared to in 'not equal' operation
-            }
-        return self._wait(props_values, timeout=timeout, comp='ne')
+        props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
+        return self._wait(props_values, timeout=timeout)
 
     def cmd_beamline_ctrl_enable(self, timeout=None):
         """Command enable bealine EPU control."""
-        return self._set_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
 
     def cmd_beamline_ctrl_disable(self, timeout=None):
         """Command disable bealine EPU control."""
-        return self._set_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
     # --- cmd_set ---
 
     def cmd_set_phase(self, phase, timeout=None):
         """Command to set EPU target phase for movement [mm]."""
-        return self._set_sp('Phase-SP', phase, timeout)
+        return self._write_sp('Phase-SP', phase, timeout)
 
     def cmd_set_gap(self, gap, timeout=None):
         """Command to set EPU target gap for movement [mm]."""
-        return self._set_sp('Gap-SP', gap, timeout)
+        return self._write_sp('Gap-SP', gap, timeout)
 
     def cmd_set_phase_speed(self, phase_speed, timeout=None):
         """Command to set EPU cruise phase speed for movement [mm/s]."""
-        return self._set_sp('PhaseSpeed-SP', phase_speed, timeout)
+        return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
 
     def cmd_set_gap_speed(self, gap_speed, timeout=None):
         """Command to set EPU cruise gap speed for movement [mm/s]."""
-        return self._set_sp('GapSpeed-SP', gap_speed, timeout)
+        return self._write_sp('GapSpeed-SP', gap_speed, timeout)
 
     def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set EPU max cruise phase speed for movement [mm/s]."""
-        return self._set_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
+        return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
     def cmd_set_gap_speed_max(self, gap_speed_max, timeout=None):
         """Command to set EPU max cruise gap speed for movement [mm/s]."""
-        return self._set_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
+        return self._write_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
 
     # --- cmd_move disable/enable ---
 
     def cmd_move_phase_enable(self, timeout=None):
         """Command to release and enable EPU phase movement."""
-        # return self._set_sp('EnblAndReleasePhase-Sel', 1, timeout)
-        self['EnblAndReleasePhase-Sel'] = 1
-        return True
+        # self['EnblAndReleasePhase-Sel'] = 1
+        # return True
+        return self._write_sp('EnblAndReleasePhase-Sel', 1, timeout)
 
     def cmd_move_phase_disable(self, timeout=None):
         """Command to disable and break EPU phase movement."""
-        # return self._set_sp('EnblAndReleasePhase-Sel', 0, timeout)
-        self['EnblAndReleasePhase-Sel'] = 0
-        return True
+        # self['EnblAndReleasePhase-Sel'] = 0
+        # return True
+        return self._write_sp('EnblAndReleasePhase-Sel', 0, timeout)
 
     def cmd_move_gap_enable(self, timeout=None):
         """Command to release and enable EPU gap movement."""
-        # return self._set_sp('EnblAndReleaseGap-Sel', 1, timeout)
-        self['EnblAndReleaseGap-Sel'] = 1
-        return True
+        # self['EnblAndReleaseGap-Sel'] = 1
+        # return True
+        return self._write_sp('EnblAndReleaseGap-Sel', 1, timeout)
 
     def cmd_move_gap_disable(self, timeout=None):
         """Command to disable and break EPU gap movement."""
-        # return self._set_sp('EnblAndReleaseGap-Sel', 0, timeout)
-        self['EnblAndReleaseGap-Sel'] = 0
-        return True
+        # self['EnblAndReleaseGap-Sel'] = 0
+        # return True
+        return self._write_sp('EnblAndReleaseGap-Sel', 0, timeout)
 
     def cmd_move_enable(self, timeout=None):
         """Command to release and enable EPU phase and gap movements."""
@@ -404,18 +416,19 @@ class EPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if self.cmd_wait_while_busy(timeout=timeout):
+        if not self.cmd_wait_while_busy(timeout=timeout):
             return False
 
         # send stop command
-        self['Stop-Cmd'] = 1
+        self.cmd_move_disable()
+        # self['Stop-Cmd'] = 1
 
         # check for successful stop
-        if self.cmd_wait_while_busy(timeout=timeout):
+        if not self.cmd_wait_while_busy(timeout=timeout):
             return False
         success = True
-        success &= super()._wait('Moving-Mon', 0, tiemout=timeout)
-        success &= super()._wait('IsBusy-Mon', 0, tiemout=timeout)
+        success &= super()._wait('Moving-Mon', 0, timeout=timeout)
+        success &= super()._wait('IsBusy-Mon', 0, timeout=timeout)
         if not success:
             return False
 
@@ -484,7 +497,7 @@ class EPU(_Device):
         """Command to reset EPU to a standard movement state."""
         success = True
         success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
-        success &= self.cmd_drive_turn_on(timeout=timeout)
+        success &= self.cmd_drive_turn_power_on(timeout=timeout)
         success &= self.cmd_move_enable(timeout=timeout)
         return success
 
@@ -503,19 +516,19 @@ class EPU(_Device):
 
         return True
 
-    def _set_sp(self, propties_sp, values, timeout=None):
+    def _write_sp(self, propties_sp, values, timeout=None):
         timeout = timeout or self._default_timeout
         if isinstance(propties_sp, str):
             propties_sp = (propties_sp, )
             values = (values, )
         success = True
         for propty_sp, value in zip(propties_sp, values):
-            if value == self[propty_sp]:
-                continue
+            propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            # if self[propty_rb] == value:
+            #     continue
             if not self.cmd_wait_while_busy(timeout=timeout):
                 return False
             self[propty_sp] = value
-            propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             success &= super()._wait(
                 propty_rb, value, timeout=timeout, comp='eq')
         return success
