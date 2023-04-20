@@ -18,6 +18,7 @@ class ETypes(_csdev.ETypes):
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
+    IDLEINJECTING = ('Idle', 'Injecting')
     BIASFB_MODEL_TYPES = ('Linear', 'GaussianProcess')
     STANDBY_INJECT = ('Standby', 'Inject')
 
@@ -39,6 +40,7 @@ class Const(_csdev.Const):
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
+    IdleInjecting = _csdev.Const.register('IdleInjecting', _et.IDLEINJECTING)
     BiasFBModelTypes = _csdev.Const.register(
         'ModelTypes', _et.BIASFB_MODEL_TYPES)
     StandbyInject = _csdev.Const.register('StandbyInject', _et.STANDBY_INJECT)
@@ -229,6 +231,21 @@ def get_injctrl_propty_database():
         'BucketListStep-RB': {
             'type': 'int', 'value': 15, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
+        'IsInjecting-Mon': {
+            'type': 'enum', 'value': _ct.IdleInjecting.Idle,
+            'enums': _et.IDLEINJECTING, 'unit': 'Idle_Inj'},
+        'IsInjDelay-SP': {
+            'type': 'int', 'value': 0, 'unit': 'ms',
+            'lolim': 0, 'hilim': 1000},
+        'IsInjDelay-RB': {
+            'type': 'int', 'value': 0, 'unit': 'ms',
+            'lolim': 0, 'hilim': 1000},
+        'IsInjDuration-SP': {
+            'type': 'int', 'value': 300, 'unit': 'ms',
+            'lolim': 0, 'hilim': 1000},
+        'IsInjDuration-RB': {
+            'type': 'int', 'value': 300, 'unit': 'ms',
+            'lolim': 0, 'hilim': 1000},
 
         'TopUpState-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off,
