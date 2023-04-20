@@ -1099,25 +1099,29 @@ class App(_Callback):
     def _callback_is_injecting(self, value, **kws):
         if value is None:
             return
+        thread = _epics.ca.CAThread(
+            target=self._thread_is_injecting, daemon=True)
+        thread.start()
 
+    def _thread_is_injecting(self):
         # check if any InjSI PU is pulsing
         is_injecting = False
         for pvs in self._pvs_injsys.values():
-            if not all([pvo.connected for pvo in pvs]):
+            if not all(pvo.connected for pvo in pvs):
+                is_injecting = True  # assume the worst scenario
                 break
-            pvs_vals = [pvo.value for pvo in pvs]
-            if all(pvs_vals):
+            if all(pvo.value for pvo in pvs):
                 is_injecting = True
                 break
 
+        if not is_injecting:
+            return
+
         # if True, raise IsInjecting flag after {delay}ms for {duration}ms
-        if is_injecting:
-            _time.sleep(self._isinj_delay/1000)
-            self.run_callbacks(
-                'IsInjecting-Mon', _Const.IdleInjecting.Injecting)
-            _time.sleep(self._isinj_duration/1000)
-            self.run_callbacks(
-                'IsInjecting-Mon', _Const.IdleInjecting.Idle)
+        _time.sleep(self._isinj_delay/1000)
+        self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Injecting)
+        _time.sleep(self._isinj_duration/1000)
+        self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
 
     # --- auxiliary injection methods ---
 
