@@ -1,5 +1,7 @@
 """Insertion Device Feedforward Configuration."""
 
+from copy import deepcopy as _dcopy
+
 import numpy as _np
 
 from ..search import IDSearch as _IDSearch
@@ -71,6 +73,16 @@ class IDFFConfig(_ConfigDBDocument):
             return list(self._value['polarizations'].keys())
         else:
             raise ValueError('Configuration not loaded!')
+
+    @property
+    def value(self):
+        """Get configuration."""
+        return _dcopy(self._value)
+
+    @value.setter
+    def value(self, value):
+        """Set configuration."""
+        self._set_value(value)
 
     def calculate_setpoints(self, polarization, kparameter_value):
         """Return correctors setpoints for a particular ID config.
@@ -159,20 +171,15 @@ class IDFFConfig(_ConfigDBDocument):
     def load(self, discarded=False):
         """."""
         super().load(discarded=discarded)
-        data = self._value['polarizations']
-        poldefs = dict()
-        for pol, tab in data.items():
-            if pol != 'none':
-                poldefs[pol] = tab['pparameter']
-            else:
-                poldefs[pol] = tab['kparameter']
-        self._polarization_definitions = poldefs
+        self._calc_polariz_defs()
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
         PPARAM_TOL = 0.1
         KPARAM_TOL = 0.1
         poldefs = self._polarization_definitions
+        if poldefs is None:
+            raise ValueError('No IDFF configuration defined.')
         for pol, val in poldefs.items():
             if pol == 'none':
                 continue
@@ -206,3 +213,18 @@ class IDFFConfig(_ConfigDBDocument):
             return corr1, corr2
         else:
             raise ValueError('Configuration not loaded!')
+
+    def _set_value(self, value):
+        super()._set_value(value)
+        self._calc_polariz_defs()
+
+    def _calc_polariz_defs(self):
+        """."""
+        data = self._value['polarizations']
+        poldefs = dict()
+        for pol, tab in data.items():
+            if pol != 'none':
+                poldefs[pol] = tab['pparameter']
+            else:
+                poldefs[pol] = tab['kparameter']
+        self._polarization_definitions = poldefs
