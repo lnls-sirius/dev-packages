@@ -127,7 +127,8 @@ class App(_Callback):
             pvo = pso.pv_object('CurrentRef-Mon')
             pvo.auto_monitor = True
             self._kick_buffer.append([])
-            pvo.add_callback(_part(self._update_kick_buffer, ps_index=idx))
+            pvo.add_callback(
+                _part(self._update_kick_buffer, ps_index=idx))
 
         self._rf_dev = _RFGen()
 
@@ -202,9 +203,12 @@ class App(_Callback):
         # configuration scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_configs = _epics.ca.CAThread(
-            target=self._check_configs, daemon=True)
-        self.thread_check_configs.start()
+        self.thread_check_corrs_configs = _epics.ca.CAThread(
+            target=self._check_corrs_configs, daemon=True)
+        self.thread_check_corrs_configs.start()
+        self.thread_check_ctrls_configs = _epics.ca.CAThread(
+            target=self._check_ctrls_configs, daemon=True)
+        self.thread_check_ctrls_configs.start()
 
     def init_database(self):
         """Set initial PV values."""
@@ -878,10 +882,11 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-        if not self._llfofb_dev.check_reforb(reforb):
+        if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not \
+                self._llfofb_dev.check_reforby(self._reforbhw_y):
             self._update_log('Syncing FOFB RefOrb...')
-            self._llfofb_dev.set_reforb(reforb)
+            self._llfofb_dev.set_reforbx(self._reforbhw_x)
+            self._llfofb_dev.set_reforby(self._reforbhw_y)
             self._update_log('...done!')
         else:
             self._update_log('FOFB RefOrb already synced.')
@@ -1077,6 +1082,10 @@ class App(_Callback):
         refhw = _np.round(refhw)  # round, low level expect it to be int
         refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
         setattr(self, '_reforbhw_' + plane.lower(), refhw)
+
+        # set reforb to FOFB controllers
+        func = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
+        func(refhw)
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
@@ -1837,7 +1846,7 @@ class App(_Callback):
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
 
-    def _check_configs(self):
+    def _check_corrs_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
             if not self.scanning:
@@ -1888,6 +1897,24 @@ class App(_Callback):
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
 
+            ttook = _time.time() - _t0
+            tsleep = tplanned - ttook
+            if tsleep > 0:
+                _time.sleep(tsleep)
+            else:
+                _log.warning(
+                    'Corrector configuration check took more than planned... '
+                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+
+    def _check_ctrls_configs(self):
+        tplanned = 1.0/App.SCAN_FREQUENCY
+        while not self.quit:
+            if not self.scanning:
+                _time.sleep(tplanned)
+                continue
+
+            _t0 = _time.time()
+
             # FOFB controllers status
             value = 0
             if self._llfofb_dev.connected:
@@ -1902,8 +1929,8 @@ class App(_Callback):
                 if not self._llfofb_dev.linkpartners_connected:
                     value = _updt_bit(value, 3, 1)
                 # RefOrbSynced
-                reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-                if not self._llfofb_dev.check_reforb(reforb):
+                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not\
+                        self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 4, 1)
                 # TimeFrameLenSynced
                 tframelen = self._time_frame_len
@@ -1941,5 +1968,5 @@ class App(_Callback):
                 _time.sleep(tsleep)
             else:
                 _log.warning(
-                    'Configuration check took more than planned... '
+                    'Controllers configuration check took more than planned... '
                     '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))

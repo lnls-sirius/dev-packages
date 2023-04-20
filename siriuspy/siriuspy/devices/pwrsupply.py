@@ -49,7 +49,8 @@ class _PSDev(_Device):
         'TestWavePeriod-RB', 'TestWavePeriod-SP',
         'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
         'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
-        'InvRespMatRow-SP', 'InvRespMatRow-RB',
+        'InvRespMatRowX-SP', 'InvRespMatRowX-RB',
+        'InvRespMatRowY-SP', 'InvRespMatRowY-RB',
         'FOFBAccGain-SP', 'FOFBAccGain-RB',
         'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
         'FOFBAccClear-Cmd',
@@ -910,13 +911,22 @@ class PowerSupplyFC(_PSDev):
         return self._wait('OpMode-Sts', mode, timeout=timeout)
 
     @property
-    def invrespmat_row(self):
-        """Correction coefficient value."""
-        return self['InvRespMatRow-RB']
+    def invrespmat_row_x(self):
+        """Horizontal correction coefficient value."""
+        return self['InvRespMatRowX-RB']
 
-    @invrespmat_row.setter
-    def invrespmat_row(self, value):
-        self['InvRespMatRow-SP'] = _np.array(value, dtype=float)
+    @invrespmat_row_x.setter
+    def invrespmat_row_x(self, value):
+        self['InvRespMatRowX-SP'] = _np.array(value, dtype=float)
+
+    @property
+    def invrespmat_row_y(self):
+        """Vertical correction coefficient value."""
+        return self['InvRespMatRowY-RB']
+
+    @invrespmat_row_y.setter
+    def invrespmat_row_y(self, value):
+        self['InvRespMatRowY-SP'] = _np.array(value, dtype=float)
 
     @property
     def fofbacc_gain(self):
