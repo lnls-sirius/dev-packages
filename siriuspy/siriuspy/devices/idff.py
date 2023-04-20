@@ -114,7 +114,10 @@ class IDFF(_Devices):
     def load_config(self, name):
         """Load IDFF configuration."""
         self._idffconfig.name = name
-        self._idffconfig.load()
+        if self._idffconfig.name == name:
+            self._idffconfig.load()
+        else:
+            raise ValueError('Could not load configuration.')
 
     def calculate_setpoints(self, polarization, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
@@ -138,7 +141,7 @@ class IDFF(_Devices):
         if not setpoints:
             _, setpoints = self.calculate_setpoints(polarization)
         if corrdevs is None:
-            corrdevs = self._devsch + self._devscv
+            corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:

@@ -32,7 +32,7 @@ def get_dict():
 #
 #   obs:
 #   1) pparameter: pvname that varies polarization configurations
-#   2) kparameter: pvname that varties k (photon energy) configurations
+#   2) kparameter: pvname that varies k (photon energy) configurations
 #   3) 'none' polarization configuration should always be in the config.
 #       it is a transition configuration between polarization configs.
 
