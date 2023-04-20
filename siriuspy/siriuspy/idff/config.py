@@ -131,6 +131,31 @@ class IDFFConfig(_ConfigDBDocument):
             polarizations=polarizations)
         return template_config
 
+    def __str__(self):
+        """."""
+        stg = ''
+        stg += f'name: {self.name}'
+        value = self.value
+        if value is None:
+            return stg
+
+        stg += '\n--- pvnames ---'
+        pvnames = ''.join(
+            [f'\n{key}: {value}' for key, value in value['pvnames'].items()])
+        stg += pvnames
+
+        for pol, table in self.value['polarizations'].items():
+            stg += f'\n--- {pol} ---'
+            for key, value in table.items():
+                if isinstance(value, (int, float)):
+                    nrpts = 1
+                    str_ = f'{value}'
+                else:
+                    nrpts = len(value)
+                    str_ = f'{min(value)}..{max(value)} [{nrpts}]'
+                stg += f'\n{key} : ' + str_
+        return stg
+
     def load(self, discarded=False):
         """."""
         super().load(discarded=discarded)
@@ -142,15 +167,6 @@ class IDFFConfig(_ConfigDBDocument):
             else:
                 poldefs[pol] = tab['kparameter']
         self._polarization_definitions = poldefs
-
-    def _get_corr_pvnames(self, cname1, cname2):
-        """Return corrector power supply pvnames."""
-        if self._value:
-            pvnames = self._value['pvnames']
-            corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
-            return corr1, corr2
-        else:
-            raise ValueError('Configuration not loaded!')
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
@@ -165,3 +181,28 @@ class IDFFConfig(_ConfigDBDocument):
         if abs(kparameter - poldefs['none']) < KPARAM_TOL:
                 return 'none'
         return 'not_defined'
+
+    def check_valid_value(self, value):
+        """."""
+        if not super().check_valid_value(value):
+            return False
+        for pol, table in value['polarizations'].items():
+            if pol == 'none':
+                nrpts = len(table['pparameter'])
+            else:
+                nrpts = len(table['kparameter'])
+            for key, value_ in table.items():
+                if key in ('kparameter', 'pparameter'):
+                    continue
+                if len(value_) != nrpts:
+                    return False
+        return True
+
+    def _get_corr_pvnames(self, cname1, cname2):
+        """Return corrector power supply pvnames."""
+        if self._value:
+            pvnames = self._value['pvnames']
+            corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
+            return corr1, corr2
+        else:
+            raise ValueError('Configuration not loaded!')
