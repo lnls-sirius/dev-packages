@@ -114,6 +114,7 @@ class IDFF(_Devices):
     def load_config(self, name):
         """Load IDFF configuration."""
         self._idffconfig.name = name
+        self._idffconfig.load()
 
     def calculate_setpoints(self, polarization, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
@@ -184,7 +185,7 @@ class IDFF(_Devices):
             # check 'kparameter'
             if 'kparameter' not in table:
                 raise ValueError(
-                    'Missing pparameter in polarization configuration.')
+                    'Missing kparameter in polarization configuration.')
 
             # check corr label list
             corrlabels_config = set(corrtable.keys())
