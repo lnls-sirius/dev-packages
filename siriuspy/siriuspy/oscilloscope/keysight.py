@@ -29,6 +29,7 @@ class Keysight:
     wavet, waved = scope.wfm_get_data()
     plt.plot(wavet, waved)
     plt.show()
+
     """
 
     def __init__(self, scope=None, scopesignal=None):
