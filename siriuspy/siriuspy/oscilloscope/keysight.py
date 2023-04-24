@@ -144,7 +144,7 @@ class Keysight:
             print('Total acquisition time:', _time.time() - tini)
             # self.send_command(b":WAVeform:STReaming ON\n", get_res=False)
         except Exception:
-            print('Close connetion by exception')
+            print('Close connection by exception')
             raise
 
         finally:
@@ -174,7 +174,7 @@ class Keysight:
             data = self.stats_acquire()
             print('Total acquisition time:', _time.time() - tini)
         except Exception:
-            print('Close connetion by exception')
+            print('Close connection by exception')
             raise
         finally:
             self.close()
