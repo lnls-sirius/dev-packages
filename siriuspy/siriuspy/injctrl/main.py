@@ -61,6 +61,8 @@ class App(_Callback):
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
         self._bucketlist_step = 15
+        self._isinj_delay = 0
+        self._isinj_duration = 300
 
         self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
@@ -143,6 +145,20 @@ class App(_Callback):
                     n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
+        # auxiliary injsys PVs
+        self._pvs_injsys = dict()
+        punames = _PSSearch.get_psnames({
+            'sec': '(SI|TS)', 'dev': 'Inj(Sept.*|NLKckr)',
+            'propty_name': '(?!:CCoil).*'})
+        for pun in punames:
+            pv_pulse = _PV(pun+':Pulse-Sts', connection_timeout=0.05)
+            pv_trigg = _PV(
+                pun.replace('PU', 'TI')+':State-Sts', connection_timeout=0.05)
+            self._pvs_injsys[pun] = [pv_pulse, pv_trigg]
+        ffname = _HLTimeSearch.get_hl_triggers({'sec': 'SI', 'idx': 'FF.*'})[0]
+        self._pvs_injsys[ffname] = [
+            _PV(ffname+':State-Sts', connection_timeout=0.05), ]
+
         # auxiliary devices
         self.egun_dev = EGun(
             print_log=False, callback=self._update_dev_status)
@@ -159,6 +175,9 @@ class App(_Callback):
             self._callback_watch_injectionevt)
         self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
             self._callback_watch_repeatbucketlist)
+        self._evg_dev.set_auto_monitor('TotalInjCount-Mon', True)
+        self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
+            self._callback_is_injecting)
 
         self._injsys_dev = InjSysStandbyHandler()
 
@@ -211,6 +230,8 @@ class App(_Callback):
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
+            'IsInjDelay-SP': self.set_isinj_delay,
+            'IsInjDuration-SP': self.set_isinj_duration,
             'TopUpState-Sel': self.set_topup_state,
             'TopUpPeriod-SP': self.set_topup_period,
             'TopUpHeadStartTime-SP': self.set_topup_headstarttime,
@@ -303,6 +324,11 @@ class App(_Callback):
             'BucketListStop-RB': self._bucketlist_stop,
             'BucketListStep-SP': self._bucketlist_step,
             'BucketListStep-RB': self._bucketlist_step,
+            'IsInjecting-Mon': _Const.IdleInjecting.Idle,
+            'IsInjDelay-SP': self._isinj_delay,
+            'IsInjDelay-RB': self._isinj_delay,
+            'IsInjDuration-SP': self._isinj_duration,
+            'IsInjDuration-RB': self._isinj_duration,
             'TopUpState-Sel': self._topup_state_sel,
             'TopUpState-Sts': self._topup_state_sts,
             'TopUpPeriod-SP': self._topup_period/60,
@@ -627,6 +653,25 @@ class App(_Callback):
                 return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
+        return True
+
+    def set_isinj_delay(self, value):
+        """Set IsInjecting-Mon flag delay."""
+        if not 0 <= value <= 1000:
+            return False
+        self._isinj_delay = value
+        self._update_log(f'Changed IsInjecting-Mon flag delay to {value}ms.')
+        self.run_callbacks('IsInjDelay-RB', value)
+        return True
+
+    def set_isinj_duration(self, value):
+        """Set IsInjecting-Mon flag duration."""
+        if not 0 <= value <= 1000:
+            return False
+        self._isinj_duration = value
+        self._update_log(
+            f'Changed IsInjecting-Mon flag duration to {value}ms.')
+        self.run_callbacks('IsInjDuration-RB', value)
         return True
 
     def _cmd_bucketlist_fill(self, stop, start, step):
@@ -1049,6 +1094,33 @@ class App(_Callback):
         devname = _PVName(pvname).device_name
         index = self._pu_names.index(devname)
         self._pu_refvolt[index] = value
+
+    def _callback_is_injecting(self, value, **kws):
+        if value is None:
+            return
+        thread = _epics.ca.CAThread(
+            target=self._thread_is_injecting, daemon=True)
+        thread.start()
+
+    def _thread_is_injecting(self):
+        # check if any InjSI PU is pulsing
+        is_injecting = False
+        for pvs in self._pvs_injsys.values():
+            if not all(pvo.connected for pvo in pvs):
+                is_injecting = True  # assume the worst scenario
+                break
+            if all(pvo.value for pvo in pvs):
+                is_injecting = True
+                break
+
+        if not is_injecting:
+            return
+
+        # if True, raise IsInjecting flag after {delay}ms for {duration}ms
+        _time.sleep(self._isinj_delay/1000)
+        self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Injecting)
+        _time.sleep(self._isinj_duration/1000)
+        self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
 
     # --- auxiliary injection methods ---
 

@@ -1413,6 +1413,68 @@ _tune_pvs = [
     ['SI-Glob:DI-TuneProc-V:FiltType-Sel', 0, 0],
     ]
 
+_fofbctrls = [
+    'IA-01RaBPM:BS-FOFBCtrl',
+    'IA-02RaBPM:BS-FOFBCtrl',
+    'IA-03RaBPM:BS-FOFBCtrl',
+    'IA-04RaBPM:BS-FOFBCtrl',
+    'IA-05RaBPM:BS-FOFBCtrl',
+    'IA-06RaBPM:BS-FOFBCtrl',
+    'IA-07RaBPM:BS-FOFBCtrl',
+    'IA-08RaBPM:BS-FOFBCtrl',
+    'IA-09RaBPM:BS-FOFBCtrl',
+    'IA-10RaBPM:BS-FOFBCtrl',
+    'IA-11RaBPM:BS-FOFBCtrl',
+    'IA-12RaBPM:BS-FOFBCtrl',
+    'IA-13RaBPM:BS-FOFBCtrl',
+    'IA-14RaBPM:BS-FOFBCtrl',
+    'IA-15RaBPM:BS-FOFBCtrl',
+    'IA-16RaBPM:BS-FOFBCtrl',
+    'IA-17RaBPM:BS-FOFBCtrl',
+    'IA-18RaBPM:BS-FOFBCtrl',
+    'IA-19RaBPM:BS-FOFBCtrl',
+    'IA-20RaBPM:BS-FOFBCtrl',
+]
+_fofb_propts = [
+    [':TRIGGER0Dir-Sel', 1, 0.0],
+    [':TRIGGER0DirPol-Sel', 1, 0.0],
+    [':TRIGGER0RcvLen-SP', 1, 0.0],
+    [':TRIGGER0TrnLen-SP', 1, 0.0],
+    [':TRIGGER1Dir-Sel', 1, 0.0],
+    [':TRIGGER1DirPol-Sel', 1, 0.0],
+    [':TRIGGER1RcvLen-SP', 1, 0.0],
+    [':TRIGGER1TrnLen-SP', 1, 0.0],
+    [':TRIGGER2Dir-Sel', 0, 0.0],
+    [':TRIGGER2DirPol-Sel', 1, 0.0],
+    [':TRIGGER2RcvLen-SP', 1, 0.0],
+    [':TRIGGER2TrnLen-SP', 1, 0.0],
+    [':TRIGGER3Dir-Sel', 0, 0.0],
+    [':TRIGGER3DirPol-Sel', 1, 0.0],
+    [':TRIGGER3RcvLen-SP', 1, 0.0],
+    [':TRIGGER3TrnLen-SP', 1, 0.0],
+    [':TRIGGER4Dir-Sel', 1, 0.0],
+    [':TRIGGER4DirPol-Sel', 1, 0.0],
+    [':TRIGGER4RcvLen-SP', 1, 0.0],
+    [':TRIGGER4TrnLen-SP', 1, 0.0],
+    [':TRIGGER5Dir-Sel', 1, 0.0],
+    [':TRIGGER5DirPol-Sel', 1, 0.0],
+    [':TRIGGER5RcvLen-SP', 1, 0.0],
+    [':TRIGGER5TrnLen-SP', 1, 0.0],
+    [':TRIGGER6Dir-Sel', 1, 0.0],
+    [':TRIGGER6DirPol-Sel', 1, 0.0],
+    [':TRIGGER6RcvLen-SP', 1, 0.0],
+    [':TRIGGER6TrnLen-SP', 1, 0.0],
+    [':TRIGGER7Dir-Sel', 1, 0.0],
+    [':TRIGGER7DirPol-Sel', 1, 0.0],
+    [':TRIGGER7RcvLen-SP', 1, 0.0],
+    [':TRIGGER7TrnLen-SP', 1, 0.0],
+    ]
+_fofb_pvs = list()
+for dev in _fofbctrls:
+    for ppt, val, dly in _fofb_propts:
+        _fofb_pvs.append([dev+ppt, val, dly])
+
+
 # When using this type of configuration to set the machine,
 # the list of PVs should be processed in the same order they are stored
 # in the configuration. The second numeric parameter in the pair is the
@@ -1421,6 +1483,6 @@ _tune_pvs = [
 _template_dict = {
     'pvs':
         _li_diags + _amcfpgaevr_pvs + _bpm_pvs + _scrn_pvs + _vlightcam_pvs +
-        _dcct_pvs + _slit_pvs + _tune_pvs
+        _dcct_pvs + _slit_pvs + _tune_pvs + _fofb_pvs
         # + _ict_pvs  # commented out becaus IOC is down.
         }
