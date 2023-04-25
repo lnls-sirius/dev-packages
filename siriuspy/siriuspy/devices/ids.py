@@ -126,7 +126,7 @@ class EPU(_Device):
         }
 
     _short_shut_eye = 0.1  # [s]
-    _default_timeout = 5  # [s]
+    _default_timeout = 8  # [s]
 
     _properties = (
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
@@ -451,9 +451,9 @@ class EPU(_Device):
         dtime_max = max(dtime_phase, dtime_gap)
 
         # additional percentual in ETA
-        tol_gap = 0.002  # [mm]
-        tol_phase = 0.002  # [mm]
-        tol_dtime = 100  # [%]
+        tol_gap = 0.01  # [mm]
+        tol_phase = 0.01  # [mm]
+        tol_dtime = 300  # [%]
         tol_factor = (1 + tol_dtime/100)
         tol_total = tol_factor * dtime_max + 5
 
