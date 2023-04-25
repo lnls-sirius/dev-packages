@@ -6,6 +6,10 @@ from threading import Thread as _Thread, Event as _Event, \
 from queue import Queue as _Queue
 from collections import deque as _deque
 
+from epics.ca import use_initial_context as _use_initial_context
+
+from .epics import CAThread as _CAThread
+
 
 class AsyncWorker(_Thread):
     """Asynchronous Worker Thread.
@@ -13,9 +17,10 @@ class AsyncWorker(_Thread):
     Performs asynchronous jobs indefinitely.
     """
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, is_cathread=False):
         """."""
         super().__init__(name=name, daemon=True)
+        self.is_cathread = is_cathread
         self._evt_received = _Event()
         self._evt_ready = _Event()
         self._evt_ready.set()
@@ -48,6 +53,8 @@ class AsyncWorker(_Thread):
 
     def run(self):
         """."""
+        if self.is_cathread:
+            _use_initial_context()
         while not self._evt_stop.is_set():
             if self._evt_received.wait(0.5):
                 self._evt_received.clear()
@@ -56,20 +63,17 @@ class AsyncWorker(_Thread):
 
 
 class QueueThread(_Thread):
-    """Callback queue class.
-
-        Queues threads of this class are used to process callbacks of power
-    supplies (magnets) properties among others.
-    """
+    """Callback queue class."""
 
     # NOTE: QueueThread was reported as generating unstable behaviour
     # when used intensively in the SOFB IOC. Currently this class is
     # used in as-ps-diag IOC classes.
     # TODO: investigate this issue!
 
-    def __init__(self):
+    def __init__(self, is_cathread=False):
         """Init method."""
         super().__init__(daemon=True)
+        self.is_cathread = is_cathread
         self._queue = _Queue()
         self._running = False
 
@@ -86,6 +90,8 @@ class QueueThread(_Thread):
 
     def run(self):
         """Run method."""
+        if self.is_cathread:
+            _use_initial_context()
         self._running = True
         while self.running:
             func_item = self._queue.get()
@@ -103,7 +109,9 @@ class QueueThread(_Thread):
 class RepeaterThread(_Thread):
     """Repeat execution of predefined function for a given number of times."""
 
-    def __init__(self, interval, function, args=None, kwargs=None, niter=0):
+    def __init__(
+            self, interval, function, args=None, kwargs=None, niter=0,
+            is_cathread=False):
         """Init method.
 
         Inputs:
@@ -113,12 +121,14 @@ class RepeaterThread(_Thread):
         - kwargs: dictionary with keyword arguments of method.
         - niter: number of times to execute method. If niter is zero or None
             it will be executed indefinetly until stop is called.
+        - whether to use CAThread logic .
         """
         if args is None:
             args = tuple()
         if kwargs is None:
             kwargs = dict()
         super().__init__(daemon=True)
+        self.is_cathread = is_cathread
         self.interval = interval
         if not hasattr(function, '__call__'):
             raise TypeError('Argument "function" is not callable.')
@@ -133,6 +143,9 @@ class RepeaterThread(_Thread):
 
     def run(self):
         """Run method."""
+        if self.is_cathread:
+            _use_initial_context()
+
         self._unpaused.wait()
         self.function(*self.args, **self.kwargs)
         dtime = 0.0
@@ -184,9 +197,10 @@ class DequeThread(_deque):
     thread.
     """
 
-    def __init__(self):
+    def __init__(self, is_cathread=False):
         """Init."""
         super().__init__()
+        self.is_cathread = is_cathread
         self._last_operation = None
         self._thread = None
         self._ignore = False
@@ -268,7 +282,12 @@ class DequeThread(_deque):
                 func, args = operation
             elif len(operation) >= 3:
                 func, args, kws = operation[:3]
-            self._thread = _Thread(
+
+            _thread_class = _Thread
+            if self.is_cathread:
+                _thread_class = _CAThread
+
+            self._thread = _thread_class(
                 target=func, args=args, kwargs=kws, daemon=True)
             self._thread.start()
             return True
