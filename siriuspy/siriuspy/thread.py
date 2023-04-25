@@ -194,17 +194,26 @@ class DequeThread(_deque):
 
     This class manages generic operations (actions) using an append-right,
     pop-left queue. Each operation processing is a method invoked as a separate
-    thread.
+    thread. It also has process loop methods to continuously process its
+    operation queue.
     """
 
-    def __init__(self, is_cathread=False):
+    DEF_LOOP_INTERVAL = 0.1  # [s]
+    SMALL_SLEEP_TIME = 0.1  # [s]
+
+    def __init__(self, loop_interval=None, is_cathread=False):
         """Init."""
         super().__init__()
+        loop_interval = loop_interval if loop_interval is not None else \
+            self.DEF_LOOP_INTERVAL
         self.is_cathread = is_cathread
         self._last_operation = None
-        self._thread = None
+        self._process_thread = None
         self._ignore = False
-        self._enabled = True
+        self._loop_thread = None
+        self._loop_stop_evt = _Event()
+        self._loop_interval = loop_interval
+        self._loop_is_running = False
         self._lock = _Lock()
 
     @property
@@ -213,13 +222,19 @@ class DequeThread(_deque):
         return self._last_operation
 
     @property
-    def enabled(self):
-        """Enable process."""
-        return self._enabled
+    def running(self):
+        """."""
+        return self._loop_is_running
 
-    @enabled.setter
-    def enabled(self, value):
-        self._enabled = value
+    @property
+    def interval(self):
+        """Return loop process interval."""
+        return self._loop_interval
+
+    @interval.setter
+    def interval(self, value):
+        """Set loop process interval."""
+        self._loop_interval = max(0, value)
 
     def ignore_set(self):
         """Turn ignore state on."""
@@ -263,8 +278,9 @@ class DequeThread(_deque):
         """Process operation from queue."""
         # first check if a thread is already running
         with self._lock:
-            donothing = not self._enabled
-            donothing |= self._thread is not None and self._thread.is_alive()
+            donothing = \
+                self._process_thread is not None and \
+                self._process_thread.is_alive()
             if donothing:
                 return False
 
@@ -287,7 +303,41 @@ class DequeThread(_deque):
             if self.is_cathread:
                 _thread_class = _CAThread
 
-            self._thread = _thread_class(
+            self._process_thread = _thread_class(
                 target=func, args=args, kwargs=kws, daemon=True)
-            self._thread.start()
+            self._process_thread.start()
             return True
+
+    def run(self, interval=None):
+        """Run deque process loop."""
+        if interval is not None:
+            self.interval = interval
+
+        # check if there is a previously running loop
+        self._loop_stop_evt.clear()
+        while self._loop_thread is not None and self._loop_thread.is_alive():
+            return
+
+        # start new process loop
+        _thread_class = _Thread
+        if self.is_cathread:
+            _thread_class = _CAThread
+        self._loop_thread = _thread_class(
+            target=self._loop_run_process, daemon=True)
+        self._loop_thread.start()
+
+    def stop(self):
+        """Stop deque process loop."""
+        self._loop_stop_evt.set()
+
+    def _loop_run_process(self):
+        while not self._loop_stop_evt.is_set():
+            self._loop_is_running = True
+            self.process()
+            t0 = _time.time()
+            while _time.time() - t0 < self._loop_interval:
+                sleep_time = \
+                    min(DequeThread.SMALL_SLEEP_TIME, self._loop_interval)
+                _time.sleep(sleep_time)
+        self._loop_is_running = False
+        self._loop_stop_evt.clear()
