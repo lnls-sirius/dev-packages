@@ -141,10 +141,13 @@ class IDFF(_Devices):
             polarization, kparameter_value)
         return polarization, setpoints
 
-    def implement_setpoints(self, polarization, setpoints=None, corrdevs=None):
+    def implement_setpoints(
+            self, setpoints=None, corrdevs=None):
         """Implement setpoints in correctors."""
-        if not setpoints:
-            _, setpoints = self.calculate_setpoints(polarization)
+        if setpoints is None:
+            _, setpoints = self.calculate_setpoints(
+                pparameter_value=None,
+                kparameter_value=None)
         if corrdevs is None:
             corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
