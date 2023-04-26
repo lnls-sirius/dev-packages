@@ -212,8 +212,7 @@ class App(_Callback):
                 if self._control_qs == self._const.DsblEnbl.Dsbl:
                     corrs = self._idff.chdevs + self._idff.cvdevs
                 try:
-                    self._idff.implement_setpoints(
-                        polarization=self._polarization, corrdevs=corrs)
+                    self._idff.implement_setpoints(corrdevs=corrs)
                 except ValueError as err:
                     self._update_log('ERR:'+str(err))
 
