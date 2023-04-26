@@ -119,12 +119,17 @@ class IDFF(_Devices):
         else:
             raise ValueError('Could not load configuration.')
 
-    def calculate_setpoints(self, polarization, kparameter_value=None):
+    def calculate_setpoints(
+            self, pparameter_value=None, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        polarization = self.get_polarization_state(
+                pparameter_value=pparameter_value,
+                kparameter_value=kparameter_value)
+
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
