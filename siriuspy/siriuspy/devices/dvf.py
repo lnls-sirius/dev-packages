@@ -19,6 +19,7 @@ class DVF(_DeviceNC):
     _default_timeout = 10  # [s]
 
     _dvfparam_fields = (
+        'MAX_INTENSITY_NR_BITS',
         'ACQUISITION_TIME_MIN',  # [s]
         'ACQUISITION_TIME_DEFAULT',  # [s]
         'EXPOSURE_TIME_DEFAULT',  # [s]
@@ -32,12 +33,12 @@ class DVF(_DeviceNC):
         DEVICES.CAX_DVF1 :
             # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
             _get_namedtuple('DVFParameters',
-            _dvfparam_fields, (0.5, 0.5, 0.005, 1024, 1280, 4.8, 0.5)),
+            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 0.5)),
         DEVICES.CAX_DVF2 :
             # DVF2 today: pixel size 4.8 um; magnification factor 5.0
             # DVF2 future hifi: pixel size 2.4 um; magnification factor 5.0
             _get_namedtuple('DVFParameters',
-            _dvfparam_fields, (0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
+            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
         }
 
     _properties = (
@@ -71,6 +72,13 @@ class DVF(_DeviceNC):
     def parameters(self):
         """Return DVF parameters."""
         return DVF._dev2params[self.devname]
+
+    @property
+    def intensity_saturation_value(self):
+        """Image intensity saturation value."""
+        # NOTE: a PV will be added to the IOC to select nr bits of intensity
+        intensity_nr_bits = self.parameters.MAX_INTENSITY_NR_BITS
+        return 2**intensity_nr_bits - 1
 
     @property
     def exposure_time(self):

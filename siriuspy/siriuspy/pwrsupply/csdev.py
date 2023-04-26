@@ -159,7 +159,7 @@ class ETypes(_csdev.ETypes):
         'Sobre-tensao no DC-Link', 'Sub-tensao no DC-Link',
         'Interlock da placa IIB',
         'Interlock externo', 'Interlock do rack',
-        'Bit6', 'Bit7',
+        'Alta corrente de fuga', 'Bit7',
         'Bit8', 'Bit9', 'Bit10', 'Bit11',
         'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
@@ -184,9 +184,8 @@ class ETypes(_csdev.ETypes):
         'Erro no driver do IGBT Bottom 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit19',
+        'Alta umidade relativa', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
@@ -201,10 +200,9 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no driver do IGBT 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB',
         'Alta umidade relativa',
-        'Bit13', 'Bit14', 'Bit15',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -254,9 +252,9 @@ class ETypes(_csdev.ETypes):
         'Erro no driver do IGBT Bottom 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit19',
+        'Alta umidade relativa',
+        'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
@@ -271,10 +269,9 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no driver do IGBT 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga',
         'Sobre-temperatura da placa IIB',
         'Alta umidade relativa',
-        'Bit13', 'Bit14', 'Bit15',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -422,8 +419,9 @@ class ETypes(_csdev.ETypes):
         'Erro no driver do IGBT Bottom 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga', 'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit19',
+        'Sobre-temperatura da placa IIB',
+        'Alta umidade relativa',
+        'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
@@ -436,8 +434,9 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no driver do IGBT 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
-        'Alta corrente de fuga', 'Sobre-temperatura da placa IIB',
-        'Alta umidade relativa', 'Bit13', 'Bit14', 'Bit15',
+        'Sobre-temperatura da placa IIB',
+        'Alta umidade relativa',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
@@ -609,8 +608,8 @@ class ETypes(_csdev.ETypes):
         'Interlock da placa IIB do modulo 4',
         'Bit30', 'Bit31')
     ALARMS_FAP_4P = ALARMS_FBP
-    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
-    IIB_ALARMS_FAP_4P = (
+    IIB_INTLCK_FAP_4P_MOD1 = IIB_INTLCK_FAP
+    IIB_ALARMS_FAP_4P_MOD1 = (
         'Sobre-tensao de entrada', 'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
         'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
@@ -619,6 +618,37 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no driver do IGBT 2',
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador', 'Alta corrente de fuga',
+        'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
+        'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB_INTLCK_FAP_4P_MOD234 = (
+        'Sobre-tensao de entrada', 'Sobre-tensao de saida',
+        'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
+        'Sobre-tensao dos drivers dos IGBTs',
+        'Sobre-corrente do driver do IGBT 1',
+        'Sobre-corrente do driver do IGBT 2', 'Erro no driver do IGBT 1',
+        'Erro no driver do IGBT 2', 'Sobre-temperatura nos indutores',
+        'Sobre-temperatura no dissipador',
+        'Falha no contator de entrada do DC-Link',
+        'Contator de entrada do DC-Link colado', 'Interlock externo',
+        'Interlock do rack', 'Bit17',
+        'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB_ALARMS_FAP_4P_MOD234 = (
+        'Sobre-tensao de entrada', 'Sobre-tensao de saida',
+        'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
+        'Sobre-tensao dos drivers dos IGBTs',
+        'Sobre-corrente no driver do IGBT 1',
+        'Sobre-corrente no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
+        'Sobre-temperatura no dissipador', 'Bit11',
         'Sobre-temperatura da placa IIB', 'Alta umidade relativa',
         'Bit14', 'Bit15',
         'Bit16', 'Bit17', 'Bit18', 'Bit19',
@@ -673,7 +703,7 @@ class ETypes(_csdev.ETypes):
         'Sobre-corrente no braco 2',
         'Bit31')
     ALARMS_FAP_2P2S = ALARMS_FBP
-    IIB_INTLCK_FAP_2P2S = (
+    IIB_INTLCK_FAP_2P2S_MOD1 = (
         'Sobre-tensao de entrada',
         'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1',
@@ -697,7 +727,7 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
-    IIB_ALARMS_FAP_2P2S = (
+    IIB_ALARMS_FAP_2P2S_MOD1 = (
         'Sobre-tensao de entrada',
         'Sobre-tensao de saida',
         'Sobre-corrente no IGBT 1',
@@ -710,6 +740,50 @@ class ETypes(_csdev.ETypes):
         'Sobre-temperatura nos indutores',
         'Sobre-temperatura no dissipador',
         'Alta corrente de fuga',
+        'Sobre-temperatura na placa IIB',
+        'Alta umidade relativa',
+        'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB_INTLCK_FAP_2P2S_MOD234 = (
+        'Sobre-tensao de entrada',
+        'Sobre-tensao de saida',
+        'Sobre-corrente no IGBT 1',
+        'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1',
+        'Sobre-temperatura no IGBT 2',
+        'Sobre-tensao dos drivers dos IGBTs',
+        'Sobre-corrente no driver do IGBT 1',
+        'Sobre-corrente no driver do IGBT 2',
+        'Erro no driver do IGBT 1',
+        'Erro no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
+        'Sobre-temperatura no dissipador',
+        'Falha no contator de entrada do DC-Link',
+        'Contator de entrada do DC-Link colado',
+        'Interlock Externo',
+        'Interlock do Rack',
+        'Bit17',
+        'Sobre-temperatura da placa IIB',
+        'Alta umidade relativa',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    IIB_ALARMS_FAP_2P2S_MOD234 = (
+        'Sobre-tensao de entrada',
+        'Sobre-tensao de saida',
+        'Sobre-corrente no IGBT 1',
+        'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1',
+        'Sobre-temperatura no IGBT 2',
+        'Sobre-tensao nos drivers dos IGBTs',
+        'Sobre-corrente no driver do IGBT 1',
+        'Sobre-corrente no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
+        'Sobre-temperatura no dissipador',
+        'Bit11',
         'Sobre-temperatura na placa IIB',
         'Alta umidade relativa',
         'Bit14', 'Bit15',
@@ -864,6 +938,74 @@ def get_ps_modules(psmodel=None, psname=None):
             mod = aux[0]
             modules.add(mod)
     return sorted(modules)
+
+
+def get_ps_scopesourcemap(psname):
+    """Return PS modules for a power supply model."""
+    psmodel = _PSSearch.conv_psname_2_psmodel(psname)
+    psudcindex = _PSSearch.conv_psname_2_udcindex(psname)
+    if psmodel == 'FBP':
+        return {
+            'Output current [A]': 0xD000 + 2*psudcindex,
+            'Output voltage [V]': 0xC008 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD008 + 2*psudcindex,
+            'DCLink voltage [V]': 0xC000 + 2*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAC_DCDC':
+        return {
+            'Output current [A]': 0xD006,
+            'Output voltage [V]': 0xC000,
+            'Tracking error [A or V]': 0xD008,
+            'DCLink voltage [V]': 0xD004,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2S_DCDC':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2S_ACDC':
+        return {
+            'Output voltage [V]': 0xD000 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD00C + 14*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAC_2P4S_DCDC':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAC_2P4S_ACDC':
+        return {
+            'Output voltage [V]': 0xD000 + 2*psudcindex,
+            'Tracking error [A or V]': 0xD00C + 14*psudcindex,
+            'DCLink voltage [V]': 0xC000 + 2*psudcindex,
+            'PWM duty cycle [p.u.]': 0xD040 + 2*psudcindex,
+        }
+    if psmodel == 'FAP':
+        return {
+            'Output current [A]': 0xD006,
+            'Output voltage [V]': 0xC004,
+            'Tracking error [A or V]': 0xD008,
+            'DCLink voltage [V]': 0xD004,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAP_2P2S':
+        return {
+            'Output current [A]': 0xD008,
+            'Tracking error [A or V]': 0xD00A,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    if psmodel == 'FAP_4P':
+        return {
+            'Output current [A]': 0xD006,
+            'Tracking error [A or V]': 0xD008,
+            'PWM duty cycle [p.u.]': 0xD040,
+        }
+    return dict()
 
 
 # --- Auxiliary functions ---
@@ -1432,7 +1574,6 @@ def _get_ps_FOFB_propty_database():
             'lolo': 0, 'low': 0, 'lolim': 0,
             'hilim': 4194303, 'high': 4194303, 'hihi': 4194303},
         # Status and Alarms
-        'PSStatus-Mon': {'type': 'int', 'value': 0},
         'AlarmsAmp-Mon': {'type': 'int', 'value': 0},
         'AlarmsAmpLabels-Cte': {
             'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
@@ -1627,6 +1768,9 @@ def _get_ps_FAC_DCDC_propty_database():
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
                              'prec': PS_CURRENT_PRECISION,
                              'unit': 'p.u.'},
+        'LeakCurrent-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': PS_CURRENT_PRECISION,
+                            'unit': 'A'},
         'VoltageInputIIB-Mon': {'type': 'float', 'value': 0.0,
                                 'prec': PS_CURRENT_PRECISION,
                                 'unit': 'V'},
@@ -1653,9 +1797,6 @@ def _get_ps_FAC_DCDC_propty_database():
         'IGBT2DriverCurrentIIB-Mon': {'type': 'float', 'value': 0.0,
                                       'prec': PS_CURRENT_PRECISION,
                                       'unit': 'A'},
-        'LeakCurrentIIB-Mon': {'type': 'float', 'value': 0.0,
-                               'prec': PS_CURRENT_PRECISION,
-                               'unit': 'A'},
         'BoardTemperatureIIB-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIB-Mon': {'type': 'float', 'value': 0.0,
@@ -2349,6 +2490,9 @@ def _get_ps_FAP_4P_propty_database():
         'IGBT2PWMDutyCycleMod4-Mon': {'type': 'float', 'value': 0.0,
                                       'prec': PS_CURRENT_PRECISION,
                                       'unit': 'p.u.'},
+        'LeakCurrent-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': PS_CURRENT_PRECISION,
+                            'unit': 'A'},
         'VoltageInputIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2378,9 +2522,6 @@ def _get_ps_FAP_4P_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod1-Mon': {
@@ -2390,13 +2531,13 @@ def _get_ps_FAP_4P_propty_database():
         'IntlkIIBMod1-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod1Labels-Cte': {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_4P),
-            'value': _et.IIB_INTLCK_FAP_4P,
+            'count': len(_et.IIB_INTLCK_FAP_4P_MOD1),
+            'value': _et.IIB_INTLCK_FAP_4P_MOD1,
             'unit': 'interlock'},
         'AlarmsIIBMod1-Mon': {'type': 'int', 'value': 0},
         'AlarmsIIBMod1Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_4P),
-                                    'value': _et.IIB_ALARMS_FAP_4P},
+                                    'count': len(_et.IIB_ALARMS_FAP_4P_MOD1),
+                                    'value': _et.IIB_ALARMS_FAP_4P_MOD1},
         'VoltageInputIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2426,9 +2567,6 @@ def _get_ps_FAP_4P_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod2-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod2-Mon': {
@@ -2439,13 +2577,13 @@ def _get_ps_FAP_4P_propty_database():
             'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod2Labels-Cte': {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_4P),
-            'value': _et.IIB_INTLCK_FAP_4P,
+            'count': len(_et.IIB_INTLCK_FAP_4P_MOD234),
+            'value': _et.IIB_INTLCK_FAP_4P_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod2-Mon': {'type': 'int', 'value': 0},
         'AlarmsIIBMod2Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_4P),
-                                    'value': _et.IIB_ALARMS_FAP_4P},
+                                    'count': len(_et.IIB_ALARMS_FAP_4P_MOD234),
+                                    'value': _et.IIB_ALARMS_FAP_4P_MOD234},
         'VoltageInputIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2475,9 +2613,6 @@ def _get_ps_FAP_4P_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod3-Mon': {
@@ -2487,13 +2622,14 @@ def _get_ps_FAP_4P_propty_database():
         'IntlkIIBMod3-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod3Labels-Cte': {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_4P),
-            'value': _et.IIB_INTLCK_FAP_4P,
+            'count': len(_et.IIB_INTLCK_FAP_4P_MOD234),
+            'value': _et.IIB_INTLCK_FAP_4P_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod3-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod3Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_4P),
-                                    'value': _et.IIB_ALARMS_FAP_4P},
+        'AlarmsIIBMod3Labels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_FAP_4P_MOD234),
+            'value': _et.IIB_ALARMS_FAP_4P_MOD234},
         'VoltageInputIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2523,9 +2659,6 @@ def _get_ps_FAP_4P_propty_database():
                                            'prec': 2, 'unit': 'C'},
         'HeatSinkTemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                            'prec': 2, 'unit': 'C'},
-        'LeakageCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'TemperatureIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod4-Mon': {
@@ -2535,13 +2668,14 @@ def _get_ps_FAP_4P_propty_database():
         'IntlkIIBMod4-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod4Labels-Cte': {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_4P),
-            'value': _et.IIB_INTLCK_FAP_4P,
+            'count': len(_et.IIB_INTLCK_FAP_4P_MOD234),
+            'value': _et.IIB_INTLCK_FAP_4P_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod4-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod4Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_4P),
-                                    'value': _et.IIB_ALARMS_FAP_4P},
+        'AlarmsIIBMod4Labels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_FAP_4P_MOD234),
+            'value': _et.IIB_ALARMS_FAP_4P_MOD234},
         }
     propty_db.update(db_ps)
     return propty_db
@@ -2656,6 +2790,9 @@ def _get_ps_FAP_2P2S_propty_database():
         'IGBT2PWMDutyCycleMod4-Mon': {'type': 'float', 'value': 0.0,
                                       'prec': PS_CURRENT_PRECISION,
                                       'unit': 'p.u.'},
+        'LeakCurrent-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': PS_CURRENT_PRECISION,
+                            'unit': 'A'},
         'VoltageInputIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2689,19 +2826,16 @@ def _get_ps_FAP_2P2S_propty_database():
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod1-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
-        'LeakageCurrentIIBMod1-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'IntlkIIBMod1-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod1Labels-Cte':  {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_2P2S),
-            'value': _et.IIB_INTLCK_FAP_2P2S,
+            'count': len(_et.IIB_INTLCK_FAP_2P2S_MOD1),
+            'value': _et.IIB_INTLCK_FAP_2P2S_MOD1,
             'unit': 'interlock'},
         'AlarmsIIBMod1-Mon': {'type': 'int', 'value': 0},
         'AlarmsIIBMod1Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
-                                    'value': _et.IIB_ALARMS_FAP_2P2S},
+                                    'count': len(_et.IIB_ALARMS_FAP_2P2S_MOD1),
+                                    'value': _et.IIB_ALARMS_FAP_2P2S_MOD1},
         'VoltageInputIIBMod2-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2740,13 +2874,14 @@ def _get_ps_FAP_2P2S_propty_database():
         'IntlkIIBMod2-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod2Labels-Cte': {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_2P2S),
-            'value': _et.IIB_INTLCK_FAP_2P2S,
+            'count': len(_et.IIB_INTLCK_FAP_2P2S_MOD234),
+            'value': _et.IIB_INTLCK_FAP_2P2S_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod2-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod2Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
-                                    'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod2Labels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_FAP_2P2S_MOD234),
+            'value': _et.IIB_ALARMS_FAP_2P2S_MOD234},
         'VoltageInputIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2780,19 +2915,17 @@ def _get_ps_FAP_2P2S_propty_database():
                                    'prec': 2, 'unit': 'C'},
         'RelativeHumidityIIBMod3-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
-        'LeakageCurrentIIBMod3-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'IntlkIIBMod3-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod3Labels-Cte':  {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_2P2S),
-            'value': _et.IIB_INTLCK_FAP_2P2S,
+            'count': len(_et.IIB_INTLCK_FAP_2P2S_MOD234),
+            'value': _et.IIB_INTLCK_FAP_2P2S_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod3-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod3Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
-                                    'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod3Labels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_FAP_2P2S_MOD234),
+            'value': _et.IIB_ALARMS_FAP_2P2S_MOD234},
         'VoltageInputIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                     'prec': PS_CURRENT_PRECISION,
                                     'unit': 'V'},
@@ -2829,19 +2962,17 @@ def _get_ps_FAP_2P2S_propty_database():
                                    'unit': 'C'},
         'RelativeHumidityIIBMod4-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': 2, 'unit': '%'},
-        'LeakageCurrentIIBMod4-Mon': {'type': 'float', 'value': 0.0,
-                                      'prec': PS_CURRENT_PRECISION,
-                                      'unit': 'A'},
         'IntlkIIBMod4-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkIIBMod4Labels-Cte':  {
             'type': 'string',
-            'count': len(_et.IIB_INTLCK_FAP_2P2S),
-            'value': _et.IIB_INTLCK_FAP_2P2S,
+            'count': len(_et.IIB_INTLCK_FAP_2P2S_MOD234),
+            'value': _et.IIB_INTLCK_FAP_2P2S_MOD234,
             'unit': 'interlock'},
         'AlarmsIIBMod4-Mon': {'type': 'int', 'value': 0},
-        'AlarmsIIBMod4Labels-Cte': {'type': 'string',
-                                    'count': len(_et.IIB_ALARMS_FAP_2P2S),
-                                    'value': _et.IIB_ALARMS_FAP_2P2S},
+        'AlarmsIIBMod4Labels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_FAP_2P2S_MOD234),
+            'value': _et.IIB_ALARMS_FAP_2P2S_MOD234},
     }
     propty_db.update(db_ps)
     return propty_db
