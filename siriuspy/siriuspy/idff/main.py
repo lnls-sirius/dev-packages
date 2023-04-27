@@ -195,14 +195,16 @@ class App(_Callback):
     def _do_ff(self):
         while not self.quit:
             tplanned = 1.0/self._loop_freq
+
+            # sleep appropriately if loop is not closed
             if not self._loop_state:
                 _time.sleep(1.0/self._loop_freq)
                 continue
 
+            # try implementing correctors setpoints, registering time taken
             _t0 = _time.time()
-
             if not self._idff.connected:
-                self._update_log('ERR: Some PV is disconnected.')
+                self._update_log('ERR: Some PV in IDFF is disconnected.')
             else:
                 new_pol = self._idff.get_polarization_state()
                 if new_pol != self._polarization:
@@ -216,8 +218,9 @@ class App(_Callback):
                         polarization=self._polarization, corrdevs=corrs)
                 except ValueError as err:
                     self._update_log('ERR:'+str(err))
-
             ttook = _time.time() - _t0
+
+            # sleep unsed time or signal overtime to stdout
             tsleep = tplanned - ttook
             if tsleep > 0:
                 _time.sleep(tsleep)
