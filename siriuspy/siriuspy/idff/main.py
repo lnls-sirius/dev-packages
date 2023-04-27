@@ -28,11 +28,9 @@ class App(_Callback):
         self._config_name = ''
         self.read_autosave_file()
 
-        # connections
-        # use pyepics recommendations for threading
-        _epics.ca.use_initial_context()
-
         self._idff = _IDFF(idname)
+
+        self._load_config(self._config_name)
 
         # pvs to write methods
         self.map_pv2write = {
@@ -62,7 +60,6 @@ class App(_Callback):
         }
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
-        self._load_config(self._config_name)
         self._update_log('Started.')
 
     @property
