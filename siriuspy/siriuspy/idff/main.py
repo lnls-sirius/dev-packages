@@ -198,13 +198,13 @@ class App(_Callback):
 
             # sleep appropriately if loop is not closed
             if not self._loop_state:
-                _time.sleep(1.0/self._loop_freq)
+                _time.sleep(tplanned)
                 continue
 
             # try implementing correctors setpoints, registering time taken
             _t0 = _time.time()
             if not self._idff.connected:
-                self._update_log('ERR: Some PV in IDFF is disconnected.')
+                self._update_log('ERR: IDFF device is disconnected.')
             else:
                 new_pol = self._idff.get_polarization_state()
                 if new_pol != self._polarization:
