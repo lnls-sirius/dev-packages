@@ -354,7 +354,9 @@ class Trigger(_Device):
     @property
     def source_str(self):
         """Source string."""
-        return self._source_options[self['Src-Sts']]
+        if self['Src-Sts'] is not None:
+            return self._source_options[self['Src-Sts']]
+        return
 
     @property
     def source_options(self):
@@ -530,14 +532,18 @@ class HLTiming(_Devices):
             map_table2evt[v] = map_table2evt.get(v, []) + [k]
         return map_table2evt
 
-    def change_triggers_source(self, trigs, new_src='Linac') -> list:
+    def change_triggers_source(
+            self, trigs, new_src='Linac', printlog=True) -> list:
         """."""
         notchanged = list()
         for tn in trigs:
             tr = self.triggers[tn]
 
             if new_src not in tr.source_options:
-                print(f'{tn:25s} -> No Change: {new_src:s} is not an option.')
+                if printlog:
+                    print(
+                        f'{tn:25s} -> No Change: {new_src:s}'
+                        ' is not an option.')
                 notchanged.append(tn)
                 continue
 
@@ -556,18 +562,21 @@ class HLTiming(_Devices):
             dly += delta_dly
             if dly < 0:
                 notchanged.append(tn)
-                print(f'{tn:25s} -> No Change: total delay not constant!')
+                if printlog:
+                    print(f'{tn:25s} -> No Change: total delay not constant!')
                 continue
 
             tr.delay_raw = dly
             tr.source = new_src
-            print(f'{tn:25s} -> Change OK: .')
+            if printlog:
+                print(f'{tn:25s} -> Change OK: .')
         return notchanged
 
-    def change_event_delay(self, new_dly, event='Linac'):
+    def change_event_delay(self, new_dly, event='Linac', printlog=True):
         """."""
         if event not in self.events:
-            print(f'{event} is not a valid event!')
+            if printlog:
+                print(f'{event} is not a valid event!')
             return False
         new_dly = int(new_dly)
         old_dly = self.events[event].delay_raw
@@ -577,14 +586,15 @@ class HLTiming(_Devices):
         for trn in trigs:
             dly = self.triggers[trn].delay_raw + dlt_dly
             if dly < 0:
-                print(f'cannot change delay: {trn:s} would change!')
+                if printlog:
+                    print(f'cannot change delay: {trn:s} would change!')
                 return False
 
         for trn in trigs:
             self.triggers[trn].delay_raw += dlt_dly
         self.events[event].delay_raw = new_dly
-
-        print('Delay changed!')
+        if printlog:
+            print('Delay changed!')
         return True
 
     def print_injtable_mapping(self, only_enabled=False):

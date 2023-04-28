@@ -379,6 +379,7 @@ class Devices:
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
+        tini = _time.time()
         for _ in range(int(timeout/_TINY_INTERVAL)):
             okdevs = set()
             for k, v in dev2val.items():
@@ -387,14 +388,18 @@ class Devices:
                     boo = _np.all(boo)
                 if boo:
                     okdevs.add(k)
+                if _time.time() - tini > timeout:
+                    break
             list(map(dev2val.__delitem__, okdevs))
             if not dev2val:
+                break
+            if _time.time() - tini > timeout:
                 break
             _time.sleep(_TINY_INTERVAL)
 
         allok = not dev2val
         if return_prob:
-            return allok, [dev.devname+':'+propty for dev in dev2val]
+            return allok, [dev.pv_object(propty).pvname for dev in dev2val]
         return allok
 
     def _get_dev_2_val(self, devices, values):

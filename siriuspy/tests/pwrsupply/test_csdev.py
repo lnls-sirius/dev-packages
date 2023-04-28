@@ -31,6 +31,7 @@ PUB_INTERFACE = (
     'get_conv_propty_database',
     'get_ps_interlocks',
     'get_ps_modules',
+    'get_ps_scopesourcemap',
 )
 
 

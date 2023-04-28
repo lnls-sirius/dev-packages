@@ -325,6 +325,15 @@ class PSSearch:
         return dict_aux[dclink]
 
     @staticmethod
+    def conv_psname_2_udcindex(psname):
+        """Return power supply index in associated UDC."""
+        with PSSearch._lock:
+            PSSearch._reload_udc_2_bsmp_dict()
+        udc = PSSearch._bsmp_2_udc_dict[psname]
+        udcmap = PSSearch._udc_2_bsmp_dict[udc]
+        return [ps[0] for ps in udcmap].index(psname)
+
+    @staticmethod
     def get_linac_ps_sinap2sirius_dict():
         """Return PS name convertion dict."""
         return PSSearch._linac_ps_sinap2sirius

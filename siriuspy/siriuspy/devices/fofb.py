@@ -28,7 +28,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
-        'RefOrb-SP', 'RefOrb-RB',
+        'RefOrbX-SP', 'RefOrbX-RB',
+        'RefOrbY-SP', 'RefOrbY-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
         'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
         'MinBPMCnt-SP', 'MinBPMCnt-RB',
@@ -46,77 +47,32 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         super().__init__(devname, properties=FOFBCtrlRef._properties)
 
     @property
-    def ref(self):
-        """Reference orbit, first half reference for X, second, for Y."""
-        ref = self['RefOrb-RB']
-        if ref is None:
-            return None
-        ref = ref.copy()
-        # handle initial state of RefOrb PVs
-        if len(ref) < 2*NR_BPM:
-            value = _np.zeros(2*NR_BPM, dtype=int)
-            value[:len(ref)] = ref
-            ref = value
-        return ref
-
-    @ref.setter
-    def ref(self, value):
-        self['RefOrb-SP'] = _np.array(value, dtype=int)
-
-    @property
     def refx(self):
         """Reference orbit X."""
-        return self.ref[:NR_BPM]
+        return self['RefOrbX-RB']
 
     @refx.setter
     def refx(self, value):
-        var = self.ref
-        var[:NR_BPM] = _np.array(value, dtype=int)
-        self.ref = var
+        self['RefOrbX-SP'] = _np.array(value, dtype=int)
 
     @property
     def refy(self):
         """Reference orbit Y."""
-        return self.ref[NR_BPM:]
+        return self['RefOrbY-RB']
 
     @refy.setter
     def refy(self, value):
-        var = self.ref
-        var[NR_BPM:] = _np.array(value, dtype=int)
-        self.ref = var
+        self['RefOrbY-SP'] = _np.array(value, dtype=int)
 
-    def set_ref(self, value):
-        """Set RefOrb."""
-        self.ref = value
-        return True
-
-    def set_refx(self, value):
-        """Set RefOrb X."""
-        self.refx = value
-        return True
-
-    def set_refy(self, value):
-        """Set RefOrb Y."""
-        self.refy = value
-        return True
-
-    def check_ref(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not _np.all(self.ref == value):
+    def check_refx(self, value):
+        """Check whether RefOrbX is equal to value."""
+        if not _np.all(self.refx == value):
             return False
         return True
 
-    def check_refx(self, value):
-        """Check whether first half of RefOrb is equal to value."""
-        return self._check_reforbit('x', value)
-
     def check_refy(self, value):
-        """Check whether second half of RefOrb is equal to value."""
-        return self._check_reforbit('y', value)
-
-    def _check_reforbit(self, plane, value):
-        refval = getattr(self, 'ref'+plane.lower())
-        if not _np.all(refval == value):
+        """Check whether RefOrbY is equal to value."""
+        if not _np.all(self.refy == value):
             return False
         return True
 
@@ -176,7 +132,7 @@ class _DCCDevice(_ProptyDevice):
 
     _properties = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
-        'CCEnable-SP', 'CCEnable-RB',
+        'CCEnable-Sel', 'CCEnable-Sts',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
     )
     _properties_fmc = (
@@ -216,11 +172,11 @@ class _DCCDevice(_ProptyDevice):
     @property
     def cc_enable(self):
         """Communication enable."""
-        return self['CCEnable-RB']
+        return self['CCEnable-Sts']
 
     @cc_enable.setter
     def cc_enable(self, value):
-        self['CCEnable-SP'] = value
+        self['CCEnable-Sel'] = value
 
     @property
     def time_frame_len(self):
@@ -362,49 +318,33 @@ class FamFOFBControllers(_Devices):
         """FOFBS Event device."""
         return self._evt_fofb
 
-    def set_reforb(self, value):
-        """Set RefOrb for all FOFB controllers."""
-        for ctrl in self._ctl_refs.values():
-            ctrl.set_ref(value)
-        return True
-
     def set_reforbx(self, value):
         """Set RefOrbX for all FOFB controllers."""
-        return self._set_reforb('x', value)
+        for ctrl in self._ctl_refs.values():
+            ctrl.refx = value
+        return True
 
     def set_reforby(self, value):
         """Set RefOrbY for all FOFB controllers."""
-        return self._set_reforb('y', value)
-
-    def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'set_ref' + plane.lower())
-            fun(value)
-        return True
-
-    def check_reforb(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not self.connected:
-            return False
-        for ctrl in self._ctl_refs.values():
-            if not ctrl.check_ref(value):
-                return False
+            ctrl.refy = value
         return True
 
     def check_reforbx(self, value):
         """Check whether RefOrbX is equal to value."""
-        return self._check_reforb('x', value)
-
-    def check_reforby(self, value):
-        """Check whether RefOrbY is equal to value."""
-        return self._check_reforb('y', value)
-
-    def _check_reforb(self, plane, value):
         if not self.connected:
             return False
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'check_ref' + plane.lower())
-            if not fun(value):
+            if not ctrl.check_refx(value):
+                return False
+        return True
+
+    def check_reforby(self, value):
+        """Check whether RefOrbY is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctl_refs.values():
+            if not ctrl.check_refy(value):
                 return False
         return True
 
@@ -601,18 +541,18 @@ class FamFOFBControllers(_Devices):
 
         # temporary solution: disable BPM DCCs that are not in FOFB network
         dcc2dsbl = list(self._bpmdcc2dsbl.values())
-        self._set_devices_propty(dcc2dsbl, 'CCEnable-SP', 0)
+        self._set_devices_propty(dcc2dsbl, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                dcc2dsbl, 'CCEnable-RB', 0, timeout=timeout/2):
+                dcc2dsbl, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
 
-        self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
+        self._set_devices_propty(alldccs, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                alldccs, 'CCEnable-RB', 0, timeout=timeout/2):
+                alldccs, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
-        self._set_devices_propty(enbdccs, 'CCEnable-SP', 1)
+        self._set_devices_propty(enbdccs, 'CCEnable-Sel', 1)
         if not self._wait_devices_propty(
-                enbdccs, 'CCEnable-RB', 1, timeout=timeout/2):
+                enbdccs, 'CCEnable-Sts', 1, timeout=timeout/2):
             return False
         self._evt_fofb.cmd_external_trigger()
         return True
@@ -929,10 +869,13 @@ class FamFastCorrs(_Devices):
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values and indices must have the same size.')
         if any([len(v) != 2*NR_BPM for v in values]):
             raise ValueError(f'Value must have size {2*NR_BPM}.')
         for i, dev in enumerate(devs):
-            dev.invrespmat_row = values[i]
+            dev.invrespmat_row_x = values[i][:NR_BPM]
+            dev.invrespmat_row_y = values[i][NR_BPM:]
         return True
 
     def check_invrespmat_row(
@@ -943,14 +886,14 @@ class FamFastCorrs(_Devices):
             return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
-        values = _np.asarray(values)
         devs = self._get_devices(psnames, psindices)
-        if not values.shape[0] == len(devs):
+        if not len(values) == len(devs):
             raise ValueError('Values and indices must have the same size.')
-        impltd = _np.asarray([d.invrespmat_row for d in devs])
-        if _np.allclose(values, impltd, atol=atol):
-            return True
-        return False
+        for i, dev in enumerate(devs):
+            impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if not _np.allclose(values[i], impltd, atol=atol):
+                return False
+        return True
 
     def set_fofbacc_gain(self, values, psnames=None, psindices=None):
         """Command to set power supply correction gain."""
