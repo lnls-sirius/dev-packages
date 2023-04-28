@@ -189,38 +189,64 @@ class App(_Callback):
 
     # ----- update pvs methods -----
 
+    def _do_sleep(self, time0, tplanned):
+        ttook = _time.time() - time0
+        tsleep = tplanned - ttook
+        if tsleep > 0:
+            _time.sleep(tsleep)
+        else:
+            _log.warning(
+                'Feedforward step took more than planned... '
+                '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+
+    def _do_update_polarization(self):
+        new_pol, *_ = self._idff.get_polarization_state()
+        if new_pol != self._polarization:
+            self._polarization = new_pol
+            self.run_callbacks('Polarization-Mon', new_pol)
+
+    def _do_update_correctors(self):
+        corrs = None
+        if self._control_qs == self._const.DsblEnbl.Dsbl:
+            corrs = self._idff.chdevs + self._idff.cvdevs
+        try:
+            # ret = self._idff.calculate_setpoints()
+            # setpoints, polarization, *parameters = ret
+            # pparameter_value, kparameter_value = parameters
+            # print('pparameter: ', pparameter_value)
+            # print('kparameter: ', kparameter_value)
+            # print('polarization: ', polarization)
+            # print('setpoints: ', setpoints)
+            # print()
+            self._idff.implement_setpoints(corrdevs=corrs)
+        except ValueError as err:
+            self._update_log('ERR:'+str(err))
+
     def _do_ff(self):
+        # updating loop
         while not self.quit:
+            # updating interval
             tplanned = 1.0/self._loop_freq
 
-            # sleep appropriately if loop is not closed
-            if not self._loop_state:
-                _time.sleep(tplanned)
-                continue
-
-            # try implementing correctors setpoints, registering time taken
+            # initial time
             _t0 = _time.time()
+
+            # check IDFF device connection
             if not self._idff.connected:
                 self._update_log('ERR: IDFF device is disconnected.')
-            else:
-                new_pol = self._idff.get_polarization_state()
-                if new_pol != self._polarization:
-                    self._polarization = new_pol
-                    self.run_callbacks('Polarization-Mon', new_pol)
-                corrs = None
-                if self._control_qs == self._const.DsblEnbl.Dsbl:
-                    corrs = self._idff.chdevs + self._idff.cvdevs
-                try:
-                    self._idff.implement_setpoints(corrdevs=corrs)
-                except ValueError as err:
-                    self._update_log('ERR:'+str(err))
-            ttook = _time.time() - _t0
+                self._do_sleep(_t0, tplanned)
+                continue
 
-            # sleep unsed time or signal overtime to stdout
-            tsleep = tplanned - ttook
-            if tsleep > 0:
-                _time.sleep(tsleep)
-            else:
-                _log.warning(
-                    'Feedforward step took more than planned... '
-                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+            # update polarization state
+            self._do_update_polarization()
+
+            # return if loop is not closed
+            if not self._loop_state:
+                self._do_sleep(_t0, tplanned)
+                continue
+
+            # correctors setpoint implementation
+            self._do_update_correctors()
+
+            # sleep unused time or signal overtime to stdout
+            self._do_sleep(_t0, tplanned)

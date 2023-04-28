@@ -126,7 +126,8 @@ class IDFF(_Devices):
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
-        polarization = self.get_polarization_state(
+        polarization, pparameter_value, kparameter_value = \
+            self.get_polarization_state(
                 pparameter_value=pparameter_value,
                 kparameter_value=kparameter_value)
 
@@ -139,15 +140,16 @@ class IDFF(_Devices):
             kparameter_value = self.kparameter_mon
         setpoints = self.idffconfig.calculate_setpoints(
             polarization, kparameter_value)
-        return polarization, setpoints
+        return setpoints, polarization, pparameter_value, kparameter_value
 
     def implement_setpoints(
             self, setpoints=None, corrdevs=None):
         """Implement setpoints in correctors."""
         if setpoints is None:
-            _, setpoints = self.calculate_setpoints(
-                pparameter_value=None,
-                kparameter_value=None)
+            setpoints, polarization, pparameter_value, kparameter_value = \
+                self.calculate_setpoints(
+                    pparameter_value=None,
+                    kparameter_value=None)
         if corrdevs is None:
             corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
@@ -157,6 +159,7 @@ class IDFF(_Devices):
                     pvname = _SiriusPVName(pvname)
                     dev[pvname.propty] = value
                     break
+        return polarization, pparameter_value, kparameter_value
 
     def check_valid_value(self, value):
         """Check consistency of SI_IDFF configuration."""
@@ -225,8 +228,9 @@ class IDFF(_Devices):
             pparameter_value = self.pparameter_mon
         if kparameter_value is None:
             kparameter_value = self.kparameter_mon
-        return self.idffconfig.get_polarization_state(
+        polarization = self.idffconfig.get_polarization_state(
             pparameter=pparameter_value, kparameter=kparameter_value)
+        return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
         param_auto_mon = False
