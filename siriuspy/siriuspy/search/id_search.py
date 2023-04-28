@@ -34,8 +34,8 @@ class IDSearch:
             'polarizations': (
                 'none', 'circularn', 'horizontal', 'circularp', 'vertical',
                 ),
-            'pparameter': 'SI-10SB:ID-EPU:Phase-Mon',
-            'kparameter': 'SI-10SB:ID-EPU:Gap-Mon',
+            'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
+            'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-10SB:PS-CV-1:Current-SP',
