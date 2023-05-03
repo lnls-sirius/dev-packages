@@ -23,7 +23,7 @@ class IDFFConst(_csdev.Const):
     """ID Feedforward Const class."""
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
-    DEFAULT_LOOP_FREQ = 10  # Hz
+    DEFAULT_LOOP_FREQ = 5  # Hz
 
     def __init__(self, idname):
         """Init."""
