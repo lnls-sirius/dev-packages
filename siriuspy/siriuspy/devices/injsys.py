@@ -1247,6 +1247,7 @@ class InjSysConfigHandler(_Devices, _Callback):
             triggers += self._injsi_putrigs
         triggers = [self._hltiming.triggers[trig] for trig in triggers]
 
+        trigsrc = self._get_trigger_source(config)
         if all(trig.source_str == trigsrc for trig in triggers):
             return True
         return False
@@ -1260,8 +1261,7 @@ class InjSysConfigHandler(_Devices, _Callback):
                 self._injbo_pumadevs + self._injbo_psmadevs
             triggers = self._injbo_putrigs + self._injsi_putrigs
 
-        trigsrc = InjSysConfigHandler.DEFAULT_WARM_TRIGEVT if config == 'warm'\
-            else InjSysConfigHandler.DEFAULT_COLD_TRIGEVT
+        trigsrc = self._get_trigger_source(config)
         magdlt = +1 if config == 'warm' else -1
 
         self._update_status(f'Setting PS and PU to {config} configuration...')
@@ -1276,6 +1276,11 @@ class InjSysConfigHandler(_Devices, _Callback):
 
         self._update_status('Done!')
         return True
+
+    def _get_trigger_source(self, config):
+        if config == 'warm':
+            return InjSysConfigHandler.DEFAULT_WARM_TRIGEVT
+        return InjSysConfigHandler.DEFAULT_COLD_TRIGEVT
 
     def _turn_off_injsi(self):
         """Turn off injection to SI."""
