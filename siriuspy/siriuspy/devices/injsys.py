@@ -10,7 +10,7 @@ from .device import Devices as _Devices, DeviceNC as _DeviceNC, \
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .timing import EVG, Event, Trigger
+from .timing import EVG, Event, Trigger, HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
@@ -1109,10 +1109,7 @@ class InjSysConfigHandler(_Devices, _Callback):
         self._injbo_psmags = [ps for ps in bo_posang if ':PU-' not in ps]
 
         # device objects
-        self._injsi_putidevs = [
-            Trigger(trig) for trig in self._injsi_putrigs]
-        self._injbo_putidevs = [
-            Trigger(trig) for trig in self._injbo_putrigs]
+        self._hltiming = HLTiming()
 
         self._injsi_pumadevs = [
             PowerSupplyPU(mag) for mag in self._injsi_pumags]
@@ -1122,16 +1119,13 @@ class InjSysConfigHandler(_Devices, _Callback):
         self._injsi_psmadevs = [PowerSupply(mag) for mag in self._injsi_psmags]
         self._injbo_psmadevs = [PowerSupply(mag) for mag in self._injbo_psmags]
 
-        self._evg = EVG()
-
         self._nextinj = _Device(
             'AS-Glob:AP-InjCtrl', properties=('TopUpNextInj-Mon', ))
 
         # call base class constructor
-        alldevs = self._injsi_putidevs + self._injbo_putidevs + \
+        alldevs = self._hltiming + \
             self._injsi_pumadevs + self._injbo_pumadevs + \
             self._injsi_psmadevs + self._injbo_psmadevs
-        alldevs.append(self._evg)
         alldevs.append(self._nextinj)
 
         _Devices.__init__(self, '', alldevs)
@@ -1212,9 +1206,9 @@ class InjSysConfigHandler(_Devices, _Callback):
         self._turn_off_injsi()
 
         self._update_status('Turning Injection On...')
-        self._evg.cmd_turn_on_injection()
+        self._hltiming.evg.cmd_turn_on_injection()
         _time.sleep(0.5)
-        self._evg.wait_injection_finish()
+        self._hltiming.evg.wait_injection_finish()
         _time.sleep(2)
         self._update_status('Done!')
 
@@ -1248,12 +1242,10 @@ class InjSysConfigHandler(_Devices, _Callback):
         return config
 
     def _check_triggers_config(self, config, only_injbo=True):
-        triggers = self._injbo_putidevs
+        triggers = self._injbo_putrigs
         if not only_injbo:
-            triggers += self._injsi_putidevs
-
-        trigsrc = InjSysConfigHandler.DEFAULT_WARM_TRIGEVT if config == 'warm'\
-            else InjSysConfigHandler.DEFAULT_COLD_TRIGEVT
+            triggers += self._injsi_putrigs
+        triggers = [self._hltiming.triggers[trig] for trig in triggers]
 
         if all(trig.source_str == trigsrc for trig in triggers):
             return True
@@ -1262,11 +1254,11 @@ class InjSysConfigHandler(_Devices, _Callback):
     def _set_devices_config(self, config, only_injbo=True):
         if only_injbo:
             magnets = self._injbo_pumadevs + self._injbo_psmadevs
-            triggers = self._injbo_putidevs
+            triggers = self._injbo_putrigs
         else:
             magnets = self._injsi_pumadevs + self._injsi_psmadevs + \
                 self._injbo_pumadevs + self._injbo_psmadevs
-            triggers = self._injbo_putidevs + self._injsi_putidevs
+            triggers = self._injbo_putrigs + self._injsi_putrigs
 
         trigsrc = InjSysConfigHandler.DEFAULT_WARM_TRIGEVT if config == 'warm'\
             else InjSysConfigHandler.DEFAULT_COLD_TRIGEVT
@@ -1279,8 +1271,8 @@ class InjSysConfigHandler(_Devices, _Callback):
             dev[propty+'-SP'] += magdlt * self._warm_2_cold_deltas[devname]
 
         self._update_status(f'Moving PU triggers to {trigsrc}...')
-        for dev in triggers:
-            dev.source = trigsrc
+        self._hltiming.change_triggers_source(
+            triggers, new_src=trigsrc, printlog=self._print_log)
 
         self._update_status('Done!')
         return True
@@ -1294,8 +1286,8 @@ class InjSysConfigHandler(_Devices, _Callback):
         self._update_status('Done!')
 
         self._update_status('Turning triggers off...')
-        for dev in self._injsi_putidevs:
-            dev.state = 0
+        for trig in self._injsi_putrigs:
+            self._hltiming.triggers[trig].state = 0
         _time.sleep(1)
         self._update_status('Done!')
         return True
@@ -1303,8 +1295,8 @@ class InjSysConfigHandler(_Devices, _Callback):
     def _turn_on_injsi(self):
         """Turn on injection to SI."""
         self._update_status('Turning triggers on...')
-        for dev in self._injsi_putidevs:
-            dev.state = 1
+        for trig in self._injsi_putrigs:
+            self._hltiming.triggers[trig].state = 1
         _time.sleep(1)
         self._update_status('Done!')
 
