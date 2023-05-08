@@ -74,6 +74,7 @@ class PSNamesSOFB:
             return _IDSearch.conv_idname_2_idff_qsnames(acc)
         return []
 
+
 class UnitConverter:
     """."""
 
@@ -217,10 +218,12 @@ class PSConnSOFB:
             self.converter = UnitConverter(
                 self._sofb_psnames, dipoleoff=dipoleoff)
 
+    @property
     def pru(self):
         """Return Beagle-name to PRU-object dictionary."""
         return self._pru
 
+    @property
     def udc(self):
         """Return Beagle-name to UDC-object dictionary."""
         return self._udc
@@ -659,7 +662,7 @@ class PSConnIDFF(PSConnSOFB):
     def _init_connectors(self, ethbridgeclnt_class):
         """."""
         pru, udc = self._create_pru_udc(ethbridgeclnt_class)
-        # self._add_groups_of_variables(udc)
+        self._add_groups_of_variables(udc)
 
         return pru, udc
 
