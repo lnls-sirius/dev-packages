@@ -11,6 +11,7 @@ from socket import timeout as _socket_timeout
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
+from ..search import IDSearch as _IDSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
@@ -44,7 +45,9 @@ class PSNamesSOFB:
 
     @staticmethod
     def get_psnames_ch(acc):
-        """Return horizontal corrector psnames of a given sector."""
+        """Return horizontal corrector psnames of a given sector/ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_chnames(acc)
         if PSNamesSOFB._sofb_factory is None:
             from ..sofb.csdev import SOFBFactory
             PSNamesSOFB._sofb_factory = SOFBFactory
@@ -54,7 +57,9 @@ class PSNamesSOFB:
 
     @staticmethod
     def get_psnames_cv(acc):
-        """Return vertical corrector psnames of a given sector."""
+        """Return vertical corrector psnames of a given sector/ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_cvnames(acc)
         if PSNamesSOFB._sofb_factory is None:
             from ..sofb.csdev import SOFBFactory
             PSNamesSOFB._sofb_factory = SOFBFactory
@@ -62,6 +67,12 @@ class PSNamesSOFB:
             PSNamesSOFB._sofb[acc] = PSNamesSOFB._sofb_factory.create(acc)
         return PSNamesSOFB._sofb[acc].cv_names
 
+    @staticmethod
+    def get_psnames_qs(acc):
+        """Return skew corrector psnames of a ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_qsnames(acc)
+        return []
 
 class UnitConverter:
     """."""
@@ -149,7 +160,7 @@ class PSConnSOFB:
 
     def __init__(
             self, ethbridgeclnt_class, bbbnames=None, mproc=None,
-            sofb_update_iocs=False, dipoleoff=False):
+            sofb_update_iocs=False, dipoleoff=False, acc=None):
         """."""
         # check arguments
         if mproc is not None and \
@@ -158,7 +169,7 @@ class PSConnSOFB:
             raise ValueError('Invalid mproc dictionary!')
 
         self._dipoleoff = dipoleoff
-        self._acc = 'SI'
+        self._acc = acc or 'SI'
         self._pru = None
         self._udc = None
         self.bbbnames = bbbnames or _dcopy(PSSOFB.BBBNAMES)
@@ -169,7 +180,8 @@ class PSConnSOFB:
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
-            PSNamesSOFB.get_psnames_cv(self._acc)
+            PSNamesSOFB.get_psnames_cv(self._acc) + \
+            PSNamesSOFB.get_psnames_qs(self._acc)
 
         # snapshot of sofb current values
         ncorrs = len(self._sofb_psnames)
@@ -627,6 +639,27 @@ class PSConnSOFB:
             # add PRU and UDC objects to disctionaries.
             pru[bbbname] = pru_
             udc[bbbname] = udc_
+
+        return pru, udc
+
+
+class PSConnIDFF(PSConnSOFB):
+    """."""
+
+    def _update_bbb2devs(self):
+        """."""
+        for bbbname in self.bbbnames:
+            all_devs = _PSSearch.conv_bbbname_2_bsmps(bbbname)
+            devs = []
+            for psname, bsmpid in all_devs:
+                if 'QS' not in psname:
+                    devs.append((psname, bsmpid))
+            self.bbb2devs[bbbname] = devs
+
+    def _init_connectors(self, ethbridgeclnt_class):
+        """."""
+        pru, udc = self._create_pru_udc(ethbridgeclnt_class)
+        # self._add_groups_of_variables(udc)
 
         return pru, udc
 
