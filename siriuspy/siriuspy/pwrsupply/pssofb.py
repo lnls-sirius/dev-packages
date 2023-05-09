@@ -643,27 +643,6 @@ class PSConnSOFB:
         return pru, udc
 
 
-class PSConnIDFF(PSConnSOFB):
-    """."""
-
-    def _update_bbb2devs(self):
-        """."""
-        for bbbname in self.bbbnames:
-            all_devs = _PSSearch.conv_bbbname_2_bsmps(bbbname)
-            devs = []
-            for psname, bsmpid in all_devs:
-                if 'QS' not in psname:
-                    devs.append((psname, bsmpid))
-            self.bbb2devs[bbbname] = devs
-
-    def _init_connectors(self, ethbridgeclnt_class):
-        """."""
-        pru, udc = self._create_pru_udc(ethbridgeclnt_class)
-        # self._add_groups_of_variables(udc)
-
-        return pru, udc
-
-
 class PSSOFB:
     """."""
 
