@@ -162,6 +162,10 @@ class App(_Callback):
             return False
 
         self._pssofb_isused = bool(value)
+        status = 'enabled' if self._pssofb_isused else 'disabled'
+        self._update_log(f'SOFBMode {status}.')
+        self.run_callbacks('SOFBMode-Sts', value)
+
         return True
 
     def _load_config(self, config_name):
@@ -315,16 +319,6 @@ class App(_Callback):
 
         corrdevs = self._idff.chnames + self._idff.cvnames + self._idff.qsnames
 
-        # turn on
-        for dev in corrdevs:
-            if not dev.cmd_turn_on():
-                return False
-
-        # opmode slowref
-        for dev in corrdevs:
-            if not dev.cmd_slowref():
-                return False
-
         # sofbmode
         for dev in corrdevs:
             if pssofb_isused:
@@ -358,7 +352,7 @@ class App(_Callback):
 
         return pssofb, bsmp_devs
 
-    def _pssfob_current_setpoint(self, setpoints, corrdevs):
+    def _pssfob_get_current_setpoint(self, setpoints, corrdevs):
         """Convert IDFF dict setpoints to PSSOFB list setpoints."""
         current_sp = _np.ones(len(setpoints)) * _np.nan
         devnames = [dev.devname for dev in corrdevs]
