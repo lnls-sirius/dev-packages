@@ -39,6 +39,9 @@ class _PSDev(_Device):
         'CycleAuxParam-SP', 'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
+    _properties_fbp = _properties_magps + (
+        'SOFBMode-Sel', 'SOFBMode-Sts'
+        )
     _properties_fc = (
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
         'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
@@ -81,7 +84,7 @@ class _PSDev(_Device):
         # power supply type and magnetic function
         (self._pstype, self._psmodel, self._magfunc,
          self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed, self._is_fc,
+         self._is_linac, self._is_pulsed, self._is_fc, self._is_fbp,
          self._is_magps) = _PSDev.get_device_type(devname)
 
         # set attributes
@@ -239,10 +242,11 @@ class _PSDev(_Device):
         is_linac = devname.sec.endswith('LI')
         is_pulsed = devname.dis == 'PU'
         is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
-        is_magps = not is_linac and not is_pulsed and not is_fc
+        is_fbp = psmodel == 'FBP'
+        is_magps = not is_linac and not is_pulsed and not is_fc and not is_fbp
         return (pstype, psmodel, magfunc,
                 strength_propty, strength_units,
-                is_linac, is_pulsed, is_fc, is_magps)
+                is_linac, is_pulsed, is_fc, is_fbp, is_magps)
 
     # --- private methods ---
 
@@ -261,6 +265,8 @@ class _PSDev(_Device):
                 properties += _PSDev._properties_pulsed_nlkckr
         elif self._is_fc:
             properties += _PSDev._properties_fc
+        elif self._is_fbp:
+            properties += _PSDev._properties_fbp
         else:
             properties += _PSDev._properties_magps
 
@@ -968,3 +974,26 @@ class PowerSupplyFC(_PSDev):
         """Command to clear FOFB accumulator."""
         self['FOFBAccClear-Cmd'] = 1
         return True
+
+
+class PowerSupplyFBP(_PSDev):
+    """FBP Power Supply Device."""
+
+    SOFBMODE_SEL = _Const.DsblEnbl
+    SOFBMODE_STS = _Const.DsblEnbl
+
+    def cmd_sofbmode_enable(self, timeout=_PSDev._default_timeout):
+        """."""
+        return self._cmd_sofbmode(
+            timeout, self.SOFBMODE_SEL.Enbl, self.SOFBMODE_STS.Enbl)
+
+    def cmd_sofbmode_disable(self, timeout=_PSDev._default_timeout):
+        """."""
+        return self._cmd_sofbmode(
+            timeout, self.SOFBMODE_SEL.Dsbl, self.SOFBMODE_STS.Dsbl)
+
+    def _cmd_sofbmode(self, timeout, state_sel, state_sts):
+        """."""
+        self['SOFBMode-Sel'] = state_sel
+        return self._wait(
+            'SOFBMode-Sts', state_sts, timeout=timeout)

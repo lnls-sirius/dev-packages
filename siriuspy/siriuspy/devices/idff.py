@@ -5,7 +5,7 @@ from ..search import IDSearch as _IDSearch
 from ..idff.config import IDFFConfig as _IDFFConfig
 
 from .device import Device as _Device, Devices as _Devices
-from .pwrsupply import PowerSupply as _PowerSupply
+from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import WIG as _WIG, APU as _APU, EPU as _EPU
 
 
@@ -240,9 +240,9 @@ class IDFF(_Devices):
         devkp = _Device(
             devname=devname,
             properties=(self._kparametername, ), auto_mon=param_auto_mon)
-        devsch = [_PowerSupply(devname=dev) for dev in self.chnames]
-        devscv = [_PowerSupply(devname=dev) for dev in self.cvnames]
-        devsqs = [_PowerSupply(devname=dev) for dev in self.qsnames]
+        devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
+        devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
+        devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
 
         return devpp, devkp, devsch, devscv, devsqs
 
