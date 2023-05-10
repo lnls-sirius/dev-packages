@@ -68,6 +68,12 @@ class IDFFConst(_csdev.Const):
 
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
+            'SOFBMode-Sel': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'SOFBMode-Sts': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
         }
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase

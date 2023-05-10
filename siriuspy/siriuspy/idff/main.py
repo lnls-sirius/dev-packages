@@ -4,15 +4,22 @@ import os as _os
 import logging as _log
 import time as _time
 import epics as _epics
+import numpy as _np
+
+from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 from ..callbacks import Callback as _Callback
 from ..devices import IDFF as _IDFF
+from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
+from ..pwrsupply.pssofb import PSNamesSOFB as _PSNamesSOFB
 
 from .csdev import IDFFConst as _Const, ETypes as _ETypes
 
 
 class App(_Callback):
     """Main application for handling machine shift."""
+
+    DEF_PS_TIMEOUT = 5  # [s]
 
     def __init__(self, idname):
         """Class constructor."""
@@ -30,7 +37,12 @@ class App(_Callback):
 
         self._idff = _IDFF(idname)
 
+        self._pssofb_isused = self._pvs_database['SOFBMode-Sts']['value']
+        self._pssofb, self._bsmp_devs = self._pssofb_init(idname)
+
         self._load_config(self._config_name)
+
+        self._idff_prepare()
 
         # pvs to write methods
         self.map_pv2write = {
@@ -38,9 +50,10 @@ class App(_Callback):
             'LoopFreq-SP': self.set_loop_freq,
             'ControlQS-Sel': self.set_control_qs,
             'ConfigName-SP': self.set_config_name,
+            'SOFBMode-Sel': self.set_sofb_mode,
         }
 
-        self.quit = False
+        self._quit = False
         self._thread_ff = _epics.ca.CAThread(
             target=self._do_ff, daemon=True)
         self._thread_ff.start()
@@ -134,6 +147,23 @@ class App(_Callback):
         self.run_callbacks('ConfigName-RB', value)
         return True
 
+    def set_sofb_mode(self, value):
+        """Set whether to use SOFBMode."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+
+        if self._loop_state == self._const.LoopState.Closed:
+            self._update_log('ERR:Open loop before changing configuration.')
+            return False
+
+        if not self._idff_prepare_corrs_state(value):
+            self._update_log(('ERR:Could not configure IDFF correctors '
+                'when changing SOFBMode.'))
+            return False
+
+        self._pssofb_isused = bool(value)
+        return True
+
     def _load_config(self, config_name):
         try:
             self._idff.load_config(config_name)
@@ -142,6 +172,18 @@ class App(_Callback):
             self._update_log('ERR:'+str(err))
             return False
         return True
+
+    @property
+    def quit(self):
+        """."""
+        return self._quit
+
+    @quit.setter
+    def quit(self, value):
+        """."""
+        if value:
+            self._quit = value
+            self._pssofb.threads_shutdown()
 
     #  ----- log auxiliary methods -----
 
@@ -206,9 +248,9 @@ class App(_Callback):
             self.run_callbacks('Polarization-Mon', new_pol)
 
     def _do_update_correctors(self):
-        corrs = None
+        corrdevs = None
         if self._control_qs == self._const.DsblEnbl.Dsbl:
-            corrs = self._idff.chdevs + self._idff.cvdevs
+            corrdevs = self._idff.chdevs + self._idff.cvdevs
         try:
             # ret = self._idff.calculate_setpoints()
             # setpoints, polarization, *parameters = ret
@@ -218,13 +260,26 @@ class App(_Callback):
             # print('polarization: ', polarization)
             # print('setpoints: ', setpoints)
             # print()
-            self._idff.implement_setpoints(corrdevs=corrs)
+            if self._pssofb_isused:
+                # calc setpoints
+                ret = self._idff.calculate_setpoints()
+                setpoints, *_ = ret
+
+                # built curr_sp vector
+                curr_sp = self._pssfob_current_setpoint(setpoints, corrdevs)
+
+                # apply curr_sp to pssofb
+                self._pssofb.bsmp_sofb_current_set_update((curr_sp, ))
+            else:
+                # use PS IOCs (IDFF) to implement setpoints
+                self._idff.implement_setpoints(corrdevs=corrdevs)
+
         except ValueError as err:
             self._update_log('ERR:'+str(err))
 
     def _do_ff(self):
         # updating loop
-        while not self.quit:
+        while not self._quit:
             # updating interval
             tplanned = 1.0/self._loop_freq
 
@@ -250,3 +305,64 @@ class App(_Callback):
 
             # sleep unused time or signal overtime to stdout
             self._do_sleep(_t0, tplanned)
+
+    # ----- idff -----
+
+    def _idff_prepare_corrs_state(self, pssofb_isused):
+        """."""
+        if not self._idff.wait_for_connection():
+            return False
+
+        corrdevs = self._idff.chnames + self._idff.cvnames + self._idff.qsnames
+
+        # turn on
+        for dev in corrdevs:
+            if not dev.cmd_turn_on():
+                return False
+
+        # opmode slowref
+        for dev in corrdevs:
+            if not dev.cmd_slowref():
+                return False
+
+        # sofbmode
+        for dev in corrdevs:
+            if pssofb_isused:
+                if not dev.cmd_sofbmode_enable(timeout=App.DEF_PS_TIMEOUT):
+                    return False
+            else:
+                if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
+                    return False
+
+        return True
+
+    # ----- pssofb -----
+
+    def _pssofb_init(self, idname):
+        """."""
+        # bbbnames
+        bbbnames = _PSNamesSOFB.get_bbbnames(idname)
+
+        # create pssofb object
+        pssofb = _PSConnSOFB(
+            ethbridgeclnt_class=_EthBridgeClient,
+            bbbnames=bbbnames,
+            sofb_update_iocs=True,
+            acc=idname)
+
+        # build bsmpid -> psname dict
+        bsmp_devs = dict()
+        for devices in pssofb.bbb2devs.values():
+            for devname, bsmpid in devices:
+                bsmp_devs[bsmpid] = devname
+
+        return pssofb, bsmp_devs
+
+    def _pssfob_current_setpoint(self, setpoints, corrdevs):
+        """Convert IDFF dict setpoints to PSSOFB list setpoints."""
+        current_sp = _np.ones(len(setpoints)) * _np.nan
+        devnames = [dev.devname for dev in corrdevs]
+        for bsmpid, devname in self._bsmp_devs.items():
+            if devname in devnames:
+                current_sp[bsmpid - 1] = setpoints[devname]
+        return current_sp
