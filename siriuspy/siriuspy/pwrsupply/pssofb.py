@@ -74,6 +74,19 @@ class PSNamesSOFB:
             return _IDSearch.conv_idname_2_idff_qsnames(acc)
         return []
 
+    @staticmethod
+    def get_bbbnames(acc):
+        """Return bbbnames."""
+        corrnames = \
+            PSNamesSOFB.get_psnames_ch(acc) + \
+            PSNamesSOFB.get_psnames_cv(acc) + \
+            PSNamesSOFB.get_psnames_qs(acc)
+        bbbnames = set()
+        for corrname in corrnames:
+            bbbname = _PSSearch.conv_psname_2_bbbname(corrname)
+            bbbnames.add(bbbname)
+        return list(bbbnames)
+
 
 class UnitConverter:
     """."""
