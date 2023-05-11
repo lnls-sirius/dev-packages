@@ -917,6 +917,7 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
+        self._initial_orbs = None
 
     @property
     def bpm_names(self):
@@ -1226,9 +1227,10 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        orbs0, self._initial_orbs = self._initial_orbs, None
-        if orbs0 is None:
+        if self._initial_orbs is None:
             return -3
+
+        orbs0 = self._initial_orbs
         while timeout > 0:
             t00 = _time.time()
             orbs = self.get_mturn_orbit(return_sum=consider_sum)
