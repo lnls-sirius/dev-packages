@@ -1,4 +1,5 @@
-"""."""
+"""BPM devices."""
+
 import time as _time
 from threading import Event as _Flag
 import numpy as _np
@@ -14,9 +15,9 @@ class BPM(_Device):
     """BPM Device."""
 
     ACQSTATES_NOTOK = {
-            _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
-            _csbpm.AcqStates.Too_Few_Samples,
-            _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
+        _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
+        _csbpm.AcqStates.Too_Few_Samples,
+        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
     ACQSTATES_STARTED = {
         _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
         _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
@@ -887,7 +888,7 @@ class BPM(_Device):
 
 
 class FamBPMs(_Devices):
-    """."""
+    """Family of BPMs."""
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -1257,9 +1258,9 @@ class FamBPMs(_Devices):
         Returns:
             int: code describing what happened:
                 -4: unknown error;
-                -3: initial orbit was not acquired before acquisition;
-                -2: TypeError ocurred (maybe because some of them are None);
-                -1: Orbits have different sizes;
+                -3: initial orbits were not defined;
+                -2: Orbits have different sizes;
+                -1: TypeError ocurred (maybe because some of them are None);
                 =0: Orbit updated.
                 >0: Index of the first BPM which did not update plus 1.
 
@@ -1289,9 +1290,9 @@ class FamBPMs(_Devices):
 
         if typ:
             return -1
-        elif max(sizes) != min(sizes):
+        if max(sizes) != min(sizes):
             return -2
-        elif _np.any(errs):
+        if _np.any(errs):
             return int(errs.nonzero()[0][0])+1
         return -4
 
