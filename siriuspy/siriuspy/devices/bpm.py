@@ -1028,31 +1028,25 @@ class FamBPMs(_Devices):
                 timestamps. Defaults to False.
 
         Returns:
-            tsmpx (numpy.ndarray, Nx160): Horizontal Orbit PVs timestamps.
-            tsmpy (numpy.ndarray, Nx160): Vertical Orbit PVs timestamps.
-            tsmps (numpy.ndarray, Nx160): BPMs Sum signal PVs timestamps.
+            tsmps (numpy.ndarray, (160, N)): The i-th row has the timestamp of
+                the i-th bpm for the [horizontal, vertical, sum] signals
+                respectively. If return_sum is False, then N=2 instead of 3.
 
         """
-        tsmpx, tsmpy = [], []
-        if return_sum:
-            tsmps = []
-
-        for bpm in self._devices:
-            pvox = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
-            pvoy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
-            varx = pvox.get_timevars(timeout=self.TIMEOUT)
-            vary = pvoy.get_timevars()
-            tsmpy.append(pvox.timestamp if varx is None else varx['timestamp'])
-            tsmpx.append(pvoy.timestamp if vary is None else vary['timestamp'])
-            if return_sum:
-                pvos = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
-                varsum = pvos.get_timevars()
-                tsmps.append(
-                    pvos.timestamp if varsum is None else varsum['timestamp'])
-
-        if not return_sum:
-            return tsmpx, tsmpy
-        return tsmpx, tsmpy, tsmps
+        tsmps = _np.zeros((len(self._devices), 2+return_sum), dtype=float)
+        for i, bpm in enumerate(self._devices):
+            pvx = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
+            pvy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
+            vax = pvx.get_timevars(timeout=self.TIMEOUT)
+            vay = pvy.get_timevars()
+            tsmps[i, 0] = pvx.timestamp if vax is None else vax['timestamp']
+            tsmps[i, 1] = pvy.timestamp if vay is None else vay['timestamp']
+            if not return_sum:
+                continue
+            pvs = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
+            vas = pvs.get_timevars()
+            tsmps[i, 2] = pvs.timestamp if vas is None else vas['timestamp']
+        return tsmps
 
     def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
@@ -1368,15 +1362,13 @@ class FamBPMs(_Devices):
         while timeout > 0:
             t00 = _time.time()
             tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
-            errs = _np.array([
-                _np.any(_np.equal(t, t0)) for t, t0 in zip(tsmp, tsmp0)])
-            continue_ = _np.any(errs)
-            if not continue_:
+            updated = _np.all(_np.equal(tsmp, tsmp0), axis=1)
+            if _np.all(updated):
                 return 0
             _time.sleep(0.1)
             timeout -= _time.time() - t00
 
-        return int(errs.nonzero()[0][0])+1
+        return int(_np.nonzero(~updated)[0][0])+1
 
     def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
         """Combine all methods to wait update data.
