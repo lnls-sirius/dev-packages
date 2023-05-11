@@ -918,6 +918,7 @@ class FamBPMs(_Devices):
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
         self._initial_orbs = None
+        self._initial_timestamps = None
 
     @property
     def bpm_names(self):
@@ -1009,6 +1010,40 @@ class FamBPMs(_Devices):
         if not return_sum:
             return orbx, orby
         return orbx, orby, _np.array(possum).T
+
+    def get_mturn_timestamps(self, return_sum=False):
+        """Get Multiturn data timestamps.
+
+        Args:
+            return_sum (bool, optional): Whether or not to return BPMs sum
+                timestamps. Defaults to False.
+
+        Returns:
+            tsmpx (numpy.ndarray, Nx160): Horizontal Orbit PVs timestamps.
+            tsmpy (numpy.ndarray, Nx160): Vertical Orbit PVs timestamps.
+            tsmps (numpy.ndarray, Nx160): BPMs Sum signal PVs timestamps.
+
+        """
+        tsmpx, tsmpy = [], []
+        if return_sum:
+            tsmps = []
+
+        for bpm in self._devices:
+            pvox = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
+            pvoy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
+            varx = pvox.get_timevars(timeout=self.TIMEOUT)
+            vary = pvoy.get_timevars()
+            tsmpy.append(pvox.timestamp if varx is None else varx['timestamp'])
+            tsmpx.append(pvoy.timestamp if vary is None else vary['timestamp'])
+            if return_sum:
+                pvos = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
+                varsum = pvos.get_timevars()
+                tsmps.append(
+                    pvos.timestamp if varsum is None else varsum['timestamp'])
+
+        if not return_sum:
+            return tsmpx, tsmpy
+        return tsmpx, tsmpy, tsmps
 
     def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
@@ -1258,6 +1293,76 @@ class FamBPMs(_Devices):
         if _np.any(errs):
             return int(errs.nonzero()[0][0])+1
         return -4
+
+    def mturn_update_initial_timestamps(self, consider_sum=False):
+        """Call this method before acquisition to get orbit for comparison."""
+        self._initial_timestamps = self.get_mturn_timestamps(
+            return_sum=consider_sum)
+
+    def mturn_wait_update_timestamps(
+            self, timeout=10, consider_sum=False) -> int:
+        """Call this method after acquisition to check if data was updated.
+
+        For this method to work it is necessary to call
+            mturn_update_initial_timestamps
+        before the acquisition starts, so that a reference for comparison is
+        created.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+            consider_sum (bool, optional): Whether to also wait for sum signal
+                to be updated. Defaults to False.
+
+        Returns:
+            int: code describing what happened:
+                -1: initial timestamps were not defined;
+                =0: data updated.
+                >0: index of the first FOFB controller which did not update
+                    plus 1.
+
+        """
+        if self._initial_timestamps is None:
+            return -1
+
+        tsmp0 = self._initial_timestamps
+        while timeout > 0:
+            t00 = _time.time()
+            tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
+            errs = _np.array([
+                _np.any(_np.equal(t, t0)) for t, t0 in zip(tsmp, tsmp0)])
+            continue_ = _np.any(errs)
+            if not continue_:
+                return 0
+            _time.sleep(0.1)
+            timeout -= _time.time() - t00
+
+        return int(errs.nonzero()[0][0])+1
+
+    def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
+        """Combine mturn_wait_update_timestamps and mturn_wait_update_orbit.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+            consider_sum (bool, optional): Whether to also wait for sum signal
+                to be updated. Defaults to False.
+
+        Returns:
+            int: code describing what happened:
+                -4: unknown error;
+                -3: initial orbit was not acquired before acquisition;
+                -2: TypeError ocurred (maybe because some of them are None);
+                -1: Orbits have different sizes;
+                =0: Orbit updated.
+                >0: Index of the first BPM which did not update plus 1.
+
+        """
+        t00 = _time.time()
+        ret = self.mturn_wait_update_timestamps(timeout)
+        if ret > 0:
+            return ret
+        timeout -= _time.time() - t00
+
+        return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
 
 
 class BPMLogicalTrigger(_ProptyDevice):
