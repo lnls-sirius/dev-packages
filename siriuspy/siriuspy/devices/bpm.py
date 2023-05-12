@@ -1290,8 +1290,7 @@ class FamBPMs(_Devices):
             int: code describing what happened:
                 -1: initial timestamps were not defined;
                 =0: data updated.
-                >0: index of the first BPM which did not update
-                    plus 1.
+                >0: index of the first BPM which did not update plus 1.
 
         """
         if self._initial_timestamps is None:
