@@ -1247,7 +1247,8 @@ class FamBPMs(_Devices):
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_times(self, consider_sum=False):
+    def mturn_reset_flags_and_update_initial_timestamps(
+            self, consider_sum=False):
         """Set initial state to wait for orbit acquisition to start."""
         self.mturn_reset_flags()
         self.mturn_update_initial_timestamps(consider_sum)
