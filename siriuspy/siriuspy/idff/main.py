@@ -40,9 +40,11 @@ class App(_Callback):
         self._pssofb_isused = self._pvs_database['SOFBMode-Sts']['value']
         self._pssofb, self._bsmp_devs = self._pssofb_init(idname)
 
+        # load idff in configdb
         self._load_config(self._config_name)
 
-        self._idff_prepare()
+        # prepare initial idff corrs state
+        self._idff_prepare_corrs_state(self._pssofb_isused)
 
         # pvs to write methods
         self.map_pv2write = {
@@ -157,8 +159,9 @@ class App(_Callback):
             return False
 
         if not self._idff_prepare_corrs_state(value):
-            self._update_log(('ERR:Could not configure IDFF correctors '
-                'when changing SOFBMode.'))
+            self._update_log(
+                ('ERR:Could not configure IDFF correctors '
+                 'when changing SOFBMode.'))
             return False
 
         self._pssofb_isused = bool(value)
@@ -317,7 +320,7 @@ class App(_Callback):
         if not self._idff.wait_for_connection():
             return False
 
-        corrdevs = self._idff.chnames + self._idff.cvnames + self._idff.qsnames
+        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
 
         # sofbmode
         for dev in corrdevs:
