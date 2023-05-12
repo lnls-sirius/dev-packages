@@ -918,7 +918,6 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
-        self._initial_orbs = None
         self._initial_timestamps = None
 
         self._mturn_flags = dict()
@@ -1238,10 +1237,6 @@ class FamBPMs(_Devices):
         for bpm in self._devices:
             bpm.switching_mode = mode
 
-    def mturn_update_initial_orbit(self, consider_sum=False):
-        """Call this method before acquisition to get orbit for comparison."""
-        self._initial_orbs = self.get_mturn_orbit(return_sum=consider_sum)
-
     def mturn_update_initial_timestamps(self, consider_sum=False):
         """Call this method before acquisition to get orbit for comparison."""
         self._initial_timestamps = self.get_mturn_timestamps(
@@ -1252,11 +1247,10 @@ class FamBPMs(_Devices):
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_data(self, consider_sum=False):
+    def mturn_reset_flags_and_update_initial_times(self, consider_sum=False):
         """Set initial state to wait for orbit acquisition to start."""
         self.mturn_reset_flags()
         self.mturn_update_initial_timestamps(consider_sum)
-        self.mturn_update_initial_orbit(consider_sum)
 
     def mturn_wait_update_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
@@ -1278,61 +1272,6 @@ class FamBPMs(_Devices):
             timeout = max(timeout, 0)
         return 0
 
-    def mturn_wait_update_orbit(self, timeout=10, consider_sum=False) -> int:
-        """Call this method after acquisition to check if orbit was updated.
-
-        For this method to work it is necessary to call
-            mturn_update_initial_orbit
-        before the acquisition starts, so that a reference for comparison is
-        created.
-
-        Args:
-            timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
-
-        Returns:
-            int: code describing what happened:
-                -4: unknown error;
-                -3: initial orbits were not defined;
-                -2: Orbits have different sizes;
-                -1: TypeError ocurred (maybe because some of them are None);
-                =0: Orbit updated.
-                >0: Index of the first BPM which did not update plus 1.
-
-        """
-        if self._initial_orbs is None:
-            return -3
-
-        orbs0 = self._initial_orbs
-        while timeout > 0:
-            t00 = _time.time()
-            orbs = self.get_mturn_orbit(return_sum=consider_sum)
-            typ = False
-            try:
-                sizes = [
-                    min(o.shape[0], o0.shape[0]) for o, o0 in zip(orbs, orbs0)]
-                continue_ = max(sizes) != min(sizes)
-                errs = _np.any([
-                    _np.all(_np.isclose(o[:s], o0[:s]), axis=0)
-                    for o, o0, s in zip(orbs, orbs0, sizes)], axis=0)
-                continue_ |= _np.any(errs)
-            except TypeError:
-                typ = True
-                continue_ = True
-            if not continue_:
-                return 0
-            _time.sleep(0.1)
-            timeout -= _time.time() - t00
-
-        if typ:
-            return -1
-        if max(sizes) != min(sizes):
-            return -2
-        if _np.any(errs):
-            return int(errs.nonzero()[0][0])+1
-        return -4
-
     def mturn_wait_update_timestamps(
             self, timeout=10, consider_sum=False) -> int:
         """Call this method after acquisition to check if data was updated.
@@ -1351,7 +1290,7 @@ class FamBPMs(_Devices):
             int: code describing what happened:
                 -1: initial timestamps were not defined;
                 =0: data updated.
-                >0: index of the first FOFB controller which did not update
+                >0: index of the first BPM which did not update
                     plus 1.
 
         """
@@ -1380,12 +1319,10 @@ class FamBPMs(_Devices):
 
         Returns:
             int: code describing what happened:
-                -4: unknown error;
-                -3: initial orbit was not acquired before acquisition;
-                -2: TypeError ocurred (maybe because some of them are None);
-                -1: Orbits have different sizes;
-                =0: Orbit updated.
-                >0: Index of the first BPM which did not update plus 1.
+                -1: initial timestamps were not defined;
+                =0: data updated.
+                >0: index of the first BPM which did not update
+                    plus 1.
 
         """
         t00 = _time.time()
@@ -1394,13 +1331,8 @@ class FamBPMs(_Devices):
             return ret
         timeout -= _time.time() - t00
 
-        t00 = _time.time()
-        ret = self.mturn_wait_update_timestamps(timeout)
-        if ret > 0:
-            return ret
-        timeout -= _time.time() - t00
-
-        return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
+        return self.mturn_wait_update_timestamps(
+            timeout, consider_sum=consider_sum)
 
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
