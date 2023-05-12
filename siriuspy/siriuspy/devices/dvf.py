@@ -42,22 +42,28 @@ class DVF(_DeviceNC):
         }
 
     _properties = (
-        'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
-        'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
         'cam1:Acquire', 'cam1:Acquire_RBV',
         'cam1:ImageMode', 'cam1:ImageMode_RBV',
+        'cam1:Gain', 'cam1:Gain_RBV',
+        'cam1:GainAuto', 'cam1:GainAuto_RBV',
+        'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
+        'cam1:PixelSize', 'cam1:PixelSize_RBV',
+        'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
+        'cam1:Temperature',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
+        'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
         'image1:ArrayData',
+        'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
+        'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
         'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
         'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
         'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
         'CC1:FalseColor', 'CC1:FalseColor_RBV',
         'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
-        # 'Trans1:Type',
         )
 
     def __init__(self, devname, *args, **kwargs):
@@ -109,22 +115,29 @@ class DVF(_DeviceNC):
         return self['cam1:Acquire']
 
     @property
+    def cam_sizex(self):
+        """Camera second dimension size (pixels)."""
+        return self['cam1:SizeX_RBV']
+
+    @property
+    def cam_sizey(self):
+        """Camera first dimension size (pixels)."""
+        return self['cam1:SizeY_RBV']
+
+    @property
     def image_sizex(self):
         """Image second dimension size (pixels)."""
-        params = self.parameters
-        return params.IMAGE_SIZE_X
+        return self['image1:ArraySize0_RBV']
 
     @property
     def image_sizey(self):
         """Image first dimension size (pixels)."""
-        params = self.parameters
-        return params.IMAGE_SIZE_Y
+        return self['image1:ArraySize1_RBV']
 
     @property
     def image(self):
-        """Return DVF image formatted as a (sizey, sizex) matrix."""
-        params = self.parameters
-        shape = (params.IMAGE_SIZE_Y, params.IMAGE_SIZE_X)
+        """Return DVF image formatted as a (sizey, sizex) numpy matrix."""
+        shape = (self.image_sizey, self.image_sizex)
         data = self['image1:ArrayData']
         image = _np.reshape(data, shape)
         return image
@@ -148,6 +161,51 @@ class DVF(_DeviceNC):
         mag_factor = self.optics_magnefication_factor
         pixel2srcsize = pixel_size / mag_factor
         return pixel2srcsize
+
+    @property
+    def gain(self):
+        """Return camera gain."""
+        return self['cam1:Gain_RBV']
+
+    @gain.setter
+    def gain(self, value):
+        """Set camera gain."""
+        self['cam1:Gain'] = value
+
+    @property
+    def gain_auto(self):
+        """Return camera gain auto."""
+        return self['cam1:GainAuto_RBV']
+
+    @gain.setter
+    def gain_auto(self, value):
+        """Set camera gain auto."""
+        self['cam1:GainAuto'] = value
+
+    @property
+    def pixel_format(self):
+        """Return camera pixel format."""
+        return self['cam1:PixelFormat_RBV']
+
+    @pixel_format.setter
+    def pixel_format(self, value):
+        """Set camera pixel format."""
+        self['cam1:PixelFormat'] = value
+
+    @property
+    def pixel_size(self):
+        """Return camera pixel size."""
+        return self['cam1:PixelSize_RBV']
+
+    @pixel_size.setter
+    def pixel_size(self, value):
+        """Set camera pixel size."""
+        self['cam1:PixelSize'] = value
+
+    @property
+    def camera_temperature(self):
+        """Return camera temperature"""
+        return self['cam1:Temperature']
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
