@@ -203,7 +203,7 @@ class DVF(_DeviceNC):
         self['cam1:PixelSize'] = value
 
     @property
-    def camera_temperature(self):
+    def cam_temperature(self):
         """Return camera temperature"""
         return self['cam1:Temperature']
 
