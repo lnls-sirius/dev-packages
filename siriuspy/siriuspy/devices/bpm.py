@@ -1,4 +1,5 @@
-"""."""
+"""BPM devices."""
+
 import time as _time
 from threading import Event as _Flag
 import numpy as _np
@@ -14,9 +15,9 @@ class BPM(_Device):
     """BPM Device."""
 
     ACQSTATES_NOTOK = {
-            _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
-            _csbpm.AcqStates.Too_Few_Samples,
-            _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
+        _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
+        _csbpm.AcqStates.Too_Few_Samples,
+        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
     ACQSTATES_STARTED = {
         _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
         _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
@@ -887,7 +888,7 @@ class BPM(_Device):
 
 
 class FamBPMs(_Devices):
-    """."""
+    """Family of BPMs."""
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -917,6 +918,7 @@ class FamBPMs(_Devices):
         super().__init__(devname, devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
+        self._initial_timestamps = None
 
         self._mturn_flags = dict()
         # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
@@ -1016,6 +1018,34 @@ class FamBPMs(_Devices):
         if not return_sum:
             return orbx, orby
         return orbx, orby, _np.array(possum).T
+
+    def get_mturn_timestamps(self, return_sum=False):
+        """Get Multiturn data timestamps.
+
+        Args:
+            return_sum (bool, optional): Whether or not to return BPMs sum
+                timestamps. Defaults to False.
+
+        Returns:
+            tsmps (numpy.ndarray, (160, N)): The i-th row has the timestamp of
+                the i-th bpm for the [horizontal, vertical, sum] signals
+                respectively. If return_sum is False, then N=2 instead of 3.
+
+        """
+        tsmps = _np.zeros((len(self._devices), 2+return_sum), dtype=float)
+        for i, bpm in enumerate(self._devices):
+            pvx = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
+            pvy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
+            vax = pvx.get_timevars(timeout=self.TIMEOUT)
+            vay = pvy.get_timevars()
+            tsmps[i, 0] = pvx.timestamp if vax is None else vax['timestamp']
+            tsmps[i, 1] = pvy.timestamp if vay is None else vay['timestamp']
+            if not return_sum:
+                continue
+            pvs = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
+            vas = pvs.get_timevars()
+            tsmps[i, 2] = pvs.timestamp if vas is None else vas['timestamp']
+        return tsmps
 
     def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
@@ -1207,19 +1237,21 @@ class FamBPMs(_Devices):
         for bpm in self._devices:
             bpm.switching_mode = mode
 
-    def mturn_update_initial_orbit(self, consider_sum=False):
+    def mturn_update_initial_timestamps(self, consider_sum=False):
         """Call this method before acquisition to get orbit for comparison."""
-        self._initial_orbs = self.get_mturn_orbit(return_sum=consider_sum)
+        self._initial_timestamps = self.get_mturn_timestamps(
+            return_sum=consider_sum)
 
     def mturn_reset_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_orbit(self, consider_sum=False):
+    def mturn_reset_flags_and_update_initial_timestamps(
+            self, consider_sum=False):
         """Set initial state to wait for orbit acquisition to start."""
         self.mturn_reset_flags()
-        self.mturn_update_initial_orbit(consider_sum)
+        self.mturn_update_initial_timestamps(consider_sum)
 
     def mturn_wait_update_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
@@ -1241,11 +1273,12 @@ class FamBPMs(_Devices):
             timeout = max(timeout, 0)
         return 0
 
-    def mturn_wait_update_orbit(self, timeout=10, consider_sum=False) -> int:
-        """Call this method after acquisition to check if orbit was updated.
+    def mturn_wait_update_timestamps(
+            self, timeout=10, consider_sum=False) -> int:
+        """Call this method after acquisition to check if data was updated.
 
         For this method to work it is necessary to call
-            mturn_update_initial_orbit
+            mturn_update_initial_timestamps
         before the acquisition starts, so that a reference for comparison is
         created.
 
@@ -1256,47 +1289,28 @@ class FamBPMs(_Devices):
 
         Returns:
             int: code describing what happened:
-                -4: unknown error;
-                -3: initial orbit was not acquired before acquisition;
-                -2: TypeError ocurred (maybe because some of them are None);
-                -1: Orbits have different sizes;
-                =0: Orbit updated.
-                >0: Index of the first BPM which did not update plus 1.
+                -1: initial timestamps were not defined;
+                =0: data updated.
+                >0: index of the first BPM which did not update plus 1.
 
         """
-        orbs0, self._initial_orbs = self._initial_orbs, None
-        if orbs0 is None:
-            return -3
+        if self._initial_timestamps is None:
+            return -1
+
+        tsmp0 = self._initial_timestamps
         while timeout > 0:
             t00 = _time.time()
-            orbs = self.get_mturn_orbit(return_sum=consider_sum)
-            typ = False
-            try:
-                sizes = [
-                    min(o.shape[0], o0.shape[0]) for o, o0 in zip(orbs, orbs0)]
-                continue_ = max(sizes) != min(sizes)
-                errs = _np.any([
-                    _np.all(_np.isclose(o[:s], o0[:s]), axis=0)
-                    for o, o0, s in zip(orbs, orbs0, sizes)], axis=0)
-                continue_ |= _np.any(errs)
-            except TypeError:
-                typ = True
-                continue_ = True
-            if not continue_:
+            tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
+            updated = _np.all(_np.equal(tsmp, tsmp0), axis=1)
+            if _np.all(updated):
                 return 0
             _time.sleep(0.1)
             timeout -= _time.time() - t00
 
-        if typ:
-            return -1
-        elif max(sizes) != min(sizes):
-            return -2
-        elif _np.any(errs):
-            return int(errs.nonzero()[0][0])+1
-        return -4
+        return int(_np.nonzero(~updated)[0][0])+1
 
     def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
-        """Combine mturn_wait_update_flags and mturn_wait_update_orbit.
+        """Combine all methods to wait update data.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
@@ -1305,12 +1319,9 @@ class FamBPMs(_Devices):
 
         Returns:
             int: code describing what happened:
-                -4: unknown error;
-                -3: initial orbit was not acquired before acquisition;
-                -2: TypeError ocurred (maybe because some of them are None);
-                -1: Orbits have different sizes;
-                =0: Orbit updated.
-                >0: Index of the first BPM which did not update plus 1.
+                -1: initial timestamps were not defined;
+                =0: data updated.
+                >0: index of the first BPM which did not update plus 1.
 
         """
         t00 = _time.time()
@@ -1319,7 +1330,8 @@ class FamBPMs(_Devices):
             return ret
         timeout -= _time.time() - t00
 
-        return self.mturn_wait_update_orbit(timeout, consider_sum=consider_sum)
+        return self.mturn_wait_update_timestamps(
+            timeout, consider_sum=consider_sum)
 
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
