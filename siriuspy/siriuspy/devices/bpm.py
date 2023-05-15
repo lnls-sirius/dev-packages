@@ -1301,13 +1301,13 @@ class FamBPMs(_Devices):
         while timeout > 0:
             t00 = _time.time()
             tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
-            updated = _np.all(_np.equal(tsmp, tsmp0), axis=1)
-            if _np.all(updated):
+            errors = _np.any(_np.equal(tsmp, tsmp0), axis=1)
+            if not _np.any(errors):
                 return 0
             _time.sleep(0.1)
             timeout -= _time.time() - t00
 
-        return int(_np.nonzero(~updated)[0][0])+1
+        return int(_np.nonzero(errors)[0][0])+1
 
     def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
         """Combine all methods to wait update data.
