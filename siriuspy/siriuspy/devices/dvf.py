@@ -3,6 +3,8 @@
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
+from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
+from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
 
 from .device import DeviceNC as _DeviceNC
 
@@ -251,3 +253,224 @@ class DVF(_DeviceNC):
         timeout = timeout or self._default_timeout
         self[propty] = value
         return self._wait(propty + '_RBV', value, timeout=timeout)
+
+
+class DVFImgProc(DVF):
+    """."""
+
+    _properties = DVF._properties + (
+        'ImgIntensityMax-Mon', 'ImgIntensityMin-Mon',
+        'ImgIntensitySum-Mon', 'ImgIsSaturated-Mon',
+        'ImgIsWithBeam-Mon',
+        'ImgIsWithBeamThreshold-SP', 'ImgIsWithBeamThreshold-RB'
+
+        'ImgROIX-RB' ,'ImgROIX-SP',
+        'ImgROIXCenter-Mon', 'ImgROIXFWHM-Mon',
+        'ImgROIY-RB', 'ImgROIY-SP',
+        'ImgROIYCenter-Mon', 'ImgROIYFWHM-Mon',
+
+        'ImgLog-Mon',
+        'ImgROIUpdateWithFWHM-Sel', 'ImgROIUpdateWithFWHM-Sts',
+        'ImgROIYUpdateWithFWHMFactor-RB', 'ImgROIYUpdateWithFWHMFactor-SP',
+        'ImgROIXUpdateWithFWHMFactor-RB', 'ImgROIXUpdateWithFWHMFactor-SP',
+
+        'ImgROIXFitMean-Mon', 'ImgROIXFitSigma-Mon',
+        'ImgROIXFitAmplitude-Mon', 'ImgROIXFitError-Mon',
+        'ImgROIYFitMean-Mon', 'ImgROIYFitSigma-Mon',
+        'ImgROIYFitAmplitude-Mon', 'ImgROIYFitError-Mon',
+        'ImgFitAngle-Mon',
+        'ImgFitSigma1-Mon', 'ImgFitSigma2-Mon',
+        'ImgFitProcTime-Mon',
+        'ImgFitAngleUseCMomSVD-Sel', 'ImgFitAngleUseCMomSVD-Sts'
+        'ImgDVFStatus-Mon', 'ImgDVFStatusLabels-Cte',
+        )
+
+    def __init__(self, devname, *args, **kwargs):
+        """."""
+        super().__init__(devname=devname, *args, **kwargs)
+        self._fitgaussian = _FitGaussianScipy()
+
+    @property
+    def intensity_min(self):
+        """Image min intensity."""
+        return self['ImgIntensityMin-Mon']
+
+    @property
+    def intensity_max(self):
+        """Image max intensity."""
+        return self['ImgIntensityMax-Mon']
+
+    @property
+    def intensity_sum(self):
+        """Image sum intensity."""
+        return self['ImgIntensitySum-Mon']
+
+    @property
+    def is_saturated(self):
+        """Whether image is saturated."""
+        return self['ImgIsSaturated-Mon']
+
+    @property
+    def is_with_beam(self):
+        """Whether image is with beam."""
+        return self['ImgIsWithBeam-Mon']
+
+    @property
+    def is_with_beam_threashold(self):
+        """Get image is with beam threashold."""
+        return self['ImgIsWithBeamThreshold-RB']
+
+    @is_with_beam_threashold.setter
+    def is_with_beam_threashold(self, value):
+        """Set image is with beam threashold."""
+        self['ImgIsWithBeamThreshold-SP'] = value
+
+    @property
+    def roiy(self):
+        """."""
+        return self['ImgROIY-RB']
+
+    @roiy.setter
+    def roiy(self, value):
+        """."""
+        self['ImgROIY-SP'] = value
+
+    @property
+    def roix(self):
+        """."""
+        return self['ImgROIX-RB']
+
+    @roix.setter
+    def roix(self, value):
+        """."""
+        self['ImgROIX-SP'] = value
+
+    @property
+    def roiy_center(self):
+        """."""
+        return self['ImgROIYCenter-Mon']
+
+    @property
+    def roix_center(self):
+        """."""
+        return self['ImgROIXCenter-Mon']
+
+    @property
+    def roiy_fwhm(self):
+        """."""
+        return self['ImgROIYFWHM-Mon']
+
+    @property
+    def roix_fwhm(self):
+        """."""
+        return self['ImgROIXFWHM-Mon']
+
+    @property
+    def roiy_fit_amplitude(self):
+        """."""
+        return self['ImgROIYFitAmplitude-Mon']
+
+    @property
+    def roix_fit_amplitude(self):
+        """."""
+        return self['ImgROIXFitAmplitude-Mon']
+
+    @property
+    def roiy_fit_mean(self):
+        """."""
+        return self['ImgROIYFitMean-Mon']
+
+    @property
+    def roix_fit_mean(self):
+        """."""
+        return self['ImgROIXFitMean-Mon']
+
+    @property
+    def roiy_fit_sigma(self):
+        """."""
+        return self['ImgROIYFitSigma-Mon']
+
+    @property
+    def roix_fit_sigma(self):
+        """."""
+        return self['ImgROIXFitSigma-Mon']
+
+    @property
+    def roiy_fit_error(self):
+        """."""
+        return self['ImgROIYFitError-Mon']
+
+    @property
+    def roix_fit_error(self):
+        """."""
+        return self['ImgROIXFitError-Mon']
+
+    @property
+    def roiy_fwhm_factor(self):
+        """."""
+        return self['ImgROIYUpdateWithFWHMFactor-RB']
+
+    @roiy_fwhm_factor.setter
+    def roiy_fwhm_factor(self, value):
+        """."""
+        self['ImgROIYUpdateWithFWHMFactor-SP'] = value
+
+    @property
+    def roix_fwhm_factor(self):
+        """."""
+        return self['ImgROIXUpdateWithFWHMFactor-RB']
+
+    @roix_fwhm_factor.setter
+    def roix_fwhm_factor(self, value):
+        """."""
+        self['ImgROIXUpdateWithFWHMFactor-SP'] = value
+
+    @property
+    def roi_update_with_fwhm(self):
+        """."""
+        return self['ImgROIUpdateWithFWHM-Sts']
+
+    @property
+    def fit_angle(self):
+        """."""
+        return self['ImgFitAngle-Mon']
+
+    @property
+    def fit_sigma1(self):
+        """."""
+        return self['ImgFitSigma1-Mon']
+
+    @property
+    def fit_sigma2(self):
+        """."""
+        return self['ImgFitSigma2-Mon']
+
+    @property
+    def fit_proctime(self):
+        """Return image processing time [ms]."""
+        return self['ImgFitProcTime-Mon']
+
+    @property
+    def fit_angle_use_cmom_svd(self):
+        """."""
+        return self['ImgFitAngleUseCMomSVD-Sts']
+
+    @property
+    def log(self):
+        """."""
+        return self['ImgLog-Mon']
+
+    def create_image2dfit(self):
+        """Return a Image2DFit object with current image as data."""
+        imgfit2d = _Image2D_Fit(
+            data=self.image, fitgaussian=self._fitgaussian,
+            roix=self.roix, roiy=self.roiy)
+        return imgfit2d
+
+    def cmd_roi_update_with_fwhm(self, value):
+        """."""
+        self['ImgROIUpdateWithFWHM-Sel'] = bool(value)
+
+    def cmd_fit_angle_use_cmom_svd(self, value):
+        """."""
+        self['ImgFitAngleUseCMomSVD-Sel'] = bool(value)
