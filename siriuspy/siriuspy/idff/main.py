@@ -201,7 +201,7 @@ class App(_Callback):
 
     def _do_update_polarization(self):
         new_pol, *_ = self._idff.get_polarization_state()
-        if new_pol != self._polarization:
+        if new_pol is not None and new_pol != self._polarization:
             self._polarization = new_pol
             self.run_callbacks('Polarization-Mon', new_pol)
 
