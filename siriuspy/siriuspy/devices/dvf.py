@@ -430,6 +430,11 @@ class DVFImgProc(DVF):
         """."""
         return self['ImgROIUpdateWithFWHM-Sts']
 
+    @roi_update_with_fwhm.setter
+    def roi_update_with_fwhm(self, value):
+        """."""
+        self['ImgROIUpdateWithFWHM-Sel'] = bool(value)
+
     @property
     def fit_angle(self):
         """."""
@@ -455,6 +460,11 @@ class DVFImgProc(DVF):
         """."""
         return self['ImgFitAngleUseCMomSVD-Sts']
 
+    @fit_angle_use_cmom_svd.setter
+    def fit_angle_use_cmom_svd(self, value):
+        """."""
+        self['ImgFitAngleUseCMomSVD-Sel'] = bool(value)
+
     @property
     def log(self):
         """."""
@@ -466,11 +476,3 @@ class DVFImgProc(DVF):
             data=self.image, fitgaussian=self._fitgaussian,
             roix=self.roix, roiy=self.roiy)
         return imgfit2d
-
-    def cmd_roi_update_with_fwhm(self, value):
-        """."""
-        self['ImgROIUpdateWithFWHM-Sel'] = bool(value)
-
-    def cmd_fit_angle_use_cmom_svd(self, value):
-        """."""
-        self['ImgFitAngleUseCMomSVD-Sel'] = bool(value)
