@@ -12,6 +12,9 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     OPEN_CLOSED = ('Open', 'Closed')
+    STS_LBLS_CORR = (
+        'Connected', 'PwrStateOn', 'OpModeConfigured',
+        'SOFBModeConfigured')
 
 
 _et = ETypes
@@ -23,7 +26,10 @@ class IDFFConst(_csdev.Const):
     """ID Feedforward Const class."""
 
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
-    DEFAULT_LOOP_FREQ = 5  # Hz
+    StsLblsCorr = _csdev.Const.register(
+        'StsLblsCorr', _et.STS_LBLS_CORR)
+
+    DEFAULT_LOOP_FREQ = 5  # [Hz]
 
     def __init__(self, idname):
         """Init."""
@@ -68,6 +74,17 @@ class IDFFConst(_csdev.Const):
 
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
+            'SOFBMode-Sel': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'SOFBMode-Sts': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'CorrConfig-Cmd': {'type': 'int', 'value': 0},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111},
+            'CorrStatusLabels-Cte': {
+                'type': 'string', 'count': len(self.StsLblsCorr._fields),
+                'value': self.StsLblsCorr._fields}
         }
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase

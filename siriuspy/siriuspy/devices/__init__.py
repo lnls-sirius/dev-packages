@@ -24,7 +24,8 @@ from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
 from .posang import PosAng
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
-from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC
+from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC, \
+    PowerSupplyFBP
 from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
     RFKillBeam
 from .screen import Screen
