@@ -63,11 +63,11 @@ class DVF(_DeviceNC):
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
-        'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
-        'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
-        'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
-        'CC1:FalseColor', 'CC1:FalseColor_RBV',
-        'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
+        # 'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
+        # 'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
+        # 'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
+        # 'CC1:FalseColor', 'CC1:FalseColor_RBV',
+        # 'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
         )
 
     def __init__(self, devname, *args, **kwargs):
@@ -220,11 +220,11 @@ class DVF(_DeviceNC):
             'ffmstream1:EnableCallbacks': 1,  # Enable
             'HDF1:EnableCallbacks': 1,  # Enable
             'Trans1:EnableCallbacks': 0,  # Disable
-            'Over1:EnableCallbacks': 0,  # Disable
-            'CC1:EnableCallbacks': 0,  # Disable
-            'CC1:ColorModeOut': 0,  # Mono
-            'CC1:FalseColor': 0,  # None
-            'DimFei1:EnableCallbacks': 0,  # Disable
+            # 'Over1:EnableCallbacks': 0,  # Disable
+            # 'CC1:EnableCallbacks': 0,  # Disable
+            # 'CC1:ColorModeOut': 0,  # Mono
+            # 'CC1:FalseColor': 0,  # None
+            # 'DimFei1:EnableCallbacks': 0,  # Disable
         }
 
         # set properties
@@ -264,9 +264,9 @@ class DVFImgProc(DVF):
         'ImgIntensityMax-Mon', 'ImgIntensityMin-Mon',
         'ImgIntensitySum-Mon', 'ImgIsSaturated-Mon',
         'ImgIsWithBeam-Mon',
-        'ImgIsWithBeamThreshold-SP', 'ImgIsWithBeamThreshold-RB'
+        'ImgIsWithBeamThreshold-SP', 'ImgIsWithBeamThreshold-RB',
 
-        'ImgROIX-RB' ,'ImgROIX-SP',
+        'ImgROIX-RB', 'ImgROIX-SP',
         'ImgROIXCenter-Mon', 'ImgROIXFWHM-Mon',
         'ImgROIY-RB', 'ImgROIY-SP',
         'ImgROIYCenter-Mon', 'ImgROIYFWHM-Mon',
@@ -283,7 +283,7 @@ class DVFImgProc(DVF):
         'ImgFitAngle-Mon',
         'ImgFitSigma1-Mon', 'ImgFitSigma2-Mon',
         'ImgFitProcTime-Mon',
-        'ImgFitAngleUseCMomSVD-Sel', 'ImgFitAngleUseCMomSVD-Sts'
+        'ImgFitAngleUseCMomSVD-Sel', 'ImgFitAngleUseCMomSVD-Sts',
         'ImgDVFStatus-Mon', 'ImgDVFStatusLabels-Cte',
         )
 
