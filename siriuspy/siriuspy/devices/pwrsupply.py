@@ -976,7 +976,7 @@ class PowerSupplyFC(_PSDev):
         return True
 
 
-class PowerSupplyFBP(_PSDev):
+class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""
 
     SOFBMODE_SEL = _Const.DsblEnbl
