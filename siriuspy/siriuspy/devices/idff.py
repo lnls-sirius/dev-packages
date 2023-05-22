@@ -228,6 +228,8 @@ class IDFF(_Devices):
             pparameter_value = self.pparameter_mon
         if kparameter_value is None:
             kparameter_value = self.kparameter_mon
+        if None in (pparameter_value, kparameter_value):
+            return None, pparameter_value, kparameter_value
         polarization = self.idffconfig.get_polarization_state(
             pparameter=pparameter_value, kparameter=kparameter_value)
         return polarization, pparameter_value, kparameter_value
