@@ -186,7 +186,7 @@ class IDFFConfig(_ConfigDBDocument):
             if abs(pparameter - val) < PPARAM_TOL:
                 return pol
         if abs(kparameter - poldefs['none']) < KPARAM_TOL:
-                return 'none'
+            return 'none'
         return 'not_defined'
 
     def check_valid_value(self, value):

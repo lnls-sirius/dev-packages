@@ -80,7 +80,7 @@ class IDFFConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields}

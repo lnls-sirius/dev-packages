@@ -182,12 +182,11 @@ class App(_Callback):
 
     @property
     def quit(self):
-        """."""
+        """Quit and shutdown threads."""
         return self._quit
 
     @quit.setter
     def quit(self, value):
-        """."""
         if value:
             self._quit = value
             self._pssofb.threads_shutdown()
@@ -316,13 +315,10 @@ class App(_Callback):
     # ----- idff -----
 
     def _idff_prepare_corrs_state(self, pssofb_isused):
-        """."""
+        """Configure PSSOFB mode state ."""
         if not self._idff.wait_for_connection():
             return False
-
         corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
-
-        # sofbmode
         for dev in corrdevs:
             if pssofb_isused:
                 if not dev.cmd_sofbmode_enable(timeout=App.DEF_PS_TIMEOUT):
@@ -330,13 +326,12 @@ class App(_Callback):
             else:
                 if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
                     return False
-
         return True
 
     # ----- pssofb -----
 
     def _pssofb_init(self, idname):
-        """."""
+        """Create PSSOFB connections to control correctors."""
         # bbbnames
         bbbnames = _PSNamesSOFB.get_bbbnames(idname)
 
