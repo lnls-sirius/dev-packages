@@ -8,6 +8,7 @@ import numpy as _np
 
 from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
+from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
 from ..devices import IDFF as _IDFF
 from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
@@ -53,6 +54,7 @@ class App(_Callback):
             'ControlQS-Sel': self.set_control_qs,
             'ConfigName-SP': self.set_config_name,
             'SOFBMode-Sel': self.set_sofb_mode,
+            'CorrConfig-Cmd': self.cmd_corrconfig,
         }
 
         self._quit = False
@@ -72,6 +74,10 @@ class App(_Callback):
             'ConfigName-SP': self._config_name,
             'ConfigName-RB': self._config_name,
             'Polarization-Mon': self._polarization,
+            'SOFBMode-Sel': self._pssofb_isused,
+            'SOFBMode-Sts': self._pssofb_isused,
+            'CorrConfig-Cmd': 0,
+            'CorrStatus-Mon': 0b1111,
         }
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -89,7 +95,15 @@ class App(_Callback):
 
     def process(self, interval):
         """Sleep."""
-        _time.sleep(interval)
+        # check correctors state periodically
+        _t0 = _time.time()
+        self._update_corr_status()
+        dtime = _time.time() - _t0
+        # sleep
+        if dtime > 0:
+            _time.sleep(interval - dtime)
+        else:
+            _log.debug('process took {0:f}ms.'.format((dtime)*1000))
 
     def read(self, reason):
         """Read from IOC database."""
@@ -168,6 +182,26 @@ class App(_Callback):
         status = 'enabled' if self._pssofb_isused else 'disabled'
         self._update_log(f'SOFBMode {status}.')
         self.run_callbacks('SOFBMode-Sts', value)
+
+        return True
+
+    def cmd_corrconfig(self, _):
+        """Command to reconfigure power supplies to desired state."""
+        if self._loop_state == self._const.LoopState.Closed:
+            self._update_log('ERR:Open loop before configure correctors.')
+            return False
+        if self._pssofb_isused:
+            self._update_log('ERR:Turn off PSSOFB mode before configure.')
+            return False
+
+        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
+        for dev in corrdevs:
+            # turn on
+            if not dev.cmd_turn_on():
+                return False
+            # opmode slowref
+            if not dev.cmd_slowref():
+                return False
 
         return True
 
@@ -310,6 +344,25 @@ class App(_Callback):
 
             # sleep unused time or signal overtime to stdout
             self._do_sleep(_t0, tplanned)
+
+    def _update_corr_status(self):
+        """Update CorrStatus-Mon PV."""
+        devs = self._idff.chdevs + self._idff.cvdevs
+        if self._control_qs == self._const.DsblEnbl.Enbl:
+            devs.extend(self._idff.qsdevs)
+
+        status = 0
+        if all(d.connected for d in devs):
+            if any(d.pwrstate != d.PWRSTATE.On for d in devs):
+                status = _updt_bit(status, 1, 1)
+            if any(d.opmode != d.OPMODE_STS.SlowRef for d in devs):
+                status = _updt_bit(status, 2, 1)
+            if any(d.sofbmode != self._pssofb_isused for d in devs):
+                status = _updt_bit(status, 3, 1)
+        else:
+            status = 0b111
+
+        self.run_callbacks('CorrStatus-Mon', status)
 
     # ----- idff -----
 

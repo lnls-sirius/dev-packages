@@ -982,18 +982,22 @@ class PowerSupplyFBP(PowerSupply):
     SOFBMODE_SEL = _Const.DsblEnbl
     SOFBMODE_STS = _Const.DsblEnbl
 
+    @property
+    def sofbmode(self):
+        """SOFB mode status."""
+        return self['SOFBMode-Sts']
+
     def cmd_sofbmode_enable(self, timeout=_PSDev._default_timeout):
-        """."""
+        """Command to enable SOFBMode. Send command and wait."""
         return self._cmd_sofbmode(
             timeout, self.SOFBMODE_SEL.Enbl, self.SOFBMODE_STS.Enbl)
 
     def cmd_sofbmode_disable(self, timeout=_PSDev._default_timeout):
-        """."""
+        """Command to disable SOFBMode. Send command and wait."""
         return self._cmd_sofbmode(
             timeout, self.SOFBMODE_SEL.Dsbl, self.SOFBMODE_STS.Dsbl)
 
     def _cmd_sofbmode(self, timeout, state_sel, state_sts):
-        """."""
         self['SOFBMode-Sel'] = state_sel
         return self._wait(
             'SOFBMode-Sts', state_sts, timeout=timeout)
