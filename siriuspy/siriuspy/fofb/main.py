@@ -382,7 +382,7 @@ class App(_Callback):
 
     # --- loop control ---
 
-    def set_loop_state(self, value, reset=False, abort=False):
+    def set_loop_state(self, value, abort=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
@@ -405,11 +405,11 @@ class App(_Callback):
 
         self._thread_loopstate = _epics.ca.CAThread(
             target=self._thread_set_loop_state,
-            args=[value, reset, abort], daemon=True)
+            args=[value, abort], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value, reset, abort):
+    def _thread_set_loop_state(self, value, abort):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
@@ -456,9 +456,6 @@ class App(_Callback):
             self._loop_state = value
             self._check_set_corrs_opmode()
             self.run_callbacks('LoopState-Sts', self._loop_state)
-
-        if reset:
-            self._do_fofbctrl_reset()
 
     def _do_loop_gain_ramp(self, ramp='up', abort=False):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
@@ -1567,8 +1564,7 @@ class App(_Callback):
                 self._update_log('FATAL:Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
-                self.set_loop_state(
-                    self._const.LoopState.Open, reset=True, abort=True)
+                self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
