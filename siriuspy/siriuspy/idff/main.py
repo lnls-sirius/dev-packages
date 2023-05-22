@@ -294,7 +294,6 @@ class App(_Callback):
 
             # check IDFF device connection
             if not self._idff.connected:
-                self._update_log('ERR: IDFF device is disconnected.')
                 self._do_sleep(_t0, tplanned)
                 continue
 
