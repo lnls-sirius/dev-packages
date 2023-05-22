@@ -32,7 +32,7 @@ from .sofb import SOFB
 from .syncd import DevicesSync
 from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
-from .dvf import DVF
+from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
 
 
