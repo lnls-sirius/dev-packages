@@ -44,9 +44,6 @@ class App(_Callback):
         # load idff in configdb
         self._load_config(self._config_name)
 
-        # prepare initial idff corrs state
-        self._idff_prepare_corrs_state(self._pssofb_isused)
-
         # pvs to write methods
         self.map_pv2write = {
             'LoopState-Sel': self.set_loop_state,
