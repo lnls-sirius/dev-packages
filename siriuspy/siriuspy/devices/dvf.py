@@ -261,6 +261,11 @@ class DVF(_DeviceNC):
         """Tune IOC image acquisition off."""
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
 
+    @staticmethod
+    def conv_devname2parameters(devname):
+        """."""
+        return DVF._dev2params[devname]
+
     def _set_and_wait(self, propty, value, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
