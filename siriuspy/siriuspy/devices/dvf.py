@@ -30,19 +30,16 @@ class DVF(_DeviceNC):
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
     )
-    #   DVF device :       ((sizey, sizex), pixel_size_um mag_factor
+
     _dev2params = {
-        DEVICES.CAX_DVF1 :
-            # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
-            _get_namedtuple('DVFParameters',
-            # _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 0.5)),
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
-        DEVICES.CAX_DVF2 :
-            # DVF2 today: pixel size 4.8 um; magnification factor 5.0
-            # DVF2 future hifi: pixel size 2.4 um; magnification factor 5.0
-            _get_namedtuple('DVFParameters',
-            # _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF1:
+            _get_namedtuple(
+                'DVFParameters',
+                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF2:
+            _get_namedtuple(
+                'DVFParameters',
+                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
         }
 
     _properties = (
@@ -53,10 +50,12 @@ class DVF(_DeviceNC):
         'cam1:ImageMode', 'cam1:ImageMode_RBV',
         'cam1:Gain', 'cam1:Gain_RBV',
         'cam1:GainAuto', 'cam1:GainAuto_RBV',
+        'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Temperature',
+        'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
         'image1:ArrayData',
@@ -211,11 +210,23 @@ class DVF(_DeviceNC):
         """Return camera temperature"""
         return self['cam1:Temperature']
 
+    @property
+    def cam_frames_completed(self):
+        """Return number of acquisition frames completed."""
+        return self['cam1:COMPLETED_RBV']
+
+    @property
+    def cam_frames_failures(self):
+        """Return number of acquisition frames failures."""
+        return self['cam1:FAILURES_RBV']
+
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
         props_values = {
             'cam1:ArrayCallbacks': 1,  # Enable
             'cam1:ImageMode': 2,  # Continuous
+            'cam1:DataType': 1,  # UInt16
+            'cam1:PixelFormat': 1,  # Mono12
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 1,  # Enable
             'HDF1:EnableCallbacks': 1,  # Enable
