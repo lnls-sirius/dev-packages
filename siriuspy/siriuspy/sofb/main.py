@@ -855,7 +855,6 @@ class SOFB(_BaseClass):
                 msg = 'ERR: Cannot Correct, at least one AMC is not locked!'
                 self._update_log(msg)
                 _log.info(msg)
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
@@ -904,8 +903,6 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             dkicks = self._process_pid(dkicks, interval)
@@ -913,15 +910,11 @@ class SOFB(_BaseClass):
             kicks, dkicks = self._process_kicks(
                 self._ref_corr_kicks, dkicks, apply_gain=False)
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             kicks = self._interact_with_fofb_in_apply_kicks(
                 kicks, dkicks, refx0, refy0)
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             tims.append(_time())
 
@@ -932,8 +925,6 @@ class SOFB(_BaseClass):
             times.append(tims)
             # if ret == -2:
             if ret < 0:  # change here for debug
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             elif ret == -1:
                 # means that correctors are not ready yet
@@ -958,6 +949,10 @@ class SOFB(_BaseClass):
                 msg = 'Trigger ready!'
                 self._update_log(msg)
                 _log.info(msg)
+
+        if self._loop_state == self._csorb.LoopState.Closed:
+            self._loop_state = self._csorb.LoopState.Open
+            self.run_callbacks('LoopState-Sel', 0)
 
         msg = 'Loop opened!'
         self._update_log(msg)
