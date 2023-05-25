@@ -75,6 +75,9 @@ class SOFB(_BaseClass):
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
+        self._amcs = [
+            _PV(f'IA-{i:02d}RaBPM:TI-AMCFPGAEVR:RefClkLocked-Mon')
+            for i in range(1, 21)]
 
     def get_map2write(self):
         """Get the database of the class."""
@@ -182,6 +185,14 @@ class SOFB(_BaseClass):
         if self._tests or self.acc != 'SI':
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
+
+    @property
+    def is_amc_locked(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected or not amc.value:
+                return False
+        return True
 
     def process(self):
         """Run continuously in the main thread."""
@@ -839,6 +850,12 @@ class SOFB(_BaseClass):
                 msg = 'ERR: Cannot Correct, We do not have stored beam!'
                 self._update_log(msg)
                 _log.info(msg)
+                break
+            if not self.is_amc_locked:
+                msg = 'ERR: Cannot Correct, at least one AMC is not locked!'
+                self._update_log(msg)
+                _log.info(msg)
+                self.run_callbacks('LoopState-Sel', 0)
                 break
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
