@@ -749,7 +749,7 @@ class SOFB(_BaseClass):
         _log.info(msg)
 
     def _do_drive(self):
-        self.run_callbacks('DriveState-Sts', 1)
+        self.run_callbacks('DriveState-Sts', self._csorb.DriveState.Closed)
 
         freqdiv = self._drive_divisor
         nrcycles = self._drive_nrcycles
@@ -810,10 +810,10 @@ class SOFB(_BaseClass):
         msg = 'Drive Loop opened!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('DriveState-Sts', 0)
+        self.run_callbacks('DriveState-Sts', self._csorb.DriveState.Open)
 
     def _do_auto_corr(self):
-        self.run_callbacks('LoopState-Sts', 1)
+        self.run_callbacks('LoopState-Sts', self._csorb.LoopState.Closed)
         times, rets = [], []
         tim0 = _time()
         bpmsfreq = self._csorb.BPMsFreq
@@ -952,12 +952,12 @@ class SOFB(_BaseClass):
 
         if self._loop_state == self._csorb.LoopState.Closed:
             self._loop_state = self._csorb.LoopState.Open
-            self.run_callbacks('LoopState-Sel', 0)
+            self.run_callbacks('LoopState-Sel', self._csorb.LoopState.Open)
 
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('LoopState-Sts', 0)
+        self.run_callbacks('LoopState-Sts', self._csorb.LoopState.Open)
 
     def _process_pid(self, dkicks, interval):
         """Velocity algorithm of PID."""
