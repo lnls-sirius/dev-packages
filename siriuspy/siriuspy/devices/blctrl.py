@@ -1,9 +1,9 @@
 """Beamline Control."""
 
-from .device import Device as _Device
+from .device import DeviceNC as _DeviceNC
 
 
-class BLCtrl(_Device):
+class BLCtrl(_DeviceNC):
     """Beamline Control."""
 
     class DEVICES:
