@@ -21,7 +21,7 @@ class BLCtrl(_DeviceNC):
         'A:PPS01:PG_STATUS',  # Status do gamma shutter da cabana A – 0 indica aberto
         'M:PPS01:HABILITACAO_MAQUINA',  # Status da liberação do gamma pela máquina – 1 indica liberado
         'A:PPS01:SEARCH_OK',  # status da procura cabana A – 1 indica procura feita
-        'B:PPS01:SEARCH_OK',  # status da procura cabana B - 1 indica procura feita
+        'B:PPS01:SEARCH_OK',  # status da procura cabana B – 1 indica procura feita
     )
 
     def __init__(self, devname, *args, **kwargs):
