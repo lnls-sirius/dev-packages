@@ -35,7 +35,7 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
-from .blctrl import BLCtrl
+from .blctrl import BLPPSCtrl
 
 
 del device, bpm, dcct, egun, ict, lillrf, modltr

@@ -3,7 +3,7 @@
 from .device import DeviceNC as _DeviceNC
 
 
-class BLCtrl(_DeviceNC):
+class BLPPSCtrl(_DeviceNC):
     """Beamline Control."""
 
     class DEVICES:
@@ -27,7 +27,7 @@ class BLCtrl(_DeviceNC):
     def __init__(self, devname, *args, **kwargs):
         """Init."""
         # check if device exists
-        if devname not in BLCtrl.DEVICES.ALL:
+        if devname not in BLPPSCtrl.DEVICES.ALL:
             raise NotImplementedError(devname)
         # call base class constructor
         super().__init__(devname, properties=self._properties, *args, **kwargs)
