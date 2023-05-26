@@ -43,6 +43,7 @@ class DVF(_DeviceNC):
         }
 
     _properties = (
+        'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
@@ -56,17 +57,22 @@ class DVF(_DeviceNC):
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Temperature',
         'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
+        'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
+        'ROI1:MinX', 'ROI1:MinX_RBV',
+        'ROI1:MinY', 'ROI1:MinY_RBV',
+        'ROI1:SizeX', 'ROI1:SizeX_RBV',
+        'ROI1:SizeY', 'ROI1:SizeY_RBV',
+        'ROI1:EnableX', 'ROI1:EnableX_RBV',
+        'ROI1:EnableY', 'ROI1:EnableY_RBV',
+        'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
+        'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
         'image1:ArrayData',
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
-        # 'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
-        # 'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
-        # 'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
-        # 'CC1:FalseColor', 'CC1:FalseColor_RBV',
-        # 'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
         )
 
     def __init__(self, devname, *args, **kwargs):
@@ -118,6 +124,16 @@ class DVF(_DeviceNC):
         return self['cam1:Acquire']
 
     @property
+    def cam_max_sizex(self):
+        """Camera max second dimension size (pixels)."""
+        return self['cam1:MaxSizeX_RBV']
+
+    @property
+    def cam_max_sizey(self):
+        """Camera max first dimension size (pixels)."""
+        return self['cam1:MaxSizeY_RBV']
+
+    @property
     def cam_sizex(self):
         """Camera second dimension size (pixels)."""
         return self['cam1:SizeX_RBV']
@@ -126,6 +142,26 @@ class DVF(_DeviceNC):
     def cam_sizey(self):
         """Camera first dimension size (pixels)."""
         return self['cam1:SizeY_RBV']
+
+    @property
+    def roi_minx(self):
+        """."""
+        return self['ROI1:MinX_RBV']
+
+    @roi_minx.setter
+    def roi_minx(self, value):
+        """."""
+        self['ROI1:MinX'] = int(value)
+
+    @property
+    def roi_miny(self):
+        """."""
+        return self['ROI1:MinY_RBV']
+
+    @roi_miny.setter
+    def roi_miny(self, value):
+        """."""
+        self['ROI1:MinY'] = int(value)
 
     @property
     def image_sizex(self):
@@ -223,19 +259,24 @@ class DVF(_DeviceNC):
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
         props_values = {
-            'cam1:ArrayCallbacks': 1,  # Enable
+            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
-            'cam1:DataType': 1,  # UInt16
             'cam1:PixelFormat': 1,  # Mono12
+            'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
+            'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
+            'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
+            'ROI1:MinX': 0,  # [pixel]
+            'ROI1:MinY': 0,  # [pixel]
+            'ROI1:SizeX': self.cam_max_sizex,  # [pixel]
+            'ROI1:SizeY': self.cam_max_sizey,  # [pixel]
+            'ROI1:EnableX': 1,  # Enable
+            'ROI1:EnableY': 1,  # Enable
+            'ROI1:ArrayCallbacks': 1,  # Enable passing array
+            'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
             'image1:EnableCallbacks': 1,  # Enable
-            'ffmstream1:EnableCallbacks': 1,  # Enable
-            'HDF1:EnableCallbacks': 1,  # Enable
+            'ffmstream1:EnableCallbacks': 0,  # Disable
+            'HDF1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
-            # 'Over1:EnableCallbacks': 0,  # Disable
-            # 'CC1:EnableCallbacks': 0,  # Disable
-            # 'CC1:ColorModeOut': 0,  # Mono
-            # 'CC1:FalseColor': 0,  # None
-            # 'DimFei1:EnableCallbacks': 0,  # Disable
         }
 
         # set properties
