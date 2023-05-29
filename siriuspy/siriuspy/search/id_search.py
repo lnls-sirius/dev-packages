@@ -60,8 +60,6 @@ class IDSearch:
             'ch2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-17SA:PS-CV-1:Current-SP',
             'cv2': 'SI-17SA:PS-CV-2:Current-SP',
-            'qs1': 'SI-17SA:PS-QS-1:Current-SP',
-            'qs2': 'SI-17SA:PS-QS-2:Current-SP',
         },
     }
 
