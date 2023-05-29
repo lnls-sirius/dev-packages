@@ -91,9 +91,18 @@ class DVF(_DeviceNC):
     @property
     def intensity_saturation_value(self):
         """Image intensity saturation value."""
-        # NOTE: a PV will be added to the IOC to select nr bits of intensity
-        intensity_nr_bits = self.parameters.MAX_INTENSITY_NR_BITS
-        return 2**intensity_nr_bits - 1
+        pixel_format_to_num_bits = {0: 8, 1: 12}  # 0: 'Mono8, 1: 'Mono12
+        data_type_to_num_bits = {0: 8, 1: 16} # 0: 'UInt8', 1: 'UInt16'
+        used_bits = pixel_format_to_num_bits[self.pixel_format]
+        max_bits = data_type_to_num_bits[self.data_type]
+        max_intensity = (1 << used_bits) - 1
+        if used_bits <= max_bits:
+            # Shift intensity to align with most-significant bits
+            max_intensity <<= max_bits - used_bits
+        elif used_bits > max_bits:
+            # Clip to maximum value allowed by the data type
+            max_intensity = (1 << max_bits) - 1
+        return max_intensity
 
     @property
     def exposure_time(self):
@@ -230,6 +239,16 @@ class DVF(_DeviceNC):
     def pixel_format(self, value):
         """Set camera pixel format."""
         self['cam1:PixelFormat'] = value
+
+    @property
+    def data_type(self):
+        """Return camera data type."""
+        return self['cam1:DataType_RBV']
+
+    @data_type.setter
+    def data_type(self, value):
+        """Set camera data type."""
+        self['cam1:DataType'] = value
 
     @property
     def pixel_size(self):
