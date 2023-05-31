@@ -151,7 +151,7 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
-            auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
+            auto_monitor = self._auto_mon and not pvname.endswith('-Mon')
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
