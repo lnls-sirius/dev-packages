@@ -41,37 +41,24 @@ class IDFFConst(_csdev.Const):
         fname = fname.lower()
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
 
-    def get_propty_database(self):
+    def get_propty_database(self, include_qs_control=True):
         """Return property database."""
         dbase = {
             'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
-
             'LoopState-Sel': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
-
             'LoopFreq-SP': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
                 'unit': 'Hz', 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopFreq-RB': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
                 'unit': 'Hz', 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
-
-            'ControlQS-Sel': {
-                'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Enbl,
-                'unit': 'If QS are included in loop'},
-            'ControlQS-Sts': {
-                'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Enbl,
-                'unit': 'If QS are included in loop'},
-
             'Polarization-Mon': {'type': 'string', 'value': 'none'},
-
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
             'SOFBMode-Sel': {
@@ -86,5 +73,16 @@ class IDFFConst(_csdev.Const):
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields}
         }
+        if include_qs_control:
+            dbase.update({
+                'ControlQS-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DsblEnbl.Enbl,
+                    'unit': 'If QS are included in loop'},
+                'ControlQS-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DsblEnbl.Enbl,
+                    'unit': 'If QS are included in loop'},
+            })
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase

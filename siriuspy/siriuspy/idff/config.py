@@ -39,7 +39,7 @@ class IDFFConfig(_ConfigDBDocument):
             kparm = config['pvnames']['pparameter']
             return kparm
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def kparameter_pvname(self):
@@ -49,7 +49,7 @@ class IDFFConfig(_ConfigDBDocument):
             kparm = config['pvnames']['kparameter']
             return kparm
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def ch_pvnames(self):
@@ -72,7 +72,7 @@ class IDFFConfig(_ConfigDBDocument):
         if self._value:
             return list(self._value['polarizations'].keys())
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def value(self):
@@ -104,7 +104,7 @@ class IDFFConfig(_ConfigDBDocument):
                     setpoints[corr_pvname] = setpoint
             return setpoints
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @staticmethod
     def create_template_config(idname):
@@ -183,7 +183,7 @@ class IDFFConfig(_ConfigDBDocument):
         for pol, val in poldefs.items():
             if pol == 'none':
                 continue
-            if abs(pparameter - val) < PPARAM_TOL:
+            if val is None or abs(pparameter - val) < PPARAM_TOL:
                 return pol
         if abs(kparameter - poldefs['none']) < KPARAM_TOL:
             return 'none'
@@ -212,7 +212,7 @@ class IDFFConfig(_ConfigDBDocument):
             corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
             return corr1, corr2
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     def _set_value(self, value):
         super()._set_value(value)
