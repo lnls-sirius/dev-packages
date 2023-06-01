@@ -187,6 +187,14 @@ class SOFB(_BaseClass):
         return self._havebeam_pv.connected and self._havebeam_pv.value
 
     @property
+    def is_amc_connected(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected:
+                return False
+        return True
+
+    @property
     def is_amc_locked(self):
         """."""
         for amc in self._amcs:
@@ -847,14 +855,19 @@ class SOFB(_BaseClass):
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
-                msg = 'ERR: Cannot Correct, We do not have stored beam!'
+                msg = 'ERR: We do not have stored beam!'
                 self._update_log(msg)
-                _log.info(msg)
+                _log.error(msg[5:])
+                break
+            if not self.is_amc_connected:
+                msg = 'ERR: At least one AMC is not connected!'
+                self._update_log(msg)
+                _log.error(msg[5:])
                 break
             if not self.is_amc_locked:
-                msg = 'ERR: Cannot Correct, at least one AMC is not locked!'
+                msg = 'ERR: At least one AMC is not locked!'
                 self._update_log(msg)
-                _log.info(msg)
+                _log.error(msg[5:])
                 break
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
