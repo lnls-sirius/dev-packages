@@ -62,7 +62,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 50  # [um]
     ACQRATE_TRIGMODE = 2  # [Hz]
-    ACQRATE_SLOWORB = 60  # [Hz]
+    ACQRATE_SLOWORB = 12  # [Hz]
     BPMsFreq = 10.48  # [Hz]
 
     TrigAcqCtrl = _csbpm.AcqEvents

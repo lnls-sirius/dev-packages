@@ -358,6 +358,15 @@ _pvs_as_ti = [
     ['BO-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['BO-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
+    ['BO-Glob:TI-LLRF-Gen:DelayRaw-SP', 0, 0],
+    ['BO-Glob:TI-LLRF-Gen:WidthRaw-SP', 0, 0.0],
+    ['BO-Glob:TI-LLRF-Gen:NrPulses-SP', 0, 0.0],
+    ['BO-Glob:TI-LLRF-Gen:Polarity-Sel', 0, 0.0],
+    ['BO-Glob:TI-LLRF-Gen:Src-Sel', 0, 0.0],
+    ['BO-Glob:TI-LLRF-Gen:State-Sel', 0, 0.0],
+    ['BO-Glob:TI-LLRF-Gen:DeltaDelayRaw-SP', 30*[0, ], 0],
+    ['BO-Glob:TI-LLRF-Gen:LowLvlLock-Sel', 0, 0.0],
+
     ['BO-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
     ['BO-Glob:TI-LLRF-PsMtn:WidthRaw-SP', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
@@ -712,6 +721,15 @@ _pvs_as_ti = [
     ['SI-Glob:TI-BbBProcV-Trig2:State-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Glob:TI-BbBProcV-Trig2:LowLvlLock-Sel', 0, 0.0],
+
+    ['SI-Glob:TI-LLRF-Gen:DelayRaw-SP', 0, 0],
+    ['SI-Glob:TI-LLRF-Gen:WidthRaw-SP', 0, 0.0],
+    ['SI-Glob:TI-LLRF-Gen:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-LLRF-Gen:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-LLRF-Gen:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-LLRF-Gen:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-LLRF-Gen:DeltaDelayRaw-SP', 30*[0, ], 0],
+    ['SI-Glob:TI-LLRF-Gen:LowLvlLock-Sel', 0, 0.0],
 
     ['SI-Glob:TI-LLRF-PsMtn:DelayRaw-SP', 0, 0],
     ['SI-Glob:TI-LLRF-PsMtn:WidthRaw-SP', 0, 0.0],

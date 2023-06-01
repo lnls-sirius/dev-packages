@@ -253,8 +253,12 @@ class EpicsOrbit(BaseOrbit):
 
         if reset:
             with self._lock_raw_orbs:
+                msg = 'DEB: Reseting Orbit.'
+                _log.debug(msg)
                 self._reset_orbs()
-            _time.sleep(self._smooth_npts/self._csorb.ACQRATE_SLOWORB)
+                msg = 'DEB: Reseted Orbit.'
+                _log.debug(msg)
+            _time.sleep(self._smooth_npts/self._csorb.BPMsFreq)
 
         if self.is_multiturn():
             orbs = self.smooth_mtorb
@@ -278,7 +282,10 @@ class EpicsOrbit(BaseOrbit):
                 if not isempty and len(raws['X']) >= self._smooth_npts:
                     orbx, orby = getorb(orbs)
                     break
-            _time.sleep(1/self._csorb.ACQRATE_SLOWORB)
+            msg = 'DEB: Trying to get: '
+            msg += f'empty={str(isempty):s}, smooth={len(raws["X"]):02d}.'
+            _log.debug(msg)
+            _time.sleep(1/self._csorb.BPMsFreq)
         else:
             msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)

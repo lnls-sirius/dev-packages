@@ -29,6 +29,7 @@ class Keysight:
     wavet, waved = scope.wfm_get_data()
     plt.plot(wavet, waved)
     plt.show()
+
     """
 
     def __init__(self, scope=None, scopesignal=None):
@@ -122,6 +123,7 @@ class Keysight:
 
         va1 = _np.array(list(dataraw)[0::2])
         va0 = _np.array(list(dataraw)[1::2])
+
         datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
 
         datax = _np.arange(datay.size)*xinc
@@ -142,8 +144,9 @@ class Keysight:
             print('Total acquisition time:', _time.time() - tini)
             # self.send_command(b":WAVeform:STReaming ON\n", get_res=False)
         except Exception:
-            print("Unexpected error:", _sys.exc_info()[0])
-            print('Close connetion by exception')
+            print('Close connection by exception')
+            raise
+
         finally:
             self.close()
 
@@ -158,6 +161,36 @@ class Keysight:
     def stats_acquire(self):
         """Return a dictionary of scope measurement statistics."""
         meas = self.send_command(b":MEASure:RESults?\n")
+        data = Keysight.process_stats_meas(meas)
+        return data
+
+    def stats_get_data(self):
+        """."""
+        self.connect()
+        try:
+            self.stats_enable()
+            tini = _time.time()
+            print('Acquiring ' + self.chan)
+            data = self.stats_acquire()
+            print('Total acquisition time:', _time.time() - tini)
+        except Exception:
+            print('Close connection by exception')
+            raise
+        finally:
+            self.close()
+        return data
+
+    def send_command(self, cmd, get_res=True):
+        """."""
+        self._socket.sendall(cmd)
+        if get_res:
+            return self._socket.recv(1024).decode('ascii')
+        return
+
+    @staticmethod
+    def process_stats_meas(meas):
+        """Process stats measurents."""
+        # TODO: generalize or instantiate for each scope type
         meas = meas.split(',')
         data = dict()
         for i in range(0, len(meas) - len(meas) % 8, 8):
@@ -172,26 +205,3 @@ class Keysight:
             datum['num_of_meas'] = int(float(meas[i+7]))
             data[label] = datum
         return data
-
-    def stats_get_data(self):
-        """."""
-        self.connect()
-        try:
-            self.stats_enable()
-            tini = _time.time()
-            print('Acquiring ' + self.chan)
-            data = self.stats_acquire()
-            print('Total acquisition time:', _time.time() - tini)
-        except Exception:
-            print("Unexpected error:", _sys.exc_info()[0])
-            print('Close connetion by exception')
-        finally:
-            self.close()
-        return data
-
-    def send_command(self, cmd, get_res=True):
-        """."""
-        self._socket.sendall(cmd)
-        if get_res:
-            return self._socket.recv(1024).decode('ascii')
-        return

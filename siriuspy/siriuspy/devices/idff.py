@@ -5,7 +5,7 @@ from ..search import IDSearch as _IDSearch
 from ..idff.config import IDFFConfig as _IDFFConfig
 
 from .device import Device as _Device, Devices as _Devices
-from .pwrsupply import PowerSupply as _PowerSupply
+from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import WIG as _WIG, APU as _APU, EPU as _EPU
 
 
@@ -31,10 +31,13 @@ class IDFF(_Devices):
         self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
+        self._pparametername = \
+            _IDSearch.conv_idname_2_pparameter_propty(devname)
+
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        self._devkp, self._devsch, self._devscv, self._devsqs = \
+        self._devpp, self._devkp, self._devsch, self._devscv, self._devsqs = \
             self._create_devices(devname)
 
         # call base class constructor
@@ -60,6 +63,26 @@ class IDFF(_Devices):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
+    def chdevs(self):
+        """Return CH corrector power supply devices."""
+        return self._devsch
+
+    @property
+    def cvdevs(self):
+        """Return CV corrector power supply devices."""
+        return self._devscv
+
+    @property
+    def qsdevs(self):
+        """Return QS corrector power supply names."""
+        return self._devsqs
+
+    @property
+    def pparametername(self):
+        """Return corresponding to ID pparameter."""
+        return self._pparametername
+
+    @property
     def kparametername(self):
         """Return corresponding to ID kparameter."""
         return self._kparametername
@@ -70,7 +93,12 @@ class IDFF(_Devices):
         return _IDSearch.conv_idname_2_polarizations(self.devname)
 
     @property
-    def kparameter(self):
+    def pparameter_mon(self):
+        """Return pparameter value."""
+        return self._devpp[self._pparametername]
+
+    @property
+    def kparameter_mon(self):
         """Return kparameter value."""
         return self._devkp[self._kparametername]
 
@@ -79,59 +107,146 @@ class IDFF(_Devices):
         """."""
         return self._idffconfig
 
+    def find_configs(self):
+        """Find si_idff configurations in configdb."""
+        return self._idffconfig.configdbclient.find_configs()
+
     def load_config(self, name):
         """Load IDFF configuration."""
-        self._idffconfig.load_config(name=name)
-        if not self._config_is_ok():
-            raise ValueError('Config is incompatible with ID configdb type.')
+        self._idffconfig.name = name
+        if self._idffconfig.name == name:
+            self._idffconfig.load()
+        else:
+            raise ValueError('Could not load configuration.')
 
-    @property
-    def kparameter_pvname(self):
-        """Return pvname corresponding to ID kparameter pvname."""
-        return self._idffconfig.kparameter_pvname
-
-    def calculate_setpoints(self, polarization):
+    def calculate_setpoints(
+            self, pparameter_value=None, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        polarization, pparameter_value, kparameter_value = \
+            self.get_polarization_state(
+                pparameter_value=pparameter_value,
+                kparameter_value=kparameter_value)
+
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
-        kparameter = self.kparameter
+        if kparameter_value is None:
+            kparameter_value = self.kparameter_mon
         setpoints = self.idffconfig.calculate_setpoints(
-            polarization, kparameter)
-        return polarization, setpoints
+            polarization, kparameter_value)
+        return setpoints, polarization, pparameter_value, kparameter_value
 
-    def implement_setpoints(self, polarization, setpoints=None):
+    def implement_setpoints(
+            self, setpoints=None, corrdevs=None):
         """Implement setpoints in correctors."""
-        if not setpoints:
-            _, setpoints = self.calculate_setpoints(polarization)
-        corrs = self._devsch + self._devscv
+        if setpoints is None:
+            setpoints, polarization, pparameter_value, kparameter_value = \
+                self.calculate_setpoints(
+                    pparameter_value=None,
+                    kparameter_value=None)
+        if corrdevs is None:
+            corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
-            for dev in corrs:
+            # find corrdev corresponding to pvname
+            for dev in corrdevs:
                 if dev.devname in pvname:
                     pvname = _SiriusPVName(pvname)
                     dev[pvname.propty] = value
                     break
+        return polarization, pparameter_value, kparameter_value
+
+    def check_valid_value(self, value):
+        """Check consistency of SI_IDFF configuration."""
+        if not super().check_valid_value(value):
+            raise ValueError('Value incompatible with config template')
+
+        configs = value['polarizations']
+        pvnames = {key: value for key, value in value['pvnames'] \
+            if key not in ('pparameters', 'kparameters')}
+        corrlabels = set(pvnames.keys())
+
+        # check pvnames in configs
+        pvsconfig = set(pvnames.values())
+        pvsidsearch = set(self.chnames + self.cvnames + self.qsnames)
+        symm_diff = pvsconfig ^ pvsidsearch
+        if symm_diff:
+            raise ValueError('List of pvnames in config is not consistent')
+
+        # check polarizations in configs
+        pconfig = set(configs.keys())
+        pidsearch = set(_IDSearch.conv_idname_2_polarizations(self.devname))
+        symm_diff = pconfig ^ pidsearch
+        if symm_diff:
+            raise ValueError(
+                'List of polarizations in config is not consistent')
+
+        # check polarization tables consistency
+        for polarization, table in configs.items():
+            corrtable = {key: value for key, value in table \
+                if key not in ('pparameters', 'kparameters')}
+
+            # check 'pparameter'
+            if 'pparameter' not in table:
+                raise ValueError(
+                    'Missing pparameter in polarization configuration.')
+
+            # check 'kparameter'
+            if 'kparameter' not in table:
+                raise ValueError(
+                    'Missing kparameter in polarization configuration.')
+
+            # check corr label list
+            corrlabels_config = set(corrtable.keys())
+            symm_diff = corrlabels ^ corrlabels_config
+            if symm_diff:
+                raise ValueError(
+                    'List of corrlabels in config is not consistent')
+
+            # check nrpts in tables
+            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            nrpts_corrtables = set([len(table) for table in corrtable.values()])
+            nrpts_kparameter = set([len(table[param]), ])
+            symm_diff = nrpts_corrtables ^ nrpts_kparameter
+            if symm_diff:
+                msg = (
+                    'Corrector tables and kparameter list in config'
+                    ' are not consistent')
+                raise ValueError(msg)
+
+        return True
+
+    def get_polarization_state(
+            self, pparameter_value=None, kparameter_value=None):
+        """."""
+        if pparameter_value is None:
+            pparameter_value = self.pparameter_mon
+        if kparameter_value is None:
+            kparameter_value = self.kparameter_mon
+        if None in (pparameter_value, kparameter_value):
+            return None, pparameter_value, kparameter_value
+        polarization = self.idffconfig.get_polarization_state(
+            pparameter=pparameter_value, kparameter=kparameter_value)
+        return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
-        kparm_auto_mon = False
+        param_auto_mon = False
+        devpp = _Device(
+            devname=devname,
+            properties=(self._pparametername, ), auto_mon=param_auto_mon)
         devkp = _Device(
             devname=devname,
-            properties=(self._kparametername, ), auto_mon=kparm_auto_mon)
-        devsch = [_PowerSupply(devname=dev) for dev in self.chnames]
-        devscv = [_PowerSupply(devname=dev) for dev in self.cvnames]
-        devsqs = [_PowerSupply(devname=dev) for dev in self.qsnames]
+            properties=(self._kparametername, ), auto_mon=param_auto_mon)
+        devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
+        devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
+        devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
 
-        return devkp, devsch, devscv, devsqs
-
-    def _config_is_ok(self):
-        # TODO: to be implemented
-        return True
+        return devpp, devkp, devsch, devscv, devsqs
 
 
 class WIGIDFF(IDFF):
@@ -143,7 +258,7 @@ class WIGIDFF(IDFF):
     @property
     def gap_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon
 
 
 class EPUIDFF(IDFF):
@@ -153,9 +268,14 @@ class EPUIDFF(IDFF):
         """."""
 
     @property
+    def phase_mon(self):
+        """."""
+        return self.pparameter_mon
+
+    @property
     def gap_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon
 
 
 class APUIDFF(_Devices):
@@ -167,4 +287,4 @@ class APUIDFF(_Devices):
     @property
     def phase_mon(self):
         """."""
-        return self.kparameter
+        return self.kparameter_mon

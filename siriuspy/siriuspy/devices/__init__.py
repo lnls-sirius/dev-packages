@@ -24,7 +24,8 @@ from .orbit_interlock import BPMOrbitIntlk, BaseOrbitIntlk, OrbitInterlock
 from .posang import PosAng
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSCorrSOFB, PSApplySOFB
-from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC
+from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC, \
+    PowerSupplyFBP
 from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
     RFKillBeam
 from .screen import Screen
@@ -32,7 +33,7 @@ from .sofb import SOFB
 from .syncd import DevicesSync
 from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
-from .dvf import DVF
+from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
 
 
