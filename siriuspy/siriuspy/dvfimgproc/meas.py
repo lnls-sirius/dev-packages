@@ -7,7 +7,7 @@ from siriuspy.devices import DVF as _DVF
 from mathphys import imgproc as _imgproc
 
 
-class Measurement():
+class MeasDVF():
     """."""
 
     STATUS_SUCCESS = ''
@@ -20,7 +20,7 @@ class Measurement():
         """."""
         self._devname = devname
         self._callback = callback
-        self._status = Measurement.STATUS_SUCCESS
+        self._status = MeasDVF.STATUS_SUCCESS
         self._dvf = None
         self._fitgauss = _imgproc.FitGaussianScipy()  # needs scipy
         self._image2dfit = None
@@ -38,7 +38,7 @@ class Measurement():
         self.process_image()
 
         # add callback
-        self._imgpv = self._dvf.pv_object(Measurement.DVF_IMAGE_PROPTY)
+        self._imgpv = self._dvf.pv_object(MeasDVF.DVF_IMAGE_PROPTY)
         self._imgpv.add_callback(self.process_image)
 
     @property
@@ -156,7 +156,7 @@ class Measurement():
         _, roiy = self._image2dfit.roi
         try:
             self._image2dfit.roi = [value, roiy]
-            self._status = Measurement.STATUS_SUCCESS
+            self._status = MeasDVF.STATUS_SUCCESS
         except Exception:
             self._status = 'Unable to set ROIX'
 
@@ -165,7 +165,7 @@ class Measurement():
         roix, _ = self._image2dfit.roi
         try:
             self._image2dfit.roi = [roix, value]
-            self._status = Measurement.STATUS_SUCCESS
+            self._status = MeasDVF.STATUS_SUCCESS
         except Exception:
             self._status = 'Unable to set ROIY'
 
@@ -173,7 +173,7 @@ class Measurement():
         """."""
         try:
             self._image2dfit.intensity_threshold = int(value)
-            self._status = Measurement.STATUS_SUCCESS
+            self._status = MeasDVF.STATUS_SUCCESS
             self._intensity_threshold = self._image2dfit.intensity_threshold
         except Exception:
             self._status = 'Unable to set intensity threshold'
@@ -182,7 +182,7 @@ class Measurement():
         """."""
         try:
             self._image2dfit.use_svd4theta = value
-            self._status = Measurement.STATUS_SUCCESS
+            self._status = MeasDVF.STATUS_SUCCESS
             self._use_svd4theta = self._image2dfit.use_svd4theta
         except Exception:
             self._status = 'Unable to set angle fit method'
@@ -190,7 +190,7 @@ class Measurement():
     def process_image(self, **kwargs):
         """Process image."""
         # assume image can be processed for the time being
-        self._status = Measurement.STATUS_SUCCESS
+        self._status = MeasDVF.STATUS_SUCCESS
 
         # check if DVF is connected
         if not self._dvf.connected:
@@ -210,9 +210,9 @@ class Measurement():
                 image=img2dfit.fitx, fwhm_factor=self.fwhmx_factor)
             roiy = img2dfit.fity.calc_roi_with_fwhm(
                 image=img2dfit.fity, fwhm_factor=self.fwhmy_factor)
-            if roix[1] - roix[0] < Measurement.MIN_ROI_SIZE:
+            if roix[1] - roix[0] < MeasDVF.MIN_ROI_SIZE:
                 roix = None
-            if roiy[1] - roiy[0] < Measurement.MIN_ROI_SIZE:
+            if roiy[1] - roiy[0] < MeasDVF.MIN_ROI_SIZE:
                 roiy = None
         else:
             # reuse current roi for new image

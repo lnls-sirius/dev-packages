@@ -10,8 +10,6 @@ from ..envars import VACA_PREFIX as _vaca_prefix
 from ..devices import DVF as _DVF
 
 
-# TODO: move this module to siriuspy
-
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 

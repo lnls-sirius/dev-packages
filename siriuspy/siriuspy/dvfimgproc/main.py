@@ -8,7 +8,7 @@ from pcaspy import Severity as _Severity
 
 from .. import util as _util
 
-from .meas import Measurement
+from .meas import MeasDVF
 
 
 class App:
@@ -285,7 +285,7 @@ class App:
             self._database['ImgFitAngleUseCMomSVD-Sts']['value']
 
         # create object
-        meas = Measurement(
+        meas = MeasDVF(
             self.const.devname,
             fwhmx_factor=fwhmx_factor, fwhmy_factor=fwhmy_factor,
             roi_with_fwhm=roi_with_fwhm,
