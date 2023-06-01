@@ -4,6 +4,7 @@ import os as _os
 
 from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
+from ..search import IDSearch as _IDSearch
 
 
 # --- Enumeration Types ---
@@ -40,8 +41,10 @@ class IDFFConst(_csdev.Const):
         fname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
         fname = fname.lower()
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
+        qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
+        self.has_qscorrs = True if qsnames else False
 
-    def get_propty_database(self, include_qs_control=True):
+    def get_propty_database(self):
         """Return property database."""
         dbase = {
             'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
@@ -73,7 +76,7 @@ class IDFFConst(_csdev.Const):
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields}
         }
-        if include_qs_control:
+        if self.has_qscorrs:
             dbase.update({
                 'ControlQS-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
