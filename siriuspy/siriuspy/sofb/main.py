@@ -75,6 +75,9 @@ class SOFB(_BaseClass):
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
+        self._amcs = [
+            _PV(f'IA-{i:02d}RaBPM:TI-AMCFPGAEVR:RefClkLocked-Mon')
+            for i in range(1, 21)]
 
     def get_map2write(self):
         """Get the database of the class."""
@@ -182,6 +185,22 @@ class SOFB(_BaseClass):
         if self._tests or self.acc != 'SI':
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
+
+    @property
+    def is_amc_connected(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected:
+                return False
+        return True
+
+    @property
+    def is_amc_locked(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected or not amc.value:
+                return False
+        return True
 
     def process(self):
         """Run continuously in the main thread."""
@@ -738,7 +757,7 @@ class SOFB(_BaseClass):
         _log.info(msg)
 
     def _do_drive(self):
-        self.run_callbacks('DriveState-Sts', 1)
+        self.run_callbacks('DriveState-Sts', self._csorb.DriveState.Closed)
 
         freqdiv = self._drive_divisor
         nrcycles = self._drive_nrcycles
@@ -799,10 +818,10 @@ class SOFB(_BaseClass):
         msg = 'Drive Loop opened!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('DriveState-Sts', 0)
+        self.run_callbacks('DriveState-Sts', self._csorb.DriveState.Open)
 
     def _do_auto_corr(self):
-        self.run_callbacks('LoopState-Sts', 1)
+        self.run_callbacks('LoopState-Sts', self._csorb.LoopState.Closed)
         times, rets = [], []
         tim0 = _time()
         bpmsfreq = self._csorb.BPMsFreq
@@ -836,9 +855,19 @@ class SOFB(_BaseClass):
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
-                msg = 'ERR: Cannot Correct, We do not have stored beam!'
+                msg = 'ERR: We do not have stored beam!'
                 self._update_log(msg)
-                _log.info(msg)
+                _log.error(msg[5:])
+                break
+            if not self.is_amc_connected:
+                msg = 'ERR: At least one AMC is not connected!'
+                self._update_log(msg)
+                _log.error(msg[5:])
+                break
+            if not self.is_amc_locked:
+                msg = 'ERR: At least one AMC is not locked!'
+                self._update_log(msg)
+                _log.error(msg[5:])
                 break
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
@@ -887,8 +916,6 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             dkicks = self._process_pid(dkicks, interval)
@@ -896,15 +923,11 @@ class SOFB(_BaseClass):
             kicks, dkicks = self._process_kicks(
                 self._ref_corr_kicks, dkicks, apply_gain=False)
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             kicks = self._interact_with_fofb_in_apply_kicks(
                 kicks, dkicks, refx0, refy0)
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             tims.append(_time())
 
@@ -915,8 +938,6 @@ class SOFB(_BaseClass):
             times.append(tims)
             # if ret == -2:
             if ret < 0:  # change here for debug
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             elif ret == -1:
                 # means that correctors are not ready yet
@@ -942,10 +963,14 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.info(msg)
 
+        if self._loop_state == self._csorb.LoopState.Closed:
+            self._loop_state = self._csorb.LoopState.Open
+            self.run_callbacks('LoopState-Sel', self._csorb.LoopState.Open)
+
         msg = 'Loop opened!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('LoopState-Sts', 0)
+        self.run_callbacks('LoopState-Sts', self._csorb.LoopState.Open)
 
     def _process_pid(self, dkicks, interval):
         """Velocity algorithm of PID."""

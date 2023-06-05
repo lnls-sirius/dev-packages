@@ -30,22 +30,20 @@ class DVF(_DeviceNC):
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
     )
-    #   DVF device :       ((sizey, sizex), pixel_size_um mag_factor
+
     _dev2params = {
-        DEVICES.CAX_DVF1 :
-            # DVF1 Today: pixel size 4.8 um; magnification factor 0.5
-            _get_namedtuple('DVFParameters',
-            # _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 0.5)),
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
-        DEVICES.CAX_DVF2 :
-            # DVF2 today: pixel size 4.8 um; magnification factor 5.0
-            # DVF2 future hifi: pixel size 2.4 um; magnification factor 5.0
-            _get_namedtuple('DVFParameters',
-            # _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF1:
+            _get_namedtuple(
+                'DVFParameters',
+                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF2:
+            _get_namedtuple(
+                'DVFParameters',
+                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
         }
 
     _properties = (
+        'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
@@ -53,21 +51,28 @@ class DVF(_DeviceNC):
         'cam1:ImageMode', 'cam1:ImageMode_RBV',
         'cam1:Gain', 'cam1:Gain_RBV',
         'cam1:GainAuto', 'cam1:GainAuto_RBV',
+        'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Temperature',
+        'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
+        'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
+        'ROI1:MinX', 'ROI1:MinX_RBV',
+        'ROI1:MinY', 'ROI1:MinY_RBV',
+        'ROI1:SizeX', 'ROI1:SizeX_RBV',
+        'ROI1:SizeY', 'ROI1:SizeY_RBV',
+        'ROI1:EnableX', 'ROI1:EnableX_RBV',
+        'ROI1:EnableY', 'ROI1:EnableY_RBV',
+        'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
+        'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
         'image1:ArrayData',
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
-        # 'Over1:EnableCallbacks', 'Over1:EnableCallbacks_RBV',
-        # 'CC1:EnableCallbacks', 'CC1:EnableCallbacks_RBV',
-        # 'CC1:ColorModeOut', 'CC1:ColorModeOut_RBV',
-        # 'CC1:FalseColor', 'CC1:FalseColor_RBV',
-        # 'DimFei1:EnableCallbacks', 'DimFei1:EnableCallbacks_RBV',
         )
 
     def __init__(self, devname, *args, **kwargs):
@@ -86,9 +91,18 @@ class DVF(_DeviceNC):
     @property
     def intensity_saturation_value(self):
         """Image intensity saturation value."""
-        # NOTE: a PV will be added to the IOC to select nr bits of intensity
-        intensity_nr_bits = self.parameters.MAX_INTENSITY_NR_BITS
-        return 2**intensity_nr_bits - 1
+        pixel_format_to_num_bits = {0: 8, 1: 12}  # 0: 'Mono8, 1: 'Mono12
+        data_type_to_num_bits = {0: 8, 1: 16} # 0: 'UInt8', 1: 'UInt16'
+        used_bits = pixel_format_to_num_bits[self.pixel_format]
+        max_bits = data_type_to_num_bits[self.data_type]
+        max_intensity = (1 << used_bits) - 1
+        if used_bits <= max_bits:
+            # Shift intensity to align with most-significant bits
+            max_intensity <<= max_bits - used_bits
+        elif used_bits > max_bits:
+            # Clip to maximum value allowed by the data type
+            max_intensity = (1 << max_bits) - 1
+        return max_intensity
 
     @property
     def exposure_time(self):
@@ -119,6 +133,16 @@ class DVF(_DeviceNC):
         return self['cam1:Acquire']
 
     @property
+    def cam_max_sizex(self):
+        """Camera max second dimension size (pixels)."""
+        return self['cam1:MaxSizeX_RBV']
+
+    @property
+    def cam_max_sizey(self):
+        """Camera max first dimension size (pixels)."""
+        return self['cam1:MaxSizeY_RBV']
+
+    @property
     def cam_sizex(self):
         """Camera second dimension size (pixels)."""
         return self['cam1:SizeX_RBV']
@@ -127,6 +151,26 @@ class DVF(_DeviceNC):
     def cam_sizey(self):
         """Camera first dimension size (pixels)."""
         return self['cam1:SizeY_RBV']
+
+    @property
+    def roi_minx(self):
+        """."""
+        return self['ROI1:MinX_RBV']
+
+    @roi_minx.setter
+    def roi_minx(self, value):
+        """."""
+        self['ROI1:MinX'] = int(value)
+
+    @property
+    def roi_miny(self):
+        """."""
+        return self['ROI1:MinY_RBV']
+
+    @roi_miny.setter
+    def roi_miny(self, value):
+        """."""
+        self['ROI1:MinY'] = int(value)
 
     @property
     def image_sizex(self):
@@ -197,6 +241,16 @@ class DVF(_DeviceNC):
         self['cam1:PixelFormat'] = value
 
     @property
+    def data_type(self):
+        """Return camera data type."""
+        return self['cam1:DataType_RBV']
+
+    @data_type.setter
+    def data_type(self, value):
+        """Set camera data type."""
+        self['cam1:DataType'] = value
+
+    @property
     def pixel_size(self):
         """Return camera pixel size."""
         return self['cam1:PixelSize_RBV']
@@ -211,20 +265,37 @@ class DVF(_DeviceNC):
         """Return camera temperature"""
         return self['cam1:Temperature']
 
+    @property
+    def cam_frames_completed(self):
+        """Return number of acquisition frames completed."""
+        return self['cam1:COMPLETED_RBV']
+
+    @property
+    def cam_frames_failures(self):
+        """Return number of acquisition frames failures."""
+        return self['cam1:FAILURES_RBV']
+
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
         props_values = {
-            'cam1:ArrayCallbacks': 1,  # Enable
+            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
+            'cam1:PixelFormat': 1,  # Mono12
+            'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
+            'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
+            'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
+            'ROI1:MinX': 0,  # [pixel]
+            'ROI1:MinY': 0,  # [pixel]
+            'ROI1:SizeX': self.cam_max_sizex,  # [pixel]
+            'ROI1:SizeY': self.cam_max_sizey,  # [pixel]
+            'ROI1:EnableX': 1,  # Enable
+            'ROI1:EnableY': 1,  # Enable
+            'ROI1:ArrayCallbacks': 1,  # Enable passing array
+            'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
             'image1:EnableCallbacks': 1,  # Enable
-            'ffmstream1:EnableCallbacks': 1,  # Enable
-            'HDF1:EnableCallbacks': 1,  # Enable
+            'ffmstream1:EnableCallbacks': 0,  # Disable
+            'HDF1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
-            # 'Over1:EnableCallbacks': 0,  # Disable
-            # 'CC1:EnableCallbacks': 0,  # Disable
-            # 'CC1:ColorModeOut': 0,  # Mono
-            # 'CC1:FalseColor': 0,  # None
-            # 'DimFei1:EnableCallbacks': 0,  # Disable
         }
 
         # set properties
@@ -249,6 +320,11 @@ class DVF(_DeviceNC):
     def cmd_acquire_off(self, timeout=None):
         """Tune IOC image acquisition off."""
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
+
+    @staticmethod
+    def conv_devname2parameters(devname):
+        """."""
+        return DVF._dev2params[devname]
 
     def _set_and_wait(self, propty, value, timeout=None):
         """."""
