@@ -192,106 +192,91 @@ class App(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
-        self.run_callbacks('LoopState-Sel', self._loop_state)
-        self.run_callbacks('LoopState-Sts', self._loop_state)
-        self.run_callbacks('LoopGainH-SP', self._loop_gain_h)
-        self.run_callbacks('LoopGainH-RB', self._loop_gain_h)
-        self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
-        self.run_callbacks('LoopGainV-SP', self._loop_gain_v)
-        self.run_callbacks('LoopGainV-RB', self._loop_gain_v)
-        self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
-        self.run_callbacks('LoopMaxOrbDistortion-SP', self._loop_max_orb_dist)
-        self.run_callbacks('LoopMaxOrbDistortion-RB', self._loop_max_orb_dist)
-        self.run_callbacks(
-            'LoopMaxOrbDistortionEnbl-Sel', self._loop_max_orb_dist_enbl)
-        self.run_callbacks(
-            'LoopMaxOrbDistortionEnbl-Sts', self._loop_max_orb_dist_enbl)
-        self.run_callbacks(
-            'LoopPacketLossDetecEnbl-Sel', self._loop_packloss_detec_enbl)
-        self.run_callbacks(
-            'LoopPacketLossDetecEnbl-Sts', self._loop_packloss_detec_enbl)
-        self.run_callbacks('CorrStatus-Mon', self._corr_status)
-        self.run_callbacks('CorrConfig-Cmd', 0)
-        self.run_callbacks('CorrSetPwrStateOn-Cmd', 0)
-        self.run_callbacks('CorrSetOpModeManual-Cmd', 0)
-        self.run_callbacks('CorrSetAccFreezeDsbl-Cmd', 0)
-        self.run_callbacks('CorrSetAccFreezeEnbl-Cmd', 0)
-        self.run_callbacks('CorrSetAccClear-Cmd', 0)
-        self.run_callbacks('CorrSetCurrZero-Cmd', 0)
-        self.run_callbacks(
-            'CorrSetCurrZeroDuration-SP', self._corr_setcurrzero_dur)
-        self.run_callbacks(
-            'CorrSetCurrZeroDuration-RB', self._corr_setcurrzero_dur)
-        self.run_callbacks('CHAccSatMax-SP', self._ch_maxacccurr)
-        self.run_callbacks('CHAccSatMax-RB', self._ch_maxacccurr)
-        self.run_callbacks('CVAccSatMax-SP', self._cv_maxacccurr)
-        self.run_callbacks('CVAccSatMax-RB', self._cv_maxacccurr)
-        self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
-        self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
-        self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
-        self.run_callbacks('CtrlrConfBPMId-Cmd', 0)
-        self.run_callbacks('CtrlrSyncNet-Cmd', 0)
-        self.run_callbacks(
-            'CtrlrSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
-        self.run_callbacks(
-            'CtrlrSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
-        self.run_callbacks(
-            'CtrlrSyncEnblList-Mon', self._fofbctrl_syncenbllist)
-        self.run_callbacks('CtrlrSyncRefOrb-Cmd', 0)
-        self.run_callbacks('CtrlrSyncTFrameLen-Cmd', 0)
-        self.run_callbacks('CtrlrConfBPMLogTrg-Cmd', 0)
-        self.run_callbacks('CtrlrSyncMaxOrbDist-Cmd', 0)
-        self.run_callbacks('CtrlrSyncPacketLossDetec-Cmd', 0)
-        self.run_callbacks('CtrlrReset-Cmd', 0)
-        self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
-        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
-        self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
-        self.run_callbacks(
-            'KickCH-Mon', _np.zeros(self._const.nr_ch, dtype=float))
-        self.run_callbacks(
-            'KickCV-Mon', _np.zeros(self._const.nr_cv, dtype=float))
-        self.run_callbacks('RefOrbX-SP', self._reforb_x)
-        self.run_callbacks('RefOrbX-RB', self._reforb_x)
-        self.run_callbacks('RefOrbY-SP', self._reforb_y)
-        self.run_callbacks('RefOrbY-RB', self._reforb_y)
-        self.run_callbacks('RefOrbHwX-Mon', self._reforbhw_x)
-        self.run_callbacks('RefOrbHwY-Mon', self._reforbhw_y)
-        self.run_callbacks('BPMXEnblList-SP', self._enable_lists['bpmx'])
-        self.run_callbacks('BPMXEnblList-RB', self._enable_lists['bpmx'])
-        self.run_callbacks('BPMYEnblList-SP', self._enable_lists['bpmy'])
-        self.run_callbacks('BPMYEnblList-RB', self._enable_lists['bpmy'])
-        self.run_callbacks('CHEnblList-SP', self._enable_lists['ch'])
-        self.run_callbacks('CHEnblList-RB', self._enable_lists['ch'])
-        self.run_callbacks('CVEnblList-SP', self._enable_lists['cv'])
-        self.run_callbacks('CVEnblList-RB', self._enable_lists['cv'])
-        self.run_callbacks(
-            'UseRF-Sel', bool(self._enable_lists['rf']))
-        self.run_callbacks(
-            'UseRF-Sts', bool(self._enable_lists['rf']))
-        self.run_callbacks('MinSingValue-SP', self._min_sing_val)
-        self.run_callbacks('MinSingValue-RB', self._min_sing_val)
-        self.run_callbacks('TikhonovRegConst-SP', self._tikhonov_reg_const)
-        self.run_callbacks('TikhonovRegConst-RB', self._tikhonov_reg_const)
-        self.run_callbacks('InvRespMatNormMode-Sel', self._invrespmat_normmode)
-        self.run_callbacks('InvRespMatNormMode-Sts', self._invrespmat_normmode)
+        pvn2vals = {
+            'LoopState-Sel': self._loop_state,
+            'LoopState-Sts': self._loop_state,
+            'LoopGainH-SP': self._loop_gain_h,
+            'LoopGainH-RB': self._loop_gain_h,
+            'LoopGainH-Mon': self._loop_gain_mon_h,
+            'LoopGainV-SP': self._loop_gain_v,
+            'LoopGainV-RB': self._loop_gain_v,
+            'LoopGainV-Mon': self._loop_gain_mon_v,
+            'LoopMaxOrbDistortion-SP': self._loop_max_orb_dist,
+            'LoopMaxOrbDistortion-RB': self._loop_max_orb_dist,
+            'LoopMaxOrbDistortionEnbl-Sel': self._loop_max_orb_dist_enbl,
+            'LoopMaxOrbDistortionEnbl-Sts': self._loop_max_orb_dist_enbl,
+            'LoopPacketLossDetecEnbl-Sel': self._loop_packloss_detec_enbl,
+            'LoopPacketLossDetecEnbl-Sts': self._loop_packloss_detec_enbl,
+            'CorrStatus-Mon': self._corr_status,
+            'CorrConfig-Cmd': 0,
+            'CorrSetPwrStateOn-Cmd': 0,
+            'CorrSetOpModeManual-Cmd': 0,
+            'CorrSetAccFreezeDsbl-Cmd': 0,
+            'CorrSetAccFreezeEnbl-Cmd': 0,
+            'CorrSetAccClear-Cmd': 0,
+            'CorrSetCurrZero-Cmd': 0,
+            'CorrSetCurrZeroDuration-SP': self._corr_setcurrzero_dur,
+            'CorrSetCurrZeroDuration-RB': self._corr_setcurrzero_dur,
+            'CHAccSatMax-SP': self._ch_maxacccurr,
+            'CHAccSatMax-RB': self._ch_maxacccurr,
+            'CVAccSatMax-SP': self._cv_maxacccurr,
+            'CVAccSatMax-RB': self._cv_maxacccurr,
+            'TimeFrameLen-SP': self._time_frame_len,
+            'TimeFrameLen-RB': self._time_frame_len,
+            'CtrlrStatus-Mon': self._fofbctrl_status,
+            'CtrlrConfBPMId-Cmd': 0,
+            'CtrlrSyncNet-Cmd': 0,
+            'CtrlrSyncUseEnblList-Sel': self._fofbctrl_syncuseenbllist,
+            'CtrlrSyncUseEnblList-Sts': self._fofbctrl_syncuseenbllist,
+            'CtrlrSyncEnblList-Mon': self._fofbctrl_syncenbllist,
+            'CtrlrSyncRefOrb-Cmd': 0,
+            'CtrlrSyncTFrameLen-Cmd': 0,
+            'CtrlrConfBPMLogTrg-Cmd': 0,
+            'CtrlrSyncMaxOrbDist-Cmd': 0,
+            'CtrlrSyncPacketLossDetec-Cmd': 0,
+            'CtrlrReset-Cmd': 0,
+            'KickBufferSize-SP': self._kick_buffer_size,
+            'KickBufferSize-RB': self._kick_buffer_size,
+            'KickBufferSize-Mon': self._kick_buffer_size,
+            'KickCH-Mon': _np.zeros(self._const.nr_ch, dtype=float),
+            'KickCV-Mon': _np.zeros(self._const.nr_cv, dtype=float),
+            'RefOrbX-SP': self._reforb_x,
+            'RefOrbX-RB': self._reforb_x,
+            'RefOrbY-SP': self._reforb_y,
+            'RefOrbY-RB': self._reforb_y,
+            'RefOrbHwX-Mon': self._reforbhw_x,
+            'RefOrbHwY-Mon': self._reforbhw_y,
+            'BPMXEnblList-SP': self._enable_lists['bpmx'],
+            'BPMXEnblList-RB': self._enable_lists['bpmx'],
+            'BPMYEnblList-SP': self._enable_lists['bpmy'],
+            'BPMYEnblList-RB': self._enable_lists['bpmy'],
+            'CHEnblList-SP': self._enable_lists['ch'],
+            'CHEnblList-RB': self._enable_lists['ch'],
+            'CVEnblList-SP': self._enable_lists['cv'],
+            'CVEnblList-RB': self._enable_lists['cv'],
+            'UseRF-Sel': bool(self._enable_lists['rf']),
+            'UseRF-Sts': bool(self._enable_lists['rf']),
+            'MinSingValue-SP': self._min_sing_val,
+            'MinSingValue-RB': self._min_sing_val,
+            'TikhonovRegConst-SP': self._tikhonov_reg_const,
+            'TikhonovRegConst-RB': self._tikhonov_reg_const,
+            'InvRespMatNormMode-Sel': self._invrespmat_normmode,
+            'InvRespMatNormMode-Sts': self._invrespmat_normmode,
+            'MeasRespMat-Cmd': 0,
+            'MeasRespMat-Mon': self._const.MeasRespMatMon.Idle,
+            'MeasRespMatKickCH-SP': self._meas_respmat_kick['ch'],
+            'MeasRespMatKickCH-RB': self._meas_respmat_kick['ch'],
+            'MeasRespMatKickCV-SP': self._meas_respmat_kick['cv'],
+            'MeasRespMatKickCV-RB': self._meas_respmat_kick['cv'],
+            'MeasRespMatKickRF-SP': self._meas_respmat_kick['rf'],
+            'MeasRespMatKickRF-RB': self._meas_respmat_kick['rf'],
+            'MeasRespMatWait-SP': self._meas_respmat_wait,
+            'MeasRespMatWait-RB': self._meas_respmat_wait,
+        }
+        for pvn, val in pvn2vals.items():
+            self.run_callbacks(pvn, val)
         self._load_respmat()
         self.run_callbacks('RespMat-SP', list(self._respmat.ravel()))
-        self.run_callbacks('MeasRespMat-Cmd', 0)
-        self.run_callbacks('MeasRespMat-Mon', self._const.MeasRespMatMon.Idle)
-        self.run_callbacks(
-            'MeasRespMatKickCH-SP', self._meas_respmat_kick['ch'])
-        self.run_callbacks(
-            'MeasRespMatKickCH-RB', self._meas_respmat_kick['ch'])
-        self.run_callbacks(
-            'MeasRespMatKickCV-SP', self._meas_respmat_kick['cv'])
-        self.run_callbacks(
-            'MeasRespMatKickCV-RB', self._meas_respmat_kick['cv'])
-        self.run_callbacks(
-            'MeasRespMatKickRF-SP', self._meas_respmat_kick['rf'])
-        self.run_callbacks(
-            'MeasRespMatKickRF-RB', self._meas_respmat_kick['rf'])
-        self.run_callbacks('MeasRespMatWait-SP', self._meas_respmat_wait)
-        self.run_callbacks('MeasRespMatWait-RB', self._meas_respmat_wait)
         self._update_log('Started.')
         self._init = True
 
