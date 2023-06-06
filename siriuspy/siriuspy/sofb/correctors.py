@@ -8,8 +8,7 @@ import numpy as _np
 from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
-from ..epics import PV as _PV, CAThread as _Thread
-from ..thread import RepeaterThread as _Repeat
+from ..thread import RepeaterThread as _Repeat, QueueThread as _QueueThread
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from ..timesys.csdev import Const as _TIConst
@@ -456,6 +455,9 @@ class EpicsCorrectors(BaseCorrectors):
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
 
+        self._queue_thread = _QueueThread(is_cathread=True)
+        self._queue_thread.loop_run()
+
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]
         if self.isring:
@@ -678,10 +680,8 @@ class EpicsCorrectors(BaseCorrectors):
     def set_corrs_mode(self, value, is_thread=False):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
         if not is_thread:
-            _Thread(
-                target=self.set_corrs_mode,
-                args=(value, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_corrs_mode, (value, ), {'is_thread': True}))
             return True
 
         if value not in self._csorb.CorrSync:
@@ -765,10 +765,8 @@ class EpicsCorrectors(BaseCorrectors):
     def configure_correctors(self, val, is_thread=False):
         """Configure correctors method."""
         if not is_thread:
-            _Thread(
-                target=self.configure_correctors,
-                args=(val, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.configure_correctors, (val, ), {'is_thread': True}))
             return True
 
         corrs = self._get_used_corrs(include_rf=True)

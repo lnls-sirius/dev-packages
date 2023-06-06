@@ -6,7 +6,7 @@ from functools import partial as _part
 
 import numpy as _np
 
-from ..epics import PV as _PV, CAThread as _Thread
+from ..thread import QueueThread as _QueueThread
 from .base_class import BaseClass as _BaseClass
 
 
@@ -21,6 +21,8 @@ class EpicsMatrix(BaseMatrix):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
+        self._queue_thread = _QueueThread(is_cathread=True)
+        self._queue_thread.loop_run()
         self.select_items = {
             'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
             'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
@@ -88,10 +90,8 @@ class EpicsMatrix(BaseMatrix):
     def set_respmat_mode(self, mode, is_thread=False):
         """Set the response matrix mode."""
         if not is_thread:
-            _Thread(
-                target=self.set_respmat_mode,
-                args=(mode, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_respmat_mode, (mode, ), {'is_thread': True}))
             return True
 
         msg = 'Setting New RespMatMode.'
@@ -111,10 +111,8 @@ class EpicsMatrix(BaseMatrix):
     def set_respmat(self, mat, is_thread=False):
         """Set the response matrix in memory and save it in file."""
         if not is_thread:
-            _Thread(
-                target=self.set_respmat,
-                args=(mat, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_respmat, (mat, ), {'is_thread': True}))
             return True
 
         msg = 'Setting New RespMat.'
@@ -136,10 +134,8 @@ class EpicsMatrix(BaseMatrix):
     def set_enbllist(self, key, val, is_thread=False):
         """."""
         if not is_thread:
-            _Thread(
-                target=self.set_enbllist,
-                args=(key, val), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_enbllist, (key, val), {'is_thread': True}))
             return True
 
         msg = 'Setting {0:s} EnblList'.format(key.upper())
@@ -176,8 +172,7 @@ class EpicsMatrix(BaseMatrix):
             return None
         kicks = _np.dot(self.inv_respmat, orbit)
         kicks *= -1
-        _Thread(
-            target=self._update_dkicks, args=(kicks, ), daemon=True).start()
+        self._queue_thread.put((self._update_dkicks, (kicks, )))
         return kicks
 
     def estimate_orbit_variation(self, kicks):
@@ -210,10 +205,8 @@ class EpicsMatrix(BaseMatrix):
     def set_min_sing_value(self, num, is_thread=False):
         """."""
         if not is_thread:
-            _Thread(
-                target=self.set_min_sing_value,
-                args=(num, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_min_sing_value, (num, ), {'is_thread': True}))
             return True
 
         bkup = self.min_sing_val
@@ -227,10 +220,8 @@ class EpicsMatrix(BaseMatrix):
     def set_tikhonov_reg_const(self, num, is_thread=False):
         """."""
         if not is_thread:
-            _Thread(
-                target=self.set_tikhonov_reg_const,
-                args=(num, ), kwargs={'is_thread': True},
-                daemon=True).start()
+            self._queue_thread.put((
+                self.set_tikhonov_reg_const, (num, ), {'is_thread': True}))
             return True
 
         bkup = self.tikhonov_reg_const
