@@ -97,6 +97,11 @@ class HLFOFBConst(_csdev.Const):
             '/home', 'sirius', 'iocs-log', 'si-ap-fofb', 'data')
         self.reforb_fname = _os.path.join(ioc_fol, 'reforbit.orb')
         self.respmat_fname = _os.path.join(ioc_fol, 'respmat.respmat')
+        self.bpmxenbl_fname = _os.path.join(ioc_fol, 'bpmxenbllist.bpmenbl')
+        self.bpmyenbl_fname = _os.path.join(ioc_fol, 'bpmyenbllist.bpmenbl')
+        self.chenbl_fname = _os.path.join(ioc_fol, 'chenbllist.correnbl')
+        self.cvenbl_fname = _os.path.join(ioc_fol, 'cvenbllist.correnbl')
+        self.rfenbl_fname = _os.path.join(ioc_fol, 'rfenbllist.rfenbl')
 
         # reforb and matrix parameters
         self.reforb_size = self.nr_bpms

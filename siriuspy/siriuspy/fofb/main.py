@@ -240,22 +240,6 @@ class App(_Callback):
             'KickBufferSize-Mon': self._kick_buffer_size,
             'KickCH-Mon': _np.zeros(self._const.nr_ch, dtype=float),
             'KickCV-Mon': _np.zeros(self._const.nr_cv, dtype=float),
-            'RefOrbX-SP': self._reforb_x,
-            'RefOrbX-RB': self._reforb_x,
-            'RefOrbY-SP': self._reforb_y,
-            'RefOrbY-RB': self._reforb_y,
-            'RefOrbHwX-Mon': self._reforbhw_x,
-            'RefOrbHwY-Mon': self._reforbhw_y,
-            'BPMXEnblList-SP': self._enable_lists['bpmx'],
-            'BPMXEnblList-RB': self._enable_lists['bpmx'],
-            'BPMYEnblList-SP': self._enable_lists['bpmy'],
-            'BPMYEnblList-RB': self._enable_lists['bpmy'],
-            'CHEnblList-SP': self._enable_lists['ch'],
-            'CHEnblList-RB': self._enable_lists['ch'],
-            'CVEnblList-SP': self._enable_lists['cv'],
-            'CVEnblList-RB': self._enable_lists['cv'],
-            'UseRF-Sel': bool(self._enable_lists['rf']),
-            'UseRF-Sts': bool(self._enable_lists['rf']),
             'MinSingValue-SP': self._min_sing_val,
             'MinSingValue-RB': self._min_sing_val,
             'TikhonovRegConst-SP': self._tikhonov_reg_const,
@@ -275,8 +259,31 @@ class App(_Callback):
         }
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
-        self._load_respmat()
+
+        # load autosave data
+        # matrix
+        okm = self._load_respmat()
         self.run_callbacks('RespMat-SP', list(self._respmat.ravel()))
+        if not okm:
+            self.run_callbacks('RespMat-RB', list(self._respmat.ravel()))
+        # ref orbits
+        okr = self._load_reforbit()
+        for plan in ['x', 'y']:
+            pvn = f'RefOrb{plan.upper()}-SP'
+            pvv = getattr(self, f'_reforb_{plan}')
+            self.run_callbacks(pvn, pvv)
+            if not okr:
+                self.run_callbacks(pvn.replace('SP', 'RB'), pvv)
+        # enable lists
+        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
+            okl = self._load_enbllist(dev)
+            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
+            enb = self._enable_lists[dev]
+            pvv = enb if dev != 'rf' else bool(enb)
+            self.run_callbacks(pvn, pvv)
+            if not okl:
+                self.run_callbacks(
+                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
         self._update_log('Started.')
         self._init = True
 
@@ -968,15 +975,46 @@ class App(_Callback):
         refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
         setattr(self, '_reforbhw_' + plane.lower(), refhw)
 
-        # set reforb to FOFB controllers
-        func = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
-        func(refhw)
+        # do not set reforb to controllers and save to file in initialization
+        if self._init:
+            # set reforb to FOFB controllers
+            func = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
+            func(refhw)
+
+            # save to autosave file
+            self._save_reforbit()
 
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
         self.run_callbacks(f'RefOrbHw{plane.upper()}-Mon', refhw)
         self._update_log('...done!')
         return True
+
+    def _load_reforbit(self):
+        filename = self._const.reforb_fname
+        if not _os.path.isfile(filename):
+            return False
+        self._update_log('Loading RefOrbits from file...')
+        refx, refy = _np.loadtxt(filename, unpack=True)
+        okx = self.set_reforbit('x', refx)
+        oky = self.set_reforbit('y', refy)
+        if all([okx, oky]):
+            msg = 'Loaded RefOrbits!'
+        else:
+            msg = 'ERR:Problem loading RefOrbits from file.'
+        self._update_log(msg)
+        return 'ERR' not in msg
+
+    def _save_reforbit(self):
+        filename = self._const.reforb_fname
+        refx, refy = self._reforb_x, self._reforb_y
+        orbs = _np.array([refx, refy]).T
+        try:
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, orbs)
+        except FileNotFoundError:
+            self._update_log('WARN:Could not save ref.orbit to file.')
 
     # --- matrix manipulation ---
 
@@ -1005,7 +1043,8 @@ class App(_Callback):
             return False
 
         # if ok, save matrix
-        self._save_respmat(matb)
+        if self._init:
+            self._save_respmat(matb)
 
         # update readback pv
         self.run_callbacks('RespMat-RB', list(self._respmat.ravel()))
@@ -1014,18 +1053,24 @@ class App(_Callback):
 
     def _load_respmat(self):
         filename = self._const.respmat_fname
-        if _os.path.isfile(filename):
-            self._update_log('Loading RespMat from file...')
-            if self.set_respmat(_np.loadtxt(filename)):
-                msg = 'Loaded RespMat!'
-            else:
-                msg = 'ERR:Problem loading RespMat from file.'
-            self._update_log(msg)
+        if not _os.path.isfile(filename):
+            return False
+        self._update_log('Loading RespMat from file...')
+        if self.set_respmat(_np.loadtxt(filename)):
+            msg = 'Loaded RespMat!'
+        else:
+            msg = 'ERR:Problem loading RespMat from file.'
+        self._update_log(msg)
+        return 'ERR' not in msg
 
     def _save_respmat(self, mat):
-        path = _os.path.split(self._const.respmat_fname)[0]
-        _os.makedirs(path, exist_ok=True)
-        _np.savetxt(self._const.respmat_fname, mat)
+        try:
+            filename = self._const.respmat_fname
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, mat)
+        except FileNotFoundError:
+            self._update_log('WARN:Could not save matrix to file.')
 
     def set_enbllist(self, device, value):
         """Set enable list for device."""
@@ -1052,11 +1097,16 @@ class App(_Callback):
             self._enable_lists[device] = bkup
             return False
 
-        # handle devices enable configuration
-        self._thread_enbllist = _epics.ca.CAThread(
-            target=self._handle_devices_enblconfig, args=[device, ],
-            daemon=True)
-        self._thread_enbllist.start()
+        # do not set enable lists and save to file in initialization
+        if self._init:
+            # handle devices enable configuration
+            self._thread_enbllist = _epics.ca.CAThread(
+                target=self._handle_devices_enblconfig, args=[device, ],
+                daemon=True)
+            self._thread_enbllist.start()
+
+            # save to autosave files
+            self._save_enbllist(device, _np.array([value], dtype=bool))
 
         # update readback pv
         if device == 'rf':
@@ -1103,6 +1153,28 @@ class App(_Callback):
         """Corrector enable list."""
         enbl = self._enable_lists
         return _np.hstack([enbl['ch'], enbl['cv'], enbl['rf']])
+
+    def _load_enbllist(self, device):
+        filename = getattr(self._const, device+'enbl_fname')
+        if not _os.path.isfile(filename):
+            return
+        okl = self.set_enbllist(device, _np.loadtxt(filename))
+        if okl:
+            msg = f'Loaded {device} enable list!'
+        else:
+            msg = f'ERR:Problem loading {device} enable list from file.'
+        self._update_log(msg)
+        return okl
+
+    def _save_enbllist(self, device, value):
+        try:
+            filename = getattr(self._const, device+'enbl_fname')
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, value)
+        except FileNotFoundError:
+            self._update_log(
+                f'WARN:Could not save {device} enable list to file.')
 
     def set_min_sing_value(self, value):
         """Set minimum singular values."""
