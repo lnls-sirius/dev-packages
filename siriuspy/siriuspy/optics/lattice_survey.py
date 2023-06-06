@@ -21,8 +21,7 @@ def generate_model_static_table():
         "#    siriuspy.optics.lattice_survey.generate_model_static_table.\n"\
         "#\n"\
         "# If any model change, please, run the script\n"\
-        "# again and copy the generated file to replace this one.\n"\
-        "# \n"
+        "# again and copy the generated file to replace this one.\n"
 
     filename = 'magnets-model-data.txt'
 
