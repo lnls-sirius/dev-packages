@@ -96,7 +96,7 @@ def _append_mag_data(filename, model, acc, label, section):
         for ind, inst, sub in zip(inds, insts, subs):
             # --- ID correctors
             if mag_tp in ('IDCH', 'IDCV', 'IDQS'):
-                # NOTE: this would address wrong instances if there were
+                # NOTE: this would issue wrong instances if there were
                 # other CH or CV magnets in insertion device straights, which
                 # is not the case.
                 mag_tp = mag_tp[2:]
