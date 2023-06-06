@@ -1,6 +1,7 @@
 """Define PVs, contants and properties of High Level FOFB."""
 
 import os as _os
+import numpy as _np
 
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
@@ -109,6 +110,10 @@ class HLFOFBConst(_csdev.Const):
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
         self.corrgains_size = self.nr_chcv
+
+        # dcc minimum enable configuration
+        self.dccenbl_min = _np.array([
+            bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""

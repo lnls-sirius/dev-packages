@@ -1681,7 +1681,8 @@ class App(_Callback):
         if self._fofbctrl_syncuseenbllist:
             bpmx = self._enable_lists['bpmx']
             bpmy = self._enable_lists['bpmy']
-            dccenbl = _np.logical_or(bpmx, bpmy)
+            mini = self._const.dccenbl_min
+            dccenbl = _np.logical_or.reduce([bpmx, bpmy, mini])
             bpms = self._llfofb_dev.get_dccfmc_visible_bpms([
                 self._const.bpm_names[i] for i, s in enumerate(dccenbl) if s])
             dccenbl = _np.array([b in bpms for b in self._const.bpm_names])
