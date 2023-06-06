@@ -3,8 +3,7 @@
 import time as _time
 from threading import Thread as _Thread, Event as _Event, \
     Lock as _Lock
-from queue import Queue as _Queue
-from collections import deque as _deque
+from queue import Queue as _Queue, Empty as _Empty, Full as _Full
 
 from epics.ca import use_initial_context as _use_initial_context
 
@@ -60,50 +59,6 @@ class AsyncWorker(_Thread):
                 self._evt_received.clear()
                 self.target(*self.args)
                 self._evt_ready.set()
-
-
-class QueueThread(_Thread):
-    """Callback queue class."""
-
-    # NOTE: QueueThread was reported as generating unstable behaviour
-    # when used intensively in the SOFB IOC. Currently this class is
-    # used in as-ps-diag IOC classes.
-    # TODO: investigate this issue!
-
-    def __init__(self, is_cathread=False):
-        """Init method."""
-        super().__init__(daemon=True)
-        self.is_cathread = is_cathread
-        self._queue = _Queue()
-        self._running = False
-
-    @property
-    def running(self):
-        """Return whether thread is running."""
-        return self._running
-
-    def add_callback(self, func, *args, **kwargs):
-        """Add callback."""
-        if not hasattr(func, '__call__'):
-            raise TypeError('Argument "func" is not callable.')
-        self._queue.put((func, args, kwargs))
-
-    def run(self):
-        """Run method."""
-        if self.is_cathread:
-            _use_initial_context()
-        self._running = True
-        while self.running:
-            func_item = self._queue.get()
-            nitems = self._queue.qsize()
-            if nitems and nitems % 500 == 0:
-                print("Warning: Queue size is {}!".format(nitems))
-            function, args, kwargs = func_item
-            function(*args, **kwargs)  # run the show!
-
-    def stop(self):
-        """Stop queue thread."""
-        self._running = False
 
 
 class RepeaterThread(_Thread):
@@ -189,32 +144,24 @@ class RepeaterThread(_Thread):
         self._stopped.set()
 
 
-class DequeThread(_deque):
-    """DequeThread.
+class QueueThread(_Queue):
+    """QueueThread.
 
-    This class manages generic operations (actions) using an append-right,
-    pop-left queue. Each operation processing is a method invoked as a separate
-    thread. It also has process loop methods to continuously process its
-    operation queue.
+    This class manages generic operations (actions) using a FIFO queue. Each
+    operation processing is a method invoked as a separate thread. It also has
+    process loop methods to continuously process its operation queue in a
+    single thread.
     """
 
-    DEF_LOOP_INTERVAL = 0.1  # [s]
-    SMALL_SLEEP_TIME = 0.1  # [s]
-
-    def __init__(self, loop_interval=None, is_cathread=False):
+    def __init__(self, is_cathread=False):
         """Init."""
         super().__init__()
-        loop_interval = loop_interval if loop_interval is not None else \
-            self.DEF_LOOP_INTERVAL
         self.is_cathread = is_cathread
         self._last_operation = None
-        self._process_thread = None
-        self._ignore = False
-        self._loop_thread = None
+        self._pth = None
+        self._lth = None
         self._loop_stop_evt = _Event()
-        self._loop_interval = loop_interval
-        self._loop_is_running = False
-        self._lock = _Lock()
+        self._changing_queue = _Lock()
 
     @property
     def last_operation(self):
@@ -222,122 +169,90 @@ class DequeThread(_deque):
         return self._last_operation
 
     @property
-    def running(self):
+    def loop_running(self):
         """."""
-        return self._loop_is_running
+        return self._lth is not None and self._lth.is_alive()
 
     @property
-    def interval(self):
-        """Return loop process interval."""
-        return self._loop_interval
+    def process_running(self):
+        """."""
+        return self._pth is not None and self._pth.is_alive()
 
-    @interval.setter
-    def interval(self, value):
-        """Set loop process interval."""
-        self._loop_interval = max(0, value)
+    def put(self, operation, block=True, timeout=None, unique=False):
+        """Put operation to queue."""
+        if not hasattr(operation, '__len__'):
+            operation = (operation, )
+        if not hasattr(operation[0], '__call__'):
+            raise TypeError(
+                'First element of "operation" is not callable.')
 
-    def ignore_set(self):
-        """Turn ignore state on."""
-        self._ignore = True
-
-    def ignore_clear(self):
-        """Turn ignore state on."""
-        self._ignore = False
-
-    def append(self, operation, unique=False):
-        """Append operation to queue."""
-        with self._lock:
-            if self._ignore or (unique and self.count(operation) > 0):
+        with self._changing_queue:
+            if unique and self.queue.count(operation) > 0:
                 return False
-
-            if not hasattr(operation, '__len__'):
-                operation = (operation, )
-            if not hasattr(operation[0], '__call__'):
-                raise TypeError(
-                    'First element of "operation" is not callable.')
-            super().append(operation)
+            try:
+                super().put(operation, block=block, timeout=timeout)
+            except _Full:
+                return False
             self._last_operation = operation
-            return True
+        return True
 
-    def clear(self):
-        """Clear deque."""
-        with self._lock:
-            super().clear()
+    def get(self, block=True, timeout=None):
+        """Get operation from queue."""
+        with self._changing_queue:
+            try:
+                return super().get(block=block, timeout=timeout)
+            except _Empty:
+                return None
 
-    def pop(self):
-        """Pop operation from queue."""
-        with self._lock:
-            return super().pop()
-
-    def popleft(self):
-        """Pop left operation from queue."""
-        with self._lock:
-            return super().popleft()
-
-    def process(self):
+    def process(self, block=True, timeout=None):
         """Process operation from queue."""
-        # first check if a thread is already running
-        with self._lock:
-            donothing = \
-                self._process_thread is not None and \
-                self._process_thread.is_alive()
-            if donothing:
+        with self._changing_queue:
+            # first check if a thread is already running
+            if self.process_running:
                 return False
-
             # no thread is running, we can process queue
             try:
-                operation = super().popleft()
-            except IndexError:
-                # there is nothing in the queue
+                func, args, kws = self._get_operation(block, timeout)
+            except _Empty:
                 return False
-            # process operation taken from queue
-            args, kws = tuple(), dict()
-            if len(operation) == 1:
-                func = operation[0]
-            elif len(operation) == 2:
-                func, args = operation
-            elif len(operation) >= 3:
-                func, args, kws = operation[:3]
-
-            _thread_class = _Thread
-            if self.is_cathread:
-                _thread_class = _CAThread
-
-            self._process_thread = _thread_class(
-                target=func, args=args, kwargs=kws, daemon=True)
-            self._process_thread.start()
+            th_cls = _CAThread if self.is_cathread else _Thread
+            self._pth = th_cls(target=func, args=args, kwargs=kws, daemon=True)
+            self._pth.start()
             return True
 
-    def run(self, interval=None):
+    def loop_run(self):
         """Run deque process loop."""
-        if interval is not None:
-            self.interval = interval
-
         # check if there is a previously running loop
         self._loop_stop_evt.clear()
-        while self._loop_thread is not None and self._loop_thread.is_alive():
+        if self.loop_running:
             return
-
         # start new process loop
-        _thread_class = _Thread
-        if self.is_cathread:
-            _thread_class = _CAThread
-        self._loop_thread = _thread_class(
-            target=self._loop_run_process, daemon=True)
-        self._loop_thread.start()
+        th_cls = _CAThread if self.is_cathread else _Thread
+        self._lth = th_cls(target=self._loop_run_process, daemon=True)
+        self._lth.start()
 
-    def stop(self):
+    def loop_stop(self):
         """Stop deque process loop."""
         self._loop_stop_evt.set()
 
     def _loop_run_process(self):
         while not self._loop_stop_evt.is_set():
-            self._loop_is_running = True
-            self.process()
-            t0 = _time.time()
-            while _time.time() - t0 < self._loop_interval:
-                sleep_time = \
-                    min(DequeThread.SMALL_SLEEP_TIME, self._loop_interval)
-                _time.sleep(sleep_time)
-        self._loop_is_running = False
+            try:
+                func, args, kws = self._get_operation(True, timeout=1)
+                func(*args, **kws)
+            except _Empty:
+                continue
         self._loop_stop_evt.clear()
+
+    def _get_operation(self, block=True, timeout=None):
+        """Raise queue.Empty exception in case of timeout or empty Queue."""
+        operation = super().get(block=block, timeout=timeout)
+        # process operation taken from queue
+        args, kws = tuple(), dict()
+        if len(operation) == 1:
+            func = operation[0]
+        elif len(operation) == 2:
+            func, args = operation
+        elif len(operation) >= 3:
+            func, args, kws = operation[:3]
+        return func, args, kws
