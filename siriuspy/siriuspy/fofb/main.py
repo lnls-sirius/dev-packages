@@ -86,9 +86,6 @@ class App(_Callback):
         self._meas_respmat_thread = None
         self._measuring_respmat = False
 
-        # use pyepics recommendations for threading
-        _epics.ca.use_initial_context()
-
         # devices and connections
         self._sisofb_dev = _SOFB(_SOFB.DEVICES.SI)
         ppties_automon_off = [
