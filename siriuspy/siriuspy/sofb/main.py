@@ -36,7 +36,7 @@ class SOFB(_BaseClass):
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
-        self._loop_print_every_num_iter = 1000
+        self._loop_print_every_num_iter = 200
         self._loop_use_pssofb = False
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
