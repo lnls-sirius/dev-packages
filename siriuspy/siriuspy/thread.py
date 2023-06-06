@@ -187,6 +187,9 @@ class QueueThread(_Queue):
                 'First element of "operation" is not callable.')
 
         with self._changing_queue:
+            # NOTE: the self.queue attribute is not in the documentation of
+            # the class Queue. I am not sure if they will keep this reference
+            # in the future, or maybe make it a hidden attribute.
             if unique and self.queue.count(operation) > 0:
                 return False
             try:
