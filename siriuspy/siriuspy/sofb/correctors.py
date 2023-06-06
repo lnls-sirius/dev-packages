@@ -8,6 +8,7 @@ import numpy as _np
 from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
+from ..epics import PV as _PV
 from ..thread import RepeaterThread as _Repeat, QueueThread as _QueueThread
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
