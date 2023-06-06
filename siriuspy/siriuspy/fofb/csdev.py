@@ -41,7 +41,7 @@ _et = ETypes  # syntactic sugar
 class HLFOFBConst(_csdev.Const):
     """Const class defining High Level FOFB constants."""
 
-    MIN_SING_VAL = 0.2
+    MIN_SING_VAL = 0.1
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
     DEF_KICK_BUFFER_SIZE = 1
