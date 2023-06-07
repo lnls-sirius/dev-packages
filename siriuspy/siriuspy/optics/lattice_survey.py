@@ -104,16 +104,12 @@ def _append_mag_data(filename, model, acc, label, section):
                 dis = 'PM'
             else:
                 dis = 'MA'
-            # --- FF correctors
-            if sub in ('01M1', '01M2') and mag_tp in ('FCH', 'FCV'):
-                mag_tp_ = 'F' + mag_tp
-            else:
-                mag_tp_ = mag_tp
+
+            val = (pos[ind[-1]+1] + pos[ind[0]]) / 2  # elem position
             # --- convert device index
-            inst = _conv_inst(section, sub, mag_tp_, inst)
+            inst = _conv_inst(section, sub, mag_tp, inst)
             name = _join_name(
-                sec=section, dis=dis, dev=mag_tp_, sub=sub, idx=inst)
-            val = (pos[ind[-1]+1] + pos[ind[0]]) / 2
+                sec=section, dis=dis, dev=mag_tp, sub=sub, idx=inst)
             mag_data[name] = val
 
     mags = list(mag_data.keys())
@@ -127,7 +123,7 @@ def _append_mag_data(filename, model, acc, label, section):
             mag='Name', pos='Position @ center [m]'))
         f.write('#'+57*'-' + '\n')
         for mag, pos in zip(mags, mpos):
-            f.write("{mag:20s} {pos:^20.4f}\n".format(
+            f.write("{mag:20s} {pos:>20.4f}\n".format(
                 mag=mag, pos=pos))
 
 
