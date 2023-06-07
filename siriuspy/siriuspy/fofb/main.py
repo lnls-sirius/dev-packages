@@ -12,7 +12,7 @@ from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _PVName
-from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
+from ..devices import FamFOFBControllers as _FamFOFBCtrls, Device as _Device,\
     FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
 
 from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
@@ -70,6 +70,8 @@ class App(_Callback):
             'cv': _np.ones(self._const.nr_cv, dtype=bool),
             'rf': _np.ones(1, dtype=bool),
         }
+        self._corr_accdec_val = 1
+        self._corr_accdec_enm = self._const.DecOpt.FOFB
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -131,6 +133,11 @@ class App(_Callback):
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
+        self._auxbpm = _Device(
+            'SI-01M1:DI-BPM',
+            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'),
+            auto_mon=False)
+
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
                 prefix=_vaca_prefix)
@@ -167,6 +174,8 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
             'CtrlrSyncPacketLossDetec-Cmd': self.cmd_fofbctrl_syncpacklossdet,
             'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
+            'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
+            'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -242,6 +251,10 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': 0,
             'CtrlrSyncPacketLossDetec-Cmd': 0,
             'CtrlrReset-Cmd': 0,
+            'FOFBAccDecimation-Sel': self._corr_accdec_enm,
+            'FOFBAccDecimation-Sts': self._corr_accdec_enm,
+            'FOFBAccDecimation-SP': self._corr_accdec_val,
+            'FOFBAccDecimation-RB': self._corr_accdec_val,
             'KickCHAcc-Mon': initkickch,
             'KickCVAcc-Mon': initkickcv,
             'KickCHRef-Mon': initkickch,
@@ -690,6 +703,40 @@ class App(_Callback):
                 target=self._thread_corr_currzero, daemon=True)
             self._thread_currzero.start()
         self.run_callbacks('CorrSetCurrZeroDuration-RB', value)
+        return True
+
+    def set_corr_accdec(self, option, value):
+        """Set corrector accumulator decimation."""
+        if self._corr_accdec_enm != self._const.DecOpt.Custom and \
+                option == 'value':
+            return False
+
+        if option == 'enum':
+            if value == self._const.DecOpt.FOFB:
+                dec = 1
+            elif value == self._const.DecOpt.Monit:
+                if self._auxbpm.connected:
+                    monit = self._auxbpm['INFOMONITRate-RB']
+                    fofb = self._auxbpm['INFOFOFBRate-RB']
+                    dec = int(monit / fofb)
+                else:
+                    self._update_log('WARN:Could not read decimation from BPM')
+                    self._update_log('WARN:rates. Using value 4600.')
+                    dec = 4600
+            else:
+                dec = self._corr_accdec_val
+            self._corr_accdec_enm = value
+            self.run_callbacks('FOFBAccDecimation-Sts', value)
+            self.run_callbacks('FOFBAccDecimation-SP', dec)
+        else:
+            dec = value
+        self._corr_accdec_val = dec
+        self.run_callbacks('FOFBAccDecimation-RB', dec)
+
+        self._update_log('Setting FOFB Acc decimation...')
+        self._corrs_dev.set_fofbacc_decimation(dec)
+        self._update_log('...done!')
+
         return True
 
     def _thread_corr_currzero(self):
@@ -1830,8 +1877,11 @@ class App(_Callback):
                 isok &= self._corrs_dev.check_fofbacc_satmin(-cvl, psnames=cvn)
                 if not isok:
                     value = _updt_bit(value, 6, 1)
+                # AccDecimationSynced
+                if not self._corrs_dev.check_pwrstate(self._corr_accdec_val):
+                    value = _updt_bit(value, 7, 1)
             else:
-                value = 0b1111111
+                value = 0b11111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)

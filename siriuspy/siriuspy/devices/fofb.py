@@ -772,6 +772,16 @@ class FamFastCorrs(_Devices):
         return _np.array([p.fofbacc_satmin for p in self._psdevs])
 
     @property
+    def fofbacc_decimation(self):
+        """FOFB pre-accumulator decimation.
+
+        Returns:
+            counts (numpy.ndarray, 160):
+                FOFB pre-accumulator decimation for each power supply.
+        """
+        return _np.array([p.fofbacc_decimation for p in self._psdevs])
+
+    @property
     def curr_gain(self):
         """Current gain.
 
@@ -981,6 +991,29 @@ class FamFastCorrs(_Devices):
             return False
         devs = self._get_devices(psnames, psindices)
         impltd = _np.asarray([d.fofbacc_satmin for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def set_fofbacc_decimation(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator decimation."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_decimation = values[i]
+        return True
+
+    def check_fofbacc_decimation(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_MON):
+        """Check whether power supplies have desired decimation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_decimation for d in devs])
         if isinstance(values, (int, float, bool)):
             values = len(devs) * [values]
         if _np.allclose(values, impltd, atol=atol):

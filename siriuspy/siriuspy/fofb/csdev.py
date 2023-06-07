@@ -25,12 +25,15 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
+        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
+        'AccDecimationSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
         'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
         'LoopInterlockOk')
+
+    DEC_OPT = ('FOFB', 'Monit', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -63,6 +66,7 @@ class HLFOFBConst(_csdev.Const):
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
+    DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
 
     def __init__(self):
         """Class constructor."""
@@ -181,7 +185,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b11111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -239,7 +243,19 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks
+            # Kicks and decimation configuration
+            'FOFBAccDecimation-Sel': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-Sts': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-SP': {
+                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
+                'hilim': 8600, 'unit': 'count'},
+            'FOFBAccDecimation-RB': {
+                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
+                'hilim': 8600, 'unit': 'count'},
             'KickCHAcc-Mon': {
                 'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
                 'value': self.nr_ch*[0]},

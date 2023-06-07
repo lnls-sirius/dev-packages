@@ -60,6 +60,7 @@ class _PSDev(_Device):
         'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
         'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
         'FOFBAcc-Mon',
+        'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -975,6 +976,15 @@ class PowerSupplyFC(_PSDev):
     def fofbacc_mon(self):
         """FOFB accumulator."""
         return self['FOFBAcc-Mon']
+
+    @property
+    def fofbacc_decimation(self):
+        """FOFB accumulator decimation."""
+        return self['FOFBAccDecimation-RB']
+
+    @fofbacc_decimation.setter
+    def fofbacc_decimation(self, value):
+        self['FOFBAccDecimation-SP'] = value
 
     def cmd_fofbacc_clear(self):
         """Command to clear FOFB accumulator."""
