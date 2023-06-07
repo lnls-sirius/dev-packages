@@ -21,7 +21,7 @@ class ComputedPV:
 
         # starts computer_pvs queue, if not started yet
         self._queue = queue
-        self._queue.loop_run()
+        self._queue.start()
 
         # --- properties ---
 

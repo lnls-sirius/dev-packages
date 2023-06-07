@@ -144,7 +144,7 @@ class RepeaterThread(_Thread):
         self._stopped.set()
 
 
-class QueueThread(_Queue):
+class _BaseQueueThread(_Queue):
     """QueueThread.
 
     This class manages generic operations (actions) using a FIFO queue. Each
@@ -158,9 +158,7 @@ class QueueThread(_Queue):
         super().__init__()
         self.is_cathread = is_cathread
         self._last_operation = None
-        self._pth = None
-        self._lth = None
-        self._loop_stop_evt = _Event()
+        self._th = None
         self._changing_queue = _Lock()
 
     @property
@@ -169,14 +167,9 @@ class QueueThread(_Queue):
         return self._last_operation
 
     @property
-    def loop_running(self):
+    def is_running(self):
         """."""
-        return self._lth is not None and self._lth.is_alive()
-
-    @property
-    def process_running(self):
-        """."""
-        return self._pth is not None and self._pth.is_alive()
+        return self._th is not None and self._th.is_alive()
 
     def put(self, operation, block=True, timeout=None, unique=False):
         """Put operation to queue."""
@@ -207,48 +200,6 @@ class QueueThread(_Queue):
             except _Empty:
                 return None
 
-    def process(self, block=True, timeout=None):
-        """Process operation from queue."""
-        with self._changing_queue:
-            # first check if a thread is already running
-            if self.process_running:
-                return False
-            # no thread is running, we can process queue
-            try:
-                func, args, kws = self._get_operation(block, timeout)
-            except _Empty:
-                return False
-            th_cls = _CAThread if self.is_cathread else _Thread
-            self._pth = th_cls(
-                target=self._run_process, args=(func, args, kws), daemon=True)
-            self._pth.start()
-            return True
-
-    def loop_run(self):
-        """Run deque process loop."""
-        # check if there is a previously running loop
-        self._loop_stop_evt.clear()
-        if self.loop_running:
-            return
-        # start new process loop
-        th_cls = _CAThread if self.is_cathread else _Thread
-        self._lth = th_cls(target=self._loop_run_process, daemon=True)
-        self._lth.start()
-
-    def loop_stop(self):
-        """Stop deque process loop."""
-        self._loop_stop_evt.set()
-
-    def _loop_run_process(self):
-        while not self._loop_stop_evt.is_set():
-            try:
-                func, args, kws = self._get_operation(True, timeout=1)
-                func(*args, **kws)
-                self.task_done()
-            except _Empty:
-                continue
-        self._loop_stop_evt.clear()
-
     def _get_operation(self, block=True, timeout=None):
         """Raise queue.Empty exception in case of timeout or empty Queue."""
         operation = super().get(block=block, timeout=timeout)
@@ -263,5 +214,72 @@ class QueueThread(_Queue):
         return func, args, kws
 
     def _run_process(self, func, args, kws):
-        func(*args, **kws)
+        """."""
+        try:
+            func(*args, **kws)
+        except Exception:
+            pass
         self.task_done()
+
+
+class QueueThreads(_BaseQueueThread):
+    """QueueThreads.
+
+    This class manages generic operations (actions) using a FIFO queue. Each
+    operation processing is a method invoked as a separate thread.
+    """
+
+    def process(self, block=True, timeout=None):
+        """Process operation from queue."""
+        with self._changing_queue:
+            # first check if a thread is already running
+            if self.is_running:
+                return False
+            # no thread is running, we can process queue
+            try:
+                func, args, kws = self._get_operation(block, timeout)
+            except _Empty:
+                return False
+            th_cls = _CAThread if self.is_cathread else _Thread
+            self._th = th_cls(
+                target=self._run_process, args=(func, args, kws), daemon=True)
+            self._th.start()
+            return True
+
+
+class LoopQueueThread(_BaseQueueThread):
+    """LoopQueueThread.
+
+    This class manages generic operations (actions) using a FIFO queue.
+    It has a process loop to continuously process its operation queue in a
+    single thread.
+    """
+
+    def __init__(self, is_cathread=False):
+        """Init."""
+        super().__init__(is_cathread=is_cathread)
+        self._loop_stop_evt = _Event()
+
+    def start(self):
+        """Run deque process loop."""
+        # check if there is a previously running loop
+        self._loop_stop_evt.clear()
+        if self.is_running:
+            return
+        # start new process loop
+        th_cls = _CAThread if self.is_cathread else _Thread
+        self._th = th_cls(target=self._loop_run_process, daemon=True)
+        self._th.start()
+
+    def stop(self):
+        """Stop deque process loop."""
+        self._loop_stop_evt.set()
+
+    def _loop_run_process(self):
+        while not self._loop_stop_evt.is_set():
+            try:
+                func, args, kws = self._get_operation(True, timeout=1)
+                self._run_process(func, args, kws)
+            except _Empty:
+                continue
+        self._loop_stop_evt.clear()

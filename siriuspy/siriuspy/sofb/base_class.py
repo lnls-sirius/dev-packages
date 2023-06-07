@@ -5,7 +5,7 @@ import logging as _log
 import numpy as _np
 
 from ..callbacks import Callback as _Callback
-from ..thread import QueueThread as _QueueThread
+from ..thread import LoopQueueThread as _LoopQueueThread
 
 from .csdev import SOFBFactory as _SOFBFactory, ConstTLines as _ConstTLines
 
@@ -29,8 +29,8 @@ class BaseClass(_Callback):
         """Init method."""
         super().__init__(callback)
         if BaseClass._QTHREAD is None:
-            BaseClass._QTHREAD = _QueueThread(is_cathread=True)
-            self._QTHREAD.loop_run()
+            BaseClass._QTHREAD = _LoopQueueThread(is_cathread=True)
+            self._QTHREAD.start()
         self._csorb = _create_csorb(acc)
         self._prefix = prefix
         self._status = 0b0
