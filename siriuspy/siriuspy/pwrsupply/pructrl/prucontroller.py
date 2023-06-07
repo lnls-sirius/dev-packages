@@ -126,12 +126,16 @@ class PRUController:
     @property
     def processing(self):
         """Return processing state."""
-        return self._processing
+        return self._queue.is_running
 
     @processing.setter
     def processing(self, value):
         """Set processing state."""
         self._processing = value
+        if self._processing:
+            self._queue.start()
+        else:
+            self._queue.stop()
 
     @property
     def queue_length(self):
@@ -416,11 +420,6 @@ class PRUController:
             # operation appended to queue
             pass
 
-    def bsmp_process(self, block=True, timeout=None):
-        """Run process once."""
-        # process first operation in queue, if any.
-        self._queue.process(block, timeout)
-
     def bsmp_init_communication(self):
         """."""
         # --- BSMP communication ---
@@ -456,8 +455,9 @@ class PRUController:
         fmt = '  - {:<20s} ({:^20s}) [{:09.3f}] ms'
         t0_ = _time()
 
-        # define process thread
-        self._thread_process = _Thread(target=self._loop_process, daemon=True)
+        # start queue loop
+        if self._processing:
+            self._queue.start()
 
         # define scan thread
         self._dev_idx_last_scanned = \
@@ -538,13 +538,6 @@ class PRUController:
 
             # update timestamp
             self._timestamp_update = _time()
-
-    def _loop_process(self):
-        while self._running:
-            if self.processing:
-                self.bsmp_process(block=True, timeout=self._sleep_process_loop)
-            else:
-                _sleep(self._sleep_process_loop)
 
     def _get_scan_interval(self):
         if self._parms.FREQ_SCAN == 0:
