@@ -297,7 +297,11 @@ class FamFOFBControllers(_Devices):
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
                 self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
-        bpm2dsbl = ['SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2']
+        bpm2dsbl = [
+            'SI-'+sub+':DI-BPM-'+idx
+            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
+            for idx in ['1', '2']
+        ]
         self._bpmdcc2dsbl = dict()
         for bpm in bpm2dsbl:
             self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
