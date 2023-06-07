@@ -35,6 +35,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         'MinBPMCnt-SP', 'MinBPMCnt-RB',
         'MinBPMCntEnbl-Sel', 'MinBPMCntEnbl-Sts',
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
+        'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
+        'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
     )
 
     def __init__(self, devname):
@@ -111,6 +113,24 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
     @min_bpm_count_enbl.setter
     def min_bpm_count_enbl(self, value):
         self['MinBPMCntEnbl-Sel'] = value
+
+    @property
+    def sysid_fofbacc_exc_state(self):
+        """SYSID core PRBS excitation enable state for correctors."""
+        return self['SYSIDPRBSFOFBAccEn-Sts']
+
+    @sysid_fofbacc_exc_state.setter
+    def sysid_fofbacc_exc_state(self, value):
+        self['SYSIDPRBSFOFBAccEn-Sel'] = value
+
+    @property
+    def sysid_bpm_exc_state(self):
+        """SYSID core PRBS excitation enable state for BPMs."""
+        return self['SYSIDPRBSBPMPosEn-Sts']
+
+    @sysid_bpm_exc_state.setter
+    def sysid_bpm_exc_state(self, value):
+        self['SYSIDPRBSBPMPosEn-Sel'] = value
 
     @property
     def interlock(self):
@@ -647,6 +667,29 @@ class FamFOFBControllers(_Devices):
         if not self._wait_devices_propty(
                 devs, 'RcvInSel-RB', rins, timeout=timeout/2):
             return False
+        return True
+
+    def check_sysid_exc_disabled(self):
+        """Check whether SYSID excitation is disabled."""
+        if not self.connected:
+            return False
+        for ctl in self._ctl_refs.values():
+            if ctl.sysid_fofbacc_exc_state or ctl.sysid_bpm_exc_state:
+                return False
+        return True
+
+    def cmd_dsbl_sysid_exc(self, timeout=DEF_TIMEOUT):
+        """Command to disable SYSID excitation."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'SYSIDPRBSFOFBAccEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSFOFBAccEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(devs, 'SYSIDPRBSBPMPosEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSBPMPosEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._evt_fofb.cmd_external_trigger()
         return True
 
 

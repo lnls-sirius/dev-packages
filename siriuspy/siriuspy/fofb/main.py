@@ -174,6 +174,7 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
             'CtrlrSyncPacketLossDetec-Cmd': self.cmd_fofbctrl_syncpacklossdet,
             'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
+            'CtrlrDsblSYSIDExc-Cmd': self.cmd_fofbctrl_dsblsysid,
             'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
             'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
@@ -251,6 +252,7 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': 0,
             'CtrlrSyncPacketLossDetec-Cmd': 0,
             'CtrlrReset-Cmd': 0,
+            'CtrlrDsblSYSIDExc-Cmd': 0,
             'FOFBAccDecimation-Sel': self._corr_accdec_enm,
             'FOFBAccDecimation-Sts': self._corr_accdec_enm,
             'FOFBAccDecimation-SP': self._corr_accdec_val,
@@ -960,6 +962,16 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._do_fofbctrl_reset()
+        return True
+
+    def cmd_fofbctrl_dsblsysid(self, _):
+        """Disable FOFB controllers system identification excitation."""
+        self._update_log('Received disable FOFB controllers SYSID...')
+        if not self._check_fofbctrl_connection():
+            return False
+        self._update_log('Disabling SYSID excitation...')
+        self._llfofb_dev.cmd_dsbl_sysid_exc()
+        self._update_log('...done!')
         return True
 
     # --- kicks update ---
@@ -1945,8 +1957,11 @@ class App(_Callback):
                 # LoopInterlockOk
                 if not self._llfofb_dev.interlock_ok:
                     value = _updt_bit(value, 9, 1)
+                # SYSIDExcitationDisabled
+                if not self._llfofb_dev.check_sysid_exc_disabled():
+                    value = _updt_bit(value, 10, 1)
             else:
-                value = 0b1111111111
+                value = 0b11111111111
 
             self._fofbctrl_status = value
             self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)

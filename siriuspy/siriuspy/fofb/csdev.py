@@ -31,7 +31,7 @@ class ETypes(_csdev.ETypes):
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
         'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
-        'LoopInterlockOk')
+        'LoopInterlockOk', 'SYSIDExcitationDisabled')
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
 
@@ -221,7 +221,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
                 'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
-            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b11111111111},
             'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
@@ -242,6 +242,7 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrDsblSYSIDExc-Cmd': {'type': 'int', 'value': 0},
 
             # Kicks and decimation configuration
             'FOFBAccDecimation-Sel': {
