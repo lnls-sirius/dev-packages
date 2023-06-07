@@ -324,7 +324,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        self._QTHREAD.put((self._apply_corr, tuple(), {'code': code}))
+        self._LQTHREAD.put((self._apply_corr, tuple(), {'code': code}))
         return True
 
     def calc_correction(self, _):
@@ -335,7 +335,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        self._QTHREAD.put((self._calc_correction, ))
+        self._LQTHREAD.put((self._calc_correction, ))
         return True
 
     def set_delta_kick(self, code, dkicks):
@@ -345,7 +345,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        self._QTHREAD.put((
+        self._LQTHREAD.put((
             self._set_delta_kick, tuple(),
             {'code': code, 'dkicks': dkicks}))
         return True
@@ -870,7 +870,7 @@ class SOFB(_BaseClass):
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
             if itern >= self._loop_print_every_num_iter:
-                self._QTHREAD.put((
+                self._LQTHREAD.put((
                     self._print_auto_corr_info, (times, rets, _time()-tim0)))
                 times, rets = [], []
                 tim0 = _time()

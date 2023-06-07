@@ -678,7 +678,7 @@ class EpicsCorrectors(BaseCorrectors):
     def set_corrs_mode(self, value, is_thread=False):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
         if not is_thread:
-            self._QTHREAD.put((
+            self._LQTHREAD.put((
                 self.set_corrs_mode, (value, ), {'is_thread': True}))
             return True
 
@@ -763,7 +763,7 @@ class EpicsCorrectors(BaseCorrectors):
     def configure_correctors(self, val, is_thread=False):
         """Configure correctors method."""
         if not is_thread:
-            self._QTHREAD.put((
+            self._LQTHREAD.put((
                 self.configure_correctors, (val, ), {'is_thread': True}))
             return True
 
