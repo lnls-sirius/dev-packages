@@ -90,15 +90,6 @@ class App(_Callback):
 
         # devices and connections
         self._sisofb_dev = _SOFB(_SOFB.DEVICES.SI)
-        ppties_automon_off = [
-            'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon', 'MTurnTime-Mon',
-            'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
-            'SlowOrbX-Mon', 'SlowOrbY-Mon',
-            'KickCH-Mon', 'KickCV-Mon', 'KickRF-Mon',
-            'DeltaKickCH-Mon', 'DeltaKickCV-Mon', 'DeltaKickRF-Mon',
-        ]
-        for ppty in ppties_automon_off:
-            self._sisofb_dev.set_auto_monitor(ppty, False)
 
         corrnames = self._const.ch_names + self._const.cv_names
         self._corrs_dev = _FamFastCorrs(corrnames)
