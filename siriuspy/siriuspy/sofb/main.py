@@ -325,9 +325,10 @@ class SOFB(_BaseClass):
             _log.error(msg[5:])
             return False
         self._LQTHREAD.put((self._apply_corr, tuple(), {'code': code}))
+        self.run_callbacks('ApplyDelta-Cmd', code)
         return True
 
-    def calc_correction(self, _):
+    def calc_correction(self, val):
         """Calculate correction."""
         self.run_callbacks('ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Idle)
         if self._thread and self._thread.is_alive():
@@ -336,6 +337,7 @@ class SOFB(_BaseClass):
             _log.error(msg[5:])
             return False
         self._LQTHREAD.put((self._calc_correction, ))
+        self.run_callbacks('CalcDelta-Cmd', val)
         return True
 
     def set_delta_kick(self, code, dkicks):
@@ -358,6 +360,7 @@ class SOFB(_BaseClass):
             self._stop_meas_respmat()
         elif value == self._csorb.MeasRespMatCmd.Reset:
             self._reset_meas_respmat()
+        self.run_callbacks('MeasRespMat-Cmd', value)
         return True
 
     def set_auto_corr(self, value):

@@ -341,48 +341,66 @@ class TLSOFB(_Device):
 
     def cmd_reset(self):
         """."""
-        self['SmoothReset-Cmd'] = 1
-        return True
+        prop = 'SmoothReset-Cmd'
+        val = self[prop]
+        self[prop] = 1
+        return self._wait(prop, val+1)
 
     def cmd_calccorr(self):
         """."""
-        self['CalcDelta-Cmd'] = 1
-        return True
+        prop = 'CalcDelta-Cmd'
+        val = self[prop]
+        self[prop] = 1
+        return self._wait(prop, val+1)
 
     def cmd_applycorr_ch(self):
         """."""
-        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.CH
-        return True
+        prop = 'ApplyDelta-Cmd'
+        val = self[prop]
+        self[prop] = self._data.ApplyDelta.CH
+        return self._wait(prop, val+1)
 
     def cmd_applycorr_cv(self):
         """."""
-        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.CV
-        return True
+        prop = 'ApplyDelta-Cmd'
+        val = self[prop]
+        self[prop] = self._data.ApplyDelta.CV
+        return self._wait(prop, val+1)
 
     def cmd_applycorr_rf(self):
         """."""
-        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.RF
-        return True
+        prop = 'ApplyDelta-Cmd'
+        val = self[prop]
+        self[prop] = self._data.ApplyDelta.RF
+        return self._wait(prop, val+1)
 
     def cmd_applycorr_all(self):
         """."""
-        self['ApplyDelta-Cmd'] = self._data.ApplyDelta.All
-        return True
+        prop = 'ApplyDelta-Cmd'
+        val = self[prop]
+        self[prop] = self._data.ApplyDelta.All
+        return self._wait(prop, val+1)
 
     def cmd_measrespmat_start(self):
         """."""
-        self['MeasRespMat-Cmd'] = 0
-        return True
+        prop = 'MeasRespMat-Cmd'
+        val = self[prop]
+        self[prop] = 0
+        return self._wait(prop, val+1)
 
     def cmd_measrespmat_stop(self):
         """."""
-        self['MeasRespMat-Cmd'] = 1
-        return True
+        prop = 'MeasRespMat-Cmd'
+        val = self[prop]
+        self[prop] = 1
+        return self._wait(prop, val+1)
 
     def cmd_measrespmat_reset(self):
         """."""
-        self['MeasRespMat-Cmd'] = 2
-        return True
+        prop = 'MeasRespMat-Cmd'
+        val = self[prop]
+        self[prop] = 2
+        return self._wait(prop, val+1)
 
     def cmd_trigacq_start(self, timeout=10):
         """."""
@@ -469,10 +487,8 @@ class TLSOFB(_Device):
             if resx < residue and resy < residue:
                 break
             self.cmd_calccorr()
-            _time.sleep(0.5)
             self.cmd_applycorr_all()
             self.wait_apply_delta_kick()
-            _time.sleep(0.2)
             self.cmd_reset()
             self.wait_buffer()
         return i, resx, resy
@@ -571,8 +587,10 @@ class BOSOFB(TLSOFB):
 
     def cmd_mturn_acquire(self):
         """."""
-        self['MTurnAcquire-Cmd'] = 1
-        return True
+        prop = 'MTurnAcquire-Cmd'
+        val = self[prop]
+        self[prop] = 1
+        return self._wait(prop, val+1)
 
 
 class SISOFB(BOSOFB):
