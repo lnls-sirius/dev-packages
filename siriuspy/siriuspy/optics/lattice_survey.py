@@ -73,6 +73,21 @@ def _conv_inst(section, sub, mag_tp, inst):
     return inst
 
 
+def _conv_id_correctors(mag_tp):
+    if mag_tp in ('IDCH', 'IDCV', 'IDQS'):
+        # NOTE: this would issue wrong instances if there were
+        # other CH or CV magnets in insertion device straights, which
+        # is not the case.
+        mag_tp = mag_tp[2:]
+    return mag_tp
+
+
+def _conv_pulsed_magnets(mag_tp, dis):
+    if 'Inj' in mag_tp or 'Eje' in mag_tp or 'Ping' in mag_tp:
+        dis = 'PM'
+    return dis
+
+
 def _append_mag_data(filename, model, acc, label, section):
     fam_data = model.get_family_data(acc)
     pos = pyaccel.lattice.find_spos(acc)
@@ -93,25 +108,17 @@ def _append_mag_data(filename, model, acc, label, section):
         subs = fam_data[mag_tp]['subsection']
         insts = fam_data[mag_tp]['instance']
         for ind, inst, sub in zip(inds, insts, subs):
-            # --- ID correctors
-            if mag_tp in ('IDCH', 'IDCV', 'IDQS'):
-                # NOTE: this would issue wrong instances if there were
-                # other CH or CV magnets in insertion device straights, which
-                # is not the case.
-                mag_tp = mag_tp[2:]
-            # --- Pulsed magnets
-            if 'Inj' in mag_tp or 'Eje' in mag_tp or 'Ping' in mag_tp:
-                dis = 'PM'
-            else:
-                dis = 'MA'
-
             val = (pos[ind[-1]+1] + pos[ind[0]]) / 2  # elem position
-            # --- convert device index
-            inst = _conv_inst(section, sub, mag_tp, inst)
+            # special conversions
+            mag_tp_, inst_, dis_ = mag_tp, inst, 'MA'
+            mag_tp_ = _conv_id_correctors(mag_tp_)
+            dis_ = _conv_pulsed_magnets(mag_tp_, dis_)
+            inst_ = _conv_inst(section, sub, mag_tp_, inst_)
             name = _join_name(
-                sec=section, dis=dis, dev=mag_tp, sub=sub, idx=inst)
+                sec=section, dis=dis_, dev=mag_tp_, sub=sub, idx=inst_)
             mag_data[name] = val
 
+    # order by spos
     mags = list(mag_data.keys())
     mpos = list(mag_data.values())
     mpos, mags = zip(*sorted(zip(mpos, mags)))
@@ -123,8 +130,7 @@ def _append_mag_data(filename, model, acc, label, section):
             mag='Name', pos='Position @ center [m]'))
         f.write('#'+57*'-' + '\n')
         for mag, pos in zip(mags, mpos):
-            f.write("{mag:20s} {pos:>20.4f}\n".format(
-                mag=mag, pos=pos))
+            f.write(f'{mag:20s} {pos:>20.4f}\n')
 
 
 def generate_bpm_static_table():
