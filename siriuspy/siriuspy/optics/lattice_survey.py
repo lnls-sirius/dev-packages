@@ -64,10 +64,14 @@ def _conv_dev_inst(section, sub, mag_tp, inst):
                 '1': ('CV', '0'), '2': ('CV', '1'),
                 '3': ('CV', '1E2'), '4': ('CV', '2')},
             },
-        # last TB corrector was reconnected to serve as a skew quad
+        # TB skew quad in the model converted to ch
         'TB-04': {
             'CH': {'1': ('CH', '')},
             'CH': {'2': ('QS', '')},
+            },
+        'TB-04': {
+            'CH': {'': ('CH', '1')},
+            'QS': {'': ('CH', '2')},
             },
         }
     secsub = section + '-' + sub
