@@ -8,7 +8,6 @@ import numpy as _np
 
 from ..epics import PV as _PV, CAThread as _Thread
 from ..devices import HLFOFB
-from ..thread import QueueThread as _QueueThread
 
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
@@ -28,9 +27,6 @@ class SOFB(_BaseClass):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
-
-        self._queue_thread = _QueueThread(is_cathread=True)
-        self._queue_thread.loop_run()
 
         self._tests = tests
         self._orbit = self._correctors = self._matrix = None

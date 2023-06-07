@@ -9,7 +9,7 @@ from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
-from ..thread import RepeaterThread as _Repeat, QueueThread as _QueueThread
+from ..thread import RepeaterThread as _Repeat
 from ..pwrsupply.csdev import Const as _PSConst
 from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from ..timesys.csdev import Const as _TIConst
@@ -455,9 +455,6 @@ class EpicsCorrectors(BaseCorrectors):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
-
-        self._queue_thread = _QueueThread(is_cathread=True)
-        self._queue_thread.loop_run()
 
         self._names = self._csorb.ch_names + self._csorb.cv_names
         self._corrs = [get_corr(dev) for dev in self._names]

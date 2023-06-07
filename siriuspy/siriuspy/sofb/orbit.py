@@ -12,7 +12,7 @@ import bottleneck as _bn
 
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
-from ..thread import RepeaterThread as _Repeat, QueueThread as _QueueThread
+from ..thread import RepeaterThread as _Repeat
 from ..epics import PV as _PV, CAProcessSpawn as _Process, CAThread as _Thread
 
 from .base_class import BaseClass as _BaseClass
@@ -83,8 +83,6 @@ class EpicsOrbit(BaseOrbit):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
 
-        self._queue_thread = _QueueThread(is_cathread=True)
-        self._queue_thread.loop_run()
         self._mode = 0  # first mode of the list
         self._sofb = None
         self._sync_with_inj = False

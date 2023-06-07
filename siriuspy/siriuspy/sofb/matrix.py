@@ -6,7 +6,6 @@ from functools import partial as _part
 
 import numpy as _np
 
-from ..thread import QueueThread as _QueueThread
 from .base_class import BaseClass as _BaseClass
 
 
@@ -21,8 +20,6 @@ class EpicsMatrix(BaseMatrix):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
-        self._queue_thread = _QueueThread(is_cathread=True)
-        self._queue_thread.loop_run()
         self.select_items = {
             'bpmx': _np.ones(self._csorb.nr_bpms, dtype=bool),
             'bpmy': _np.ones(self._csorb.nr_bpms, dtype=bool),
