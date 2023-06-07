@@ -23,14 +23,14 @@ def _create_csorb(acc):
 class BaseClass(_Callback):
     """Base Class."""
 
-    _queue_thread = None
+    _QTHREAD = None
 
     def __init__(self, acc, prefix='', callback=None):
         """Init method."""
         super().__init__(callback)
-        if BaseClass._queue_thread is None:
-            BaseClass._queue_thread = _QueueThread(is_cathread=True)
-            self._queue_thread.loop_run()
+        if BaseClass._QTHREAD is None:
+            BaseClass._QTHREAD = _QueueThread(is_cathread=True)
+            self._QTHREAD.loop_run()
         self._csorb = _create_csorb(acc)
         self._prefix = prefix
         self._status = 0b0

@@ -87,7 +87,7 @@ class EpicsMatrix(BaseMatrix):
     def set_respmat_mode(self, mode, is_thread=False):
         """Set the response matrix mode."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_respmat_mode, (mode, ), {'is_thread': True}))
             return True
 
@@ -108,7 +108,7 @@ class EpicsMatrix(BaseMatrix):
     def set_respmat(self, mat, is_thread=False):
         """Set the response matrix in memory and save it in file."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_respmat, (mat, ), {'is_thread': True}))
             return True
 
@@ -131,7 +131,7 @@ class EpicsMatrix(BaseMatrix):
     def set_enbllist(self, key, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_enbllist, (key, val), {'is_thread': True}))
             return True
 
@@ -169,7 +169,7 @@ class EpicsMatrix(BaseMatrix):
             return None
         kicks = _np.dot(self.inv_respmat, orbit)
         kicks *= -1
-        self._queue_thread.put((self._update_dkicks, (kicks, )))
+        self._QTHREAD.put((self._update_dkicks, (kicks, )))
         return kicks
 
     def estimate_orbit_variation(self, kicks):
@@ -202,7 +202,7 @@ class EpicsMatrix(BaseMatrix):
     def set_min_sing_value(self, num, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_min_sing_value, (num, ), {'is_thread': True}))
             return True
 
@@ -217,7 +217,7 @@ class EpicsMatrix(BaseMatrix):
     def set_tikhonov_reg_const(self, num, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_tikhonov_reg_const, (num, ), {'is_thread': True}))
             return True
 

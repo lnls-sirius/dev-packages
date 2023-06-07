@@ -324,7 +324,7 @@ class EpicsOrbit(BaseOrbit):
     def set_spass_mask(self, val, beg=True, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_spass_mask, (val, ), {'beg': beg, 'is_thread': True}))
             return True
 
@@ -339,7 +339,7 @@ class EpicsOrbit(BaseOrbit):
     def set_mturn_sync(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_mturn_sync, (val, ), {'is_thread': True}))
             return True
 
@@ -356,7 +356,7 @@ class EpicsOrbit(BaseOrbit):
     def set_mturn_usemask(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_mturn_usemask, (val, ), {'is_thread': True}))
             return True
 
@@ -374,7 +374,7 @@ class EpicsOrbit(BaseOrbit):
     def set_mturnmask(self, val, beg=True, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_mturnmask, (val, ), {'beg': beg, 'is_thread': True}))
             return True
 
@@ -401,7 +401,7 @@ class EpicsOrbit(BaseOrbit):
     def set_spass_average(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_spass_average, (val, ), {'is_thread': True}))
             return True
 
@@ -421,7 +421,7 @@ class EpicsOrbit(BaseOrbit):
     def set_reforb(self, plane, orb, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_reforb, (plane, orb), {'is_thread': True}))
             return True
 
@@ -452,7 +452,7 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_mode(self, value, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_orbit_mode, (value, ), {'is_thread': True}))
             return True
 
@@ -512,7 +512,7 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_multiturn_idx(self, value, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_orbit_multiturn_idx, (value, ), {'is_thread': True}))
             return True
 
@@ -534,7 +534,7 @@ class EpicsOrbit(BaseOrbit):
         """."""
         _ = args
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.acq_config_bpms, tuple(), {'is_thread': True}))
             return True
 
@@ -612,7 +612,7 @@ class EpicsOrbit(BaseOrbit):
     def set_trig_acq_control(self, value, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_trig_acq_control, (value, ), {'is_thread': True}))
             return True
 
@@ -625,7 +625,7 @@ class EpicsOrbit(BaseOrbit):
     def set_trig_acq_channel(self, value, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_trig_acq_channel, (value, ), {'is_thread': True}))
             return True
 
@@ -646,7 +646,7 @@ class EpicsOrbit(BaseOrbit):
     def set_trig_acq_repeat(self, value, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_trig_acq_repeat, (value, ), {'is_thread': True}))
             return True
 
@@ -659,7 +659,7 @@ class EpicsOrbit(BaseOrbit):
     def set_acq_nrsamples(self, val, ispost=True, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_acq_nrsamples, (val, ),
                 {'ispost': ispost, 'is_thread': True}))
             return True
@@ -685,7 +685,7 @@ class EpicsOrbit(BaseOrbit):
     def set_trig_acq_nrshots(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_trig_acq_nrshots, (val, ), {'is_thread': True}))
             return True
 
@@ -705,7 +705,7 @@ class EpicsOrbit(BaseOrbit):
     def set_poly_calibration(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_poly_calibration, (val, ), {'is_thread': True}))
             return True
 
@@ -721,7 +721,7 @@ class EpicsOrbit(BaseOrbit):
     def set_mturndownsample(self, val, is_thread=False):
         """."""
         if not is_thread:
-            self._queue_thread.put((
+            self._QTHREAD.put((
                 self.set_mturndownsample, (val, ), {'is_thread': True}))
             return True
 
@@ -735,7 +735,7 @@ class EpicsOrbit(BaseOrbit):
 
     def acquire_mturn_orbit(self, _):
         """Acquire Multiturn data from BPMs."""
-        self._queue_thread.put((
+        self._QTHREAD.put((
             self._update_multiturn_orbits, tuple(), dict(force_update=True)))
         return True
 
