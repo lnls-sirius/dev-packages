@@ -44,7 +44,6 @@ class HLFOFBConst(_csdev.Const):
     MIN_SING_VAL = 0.1
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
-    DEF_KICK_BUFFER_SIZE = 1
     DEF_MAX_ORB_DISTORTION = 200  # [um]
 
     CONV_UM_2_NM = 1e3
@@ -240,19 +239,19 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and Kick buffer configuration
-            'KickBufferSize-SP': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-RB': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-Mon': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Actual buffer size used to calculate kicks average.'},
+            # Kicks
+            'KickCHAcc-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
+                'value': self.nr_ch*[0]},
+            'KickCVAcc-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
+                'value': self.nr_cv*[0]},
+            'KickCHRef-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
+                'value': self.nr_ch*[0]},
+            'KickCVRef-Mon': {
+                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
+                'value': self.nr_cv*[0]},
             'KickCH-Mon': {
                 'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
                 'value': self.nr_ch*[0]},

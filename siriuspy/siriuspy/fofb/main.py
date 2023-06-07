@@ -101,14 +101,20 @@ class App(_Callback):
         corrnames = self._const.ch_names + self._const.cv_names
         self._corrs_dev = _FamFastCorrs(corrnames)
 
-        self._kick_buffer = []
-        self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
-        for idx, pso in enumerate(self._corrs_dev.psdevs):
-            pvo = pso.pv_object('CurrentRef-Mon')
-            pvo.auto_monitor = True
-            self._kick_buffer.append([])
-            pvo.add_callback(
-                _part(self._update_kick_buffer, ps_index=idx))
+        self._propty2kickpvs = {
+            'FOFBAcc-Mon': ['KickCHAcc-Mon', 'KickCVAcc-Mon'],
+            'CurrentRef-Mon': ['KickCHRef-Mon', 'KickCVRef-Mon'],
+            'Current-Mon': ['KickCH-Mon', 'KickCV-Mon'],
+        }
+        self._kick_mon = {}
+        size = len(self._corrs_dev.psdevs)
+        for propty in self._propty2kickpvs:
+            self._kick_mon[propty] = _np.zeros(size, dtype=float)
+            for idx, pso in enumerate(self._corrs_dev.psdevs):
+                pvo = pso.pv_object(propty)
+                pvo.auto_monitor = _epics.dbr.DBE_VALUE
+                pvo.add_callback(
+                    _part(self._update_kick_array, ps_index=idx))
 
         self._rf_dev = _RFGen()
 
@@ -161,7 +167,6 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
             'CtrlrSyncPacketLossDetec-Cmd': self.cmd_fofbctrl_syncpacklossdet,
             'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
-            'KickBufferSize-SP': self.set_kicker_buffer_size,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -192,6 +197,8 @@ class App(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
+        initkickch = _np.zeros(self._const.nr_ch, dtype=float)
+        initkickcv = _np.zeros(self._const.nr_cv, dtype=float)
         pvn2vals = {
             'LoopState-Sel': self._loop_state,
             'LoopState-Sts': self._loop_state,
@@ -235,11 +242,12 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': 0,
             'CtrlrSyncPacketLossDetec-Cmd': 0,
             'CtrlrReset-Cmd': 0,
-            'KickBufferSize-SP': self._kick_buffer_size,
-            'KickBufferSize-RB': self._kick_buffer_size,
-            'KickBufferSize-Mon': self._kick_buffer_size,
-            'KickCH-Mon': _np.zeros(self._const.nr_ch, dtype=float),
-            'KickCV-Mon': _np.zeros(self._const.nr_cv, dtype=float),
+            'KickCHAcc-Mon': initkickch,
+            'KickCVAcc-Mon': initkickcv,
+            'KickCHRef-Mon': initkickch,
+            'KickCVRef-Mon': initkickcv,
+            'KickCH-Mon': initkickch,
+            'KickCV-Mon': initkickcv,
             'MinSingValue-SP': self._min_sing_val,
             'MinSingValue-RB': self._min_sing_val,
             'TikhonovRegConst-SP': self._tikhonov_reg_const,
@@ -907,52 +915,28 @@ class App(_Callback):
         self._do_fofbctrl_reset()
         return True
 
-    # --- kicks buffer and kicks update ---
+    # --- kicks update ---
 
-    def set_kicker_buffer_size(self, value: int):
-        """Set size of the kick buffer.
-
-        Args:
-            value (int): New value for the buffer size.
-
-        Returns:
-            bool: Whether property was properly set.
-
-        """
-        self._kick_buffer_size = max(1, int(value))
-        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
-        return True
-
-    def _update_kick_buffer(self, pvname, value, ps_index, **kwargs):
-        _ = kwargs, pvname
+    def _update_kick_array(self, pvname, value, ps_index, **kwargs):
+        _ = kwargs
         if value is None:
             return
         val = self._corrs_dev.psconvs[ps_index].conv_current_2_strength(value)
         if val is None:
             return
-        self._kick_buffer[ps_index].append(val)
-        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
+        propty = _PVName(pvname).propty
+        self._kick_mon[propty][ps_index] = val
 
     def _update_kicks(self):
-        kickch, kickcv = [], []
-        lenb = self._kick_buffer_size if self._loop_state else 1
+        nrch, nrcv = self._const.nr_ch, self._const.nr_cv
 
-        rlenb = 0
-        for i in range(self._const.nr_ch):
-            buff = self._kick_buffer[i][-lenb:]
-            rlenb = max(rlenb, len(buff))
-            val = _np.mean(buff) if buff else 0.0
-            kickch.append(val)
+        for propty, kickpvs in self._propty2kickpvs.items():
+            kicks = self._kick_mon[propty]
+            kickch = kicks[:nrch]
+            kickcv = kicks[nrch:nrch+nrcv]
 
-        for i in range(self._const.nr_ch, self._const.nr_chcv):
-            buff = self._kick_buffer[i][-lenb:]
-            rlenb = max(rlenb, len(buff))
-            val = _np.mean(buff) if buff else 0.0
-            kickcv.append(val)
-
-        self.run_callbacks('KickCH-Mon', kickch)
-        self.run_callbacks('KickCV-Mon', kickcv)
-        self.run_callbacks('KickBufferSize-Mon', rlenb)
+            self.run_callbacks(kickpvs[0], kickch)
+            self.run_callbacks(kickpvs[1], kickcv)
 
     # --- reference orbit ---
 

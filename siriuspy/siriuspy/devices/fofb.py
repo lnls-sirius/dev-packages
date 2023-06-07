@@ -1034,7 +1034,8 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
-        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
+        'KickCHAcc-Mon', 'KickCVAcc-Mon',
+        'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
         'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
@@ -1250,27 +1251,33 @@ class HLFOFB(_Device):
         return True
 
     @property
-    def kick_buffer_size_mon(self):
-        """Return actual kicks buffer size."""
-        return self['KickBufferSize-Mon']
+    def kickch_acc(self):
+        """Return CH kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCHAcc-Mon']
 
     @property
-    def kick_buffer_size(self):
-        """Return kicks buffer size."""
-        return self['KickBufferSize-RB']
+    def kickcv_acc(self):
+        """Return CV kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCVAcc-Mon']
 
-    @kick_buffer_size.setter
-    def kick_buffer_size(self, value):
-        self['KickBufferSize-SP'] = max(1, int(value))
+    @property
+    def kickch_ref(self):
+        """Return CH kicks related to CurrentRef-Mon PVs."""
+        return self['KickCHRef-Mon']
+
+    @property
+    def kickcv_ref(self):
+        """Return CV kicks related to CurrentRef-Mon PVs."""
+        return self['KickCVRef-Mon']
 
     @property
     def kickch(self):
-        """Return average of CH kicks."""
+        """Return CH kicks related to Current-Mon PVs."""
         return self['KickCH-Mon']
 
     @property
     def kickcv(self):
-        """Return average of CV kicks."""
+        """Return CV kicks related to Current-Mon PVs."""
         return self['KickCV-Mon']
 
     @property
