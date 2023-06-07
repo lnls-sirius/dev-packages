@@ -219,7 +219,8 @@ class QueueThread(_Queue):
             except _Empty:
                 return False
             th_cls = _CAThread if self.is_cathread else _Thread
-            self._pth = th_cls(target=func, args=args, kwargs=kws, daemon=True)
+            self._pth = th_cls(
+                target=self._run_process, args=(func, args, kws), daemon=True)
             self._pth.start()
             return True
 
@@ -243,6 +244,7 @@ class QueueThread(_Queue):
             try:
                 func, args, kws = self._get_operation(True, timeout=1)
                 func(*args, **kws)
+                self.task_done()
             except _Empty:
                 continue
         self._loop_stop_evt.clear()
@@ -259,3 +261,7 @@ class QueueThread(_Queue):
         elif len(operation) >= 3:
             func, args, kws = operation[:3]
         return func, args, kws
+
+    def _run_process(self, func, args, kws):
+        func(*args, **kws)
+        self.task_done()
