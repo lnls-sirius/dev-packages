@@ -50,16 +50,24 @@ def generate_model_static_table():
     _append_mag_data(filename, model, acc, 'SR Transport Line (TS)', 'TS')
 
 
-def _conv_inst(section, sub, mag_tp, inst):
+def _conv_dev_inst(section, sub, mag_tp, inst):
     inst_conv = {
+        # additional correctors were added in TS
         'TS-01': {
-            'CV': {'2': '1E2', '3': '2'},
+            'CV': {'2': ('CV', '1E2'), '3': ('CV', '2')},
             },
         'TS-02': {
-            'CV': {'1': '0', '2': ''},
+            'CV': {'1': ('CV', '0'), '2': ('CV', '')},
             },
         'TS-04': {
-            'CV': {'1': '0', '2': '1', '3': '1E2', '4': '2'},
+            'CV': {
+                '1': ('CV', '0'), '2': ('CV', '1'),
+                '3': ('CV', '1E2'), '4': ('CV', '2')},
+            },
+        # last TB corrector was reconnected to serve as a skew quad
+        'TB-04': {
+            'CH': {'1': ('CH', '')},
+            'CH': {'2': ('QS', '')},
             },
         }
     secsub = section + '-' + sub
@@ -70,7 +78,7 @@ def _conv_inst(section, sub, mag_tp, inst):
             inst_conv_ = inst_conv_[mag_tp]
             if inst in inst_conv_:
                 return inst_conv_[inst]
-    return inst
+    return mag_tp, inst
 
 
 def _conv_id_correctors(mag_tp):
@@ -113,7 +121,7 @@ def _append_mag_data(filename, model, acc, label, section):
             mag_tp_, inst_, dis_ = mag_tp, inst, 'MA'
             mag_tp_ = _conv_id_correctors(mag_tp_)
             dis_ = _conv_pulsed_magnets(mag_tp_, dis_)
-            inst_ = _conv_inst(section, sub, mag_tp_, inst_)
+            mag_tp_, inst_ = _conv_dev_inst(section, sub, mag_tp_, inst_)
             name = _join_name(
                 sec=section, dis=dis_, dev=mag_tp_, sub=sub, idx=inst_)
             mag_data[name] = val
