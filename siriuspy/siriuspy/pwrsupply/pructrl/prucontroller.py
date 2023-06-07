@@ -101,7 +101,6 @@ class PRUController:
 
         # starts communications
         self._dev_idx_last_scanned = None
-        self._thread_process = None
         self._thread_scan = None
         if init:
             self.bsmp_init_communication()
@@ -445,7 +444,8 @@ class PRUController:
 
         # after all initializations, threads are started
         self._running = True
-        self._thread_process.start()
+        if self._processing:
+            self._queue.start()
         self._thread_scan.start()
 
     # --- private methods: initializations ---
@@ -454,10 +454,6 @@ class PRUController:
 
         fmt = '  - {:<20s} ({:^20s}) [{:09.3f}] ms'
         t0_ = _time()
-
-        # start queue loop
-        if self._processing:
-            self._queue.start()
 
         # define scan thread
         self._dev_idx_last_scanned = \
