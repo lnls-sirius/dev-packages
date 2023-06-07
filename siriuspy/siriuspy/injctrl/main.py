@@ -104,46 +104,46 @@ class App(_Callback):
 
         # auxiliary diagnosis pvs
         self._pvs_diag = dict()
-        for sec in secs:
-            self._pvs_diag[sec] = dict()
-            self._pvs_diag[sec]['TI'] = {
-                n: _PV(n+':Status-Mon', connection_timeout=0.05)
-                for n in _HLTimeSearch.get_hl_triggers(filters={'sec': sec})}
+        # for sec in secs:
+        #     self._pvs_diag[sec] = dict()
+        #     self._pvs_diag[sec]['TI'] = {
+        #         n: _PV(n+':Status-Mon', connection_timeout=0.05)
+        #         for n in _HLTimeSearch.get_hl_triggers(filters={'sec': sec})}
 
-            if sec == 'AS':
-                continue
+        #     if sec == 'AS':
+        #         continue
 
-            self._pvs_diag[sec]['PS'] = {
-                n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                for n in _PSSearch.get_psnames(
-                    {'sec': sec, 'dis': 'PS', 'dev': '(B|Q.*|S.*|CH|CV)'})}
+        #     self._pvs_diag[sec]['PS'] = {
+        #         n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #         for n in _PSSearch.get_psnames(
+        #             {'sec': sec, 'dis': 'PS', 'dev': '(B|Q.*|S.*|CH|CV)'})}
 
-            if sec != 'LI':
-                punames = _PSSearch.get_psnames({
-                    'sec': sec, 'dis': 'PU', 'dev': '.*(Kckr|Sept)',
-                    'propty_name': '(?!:CCoil).*'})
-                if sec == 'SI':
-                    punames.remove('SI-01SA:PU-InjDpKckr')
-                self._pvs_diag[sec]['PU'] = {
-                    n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                    for n in punames}
-            else:
-                self._pvs_diag[sec]['PU'] = {
-                    n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                    for n in ['LI-01:PU-Modltr-1', 'LI-01:PU-Modltr-2']}
+        #     if sec != 'LI':
+        #         punames = _PSSearch.get_psnames({
+        #             'sec': sec, 'dis': 'PU', 'dev': '.*(Kckr|Sept)',
+        #             'propty_name': '(?!:CCoil).*'})
+        #         if sec == 'SI':
+        #             punames.remove('SI-01SA:PU-InjDpKckr')
+        #         self._pvs_diag[sec]['PU'] = {
+        #             n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #             for n in punames}
+        #     else:
+        #         self._pvs_diag[sec]['PU'] = {
+        #             n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #             for n in ['LI-01:PU-Modltr-1', 'LI-01:PU-Modltr-2']}
 
-                self._pvs_diag[sec]['RF'] = {
-                    n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                    for n in _LIDiagConst.DEV_2_LINAME if 'RF' in n}
+        #         self._pvs_diag[sec]['RF'] = {
+        #             n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #             for n in _LIDiagConst.DEV_2_LINAME if 'RF' in n}
 
-                self._pvs_diag[sec]['Egun'] = {
-                    n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                    for n in _LIDiagConst.DEV_2_LINAME if 'EG' in n}
+        #         self._pvs_diag[sec]['Egun'] = {
+        #             n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #             for n in _LIDiagConst.DEV_2_LINAME if 'EG' in n}
 
-            if sec in ['BO', 'SI']:
-                self._pvs_diag[sec]['RF'] = {
-                    n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
-                    for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
+        #     if sec in ['BO', 'SI']:
+        #         self._pvs_diag[sec]['RF'] = {
+        #             n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
+        #             for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
         # auxiliary injsys PVs
         self._pvs_injsys = dict()
@@ -163,56 +163,58 @@ class App(_Callback):
         self.egun_dev = EGun(
             print_log=False, callback=self._update_dev_status)
         self._init_egun = False
-        self.egun_dev.trigps.pv_object('enable').add_callback(
-            self._callback_watch_eguntrig)
+        # self.egun_dev.trigps.pv_object('enable').add_callback(
+        #     self._callback_watch_eguntrig)
 
-        self._pumode_dev = InjSysPUModeHandler(
-            print_log=False, callback=self._update_dev_status)
+        # self._pumode_dev = InjSysPUModeHandler(
+        #     print_log=False, callback=self._update_dev_status)
 
         self._evg_dev = EVG()
         self._init_injevt = False
-        self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
-            self._callback_watch_injectionevt)
-        self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
-            self._callback_watch_repeatbucketlist)
-        self._evg_dev.set_auto_monitor('TotalInjCount-Mon', True)
-        self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
-            self._callback_is_injecting)
+        # self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
+        #     self._callback_watch_injectionevt)
+        # self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
+        #     self._callback_watch_repeatbucketlist)
+        # self._evg_dev.set_auto_monitor('TotalInjCount-Mon', True)
+        # self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
+        #     self._callback_is_injecting)
+        pv = _PV('test-AS-RaMO:TI-EVG:TotalInjCount-Mon', connection_timeout=0.05)
+        pv.add_callback(self._callback_is_injecting)
 
-        self._injsys_dev = InjSysStandbyHandler()
+        # self._injsys_dev = InjSysStandbyHandler()
 
         self.currinfo_dev = CurrInfoSI()
-        self.currinfo_dev.set_auto_monitor('Current-Mon', True)
-        curr_pvo = self.currinfo_dev.pv_object('Current-Mon')
-        curr_pvo.add_callback(self._callback_autostop)
-        curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
+        # self.currinfo_dev.set_auto_monitor('Current-Mon', True)
+        # curr_pvo = self.currinfo_dev.pv_object('Current-Mon')
+        # curr_pvo.add_callback(self._callback_autostop)
+        # curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = _PSSearch.get_psnames({
-            'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)',
-            'propty_name': '(?!:CCoil).*'})
-        self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
-        self._pu_refvolt = list()
-        self._topup_puref_ignore = False
-        for dev in self._pu_devs:
-            pvo = dev.pv_object('Voltage-SP')
-            self._pu_refvolt.append(pvo.value)
-            pvo.add_callback(self._callback_update_pu_refvolt)
+        # self._pu_names = _PSSearch.get_psnames({
+        #     'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)',
+        #     'propty_name': '(?!:CCoil).*'})
+        # self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
+        # self._pu_refvolt = list()
+        # self._topup_puref_ignore = False
+        # for dev in self._pu_devs:
+        #     pvo = dev.pv_object('Voltage-SP')
+        #     self._pu_refvolt.append(pvo.value)
+        #     pvo.add_callback(self._callback_update_pu_refvolt)
 
-        self._rfkillbeam = RFKillBeam()
+        # self._rfkillbeam = RFKillBeam()
 
-        self._li_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
-        self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
+        # self._li_trig_names = _HLTimeSearch.get_hl_triggers(
+        #     {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
+        # self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
 
-        self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'Mags'})
-        self._bops_trig_devs = [Trigger(tin) for tin in self._bops_trig_names]
+        # self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
+        #     {'sec': 'BO', 'dev': 'Mags'})
+        # self._bops_trig_devs = [Trigger(tin) for tin in self._bops_trig_names]
 
-        self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
-        self._borf_trig_devs = [Trigger(tin) for tin in self._borf_trig_names]
+        # self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
+        #     {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
+        # self._borf_trig_devs = [Trigger(tin) for tin in self._borf_trig_names]
 
-        self._hlti_dev = HLTiming()
+        # self._hlti_dev = HLTiming()
 
         # pvname to write method map
         self.map_pv2write = {
@@ -254,12 +256,12 @@ class App(_Callback):
         # status scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_diagstatus = _epics.ca.CAThread(
-            target=self._update_diagstatus, daemon=True)
-        self.thread_check_diagstatus.start()
-        self.thread_check_injstatus = _epics.ca.CAThread(
-            target=self._update_injstatus, daemon=True)
-        self.thread_check_injstatus.start()
+        # self.thread_check_diagstatus = _epics.ca.CAThread(
+        #     target=self._update_diagstatus, daemon=True)
+        # self.thread_check_diagstatus.start()
+        # self.thread_check_injstatus = _epics.ca.CAThread(
+        #     target=self._update_injstatus, daemon=True)
+        # self.thread_check_injstatus.start()
 
         # initialize default operation values with implemented values
         self.egun_dev.wait_for_connection()
@@ -309,12 +311,12 @@ class App(_Callback):
             'HVOpVolt-SP': self._hvopvolt,
             'HVOpVolt-RB': self._hvopvolt,
             'HVOpVoltCmdSts-Mon': self._p2w['HVOpVolt']['status'],
-            'PUModeDeltaPosAng-SP': self._pumode_dev.delta_posang,
-            'PUModeDeltaPosAng-RB': self._pumode_dev.delta_posang,
-            'PUModeDpKckrDlyRef-SP': self._pumode_dev.dpkckr_dlyref,
-            'PUModeDpKckrDlyRef-RB': self._pumode_dev.dpkckr_dlyref,
-            'PUModeDpKckrKick-SP': self._pumode_dev.dpkckr_kick,
-            'PUModeDpKckrKick-RB': self._pumode_dev.dpkckr_kick,
+            # 'PUModeDeltaPosAng-SP': self._pumode_dev.delta_posang,
+            # 'PUModeDeltaPosAng-RB': self._pumode_dev.delta_posang,
+            # 'PUModeDpKckrDlyRef-SP': self._pumode_dev.dpkckr_dlyref,
+            # 'PUModeDpKckrDlyRef-RB': self._pumode_dev.dpkckr_dlyref,
+            # 'PUModeDpKckrKick-SP': self._pumode_dev.dpkckr_kick,
+            # 'PUModeDpKckrKick-RB': self._pumode_dev.dpkckr_kick,
             'PUModeCmdSts-Mon': self._p2w['PUMode']['status'],
             'TargetCurrent-SP': self._target_current,
             'TargetCurrent-RB': self._target_current,
@@ -354,7 +356,7 @@ class App(_Callback):
             'TopUpNextInj-Mon': self._topup_next,
             'TopUpNrPulses-SP': self._topup_nrpulses,
             'TopUpNrPulses-RB': self._topup_nrpulses,
-            'InjSysCmdDone-Mon': ','.join(self._injsys_dev.done),
+            # 'InjSysCmdDone-Mon': ','.join(self._injsys_dev.done),
             'InjSysCmdSts-Mon': _Const.InjSysCmdSts.Idle,
             'RFKillBeam-Mon': _Const.RFKillBeamMon.Idle,
             'DiagStatusLI-Mon': self._status['LI'],
@@ -369,35 +371,35 @@ class App(_Callback):
             self.run_callbacks(pvn, val)
 
         self._callback_update_type(init=True)
-        self.egun_dev.pulse.pv_object('multiselstatus').add_callback(
-            self._callback_update_type)
-        self.egun_dev.pulse.pv_object('multiswstatus').add_callback(
-            self._callback_update_type)
-        self.egun_dev.pulse.pv_object('singleselstatus').add_callback(
-            self._callback_update_type)
-        self.egun_dev.pulse.pv_object('singleswstatus').add_callback(
-            self._callback_update_type)
-        self.egun_dev.trigmultipre.pv_object('State-Sts').add_callback(
-            self._callback_update_type)
-        self.egun_dev.trigmulti.pv_object('State-Sts').add_callback(
-            self._callback_update_type)
-        self.egun_dev.trigsingle.pv_object('State-Sts').add_callback(
-            self._callback_update_type)
-        self._callback_update_pumode(init=True)
-        self._pumode_dev.trigdpk.pv_object('Src-Sts').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.trigdpk.pv_object('DelayRaw-RB').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.pudpk.pv_object('Kick-RB').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.pudpk.pv_object('PwrState-Sts').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.pudpk.pv_object('Pulse-Sts').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.punlk.pv_object('PwrState-Sts').add_callback(
-            self._callback_update_pumode)
-        self._pumode_dev.punlk.pv_object('Pulse-Sts').add_callback(
-            self._callback_update_pumode)
+        # self.egun_dev.pulse.pv_object('multiselstatus').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.pulse.pv_object('multiswstatus').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.pulse.pv_object('singleselstatus').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.pulse.pv_object('singleswstatus').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.trigmultipre.pv_object('State-Sts').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.trigmulti.pv_object('State-Sts').add_callback(
+        #     self._callback_update_type)
+        # self.egun_dev.trigsingle.pv_object('State-Sts').add_callback(
+        #     self._callback_update_type)
+        # self._callback_update_pumode(init=True)
+        # self._pumode_dev.trigdpk.pv_object('Src-Sts').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.trigdpk.pv_object('DelayRaw-RB').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.pudpk.pv_object('Kick-RB').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.pudpk.pv_object('PwrState-Sts').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.pudpk.pv_object('Pulse-Sts').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.punlk.pv_object('PwrState-Sts').add_callback(
+        #     self._callback_update_pumode)
+        # self._pumode_dev.punlk.pv_object('Pulse-Sts').add_callback(
+        #     self._callback_update_pumode)
         self._bias_feedback.init_database()
         self.run_callbacks('Log-Mon', 'Started.')
 

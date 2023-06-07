@@ -107,7 +107,8 @@ class App(_Callback):
                 pvo = pso.pv_object(propty)
                 pvo.auto_monitor = _epics.dbr.DBE_VALUE
                 pvo.add_callback(
-                    _part(self._update_kick_array, ps_index=idx))
+                    _part(self._update_kick_array, ps_index=idx),
+                    with_ctrlvars=False)
 
         self._rf_dev = _RFGen()
 
@@ -189,12 +190,12 @@ class App(_Callback):
         # configuration scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_corrs_configs = _epics.ca.CAThread(
-            target=self._check_corrs_configs, daemon=True)
-        self.thread_check_corrs_configs.start()
-        self.thread_check_ctrls_configs = _epics.ca.CAThread(
-            target=self._check_ctrls_configs, daemon=True)
-        self.thread_check_ctrls_configs.start()
+        # self.thread_check_corrs_configs = _epics.ca.CAThread(
+        #     target=self._check_corrs_configs, daemon=True)
+        # self.thread_check_corrs_configs.start()
+        # self.thread_check_ctrls_configs = _epics.ca.CAThread(
+        #     target=self._check_ctrls_configs, daemon=True)
+        # self.thread_check_ctrls_configs.start()
 
     def init_database(self):
         """Set initial PV values."""
@@ -1153,7 +1154,8 @@ class App(_Callback):
     def _handle_devices_enblconfig(self, device):
         if device in ['ch', 'cv']:
             if self._check_corr_connection():
-                self._check_set_corrs_opmode()
+                pass
+                # self._check_set_corrs_opmode()
         elif device in ['bpmx', 'bpmy']:
             self._update_fofbctrl_sync_enbllist()
             if self._check_fofbctrl_connection():
@@ -1305,7 +1307,8 @@ class App(_Callback):
 
         # convert matrix to hardware units
         str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
-        currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
+        # currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
+        currgain = _np.r_[6.25e-5*_np.ones(160), 1.0]
         if _np.any(str2curr == 0) or _np.any(currgain == 0):
             self._update_log('ERR:Could not calculate hardware unit')
             self._update_log('ERR:matrix, CurrGain or "urad to A" ')
@@ -1360,7 +1363,8 @@ class App(_Callback):
         # send new matrix to low level FOFB
         self._calc_corrs_coeffs()
         if self._init:
-            self._set_corrs_coeffs()
+            # self._set_corrs_coeffs()
+            pass
 
         self._update_log('Ok!')
         return True

@@ -18,6 +18,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 
 _DEF_TIMEOUT = 10  # s
 _TINY_INTERVAL = 0.050  # s
+_VACA_PREFIX = ''
 
 
 class Device:
@@ -83,7 +84,14 @@ class Device:
         """Set auto_monitor state of individual PVs."""
         if pvname not in self._pvs:
             return False
-        self._pvs[pvname].auto_monitor = int(value)
+        pvobj = self._pvs[pvname]
+        try:
+            pvobj.auto_monitor = int(value)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
+            # event. If the PV IOC goes down, for example.
+            print('Could not set auto_monitor of {}'.format(pvobj.pvname))
+            return False
         return True
 
     def update(self):
@@ -140,7 +148,15 @@ class Device:
     def __setitem__(self, propty, value):
         """Set value of property."""
         pvobj = self._pvs[propty]
-        pvobj.value = value
+        # pvobj.value = value
+        pvname = pvobj.pvname
+        if 'FCH' in pvname or 'FCV' in pvname:
+            if '01C2' not in pvname:
+                return
+        if isinstance(value, _np.ndarray):
+            print(pvname, value.shape, [value[0], value[-1]])
+        else:
+            print(pvname, value)
 
     # --- private methods ---
 
