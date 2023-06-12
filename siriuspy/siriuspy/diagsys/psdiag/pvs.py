@@ -32,13 +32,14 @@ class PSDiffPV:
 class PSStatusPV:
     """Power Supply Status PV."""
 
-    BIT_PSCONNECT = 0b0000001
-    BIT_PWRSTATON = 0b0000010
-    BIT_CURRTDIFF = 0b0000100
-    BIT_INTERLOCK = 0b0001000
-    BIT_ALARMSSET = 0b0010000
-    BIT_OPMODEDIF = 0b0100000
-    BIT_BOWFMDIFF = 0b1000000
+    BIT_PSCONNECT = 0b00000001
+    BIT_PWRSTATON = 0b00000010
+    BIT_CURRTDIFF = 0b00000100
+    BIT_INTERLOCK = 0b00001000
+    BIT_ALARMSSET = 0b00010000
+    BIT_OPMODEDIF = 0b00100000
+    BIT_BOWFMDIFF = 0b01000000
+    BIT_TRIGMDENB = 0b10000000
 
     PWRSTE_STS = 0
     CURRT_DIFF = 1
@@ -48,6 +49,7 @@ class PSStatusPV:
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
+    TRIGEN_STS = 4
 
     DTOLWFM_DICT = dict()
 
@@ -99,6 +101,7 @@ class PSStatusPV:
             value |= PSStatusPV.BIT_ALARMSSET
             value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_BOWFMDIFF
+            value |= PSStatusPV.BIT_TRIGMDENB
             return {'value': value}
 
         # pwrstate?
@@ -152,6 +155,12 @@ class PSStatusPV:
                 if alarmval != 0 or alarmval is None:
                     value |= PSStatusPV.BIT_ALARMSSET
                     break
+
+            # triggered mode enable?
+            if psname.dev in ['FCH', 'FCV']:
+                trigen = computed_pv.pvs[PSStatusPV.TRIGEN_STS].value
+                if trigen or trigen is None:
+                    value |= PSStatusPV.BIT_TRIGMDENB
 
         else:
             # current-diff?

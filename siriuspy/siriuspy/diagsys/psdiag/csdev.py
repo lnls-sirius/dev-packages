@@ -15,7 +15,9 @@ class ETypes(_csdev.ETypes):
         'Interlocks',
         'Alarms',
         'OpMode-(Sel|Sts) are different',
-        'Reserved')
+        'Reserved',
+        'Reserved',
+        )
 
     DIAG_STATUS_LABELS_LI = (
         'PS Disconnected/Comm. Broken',
@@ -24,7 +26,9 @@ class ETypes(_csdev.ETypes):
         'Interlocks',
         'Reserved',
         'Reserved',
-        'Reserved')
+        'Reserved',
+        'Reserved',
+        )
 
     DIAG_STATUS_LABELS_FC = (
         'PS Disconnected',
@@ -33,7 +37,9 @@ class ETypes(_csdev.ETypes):
         'Reserved',
         'Alarms',
         'OpMode-(Sel|Sts) are different',
-        'Reserved')
+        'Reserved',
+        'Triggered mode enabled',
+        )
 
     DIAG_STATUS_LABELS_BO = (
         'PS Disconnected/Comm. Broken',
@@ -42,7 +48,9 @@ class ETypes(_csdev.ETypes):
         'Interlocks',
         'Alarms',
         'OpMode-(Sel|Sts) are different',
-        'Wfm error exceeded tolerance')
+        'Wfm error exceeded tolerance',
+        'Reserved',
+        )
 
 
 _et = ETypes  # syntactic sugar

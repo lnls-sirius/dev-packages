@@ -42,7 +42,7 @@ class PSDiagApp(_App):
                         alarm_list.extend(
                             [aux+':'+alm for alm in intlks if 'Alarm' in alm])
 
-                nbpvs = 4 if psname.dev in ['FCH', 'FCV'] else 5
+                nbpvs = 5
                 pvs = [None]*(nbpvs+len(intlk_list)+len(alarm_list))
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
@@ -50,6 +50,8 @@ class PSDiagApp(_App):
                 pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
                 if psname.dev not in ['FCH', 'FCV']:
                     pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
+                else:
+                    pvs[_PSStatusPV.TRIGEN_STS] = devname + ':TrigEn-Sts'
 
                 computer.INTLK_PVS = list()
                 for idx, intlk in enumerate(intlk_list):
