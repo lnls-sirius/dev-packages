@@ -19,9 +19,13 @@ class PSDiagApp(_App):
             devname = SiriusPVName(psname).substitute(prefix=self._prefix)
 
             # DiagCurrentDiff-Mon
-            pvs = [None, None]
+            nrpvs = 4 if devname.sec != 'LI' else 2
+            pvs = [None]*nrpvs
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
             pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
+            if devname.sec != 'LI':
+                pvs[_PSDiffPV.CURRT_REF] = devname + ':CurrentRef-Mon'
+                pvs[_PSDiffPV.OPMODESTS] = devname + ':OpMode-Sts'
             pvo = _ComputedPV(
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)

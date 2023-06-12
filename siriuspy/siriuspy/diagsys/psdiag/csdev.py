@@ -33,7 +33,7 @@ class ETypes(_csdev.ETypes):
     DIAG_STATUS_LABELS_FC = (
         'PS Disconnected',
         'PwrState-Sts Off',
-        'Current-(SP|RB) are different',
+        'Current-(SP|Ref-Mon|Mon) are different',
         'Reserved',
         'Alarms',
         'OpMode-(Sel|Sts) are different',
