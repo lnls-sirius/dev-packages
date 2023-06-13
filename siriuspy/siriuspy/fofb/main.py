@@ -711,7 +711,7 @@ class App(_Callback):
                 if self._auxbpm.connected:
                     monit = self._auxbpm['INFOMONITRate-RB']
                     fofb = self._auxbpm['INFOFOFBRate-RB']
-                    dec = int(monit / fofb)
+                    dec = monit // fofb
                 else:
                     self._update_log('WARN:Could not read decimation from BPM')
                     self._update_log('WARN:rates. Using value 4600.')
