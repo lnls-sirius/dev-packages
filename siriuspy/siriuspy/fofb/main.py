@@ -1881,7 +1881,8 @@ class App(_Callback):
                 if not isok:
                     value = _updt_bit(value, 6, 1)
                 # AccDecimationSynced
-                if not self._corrs_dev.check_pwrstate(self._corr_accdec_val):
+                dec = self._corr_accdec_val
+                if not self._corrs_dev.check_fofbacc_decimation(dec):
                     value = _updt_bit(value, 7, 1)
             else:
                 value = 0b11111111
