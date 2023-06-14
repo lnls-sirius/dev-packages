@@ -18,7 +18,7 @@ from .csdev import IDFFConst as _Const, ETypes as _ETypes
 
 
 class App(_Callback):
-    """Main application for handling machine shift."""
+    """Main application for handling IDFF."""
 
     DEF_PS_TIMEOUT = 5  # [s]
 
