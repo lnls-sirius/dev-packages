@@ -1110,8 +1110,8 @@ class SOFB(_BaseClass):
 
         if self._download_fofb_kicks and fofb.loop_state:
             # NOTE: Do not download kicks from correctors not in the loop:
-            kickch = fofb.kickch.copy()
-            kickcv = fofb.kickcv.copy()
+            kickch = fofb.kickch_acc.copy()
+            kickcv = fofb.kickcv_acc.copy()
             kickch[~fofb.chenbl] = 0
             kickcv[~fofb.cvenbl] = 0
 
