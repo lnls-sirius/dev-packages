@@ -542,7 +542,9 @@ class PRUController:
         while self._running:
             if self.processing:
                 self.bsmp_process(block=True, timeout=self._sleep_process_loop)
-            else:
+            # if queue is empty, sleep a little
+            # NOTE: this optimization is being tested...
+            if self._queue.empty():
                 _sleep(self._sleep_process_loop)
 
     def _get_scan_interval(self):
