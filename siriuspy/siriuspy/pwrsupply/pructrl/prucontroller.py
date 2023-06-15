@@ -353,7 +353,7 @@ class PRUController:
         """Change SOFB mode: True or False."""
         self._sofb_mode = state
         if state:
-            while self._queue:  # wait until queue is empty
+            while not self._queue.empty():  # wait until queue is empty
                 pass
 
     @property
@@ -363,8 +363,7 @@ class PRUController:
 
     def sofb_current_set(self, value):
         """."""
-        # wait until queue is empty
-        while self._queue:
+        while not self._queue.empty():  # wait until queue is empty
             pass
 
         # execute SOFB setpoint
@@ -394,7 +393,7 @@ class PRUController:
             return
 
         # wait until queue is empty
-        while self._queue:
+        while not self._queue.empty():
             pass
 
         # select power supply dev_id for updating
@@ -412,7 +411,7 @@ class PRUController:
         # select devices and variable group, defining the read group
         # operation to be performed
         operation = (self._bsmp_update, ())
-        if not self._queue or operation != self._queue.last_operation:
+        if self._queue.empty() or operation != self._queue.last_operation:
             self._queue.put(operation, block=False)
         else:
             # do not append if last operation is the same as last one
