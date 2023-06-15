@@ -116,8 +116,8 @@ class PAPU(_Device):
     _default_timeout = 8  # [s]
 
     _properties_papu = (
-        'Home-Cmd', 'EnblPwrPhase-Cmd', 'StopPhase-Cmd', 'ClearErr-Cmd',
-        'BeamLineCtrl-Mon',
+        'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
+        'BeamLineCtrl-Mon', 'Home-Mon',
         )
     _properties = (
         'PeriodLength-Cte',
@@ -130,8 +130,10 @@ class PAPU(_Device):
         'Phase-SP', 'Phase-RB', 'Phase-Mon',
         'PhaseSpeed-SP', 'PhaseSpeed-RB', 'PhaseSpeed-Mon',
         'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
-        'ChangePhase-Cmd',
+        'StopPhase-Cmd', 'ChangePhase-Cmd',
+        'Log-Mon',
         )
+
 
     def __init__(self, devname, properties=None, auto_mon=True):
         """."""
@@ -149,6 +151,11 @@ class PAPU(_Device):
     def period_length(self):
         """Return ID period length [mm]."""
         return self['PeriodLength-Cte']
+
+    @property
+    def log_mon(self):
+        """Return ID Log."""
+        return self['Log-Mon']
 
     # --- phase speeds ----
 
@@ -221,6 +228,11 @@ class PAPU(_Device):
     def is_moving(self):
         """Return is moving state (True|False)."""
         return self['Moving-Mon'] != 0
+
+    @property
+    def is_homing(self):
+        """Return whether ID is in homing procedure."""
+        return self['Home-Mon']
 
     @property
     def is_beamline_ctrl_enabled(self):
@@ -517,6 +529,11 @@ class EPU(PAPU):
     def is_move_enabled(self):
         """Return phase and gap movements enabled state (True|False)."""
         return self.is_move_phase_enabled and self.is_move_gap_enabled
+
+    @property
+    def is_homing(self):
+        """Return whether ID is in homing procedure."""
+        return False
 
     # --- other checks ---
 
