@@ -112,6 +112,8 @@ class PAPU(_Device):
         PAPU50_17SA = 'SI-17SA:ID-PAPU50'
         ALL = (PAPU50_17SA, )
 
+    TOLERANCE_PHASE = 0.01  # [mm]
+
     _SHORT_SHUT_EYE = 0.1  # [s]
     _default_timeout = 8  # [s]
 
@@ -289,6 +291,20 @@ class PAPU(_Device):
         """Command to disable and break ID phase and gap movements."""
         return self.cmd_move_phase_disable(timeout=timeout)
 
+    # --- cmd_wait
+
+    def cmd_wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        return True
+
+    def cmd_wait_for_movement(self, timeout=None):
+        """Command wait until movement starts or timeout."""
+        time_init = _time.time()
+        while not self.is_moving:
+            if timeout is not None and _time.time() - time_init > timeout:
+                return False
+        return True
+
     # -- cmd_move
 
     def cmd_move_stop(self, timeout=None):
@@ -317,16 +333,12 @@ class PAPU(_Device):
         """Command to start phase movement."""
         return self._move_start('ChangePhase-Cmd', timeout=timeout)
 
-        """Command to start gap movement."""
-        return self._move_start('ChangeGap-Cmd', timeout=timeout)
-
     def cmd_move(self, phase, timeout=None):
         """Command to set and start phase movements."""
         # calc ETA
         dtime_max = abs(phase - self.phase_mon) / self.phase_speed
 
         # additional percentual in ETA
-        tol_phase = 0.01  # [mm]
         tol_dtime = 300  # [%]
         tol_factor = (1 + tol_dtime/100)
         tol_total = tol_factor * dtime_max + 5
@@ -342,7 +354,7 @@ class PAPU(_Device):
         # wait for movement within reasonable time
         time_init = _time.time()
         while \
-                abs(self.phase_mon - phase) > tol_phase or \
+                abs(self.phase_mon - phase) > PAPU.TOLERANCE_PHASE or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
                 print(f'tol_total: {tol_total:.3f} s')
