@@ -231,8 +231,8 @@ class PAPU(_Device):
 
     @property
     def is_homing(self):
-        """Return whether ID is in homing procedure."""
-        return self['Home-Mon']
+        """Return whether ID is in homing procedure (True|False)."""
+        return self['Home-Mon'] != 0
 
     @property
     def is_beamline_ctrl_enabled(self):
