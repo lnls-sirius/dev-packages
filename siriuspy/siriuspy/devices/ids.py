@@ -112,16 +112,19 @@ class PAPU(_Device):
         PAPU50_17SA = 'SI-17SA:ID-PAPU50'
         ALL = (PAPU50_17SA, )
 
+    TOLERANCE_PHASE = 0.01  # [mm]
+
     _SHORT_SHUT_EYE = 0.1  # [s]
     _default_timeout = 8  # [s]
 
-    _properties_homing = ('Homing-Cmd', )
+    _properties_papu = (
+        'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
+        'BeamLineCtrl-Mon', 'Home-Mon',
+        )
     _properties = (
         'PeriodLength-Cte',
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
-        'EnblPwrAll-Cmd',
-        'Stop-Cmd', 'Moving-Mon', 'IsBusy-Mon',
-        'Status-Mon',
+        'Moving-Mon',
         'PwrPhase-Mon',
         'EnblAndReleasePhase-Sel', 'EnblAndReleasePhase-Sts',
         'AllowedToChangePhase-Mon',
@@ -129,8 +132,10 @@ class PAPU(_Device):
         'Phase-SP', 'Phase-RB', 'Phase-Mon',
         'PhaseSpeed-SP', 'PhaseSpeed-RB', 'PhaseSpeed-Mon',
         'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
-        'ChangePhase-Cmd',
+        'StopPhase-Cmd', 'ChangePhase-Cmd',
+        'Log-Mon',
         )
+
 
     def __init__(self, devname, properties=None, auto_mon=True):
         """."""
@@ -141,7 +146,7 @@ class PAPU(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        properties = properties or self._properties + self._properties_homing
+        properties = properties or self._properties + self._properties_papu
         super().__init__(devname, properties=properties, auto_mon=auto_mon)
 
     @property
@@ -150,9 +155,9 @@ class PAPU(_Device):
         return self['PeriodLength-Cte']
 
     @property
-    def status(self):
-        """ID status."""
-        return self['Status-Mon']
+    def log_mon(self):
+        """Return ID Log."""
+        return self['Log-Mon']
 
     # --- phase speeds ----
 
@@ -226,29 +231,15 @@ class PAPU(_Device):
         """Return is moving state (True|False)."""
         return self['Moving-Mon'] != 0
 
-    # --- other checks ---
-
     @property
-    def is_busy(self):
-        """Return is busy state (True|False)."""
-        return self['IsBusy-Mon'] != 0
+    def is_homing(self):
+        """Return whether ID is in homing procedure (True|False)."""
+        return self['Home-Mon'] != 0
 
     @property
     def is_beamline_ctrl_enabled(self):
         """Return beamline control enabled state (True|False)."""
         return self['BeamLineCtrlEnbl-Sts'] != 0
-
-    # --- cmd_wait
-
-    def cmd_wait_while_busy(self, timeout=None):
-        """Command wait within timeout while ID control is busy."""
-        timeout = timeout or self._default_timeout
-        time_init = _time.time()
-        while self.is_busy:
-            _time.sleep(min(self._SHORT_SHUT_EYE, timeout))
-            if _time.time() - time_init > timeout:
-                return False
-        return True
 
     # --- cmd_beamline and cmd_drive
 
@@ -256,7 +247,7 @@ class PAPU(_Device):
         """Command turn phase drive on."""
         if self.is_phase_drive_powered:
             return True
-        self['EnblPwrAll-Cmd'] = 1
+        self['EnblPwrPhase-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1}
         return self._wait(props_values, timeout=timeout)
 
@@ -300,6 +291,20 @@ class PAPU(_Device):
         """Command to disable and break ID phase and gap movements."""
         return self.cmd_move_phase_disable(timeout=timeout)
 
+    # --- cmd_wait
+
+    def wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        return True
+
+    def wait_move_start(self, timeout=None):
+        """Command wait until movement starts or timeout."""
+        time_init = _time.time()
+        while not self.is_moving:
+            if timeout is not None and _time.time() - time_init > timeout:
+                return False
+        return True
+
     # -- cmd_move
 
     def cmd_move_stop(self, timeout=None):
@@ -307,18 +312,17 @@ class PAPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
 
         # send stop command
         self.cmd_move_disable()
 
         # check for successful stop
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
         success = True
         success &= super()._wait('Moving-Mon', 0, timeout=timeout)
-        success &= super()._wait('IsBusy-Mon', 0, timeout=timeout)
         if not success:
             return False
 
@@ -329,16 +333,12 @@ class PAPU(_Device):
         """Command to start phase movement."""
         return self._move_start('ChangePhase-Cmd', timeout=timeout)
 
-        """Command to start gap movement."""
-        return self._move_start('ChangeGap-Cmd', timeout=timeout)
-
     def cmd_move(self, phase, timeout=None):
         """Command to set and start phase movements."""
         # calc ETA
         dtime_max = abs(phase - self.phase_mon) / self.phase_speed
 
         # additional percentual in ETA
-        tol_phase = 0.01  # [mm]
         tol_dtime = 300  # [%]
         tol_factor = (1 + tol_dtime/100)
         tol_total = tol_factor * dtime_max + 5
@@ -354,7 +354,7 @@ class PAPU(_Device):
         # wait for movement within reasonable time
         time_init = _time.time()
         while \
-                abs(self.phase_mon - phase) > tol_phase or \
+                abs(self.phase_mon - phase) > PAPU.TOLERANCE_PHASE or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
                 print(f'tol_total: {tol_total:.3f} s')
@@ -380,6 +380,12 @@ class PAPU(_Device):
         success &= self.cmd_move_enable(timeout=timeout)
         return success
 
+    # --- other cmds ---
+
+    def cmd_clear_error(self):
+        """."""
+        self['ClearErr-Cmd'] = 1
+
     # --- private methods ---
 
     def _move_start(self, cmd_propty, timeout=None):
@@ -387,7 +393,7 @@ class PAPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
 
         # send move command
@@ -405,7 +411,7 @@ class PAPU(_Device):
             propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             # if self[propty_rb] == value:
             #     continue
-            if not self.cmd_wait_while_busy(timeout=timeout):
+            if not self.wait_while_busy(timeout=timeout):
                 return False
             self[propty_sp] = value
             success &= super()._wait(
@@ -431,14 +437,16 @@ class EPU(PAPU):
         ALL = (EPU50_10SB, )
 
     _properties = PAPU._properties + (
+        'EnblPwrAll-Cmd',
         'PwrGap-Mon',
+        'Status-Mon',
         'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
         'AllowedToChangeGap-Mon',
-        'ParkedGap-Cte',
+        'ParkedGap-Cte', 'IsBusy-Mon',
         'Gap-SP', 'Gap-RB', 'Gap-Mon',
         'GapSpeed-SP', 'GapSpeed-RB', 'GapSpeed-Mon',
         'MaxGapSpeed-SP', 'MaxGapSpeed-RB',
-        'ChangeGap-Cmd',
+        'ChangeGap-Cmd', 'Stop-Cmd',
         )
 
     def __init__(self, devname):
@@ -451,6 +459,11 @@ class EPU(PAPU):
 
         # call base class constructor
         super().__init__(devname, properties=self._properties, auto_mon=True)
+
+    @property
+    def status(self):
+        """ID status."""
+        return self['Status-Mon']
 
     # --- gap speeds ----
 
@@ -529,6 +542,18 @@ class EPU(PAPU):
         """Return phase and gap movements enabled state (True|False)."""
         return self.is_move_phase_enabled and self.is_move_gap_enabled
 
+    @property
+    def is_homing(self):
+        """Return whether ID is in homing procedure."""
+        return False
+
+    # --- other checks ---
+
+    @property
+    def is_busy(self):
+        """Return is busy state (True|False)."""
+        return self['IsBusy-Mon'] != 0
+
     # --- cmd_beamline and cmd_drive
 
     def cmd_drive_turn_power_on(self, timeout=None):
@@ -576,6 +601,18 @@ class EPU(PAPU):
         success &= self.cmd_move_phase_disable(timeout=timeout)
         success &= self.cmd_move_gap_disable(timeout=timeout)
         return success
+
+    # --- cmd_wait
+
+    def wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        timeout = timeout or self._default_timeout
+        time_init = _time.time()
+        while self.is_busy:
+            _time.sleep(min(self._SHORT_SHUT_EYE, timeout))
+            if _time.time() - time_init > timeout:
+                return False
+        return True
 
     # -- cmd_move
 
@@ -629,6 +666,12 @@ class EPU(PAPU):
         """Command to set and start ID movement to parked config."""
         return self.cmd_move(
             self.phase_parked, self.gap_parked, timeout=timeout)
+
+    # --- other cmds ---
+
+    def cmd_clear_error(self):
+        """."""
+        pass
 
 
 class WIG(_Device):
