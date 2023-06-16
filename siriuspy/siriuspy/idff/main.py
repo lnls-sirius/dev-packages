@@ -67,8 +67,6 @@ class App(_Callback):
             'LoopState-Sts': self._loop_state,
             'LoopFreq-SP': self._loop_freq,
             'LoopFreq-RB': self._loop_freq,
-            'ControlQS-Sel': self._control_qs,
-            'ControlQS-Sts': self._control_qs,
             'ConfigName-SP': self._config_name,
             'ConfigName-RB': self._config_name,
             'Polarization-Mon': self._polarization,
@@ -77,6 +75,11 @@ class App(_Callback):
             'CorrConfig-Cmd': 0,
             'CorrStatus-Mon': 0b1111,
         }
+        if self._const.has_qscorrs:
+            pvn2vals.ipdate({
+                'ControlQS-Sel': self._control_qs,
+                'ControlQS-Sts': self._control_qs,
+                })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
         self._update_log('Started.')
