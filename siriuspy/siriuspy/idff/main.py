@@ -10,6 +10,7 @@ from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
+from ..clientconfigdb import ConfigDBException as _ConfigDBException
 from ..devices import IDFF as _IDFF
 from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
 from ..pwrsupply.pssofb import PSNamesSOFB as _PSNamesSOFB
@@ -206,7 +207,7 @@ class App(_Callback):
         try:
             self._idff.load_config(config_name)
             self._update_log(f'Updated configuration: {config_name}.')
-        except ValueError as err:
+        except (ValueError, _ConfigDBException) as err:
             self._update_log('ERR:'+str(err))
             return False
         return True
