@@ -293,11 +293,11 @@ class PAPU(_Device):
 
     # --- cmd_wait
 
-    def cmd_wait_while_busy(self, timeout=None):
+    def wait_while_busy(self, timeout=None):
         """Command wait within timeout while ID control is busy."""
         return True
 
-    def cmd_wait_for_movement(self, timeout=None):
+    def wait_for_movement(self, timeout=None):
         """Command wait until movement starts or timeout."""
         time_init = _time.time()
         while not self.is_moving:
@@ -312,14 +312,14 @@ class PAPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
 
         # send stop command
         self.cmd_move_disable()
 
         # check for successful stop
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
         success = True
         success &= super()._wait('Moving-Mon', 0, timeout=timeout)
@@ -393,7 +393,7 @@ class PAPU(_Device):
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
-        if not self.cmd_wait_while_busy(timeout=timeout):
+        if not self.wait_while_busy(timeout=timeout):
             return False
 
         # send move command
@@ -411,7 +411,7 @@ class PAPU(_Device):
             propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             # if self[propty_rb] == value:
             #     continue
-            if not self.cmd_wait_while_busy(timeout=timeout):
+            if not self.wait_while_busy(timeout=timeout):
                 return False
             self[propty_sp] = value
             success &= super()._wait(
@@ -604,7 +604,7 @@ class EPU(PAPU):
 
     # --- cmd_wait
 
-    def cmd_wait_while_busy(self, timeout=None):
+    def wait_while_busy(self, timeout=None):
         """Command wait within timeout while ID control is busy."""
         timeout = timeout or self._default_timeout
         time_init = _time.time()
