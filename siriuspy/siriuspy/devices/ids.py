@@ -297,7 +297,7 @@ class PAPU(_Device):
         """Command wait within timeout while ID control is busy."""
         return True
 
-    def wait_for_movement(self, timeout=None):
+    def wait_move_start(self, timeout=None):
         """Command wait until movement starts or timeout."""
         time_init = _time.time()
         while not self.is_moving:
