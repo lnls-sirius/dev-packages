@@ -264,6 +264,8 @@ class App(_Callback):
     def _get_default_configname(self):
         if self._const.idname.dev == 'EPU50':
             return 'epu50_ref'
+        elif self._const.idname.dev == 'PAPU50':
+            return 'papu50_ref'
         return ''
 
     # ----- update pvs methods -----
