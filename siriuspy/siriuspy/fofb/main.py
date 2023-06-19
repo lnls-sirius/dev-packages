@@ -107,7 +107,8 @@ class App(_Callback):
                 pvo = pso.pv_object(propty)
                 pvo.set_auto_monitor(_epics.dbr.DBE_VALUE)
                 pvo.add_callback(
-                    _part(self._update_kick_array, ps_index=idx))
+                   _part(self._update_kick_array, ps_index=idx),
+                   with_ctrlvars=False)
 
         self._rf_dev = _RFGen()
 
