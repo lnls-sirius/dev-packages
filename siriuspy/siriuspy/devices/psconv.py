@@ -228,9 +228,11 @@ class StrengthConv(_Devices):
         if StrengthConv._is_trim(devname):
             # trims need dipole and family connectors
             dev_dip = PSProperty(
-                'SI-Fam:PS-B1B2-1', 'Energy' + proptype, auto_monitor_mon)
+                'SI-Fam:PS-B1B2-1', 'Energy' + proptype,
+                auto_monitor_mon=auto_monitor_mon)
             devname = devname.substitute(sub='Fam')
-            dev_fam = PSProperty(devname, 'KL' + proptype, auto_monitor_mon)
+            dev_fam = PSProperty(
+                devname, 'KL' + proptype, auto_monitor_mon=auto_monitor_mon)
             return True, dev_dip, dev_fam
         return False, None, None
 
@@ -240,15 +242,18 @@ class StrengthConv(_Devices):
             if devname.dev == 'InjKckr':
                 # BO injection kicker uses TB dipole normalizer
                 dev_dip = PSProperty(
-                    'TB-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                    'TB-Fam:PS-B', 'Energy' + proptype,
+                    auto_monitor_mon=auto_monitor_mon)
             elif devname.dev == 'EjeKckr':
                 # BO ejection kicker uses TS dipole normalizer
                 dev_dip = PSProperty(
-                    'TS-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                    'TS-Fam:PS-B', 'Energy' + proptype,
+                    auto_monitor_mon=auto_monitor_mon)
             else:
                 # other BO ps use BO dipoles as normalizer
                 dev_dip = PSProperty(
-                    'BO-Fam:PS-B-1', 'Energy' + proptype, auto_monitor_mon)
+                    'BO-Fam:PS-B-1', 'Energy' + proptype,
+                    auto_monitor_mon=auto_monitor_mon)
             return True, dev_dip
         return False, None
 
@@ -256,24 +261,29 @@ class StrengthConv(_Devices):
     def _get_dev_others(devname, proptype, auto_monitor_mon):
         if devname.startswith('LI'):
             return PSProperty(
-                'TB-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                'TB-Fam:PS-B', 'Energy' + proptype,
+                auto_monitor_mon=auto_monitor_mon)
         if devname.startswith('TB'):
             # all TB ps other than dipoles need dipole connectors
             return PSProperty(
-                'TB-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                'TB-Fam:PS-B', 'Energy' + proptype,
+                auto_monitor_mon=auto_monitor_mon)
         elif devname.startswith('TS'):
             # all TS ps use TS dipole
             return PSProperty(
-                'TS-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                'TS-Fam:PS-B', 'Energy' + proptype,
+                auto_monitor_mon=auto_monitor_mon)
         elif devname.startswith('SI'):
             if devname.dev in {'InjDpKckr', 'InjNLKckr'}:
                 # SI injection ps use TS dipole
                 return PSProperty(
-                    'TS-Fam:PS-B', 'Energy' + proptype, auto_monitor_mon)
+                    'TS-Fam:PS-B', 'Energy' + proptype,
+                    auto_monitor_mon=auto_monitor_mon)
             else:
                 # other SI ps use SI dipole
                 return PSProperty(
-                    'SI-Fam:PS-B1B2-1', 'Energy' + proptype, auto_monitor_mon)
+                    'SI-Fam:PS-B1B2-1', 'Energy' + proptype,
+                    auto_monitor_mon=auto_monitor_mon)
         return None
 
     @staticmethod

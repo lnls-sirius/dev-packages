@@ -19,7 +19,8 @@ class DevicesSync(_DeviceApp):
         properties, self._prop2prop = self._get_properties()
 
         # call base class constructor
-        super().__init__(properties, devname, auto_monitor_mon)
+        super().__init__(
+            properties, devname, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def devnames(self):

@@ -383,7 +383,8 @@ class PSApplySOFB(_Devices):
             pstype_2_index[pstype].append(i)
             if pstype not in pstype_2_sconv:
                 sconv = _StrengthConv(
-                    psname, PSApplySOFB._dipole_propty, auto_monitor_mon)
+                    psname, PSApplySOFB._dipole_propty,
+                    auto_monitor_mon=auto_monitor_mon)
                 pstype_2_sconv[pstype] = sconv
 
         # convert index to numpy array
