@@ -33,12 +33,9 @@ class Device:
             Whether to automatically monitor PVs for changes. Used for PVs
             that do not end with '-Mon' or 'Data'. Defaults to True.
         auto_monitor_mon: bool, optional
-            Whether to automatically monitor '-Mon' PVs for changes. Defaults
-            to False to avoid overloading the client.
-        auto_monitor_data: bool, optional
-            Whether to automatically monitor 'Data' PVs for changes. Defaults
-            to True. Set to False when using PV.get_timevars() to know when a
-            PV has been updated.
+            Whether to automatically monitor '-Mon' or 'Data' PVs for changes.
+            Defaults to False (to avoid overloading the client). Set to False
+            when using PV.get_timevars() to know when a PV has been updated.
     """
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
@@ -47,11 +44,10 @@ class Device:
 
     def __init__(
             self, devname, properties, auto_monitor=True,
-            auto_monitor_mon=False, auto_monitor_data=True):
+            auto_monitor_mon=False):
         self._properties = properties[:]
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
-        self._auto_monitor_data = auto_monitor_data
         self._devname, self._pvs = self._create_pvs(devname)
 
     @property
@@ -181,10 +177,8 @@ class Device:
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
             auto_monitor = self._auto_monitor
-            if pvname.endswith('-Mon'):
+            if pvname.endswith(('-Mon', 'Data')):
                 auto_monitor = self._auto_monitor_mon
-            elif pvname.endswith('Data'):
-                auto_monitor = self._auto_monitor_data
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
