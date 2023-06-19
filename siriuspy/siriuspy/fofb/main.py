@@ -118,8 +118,8 @@ class App(_Callback):
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('LoopIntlk-Mon')
             self._intlk_values[pvo.pvname] = 0
-            pvo.set_auto_monitor(True)
-            pvo.add_callback(self._callback_loopintlk)
+            pvo.add_callback(
+                self._callback_loopintlk, with_ctrlvars=False)
             self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
