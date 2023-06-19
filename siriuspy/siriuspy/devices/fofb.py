@@ -46,7 +46,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=FOFBCtrlRef._properties)
+        super().__init__(
+            devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
 
     @property
     def refx(self):
