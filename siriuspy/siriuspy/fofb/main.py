@@ -105,7 +105,7 @@ class App(_Callback):
             self._kick_mon[propty] = _np.zeros(size, dtype=float)
             for idx, pso in enumerate(self._corrs_dev.psdevs):
                 pvo = pso.pv_object(propty)
-                pvo.auto_monitor = _epics.dbr.DBE_VALUE
+                pvo.set_auto_monitor(_epics.dbr.DBE_VALUE)
                 pvo.add_callback(
                     _part(self._update_kick_array, ps_index=idx))
 
@@ -118,7 +118,7 @@ class App(_Callback):
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('LoopIntlk-Mon')
             self._intlk_values[pvo.pvname] = 0
-            pvo.auto_monitor = True
+            pvo.set_auto_monitor(True)
             pvo.add_callback(self._callback_loopintlk)
             self._intlk_pvs.append(pvo)
 
@@ -126,8 +126,7 @@ class App(_Callback):
 
         self._auxbpm = _Device(
             'SI-01M1:DI-BPM',
-            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'),
-            auto_mon=False)
+            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'))
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
