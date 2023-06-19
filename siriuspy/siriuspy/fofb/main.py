@@ -105,10 +105,9 @@ class App(_Callback):
             self._kick_mon[propty] = _np.zeros(size, dtype=float)
             for idx, pso in enumerate(self._corrs_dev.psdevs):
                 pvo = pso.pv_object(propty)
-                pvo.set_auto_monitor(_epics.dbr.DBE_VALUE)
                 pvo.add_callback(
-                   _part(self._update_kick_array, ps_index=idx),
-                   with_ctrlvars=False)
+                    _part(self._update_kick_array, ps_index=idx),
+                    with_ctrlvars=False)
 
         self._rf_dev = _RFGen()
 

@@ -168,12 +168,9 @@ class _DCCDevice(_ProptyDevice):
         if 'FMC' in self.dccname:
             properties += _DCCDevice._properties_fmc
 
-        super().__init__(devname, dccname, properties=properties)
-        prop2automon = [
-            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
-            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
-        for prop in prop2automon:
-            self.set_auto_monitor(prop, True)
+        super().__init__(
+            devname, dccname, properties=properties,
+            auto_monitor_mon=True)
 
     @property
     def bpm_id(self):
@@ -716,7 +713,8 @@ class FamFastCorrs(_Devices):
             cvn = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
             psnames = chn + cvn
         self._psnames = psnames
-        self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
+        self._psdevs = [PowerSupplyFC(psn, auto_monitor_mon=True)
+                        for psn in self._psnames]
         self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
                         for psn in self._psnames]
         super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
