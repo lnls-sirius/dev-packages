@@ -14,13 +14,14 @@ class IDSearch:
     # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
 
     _beamline2idname = {
-        'CARNAUBA': 'SI-06SB:ID-APU22',
-        'CATERETE': 'SI-07SP:ID-APU22',
-        'EMA':      'SI-08SB:ID-APU22',
-        'MANACA':   'SI-09SA:ID-APU22',
-        'SABIA':    'SI-10SB:ID-EPU50',
-        'IPE':      'SI-11SP:ID-APU58',
-        'PAINEIRA': 'SI-14SB:ID-WIG180',
+        'CARNAUBA': 'SI-06SB:ID-APU22',  # titular: VPU19
+        'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU19
+        'EMA':      'SI-08SB:ID-APU22',  # titular: IVU18
+        'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
+        'SABIA':    'SI-10SB:ID-EPU50',  # titular: 2 x DELTA52
+        'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
+        'PAINEIRA': 'SI-14SB:ID-WIG180',  # titular: IVU18
+        'SAPUCAIA': 'SI-17SA:ID-PAPU50',  # titular: 2 x APU22
     }
 
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
@@ -50,6 +51,15 @@ class IDSearch:
             'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
             'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
+        },
+        'SI-17SA:ID-PAPU50': {
+            'polarizations': ('horizontal', ),
+            'pparameter': None,
+            'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
+            'ch1': 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            'ch2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            'cv1': 'SI-17SA:PS-CV-1:Current-SP',
+            'cv2': 'SI-17SA:PS-CV-2:Current-SP',
         },
     }
 
@@ -100,8 +110,12 @@ class IDSearch:
     def conv_idname_2_pparameter_propty(idname):
         """."""
         idff = IDSearch.conv_idname_2_idff(idname)
-        pvname = _SiriusPVName(idff['pparameter'])
-        return pvname.propty
+        pparameter = idff['pparameter']
+        if pparameter:
+            pvname = _SiriusPVName(pparameter)
+            return pvname.propty
+        else:
+            return None
 
     @staticmethod
     def conv_idname_2_kparameter_propty(idname):

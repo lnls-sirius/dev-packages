@@ -71,18 +71,14 @@ def _init_CONFIG_TYPES_DICT():
 def _recursive_check(ref_value, value, checklength=True):
     tps = {type(ref_value), type(value)}
     if len(tps) > len(tps - _INT_TYPES) > 0:
-        # print('h1')
         return False
     elif len(tps) > len(tps - _FLOAT_TYPES) > 0:
-        # print('h2')
         return False
     elif isinstance(ref_value, dict):
         if checklength and len(value) != len(ref_value):
-            # print('h3')
             return False
         for key, val in value.items():
             if key not in ref_value and checklength:
-                # print('h4')
                 return False
             if key in ref_value:
                 v_ref = ref_value[key]
@@ -91,15 +87,12 @@ def _recursive_check(ref_value, value, checklength=True):
                 else:
                     checked = _recursive_check(v_ref, val, checklength)
                 if not checked:
-                    # print('h5')
                     return False
     elif isinstance(ref_value, (list, tuple, _np.ndarray)):
         if checklength and len(ref_value) != len(value):
-            # print('h6')
             return False
         for i in range(min(len(value), len(ref_value))):
             checked = _recursive_check(value[i], ref_value[i], checklength)
             if not checked:
-                # print('h7')
                 return False
     return True

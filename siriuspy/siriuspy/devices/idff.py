@@ -6,19 +6,15 @@ from ..idff.config import IDFFConfig as _IDFFConfig
 
 from .device import Device as _Device, Devices as _Devices
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
-from .ids import WIG as _WIG, APU as _APU, EPU as _EPU
+from .ids import WIG as _WIG, APU as _APU, PAPU as _PAPU, EPU as _EPU
 
 
 class IDFF(_Devices):
     """Insertion Device Feedforward Device."""
 
-    class DEVICES:
+    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES):
         """."""
-        EPU50_10SB = 'SI-10SB:ID-EPU50'
-        WIG180_14SB = 'SI-14SB:ID-WIG180'
-        ALL = (
-            EPU50_10SB, WIG180_14SB,
-            )
+        ALL = _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + _EPU.DEVICES.ALL
 
     def __init__(self, devname):
         """."""
@@ -259,6 +255,18 @@ class WIGIDFF(IDFF):
     def gap_mon(self):
         """."""
         return self.kparameter_mon
+
+
+class PAPUIDFF(IDFF):
+    """PAPU Feedforward."""
+
+    class DEVICES(_PAPU.DEVICES):
+        """."""
+
+    @property
+    def phase_mon(self):
+        """."""
+        return self.pparameter_mon
 
 
 class EPUIDFF(IDFF):
