@@ -100,9 +100,10 @@ class App(_Callback):
         _t0 = _time.time()
         self._update_corr_status()
         dtime = _time.time() - _t0
+        sleep_time = interval - dtime
         # sleep
-        if dtime > 0:
-            _time.sleep(interval - dtime)
+        if sleep_time > 0:
+            _time.sleep(sleep_time)
         else:
             _log.debug('process took {0:f}ms.'.format((dtime)*1000))
 

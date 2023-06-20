@@ -220,7 +220,11 @@ class IDFF(_Devices):
     def get_polarization_state(
             self, pparameter_value=None, kparameter_value=None):
         """."""
-        if pparameter_value is None:
+        if self.pparametername is None:
+            if kparameter_value is None:
+                kparameter_value = self.kparameter_mon
+            return self.polarizations[0], pparameter_value, kparameter_value
+        if pparameter_value:
             pparameter_value = self.pparameter_mon
         if kparameter_value is None:
             kparameter_value = self.kparameter_mon
