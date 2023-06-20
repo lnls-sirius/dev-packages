@@ -714,8 +714,7 @@ class FamFastCorrs(_Devices):
             cvn = _PSSearch.get_psnames({'sec': 'SI', 'dev': 'FCV'})
             psnames = chn + cvn
         self._psnames = psnames
-        self._psdevs = [PowerSupplyFC(psn, auto_monitor_mon=True)
-                        for psn in self._psnames]
+        self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
         self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
                         for psn in self._psnames]
         super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
