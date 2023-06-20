@@ -46,7 +46,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=FOFBCtrlRef._properties)
+        super().__init__(
+            devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
 
     @property
     def refx(self):
@@ -168,12 +169,9 @@ class _DCCDevice(_ProptyDevice):
         if 'FMC' in self.dccname:
             properties += _DCCDevice._properties_fmc
 
-        super().__init__(devname, dccname, properties=properties)
-        prop2automon = [
-            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
-            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
-        for prop in prop2automon:
-            self.set_auto_monitor(prop, True)
+        super().__init__(
+            devname, dccname, properties=properties,
+            auto_monitor_mon=True)
 
     @property
     def bpm_id(self):
@@ -717,7 +715,7 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_mon=True)
+        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
                         for psn in self._psnames]
         super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
 
