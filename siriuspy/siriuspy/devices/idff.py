@@ -238,10 +238,12 @@ class IDFF(_Devices):
         param_auto_mon = False
         devpp = _Device(
             devname=devname,
-            properties=(self._pparametername, ), auto_mon=param_auto_mon)
+            properties=(self._pparametername, ),
+            auto_monitor_mon=param_auto_mon)
         devkp = _Device(
             devname=devname,
-            properties=(self._kparametername, ), auto_mon=param_auto_mon)
+            properties=(self._kparametername, ),
+            auto_monitor_mon=param_auto_mon)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]

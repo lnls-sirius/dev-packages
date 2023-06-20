@@ -81,7 +81,7 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname, auto_mon=True, ispost_mortem=False):
+    def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
         """."""
         # call base class constructor
         if not _BPMSearch.is_valid_devname(devname):
@@ -95,7 +95,7 @@ class BPM(_Device):
         properties = list(properties)
 
         super().__init__(
-            devname, properties=properties, auto_mon=auto_mon)
+            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -912,7 +912,7 @@ class FamBPMs(_Devices):
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
         devs = [
-            BPM(dev, auto_mon=False, ispost_mortem=ispost_mortem)
+            BPM(dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem)
             for dev in bpm_names]
 
         super().__init__(devname, devs)

@@ -54,7 +54,7 @@ class PSCorrSOFB(_Device):
         _curr_refmon,
         _curr_mon)
 
-    def __init__(self, devname, auto_mon=False):
+    def __init__(self, devname, auto_monitor_mon=False):
         """."""
         self._devname_orig = _SiriusPVName(devname)
         self._sec = self._devname_orig.sec
@@ -71,7 +71,8 @@ class PSCorrSOFB(_Device):
         # call base class constructor
         devname = self._bsmpdevs[0][0]
         super().__init__(
-            devname, properties=PSCorrSOFB._properties, auto_mon=auto_mon)
+            devname, properties=PSCorrSOFB._properties,
+            auto_monitor_mon=auto_monitor_mon)
 
         # get sofb indices
         self._sofb_indices, self._idx_corr = self._get_sofb_indices()
@@ -194,18 +195,19 @@ class PSApplySOFB(_Devices):
         SI = 'SI'
         ALL = (BO, SI)
 
-    def __init__(self, devname, auto_mon=False, dipoleoff=False):
+    def __init__(self, devname, auto_monitor_mon=False, dipoleoff=False):
         """."""
         # check if device exists
         if devname not in PSApplySOFB.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # get devices
-        devices = PSApplySOFB._get_pscorrsofb_devices(devname, auto_mon)
+        devices = PSApplySOFB._get_pscorrsofb_devices(
+            devname, auto_monitor_mon)
 
         # strengthconv dictionaries
         self._pstype_2_index, self._pstype_2_sconv = \
-            self._get_strenconv(devname, auto_mon)
+            self._get_strenconv(devname, auto_monitor_mon)
 
         # add StrengthConv devices
         devices += self._pstype_2_sconv.values()
@@ -352,7 +354,7 @@ class PSApplySOFB(_Devices):
         return current
 
     @staticmethod
-    def _get_pscorrsofb_devices(devname, auto_mon):
+    def _get_pscorrsofb_devices(devname, auto_monitor_mon):
         psnames = PSNamesSOFB.get_psnames_ch(devname) + \
             PSNamesSOFB.get_psnames_cv(devname)
         devices = dict()
@@ -360,14 +362,14 @@ class PSApplySOFB(_Devices):
         for psname in psnames:
             if psname in all_devices:
                 continue
-            sofb_corr = PSCorrSOFB(psname, auto_mon)
+            sofb_corr = PSCorrSOFB(psname, auto_monitor_mon)
             all_devices += [dev[0] for dev in sofb_corr.bsmpdevs]
             devname = sofb_corr.devname_first_udc
             if devname not in devices:
                 devices[devname] = sofb_corr
         return list(devices.values())
 
-    def _get_strenconv(self, devname, auto_mon):
+    def _get_strenconv(self, devname, auto_monitor_mon):
         # 1. create pstype to StrengthConv dictionary.
         # 2. create pstype to corrector index dictionnary.
         pstype_2_index = dict()
@@ -381,7 +383,8 @@ class PSApplySOFB(_Devices):
             pstype_2_index[pstype].append(i)
             if pstype not in pstype_2_sconv:
                 sconv = _StrengthConv(
-                    psname, PSApplySOFB._dipole_propty, auto_mon)
+                    psname, PSApplySOFB._dipole_propty,
+                    auto_monitor_mon=auto_monitor_mon)
                 pstype_2_sconv[pstype] = sconv
 
         # convert index to numpy array
