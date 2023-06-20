@@ -275,6 +275,17 @@ class App(_Callback):
             self.run_callbacks(pvn, val)
 
         # load autosave data
+        # enable lists
+        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
+            okl = self._load_enbllist(dev)
+            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
+            enb = self._enable_lists[dev]
+            pvv = enb if dev != 'rf' else bool(enb)
+            self.run_callbacks(pvn, pvv)
+            if not okl:
+                self.run_callbacks(
+                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
+        self._update_fofbctrl_sync_enbllist()
         # matrix
         okm = self._load_respmat()
         self.run_callbacks('RespMat-SP', list(self._respmat.ravel()))
@@ -288,16 +299,6 @@ class App(_Callback):
             self.run_callbacks(pvn, pvv)
             if not okr:
                 self.run_callbacks(pvn.replace('SP', 'RB'), pvv)
-        # enable lists
-        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
-            okl = self._load_enbllist(dev)
-            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
-            enb = self._enable_lists[dev]
-            pvv = enb if dev != 'rf' else bool(enb)
-            self.run_callbacks(pvn, pvv)
-            if not okl:
-                self.run_callbacks(
-                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
         self._update_log('Started.')
         self._init = True
 
@@ -1125,14 +1126,15 @@ class App(_Callback):
                 'ERR: Wrong {0:s} EnblList size.'.format(device.upper()))
             return False
 
-        # check if matrix is invertible
         self._enable_lists[device] = new
-        if not self._calc_matrices():
-            self._enable_lists[device] = bkup
-            return False
 
         # do not set enable lists and save to file in initialization
         if self._init:
+            # check if matrix is invertible
+            if not self._calc_matrices():
+                self._enable_lists[device] = bkup
+                return False
+
             # handle devices enable configuration
             self._thread_enbllist = _epics.ca.CAThread(
                 target=self._handle_devices_enblconfig, args=[device, ],
