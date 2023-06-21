@@ -384,8 +384,7 @@ class PRUController:
         if not self._sofb_mode:
             return
 
-        # wait until queue is empty
-        while not self._queue.empty():
+        while not self._queue.empty():  # wait until queue is empty
             pass
 
         # select power supply dev_id for updating
