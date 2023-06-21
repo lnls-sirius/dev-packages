@@ -136,6 +136,7 @@ class MeasDVF():
         return False
 
     def reset_dvf(self):
+        """Reset DVF."""
         if self.dvf.connected:
             return self._dvf.cmd_reset()
         else:

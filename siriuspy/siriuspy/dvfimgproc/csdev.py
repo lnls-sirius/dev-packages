@@ -63,9 +63,9 @@ class Constants(_csdev.Const):
         database['ImgProperties-Cte'] = database['Properties-Cte']
         del database['Properties-Cte']
 
-        # TODO: Version here will take value from siriuspy package
-        # Is this what we want? maybe we should start composing the string
-        # from siriuspy + machine-applications?
+        # TODO: Version here will take value from siriuspy package, when
+        # code is moved to this repo. Is this what we want? maybe we should
+        # start composing the string from siriuspy + machine-applicaions?
         database['ImgVersion-Cte'] = {
             'type': 'string',
             'value': _util.get_last_commit_hash()
@@ -74,7 +74,7 @@ class Constants(_csdev.Const):
         return database
 
     def _get_image_db(self):
-        dvf_params = _DVF.conv_devname2parameters[self.devname]
+        dvf_params = _DVF.conv_devname2parameters(self.devname)
         sufix = '-Mon'
         dbase = {
             'ImgDVFSizeX-Cte': {
@@ -118,7 +118,7 @@ class Constants(_csdev.Const):
             'ImgIsWithBeamThreshold-RB': {
                 'type': 'int', 'unit': 'intensity', 'value': 10,
             },
-            }
+        }
         return dbase
 
     def _get_roi_db(self):
@@ -198,7 +198,7 @@ class Constants(_csdev.Const):
                 'type': 'enum', 'enums': _et.NO_YES,
                 'value': self.NoYes.No,
             },
-            })
+        })
         return db
 
     def _get_others_db(self):
@@ -232,6 +232,6 @@ class Constants(_csdev.Const):
                 'type': 'string', 'count': len(self.StsLblsDVF._fields),
                 'value': self.StsLblsDVF._fields,
             },
-            })
+        })
 
         return db
