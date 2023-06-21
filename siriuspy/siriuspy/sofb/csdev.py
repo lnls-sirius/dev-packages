@@ -767,10 +767,10 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0, 'unit': '#', 'prec': 0,
                 'lolim': 0, 'hilim': 100000},
             'LoopPrintEveryNumIters-SP': {
-                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'type': 'float', 'value': 200, 'unit': '#', 'prec': 0,
                 'lolim': 1, 'hilim': 100000},
             'LoopPrintEveryNumIters-RB': {
-                'type': 'float', 'value': 1000, 'unit': '#', 'prec': 0,
+                'type': 'float', 'value': 200, 'unit': '#', 'prec': 0,
                 'lolim': 1, 'hilim': 100000},
             'LoopPerfItersTOut-Mon': {
                 'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
