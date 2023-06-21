@@ -5,19 +5,23 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread, Event as _Flag
 import logging as _log
 
-from .device import Devices as _Devices, DeviceNC as _DeviceNC
+from .device import Devices as _Devices, DeviceNC as _DeviceNC, \
+    Device as _Device
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .timing import EVG, Event, Trigger
+from .timing import EVG, Event, Trigger, HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
+from ..clientconfigdb import PVsConfig as _PVsConfig, \
+    ConfigDBException as _ConfigDBException
 from ..search import PSSearch, HLTimeSearch
 from ..csdev import Const as _Const
 from ..timesys.csdev import Const as _TIConst
 from ..pwrsupply.csdev import Const as _PSConst
 from ..injctrl.csdev import Const as _InjConst
+from ..posang.csdev import Const as _PosAngConst
 from ..callbacks import Callback as _Callback
 
 
@@ -1063,6 +1067,252 @@ class InjSysPUModeHandler(_Devices, _Callback):
         return False
 
     # ---------- logging -----------
+
+    def _update_status(self, status):
+        if self._print_log:
+            print(status)
+        self.run_callbacks(status)
+
+
+class InjSysConfigHandler(_Devices, _Callback):
+    """Injection system configuration handler.
+
+    This class groups methods to switch between warm and cold
+    injection system configurations.
+    """
+
+    DEFAULT_WARM_CONFIG = 'ref_config'
+    DEFAULT_WARM_TRIGEVT = 'RmpBO'
+    DEFAULT_COLD_CONFIG = 'ref_config_topup_InjSI_optimized'
+    DEFAULT_COLD_TRIGEVT = 'Linac'
+
+    def __init__(self, print_log=True, callback=None):
+        """Init."""
+        self._print_log = print_log
+
+        # device names
+        self._injsi_putrigs = HLTimeSearch.get_hl_triggers({
+            'sec': '(BO|TS|SI)', 'dev': '.*(Sept|EjeKckr|NLKckr|FFC)'})
+        self._injbo_putrigs = HLTimeSearch.get_hl_triggers({
+            'sec': '(BO|TB)', 'dev': '.*(Sept|InjKckr)'})
+
+        self._injsi_pumags = [
+            pun.replace(':TI-', ':PU-')
+            for pun in self._injsi_putrigs if 'FFC' not in pun]
+        self._injbo_pumags = [
+            pun.replace(':TI-', ':PU-') for pun in self._injbo_putrigs]
+
+        si_posang = _PosAngConst.TS_CORRH_POSANG_SEPTSEPT + \
+            _PosAngConst.TS_CORRV_POSANG
+        self._injsi_psmags = [ps for ps in si_posang if ':PU-' not in ps]
+        bo_posang = _PosAngConst.TB_CORRH_POSANG + _PosAngConst.TB_CORRV_POSANG
+        self._injbo_psmags = [ps for ps in bo_posang if ':PU-' not in ps]
+
+        # device objects
+        self._hltiming = HLTiming()
+
+        self._injsi_pumadevs = [
+            PowerSupplyPU(mag) for mag in self._injsi_pumags]
+        self._injbo_pumadevs = [
+            PowerSupplyPU(mag) for mag in self._injbo_pumags]
+
+        self._injsi_psmadevs = [PowerSupply(mag) for mag in self._injsi_psmags]
+        self._injbo_psmadevs = [PowerSupply(mag) for mag in self._injbo_psmags]
+
+        self._nextinj = _Device(
+            'AS-Glob:AP-InjCtrl', properties=('TopUpNextInj-Mon', ))
+
+        # call base class constructor
+        alldevs = self._hltiming + \
+            self._injsi_pumadevs + self._injbo_pumadevs + \
+            self._injsi_psmadevs + self._injbo_psmadevs
+        alldevs.append(self._nextinj)
+
+        _Devices.__init__(self, '', alldevs)
+        _Callback.__init__(self, callback=callback)
+
+        # cold and warm configurations
+        self._ref_config_warm = self._read_config_from_db(
+            InjSysConfigHandler.DEFAULT_WARM_CONFIG)
+        self._ref_config_cold = self._read_config_from_db(
+            InjSysConfigHandler.DEFAULT_COLD_CONFIG)
+        self.read_warm_2_cold_deltas()
+
+    # ----- config methods -----
+
+    @property
+    def ref_config_warm(self):
+        """Global config reference for warm config."""
+        if self._ref_config_warm is not None:
+            return self._ref_config_warm.name
+
+    @ref_config_warm.setter
+    def ref_config_warm(self, new_name):
+        config = self._read_config_from_db(new_name)
+        if config is not None:
+            self._ref_config_warm = config
+            self.read_warm_2_cold_deltas()
+
+    @property
+    def ref_config_cold(self):
+        """Global config reference for cold config."""
+        if self._ref_config_cold is not None:
+            return self._ref_config_cold.name
+
+    @ref_config_cold.setter
+    def ref_config_cold(self, new_name):
+        config = self._read_config_from_db(new_name)
+        if config is not None:
+            self._ref_config_cold = config
+            self.read_warm_2_cold_deltas()
+
+    @property
+    def warm_2_cold_deltas(self):
+        """Return warm to cold configuration deltas."""
+        return self._warm_2_cold_deltas.copy()
+
+    def read_warm_2_cold_deltas(self):
+        """Read deltas from warm to cold configuration."""
+        warm2cold = dict()
+        magnets = self._injbo_pumags + self._injsi_pumags
+        magnets += self._injbo_psmags + self._injsi_psmags
+        for mag in magnets:
+            propty = 'Current' if ':PS-' in mag else 'Voltage'
+            warm = self._ref_config_warm.pvs[mag + ':' + propty + '-SP'][0]
+            cold = self._ref_config_cold.pvs[mag + ':' + propty + '-SP'][0]
+            warm2cold[mag] = cold - warm  # delta, where warm + delta = cold
+        self._warm_2_cold_deltas = warm2cold
+        return True
+
+    # ----- cold mode methods -----
+
+    def is_cold(self, only_injbo=True):
+        """Return whether injector are in cold config."""
+        return self._check_triggers_config('cold', only_injbo)
+
+    def switch_to_cold_config(self, only_injbo=True):
+        """Switch injector to cold configuration."""
+        if self.is_cold(only_injbo):
+            self._update_status('Already at cold configuration.')
+            return True
+        return self._set_devices_config('cold', only_injbo)
+
+    def cmd_do_pulse_without_injsi(self):
+        """Do a pulse without injecting to SI."""
+        if 0 < self._nextinj['TopUpNextInj-Mon'] - _time.time() < 40:
+            self._update_status('Too close from next injection. Aborting...')
+            return False
+
+        self._turn_off_injsi()
+
+        self._update_status('Turning Injection On...')
+        self._hltiming.evg.cmd_turn_on_injection()
+        _time.sleep(0.5)
+        self._hltiming.evg.wait_injection_finish()
+        _time.sleep(2)
+        self._update_status('Done!')
+
+        self._turn_on_injsi()
+        return True
+
+    # ----- warm mode methods -----
+
+    def is_warm(self, only_injbo=True):
+        """Return whether injector are in warm config."""
+        return self._check_triggers_config('warm', only_injbo)
+
+    def switch_to_warm_config(self, only_injbo=True):
+        """Switch injector to warm configuration."""
+        if self.is_warm(only_injbo):
+            self._update_status('Already at warm configuration.')
+            return True
+        return self._set_devices_config('warm', only_injbo)
+
+    # ----- auxiliary methods -----
+
+    def _read_config_from_db(self, config_name):
+        try:
+            config = _PVsConfig(config_type='global_config', name=config_name)
+            config.load()
+            self._update_status(
+                f'Configuration {config_name} read from configdb.')
+        except _ConfigDBException:
+            self._update_status('ERR:Could not read configuration.')
+            return None
+        return config
+
+    def _check_triggers_config(self, config, only_injbo=True):
+        triggers = self._injbo_putrigs
+        if not only_injbo:
+            triggers += self._injsi_putrigs
+        triggers = [self._hltiming.triggers[trig] for trig in triggers]
+
+        trigsrc = self._get_trigger_source(config)
+        if all(trig.source_str == trigsrc for trig in triggers):
+            return True
+        return False
+
+    def _set_devices_config(self, config, only_injbo=True):
+        if only_injbo:
+            magnets = self._injbo_pumadevs + self._injbo_psmadevs
+            triggers = self._injbo_putrigs
+        else:
+            magnets = self._injsi_pumadevs + self._injsi_psmadevs + \
+                self._injbo_pumadevs + self._injbo_psmadevs
+            triggers = self._injbo_putrigs + self._injsi_putrigs
+
+        trigsrc = self._get_trigger_source(config)
+        magdlt = +1 if config == 'warm' else -1
+
+        self._update_status(f'Setting PS and PU to {config} configuration...')
+        for dev in magnets:
+            devname = dev.devname
+            propty = 'Current' if ':PS-' in devname else 'Voltage'
+            dev[propty+'-SP'] += magdlt * self._warm_2_cold_deltas[devname]
+
+        self._update_status(f'Moving PU triggers to {trigsrc}...')
+        self._hltiming.change_triggers_source(
+            triggers, new_src=trigsrc, printlog=self._print_log)
+
+        self._update_status('Done!')
+        return True
+
+    def _get_trigger_source(self, config):
+        if config == 'warm':
+            return InjSysConfigHandler.DEFAULT_WARM_TRIGEVT
+        return InjSysConfigHandler.DEFAULT_COLD_TRIGEVT
+
+    def _turn_off_injsi(self):
+        """Turn off injection to SI."""
+        self._update_status('Turning pulses off...')
+        for dev in self._injsi_pumadevs:
+            dev.pulse = 0
+        _time.sleep(1)
+        self._update_status('Done!')
+
+        self._update_status('Turning triggers off...')
+        for trig in self._injsi_putrigs:
+            self._hltiming.triggers[trig].state = 0
+        _time.sleep(1)
+        self._update_status('Done!')
+        return True
+
+    def _turn_on_injsi(self):
+        """Turn on injection to SI."""
+        self._update_status('Turning triggers on...')
+        for trig in self._injsi_putrigs:
+            self._hltiming.triggers[trig].state = 1
+        _time.sleep(1)
+        self._update_status('Done!')
+
+        self._update_status('Turning pulses on...')
+        for dev in self._injsi_pumadevs:
+            dev.pulse = 1
+        _time.sleep(1)
+        self._update_status('Done!')
+        return True
+
+    # ----- log methods -----
 
     def _update_status(self, status):
         if self._print_log:
