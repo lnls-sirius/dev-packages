@@ -42,7 +42,7 @@ class ETypes(_csdev.ETypes):
         'TimingConnected', 'TimingConfigured', 'RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
-        'BPMsEnabled', 'BPMsConfigured')
+        'BPMsEnabled', 'BPMsConfigured', 'OrbRawConnected')
     STS_LBLS_GLOB = ('Ok', 'NotOk')
 
 
