@@ -60,10 +60,10 @@ class EpicsOrbit(BaseOrbit):
         self._new_orbit_raw = _Event()
         if self.acc == 'SI':
             self._sloworb_raw_pv = _PV(
-                'SI-Glob:AP-SOFB:OrbitRaw-Mon',
+                'SI-Glob:AP-SOFB:SlowOrbRaw-Mon',
                 callback=self._update_sloworb_raw, auto_monitor=True)
             self._sloworb_raw_timeout_pv = _PV(
-                'SI-Glob:AP-SOFB:OrbitRawTimeout-RB', auto_monitor=True)
+                'SI-Glob:AP-SOFB:SlowOrbTimeout-RB', auto_monitor=True)
         self._orbit_thread = _Repeat(
             1/self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0)
         self._orbit_thread.start()
@@ -957,6 +957,9 @@ class EpicsOrbit(BaseOrbit):
                 lambda x: x.switching_mode == _csbpm.SwModes.switching, bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
+        orb_conn = self._sloworb_raw_pv.connected if self.acc == 'SI' else True
+        status = _util.update_bit(v=status, bit_pos=5, bit_val=not orb_conn)
+
         self._status = status
         self.run_callbacks('OrbStatus-Mon', status)
         self._update_bpmoffsets()
@@ -973,6 +976,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('BPMOffsetY-Mon', orby)
 
     def _get_mask(self):
+        mask = _np.ones(self._csorb.nr_bpms, dtype=bool)
         if self.sofb is not None and self.sofb.matrix is not None:
             mask = self.sofb.matrix.bpm_enbllist
             mask = mask[:mask.size//2] & mask[mask.size//2:]
