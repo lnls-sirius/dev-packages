@@ -750,6 +750,9 @@ class EpicsOrbit(BaseOrbit):
         if self._sloworb_raw_timeout_pv.connected:
             timeout = self._sloworb_raw_timeout_pv.value or timeout
         if not self._new_orbit_raw.wait(timeout=timeout):
+            msg = 'ERR: Raw orbit did not update.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return
         self._new_orbit_raw.clear()
 
