@@ -60,18 +60,18 @@ class App(_Callback):
         self._target_current = 100.0
         self._bucketlist_start = 1
         self._bucketlist_stop = 864
-        self._bucketlist_step = 15
+        self._bucketlist_step = 29
         self._isinj_delay = 0
         self._isinj_duration = 300
 
         self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 5*60  # [s]
-        self._topup_headstarttime = 0
+        self._topup_period = 4*60  # [s]
+        self._topup_headstarttime = 2.43
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
         self._topup_pu_prepared = True
-        self._topup_liwarmupenbl = _Const.DsblEnbl.Dsbl
+        self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
         self._topup_liwarmuptime = 30
         self._topup_li_prepared = True
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
