@@ -63,9 +63,10 @@ class Constants(_csdev.Const):
         database['ImgProperties-Cte'] = database['Properties-Cte']
         del database['Properties-Cte']
 
-        # TODO: Version here will take value from siriuspy package, when
-        # code is moved to this repo. Is this what we want? maybe we should
-        # start composing the string from siriuspy + machine-applicaions?
+        # TODO: When the known bug related to the use of get_last_commit_hash
+        # for determining application version is solved, maybe the value of
+        # this PV should be composed in the driver layer, using the values of
+        # siriuspy + machine-applicaions versions.
         database['ImgVersion-Cte'] = {
             'type': 'string',
             'value': _util.get_last_commit_hash()
