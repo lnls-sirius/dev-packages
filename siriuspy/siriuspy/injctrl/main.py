@@ -731,7 +731,7 @@ class App(_Callback):
     def set_topup_headstarttime(self, value):
         """Set top-up head start time [s]."""
         # do not allow headstarttime to be larger than topup_period.
-        if not 0 <= value < self._topup_period - 1:
+        if not 0 <= value <= self._topup_period - 1:
             return False
         self._topup_headstarttime = value
         self._update_log('Changed top-up head start time to '+str(value)+'s.')
