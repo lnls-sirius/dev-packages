@@ -57,13 +57,11 @@ class EpicsOrbit(BaseOrbit):
         self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
         self.new_orbit = _Event()
-        self._new_orbit_raw = _Event()
+        self._new_orbraw_flag = _Event()
         if self.acc == 'SI':
             self._sloworb_raw_pv = _PV(
                 'SI-Glob:AP-SOFB:SlowOrbRaw-Mon',
                 callback=self._update_sloworb_raw, auto_monitor=True)
-            self._sloworb_raw_timeout_pv = _PV(
-                'SI-Glob:AP-SOFB:SlowOrbTimeout-RB', auto_monitor=True)
         self._orbit_thread = _Repeat(
             1/self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0)
         self._orbit_thread.start()
@@ -158,12 +156,11 @@ class EpicsOrbit(BaseOrbit):
         """Check is mode or self._mode is in any of the Triggered modes."""
         return self.is_singlepass(mode) or self.is_multiturn(mode)
 
-    def get_orbit(self, reset=False, synced=False, timeout=1/10):
+    def get_orbit(self, reset=False, synced=False, timeout=1/5):
         """Return the orbit distortion."""
         nrb = self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
-
         if reset:
             with self._lock_raw_orbs:
                 msg = 'DEB: Reseting Orbit.'
@@ -746,15 +743,14 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self):
         """."""
-        timeout = 110/1000
-        if self._sloworb_raw_timeout_pv.connected:
-            timeout = self._sloworb_raw_timeout_pv.value or timeout
-        if not self._new_orbit_raw.wait(timeout=timeout):
+        timeout = 1000/1000
+        if not self._new_orbraw_flag.wait(timeout=timeout):
             msg = 'ERR: Raw orbit did not update.'
             self._update_log(msg)
             _log.error(msg[5:])
             return
-        self._new_orbit_raw.clear()
+        else:
+            self._new_orbraw_flag.clear()
 
         orb = self._sloworb_raw_pv.value
         posx, posy = orb[:self._csorb.nr_bpms], orb[self._csorb.nr_bpms:]
@@ -791,7 +787,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_sloworb_raw(self, pvname, value, **kwrgs):
         _ = pvname, value, kwrgs
-        self._new_orbit_raw.set()
+        self._new_orbraw_flag.set()
 
     def _update_multiturn_orbits(self, force_update=True):
         """."""
