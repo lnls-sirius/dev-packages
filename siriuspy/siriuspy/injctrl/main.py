@@ -66,7 +66,7 @@ class App(_Callback):
 
         self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 4*60  # [s]
+        self._topup_period = 3*60  # [s]
         self._topup_headstarttime = 2.43
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
@@ -331,8 +331,8 @@ class App(_Callback):
             'IsInjDuration-RB': self._isinj_duration,
             'TopUpState-Sel': self._topup_state_sel,
             'TopUpState-Sts': self._topup_state_sts,
-            'TopUpPeriod-SP': self._topup_period/60,
-            'TopUpPeriod-RB': self._topup_period/60,
+            'TopUpPeriod-SP': self._topup_period,
+            'TopUpPeriod-RB': self._topup_period,
             'TopUpHeadStartTime-SP': self._topup_headstarttime,
             'TopUpHeadStartTime-RB': self._topup_headstarttime,
             'TopUpPUStandbyEnbl-Sel': self._topup_pustandbyenbl,
@@ -710,23 +710,28 @@ class App(_Callback):
 
     def set_topup_period(self, value):
         """Set top-up period [min]."""
-        if not 1 <= value <= 6*60:
+        if not 1 <= value <= 60*60:
             return False
 
-        sec = value*60
+        if self._topup_headstarttime > value - 1:
+            if self.set_topup_headstarttime(value - 1):
+                self.run_callbacks('TopUpHeadStartTime-SP', value - 1)
+
+        sec = value
         if self._topup_state_sts != _Const.TopUpSts.Off:
             now = _Time.now().timestamp()
             self._topup_next = now - (now % sec) + sec
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
         self._topup_period = sec
-        self._update_log('Changed top-up period to '+str(value)+'min.')
+        self._update_log('Changed top-up period to '+str(value)+'s.')
         self.run_callbacks('TopUpPeriod-RB', value)
         return True
 
     def set_topup_headstarttime(self, value):
         """Set top-up head start time [s]."""
-        if not 0 <= value <= 10*60:
+        # do not allow headstarttime to be larger than topup_period.
+        if not 0 <= value < self._topup_period - 1:
             return False
         self._topup_headstarttime = value
         self._update_log('Changed top-up head start time to '+str(value)+'s.')
