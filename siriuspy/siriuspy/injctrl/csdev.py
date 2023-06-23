@@ -258,7 +258,7 @@ def get_injctrl_propty_database():
             'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
             'type': 'int', 'value': 3, 'unit': 'min',
-            'lolim': 1, 'hilim': 60*60},
+            'lolim': 1, 'hilim': 6*60},
         'TopUpHeadStartTime-SP': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
             'lolim': 0, 'hilim': 2*60},
