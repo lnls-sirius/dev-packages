@@ -67,7 +67,7 @@ class App(_Callback):
         self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
         self._topup_period = 3*60  # [s]
-        self._topup_headstarttime = 2.43
+        self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
         self._topup_pu_prepared = True
