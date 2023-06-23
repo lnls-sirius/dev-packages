@@ -1415,7 +1415,7 @@ class App(_Callback):
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
         self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
-        self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
+        self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
         self._handle_bops_standby_state(_Const.StandbyInject.Inject)
         self._handle_borf_standby_state(_Const.StandbyInject.Inject)
 
