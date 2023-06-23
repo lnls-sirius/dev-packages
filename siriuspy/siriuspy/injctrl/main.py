@@ -67,7 +67,6 @@ class App(_Callback):
         self._accum_state_sts = _Const.AccumSts.Off
         self._accum_period = 5  # [s]
 
-        self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
         self._topup_period = 3*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
@@ -177,8 +176,6 @@ class App(_Callback):
         self._init_injevt = False
         self._evg_dev.pv_object('InjectionEvt-Sel').add_callback(
             self._callback_watch_injectionevt)
-        self._evg_dev.pv_object('RepeatBucketList-RB').add_callback(
-            self._callback_watch_repeatbucketlist)
         self._evg_dev.set_auto_monitor('TotalInjCount-Mon', True)
         self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
             self._callback_is_injecting)
@@ -339,7 +336,7 @@ class App(_Callback):
             'AccumState-Sts': self._accum_state_sts,
             'AccumPeriod-SP': self._accum_period,
             'AccumPeriod-RB': self._accum_period,
-            'TopUpState-Sel': self._topup_state_sel,
+            'TopUpState-Sel': _Const.OffOn.Off,
             'TopUpState-Sts': self._topup_state_sts,
             'TopUpPeriod-SP': self._topup_period/60,
             'TopUpPeriod-RB': self._topup_period/60,
@@ -712,14 +709,11 @@ class App(_Callback):
         if self._mode != _Const.InjMode.TopUp:
             return False
 
-        self._topup_state_sel = value
         if value == _Const.OffOn.On:
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
                 return False
-            if self._topup_thread is not None and \
-                    not self._topup_thread.is_alive() or\
-                    self._topup_thread is None:
+            if self._topup_thread is None or not self._topup_thread.is_alive():
                 self._launch_topup_thread()
         else:
             self._update_log('Stop received!')
@@ -1126,13 +1120,6 @@ class App(_Callback):
             self.run_callbacks('PUMode-Sel', self._pumode)
             self.run_callbacks('PUMode-Sts', self._pumode)
 
-    def _callback_watch_repeatbucketlist(self, value, **kws):
-        if self._mode != _Const.InjMode.Decay and value != 1:
-            topup = _Const.InjMode.Topup
-            stg = 'top-up' if self._mode == topup else 'accumulation'
-            self._update_log('WARN:RepeatBucketList is diff. from 1.')
-            self._update_log(f'WARN:Aborting {stg:f}...')
-
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
             return
@@ -1438,8 +1425,7 @@ class App(_Callback):
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
         if not self._abort or self._setting_mode:
-            self._topup_state_sel = _Const.OffOn.Off
-            self.run_callbacks('TopUpState-Sel', self._topup_state_sel)
+            self.run_callbacks('TopUpState-Sel', _Const.OffOn.Off)
 
     def _wait_topup_period(self):
         while _time.time() < self._topup_next:
