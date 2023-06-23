@@ -254,17 +254,17 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
             'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 3*60, 'unit': 's',
-            'lolim': 1, 'hilim': 60*60},
+            'type': 'int', 'value': 3, 'unit': 'min',
+            'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 3*60, 'unit': 's',
+            'type': 'int', 'value': 3, 'unit': 'min',
             'lolim': 1, 'hilim': 60*60},
         'TopUpHeadStartTime-SP': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
-            'lolim': 0, 'hilim': 10},
+            'lolim': 0, 'hilim': 2*60},
         'TopUpHeadStartTime-RB': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
-            'lolim': 0, 'hilim': 10},
+            'lolim': 0, 'hilim': 2*60},
         'TopUpPUStandbyEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
