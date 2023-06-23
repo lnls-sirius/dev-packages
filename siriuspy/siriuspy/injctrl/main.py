@@ -85,7 +85,7 @@ class App(_Callback):
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
-        self._topup_thread = None
+        self._topup_job = None
         self._accum_job = None
         self._abort = False
         self._setting_mode = False
@@ -444,9 +444,9 @@ class App(_Callback):
             return True
 
         # stop topup and accum threads:
-        if self._topup_thread and self._topup_thread.is_alive():
+        if self._topup_job and self._topup_job.is_alive():
             self._setting_mode = True
-            self._stop_topup_thread()
+            self._stop_topup_job()
             self._setting_mode = False
         if self._accum_job and self._accum_job.is_alive():
             self._setting_mode = True
@@ -712,13 +712,13 @@ class App(_Callback):
             self._update_log('Start received!')
             if not self._check_allok_2_inject():
                 return False
-            if self._topup_thread is None or not self._topup_thread.is_alive():
-                self._launch_topup_thread()
+            if self._topup_job is None or not self._topup_job.is_alive():
+                self._launch_topup_job()
         else:
             self._update_log('Stop received!')
-            if self._topup_thread is not None and \
-                    self._topup_thread.is_alive():
-                self._stop_topup_thread()
+            if self._topup_job is not None and \
+                    self._topup_job.is_alive():
+                self._stop_topup_job()
         return True
 
     def set_accum_state(self, value):
@@ -731,7 +731,7 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 return False
             if self._accum_job is None or not self._accum_job.is_alive():
-                self._launch_topup_thread()
+                self._launch_topup_job()
         else:
             self._update_log('Stop received!')
             if self.accum_thread is not None and self._accum_job.is_alive():
@@ -1333,21 +1333,21 @@ class App(_Callback):
 
     # --- auxiliary top-up methods ---
 
-    def _launch_topup_thread(self):
+    def _launch_topup_job(self):
         while self._abort:
             _time.sleep(0.1)
         self._update_log('Launching top-up thread...')
-        self._topup_thread = _epics.ca.CAThread(
+        self._topup_job = _epics.ca.CAThread(
             target=self._do_topup, daemon=True)
-        self._topup_thread.start()
+        self._topup_job.start()
 
-    def _stop_topup_thread(self):
+    def _stop_topup_job(self):
         if self._abort:
             return
         self._update_log('Stopping top-up thread...')
         self._abort = True
-        self._topup_thread.join()
-        self._topup_thread = None
+        self._topup_job.join()
+        self._topup_job = None
         self._update_log('Stopped top-up thread.')
         self._abort = False
 
