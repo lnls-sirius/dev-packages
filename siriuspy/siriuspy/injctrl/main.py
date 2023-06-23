@@ -72,16 +72,16 @@ class App(_Callback):
         self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
-        self._topup_pu_prepared = True
+        self._aspu_standby_state = None
         self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
         self._topup_liwarmuptime = 30
-        self._topup_li_prepared = True
+        self._liti_warmup_state = None
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_bopswarmuptime = 10
-        self._topup_bops_prepared = True
+        self._bops_standby_state = None
         self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_borfwarmuptime = 10
-        self._topup_borf_prepared = True
+        self._borf_standby_state = None
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
@@ -193,7 +193,6 @@ class App(_Callback):
             'propty_name': '(?!:CCoil).*'})
         self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
         self._pu_refvolt = list()
-        self._topup_puref_ignore = False
         for dev in self._pu_devs:
             pvo = dev.pv_object('Voltage-SP')
             self._pu_refvolt.append(pvo.value)
@@ -606,7 +605,7 @@ class App(_Callback):
         return True
 
     def set_pumode_delta_posang(self, value):
-        """Set PU mode delta posang"""
+        """Set PU mode delta posang."""
         self._pumode_dev.delta_posang = value
         self.run_callbacks('PUModeDeltaPosAng-RB', value)
         return True
@@ -794,11 +793,8 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
-        if value:
-            if not self._update_topup_pu_refvolt():
-                return False
-        else:
-            self._handle_topup_pu_voltage(_Const.StandbyInject.Inject)
+        if value == _Const.DsblEnbl.Dsbl:
+            self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
         self._topup_pustandbyenbl = value
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled PU standby between injections.')
@@ -819,7 +815,7 @@ class App(_Callback):
             return False
 
         if value == _Const.DsblEnbl.Dsbl:
-            self._handle_topup_linac_timing(state=_Const.StandbyInject.Inject)
+            self._handle_liti_warmup_state(state=_Const.StandbyInject.Inject)
         self._topup_liwarmupenbl = value
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled LI warm up before injections.')
@@ -840,7 +836,7 @@ class App(_Callback):
             return False
 
         if value == _Const.DsblEnbl.Dsbl:
-            self._handle_topup_bops_timing(state=_Const.StandbyInject.Inject)
+            self._handle_bops_standby_state(state=_Const.StandbyInject.Inject)
         self._topup_bopsstandbyenbl = value
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled BO PS standby between injections.')
@@ -863,7 +859,7 @@ class App(_Callback):
             return False
 
         if value == _Const.DsblEnbl.Dsbl:
-            self._handle_topup_borf_timing(state=_Const.StandbyInject.Inject)
+            self._handle_borf_standby_state(state=_Const.StandbyInject.Inject)
         self._topup_borfstandbyenbl = value
         text = 'En' if value else 'Dis'
         self._update_log(text+'abled BO RF standby between injections.')
@@ -1123,7 +1119,7 @@ class App(_Callback):
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
             return
-        if self._topup_puref_ignore:
+        if self._aspu_standby_state == _Const.StandbyInject.Standby:
             return
         devname = _PVName(pvname).device_name
         index = self._pu_names.index(devname)
@@ -1406,18 +1402,22 @@ class App(_Callback):
                 self._update_log('Skipping injection...')
                 _time.sleep(2)
 
-            self._handle_topup_pu_voltage(_Const.StandbyInject.Standby)
-            self._handle_topup_linac_timing(_Const.StandbyInject.Standby)
-            self._handle_topup_bops_timing(_Const.StandbyInject.Standby)
-            self._handle_topup_borf_timing(_Const.StandbyInject.Standby)
+            if self._topup_pustandbyenbl:
+                self._handle_aspu_standby_state(_Const.StandbyInject.Standby)
+            if self._topup_liwarmupenbl:
+                self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
+            if self._topup_bopsstandbyenbl:
+                self._handle_bops_standby_state(_Const.StandbyInject.Standby)
+            if self._topup_borfstandbyenbl:
+                self._handle_borf_standby_state(_Const.StandbyInject.Standby)
 
             self._topup_next += self._topup_period
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
-        self._handle_topup_pu_voltage(_Const.StandbyInject.Inject)
-        self._handle_topup_linac_timing(_Const.StandbyInject.Inject)
-        self._handle_topup_bops_timing(_Const.StandbyInject.Inject)
-        self._handle_topup_borf_timing(_Const.StandbyInject.Inject)
+        self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
+        self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
+        self._handle_bops_standby_state(_Const.StandbyInject.Inject)
+        self._handle_borf_standby_state(_Const.StandbyInject.Inject)
 
         self._bias_feedback.do_update_models = False
 
@@ -1441,13 +1441,13 @@ class App(_Callback):
 
             # prepare subsystems
             if remaining <= self._topup_puwarmuptime:
-                self._handle_topup_pu_voltage(_Const.StandbyInject.Inject)
+                self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
             if remaining <= self._topup_liwarmuptime:
-                self._handle_topup_linac_timing(_Const.StandbyInject.Inject)
+                self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
             if remaining <= self._topup_bopswarmuptime:
-                self._handle_topup_bops_timing(_Const.StandbyInject.Inject)
+                self._handle_bops_standby_state(_Const.StandbyInject.Inject)
             if remaining <= self._topup_borfwarmuptime:
-                self._handle_topup_borf_timing(_Const.StandbyInject.Inject)
+                self._handle_borf_standby_state(_Const.StandbyInject.Inject)
 
             # bias fb
             cond = remaining <= _Const.BIASFB_AHEADSETIME
@@ -1472,42 +1472,34 @@ class App(_Callback):
         return True
 
     def _prepare_topup(self):
+        # If remaining time is too short do not put in standby or warmup
         # PU
-        if self._topup_pustandbyenbl:
-            if not self._update_topup_pu_refvolt():
-                self._update_log('ERR:...aborted top-up loop.')
-                return
-            # set PU voltage standby if remaining time is not too short
-            if self._topup_next - _time.time() > self._topup_puwarmuptime*2:
-                self._handle_topup_pu_voltage(_Const.StandbyInject.Standby)
+        standby = _Const.StandbyInject.Standby
+        if self._topup_pustandbyenbl and \
+                self._topup_next - _time.time() > self._topup_puwarmuptime*2:
+            self._handle_aspu_standby_state(standby)
 
         # LI
-        if self._topup_liwarmupenbl:
-            if self._topup_next - _time.time() > self._topup_liwarmuptime*2:
-                self._handle_topup_linac_timing(
-                    state=_Const.StandbyInject.Standby)
+        if self._topup_liwarmupenbl and \
+                self._topup_next - _time.time() > self._topup_liwarmuptime*2:
+            self._handle_liti_warmup_state(standby)
 
         # BO PS
-        if self._topup_bopsstandbyenbl:
-            if self._topup_next - _time.time() > self._topup_bopswarmuptime*2:
-                self._handle_topup_bops_timing(
-                    state=_Const.StandbyInject.Standby)
+        if self._topup_bopsstandbyenbl and \
+                self._topup_next - _time.time() > self._topup_bopswarmuptime*2:
+            self._handle_bops_standby_state(standby)
 
         # BO RF
-        if self._topup_borfstandbyenbl:
-            if self._topup_next - _time.time() > self._topup_borfwarmuptime*2:
-                self._handle_topup_borf_timing(
-                    state=_Const.StandbyInject.Standby)
+        if self._topup_borfstandbyenbl and \
+                self._topup_next - _time.time() > self._topup_borfwarmuptime*2:
+            self._handle_borf_standby_state(standby)
 
-    def _handle_topup_pu_voltage(self, state):
-        if not self._topup_pustandbyenbl:
+    def _handle_aspu_standby_state(self, state):
+        if self._aspu_standby_state == state:
             return
-        is_inj = state == _Const.StandbyInject.Inject
-        if is_inj and self._topup_pu_prepared:
-            return
-        self._topup_puref_ignore = True
-        self._topup_pu_prepared = is_inj
-        factor = 1 if is_inj else 0.5
+        self._aspu_standby_state = state
+
+        factor = 1 if state == _Const.StandbyInject.Inject else 0.5
         self._update_log(f'Setting PU Voltage to {factor*100}%...')
         for idx, dev in enumerate(self._pu_devs):
             if not dev.connected:
@@ -1515,59 +1507,36 @@ class App(_Callback):
                 continue
             dev.voltage = self._pu_refvolt[idx] * factor
         self._update_log('...done.')
-        _time.sleep(1)
-        self._topup_puref_ignore = False
 
-    def _update_topup_pu_refvolt(self):
-        # get PU voltage reference
-        for idx, dev in enumerate(self._pu_devs):
-            spv = dev['Voltage-SP']
-            if spv is None:
-                self._update_topupsts(_Const.TopUpSts.Off)
-                self._update_log('ERR:Could not read voltage of')
-                self._update_log('ERR:'+dev.devname+'...')
-                return False
-            self._pu_refvolt[idx] = dev['Voltage-SP']
-        return True
+    def _handle_liti_warmup_state(self, state):
+        if self._liti_warmup_state == state:
+            return
+        self._liti_warmup_state = state
 
-    def _handle_topup_linac_timing(self, state):
-        if not self._topup_liwarmupenbl:
-            return
-        is_inj = state == _Const.StandbyInject.Inject
-        if is_inj and self._topup_li_prepared:
-            return
-        self._topup_li_prepared = is_inj
-        event = 'RmpBO' if is_inj else 'Linac'
+        event = 'RmpBO' if state == _Const.StandbyInject.Inject else 'Linac'
         self._hlti_dev.change_triggers_source(
             self._li_trig_names, new_src=event, printlog=False)
         self._update_log('LI timing configured.')
-        return
 
-    def _handle_topup_bops_timing(self, state):
-        if not self._topup_bopsstandbyenbl:
+    def _handle_bops_standby_state(self, state):
+        if self._bops_standby_state == state:
             return
-        is_inj = state == _Const.StandbyInject.Inject
-        if is_inj and self._topup_bops_prepared:
-            return
-        self._topup_bops_prepared = is_inj
-        trigstate = int(is_inj)
+        self._bops_standby_state = state
+
+        trigstate = int(state == _Const.StandbyInject.Inject)
         for trig in self._bops_trig_devs:
             trig.state = trigstate
         self._update_log('BO PS timing configured.')
-        return
 
-    def _handle_topup_borf_timing(self, state):
-        if not self._topup_borfstandbyenbl:
+    def _handle_borf_standby_state(self, state):
+        if self._borf_standby_state == state:
             return
-        is_inj = state == _Const.StandbyInject.Inject
-        if is_inj and self._topup_borf_prepared:
-            return
-        self._topup_borf_prepared = is_inj
-        trigstate = int(is_inj)
+        self._borf_standby_state = state
+
+        trigstate = int(state == _Const.StandbyInject.Inject)
         for trig in self._borf_trig_devs:
             trig.state = trigstate
         self._update_log('BO RF timing configured.')
-        return
 
     # --- auxiliary log methods ---
 
