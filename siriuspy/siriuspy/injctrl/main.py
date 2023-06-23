@@ -1295,6 +1295,11 @@ class App(_Callback):
         # update bucket list according to settings
         self._update_bucket_list(nrpulses=1)
 
+        self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
+        self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
+        self._handle_bops_standby_state(_Const.StandbyInject.Inject)
+        self._handle_borf_standby_state(_Const.StandbyInject.Inject)
+
         while self._mode == _Const.InjMode.Accum:
             if not self.currinfo_dev.connected:
                 self._update_log('ERR:CurrInfo device disconnected.')
@@ -1324,6 +1329,8 @@ class App(_Callback):
             self._update_log('Injection finished.')
 
             self._update_bucket_list(nrpulses=1)
+
+        self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
         # update top-up status
         self.run_callbacks('AccumState-Sts', _Const.AccumSts.Off)
