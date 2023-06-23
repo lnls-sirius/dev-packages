@@ -64,6 +64,9 @@ class App(_Callback):
         self._isinj_delay = 0
         self._isinj_duration = 300
 
+        self._accum_state_sts = _Const.AccumSts.Off
+        self._accum_period = 5  # [s]
+
         self._topup_state_sel = _Const.OffOn.Off
         self._topup_state_sts = _Const.TopUpSts.Off
         self._topup_period = 3*60  # [s]
@@ -84,6 +87,7 @@ class App(_Callback):
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
         self._topup_thread = None
+        self._accum_job = None
         self._abort = False
         self._setting_mode = False
 
@@ -232,6 +236,8 @@ class App(_Callback):
             'BucketListStep-SP': self.set_bucketlist_step,
             'IsInjDelay-SP': self.set_isinj_delay,
             'IsInjDuration-SP': self.set_isinj_duration,
+            'AccumState-Sel': self.set_accum_state,
+            'AccumPeriod-SP': self.set_accum_period,
             'TopUpState-Sel': self.set_topup_state,
             'TopUpPeriod-SP': self.set_topup_period,
             'TopUpHeadStartTime-SP': self.set_topup_headstarttime,
@@ -329,6 +335,10 @@ class App(_Callback):
             'IsInjDelay-RB': self._isinj_delay,
             'IsInjDuration-SP': self._isinj_duration,
             'IsInjDuration-RB': self._isinj_duration,
+            'AccumState-Sel': _Const.OffOn.Off,
+            'AccumState-Sts': self._accum_state_sts,
+            'AccumPeriod-SP': self._accum_period,
+            'AccumPeriod-RB': self._accum_period,
             'TopUpState-Sel': self._topup_state_sel,
             'TopUpState-Sts': self._topup_state_sts,
             'TopUpPeriod-SP': self._topup_period/60,
@@ -433,16 +443,25 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.INJMODE):
             return False
 
-        if value == _Const.InjMode.TopUp and \
-                self._topup_state_sts == _Const.TopUpSts.Off:
+        if value == self._mode:
+            self.run_callbacks('Mode-Sts', self._mode)
+            return True
+
+        # stop topup and accum threads:
+        if self._topup_thread and self._topup_thread.is_alive():
+            self._setting_mode = True
+            self._stop_topup_thread()
+            self._setting_mode = False
+        if self._accum_job and self._accum_job.is_alive():
+            self._setting_mode = True
+            self._stop_accumulation()
+            self._setting_mode = False
+
+        if value != _Const.InjMode.Decay:
+            stg = 'top-up' if value == _Const.InjMode.Topup else 'accumulation'
             self._update_log('Configuring EVG RepeatBucketList...')
             self._evg_dev['RepeatBucketList-SP'] = 1
-            self._update_log('...done. Waiting to start top-up.')
-        else:
-            if self._topup_thread and self._topup_thread.is_alive():
-                self._setting_mode = True
-                self._stop_topup_thread()
-                self._setting_mode = False
+            self._update_log(f'...done. Ready to start {stg:s}.')
 
         self._mode = value
         self.run_callbacks('Mode-Sts', self._mode)
@@ -452,9 +471,9 @@ class App(_Callback):
         """Set injection type."""
         if not 0 <= value < len(_ETypes.INJTYPE):
             return False
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             self._update_log(
-                'ERR:Turn off top-up mode before changing inj.type.')
+                f'ERR:InjType can only be changed in Decay mode.')
             return False
         if self._p2w['Type']['watcher'] is not None and \
                 self._p2w['Type']['watcher'].is_alive():
@@ -560,9 +579,11 @@ class App(_Callback):
         """Set PU mode."""
         if not 0 <= value < len(_ETypes.PUMODE):
             return False
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
+            topup = _Const.InjMode.Topup
+            stg = 'top-up' if self._mode == topup else 'accumulation'
             self._update_log(
-                'ERR:Turn off top-up mode before changing PUMode.')
+                f'ERR:PUMode can only be changed in Decay mode.')
             return False
         if self._p2w['PUMode']['watcher'] is not None and \
                 self._p2w['PUMode']['watcher'].is_alive():
@@ -644,7 +665,7 @@ class App(_Callback):
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
         if self._mode == _Const.InjMode.TopUp:
-            if not self._update_bucket_list_topup(step=step):
+            if not self._update_bucket_list(step=step):
                 return False
         else:
             start = self._bucketlist_start
@@ -705,7 +726,23 @@ class App(_Callback):
             if self._topup_thread is not None and \
                     self._topup_thread.is_alive():
                 self._stop_topup_thread()
+        return True
 
+    def set_accum_state(self, value):
+        """Set accum state."""
+        if self._mode != _Const.InjMode.Accum:
+            return False
+
+        if value == _Const.OffOn.On:
+            self._update_log('Start received!')
+            if not self._check_allok_2_inject():
+                return False
+            if self._accum_job is None or not self._accum_job.is_alive():
+                self._launch_topup_thread()
+        else:
+            self._update_log('Stop received!')
+            if self.accum_thread is not None and self._accum_job.is_alive():
+                self._stop_accumulation()
         return True
 
     def set_topup_period(self, value):
@@ -722,6 +759,16 @@ class App(_Callback):
         self._topup_period = sec
         self._update_log('Changed top-up period to '+str(value)+'min.')
         self.run_callbacks('TopUpPeriod-RB', value)
+        return True
+
+    def set_accum_period(self, value):
+        """Set accumulation period [s]."""
+        if not 1 <= value <= 60*60:
+            return False
+
+        self._accum_period = value
+        self._update_log('Changed accumulation period to '+str(value)+'s.')
+        self.run_callbacks('AccumPeriod-RB', value)
         return True
 
     def set_topup_headstarttime(self, value):
@@ -846,7 +893,7 @@ class App(_Callback):
 
         self._topup_nrpulses = value
         if self._mode == _Const.InjMode.TopUp:
-            if not self._update_bucket_list_topup():
+            if not self._update_bucket_list():
                 return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topup_nrpulses)
@@ -1080,11 +1127,11 @@ class App(_Callback):
             self.run_callbacks('PUMode-Sts', self._pumode)
 
     def _callback_watch_repeatbucketlist(self, value, **kws):
-        if self._mode == _Const.InjMode.TopUp:
-            if value != 1:
-                self._update_log('WARN:RepeatBucketList is diff. from 1.')
-                self._update_log('WARN:Aborting top-up...')
-            return
+        if self._mode != _Const.InjMode.Decay and value != 1:
+            topup = _Const.InjMode.Topup
+            stg = 'top-up' if self._mode == topup else 'accumulation'
+            self._update_log('WARN:RepeatBucketList is diff. from 1.')
+            self._update_log(f'WARN:Aborting {stg:f}...')
 
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
@@ -1137,7 +1184,7 @@ class App(_Callback):
                     if _get_bit(self._injstatus, bit):
                         self._update_log('WARN:'+prob)
 
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             if self._evg_dev.nrpulses != 1:
                 self._update_log('ERR:Aborted. RepeatBucketList must be 1.')
                 return False
@@ -1210,7 +1257,7 @@ class App(_Callback):
         new_bucklist = _np.roll(old_bucklist, -1 * proll)
         return self._set_bucket_list(new_bucklist)
 
-    def _update_bucket_list_topup(self, step=None):
+    def _update_bucket_list(self, step=None, nrpulses=None):
         if not self._evg_dev.connected:
             self._update_log('ERR:Could not update bucket list,')
             self._update_log('ERR:EVG is disconnected.')
@@ -1223,7 +1270,8 @@ class App(_Callback):
         if not _Const.MIN_BKT <= lastfilledbucket <= _Const.MAX_BKT:
             lastfilledbucket = 1
 
-        bucket = _np.arange(self._topup_nrpulses) + 1
+        nrpulses = nrpulses or self._topup_nrpulses
+        bucket = _np.arange(nrpulses) + 1
         bucket *= step
         bucket += lastfilledbucket - 1
         bucket %= 864
@@ -1239,6 +1287,66 @@ class App(_Callback):
                 return True
         self._update_log('WARN:Could not update BucketList.')
         return False
+
+    # --- auxiliary accumulation methods ---
+
+    def _launch_accum_job(self):
+        while self._abort:
+            _time.sleep(0.1)
+        self._update_log('Launching accumulation thread...')
+        self._accum_job = _epics.ca.CAThread(
+            target=self._do_accumulation, daemon=True)
+        self._accum_job.start()
+
+    def _stop_accumulation(self):
+        if self._abort:
+            return
+        self._update_log('Stopping accumulation thread...')
+        self._abort = True
+        self._accum_job.join()
+        self._accum_job = None
+        self._update_log('Stopped accumulation thread.')
+        self._abort = False
+
+    def _do_accumulation(self):
+        # update bucket list according to settings
+        self._update_bucket_list(nrpulses=1)
+
+        while self._mode == _Const.InjMode.Accum:
+            if not self.currinfo_dev.connected:
+                self._update_log('ERR:CurrInfo device disconnected.')
+                break
+            if self.currinfo_dev.current >= self._target_current:
+                self._update_log(
+                    'Target Current reached. Stopping accumulation...')
+                break
+
+            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+            self._update_log('Waiting for next injection...')
+            _time.sleep(self._accum_period)
+
+            self._update_log('Accumulation period elapsed. Preparing...')
+            if not self._check_allok_2_inject():
+                break
+
+            self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
+            self._update_log('Starting injection...')
+            if not self._start_injection():
+                break
+
+            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
+            self._update_log('Injecting...')
+            if not self._wait_injection():
+                break
+            self._update_log('Injection finished.')
+
+            self._update_bucket_list(nrpulses=1)
+
+        # update top-up status
+        self.run_callbacks('AccumState-Sts', _Const.AccumSts.Off)
+        self._update_log('Stopped accumulation loop.')
+        if not self._abort or self._setting_mode:
+            self.run_callbacks('AccumState-Sel', _Const.OffOn.Off)
 
     # --- auxiliary top-up methods ---
 
@@ -1267,7 +1375,7 @@ class App(_Callback):
 
     def _do_topup(self):
         # update bucket list according to settings
-        self._update_bucket_list_topup()
+        self._update_bucket_list()
 
         # update next injection schedule
         now, period = _Time.now().timestamp(), self._topup_period
@@ -1305,7 +1413,7 @@ class App(_Callback):
                     break
 
                 self._update_topupsts(_Const.TopUpSts.TurningOff)
-                self._update_bucket_list_topup()
+                self._update_bucket_list()
             else:
                 self._update_topupsts(_Const.TopUpSts.Skipping)
                 self._update_log('Skipping injection...')

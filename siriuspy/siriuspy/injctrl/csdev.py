@@ -8,13 +8,14 @@ from .. import csdev as _csdev
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    INJMODE = ('Decay', 'TopUp')
+    INJMODE = ('Decay', 'TopUp', 'Accum')
     INJTYPE = ('SingleBunch', 'MultiBunch')
     INJTYPE_MON = INJTYPE + ('Undefined', )
     PUMODE = ('Accumulation', 'Optimization', 'OnAxis')
     PUMODE_MON = PUMODE + ('Undefined', )
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff', 'Skipping')
+    ACCUMSTS = ('Off', 'Waiting', 'TurningOn', 'Injecting')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
@@ -37,6 +38,7 @@ class Const(_csdev.Const):
     PUMode = _csdev.Const.register('PUMode', _et.PUMODE)
     PUModeMon = _csdev.Const.register('PUModeMon', _et.PUMODE_MON)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
+    AccumSts = _csdev.Const.register('AccumSts', _et.ACCUMSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
@@ -246,6 +248,19 @@ def get_injctrl_propty_database():
         'IsInjDuration-RB': {
             'type': 'int', 'value': 300, 'unit': 'ms',
             'lolim': 0, 'hilim': 1000},
+
+        'AccumState-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off,
+            'enums': _et.OFF_ON, 'unit': 'Off_On'},
+        'AccumState-Sts': {
+            'type': 'enum', 'value': _ct.AccumSts.Off, 'enums': _et.ACCUMSTS,
+            'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
+        'AccumPeriod-SP': {
+            'type': 'int', 'value': 5, 'unit': 's',
+            'lolim': 1, 'hilim': 60*60},
+        'AccumPeriod-RB': {
+            'type': 'int', 'value': 5, 'unit': 's',
+            'lolim': 1, 'hilim': 60*60},
 
         'TopUpState-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off,
