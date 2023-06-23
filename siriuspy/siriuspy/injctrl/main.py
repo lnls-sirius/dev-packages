@@ -1402,7 +1402,6 @@ class App(_Callback):
                 if not self._wait_injection():
                     break
 
-                self._update_topupsts(_Const.TopUpSts.TurningOff)
                 self._update_bucket_list()
             else:
                 self._update_topupsts(_Const.TopUpSts.Skipping)
