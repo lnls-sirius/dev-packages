@@ -200,6 +200,7 @@ class Device:
         if comp_(value):
             return True
 
+        timeout = timeout if timeout else _DEF_TIMEOUT
         ntrials = int(timeout/_TINY_INTERVAL)
         for _ in range(ntrials):
             _time.sleep(_TINY_INTERVAL)
