@@ -1559,8 +1559,8 @@ class MacReport:
             beg_val += [beg_idcs.size-1]
             beg1, beg2 = beg_idcs[beg_val], beg_idcs[beg_val] + 15
             if beg2[-1] > self._users_shift_delivd_values.size-1:
-                beg1.pop()
-                beg2.pop()
+                beg1 = _np.delete(beg1, -1)
+                beg2 = _np.delete(beg2, -1)
             beg_val = [i for i in range(beg1.size) if not
                        any([beg1[i] < e < beg2[i] for e in end_idcs])]
             beg1, beg2 = beg1[beg_val], beg2[beg_val]
@@ -1577,8 +1577,8 @@ class MacReport:
                              if end_idcs[i]-end_idcs[i-1] > 15]
             end1, end2 = end_idcs[end_val] - 15, end_idcs[end_val]
             if end1[0] < 0:
-                end1.pop(0)
-                end2.pop(0)
+                end1 = _np.delete(end1, 0)
+                end2 = _np.delete(end2, 0)
             end_val = [i for i in range(end1.size-1) if not
                        any([end1[i] < b < end2[i] for b in beg_idcs])]
             end1, end2 = end1[end_val], end2[end_val]
