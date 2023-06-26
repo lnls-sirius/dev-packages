@@ -450,7 +450,7 @@ class App(_Callback):
             self._setting_mode = False
         if self._accum_job and self._accum_job.is_alive():
             self._setting_mode = True
-            self._stop_accumulation()
+            self._stop_accum_job()
             self._setting_mode = False
 
         if value != _Const.InjMode.Decay:
@@ -731,11 +731,11 @@ class App(_Callback):
             if not self._check_allok_2_inject():
                 return False
             if self._accum_job is None or not self._accum_job.is_alive():
-                self._launch_topup_job()
+                self._launch_accum_job()
         else:
             self._update_log('Stop received!')
-            if self.accum_thread is not None and self._accum_job.is_alive():
-                self._stop_accumulation()
+            if self._accum_job is not None and self._accum_job.is_alive():
+                self._stop_accum_job()
         return True
 
     def set_topup_period(self, value):
@@ -1281,7 +1281,7 @@ class App(_Callback):
             target=self._do_accumulation, daemon=True)
         self._accum_job.start()
 
-    def _stop_accumulation(self):
+    def _stop_accum_job(self):
         if self._abort:
             return
         self._update_log('Stopping accumulation thread...')
