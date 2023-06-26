@@ -636,7 +636,7 @@ class App(_Callback):
             return False
         stop = self._bucketlist_stop
         step = self._bucketlist_step
-        if self._mode != _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.TopUp:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_start = start
@@ -649,7 +649,7 @@ class App(_Callback):
             return False
         start = self._bucketlist_start
         step = self._bucketlist_step
-        if self._mode != _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.TopUp:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_stop = stop
@@ -660,7 +660,7 @@ class App(_Callback):
         """Set bucketlist_step."""
         if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
             return False
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             if not self._update_bucket_list(step=step):
                 return False
         else:
@@ -1002,7 +1002,7 @@ class App(_Callback):
         if not self._init_egun:
             self._init_egun = True
             return
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             return
         _epics.ca.CAThread(
             target=self._watch_eguntrig, args=[value, ], daemon=True).start()
@@ -1023,7 +1023,7 @@ class App(_Callback):
         if not self._init_injevt:
             self._init_injevt = True
             return
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             return
         _epics.ca.CAThread(
             target=self._watch_injti, args=[value, ], daemon=True).start()
@@ -1061,7 +1061,7 @@ class App(_Callback):
         self._thread_autostop.start()
 
     def _thread_run_autostop(self, value, cb_type):
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode != _Const.InjMode.Decay:
             return
         if not self._evg_dev['InjectionEvt-Sel']:
             return
@@ -1320,8 +1320,6 @@ class App(_Callback):
             self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
             if not self._wait_injection():
                 break
-            self._update_log('Injection finished.')
-
             self._update_bucket_list(nrpulses=1)
 
             dt_ = self._accum_period - (_time.time() - t0_)
@@ -1629,7 +1627,7 @@ class App(_Callback):
                             # disregard alarms
                             if sub == 'PS':
                                 value = _np.bitwise_and(int(value), psalrm)
-                            elif self._mode == _Const.InjMode.TopUp and \
+                            elif self._mode != _Const.InjMode.Decay and \
                                     sec == 'LI' and sub == 'PU':
                                 value = _np.bitwise_and(int(value), lipualrm)
                             nok = value > 0
@@ -1682,7 +1680,7 @@ class App(_Callback):
             value = _updt_bit(value, 0, val)
 
             # BucketList not synced
-            if self._mode != _Const.InjMode.TopUp:
+            if self._mode == _Const.InjMode.Decay:
                 val = 1 if not self._evg_dev.connected else \
                     self._evg_dev.bucketlist_sync != 1
                 value = _updt_bit(value, 1, val)
