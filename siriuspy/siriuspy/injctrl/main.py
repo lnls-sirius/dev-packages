@@ -1310,17 +1310,14 @@ class App(_Callback):
                     'Target Current reached. Stopping accumulation...')
                 break
 
-            self._update_log('Accumulation period elapsed. Preparing...')
             if not self._check_allok_2_inject():
                 break
 
             self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
-            self._update_log('Starting injection...')
             if not self._start_injection():
                 break
 
             self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
-            self._update_log('Injecting...')
             if not self._wait_injection():
                 break
             self._update_log('Injection finished.')
