@@ -1301,6 +1301,7 @@ class App(_Callback):
         self._handle_borf_standby_state(_Const.StandbyInject.Inject)
 
         while self._mode == _Const.InjMode.Accum:
+            t0_ = _time.time()
             if not self.currinfo_dev.connected:
                 self._update_log('ERR:CurrInfo device disconnected.')
                 break
@@ -1308,10 +1309,6 @@ class App(_Callback):
                 self._update_log(
                     'Target Current reached. Stopping accumulation...')
                 break
-
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
-            self._update_log('Waiting for next injection...')
-            _time.sleep(self._accum_period)
 
             self._update_log('Accumulation period elapsed. Preparing...')
             if not self._check_allok_2_inject():
@@ -1329,6 +1326,12 @@ class App(_Callback):
             self._update_log('Injection finished.')
 
             self._update_bucket_list(nrpulses=1)
+
+            dt_ = self._accum_period - (_time.time() - t0_)
+            if dt_ > 0:
+                self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+                self._update_log('Waiting for next injection...')
+                _time.sleep(dt_)
 
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
