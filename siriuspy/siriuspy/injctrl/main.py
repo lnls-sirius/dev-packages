@@ -454,7 +454,7 @@ class App(_Callback):
             self._setting_mode = False
 
         if value != _Const.InjMode.Decay:
-            stg = 'top-up' if value == _Const.InjMode.Topup else 'accumulation'
+            stg = 'top-up' if value == _Const.InjMode.TopUp else 'accumulation'
             self._update_log('Configuring EVG RepeatBucketList...')
             self._evg_dev['RepeatBucketList-SP'] = 1
             self._update_log(f'...done. Ready to start {stg:s}.')
@@ -576,7 +576,7 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.PUMODE):
             return False
         if self._mode != _Const.InjMode.Decay:
-            topup = _Const.InjMode.Topup
+            topup = _Const.InjMode.TopUp
             stg = 'top-up' if self._mode == topup else 'accumulation'
             self._update_log(
                 f'ERR:PUMode can only be changed in Decay mode.')
