@@ -1044,7 +1044,7 @@ class App(_Callback):
         if self._thread_autostop is not None and \
                 self._thread_autostop.is_alive():
             return
-        if value is None and value < self._target_current:
+        if value is None or value < self._target_current:
             return
         self._thread_autostop = _epics.ca.CAThread(
             target=self._thread_run_autostop, args=[value, 'cb_val'])
