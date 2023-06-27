@@ -42,7 +42,7 @@ class ETypes(_csdev.ETypes):
         'TimingConnected', 'TimingConfigured', 'RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
-        'BPMsEnabled', 'BPMsConfigured')
+        'BPMsEnabled', 'BPMsConfigured', 'OrbRawConnected')
     STS_LBLS_GLOB = ('Ok', 'NotOk')
 
 
@@ -62,7 +62,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 50  # [um]
     ACQRATE_TRIGMODE = 2  # [Hz]
-    ACQRATE_SLOWORB = 12  # [Hz]
+    ACQRATE_SLOWORB = 60  # [Hz]
     BPMsFreq = 10.48  # [Hz]
 
     TrigAcqCtrl = _csbpm.AcqEvents
