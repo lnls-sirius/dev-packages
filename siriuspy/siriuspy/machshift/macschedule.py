@@ -50,12 +50,20 @@ class MacScheduleData:
         return _np.sum(tags) if begin != end else 0
 
     @staticmethod
-    def get_users_shift_day_count(begin, end):
+    def get_users_shift_day_count(begin, end, count_sundays=True):
         """Get users shift day count for a period."""
         begin, end = MacScheduleData._handle_interval_data(begin, end)
-        _, tags = MacScheduleData._get_numeric_data_for_interval(
+        tims, tags = MacScheduleData._get_numeric_data_for_interval(
             begin, end, dtype='macsched_byday')
-        return _np.sum(tags) if begin != end else 0
+
+        count = 0
+        if begin != end:
+            for tim, tag in zip(tims, tags):
+                weekday = _Time(tim).weekday()
+                if (weekday == 6 and count_sundays) or weekday != 6:
+                    count += tag
+        return count
+
 
     @staticmethod
     def is_user_shift_programmed(
@@ -117,6 +125,7 @@ class MacScheduleData:
         databyshift = list()
         databyday = list()
         datainicurr = list()
+        flag_bit, inicurr = 0, 0.0
         for datum in data:
             if len(datum) < 2:
                 raise Exception(
@@ -126,9 +135,9 @@ class MacScheduleData:
             month, day = int(datum[0]), int(datum[1])
             if len(datum) == 2:
                 timestamp = _Time(year, month, day, 0, 0).timestamp()
-                databyshift.append((timestamp, 0))
-                databyday.append((timestamp, 0))
-                datainicurr.append((timestamp, 0.0))
+                databyshift.append((timestamp, flag_bit))
+                databyday.append((timestamp, flag_bit))
+                datainicurr.append((timestamp, inicurr))
             else:
                 timestamp = _Time(year, month, day, 0, 0).timestamp()
                 databyday.append((timestamp, 1))
