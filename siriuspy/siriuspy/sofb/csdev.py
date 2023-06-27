@@ -106,7 +106,6 @@ class ConstSI(ConstRings):
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
-    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBL_ENBL)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
@@ -867,15 +866,6 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',
                 'lolim': 0, 'hilim': 10000},
-            'CorrPSSOFBEnbl-Sel': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
-            'CorrPSSOFBEnbl-Sts': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
-            'CorrPSSOFBEnbl-Mon': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
             'FOFBDownloadKicksPerc-SP': {
                 'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},

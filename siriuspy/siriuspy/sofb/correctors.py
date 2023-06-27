@@ -16,12 +16,12 @@ from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 from ..namesys import SiriusPVName as _PVName
-from ..pwrsupply.pssofb import PSSOFB as _PSSOFB
 
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
 
 TIMEOUT = 0.05
+WAIT_CORRS = False
 
 
 class Corrector(_BaseTimingConfig):
@@ -449,7 +449,6 @@ class EpicsCorrectors(BaseCorrectors):
     NUM_TIMEOUT = 1000
     MAX_PROB = 5
     ACQRATE = 2
-    WAIT_PSSOFB = True
 
     def __init__(self, acc, prefix='', callback=None, dipoleoff=False):
         """Initialize the instance."""
@@ -461,17 +460,8 @@ class EpicsCorrectors(BaseCorrectors):
         if self.isring:
             self._corrs.append(RFCtrl(self.acc))
 
-        self._use_pssofb = False
         if self.acc == 'SI':
             self.sync_kicks = self._csorb.CorrSync.Off
-            self._ref_kicks = None
-            self._ret_kicks = None
-            self._func_ret = None
-            self._prob = None
-            self._pssofb = _PSSOFB(
-                EthBridgeClient, nr_procs=8, asynchronous=True,
-                sofb_update_iocs=True, dipoleoff=dipoleoff)
-            self._pssofb.processes_start()
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
             1/self.ACQRATE, self._update_corrs_strength, niter=0)
@@ -491,19 +481,9 @@ class EpicsCorrectors(BaseCorrectors):
         """."""
         return self._corrs
 
-    @property
-    def use_pssofb(self):
-        """."""
-        return self._use_pssofb
-
-    @use_pssofb.setter
-    def use_pssofb(self, value):
-        self.set_use_pssofb(value)
-
     def shutdown(self):
         """Shutdown Process."""
-        if self.acc == 'SI':
-            self._pssofb.processes_shutdown()
+        pass
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -526,9 +506,6 @@ class EpicsCorrectors(BaseCorrectors):
             _log.error(msg[5:])
             return 0
 
-        if self.acc == 'SI' and self._use_pssofb:
-            return self.apply_kicks_pssofb(values)
-
         strn = '    TIMEIT: {0:20s} - {1:7.3f}'
         _log.info('    TIMEIT: BEGIN')
         time1 = _time.time()
@@ -542,7 +519,7 @@ class EpicsCorrectors(BaseCorrectors):
         _log.info(strn.format('send sp:', 1000*(time2-time1)))
 
         # Wait for readbacks to be updated
-        if self._timed_out(values, mode='ready'):
+        if WAIT_CORRS and self._timed_out(values, mode='ready'):
             return -1
         time3 = _time.time()
         _log.info(strn.format('check ready:', 1000*(time3-time2)))
@@ -553,60 +530,12 @@ class EpicsCorrectors(BaseCorrectors):
         _log.info(strn.format('send evt:', 1000*(time4-time3)))
 
         # Wait for references to be updated
-        self._timed_out(values, mode='applied')
+        if WAIT_CORRS and self._timed_out(values, mode='applied'):
+            pass
         time5 = _time.time()
         _log.info(strn.format('check applied:', 1000*(time5-time4)))
         _log.info('    TIMEIT: END')
         return 0
-
-    def apply_kicks_pssofb(self, values):
-        """Apply kicks with PSSOFB.
-
-        Will return -2 if there is a problem with some PS.
-        Will return -1 if PS did not finish applying last kick.
-        Will return 0 if all previous kick were implemented.
-        Will return >0 indicating how many previous kicks were not implemented.
-        """
-        if not self._pssofb.is_ready():
-            msg = 'ERR: PSSOFB not ready!'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return -1
-
-        # Send correctors setpoint
-        ret_kicks = self._pssofb.sofb_kick_readback_ref
-        func_ret = self._pssofb.sofb_func_return
-        self._ret_kicks = ret_kicks
-        self._func_ret = func_ret
-
-        self._set_ref_kicks(values)
-        # NOTE: values will contain NaNs when corrector is not in the loop, as
-        # a mean to not communicate with it. Pass them to PSSOFB so it handles
-        # this appropriately (actually it is the PSBSMP class that will handle
-        # NaNs):
-        self._pssofb.bsmp_sofb_kick_set(values[:-1])
-        if not _np.isnan(values[-1]):
-            self.put_value_in_corr(self._corrs[-1], values[-1])
-
-        if self.WAIT_PSSOFB and not self._pssofb.wait(timeout=1):
-            msg = 'ERR: PSSOFB timed out: Worker is not Done!'
-            self._update_log(msg)
-            _log.error(msg[5:])
-
-        # compare kicks to check if there is something wrong
-        ret = self._compare_kicks_pssofb(ret_kicks, func_ret)
-
-        # Send trigger signal for implementation
-        self.send_evt()
-
-        return ret
-
-    def _set_ref_kicks(self, values):
-        new_ref = _np.array(self._ref_kicks[-1])
-        not_nan = ~_np.isnan(values)
-        new_ref[not_nan] = values[not_nan]
-        self._ref_kicks.append(new_ref)
-        del self._ref_kicks[0]
 
     def put_value_in_corr(self, corr, value):
         """Put value in corrector method."""
@@ -644,8 +573,6 @@ class EpicsCorrectors(BaseCorrectors):
     def get_strength(self):
         """Get the correctors strengths."""
         corr_values = _np.zeros(self._csorb.nr_corrs, dtype=float)
-        if self.acc == 'SI' and self._use_pssofb:
-            return self._ref_kicks[-1].copy()
 
         for i, corr in enumerate(self._corrs):
             if corr.connected and corr.value is not None:
@@ -719,45 +646,6 @@ class EpicsCorrectors(BaseCorrectors):
         frf = 499666 / 4  # [kHz]
         raw = int(value * frf)
         self.timing.delayraw = raw
-        return True
-
-    def set_use_pssofb(self, val):
-        """."""
-        if self.acc != 'SI':
-            return False
-        if val not in self._csorb.CorrPSSOFBEnbl:
-            return False
-        if val != self._use_pssofb and val == self._csorb.CorrPSSOFBEnbl.Enbl:
-            kicks = self.get_strength()
-            self._ref_kicks = [kicks.copy(), kicks.copy(), kicks.copy()]
-            self._prob = _np.zeros(kicks.size, dtype=_np.int8)
-            # initialize PSSOFB State
-            self._pssofb.bsmp_sofb_kick_set(kicks[:-1])
-        self._use_pssofb = val
-
-        # NOTE: We need this time to avoid problems in the Correctors IOCs.
-        # We noticed that without this sleep, in ramdom manner, the IOCs from
-        # some correctors do not turn off the SOFB mode when requested, which
-        # required the reboot of the IOC to get back control of the corrs.
-        # We noticed this problem only happens when we use PSSOFB to control
-        # the correctors. This means that PSConnSOFB, which doesn't use
-        # multiprocessing, is problem free somehow.
-        # We don't understand the reason for this sleep to solve the problem
-        # and neither why the problem even occurs...
-        _time.sleep(0.2)
-
-        mask = self._get_mask()
-        for i, corr in enumerate(self._corrs[:-1]):
-            if mask[i] and not corr.connected:
-                msg = 'ERR: Failed to configure '
-                msg += corr.name
-                self._update_log(msg)
-                _log.error(msg[5:])
-                continue
-            corr.put_enable = mask[i]
-            corr.sofbmode = val
-
-        self.run_callbacks('CorrPSSOFBEnbl-Mon', val)
         return True
 
     def configure_correctors(self, val, is_thread=False):
@@ -849,59 +737,6 @@ class EpicsCorrectors(BaseCorrectors):
 
         self._print_guilty(okg, mode=mode)
         return True
-
-    def _compare_kicks_pssofb(self, values, fret):
-        mask = self._get_mask()
-        rfc = self._corrs[-1]
-        ref_vals = self._ref_kicks[0]
-
-        # NOTE: In case there is some problem in the return value, apart from
-        # DSP_TIMEOUT, which we consider not a fatal problem, return code
-        # error -2 so that the loop can be opened:
-        timeout = _np.zeros(ref_vals.size, dtype=bool)
-        timeout[:-1] = fret == _ConstPSBSMP.ACK_DSP_TIMEOUT
-        comm_prob = fret != _ConstPSBSMP.ACK_OK
-        comm_prob &= ~timeout[:-1]
-        comm_prob &= mask[:-1]  # If corrector is not in the loop, ignore it.
-        if _np.any(comm_prob):
-            self._print_guilty(~comm_prob, mode='prob_code', fret=fret)
-            return -2
-
-        curr_vals = _np.zeros(self._csorb.nr_corrs, dtype=float)
-        curr_vals[:-1] = values
-        curr_vals[-1] = rfc.value
-
-        # NOTE: If the return value is zero, it might mean the corrector had a
-        # problem. In this case we return -2 so the main correction loop can
-        # exit and give back the control to the IOC.
-        iszero = _np.equal(curr_vals, 0.0)
-        iszero_ref = _compare_kicks(ref_vals, 0)
-        prob = iszero & ~(iszero_ref)
-        prob &= mask  # If corrector is not in the loop, ignore it.
-        # For debugging:
-        # if _np.any(prob):
-        #     self._print_guilty(
-        #         ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
-
-        # Only acuse problem if it repeats for MAX_PROB consecutive times:
-        # Because in some cases of previous unsuccessful applications, the
-        # current value will be different from this reference.
-        self._prob[prob] += 1
-        self._prob[~prob] = 0
-        if _np.any(self._prob >= self.MAX_PROB):
-            self._print_guilty(
-                ~prob, mode='prob_curr', currs=curr_vals, refs=ref_vals)
-            return -2
-
-        diff = _np.logical_not(_compare_kicks(curr_vals, ref_vals))
-
-        # NOTE: I don't remember why it only matters when differences are due
-        # to Timeout error:
-        diff &= timeout
-
-        # If corrector is not in the loop, ignore it:
-        diff &= mask
-        return _np.sum(diff)
 
     def _print_guilty(
             self, okg, mode='ready', fret=None, currs=None, refs=None):

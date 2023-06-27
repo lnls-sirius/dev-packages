@@ -33,7 +33,6 @@ class SOFB(_BaseClass):
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
         self._loop_print_every_num_iter = 200
-        self._loop_use_pssofb = False
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -120,7 +119,6 @@ class SOFB(_BaseClass):
                 self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         if self.acc == 'SI':
-            dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
@@ -213,25 +211,6 @@ class SOFB(_BaseClass):
             _sleep(dtime)
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
-
-    def set_use_pssofb(self, val):
-        """Set whether or not closed loop will use PSSOFB.
-
-        Args:
-            val (bool): desired state.
-
-        Returns:
-            bool: Whether setting was successful.
-
-        """
-        if self._thread and self._thread.is_alive():
-            msg = 'ERR: Performing some task. Cannot change PSSOFB state!'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        self._loop_use_pssofb = bool(val)
-        self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
-        return True
 
     def set_print_every_num_iters(self, value: float) -> bool:
         """Define number of iterations between loop statistics calculation.
@@ -825,30 +804,22 @@ class SOFB(_BaseClass):
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+        self._ref_corr_kicks = self.correctors.get_strength()
         fofb = self.fofb
         refx0 = refy0 = None
         if fofb.connected:
             refx0 = fofb.refx
             refy0 = fofb.refy
 
-        if self._loop_use_pssofb:
-            msg = 'Turning on PSSOFB...'
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to EVG Clock...'
             self._update_log(msg)
             _log.info(msg)
-            self.correctors.use_pssofb = True
-            msg = 'PSSOFB ready!'
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
+            msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)
-
-            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-                msg = 'Setting Trigger to listen to EVG Clock...'
-                self._update_log(msg)
-                _log.info(msg)
-                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
-                self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
-                msg = 'Trigger ready!'
-                self._update_log(msg)
-                _log.info(msg)
 
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
@@ -876,15 +847,7 @@ class SOFB(_BaseClass):
                 tim0 = _time()
 
             interval = 1/self._loop_freq
-            use_pssofb = self.correctors.use_pssofb
-            norbs = 1
-            if use_pssofb:
-                norbs = max(int(bpmsfreq*interval), 1)
-            elif tims:
-                # if not pssofb wait for interval to be satisfied
-                dtime = tims[0] - tims[-1]
-                dtime += interval
-                _sleep(max(dtime, 0))
+            norbs = max(int(bpmsfreq*interval), 1)
 
             tims = []
             tims.append(_time())
@@ -904,7 +867,6 @@ class SOFB(_BaseClass):
 
             tims.append(_time())
 
-            self._ref_corr_kicks = self.correctors.get_strength()
             tims.append(_time())
 
             orb = self._interact_with_fofb_in_calc_kicks(orb)
@@ -929,6 +891,7 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
+            self._ref_corr_kicks = kicks
             rets.append(ret)
             tims.append(_time())
             tims.append(tims[1])  # to compute total time - get_orbit
@@ -941,24 +904,15 @@ class SOFB(_BaseClass):
                 # skip this iteration
                 continue
 
-        if self._loop_use_pssofb:
-            msg = 'Turning off PSSOFB...'
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to Event...'
             self._update_log(msg)
             _log.info(msg)
-            self.correctors.use_pssofb = False
-            msg = 'PSSOFB is off!'
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
+            msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)
-
-            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-                msg = 'Setting Trigger to listen to Event...'
-                self._update_log(msg)
-                _log.info(msg)
-                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
-                self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
-                msg = 'Trigger ready!'
-                self._update_log(msg)
-                _log.info(msg)
 
         if self._loop_state == self._csorb.LoopState.Closed:
             self._loop_state = self._csorb.LoopState.Open
