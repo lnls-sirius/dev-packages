@@ -494,62 +494,6 @@ class BORFRampStandbyHandler(_BaseHandler):
         return True, '', []
 
 
-class InjBOStandbyHandler(_BaseHandler):
-    """InjBO Event standby mode handler for injection procedure."""
-
-    def __init__(self):
-        self.evg = EVG()
-        self.injboevt = Event('InjBO')
-
-        devices = (self.evg, self.injboevt)
-
-        self._on_values = {
-            self.injboevt: {'Mode-Sts': Event.MODES.index('Continuous')}}
-
-        # call base class constructor
-        super().__init__('', devices)
-
-    def cmd_turn_off(self):
-        """Turn off."""
-        # disable injbo
-        self.injboevt.mode = 'Disable'
-
-        # wait for injbo to be disabled
-        retval = self._wait_devices_propty(
-            self.injboevt, 'Mode-Sts', Event.MODES.index('Disable'),
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for InjBO Event to be disabled timed '\
-                   'out without success! Verify InjBO Event!'
-            return [False, text, retval[1]]
-
-        # update events
-        _time.sleep(1)
-        self.evg.cmd_update_events()
-        _time.sleep(1)
-
-        return True, '', []
-
-    def cmd_turn_on(self):
-        """Turn on."""
-        # set injbo to Continuous table
-        self.injboevt.mode = 'Continuous'
-
-        # wait for injbo to be in Continuous Table
-        retval = self._wait_devices_propty(
-            self.injboevt, 'Mode-Sts', Event.MODES.index('Continuous'),
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for InjBO Event to be in Continuous table '\
-                   'timed out without success! Verify InjBO Event!'
-            return [False, text, retval[1]]
-
-        # update events
-        self.evg.cmd_update_events()
-
-        return True, '', []
-
-
 class LILLRFStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
@@ -646,7 +590,6 @@ class InjSysStandbyHandler(_Devices):
         'as_pu': 'AS PU (Septa, Kickers and Modulators)',
         'bo_ps': 'BO PS Ramp',
         'bo_rf': 'BO RF Ramp',
-        'injbo': 'TI InjBO Event',
         'li_rf': 'LI LLRF (Klystrons Loop)',
     }
 
@@ -656,7 +599,6 @@ class InjSysStandbyHandler(_Devices):
             'as_pu': ASPUStandbyHandler(),
             'bo_ps': BOPSRampStandbyHandler(),
             'bo_rf': BORFRampStandbyHandler(),
-            'injbo': InjBOStandbyHandler(),
             'li_rf': LILLRFStandbyHandler(),
         }
         self._dev_refs = devs

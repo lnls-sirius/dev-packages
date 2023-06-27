@@ -75,8 +75,8 @@ class Const(_csdev.Const):
     FILACURR_OPVALUE = 1.39  # [A]
     HV_OPVALUE = 90.0  # [kV]
 
-    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'li_rf']
+    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'as_pu', 'bo_ps']
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
