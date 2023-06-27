@@ -76,7 +76,7 @@ class App(_Callback):
             'CorrStatus-Mon': 0b1111,
         }
         if self._const.has_qscorrs:
-            pvn2vals.ipdate({
+            pvn2vals.update({
                 'ControlQS-Sel': self._control_qs,
                 'ControlQS-Sts': self._control_qs,
                 })
