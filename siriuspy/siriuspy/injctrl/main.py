@@ -200,19 +200,13 @@ class App(_Callback):
 
         self._rfkillbeam = RFKillBeam()
 
+        self._hlti_dev = HLTiming()
         self._li_trig_names = _HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
-        self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
-
         self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
             {'sec': 'BO', 'dev': 'Mags'})
-        self._bops_trig_devs = [Trigger(tin) for tin in self._bops_trig_names]
-
         self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
             {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
-        self._borf_trig_devs = [Trigger(tin) for tin in self._borf_trig_names]
-
-        self._hlti_dev = HLTiming()
 
         # pvname to write method map
         self.map_pv2write = {
@@ -1528,7 +1522,8 @@ class App(_Callback):
         self._bops_standby_state = state
 
         trigstate = int(state == _Const.StandbyInject.Inject)
-        for trig in self._bops_trig_devs:
+        for name in self._bops_trig_names:
+            trig = self._hlti_dev.triggers[name]
             trig.state = trigstate
         self._update_log('BO PS timing configured.')
 
@@ -1538,7 +1533,8 @@ class App(_Callback):
         self._borf_standby_state = state
 
         trigstate = int(state == _Const.StandbyInject.Inject)
-        for trig in self._borf_trig_devs:
+        for name in self._borf_trig_names:
+            trig = self._hlti_dev.triggers[name]
             trig.state = trigstate
         self._update_log('BO RF timing configured.')
 
