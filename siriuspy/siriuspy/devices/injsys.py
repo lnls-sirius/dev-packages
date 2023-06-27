@@ -618,6 +618,11 @@ class InjSysStandbyHandler(_Devices):
         super().__init__('', tuple(devs.values()))
 
     @property
+    def handlers(self):
+        """."""
+        return self._dev_refs
+
+    @property
     def on_order(self):
         """On setpoints order."""
         return _dcopy(self._on_order)

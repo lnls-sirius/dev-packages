@@ -188,10 +188,8 @@ class App(_Callback):
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = _PSSearch.get_psnames({
-            'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)',
-            'propty_name': '(?!:CCoil).*'})
-        self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
+        self._pu_names = self._injsys_dev.handlers['as_pu'].punames
+        self._pu_devs = self._injsys_dev.handlers['as_pu'].pudevices
         self._pu_refvolt = list()
         for dev in self._pu_devs:
             pvo = dev.pv_object('Voltage-SP')
