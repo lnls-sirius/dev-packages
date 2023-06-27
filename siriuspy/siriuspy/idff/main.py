@@ -162,6 +162,7 @@ class App(_Callback):
             return False
 
         self._config_name = value
+        self.update_autosave_file()
         self.run_callbacks('ConfigName-RB', value)
         return True
 
