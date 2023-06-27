@@ -506,7 +506,7 @@ class DVFImgProc(DVF):
     @property
     def roi_update_with_fwhm(self):
         """."""
-        return self['ImgROIUpdateWithFWHM-Sts']
+        return bool(self['ImgROIUpdateWithFWHM-Sts'])
 
     @roi_update_with_fwhm.setter
     def roi_update_with_fwhm(self, value):
@@ -551,6 +551,6 @@ class DVFImgProc(DVF):
     def create_image2dfit(self):
         """Return a Image2DFit object with current image as data."""
         imgfit2d = _Image2D_Fit(
-            data=self.image, fitgaussian=self._fitgaussian,
+            data=self.image, fitgauss=self._fitgaussian,
             roix=self.roix, roiy=self.roiy)
         return imgfit2d

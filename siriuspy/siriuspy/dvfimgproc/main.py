@@ -2,6 +2,7 @@
 
 import time as _time
 import logging as _log
+import numpy as _np
 
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
@@ -17,50 +18,50 @@ class App:
     CHECK_IMG_ACQUIRE = True
 
     _MON_PVS_2_IMGFIT = {
-            # These PVs are updated at evry image processing
-            # --- image intensity ---
-            'ImgSizeX-Mon': ('fitx', 'size'),
-            'ImgSizeY-Mon': ('fity', 'size'),
-            'ImgIntensityMin-Mon': 'intensity_min',
-            'ImgIntensityMax-Mon': 'intensity_max',
-            'ImgIntensitySum-Mon': 'intensity_sum',
-            'ImgIsSaturated-Mon': 'is_saturated',
-            # --- image projection ---
-            'ImgProjX-Mon': ('imagex', 'data'),
-            'ImgProjY-Mon': ('imagey', 'data'),
-            'ImgIsWithBeam-Mon': 'is_with_image',
-            # --- roix ---
-            'ImgROIX-RB': ('fitx', 'roi'),
-            'ImgROIXCenter-Mon': ('fitx', 'roi_center'),
-            'ImgROIXFWHM-Mon': ('fitx', 'roi_fwhm'),
-            # --- roix_fit ---
-            'ImgROIXFitAmplitude-Mon': ('fitx', 'roi_amplitude'),
-            'ImgROIXFitMean-Mon': ('fitx', 'roi_mean'),
-            'ImgROIXFitSigma-Mon': ('fitx', 'roi_sigma'),
-            'ImgROIXFitError-Mon': ('fitx', 'roi_fit_error'),
-            # --- roixy ---
-            'ImgROIY-RB': ('fity', 'roi'),
-            'ImgROIYCenter-Mon': ('fity', 'roi_center'),
-            'ImgROIYFWHM-Mon': ('fity', 'roi_fwhm'),
-            # --- roiy_fit ---
-            'ImgROIYFitAmplitude-Mon': ('fity', 'roi_amplitude'),
-            'ImgROIYFitMean-Mon': ('fity', 'roi_mean'),
-            'ImgROIYFitSigma-Mon': ('fity', 'roi_sigma'),
-            'ImgROIYFitError-Mon': ('fity', 'roi_fit_error'),
-            # --- gauss2d fit ---
-            'ImgFitAngle-Mon': 'angle',
-            'ImgFitSigma1-Mon': 'sigma1',
-            'ImgFitSigma2-Mon': 'sigma2',
-        }
+        # These PVs are updated at evry image processing
+        # --- image intensity ---
+        'ImgSizeX-Mon': ('fitx', 'size'),
+        'ImgSizeY-Mon': ('fity', 'size'),
+        'ImgIntensityMin-Mon': 'intensity_min',
+        'ImgIntensityMax-Mon': 'intensity_max',
+        'ImgIntensitySum-Mon': 'intensity_sum',
+        'ImgIsSaturated-Mon': 'is_saturated',
+        # --- image projection ---
+        'ImgProjX-Mon': ('fitx', 'data'),
+        'ImgProjY-Mon': ('fity', 'data'),
+        'ImgIsWithBeam-Mon': 'is_with_image',
+        # --- roix ---
+        'ImgROIX-RB': ('fitx', 'roi'),
+        'ImgROIXCenter-Mon': ('fitx', 'roi_center'),
+        'ImgROIXFWHM-Mon': ('fitx', 'roi_fwhm'),
+        # --- roix_fit ---
+        'ImgROIXFitAmplitude-Mon': ('fitx', 'roi_amplitude'),
+        'ImgROIXFitMean-Mon': ('fitx', 'roi_mean'),
+        'ImgROIXFitSigma-Mon': ('fitx', 'roi_sigma'),
+        'ImgROIXFitError-Mon': ('fitx', 'roi_fit_error'),
+        # --- roixy ---
+        'ImgROIY-RB': ('fity', 'roi'),
+        'ImgROIYCenter-Mon': ('fity', 'roi_center'),
+        'ImgROIYFWHM-Mon': ('fity', 'roi_fwhm'),
+        # --- roiy_fit ---
+        'ImgROIYFitAmplitude-Mon': ('fity', 'roi_amplitude'),
+        'ImgROIYFitMean-Mon': ('fity', 'roi_mean'),
+        'ImgROIYFitSigma-Mon': ('fity', 'roi_sigma'),
+        'ImgROIYFitError-Mon': ('fity', 'roi_fit_error'),
+        # --- gauss2d fit ---
+        'ImgFitAngle-Mon': 'angle',
+        'ImgFitSigma1-Mon': 'sigma1',
+        'ImgFitSigma2-Mon': 'sigma2',
+    }
 
     _INIT_PVS_2_IMGFIT = {
-            # These are either constant PVs or readback PVs whose
-            # initializations need external input
-            'ImgROIX-RB': ('fitx', 'roi'),
-            'ImgROIY-RB': ('fity', 'roi'),
-            'ImgROIX-SP': ('fitx', 'roi'),
-            'ImgROIY-SP': ('fity', 'roi'),
-        }
+        # These are either constant PVs or readback PVs whose
+        # initializations need external input
+        'ImgROIX-RB': ('fitx', 'roi'),
+        'ImgROIY-RB': ('fity', 'roi'),
+        'ImgROIX-SP': ('fitx', 'roi'),
+        'ImgROIY-SP': ('fity', 'roi'),
+    }
 
     def __init__(self, driver=None, const=None):
         """Initialize the instance."""
@@ -274,15 +275,15 @@ class App:
     def _create_meas(self):
         # build arguments
         fwhmx_factor = \
-            self._database['ImgROIXUpdateWithFWHMFactor-RB']['value']
+            float(self._database['ImgROIXUpdateWithFWHMFactor-RB']['value'])
         fwhmy_factor = \
-            self._database['ImgROIYUpdateWithFWHMFactor-RB']['value']
+            float(self._database['ImgROIYUpdateWithFWHMFactor-RB']['value'])
         roi_with_fwhm = \
-            self._database['ImgROIUpdateWithFWHM-Sts']['value']
+            float(self._database['ImgROIUpdateWithFWHM-Sts']['value'])
         intensity_threshold = \
-            self._database['ImgIsWithBeamThreshold-RB']['value']
+            int(self._database['ImgIsWithBeamThreshold-RB']['value'])
         use_svd4theta = \
-            self._database['ImgFitAngleUseCMomSVD-Sts']['value']
+            int(self._database['ImgFitAngleUseCMomSVD-Sts']['value'])
 
         # create object
         meas = MeasDVF(
@@ -291,13 +292,13 @@ class App:
             roi_with_fwhm=roi_with_fwhm,
             intensity_threshold=intensity_threshold,
             use_svd4theta=use_svd4theta,
-            )
+        )
         return meas
 
     def _write_pv(self, pvname, value=None, success=True):
         """."""
         if success:
-            if value in (True, False):
+            if isinstance(value, (bool, _np.bool, _np.bool_)):
                 value = 1 if value else 0
             try:
                 self._driver.setParam(pvname, value)
@@ -426,7 +427,7 @@ class App:
         if reason not in (
                 'ImgROIXUpdateWithFWHMFactor-SP',
                 'ImgROIYUpdateWithFWHMFactor-SP'
-                ):
+        ):
             return None
         if 'X' in reason:
             self.meas.fwhmx_factor = value
