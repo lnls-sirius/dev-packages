@@ -468,7 +468,7 @@ class LinacStandbyHandler(_BaseHandler):
             {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
 
         self._on_values = dict()
-        for dev in devices:
+        for dev in self._llrf_devs:
             self._on_values[dev] = {
                 'GET_INTEGRAL_ENABLE': _Const.DsblEnbl.Enbl,
                 'GET_FB_MODE': _Const.DsblEnbl.Enbl}
