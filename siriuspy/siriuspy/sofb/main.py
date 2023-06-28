@@ -866,11 +866,7 @@ class SOFB(_BaseClass):
                 orb *= 2 * 3  # Maximum orbit distortion of 3 um
 
             tims.append(_time())
-
-            tims.append(_time())
-
             orb = self._interact_with_fofb_in_calc_kicks(orb)
-
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
@@ -991,7 +987,7 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        labs = ['GetO', 'GetK', 'Calc', 'Proc', 'App', 'Tot']
+        labs = ['GetO', 'Calc', 'Proc', 'App', 'Tot']
         for i, lab in enumerate(labs):
             self.run_callbacks(f'LoopPerfTim{lab:s}Max-Mon', max_[i])
             self.run_callbacks(f'LoopPerfTim{lab:s}Min-Mon', min_[i])

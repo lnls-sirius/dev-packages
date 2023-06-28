@@ -798,18 +798,6 @@ class SOFBSI(SOFBRings, ConstSI):
             'LoopPerfTimGetOStd-Mon': {
                 'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
                 'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKMax-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKMin-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKAvg-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKStd-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
             'LoopPerfTimCalcMax-Mon': {
                 'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
                 'lolim': -1, 'hilim': 100},
