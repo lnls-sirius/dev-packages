@@ -252,7 +252,7 @@ class ASPUStandbyHandler(_BaseHandler):
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet Pulse to be enabled '\
-                   'timed out without success! Verify pulsed magnets!'
+                'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
         # turn modulator trigout on
@@ -415,8 +415,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
             self._psdevs, 'WfmUpdateAuto-Sts', _PSConst.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
         if not retval[0]:
-            text = 'Check for BO PS WfmUpdateAuto to be enable '\
-                   'timed out without success! Verify BO PS!'
+            text = 'Check for BO PS WfmUpdateAuto to be enabled '\
+                'timed out without success! Verify BO PS!'
             return [False, text, retval[1]]
 
         # configure trigger source
@@ -456,7 +456,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
 
     def enable_triggers(self):
         """."""
-        # disable triggers
+        # enable triggers
         self._set_devices_propty(
             self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Enbl)
 
@@ -467,8 +467,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
 
         if retval[0]:
             return True, '', []
-        text = 'Check for BO Mags Triggers to be enable timed '\
-                'out without success! Verify BO Mags Triggers!'
+        text = 'Check for BO Mags Triggers to be enabled timed '\
+            'out without success! Verify BO Mags Triggers!'
         return [False, text, retval[1]]
 
 
@@ -526,7 +526,7 @@ class BORFRampStandbyHandler(_BaseHandler):
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO RF Ramp to be enabled timed '\
-                   'out without success! Verify BO RF Ramp!'
+                'out without success! Verify BO RF Ramp!'
             return [False, text, retval[1]]
 
         return True, '', []
@@ -550,7 +550,7 @@ class BORFRampStandbyHandler(_BaseHandler):
 
     def enable_triggers(self):
         """."""
-        # disable triggers
+        # enable triggers
         self._set_devices_propty(
             self.rmptrg, 'State-Sel', _TIConst.DsblEnbl.Enbl)
 
@@ -561,7 +561,7 @@ class BORFRampStandbyHandler(_BaseHandler):
 
         if retval[0]:
             return True, '', []
-        text = 'Check for BO RF Triggers to be enable timed '\
+        text = 'Check for BO RF Triggers to be enabled timed '\
             'out without success! Verify BO RF Triggers!'
         return [False, text, retval[1]]
 
