@@ -78,7 +78,7 @@ class EpicsOrbit(BaseOrbit):
         self._sofb = sofb
 
     def shutdown(self):
-        """."""
+        """Shutdown threads."""
         self._orbit_thread.resume()
         self._orbit_thread.stop()
         self._orbit_thread.join()

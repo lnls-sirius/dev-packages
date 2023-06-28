@@ -437,8 +437,10 @@ class EpicsCorrectors(BaseCorrectors):
         return self._corrs
 
     def shutdown(self):
-        """Shutdown Process."""
-        pass
+        """Shutdown threads."""
+        self._corrs_thread.resume()
+        self._corrs_thread.stop()
+        self._corrs_thread.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
