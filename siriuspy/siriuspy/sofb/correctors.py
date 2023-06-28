@@ -65,20 +65,6 @@ class Corrector(_BaseTimingConfig):
         """."""
 
     @property
-    def sofbmode_ok(self):
-        """Return SOFBMode Ok status."""
-        return self.connected
-
-    @property
-    def sofbmode(self):
-        """SOFBMode."""
-        return 0
-
-    @sofbmode.setter
-    def sofbmode(self, val):
-        """."""
-
-    @property
     def state(self):
         """State."""
         pv = self._config_pvs_rb['PwrState']
@@ -178,17 +164,14 @@ class CHCV(Corrector):
         self._ref = _PV(pvref, **opt)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRef,
-            'PwrState': _PSConst.PwrStateSel.On,
-            'SOFBMode': _PSConst.DsblEnbl.Dsbl}
+            'PwrState': _PSConst.PwrStateSel.On}
         pvpref = self._name.substitute(prefix=LL_PREF)
         self._config_pvs_sp = {
             'OpMode': _PV(pvpref.substitute(propty='OpMode-Sel'), **opt),
-            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sel'), **opt),
-            'SOFBMode': _PV(pvpref.substitute(propty='SOFBMode-Sel'), **opt)}
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sel'), **opt)}
         self._config_pvs_rb = {
             'OpMode': _PV(pvpref.substitute(propty='OpMode-Sts'), **opt),
-            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sts'), **opt),
-            'SOFBMode': _PV(pvpref.substitute(propty='SOFBMode-Sts'), **opt)}
+            'PwrState': _PV(pvpref.substitute(propty='PwrState-Sts'), **opt)}
 
     @property
     def opmode_ok(self):
@@ -220,31 +203,6 @@ class CHCV(Corrector):
             pvobj.put(val, wait=False)
 
     @property
-    def sofbmode_ok(self):
-        """Opmode ok status."""
-        isok = self.sofbmode == self._config_ok_vals['SOFBMode']
-        if not isok:
-            msg = 'SOFBMode not Ok {0:s}'.format(self.name)
-            _log.warning(msg)
-        return isok
-
-    @property
-    def sofbmode(self):
-        """SOFBMode."""
-        pvobj = self._config_pvs_rb['SOFBMode']
-        if not pvobj.connected:
-            return None
-        return pvobj.value
-
-    @sofbmode.setter
-    def sofbmode(self, val):
-        """."""
-        pvobj = self._config_pvs_sp['SOFBMode']
-        self._config_ok_vals['SOFBMode'] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
-
-    @property
     def connected(self):
         """Status connected."""
         conn = super().connected
@@ -266,12 +224,9 @@ class CHCV(Corrector):
 
         if not self.put_enable:
             return True
-        val = self._config_ok_vals['SOFBMode']
-        self.sofbmode = 0
         for k, pvo in self._config_pvs_sp.items():
-            if k in self._config_ok_vals and k != 'SOFBMode':
+            if k in self._config_ok_vals:
                 pvo.put(self._config_ok_vals[k], wait=False)
-        self.sofbmode = val
         return True
 
 
@@ -692,8 +647,6 @@ class EpicsCorrectors(BaseCorrectors):
         opmode_ok = True
         if self.acc != 'BO':
             opmode_ok = all(corr.opmode_ok for corr in chcvs)
-        if self.acc == 'SI':
-            opmode_ok &= all(corr.sofbmode_ok for corr in chcvs)
         status = _util.update_bit(status, bit_pos=1, bit_val=not opmode_ok)
         status = _util.update_bit(
             status, bit_pos=2,
