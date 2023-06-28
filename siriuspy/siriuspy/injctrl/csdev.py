@@ -122,10 +122,10 @@ def get_injctrl_propty_database():
 
         'Mode-Sel': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Mode-Sts': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Type-Sel': {
             'type': 'enum', 'value': _ct.InjType.MultiBunch,
             'enums': _et.INJTYPE, 'unit': 'SB_MB'},
