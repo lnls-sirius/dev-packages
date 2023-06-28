@@ -1507,9 +1507,9 @@ class App(_Callback):
 
         lirf = self._injsys_dev.handlers['li_rf']
         if state == _Const.StandbyInject.Inject:
-            lirf.change_to_rmpbo()
+            lirf.change_trigs_to_rmpbo_evt()
         else:
-            lirf.change_to_linac()
+            lirf.change_trigs_to_linac_evt()
         self._update_log('LI timing configured.')
 
     def _handle_bops_standby_state(self, state):

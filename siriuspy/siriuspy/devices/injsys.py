@@ -620,13 +620,13 @@ class LILLRFStandbyHandler(_BaseHandler):
                    'timed out without success! Verify LI LLRF!'
             return [False, text, retval[1]]
 
-        self.change_to_linac()
+        self.change_trigs_to_linac_evt()
 
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
-        self.change_to_rmpbo()
+        self.change_trigs_to_rmpbo_evt()
 
         # wait for some pulses
         _time.sleep(LILLRFStandbyHandler.WAIT_2_TURNON)
@@ -659,12 +659,12 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         return True, '', []
 
-    def change_to_linac(self):
+    def change_trigs_to_linac_evt(self):
         """."""
         return self.hltiming.change_triggers_source(
             self._trig_names, new_src='Linac')
 
-    def change_to_rmpbo(self):
+    def change_trigs_to_rmpbo_evt(self):
         """."""
         return self.hltiming.change_triggers_source(
             self._trig_names, new_src='RmpBO')
