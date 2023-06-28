@@ -311,7 +311,8 @@ class App(_Callback):
                 setpoints, *_ = ret
 
                 # built curr_sp vector
-                curr_sp = self._pssfob_current_setpoint(setpoints, corrdevs)
+                curr_sp = self._pssfob_get_current_setpoint(
+                    setpoints, corrdevs)
 
                 # apply curr_sp to pssofb
                 self._pssofb.bsmp_sofb_current_set_update((curr_sp, ))
