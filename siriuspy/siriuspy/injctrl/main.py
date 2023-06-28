@@ -14,8 +14,8 @@ from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, \
-    PowerSupplyPU, RFKillBeam, InjSysPUModeHandler, Trigger, HLTiming
+from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, HLTiming, \
+    RFKillBeam, InjSysPUModeHandler
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -148,6 +148,9 @@ class App(_Callback):
                     n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
+        # Timing device
+        self._hlti_dev = HLTiming()
+
         # auxiliary injsys PVs
         self._pvs_injsys = dict()
         punames = _PSSearch.get_psnames({
@@ -170,7 +173,8 @@ class App(_Callback):
             self._callback_watch_eguntrig)
 
         self._pumode_dev = InjSysPUModeHandler(
-            print_log=False, callback=self._update_dev_status)
+            print_log=False, callback=self._update_dev_status,
+            hltiming=self._hlti_dev)
 
         self._evg_dev = EVG()
         self._init_injevt = False
@@ -180,7 +184,7 @@ class App(_Callback):
         self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
             self._callback_is_injecting)
 
-        self._injsys_dev = InjSysStandbyHandler()
+        self._injsys_dev = InjSysStandbyHandler(hltiming=self._hlti_dev)
 
         self.currinfo_dev = CurrInfoSI()
         self.currinfo_dev.set_auto_monitor('Current-Mon', True)
@@ -197,14 +201,6 @@ class App(_Callback):
             pvo.add_callback(self._callback_update_pu_refvolt)
 
         self._rfkillbeam = RFKillBeam()
-
-        self._hlti_dev = HLTiming()
-        self._li_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
-        self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'Mags'})
-        self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
 
         # pvname to write method map
         self.map_pv2write = {
@@ -1509,9 +1505,11 @@ class App(_Callback):
             return
         self._liti_warmup_state = state
 
-        event = 'RmpBO' if state == _Const.StandbyInject.Inject else 'Linac'
-        self._hlti_dev.change_triggers_source(
-            self._li_trig_names, new_src=event, printlog=False)
+        lirf = self._injsys_dev.handlers['li_rf']
+        if state == _Const.StandbyInject.Inject:
+            lirf.change_to_rmpbo()
+        else:
+            lirf.change_to_linac()
         self._update_log('LI timing configured.')
 
     def _handle_bops_standby_state(self, state):
@@ -1519,10 +1517,11 @@ class App(_Callback):
             return
         self._bops_standby_state = state
 
-        trigstate = int(state == _Const.StandbyInject.Inject)
-        for name in self._bops_trig_names:
-            trig = self._hlti_dev.triggers[name]
-            trig.state = trigstate
+        bops = self._injsys_dev.handlers['bo_ps']
+        if state == _Const.StandbyInject.Inject:
+            bops.enable_triggers()
+        else:
+            bops.disable_triggers()
         self._update_log('BO PS timing configured.')
 
     def _handle_borf_standby_state(self, state):
@@ -1530,10 +1529,11 @@ class App(_Callback):
             return
         self._borf_standby_state = state
 
-        trigstate = int(state == _Const.StandbyInject.Inject)
-        for name in self._borf_trig_names:
-            trig = self._hlti_dev.triggers[name]
-            trig.state = trigstate
+        borf = self._injsys_dev.handlers['bo_rf']
+        if state == _Const.StandbyInject.Inject:
+            borf.enable_triggers()
+        else:
+            borf.disable_triggers()
         self._update_log('BO RF timing configured.')
 
     # --- auxiliary log methods ---

@@ -9,7 +9,7 @@ from .device import Devices as _Devices, DeviceNC as _DeviceNC
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .timing import EVG, Event, Trigger
+from .timing import Trigger, HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
@@ -23,6 +23,22 @@ from ..callbacks import Callback as _Callback
 
 class _BaseHandler(_Devices):
     """Base standby mode handler for injection procedure."""
+
+    def __init__(self, devname, devices, hltiming=None):
+        """."""
+        self._hltiming = hltiming or HLTiming()
+        devices = tuple(devices) + (self._hltiming, )
+        super().__init__(devname, devices)
+
+    @property
+    def hltiming(self):
+        """."""
+        return self._hltiming
+
+    @hltiming.setter
+    def hltiming(self, hltiming):
+        if isinstance(hltiming, HLTiming):
+            self._hltiming = hltiming
 
     @property
     def is_on(self):
@@ -46,7 +62,7 @@ class _BaseHandler(_Devices):
 class ASPUStandbyHandler(_BaseHandler):
     """Pulsed magnets standby mode handler for injection procedure."""
 
-    def __init__(self):
+    def __init__(self, hltiming=None):
         """Init."""
         self._punames = PSSearch.get_psnames(
             {'dis': 'PU', 'dev': '.*(Kckr|Sept)',
@@ -58,9 +74,6 @@ class ASPUStandbyHandler(_BaseHandler):
         # pu devices
         self._pudevs = [PowerSupplyPU(pun) for pun in self._punames]
 
-        # trigger devices
-        self._trigdevs = [Trigger(trg) for trg in self._trignames]
-
         # modulator devices
         self._moddevs = [LIModltr(mod) for mod in self._modnames]
         self._limps = _DeviceNC(
@@ -68,9 +81,15 @@ class ASPUStandbyHandler(_BaseHandler):
             ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
              'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
 
-        alldevs = self._pudevs + self._trigdevs + self._moddevs
+        alldevs = self._pudevs + self._moddevs
         alldevs.append(self._limps)
         alldevs = tuple(alldevs)
+
+        # call base class constructor
+        super().__init__('', alldevs, hltiming=hltiming)
+
+        # trigger devices
+        self._trigdevs = [self._hltiming.triggers[t] for t in self._trignames]
 
         self._on_values = dict()
         for pudev in self._pudevs:
@@ -96,9 +115,6 @@ class ASPUStandbyHandler(_BaseHandler):
             'Mod2State_I': 0,
             'Mod2State_L': 0,
         }
-
-        # call base class constructor
-        super().__init__('', alldevs)
 
     @property
     def punames(self):
@@ -293,7 +309,7 @@ class ASPUStandbyHandler(_BaseHandler):
 class BOPSRampStandbyHandler(_BaseHandler):
     """BO PS Ramp standy mode handler for injection procedure."""
 
-    def __init__(self):
+    def __init__(self, hltiming=None):
         """Init."""
         self._psnames = PSSearch.get_psnames(
             {'sec': 'BO', 'dis': 'PS'})
@@ -303,10 +319,11 @@ class BOPSRampStandbyHandler(_BaseHandler):
         # ps devices
         self._psdevs = [PowerSupply(psn) for psn in self._psnames]
 
-        # trigger devices
-        self._trigdevs = [Trigger(trg) for trg in self._trignames]
+        # call base class constructor
+        super().__init__('', self._psdevs, hltiming=hltiming)
 
-        alldevs = tuple(self._psdevs + self._trigdevs)
+        # trigger devices
+        self._trigdevs = [self._hltiming.triggers(t) for t in self._trignames]
 
         self._on_values = dict()
         for psdev in self._psdevs:
@@ -317,9 +334,6 @@ class BOPSRampStandbyHandler(_BaseHandler):
             self._on_values[tdev] = {
                 'State-Sts': _TIConst.DsblEnbl.Enbl,
                 'Src-Sts': tdev.source_options.index('RmpBO')}
-
-        # call base class constructor
-        super().__init__('', alldevs)
 
     @property
     def psnames(self):
@@ -343,18 +357,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
 
     def cmd_turn_off(self):
         """Turn off."""
-        # disable triggers
-        self._set_devices_propty(
-            self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Dsbl)
-
-        # wait for triggers to be disabled
-        retval = self._wait_devices_propty(
-            self._trigdevs, 'State-Sts', _TIConst.DsblEnbl.Dsbl,
-            timeout=3, return_prob=True)
+        retval = self.disable_triggers()
         if not retval[0]:
-            text = 'Check for BO Mags Triggers to be disabled timed '\
-                   'out without success! Verify BO Mags Triggers!'
-            return [False, text, retval[1]]
+            return retval
 
         # wait duration of a ramp for PS change opmode
         _time.sleep(0.5)
@@ -426,30 +431,58 @@ class BOPSRampStandbyHandler(_BaseHandler):
                    'timed out without success! Verify BO Mags Triggers!'
             return [False, text, retval[1]]
 
-        # enable triggers
+        retval = self.enable_triggers()
+        if not retval[0]:
+            return retval
+
+        return True, '', []
+
+    def disable_triggers(self):
+        """."""
+        # disable triggers
+        self._set_devices_propty(
+            self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Dsbl)
+
+        # wait for triggers to be disabled
+        retval = self._wait_devices_propty(
+            self._trigdevs, 'State-Sts', _TIConst.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+
+        if retval[0]:
+            return True, '', []
+        text = 'Check for BO Mags Triggers to be disabled timed '\
+               'out without success! Verify BO Mags Triggers!'
+        return [False, text, retval[1]]
+
+    def enable_triggers(self):
+        """."""
+        # disable triggers
         self._set_devices_propty(
             self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Enbl)
 
-        # wait for triggers to be enable
+        # wait for triggers to be enabled
         retval = self._wait_devices_propty(
             self._trigdevs, 'State-Sts', _TIConst.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for BO Mags Triggers to be enable timed '\
-                   'out without success! Verify BO Mags Triggers!'
-            return [False, text, retval[1]]
 
-        return True, '', []
+        if retval[0]:
+            return True, '', []
+        text = 'Check for BO Mags Triggers to be enable timed '\
+                'out without success! Verify BO Mags Triggers!'
+        return [False, text, retval[1]]
 
 
 class BORFRampStandbyHandler(_BaseHandler):
     """BO RF Ramp standby mode handler for injection procedure."""
 
-    def __init__(self):
+    def __init__(self, hltiming=None):
+        """."""
         self.llrf = ASLLRF(ASLLRF.DEVICES.BO)
-        self.rmptrg = Trigger('BO-Glob:TI-LLRF-Rmp')
 
-        devices = (self.llrf, self.rmptrg)
+        # call base class constructor
+        super().__init__('', (self.llrf, ), hltiming=hltiming)
+
+        self.rmptrg = self._hltiming.triggers['BO-Glob:TI-LLRF-Rmp']
 
         self._on_values = dict()
         self._on_values[self.llrf] = {
@@ -457,9 +490,6 @@ class BORFRampStandbyHandler(_BaseHandler):
             'RmpReady-Mon': _Const.DsblEnbl.Enbl}
         self._on_values[self.rmptrg] = {
             'State-Sts': _Const.DsblEnbl.Enbl}
-
-        # call base class constructor
-        super().__init__('', devices)
 
     def cmd_turn_off(self):
         """Turn off."""
@@ -475,10 +505,18 @@ class BORFRampStandbyHandler(_BaseHandler):
                    'out without success! Verify BO RF Ramp!'
             return [False, text, retval[1]]
 
+        retval = self.disable_triggers()
+        if not retval[0]:
+            return retval
+
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
+        retval = self.enable_triggers()
+        if not retval[0]:
+            return retval
+
         # set RF ramp to enabled
         self.llrf.rmp_enable = _Const.DsblEnbl.Enbl
 
@@ -493,13 +531,47 @@ class BORFRampStandbyHandler(_BaseHandler):
 
         return True, '', []
 
+    def disable_triggers(self):
+        """."""
+        # disable triggers
+        self._set_devices_propty(
+            self.rmptrg, 'State-Sel', _TIConst.DsblEnbl.Dsbl)
+
+        # wait for triggers to be disabled
+        retval = self._wait_devices_propty(
+            self.rmptrg, 'State-Sts', _TIConst.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+
+        if retval[0]:
+            return True, '', []
+        text = 'Check for BO RF Triggers to be disabled timed '\
+            'out without success! Verify BO RF Triggers!'
+        return [False, text, retval[1]]
+
+    def enable_triggers(self):
+        """."""
+        # disable triggers
+        self._set_devices_propty(
+            self.rmptrg, 'State-Sel', _TIConst.DsblEnbl.Enbl)
+
+        # wait for triggers to be enabled
+        retval = self._wait_devices_propty(
+            self.rmptrg, 'State-Sts', _TIConst.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+
+        if retval[0]:
+            return True, '', []
+        text = 'Check for BO RF Triggers to be enable timed '\
+            'out without success! Verify BO RF Triggers!'
+        return [False, text, retval[1]]
+
 
 class LILLRFStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
     WAIT_2_TURNON = 2  # [s]
 
-    def __init__(self):
+    def __init__(self, hltiming=None):
         """Init."""
 
         # create devices
@@ -508,14 +580,17 @@ class LILLRFStandbyHandler(_BaseHandler):
             devices.append(DevLILLRF(dev))
         devices = tuple(devices)
 
+        # call base class constructor
+        super().__init__('', devices, hltiming=hltiming)
+
+        self._trig_names = HLTimeSearch.get_hl_triggers(
+            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
+
         self._on_values = dict()
         for dev in devices:
             self._on_values[dev] = {
                 'GET_INTEGRAL_ENABLE': _Const.DsblEnbl.Enbl,
                 'GET_FB_MODE': _Const.DsblEnbl.Enbl}
-
-        # call base class constructor
-        super().__init__('', devices)
 
     def cmd_turn_off(self):
         """Turn off."""
@@ -545,11 +620,15 @@ class LILLRFStandbyHandler(_BaseHandler):
                    'timed out without success! Verify LI LLRF!'
             return [False, text, retval[1]]
 
+        self.change_to_linac()
+
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
-        # wait for some InjBO pulses
+        self.change_to_rmpbo()
+
+        # wait for some pulses
         _time.sleep(LILLRFStandbyHandler.WAIT_2_TURNON)
 
         # turn integral on
@@ -580,6 +659,16 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         return True, '', []
 
+    def change_to_linac(self):
+        """."""
+        return self.hltiming.change_triggers_source(
+            self._trig_names, new_src='Linac')
+
+    def change_to_rmpbo(self):
+        """."""
+        return self.hltiming.change_triggers_source(
+            self._trig_names, new_src='RmpBO')
+
 
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
@@ -593,13 +682,14 @@ class InjSysStandbyHandler(_Devices):
         'li_rf': 'LI LLRF (Klystrons Loop)',
     }
 
-    def __init__(self):
+    def __init__(self, hltiming=None):
         """Init."""
+        self._hltiming = hltiming or HLTiming()
         devs = {
-            'as_pu': ASPUStandbyHandler(),
-            'bo_ps': BOPSRampStandbyHandler(),
-            'bo_rf': BORFRampStandbyHandler(),
-            'li_rf': LILLRFStandbyHandler(),
+            'as_pu': ASPUStandbyHandler(hltiming=self._hltiming),
+            'bo_ps': BOPSRampStandbyHandler(hltiming=self._hltiming),
+            'bo_rf': BORFRampStandbyHandler(hltiming=self._hltiming),
+            'li_rf': LILLRFStandbyHandler(hltiming=self._hltiming),
         }
         self._dev_refs = devs
         self._on_order = InjSysStandbyHandler.DEF_ON_ORDER
@@ -616,6 +706,17 @@ class InjSysStandbyHandler(_Devices):
 
         # call super init
         super().__init__('', tuple(devs.values()))
+
+    @property
+    def hltiming(self):
+        """."""
+        return self._hltiming
+
+    @hltiming.setter
+    def hltiming(self, hltiming):
+        """."""
+        if isinstance(hltiming, HLTiming):
+            self._hltiming = hltiming
 
     @property
     def handlers(self):
@@ -758,27 +859,35 @@ class InjSysPUModeHandler(_Devices, _Callback):
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
     SI_DPKCKR_DLYREF = 36800000  # [count]
 
-    def __init__(self, print_log=True, callback=None):
+    def __init__(self, print_log=True, callback=None, hltiming=None):
         """Init."""
+        self._hltiming = hltiming or HLTiming()
         self.pudpk = PowerSupplyPU(PowerSupplyPU.DEVICES.SI_INJ_DPKCKR)
         self.punlk = PowerSupplyPU(PowerSupplyPU.DEVICES.SI_INJ_NLKCKR)
-        self.trigdpk = Trigger('SI-01SA:TI-InjDpKckr')
-        self.trignlk = Trigger('SI-01SA:TI-InjNLKckr')
+        self.trigdpk = self._hltiming.triggers['SI-01SA:TI-InjDpKckr']
+        self.trignlk = self._hltiming.triggers['SI-01SA:TI-InjNLKckr']
         self.posang = PosAng(PosAng.DEVICES.TS)
         self.delta_posang = self.TS_POSANG_DEFDELTA
         self.dpkckr_dlyref = self.SI_DPKCKR_DLYREF
         self.dpkckr_kick = self.SI_DPKCKR_DEFKICK
-        devices = (
-            self.pudpk, self.punlk,
-            self.trigdpk, self.trignlk,
-            self.posang,
-        )
+        devices = (self.pudpk, self.punlk, self._hltiming, self.posang)
         self._print_log = print_log
         self._abort = _Flag()
 
         # call super init
         _Devices.__init__(self, '', devices)
         _Callback.__init__(self, callback=callback)
+
+    @property
+    def hltiming(self):
+        """."""
+        return self._hltiming
+
+    @hltiming.setter
+    def hltiming(self, hltiming):
+        """."""
+        if isinstance(hltiming, HLTiming):
+            self._hltiming = hltiming
 
     @property
     def is_trigdpk_onaxis(self):
