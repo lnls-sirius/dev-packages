@@ -14,8 +14,8 @@ from .ict import ICT, TranspEff
 from .ids import APU, WIG, PAPU, EPU
 from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF
 from .injctrl import InjCtrl
-from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
-    BORFRampStandbyHandler, InjSysStandbyHandler, LILLRFStandbyHandler, \
+from .injsys import PUMagsStandbyHandler, BOPSRampStandbyHandler, \
+    BORFRampStandbyHandler, InjSysStandbyHandler, LinacStandbyHandler, \
     InjSysPUModeHandler
 from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift

@@ -59,7 +59,7 @@ class _BaseHandler(_Devices):
         return vals
 
 
-class ASPUStandbyHandler(_BaseHandler):
+class PUMagsStandbyHandler(_BaseHandler):
     """Pulsed magnets standby mode handler for injection procedure."""
 
     def __init__(self, hltiming=None):
@@ -69,24 +69,12 @@ class ASPUStandbyHandler(_BaseHandler):
              'propty_name': '(?!:CCoil).*'})
         self._trignames = [
             dev.replace('PU', 'TI') for dev in self._punames]
-        self._modnames = LIModltr.DEVICES.ALL
 
         # pu devices
         self._pudevs = [PowerSupplyPU(pun) for pun in self._punames]
 
-        # modulator devices
-        self._moddevs = [LIModltr(mod) for mod in self._modnames]
-        self._limps = _DeviceNC(
-            'LA-CN:H1MPS-1',
-            ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
-             'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
-
-        alldevs = self._pudevs + self._moddevs
-        alldevs.append(self._limps)
-        alldevs = tuple(alldevs)
-
         # call base class constructor
-        super().__init__('', alldevs, hltiming=hltiming)
+        super().__init__('', self._pudevs, hltiming=hltiming)
 
         # trigger devices
         self._trigdevs = [self._hltiming.triggers[t] for t in self._trignames]
@@ -103,18 +91,6 @@ class ASPUStandbyHandler(_BaseHandler):
                 continue
             self._on_values[tdev] = {
                 'State-Sts': _TIConst.DsblEnbl.Enbl}
-        for mdev in self._moddevs:
-            self._on_values[mdev] = {
-                'CHARGE': _TIConst.DsblEnbl.Enbl,
-                'TRIGOUT': _TIConst.DsblEnbl.Enbl,
-                'CPS_ALL': 1,
-            }
-        self._on_values[self._limps] = {
-            'Mod1State_I': 0,
-            'Mod1State_L': 0,
-            'Mod2State_I': 0,
-            'Mod2State_L': 0,
-        }
 
     @property
     def punames(self):
@@ -136,31 +112,8 @@ class ASPUStandbyHandler(_BaseHandler):
         """Trigger devices."""
         return self._trigdevs
 
-    @property
-    def modnames(self):
-        """Modulator names."""
-        return _dcopy(self._modnames)
-
-    @property
-    def moddevices(self):
-        """Modulator devices."""
-        return self._moddevs
-
     def cmd_turn_off(self):
         """Turn off."""
-        # turn modulator trigout off
-        self._set_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl)
-
-        # wait for modulator trigout to turn off
-        retval = self._wait_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for LI modulator TrigOut to be off timed '\
-                   'out without success! Verify LI Modulators!'
-            return [False, text, retval[1]]
-
         # set pulsed magnet pulse off
         self._set_devices_propty(
             self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl)
@@ -187,45 +140,10 @@ class ASPUStandbyHandler(_BaseHandler):
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
-        # wait for modulators trig.out
-        _time.sleep(1)
-
-        # turn modulator charge off
-        self._set_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl)
-
-        # wait for modulator charge to turn off
-        retval = self._wait_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for LI modulator Charge to be off timed '\
-                   'out without success! Verify LI Modulators!'
-            return [False, text, retval[1]]
-
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
-        # turn modulators charge on
-        self._set_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl)
-
-        # wait for modulators charge to turn on
-        retval = self._wait_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for LI modulator Charge to be on timed '\
-                   'out without success! Verify LI Modulators!'
-            return [False, text, retval[1]]
-
-        # reset modulator
-        for dev in self._moddevs:
-            if not dev.cmd_reset():
-                text = 'Could not reset LI modulator! Verify LI Modulators!'
-                return [False, text, [dev.devname+':RESET', ]]
-
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
         # set pulsed magnet power state on
@@ -240,7 +158,7 @@ class ASPUStandbyHandler(_BaseHandler):
                    'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
 
-        # wait a moment for the PU high voltage and modulators charge
+        # wait a moment for the PU high voltage
         _time.sleep(1)
 
         # set pulsed magnet pulse on
@@ -254,54 +172,6 @@ class ASPUStandbyHandler(_BaseHandler):
             text = 'Check for pulsed magnet Pulse to be enabled '\
                 'timed out without success! Verify pulsed magnets!'
             return [False, text, retval[1]]
-
-        # turn modulator trigout on
-        self._set_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl)
-
-        # wait for modulator trigout to turn on
-        retval = self._wait_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl,
-            timeout=3, return_prob=True)
-        if not retval[0]:
-            text = 'Check for LI modulator TrigOut to be on timed '\
-                   'out without success! Verify LI Modulators!'
-            return [False, text, retval[1]]
-
-        # check if mps status is ok
-        _t0 = _time.time()
-        while _time.time() - _t0 < 5:
-            if not self._limps['Mod1State_I'] and \
-                    not self._limps['Mod2State_I']:
-                break
-        else:
-            problems = [
-                self._limps.pv_object('Mod'+i+'State_I').pvname for
-                i in ['1', '2'] if self._limps['Mod'+i+'State_I']]
-            text = 'Check for LI modulators MPS Status to be ok timed '\
-                   'out without success! Verify LI Modulators MPS!'
-            return [False, text, problems]
-
-        # reset linac mps modulator signal
-        self._limps['Mod1State_R'] = 1
-        self._limps['Mod2State_R'] = 1
-        _time.sleep(1)
-        self._limps['Mod1State_R'] = 0
-        self._limps['Mod2State_R'] = 0
-
-        # check if mps latch is ok
-        _t0 = _time.time()
-        while _time.time() - _t0 < 5:
-            if not self._limps['Mod1State_L'] and \
-                    not self._limps['Mod2State_L']:
-                break
-        else:
-            problems = [
-                self._limps.pv_object('Mod'+i+'State_L').pvname for
-                i in ['1', '2'] if self._limps['Mod'+i+'State_L']]
-            text = 'Check for LI modulators MPS Latch to be ok timed '\
-                   'out without success! Verify LI Modulators MPS!'
-            return [False, text, problems]
 
         return True, '', []
 
@@ -566,7 +436,7 @@ class BORFRampStandbyHandler(_BaseHandler):
         return [False, text, retval[1]]
 
 
-class LILLRFStandbyHandler(_BaseHandler):
+class LinacStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
     WAIT_2_TURNON = 2  # [s]
@@ -575,13 +445,24 @@ class LILLRFStandbyHandler(_BaseHandler):
         """Init."""
 
         # create devices
-        devices = list()
+        self._llrf_devs = list()
         for dev in DevLILLRF.DEVICES.ALL:
-            devices.append(DevLILLRF(dev))
-        devices = tuple(devices)
+            self._llrf_devs.append(DevLILLRF(dev))
+
+        self._modnames = LIModltr.DEVICES.ALL
+
+        # modulator devices
+        self._moddevs = [LIModltr(mod) for mod in self._modnames]
+        self._limps = _DeviceNC(
+            'LA-CN:H1MPS-1',
+            ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
+             'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
+
+        devices = self._llrf_devs + self._moddevs
+        devices.append(self._limps)
 
         # call base class constructor
-        super().__init__('', devices, hltiming=hltiming)
+        super().__init__('', tuple(devices), hltiming=hltiming)
 
         self._trig_names = HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
@@ -591,16 +472,33 @@ class LILLRFStandbyHandler(_BaseHandler):
             self._on_values[dev] = {
                 'GET_INTEGRAL_ENABLE': _Const.DsblEnbl.Enbl,
                 'GET_FB_MODE': _Const.DsblEnbl.Enbl}
+        for mdev in self._moddevs:
+            self._on_values[mdev] = {
+                'CHARGE': _TIConst.DsblEnbl.Enbl,
+                'TRIGOUT': _TIConst.DsblEnbl.Enbl,
+                'CPS_ALL': 1}
+        self._on_values[self._limps] = {
+            'Mod1State_I': 0, 'Mod1State_L': 0,
+            'Mod2State_I': 0, 'Mod2State_L': 0}
+
+    @property
+    def modnames(self):
+        """Modulator names."""
+        return _dcopy(self._modnames)
+
+    @property
+    def moddevices(self):
+        """Modulator devices."""
+        return self._moddevs
 
     def cmd_turn_off(self):
         """Turn off."""
         # turn feedback off
         self._set_devices_propty(
-            self.devices, 'SET_FB_MODE', _Const.DsblEnbl.Dsbl)
-
+            self._llrf_devs, 'SET_FB_MODE', _Const.DsblEnbl.Dsbl)
         # wait for feedback to turn off
         retval = self._wait_devices_propty(
-            self.devices, 'GET_FB_MODE', _Const.DsblEnbl.Dsbl,
+            self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Dsbl,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Feedback Mode to be off '\
@@ -609,11 +507,10 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         # turn integral off
         self._set_devices_propty(
-            self.devices, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl)
-
+            self._llrf_devs, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl)
         # wait for integral to turn off
         retval = self._wait_devices_propty(
-            self.devices, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl,
+            self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Integral Mode to be off '\
@@ -622,22 +519,88 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         self.change_trigs_to_linac_evt()
 
+        # turn modulator trigout off
+        self._set_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl)
+        # wait for modulator trigout to turn off
+        retval = self._wait_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator TrigOut to be off timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
+        # wait for modulators trig.out
+        _time.sleep(1)
+
+        # turn modulator charge off
+        self._set_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl)
+        # wait for modulator charge to turn off
+        retval = self._wait_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator Charge to be off timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
         return True, '', []
 
     def cmd_turn_on(self):
         """Turn on."""
+        # turn modulators charge on
+        self._set_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl)
+        # wait for modulators charge to turn on
+        retval = self._wait_devices_propty(
+            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator Charge to be on timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
+        # reset modulator
+        for dev in self._moddevs:
+            if not dev.cmd_reset():
+                text = 'Could not reset LI modulator! Verify LI Modulators!'
+                return [False, text, [dev.devname+':RESET', ]]
+
+        # wait a moment for the modulators charge
+        _time.sleep(1)
+
+        # turn modulator trigout on
+        self._set_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl)
+        # wait for modulator trigout to turn on
+        retval = self._wait_devices_propty(
+            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl,
+            timeout=3, return_prob=True)
+        if not retval[0]:
+            text = 'Check for LI modulator TrigOut to be on timed '\
+                   'out without success! Verify LI Modulators!'
+            return [False, text, retval[1]]
+
+        retval = self.check_mps_status()
+        if not retval[0]:
+            return retval
+        retval = self.reset_mps_status()
+        if not retval[0]:
+            return retval
+
         self.change_trigs_to_rmpbo_evt()
 
         # wait for some pulses
-        _time.sleep(LILLRFStandbyHandler.WAIT_2_TURNON)
+        _time.sleep(LinacStandbyHandler.WAIT_2_TURNON)
 
         # turn integral on
         self._set_devices_propty(
-            self.devices, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl)
-
+            self._llrf_devs, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl)
         # wait for integral to turn on
         retval = self._wait_devices_propty(
-            self.devices, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl,
+            self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Integral Mode to be on '\
@@ -646,11 +609,10 @@ class LILLRFStandbyHandler(_BaseHandler):
 
         # turn feedback on
         self._set_devices_propty(
-            self.devices, 'SET_FB_MODE', _Const.DsblEnbl.Enbl)
-
+            self._llrf_devs, 'SET_FB_MODE', _Const.DsblEnbl.Enbl)
         # wait for feedback to turn on
         retval = self._wait_devices_propty(
-            self.devices, 'GET_FB_MODE', _Const.DsblEnbl.Enbl,
+            self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Enbl,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Feedback Mode to be on '\
@@ -669,6 +631,45 @@ class LILLRFStandbyHandler(_BaseHandler):
         return self.hltiming.change_triggers_source(
             self._trig_names, new_src='RmpBO')
 
+    def check_mps_status(self):
+        """."""
+        # check if mps status is ok
+        _t0 = _time.time()
+        while _time.time() - _t0 < 5:
+            if not self._limps['Mod1State_I'] and \
+                    not self._limps['Mod2State_I']:
+                return True, '', []
+
+        problems = [
+            self._limps.pv_object('Mod'+i+'State_I').pvname for
+            i in ['1', '2'] if self._limps['Mod'+i+'State_I']]
+        text = 'Check for LI modulators MPS Status to be ok timed '\
+            'out without success! Verify LI Modulators MPS!'
+        return [False, text, problems]
+
+    def reset_mps_status(self):
+        """."""
+        # reset linac mps modulator signal
+        self._limps['Mod1State_R'] = 1
+        self._limps['Mod2State_R'] = 1
+        _time.sleep(1)
+        self._limps['Mod1State_R'] = 0
+        self._limps['Mod2State_R'] = 0
+
+        # check if mps latch is ok
+        _t0 = _time.time()
+        while _time.time() - _t0 < 5:
+            if not self._limps['Mod1State_L'] and \
+                    not self._limps['Mod2State_L']:
+                return True, '', []
+
+        problems = [
+            self._limps.pv_object('Mod'+i+'State_L').pvname for
+            i in ['1', '2'] if self._limps['Mod'+i+'State_L']]
+        text = 'Check for LI modulators MPS Latch to be ok timed '\
+            'out without success! Verify LI Modulators MPS!'
+        return [False, text, problems]
+
 
 class InjSysStandbyHandler(_Devices):
     """Injection system standy mode handler."""
@@ -686,10 +687,10 @@ class InjSysStandbyHandler(_Devices):
         """Init."""
         self._hltiming = hltiming or HLTiming()
         devs = {
-            'as_pu': ASPUStandbyHandler(hltiming=self._hltiming),
+            'as_pu': PUMagsStandbyHandler(hltiming=self._hltiming),
             'bo_ps': BOPSRampStandbyHandler(hltiming=self._hltiming),
             'bo_rf': BORFRampStandbyHandler(hltiming=self._hltiming),
-            'li_rf': LILLRFStandbyHandler(hltiming=self._hltiming),
+            'li_rf': LinacStandbyHandler(hltiming=self._hltiming),
         }
         self._dev_refs = devs
         self._on_order = InjSysStandbyHandler.DEF_ON_ORDER
