@@ -9,7 +9,7 @@ from .device import Devices as _Devices, DeviceNC as _DeviceNC
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
-from .timing import Trigger, HLTiming
+from .timing import HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
@@ -193,7 +193,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
         super().__init__('', self._psdevs, hltiming=hltiming)
 
         # trigger devices
-        self._trigdevs = [self._hltiming.triggers(t) for t in self._trignames]
+        self._trigdevs = [self._hltiming.triggers[t] for t in self._trignames]
 
         self._on_values = dict()
         for psdev in self._psdevs:
