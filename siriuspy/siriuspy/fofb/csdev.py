@@ -244,7 +244,7 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
             'CtrlrDsblSYSIDExc-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and decimation configuration
+            # decimation configuration
             'FOFBAccDecimation-Sel': {
                 'type': 'enum', 'enums': _et.DEC_OPT,
                 'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
@@ -257,24 +257,6 @@ class HLFOFBConst(_csdev.Const):
             'FOFBAccDecimation-RB': {
                 'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
                 'hilim': 8600, 'unit': 'count'},
-            'KickCHAcc-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
-                'value': self.nr_ch*[0]},
-            'KickCVAcc-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
-                'value': self.nr_cv*[0]},
-            'KickCHRef-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
-                'value': self.nr_ch*[0]},
-            'KickCVRef-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
-                'value': self.nr_cv*[0]},
-            'KickCH-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
-                'value': self.nr_ch*[0]},
-            'KickCV-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
-                'value': self.nr_cv*[0]},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
