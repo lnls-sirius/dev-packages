@@ -487,8 +487,8 @@ class EpicsCorrectors(BaseCorrectors):
         _log.info(strn.format('send evt:', 1000*(time4-time3)))
 
         # Wait for references to be updated
-        if WAIT_CORRS and self._timed_out(values, mode='applied'):
-            pass
+        if WAIT_CORRS:
+            self._timed_out(values, mode='applied')
         time5 = _time.time()
         _log.info(strn.format('check applied:', 1000*(time5-time4)))
         _log.info('    TIMEIT: END')
