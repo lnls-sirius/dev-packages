@@ -677,10 +677,10 @@ class InjSysStandbyHandler(_Devices):
     DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
     DEF_OFF_ORDER = _InjConst.INJSYS_DEF_OFF_ORDER
     HANDLER_DESC = {
-        'as_pu': 'AS PU (Septa, Kickers and Modulators)',
+        'as_pu': 'AS PU (All Septa and Kickers)',
         'bo_ps': 'BO PS Ramp',
         'bo_rf': 'BO RF Ramp',
-        'li_rf': 'LI LLRF (Klystrons Loop)',
+        'li_rf': 'LINAC (SHB, Klystrons and Modulators)',
     }
 
     def __init__(self, hltiming=None):
