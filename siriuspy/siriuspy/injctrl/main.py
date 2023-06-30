@@ -928,10 +928,11 @@ class App(_Callback):
         is_running = self._injsys_dev.is_running
         ret = self._injsys_dev.result
         if is_running:
-            msg = 'ERR:Timed out in turn '+cmd+' Inj.System.'
+            self._update_log('ERR:Timed out in turn '+cmd+' Inj.System.')
+            self._injsys_dev.cmd_abort()
         elif not ret[0]:
             self._update_log('ERR:Failed to turn '+cmd+' Inj.System.')
-            msgs = ret[1].split()
+            msgs = ret[1].split('\n')
             msgs = [m[i:i+35] for m in msgs for i in range(0, len(m), 35)]
             for msg in msgs:
                 self._update_log('ERR:'+msg)
