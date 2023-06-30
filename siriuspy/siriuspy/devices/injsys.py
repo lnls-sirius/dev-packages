@@ -844,9 +844,14 @@ class InjSysStandbyHandler(_Devices):
             if retval[0]:
                 self._done.append(handler_name)
             else:
-                break
+                if self._result is None:
+                    self._result = retval
+                else:
+                    self._result[1] += '\n' + retval[1]
+                    self._result[2] += retval[2]
 
-        self._result = retval
+        if self._result is None:
+            self._result = [True, '', []]
 
         self._is_running = ''
 

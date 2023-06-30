@@ -924,12 +924,15 @@ class App(_Callback):
             self.run_callbacks(
                 'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
+
+        is_running = self._injsys_dev.is_running
         ret = self._injsys_dev.result
-        if ret is None:
+        if is_running:
             msg = 'ERR:Timed out in turn '+cmd+' Inj.System.'
         elif not ret[0]:
             self._update_log('ERR:Failed to turn '+cmd+' Inj.System.')
-            msgs = [ret[1][i:i+35] for i in range(0, len(ret[1]), 35)]
+            msgs = ret[1].split()
+            msgs = [m[i:i+35] for m in msgs for i in range(0, len(m), 35)]
             for msg in msgs:
                 self._update_log('ERR:'+msg)
             self._update_log('ERR:Detail list: ')
