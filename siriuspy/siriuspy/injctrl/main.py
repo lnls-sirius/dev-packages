@@ -443,6 +443,12 @@ class App(_Callback):
 
         if value != _Const.InjMode.Decay:
             stg = 'top-up' if value == _Const.InjMode.TopUp else 'accumulation'
+
+            if self._pumode != _Const.PUMode.Accumulation:
+                self._update_log('ERR:Set PUMode to Accumulation before')
+                self._update_log('ERR:changing mode to {stg}')
+                return False
+
             self._update_log('Configuring EVG RepeatBucketList...')
             self._evg_dev['RepeatBucketList-SP'] = 1
             self._update_log(f'...done. Ready to start {stg:s}.')
