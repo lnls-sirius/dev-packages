@@ -624,7 +624,7 @@ class App(_Callback):
             return False
         stop = self._bucketlist_stop
         step = self._bucketlist_step
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.Decay:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_start = start
@@ -637,7 +637,7 @@ class App(_Callback):
             return False
         start = self._bucketlist_start
         step = self._bucketlist_step
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.Decay:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_stop = stop
