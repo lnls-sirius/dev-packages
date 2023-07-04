@@ -11,6 +11,10 @@ from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 class IDFFConfig(_ConfigDBDocument):
     """Insertion Device Feedforward Configuration."""
 
+    # NOTE: for EPU50 there is a large discrepancy
+    # between RB/SP/Mon phase values
+    PPARAM_TOL = 0.5  # [mm]
+    KPARAM_TOL = 0.1  # [mm]
     CONFIGDB_TYPE = 'si_idff'
 
     def __init__(self, name=None, url=None):
@@ -175,17 +179,15 @@ class IDFFConfig(_ConfigDBDocument):
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
-        PPARAM_TOL = 0.1
-        KPARAM_TOL = 0.1
         poldefs = self._polarization_definitions
         if poldefs is None:
             raise ValueError('No IDFF configuration defined.')
         for pol, val in poldefs.items():
             if pol == 'none':
                 continue
-            if val is None or abs(pparameter - val) < PPARAM_TOL:
+            if val is None or abs(pparameter - val) < IDFFConfig.PPARAM_TOL:
                 return pol
-        if abs(kparameter - poldefs['none']) < KPARAM_TOL:
+        if abs(kparameter - poldefs['none']) < IDFFConfig.KPARAM_TOL:
             return 'none'
         return 'not_defined'
 
