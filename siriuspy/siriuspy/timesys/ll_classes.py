@@ -678,7 +678,7 @@ class _BASETRIG(_BaseLL):
             dic_ = {'Src': n}
         else:
             n -= offset
-            evt = int(_TIConst.EvtHL2LLMap[pname][-2:])
+            evt = int(_TIConst.EvtHL2LLMap[pname][3:])
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             intrg = _LLSearch.get_channel_internal_trigger_pvname(
