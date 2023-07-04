@@ -107,7 +107,7 @@ _amcfpgaevrs = [
     'IA-20RaBPM:TI-AMCFPGAEVR:',
     'IA-20RaBPMTL:TI-AMCFPGAEVR:',
     ]
-_amcfpgaevr_amcs = ['AMC3', 'AMC4', 'AMC5', 'AMC6', 'AMC7']
+_amcfpgaevr_amcs = ['AMC3', 'AMC4', 'AMC6', 'AMC7']
 _amcfpgaevr_propts = [
     ['State-Sel', 1, 0.0],
     ['Src-Sel', 3, 0.0],
