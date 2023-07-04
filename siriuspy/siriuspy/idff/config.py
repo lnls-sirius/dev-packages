@@ -25,17 +25,6 @@ class IDFFConfig(_ConfigDBDocument):
             config_type=IDFFConfig.CONFIGDB_TYPE, name=name_, url=url)
 
     @property
-    def name(self):
-        """Return configuration name."""
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        """Set configuration name."""
-        if self.configdbclient.check_valid_configname(value):
-            self._name = value
-
-    @property
     def pparameter_pvname(self):
         """Return ID pparameter pvname."""
         config = self._value
