@@ -76,7 +76,7 @@ class App(_Callback):
             'CorrStatus-Mon': 0b1111,
         }
         if self._const.has_qscorrs:
-            pvn2vals.ipdate({
+            pvn2vals.update({
                 'ControlQS-Sel': self._control_qs,
                 'ControlQS-Sts': self._control_qs,
                 })
@@ -162,6 +162,7 @@ class App(_Callback):
             return False
 
         self._config_name = value
+        self.update_autosave_file()
         self.run_callbacks('ConfigName-RB', value)
         return True
 
@@ -310,7 +311,8 @@ class App(_Callback):
                 setpoints, *_ = ret
 
                 # built curr_sp vector
-                curr_sp = self._pssfob_current_setpoint(setpoints, corrdevs)
+                curr_sp = self._pssfob_get_current_setpoint(
+                    setpoints, corrdevs)
 
                 # apply curr_sp to pssofb
                 self._pssofb.bsmp_sofb_current_set_update((curr_sp, ))

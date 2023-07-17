@@ -7,21 +7,33 @@ from siriuspy.machshift.macreport import MacReport
 
 # failure statistics per month
 intervals = [
-    [Time(2021, 1, 1, 0, 0), Time(2021, 1, 31, 23, 59)],
-    [Time(2021, 2, 1, 0, 0), Time(2021, 2, 28, 23, 59)],
-    [Time(2021, 3, 1, 0, 0), Time(2021, 3, 31, 23, 59)],
-    [Time(2021, 4, 1, 0, 0), Time(2021, 4, 30, 23, 59)],
-    [Time(2021, 5, 1, 0, 0), Time(2021, 5, 31, 23, 59)],
-    [Time(2021, 6, 1, 0, 0), Time(2021, 6, 30, 23, 59)],
-    [Time(2021, 7, 1, 0, 0), Time(2021, 7, 31, 23, 59)],
-    [Time(2021, 8, 1, 0, 0), Time(2021, 8, 31, 23, 59)],
-    [Time(2021, 9, 1, 0, 0), Time(2021, 9, 30, 23, 59)],
-    [Time(2021, 10, 1, 0, 0), Time(2021, 10, 31, 23, 59)],
-    [Time(2021, 11, 1, 0, 0), Time(2021, 11, 30, 23, 59)],
-    [Time(2021, 12, 1, 0, 0), Time(2021, 12, 31, 23, 59)],
-    [Time(2022, 1, 1, 0, 0), Time(2022, 1, 31, 23, 59)],
-    [Time(2022, 2, 1, 0, 0), Time(2022, 2, 28, 23, 59)],
-    [Time(2022, 3, 1, 0, 0), Time(2022, 3, 31, 23, 59)],
+    [Time(2021, 1, 1, 0, 0), Time(2021, 1, 31, 23, 59, 59)],
+    [Time(2021, 2, 1, 0, 0), Time(2021, 2, 28, 23, 59, 59)],
+    [Time(2021, 3, 1, 0, 0), Time(2021, 3, 31, 23, 59, 59)],
+    [Time(2021, 4, 1, 0, 0), Time(2021, 4, 30, 23, 59, 59)],
+    [Time(2021, 5, 1, 0, 0), Time(2021, 5, 31, 23, 59, 59)],
+    [Time(2021, 6, 1, 0, 0), Time(2021, 6, 30, 23, 59, 59)],
+    [Time(2021, 7, 1, 0, 0), Time(2021, 7, 31, 23, 59, 59)],
+    [Time(2021, 8, 1, 0, 0), Time(2021, 8, 31, 23, 59, 59)],
+    [Time(2021, 9, 1, 0, 0), Time(2021, 9, 30, 23, 59, 59)],
+    [Time(2021, 10, 1, 0, 0), Time(2021, 10, 31, 23, 59, 59)],
+    [Time(2021, 11, 1, 0, 0), Time(2021, 11, 30, 23, 59, 59)],
+    [Time(2021, 12, 1, 0, 0), Time(2021, 12, 31, 23, 59, 59)],
+    [Time(2022, 1, 1, 0, 0), Time(2022, 1, 31, 23, 59, 59)],
+    [Time(2022, 2, 1, 0, 0), Time(2022, 2, 28, 23, 59, 59)],
+    [Time(2022, 3, 1, 0, 0), Time(2022, 3, 31, 23, 59, 59)],
+    [Time(2022, 4, 1, 0, 0), Time(2022, 4, 30, 23, 59, 59)],
+    [Time(2022, 5, 1, 0, 0), Time(2022, 5, 31, 23, 59, 59)],
+    [Time(2022, 6, 1, 0, 0), Time(2022, 6, 30, 23, 59, 59)],
+    [Time(2022, 7, 1, 0, 0), Time(2022, 7, 31, 23, 59, 59)],
+    [Time(2022, 8, 1, 0, 0), Time(2022, 8, 31, 23, 59, 59)],
+    [Time(2022, 9, 1, 0, 0), Time(2022, 9, 30, 23, 59, 59)],
+    [Time(2022, 10, 1, 0, 0), Time(2022, 10, 31, 23, 59, 59)],
+    [Time(2022, 11, 1, 0, 0), Time(2022, 11, 30, 23, 59, 59)],
+    [Time(2022, 12, 1, 0, 0), Time(2022, 12, 31, 23, 59, 59)],
+    [Time(2023, 1, 1, 0, 0), Time(2023, 1, 31, 23, 59, 59)],
+    [Time(2023, 2, 1, 0, 0), Time(2023, 2, 28, 23, 59, 59)],
+    [Time(2023, 3, 1, 0, 0), Time(2023, 3, 31, 23, 59, 59)],
 ]
 
 macreports = dict()
@@ -34,6 +46,7 @@ for intvl in intervals:
 
 mtbfs, mttrs, reliabs = dict(), dict(), dict()
 progrmd, delivd, usertot = dict(), dict(), dict()
+currmean, currstd = dict(), dict()
 stable, unstable, relstable = dict(), dict(), dict()
 for date, macr in macreports.items():
     mtbfs[date] = macr.usershift_time_between_failures_average
@@ -42,16 +55,18 @@ for date, macr in macreports.items():
     progrmd[date] = macr.usershift_progmd_time
     delivd[date] = macr.usershift_delivd_time
     usertot[date] = macr.usershift_total_time
+    currmean[date] = macr.usershift_current_average
+    currstd[date] = macr.usershift_current_stddev
     stable[date] = macr.usershift_total_stable_beam_time
     unstable[date] = macr.usershift_total_unstable_beam_time
     relstable[date] = macr.usershift_relative_stable_beam_time
 
-str_ = '{:<10s}' + '{:>16s}'*9
+str_ = '{:<10s}' + '{:>16s}'*9 + '{:>20s}'
 print(str_.format(
     'Y-M', 'MTBF', 'MTTR',
     'Reliability', 'Progrmd hours', 'Delivd hours', 'Total hours',
-    '% stable hours', 'Stable hours', 'Unstable hours'))
-str_ = '{:<10s}' + '    {:>12.3f}'*9
+    '% stable hours', 'Stable hours', 'Unstable hours', 'Current (Avg±Std)'))
+str_ = '{:<10s}' + '    {:>12.3f}'*9 + '    {:4.3f} ± {:4.3f}'
 for date in macreports:
     print(str_.format(
         str(date.year)+'-'+str(date.month),
@@ -64,6 +79,7 @@ for date in macreports:
         relstable[date],
         stable[date],
         unstable[date],
+        currmean[date], currstd[date],
     ))
 
 fig, axs = plt.subplots(3, 1, sharex=True)
@@ -88,20 +104,33 @@ fig.show()
 
 # programmed vs. delivered hours
 macr = MacReport()
-macr.connector.timeout = 120
-macr.time_start = Time(2021, 3, 1, 0, 0)
-macr.time_stop = Time(2022, 3, 31, 23, 59)
+macr.connector.timeout = 300
+macr.time_start = Time(2022, 4, 1, 0, 0)
+macr.time_stop = Time(2023, 3, 31, 23, 59, 59)
 macr.update()
 
-print('MTBF', macr.usershift_time_between_failures_average)
-print('MTTR', macr.usershift_time_to_recover_average)
-print('Reliability', macr.usershift_beam_reliability)
-print('Progrmd hours', macr.usershift_progmd_time)
-print('Delivd hours', macr.usershift_delivd_time)
-print('Total hours', macr.usershift_total_time)
-print('% stable hours', macr.usershift_relative_stable_beam_time)
-print('Stable hours', macr.usershift_total_stable_beam_time)
-print('Unstable hours', macr.usershift_total_unstable_beam_time)
+str_ = '{:<10s}' + '{:>16s}'*9 + '{:>20s}'
+print(str_.format(
+    'Y-M', 'MTBF', 'MTTR',
+    'Reliability', 'Progrmd hours', 'Delivd hours', 'Total hours',
+    '% stable hours', 'Stable hours', 'Unstable hours', 'Current (Avg±Std)'))
+str_ = '{:<10s}' + '    {:>12.3f}'*9 + '    {:4.3f} ± {:4.3f}'
+print(
+    str_.format(
+        str(macr.time_start.year)+'-'+str(macr.time_start.month) + ' a ' +
+        str(macr.time_stop.year)+'-'+str(macr.time_stop.month),
+        macr.usershift_time_between_failures_average,
+        macr.usershift_time_to_recover_average,
+        macr.usershift_beam_reliability,
+        macr.usershift_progmd_time,
+        macr.usershift_delivd_time,
+        macr.usershift_total_time,
+        macr.usershift_relative_stable_beam_time,
+        macr.usershift_total_stable_beam_time,
+        macr.usershift_total_unstable_beam_time,
+        macr.usershift_current_average,
+        macr.usershift_current_stddev,
+    ))
 
 rd = macr.raw_data
 dtimes = np.diff(rd['Timestamp'])
