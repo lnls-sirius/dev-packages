@@ -75,8 +75,8 @@ class Const(_csdev.Const):
     FILACURR_OPVALUE = 1.39  # [A]
     HV_OPVALUE = 90.0  # [kV]
 
-    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'li_rf']
+    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'as_pu', 'bo_ps']
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
@@ -122,10 +122,10 @@ def get_injctrl_propty_database():
 
         'Mode-Sel': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Mode-Sts': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Type-Sel': {
             'type': 'enum', 'value': _ct.InjType.MultiBunch,
             'enums': _et.INJTYPE, 'unit': 'SB_MB'},

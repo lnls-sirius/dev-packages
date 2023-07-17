@@ -14,8 +14,8 @@ from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, \
-    PowerSupplyPU, RFKillBeam, InjSysPUModeHandler, Trigger, HLTiming
+from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, HLTiming, \
+    RFKillBeam, InjSysPUModeHandler
 
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
@@ -148,6 +148,9 @@ class App(_Callback):
                     n: _PV(n+':DiagStatus-Mon', connection_timeout=0.05)
                     for n in _RFDiagConst.ALL_DEVICES if n.startswith(sec)}
 
+        # Timing device
+        self._hlti_dev = HLTiming()
+
         # auxiliary injsys PVs
         self._pvs_injsys = dict()
         punames = _PSSearch.get_psnames({
@@ -170,7 +173,8 @@ class App(_Callback):
             self._callback_watch_eguntrig)
 
         self._pumode_dev = InjSysPUModeHandler(
-            print_log=False, callback=self._update_dev_status)
+            print_log=False, callback=self._update_dev_status,
+            hltiming=self._hlti_dev)
 
         self._evg_dev = EVG()
         self._init_injevt = False
@@ -180,7 +184,7 @@ class App(_Callback):
         self._evg_dev.pv_object('TotalInjCount-Mon').add_callback(
             self._callback_is_injecting)
 
-        self._injsys_dev = InjSysStandbyHandler()
+        self._injsys_dev = InjSysStandbyHandler(hltiming=self._hlti_dev)
 
         self.currinfo_dev = CurrInfoSI()
         self.currinfo_dev.set_auto_monitor('Current-Mon', True)
@@ -188,10 +192,8 @@ class App(_Callback):
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = _PSSearch.get_psnames({
-            'dis': 'PU', 'dev': '.*(InjKckr|EjeKckr|InjNLKckr|Sept)',
-            'propty_name': '(?!:CCoil).*'})
-        self._pu_devs = [PowerSupplyPU(pun) for pun in self._pu_names]
+        self._pu_names = self._injsys_dev.handlers['as_pu'].punames
+        self._pu_devs = self._injsys_dev.handlers['as_pu'].pudevices
         self._pu_refvolt = list()
         for dev in self._pu_devs:
             pvo = dev.pv_object('Voltage-SP')
@@ -199,20 +201,6 @@ class App(_Callback):
             pvo.add_callback(self._callback_update_pu_refvolt)
 
         self._rfkillbeam = RFKillBeam()
-
-        self._li_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
-        self._li_trig_devs = [Trigger(tin) for tin in self._li_trig_names]
-
-        self._bops_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'Mags'})
-        self._bops_trig_devs = [Trigger(tin) for tin in self._bops_trig_names]
-
-        self._borf_trig_names = _HLTimeSearch.get_hl_triggers(
-            {'sec': 'BO', 'dev': 'LLRF', 'idx': 'Rmp'})
-        self._borf_trig_devs = [Trigger(tin) for tin in self._borf_trig_names]
-
-        self._hlti_dev = HLTiming()
 
         # pvname to write method map
         self.map_pv2write = {
@@ -455,6 +443,12 @@ class App(_Callback):
 
         if value != _Const.InjMode.Decay:
             stg = 'top-up' if value == _Const.InjMode.TopUp else 'accumulation'
+
+            if self._pumode != _Const.PUMode.Accumulation:
+                self._update_log('ERR:Set PUMode to Accumulation before')
+                self._update_log('ERR:changing mode to {stg}')
+                return False
+
             self._update_log('Configuring EVG RepeatBucketList...')
             self._evg_dev['RepeatBucketList-SP'] = 1
             self._update_log(f'...done. Ready to start {stg:s}.')
@@ -576,8 +570,6 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.PUMODE):
             return False
         if self._mode != _Const.InjMode.Decay:
-            topup = _Const.InjMode.TopUp
-            stg = 'top-up' if self._mode == topup else 'accumulation'
             self._update_log(
                 f'ERR:PUMode can only be changed in Decay mode.')
             return False
@@ -636,7 +628,7 @@ class App(_Callback):
             return False
         stop = self._bucketlist_stop
         step = self._bucketlist_step
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.Decay:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_start = start
@@ -649,7 +641,7 @@ class App(_Callback):
             return False
         start = self._bucketlist_start
         step = self._bucketlist_step
-        if self._mode == _Const.InjMode.TopUp:
+        if self._mode == _Const.InjMode.Decay:
             if not self._cmd_bucketlist_fill(stop, start, step):
                 return False
         self._bucketlist_stop = stop
@@ -936,12 +928,16 @@ class App(_Callback):
             self.run_callbacks(
                 'InjSysCmdDone-Mon', ','.join(self._injsys_dev.done))
         self.run_callbacks('InjSysCmdSts-Mon', _Const.InjSysCmdSts.Idle)
+
+        is_running = self._injsys_dev.is_running
         ret = self._injsys_dev.result
-        if ret is None:
-            msg = 'ERR:Timed out in turn '+cmd+' Inj.System.'
+        if is_running:
+            self._update_log('ERR:Timed out in turn '+cmd+' Inj.System.')
+            self._injsys_dev.cmd_abort()
         elif not ret[0]:
             self._update_log('ERR:Failed to turn '+cmd+' Inj.System.')
-            msgs = [ret[1][i:i+35] for i in range(0, len(ret[1]), 35)]
+            msgs = ret[1].split('\n')
+            msgs = [m[i:i+35] for m in msgs for i in range(0, len(m), 35)]
             for msg in msgs:
                 self._update_log('ERR:'+msg)
             self._update_log('ERR:Detail list: ')
@@ -1517,9 +1513,11 @@ class App(_Callback):
             return
         self._liti_warmup_state = state
 
-        event = 'RmpBO' if state == _Const.StandbyInject.Inject else 'Linac'
-        self._hlti_dev.change_triggers_source(
-            self._li_trig_names, new_src=event, printlog=False)
+        lirf = self._injsys_dev.handlers['li_rf']
+        if state == _Const.StandbyInject.Inject:
+            lirf.change_trigs_to_rmpbo_evt()
+        else:
+            lirf.change_trigs_to_linac_evt()
         self._update_log('LI timing configured.')
 
     def _handle_bops_standby_state(self, state):
@@ -1527,9 +1525,11 @@ class App(_Callback):
             return
         self._bops_standby_state = state
 
-        trigstate = int(state == _Const.StandbyInject.Inject)
-        for trig in self._bops_trig_devs:
-            trig.state = trigstate
+        bops = self._injsys_dev.handlers['bo_ps']
+        if state == _Const.StandbyInject.Inject:
+            bops.enable_triggers()
+        else:
+            bops.disable_triggers()
         self._update_log('BO PS timing configured.')
 
     def _handle_borf_standby_state(self, state):
@@ -1537,9 +1537,11 @@ class App(_Callback):
             return
         self._borf_standby_state = state
 
-        trigstate = int(state == _Const.StandbyInject.Inject)
-        for trig in self._borf_trig_devs:
-            trig.state = trigstate
+        borf = self._injsys_dev.handlers['bo_rf']
+        if state == _Const.StandbyInject.Inject:
+            borf.enable_triggers()
+        else:
+            borf.disable_triggers()
         self._update_log('BO RF timing configured.')
 
     # --- auxiliary log methods ---
