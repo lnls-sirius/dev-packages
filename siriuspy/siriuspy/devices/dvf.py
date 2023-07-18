@@ -392,7 +392,7 @@ class DVF(_DeviceNC):
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
 
     def cmd_set_cam_roi(self, offsetx, offsety, width, height, timeout=None):
-        """Set cam image region of interest."""
+        """Set cam image region of interest and reset aquisition."""
         self.cmd_acquire_off(timeout=timeout)
         self.cam_offsetx = offsetx
         self.cam_offsety = offsety
