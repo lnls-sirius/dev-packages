@@ -55,6 +55,7 @@ class TestLLTimeSearch(TestCase):
         'get_trigger_name',
         'get_fout_channel',
         'get_evg_channel',
+        'get_crates_mapping',
     )
 
     def test_public_interface(self):
