@@ -253,6 +253,11 @@ class MacReport:
         'Users',
     ]
 
+    FAILURES_MANUAL = [
+        # power grid failure, archiver was down
+        [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
+    ]
+
     def __init__(self, connector=None, logger=None):
         """Initialize object."""
         # client archiver connector
@@ -1075,7 +1080,7 @@ class MacReport:
 
         datetimes = _np.array([_Time(t) for t in self._raw_data['Timestamp']])
 
-        fig, axs = _plt.subplots(16, 1, sharex=True)
+        fig, axs = _plt.subplots(17, 1, sharex=True)
         fig.set_size_inches(9, 10)
         fig.subplots_adjust(top=0.96, left=0.08, bottom=0.05, right=0.96)
         axs[0].set_title('Raw data', fontsize=12)
@@ -1152,40 +1157,47 @@ class MacReport:
 
         axs[10].xaxis.axis_date()
         axs[10].plot(
-            datetimes, self._raw_data['Distortions']['SOFBLoop'], '-',
-            color='orangered', label='Distortions - SOFB Loop Open')
+            datetimes, self._raw_data['Failures']['ManualAnnotated'], '-',
+            color='red', label='Failures - Manual Annotated')
         axs[10].legend(loc='upper left', fontsize=9)
         axs[10].grid()
 
         axs[11].xaxis.axis_date()
         axs[11].plot(
-            datetimes, self._raw_data['Distortions']['FOFBLoop'], '-',
-            color='orangered', label='Distortions - FOFB Loop Open')
+            datetimes, self._raw_data['Distortions']['SOFBLoop'], '-',
+            color='orangered', label='Distortions - SOFB Loop Open')
         axs[11].legend(loc='upper left', fontsize=9)
         axs[11].grid()
 
         axs[12].xaxis.axis_date()
         axs[12].plot(
-            datetimes[0], 0, '.', color='white',
-            label='Distortions - BbB Instabilities:')
-        axs[12].plot(
-            datetimes, self._raw_data['Distortions']['BbBHStab'], '-',
-            color='blue', label='H')
-        axs[12].plot(
-            datetimes, self._raw_data['Distortions']['BbBVStab'], '-',
-            color='red', label='V')
-        axs[12].plot(
-            datetimes, self._raw_data['Distortions']['BbBLStab'], '-',
-            color='green', label='L')
-        axs[12].legend(loc='upper left', fontsize=9, ncol=4)
+            datetimes, self._raw_data['Distortions']['FOFBLoop'], '-',
+            color='orangered', label='Distortions - FOFB Loop Open')
+        axs[12].legend(loc='upper left', fontsize=9)
         axs[12].grid()
 
         axs[13].xaxis.axis_date()
         axs[13].plot(
+            datetimes[0], 0, '.', color='white',
+            label='Distortions - BbB Instabilities:')
+        axs[13].plot(
+            datetimes, self._raw_data['Distortions']['BbBHStab'], '-',
+            color='blue', label='H')
+        axs[13].plot(
+            datetimes, self._raw_data['Distortions']['BbBVStab'], '-',
+            color='red', label='V')
+        axs[13].plot(
+            datetimes, self._raw_data['Distortions']['BbBLStab'], '-',
+            color='green', label='L')
+        axs[13].legend(loc='upper left', fontsize=9, ncol=4)
+        axs[13].grid()
+
+        axs[14].xaxis.axis_date()
+        axs[14].plot(
             datetimes, self._raw_data['Shift']['Injection'], '-',
             color='lightsalmon', label='Injection Shifts')
-        axs[13].legend(loc='upper left', fontsize=9)
-        axs[13].grid()
+        axs[14].legend(loc='upper left', fontsize=9)
+        axs[14].grid()
 
         shift2color = {
             'MachineStudy': ['MacStudy', 'skyblue'],
@@ -1195,26 +1207,26 @@ class MacReport:
         for shift, auxdata in shift2color.items():
             ydata = self._raw_data['Shift'][shift]
 
-            axs[14].xaxis.axis_date()
-            axs[14].plot(
+            axs[15].xaxis.axis_date()
+            axs[15].plot(
                 datetimes, ydata, '-',
                 color=auxdata[1], label=auxdata[0])
-        axs[14].legend(loc='upper left', ncol=4, fontsize=9)
-        axs[14].set_ylim(0.0, 2.0)
-        axs[14].grid()
+        axs[15].legend(loc='upper left', ncol=4, fontsize=9)
+        axs[15].set_ylim(0.0, 2.0)
+        axs[15].grid()
 
         egmodes2color = {
             'MultiBunch': 'orangered', 'SingleBunch': 'orange'}
         for egmode, color in egmodes2color.items():
             ydata = self._raw_data['EgunModes'][egmode]
 
-            axs[15].xaxis.axis_date()
-            axs[15].plot(
+            axs[16].xaxis.axis_date()
+            axs[16].plot(
                 datetimes, ydata, '-',
                 color=color, label=egmode)
-        axs[15].legend(loc='upper left', ncol=2, fontsize=9)
-        axs[15].set_ylim(0.0, 2.0)
-        axs[15].grid()
+        axs[16].legend(loc='upper left', ncol=2, fontsize=9)
+        axs[16].set_ylim(0.0, 2.0)
+        axs[16].grid()
 
         return fig
 
@@ -1338,6 +1350,10 @@ class MacReport:
 
         # get pvs data and calculate failures
         self._raw_data['Failures'] = dict()
+
+        # - manual annotated failures
+        self._raw_data['Failures']['ManualAnnotated'] = \
+            self._get_man_annotated_fails_data()
 
         # - subsystems status
         self._ps_fail_values, self._mps_fail_values = \
@@ -1559,8 +1575,8 @@ class MacReport:
             beg_val += [beg_idcs.size-1]
             beg1, beg2 = beg_idcs[beg_val], beg_idcs[beg_val] + 15
             if beg2[-1] > self._users_shift_delivd_values.size-1:
-                beg1.pop()
-                beg2.pop()
+                beg1 = _np.delete(beg1, -1)
+                beg2 = _np.delete(beg2, -1)
             beg_val = [i for i in range(beg1.size) if not
                        any([beg1[i] < e < beg2[i] for e in end_idcs])]
             beg1, beg2 = beg1[beg_val], beg2[beg_val]
@@ -1577,8 +1593,8 @@ class MacReport:
                              if end_idcs[i]-end_idcs[i-1] > 15]
             end1, end2 = end_idcs[end_val] - 15, end_idcs[end_val]
             if end1[0] < 0:
-                end1.pop(0)
-                end2.pop(0)
+                end1 = _np.delete(end1, 0)
+                end2 = _np.delete(end2, 0)
             end_val = [i for i in range(end1.size-1) if not
                        any([end1[i] < b < end2[i] for b in beg_idcs])]
             end1, end2 = end1[end_val], end2[end_val]
@@ -1593,6 +1609,7 @@ class MacReport:
         # # # ----- failures -----
         beam_dump_values = _np.logical_not(
             self._raw_data['Failures']['WrongShift']) * \
+            self._raw_data['Failures']['ManualAnnotated'] * \
             self._raw_data['Failures']['NoEBeam']
         self._usershift_beam_dump_count = _np.sum(
             _np.diff(beam_dump_values) > 0)
@@ -1753,6 +1770,20 @@ class MacReport:
             idcsdefv = _np.where(times <= tstr.timestamp())[0]
             values[idcsdefv] = defv
         return times, values
+
+    def _get_man_annotated_fails_data(self):
+        # get all annotated failures
+        t2vs = _np.array([[], []])
+        for ini, end in MacReport.FAILURES_MANUAL:
+            t2vs = _np.c_[t2vs, [ini.timestamp(), 1], [end.timestamp(), 0]]
+        # insert initial point indicating not failure
+        t2vs = _np.c_[t2vs, [t2vs[0, 0]-1, 0]]
+        # sort by dates
+        t2vs = t2vs[:, t2vs[0, :].argsort()]
+        # calculate failures data in current timestamp base
+        failures = _interp1d_previous(
+            t2vs[0, :], t2vs[1, :], self._curr_times)
+        return failures
 
     def _calc_current_stats(self, dtimes):
         interval = _np.sum(dtimes)

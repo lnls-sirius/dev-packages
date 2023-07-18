@@ -120,7 +120,7 @@ class PAPU(_Device):
 
     _properties_papu = (
         'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
-        'BeamLineCtrl-Mon', 'Home-Mon',
+        'BeamLineCtrl-Mon',  # 'Home-Mon',
         )
     _properties = (
         'PeriodLength-Cte',
