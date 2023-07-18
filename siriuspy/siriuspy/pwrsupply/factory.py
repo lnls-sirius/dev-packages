@@ -5,7 +5,7 @@ import re as _re
 from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
-from ..thread import QueueThreads as _QueueThreads
+from ..thread import LoopQueueThread as _LoopQueueThread
 from ..bsmp.serial import Channel as _Channel
 
 from .csdev import get_ps_propty_database as _get_ps_propty_database
@@ -37,8 +37,8 @@ class BBBFactory:
         # create PRU used for low-level communication
         pru = _PRU(ethbridgeclnt_class, bbbname=bbbname)
 
-        # create QueueThreads that queue all serial operations
-        prucqueue = _QueueThreads()
+        # create LoopQueueThread that queue all serial operations
+        prucqueue = _LoopQueueThread()
 
         # build dicts for grouped udc.
         psmodels, devices, freqs = \
@@ -47,7 +47,7 @@ class BBBFactory:
         if len(psmodels) > 1:
             # more than one psmodel under the same beagle. there will be two
             # PRUController objects pushing operation requests into the common
-            # QueueThreads. we have to use to lock mechanism in bsmp.Channel
+            # LoopQueueThread. we have to use to lock mechanism in bsmp.Channel
             # in order to avoid one PRUController process thread interpreting
             # the operation request of the other PRUController scan thread.
             _Channel.create_lock()

@@ -83,6 +83,7 @@ class HLTimeSearch:
 
     @classmethod
     def get_hl_from_ll_triggers(cls, channel):
+        cls._init()
         # channel = _LLSearch.get_channel_output_port_pvname(channel)
         prpt = channel.propty
         if prpt.startswith('OTP'):

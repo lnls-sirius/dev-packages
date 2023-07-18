@@ -35,6 +35,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         'MinBPMCnt-SP', 'MinBPMCnt-RB',
         'MinBPMCntEnbl-Sel', 'MinBPMCntEnbl-Sts',
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
+        'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
+        'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
     )
 
     def __init__(self, devname):
@@ -44,7 +46,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=FOFBCtrlRef._properties)
+        super().__init__(
+            devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
 
     @property
     def refx(self):
@@ -113,6 +116,24 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self['MinBPMCntEnbl-Sel'] = value
 
     @property
+    def sysid_fofbacc_exc_state(self):
+        """SYSID core PRBS excitation enable state for correctors."""
+        return self['SYSIDPRBSFOFBAccEn-Sts']
+
+    @sysid_fofbacc_exc_state.setter
+    def sysid_fofbacc_exc_state(self, value):
+        self['SYSIDPRBSFOFBAccEn-Sel'] = value
+
+    @property
+    def sysid_bpm_exc_state(self):
+        """SYSID core PRBS excitation enable state for BPMs."""
+        return self['SYSIDPRBSBPMPosEn-Sts']
+
+    @sysid_bpm_exc_state.setter
+    def sysid_bpm_exc_state(self, value):
+        self['SYSIDPRBSBPMPosEn-Sel'] = value
+
+    @property
     def interlock(self):
         """Interlock status."""
         return self['LoopIntlk-Mon']
@@ -148,12 +169,9 @@ class _DCCDevice(_ProptyDevice):
         if 'FMC' in self.dccname:
             properties += _DCCDevice._properties_fmc
 
-        super().__init__(devname, dccname, properties=properties)
-        prop2automon = [
-            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
-            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
-        for prop in prop2automon:
-            self.set_auto_monitor(prop, True)
+        super().__init__(
+            devname, dccname, properties=properties,
+            auto_monitor_mon=True)
 
     @property
     def bpm_id(self):
@@ -277,7 +295,11 @@ class FamFOFBControllers(_Devices):
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
                 self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
-        bpm2dsbl = ['SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2']
+        bpm2dsbl = [
+            'SI-'+sub+':DI-BPM-'+idx
+            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
+            for idx in ['1', '2']
+        ]
         self._bpmdcc2dsbl = dict()
         for bpm in bpm2dsbl:
             self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
@@ -649,6 +671,29 @@ class FamFOFBControllers(_Devices):
             return False
         return True
 
+    def check_sysid_exc_disabled(self):
+        """Check whether SYSID excitation is disabled."""
+        if not self.connected:
+            return False
+        for ctl in self._ctl_refs.values():
+            if ctl.sysid_fofbacc_exc_state or ctl.sysid_bpm_exc_state:
+                return False
+        return True
+
+    def cmd_dsbl_sysid_exc(self, timeout=DEF_TIMEOUT):
+        """Command to disable SYSID excitation."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'SYSIDPRBSFOFBAccEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSFOFBAccEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(devs, 'SYSIDPRBSBPMPosEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSBPMPosEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._evt_fofb.cmd_external_trigger()
+        return True
+
 
 class FamFastCorrs(_Devices):
     """Family of FOFB fast correctors."""
@@ -670,7 +715,7 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_mon=True)
+        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
                         for psn in self._psnames]
         super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
 
@@ -770,6 +815,16 @@ class FamFastCorrs(_Devices):
                 for each power supply.
         """
         return _np.array([p.fofbacc_satmin for p in self._psdevs])
+
+    @property
+    def fofbacc_decimation(self):
+        """FOFB pre-accumulator decimation.
+
+        Returns:
+            counts (numpy.ndarray, 160):
+                FOFB pre-accumulator decimation for each power supply.
+        """
+        return _np.array([p.fofbacc_decimation for p in self._psdevs])
 
     @property
     def curr_gain(self):
@@ -987,6 +1042,29 @@ class FamFastCorrs(_Devices):
             return True
         return False
 
+    def set_fofbacc_decimation(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator decimation."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_decimation = values[i]
+        return True
+
+    def check_fofbacc_decimation(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_MON):
+        """Check whether power supplies have desired decimation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_decimation for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
     def cmd_fofbacc_clear(self, psnames=None, psindices=None):
         """Send clear power supplies pre-accumulator."""
         for dev in self._get_devices(psnames, psindices):
@@ -1034,7 +1112,8 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
-        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
+        'KickCHAcc-Mon', 'KickCVAcc-Mon',
+        'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
         'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
@@ -1250,27 +1329,33 @@ class HLFOFB(_Device):
         return True
 
     @property
-    def kick_buffer_size_mon(self):
-        """Return actual kicks buffer size."""
-        return self['KickBufferSize-Mon']
+    def kickch_acc(self):
+        """Return CH kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCHAcc-Mon']
 
     @property
-    def kick_buffer_size(self):
-        """Return kicks buffer size."""
-        return self['KickBufferSize-RB']
+    def kickcv_acc(self):
+        """Return CV kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCVAcc-Mon']
 
-    @kick_buffer_size.setter
-    def kick_buffer_size(self, value):
-        self['KickBufferSize-SP'] = max(1, int(value))
+    @property
+    def kickch_ref(self):
+        """Return CH kicks related to CurrentRef-Mon PVs."""
+        return self['KickCHRef-Mon']
+
+    @property
+    def kickcv_ref(self):
+        """Return CV kicks related to CurrentRef-Mon PVs."""
+        return self['KickCVRef-Mon']
 
     @property
     def kickch(self):
-        """Return average of CH kicks."""
+        """Return CH kicks related to Current-Mon PVs."""
         return self['KickCH-Mon']
 
     @property
     def kickcv(self):
-        """Return average of CV kicks."""
+        """Return CV kicks related to Current-Mon PVs."""
         return self['KickCV-Mon']
 
     @property

@@ -21,16 +21,33 @@ _TINY_INTERVAL = 0.050  # s
 
 
 class Device:
-    """Epics Device."""
+    """Epics Device.
+
+    Parameters
+    ----------
+        devname: str
+            Device name, to be used as PVs prefix.
+        properties: (tuple, list)
+            List of properties, to be used as last part of the PV names.
+        auto_monitor: bool, optional
+            Whether to automatically monitor PVs for changes. Used for PVs
+            that do not end with '-Mon' or 'Data'. Defaults to True.
+        auto_monitor_mon: bool, optional
+            Whether to automatically monitor '-Mon' or 'Data' PVs for changes.
+            Defaults to False (to avoid overloading the client). Set to False
+            when using PV.get_timevars() to know when a PV has been updated.
+    """
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     GET_TIMEOUT = _GET_TIMEOUT
     _properties = ()
 
-    def __init__(self, devname, properties, auto_mon=False):
-        """."""
+    def __init__(
+            self, devname, properties, auto_monitor=True,
+            auto_monitor_mon=False):
         self._properties = properties[:]
-        self._auto_mon = auto_mon
+        self._auto_monitor = auto_monitor
+        self._auto_monitor_mon = auto_monitor_mon
         self._devname, self._pvs = self._create_pvs(devname)
 
     @property
@@ -83,7 +100,15 @@ class Device:
         """Set auto_monitor state of individual PVs."""
         if pvname not in self._pvs:
             return False
-        self._pvs[pvname].auto_monitor = int(value)
+        pvobj = self._pvs[pvname]
+        try:
+            # TODO verify need of int
+            pvobj.auto_monitor = int(value)
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            # exceptions raised in a Virtual Circuit Disconnect (192)
+            # event. If the PV IOC goes down, for example.
+            print('Could not set auto_monitor of {}'.format(pvobj.pvname))
+            return False
         return True
 
     def update(self):
@@ -151,7 +176,9 @@ class Device:
         pvs = dict()
         for propty in self._properties:
             pvname = self._get_pvname(devname, propty)
-            auto_monitor = self._auto_mon or not pvname.endswith('-Mon')
+            auto_monitor = self._auto_monitor
+            if pvname.endswith(('-Mon', 'Data')):
+                auto_monitor = self._auto_monitor_mon
             in_sim = _Simulation.pv_check(pvname)
             pvclass = _PVSim if in_sim else _PV
             pvs[propty] = pvclass(
@@ -209,11 +236,11 @@ class Device:
 class ProptyDevice(Device):
     """Device with a prefix property name."""
 
-    def __init__(self, devname, propty_prefix, properties):
+    def __init__(self, devname, propty_prefix, properties, **kwargs):
         """."""
         self._propty_prefix = propty_prefix
         # call base class constructor
-        super().__init__(devname, properties=properties)
+        super().__init__(devname, properties=properties, **kwargs)
 
     def _get_pvname(self, devname, propty):
         if devname:
@@ -250,12 +277,12 @@ class DeviceApp(Device):
     This kind of device groups properties of other devices.
     """
 
-    def __init__(self, properties, devname=None, auto_mon=False):
+    def __init__(self, properties, devname=None, **kwargs):
         """."""
         self._devname_app = devname
 
         # call base class constructor
-        super().__init__(None, properties=properties, auto_mon=auto_mon)
+        super().__init__(None, properties=properties, **kwargs)
 
     @property
     def devname(self):

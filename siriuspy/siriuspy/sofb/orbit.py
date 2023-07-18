@@ -23,59 +23,6 @@ class BaseOrbit(_BaseClass):
     """."""
 
 
-def run_subprocess(pvs, send_pipe, recv_pipe):
-    """Run subprocesses."""
-    max_spread = 40/1000  # in [s]
-    timeout = 110/1000  # in [s]
-
-    ready_evt = _Event()
-
-    tstamps = _np.full(len(pvs), _np.nan)
-
-    def callback(*_, **kwargs):
-        pvo = kwargs['cb_info'][1]
-        # pvo._args['timestamp'] = _time.time()
-        tstamps[pvo.index] = pvo.timestamp
-        maxi = _bn.nanmax(tstamps)
-        mini = _bn.nanmin(tstamps)
-        if (maxi-mini) < max_spread:
-            ready_evt.set()
-
-    def conn_callback(pvname=None, conn=None, pv=None):
-        if not conn:
-            tstamps[pv.index] = _np.nan
-
-    pvsobj = []
-    for i, pvn in enumerate(pvs):
-        pvo = _PV(pvn, connection_timeout=TIMEOUT)
-        pvo.index = i
-        pvsobj.append(pvo)
-
-    for pvo in pvsobj:
-        pvo.wait_for_connection()
-
-    for pvo in pvsobj:
-        pvo.add_callback(callback)
-        pvo.connection_callbacks.append(conn_callback)
-
-    boo = True
-    while boo or recv_pipe.recv():
-        boo = False
-        ready_evt.clear()
-        nok = 0.0
-        if not ready_evt.wait(timeout=timeout):
-            nok = 1.0
-        out = []
-        for pvo in pvsobj:
-            if not pvo.connected:
-                out.append(_np.nan)
-                continue
-            # out.append(pvo.timestamp)
-            out.append(pvo.value)
-        out.append(nok)
-        send_pipe.send(out)
-
-
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
@@ -86,7 +33,6 @@ class EpicsOrbit(BaseOrbit):
         self._mode = 0  # first mode of the list
         self._sofb = None
         self._sync_with_inj = False
-        self._sloworb_timeout = 0
         self.ref_orbs = {
             'X': _np.zeros(self._csorb.nr_bpms),
             'Y': _np.zeros(self._csorb.nr_bpms)}
@@ -111,11 +57,11 @@ class EpicsOrbit(BaseOrbit):
         self.bpms = [BPM(name, callback) for name in self._csorb.bpm_names]
         self.timing = TimingConfig(acc, callback)
         self.new_orbit = _Event()
+        self._new_orbraw_flag = _Event()
         if self.acc == 'SI':
-            self._processes = []
-            self._mypipes_recv = []
-            self._mypipes_send = []
-            self._create_processes(nrprocs=16)
+            self._sloworb_raw_pv = _PV(
+                'SI-Glob:AP-SOFB:SlowOrbRaw-Mon',
+                callback=self._update_sloworb_raw, auto_monitor=True)
         self._orbit_thread = _Repeat(
             1/self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0)
         self._orbit_thread.start()
@@ -131,46 +77,11 @@ class EpicsOrbit(BaseOrbit):
     def sofb(self, sofb):
         self._sofb = sofb
 
-    def _create_processes(self, nrprocs=8):
-        # get the start method of the Processes that will be launched:
-        spw = _mp.get_context('spawn')
-
-        pvs = []
-        for bpm in self._csorb.bpm_names:
-            pvs.append(bpm+':PosX-Mon')
-        for bpm in self._csorb.bpm_names:
-            pvs.append(bpm+':PosY-Mon')
-
-        # subdivide the pv list for the processes
-        div = len(pvs) // nrprocs
-        rem = len(pvs) % nrprocs
-        sub = [div*i + min(i, rem) for i in range(nrprocs+1)]
-
-        # create processes
-        for i in range(nrprocs):
-            mine, send_pipe = spw.Pipe(duplex=False)
-            self._mypipes_recv.append(mine)
-            recv_pipe, mine = spw.Pipe(duplex=False)
-            self._mypipes_send.append(mine)
-            pvsn = pvs[sub[i]:sub[i+1]]
-            self._processes.append(_Process(
-                target=run_subprocess,
-                args=(pvsn, send_pipe, recv_pipe),
-                daemon=True))
-        for proc in self._processes:
-            proc.start()
-
     def shutdown(self):
         """."""
         self._orbit_thread.resume()
         self._orbit_thread.stop()
         self._orbit_thread.join()
-        if self.acc == 'SI':
-            for pipe in self._mypipes_send:
-                pipe.send(False)
-                pipe.close()
-            for proc in self._processes:
-                proc.join()
 
     def get_map2write(self):
         """Get the write methods of the class."""
@@ -245,12 +156,11 @@ class EpicsOrbit(BaseOrbit):
         """Check is mode or self._mode is in any of the Triggered modes."""
         return self.is_singlepass(mode) or self.is_multiturn(mode)
 
-    def get_orbit(self, reset=False, synced=False, timeout=1/10):
+    def get_orbit(self, reset=False, synced=False, timeout=1/5):
         """Return the orbit distortion."""
         nrb = self._csorb.nr_bpms
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
-
         if reset:
             with self._lock_raw_orbs:
                 msg = 'DEB: Reseting Orbit.'
@@ -835,9 +745,17 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self):
         """."""
-        posx, posy, nok = self._get_orbit_from_processes()
-        posx /= 1000
-        posy /= 1000
+        timeout = 1000/1000
+        if not self._new_orbraw_flag.wait(timeout=timeout):
+            msg = 'ERR: Raw orbit did not update.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return
+        else:
+            self._new_orbraw_flag.clear()
+
+        orb = self._sloworb_raw_pv.value
+        posx, posy = orb[:self._csorb.nr_bpms], orb[self._csorb.nr_bpms:]
         nanx = _np.isnan(posx)
         nany = _np.isnan(posy)
         posx[nanx] = self.ref_orbs['X'][nanx]
@@ -858,10 +776,6 @@ class EpicsOrbit(BaseOrbit):
                 self.smooth_orb[plane] = orb
         self.new_orbit.set()
 
-        self._sloworb_timeout += nok
-        if self._sloworb_timeout >= 1000:
-            self._sloworb_timeout = 0
-        self.run_callbacks('SlowOrbTimeout-Mon', self._sloworb_timeout)
         for plane in ('X', 'Y'):
             orb = self.smooth_orb[plane]
             if orb is None:
@@ -873,19 +787,9 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(f'DeltaOrb{plane:s}Min-Mon', _bn.nanmin(dorb))
             self.run_callbacks(f'DeltaOrb{plane:s}Max-Mon', _bn.nanmax(dorb))
 
-    def _get_orbit_from_processes(self):
-        nr_bpms = self._csorb.nr_bpms
-        out = []
-        nok = []
-        for pipe in self._mypipes_recv:
-            res = pipe.recv()
-            out.extend(res[:-1])
-            nok.append(res[-1])
-        for pipe in self._mypipes_send:
-            pipe.send(True)
-        orbx = _np.array(out[:nr_bpms], dtype=float)
-        orby = _np.array(out[nr_bpms:], dtype=float)
-        return orbx, orby, any(nok)
+    def _update_sloworb_raw(self, pvname, value, **kwrgs):
+        _ = pvname, value, kwrgs
+        self._new_orbraw_flag.set()
 
     def _update_multiturn_orbits(self, force_update=True):
         """."""
@@ -1052,6 +956,9 @@ class EpicsOrbit(BaseOrbit):
                 lambda x: x.switching_mode == _csbpm.SwModes.switching, bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
+        orb_conn = self._sloworb_raw_pv.connected if self.acc == 'SI' else True
+        status = _util.update_bit(v=status, bit_pos=5, bit_val=not orb_conn)
+
         self._status = status
         self.run_callbacks('OrbStatus-Mon', status)
         self._update_bpmoffsets()
@@ -1068,6 +975,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('BPMOffsetY-Mon', orby)
 
     def _get_mask(self):
+        mask = _np.ones(self._csorb.nr_bpms, dtype=bool)
         if self.sofb is not None and self.sofb.matrix is not None:
             mask = self.sofb.matrix.bpm_enbllist
             mask = mask[:mask.size//2] & mask[mask.size//2:]

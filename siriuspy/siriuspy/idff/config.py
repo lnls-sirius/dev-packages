@@ -11,6 +11,10 @@ from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 class IDFFConfig(_ConfigDBDocument):
     """Insertion Device Feedforward Configuration."""
 
+    # NOTE: for EPU50 there is a large discrepancy
+    # between RB/SP/Mon phase values
+    PPARAM_TOL = 0.5  # [mm]
+    KPARAM_TOL = 0.1  # [mm]
     CONFIGDB_TYPE = 'si_idff'
 
     def __init__(self, name=None, url=None):
@@ -21,17 +25,6 @@ class IDFFConfig(_ConfigDBDocument):
             config_type=IDFFConfig.CONFIGDB_TYPE, name=name_, url=url)
 
     @property
-    def name(self):
-        """Return configuration name."""
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        """Set configuration name."""
-        if self.configdbclient.check_valid_configname(value):
-            self._name = value
-
-    @property
     def pparameter_pvname(self):
         """Return ID pparameter pvname."""
         config = self._value
@@ -39,7 +32,7 @@ class IDFFConfig(_ConfigDBDocument):
             kparm = config['pvnames']['pparameter']
             return kparm
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def kparameter_pvname(self):
@@ -49,7 +42,7 @@ class IDFFConfig(_ConfigDBDocument):
             kparm = config['pvnames']['kparameter']
             return kparm
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def ch_pvnames(self):
@@ -72,7 +65,7 @@ class IDFFConfig(_ConfigDBDocument):
         if self._value:
             return list(self._value['polarizations'].keys())
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @property
     def value(self):
@@ -104,7 +97,7 @@ class IDFFConfig(_ConfigDBDocument):
                     setpoints[corr_pvname] = setpoint
             return setpoints
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     @staticmethod
     def create_template_config(idname):
@@ -175,17 +168,15 @@ class IDFFConfig(_ConfigDBDocument):
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
-        PPARAM_TOL = 0.1
-        KPARAM_TOL = 0.1
         poldefs = self._polarization_definitions
         if poldefs is None:
             raise ValueError('No IDFF configuration defined.')
         for pol, val in poldefs.items():
             if pol == 'none':
                 continue
-            if abs(pparameter - val) < PPARAM_TOL:
+            if val is None or abs(pparameter - val) < IDFFConfig.PPARAM_TOL:
                 return pol
-        if abs(kparameter - poldefs['none']) < KPARAM_TOL:
+        if abs(kparameter - poldefs['none']) < IDFFConfig.KPARAM_TOL:
             return 'none'
         return 'not_defined'
 
@@ -212,7 +203,7 @@ class IDFFConfig(_ConfigDBDocument):
             corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
             return corr1, corr2
         else:
-            raise ValueError('Configuration not loaded!')
+            raise ValueError('Configuration not defined!')
 
     def _set_value(self, value):
         super()._set_value(value)

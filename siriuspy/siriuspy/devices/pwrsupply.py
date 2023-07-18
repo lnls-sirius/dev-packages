@@ -59,6 +59,8 @@ class _PSDev(_Device):
         'FOFBAccClear-Cmd',
         'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
         'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
+        'FOFBAcc-Mon',
+        'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -73,7 +75,7 @@ class _PSDev(_Device):
         'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
     )
 
-    def __init__(self, devname):
+    def __init__(self, devname, auto_monitor_mon=False):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -94,7 +96,8 @@ class _PSDev(_Device):
          properties) = self._set_attributes_properties(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=properties)
+        super().__init__(
+            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
 
         # private attribute with strength setpoint pv object
         self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
@@ -969,6 +972,20 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_satmin.setter
     def fofbacc_satmin(self, value):
         self['FOFBAccSatMin-SP'] = value
+
+    @property
+    def fofbacc_mon(self):
+        """FOFB accumulator."""
+        return self['FOFBAcc-Mon']
+
+    @property
+    def fofbacc_decimation(self):
+        """FOFB accumulator decimation."""
+        return self['FOFBAccDecimation-RB']
+
+    @fofbacc_decimation.setter
+    def fofbacc_decimation(self, value):
+        self['FOFBAccDecimation-SP'] = value
 
     def cmd_fofbacc_clear(self):
         """Command to clear FOFB accumulator."""

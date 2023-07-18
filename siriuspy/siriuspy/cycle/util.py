@@ -42,7 +42,7 @@ def get_psnames(isadv=False):
 
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
     to_remove.extend(_PSSearch.get_psnames(
-        {'sec': 'SI', 'sub': '10SB', 'dev': '(CH|CV|QS)'}))
+        {'sec': 'SI', 'sub': '(10SB|17SA)', 'dev': '(CH|CV|QS)'}))
     to_remove.extend(_PSSearch.get_psnames(
         {'sec': 'SI', 'sub': '(01M1|01M2)', 'dev': '(FCH|FCV)'}))
     for name in to_remove:

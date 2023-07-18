@@ -11,12 +11,12 @@ from .energy import Energy
 from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
 from .ict import ICT, TranspEff
-from .ids import APU, WIG, EPU
-from .idff import IDFF, WIGIDFF, EPUIDFF, APUIDFF
+from .ids import APU, WIG, PAPU, EPU
+from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF
 from .injctrl import InjCtrl
-from .injsys import ASPUStandbyHandler, BOPSRampStandbyHandler, \
-    BORFRampStandbyHandler, InjBOStandbyHandler, InjSysStandbyHandler, \
-    LILLRFStandbyHandler, InjSysPUModeHandler
+from .injsys import PUMagsStandbyHandler, BOPSRampStandbyHandler, \
+    BORFRampStandbyHandler, InjSysStandbyHandler, LinacStandbyHandler, \
+    InjSysPUModeHandler
 from .lillrf import LILLRF, DevLILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
@@ -35,9 +35,10 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
+from .blctrl import BLPPSCtrl
 
 
 del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, bbb, machshift, dvf, lienergy
+del ids, currinfo, bbb, machshift, dvf, lienergy, blctrl

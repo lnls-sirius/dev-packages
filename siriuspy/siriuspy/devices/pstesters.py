@@ -432,7 +432,7 @@ class TesterPSFOFB(_TesterBase):
     """FOFB PS tester."""
 
     _properties = (
-        'AlarmsAmp-Mon',
+        'AlarmsAmp-Mon', 'AlarmsAmpLtcRst-Cmd',
         'PwrState-Sel', 'PwrState-Sts',
         'Current-SP', 'CurrentRef-Mon', 'Current-Mon',
         'OpMode-Sel', 'OpMode-Sts',
@@ -445,6 +445,10 @@ class TesterPSFOFB(_TesterBase):
         splims = _PSSearch.conv_psname_2_splims(devname)
         self.test_current = splims['TSTV']
         self.test_tol = splims['TSTR']
+
+    def reset(self):
+        """Reset."""
+        self['AlarmsAmpLtcRst-Cmd'] = 1
 
     def set_opmode(self, state):
         """Set opmode to 'state'."""

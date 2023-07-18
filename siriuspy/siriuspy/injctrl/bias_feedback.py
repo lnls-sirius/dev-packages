@@ -262,16 +262,16 @@ class BiasFeedback():
 
         kernel = gpy.kern.RBF(input_dim=1)
         db_ = self.database['BiasFBGPModKernStd-RB']
-        kernel.variance.constrain_bounded(db_['low']**2, db_['high']**2)
+        kernel.variance.constrain_bounded(db_['lolim']**2, db_['hilim']**2)
         kernel.variance = db_['value']**2
         db_ = self.database['BiasFBGPModKernLenScl-RB']
-        kernel.lengthscale.constrain_bounded(db_['low'], db_['high'])
+        kernel.lengthscale.constrain_bounded(db_['lolim'], db_['hilim'])
         kernel.lengthscale = db_['value']
 
         gpmodel = gpy.models.GPRegression(x, y, kernel)
         db_ = self.database['BiasFBGPModNoiseStd-RB']
         gpmodel.likelihood.variance.constrain_bounded(
-            db_['low']**2, db_['high']**2)
+            db_['lolim']**2, db_['hilim']**2)
         gpmodel.likelihood.variance = db_['value']**2
         self.gpmodel = gpmodel
         self._update_predictions()

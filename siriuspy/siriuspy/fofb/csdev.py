@@ -1,6 +1,7 @@
 """Define PVs, contants and properties of High Level FOFB."""
 
 import os as _os
+import numpy as _np
 
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
@@ -24,12 +25,15 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
+        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
+        'AccDecimationSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
         'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
-        'LoopInterlockOk')
+        'LoopInterlockOk', 'SYSIDExcitationDisabled')
+
+    DEC_OPT = ('FOFB', 'Monit', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -40,10 +44,9 @@ _et = ETypes  # syntactic sugar
 class HLFOFBConst(_csdev.Const):
     """Const class defining High Level FOFB constants."""
 
-    MIN_SING_VAL = 0.2
+    MIN_SING_VAL = 0.1
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
-    DEF_KICK_BUFFER_SIZE = 1
     DEF_MAX_ORB_DISTORTION = 200  # [um]
 
     CONV_UM_2_NM = 1e3
@@ -63,6 +66,7 @@ class HLFOFBConst(_csdev.Const):
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
+    DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
 
     def __init__(self):
         """Class constructor."""
@@ -97,6 +101,11 @@ class HLFOFBConst(_csdev.Const):
             '/home', 'sirius', 'iocs-log', 'si-ap-fofb', 'data')
         self.reforb_fname = _os.path.join(ioc_fol, 'reforbit.orb')
         self.respmat_fname = _os.path.join(ioc_fol, 'respmat.respmat')
+        self.bpmxenbl_fname = _os.path.join(ioc_fol, 'bpmxenbllist.bpmenbl')
+        self.bpmyenbl_fname = _os.path.join(ioc_fol, 'bpmyenbllist.bpmenbl')
+        self.chenbl_fname = _os.path.join(ioc_fol, 'chenbllist.correnbl')
+        self.cvenbl_fname = _os.path.join(ioc_fol, 'cvenbllist.correnbl')
+        self.rfenbl_fname = _os.path.join(ioc_fol, 'rfenbllist.rfenbl')
 
         # reforb and matrix parameters
         self.reforb_size = self.nr_bpms
@@ -104,6 +113,10 @@ class HLFOFBConst(_csdev.Const):
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
         self.corrgains_size = self.nr_chcv
+
+        # dcc minimum enable configuration
+        self.dccenbl_min = _np.array([
+            bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -172,7 +185,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b11111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -208,7 +221,7 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
                 'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
-            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b11111111111},
             'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
@@ -229,26 +242,21 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrDsblSYSIDExc-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and Kick buffer configuration
-            'KickBufferSize-SP': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-RB': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-Mon': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Actual buffer size used to calculate kicks average.'},
-            'KickCH-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
-                'value': self.nr_ch*[0]},
-            'KickCV-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
-                'value': self.nr_cv*[0]},
+            # decimation configuration
+            'FOFBAccDecimation-Sel': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-Sts': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-SP': {
+                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
+                'hilim': 8600, 'unit': 'count'},
+            'FOFBAccDecimation-RB': {
+                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
+                'hilim': 8600, 'unit': 'count'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {

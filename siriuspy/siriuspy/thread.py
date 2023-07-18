@@ -171,7 +171,7 @@ class _BaseQueueThread(_Queue):
         """."""
         return self._th is not None and self._th.is_alive()
 
-    def put(self, operation, block=True, timeout=None, unique=False):
+    def put(self, operation, block=True, timeout=None):
         """Put operation to queue."""
         if not hasattr(operation, '__len__'):
             operation = (operation, )
@@ -180,11 +180,6 @@ class _BaseQueueThread(_Queue):
                 'First element of "operation" is not callable.')
 
         with self._changing_queue:
-            # NOTE: the self.queue attribute is not in the documentation of
-            # the class Queue. I am not sure if they will keep this reference
-            # in the future, or maybe make it a hidden attribute.
-            if unique and self.queue.count(operation) > 0:
-                return False
             try:
                 super().put(operation, block=block, timeout=timeout)
             except _Full:

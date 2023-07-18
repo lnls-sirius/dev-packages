@@ -8,13 +8,14 @@ from .. import csdev as _csdev
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    INJMODE = ('Decay', 'TopUp')
+    INJMODE = ('Decay', 'TopUp', 'Accum')
     INJTYPE = ('SingleBunch', 'MultiBunch')
     INJTYPE_MON = INJTYPE + ('Undefined', )
     PUMODE = ('Accumulation', 'Optimization', 'OnAxis')
     PUMODE_MON = PUMODE + ('Undefined', )
     TOPUPSTS = (
         'Off', 'Waiting', 'TurningOn', 'Injecting', 'TurningOff', 'Skipping')
+    ACCUMSTS = ('Off', 'Waiting', 'TurningOn', 'Injecting')
     INJSYSCMDSTS = ('Idle', 'On', 'Off')
     RFKILLBEAMMON = ('Idle', 'Kill')
     IDLERUNNING = ('Idle', 'Running')
@@ -37,6 +38,7 @@ class Const(_csdev.Const):
     PUMode = _csdev.Const.register('PUMode', _et.PUMODE)
     PUModeMon = _csdev.Const.register('PUModeMon', _et.PUMODE_MON)
     TopUpSts = _csdev.Const.register('TopUpSts', _et.TOPUPSTS)
+    AccumSts = _csdev.Const.register('AccumSts', _et.ACCUMSTS)
     InjSysCmdSts = _csdev.Const.register('InjSysCmdSts', _et.INJSYSCMDSTS)
     RFKillBeamMon = _csdev.Const.register('RFKillBeamMon', _et.RFKILLBEAMMON)
     IdleRunning = _csdev.Const.register('IdleRunning', _et.IDLERUNNING)
@@ -73,8 +75,8 @@ class Const(_csdev.Const):
     FILACURR_OPVALUE = 1.39  # [A]
     HV_OPVALUE = 90.0  # [kV]
 
-    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'injbo', 'li_rf']
-    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'injbo', 'as_pu', 'bo_ps']
+    INJSYS_DEF_ON_ORDER = ['bo_rf', 'as_pu', 'bo_ps', 'li_rf']
+    INJSYS_DEF_OFF_ORDER = ['bo_rf', 'li_rf', 'as_pu', 'bo_ps']
 
     BIASFB_AHEADSETIME = 10  # [s]
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
@@ -120,10 +122,10 @@ def get_injctrl_propty_database():
 
         'Mode-Sel': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Mode-Sts': {
             'type': 'enum', 'value': _ct.InjMode.Decay,
-            'enums': _et.INJMODE, 'unit': 'Decay_Topup'},
+            'enums': _et.INJMODE, 'unit': 'Decay_Topup_Accum'},
         'Type-Sel': {
             'type': 'enum', 'value': _ct.InjType.MultiBunch,
             'enums': _et.INJTYPE, 'unit': 'SB_MB'},
@@ -247,6 +249,19 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 300, 'unit': 'ms',
             'lolim': 0, 'hilim': 1000},
 
+        'AccumState-Sel': {
+            'type': 'enum', 'value': _ct.OffOn.Off,
+            'enums': _et.OFF_ON, 'unit': 'Off_On'},
+        'AccumState-Sts': {
+            'type': 'enum', 'value': _ct.AccumSts.Off, 'enums': _et.ACCUMSTS,
+            'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
+        'AccumPeriod-SP': {
+            'type': 'int', 'value': 5, 'unit': 's',
+            'lolim': 1, 'hilim': 60*60},
+        'AccumPeriod-RB': {
+            'type': 'int', 'value': 5, 'unit': 's',
+            'lolim': 1, 'hilim': 60*60},
+
         'TopUpState-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off,
             'enums': _et.OFF_ON, 'unit': 'Off_On'},
@@ -254,10 +269,10 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
             'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 5, 'unit': 'min',
+            'type': 'int', 'value': 3, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 5, 'unit': 'min',
+            'type': 'int', 'value': 3, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpHeadStartTime-SP': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
@@ -396,27 +411,23 @@ def get_biasfb_database():
     """."""
     dbase = {
         'LoopState-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'LoopState-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'MinVoltage-SP': {
             'type': 'float', 'value': -52, 'unit': 'V',
-            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MinVoltage-RB': {
             'type': 'float', 'value': -52, 'unit': 'V',
-            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-SP': {
-            'type': 'float', 'value': -40, 'unit': 'V',
-            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'type': 'float', 'value': -45, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-RB': {
-            'type': 'float', 'value': -40, 'unit': 'V',
-            'prec': 1, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'type': 'float', 'value': -45, 'unit': 'V',
+            'prec': 1, 'lolim': -120, 'hilim': -30.0},
 
         'ModelType-Sel': {
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
@@ -426,52 +437,34 @@ def get_biasfb_database():
             'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
         'ModelMaxNrPts-SP': {
             'type': 'int', 'value': 20, 'unit': '#',
-            'lolim': 2, 'low': 2, 'lolo': 2,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelMaxNrPts-RB': {
             'type': 'int', 'value': 20, 'unit': '#',
-            'lolim': 0, 'low': 0, 'lolo': 0,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNrPts-Mon': {
             'type': 'int', 'value': 20, 'unit': '#',
-            'lolim': 2, 'low': 2, 'lolo': 2,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
         'ModelAutoFitParams-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'ModelAutoFitParams-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'ModelAutoFitEveryNrPts-SP': {
-            'type': 'int', 'value': 10, 'unit': '#',
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'type': 'int', 'value': 1, 'unit': '#',
+            'lolim': 1, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelAutoFitEveryNrPts-RB': {
-            'type': 'int', 'value': 10, 'unit': '#',
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'type': 'int', 'value': 1, 'unit': '#',
+            'lolim': 1, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNrPtsAfterFit-Mon': {
-            'type': 'int', 'value': 10, 'unit': '#',
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': _ct.BIASFB_MAX_DATA_SIZE,
-            'high': _ct.BIASFB_MAX_DATA_SIZE,
-            'hihi': _ct.BIASFB_MAX_DATA_SIZE},
+            'type': 'int', 'value': 1, 'unit': '#',
+            'lolim': 1, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelUpdateData-Sel': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'ModelUpdateData-Sts': {
-            'type': 'enum', 'value': _ct.OffOn.Off, 'enums': _et.OFF_ON,
+            'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'ModelDataBias-SP': {
             'type': 'float', 'count': _ct.BIASFB_MAX_DATA_SIZE,
@@ -493,29 +486,23 @@ def get_biasfb_database():
             'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
 
         'LinModAngCoeff-SP': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
-            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
-            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-RB': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
-            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
-            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-Mon': {
-            'type': 'float', 'value': 10, 'unit': 'V/mA',
-            'prec': 2, 'lolim': 0.1, 'low': 0.1, 'lolo': 0.1,
-            'hilim': 30.0, 'high': 30.0, 'hihi': 30.0},
+            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModOffCoeff-SP': {
             'type': 'float', 'value': -52, 'unit': 'V/mA',
-            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-RB': {
             'type': 'float', 'value': -52, 'unit': 'V/mA',
-            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-Mon': {
             'type': 'float', 'value': -52, 'unit': 'V/mA',
-            'prec': 2, 'lolim': -120, 'low': -120, 'lolo': -120,
-            'hilim': -30.0, 'high': -30.0, 'hihi': -30.0},
+            'prec': 2, 'lolim': -120, 'hilim': -30.0},
 
         # These are used to give the model inference about the bias
         # Generally ploted in Injcurr X Bias graphs
@@ -533,40 +520,31 @@ def get_biasfb_database():
 
         'GPModNoiseStd-SP': {
             'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
-            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
-            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+            'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-RB': {
             'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
-            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
-            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+            'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-Mon': {
             'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
-            'lolim': 0.005, 'low': 0.005, 'lolo': 0.005,
-            'hilim': 0.5, 'high': 0.5, 'hihi': 0.5},
+            'lolim': 0.005, 'hilim': 0.5},
         'GPModKernStd-SP': {
             'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
-            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
-            'hilim': 1, 'high': 1, 'hihi': 1},
+            'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-RB': {
             'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
-            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
-            'hilim': 1, 'high': 1, 'hihi': 1},
+            'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-Mon': {
             'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
-            'lolim': 0.05, 'low': 0.05, 'lolo': 0.05,
-            'hilim': 1, 'high': 1, 'hihi': 1},
+            'lolim': 0.05, 'hilim': 1},
         'GPModKernLenScl-SP': {
             'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 10, 'high': 10, 'hihi': 10},
+            'lolim': 1, 'hilim': 10},
         'GPModKernLenScl-RB': {
             'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 10, 'high': 10, 'hihi': 10},
+            'lolim': 1, 'hilim': 10},
         'GPModKernLenScl-Mon': {
             'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'low': 1, 'lolo': 1,
-            'hilim': 10, 'high': 10, 'hihi': 10},
+            'lolim': 1, 'hilim': 10},
 
         # These are used to give the model inference about the bias
         # Generally ploted in Injcurr X Bias graphs

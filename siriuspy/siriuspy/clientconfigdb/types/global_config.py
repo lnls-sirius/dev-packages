@@ -620,6 +620,15 @@ _pvs_as_ti = [
     ['SI-Fam:TI-BPM:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Fam:TI-BPM:LowLvlLock-Sel', 0, 0.0],
 
+    ['SI-Fam:TI-BPM-PsMtn:DelayRaw-SP', 0, 0],
+    ['SI-Fam:TI-BPM-PsMtn:WidthRaw-SP', 0, 0.0],
+    ['SI-Fam:TI-BPM-PsMtn:NrPulses-SP', 0, 0.0],
+    ['SI-Fam:TI-BPM-PsMtn:Polarity-Sel', 0, 0.0],
+    ['SI-Fam:TI-BPM-PsMtn:Src-Sel', 0, 0.0],
+    ['SI-Fam:TI-BPM-PsMtn:State-Sel', 0, 0.0],
+    ['SI-Fam:TI-BPM-PsMtn:DeltaDelayRaw-SP', 30*[0, ], 0],
+    ['SI-Fam:TI-BPM-PsMtn:LowLvlLock-Sel', 0, 0.0],
+
     ['SI-Fam:TI-FOFB:DelayRaw-SP', 0, 0],
     ['SI-Fam:TI-FOFB:WidthRaw-SP', 0, 0.0],
     ['SI-Fam:TI-FOFB:NrPulses-SP', 0, 0.0],
@@ -2595,20 +2604,8 @@ _pvs_si_ps_qn = [
 _pvs_si_ps_ids = [
     ['SI-14SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-14SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-CH-1:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-CH-2:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-CV-1:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-CV-2:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-QS-1:OpMode-Sel', _SLOWREF, 0.0],
-    ['SI-10SB:PS-QS-2:OpMode-Sel', _SLOWREF, 0.0],
     ['SI-14SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
     ['SI-14SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-CH-1:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-CH-2:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-QS-1:Current-SP', 0.0, 0.0],  # [A]
-    ['SI-10SB:PS-QS-2:Current-SP', 0.0, 0.0],  # [A]
     ]
 
 

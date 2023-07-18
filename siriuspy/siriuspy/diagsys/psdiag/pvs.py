@@ -15,30 +15,44 @@ class PSDiffPV:
 
     CURRT_SP = 0
     CURRT_MON = 1
+    CURRT_REF = 2
+    OPMODESTS = 3
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute difference between SP and Mon current values."""
-        disconnected = \
+        psname = _PVName(computed_pv.pvs[0].pvname).device_name
+        disconn = \
             not computed_pv.pvs[PSDiffPV.CURRT_SP].connected or \
             not computed_pv.pvs[PSDiffPV.CURRT_MON].connected
-        if disconnected:
+        if psname.dev in ['FCH', 'FCV']:
+            disconn |= not computed_pv.pvs[PSDiffPV.CURRT_REF].connected
+            disconn |= not computed_pv.pvs[PSDiffPV.OPMODESTS].connected
+        if disconn:
             return None
+
         value_sp = computed_pv.pvs[PSDiffPV.CURRT_SP].value
         value_mon = computed_pv.pvs[PSDiffPV.CURRT_MON].value
         diff = value_mon - value_sp
+        if psname.dev in ['FCH', 'FCV']:
+            opmode = computed_pv.pvs[PSDiffPV.OPMODESTS].value
+            if opmode == _PSConst.OpModeFOFBSts.fofb:
+                value_ref = computed_pv.pvs[PSDiffPV.CURRT_REF].value
+                diff = value_mon - value_ref
+
         return {'value': diff}
 
 
 class PSStatusPV:
     """Power Supply Status PV."""
 
-    BIT_PSCONNECT = 0b0000001
-    BIT_PWRSTATON = 0b0000010
-    BIT_CURRTDIFF = 0b0000100
-    BIT_INTERLOCK = 0b0001000
-    BIT_ALARMSSET = 0b0010000
-    BIT_OPMODEDIF = 0b0100000
-    BIT_BOWFMDIFF = 0b1000000
+    BIT_PSCONNECT = 0b00000001
+    BIT_PWRSTATON = 0b00000010
+    BIT_CURRTDIFF = 0b00000100
+    BIT_INTERLOCK = 0b00001000
+    BIT_ALARMSSET = 0b00010000
+    BIT_OPMODEDIF = 0b00100000
+    BIT_BOWFMDIFF = 0b01000000
+    BIT_TRIGMDENB = 0b10000000
 
     PWRSTE_STS = 0
     CURRT_DIFF = 1
@@ -48,6 +62,7 @@ class PSStatusPV:
     OPMODE_SEL = 2
     OPMODE_STS = 3
     WAVFRM_MON = 4
+    TRIGEN_STS = 4
 
     DTOLWFM_DICT = dict()
 
@@ -99,6 +114,7 @@ class PSStatusPV:
             value |= PSStatusPV.BIT_ALARMSSET
             value |= PSStatusPV.BIT_OPMODEDIF
             value |= PSStatusPV.BIT_BOWFMDIFF
+            value |= PSStatusPV.BIT_TRIGMDENB
             return {'value': value}
 
         # pwrstate?
@@ -114,7 +130,9 @@ class PSStatusPV:
                 if psname.dev in ['FCH', 'FCV']:
                     opmode_sel = _ETypes.FOFB_OPMODES_SEL[sel]
                     opmode_sts = _ETypes.FOFB_OPMODES_STS[sts]
-                    checkdiff = sts == _PSConst.OpModeFOFBSts.manual
+                    checkdiff = sts in [
+                        _PSConst.OpModeFOFBSts.manual,
+                        _PSConst.OpModeFOFBSts.fofb]
                 else:
                     opmode_sel = _ETypes.OPMODES[sel]
                     opmode_sts = _ETypes.STATES[sts]
@@ -152,6 +170,12 @@ class PSStatusPV:
                 if alarmval != 0 or alarmval is None:
                     value |= PSStatusPV.BIT_ALARMSSET
                     break
+
+            # triggered mode enable?
+            if psname.dev in ['FCH', 'FCV']:
+                trigen = computed_pv.pvs[PSStatusPV.TRIGEN_STS].value
+                if trigen or trigen is None:
+                    value |= PSStatusPV.BIT_TRIGMDENB
 
         else:
             # current-diff?
