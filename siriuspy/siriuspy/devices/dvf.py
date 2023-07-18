@@ -161,11 +161,14 @@ class DVF(_DeviceNC):
     @property
     def cam_width(self):
         """Camera image X width [pixels]."""
+        # NOTE: the same as cam_sizex
         return self['cam1:Width_RBV']
 
     @cam_width.setter
     def cam_width(self, value):
         """Set camera image X width [pixel]."""
+        # NOTE: acquisition has to turned off and on for
+        # this to take effect on ROI and image1 modules
         value = int(value)
         if 0 < value <= self.cam_max_sizex:
             self['cam1:Width'] = value
@@ -175,11 +178,14 @@ class DVF(_DeviceNC):
     @property
     def cam_height(self):
         """Camera image Y height [pixels]."""
+        # NOTE: the same as cam_sizey
         return self['cam1:Height_RBV']
 
     @cam_height.setter
     def cam_height(self, value):
         """Set camera image Y height [pixel]."""
+        # NOTE: acquisition has to turned off and on for
+        # this to take effect on ROI and image1 modules
         value = int(value)
         if 0 < value <= self.cam_max_sizey:
             self['cam1:Height'] = value
@@ -194,6 +200,7 @@ class DVF(_DeviceNC):
     @cam_offsetx.setter
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
+        # NOTE: if offset if invalid setpoint is neglected
         value = int(value)
         if 0 <= value < self.cam_max_sizex:
             self['cam1:OffsetX'] = value
@@ -208,45 +215,12 @@ class DVF(_DeviceNC):
     @cam_offsety.setter
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
+        # NOTE: if offset if invalid setpoint is neglected
         value = int(value)
         if 0 <= value < self.cam_max_sizey:
             self['cam1:OffsetY'] = value
         else:
             raise ValueError('Invalid offsety value!')
-
-    @property
-    def cam_centerx(self):
-        """Camera image X center [pixels]."""
-        return self['cam1:CenterX_RBV']
-
-    @cam_centerx.setter
-    def cam_centerx(self, value):
-        """Set camera image X center [pixel].
-        Adjust OffsetX as to width to be centered at CenterX.
-        """
-        value = int(value)
-        if (value - self.cam_width//2) >= 0 and \
-                (value + self.cam_width//2) <= self.cam_max_sizex:
-            self['cam1:CenterX'] = value
-        else:
-            raise ValueError('Invalid centerx value!')
-
-    @property
-    def cam_centery(self):
-        """Camera image Y center [pixels]."""
-        return self['cam1:CenterY_RBV']
-
-    @cam_centery.setter
-    def cam_centery(self, value):
-        """Set camera image Y center [pixel].
-        Adjust OffsetY as to height to be centered at CenterY.
-        """
-        value = int(value)
-        if (value - self.cam_height//2) >= 0 and \
-                (value + self.cam_height//2) <= self.cam_max_sizey:
-            self['cam1:CenterY'] = value
-        else:
-            raise ValueError('Invalid centery value!')
 
     @property
     def roi_minx(self):
