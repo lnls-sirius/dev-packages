@@ -167,7 +167,7 @@ class DVF(_DeviceNC):
     @cam_width.setter
     def cam_width(self, value):
         """Set camera image X width [pixel]."""
-        # NOTE: acquisition has to turned off and on for
+        # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
         if 0 < value <= self.cam_max_sizex:
@@ -184,7 +184,7 @@ class DVF(_DeviceNC):
     @cam_height.setter
     def cam_height(self, value):
         """Set camera image Y height [pixel]."""
-        # NOTE: acquisition has to turned off and on for
+        # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
         if 0 < value <= self.cam_max_sizey:
@@ -390,6 +390,15 @@ class DVF(_DeviceNC):
     def cmd_acquire_off(self, timeout=None):
         """Tune IOC image acquisition off."""
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
+
+    def cmd_set_cam_roi(self, offsetx, offsety, width, height, timeout=None):
+        """Set cam image region of interest."""
+        self.cmd_acquire_off(timeout=timeout)
+        self.cam_offsetx = offsetx
+        self.cam_offsety = offsety
+        self.cam_width = width
+        self.cam_height = height
+        self.cmd_acquire_on(timeout=timeout)
 
     @staticmethod
     def conv_devname2parameters(devname):
