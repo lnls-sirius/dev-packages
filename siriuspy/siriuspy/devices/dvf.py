@@ -200,10 +200,11 @@ class DVF(_DeviceNC):
     @cam_offsetx.setter
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
-        # NOTE: if offset if invalid setpoint is neglected
         value = int(value)
         if 0 <= value < self.cam_max_sizex:
             self['cam1:OffsetX'] = value
+            # NOTE: if offset is invalid, there is, offset + width exceeds
+            # cam image max size, then setpoint is neglected by DVF IOC
         else:
             raise ValueError('Invalid offsetx value!')
 
@@ -215,10 +216,11 @@ class DVF(_DeviceNC):
     @cam_offsety.setter
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
-        # NOTE: if offset if invalid setpoint is neglected
         value = int(value)
         if 0 <= value < self.cam_max_sizey:
             self['cam1:OffsetY'] = value
+            # NOTE: if offset is invalid, there is, offset + height exceeds
+            # cam image max size, then setpoint is neglected by DVF IOC
         else:
             raise ValueError('Invalid offsety value!')
 
