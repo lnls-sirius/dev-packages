@@ -651,7 +651,7 @@ _pvs_as_ti = [
     ['SI-Fam:TI-BPM-OrbIntlk:State-Sel', 0, 0.0],
     ['SI-Fam:TI-BPM-OrbIntlk:DeltaDelayRaw-SP', 30*[0, ], 0],
     ['SI-Fam:TI-BPM-OrbIntlk:LowLvlLock-Sel', 0, 0.0],
-    ['SI-Fam:TI-BPM-OrbIntlk:Direction-Sel', 0, 0.0],
+    ['SI-Fam:TI-BPM-OrbIntlk:Direction-Sel', 1, 0.0],
 
     ['SI-Fam:TI-FOFB:DelayRaw-SP', 0, 0],
     ['SI-Fam:TI-FOFB:WidthRaw-SP', 0, 0.0],
