@@ -52,6 +52,7 @@ class TestLLTimeSearch(TestCase):
         'get_relations_twds_evg',
         'has_clock',
         'has_delay_type',
+        'has_direction',
         'get_trigger_name',
         'get_fout_channel',
         'get_evg_channel',
