@@ -185,6 +185,7 @@ class TestConst(TestCase):
         'TrigPol',
         'LowLvlLock',
         'TrigDlyTyp',
+        'TrigDir',
         'InInjTab',
         'TrigSrcLL',
         'EvtHL2LLMap',
