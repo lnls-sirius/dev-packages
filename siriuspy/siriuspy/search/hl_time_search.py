@@ -108,7 +108,7 @@ class HLTimeSearch:
 
     @classmethod
     def has_direction(cls, hl_trigger):
-        """Return True if hl_trigger has property delayType."""
+        """Return True if hl_trigger has property direction."""
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
         return all([_LLSearch.has_direction(name) for name in ll_chans])
