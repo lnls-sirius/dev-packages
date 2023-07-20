@@ -16,7 +16,7 @@ from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
 
 
-class _FOFBCtrlBase:
+class FOFBCtrlBase:
     """FOFB Ctrl base."""
 
     _devices = {
@@ -24,7 +24,9 @@ class _FOFBCtrlBase:
     DEVICES = _get_namedtuple('DEVICES', *zip(*_devices.items()))
 
 
-class FOFBCtrlRef(_Device, _FOFBCtrlBase):
+# ---------------- ref device  ----------------
+
+class FOFBCtrlRef(_Device, FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
@@ -140,6 +142,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         return True
 
 
+# ---------------- DCC devices ----------------
+
 class _DCCDevice(_ProptyDevice):
     """FOFB Diamond communication controller device."""
 
@@ -211,7 +215,7 @@ class _DCCDevice(_ProptyDevice):
         return self['BPMCnt-Mon'] == cnt
 
 
-class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
+class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
     """FOFBCtrl DCC device."""
 
     class PROPDEVICES:
@@ -244,6 +248,8 @@ class BPMDCC(_DCCDevice):
         super().__init__(devname, 'DCCP2P')
 
 
+# ---------------- Fam devices ----------------
+
 class FamFOFBControllers(_Devices):
     """Family of FOFBCtrl and related BPM devices."""
 
@@ -270,7 +276,7 @@ class FamFOFBControllers(_Devices):
         lpaw = _np.roll(bpmids, -1)
         self._ctl_ids, self._ctl_part = dict(), dict()
         self._ctl_refs, self._ctl_dccs = dict(), dict()
-        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+        for idx, ctl in enumerate(FOFBCtrlBase.DEVICES):
             self._ctl_ids[ctl] = bpmids[idx]
             self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
@@ -1074,6 +1080,8 @@ class FamFastCorrs(_Devices):
             indices = [i for i in range(len(self._psnames))]
         return [self._psdevs[i] for i in indices]
 
+
+# ----------------  HL device  ----------------
 
 class HLFOFB(_Device):
     """Control high level FOFB IOC."""
