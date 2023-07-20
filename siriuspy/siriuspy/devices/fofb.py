@@ -41,10 +41,6 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     def __init__(self, devname):
         """Init."""
-        # check if device exists
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
-
         # call base class constructor
         super().__init__(
             devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
@@ -227,8 +223,6 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
 
     def __init__(self, devname, dccname):
         """Init."""
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
         if dccname not in self.PROPDEVICES.ALL:
             raise NotImplementedError(dccname)
         super().__init__(devname, dccname)
@@ -247,9 +241,6 @@ class BPMDCC(_DCCDevice):
 
     def __init__(self, devname):
         """Init."""
-        # Temporarily remove this check to control new 10SB BPMs
-        # if not _BPMSearch.is_valid_devname(devname):
-        #     raise NotImplementedError(devname)
         super().__init__(devname, 'DCCP2P')
 
 

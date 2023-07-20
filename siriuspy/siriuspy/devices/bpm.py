@@ -84,9 +84,6 @@ class BPM(_Device):
     def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
         """."""
         # call base class constructor
-        if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
-
         self._ispost_mortem = ispost_mortem
         properties = {self.get_propname(p) for p in BPM._properties}
 
@@ -888,7 +885,19 @@ class BPM(_Device):
 
 
 class FamBPMs(_Devices):
-    """Family of BPMs."""
+    """Family of BPMs.
+
+    Parameters
+    ----------
+        devname (str, optional)
+            Device name. If not provided, defaults to DEVICES.SI.
+            Determine the list of BPM names.
+        bpmnames ((list, tuple), optional)
+            BPM names list. If provided, it takes priority over 'devname'
+            parameter. Defaults to None.
+        ispost_mortem (bool, optional)
+            Whether to control PM acquisition core. Defaults to False.
+    """
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -900,7 +909,7 @@ class FamBPMs(_Devices):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, ispost_mortem=False):
+    def __init__(self, devname=None, bpmnames=None, ispost_mortem=False):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -908,7 +917,7 @@ class FamBPMs(_Devices):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        bpm_names = _BPMSearch.get_names(
+        bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
         devs = [
@@ -1350,8 +1359,6 @@ class BPMLogicalTrigger(_ProptyDevice):
 
     def __init__(self, bpmname, index):
         """Init."""
-        if not _BPMSearch.is_valid_devname(bpmname):
-            raise NotImplementedError(bpmname)
         if not 0 <= int(index) <= 23:
             raise NotImplementedError(index)
         super().__init__(
