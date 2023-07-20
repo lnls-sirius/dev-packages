@@ -1,6 +1,7 @@
 """Storage Ring Scrapers."""
 
 from .device import Device as _Device
+import time as _time
 
 
 class _ScraperDev(_Device):
@@ -55,6 +56,16 @@ class _ScraperDev(_Device):
     def cmd_go_max_aperture(self):
         """Go to maximum slit aperture."""
         self['Home-Cmd'] = 1
+
+    def _wait_finish_moving(self, pv_names, timeout=10):
+        """."""
+        t0 = _time.time()
+        ret1 = self._wait(propty=pv_names[0], value=1, timeout=timeout)
+        if not ret1:
+            return ret1
+        timeout -= _time.time() - t0
+        ret2 = self._wait(propty=pv_names[1], value=1, timeout=timeout)
+        return ret2
 
     @staticmethod
     def _check_limits(limits):
@@ -141,6 +152,11 @@ class ScraperH(_ScraperDev):
     def right_slit_control_prefix(self):
         """."""
         return self['InnerMotionCtrl-Cte']
+
+    def wait_slits_finish_moving(self, timeout=10):
+        """."""
+        names = [slit + 'DoneMov-Mon' for slit in ('Outer', 'Inner')]
+        return self._wait_finish_moving(pv_names=names, timeout=timeout)
 
     def move_left_slit(self, value):
         """Change outer slit to position [mm]."""
@@ -244,6 +260,11 @@ class ScraperV(_ScraperDev):
     def top_slit_control_prefix(self):
         """."""
         return self['TopMotionCtrl-Cte']
+
+    def wait_slits_finish_moving(self, timeout=10):
+        """."""
+        names = [slit + 'DoneMov-Mon' for slit in ('Top', 'Bottom')]
+        return self._wait_finish_moving(pv_names=names, timeout=timeout)
 
     def move_top_slit(self, value):
         """Change top slit position [mm]."""
