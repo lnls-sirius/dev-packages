@@ -82,12 +82,12 @@ class ScraperH(_ScraperDev):
             devname=_ScraperDev.DEVICES.H, properties=_all_properties)
 
     @property
-    def left_slit(self):
+    def left_slit_pos(self):
         """Left slit position [mm]."""
         return self['OuterSlitPos-RB']
 
     @property
-    def right_slit(self):
+    def right_slit_pos(self):
         """Right slit position [mm]."""
         return self['InnerSlitPos-RB']
 
@@ -189,12 +189,12 @@ class ScraperV(_ScraperDev):
             devname=_ScraperDev.DEVICES.V, properties=_all_properties)
 
     @property
-    def top_slit(self):
+    def top_slit_pos(self):
         """Top slit position [mm]."""
         return self['TopSlitPos-RB']
 
     @property
-    def bottom_slit(self):
+    def bottom_slit_pos(self):
         """Bottom slit position [mm]."""
         return self['BottomSlitPos-RB']
 
