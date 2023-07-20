@@ -56,6 +56,13 @@ class _ScraperDev(_Device):
         """Go to maximum slit aperture."""
         self['Home-Cmd'] = 1
 
+    @staticmethod
+    def _check_limits(limits):
+        if abs(limits[0]) > abs(limits[1]):
+            raise ValueError(
+                'Absolute values for inner limit must be smaller '
+                'than outer limit.')
+
 
 class ScraperH(_ScraperDev):
     """."""
@@ -103,39 +110,25 @@ class ScraperH(_ScraperDev):
 
     @property
     def left_slit_limits(self):
-        """Limits for left slit.
-
-        Left Slit (x>0)             Right Slit (x<0)
-        [Outer, Inner] | (x=0) | [Inner, Outer]
-        """
-        return [self['OuterSlitOuterLim-RB'], self['OuterSlitInnerLim-RB']]
+        """Limits for left slit."""
+        return [self['OuterSlitInnerLim-RB'], self['OuterSlitOuterLim-RB']]
 
     @left_slit_limits.setter
     def left_slit_limits(self, limits):
-        """Set left slit limits.
-
-        Left Slit (x>0)             Right Slit (x<0)
-        [Outer, Inner] | (x=0) | [Inner, Outer]
-        """
+        """Set left slit limits."""
+        _ScraperDev._check_limits(limits)
         self['OuterSlitInnerLim-SP'] = limits[0]
         self['OuterSlitOuterLim-SP'] = limits[1]
 
     @property
     def right_slit_limits(self):
-        """Limits for right slit.
-
-        Left Slit (x>0)             Right Slit (x<0)
-        [Outer, Inner] | (x=0) | [Inner, Outer]
-        """
+        """Limits for right slit."""
         return [self['InnerSlitInnerLim-RB'], self['InnerSlitOuterLim-RB']]
 
     @right_slit_limits.setter
     def right_slit_limits(self, limits):
-        """Set right slit limits.
-
-        Left Slit (x>0)             Right Slit (x<0)
-        [Outer, Inner] | (x=0) | [Inner, Outer]
-        """
+        """Set right slit limits."""
+        _ScraperDev._check_limits(limits)
         self['InnerSlitInnerLim-SP'] = limits[0]
         self['InnerSlitOuterLim-SP'] = limits[1]
 
@@ -220,67 +213,25 @@ class ScraperV(_ScraperDev):
 
     @property
     def top_slit_limits(self):
-        """Set top slit limits.
-
-        Top Slit (y>0)
-            [Outer,
-             Inner]
-               ---
-              (y=0)
-               ---
-            [Inner,
-             Outer]
-        Bottom Slit (y<0)
-        """
-        return [self['TopSlitOuterLim-RB'], self['TopSlitInnerLim-RB']]
+        """Set top slit limits."""
+        return [self['TopSlitInnerLim-RB'], self['TopSlitOuterLim-RB']]
 
     @top_slit_limits.setter
     def top_slit_limits(self, limits):
-        """Set top slit limits.
-
-        Top Slit (y>0)
-            [Outer,
-             Inner]
-               ---
-              (y=0)
-               ---
-            [Inner,
-             Outer]
-        Bottom Slit (y<0)
-        """
-        self['TopSlitOuterLim-SP'] = limits[0]
-        self['TopSlitInnerLim-SP'] = limits[1]
+        """Set top slit limits."""
+        _ScraperDev._check_limits(limits)
+        self['TopSlitInnerLim-SP'] = limits[0]
+        self['TopSlitOuterLim-SP'] = limits[1]
 
     @property
     def bottom_slit_limits(self):
-        """Set bottom slit limits.
-
-        Top Slit (y>0)
-            [Outer,
-             Inner]
-               ---
-              (y=0)
-               ---
-            [Inner,
-             Outer]
-        Bottom Slit (y<0)
-        """
+        """Set bottom slit limits."""
         return [self['BottomSlitInnerLim-RB'], self['BottomSlitOuterLim-RB']]
 
     @bottom_slit_limits.setter
     def bottom_slit_limits(self, limits):
-        """Set bottom slit limits.
-
-        Top Slit (y>0)
-            [Outer,
-             Inner]
-               ---
-              (y=0)
-               ---
-            [Inner,
-             Outer]
-        Bottom Slit (y<0)
-        """
+        """Set bottom slit limits."""
+        _ScraperDev._check_limits(limits)
         self['BottomSlitInnerLim-SP'] = limits[0]
         self['BottomSlitOuterLim-SP'] = limits[1]
 
