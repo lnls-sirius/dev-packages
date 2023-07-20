@@ -149,11 +149,11 @@ class ScraperH(_ScraperDev):
         """."""
         return self['InnerMotionCtrl-Cte']
 
-    def cmd_move_left_slit(self, value):
+    def move_left_slit(self, value):
         """Change outer slit to position [mm]."""
         self['OuterSlitPos-SP'] = value
 
-    def cmd_move_right_slit(self, value):
+    def move_right_slit(self, value):
         """Change inner slit to position [mm]."""
         self['InnerSlitPos-SP'] = value
 
@@ -294,11 +294,11 @@ class ScraperV(_ScraperDev):
         """."""
         return self['TopMotionCtrl-Cte']
 
-    def cmd_move_top_slit(self, value):
+    def move_top_slit(self, value):
         """Change top slit position [mm]."""
         self['TopSlitPos-SP'] = value
 
-    def cmd_move_bottom_slit(self, value):
+    def move_bottom_slit(self, value):
         """Change bottom slit position [mm]."""
         self['BottomSlitPos-SP'] = value
 
