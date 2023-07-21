@@ -21,7 +21,7 @@ class ETypes(_csdev.ETypes):
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
     LOCKLL = ('Unlocked', 'Locked')
     DLYTYP = ('Manual', 'Auto')
-    DIRECTION = ('Out', 'In')
+    DIRECTION = ('Receive', 'Transmit')
     ININJTAB = ('No', 'Yes')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
