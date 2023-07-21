@@ -314,6 +314,20 @@ class LLTimeSearch:
         return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
 
     @classmethod
+    def has_direction(cls, ll_trigger):
+        """Check whether a low level trigger has direction property.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return 'AMCFPGAEVR' == name.dev
+
+    @classmethod
     def get_trigger_name(cls, channel):
         """Get name of the trigger associated with channel."""
         chan_tree = cls.get_device_tree(channel)
