@@ -68,11 +68,11 @@ class _ScraperDev(_Device):
         return ret2
 
     @staticmethod
-    def _check_limits(limits):
-        if abs(limits[0]) > abs(limits[1]):
-            raise ValueError(
-                'Absolute values for inner limit must be smaller '
-                'than outer limit.')
+    def _check_limits(lims, is_negative=False):
+        dlim = lims[1] - lims[0]
+        if (dlim == 0) or ((dlim < 0) ^ is_negative):
+            stg = 'greater' if is_negative else 'smaller'
+            raise ValueError(f'Inner limit must be {stg:s} than outer limit.')
 
 
 class ScraperH(_ScraperDev):
@@ -125,11 +125,11 @@ class ScraperH(_ScraperDev):
         return [self['OuterSlitInnerLim-RB'], self['OuterSlitOuterLim-RB']]
 
     @left_slit_limits.setter
-    def left_slit_limits(self, limits):
+    def left_slit_limits(self, lims):
         """Set left slit limits."""
-        _ScraperDev._check_limits(limits)
-        self['OuterSlitInnerLim-SP'] = limits[0]
-        self['OuterSlitOuterLim-SP'] = limits[1]
+        _ScraperDev._check_limits(lims, is_negative=False)
+        self['OuterSlitInnerLim-SP'] = lims[0]
+        self['OuterSlitOuterLim-SP'] = lims[1]
 
     @property
     def right_slit_limits(self):
@@ -137,11 +137,11 @@ class ScraperH(_ScraperDev):
         return [self['InnerSlitInnerLim-RB'], self['InnerSlitOuterLim-RB']]
 
     @right_slit_limits.setter
-    def right_slit_limits(self, limits):
+    def right_slit_limits(self, lims):
         """Set right slit limits."""
-        _ScraperDev._check_limits(limits)
-        self['InnerSlitInnerLim-SP'] = limits[0]
-        self['InnerSlitOuterLim-SP'] = limits[1]
+        _ScraperDev._check_limits(lims, is_negative=True)
+        self['InnerSlitInnerLim-SP'] = lims[0]
+        self['InnerSlitOuterLim-SP'] = lims[1]
 
     @property
     def left_slit_control_prefix(self):
@@ -223,11 +223,11 @@ class ScraperV(_ScraperDev):
         return [self['TopSlitInnerLim-RB'], self['TopSlitOuterLim-RB']]
 
     @top_slit_limits.setter
-    def top_slit_limits(self, limits):
+    def top_slit_limits(self, lims):
         """Set top slit limits."""
-        _ScraperDev._check_limits(limits)
-        self['TopSlitInnerLim-SP'] = limits[0]
-        self['TopSlitOuterLim-SP'] = limits[1]
+        _ScraperDev._check_limits(lims, is_negative=False)
+        self['TopSlitInnerLim-SP'] = lims[0]
+        self['TopSlitOuterLim-SP'] = lims[1]
 
     @property
     def bottom_slit_limits(self):
@@ -235,11 +235,11 @@ class ScraperV(_ScraperDev):
         return [self['BottomSlitInnerLim-RB'], self['BottomSlitOuterLim-RB']]
 
     @bottom_slit_limits.setter
-    def bottom_slit_limits(self, limits):
+    def bottom_slit_limits(self, lims):
         """Set bottom slit limits."""
-        _ScraperDev._check_limits(limits)
-        self['BottomSlitInnerLim-SP'] = limits[0]
-        self['BottomSlitOuterLim-SP'] = limits[1]
+        _ScraperDev._check_limits(lims, is_negative=True)
+        self['BottomSlitInnerLim-SP'] = lims[0]
+        self['BottomSlitOuterLim-SP'] = lims[1]
 
     @property
     def bottom_slit_control_prefix(self):
