@@ -169,10 +169,12 @@ class ScraperH(_ScraperDev):
     def cmd_force_left_slit(self):
         """Force left slit position."""
         self['ForceOuterSlitPos-Cmd'] = 1
+        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_right_slit(self):
         """Force right slit position."""
         self['ForceInnerSlitPos-Cmd'] = 1
+        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
 
 class ScraperV(_ScraperDev):
