@@ -38,18 +38,18 @@ class _ScraperDev(_Device):
     @property
     def is_coordinate_convertion_ok(self):
         """."""
-        return self['CoordConvErr-Mon']
+        return not self['CoordConvErr-Mon']
 
     @property
     def is_backlash_compensation_enabled(self):
         """."""
         return self['EnblBacklashComp-Sts']
 
-    def cmd_enable_backlash_compensation(self):
+    def enable_backlash_compensation(self):
         """."""
         self['EnblBacklashComp-Sel'] = 1
 
-    def cmd_disable_backlash_compensation(self):
+    def disable_backlash_compensation(self):
         """."""
         self['EnblBacklashComp-Sel'] = 0
 
@@ -159,11 +159,11 @@ class ScraperH(_ScraperDev):
         return self._wait_finish_moving(pv_names=names, timeout=timeout)
 
     def move_left_slit(self, value):
-        """Change outer slit to position [mm]."""
+        """Move outer slit to given position [mm]."""
         self['OuterSlitPos-SP'] = value
 
     def move_right_slit(self, value):
-        """Change inner slit to position [mm]."""
+        """Move inner slit to given position [mm]."""
         self['InnerSlitPos-SP'] = value
 
     def cmd_force_left_slit(self):
@@ -218,16 +218,6 @@ class ScraperV(_ScraperDev):
         return not self['BottomDoneMov-Mon']
 
     @property
-    def is_force_cmd_complete(self):
-        """."""
-        return self['ForceComplete-Mon']
-
-    @property
-    def is_coordinate_convertion_ok(self):
-        """."""
-        return self['CoordConvErr-Mon']
-
-    @property
     def top_slit_limits(self):
         """Set top slit limits."""
         return [self['TopSlitInnerLim-RB'], self['TopSlitOuterLim-RB']]
@@ -277,7 +267,9 @@ class ScraperV(_ScraperDev):
     def cmd_force_top_slit(self):
         """Force top slit position."""
         self['ForceTopSlitPos-Cmd'] = 1
+        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_bottom_slit(self):
         """Force bottom slit position."""
         self['ForceBottomSlitPos-Cmd'] = 1
+        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
