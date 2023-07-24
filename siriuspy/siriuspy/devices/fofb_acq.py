@@ -17,6 +17,9 @@ from .psconv import StrengthConv
 class _FOFBCtrlAcqConst(_Const):
     """FOFB acquisition constants."""
 
+    # TODO: when BPM IOC is updated, these acquisition core base classes
+    # should be migrated to a common module to be shared.
+
     CHANNEL = ('lamp', 'invalid', 'sysid', 'sysid_applied')
     TRIGTYP = ('now', 'external', 'data', 'software')
     TRIGEVT = ('start', 'stop')
