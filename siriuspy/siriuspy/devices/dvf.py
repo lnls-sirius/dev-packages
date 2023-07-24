@@ -225,7 +225,7 @@ class DVF(_DeviceNC):
         """Return camera gain auto."""
         return self['cam1:GainAuto_RBV']
 
-    @gain.setter
+    @gain_auto.setter
     def gain_auto(self, value):
         """Set camera gain auto."""
         self['cam1:GainAuto'] = value

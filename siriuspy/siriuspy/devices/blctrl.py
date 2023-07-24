@@ -7,8 +7,9 @@ from .device import DeviceNC as _DeviceNC
 class BLPPSCtrl(_DeviceNC):
     """Beamline Control."""
 
-    GATEVALVE_TIMEOUT = 20  # [s]
-    SHUTTER_TIMEOUT = 7  # [s]
+    TIMEOUT_GATEVALVE = 20  # [s]
+    TIMEOUT_SHUTTER = 7  # [s]
+    TIMEOUT_EPS_RESET = 3  # [s]
 
     class DEVICES:
         """Devices names."""
@@ -25,6 +26,15 @@ class BLPPSCtrl(_DeviceNC):
 
         # general EPS status for hutchA shutter
         'A:PPS01:HABILITACAO_EPS',
+
+        # EPS status
+        'A:EPS01:StatusPos',
+        'A:EPS01:StatusTemp',
+        'A:EPS01:StatusVac',
+        'B:EPS01:StatusVac',
+        'F:EPS01:StatusPos',
+        'F:EPS01:StatusTemp',
+        'F:EPS01:StatusVac',
 
         # open front-end and first hutchA valve gates
         'F:EPS01:openGates',
@@ -104,6 +114,41 @@ class BLPPSCtrl(_DeviceNC):
         return self['A:PPS01:PG_STATUS'] == 0
 
     @property
+    def is_hutchA_eps_dvf_pos_ok(self):
+        """."""
+        return bool(self['A:EPS01:StatusPos'])
+
+    @property
+    def is_hutchA_eps_temperatures_ok(self):
+        """."""
+        return bool(self['A:EPS01:StatusTemp'])
+
+    @property
+    def is_hutchA_eps_vacuum_ok(self):
+        """."""
+        return bool(self['A:EPS01:StatusVac'])
+
+    @property
+    def is_hutchB_eps_vacuum_ok(self):
+        """."""
+        return bool(self['B:EPS01:StatusVac'])
+
+    @property
+    def is_frontend_eps_mirror_pos_ok(self):
+        """."""
+        return bool(self['F:EPS01:StatusPos'])
+
+    @property
+    def is_frontend_eps_temperatures_ok(self):
+        """."""
+        return bool(self['F:EPS01:StatusTemp'])
+
+    @property
+    def is_frontend_eps_vacuum_ok(self):
+        """."""
+        return bool(self['F:EPS01:StatusVac'])
+
+    @property
     def is_frontend_gatevalves_opened(self):
         """."""
         if not bool(self['A:EPS01:GV5open']):
@@ -112,6 +157,7 @@ class BLPPSCtrl(_DeviceNC):
             return False
         if not bool(self['F:EPS01:GV3open']):
             return False
+        # NOTE: GV2open not installed yet.
         # if not bool(self['F:EPS01:GV2open']):
         #     return False
         if not bool(self['F:EPS01:GV1open']):
@@ -134,24 +180,20 @@ class BLPPSCtrl(_DeviceNC):
         return True
 
     @property
-    def is_beamline_gatevalves_opened(self):
+    def is_hutchB_gatevalves_opened(self):
         """."""
         if not bool(self['B:EPS01:GV7open']):
             return False
         if not bool(self['A:EPS01:GV6open']):
             return False
-        if not self.is_frontend_gatevalves_opened:
-            return False
         return True
 
     @property
-    def is_beamline_gatevalves_closed(self):
+    def is_hutchB_gatevalves_closed(self):
         """."""
         if not bool(self['B:EPS01:GV7closed']):
             return False
         if not bool(self['A:EPS01:GV6closed']):
-            return False
-        if not self.is_frontend_gatevalves_closed:
             return False
         return True
 
@@ -165,42 +207,161 @@ class BLPPSCtrl(_DeviceNC):
         """."""
         return bool(self['A:PPS01:HABILITACAO_EPS'])
 
+    @property
+    def is_frontend_eps_ok(self):
+        """."""
+        state = True
+        state &= self.is_frontend_eps_mirror_pos_ok
+        state &= self.is_frontend_eps_temperatures_ok
+        state &= self.is_frontend_eps_vacuum_ok
+        return state
+
+    @property
+    def is_hutchA_eps_ok(self):
+        """."""
+        state = True
+        state &= self.is_hutchA_eps_dvf_pos_ok
+        state &= self.is_hutchA_eps_temperatures_ok
+        state &= self.is_hutchA_eps_vacuum_ok
+        return state
+
+    @property
+    def is_hutchB_eps_ok(self):
+        """."""
+        state = True
+        state &= self.is_hutchB_eps_vacuum_ok
+        return state
+
+    @property
+    def is_beamline_eps_ok(self):
+        """."""
+        state = True
+        state &= self.is_frontend_eps_ok
+        state &= self.is_hutchA_eps_ok
+        state &= self.is_hutchB_eps_ok
+        return state
+
     def cmd_beamline_eps_reset(self):
         """."""
         self['F:EPS01:resetCmd'] = 1
 
-    def cmd_frontend_gatevalves_open(self):
+    def cmd_frontend_gatevalves_open(self, timeout=None):
         """."""
-        self['F:EPS01:openGates'] = 1
+        if self.is_frontend_gatevalves_opened:
+            return True
+        else:
+            self['F:EPS01:openGates'] = 1
 
-    def cmd_hutchB_gatevalves_open(self):
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while not self.is_frontend_gatevalves_opened:
+            if _time.time() - t0 > timeout:
+                print('open frontend gatevalve timeout reached!')
+                return False
+            _time.sleep(0.5)
+
+        return True
+
+    def cmd_hutchB_gatevalves_open(self, timeout=None):
         """."""
-        self['B:EPS01:openGates'] = 1
+        if self.is_hutchB_gatevalves_opened:
+            return True
+        else:
+            self['B:EPS01:openGates'] = 1
 
-    def cmd_frontend_gamma_and_photon_open(self):
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while not self.is_hutchB_gatevalves_opened:
+            if _time.time() - t0 > timeout:
+                print('open hutchB gatevalve timeout reached!')
+                return False
+            _time.sleep(0.5)
+
+        return True
+
+    def cmd_frontend_gamma_and_photon_open(self, timeout=None):
         """."""
-        self['F:PPS01:FOEOPEN'] = 1
+        if self.is_frontend_gamma_shutter_opened and \
+                self.is_frontend_photon_shutter_opened:
+            return True
+        else:
+            self['F:PPS01:FOEOPEN'] = 1
 
-    def cmd_frontend_gamma_and_photon_close(self):
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while \
+                not self.is_frontend_gamma_shutter_opened or \
+                not self.is_frontend_photon_shutter_opened:
+            if _time.time() - t0 > timeout:
+                print('open frontend shutter timeout reached!')
+                return False
+            _time.sleep(0.5)
+
+        return True
+
+    def cmd_frontend_gamma_and_photon_close(self, timeout=None):
         """."""
-        self['F:PPS01:FOECLOSE'] = 1
+        if \
+                not self.is_frontend_gamma_shutter_opened and \
+                not self.is_frontend_photon_shutter_opened:
+            return True
+        else:
+            self['F:PPS01:FOECLOSE'] = 1
 
-    def cmd_hutchA_gamma_open(self):
-        """."""
-        if not self.is_hutchA_gamma_shutter_opened:
-            self['A:PPS01:OEAOPENCLOSE'] = 1
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while \
+                self.is_frontend_gamma_shutter_opened or \
+                self.is_frontend_photon_shutter_opened:
+            if _time.time() - t0 > timeout:
+                print('close frontend shutter timeout reached!')
+                return False
+            _time.sleep(0.5)
 
-    def cmd_hutchA_gamma_close(self):
+        return True
+
+    def cmd_hutchA_photon_open(self, timeout=None):
         """."""
         if self.is_hutchA_gamma_shutter_opened:
+            return True
+        else:
             self['A:PPS01:OEAOPENCLOSE'] = 1
 
-    def cmd_open_beamline(self):
-        """."""
-        if not self.is_machine_gamma_enabled:
-            print('Machine gamma signal not enabled.')
-            return False
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while not self.is_hutchA_gamma_shutter_opened:
+            if _time.time() - t0 > timeout:
+                print('open hutchA photon shutter timeout reached!')
+                return False
+            _time.sleep(0.5)
 
+        return True
+
+    def cmd_hutchA_photon_close(self, timeout=None):
+        """."""
+        if not self.is_hutchA_gamma_shutter_opened:
+            return True
+        else:
+            self['A:PPS01:OEAOPENCLOSE'] = 1
+
+        if timeout is None:
+            return True
+        t0 = _time.time()
+        while self.is_hutchA_gamma_shutter_opened:
+            if _time.time() - t0 > timeout:
+                print('close hutchA photon shutter timeout reached!')
+                return False
+            _time.sleep(0.5)
+
+        return True
+
+    def cmd_beamline_open(self):
+        """."""
         if not self.is_hutchA_intlk_search_done:
             print('hutchA search is not done!')
             return False
@@ -209,29 +370,47 @@ class BLPPSCtrl(_DeviceNC):
             print('hutchB search is not done!')
             return False
 
-        self.cmd_beamline_eps_reset()
-        # self.is_beamline_eps_ok()
-        _time.sleep(1.5)  # while is_beamline_eps_ok is not implemented
+        if not self.is_machine_gamma_enabled:
+            print('machine gamma signal not enabled.')
+            return False
 
-        if not self.is_hutchA_shutter_eps_permission_ok and \
-                not self.is_frontend_shutter_eps_permission_ok:
-            # open hutchB gatevalves
-            self.cmd_hutchB_gatevalves_open()
+        # check and reset EPS
+        if not self.is_beamline_eps_ok:
+            print('beamline eps reset')
+            self.cmd_beamline_eps_reset()
             t0 = _time.time()
-            while not self.is_beamline_gatevalves_opened:
-                if _time.time() - t0 > BLPPSCtrl.GATEVALVE_TIMEOUT:
-                    print('open gatevalve timeout reached!')
+            while not self.is_beamline_eps_ok:
+                if _time.time() - t0 > BLPPSCtrl.TIMEOUT_EPS_RESET:
+                    print('eps reset timeout reached!')
                     return False
                 _time.sleep(0.5)
 
-        self.cmd_frontend_gamma_and_photon_open()
-        t0 = _time.time()
-        while \
-                not self.is_frontend_gamma_shutter_opened or \
-                not self.is_frontend_photon_shutter_opened:
-            if _time.time() - t0 > BLPPSCtrl.SHUTTER_TIMEOUT:
-                print('frontend gamma and photon shutters timeout reached!')
-                return False
-            _time.sleep(0.5)
+        # check frontend shutter permission and open gatevalves for hutchA
+        if not self.is_frontend_shutter_eps_permission_ok:
+            print('open frontend and hutchA gatevalves')
+            # open frontend and hutchA gatevalves
+            self.cmd_frontend_gatevalves_open()
+            t0 = _time.time()
+            while not self.is_frontend_gatevalves_opened:
+                if _time.time() - t0 > BLPPSCtrl.TIMEOUT_GATEVALVE:
+                    msg = 'open frontend and hutchA gatevalve timeout reached!'
+                    print(msg)
+                    return False
+                _time.sleep(0.5)
+
+        # check hutchA shutter permission and open gatevalves for hutchB
+        if not self.is_hutchA_shutter_eps_permission_ok:
+            print('open hutchB gatevalves')
+            self.cmd_hutchB_gatevalves_open(
+                timeout=BLPPSCtrl.TIMEOUT_GATEVALVE)
+
+        # open frontend gamma and photon shutter
+        print('open frontend gamma and photon shutters')
+        self.cmd_frontend_gamma_and_photon_open(
+            timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+
+        # open hutchA photon shutter
+        print('open hutchA photon shutter')
+        self.cmd_hutchA_photon_open(timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
 
         return True
