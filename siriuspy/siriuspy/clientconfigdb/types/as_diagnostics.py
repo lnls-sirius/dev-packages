@@ -13,6 +13,10 @@ def get_dict():
     return _dict
 
 
+AFC_ACQCORE_NR_PHY_TRIGGER = 8
+AFC_ACQCORE_NR_LOG_TRIGGER = 24
+
+
 _li_diags = [
     # Screens
     ['LA-BI:PRF1:CAM:AcquireTime', 0.001, 0],
@@ -373,38 +377,6 @@ _bpm_propts = [
     [':ADC1RstModes-Sel', 1, 0.0],
     [':ADC2RstModes-Sel', 1, 0.0],
     [':ADC3RstModes-Sel', 1, 0.0],
-    [':TRIGGER0Dir-Sel', 1, 0.0],
-    [':TRIGGER0DirPol-Sel', 1, 0.0],
-    [':TRIGGER0RcvLen-SP', 1, 0.0],
-    [':TRIGGER0TrnLen-SP', 1, 0.0],
-    [':TRIGGER1Dir-Sel', 1, 0.0],
-    [':TRIGGER1DirPol-Sel', 1, 0.0],
-    [':TRIGGER1RcvLen-SP', 1, 0.0],
-    [':TRIGGER1TrnLen-SP', 1, 0.0],
-    [':TRIGGER2Dir-Sel', 0, 0.0],
-    [':TRIGGER2DirPol-Sel', 1, 0.0],
-    [':TRIGGER2RcvLen-SP', 1, 0.0],
-    [':TRIGGER2TrnLen-SP', 1, 0.0],
-    [':TRIGGER3Dir-Sel', 0, 0.0],
-    [':TRIGGER3DirPol-Sel', 1, 0.0],
-    [':TRIGGER3RcvLen-SP', 1, 0.0],
-    [':TRIGGER3TrnLen-SP', 1, 0.0],
-    [':TRIGGER4Dir-Sel', 1, 0.0],
-    [':TRIGGER4DirPol-Sel', 1, 0.0],
-    [':TRIGGER4RcvLen-SP', 1, 0.0],
-    [':TRIGGER4TrnLen-SP', 1, 0.0],
-    [':TRIGGER5Dir-Sel', 1, 0.0],
-    [':TRIGGER5DirPol-Sel', 1, 0.0],
-    [':TRIGGER5RcvLen-SP', 1, 0.0],
-    [':TRIGGER5TrnLen-SP', 1, 0.0],
-    [':TRIGGER6Dir-Sel', 1, 0.0],
-    [':TRIGGER6DirPol-Sel', 1, 0.0],
-    [':TRIGGER6RcvLen-SP', 1, 0.0],
-    [':TRIGGER6TrnLen-SP', 1, 0.0],
-    [':TRIGGER7Dir-Sel', 1, 0.0],
-    [':TRIGGER7DirPol-Sel', 1, 0.0],
-    [':TRIGGER7RcvLen-SP', 1, 0.0],
-    [':TRIGGER7TrnLen-SP', 1, 0.0],
     [':ACQChannel-Sel', 0, 0.0],
     [':ACQSamplesPre-SP', 100, 0.0],
     [':ACQSamplesPost-SP', 50, 0.0],
@@ -452,8 +424,15 @@ _bpm_propts = [
     [':SwInvGainC-SP', 1.0, 0.0],
     [':SwInvGainD-SP', 1.0, 0.0],
 ]
+for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
+    _bpm_propts.extend([
+        [f':TRIGGER{phy_trig}Dir-Sel', 0, 0.0],
+        [f':TRIGGER{phy_trig}DirPol-Sel', 0, 0.0],
+        [f':TRIGGER{phy_trig}RcvLen-SP', 0, 0.0],
+        [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
+    ])
 for acq_core in ['', '_PM']:
-    for log_trig in range(24):
+    for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _bpm_propts.extend([
             [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],
             [f':TRIGGER{acq_core}{log_trig}RcvSrc-Sel', 0, 0.0],
@@ -464,7 +443,6 @@ _bpm_pvs = list()
 for dev in _bpms:
     for ppt, val, dly in _bpm_propts:
         _bpm_pvs.append([dev+ppt, val, dly])
-
 
 _scrns = [
     'TB-01:DI-{0:s}-1',
@@ -1253,7 +1231,7 @@ _fofbctrls = [
     'IA-20RaBPM:BS-FOFBCtrl',
 ]
 _fofb_propts = list()
-for phy_trig in range(8):
+for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _fofb_propts.extend([
         [f':TRIGGER{phy_trig}Dir-Sel', 0, 0.0],
         [f':TRIGGER{phy_trig}DirPol-Sel', 0, 0.0],
@@ -1261,7 +1239,7 @@ for phy_trig in range(8):
         [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
     ])
 for acq_core in ['_LAMP', '_SYSID']:
-    for log_trig in range(24):
+    for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _fofb_propts.extend([
             [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],
             [f':TRIGGER{acq_core}{log_trig}RcvSrc-Sel', 0, 0.0],
