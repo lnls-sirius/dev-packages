@@ -337,6 +337,7 @@ class FOFBCtrlSysId(_FOFBCtrlAcqBase):
         'PRBSSyncEn-Sel', 'PRBSSyncEn-Sts',
         'PRBSStepDuration-SP', 'PRBSStepDuration-RB',
         'PRBSLFSRLength-SP', 'PRBSLFSRLength-RB',
+        'PRBSFOFBAccMovAvgTaps-SP', 'PRBSFOFBAccMovAvgTaps-RB',
         'PRBSFOFBAccEn-Sel', 'PRBSFOFBAccEn-Sts',
         'PRBSBPMPosEn-Sel', 'PRBSBPMPosEn-Sts',
         'PRBSBPMPosXLvl0-SP', 'PRBSBPMPosXLvl0-RB',
@@ -407,6 +408,15 @@ class FOFBCtrlSysId(_FOFBCtrlAcqBase):
     @prbs_lfsr_len.setter
     def prbs_lfsr_len(self, val):
         self['PRBSLFSRLength-SP'] = val
+
+    @property
+    def prbs_mov_avg_taps(self):
+        """Number of taps of the PRBS moving average filter."""
+        return self['PRBSFOFBAccMovAvgTaps-RB']
+
+    @prbs_mov_avg_taps.setter
+    def prbs_mov_avg_taps(self, val):
+        self['PRBSFOFBAccMovAvgTaps-SP'] = val
 
     @property
     def prbs_fofbacc_enbl(self):
@@ -568,6 +578,14 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             [dev.prbs_lfsr_len for dev in self._ctlrs.values()])
 
     @property
+    def prbs_mov_avg_taps(self):
+        """
+        Number of taps of the PRBS moving average filter of all controllers.
+        """
+        return _np.array(
+            [dev.prbs_mov_avg_taps for dev in self._ctlrs.values()])
+
+    @property
     def prbs_sync_enbl(self):
         """PRBS sync enable of all controllers in ctrldevs."""
         return _np.array(
@@ -709,6 +727,17 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             if not _np.all(data == ctlr01_prbsdata):
                 return idx+1
         return 0
+
+    def set_prbs_mov_avg_taps(self, value):
+        """Configure number of taps of the PRBS moving average filter
+        for all FOFB controllers.
+
+        Args:
+            value (int): number of taps.
+        """
+        for ctl in self._ctlrs.values():
+            ctl.prbs_mov_avg_taps = value
+        return True
 
     def config_prbs(self, step_duration, lfsr_len):
         """Configure acquisition for FOFB controllers.
