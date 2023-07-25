@@ -692,7 +692,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
              for psn in self._psnames])
 
     def set_data_type(self, value):
-        """Configure acquisition for FOFB controllers.
+        """Configure acquisition data type for FOFB controllers.
 
         Args:
             data_type (int): acquisition data type
@@ -740,7 +740,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         return True
 
     def config_prbs(self, step_duration, lfsr_len):
-        """Configure acquisition for FOFB controllers.
+        """Configure PRBS for FOFB controllers.
 
         Args:
             step_duration (int): step duration.
@@ -773,10 +773,10 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         """Set power supply FOFBAcc PRBS excitation levels.
 
         Args:
-            level0 (numpy.ndarray, (NR_BPM,)):
+            level0 (numpy.ndarray, (NR_CORRS,)):
                 desired values for power supplies PRBS excitation level 0
                 in psnames order.
-            level1 (optional, numpy.ndarray, (NR_BPM,)):
+            level1 (optional, numpy.ndarray, (NR_CORRS,)):
                 If None, we consider level1 = -level0. Defaults to None.
 
         """
@@ -794,10 +794,10 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         desired values.
 
         Args:
-            level0 (numpy.ndarray, (NR_BPM,)):
+            level0 (numpy.ndarray, (NR_CORRS,)):
                 desired values for power supplies PRBS excitation level 0
                 in psnames order.
-            level1 (optional, numpy.ndarray, (NR_BPM,)):
+            level1 (optional, numpy.ndarray, (NR_CORRS,)):
                 If None, we consider level1 = -level0. Defaults to None.
             atol (optional, float):
                 Absolute tolerance for values comparison.
