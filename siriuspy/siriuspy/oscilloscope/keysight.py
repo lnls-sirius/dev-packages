@@ -131,6 +131,7 @@ class Keysight:
 
         va1 = _np.array(list(dataraw)[0::2])
         va0 = _np.array(list(dataraw)[1::2])
+        va1 = va1[:va0.size]
 
         datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
 
