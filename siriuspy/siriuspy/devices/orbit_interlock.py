@@ -88,6 +88,7 @@ class BaseOrbitIntlk:
         self._oper = {
             'mean': self._mean,
             'diff': self._diff,
+            'min': min,
         }
 
     @staticmethod
