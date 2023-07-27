@@ -14,6 +14,7 @@ class DVF(_DeviceNC):
 
     class DEVICES:
         """Devices names."""
+
         CAX_DVF1 = 'CAX:A:BASLER01'
         CAX_DVF2 = 'CAX:B:BASLER01'
         ALL = (CAX_DVF1, CAX_DVF2)
@@ -170,10 +171,10 @@ class DVF(_DeviceNC):
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < value <= self.cam_max_sizex:
+        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
             self['cam1:Width'] = value
         else:
-            raise ValueError('Invalid width value!')
+            raise ValueError('Invalid offsetx and width combination!')
 
     @property
     def cam_height(self):
@@ -187,10 +188,10 @@ class DVF(_DeviceNC):
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < value <= self.cam_max_sizey:
+        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
             self['cam1:Height'] = value
         else:
-            raise ValueError('Invalid width value!')
+            raise ValueError('Invalid offsety and height combination!')
 
     @property
     def cam_offsetx(self):
@@ -201,12 +202,10 @@ class DVF(_DeviceNC):
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
         value = int(value)
-        if 0 <= value < self.cam_max_sizex:
+        if 0 < value + self.cam_width <= self.cam_max_sizex:
             self['cam1:OffsetX'] = value
-            # NOTE: if offset is invalid, there is, offset + width exceeds
-            # cam image max size, then setpoint is neglected by DVF IOC
         else:
-            raise ValueError('Invalid offsetx value!')
+            raise ValueError('Invalid offsetx and width combination!')
 
     @property
     def cam_offsety(self):
@@ -217,12 +216,18 @@ class DVF(_DeviceNC):
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
         value = int(value)
-        if 0 <= value < self.cam_max_sizey:
+        if 0 <= value + self.cam_height <= self.cam_max_sizey:
             self['cam1:OffsetY'] = value
-            # NOTE: if offset is invalid, there is, offset + height exceeds
-            # cam image max size, then setpoint is neglected by DVF IOC
         else:
-            raise ValueError('Invalid offsety value!')
+            raise ValueError('Invalid offsety and height combination!')
+
+    @property
+    def cam_roi(self):
+        """."""
+        roi = (
+            self.cam_offsetx, self.cam_offsety,
+            self.cam_width, self.cam_height)
+        return roi
 
     @property
     def roi_minx(self):
@@ -263,6 +268,16 @@ class DVF(_DeviceNC):
         return image
 
     @property
+    def image_auto_monitor(self):
+        """Image PV auto monitor."""
+        return self.pv_object('image1:ArrayData').auto_monitor
+
+    @image_auto_monitor.setter
+    def image_auto_monitor(self, value):
+        """Set image PV auto monitor."""
+        self.pv_object('image1:ArrayData').auto_monitor = bool(value)
+
+    @property
     def image_pixel_size(self):
         """Image pixel size [um]."""
         params = self.parameters
@@ -297,7 +312,7 @@ class DVF(_DeviceNC):
         """Return camera gain auto."""
         return self['cam1:GainAuto_RBV']
 
-    @gain.setter
+    @gain_auto.setter
     def gain_auto(self, value):
         """Set camera gain auto."""
         self['cam1:GainAuto'] = value
@@ -385,22 +400,45 @@ class DVF(_DeviceNC):
         self.acquisition_time = params.ACQUISITION_TIME_DEFAULT
         return True
 
-    def cmd_acquire_on(self, timeout=None):
+    def cmd_acquire_on(self, timeout=_default_timeout):
         """Tune IOC image acquisition on."""
         return self._set_and_wait('cam1:Acquire', 1, timeout=timeout)
 
-    def cmd_acquire_off(self, timeout=None):
+    def cmd_acquire_off(self, timeout=_default_timeout):
         """Tune IOC image acquisition off."""
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
 
-    def cmd_set_cam_roi(self, offsetx, offsety, width, height, timeout=None):
+    def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image region of interest and reset aquisition."""
+        offsetx, offsety = int(offsetx), int(offsety)
+        width, height = int(width), int(height)
+        if offsetx + width > self.cam_max_sizex:
+            raise ValueError('Invalid offsetx and width combination!')
+        if offsety + height > self.cam_max_sizey:
+            raise ValueError('Invalid offsety and height combination!')
+
         self.cmd_acquire_off(timeout=timeout)
-        self.cam_offsetx = offsetx
-        self.cam_offsety = offsety
-        self.cam_width = width
-        self.cam_height = height
+        if width < self.cam_width:
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+        if height < self.cam_height:
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
         self.cmd_acquire_on(timeout=timeout)
+        return True
+
+    def cmd_cam_roi_reset(self, timeout=None):
+        """."""
+        return self.cmd_cam_roi_set(
+            offsetx=0, offsety=0,
+            width=self.cam_max_sizex, height=self.cam_max_sizey,
+            timeout=timeout)
 
     @staticmethod
     def conv_devname2parameters(devname):
@@ -628,6 +666,39 @@ class DVFImgProc(DVF):
     def log(self):
         """."""
         return self['ImgLog-Mon']
+
+    def cam_roi_calc(self, roix_fwhm_factor, roiy_fwhm_factor):
+        """."""
+        multp = 4
+
+        width = 2 * self.roix_fwhm * abs(roix_fwhm_factor)
+        width = int(width)
+        width -= width % multp
+        centerx = self.cam_offsetx + self.roix_center
+        offsetx = int(centerx - width/2)
+        offsetx -= offsetx % multp
+
+        height = 2 * self.roiy_fwhm * abs(roiy_fwhm_factor)
+        height = int(height)
+        height -= height % multp
+        centery = self.cam_offsety + self.roiy_center
+        offsety = int(centery - height/2)
+        offsety -= offsety % multp
+
+        params = (offsetx, offsety, width, height)
+
+        # check parameters, return False if inconsistent
+        if width <= 0 or width > self.cam_max_sizex:
+            return False, params
+        if height <= 0 or height > self.cam_max_sizey:
+            return False, params
+        if offsetx < 0 or offsetx + width >= self.cam_max_sizex:
+            return False, params
+        if offsety < 0 or offsety + height >= self.cam_max_sizey:
+            return False, params
+
+        # all ok, return parameters with True status.
+        return True, params
 
     def create_image2dfit(self):
         """Return a Image2DFit object with current image as data."""

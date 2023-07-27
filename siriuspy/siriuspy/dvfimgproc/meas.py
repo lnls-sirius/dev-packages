@@ -195,7 +195,7 @@ class MeasDVF():
 
         # check if DVF is connected
         if not self._dvf.connected:
-            self._status = 'DVF not connecetd'
+            self._status = 'DVF not connected'
             return
 
         # symbol to image2d fit object
