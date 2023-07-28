@@ -596,7 +596,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         dbase['RFDelayType-Sel'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.DIRECTION}
-    dic_.update(trig_db.get('Direction'), dict())
+    dic_.update(trig_db.get('Direction', dict()))
     if _HLTimeSearch.has_direction(hl_trigger):
         dbase['Direction-Sel'] = _dcopy(dic_)
         dbase['Direction-Sts'] = dic_
