@@ -4,8 +4,7 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices, \
-    ProptyDevice as _ProptyDevice
+from .device import Device as _Device, Devices as _Devices
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -1345,58 +1344,3 @@ class FamBPMs(_Devices):
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
-
-
-class BPMLogicalTrigger(_ProptyDevice):
-    """BPM Logical Trigger device."""
-
-    _properties = (
-        'RcvSrc-Sel', 'RcvSrc-Sts',
-        'RcvInSel-SP', 'RcvInSel-RB',
-        'TrnSrc-Sel', 'TrnSrc-Sts',
-        'TrnOutSel-SP', 'TrnOutSel-RB',
-    )
-
-    def __init__(self, bpmname, index):
-        """Init."""
-        if not 0 <= int(index) <= 23:
-            raise NotImplementedError(index)
-        super().__init__(
-            bpmname, 'TRIGGER'+str(index),
-            properties=BPMLogicalTrigger._properties)
-
-    @property
-    def receiver_source(self):
-        """Receiver source."""
-        return self['RcvSrc-Sts']
-
-    @receiver_source.setter
-    def receiver_source(self, value):
-        self['RcvSrc-Sel'] = value
-
-    @property
-    def receiver_in_sel(self):
-        """Receiver in selection."""
-        return self['RcvInSel-RB']
-
-    @receiver_in_sel.setter
-    def receiver_in_sel(self, value):
-        self['RcvInSel-SP'] = value
-
-    @property
-    def transmitter_source(self):
-        """Transmitter source."""
-        return self['TrnSrc-Sts']
-
-    @transmitter_source.setter
-    def transmitter_source(self, value):
-        self['TrnSrc-Sel'] = value
-
-    @property
-    def transmitter_out_sel(self):
-        """Transmitter out selection."""
-        return self['TrnOutSel-RB']
-
-    @transmitter_out_sel.setter
-    def transmitter_out_sel(self, value):
-        self['TrnOutSel-SP'] = value

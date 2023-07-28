@@ -10,7 +10,7 @@ from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
     Devices as _Devices
-from .bpm import BPMLogicalTrigger
+from .afc_acq_core import AFCACQLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
@@ -291,7 +291,7 @@ class FamFOFBControllers(_Devices):
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
-                self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
+                self._bpm_trgs[trigname] = AFCACQLogicalTrigger(bpm, trig)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
             for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
@@ -329,7 +329,7 @@ class FamFOFBControllers(_Devices):
 
     @property
     def bpmtrigdevs(self):
-        """BPMLogicalTrigger device list."""
+        """AFCACQLogicalTrigger device list."""
         return self._bpm_trgs
 
     @property

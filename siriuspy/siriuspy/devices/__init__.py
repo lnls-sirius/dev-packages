@@ -1,7 +1,8 @@
 """Devices subpackage."""
 
+from .afc_acq_core import AFCPhysicalTrigger, AFCACQLogicalTrigger
 from .bbb import BunchbyBunch
-from .bpm import BPM, FamBPMs, BPMLogicalTrigger
+from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
