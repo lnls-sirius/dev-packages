@@ -1103,8 +1103,9 @@ class FamBPMs(_Devices):
             nr_points_after (int): number of points after trigger.
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
-            acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
-                'FAcq'). Defaults to 'FAcq'.
+            acq_rate (str, optional): Acquisition rate ('TbT', 'TbTPha',
+                'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp').
+                Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
@@ -1119,10 +1120,18 @@ class FamBPMs(_Devices):
         """
         if acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
+        elif acq_rate.lower().startswith('fofbpha'):
+            acq_rate = self._csbpm.AcqChan.FOFBPha
         elif acq_rate.lower().startswith('fofb'):
             acq_rate = self._csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbtpha'):
+            acq_rate = self._csbpm.AcqChan.TbTPha
         elif acq_rate.lower().startswith('tbt'):
             acq_rate = self._csbpm.AcqChan.TbT
+        elif acq_rate.lower().startswith('adcswp'):
+            acq_rate = self._csbpm.AcqChan.ADCSwp
+        elif acq_rate.lower().startswith('adc'):
+            acq_rate = self._csbpm.AcqChan.ADC
         else:
             raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
