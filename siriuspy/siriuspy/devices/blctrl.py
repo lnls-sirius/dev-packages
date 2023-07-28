@@ -401,16 +401,22 @@ class BLPPSCtrl(_DeviceNC):
         # check hutchA shutter permission and open gatevalves for hutchB
         if not self.is_hutchA_shutter_eps_permission_ok:
             print('open hutchB gatevalves')
-            self.cmd_hutchB_gatevalves_open(
+            is_ok = self.cmd_hutchB_gatevalves_open(
                 timeout=BLPPSCtrl.TIMEOUT_GATEVALVE)
+            if not is_ok:
+                return False
 
         # open frontend gamma and photon shutter
         print('open frontend gamma and photon shutters')
-        self.cmd_frontend_gamma_and_photon_open(
+        is_ok = self.cmd_frontend_gamma_and_photon_open(
             timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+        if not is_ok:
+            return False
 
         # open hutchA photon shutter
         print('open hutchA photon shutter')
-        self.cmd_hutchA_photon_open(timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+        is_ok = self.cmd_hutchA_photon_open(timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+        if not is_ok:
+            return False
 
         return True
