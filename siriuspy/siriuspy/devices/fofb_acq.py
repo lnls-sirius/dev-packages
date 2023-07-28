@@ -802,6 +802,10 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             atol (optional, float):
                 Absolute tolerance for values comparison.
 
+        Returns:
+            bool: indicate whether levels 0 and 1 of power supply FOFBAcc PRBS
+                excitation are in desired values.
+
         """
         level0, level1 = self._handle_corr_levels(level0, level1)
         impltd0 = _np.array(
@@ -815,24 +819,16 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         return True
 
     def wait_prbs_fofbacc_levels(
-            self, level0, level1=None, timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
+            self, level0, level1=None, atol=DEF_ATOL_FOFBACC,
+            timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
         """
         Wait for power supply FOFBAcc PRBS excitation levels to be equal to
-        desired values.
-
-        Args:
-            level0 (numpy.ndarray, (NR_CORRS,)):
-                desired values for power supplies PRBS excitation level 0
-                in psnames order.
-            level1 (optional, numpy.ndarray, (NR_CORRS,)):
-                If None, we consider level1 = -level0. Defaults to None.
-            atol (optional, float):
-                Absolute tolerance for values comparison.
-
+        desired values. Refer to check_prbs_fofbacc_levels for more details
+        on arguments and returns.
         """
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
-            if self.check_prbs_fofbacc_levels(level0, level1):
+            if self.check_prbs_fofbacc_levels(level0, level1, atol):
                 return True
             _time.sleep(0.1)
         return False
@@ -909,19 +905,9 @@ class FamFOFBSysId(_FamFOFBAcqBase):
     def wait_prbs_bpmposx_levels(
             self, level0, level1=None, timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
         """
-        Wait for BPM PosX PRBS excitation levels to be equal to
-        desired values.
-
-        Args:
-            level0 (numpy.ndarray, (NR_BPM,)):
-                desired values for BPM PosX PRBS excitation level 0.
-            level1 (optional, numpy.ndarray, (NR_BPM,)):
-                If None, we consider level1 = -level0. Defaults to None.
-
-        Returns:
-            bool: indicate whether levels 0 and 1 of BPM PosX PRBS
-                excitation are in desired values.
-
+        Wait for BPM PosX PRBS excitation levels to be equal to desired
+        values. Refer to check_prbs_bpmposx_levels for more details on
+        arguments and returns.
         """
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
@@ -973,19 +959,9 @@ class FamFOFBSysId(_FamFOFBAcqBase):
     def wait_prbs_bpmposy_levels(
             self, level0, level1=None, timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
         """
-        Wait for BPM PosY PRBS excitation levels to be equal to
-        desired values.
-
-        Args:
-            level0 (numpy.ndarray, (NR_BPM,)):
-                desired values for BPM PosY PRBS excitation level 0.
-            level1 (optional, numpy.ndarray, (NR_BPM,)):
-                If None, we consider level1 = -level0. Defaults to None.
-
-        Returns:
-            bool: indicate whether levels 0 and 1 of BPM PosY PRBS
-                excitation are in desired values.
-
+        Wait for BPM PosY PRBS excitation levels to be equal to desired
+        values. Refer to check_prbs_bpmposx_levels for more details on
+        arguments and returns.
         """
         _t0 = _time.time()
         while _time.time() - _t0 < timeout:
