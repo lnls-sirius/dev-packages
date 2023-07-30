@@ -297,10 +297,10 @@ class Const(_csdev.Const):
             'MonitEnable-Sts': {
                 'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
             'MONITUpdtTime-SP': {
-                'type': 'float', 'value': 0, 'low': 0.05, 'high': 1.0,
+                'type': 'float', 'value': 0, 'low': 0.001, 'high': 1.0,
                 'unit': 's'},
             'MONITUpdtTime-RB': {
-                'type': 'float', 'value': 0, 'low': 0.05, 'high': 1.0,
+                'type': 'float', 'value': 0, 'low': 0.001, 'high': 1.0,
                 'unit': 's'},
             }
         return {prefix + k: v for k, v in dbase.items()}
