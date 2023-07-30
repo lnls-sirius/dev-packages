@@ -655,7 +655,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_ch_ki(self):
-        """Loop PID Kp parameter for CH."""
+        """Loop PID Ki parameter for CH."""
         return self['LoopPIDKiCH-RB']
 
     @loop_pid_ch_ki.setter
@@ -664,7 +664,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_ch_kd(self):
-        """Loop PID Kp parameter for CH."""
+        """Loop PID Kd parameter for CH."""
         return self['LoopPIDKdCH-RB']
 
     @loop_pid_ch_kd.setter
@@ -682,7 +682,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_cv_ki(self):
-        """Loop PID Kp parameter for CV."""
+        """Loop PID Ki parameter for CV."""
         return self['LoopPIDKiCV-RB']
 
     @loop_pid_cv_ki.setter
@@ -691,7 +691,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_cv_kd(self):
-        """Loop PID Kp parameter for CV."""
+        """Loop PID Kd parameter for CV."""
         return self['LoopPIDKdCV-RB']
 
     @loop_pid_cv_kd.setter
@@ -709,7 +709,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_rf_ki(self):
-        """Loop PID Kp parameter for RF."""
+        """Loop PID Ki parameter for RF."""
         return self['LoopPIDKiRF-RB']
 
     @loop_pid_rf_ki.setter
@@ -718,7 +718,7 @@ class SISOFB(BOSOFB):
 
     @property
     def loop_pid_rf_kd(self):
-        """Loop PID Kp parameter for RF."""
+        """Loop PID Kd parameter for RF."""
         return self['LoopPIDKdRF-RB']
 
     @loop_pid_rf_kd.setter
