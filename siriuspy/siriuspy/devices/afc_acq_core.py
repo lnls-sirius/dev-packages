@@ -77,7 +77,7 @@ class AFCPhysicalTrigger(_ProptyDevice):
     @property
     def transmitter_counter(self):
         """Transmitter counter."""
-        return self['RcvCnt-Mon']
+        return self['TrnCnt-Mon']
 
     def cmd_reset_transmitter_counter(self):
         """Reset transmitter counter."""
