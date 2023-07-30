@@ -42,7 +42,7 @@ class TLSOFB(_Device):
 
     _properties = (
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
-        'RespMat-SP', 'RespMat-RB', 'InvRespMat-Mon',
+        'RespMat-SP', 'RespMat-RB', 'RespMat-Mon', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
         'DeltaKickCH-SP', 'DeltaKickCV-SP',
@@ -106,17 +106,21 @@ class TLSOFB(_Device):
 
     @property
     def respmat(self):
-        """."""
+        """Raw response matrix."""
         return self['RespMat-RB'].reshape(self._data.nr_bpms*2, -1)
 
     @respmat.setter
     def respmat(self, mat):
-        """."""
         self['RespMat-SP'] = _np.array(mat).ravel()
 
     @property
+    def respmat_mon(self):
+        """Applied response matrix."""
+        return self['RespMat-Mon'].reshape(self._data.nr_bpms*2, -1)
+
+    @property
     def invrespmat(self):
-        """."""
+        """Inverse response matrix."""
         return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms*2)
 
     @property
@@ -588,6 +592,12 @@ class SISOFB(BOSOFB):
         'RFEnbl-Sel', 'RFEnbl-Sts',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'LoopState-Sts', 'LoopState-Sel',
+        'LoopPIDKpCH-SP', 'LoopPIDKiCH-SP', 'LoopPIDKdCH-SP',
+        'LoopPIDKpCH-RB', 'LoopPIDKiCH-RB', 'LoopPIDKdCH-RB',
+        'LoopPIDKpCV-SP', 'LoopPIDKiCV-SP', 'LoopPIDKdCV-SP',
+        'LoopPIDKpCV-RB', 'LoopPIDKiCV-RB', 'LoopPIDKdCV-RB',
+        'LoopPIDKpRF-SP', 'LoopPIDKiRF-SP', 'LoopPIDKdRF-SP',
+        'LoopPIDKpRF-RB', 'LoopPIDKiRF-RB', 'LoopPIDKdRF-RB',
         'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
         'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
         'DriveAmplitude-SP', 'DriveAmplitude-RB',
@@ -633,6 +643,87 @@ class SISOFB(BOSOFB):
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
         return self.wait_orb_status_ok(timeout=timeout)
+
+    @property
+    def loop_pid_ch_kp(self):
+        """Loop PID Kp parameter for CH."""
+        return self['LoopPIDKpCH-RB']
+
+    @loop_pid_ch_kp.setter
+    def loop_pid_ch_kp(self, value):
+        self['LoopPIDKpCH-SP'] = value
+
+    @property
+    def loop_pid_ch_ki(self):
+        """Loop PID Ki parameter for CH."""
+        return self['LoopPIDKiCH-RB']
+
+    @loop_pid_ch_ki.setter
+    def loop_pid_ch_ki(self, value):
+        self['LoopPIDKiCH-SP'] = value
+
+    @property
+    def loop_pid_ch_kd(self):
+        """Loop PID Kd parameter for CH."""
+        return self['LoopPIDKdCH-RB']
+
+    @loop_pid_ch_kd.setter
+    def loop_pid_ch_kd(self, value):
+        self['LoopPIDKdCH-SP'] = value
+
+    @property
+    def loop_pid_cv_kp(self):
+        """Loop PID Kp parameter for CV."""
+        return self['LoopPIDKpCV-RB']
+
+    @loop_pid_cv_kp.setter
+    def loop_pid_cv_kp(self, value):
+        self['LoopPIDKpCV-SP'] = value
+
+    @property
+    def loop_pid_cv_ki(self):
+        """Loop PID Ki parameter for CV."""
+        return self['LoopPIDKiCV-RB']
+
+    @loop_pid_cv_ki.setter
+    def loop_pid_cv_ki(self, value):
+        self['LoopPIDKiCV-SP'] = value
+
+    @property
+    def loop_pid_cv_kd(self):
+        """Loop PID Kd parameter for CV."""
+        return self['LoopPIDKdCV-RB']
+
+    @loop_pid_cv_kd.setter
+    def loop_pid_cv_kd(self, value):
+        self['LoopPIDKdCV-SP'] = value
+
+    @property
+    def loop_pid_rf_kp(self):
+        """Loop PID Kp parameter for RF."""
+        return self['LoopPIDKpRF-RB']
+
+    @loop_pid_rf_kp.setter
+    def loop_pid_rf_kp(self, value):
+        self['LoopPIDKpRF-SP'] = value
+
+    @property
+    def loop_pid_rf_ki(self):
+        """Loop PID Ki parameter for RF."""
+        return self['LoopPIDKiRF-RB']
+
+    @loop_pid_rf_ki.setter
+    def loop_pid_rf_ki(self, value):
+        self['LoopPIDKiRF-SP'] = value
+
+    @property
+    def loop_pid_rf_kd(self):
+        """Loop PID Kd parameter for RF."""
+        return self['LoopPIDKdRF-RB']
+
+    @loop_pid_rf_kd.setter
+    def loop_pid_rf_kd(self, value):
+        self['LoopPIDKdRF-SP'] = value
 
     @property
     def drivests(self):

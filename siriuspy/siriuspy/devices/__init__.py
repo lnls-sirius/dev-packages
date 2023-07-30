@@ -1,7 +1,8 @@
 """Devices subpackage."""
 
+from .afc_acq_core import AFCPhysicalTrigger, AFCACQLogicalTrigger
 from .bbb import BunchbyBunch
-from .bpm import BPM, FamBPMs, BPMLogicalTrigger
+from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
@@ -10,6 +11,8 @@ from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
 from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
+from .fofb_acq import FOFBCtrlSysId, FOFBPSSysId, FamFOFBSysId, \
+    FOFBCtrlLamp, FOFBPSLamp, FamFOFBLamp
 from .ict import ICT, TranspEff
 from .ids import APU, WIG, PAPU, EPU
 from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF
