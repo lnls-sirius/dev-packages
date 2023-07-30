@@ -108,13 +108,13 @@ class AFCACQLogicalTrigger(_ProptyDevice):
         'TrnOutSel-SP', 'TrnOutSel-RB',
     )
 
-    def __init__(self, bpmname, index, acqcore=''):
+    def __init__(self, devname, index, acqcore=''):
         """Init."""
         if not 0 <= int(index) <= 23:
             raise NotImplementedError(index)
         propty_prefix = 'TRIGGER'+('_'+acqcore if acqcore else '')+str(index)
         super().__init__(
-            bpmname, propty_prefix,
+            devname, propty_prefix,
             properties=AFCACQLogicalTrigger._properties)
 
     @property
