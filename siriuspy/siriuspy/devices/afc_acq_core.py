@@ -35,7 +35,7 @@ class AFCPhysicalTrigger(_ProptyDevice):
 
     @property
     def direction(self):
-        """Receiver direction."""
+        """Direction."""
         return self['Dir-Sts']
 
     @direction.setter
@@ -44,7 +44,7 @@ class AFCPhysicalTrigger(_ProptyDevice):
 
     @property
     def polarity(self):
-        """Receiver polarity."""
+        """Polarity."""
         return self['DirPol-Sts']
 
     @polarity.setter
