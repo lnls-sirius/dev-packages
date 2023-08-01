@@ -228,11 +228,11 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 864, 'unit': 'bucket index',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'BucketListStep-SP': {
-            'type': 'int', 'value': 15, 'unit': 'buckets',
-            'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
+            'type': 'int', 'value': 29, 'unit': 'buckets',
+            'lolim': -_ct.MAX_BKT, 'hilim': _ct.MAX_BKT},
         'BucketListStep-RB': {
-            'type': 'int', 'value': 15, 'unit': 'buckets',
-            'lolim': -_ct.MAX_BKT+1, 'hilim': _ct.MAX_BKT-1},
+            'type': 'int', 'value': 29, 'unit': 'buckets',
+            'lolim': -_ct.MAX_BKT, 'hilim': _ct.MAX_BKT},
         'IsInjecting-Mon': {
             'type': 'enum', 'value': _ct.IdleInjecting.Idle,
             'enums': _et.IDLEINJECTING, 'unit': 'Idle_Inj'},
