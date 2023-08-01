@@ -650,7 +650,10 @@ class App(_Callback):
 
     def set_bucketlist_step(self, step):
         """Set bucketlist_step."""
-        if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
+        if not -_Const.MAX_BKT <= step <= _Const.MAX_BKT:
+            return False
+        if step == 0:
+            self._update_log('ERR:Bucket list step must not be zero.')
             return False
         if self._mode != _Const.InjMode.Decay:
             if not self._update_bucket_list(step=step):
