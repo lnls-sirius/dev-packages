@@ -622,14 +622,20 @@ class LinacStandbyHandler(_BaseHandler):
         return True, '', []
 
     def change_trigs_to_linac_evt(self):
-        """."""
-        return self.hltiming.change_triggers_source(
-            self._trig_names, new_src='Linac')
+        """Change triggers source to Linac."""
+        trigs = list()
+        trigs.extend([t for t in self._trig_names if 'LLRF' in t])
+        trigs.extend([t for t in self._trig_names if 'SSAmp' in t])
+        trigs.extend([t for t in self._trig_names if 'Modltr' in t])
+        return self.hltiming.change_triggers_source(trigs, new_src='Linac')
 
     def change_trigs_to_rmpbo_evt(self):
-        """."""
-        return self.hltiming.change_triggers_source(
-            self._trig_names, new_src='RmpBO')
+        """Change triggers source to RmpBO."""
+        trigs = list()
+        trigs.extend([t for t in self._trig_names if 'Modltr' in t])
+        trigs.extend([t for t in self._trig_names if 'SSAmp' in t])
+        trigs.extend([t for t in self._trig_names if 'LLRF' in t])
+        return self.hltiming.change_triggers_source(trigs, new_src='RmpBO')
 
     def check_mps_status(self):
         """."""
