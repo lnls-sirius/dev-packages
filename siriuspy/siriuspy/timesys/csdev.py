@@ -21,6 +21,7 @@ class ETypes(_csdev.ETypes):
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
     LOCKLL = ('Unlocked', 'Locked')
     DLYTYP = ('Manual', 'Auto')
+    DIRECTION = ('Receive', 'Transmit')
     ININJTAB = ('No', 'Yes')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
@@ -48,7 +49,8 @@ class Const(_csdev.Const):
     TrigPol = _csdev.Const.register('TrigPol', _et.NORM_INV)
     LowLvlLock = _csdev.Const.register('LowLvlLock', _et.LOCKLL)
     TrigDlyTyp = _csdev.Const.register('TrigDlyTyp', _et.DLYTYP)
-    InInjTab = _csdev.Const.register('TrigDlyTyp', _et.ININJTAB)
+    TrigDir = _csdev.Const.register('TrigDir', _et.DIRECTION)
+    InInjTab = _csdev.Const.register('InInjTab', _et.ININJTAB)
     TrigSrcLL = _csdev.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     HLTrigStatusLabels = (
         'All PVs connected',
@@ -589,11 +591,15 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
     dic_.update(trig_db['RFDelayType'])
-    dbase['RFDelayType-Sts'] = _dcopy(dic_)
-    dbase['RFDelayType-Sel'] = dic_
-    if not _HLTimeSearch.has_delay_type(hl_trigger):
-        dbase.pop('RFDelayType-Sts')
-        dbase.pop('RFDelayType-Sel')
+    if _HLTimeSearch.has_delay_type(hl_trigger):
+        dbase['RFDelayType-Sts'] = _dcopy(dic_)
+        dbase['RFDelayType-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.DIRECTION}
+    dic_.update(trig_db.get('Direction', dict()))
+    if _HLTimeSearch.has_direction(hl_trigger):
+        dbase['Direction-Sel'] = _dcopy(dic_)
+        dbase['Direction-Sts'] = dic_
 
     dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
     dbase['InInjTable-Mon'] = {

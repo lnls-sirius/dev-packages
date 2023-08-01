@@ -83,7 +83,7 @@ def turn_on_pwrsupplies_all(acc):
     """."""
     from siriuspy.devices import PSApplySOFB
 
-    pssofb = PSApplySOFB(acc, auto_mon=True)
+    pssofb = PSApplySOFB(acc, auto_monitor_mon=True)
     pssofb.wait_for_connection()
 
     # configure power supplies
@@ -187,7 +187,7 @@ def test_pscorrsofb_all(acc):
     from siriuspy.devices import PSCorrSOFB
     from siriuspy.devices import PSApplySOFB
 
-    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
+    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_monitor_mon=True)
 
     psnames = dict()
     for dev in pssofb.devices:
@@ -207,7 +207,7 @@ def test_si_psapplysofb(fname=None):
     from siriuspy.devices import PSApplySOFB
     import matplotlib.pyplot as plt
 
-    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
+    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_monitor_mon=True)
     pssofb.wait_for_connection()
 
     # check why PVs are connected but values are being returned None
@@ -255,7 +255,7 @@ def test_si_psapplysofb_init(fname=None):
     from siriuspy.devices import PSApplySOFB
     import matplotlib.pyplot as plt
 
-    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_mon=True)
+    pssofb = PSApplySOFB(PSApplySOFB.DEVICES.SI, auto_monitor_mon=True)
     pssofb.wait_for_connection()
 
     # check why PVs are connected but values are being returned None

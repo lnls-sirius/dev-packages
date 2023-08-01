@@ -97,7 +97,7 @@ class InjCtrl(_Device):
 
     @property
     def injmode(self):
-        """Injection mode (Decay or TopUp)."""
+        """Injection mode (Decay or TopUp or Accum)."""
         return self['Mode-Sts']
 
     @injmode.setter
@@ -106,7 +106,7 @@ class InjCtrl(_Device):
 
     @property
     def injmode_str(self):
-        """Injection mode string (Decay or TopUp)."""
+        """Injection mode string (Decay or TopUp or Accum)."""
         return self.InjMode._fields[self['Mode-Sts']]
 
     @property

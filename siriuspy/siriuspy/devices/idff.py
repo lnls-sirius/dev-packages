@@ -220,6 +220,10 @@ class IDFF(_Devices):
     def get_polarization_state(
             self, pparameter_value=None, kparameter_value=None):
         """."""
+        if self.pparametername is None:
+            if kparameter_value is None:
+                kparameter_value = self.kparameter_mon
+            return self.polarizations[0], pparameter_value, kparameter_value
         if pparameter_value is None:
             pparameter_value = self.pparameter_mon
         if kparameter_value is None:
@@ -234,10 +238,12 @@ class IDFF(_Devices):
         param_auto_mon = False
         devpp = _Device(
             devname=devname,
-            properties=(self._pparametername, ), auto_mon=param_auto_mon)
+            properties=(self._pparametername, ),
+            auto_monitor_mon=param_auto_mon)
         devkp = _Device(
             devname=devname,
-            properties=(self._kparametername, ), auto_mon=param_auto_mon)
+            properties=(self._kparametername, ),
+            auto_monitor_mon=param_auto_mon)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]

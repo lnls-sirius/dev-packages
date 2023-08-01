@@ -113,7 +113,7 @@ class UnitConverter:
             if pstype not in pstype_2_sconv:
                 # sconv = _NormFact.create(psname.replace(':PS', ':MA'))
                 sconv = _StrengthConv(
-                    psname, UnitConverter.DIPOLE_PROPTY, auto_mon=True)
+                    psname, UnitConverter.DIPOLE_PROPTY, auto_monitor_mon=True)
                 pstype_2_sconv[pstype] = sconv
 
         # convert index to numpy array

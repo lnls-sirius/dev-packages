@@ -10,6 +10,7 @@ from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
+from ..clientconfigdb import ConfigDBException as _ConfigDBException
 from ..devices import IDFF as _IDFF
 from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
 from ..pwrsupply.pssofb import PSNamesSOFB as _PSNamesSOFB
@@ -66,8 +67,6 @@ class App(_Callback):
             'LoopState-Sts': self._loop_state,
             'LoopFreq-SP': self._loop_freq,
             'LoopFreq-RB': self._loop_freq,
-            'ControlQS-Sel': self._control_qs,
-            'ControlQS-Sts': self._control_qs,
             'ConfigName-SP': self._config_name,
             'ConfigName-RB': self._config_name,
             'Polarization-Mon': self._polarization,
@@ -76,6 +75,11 @@ class App(_Callback):
             'CorrConfig-Cmd': 0,
             'CorrStatus-Mon': 0b1111,
         }
+        if self._const.has_qscorrs:
+            pvn2vals.update({
+                'ControlQS-Sel': self._control_qs,
+                'ControlQS-Sts': self._control_qs,
+                })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
         self._update_log('Started.')
@@ -96,9 +100,10 @@ class App(_Callback):
         _t0 = _time.time()
         self._update_corr_status()
         dtime = _time.time() - _t0
+        sleep_time = interval - dtime
         # sleep
-        if dtime > 0:
-            _time.sleep(interval - dtime)
+        if sleep_time > 0:
+            _time.sleep(sleep_time)
         else:
             _log.debug('process took {0:f}ms.'.format((dtime)*1000))
 
@@ -157,6 +162,7 @@ class App(_Callback):
             return False
 
         self._config_name = value
+        self.update_autosave_file()
         self.run_callbacks('ConfigName-RB', value)
         return True
 
@@ -206,7 +212,7 @@ class App(_Callback):
         try:
             self._idff.load_config(config_name)
             self._update_log(f'Updated configuration: {config_name}.')
-        except ValueError as err:
+        except (ValueError, _ConfigDBException) as err:
             self._update_log('ERR:'+str(err))
             return False
         return True
@@ -264,6 +270,8 @@ class App(_Callback):
     def _get_default_configname(self):
         if self._const.idname.dev == 'EPU50':
             return 'epu50_ref'
+        elif self._const.idname.dev == 'PAPU50':
+            return 'papu50_ref'
         return ''
 
     # ----- update pvs methods -----
@@ -303,7 +311,8 @@ class App(_Callback):
                 setpoints, *_ = ret
 
                 # built curr_sp vector
-                curr_sp = self._pssfob_current_setpoint(setpoints, corrdevs)
+                curr_sp = self._pssfob_get_current_setpoint(
+                    setpoints, corrdevs)
 
                 # apply curr_sp to pssofb
                 self._pssofb.bsmp_sofb_current_set_update((curr_sp, ))

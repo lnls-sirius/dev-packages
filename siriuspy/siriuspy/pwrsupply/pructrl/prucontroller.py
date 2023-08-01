@@ -32,8 +32,6 @@ class PRUController:
     # NOTE: All private methods starting with '_bsmp' string invoke serial
     #       bsmp communications.
 
-    _sleep_process_loop = 0.020  # [s]
-
     # --- public interface ---
 
     def __init__(self,
@@ -101,7 +99,6 @@ class PRUController:
 
         # starts communications
         self._dev_idx_last_scanned = None
-        self._thread_process = None
         self._thread_scan = None
         if init:
             self.bsmp_init_communication()
@@ -126,17 +123,21 @@ class PRUController:
     @property
     def processing(self):
         """Return processing state."""
-        return self._processing
+        return self._queue.is_running
 
     @processing.setter
     def processing(self, value):
         """Set processing state."""
         self._processing = value
+        if self._processing:
+            self._queue.start()
+        else:
+            self._queue.stop()
 
     @property
     def queue_length(self):
         """Store number of operations currently in the queue."""
-        return len(self._queue)
+        return self._queue.qsize()
 
     @property
     def params(self):
@@ -157,10 +158,6 @@ class PRUController:
     def timestamp_update(self):
         """Return tmestamp of last device update."""
         return self._timestamp_update
-        # psupply = self._psupplies[device_id]
-        # with self._lock:
-        #     tstamp = psupply.timestamp_update
-        # return tstamp
 
     # === queueing writes and local state copy reads ===
 
@@ -228,8 +225,7 @@ class PRUController:
             return _dcopy(values)
 
     def exec_functions(self, device_ids, function_id, args=None):
-        """
-        Append BSMP function executions to opertations queue.
+        """Append BSMP function executions to opertations queue.
 
         Parameters
         ----------
@@ -245,7 +241,6 @@ class PRUController:
         status : bool
             True is operation was queued or False, if operation was rejected
             because of the SOFBMode state.
-
         """
         # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
@@ -261,7 +256,7 @@ class PRUController:
 
         # append bsmp function exec operation to queue
         operation = (self._bsmp_exec_function, args)
-        self._queue.append(operation)
+        self._queue.put(operation, block=False)
         return True
 
     def update_parameters(self, device_ids):
@@ -276,7 +271,7 @@ class PRUController:
         # append function operation to queue
         args = (device_ids, )
         operation = (self._bsmp_read_parameter_values, args)
-        self._queue.append(operation)
+        self._queue.put(operation, block=False)
         return True
 
     # --- wfmref and scope curves ---
@@ -299,7 +294,7 @@ class PRUController:
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
         operation = (self._bsmp_update_wfm, (device_ids, interval, ))
-        self._queue.append(operation)
+        self._queue.put(operation, block=False)
         return True
 
     def wfmref_write(self, device_ids, data):
@@ -314,7 +309,7 @@ class PRUController:
 
         # append bsmp function exec operation to queue
         operation = (self._bsmp_wfmref_write, (device_ids, data))
-        self._queue.append(operation)
+        self._queue.put(operation, block=False)
         return True
 
     def wfmref_rb_read(self, device_id):
@@ -350,7 +345,7 @@ class PRUController:
         """Change SOFB mode: True or False."""
         self._sofb_mode = state
         if state:
-            while self._queue:  # wait until queue is empty
+            while not self._queue.empty():  # wait until queue is empty
                 pass
 
     @property
@@ -360,8 +355,7 @@ class PRUController:
 
     def sofb_current_set(self, value):
         """."""
-        # wait until queue is empty
-        while self._queue:
+        while not self._queue.empty():  # wait until queue is empty
             pass
 
         # execute SOFB setpoint
@@ -390,8 +384,7 @@ class PRUController:
         if not self._sofb_mode:
             return
 
-        # wait until queue is empty
-        while self._queue:
+        while not self._queue.empty():  # wait until queue is empty
             pass
 
         # select power supply dev_id for updating
@@ -409,17 +402,12 @@ class PRUController:
         # select devices and variable group, defining the read group
         # operation to be performed
         operation = (self._bsmp_update, ())
-        if not self._queue or operation != self._queue.last_operation:
-            self._queue.append(operation)
+        if self._queue.empty() or operation != self._queue.last_operation:
+            self._queue.put(operation, block=False)
         else:
             # do not append if last operation is the same as last one
             # operation appended to queue
             pass
-
-    def bsmp_process(self):
-        """Run process once."""
-        # process first operation in queue, if any.
-        self._queue.process()
 
     def bsmp_init_communication(self):
         """."""
@@ -446,7 +434,8 @@ class PRUController:
 
         # after all initializations, threads are started
         self._running = True
-        self._thread_process.start()
+        if self._processing:
+            self._queue.start()
         self._thread_scan.start()
 
     # --- private methods: initializations ---
@@ -455,9 +444,6 @@ class PRUController:
 
         fmt = '  - {:<20s} ({:^20s}) [{:09.3f}] ms'
         t0_ = _time()
-
-        # define process thread
-        self._thread_process = _Thread(target=self._loop_process, daemon=True)
 
         # define scan thread
         self._dev_idx_last_scanned = \
@@ -504,8 +490,9 @@ class PRUController:
                 self._udc.parse_firmware_version(_firmware_version_udc)
             if 'Simulation' not in _firmware_version_udc and \
                _firmware_version_udc != _firmware_version_siriuspy:
-                errmsg = ('PRUController: Incompatible bsmp implementation version '
-                          'for device id:{}')
+                errmsg = (
+                    'PRUController: Incompatible bsmp implementation version '
+                    'for device id:{}')
                 print(errmsg.format(dev_id))
                 errmsg = 'lib version: {}'
                 print(errmsg.format(_firmware_version_siriuspy))
@@ -537,16 +524,6 @@ class PRUController:
 
             # update timestamp
             self._timestamp_update = _time()
-
-    def _loop_process(self):
-        while self._running:
-            if self.processing:
-                self.bsmp_process()
-            # if queue is empty, sleep a little
-            # _sleep(self._sleep_process_loop)
-            # NOTE: this optimization is being tested...
-            if not self._queue:
-                _sleep(self._sleep_process_loop)
 
     def _get_scan_interval(self):
         if self._parms.FREQ_SCAN == 0:

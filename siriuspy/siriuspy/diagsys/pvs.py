@@ -21,8 +21,7 @@ class ComputedPV:
 
         # starts computer_pvs queue, if not started yet
         self._queue = queue
-        if not self._queue.running:
-            self._queue.start()
+        self._queue.start()
 
         # --- properties ---
 
@@ -192,7 +191,7 @@ class ComputedPV:
         # if 'Current-Mon' not in pvname:
         #     print(pvname, value)
         if self.connected:
-            self._queue.add_callback(self._update_value, pvname, value)
+            self._queue.put((self._update_value, (pvname, value)), block=False)
 
     def _issue_callback(self, **kwargs):
         for callback in self._callbacks.values():

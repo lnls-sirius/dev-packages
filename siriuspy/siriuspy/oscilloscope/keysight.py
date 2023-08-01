@@ -32,6 +32,8 @@ class Keysight:
 
     """
 
+    SOCKET_TIMEOUT = 10  # [s]
+
     def __init__(self, scope=None, scopesignal=None):
         """."""
         if scopesignal and isinstance(scopesignal, tuple):
@@ -56,7 +58,7 @@ class Keysight:
         self._socket = _socket.socket(
             _socket.AF_INET,  # Internet
             _socket.SOCK_STREAM)  # TCP
-        self._socket.settimeout(10)
+        self._socket.settimeout(Keysight.SOCKET_TIMEOUT)
         self._socket.connect((self.host, self.port))
 
     def close(self):
@@ -67,7 +69,7 @@ class Keysight:
         """Enable scope waveform acquisition."""
         return self.send_command(b'*IDN?\r\n')
 
-    def wfm_config(self):
+    def wfm_config(self, wait_trigger=False):
         """Set scope waveform format."""
         self.send_command(b":WAVeform:FORMat WORD\n", get_res=False)
         dataformat = self.send_command(b":WAVeform:FORMat?\n")
@@ -75,7 +77,10 @@ class Keysight:
         # Set bit order to MSB First
         self.send_command(b":WAVeform:BYTeorder MSBF\n", get_res=False)
         # Acquire
-        self.send_command(b':DIG\n', get_res=False)
+        if wait_trigger:
+            self.send_command(b':DIG\n', get_res=False)
+        else:
+            self.send_command(b':RUN\n', get_res=False)
 
     def wfm_acquire(self, channel):
         """Acquire scope waveform."""
@@ -102,9 +107,12 @@ class Keysight:
 
         # Get scales
         xinc = self.send_command(b":WAVeform:XINCrement?\n")
+        xinc = float(xinc)
         print('Horizontal Scale:', xinc)
         yinc = self.send_command(b":WAVeform:YINCrement?\n")
         yor = self.send_command(b":WAVeform:YORigin?\n")
+        yinc = float(yinc)
+        yor = float(yor)
         print('Vertical Scale:', xinc, yor)
 
         # Data aquisition
@@ -123,13 +131,14 @@ class Keysight:
 
         va1 = _np.array(list(dataraw)[0::2])
         va0 = _np.array(list(dataraw)[1::2])
+        va1 = va1[:va0.size]
 
         datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
 
         datax = _np.arange(datay.size)*xinc
         return datax, datay, srate, bdw
 
-    def wfm_get_data(self, channel=None):
+    def wfm_get_data(self, channel=None, wait_trigger=False):
         """Enable and get sccope waveform data."""
         channel = channel or self.chan
         self.connect()
@@ -137,7 +146,7 @@ class Keysight:
         waved = None
         try:
             self.wfm_enable()
-            self.wfm_config()
+            self.wfm_config(wait_trigger)
             tini = _time.time()
             print('Acquiring ' + self.chan)
             wavet, waved, srate1, bdw1 = self.wfm_acquire(channel)

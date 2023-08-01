@@ -881,7 +881,7 @@ def get_ps_propty_database(psmodel=None, pstype=None, psname=None):
         psmodel = _PSSearch.conv_psname_2_psmodel(psname)
         pstype = _PSSearch.conv_psname_2_pstype(psname)
 
-    # get dbase for a psecific psmodel
+    # get dbase for a specific psmodel
     dbase = _get_model_db(psmodel)
 
     # insert corresponding strengths
@@ -3140,5 +3140,8 @@ def _insert_strengths(database, pstype):
             del database['KLRef-Mon']
         if 'SLRef-Mon' in database:
             del database['SLRef-Mon']
+    elif '-fc' in pstype:
+        database['KickAcc-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
 
     return database

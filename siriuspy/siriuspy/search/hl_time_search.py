@@ -83,6 +83,7 @@ class HLTimeSearch:
 
     @classmethod
     def get_hl_from_ll_triggers(cls, channel):
+        cls._init()
         # channel = _LLSearch.get_channel_output_port_pvname(channel)
         prpt = channel.propty
         if prpt.startswith('OTP'):
@@ -104,6 +105,13 @@ class HLTimeSearch:
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
         return all([_LLSearch.has_delay_type(name) for name in ll_chans])
+
+    @classmethod
+    def has_direction(cls, hl_trigger):
+        """Return True if hl_trigger has property direction."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return all([_LLSearch.has_direction(name) for name in ll_chans])
 
     @classmethod
     def has_clock(cls, hl_trigger):

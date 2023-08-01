@@ -94,21 +94,6 @@ class App(_Callback):
         corrnames = self._const.ch_names + self._const.cv_names
         self._corrs_dev = _FamFastCorrs(corrnames)
 
-        self._propty2kickpvs = {
-            'FOFBAcc-Mon': ['KickCHAcc-Mon', 'KickCVAcc-Mon'],
-            'CurrentRef-Mon': ['KickCHRef-Mon', 'KickCVRef-Mon'],
-            'Current-Mon': ['KickCH-Mon', 'KickCV-Mon'],
-        }
-        self._kick_mon = {}
-        size = len(self._corrs_dev.psdevs)
-        for propty in self._propty2kickpvs:
-            self._kick_mon[propty] = _np.zeros(size, dtype=float)
-            for idx, pso in enumerate(self._corrs_dev.psdevs):
-                pvo = pso.pv_object(propty)
-                pvo.auto_monitor = _epics.dbr.DBE_VALUE
-                pvo.add_callback(
-                    _part(self._update_kick_array, ps_index=idx))
-
         self._rf_dev = _RFGen()
 
         self._llfofb_dev = _FamFOFBCtrls()
@@ -118,16 +103,15 @@ class App(_Callback):
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('LoopIntlk-Mon')
             self._intlk_values[pvo.pvname] = 0
-            pvo.auto_monitor = True
-            pvo.add_callback(self._callback_loopintlk)
+            pvo.add_callback(
+                self._callback_loopintlk, with_ctrlvars=False)
             self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
 
         self._auxbpm = _Device(
             'SI-01M1:DI-BPM',
-            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'),
-            auto_mon=False)
+            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'))
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
@@ -198,8 +182,6 @@ class App(_Callback):
 
     def init_database(self):
         """Set initial PV values."""
-        initkickch = _np.zeros(self._const.nr_ch, dtype=float)
-        initkickcv = _np.zeros(self._const.nr_cv, dtype=float)
         pvn2vals = {
             'LoopState-Sel': self._loop_state,
             'LoopState-Sts': self._loop_state,
@@ -248,12 +230,6 @@ class App(_Callback):
             'FOFBAccDecimation-Sts': self._corr_accdec_enm,
             'FOFBAccDecimation-SP': self._corr_accdec_val,
             'FOFBAccDecimation-RB': self._corr_accdec_val,
-            'KickCHAcc-Mon': initkickch,
-            'KickCVAcc-Mon': initkickcv,
-            'KickCHRef-Mon': initkickch,
-            'KickCVRef-Mon': initkickcv,
-            'KickCH-Mon': initkickch,
-            'KickCV-Mon': initkickcv,
             'MinSingValue-SP': self._min_sing_val,
             'MinSingValue-RB': self._min_sing_val,
             'TikhonovRegConst-SP': self._tikhonov_reg_const,
@@ -275,6 +251,17 @@ class App(_Callback):
             self.run_callbacks(pvn, val)
 
         # load autosave data
+        # enable lists
+        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
+            okl = self._load_enbllist(dev)
+            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
+            enb = self._enable_lists[dev]
+            pvv = enb if dev != 'rf' else bool(enb)
+            self.run_callbacks(pvn, pvv)
+            if not okl:
+                self.run_callbacks(
+                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
+        self._update_fofbctrl_sync_enbllist()
         # matrix
         okm = self._load_respmat()
         self.run_callbacks('RespMat-SP', list(self._respmat.ravel()))
@@ -288,16 +275,6 @@ class App(_Callback):
             self.run_callbacks(pvn, pvv)
             if not okr:
                 self.run_callbacks(pvn.replace('SP', 'RB'), pvv)
-        # enable lists
-        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
-            okl = self._load_enbllist(dev)
-            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
-            enb = self._enable_lists[dev]
-            pvv = enb if dev != 'rf' else bool(enb)
-            self.run_callbacks(pvn, pvv)
-            if not okl:
-                self.run_callbacks(
-                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
         self._update_log('Started.')
         self._init = True
 
@@ -308,12 +285,7 @@ class App(_Callback):
 
     def process(self, interval):
         """Sleep."""
-        t0_ = _time.time()
-        self._update_kicks()
-
-        dtime = interval - (_time.time()-t0_)
-        if dtime > 0:
-            _time.sleep(dtime)
+        _time.sleep(interval)
 
     def read(self, reason):
         """Read from IOC database."""
@@ -965,29 +937,6 @@ class App(_Callback):
         self._update_log('...done!')
         return True
 
-    # --- kicks update ---
-
-    def _update_kick_array(self, pvname, value, ps_index, **kwargs):
-        _ = kwargs
-        if value is None:
-            return
-        val = self._corrs_dev.psconvs[ps_index].conv_current_2_strength(value)
-        if val is None:
-            return
-        propty = _PVName(pvname).propty
-        self._kick_mon[propty][ps_index] = val
-
-    def _update_kicks(self):
-        nrch, nrcv = self._const.nr_ch, self._const.nr_cv
-
-        for propty, kickpvs in self._propty2kickpvs.items():
-            kicks = self._kick_mon[propty]
-            kickch = kicks[:nrch]
-            kickcv = kicks[nrch:nrch+nrcv]
-
-            self.run_callbacks(kickpvs[0], kickch)
-            self.run_callbacks(kickpvs[1], kickcv)
-
     # --- reference orbit ---
 
     def set_reforbit(self, plane, value):
@@ -1125,14 +1074,15 @@ class App(_Callback):
                 'ERR: Wrong {0:s} EnblList size.'.format(device.upper()))
             return False
 
-        # check if matrix is invertible
         self._enable_lists[device] = new
-        if not self._calc_matrices():
-            self._enable_lists[device] = bkup
-            return False
 
         # do not set enable lists and save to file in initialization
         if self._init:
+            # check if matrix is invertible
+            if not self._calc_matrices():
+                self._enable_lists[device] = bkup
+                return False
+
             # handle devices enable configuration
             self._thread_enbllist = _epics.ca.CAThread(
                 target=self._handle_devices_enblconfig, args=[device, ],

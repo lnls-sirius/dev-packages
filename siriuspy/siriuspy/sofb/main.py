@@ -27,11 +27,12 @@ class SOFB(_BaseClass):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
+
         self._tests = tests
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
-        self._loop_print_every_num_iter = 1000
+        self._loop_print_every_num_iter = 200
         self._loop_use_pssofb = False
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
@@ -323,9 +324,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(
-            target=self._apply_corr, kwargs={'code': code},
-            daemon=True).start()
+        self._LQTHREAD.put((self._apply_corr, tuple(), {'code': code}))
         return True
 
     def calc_correction(self, _):
@@ -336,7 +335,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(target=self._calc_correction, daemon=True).start()
+        self._LQTHREAD.put((self._calc_correction, ))
         return True
 
     def set_delta_kick(self, code, dkicks):
@@ -346,9 +345,9 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(
-            target=self._set_delta_kick,
-            kwargs={'code': code, 'dkicks': dkicks}, daemon=True).start()
+        self._LQTHREAD.put((
+            self._set_delta_kick, tuple(),
+            {'code': code, 'dkicks': dkicks}))
         return True
 
     def set_respmat_meas_state(self, value):
@@ -477,8 +476,7 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.info(msg)
             self._drive_state = value
-            self._thread = _Thread(
-                target=self._do_drive, daemon=True)
+            self._thread = _Thread(target=self._do_drive, daemon=True)
             self._thread.start()
         elif value == self._csorb.LoopState.Open:
             msg = 'Opening the Drive Loop.'
@@ -872,9 +870,8 @@ class SOFB(_BaseClass):
             itern = len(times)
             self.run_callbacks('LoopNumIters-Mon', itern)
             if itern >= self._loop_print_every_num_iter:
-                _Thread(
-                    target=self._print_auto_corr_info,
-                    args=(times, rets, _time()-tim0), daemon=True).start()
+                self._LQTHREAD.put((
+                    self._print_auto_corr_info, (times, rets, _time()-tim0)))
                 times, rets = [], []
                 tim0 = _time()
 

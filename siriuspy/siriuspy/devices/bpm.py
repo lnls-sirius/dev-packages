@@ -4,8 +4,7 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices, \
-    ProptyDevice as _ProptyDevice
+from .device import Device as _Device, Devices as _Devices
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -81,12 +80,9 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname, auto_mon=True, ispost_mortem=False):
+    def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
         """."""
         # call base class constructor
-        if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
-
         self._ispost_mortem = ispost_mortem
         properties = {self.get_propname(p) for p in BPM._properties}
 
@@ -95,7 +91,7 @@ class BPM(_Device):
         properties = list(properties)
 
         super().__init__(
-            devname, properties=properties, auto_mon=auto_mon)
+            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -888,7 +884,19 @@ class BPM(_Device):
 
 
 class FamBPMs(_Devices):
-    """Family of BPMs."""
+    """Family of BPMs.
+
+    Parameters
+    ----------
+        devname (str, optional)
+            Device name. If not provided, defaults to DEVICES.SI.
+            Determine the list of BPM names.
+        bpmnames ((list, tuple), optional)
+            BPM names list. If provided, it takes priority over 'devname'
+            parameter. Defaults to None.
+        ispost_mortem (bool, optional)
+            Whether to control PM acquisition core. Defaults to False.
+    """
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -900,7 +908,7 @@ class FamBPMs(_Devices):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, ispost_mortem=False):
+    def __init__(self, devname=None, bpmnames=None, ispost_mortem=False):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -908,11 +916,11 @@ class FamBPMs(_Devices):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        bpm_names = _BPMSearch.get_names(
+        bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
         devs = [
-            BPM(dev, auto_mon=False, ispost_mortem=ispost_mortem)
+            BPM(dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem)
             for dev in bpm_names]
 
         super().__init__(devname, devs)
@@ -1095,8 +1103,9 @@ class FamBPMs(_Devices):
             nr_points_after (int): number of points after trigger.
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
-            acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
-                'FAcq'). Defaults to 'FAcq'.
+            acq_rate (str, optional): Acquisition rate ('TbT', 'TbTPha',
+                'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp').
+                Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
@@ -1111,10 +1120,18 @@ class FamBPMs(_Devices):
         """
         if acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
+        elif acq_rate.lower().startswith('fofbpha'):
+            acq_rate = self._csbpm.AcqChan.FOFBPha
         elif acq_rate.lower().startswith('fofb'):
             acq_rate = self._csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbtpha'):
+            acq_rate = self._csbpm.AcqChan.TbTPha
         elif acq_rate.lower().startswith('tbt'):
             acq_rate = self._csbpm.AcqChan.TbT
+        elif acq_rate.lower().startswith('adcswp'):
+            acq_rate = self._csbpm.AcqChan.ADCSwp
+        elif acq_rate.lower().startswith('adc'):
+            acq_rate = self._csbpm.AcqChan.ADC
         else:
             raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
@@ -1336,60 +1353,3 @@ class FamBPMs(_Devices):
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
-
-
-class BPMLogicalTrigger(_ProptyDevice):
-    """BPM Logical Trigger device."""
-
-    _properties = (
-        'RcvSrc-Sel', 'RcvSrc-Sts',
-        'RcvInSel-SP', 'RcvInSel-RB',
-        'TrnSrc-Sel', 'TrnSrc-Sts',
-        'TrnOutSel-SP', 'TrnOutSel-RB',
-    )
-
-    def __init__(self, bpmname, index):
-        """Init."""
-        if not _BPMSearch.is_valid_devname(bpmname):
-            raise NotImplementedError(bpmname)
-        if not 0 <= int(index) <= 23:
-            raise NotImplementedError(index)
-        super().__init__(
-            bpmname, 'TRIGGER'+str(index),
-            properties=BPMLogicalTrigger._properties)
-
-    @property
-    def receiver_source(self):
-        """Receiver source."""
-        return self['RcvSrc-Sts']
-
-    @receiver_source.setter
-    def receiver_source(self, value):
-        self['RcvSrc-Sel'] = value
-
-    @property
-    def receiver_in_sel(self):
-        """Receiver in selection."""
-        return self['RcvInSel-RB']
-
-    @receiver_in_sel.setter
-    def receiver_in_sel(self, value):
-        self['RcvInSel-SP'] = value
-
-    @property
-    def transmitter_source(self):
-        """Transmitter source."""
-        return self['TrnSrc-Sts']
-
-    @transmitter_source.setter
-    def transmitter_source(self, value):
-        self['TrnSrc-Sel'] = value
-
-    @property
-    def transmitter_out_sel(self):
-        """Transmitter out selection."""
-        return self['TrnOutSel-RB']
-
-    @transmitter_out_sel.setter
-    def transmitter_out_sel(self, value):
-        self['TrnOutSel-SP'] = value

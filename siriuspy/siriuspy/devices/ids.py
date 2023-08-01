@@ -44,7 +44,8 @@ class APU(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=APU._properties, auto_mon=True)
+        super().__init__(
+            devname, properties=APU._properties, auto_monitor_mon=True)
 
     @property
     def phase(self):
@@ -119,7 +120,7 @@ class PAPU(_Device):
 
     _properties_papu = (
         'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
-        'BeamLineCtrl-Mon', 'Home-Mon',
+        'BeamLineCtrl-Mon',  # 'Home-Mon',
         )
     _properties = (
         'PeriodLength-Cte',
@@ -136,8 +137,7 @@ class PAPU(_Device):
         'Log-Mon',
         )
 
-
-    def __init__(self, devname, properties=None, auto_mon=True):
+    def __init__(self, devname, properties=None, auto_monitor_mon=True):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -147,7 +147,8 @@ class PAPU(_Device):
 
         # call base class constructor
         properties = properties or self._properties + self._properties_papu
-        super().__init__(devname, properties=properties, auto_mon=auto_mon)
+        super().__init__(
+            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def period_length(self):
@@ -458,7 +459,8 @@ class EPU(PAPU):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=self._properties, auto_mon=True)
+        super().__init__(
+            devname, properties=self._properties, auto_monitor_mon=True)
 
     @property
     def status(self):
@@ -696,4 +698,5 @@ class WIG(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=WIG._properties, auto_mon=True)
+        super().__init__(
+            devname, properties=WIG._properties, auto_monitor_mon=True)
