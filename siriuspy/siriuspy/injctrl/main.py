@@ -446,7 +446,7 @@ class App(_Callback):
 
             if self._pumode != _Const.PUMode.Accumulation:
                 self._update_log('ERR:Set PUMode to Accumulation before')
-                self._update_log('ERR:changing mode to {stg}')
+                self._update_log(f'ERR:changing mode to {stg:s}')
                 return False
 
             self._update_log('Configuring EVG RepeatBucketList...')
@@ -650,7 +650,10 @@ class App(_Callback):
 
     def set_bucketlist_step(self, step):
         """Set bucketlist_step."""
-        if not -_Const.MAX_BKT+1 <= step <= _Const.MAX_BKT-1:
+        if not -_Const.MAX_BKT <= step <= _Const.MAX_BKT:
+            return False
+        if step == 0:
+            self._update_log('ERR:Bucket list step must not be zero.')
             return False
         if self._mode != _Const.InjMode.Decay:
             if not self._update_bucket_list(step=step):
