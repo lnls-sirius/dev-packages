@@ -446,7 +446,7 @@ class App(_Callback):
 
             if self._pumode != _Const.PUMode.Accumulation:
                 self._update_log('ERR:Set PUMode to Accumulation before')
-                self._update_log('ERR:changing mode to {stg}')
+                self._update_log(f'ERR:changing mode to {stg:s}')
                 return False
 
             self._update_log('Configuring EVG RepeatBucketList...')
