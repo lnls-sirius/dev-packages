@@ -521,32 +521,32 @@ def get_biasfb_database():
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
 
         'GPModNoiseStd-SP': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-RB': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-Mon': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModKernStd-SP': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-RB': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-Mon': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernLenScl-SP': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
         'GPModKernLenScl-RB': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
         'GPModKernLenScl-Mon': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
 
         # These properties are used to fix or unfix the fitting of the
         # gp parameters.
