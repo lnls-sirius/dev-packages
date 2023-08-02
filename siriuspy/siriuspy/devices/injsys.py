@@ -464,8 +464,15 @@ class LinacStandbyHandler(_BaseHandler):
         # call base class constructor
         super().__init__('', tuple(devices), hltiming=hltiming)
 
+        # NOTE: Triggers ordering is important so that LINAC LLRF does
+        # not have any transient during source migration between events
+        # Linac and RmpBO.
         self._trig_names = HLTimeSearch.get_hl_triggers(
-            {'sec': 'LI', 'dev': '(Mod|LLRF|SSAmp|Osc)'})
+            {'sec': 'LI', 'dev': '(Mod|Osc)'})
+        self._trig_names += HLTimeSearch.get_hl_triggers(
+            {'sec': 'LI', 'dev': 'SSAmp'})
+        self._trig_names += HLTimeSearch.get_hl_triggers(
+            {'sec': 'LI', 'dev': 'LLRF'})
 
         self._on_values = dict()
         for dev in self._llrf_devs:
@@ -623,19 +630,13 @@ class LinacStandbyHandler(_BaseHandler):
 
     def change_trigs_to_linac_evt(self):
         """Change triggers source to Linac."""
-        trigs = list()
-        trigs.extend([t for t in self._trig_names if 'LLRF' in t])
-        trigs.extend([t for t in self._trig_names if 'SSAmp' in t])
-        trigs.extend([t for t in self._trig_names if 'Modltr' in t])
-        return self.hltiming.change_triggers_source(trigs, new_src='Linac')
+        return self.hltiming.change_triggers_source(
+            self._trig_names[::-1], new_src='Linac')
 
     def change_trigs_to_rmpbo_evt(self):
         """Change triggers source to RmpBO."""
-        trigs = list()
-        trigs.extend([t for t in self._trig_names if 'Modltr' in t])
-        trigs.extend([t for t in self._trig_names if 'SSAmp' in t])
-        trigs.extend([t for t in self._trig_names if 'LLRF' in t])
-        return self.hltiming.change_triggers_source(trigs, new_src='RmpBO')
+        return self.hltiming.change_triggers_source(
+            self._trig_names, new_src='RmpBO')
 
     def check_mps_status(self):
         """."""
