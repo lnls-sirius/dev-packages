@@ -1302,15 +1302,7 @@ class App(_Callback):
 
         while self._mode == _Const.InjMode.Accum:
             t0_ = _time.time()
-            if not self.currinfo_dev.connected:
-                self._update_log('ERR:CurrInfo device disconnected.')
-                break
-            if self.currinfo_dev.current >= self._target_current:
-                self._update_log(
-                    'Target Current reached. Stopping accumulation...')
-                break
-
-            if not self._check_allok_2_inject():
+            if not self._continue_accum():
                 break
 
             self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
@@ -1323,10 +1315,22 @@ class App(_Callback):
             self._update_bucket_list(nrpulses=1)
 
             dt_ = self._accum_period - (_time.time() - t0_)
-            if dt_ > 0:
-                self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
-                self._update_log('Waiting for next injection...')
-                _time.sleep(dt_)
+            if dt_ <= 0:
+                continue
+            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+            self._update_log('Waiting for next injection...')
+
+            while dt_ > 0:
+                self.run_callbacks('Log-Mon', f'Remaining time: {dt_:.2f}s')
+                slp = min(1, dt_)
+                _time.sleep(slp)
+                if not self._continue_accum():
+                    break
+                dt_ = self._accum_period - (_time.time() - t0_)
+            else:
+                self.run_callbacks('Log-Mon', 'Remaining time: 0s')
+                continue
+            break
 
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
@@ -1335,6 +1339,18 @@ class App(_Callback):
         self._update_log('Stopped accumulation loop.')
         if not self._abort or self._setting_mode:
             self.run_callbacks('AccumState-Sel', _Const.OffOn.Off)
+
+    def _continue_accum(self):
+        if not self.currinfo_dev.connected:
+            self._update_log('ERR:CurrInfo device disconnected.')
+            return False
+        if self.currinfo_dev.current >= self._target_current:
+            self._update_log(
+                'Target Current reached. Stopping accumulation...')
+            return False
+        if not self._check_allok_2_inject():
+            return False
+        return True
 
     # --- auxiliary top-up methods ---
 
