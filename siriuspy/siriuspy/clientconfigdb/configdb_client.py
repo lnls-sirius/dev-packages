@@ -17,7 +17,7 @@ from . import _templates
 class ConfigDBClient:
     """Perform operation on configuration database."""
 
-    _TIMEOUT_DEFAULT = 2.0
+    _TIMEOUT_DEFAULT = 30.0
     _INVALID_CHARACTERS = '\\/:;,?!$'
 
     def __init__(self, url=None, config_type=None):
