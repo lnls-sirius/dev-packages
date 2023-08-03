@@ -444,7 +444,7 @@ class App(_Callback):
         if self._pumode != _Const.PUMode.Accumulation and \
                 value == _Const.InjMode.TopUp:
             self._update_log('ERR:Set PUMode to Accumulation before')
-            self._update_log(f'ERR:changing mode to top-up')
+            self._update_log('ERR:changing mode to top-up')
             return False
 
         if value != _Const.InjMode.Decay:
@@ -462,8 +462,7 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.INJTYPE):
             return False
         if self._mode != _Const.InjMode.Decay:
-            self._update_log(
-                f'ERR:InjType can only be changed in Decay mode.')
+            self._update_log('ERR:InjType can only be changed in Decay mode.')
             return False
         if self._p2w['Type']['watcher'] is not None and \
                 self._p2w['Type']['watcher'].is_alive():
@@ -571,8 +570,7 @@ class App(_Callback):
             return False
         if self._mode == _Const.InjMode.TopUp and \
                 value != _Const.PUMode.Accumulation:
-            self._update_log(
-                f'ERR:In TopUp mode PUMode must be Accumulation.')
+            self._update_log('ERR:In TopUp mode PUMode must be Accumulation.')
             return False
         if self._p2w['PUMode']['watcher'] is not None and \
                 self._p2w['PUMode']['watcher'].is_alive():
