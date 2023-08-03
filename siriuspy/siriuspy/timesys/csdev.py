@@ -605,15 +605,15 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['InInjTable-Mon'] = {
         'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
 
+    labs = '\n'.join(Const.HLTrigStatusLabels)
     dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': 1000,
-        'value': '\n'.join(Const.HLTrigStatusLabels)
-        }
+        'type': 'char', 'count': len(labs) + 10, 'value': labs}
+
     ll_trigs = '\n'.join(ll_trig_names)
     dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': 5000, 'value': ll_trigs}
+        'type': 'char', 'count': len(ll_trigs) + 10, 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
     dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': 5000, 'value': channels}
+        'type': 'char', 'count': len(channels) + 10, 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}
