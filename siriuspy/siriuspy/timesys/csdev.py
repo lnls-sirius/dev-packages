@@ -607,13 +607,13 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     labs = '\n'.join(Const.HLTrigStatusLabels)
     dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': len(labs) + 10, 'value': labs}
+        'type': 'char', 'count': len(labs), 'value': labs}
 
     ll_trigs = '\n'.join(ll_trig_names)
     dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': len(ll_trigs) + 10, 'value': ll_trigs}
+        'type': 'char', 'count': len(ll_trigs), 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
     dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': len(channels) + 10, 'value': channels}
+        'type': 'char', 'count': len(channels), 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}
