@@ -605,15 +605,17 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['InInjTable-Mon'] = {
         'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
 
+    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
+    # behavior of pcaspy
     labs = '\n'.join(Const.HLTrigStatusLabels)
     dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': len(labs), 'value': labs}
+        'type': 'char', 'count': len(labs)+1, 'value': labs}
 
     ll_trigs = '\n'.join(ll_trig_names)
     dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': len(ll_trigs), 'value': ll_trigs}
+        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
     dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': len(channels), 'value': channels}
+        'type': 'char', 'count': len(channels)+1, 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}
