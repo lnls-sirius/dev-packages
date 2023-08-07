@@ -230,7 +230,7 @@ class APU(_Device):
             values = (values, )
         success = True
         for propty_sp, value in zip(propties_sp, values):
-            if propty_sp == 'Phase-SP':
+            if propty_sp in ('Phase-SP', 'PhaseSpeed-SP'):
                 propty_rb = propty_sp
             else:
                 propty_rb = \
@@ -387,7 +387,7 @@ class PAPU(_Device):
             return True
         self['EnblPwrPhase-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1}
-        return self._wait(props_values, timeout=timeout)
+        return self._local_wait(props_values, timeout=timeout)
 
     def cmd_beamline_ctrl_enable(self, timeout=None):
         """Command enable bealine ID control."""
@@ -462,24 +462,26 @@ class PAPU(_Device):
         # send stop command
         self.cmd_move_disable()
 
-        print('h1')
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
             return False
 
-        print('h2')
-
         success = True
         success &= super()._wait('Moving-Mon', 0, timeout=timeout)
 
-        print('h3')
         if not success:
             return False
 
         # enable movement again
         status = self.cmd_move_enable(timeout=timeout)
-        print('h4')
+
         return status
+
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_phase_start(timeout=timeout)
+        return success
 
     def cmd_move_phase_start(self, timeout=None):
         """Command to start phase movement."""
@@ -570,7 +572,7 @@ class PAPU(_Device):
                 propty_rb, value, timeout=timeout, comp='eq')
         return success
 
-    def _wait(self, props_values, timeout=None, comp='eq'):
+    def _local_wait(self, props_values, timeout=None, comp='eq'):
         timeout = timeout or self._default_timeout
         success = True
         for propty, value in props_values.items():
@@ -715,7 +717,7 @@ class EPU(PAPU):
             return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
-        return self._wait(props_values, timeout=timeout)
+        return self._local_wait(props_values, timeout=timeout)
 
     # --- cmd_set ---
 
@@ -774,6 +776,13 @@ class EPU(PAPU):
         return True
 
     # -- cmd_move
+
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_gap_start(timeout=timeout)
+        success &= self.cmd_move_phase_start(timeout=timeout)
+        return success
 
     def cmd_move_gap_start(self, timeout=None):
         """Command to start gap movement."""
