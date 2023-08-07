@@ -278,11 +278,17 @@ class PAPU(_Device):
 
     def cmd_move_phase_enable(self, timeout=None):
         """Command to release and enable ID phase movement."""
-        return self._write_sp('EnblAndReleasePhase-Sel', 1, timeout)
+        self['EnblAndReleasePhase-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            1, timeout=timeout, comp='eq')
 
     def cmd_move_phase_disable(self, timeout=None):
         """Command to disable and break ID phase movement."""
-        return self._write_sp('EnblAndReleasePhase-Sel', 0, timeout)
+        self['EnblAndReleasePhase-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            0, timeout=timeout, comp='eq')
 
     def cmd_move_enable(self, timeout=None):
         """Command to release and enable ID phase and gap movements."""
@@ -319,16 +325,24 @@ class PAPU(_Device):
         # send stop command
         self.cmd_move_disable()
 
+        print('h1')
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
             return False
+
+        print('h2')
+
         success = True
         success &= super()._wait('Moving-Mon', 0, timeout=timeout)
+
+        print('h3')
         if not success:
             return False
 
         # enable movement again
-        return self.cmd_move_enable(timeout=timeout)
+        status = self.cmd_move_enable(timeout=timeout)
+        print('h4')
+        return status
 
     def cmd_move_phase_start(self, timeout=None):
         """Command to start phase movement."""
@@ -584,11 +598,17 @@ class EPU(PAPU):
 
     def cmd_move_gap_enable(self, timeout=None):
         """Command to release and enable ID gap movement."""
-        return self._write_sp('EnblAndReleaseGap-Sel', 1, timeout)
+        self['EnblAndReleaseGap-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            1, timeout=timeout, comp='eq')
 
     def cmd_move_gap_disable(self, timeout=None):
         """Command to disable and break ID gap movement."""
-        return self._write_sp('EnblAndReleaseGap-Sel', 0, timeout)
+        self['EnblAndReleaseGap-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            0, timeout=timeout, comp='eq')
 
     def cmd_move_enable(self, timeout=None):
         """Command to release and enable ID phase and gap movements."""
