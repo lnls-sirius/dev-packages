@@ -27,6 +27,7 @@ class APU(_Device):
     _properties = (
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
         'DevCtrl-Cmd', 'Moving-Mon',
+        'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
         'PhaseSpeed-SP', 'PhaseSpeed-Mon',
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
@@ -57,10 +58,58 @@ class APU(_Device):
         _, length = self.devname.split('APU')
         return float(length)
 
+    # --- phase speeds ----
+
+    @property
+    def phase_speed(self):
+        """Return phase speed [mm/s]."""
+        return self['PhaseSpeed-RB']
+
+    @property
+    def phase_speed_mon(self):
+        """Return phase speed monitor [mm/s]."""
+        return self['PhaseSpeed-Mon']
+
+    @phase_speed.setter
+    def phase_speed(self, value):
+        """Set phase_speed [mm/s]."""
+        self['PhaseSpeed-SP'] = value
+
+    @property
+    def phase_speed_max(self):
+        """Return max phase speed readback [mm/s]."""
+        return self['MaxPhaseSpeed-RB']
+
+    @property
+    def phase_speed_max_lims(self):
+        """."""
+        ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    # --- phase ---
+
+    @property
+    def phase_parked(self):
+        """Return ID parked phase value [mm]."""
+        return self.period_length / 2
+
     @property
     def phase(self):
         """Return APU phase [mm]."""
         return self['Phase-SP']
+
+    @property
+    def phase_min(self):
+        """Return ID phase lower control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Phase-SP')
+        return ctrlvars['lower_ctrl_limit']
+
+    @property
+    def phase_max(self):
+        """Return ID phase upper control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Phase-SP')
+        return ctrlvars['upper_ctrl_limit']
 
     @phase.setter
     def phase(self, value):
@@ -72,25 +121,7 @@ class APU(_Device):
         """Return APU phase [mm]."""
         return self['Phase-Mon']
 
-    @property
-    def phase_speed(self):
-        """Return APU phase speed [mm/s]."""
-        return self['PhaseSpeed-Mon']
-
-    @phase_speed.setter
-    def phase_speed(self, value):
-        """Set APU phase_speed [mm/s]."""
-        self['PhaseSpeed-SP'] = value
-
-    @property
-    def phase_speed_sp(self):
-        """Return APU phase speed SP [mm/s]."""
-        return self['PhaseSpeed-SP']
-
-    @property
-    def phase_parked(self):
-        """Return ID parked phase value [mm]."""
-        return self.period_length / 2
+    # --- Kparam methods ---
 
     @property
     def idkx(self):
@@ -102,10 +133,14 @@ class APU(_Device):
         """Set APU Kx."""
         self['Kx-SP'] = value
 
+    # --- movement checks ---
+
     @property
     def is_moving(self):
         """Return True if phase is changing."""
         return round(self['Moving-Mon']) == 1
+
+    # --- cmd_beamline and cmd_drive
 
     def cmd_beamline_ctrl_enable(self, timeout=None):
         """Command enable bealine ID control."""
@@ -115,18 +150,38 @@ class APU(_Device):
         """Command disable bealine ID control."""
         return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
+    # --- cmd_set ---
+
     def cmd_set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self._write_sp('Phase-SP', phase, timeout)
 
-    def cmd_move_start(self, timeout=_default_timeout):
-        """."""
-        self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
-        return True
+    def cmd_set_phase_speed(self, phase_speed, timeout=None):
+        """Command to set ID cruise phase speed for movement [mm/s]."""
+        return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
+
+    def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise phase speed for movement [mm/s]."""
+        return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
+
+    # --- cmd_wait
+
+    def wait_move(self):
+        """Wait for phase movement to complete."""
+        _time.sleep(APU._MOVECHECK_SLEEP)
+        while self.is_moving:
+            _time.sleep(APU._MOVECHECK_SLEEP)
+
+    # -- cmd_move
 
     def cmd_move_stop(self, timeout=_default_timeout):
         """."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_STOP
+        return True
+
+    def cmd_move_start(self, timeout=_default_timeout):
+        """."""
+        self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
         return True
 
     def cmd_move(self, phase, timeout=None):
@@ -162,15 +217,11 @@ class APU(_Device):
         # successfull movement at this point
         return True
 
-    def wait_move(self):
-        """Wait for phase movement to complete."""
-        _time.sleep(APU._MOVECHECK_SLEEP)
-        while self.is_moving:
-            _time.sleep(APU._MOVECHECK_SLEEP)
-
     def cmd_move_park(self, timeout=None):
         """Command to set and start ID movement to parked config."""
         return self.cmd_move(self.phase_parked, timeout=timeout)
+
+    # --- private methods ---
 
     def _write_sp(self, propties_sp, values, timeout=None):
         timeout = timeout or self._default_timeout
