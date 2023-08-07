@@ -24,6 +24,13 @@ class APU(_Device):
         ALL = (APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA,
                APU58_11SP, )
 
+    TOLERANCE_PHASE = 0.01  # [mm]
+
+    _SHORT_SHUT_EYE = 0.1  # [s]
+    _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
+    _MOVECHECK_SLEEP = 0.1  # [s]
+    _default_timeout = 8  # [s]
+
     _properties = (
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
         'DevCtrl-Cmd', 'Moving-Mon',
@@ -32,13 +39,6 @@ class APU(_Device):
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
     )
-
-    _default_timeout = 8  # [s]
-    _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
-    _MOVECHECK_SLEEP = 0.1  # [s]
-    _SHORT_SHUT_EYE = 0.1  # [s]
-
-    TOLERANCE_PHASE = 0.01  # [mm]
 
     def __init__(self, devname):
         """."""
