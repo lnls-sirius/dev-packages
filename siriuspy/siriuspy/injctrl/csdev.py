@@ -21,6 +21,7 @@ class ETypes(_csdev.ETypes):
     IDLERUNNING = ('Idle', 'Running')
     IDLEINJECTING = ('Idle', 'Injecting')
     BIASFB_MODEL_TYPES = ('Linear', 'GaussianProcess')
+    FIXED_UNFIXED = ('Fixed', 'Unfixed')
     STANDBY_INJECT = ('Standby', 'Inject')
 
 
@@ -45,6 +46,7 @@ class Const(_csdev.Const):
     IdleInjecting = _csdev.Const.register('IdleInjecting', _et.IDLEINJECTING)
     BiasFBModelTypes = _csdev.Const.register(
         'ModelTypes', _et.BIASFB_MODEL_TYPES)
+    FixedUnfixed = _csdev.Const.register('FixedUnfixed', _et.FIXED_UNFIXED)
     StandbyInject = _csdev.Const.register('StandbyInject', _et.STANDBY_INJECT)
 
     GEN_STATUS_LABELS = ('LI', 'TB', 'BO', 'TS', 'SI', 'AS')
@@ -519,32 +521,54 @@ def get_biasfb_database():
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
 
         'GPModNoiseStd-SP': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-RB': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModNoiseStd-Mon': {
-            'type': 'float', 'value': 0.05, 'unit': 'mA', 'prec': 4,
+            'type': 'float', 'value': 0.0316, 'unit': 'mA', 'prec': 4,
             'lolim': 0.005, 'hilim': 0.5},
         'GPModKernStd-SP': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-RB': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernStd-Mon': {
-            'type': 'float', 'value': 0.4, 'unit': 'mA', 'prec': 3,
+            'type': 'float', 'value': 0.432, 'unit': 'mA', 'prec': 3,
             'lolim': 0.05, 'hilim': 1},
         'GPModKernLenScl-SP': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
         'GPModKernLenScl-RB': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
         'GPModKernLenScl-Mon': {
-            'type': 'float', 'value': 5, 'unit': 'V', 'prec': 3,
-            'lolim': 1, 'hilim': 10},
+            'type': 'float', 'value': 4, 'unit': 'V', 'prec': 3,
+            'lolim': 2, 'hilim': 10},
+
+        # These properties are used to fix or unfix the fitting of the
+        # gp parameters.
+        'GPModNoiseStdFit-Sel': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Unfixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+        'GPModNoiseStdFit-Sts': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Unfixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+        'GPModKernStdFit-Sel': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Unfixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+        'GPModKernStdFit-Sts': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Unfixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+        'GPModKernLenSclFit-Sel': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Fixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+        'GPModKernLenSclFit-Sts': {
+            'type': 'enum', 'value': _ct.FixedUnfixed.Fixed,
+            'enums': _et.FIXED_UNFIXED, 'unit': 'Fixed_Unfixed'},
+
 
         # These are used to give the model inference about the bias
         # Generally ploted in Injcurr X Bias graphs
