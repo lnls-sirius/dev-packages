@@ -38,7 +38,7 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
-from .blctrl import BLPPSCtrl
+from .blctrl import PPSCtrl, BLPPSCtrl
 from .scraper import ScraperH, ScraperV
 
 
