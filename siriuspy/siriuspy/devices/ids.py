@@ -14,7 +14,7 @@ class APU(_Device):
     """APU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         APU22_06SB = 'SI-06SB:ID-APU22'
         APU22_07SP = 'SI-07SP:ID-APU22'
@@ -41,7 +41,7 @@ class APU(_Device):
     )
 
     def __init__(self, devname):
-        """."""
+        """Init."""
         devname = _SiriusPVName(devname)
 
         # check if device exists
@@ -77,7 +77,7 @@ class APU(_Device):
 
     @property
     def phase_speed_max_lims(self):
-        """."""
+        """Return max phase speed limits."""
         ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
         lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
         return lims
@@ -165,12 +165,12 @@ class APU(_Device):
     # -- cmd_move
 
     def cmd_move_stop(self, timeout=_default_timeout):
-        """."""
+        """Send command to stop ID movement."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_STOP
         return True
 
     def cmd_move_start(self, timeout=_default_timeout):
-        """."""
+        """Send command to start ID movement."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
         return True
 
@@ -235,7 +235,7 @@ class PAPU(_Device):
     """PAPU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         PAPU50_17SA = 'SI-17SA:ID-PAPU50'
         ALL = (PAPU50_17SA, )
@@ -265,7 +265,7 @@ class PAPU(_Device):
         )
 
     def __init__(self, devname, properties=None, auto_monitor_mon=True):
-        """."""
+        """Init."""
         devname = _SiriusPVName(devname)
 
         # check if device exists
@@ -306,7 +306,7 @@ class PAPU(_Device):
 
     @property
     def phase_speed_max_lims(self):
-        """."""
+        """Return max phase speed limits."""
         ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
         lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
         return lims
@@ -527,13 +527,12 @@ class PAPU(_Device):
     # --- other cmds ---
 
     def cmd_clear_error(self):
-        """."""
+        """Command to clear errors."""
         self['ClearErr-Cmd'] = 1
 
     # --- private methods ---
 
     def _move_start(self, cmd_propty, timeout=None):
-        """."""
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
@@ -579,7 +578,7 @@ class EPU(PAPU):
     """EPU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         EPU50_10SB = 'SI-10SB:ID-EPU50'
         ALL = (EPU50_10SB, )
@@ -598,7 +597,7 @@ class EPU(PAPU):
         )
 
     def __init__(self, devname):
-        """."""
+        """Init."""
         devname = _SiriusPVName(devname)
 
         # check if device exists
@@ -638,7 +637,7 @@ class EPU(PAPU):
 
     @property
     def gap_speed_max_lims(self):
-        """."""
+        """Return max gap speed limits."""
         ctrl = self.pv_ctrlvars('MaxGapSpeed-SP')
         lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
         return lims
@@ -832,7 +831,7 @@ class EPU(PAPU):
     # --- other cmds ---
 
     def cmd_clear_error(self):
-        """."""
+        """Command to clear errors."""
         pass
 
 
@@ -840,7 +839,8 @@ class WIG(_Device):
     """Wiggler Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
+
         WIG180_14SB = 'SI-14SB:ID-WIG180'
         ALL = (WIG180_14SB, )
 
@@ -850,7 +850,7 @@ class WIG(_Device):
     )
 
     def __init__(self, devname):
-        """."""
+        """Init."""
         devname = _SiriusPVName(devname)
 
         # check if device exists
