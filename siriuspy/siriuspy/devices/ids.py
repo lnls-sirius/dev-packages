@@ -565,9 +565,13 @@ class PAPU(_Device):
     def _wait_propty_values(self, props_values, timeout=None, comp='eq'):
         timeout = timeout or self._default_timeout
         success = True
+        dtime = 0
         for propty, value in props_values.items():
+            tim0, timeout_left = _time.time(). max(0, timeout - dtime)
             success &= super()._wait(
-                propty, value, timeout=timeout, comp=comp)
+                propty, value, timeout=timeout_left, comp=comp)
+            dtime += _time.time() - tim0
+
         return success
 
 
