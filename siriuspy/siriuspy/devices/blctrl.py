@@ -1,7 +1,44 @@
 """Beamline Control."""
 
 import time as _time
+
+from .device import Device as _Device
 from .device import DeviceNC as _DeviceNC
+
+
+class PPSCtrl(_Device):
+    """General PPS Control."""
+
+    _properties = (
+        'AlarmGammaShutter-Mon',
+        'DsblGamma-Cmd', 'DsblGamma-Mon',
+        'EnblGamma-Cmd', 'EnblGamma-Mon',
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        devname = 'AS-Glob:MP-Summary'
+        super().__init__(devname, properties=self._properties, *args, **kwargs)
+
+    @property
+    def gamma_enabled(self):
+        """."""
+        return self['AlarmGammaShutter-Mon'] == 1
+
+    @property
+    def gamma_disabled(self):
+        """."""
+        return self['AlarmGammaShutter-Mon'] == 0
+
+    def cmd_gamma_enable(self, timeout=None):
+        """Enable gamma signal for beamlines."""
+        self['EnblGamma-Cmd'] = 1
+        return self._wait('AlarmGammaShutter-Mon', 1, timeout)
+
+    def cmd_gamma_disable(self, timeout=None):
+        """Disable gamma signal for beamlines."""
+        self['DsblGamma-Cmd'] = 1
+        return self._wait('AlarmGammaShutter-Mon', 0, timeout)
 
 
 class BLPPSCtrl(_DeviceNC):
