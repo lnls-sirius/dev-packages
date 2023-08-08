@@ -70,11 +70,6 @@ class APU(_Device):
         """Return phase speed monitor [mm/s]."""
         return self['PhaseSpeed-Mon']
 
-    @phase_speed.setter
-    def phase_speed(self, value):
-        """Set phase_speed [mm/s]."""
-        self['PhaseSpeed-SP'] = value
-
     @property
     def phase_speed_max(self):
         """Return max phase speed readback [mm/s]."""
@@ -111,11 +106,6 @@ class APU(_Device):
         ctrlvars = self.pv_ctrlvars('Phase-SP')
         return ctrlvars['upper_ctrl_limit']
 
-    @phase.setter
-    def phase(self, value):
-        """Set APU phase [mm]."""
-        self['Phase-SP'] = value
-
     @property
     def phase_mon(self):
         """Return APU phase [mm]."""
@@ -150,17 +140,17 @@ class APU(_Device):
         """Command disable bealine ID control."""
         return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
-    # --- cmd_set ---
+    # --- set methods ---
 
-    def cmd_set_phase(self, phase, timeout=None):
+    def set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self._write_sp('Phase-SP', phase, timeout)
 
-    def cmd_set_phase_speed(self, phase_speed, timeout=None):
+    def set_phase_speed(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
         return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
 
-    def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
@@ -184,7 +174,11 @@ class APU(_Device):
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
         return True
 
-    def cmd_move(self, phase, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(self.phase_parked, timeout=timeout)
+
+    def move(self, phase, timeout=None):
         """Command to set and start phase movements."""
         # calc ETA
         dtime_max = abs(phase - self.phase_mon) / self.phase_speed
@@ -195,7 +189,7 @@ class APU(_Device):
         tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+        if not self.set_phase(phase=phase, timeout=timeout):
             return False
 
         # command move start
@@ -216,10 +210,6 @@ class APU(_Device):
 
         # successfull movement at this point
         return True
-
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.cmd_move(self.phase_parked, timeout=timeout)
 
     # --- private methods ---
 
@@ -387,7 +377,7 @@ class PAPU(_Device):
             return True
         self['EnblPwrPhase-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1}
-        return self._local_wait(props_values, timeout=timeout)
+        return self._wait_propty_values(props_values, timeout=timeout)
 
     def cmd_beamline_ctrl_enable(self, timeout=None):
         """Command enable bealine ID control."""
@@ -397,17 +387,17 @@ class PAPU(_Device):
         """Command disable bealine ID control."""
         return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
-    # --- cmd_set ---
+    # --- set methods ---
 
-    def cmd_set_phase(self, phase, timeout=None):
+    def set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self._write_sp('Phase-SP', phase, timeout)
 
-    def cmd_set_phase_speed(self, phase_speed, timeout=None):
+    def set_phase_speed(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
         return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
 
-    def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
@@ -487,7 +477,11 @@ class PAPU(_Device):
         """Command to start phase movement."""
         return self._move_start('ChangePhase-Cmd', timeout=timeout)
 
-    def cmd_move(self, phase, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(self.phase_parked, timeout=timeout)
+
+    def move(self, phase, timeout=None):
         """Command to set and start phase movements."""
         # calc ETA
         dtime_max = abs(phase - self.phase_mon) / self.phase_speed
@@ -498,7 +492,7 @@ class PAPU(_Device):
         tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+        if not self.set_phase(phase=phase, timeout=timeout):
             return False
 
         # command move start
@@ -519,10 +513,6 @@ class PAPU(_Device):
 
         # successfull movement at this point
         return True
-
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.cmd_move(self.phase_parked, timeout=timeout)
 
     # --- cmd_reset
 
@@ -572,7 +562,7 @@ class PAPU(_Device):
                 propty_rb, value, timeout=timeout, comp='eq')
         return success
 
-    def _local_wait(self, props_values, timeout=None, comp='eq'):
+    def _wait_propty_values(self, props_values, timeout=None, comp='eq'):
         timeout = timeout or self._default_timeout
         success = True
         for propty, value in props_values.items():
@@ -717,19 +707,19 @@ class EPU(PAPU):
             return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
-        return self._local_wait(props_values, timeout=timeout)
+        return self._wait_propty_values(props_values, timeout=timeout)
 
-    # --- cmd_set ---
+    # --- set methods ---
 
-    def cmd_set_gap(self, gap, timeout=None):
+    def set_gap(self, gap, timeout=None):
         """Command to set ID target gap for movement [mm]."""
         return self._write_sp('Gap-SP', gap, timeout)
 
-    def cmd_set_gap_speed(self, gap_speed, timeout=None):
+    def set_gap_speed(self, gap_speed, timeout=None):
         """Command to set ID cruise gap speed for movement [mm/s]."""
         return self._write_sp('GapSpeed-SP', gap_speed, timeout)
 
-    def cmd_set_gap_speed_max(self, gap_speed_max, timeout=None):
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
         """Command to set ID max cruise gap speed for movement [mm/s]."""
         return self._write_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
 
@@ -788,7 +778,12 @@ class EPU(PAPU):
         """Command to start gap movement."""
         return self._move_start('ChangeGap-Cmd', timeout=timeout)
 
-    def cmd_move(self, phase, gap, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(
+            self.phase_parked, self.gap_parked, timeout=timeout)
+
+    def move(self, phase, gap, timeout=None):
         """Command to set and start phase and gap movements."""
         # calc ETA
         dtime_phase = abs(phase - self.phase_mon) / self.phase_speed
@@ -803,9 +798,9 @@ class EPU(PAPU):
         tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+        if not self.set_phase(phase=phase, timeout=timeout):
             return False
-        if not self.cmd_set_gap(gap=gap, timeout=timeout):
+        if not self.set_gap(gap=gap, timeout=timeout):
             return False
 
         # command move start
@@ -829,11 +824,6 @@ class EPU(PAPU):
 
         # successfull movement at this point
         return True
-
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.cmd_move(
-            self.phase_parked, self.gap_parked, timeout=timeout)
 
     # --- other cmds ---
 
