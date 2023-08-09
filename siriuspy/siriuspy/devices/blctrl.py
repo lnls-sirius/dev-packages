@@ -11,8 +11,8 @@ class PPSCtrl(_Device):
 
     _properties = (
         'AlarmGammaShutter-Mon',
-        'DsblGamma-Cmd', 'DsblGamma-Mon',
-        'EnblGamma-Cmd', 'EnblGamma-Mon',
+        'DsblGamma-Cmd', 'EnblGamma-Cmd',
+        # 'DsblGamma-Mon', 'EnblGamma-Mon',
     )
 
     def __init__(self, *args, **kwargs):
