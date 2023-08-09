@@ -33,6 +33,8 @@ class _PSDev(_Device):
         'CycleType-Sel', 'CycleType-Sts',
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
         'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
+        'ScopeDuration-SP', 'ScopeDuration-SP',
+        'ScopeFreq-SP', 'ScopeFreq-RB',
         'CycleFreq-SP', 'CycleFreq-RB',
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
@@ -564,6 +566,26 @@ class PowerSupply(_PSDev):
         """Set waveform auto update."""
         self._enum_setter(
             'WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
+
+    @property
+    def scope_freq(self):
+        """Scope frequency [Hz]."""
+        return self['ScopeFreq-RB']
+
+    @scope_freq.setter
+    def scope_freq(self, value):
+        """Set scope frequency [Hz]."""
+        self['ScopeFreq-SP'] = float(value)
+
+    @property
+    def scope_duration(self):
+        """Scope duration [s]."""
+        return self['ScopeDuration-RB']
+
+    @scope_duration.setter
+    def scope_duration(self, value):
+        """Set scope duration [s]."""
+        self['ScopeDuration-SP'] = float(value)
 
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""
