@@ -33,7 +33,7 @@ class _PSDev(_Device):
         'CycleType-Sel', 'CycleType-Sts',
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
         'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
-        'ScopeDuration-SP', 'ScopeDuration-SP',
+        'ScopeDuration-SP', 'ScopeDuration-RB',
         'ScopeFreq-SP', 'ScopeFreq-RB',
         'CycleFreq-SP', 'CycleFreq-RB',
         'CycleAmpl-SP', 'CycleAmpl-RB',
