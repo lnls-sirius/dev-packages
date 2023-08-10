@@ -630,12 +630,6 @@ class SOFBRings(SOFBTLines, ConstRings):
             'MTurnAcquire-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MTurnAcquire._fields},
-            'MTurnSyncTim-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'MTurnSyncTim-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
             'MTurnUseMask-Sel': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},
