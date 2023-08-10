@@ -42,7 +42,8 @@ class ETypes(_csdev.ETypes):
         'TimingConnected', 'TimingConfigured', 'RFConnected', 'RFPwrStateOn')
     STS_LBLS_ORB = (
         'TimingConnected', 'TimingConfigured', 'BPMsConnected',
-        'BPMsEnabled', 'BPMsConfigured', 'OrbRawConnected')
+        'BPMsEnabled', 'BPMsConfigured', 'BPMsTestDsbld', 'BPMsSwSyncEnbld',
+        'OrbRawConnected')
     STS_LBLS_GLOB = ('Ok', 'NotOk')
 
 
@@ -349,6 +350,12 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Sync orbit acq. with injection',
                 'value': self.SyncWithInj.Off,
                 'enums': self.SyncWithInj._fields},
+            'TestDataEnbl-Sel': {
+                'type': 'enum', 'unit': 'Dsbl_Enbl',
+                'value': self.DsblEnbl.Dsbl, 'enums': self.DsblEnbl._fields},
+            'TestDataEnbl-Sts': {
+                'type': 'enum', 'unit': 'Dsbl_Enbl',
+                'value': self.DsblEnbl.Dsbl, 'enums': self.DsblEnbl._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
@@ -434,7 +441,7 @@ class SOFBTLines(ConstTLines):
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
                 'count': nbpm, 'value': self.bpm_nicknames},
-            'OrbStatus-Mon': {'type': 'int', 'value': 0b00000},
+            'OrbStatus-Mon': {'type': 'int', 'value': 0b00000000},
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
                 'value': self.StsLblsOrb._fields},

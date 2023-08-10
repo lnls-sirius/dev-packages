@@ -105,6 +105,7 @@ class EpicsOrbit(BaseOrbit):
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
             'SyncBPMs-Cmd': self.sync_bpms,
+            'TestDataEnbl-Sel': self.set_test_data_enbl,
             }
         if not self.isring:
             return dbase
@@ -384,6 +385,23 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SyncWithInjection-Sts', bool(boo))
         return True
 
+    def set_test_data_enbl(self, val, is_thread=False):
+        """."""
+        if not is_thread:
+            self._LQTHREAD.put((
+                self.set_test_data_enbl, (val, ), {'is_thread': True}))
+            return True
+
+        value = _csbpm.DsblEnbl.enabled
+        if val == self._csorb.DsblEnbl.Dsbl:
+            value = _csbpm.DsblEnbl.disabled
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
+            bpm.test_data_enbl = value
+        self.run_callbacks('TestDataEnbl-Sts', val)
+
     def _prepare_mode(self, oldmode=None):
         """."""
         oldmode = self._mode if oldmode is None else oldmode
@@ -497,6 +515,9 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         for bpm in self._get_used_bpms():
+            # NOTE: Switching sync must allways be enabled
+            bpm.sw_sync_enbl = _csbpm.DsblEnbl.enabled
+
             bpm.tbt_sync_enbl = _csbpm.DsblEnbl.enabled
             bpm.fofb_sync_enbl = _csbpm.DsblEnbl.enabled
             bpm.facq_sync_enbl = _csbpm.DsblEnbl.enabled
@@ -953,8 +974,18 @@ class EpicsOrbit(BaseOrbit):
                 lambda x: x.switching_mode == _csbpm.SwModes.switching, bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
+        # Check if test data is disabled
+        isok = all(map(
+                lambda x: x.test_data_enbl == _csbpm.DsblEnbl.disabled, bpms))
+        status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
+
+        # Check if switching sync is enabled
+        isok = all(map(
+                lambda x: x.sw_sync_enbl == _csbpm.DsblEnbl.enabled, bpms))
+        status = _util.update_bit(v=status, bit_pos=6, bit_val=not isok)
+
         orb_conn = self._sloworb_raw_pv.connected if self.acc == 'SI' else True
-        status = _util.update_bit(v=status, bit_pos=5, bit_val=not orb_conn)
+        status = _util.update_bit(v=status, bit_pos=7, bit_val=not orb_conn)
 
         self._status = status
         self.run_callbacks('OrbStatus-Mon', status)
