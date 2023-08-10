@@ -38,11 +38,11 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
-from .ppsctrl import PPSCtrl, BLPPSCtrl
+from .intlkctrl import ASPPSCtrl, ASMPSCtrl, BLInterlockCtrl
 from .scraper import ScraperH, ScraperV
 
 
 del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, bbb, machshift, dvf, lienergy, ppsctrl, scraper
+del ids, currinfo, bbb, machshift, dvf, lienergy, intlkctrl, scraper
