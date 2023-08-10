@@ -343,11 +343,11 @@ class SOFBTLines(ConstTLines):
 
         dbase.update({
             'SyncWithInjection-Sel': {
-                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'type': 'enum', 'unit': 'Off_On',
                 'value': self.SyncWithInj.Off,
                 'enums': self.SyncWithInj._fields},
             'SyncWithInjection-Sts': {
-                'type': 'enum', 'unit': 'Sync orbit acq. with injection',
+                'type': 'enum', 'unit': 'Off_On',
                 'value': self.SyncWithInj.Off,
                 'enums': self.SyncWithInj._fields},
             'TestDataEnbl-Sel': {
@@ -358,27 +358,27 @@ class SOFBTLines(ConstTLines):
                 'value': self.DsblEnbl.Dsbl, 'enums': self.DsblEnbl._fields},
             'TrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'TrigAcqCtrl-Sel': {
-                'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
+                'type': 'enum', 'unit': 'Start_Stop_Abort',
                 'value': self.TrigAcqCtrl.Stop,
                 'enums': self.TrigAcqCtrl._fields},
             'TrigAcqCtrl-Sts': {
-                'type': 'enum', 'unit': 'Start/Stop/Reset acquistion.',
+                'type': 'enum', 'unit': 'Start_Stop_Abort.',
                 'value': self.TrigAcqCtrl.Stop,
                 'enums': self.TrigAcqCtrl._fields},
             'TrigAcqChan-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'type': 'enum', 'unit': 'FAcq_FOFB_TbT_ADC_ADCSwp',
                 'value': self.TrigAcqChan.ADC,
                 'enums': self.TrigAcqChan._fields},
             'TrigAcqChan-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'type': 'enum', 'unit': 'FAcq_FOFB_TbT_ADC_ADCSwp',
                 'value': self.TrigAcqChan.ADC,
                 'enums': self.TrigAcqChan._fields},
             'TrigAcqRepeat-Sel': {
-                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'type': 'enum', 'unit': 'Normal_Repetitive',
                 'value': self.TrigAcqRepeat.Repetitive,
                 'enums': self.TrigAcqRepeat._fields},
             'TrigAcqRepeat-Sts': {
-                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'type': 'enum', 'unit': 'Normal_Repetitive',
                 'value': self.TrigAcqRepeat.Repetitive,
                 'enums': self.TrigAcqRepeat._fields},
             'TrigNrShots-SP': {
@@ -400,29 +400,25 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'unit': '', 'value': 382,
                 'hilim': 20000, 'lolim': 0},
             'PolyCalibration-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Enbl,
-                'enums': self.DsblEnbl._fields},
+                'type': 'enum', 'unit': 'Dsbl_Enbl',
+                'value': self.DsblEnbl.Enbl, 'enums': self.DsblEnbl._fields},
             'PolyCalibration-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Enbl,
-                'enums': self.DsblEnbl._fields},
+                'type': 'enum', 'unit': 'Dsbl_Enbl',
+                'value': self.DsblEnbl.Enbl, 'enums': self.DsblEnbl._fields},
             'SmoothNrPts-SP': {
-                'type': 'int', 'value': 1,
-                'unit': 'number of points for smoothing',
+                'type': 'int', 'value': 1, 'unit': '#',
                 'lolim': 1, 'hilim': 500},
             'SmoothNrPts-RB': {
-                'type': 'int', 'value': 1,
-                'unit': 'number of points for smoothing',
+                'type': 'int', 'value': 1, 'unit': '#',
                 'lolim': 1, 'hilim': 500},
             'SmoothMethod-Sel': {
-                'type': 'enum', 'value': self.SmoothMeth.Average,
-                'enums': _et.SMOOTH_METH},
+                'type': 'enum', 'unit': 'Average_Median',
+                'value': self.SmoothMeth.Average, 'enums': _et.SMOOTH_METH},
             'SmoothMethod-Sts': {
-                'type': 'enum', 'value': self.SmoothMeth.Average,
-                'enums': _et.SMOOTH_METH},
-            'SmoothReset-Cmd': {
-                'type': 'int', 'value': 0, 'unit': 'Reset orbit buffer'},
-            'BufferCount-Mon': {
-                'type': 'int', 'value': 0, 'unit': 'Current buffer size'},
+                'type': 'enum', 'unit': 'Average_Median',
+                'value': self.SmoothMeth.Average, 'enums': _et.SMOOTH_METH},
+            'SmoothReset-Cmd': {'type': 'int', 'value': 0, 'unit': '#'},
+            'BufferCount-Mon': {'type': 'int', 'value': 0, 'unit': '#'},
             'SPassMaskSplBeg-SP': {
                 'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
             'SPassMaskSplBeg-RB': {
@@ -514,24 +510,19 @@ class SOFBTLines(ConstTLines):
                 'unit': 'BPMY used in correction'},
             'MinSingValue-SP': {
                 'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
-                'lolim': 0, 'hilim': 1e9,
-                'unit': 'Maximum value of SV to use'},
+                'lolim': 0, 'hilim': 1e9, 'unit': 'SingVal'},
             'MinSingValue-RB': {
                 'type': 'float', 'value': self.MIN_SING_VAL, 'prec': 5,
-                'lolim': 0, 'hilim': 1e9,
-                'unit': 'Maximum value of SV to use'},
+                'lolim': 0, 'hilim': 1e9, 'unit': 'SingVal'},
             'TikhonovRegConst-SP': {
                 'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
-                'lolim': 0, 'hilim': 1e9,
-                'unit': 'Tikhonov regularization constant'},
+                'lolim': 0, 'hilim': 1e9, 'unit': 'SingVal'},
             'TikhonovRegConst-RB': {
                 'type': 'float', 'value': self.TIKHONOV_REG_CONST, 'prec': 5,
-                'lolim': 0, 'hilim': 1e9,
-                'unit': 'Tikhonov regularization constant'},
+                'lolim': 0, 'hilim': 1e9, 'unit': 'SingVal'},
             'NrSingValues-Mon': {
-                'type': 'int', 'value': self.nr_svals,
-                'lolim': 1, 'hilim': self.nr_svals,
-                'unit': 'Number of used SVs'},
+                'type': 'int', 'value': self.nr_svals, 'unit': '#SingVals',
+                'lolim': 1, 'hilim': self.nr_svals},
             'DeltaKickCH-Mon': {
                 'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
                 'unit': 'urad'},
@@ -603,10 +594,10 @@ class SOFBRings(SOFBTLines, ConstRings):
         db_ring = {
             'RFEnbl-Sel': {
                 'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
-                'unit': 'If RF is used in correction'},
+                'unit': 'Off_On'},
             'RFEnbl-Sts': {
                 'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
-                'unit': 'If RF is used in correction'},
+                'unit': 'Off_On'},
             'DeltaKickRF-Mon': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             }
@@ -956,25 +947,29 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 0, 'prec': 3, 'unit': 'deg',
                 'lolim': -360, 'hilim': 360},
             'DriveCorrIndex-SP': {
-                'type': 'int', 'value': 0, 'unit': 'number',
+                'type': 'int', 'value': 0, 'unit': '#',
                 'lolim': -self.nr_corrs, 'hilim': self.nr_corrs},
             'DriveCorrIndex-RB': {
-                'type': 'int', 'value': 0, 'unit': 'number',
+                'type': 'int', 'value': 0, 'unit': '#',
                 'lolim': -self.nr_corrs, 'hilim': self.nr_corrs},
             'DriveBPMIndex-SP': {
-                'type': 'int', 'value': 0, 'unit': 'number',
+                'type': 'int', 'value': 0, 'unit': '#',
                 'lolim': -self.nr_bpms*2, 'hilim': self.nr_bpms*2},
             'DriveBPMIndex-RB': {
-                'type': 'int', 'value': 0, 'unit': 'number',
+                'type': 'int', 'value': 0, 'unit': '#',
                 'lolim': -self.nr_bpms*2, 'hilim': self.nr_bpms*2},
             'DriveType-Sel': {
-                'type': 'enum', 'enums': self.DriveType._fields, 'value': 0},
+                'type': 'enum', 'enums': self.DriveType._fields,
+                'unit': 'Sine_Square_Impulse', 'value': 0},
             'DriveType-Sts': {
-                'type': 'enum', 'enums': self.DriveType._fields, 'value': 0},
+                'type': 'enum', 'enums': self.DriveType._fields,
+                'unit': 'Sine_Square_Impulse', 'value': 0},
             'DriveState-Sel': {
-                'type': 'enum', 'enums': self.DriveState._fields, 'value': 0},
+                'type': 'enum', 'enums': self.DriveState._fields,
+                'unit': 'Open_Closed', 'value': 0},
             'DriveState-Sts': {
-                'type': 'enum', 'enums': self.DriveState._fields, 'value': 0},
+                'type': 'enum', 'enums': self.DriveState._fields,
+                'unit': 'Open_Closed', 'value': 0},
             'DriveData-Mon': {
                 'type': 'float', 'unit': '(s, urad, um)',
                 'count': self.MAX_DRIVE_DATA, 'value': self.MAX_DRIVE_DATA*[0]}
@@ -988,10 +983,10 @@ class SOFBSI(SOFBRings, ConstSI):
         db_ring = {
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
+                'unit': 'Off_Event_Clock', 'value': self.CorrSync.Off},
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
-                'value': self.CorrSync.Off},
+                'unit': 'Off_Event_Clock', 'value': self.CorrSync.Off},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
@@ -1008,10 +1003,10 @@ class SOFBSI(SOFBRings, ConstSI):
             db_ring[k] = _dcopy(prop)
         db_ring.update({
             'SOFBMode-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+                'type': 'enum', 'unit': 'SlowOrb_MultiTurn_SinglePass',
                 'value': 0, 'enums': self.SOFBMode._fields},
             'SOFBMode-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+                'type': 'enum', 'unit': 'SlowOrb_MultiTurn_SinglePass',
                 'value': 0, 'enums': self.SOFBMode._fields},
             })
         dbase = super().get_orbit_database(prefix=prefix)
