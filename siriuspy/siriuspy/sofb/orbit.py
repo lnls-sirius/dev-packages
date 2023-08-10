@@ -515,7 +515,7 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         for bpm in self._get_used_bpms():
-            # NOTE: Switching sync must allways be enabled
+            # NOTE: Switching sync must always be enabled
             bpm.sw_sync_enbl = _csbpm.DsblEnbl.enabled
 
             bpm.tbt_sync_enbl = _csbpm.DsblEnbl.enabled
