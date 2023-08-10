@@ -113,7 +113,6 @@ class EpicsOrbit(BaseOrbit):
             'MTurnAcquire-Cmd': self.acquire_mturn_orbit,
             'MTurnIdx-SP': self.set_orbit_multiturn_idx,
             'MTurnDownSample-SP': self.set_mturndownsample,
-            'MTurnSyncTim-Sel': self.set_mturn_sync,
             'MTurnUseMask-Sel': self.set_mturn_usemask,
             'MTurnMaskSplBeg-SP': _part(self.set_mturnmask, beg=True),
             'MTurnMaskSplEnd-SP': _part(self.set_mturnmask, beg=False),
@@ -246,23 +245,6 @@ class EpicsOrbit(BaseOrbit):
         self._spass_mask[0 if beg else 1] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
-
-    def set_mturn_sync(self, val, is_thread=False):
-        """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_mturn_sync, (val, ), {'is_thread': True}))
-            return True
-
-        value = _csbpm.DsblEnbl.enabled
-        if val == self._csorb.DsblEnbl.Dsbl:
-            value = _csbpm.DsblEnbl.disabled
-
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.tbt_sync_enbl = value
-        self.run_callbacks('MTurnSyncTim-Sts', val)
 
     def set_mturn_usemask(self, val, is_thread=False):
         """."""
