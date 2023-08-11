@@ -362,6 +362,7 @@ class _BASETRIG(_BaseLL):
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
         self._duration = None  # I keep this to avoid rounding errors
+        self._fix_total_delay = True
 
         prefix = LL_PREFIX + ('-' if LL_PREFIX else '')
         prefix += _PVName(channel).device_name + ':'
@@ -442,6 +443,7 @@ class _BASETRIG(_BaseLL):
             'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             'Direction': _partial(self._set_simple, 'Dir'),
+            'FixTotalDelay': self._set_fix_total_delay,
             }
         return map_
 
@@ -491,6 +493,7 @@ class _BASETRIG(_BaseLL):
             'LowLvlLock': lambda is_sp: {'LowLvlLock': self.locked},
             'Direction': _partial(
                 self._get_simple, 'Dir', hl_prop='Direction'),
+            'FixTotalDelay': self._get_fix_total_delay,
             }
         return map_
 
@@ -580,8 +583,8 @@ class _BASETRIG(_BaseLL):
         evt_del = 0
         if src_str in self._events:
             evt = self._events[src_str]
-            evt_del = evt.delay_raw if evt.is_in_inj_table else 0
-        evt_del = evt_del or 0  # in case event PV is disconnected
+            if evt.connected:
+                evt_del = evt.delay_raw
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
         dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
         return dic
@@ -645,9 +648,7 @@ class _BASETRIG(_BaseLL):
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
-        offset = 0
-        if self.channel.dev.startswith('AMCFPGAEVR'):
-            offset = 1
+        offset = int(self.channel.dev.startswith('AMCFPGAEVR'))
         try:
             source = _TIConst.TrigSrcLL._fields[src+offset]
         except IndexError:
@@ -681,12 +682,61 @@ class _BASETRIG(_BaseLL):
             n -= offset
             evt = int(_TIConst.EvtHL2LLMap[pname].strip('Evt'))
             dic_ = {'Src': n, 'Evt': evt}
+
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             intrg = _LLSearch.get_channel_internal_trigger_pvname(
                 self.channel)
             intrg = int(intrg[-2:])  # get internal trigger number for EVR
             dic_['SrcTrig'] = intrg
+
+        if self._fix_total_delay:
+            dic_.update(self._do_fix_total_delay(pname))
         return dic_
+
+    def _do_fix_total_delay(self, evthl_name):
+        """Keep total delay of the trigger constant when source is changed."""
+        dic_ = dict()
+        dlt_dly = self._calc_dly_diff(evthl_name)
+        if dlt_dly == 0:
+            return dic_
+        dly = self._config_ok_values.get('Delay')
+        if dly is None:
+            return dic_
+        dly = dly + dlt_dly
+        if dly < 0:
+            return dic_
+        return self._set_delay(dly, raw=True)
+
+    def _calc_dly_diff(self, evthl_name):
+        """Get the difference between old and new event delays."""
+        dlt_dly = 0
+        evtn = self._events.get(evthl_name)
+        if evtn is not None and evtn.connected:
+            dlt_dly -= int(evtn.delay_raw)
+
+        srco = self._config_ok_values.get('Src')
+        if srco is None:
+            return 0
+        srco = self._process_source('Src', False, value=srco).get('Src')
+        if srco is None:
+            return 0
+        srco = self._source_enums[srco]
+        evto = self._events.get(srco)
+        if evto is None:
+            return dlt_dly
+        elif not evto.connected:
+            return 0
+        return dlt_dly + int(evto.delay_raw)
+
+    def _get_fix_total_delay(self, is_sp):
+        return {'FixTotalDelay': int(self._fix_total_delay)}
+
+    def _set_fix_total_delay(self, value):
+        if value is None:
+            return
+        self._fix_total_delay = int(bool(value))
+        self.run_callbacks(
+            self.channel, 'FixTotalDelay', self._fix_total_delay, is_sp=False)
 
     def _get_duration_pulses(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -790,6 +840,9 @@ class _EVROTP(_BASETRIG):
         if not pname.startswith('Clock'):
             mat = reg.findall(_TIConst.EvtHL2LLMap[pname])
             dic_['Evt'] = int(mat[0])
+
+        if self._fix_total_delay:
+            dic_.update(self._do_fix_total_delay(pname))
         return dic_
 
 

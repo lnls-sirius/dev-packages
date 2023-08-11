@@ -20,6 +20,7 @@ class ETypes(_csdev.ETypes):
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
     LOCKLL = ('Unlocked', 'Locked')
+    FIXTOTDLY = ('Variable', 'Fixed')
     DLYTYP = ('Manual', 'Auto')
     DIRECTION = ('Receive', 'Transmit')
     ININJTAB = ('No', 'Yes')
@@ -48,6 +49,7 @@ class Const(_csdev.Const):
     TrigStates = _csdev.Const.register('TrigStates', _et.DSBL_ENBL)
     TrigPol = _csdev.Const.register('TrigPol', _et.NORM_INV)
     LowLvlLock = _csdev.Const.register('LowLvlLock', _et.LOCKLL)
+    FixTotDly = _csdev.Const.register('FixTotDly', _et.FIXTOTDLY)
     TrigDlyTyp = _csdev.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigDir = _csdev.Const.register('TrigDir', _et.DIRECTION)
     InInjTab = _csdev.Const.register('InInjTab', _et.ININJTAB)
@@ -158,7 +160,9 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     dbase[prefix+'Src-Sts'] = dic_
     dbase[prefix+'Src-Sel'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DLYTYP}
+    dic_ = {
+        'type': 'enum', 'value': 0, 'enums': _et.DLYTYP,
+        'unit': 'Manual_Auto'}
     dbase[prefix+'RFDelayType-Sts'] = dic_
     dbase[prefix+'RFDelayType-Sel'] = _dcopy(dic_)
 
@@ -585,11 +589,19 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
     dbase['DeltaDelayRaw-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
+    dic_ = {
+        'type': 'enum', 'enums': _et.LOCKLL, 'value': 0,
+        'unit': 'Unlocked_Locked'}
     dbase['LowLvlLock-Sts'] = _dcopy(dic_)
     dbase['LowLvlLock-Sel'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
+    dic_ = {
+        'type': 'enum', 'enums': _et.FIXTOTDLY, 'value': 1,
+        'unit': 'Variable_Fixed'}
+    dbase['FixTotalDelay-Sts'] = _dcopy(dic_)
+    dbase['FixTotalDelay-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.DLYTYP, 'unit': 'Manual_Auto'}
     dic_.update(trig_db['RFDelayType'])
     if _HLTimeSearch.has_delay_type(hl_trigger):
         dbase['RFDelayType-Sts'] = _dcopy(dic_)
