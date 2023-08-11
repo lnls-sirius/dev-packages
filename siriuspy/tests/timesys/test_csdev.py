@@ -184,6 +184,7 @@ class TestConst(TestCase):
         'TrigStates',
         'TrigPol',
         'LowLvlLock',
+        'FixTotDly',
         'TrigDlyTyp',
         'TrigDir',
         'InInjTab',
