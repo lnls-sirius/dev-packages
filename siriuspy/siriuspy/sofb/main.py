@@ -356,7 +356,6 @@ class SOFB(_BaseClass):
             self._stop_meas_respmat()
         elif value == self._csorb.MeasRespMatCmd.Reset:
             self._reset_meas_respmat()
-        self.run_callbacks('MeasRespMat-Cmd', value)
         return True
 
     def set_auto_corr(self, value):
