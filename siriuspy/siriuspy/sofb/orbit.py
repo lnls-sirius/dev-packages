@@ -301,7 +301,6 @@ class EpicsOrbit(BaseOrbit):
         """."""
         with self._lock_raw_orbs:
             self._reset_orbs()
-        self.run_callbacks('SmoothReset-Cmd', 0)
         return True
 
     def set_reforb(self, plane, orb):
@@ -427,7 +426,6 @@ class EpicsOrbit(BaseOrbit):
         msg = 'Done configuring BPMs!'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('TrigAcqConfig-Cmd', 0)
 
     def sync_bpms(self, *args):
         """Synchronize BPMs."""
@@ -764,7 +762,6 @@ class EpicsOrbit(BaseOrbit):
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
         self._update_multiturn_orbit_pvs()
-        self.run_callbacks('MTurnAcquire-Cmd', 0)
 
     def _update_multiturn_orbit_pvs(self):
         for pln, orb in self.smooth_mtorb.items():
