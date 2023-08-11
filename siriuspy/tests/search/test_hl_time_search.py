@@ -36,6 +36,7 @@ class TestHLTimeSearch(TestCase):
         'get_ll_trigger_names',
         'get_hl_from_ll_triggers',
         'has_delay_type',
+        'has_direction',
         'has_clock',
         'check_hl_triggers_consistency',
         'reset',
@@ -75,7 +76,7 @@ class TestHLTimeSearch(TestCase):
         """Test get_ll_trigger_names."""
         # TODO: implement test!
         pass
-    
+
     def get_hl_from_triggers(self):
         """Test get_hl_from_ll_triggers."""
         # TODO: implement test!

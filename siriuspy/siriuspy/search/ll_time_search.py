@@ -112,6 +112,7 @@ class LLTimeSearch:
 
     _conn_from_evg = dict()
     _conn_twds_evg = dict()
+    _crates_mapping = dict()
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
@@ -314,6 +315,20 @@ class LLTimeSearch:
         return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
 
     @classmethod
+    def has_direction(cls, ll_trigger):
+        """Check whether a low level trigger has direction property.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return 'AMCFPGAEVR' == name.dev
+
+    @classmethod
     def get_trigger_name(cls, channel):
         """Get name of the trigger associated with channel."""
         chan_tree = cls.get_device_tree(channel)
@@ -336,6 +351,12 @@ class LLTimeSearch:
         for up_chan in chan_tree:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
+
+    @classmethod
+    def get_crates_mapping(cls):
+        """Return crates to devices mapping."""
+        cls._get_timedata()
+        return cls._crates_mapping
 
     # --- private methods ---
 
@@ -434,6 +455,7 @@ class LLTimeSearch:
                 mapping[crates[crate]] = list()
             else:
                 mapping[crates[crate]].append(dev)
+        cls._crates_mapping = mapping
         return mapping
 
     @classmethod

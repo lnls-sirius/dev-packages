@@ -675,13 +675,8 @@ class EpicsCorrectors(BaseCorrectors):
             self._update_log('ERR: ' + str(err))
             _log.error(_traceback.format_exc())
 
-    def set_corrs_mode(self, value, is_thread=False):
+    def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_corrs_mode, (value, ), {'is_thread': True}))
-            return True
-
         if value not in self._csorb.CorrSync:
             return False
         self.sync_kicks = value
@@ -760,13 +755,8 @@ class EpicsCorrectors(BaseCorrectors):
         self.run_callbacks('CorrPSSOFBEnbl-Mon', val)
         return True
 
-    def configure_correctors(self, val, is_thread=False):
+    def configure_correctors(self, val):
         """Configure correctors method."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.configure_correctors, (val, ), {'is_thread': True}))
-            return True
-
         corrs = self._get_used_corrs(include_rf=True)
         for corr in corrs:
             if not corr.connected:

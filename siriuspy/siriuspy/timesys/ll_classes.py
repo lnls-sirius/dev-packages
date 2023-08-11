@@ -376,8 +376,6 @@ class _BASETRIG(_BaseLL):
             # Stop using FineDelay and RF Delay to ease consistency:
             self._config_ok_values['FineDelay'] = 0
             self._config_ok_values['RFDelay'] = 0
-        elif self.channel.propty.startswith(('FMC', 'CRT')):
-            self._config_ok_values['Dir'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -443,6 +441,7 @@ class _BASETRIG(_BaseLL):
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
+            'Direction': _partial(self._set_simple, 'Dir'),
             }
         return map_
 
@@ -454,7 +453,7 @@ class _BASETRIG(_BaseLL):
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
-            'Dir': _partial(self._get_simple, 'Dir'),
+            'Dir': _partial(self._get_simple, 'Dir', hl_prop='Direction'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
@@ -490,6 +489,8 @@ class _BASETRIG(_BaseLL):
             'Status': _partial(self._get_status, ''),
             'InInjTable': _partial(self._get_status, ''),
             'LowLvlLock': lambda is_sp: {'LowLvlLock': self.locked},
+            'Direction': _partial(
+                self._get_simple, 'Dir', hl_prop='Direction'),
             }
         return map_
 
