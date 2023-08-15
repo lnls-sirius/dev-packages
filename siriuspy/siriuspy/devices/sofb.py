@@ -490,11 +490,11 @@ class TLSOFB(_Device):
             resy = _np.sqrt(_np.sum(resy*resy)/resy.size)
             if resx < residue and resy < residue:
                 break
+            self.wait_buffer()
             self.cmd_calccorr()
             self.cmd_applycorr_all()
             self.wait_apply_delta_kick()
             self.cmd_reset()
-            self.wait_buffer()
         return i, resx, resy
 
     def wait_buffer(self, timeout=None):
@@ -525,8 +525,10 @@ class TLSOFB(_Device):
 
     def cmd_sync_bpms(self):
         """Synchronize BPMs."""
-        self['SyncBPMs-Cmd'] = 1
-        return True
+        prop = 'SyncBPMs-Cmd'
+        val = self[prop]
+        self[prop] = 1
+        return self._wait(prop, val+1)
 
 
 class BOSOFB(TLSOFB):
