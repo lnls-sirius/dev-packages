@@ -4,6 +4,7 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
+from copy import deepcopy as _dcopy
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
@@ -40,15 +41,27 @@ class Device:
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     GET_TIMEOUT = _GET_TIMEOUT
-    _properties = ()
+    DEVSEP = ':'
+    ALL_PROPTIES = ()
 
     def __init__(
-            self, devname, properties, auto_monitor=True,
+            self, devname, init_propties='all', auto_monitor=True,
             auto_monitor_mon=False):
-        self._properties = properties[:]
+        """."""
+        if isinstance(init_propties, str) and init_propties.lower() == 'all':
+            propties = self.ALL_PROPTIES
+        elif not init_propties:
+            propties = []
+        elif isinstance(init_propties, (list, tuple)):
+            propties = init_propties
+        else:
+            raise ValueError('Wrong value for init_propties.')
+
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
-        self._devname, self._pvs = self._create_pvs(devname)
+        self._devname = _SiriusPVName(devname) if devname else devname
+
+        self._pvs = {prpt: self._create_pv(prpt) for prpt in propties}
 
     @property
     def devname(self):
@@ -56,9 +69,14 @@ class Device:
         return self._devname
 
     @property
-    def properties(self):
-        """Return device properties."""
-        return self._properties
+    def all_properties(self):
+        """Return all possible properties defined in class interface."""
+        return _dcopy(self.ALL_PROPTIES)
+
+    @property
+    def properties_in_use(self):
+        """Return properties that were alreadty added to the PVs list."""
+        return sorted(self._pvs.keys())
 
     @property
     def simulators(self):
@@ -118,6 +136,10 @@ class Device:
 
     def pv_object(self, propty):
         """Return PV object for a given device property."""
+        if propty not in self._pvs:
+            pvobj = self._create_pv(propty)
+            pvobj.wait_for_connection(Device.CONNECTION_TIMEOUT)
+            self._pvs[propty] = pvobj
         return self._pvs[propty]
 
     def pv_ctrlvars(self, propty):
@@ -127,7 +149,7 @@ class Device:
     def pv_attribute_values(self, attribute):
         """Return property-value dict of a given attribute for all PVs."""
         attributes = dict()
-        for propty in self._properties:
+        for propty in self.ALL_PROPTIES:
             pvobj = self._pvs[propty]
             attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
@@ -152,7 +174,7 @@ class Device:
 
     def __getitem__(self, propty):
         """Return value of property."""
-        pvobj = self._pvs[propty]
+        pvobj = self.pv_object(propty)
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
         except (_ChannelAccessGetFailure, _CASeverityException):
@@ -164,27 +186,20 @@ class Device:
 
     def __setitem__(self, propty, value):
         """Set value of property."""
-        pvobj = self._pvs[propty]
+        pvobj = self.pv_object(propty)
         pvobj.value = value
 
     # --- private methods ---
-
-    def _create_pvs(self, devname):
-        if devname:
-            devname = _SiriusPVName(devname)
-
-        pvs = dict()
-        for propty in self._properties:
-            pvname = self._get_pvname(devname, propty)
-            auto_monitor = self._auto_monitor
-            if pvname.endswith(('-Mon', 'Data')):
-                auto_monitor = self._auto_monitor_mon
-            in_sim = _Simulation.pv_check(pvname)
-            pvclass = _PVSim if in_sim else _PV
-            pvs[propty] = pvclass(
-                pvname, auto_monitor=auto_monitor,
-                connection_timeout=Device.CONNECTION_TIMEOUT)
-        return devname, pvs
+    def _create_pv(self, propty):
+        pvname = self._get_pvname(propty)
+        auto_monitor = self._auto_monitor
+        if pvname.endswith(('-Mon', 'Data')):
+            auto_monitor = self._auto_monitor_mon
+        in_sim = _Simulation.pv_check(pvname)
+        pvclass = _PVSim if in_sim else _PV
+        return pvclass(
+            pvname, auto_monitor=auto_monitor,
+            connection_timeout=Device.CONNECTION_TIMEOUT)
 
     def _wait(self, propty, value, timeout=None, comp='eq'):
         """."""
@@ -209,16 +224,17 @@ class Device:
         return False
 
     def _wait_float(
-            self, propty, value, rel_tol=0.0, abs_tol=0.1,
-            timeout=None):
+            self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
         """Wait until float value gets close enough of desired value."""
         func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
         return self._wait(propty, value, comp=func, timeout=timeout)
 
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
+    def _get_pvname(self, propty):
+        if isinstance(self._devname, _SiriusPVName):
+            func = self._devname.substitute
             pvname = func(prefix=_VACA_PREFIX, propty=propty)
+        elif devname:
+            pvname = devname + self.DEVSEP + propty
         else:
             pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
         return pvname
@@ -237,15 +253,15 @@ class Device:
 class ProptyDevice(Device):
     """Device with a prefix property name."""
 
-    def __init__(self, devname, propty_prefix, properties, **kwargs):
-        """."""
+    def __init__(self, devname, propty_prefix, **kwargs):
+        """Check Device for help with `kwargs`."""
         self._propty_prefix = propty_prefix
         # call base class constructor
-        super().__init__(devname, properties=properties, **kwargs)
+        super().__init__(devname, **kwargs)
 
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
+    def _get_pvname(self, propty):
+        if self._devname:
+            func = self._devname.substitute
             pvname = func(propty=self._propty_prefix + propty)
         else:
             pvname = self._propty_prefix + propty
@@ -260,16 +276,15 @@ class DeviceNC(Device):
     This device class is to be used for those devices whose
     names and PVs are not compliant to the Sirius naming system.
     """
-    DEVSEP = ':'
 
-    def _create_pvs(self, devname):
-        pvs = dict()
-        devname = devname or ''
-        for propty in self._properties:
-            pvname = devname + self.DEVSEP + propty
-            auto_monitor = not pvname.endswith('-Mon')
-            pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
-        return devname, pvs
+
+    def _create_pv(self, propty):
+        devname = self._devname or ''
+        pvname = devname + self.DEVSEP + propty
+        auto_monitor = self._auto_monitor
+        if pvname.endswith(('-Mon', 'Data')):
+            auto_monitor = self._auto_monitor_mon
+        return _PV(pvname, auto_monitor=auto_monitor)
 
 
 class DeviceApp(Device):
@@ -278,12 +293,12 @@ class DeviceApp(Device):
     This kind of device groups properties of other devices.
     """
 
-    def __init__(self, properties, devname=None, **kwargs):
-        """."""
+    def __init__(self, devname=None, **kwargs):
+        """Check Device for help with `kwargs`."""
         self._devname_app = devname
 
         # call base class constructor
-        super().__init__(None, properties=properties, **kwargs)
+        super().__init__(None, **kwargs)
 
     @property
     def devname(self):
@@ -299,20 +314,10 @@ class Devices:
         self._devname = devname
         self._devices = devices
 
-        self._properties = []
-        for dev in self._devices:
-            if dev is not None:
-                self._properties += dev.properties
-
     @property
     def devname(self):
         """Return device name."""
         return self._devname
-
-    @property
-    def properties(self):
-        """Return device properties."""
-        return self._properties
 
     @property
     def simulators(self):
