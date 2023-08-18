@@ -137,13 +137,12 @@ def split_name(pvname, elements=None):
         dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
         dic_['area_name'] = '-'.join([s for s in slist_[-2:]])
         dic_['device_name'] = dic_['area_name'] + ':' + list_[1]
-
-        dic_['sec'] = slist_[-2]
-        dic_['sub'] = slist_[-1]
+        dic_['sec'] = slist_[-2] if len(slist_) >= 2 else ''
+        dic_['sub'] = slist_[-1] if len(slist_) >= 1 else ''
 
         slist_ = list_[1].split('-')
         dic_['dis'] = slist_[0]
-        dic_['dev'] = slist_[1]
+        dic_['dev'] = slist_[1] if len(slist_) >= 2 else ''
         dic_['idx'] = slist_[2] if len(slist_) >= 3 else ''
 
         if len(list_) > 2:
