@@ -3,9 +3,11 @@
 import time as _time
 import logging as _log
 import traceback as _traceback
+from importlib.util import find_spec as _find_spec
 
 import numpy as _np
-from PRUserial485 import EthBridgeClient
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
