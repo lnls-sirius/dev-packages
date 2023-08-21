@@ -1578,6 +1578,10 @@ def _get_ps_FOFB_propty_database():
         'AlarmsAmpLabels-Cte': {
             'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
             'value': _et.FOFB_ALARMS_AMP},
+        'AlarmsAmpLtc-Mon': {'type': 'int', 'value': 0},
+        'AlarmsAmpLtcLabels-Cte': {
+            'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
+            'value': _et.FOFB_ALARMS_AMP},
         # PI control
         'CurrLoopKp-SP': {'type': 'int', 'value': 0},
         'CurrLoopKp-RB': {'type': 'int', 'value': 0},
