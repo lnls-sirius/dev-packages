@@ -234,13 +234,15 @@ class Device:
         return self._wait(propty, value, comp=func, timeout=timeout)
 
     def _get_pvname(self, propty):
-        if isinstance(self._devname, _SiriusPVName):
-            func = self._devname.substitute
-            pvname = func(prefix=_VACA_PREFIX, propty=propty)
-        elif devname:
-            pvname = devname + self.DEVSEP + propty
+        dev = self._devname
+        pref = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
+        if isinstance(dev, _SiriusPVName) and dev.is_standard:
+            ppt = dev.propty
+            pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
+        elif dev:
+            pvname = pref + dev + self.DEVSEP + propty
         else:
-            pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
+            pvname = pref + propty
         return pvname
 
     def _enum_setter(self, propty, value, enums):
