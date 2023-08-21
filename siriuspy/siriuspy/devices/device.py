@@ -147,10 +147,9 @@ class Device:
         return self._pvs[propty].get_ctrlvars()
 
     def pv_attribute_values(self, attribute):
-        """Return property-value dict of a given attribute for all PVs."""
+        """Return pvname-value dict of a given attribute for all PVs."""
         attributes = dict()
-        for propty in self.ALL_PROPTIES:
-            pvobj = self._pvs[propty]
+        for pvobj in self._pvs.values():
             attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
 
