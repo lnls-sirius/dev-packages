@@ -46,38 +46,49 @@ def join_name(**kwargs):
     """
     dic = {k: v for k, v in kwargs.items() if v}  # get valid args
     name = ''
-    if len(dic.keys()) == 1:
-        if 'propty' in dic.keys():
-            name = dic['propty']
-        elif 'propty_name' in dic.keys():
-            name = dic['propty_name']
-    elif len(dic.keys()) == 2:
-        if 'sec' in dic.keys() and 'sub' in dic.keys():
-            name = dic['sec'].upper() + '-' + dic['sub']
-        elif 'dis' in dic.keys() and 'dev' in dic.keys():
-            name = dic['dis'].upper() + '-' + dic['dev']
-        elif 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
-            name = dic['propty_name'].upper() + '-' + dic['propty_suffix']
-    elif len(dic.keys()) == 3:
-        if 'dis' in dic.keys() and 'dev' in dic.keys() and 'idx' in dic.keys():
+    if len(dic) == 1:
+        if 'propty' in dic:
+            name += dic['propty']
+        elif 'propty_name' in dic:
+            name += dic['propty_name']
+        return SiriusPVName(name)
+    if len(dic) == 2:
+        if 'sec' in dic and 'sub' in dic:
+            name += dic['sec'].upper() + '-' + dic['sub']
+        elif 'dis' in dic and 'dev' in dic:
+            name += dic['dis'].upper() + '-' + dic['dev']
+        elif 'propty_name' in dic and 'propty_suffix' in dic:
+            name += dic['propty_name'].upper() + '-' + dic['propty_suffix']
+        return SiriusPVName(name)
+    if len(dic) == 3:
+        if 'dis' in dic and 'dev' in dic and 'idx' in dic:
             name = dic['dis'].upper() + '-' + dic['dev'] + '-' + dic['idx']
-    elif len(dic.keys()) > 3:
-        name = dic['channel_type'] + '://' if 'channel_type' in dic.keys() else ''
-        name = dic['prefix'] + '-' if 'prefix' in dic.keys() else ''
-        name += (dic['sec'].upper() + '-' + dic['sub'] + ':' +
-                 dic['dis'].upper() + '-' + dic['dev'])
-        name += ('-' + dic['idx']) if 'idx' in dic.keys() else ''
-        if 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
-            name += ':' + dic['propty_name'] + '-' + dic['propty_suffix']
-            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
-        elif 'propty' in dic.keys():
-            name += ':' + dic['propty']
-            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
-        elif 'propty_name' in dic.keys():
-            name += ':' + dic['propty_name']
+        elif 'propty_name' in dic and 'propty_suffix' in dic:
+            name += dic['propty_name'] + '-' + dic['propty_suffix']
+        return SiriusPVName(name)
 
-    if not name:
-        raise TypeError('Not a valid SiriusPVName elements set!')
+    if 'channel_type' in dic:
+        name += dic['channel_type'] + '://'
+    if 'prefix' in dic:
+        name += dic['prefix'] + '-'
+    if 'sec' in dic and 'sub' in dic:
+        name += dic['sec'].upper() + '-' + dic['sub']
+    if name:
+        name += ':'
+    if 'dis' in dic and 'dev' in dic:
+        name += dic['dis'].upper() + '-' + dic['dev']
+    if 'idx' in dic:
+        name += '-' + dic['idx']
+    if name and {'propty_name', 'propty', 'field'} & set(dic):
+        name += ':'
+    if 'propty_name' in dic and 'propty_suffix' in dic:
+        name += dic['propty_name'] + '-' + dic['propty_suffix']
+    elif 'propty' in dic:
+        name += dic['propty']
+    elif 'propty_name' in dic:
+        name += dic['propty_name']
+    if 'field' in dic:
+        name += '.' + dic['field']
     return SiriusPVName(name)
 
 
