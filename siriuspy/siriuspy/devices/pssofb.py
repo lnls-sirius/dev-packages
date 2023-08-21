@@ -5,7 +5,7 @@ from ..search import PSSearch as _PSSearch
 from ..namesys import SiriusPVName as _SiriusPVName
 
 from . import Device as _Device
-from . import Devices as _Devices
+from . import DeviceSet as _DeviceSet
 from . psconv import StrengthConv as _StrengthConv
 
 
@@ -180,7 +180,7 @@ class PSCorrSOFB(_Device):
         return indices, idx_corr
 
 
-class PSApplySOFB(_Devices):
+class PSApplySOFB(_DeviceSet):
     """SOFB corrector devices.
 
     Group SOFB setpoints of all corrector power supplies.

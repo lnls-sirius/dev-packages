@@ -1,6 +1,6 @@
 """."""
 from .device import Device as _Device
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 from .ict import ICT
 
 
@@ -32,7 +32,7 @@ class CurrInfoTranspEff(_Device):
         return self['TranspEff-Mon']
 
 
-class CurrInfoLinear(_Devices):
+class CurrInfoLinear(_DeviceSet):
     """."""
 
     class DEVICES:
@@ -263,7 +263,7 @@ class CurrInfoSI(_Device):
         return self['StoredEBeam-Mon']
 
 
-class CurrInfoAS(_Devices):
+class CurrInfoAS(_DeviceSet):
     """."""
 
     class DEVICES:

@@ -7,7 +7,7 @@ from ..search import PSSearch as _PSSearch, BPMSearch as _BPMSearch
 from ..csdev import Const as _Const
 from ..fofb.csdev import NR_BPM
 
-from .device import ProptyDevice as _ProptyDevice, Devices as _Devices, \
+from .device import ProptyDevice as _ProptyDevice, DeviceSet as _DeviceSet, \
     Device as _Device
 from .fofb import FOFBCtrlBase as _FOFBCtrlBase
 from .timing import Event
@@ -159,7 +159,7 @@ class _FOFBCtrlAcqBase(_ProptyDevice, _FOFBCtrlBase, _FOFBCtrlAcqConst):
             timeout=timeout, comp=lambda x, y: x in y)
 
 
-class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
+class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
 
     DEF_TIMEOUT = 10  # [s]
     FOFBCTRL_CLASS = _FOFBCtrlAcqBase
@@ -198,7 +198,7 @@ class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
         devices.extend(self._ctlrs.values())
         devices.extend(self._psdevs.values())
         devices.extend(self._psconv.values())
-        super().__init__('SI-Glob:BS-FOFBAcq', devices)
+        _DeviceSet.__init__(self, 'SI-Glob:BS-FOFBAcq', devices)
 
     @property
     def ctrldevs(self):

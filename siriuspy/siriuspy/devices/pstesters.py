@@ -8,7 +8,7 @@ from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSC, ETypes as _PSE, \
     PS_LI_INTLK_THRS as _PS_LI_INTLK, \
     get_ps_interlocks as _get_ps_interlocks
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
 DEFAULT_CAP_BANK_VOLT = {
@@ -665,7 +665,7 @@ class Trigger(_Device):
         self['State-Sel'] = value
 
 
-class Triggers(_Devices):
+class Triggers(_DeviceSet):
     """Triggers."""
 
     def __init__(self, devnames):

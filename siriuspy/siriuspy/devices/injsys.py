@@ -5,7 +5,7 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread, Event as _Flag
 import logging as _log
 
-from .device import Devices as _Devices, DeviceNC as _DeviceNC
+from .device import DeviceSet as _DeviceSet, DeviceNC as _DeviceNC
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
@@ -21,7 +21,7 @@ from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
 
-class _BaseHandler(_Devices):
+class _BaseHandler(_DeviceSet):
     """Base standby mode handler for injection procedure."""
 
     def __init__(self, devname, devices, hltiming=None):
@@ -678,7 +678,7 @@ class LinacStandbyHandler(_BaseHandler):
         return [False, text, problems]
 
 
-class InjSysStandbyHandler(_Devices):
+class InjSysStandbyHandler(_DeviceSet):
     """Injection system standy mode handler."""
 
     DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
@@ -863,7 +863,7 @@ class InjSysStandbyHandler(_Devices):
         self._is_running = ''
 
 
-class InjSysPUModeHandler(_Devices, _Callback):
+class InjSysPUModeHandler(_DeviceSet, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
     _DEF_TIMEOUT = 10  # [s]
@@ -888,7 +888,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._abort = _Flag()
 
         # call super init
-        _Devices.__init__(self, '', devices)
+        _DeviceSet.__init__(self, '', devices)
         _Callback.__init__(self, callback=callback)
 
     @property

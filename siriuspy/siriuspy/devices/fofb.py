@@ -9,7 +9,7 @@ from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
 from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
+    DeviceSet as _DeviceSet
 from .afc_acq_core import AFCACQLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
@@ -250,7 +250,7 @@ class BPMDCC(_DCCDevice):
 
 # ---------------- Fam devices ----------------
 
-class FamFOFBControllers(_Devices):
+class FamFOFBControllers(_DeviceSet):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -692,7 +692,7 @@ class FamFOFBControllers(_Devices):
         return True
 
 
-class FamFastCorrs(_Devices):
+class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
 
     DEF_TIMEOUT = 10  # [s]

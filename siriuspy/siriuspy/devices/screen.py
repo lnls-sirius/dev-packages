@@ -1,10 +1,10 @@
 """."""
 
 from ..namesys import SiriusPVName as _PVName
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
-class Screen(_Devices):
+class Screen(_DeviceSet):
     """."""
 
     class DEVICES:

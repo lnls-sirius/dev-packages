@@ -4,7 +4,7 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -883,7 +883,7 @@ class BPM(_Device):
         return prop
 
 
-class FamBPMs(_Devices):
+class FamBPMs(_DeviceSet):
     """Family of BPMs.
 
     Parameters

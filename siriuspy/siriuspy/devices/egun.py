@@ -10,7 +10,7 @@ from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
-from .device import Device as _Device, Devices as _Devices, \
+from .device import Device as _Device, DeviceSet as _DeviceSet, \
     DeviceNC as _DeviceNC
 from .timing import Trigger
 
@@ -467,7 +467,7 @@ class EGPulsePS(_Device):
         return self.cmd_turn_on_multi_bunch_switch()
 
 
-class EGun(_Devices, _Callback):
+class EGun(_DeviceSet, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -525,7 +525,7 @@ class EGun(_Devices, _Callback):
         self._abort_rmp_hvps = _Flag()
         self._abort_rmp_fila = _Flag()
 
-        _Devices.__init__(self, '', devices)
+        _DeviceSet.__init__(self, '', devices)
         _Callback.__init__(self, callback=callback)
 
     @property

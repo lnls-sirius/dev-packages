@@ -3,7 +3,7 @@
 import time as _time
 import numpy as _np
 
-from .device import DeviceNC as _DeviceNC, Devices as _Devices
+from .device import DeviceNC as _DeviceNC, DeviceSet as _DeviceSet
 from ..csdev import Const as _Const
 
 
@@ -179,7 +179,7 @@ class DevLILLRF(_DeviceNC):
         return (phase + 180) % 360 - 180
 
 
-class LILLRF(_Devices):
+class LILLRF(_DeviceSet):
     """Linac Low-Level-RF devices."""
 
     def __init__(self):

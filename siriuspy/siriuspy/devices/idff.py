@@ -4,12 +4,12 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
 from ..idff.config import IDFFConfig as _IDFFConfig
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import WIG as _WIG, APU as _APU, PAPU as _PAPU, EPU as _EPU
 
 
-class IDFF(_Devices):
+class IDFF(_DeviceSet):
     """Insertion Device Feedforward Device."""
 
     class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES):
@@ -292,7 +292,7 @@ class EPUIDFF(IDFF):
         return self.kparameter_mon
 
 
-class APUIDFF(_Devices):
+class APUIDFF(_DeviceSet):
     """APU Feedforward."""
 
     class DEVICES(_APU.DEVICES):

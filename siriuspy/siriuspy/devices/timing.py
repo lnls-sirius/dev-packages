@@ -6,7 +6,7 @@ import numpy as _np
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
+    DeviceSet as _DeviceSet
 from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
     get_hl_trigger_database as _get_hl_trigger_database
 from ..search import HLTimeSearch as _HLTimeSearch
@@ -500,7 +500,7 @@ class Trigger(_Device):
         return self._wait('LowLvlLock-Sts', 0, timeout)
 
 
-class HLTiming(_Devices):
+class HLTiming(_DeviceSet):
     """."""
 
     SEARCH = _HLTimeSearch

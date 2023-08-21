@@ -3,7 +3,7 @@
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..magnet.factory import NormalizerFactory as _NormalizerFactory
 
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 from .syncd import DevicesSync as _DevicesSync
 
 
@@ -76,7 +76,7 @@ class PSProperty(_DevicesSync):
         return (devname, )
 
 
-class StrengthConv(_Devices):
+class StrengthConv(_DeviceSet):
     """Strength Converter."""
 
     # TODO: Test changing default value of auto_monitor_mon

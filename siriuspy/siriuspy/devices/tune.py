@@ -2,7 +2,7 @@
 
 
 from .device import Device as _Device
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 
 
 class TuneFrac(_Device):
@@ -79,7 +79,7 @@ class TuneProc(_Device):
         return self['Trace-Mon']
 
 
-class Tune(_Devices):
+class Tune(_DeviceSet):
     """Tune device."""
 
     class DEVICES:

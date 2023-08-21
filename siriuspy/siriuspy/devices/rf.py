@@ -5,7 +5,7 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import DeviceNC as _DeviceNC, Devices as _Devices
+from .device import DeviceNC as _DeviceNC, DeviceSet as _DeviceSet
 
 
 class RFGen(_DeviceNC):
@@ -1041,7 +1041,7 @@ class SIRFCavMonitor(_DeviceNC):
         return self['AmpVCav-Mon']
 
 
-class RFCav(_Devices):
+class RFCav(_DeviceSet):
     """."""
 
     class DEVICES:

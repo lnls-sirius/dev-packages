@@ -9,13 +9,13 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _PVName
 
-from .device import Device as _Device, Devices as _Devices, \
+from .device import Device as _Device, DeviceSet as _DeviceSet, \
     ProptyDevice as _ProptyDevice
 from .dcct import DCCT
 from .rf import RFCav
 
 
-class BunchbyBunch(_Devices):
+class BunchbyBunch(_DeviceSet):
     """BunchbyBunch Device."""
 
     _devices = {
