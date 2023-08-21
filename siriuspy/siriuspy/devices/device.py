@@ -281,7 +281,6 @@ class DeviceNC(Device):
     names and PVs are not compliant to the Sirius naming system.
     """
 
-
     def _create_pv(self, propty):
         devname = self._devname or ''
         pvname = devname + self.DEVSEP + propty
@@ -310,12 +309,11 @@ class DeviceApp(Device):
         return self._devname_app
 
 
-class Devices:
+class DeviceSet:
     """."""
 
-    def __init__(self, devname, devices):
+    def __init__(self, devices):
         """."""
-        self._devname = devname
         self._devices = devices
 
     @property
