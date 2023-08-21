@@ -250,6 +250,11 @@ class SiriusPVName(str):
         nickname += '-' + self.idx if self.idx else ''
         return nickname
 
+    @property
+    def is_standard(self):
+        """Return whether pvname is in conformation to Namesys standard."""
+        return self == self.substitute()
+
     def __lt__(self, other):
         """Less-than operator."""
         cond = ((type(other) == type(self)) and
