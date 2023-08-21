@@ -432,7 +432,7 @@ class TesterPSFOFB(_TesterBase):
     """FOFB PS tester."""
 
     _properties = (
-        'AlarmsAmp-Mon', 'AlarmsAmpLtcRst-Cmd',
+        'AlarmsAmpLtc-Mon', 'AlarmsAmpLtcRst-Cmd',
         'PwrState-Sel', 'PwrState-Sts',
         'Current-SP', 'CurrentRef-Mon', 'Current-Mon',
         'OpMode-Sel', 'OpMode-Sts',
@@ -462,7 +462,7 @@ class TesterPSFOFB(_TesterBase):
 
     def check_intlk(self):
         """Check interlocks."""
-        return self['AlarmsAmp-Mon'] == 0
+        return self['AlarmsAmpLtc-Mon'] == 0
 
     def set_pwrstate(self, state='on'):
         """Set PwrState."""
