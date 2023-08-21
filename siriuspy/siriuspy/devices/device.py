@@ -42,25 +42,24 @@ class Device:
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     GET_TIMEOUT = _GET_TIMEOUT
     DEVSEP = ':'
-    ALL_PROPTIES = ()
+    PROPERTIES_DEFAULT = ()
 
     def __init__(
-            self, devname, init_propties='all', auto_monitor=True,
+            self, devname, props2init='all', auto_monitor=True,
             auto_monitor_mon=False):
         """."""
-        if isinstance(init_propties, str) and init_propties.lower() == 'all':
-            propties = self.ALL_PROPTIES
-        elif not init_propties:
-            propties = []
-        elif isinstance(init_propties, (list, tuple)):
-            propties = init_propties
-        else:
-            raise ValueError('Wrong value for init_propties.')
-
+        self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
-        self._devname = _SiriusPVName(devname) if devname else devname
 
+        if isinstance(props2init, str) and props2init.lower() == 'all':
+            propties = self.PROPERTIES_DEFAULT
+        elif not props2init:
+            propties = []
+        elif isinstance(props2init, (list, tuple)):
+            propties = props2init
+        else:
+            raise ValueError('Wrong value for init_propties.')
         self._pvs = {prpt: self._create_pv(prpt) for prpt in propties}
 
     @property
@@ -69,14 +68,20 @@ class Device:
         return self._devname
 
     @property
-    def all_properties(self):
-        """Return all possible properties defined in class interface."""
-        return _dcopy(self.ALL_PROPTIES)
-
-    @property
     def properties_in_use(self):
         """Return properties that were alreadty added to the PVs list."""
         return sorted(self._pvs.keys())
+
+    @property
+    def properties_added(self):
+        """Return properties that were alreadty added to the PVs list."""
+        return sorted(
+            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+
+    @property
+    def properties_all(self):
+        """Return all properties of the device, connected or not."""
+        return sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
 
     @property
     def simulators(self):
