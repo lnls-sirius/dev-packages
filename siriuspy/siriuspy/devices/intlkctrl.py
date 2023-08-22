@@ -10,7 +10,7 @@ class ASPPSCtrl(_Device):
     """Accelerator PPS Control."""
 
     _properties = (
-        'TunAccessWaitTimeLeft-Mon'
+        'TunAccessRemainingWaitTime-Mon'
     )
 
     def __init__(self, *args, **kwargs):
@@ -19,9 +19,9 @@ class ASPPSCtrl(_Device):
         super().__init__(devname, properties=self._properties, *args, **kwargs)
 
     @property
-    def time_left_to_tunnel_access(self):
-        """Return time left for tunnel access [min]."""
-        return self['TunAccessWaitTimeLeft-Mon']
+    def remaining_time_for_tunnel_access(self):
+        """Return remaining time for tunnel access [min]."""
+        return self['TunAccessRemainingWaitTime-Mon']
 
 
 class ASMPSCtrl(_Device):
