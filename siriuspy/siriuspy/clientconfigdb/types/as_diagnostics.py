@@ -382,7 +382,6 @@ _bpm_propts = [
     [':TbTDataMaskEn-Sel', 1, 0.0],
     [':TbTDataMaskSamplesBeg-SP', 0.0, 0.0],
     [':TbTDataMaskSamplesEnd-SP', 0.0, 0.0],
-    [':RFFEAtt-SP', 31.5, 0.0],
     [':PosKsum-SP', 1, 0.0],
     [':PosXOffset-SP', 0, 0.0],
     [':PosYOffset-SP', 0, 0.0],
