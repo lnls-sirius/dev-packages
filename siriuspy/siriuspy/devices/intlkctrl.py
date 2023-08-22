@@ -1,11 +1,66 @@
 """Beamline Control."""
 
 import time as _time
+
+from .device import Device as _Device
 from .device import DeviceNC as _DeviceNC
 
 
-class BLPPSCtrl(_DeviceNC):
-    """Beamline Control."""
+class ASPPSCtrl(_Device):
+    """Accelerator PPS Control."""
+
+    _properties = (
+        'TunAccessRemainingWaitTime-Mon'
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        devname = 'AS-Glob:PP-Summary'
+        super().__init__(devname, properties=self._properties, *args, **kwargs)
+
+    @property
+    def remaining_time_for_tunnel_access(self):
+        """Return remaining time for tunnel access [min]."""
+        return self['TunAccessRemainingWaitTime-Mon']
+
+
+class ASMPSCtrl(_Device):
+    """Accelerator MPS Control."""
+
+    _properties = (
+        'AlarmGammaShutter-Mon',
+        'DsblGamma-Cmd', 'EnblGamma-Cmd',
+        # 'DsblGamma-Mon', 'EnblGamma-Mon',
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        devname = 'AS-Glob:MP-Summary'
+        super().__init__(devname, properties=self._properties, *args, **kwargs)
+
+    @property
+    def gamma_enabled(self):
+        """."""
+        return self['AlarmGammaShutter-Mon'] == 1
+
+    @property
+    def gamma_disabled(self):
+        """."""
+        return self['AlarmGammaShutter-Mon'] == 0
+
+    def cmd_gamma_enable(self, timeout=None):
+        """Enable gamma signal for beamlines."""
+        self['EnblGamma-Cmd'] = 1
+        return self._wait('AlarmGammaShutter-Mon', 1, timeout)
+
+    def cmd_gamma_disable(self, timeout=None):
+        """Disable gamma signal for beamlines."""
+        self['DsblGamma-Cmd'] = 1
+        return self._wait('AlarmGammaShutter-Mon', 0, timeout)
+
+
+class BLInterlockCtrl(_DeviceNC):
+    """Beamline Interlock Control."""
 
     TIMEOUT_GATEVALVE = 20  # [s]
     TIMEOUT_SHUTTER = 7  # [s]
@@ -78,7 +133,7 @@ class BLPPSCtrl(_DeviceNC):
     def __init__(self, devname, *args, **kwargs):
         """Init."""
         # check if device exists
-        if devname not in BLPPSCtrl.DEVICES.ALL:
+        if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
         # call base class constructor
         super().__init__(devname, properties=self._properties, *args, **kwargs)
@@ -380,7 +435,7 @@ class BLPPSCtrl(_DeviceNC):
             self.cmd_beamline_eps_reset()
             t0 = _time.time()
             while not self.is_beamline_eps_ok:
-                if _time.time() - t0 > BLPPSCtrl.TIMEOUT_EPS_RESET:
+                if _time.time() - t0 > self.TIMEOUT_EPS_RESET:
                     print('eps reset timeout reached!')
                     return False
                 _time.sleep(0.5)
@@ -392,7 +447,7 @@ class BLPPSCtrl(_DeviceNC):
             self.cmd_frontend_gatevalves_open()
             t0 = _time.time()
             while not self.is_frontend_gatevalves_opened:
-                if _time.time() - t0 > BLPPSCtrl.TIMEOUT_GATEVALVE:
+                if _time.time() - t0 > self.TIMEOUT_GATEVALVE:
                     msg = 'open frontend and hutchA gatevalve timeout reached!'
                     print(msg)
                     return False
@@ -402,20 +457,20 @@ class BLPPSCtrl(_DeviceNC):
         if not self.is_hutchA_shutter_eps_permission_ok:
             print('open hutchB gatevalves')
             is_ok = self.cmd_hutchB_gatevalves_open(
-                timeout=BLPPSCtrl.TIMEOUT_GATEVALVE)
+                timeout=self.TIMEOUT_GATEVALVE)
             if not is_ok:
                 return False
 
         # open frontend gamma and photon shutter
         print('open frontend gamma and photon shutters')
         is_ok = self.cmd_frontend_gamma_and_photon_open(
-            timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+            timeout=self.TIMEOUT_SHUTTER)
         if not is_ok:
             return False
 
         # open hutchA photon shutter
         print('open hutchA photon shutter')
-        is_ok = self.cmd_hutchA_photon_open(timeout=BLPPSCtrl.TIMEOUT_SHUTTER)
+        is_ok = self.cmd_hutchA_photon_open(timeout=self.TIMEOUT_SHUTTER)
         if not is_ok:
             return False
 
