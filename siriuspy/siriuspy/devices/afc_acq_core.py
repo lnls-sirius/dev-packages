@@ -2,13 +2,13 @@
 import time as _time
 
 from ..namesys import SiriusPVName
-from .device import ProptyDevice as _ProptyDevice
+from .device import Device as _Device
 
 
-class AFCPhysicalTrigger(_ProptyDevice):
+class AFCPhysicalTrigger(_Device):
     """AFC Physical Trigger device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Dir-Sel', 'Dir-Sts',
         'DirPol-Sel', 'DirPol-Sts',
         'RcvCnt-Mon',
@@ -17,21 +17,21 @@ class AFCPhysicalTrigger(_ProptyDevice):
         'TrnLen-SP', 'TrnLen-RB',
     )
 
-    def __init__(self, devname, index):
+    def __init__(self, devname, index, props2init='all'):
         """Init."""
         if not 0 <= int(index) <= 7:
             raise NotImplementedError(index)
 
-        propties = AFCPhysicalTrigger._properties
         # handle FOFB and BPM IOC differences
         # TODO: remove when new BPM IOC is updated.
-        if SiriusPVName(devname).dev == 'BPM':
-            propties += ('RcvCntRst-SP', 'TrnCntRst-SP')
-        else:
-            propties += ('RcvCntRst-Cmd', 'TrnCntRst-Cmd')
+        if props2init == 'all':
+            props2init = list(AFCPhysicalTrigger.PROPERTIES_DEFAULT)
+            if SiriusPVName(devname).dev == 'BPM':
+                props2init += ['RcvCntRst-SP', 'TrnCntRst-SP']
+            else:
+                props2init += ['RcvCntRst-Cmd', 'TrnCntRst-Cmd']
 
-        super().__init__(
-            devname, 'TRIGGER'+str(index), properties=propties)
+        super().__init__(devname+':TRIGGER'+str(index), props2init=props2init)
 
     @property
     def direction(self):
@@ -98,24 +98,22 @@ class AFCPhysicalTrigger(_ProptyDevice):
         self['TrnLen-SP'] = value
 
 
-class AFCACQLogicalTrigger(_ProptyDevice):
+class AFCACQLogicalTrigger(_Device):
     """AFC ACQ Logical Trigger device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'RcvSrc-Sel', 'RcvSrc-Sts',
         'RcvInSel-SP', 'RcvInSel-RB',
         'TrnSrc-Sel', 'TrnSrc-Sts',
         'TrnOutSel-SP', 'TrnOutSel-RB',
     )
 
-    def __init__(self, devname, index, acqcore=''):
+    def __init__(self, devname, index, acqcore='', props2init='all'):
         """Init."""
         if not 0 <= int(index) <= 23:
             raise NotImplementedError(index)
-        propty_prefix = 'TRIGGER'+('_'+acqcore if acqcore else '')+str(index)
-        super().__init__(
-            devname, propty_prefix,
-            properties=AFCACQLogicalTrigger._properties)
+        propty_prefix = ':TRIGGER'+('_'+acqcore if acqcore else '')+str(index)
+        super().__init__(devname + propty_prefix, props2init=props2init)
 
     @property
     def receiver_source(self):
