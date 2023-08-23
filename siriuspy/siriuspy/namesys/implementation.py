@@ -46,6 +46,7 @@ def join_name(**kwargs):
     """
     dic = {k: v for k, v in kwargs.items() if v}  # get valid args
     name = ''
+    elements = None
     if len(dic) == 1:
         if 'propty' in dic:
             name += dic['propty']
@@ -55,10 +56,13 @@ def join_name(**kwargs):
     if len(dic) == 2:
         if 'sec' in dic and 'sub' in dic:
             name += dic['sec'].upper() + '-' + dic['sub']
+            elements = 'sec-sub'
         elif 'dis' in dic and 'dev' in dic:
             name += dic['dis'].upper() + '-' + dic['dev']
+            elements = 'dis-dev'
         elif 'propty_name' in dic and 'propty_suffix' in dic:
             name += dic['propty_name'] + '-' + dic['propty_suffix']
+            elements = 'propty'
         return SiriusPVName(name)
     if len(dic) == 3:
         if 'dis' in dic and 'dev' in dic and 'idx' in dic:
@@ -91,7 +95,7 @@ def join_name(**kwargs):
         name += dic['propty_name']
     if 'field' in dic:
         name += '.' + dic['field']
-    return SiriusPVName(name)
+    return SiriusPVName(name, elements=elements)
 
 
 def split_name(pvname, elements=None):
