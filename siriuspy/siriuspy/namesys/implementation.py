@@ -256,10 +256,32 @@ class SiriusPVName(str):
         nickname += '-' + self.idx if self.idx else ''
         return nickname
 
-    @property
-    def is_standard(self):
-        """Return whether pvname is in conformation to Namesys standard."""
-        return self == self.substitute()
+    def is_standard(self, name_type='devname'):
+        """Return whether pvname is in conformation to Namesys standard.
+
+        Args:
+            name_type (str, optional): Type of check you want to perform.
+                Please select one of the options below to check:
+                    'devname' -> whether this is a standard Device Name;
+                    'pvname' -> if this is a standard PVname;
+                    'area_name' -> if it is a standard Area Name;
+                    'propty' -> if this is a standard Property Name.
+                Defaults to 'devname'.
+
+        Returns:
+            bool: Whether or not it is in accordance with SIRIUS naming
+                conventions.
+
+        """
+        name_type = name_type.lower()
+        props = {self.sec, self.sub}  # area_name
+        if name_type.startswith('devname'):
+            props |= {self.dev, self.dis}
+        if name_type.startswith('pvname'):
+            props.add(self.propty)
+        if name_type.startswith('propty'):
+            props = {self.propty_name, self.propty_suffix}
+        return '' not in props and self == self.substitute()
 
     def __lt__(self, other):
         """Less-than operator."""
