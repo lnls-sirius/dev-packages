@@ -24,7 +24,7 @@ class BPM(_Device):
     ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
@@ -80,18 +80,20 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
+    def __init__(
+            self, devname, props2init='all', auto_monitor_mon=True,
+            ispost_mortem=False):
         """."""
         # call base class constructor
         self._ispost_mortem = ispost_mortem
-        properties = {self.get_propname(p) for p in BPM._properties}
 
-        if _BPMSearch.is_photon_bpm(devname):
-            properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
-        properties = list(properties)
+        if props2init == 'all' and _BPMSearch.is_photon_bpm(devname):
+            props2init = set(BPM.PROPERTIES_DEFAULT)
+            props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
+            props2init = list(props2init)
 
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -874,6 +876,7 @@ class BPM(_Device):
         return fadc / self.switching_rate
 
     def get_propname(self, prop):
+        """Get appropriate property name in case of triggered acquisitions."""
         if not self._ispost_mortem:
             return prop
         if prop.startswith('GEN'):
@@ -881,6 +884,10 @@ class BPM(_Device):
         elif prop.startswith('ACQ'):
             return prop.replace('ACQ', 'ACQ_PM')
         return prop
+
+    def _get_pvname(self, propty):
+        propty = self.get_propname(propty)
+        return super()._get_pvname(propty)
 
 
 class FamBPMs(_DeviceSet):
@@ -900,6 +907,7 @@ class FamBPMs(_DeviceSet):
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
+    PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
 
     class DEVICES:
         """."""
@@ -908,7 +916,9 @@ class FamBPMs(_DeviceSet):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, bpmnames=None, ispost_mortem=False):
+    def __init__(
+            self, devname=None, bpmnames=None, ispost_mortem=False,
+            props2init='all'):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -916,14 +926,15 @@ class FamBPMs(_DeviceSet):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
+        self._devname = devname
         bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
-        devs = [
-            BPM(dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem)
-            for dev in bpm_names]
+        devs = [BPM(
+            dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
+            props2init=props2init) for dev in bpm_names]
 
-        super().__init__(devname, devs)
+        super().__init__(devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
         self._initial_timestamps = None
@@ -935,6 +946,11 @@ class FamBPMs(_DeviceSet):
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._mturn_set_flag)
+
+    @property
+    def devname(self):
+        """."""
+        return self._devname
 
     @property
     def bpm_names(self):
