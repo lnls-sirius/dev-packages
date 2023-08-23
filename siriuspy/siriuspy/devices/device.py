@@ -320,11 +320,6 @@ class DeviceSet:
         self._devices = devices
 
     @property
-    def devname(self):
-        """Return device name."""
-        return self._devname
-
-    @property
     def simulators(self):
         """Return list of simulators."""
         sims = set()
