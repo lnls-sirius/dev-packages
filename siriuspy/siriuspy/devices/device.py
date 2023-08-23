@@ -315,9 +315,15 @@ class DeviceApp(Device):
 class DeviceSet:
     """."""
 
-    def __init__(self, devices):
+    def __init__(self, devices, devname=''):
         """."""
         self._devices = devices
+        self._devname = _SiriusPVName(devname)
+
+    @property
+    def devname(self):
+        """Name of the Device set. May be empty in some cases."""
+        return self._devname
 
     @property
     def simulators(self):

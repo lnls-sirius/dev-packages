@@ -27,7 +27,6 @@ class BunchbyBunch(_DeviceSet):
     def __init__(self, devname):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        self._devname = devname
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
         self.rfcav = RFCav(RFCav.DEVICES.SI)
         self.info = SystemInfo(devname)
@@ -58,12 +57,7 @@ class BunchbyBunch(_DeviceSet):
             self.pwr_amp = PwrAmpT(devname)
             devs.append(self.pwr_amp)
 
-        super().__init__(devices=devs)
-
-    @property
-    def devname(self):
-        """Return device name."""
-        return self._devname
+        super().__init__(devices=devs, devname=devname)
 
     @staticmethod
     def process_device_name(devname):

@@ -24,7 +24,7 @@ class IDFF(_DeviceSet):
         if devname not in IDFF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._devname = devname  # needed for _create_devices
+        self._devname = _SiriusPVName(devname)  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
         self._pparametername = \
@@ -41,7 +41,7 @@ class IDFF(_DeviceSet):
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
-        super().__init__(devname=devname, devices=devices)
+        super().__init__(devices=devices, devname=devname)
 
     @property
     def chnames(self):

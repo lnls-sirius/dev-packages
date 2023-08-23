@@ -1060,14 +1060,8 @@ class RFCav(_DeviceSet):
             self.dev_cavmon = BORFCavMonitor()
         devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
-        self._devname = _PVName(devname)
         # call base class constructor
-        super().__init__(devices)
-
-    @property
-    def devname(self):
-        """Return device name."""
-        return self._devname
+        super().__init__(devices, devname=devname)
 
     @property
     def is_cw(self):
