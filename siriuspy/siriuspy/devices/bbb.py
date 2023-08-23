@@ -27,6 +27,7 @@ class BunchbyBunch(_DeviceSet):
     def __init__(self, devname):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
+        self._devname = devname
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
         self.rfcav = RFCav(RFCav.DEVICES.SI)
         self.info = SystemInfo(devname)
@@ -41,7 +42,7 @@ class BunchbyBunch(_DeviceSet):
         self.drive1 = Drive(devname, drive_num=1)
         self.drive2 = Drive(devname, drive_num=2)
         self.bunch_clean = BunchClean(devname)
-        self.fbe = FrontBackEnd()
+        self.fbe = FrontBackEnd(devname)
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive0, self.drive1, self.drive2,
@@ -57,7 +58,12 @@ class BunchbyBunch(_DeviceSet):
             self.pwr_amp = PwrAmpT(devname)
             devs.append(self.pwr_amp)
 
-        super().__init__(devname, devices=devs)
+        super().__init__(devices=devs)
+
+    @property
+    def devname(self):
+        """Return device name."""
+        return self._devname
 
     @staticmethod
     def process_device_name(devname):
@@ -205,19 +211,17 @@ class SystemInfo(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
         'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
         'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
         'RST_COUNT', 'CNTRST', 'RF_FREQ', 'FREV', 'HARM_NUM', 'REVISION',
         'GW_TYPE', 'IP_ADDR')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=SystemInfo._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def status(self):
@@ -334,7 +338,7 @@ class Timing(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'TADC', 'TDAC', 'DELAY', 'OFF_FIDS', 'FID_DELAY', 'CLKRST',
         'FREQ_CNT_CH0', 'FREQ_CNT_CH1', 'FREQ_CNT_CH2', 'FREQ_CNT_CH3',
         'FREQ_CNT_CH4',
@@ -342,12 +346,10 @@ class Timing(_Device):
         'ECLDEL0_SUBWR', 'ECLDEL1_SUBWR', 'ECLDEL2_SUBWR', 'ECLDEL3_SUBWR',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Timing._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def adc_delay(self):
@@ -488,7 +490,7 @@ class Timing(_Device):
 class Coefficients(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'CSET0', 'CSET1', 'CSET2', 'CSET3', 'COEFF',
         'DESC_CSET0', 'DESC_CSET1', 'DESC_CSET2', 'DESC_CSET3', 'DESC_COEFF',
         'CVERIFY.C', 'CVERIFY.D', 'CVERIFY.G', 'CVERIFY.H',
@@ -502,12 +504,10 @@ class Coefficients(_Device):
     OFF, ON = 0, 1
     FPGA_BITS = 2**15
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Coefficients._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def set0(self):
@@ -696,12 +696,12 @@ class Coefficients(_Device):
         return self._wait('BO_CVERIFY', 1, timeout)
 
 
-class Acquisition(_ProptyDevice):
+class Acquisition(_Device):
     """."""
 
     ACQTYPE = _get_namedtuple('Devices', ('SRAM', 'BRAM'))
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'GDTIME', 'HOLDTIME', 'POSTTIME', 'ACQTIME',
         'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE', 'SP_AVG',
         'HWTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
@@ -720,15 +720,11 @@ class Acquisition(_ProptyDevice):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname, acqtype='BRAM'):
+    def __init__(self, devname, acqtype='BRAM', props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         acqtype = Acquisition.process_acquisition_type(acqtype)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix=acqtype+'_',
-            properties=Acquisition._properties)
+        super().__init__(devname+':'+acqtype+'_', props2init=props2init)
 
         pvo = self.pv_object('RAW')
         self._update_data_evt = _Event()
@@ -1178,10 +1174,10 @@ class Acquisition(_ProptyDevice):
         self._update_data_evt.set()
 
 
-class SingleBunch(_ProptyDevice):
+class SingleBunch(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ACQTIME', 'ACQ_SAMPLES', 'ACQ_EN', 'ACQ_SINGLE',
         'BUNCH_ID', 'RAW_BUNCH_ID',
         'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
@@ -1194,13 +1190,10 @@ class SingleBunch(_ProptyDevice):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix='SB_', properties=SingleBunch._properties)
+        super().__init__(devname+':'+'SB_', props2init=props2init)
 
     @property
     def acqtime(self):
@@ -1443,7 +1436,7 @@ class SingleBunch(_ProptyDevice):
 class PhaseTracking(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PHTRK_GAIN', 'PHTRK_SETPT', 'PHTRK_RANGE', 'PHTRK_DECIM',
         'PHTRK_RATE', 'PHTRK_BANDWIDTH', 'PHTRK_LOOPCTRL',
         'PHTRK_MAG', 'PHTRK_TFGAIN', 'PHTRK_SHIFT', 'PHTRK_PHASE',
@@ -1452,13 +1445,10 @@ class PhaseTracking(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, properties=PhaseTracking._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def gain(self):
@@ -1572,7 +1562,7 @@ class PhaseTracking(_Device):
 class FrontBackEnd(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'FBE_Z_ATT', 'FBE_Z_PHASE', 'FBELT_SERVO_SETPT',
         'FBE_BE_ATT', 'FBE_BE_PHASE',
         'FBE_X_ATT', 'FBE_X_PHASE', 'FBELT_X_PHASE_SETPT',
@@ -1581,11 +1571,10 @@ class FrontBackEnd(_Device):
 
     FPGA_BITS = 2**15
 
-    def __init__(self):
+    def __init__(self, devname, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(
-            BunchbyBunch.DEVICES.L, properties=FrontBackEnd._properties)
+        devname = BunchbyBunch.process_device_name(devname)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def z_att(self):
@@ -1671,18 +1660,16 @@ class FrontBackEnd(_Device):
 class Feedback(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PROC_DS', 'FBCTRL', 'SHIFTGAIN', 'SETSEL', 'SAT_THRESHOLD',
         'FB_MASK', 'FB_PATTERN', 'CF_MASK', 'CF_PATTERN',
         'CF_PATTERN_SUB.VALB', 'GDEN',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Feedback._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def downsample(self):
@@ -1785,23 +1772,22 @@ class Feedback(_Device):
         self['GDEN'] = int(value)
 
 
-class Drive(_ProptyDevice):
+class Drive(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'MOD', 'AMPL', 'WAVEFORM', 'FREQ', 'FREQ_ACT', 'SPAN', 'SPAN_ACT',
         'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN', 'BITS',
         )
 
-    def __init__(self, devname, drive_num=None):
+    def __init__(self, devname, drive_num=None, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         propty = 'DRIVE'
         if drive_num is not None:
             propty += str(drive_num)
         propty += '_'
-        super().__init__(
-            devname, propty_prefix=propty, properties=Drive._properties)
+        super().__init__(devname+':'+propty, props2init=props2init)
 
     @property
     def number_of_bits(self):
@@ -1881,18 +1867,16 @@ class Drive(_ProptyDevice):
         self['PATTERN'] = str(value)
 
 
-class BunchClean(_ProptyDevice):
+class BunchClean(_Device):
     """."""
 
-    _properties = (
-        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN',
-        )
+    PROPERTIES_DEFAULT = (
+        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        super().__init__(
-            devname, propty_prefix='CLEAN_', properties=BunchClean._properties)
+        super().__init__(devname+':CLEAN_', props2init=props2init)
 
     @property
     def state(self):
@@ -1949,21 +1933,17 @@ class BunchClean(_ProptyDevice):
         self['PATTERN'] = str(value)
 
 
-class PwrAmpL(_ProptyDevice):
+class PwrAmpL(_Device):
     """."""
 
-    _properties = ('FAULT', 'TEMP', 'FWDLOSS', 'REVLOSS', 'FWD', 'REV')
+    PROPERTIES_DEFAULT = ('FAULT', 'TEMP', 'FWDLOSS', 'REVLOSS', 'FWD', 'REV')
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname, num=0):
+    def __init__(self, devname, num=0, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix=f'MCLRAW_{num:d}_',
-            properties=PwrAmpL._properties)
+        super().__init__(devname+f':MCLRAW_{num:d}_', props2init=props2init)
 
     @property
     def status(self):
@@ -2009,18 +1989,16 @@ class PwrAmpT(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
         'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         devname = devname.substitute(dev='BbBAmp'+devname.idx, idx='')
-
-        # call base class constructor
-        super().__init__(devname, properties=PwrAmpT._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def enable(self):
