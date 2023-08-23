@@ -58,7 +58,7 @@ def join_name(**kwargs):
         elif 'dis' in dic and 'dev' in dic:
             name += dic['dis'].upper() + '-' + dic['dev']
         elif 'propty_name' in dic and 'propty_suffix' in dic:
-            name += dic['propty_name'].upper() + '-' + dic['propty_suffix']
+            name += dic['propty_name'] + '-' + dic['propty_suffix']
         return SiriusPVName(name)
     if len(dic) == 3:
         if 'dis' in dic and 'dev' in dic and 'idx' in dic:
