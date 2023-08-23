@@ -5,10 +5,11 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import DeviceNC as _DeviceNC, DeviceSet as _DeviceSet
+from ..namesys import SiriusPVName as _PVName
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
-class RFGen(_DeviceNC):
+class RFGen(_Device):
     """Wrap the basic features of the RF Generator used in Sirius.
 
     The Generator is the R&S SMA100A Signal Generator.
@@ -66,7 +67,7 @@ class RFGen(_DeviceNC):
         SPARE = 'RF-SI-Gen'
         ALL = (AS, SPARE)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'GeneralFreq-SP', 'GeneralFreq-RB',
 
         'FreqFExeSweep-Cmd',  # execute single sweep
@@ -90,7 +91,7 @@ class RFGen(_DeviceNC):
         'FreqFDwellTime-RB', 'FreqFDwellTime-SP',
         )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         if devname is None:
             devname = RFGen.DEVICES.AS
@@ -98,9 +99,7 @@ class RFGen(_DeviceNC):
         # check if device exists
         if devname not in RFGen.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=RFGen._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def is_phase_continuous(self):
@@ -564,7 +563,7 @@ class RFGen(_DeviceNC):
         return ampl
 
 
-class ASLLRF(_DeviceNC):
+class ASLLRF(_Device):
     """AS LLRF."""
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
@@ -581,7 +580,7 @@ class ASLLRF(_DeviceNC):
         SI = 'SR-RF-DLLRF-01'
         ALL = (BO, SI)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PL:REF', 'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
         'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
@@ -594,14 +593,12 @@ class ASLLRF(_DeviceNC):
         'PHSREF:INCRATE', 'PHSREF:INCRATE:S',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in ASLLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=ASLLRF._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def is_cw(self):
@@ -810,7 +807,7 @@ class ASLLRF(_DeviceNC):
         return (phase + 180) % 360 - 180
 
 
-class BORFCavMonitor(_DeviceNC):
+class BORFCavMonitor(_Device):
     """."""
 
     class DEVICES:
@@ -818,7 +815,7 @@ class BORFCavMonitor(_DeviceNC):
 
         BO = 'BO-05D:RF-P5Cav'
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
@@ -826,11 +823,9 @@ class BORFCavMonitor(_DeviceNC):
         'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
         )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(
-            BORFCavMonitor.DEVICES.BO, properties=BORFCavMonitor._properties)
+        super().__init__(BORFCavMonitor.DEVICES.BO, props2init=props2init)
 
     @property
     def status(self):
@@ -928,7 +923,7 @@ class BORFCavMonitor(_DeviceNC):
         return self['RmpAmpVCavTop-Mon']
 
 
-class SIRFCavMonitor(_DeviceNC):
+class SIRFCavMonitor(_Device):
     """."""
 
     class DEVICES:
@@ -936,7 +931,7 @@ class SIRFCavMonitor(_DeviceNC):
 
         SI = 'SI-02SB:RF-P7Cav'
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PwrRev-Mon', 'PwrFwd-Mon',
         'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
@@ -944,11 +939,10 @@ class SIRFCavMonitor(_DeviceNC):
         'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
         )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
         # call base class constructor
-        super().__init__(
-            SIRFCavMonitor.DEVICES.SI, properties=SIRFCavMonitor._properties)
+        super().__init__(SIRFCavMonitor.DEVICES.SI, props2init=props2init)
 
     @property
     def status(self):
@@ -1066,8 +1060,14 @@ class RFCav(_DeviceSet):
             self.dev_cavmon = BORFCavMonitor()
         devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
+        self._devname = _PVName(devname)
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices)
+
+    @property
+    def devname(self):
+        """Return device name."""
+        return self._devname
 
     @property
     def is_cw(self):
