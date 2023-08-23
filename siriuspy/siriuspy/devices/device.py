@@ -236,7 +236,8 @@ class Device:
     def _get_pvname(self, propty):
         dev = self._devname
         pref = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
-        if isinstance(dev, _SiriusPVName) and dev.is_standard:
+        if isinstance(dev, _SiriusPVName) and \
+                dev.is_standard(name_type='devname'):
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
