@@ -77,7 +77,7 @@ class _PSDev(_Device):
         'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
     )
 
-    def __init__(self, devname, auto_monitor_mon=False):
+    def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -97,9 +97,10 @@ class _PSDev(_Device):
          self._strength_mon_propty,
          properties) = self._set_attributes_properties(devname)
 
-        # call base class constructor
+        if props2init == 'all':
+            props2init = properties
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
         # private attribute with strength setpoint pv object
         self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
@@ -639,14 +640,14 @@ class PowerSupplyPU(_PSDev):
 
     _properties_timing = ('Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in PowerSupplyPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname)
+        super().__init__(devname, props2init=props2init)
 
         # create timing device
         self._dev_timing = self._create_timing_device()
@@ -803,7 +804,7 @@ class PowerSupplyPU(_PSDev):
     def _create_timing_device(self):
         """."""
         devname = self._devname.substitute(dis='TI')
-        device = _Device(devname, PowerSupplyPU._properties_timing)
+        device = _Device(devname, props2init=PowerSupplyPU._properties_timing)
         return device
 
 
