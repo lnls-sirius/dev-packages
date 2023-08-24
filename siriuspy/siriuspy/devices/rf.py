@@ -725,18 +725,23 @@ class ASLLRF(_DeviceNC):
 
     @property
     def voltage_incrate_str(self):
-        """."""
+        """Voltage increase rate enum string."""
         return self.VoltIncRates._fields[self['AMPREF:INCRATE']]
 
     @property
     def voltage_incrate(self):
-        """."""
+        """Voltage increase rate."""
         return self['AMPREF:INCRATE']
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
         if int(value) in self.VoltIncRates:
             self['AMPREF:INCRATE:S'] = int(value)
+
+    def set_voltage_incrate(self, value, timeout=None):
+        """Set and wait voltage increase rate to reach `value`."""
+        self.voltage_incrate = value
+        return self._wait('AMPREF:INCRATE', value, timeout=timeout)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
