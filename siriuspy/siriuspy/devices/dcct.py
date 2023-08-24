@@ -21,7 +21,7 @@ class DCCT(_Device):
         ALL = (BO, SI_13C4, SI_14C4)
 
     _properties = (
-        'RawReadings-Mon', 'Current-Mon',
+        'RawReadings-Mon', 'Current-Mon', 'StoredEBeam-Mon',
         'FastMeasPeriod-SP', 'FastMeasPeriod-RB',
         'FastSampleCnt-SP', 'FastSampleCnt-RB',
         'MeasTrg-Sel', 'MeasTrg-Sts',
@@ -67,13 +67,18 @@ class DCCT(_Device):
 
     @property
     def current_fast(self):
-        """."""
+        """Current waveform for fast mode."""
         return self['RawReadings-Mon']
 
     @property
     def current(self):
-        """."""
+        """Current value."""
         return self['Current-Mon']
+
+    @property
+    def is_beam_stored(self):
+        """Is beam stored flag."""
+        return bool(self['StoredEBeam-Mon'])
 
     def wait(self, timeout=10):
         """."""
