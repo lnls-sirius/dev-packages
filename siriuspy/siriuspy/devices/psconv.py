@@ -100,7 +100,7 @@ class StrengthConv(_DeviceSet):
             devices = ()
 
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices, devname=devname)
 
     @property
     def dipole_strength(self):
@@ -207,7 +207,8 @@ class StrengthConv(_DeviceSet):
             return dev_dip, None
 
         # is others
-        return StrengthConv._get_dev_others(devname, proptype, auto_monitor_mon), None
+        return StrengthConv._get_dev_others(
+            devname, proptype, auto_monitor_mon), None
 
     @staticmethod
     def _get_dev_if_dipole(devname):
