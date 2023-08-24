@@ -1164,6 +1164,22 @@ class HLFOFB(_Device):
     def loop_state(self, value):
         self['LoopState-Sel'] = value
 
+    def cmd_turn_on_loop_state(self, timeout=None):
+        """Turn on loop state."""
+        if self.loop_state == _Const.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_loop_state(self, timeout=None):
+        """Turn off loop state."""
+        if self.loop_state == _Const.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Open, timeout=timeout)
+
     @property
     def loop_gain_h(self):
         """Loop gain H."""
