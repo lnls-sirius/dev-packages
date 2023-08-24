@@ -2,7 +2,7 @@
 
 import time as _time
 
-from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
+from ..csdev import Const as _Const
 
 from .device import Device as _Device
 
@@ -10,7 +10,7 @@ from .device import Device as _Device
 class DCCT(_Device):
     """."""
 
-    PWRSTATE = _PSCStatus.PWRSTATE
+    OffOn = _Const.OffOn
 
     class DEVICES:
         """Devices names."""
@@ -63,7 +63,7 @@ class DCCT(_Device):
     @acq_ctrl.setter
     def acq_ctrl(self, value):
         """."""
-        self['MeasTrg-Sel'] = DCCT.PWRSTATE.On if value else DCCT.PWRSTATE.Off
+        self['MeasTrg-Sel'] = DCCT.OffOn.On if value else DCCT.OffOn.Off
 
     @property
     def current_fast(self):
@@ -92,17 +92,17 @@ class DCCT(_Device):
 
     def cmd_turn_on(self, timeout=10):
         """."""
-        self.acq_ctrl = DCCT.PWRSTATE.On
+        self.acq_ctrl = DCCT.OffOn.On
         return self.wait(timeout)
 
     def cmd_turn_off(self, timeout=10):
         """."""
-        self.acq_ctrl = DCCT.PWRSTATE.Off
+        self.acq_ctrl = DCCT.OffOn.Off
         return self.wait(timeout)
 
     # --- private methods ---
 
     def _isok(self):
         if self['MeasTrg-Sel']:
-            return self.acq_ctrl == DCCT.PWRSTATE.On
-        return self.acq_ctrl != DCCT.PWRSTATE.On
+            return self.acq_ctrl == DCCT.OffOn.On
+        return self.acq_ctrl != DCCT.OffOn.On
