@@ -637,6 +637,15 @@ class ASLLRF(_DeviceNC):
         """Ramp ready."""
         return self['RmpReady-Mon']
 
+    def set_rmp_enable(self, value, timeout=None, wait_ready=False):
+        """Set ramp enable."""
+        self.rmp_enable = value
+        if not self._wait('RmpEnbl-Sts', value, timeout=timeout):
+            return False
+        if wait_ready:
+            return self._wait('RmpReady-Mon', value, timeout=timeout)
+        return True
+
     @property
     def phase_top(self):
         """."""
