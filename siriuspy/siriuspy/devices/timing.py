@@ -1,5 +1,6 @@
 """."""
 import time as _time
+from copy import deepcopy as _dcopy
 
 import numpy as _np
 
@@ -521,16 +522,59 @@ class HLTiming(_DeviceSet):
 
     SEARCH = _HLTimeSearch
 
-    def __init__(self):
+    def __init__(
+            self, controlled_trigs='all', trigs_props2init='all',
+            evts_props2init='all'):
         """."""
         self.evg = EVG()
         evs = self.SEARCH.get_configurable_hl_events()
-        self.events = {ev: Event(ev) for ev in evs.keys()}
-        self.triggers = {t: Trigger(t) for t in self.SEARCH.get_hl_triggers()}
+        self.events = {
+            ev: Event(ev, props2init=evts_props2init) for ev in evs.keys()}
+
+        self._triggernames_all = self.SEARCH.get_hl_triggers()
+        trigs = self._triggernames_all
+        if isinstance(controlled_trigs, (list, tuple)):
+            trigs = sorted(set(controlled_trigs) & set(self.triggernames_all))
+        self.triggers = {
+            t: Trigger(t, props2init=trigs_props2init) for t in trigs}
+        self._trigs_props2init = trigs_props2init
+
         devs = [self.evg, ]
         devs += list(self.events.values())
         devs += list(self.triggers.values())
         super().__init__(devs, devname='AS-Glob:TI-HLTiming')
+
+    @property
+    def triggernames_controlled(self):
+        """Names of the triggers controlled by this class."""
+        return list(self.triggers)
+
+    @property
+    def triggernames_all(self):
+        """Names of all the possible high level triggers."""
+        return _dcopy(self._triggernames_all)
+
+    @property
+    def is_full(self):
+        """Return True if this class controls all triggers."""
+        return not bool(set(self._triggernames_all) - set(self.triggers))
+
+    def add_trigger(self, trigname):
+        """Add trigger to the list of controlled triggers.
+
+        Args:
+            trigname (str): Trigger name to add
+
+        Returns:
+            bool: whether addition was sucessful.
+
+        """
+        if trigname not in set(self._triggernames_all):
+            return False
+        if trigname not in self.triggers:
+            self.triggers[trigname] = Trigger(
+                trigname, props2init=self._trigs_props2init)
+        return True
 
     def get_mapping_events2triggers(self) -> dict:
         """."""
@@ -553,14 +597,19 @@ class HLTiming(_DeviceSet):
         """."""
         notchanged = list()
         for tn in trigs:
-            tr = self.triggers[tn]
+            tr = self.triggers.get(tn)
+            if tr is None:
+                notchanged.append(tn)
+                if not printlog:
+                    continue
+                print(f'{tn:25s} -> No Change: {tn:s} is not controlled.')
+                continue
 
             if new_src not in tr.source_options:
-                if printlog:
-                    print(
-                        f'{tn:25s} -> No Change: {new_src:s}'
-                        ' is not an option.')
                 notchanged.append(tn)
+                if not printlog:
+                    continue
+                print(f'{tn:25s} -> No Change: {new_src:s} is not an option.')
                 continue
 
             dly_newsrc = 0
@@ -590,6 +639,11 @@ class HLTiming(_DeviceSet):
 
     def change_event_delay(self, new_dly, event='Linac', printlog=True):
         """."""
+        if not self.is_full:
+            if printlog:
+                print('Aborted: class does not control all triggers.')
+            return False
+
         if event not in self.events:
             if printlog:
                 print(f'{event} is not a valid event!')
