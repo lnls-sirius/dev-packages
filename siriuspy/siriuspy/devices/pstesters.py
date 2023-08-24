@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 
 from ..util import get_bit as _get_bit
+from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSC, ETypes as _PSE, \
     PS_LI_INTLK_THRS as _PS_LI_INTLK, \
@@ -642,6 +643,37 @@ class TesterPUSept(_TesterPUBase):
         status &= (self['Intlk6-Mon'] == 1)
         status &= (self['Intlk7-Mon'] == 1)
         return status
+
+
+class PSTesterFactory:
+    """Factory class for PS and PU testers."""
+
+    @staticmethod
+    def create(devname):
+        """Return tester for PS/PU devname."""
+        devname = _PVName(devname)
+        if devname.sec == 'LI':
+            tester = TesterPSLinac(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FOFB_PS':
+            tester = TesterPSFOFB(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP_DCLink':
+            tester = TesterDCLinkFBP(devname)
+        elif 'bo-dclink' in _PSSearch.conv_psname_2_pstype(devname):
+            tester = TesterDCLink(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'REGATRON_DCLink':
+            tester = TesterDCLinkRegatron(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP':
+            tester = TesterPSFBP(devname)
+        elif devname.dis == 'PS':
+            tester = TesterPS(devname)
+        elif devname.dis == 'PU' and 'Kckr' in devname.dev:
+            tester = TesterPUKckr(devname)
+        elif devname.dis == 'PU' and 'Sept' in devname.dev:
+            tester = TesterPUSept(devname)
+        else:
+            raise NotImplementedError(
+                f'There is no Tester defined for {devname}.')
+        return tester
 
 
 class Trigger(_Device):
