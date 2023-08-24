@@ -582,6 +582,7 @@ class ASLLRF(_DeviceNC):
         ALL = (BO, SI)
 
     _properties = (
+        'SL:S', 'SL',
         'PL:REF', 'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
         'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
@@ -602,6 +603,20 @@ class ASLLRF(_DeviceNC):
 
         # call base class constructor
         super().__init__(devname, properties=ASLLRF._properties)
+
+    @property
+    def slow_loop_state(self):
+        """Slow loop state."""
+        return self['SL']
+
+    @slow_loop_state.setter
+    def slow_loop_state(self, value):
+        self['SL:S'] = int(value)
+
+    def set_slow_loop_state(self, value, timeout=None):
+        """Wait for slow loop state to reach `value`."""
+        self.slow_loop_state = value
+        return self._wait('SL', value, timeout=timeout)
 
     @property
     def is_cw(self):
