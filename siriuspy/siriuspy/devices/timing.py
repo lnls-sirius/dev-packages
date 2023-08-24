@@ -22,7 +22,7 @@ class EVG(_Device):
         'Preparing_Continuous', 'Preparing_Injection',
         'Restarting_Continuous'))
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'InjectionEvt-Sel', 'InjectionEvt-Sts', 'UpdateEvt-Cmd',
         'ContinuousEvt-Sel', 'ContinuousEvt-Sts', 'STATEMACHINE',
         'RepeatBucketList-SP', 'RepeatBucketList-RB',
@@ -30,9 +30,9 @@ class EVG(_Device):
         'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
         'BucketListSyncStatus-Mon')
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
-        super().__init__(EVG.DEVNAME, properties=EVG._properties)
+        super().__init__(EVG.DEVNAME, props2init=props2init)
 
     @property
     def nrpulses(self):
@@ -169,10 +169,10 @@ class EVG(_Device):
         return self._wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
-class Event(_ProptyDevice):
+class Event(_Device):
     """Device Timing Event."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
         'DelayType-Sel', 'DelayType-Sts', 'Mode-Sel', 'Mode-Sts',
         'Code-Mon', 'ExtTrig-Cmd',
@@ -181,10 +181,10 @@ class Event(_ProptyDevice):
     MODES = _ETypes.EVT_MODES
     DELAYTYPES = ('Incr', 'Fixed')
 
-    def __init__(self, evtname):
+    def __init__(self, evtname, props2init='all'):
         """."""
         super().__init__(
-            EVG.DEVNAME, evtname, properties=Event._properties)
+            EVG.DEVNAME + ':' + evtname, props2init=props2init)
 
     @property
     def mode(self):
@@ -261,12 +261,28 @@ class Trigger(_Device):
     LOCKLL = ('Unlocked', 'Locked')
     POLARITIES = ('Normal', 'Inverse')
 
-    def __init__(self, trigname):
+    PROPERTIES_DEFAULT = (
+        'CtrldChannels-Cte', 'Delay-RB', 'Delay-SP', 'DelayRaw-RB',
+        'DelayRaw-SP', 'DeltaDelay-RB', 'DeltaDelay-SP', 'DeltaDelayRaw-RB',
+        'DeltaDelayRaw-SP', 'Duration-RB', 'Duration-SP', 'InInjTable-Mon',
+        'LowLvlLock-Sel', 'LowLvlLock-Sts', 'LowLvlTriggers-Cte',
+        'NrPulses-RB', 'NrPulses-SP', 'Polarity-Sel', 'Polarity-Sts',
+        'Src-Sel', 'Src-Sts', 'State-Sel', 'State-Sts', 'Status-Mon',
+        'StatusLabels-Cte', 'TotalDelay-Mon', 'TotalDelayRaw-Mon',
+        'WidthRaw-RB', 'WidthRaw-SP')
+
+    def __init__(self, trigname, props2init='all'):
         """Init."""
-        self._database = _get_hl_trigger_database(trigname)
-        self._properties = tuple(self._database)
-        self._source_options = self._database['Src-Sel']['enums']
-        super().__init__(trigname, properties=self._properties)
+        _database = _get_hl_trigger_database(trigname)
+        all_props = tuple(_database)
+        if props2init == 'all':
+            props2init = all_props
+        elif props2init is None:
+            pass
+        else:
+            props2init = list(set(all_props) & set(props2init))
+        self._source_options = _database['Src-Sel']['enums']
+        super().__init__(trigname, props2init=props2init)
 
     @property
     def status(self):
@@ -514,7 +530,7 @@ class HLTiming(_DeviceSet):
         devs = [self.evg, ]
         devs += list(self.events.values())
         devs += list(self.triggers.values())
-        super().__init__('AS-Glob:TI-HLTiming', devs)
+        super().__init__(devs, devname='AS-Glob:TI-HLTiming')
 
     def get_mapping_events2triggers(self) -> dict:
         """."""
