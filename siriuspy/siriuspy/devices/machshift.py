@@ -32,7 +32,13 @@ class MachShift(_Device):
         return MachShift.MODES[self['Mode-Sts']]
 
     def check_mode(self, value):
-        """Check if mode is Users."""
+        """Check if Mode-Sts is in desired value."""
         if isinstance(value, int):
             return self.mode == value
         return self.mode == MachShift.MODES.index(value)
+
+    def wait_mode(self, mode, timeout=None):
+        """Wait Mode-Sts to reach `mode` value."""
+        if isinstance(mode, str):
+            mode = MachShift.MODES.index(mode)
+        return self._wait('Mode-Sts', mode, timeout=timeout)
