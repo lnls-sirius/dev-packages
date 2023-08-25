@@ -5,7 +5,8 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import DeviceNC as _DeviceNC, Devices as _Devices
+from .device import Device as _Device, Devices as _Devices, \
+    DeviceNC as _DeviceNC
 
 
 class RFGen(_DeviceNC):
@@ -1169,3 +1170,248 @@ class RFKillBeam(ASLLRF):
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Amplitude Increase Rate back.']
         return [True, '']
+
+
+class SILLRFPreAmp(_Device):
+    """SILLRF Pre Amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SIA01 = 'RA-RaSIA01:RF-LLRFPreAmp-1'
+        ALL = (SIA01, )
+
+    _properties = (
+        'PINSw1Enbl-Cmd', 'PINSw1Dsbl-Cmd', 'PINSw1-Mon',
+        'PINSw2Enbl-Cmd', 'PINSw2Dsbl-Cmd', 'PINSw2-Mon',
+    )
+
+    def __init__(self, devname=''):
+        if not devname:
+            devname = SILLRFPreAmp.DEVICES.SIA01
+        if devname not in SILLRFPreAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=SILLRFPreAmp._properties)
+
+    def cmd_enable_pinsw_1(self, timeout=None, wait_mon=True):
+        """Enable PINSw 1."""
+        self['PINSw1Enbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw1Enbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw1-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_enable_pinsw_2(self, timeout=None, wait_mon=True):
+        """Enable PINSw 2."""
+        self['PINSw2Enbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw2Enbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw2-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw_1(self, timeout=None, wait_mon=True):
+        """Disable PINSw 1."""
+        self['PINSw1Dsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw1Dsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw1-Mon', 0, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw_2(self, timeout=None, wait_mon=True):
+        """Disable PINSw 2."""
+        self['PINSw2Dsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw2Dsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw2-Mon', 0, timeout=timeout)
+        return True
+
+
+class BOLLRFPreAmp(_Device):
+    """BOLLRF Pre Amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        BO01 = 'RA-RaBO01:RF-LLRFPreAmp'
+        ALL = (BO01, )
+
+    _properties = (
+        'PinSwEnbl-Cmd', 'PinSwDsbl-Cmd', 'PinSw-Mon',
+    )
+
+    def __init__(self, devname=''):
+        if not devname:
+            devname = BOLLRFPreAmp.DEVICES.BO01
+        if devname not in BOLLRFPreAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=BOLLRFPreAmp._properties)
+
+    def cmd_enable_pinsw(self, timeout=None, wait_mon=True):
+        """Enable PINSw."""
+        self['PinSwEnbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PinSwEnbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PinSw-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw(self, timeout=None, wait_mon=True):
+        """Disable PINSw."""
+        self['PinSwDsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PinSwDsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PinSw-Mon', 0, timeout=timeout)
+        return True
+
+
+class SIRFDCAmp(_Device):
+    """SI RF DC/TDK amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA1 = 'RA-ToSIA01:RF-TDKSource'
+        SSA2 = 'RA-ToSIA02:RF-TDKSource'
+        ALL = (SSA1, SSA2)
+
+    _properties = (
+        'PwrDCEnbl-Sel', 'PwrDCDsbl-Sel', 'PwrDC-Sts',
+    )
+
+    def __init__(self, devname):
+        if devname not in SIRFDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=SIRFDCAmp._properties)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrDCEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrDCEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrDC-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrDCDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrDCDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrDC-Sts', 0, timeout=timeout)
+        return True
+
+
+class BORFDCAmp(_Device):
+    """BO RF DC/DC amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA = 'RA-ToBO:RF-SSAmpTower'
+        ALL = (SSA, )
+
+    _properties = (
+        'PwrCnvEnbl-Sel', 'PwrCnvDsbl-Sel', 'PwrCnv-Sts',
+    )
+
+    def __init__(self, devname=''):
+        if not devname:
+            devname = BORFDCAmp.DEVICES.SSA
+        if devname not in BORFDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=BORFDCAmp._properties)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrCnvEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrCnvEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrCnv-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrCnvDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrCnvDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrCnv-Sts', 0, timeout=timeout)
+        return True
+
+
+class SIRFACAmp(_Device):
+    """SI RF AC/TDK amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA1 = 'RA-ToSIA01:RF-ACPanel'
+        SSA2 = 'RA-ToSIA02:RF-ACPanel'
+        ALL = (SSA1, SSA2)
+
+    _properties = (
+        'PwrACEnbl-Sel', 'PwrACDsbl-Sel', 'PwrAC-Sts',
+    )
+
+    def __init__(self, devname):
+        if devname not in SIRFACAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=SIRFACAmp._properties)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrACEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrACEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrAC-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrACDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrACDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrAC-Sts', 0, timeout=timeout)
+        return True
+
+
+class BORF300VDCAmp(_Devices):
+    """BO RF 300VDC amplifier."""
+
+    def __init__(self):
+        self._sel = _Device(
+            'RA-ToBO:RF-ACDCPanel',
+            properties=('300VdcEnbl-Sel', '300VdcDsbl-Sel'))
+        self._mon = _Device(
+            'BO-ToBO:RF-ACDCPanel', properties=('300Vdc-Mon', ))
+
+        super().__init__('', (self._sel, self._mon))
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self._sel['300VdcEnbl-Sel'] = 1
+        _time.sleep(1)
+        self._sel['300VdcEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait_devices_propty(
+                self._mon, '300Vdc-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self._sel['300VdcDsbl-Sel'] = 1
+        _time.sleep(1)
+        self._sel['300VdcDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait_devices_propty(
+                self._mon, '300Vdc-Mon', 0, timeout=timeout)
+        return True
