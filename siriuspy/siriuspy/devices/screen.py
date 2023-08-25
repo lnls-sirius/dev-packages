@@ -31,7 +31,8 @@ class Screen(_DeviceSet):
         ALL = (
             TB_1, TB_2, TB_3, TB_4, TB_5, TB_6,
             BO_1, BO_2, BO_3,
-            TS_1, TS_2, TS_3, TS_4, TS_5, TS_6)
+            TS_1, TS_2, TS_3, TS_4, TS_5, TS_6,
+            )
 
     def __init__(self, devname):
         """."""
@@ -43,7 +44,7 @@ class Screen(_DeviceSet):
         self.screen = _Screen(devname)
         self.screencam = _ScreenCam(devname)
         devs = [self.screen, self.screencam]
-        super().__init__(devname, devices=devs)
+        super().__init__(devs, devname=devname)
 
     @property
     def image_width(self):
@@ -114,22 +115,19 @@ class _Screen(_Device):
 
     DEVICES = Screen.DEVICES
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ImgData-Mon',
         'CenterXDimFei-Mon', 'CenterYDimFei-Mon',
         'SigmaXDimFei-Mon', 'SigmaYDimFei-Mon',
         'ThetaDimFei-Mon', 'ImgROIHeight-RB',
-        'ImgROIWidth-RB'
-    )
+        'ImgROIWidth-RB',
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
-        # check if device exists
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=_Screen._properties)
+        super().__init__(devname, props2init=props2init)
 
 
 class _ScreenCam(_Device):
@@ -137,17 +135,14 @@ class _ScreenCam(_Device):
 
     DEVICES = Screen.DEVICES
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ScaleFactorX-RB', 'ScaleFactorY-RB',
         'CenterOffsetX-RB', 'CenterOffsetY-RB',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
-        # check if device exists
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
-
         devname = _PVName(devname).substitute(dev='ScrnCam')
-        # call base class constructor
-        super().__init__(devname, properties=_ScreenCam._properties)
+        super().__init__(devname, props2init=props2init)
