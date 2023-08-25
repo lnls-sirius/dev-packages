@@ -387,6 +387,7 @@ _bpm_propts = [
     [':PosYOffset-SP', 0, 0.0],
     [':PosQOffset-SP', 0, 0.0],
     [':ACQTriggerHwDly-SP', 0, 0.0],
+    [':ACQ_PMTriggerHwDly-SP', 0, 0.0],
     [':INFOClkFreq-SP', 220910069.0, 0.0],
     [':INFOHarmonicNumber-SP', 864, 0.0],
     [':INFOTbTRate-SP', 382, 0.0],
