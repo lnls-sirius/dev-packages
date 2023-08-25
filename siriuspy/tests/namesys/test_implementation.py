@@ -106,7 +106,8 @@ class TestSiriusPVName(TestCase):
         'from_rb2sp',
         'strip',
         'replace',
-    )
+        'is_standard',
+        )
 
     def test_public_interface(self):
         """Test SiriusPVName public interface."""
