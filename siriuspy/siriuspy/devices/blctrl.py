@@ -1,10 +1,10 @@
 """Beamline Control."""
 
 import time as _time
-from .device import DeviceNC as _DeviceNC
+from .device import Device as _Device
 
 
-class BLPPSCtrl(_DeviceNC):
+class BLPPSCtrl(_Device):
     """Beamline Control."""
 
     TIMEOUT_GATEVALVE = 20  # [s]
@@ -17,7 +17,7 @@ class BLPPSCtrl(_DeviceNC):
         CAX = 'CAX'
         ALL = (CAX, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         # Status da liberação do gamma pela máquina – 1 indica liberado
         'M:PPS01:HABILITACAO_MAQUINA',
 
@@ -73,15 +73,15 @@ class BLPPSCtrl(_DeviceNC):
         'B:EPS01:openGates',
         'B:EPS01:GV7open', 'B:EPS01:GV7closed',  # open/close gate status
         'A:EPS01:GV6open', 'A:EPS01:GV6closed',  # open/close gate status
-    )
+        )
 
-    def __init__(self, devname, *args, **kwargs):
+    def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
-        # check if device exists
+        if devname is None:
+            devname = BLPPSCtrl.DEVICES.CAX
         if devname not in BLPPSCtrl.DEVICES.ALL:
             raise NotImplementedError(devname)
-        # call base class constructor
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
     def is_hutchA_intlk_search_done(self):
