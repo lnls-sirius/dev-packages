@@ -1,9 +1,6 @@
 """Define Insertion Devices."""
 
 import time as _time
-import numpy as _np
-
-from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _SiriusPVName
 
