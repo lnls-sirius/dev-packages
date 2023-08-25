@@ -257,61 +257,6 @@ class Device:
             self[propty] = value
 
 
-class ProptyDevice(Device):
-    """Device with a prefix property name."""
-
-    def __init__(self, devname, propty_prefix, **kwargs):
-        """Check Device for help with `kwargs`."""
-        self._propty_prefix = propty_prefix
-        # call base class constructor
-        super().__init__(devname, **kwargs)
-
-    def _get_pvname(self, propty):
-        if self._devname:
-            func = self._devname.substitute
-            pvname = func(propty=self._propty_prefix + propty)
-        else:
-            pvname = self._propty_prefix + propty
-        return pvname
-
-
-# NOTE: This class is temporary. It should become deprecated once all
-# devices names are in accordance with Sirius naming system
-class DeviceNC(Device):
-    """Non-compliant Devices.
-
-    This device class is to be used for those devices whose
-    names and PVs are not compliant to the Sirius naming system.
-    """
-
-    def _create_pv(self, propty):
-        devname = self._devname or ''
-        pvname = devname + self.DEVSEP + propty
-        auto_monitor = self._auto_monitor
-        if pvname.endswith(('-Mon', 'Data')):
-            auto_monitor = self._auto_monitor_mon
-        return _PV(pvname, auto_monitor=auto_monitor)
-
-
-class DeviceApp(Device):
-    """Application Device.
-
-    This kind of device groups properties of other devices.
-    """
-
-    def __init__(self, devname=None, **kwargs):
-        """Check Device for help with `kwargs`."""
-        self._devname_app = devname
-
-        # call base class constructor
-        super().__init__(None, **kwargs)
-
-    @property
-    def devname(self):
-        """Return application device name."""
-        return self._devname_app
-
-
 class DeviceSet:
     """."""
 

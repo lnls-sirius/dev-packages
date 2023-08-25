@@ -9,8 +9,7 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _PVName
 
-from .device import Device as _Device, DeviceSet as _DeviceSet, \
-    ProptyDevice as _ProptyDevice
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .dcct import DCCT
 from .rf import RFCav
 

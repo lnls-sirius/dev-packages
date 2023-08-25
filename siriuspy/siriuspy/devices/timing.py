@@ -6,8 +6,7 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    DeviceSet as _DeviceSet
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
     get_hl_trigger_database as _get_hl_trigger_database
 from ..search import HLTimeSearch as _HLTimeSearch
