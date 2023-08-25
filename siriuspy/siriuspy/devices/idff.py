@@ -36,12 +36,11 @@ class IDFF(_DeviceSet):
         self._devpp, self._devkp, self._devsch, self._devscv, self._devsqs = \
             self._create_devices(devname)
 
-        # call base class constructor
-        devices = [self._devkp, ]
+        devices = [self._devpp, self._devkp]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
-        super().__init__(devices=devices, devname=devname)
+        super().__init__(devices, devname=devname)
 
     @property
     def chnames(self):
@@ -163,7 +162,8 @@ class IDFF(_DeviceSet):
             raise ValueError('Value incompatible with config template')
 
         configs = value['polarizations']
-        pvnames = {key: value for key, value in value['pvnames'] \
+        pvnames = {
+            key: value for key, value in value['pvnames']
             if key not in ('pparameters', 'kparameters')}
         corrlabels = set(pvnames.keys())
 
@@ -184,7 +184,8 @@ class IDFF(_DeviceSet):
 
         # check polarization tables consistency
         for polarization, table in configs.items():
-            corrtable = {key: value for key, value in table \
+            corrtable = {
+                key: value for key, value in table
                 if key not in ('pparameters', 'kparameters')}
 
             # check 'pparameter'
@@ -206,15 +207,13 @@ class IDFF(_DeviceSet):
 
             # check nrpts in tables
             param = 'pparameter' if polarization == 'none' else 'kparameter'
-            nrpts_corrtables = set([len(table) for table in corrtable.values()])
+            nrpts_corrtables = {len(table) for table in corrtable.values()}
             nrpts_kparameter = set([len(table[param]), ])
             symm_diff = nrpts_corrtables ^ nrpts_kparameter
             if symm_diff:
-                msg = (
-                    'Corrector tables and kparameter list in config'
-                    ' are not consistent')
-                raise ValueError(msg)
-
+                raise ValueError(
+                    'Corrector tables and kparameter list in config '
+                    'are not consistent')
         return True
 
     def get_polarization_state(
@@ -238,16 +237,15 @@ class IDFF(_DeviceSet):
         param_auto_mon = False
         devpp = _Device(
             devname=devname,
-            properties=(self._pparametername, ),
+            props2init=(self._pparametername, ),
             auto_monitor_mon=param_auto_mon)
         devkp = _Device(
             devname=devname,
-            properties=(self._kparametername, ),
+            props2init=(self._kparametername, ),
             auto_monitor_mon=param_auto_mon)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-
         return devpp, devkp, devsch, devscv, devsqs
 
 
