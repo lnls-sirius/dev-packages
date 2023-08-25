@@ -612,6 +612,7 @@ class SISOFB(BOSOFB):
         'RFEnbl-Sel', 'RFEnbl-Sts',
         'SlowOrbX-Mon', 'SlowOrbY-Mon',
         'LoopState-Sts', 'LoopState-Sel',
+        'CorrSync-Sts', 'CorrSync-Sel',
         'LoopPIDKpCH-SP', 'LoopPIDKiCH-SP', 'LoopPIDKdCH-SP',
         'LoopPIDKpCH-RB', 'LoopPIDKiCH-RB', 'LoopPIDKdCH-RB',
         'LoopPIDKpCV-SP', 'LoopPIDKiCV-SP', 'LoopPIDKdCV-SP',
@@ -938,6 +939,29 @@ class SISOFB(BOSOFB):
         self['LoopState-Sel'] = self._data.LoopState.Open
         return self._wait(
             'LoopState-Sts', self._data.LoopState.Open, timeout=timeout)
+
+    @property
+    def synckicksts(self):
+        """Correction syncronization status."""
+        return self['CorrSync-Sts']
+
+    @synckicksts.setter
+    def synckicksts(self, value):
+        self._enum_setter('CorrSync-Sel', value, self._data.CorrSync)
+
+    @property
+    def synckicksts_str(self):
+        """Correction syncronization status enum string."""
+        return self._data.CorrSync._fields[self['CorrSync-Sts']]
+
+    def cmd_turn_off_synckick(self, timeout=None):
+        """Turn off correction synchronization."""
+        timeout = timeout or self._default_timeout
+        if self.synckicksts == self._data.CorrSync.Off:
+            return True
+        self['CorrSync-Sel'] = self._data.CorrSync.Off
+        return self._wait(
+            'CorrSync-Sts', self._data.CorrSync.Off, timeout=timeout)
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
