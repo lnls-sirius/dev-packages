@@ -12,6 +12,7 @@ from ..pwrsupply.csdev import Const as _Const, \
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
+from .timing import Trigger as _Trigger
 
 
 class _PSDev(_Device):
@@ -636,7 +637,7 @@ class PowerSupplyPU(_PSDev):
             TS_INJ_SEPTF,
             SI_INJ_DPKCKR, SI_INJ_NLKCKR,
             SI_PING_H, SI_PING_V,
-        )
+            )
 
     _properties_timing = ('Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB')
 
@@ -804,8 +805,7 @@ class PowerSupplyPU(_PSDev):
     def _create_timing_device(self):
         """."""
         devname = self._devname.substitute(dis='TI')
-        device = _Device(devname, props2init=PowerSupplyPU._properties_timing)
-        return device
+        return _Trigger(devname, props2init=PowerSupplyPU._properties_timing)
 
 
 class PowerSupplyFC(_PSDev):
