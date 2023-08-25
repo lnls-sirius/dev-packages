@@ -37,6 +37,7 @@ class Device:
             Whether to automatically monitor '-Mon' or 'Data' PVs for changes.
             Defaults to False (to avoid overloading the client). Set to False
             when using PV.get_timevars() to know when a PV has been updated.
+
     """
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
