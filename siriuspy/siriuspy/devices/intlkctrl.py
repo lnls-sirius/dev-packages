@@ -10,7 +10,7 @@ class ASPPSCtrl(_Device):
     """Accelerator PPS Control."""
 
     _properties = (
-        'TunAccessRemainingWaitTime-Mon'
+        'TunAccessRemainingWaitTime-Mon',
     )
 
     def __init__(self, *args, **kwargs):
