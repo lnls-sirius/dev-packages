@@ -849,6 +849,7 @@ class BORFCavMonitor(_DeviceNC):
         BO = 'BO-05D:RF-P5Cav'
 
     _properties = (
+        'PwrFwd-Mon', 'PwrRev-Mon',
         'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
