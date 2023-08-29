@@ -1385,34 +1385,40 @@ class SIRFACAmp(_Device):
         return True
 
 
-class BORF300VDCAmp(_Devices):
+class BORF300VDCAmp(_Device):
     """BO RF 300VDC amplifier."""
 
-    def __init__(self):
-        self._sel = _Device(
-            'RA-ToBO:RF-ACDCPanel',
-            properties=('300VdcEnbl-Sel', '300VdcDsbl-Sel'))
-        self._mon = _Device(
-            'BO-ToBO:RF-ACDCPanel', properties=('300Vdc-Mon', ))
+    class DEVICES:
+        """Devices names."""
 
-        super().__init__('', (self._sel, self._mon))
+        SSA = 'RA-ToBO:RF-ACDCPanel'
+        ALL = (SSA, )
+
+    _properties = (
+        '300VdcEnbl-Sel', '300VdcDsbl-Sel', '300Vdc-Sts',
+    )
+
+    def __init__(self, devname=None):
+        if not devname:
+            devname = BORF300VDCAmp.DEVICES.SSA
+        if devname not in BORF300VDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, properties=BORF300VDCAmp._properties)
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
-        self._sel['300VdcEnbl-Sel'] = 1
+        self['300VdcEnbl-Sel'] = 1
         _time.sleep(1)
-        self._sel['300VdcEnbl-Sel'] = 0
+        self['300VdcEnbl-Sel'] = 0
         if wait_mon:
-            return self._wait_devices_propty(
-                self._mon, '300Vdc-Mon', 1, timeout=timeout)
+            return self._wait('300Vdc-Sts', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
         """Disable."""
-        self._sel['300VdcDsbl-Sel'] = 1
+        self['300VdcDsbl-Sel'] = 1
         _time.sleep(1)
-        self._sel['300VdcDsbl-Sel'] = 0
+        self['300VdcDsbl-Sel'] = 0
         if wait_mon:
-            return self._wait_devices_propty(
-                self._mon, '300Vdc-Mon', 0, timeout=timeout)
+            return self._wait('300Vdc-Sts', 0, timeout=timeout)
         return True
