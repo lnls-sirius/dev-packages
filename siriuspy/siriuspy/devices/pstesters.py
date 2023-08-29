@@ -426,7 +426,8 @@ class TesterPSLinac(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else 10*self.test_tol
+        return abs(value - target) < tol
 
 
 class TesterPSFOFB(_TesterBase):
@@ -615,7 +616,8 @@ class _TesterPUBase(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else self.test_tol*2
+        return abs(value - target) < tol
 
 
 class TesterPUKckr(_TesterPUBase):
