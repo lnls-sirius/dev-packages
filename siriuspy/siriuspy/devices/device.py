@@ -28,8 +28,14 @@ class Device:
     ----------
         devname: str
             Device name, to be used as PVs prefix.
-        properties: (tuple, list)
-            List of properties, to be used as last part of the PV names.
+        props2init: ('all', None or (tuple, list)), optional
+            Define which PVs will be connected in the class instantiation. If
+            equal to 'all', all properties listed in PROPERTIES_DEFAULT will
+            be initialized. If None or empty iterable, no property will be
+            initialized. If iterable of strings, only the properties listed
+            will be initialized. In this last option, it is possible to add
+            properties that are not in PROPERTIES_DEFAULT. The other properties
+            will be created whenever they are needed. Defaults to 'all'.
         auto_monitor: bool, optional
             Whether to automatically monitor PVs for changes. Used for PVs
             that do not end with '-Mon' or 'Data'. Defaults to True.
@@ -70,12 +76,13 @@ class Device:
 
     @property
     def properties_in_use(self):
-        """Return properties that were alreadty added to the PVs list."""
+        """Return properties that were already added to the PV list."""
         return sorted(self._pvs.keys())
 
     @property
     def properties_added(self):
-        """Return properties that were alreadty added to the PVs list."""
+        """Return properties that were added to the PV list that are not in
+        PROPERTIES_DEFAULT."""
         return sorted(
             set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
 
