@@ -538,6 +538,10 @@ class _TesterPUBase(_TesterBase):
 
     def reset(self):
         """Reset."""
+        # if there is no interlock, do not send reset to avoid strange IOC
+        # behavior (Pulse-Sts is enabled when there are no interlock)
+        if self.check_intlk():
+            return
         self['Reset-Cmd'] = 1
 
     def check_intlk(self):
