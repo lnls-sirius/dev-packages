@@ -24,7 +24,7 @@ class ETypes(_csdev.ETypes):
         'Unconnected6', 'Unconnected7', 'Unconnected8', 'Unconnected9')
     SWMODES = ('rffe_switching', 'direct', 'inverted', 'switching')
     SWTAGENBL = ('disabled', 'enabled')
-    SWDATAMASKENBL = ('disabled', 'enabled')
+    FOFBDATAMASKENBL = ('disabled', 'enabled')
     MONITENBL = ('No', 'Yes')
 
     OPMODES = ('MultiBunch', 'SinglePass')
@@ -61,9 +61,9 @@ class Const(_csdev.Const):
     TrigIntern = _csdev.Const.register('TrigIntern', _et.TRIGINTERN)
     LogTrigIntern = _csdev.Const.register('LogTrigIntern', _et.LOGTRIGINTERN)
     SwModes = _csdev.Const.register('SwModes', _et.SWMODES)
-    SwTagEnbl = _csdev.Const.register('SwTagEnbl', _et.SWTAGENBL)
-    SwDataMaskEnbl = _csdev.Const.register(
-        'SwDataMaskEnbl', _et.SWDATAMASKENBL)
+    SwPhaseSyncEnbl = _csdev.Const.register('SwPhaseSyncEnbl', _et.SWTAGENBL)
+    FOFBDataMaskEnbl = _csdev.Const.register(
+        'FOFBDataMaskEnbl', _et.FOFBDATAMASKENBL)
     MonitEnbl = _csdev.Const.register('MonitEnbl', _et.MONITENBL)
     OpModes = _csdev.Const.register('OpModes', _et.OPMODES)
     Polarity = _csdev.Const.register('Polarity', _et.POLARITY)
@@ -247,27 +247,19 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': Const.SwModes._fields, 'value': 3},
             'SwMode-Sts': {
                 'type': 'enum', 'enums': Const.SwModes._fields, 'value': 3},
-            'SwTagEn-Sel': {
-                'type': 'enum', 'enums': Const.SwTagEnbl._fields, 'value': 0},
-            'SwTagEn-Sts': {
-                'type': 'enum', 'enums': Const.SwTagEnbl._fields, 'value': 0},
-            'SwDataMaskEn-Sel': {
-                'type': 'enum', 'enums': Const.SwDataMaskEnbl._fields,
+            'SwPhaseSyncEn-Sel': {
+                'type': 'enum', 'enums': Const.SwPhaseSyncEnbl._fields,
                 'value': 0},
-            'SwDataMaskEn-Sts': {
-                'type': 'enum', 'enums': Const.SwDataMaskEnbl._fields,
+            'SwPhaseSyncEn-Sts': {
+                'type': 'enum', 'enums': Const.SwPhaseSyncEnbl._fields,
                 'value': 0},
-            'SwDly-SP': {
+            'SwDeswapDly-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
-            'SwDly-RB': {
+            'SwDeswapDly-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             'SwDivClk-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             'SwDivClk-RB': {
-                'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
-            'SwDataMaskSamples-SP': {
-                'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
-            'SwDataMaskSamples-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31-1},
             'SwDirGainA-SP': {
                 'type': 'float', 'value': 0, 'low': 0.0, 'high': 1.0},
@@ -479,13 +471,13 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TriggerDataHyst-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbTTagEn-Sel': {
+            'TbTPhaseSyncEn-Sel': {
                 'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
-            'TbTTagEn-Sts': {
+            'TbTPhaseSyncEn-Sts': {
                 'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
-            'TbTTagDly-SP': {
+            'TbTPhaseSyncDly-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
-            'TbTTagDly-RB': {
+            'TbTPhaseSyncDly-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             'TbTDataMaskEn-Sel': {
                 'type': 'enum', 'enums': Const.DsblEnbl._fields, 'value': 0},
