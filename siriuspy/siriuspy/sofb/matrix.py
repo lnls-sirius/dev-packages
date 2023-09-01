@@ -84,13 +84,8 @@ class EpicsMatrix(BaseMatrix):
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return dbase
 
-    def set_respmat_mode(self, mode, is_thread=False):
+    def set_respmat_mode(self, mode):
         """Set the response matrix mode."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_respmat_mode, (mode, ), {'is_thread': True}))
-            return True
-
         msg = 'Setting New RespMatMode.'
         self._update_log(msg)
         _log.info(msg)
@@ -105,13 +100,8 @@ class EpicsMatrix(BaseMatrix):
             return
         self.run_callbacks('RespMatMode-Sts', self._respmat_mode)
 
-    def set_respmat(self, mat, is_thread=False):
+    def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_respmat, (mat, ), {'is_thread': True}))
-            return True
-
         msg = 'Setting New RespMat.'
         self._update_log(msg)
         _log.info(msg)
@@ -128,13 +118,8 @@ class EpicsMatrix(BaseMatrix):
         self._save_respmat(mat)
         self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
 
-    def set_enbllist(self, key, val, is_thread=False):
+    def set_enbllist(self, key, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_enbllist, (key, val), {'is_thread': True}))
-            return True
-
         msg = 'Setting {0:s} EnblList'.format(key.upper())
         self._update_log(msg)
         _log.info(msg)
@@ -199,13 +184,8 @@ class EpicsMatrix(BaseMatrix):
         if self.isring:
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
 
-    def set_min_sing_value(self, num, is_thread=False):
+    def set_min_sing_value(self, num):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_min_sing_value, (num, ), {'is_thread': True}))
-            return True
-
         bkup = self.min_sing_val
         self.min_sing_val = float(num)
         if not self._calc_matrices():
@@ -214,13 +194,8 @@ class EpicsMatrix(BaseMatrix):
             return
         self.run_callbacks('MinSingValue-RB', self.min_sing_val)
 
-    def set_tikhonov_reg_const(self, num, is_thread=False):
+    def set_tikhonov_reg_const(self, num):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_tikhonov_reg_const, (num, ), {'is_thread': True}))
-            return True
-
         bkup = self.tikhonov_reg_const
         self.tikhonov_reg_const = float(num)
         if not self._calc_matrices():

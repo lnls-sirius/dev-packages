@@ -287,7 +287,10 @@ _si_injbiasfb = [
     ['AS-Glob:AP-InjCtrl:BiasFBLinModOffCoeff-SP', -52.0, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStd-SP', 0.05, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStd-SP', 0.4, 0.0],
-    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenScl-SP', 5, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenScl-SP', 4, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStdFit-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStdFit-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenSclFit-Sel', 0, 0.0],
 ]
 
 
