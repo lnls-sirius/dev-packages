@@ -107,16 +107,17 @@ class EpicsMatrix(BaseMatrix):
         _log.info(msg)
         if mat is None:
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         mat = _np.reshape(mat, [-1, self._csorb.nr_corrs])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
             self.respmat = old_
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         self._save_respmat(mat)
         self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
+        return True
 
     def set_enbllist(self, key, val):
         """."""
@@ -294,7 +295,7 @@ class EpicsMatrix(BaseMatrix):
         filename = self._csorb.respmat_fname
         boo = False
         if _os.path.isfile(filename):
-            boo = self.set_respmat(_np.loadtxt(filename), is_thread=True)
+            boo = self.set_respmat(_np.loadtxt(filename))
             if boo:
                 msg = 'Loading RespMat from file.'
             else:

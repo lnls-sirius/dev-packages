@@ -356,11 +356,10 @@ class EpicsOrbit(BaseOrbit):
     def _prepare_mode(self, oldmode=None):
         """."""
         oldmode = self._mode if oldmode is None else oldmode
-        self.set_trig_acq_control(
-            self._csorb.TrigAcqCtrl.Abort, is_thread=True)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
 
         if not self.is_trigmode():
-            self.acq_config_bpms(is_thread=True)
+            self.acq_config_bpms()
             return True
 
         if self.is_singlepass():
@@ -374,18 +373,17 @@ class EpicsOrbit(BaseOrbit):
 
         if self._mode != oldmode:
             self.run_callbacks('TrigAcqChan-Sel', chan)
-            self.set_trig_acq_channel(chan, is_thread=True)
+            self.set_trig_acq_channel(chan)
             self.run_callbacks('TrigAcqRepeat-Sel', rep)
-            self.set_trig_acq_repeat(rep, is_thread=True)
+            self.set_trig_acq_repeat(rep)
             if self.acqtrignrsamples < points:
                 pts = points - self._acqtrignrsamplespre
                 self.run_callbacks('TrigNrSamplesPost-SP', pts)
-                self.set_acq_nrsamples(pts, ispost=True, is_thread=True)
+                self.set_acq_nrsamples(pts, ispost=True)
         self._update_time_vector()
-        self.acq_config_bpms(is_thread=True)
+        self.acq_config_bpms()
 
-        self.set_trig_acq_control(
-            self._csorb.TrigAcqCtrl.Start, is_thread=True)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
         return True
 
     def set_orbit_multiturn_idx(self, value):
@@ -599,7 +597,7 @@ class EpicsOrbit(BaseOrbit):
         vect = dly + dur/nrst*shots[:, None] + dtime*pts[None, :]
         self._timevector = vect.ravel()
         self.run_callbacks('MTurnTime-Mon', self._timevector)
-        self.set_orbit_multiturn_idx(self._multiturnidx, is_thread=True)
+        self.set_orbit_multiturn_idx(self._multiturnidx)
 
     def _load_ref_orbs(self):
         """."""
