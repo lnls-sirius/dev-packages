@@ -4,7 +4,6 @@ import time as _time
 import logging as _log
 from functools import partial as _part
 from threading import Lock, Event as _Event
-import multiprocessing as _mp
 import traceback as _traceback
 
 import numpy as _np
@@ -13,10 +12,10 @@ import bottleneck as _bn
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV, CAProcessSpawn as _Process, CAThread as _Thread
+from ..epics import PV as _PV, CAThread as _Thread
 
 from .base_class import BaseClass as _BaseClass
-from .bpms import BPM, TimingConfig, TIMEOUT
+from .bpms import BPM, TimingConfig
 
 
 class BaseOrbit(_BaseClass):
@@ -881,12 +880,12 @@ class EpicsOrbit(BaseOrbit):
 
         # Check if test data is disabled
         isok = all(map(
-                lambda x: x.test_data_enbl == _csbpm.DsblEnbl.disabled, bpms))
+            lambda x: x.test_data_enbl == _csbpm.DsblEnbl.disabled, bpms))
         status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
 
         # Check if switching sync is enabled
         isok = all(map(
-                lambda x: x.sw_sync_enbl == _csbpm.DsblEnbl.enabled, bpms))
+            lambda x: x.sw_sync_enbl == _csbpm.DsblEnbl.enabled, bpms))
         status = _util.update_bit(v=status, bit_pos=6, bit_val=not isok)
 
         orb_conn = self._sloworb_raw_pv.connected if self.acc == 'SI' else True
