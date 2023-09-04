@@ -223,7 +223,7 @@ class DVF(_DeviceNC):
 
     @property
     def cam_roi(self):
-        """."""
+        """Return current ROI."""
         roi = (
             self.cam_offsetx, self.cam_offsety,
             self.cam_width, self.cam_height)
@@ -668,7 +668,7 @@ class DVFImgProc(DVF):
         return self['ImgLog-Mon']
 
     def cam_roi_calc(self, roix_fwhm_factor, roiy_fwhm_factor):
-        """."""
+        """Return ROI based on FWHM factors."""
         multp = 4
 
         width = 2 * self.roix_fwhm * abs(roix_fwhm_factor)
