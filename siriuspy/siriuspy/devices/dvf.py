@@ -409,28 +409,27 @@ class DVF(_DeviceNC):
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
 
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
-        """Set cam image region of interest and reset aquisition."""
-        offsetx, offsety = int(offsetx), int(offsety)
-        width, height = int(width), int(height)
-        if offsetx + width > self.cam_max_sizex:
-            raise ValueError('Invalid offsetx and width combination!')
-        if offsety + height > self.cam_max_sizey:
-            raise ValueError('Invalid offsety and height combination!')
+        """Set cam image ROI and reset aquisition."""
+        c_width, c_height = self.cam_width, self.cam_height
+        n_width, n_height = int(width), int(height)
+        
+        if not self.cmd_acquire_off(timeout=timeout):
+            return False
+        if n_width < c_width:
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+        if n_height < c_height:
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
+        if not self.cmd_acquire_on(timeout=timeout):
+            return False
 
-        self.cmd_acquire_off(timeout=timeout)
-        if width < self.cam_width:
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-        if height < self.cam_height:
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-        self.cmd_acquire_on(timeout=timeout)
         return True
 
     def cmd_cam_roi_reset(self, timeout=None):
