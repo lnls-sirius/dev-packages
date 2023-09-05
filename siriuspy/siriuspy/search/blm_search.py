@@ -8,14 +8,14 @@ class BLMSearch:
     """Beam Loss Monitor Search Class."""
 
     _blmname2data = {
-        'SENSOR1': ('SI-09C3', 'BOTTOM', 'Ch7'),
-        'SENSOR2': ('SI-09C3', 'TOP', 'Ch8'),
-        'SENSOR3': ('SI-10M1', 'RIGHT', 'Ch7'),
-        'SENSOR4': ('SI-10M1', 'LEFT', 'Ch8'),
-        'SENSOR5': ('SI-18C3', 'BOTTOM', 'Ch7'),
-        'SENSOR6': ('SI-18C3', 'TOP', 'Ch8'),
-        'SENSOR7': ('SI-19M1', 'RIGHT', 'Ch7'),
-        'SENSOR8': ('SI-19M1', 'LEFT', 'Ch8'),
+        'SENSOR1': ('SI-09C3', 'LEFT', 'Ch7'),
+        'SENSOR2': ('SI-09C3', 'RIGHT', 'Ch8'),
+        'SENSOR3': ('SI-10M1', 'BOTTOM', 'Ch7'),
+        'SENSOR4': ('SI-10M1', 'TOP', 'Ch8'),
+        'SENSOR5': ('SI-18C3', 'LEFT', 'Ch7'),
+        'SENSOR6': ('SI-18C3', 'RIGHT', 'Ch8'),
+        'SENSOR7': ('SI-19M1', 'BOTTOM', 'Ch7'),
+        'SENSOR8': ('SI-19M1', 'TOP', 'Ch8'),
     }
 
     @staticmethod
