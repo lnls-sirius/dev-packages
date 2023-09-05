@@ -44,22 +44,32 @@ class BLMSearch:
         return chn
 
     @staticmethod
-    def conv_blmname_2_sensor_devname(blmname):
+    def conv_blmname_2_devname(blmname):
         """Return device name of a BLM."""
         sec, _, chn = BLMSearch._blmname2data[blmname]
         devname = _SiriusPVName(sec + ':' + 'CO-Counter-' + chn)
         return devname
     
     @staticmethod
+    def conv_devname_2_blmname(devname):
+        """Return BLM name from device name."""
+        for blmname in BLMSearch._blmname2data:
+            sec, _, chn = BLMSearch._blmname2data[blmname]
+            devname_ = _SiriusPVName(sec + ':' + 'CO-Counter-' + chn)
+            if devname_ == devname:
+                return blmname
+        raise ValueError(f'Invalid devname {devname}')
+
+    @staticmethod
     def conv_blmname_2_sensor_pvname(blmname):
         """Return PV name of a BLM."""
-        devname = BLMSearch.conv_blmname_2_sensor_devname(blmname)
+        devname = BLMSearch.conv_blmname_2_devname(blmname)
         pvname = devname.substitute(propty='Count-Mon')
         return pvname
     
     @staticmethod
     def conv_blmname_2_timebase_pvname(blmname):
         """Return time base PV name of a BLM."""
-        devname = BLMSearch.conv_blmname_2_sensor_devname(blmname)
+        devname = BLMSearch.conv_blmname_2_devname(blmname)
         pvname = devname.substitute(idx='', propty='TimeBase-SP')
         return pvname
