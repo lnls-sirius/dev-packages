@@ -774,12 +774,13 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.configure()
         if not self.isring:
-            return
+            return True
         if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
                 _log.error(msg[5:])
+        return True
 
     def _update_status(self):
         status = 0b0000111

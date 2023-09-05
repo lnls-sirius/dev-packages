@@ -239,8 +239,9 @@ class EpicsOrbit(BaseOrbit):
         self._spass_mask[0 if beg else 1] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
+        return True
 
-    def set_mturn_usemask(self, val, is_thread=False):
+    def set_mturn_usemask(self, val):
         """."""
         value = _csbpm.DsblEnbl.enabled
         if val == self._csorb.DsblEnbl.Dsbl:
@@ -252,6 +253,7 @@ class EpicsOrbit(BaseOrbit):
             bpm.tbt_mask_enbl = value
 
         self.run_callbacks('MTurnUseMask-Sts', val)
+        return True
 
     def set_mturnmask(self, val, beg=True):
         """."""
@@ -274,6 +276,7 @@ class EpicsOrbit(BaseOrbit):
 
         name = 'Beg' if beg else 'End'
         self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
+        return True
 
     def set_spass_average(self, val):
         """."""
@@ -283,6 +286,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('SPassAvgNrTurns-RB', val)
         self._prepare_mode()
+        return True
 
     def set_smooth_reset(self, _):
         """."""
@@ -315,6 +319,7 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._reset_orbs()
         self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
+        return True
 
     def set_orbit_mode(self, value):
         """."""
@@ -329,6 +334,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('SOFBMode-Sts', value)
         self._prepare_mode(oldmode=omode)
+        return True
 
     def set_sync_with_injection(self, boo):
         """."""
@@ -401,6 +407,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
         self._update_multiturn_orbit_pvs()
+        return True
 
     def acq_config_bpms(self, *args):
         """."""
@@ -428,6 +435,7 @@ class EpicsOrbit(BaseOrbit):
         msg = 'Done configuring BPMs!'
         self._update_log(msg)
         _log.info(msg)
+        return True
 
     def sync_bpms(self, *args):
         """Synchronize BPMs."""
@@ -486,6 +494,7 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.ctrl = value
         self.run_callbacks('TrigAcqCtrl-Sts', value)
+        return True
 
     def set_trig_acq_channel(self, value):
         """."""
@@ -502,6 +511,7 @@ class EpicsOrbit(BaseOrbit):
 
         self.run_callbacks('TrigAcqChan-Sts', value)
         self._update_time_vector(channel=val)
+        return True
 
     def set_trig_acq_repeat(self, value):
         """."""
@@ -510,6 +520,7 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.acq_repeat = value
         self.run_callbacks('TrigAcqRepeat-Sts', value)
+        return True
 
     def set_acq_nrsamples(self, val, ispost=True):
         """."""
@@ -530,6 +541,7 @@ class EpicsOrbit(BaseOrbit):
             setattr(self, '_acqtrignrsamples' + suf, val)
         self.run_callbacks('TrigNrSamples'+suf.title()+'-RB', val)
         self._update_time_vector()
+        return True
 
     def set_trig_acq_nrshots(self, val):
         """."""
@@ -545,6 +557,7 @@ class EpicsOrbit(BaseOrbit):
             self._acqtrignrshots = val
         self.run_callbacks('TrigNrShots-RB', val)
         self._update_time_vector()
+        return True
 
     def set_poly_calibration(self, val):
         """."""
@@ -556,6 +569,7 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.polycal = value
         self.run_callbacks('PolyCalibration-Sts', val)
+        return True
 
     def set_mturndownsample(self, val):
         """."""
@@ -566,6 +580,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('MTurnDownSample-RB', val)
         self._prepare_mode()
+        return True
 
     def acquire_mturn_orbit(self, _):
         """Acquire Multiturn data from BPMs."""
