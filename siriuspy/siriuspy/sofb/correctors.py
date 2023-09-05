@@ -6,8 +6,6 @@ import traceback as _traceback
 from importlib.util import find_spec as _find_spec
 
 import numpy as _np
-if _find_spec('PRUserial485') is not None:
-    from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
@@ -22,6 +20,9 @@ from ..pwrsupply.pssofb import PSSOFB as _PSSOFB
 
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
+
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient
 
 TIMEOUT = 0.05
 
@@ -773,12 +774,13 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.configure()
         if not self.isring:
-            return
+            return True
         if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
                 _log.error(msg[5:])
+        return True
 
     def _update_status(self):
         status = 0b0000111
