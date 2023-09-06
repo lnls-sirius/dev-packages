@@ -40,7 +40,7 @@ class BLMSearch:
     @staticmethod
     def conv_blmname_2_counter_channel(blmname):
         """Return the counter channel of a BLM."""
-        chn = BLMSearch._blmname2locs[blmname][2]
+        chn = BLMSearch._blmname2data[blmname][2]
         return chn
 
     @staticmethod
