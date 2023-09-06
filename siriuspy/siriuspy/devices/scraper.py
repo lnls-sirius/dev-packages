@@ -79,17 +79,17 @@ class ScraperH(_ScraperDev):
     """."""
 
     _properties = (
-        'OuterSlitPos-SP', 'OuterSlitPos-RB',
-        'InnerSlitPos-SP', 'InnerSlitPos-RB',
-        'InnerDoneMov-Mon', 'OuterDoneMov-Mon',
-        'OuterSlitInnerLim-SP', 'OuterSlitInnerLim-RB',
-        'OuterSlitOuterLim-SP', 'OuterSlitOuterLim-RB',
-        'OuterSlitBacklashDist-SP', 'OuterSlitBacklashDist-RB',
-        'OuterMotionCtrl-Cte', 'ForceOuterSlitPos-Cmd',
-        'InnerSlitInnerLim-SP', 'InnerSlitInnerLim-RB',
-        'InnerSlitOuterLim-SP', 'InnerSlitOuterLim-RB',
-        'InnerSlitBacklashDist-SP', 'InnerSlitBacklashDist-RB',
-        'InnerMotionCtrl-Cte', 'ForceInnerSlitPos-Cmd',
+        'LeftSlitPos-SP', 'LeftSlitPos-RB',
+        'RightSlitPos-SP', 'RightSlitPos-RB',
+        'RightDoneMov-Mon', 'LeftDoneMov-Mon',
+        'LeftSlitInnerLim-SP', 'LeftSlitInnerLim-RB',
+        'LeftSlitOuterLim-SP', 'LeftSlitOuterLim-RB',
+        'LeftSlitBacklashDist-SP', 'LeftSlitBacklashDist-RB',
+        'LeftMotionCtrl-Cte', 'ForceLeftSlitPos-Cmd',
+        'RightSlitInnerLim-SP', 'RightSlitInnerLim-RB',
+        'RightSlitOuterLim-SP', 'RightSlitOuterLim-RB',
+        'RightSlitBacklashDist-SP', 'RightSlitBacklashDist-RB',
+        'RightMotionCtrl-Cte', 'ForceRightSlitPos-Cmd',
         )
 
     def __init__(self):
@@ -102,78 +102,78 @@ class ScraperH(_ScraperDev):
     @property
     def left_slit_pos(self):
         """Left slit position [mm]."""
-        return self['OuterSlitPos-RB']
+        return self['LeftSlitPos-RB']
 
     @property
     def right_slit_pos(self):
         """Right slit position [mm]."""
-        return self['InnerSlitPos-RB']
+        return self['RightSlitPos-RB']
 
     @property
     def is_left_slit_moving(self):
         """."""
-        return not self['OuterDoneMov-Mon']
+        return not self['LeftDoneMov-Mon']
 
     @property
     def is_right_slit_moving(self):
         """."""
-        return not self['InnerDoneMov-Mon']
+        return not self['RightDoneMov-Mon']
 
     @property
     def left_slit_limits(self):
         """Limits for left slit."""
-        return [self['OuterSlitInnerLim-RB'], self['OuterSlitOuterLim-RB']]
+        return [self['LeftSlitInnerLim-RB'], self['LeftSlitOuterLim-RB']]
 
     @left_slit_limits.setter
     def left_slit_limits(self, lims):
         """Set left slit limits."""
         _ScraperDev._check_limits(lims, is_negative=False)
-        self['OuterSlitInnerLim-SP'] = lims[0]
-        self['OuterSlitOuterLim-SP'] = lims[1]
+        self['LeftSlitInnerLim-SP'] = lims[0]
+        self['LeftSlitOuterLim-SP'] = lims[1]
 
     @property
     def right_slit_limits(self):
         """Limits for right slit."""
-        return [self['InnerSlitInnerLim-RB'], self['InnerSlitOuterLim-RB']]
+        return [self['RightSlitInnerLim-RB'], self['RightSlitOuterLim-RB']]
 
     @right_slit_limits.setter
     def right_slit_limits(self, lims):
         """Set right slit limits."""
         _ScraperDev._check_limits(lims, is_negative=True)
-        self['InnerSlitInnerLim-SP'] = lims[0]
-        self['InnerSlitOuterLim-SP'] = lims[1]
+        self['RightSlitInnerLim-SP'] = lims[0]
+        self['RightSlitOuterLim-SP'] = lims[1]
 
     @property
     def left_slit_control_prefix(self):
         """."""
-        return self['OuterMotionCtrl-Cte']
+        return self['LeftMotionCtrl-Cte']
 
     @property
     def right_slit_control_prefix(self):
         """."""
-        return self['InnerMotionCtrl-Cte']
+        return self['RightMotionCtrl-Cte']
 
     def wait_slits_finish_moving(self, timeout=10):
         """."""
-        names = [slit + 'DoneMov-Mon' for slit in ('Outer', 'Inner')]
+        names = [slit + 'DoneMov-Mon' for slit in ('Left', 'Right')]
         return self._wait_finish_moving(pv_names=names, timeout=timeout)
 
     def move_left_slit(self, value):
-        """Move outer slit to given position [mm]."""
-        self['OuterSlitPos-SP'] = value
+        """Move left slit to given position [mm]."""
+        self['LeftSlitPos-SP'] = value
 
     def move_right_slit(self, value):
-        """Move inner slit to given position [mm]."""
-        self['InnerSlitPos-SP'] = value
+        """Move right slit to given position [mm]."""
+        self['RightSlitPos-SP'] = value
 
     def cmd_force_left_slit(self):
         """Force left slit position."""
-        self['ForceOuterSlitPos-Cmd'] = 1
+        self['ForceLeftSlitPos-Cmd'] = 1
         return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_right_slit(self):
         """Force right slit position."""
-        self['ForceInnerSlitPos-Cmd'] = 1
+        self['ForceRightSlitPos-Cmd'] = 1
         return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
 
