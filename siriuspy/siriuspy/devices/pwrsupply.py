@@ -739,7 +739,7 @@ class PowerSupplyPU(_PSDev):
     @property
     def properties(self):
         """Return device properties."""
-        return self._properties + self._dev_timing.properties
+        return self.properties_in_use + self._dev_timing.properties_in_use
 
     @property
     def pvnames(self):
@@ -750,7 +750,7 @@ class PowerSupplyPU(_PSDev):
     @property
     def interlock_ok(self):
         """Return whether all interlocks are in Ok state."""
-        intlks = [p for p in self._properties if 'Intlk' in p]
+        intlks = [p for p in self.properties_in_use if 'Intlk' in p]
         is_ok = True
         for ilk in intlks:
             is_ok &= self[ilk] == 1
