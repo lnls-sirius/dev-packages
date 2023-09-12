@@ -917,7 +917,9 @@ class EGun(_DeviceSet, _Callback):
         """Check if interlock signals are ok."""
         if not self.wait_for_connection(1):
             return False
-        isok = [self.mps_ccg[ppty] == 0 for ppty in self.mps_ccg.properties]
+        isok = [
+            self.mps_ccg[ppty] == 0
+            for ppty in self.mps_ccg.properties_in_use]
         allok = all(isok)
         allok &= self.mps_gun['GunPermit'] == 1
         allok &= self.sys_ext['status'] == 1
