@@ -945,6 +945,8 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Values and indices must have the same size.')
         for i, dev in enumerate(devs):
             impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if len(values[i]) != len(impltd):
+                return False
             if not _np.allclose(values[i], impltd, atol=atol):
                 return False
         return True

@@ -66,10 +66,10 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
-        'TbTTagEn-Sel', 'TbTTagEn-Sts',
-        'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
-        'MonitTagEn-Sel', 'MonitTagEn-Sts',
+        'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
+        'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
+        'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
+        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
         'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
@@ -217,12 +217,12 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbTTagEn-Sts']
+        return self['TbTPhaseSyncEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbTTagEn-Sel'] = val
+        self['TbTPhaseSyncEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
@@ -257,12 +257,12 @@ class BPM(_Device):
     @property
     def fofb_sync_enbl(self):
         """."""
-        return self['SwTagEn-Sts']
+        return self['FOFBPhaseSyncEn-Sts']
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        self['SwTagEn-Sel'] = val
+        self['FOFBPhaseSyncEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -287,12 +287,12 @@ class BPM(_Device):
     @property
     def facq_sync_enbl(self):
         """."""
-        return self['FAcqTagEn']
+        return self['FAcqPhaseSyncEn-Sts']
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        self['FAcqTagEn-Sel'] = val
+        self['FAcqPhaseSyncEn-Sel'] = val
 
     @property
     def monit_rate(self):
@@ -307,12 +307,12 @@ class BPM(_Device):
     @property
     def monit_sync_enbl(self):
         """."""
-        return self['MonitTagEn-Sts']
+        return self['MonitPhaseSyncEn-Sts']
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        self['MonitTagEn-Sel'] = val
+        self['MonitPhaseSyncEn-Sel'] = val
 
     @property
     def posx_gain(self):
@@ -816,28 +816,28 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTTagEn-Sts', 0)
+        return self._wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('SwTagEn-Sts', 0)
+        return self._wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
