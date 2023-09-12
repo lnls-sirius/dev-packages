@@ -297,7 +297,7 @@ class BLInterlockCtrl(_DeviceNC):
         return state
 
     @property
-    def is_ebeamline_opened(self):
+    def is_beamline_opened(self):
         """Return whether BL is opened."""
         if not self.is_hutchA_intlk_search_done:
             return False
