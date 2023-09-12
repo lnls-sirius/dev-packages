@@ -36,6 +36,7 @@ class Device:
             Whether to automatically monitor '-Mon' or 'Data' PVs for changes.
             Defaults to False (to avoid overloading the client). Set to False
             when using PV.get_timevars() to know when a PV has been updated.
+
     """
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
@@ -45,6 +46,7 @@ class Device:
     def __init__(
             self, devname, properties, auto_monitor=True,
             auto_monitor_mon=False):
+        """."""
         self._properties = properties[:]
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
@@ -186,7 +188,7 @@ class Device:
                 connection_timeout=Device.CONNECTION_TIMEOUT)
         return devname, pvs
 
-    def _wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
+    def _wait(self, propty, value, timeout=None, comp='eq'):
         """."""
         def comp_(val):
             boo = comp(self[propty], val)
@@ -200,6 +202,7 @@ class Device:
         if comp_(value):
             return True
 
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
         ntrials = int(timeout/_TINY_INTERVAL)
         for _ in range(ntrials):
             _time.sleep(_TINY_INTERVAL)
@@ -209,7 +212,7 @@ class Device:
 
     def _wait_float(
             self, propty, value, rel_tol=0.0, abs_tol=0.1,
-            timeout=_DEF_TIMEOUT):
+            timeout=None):
         """Wait until float value gets close enough of desired value."""
         func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
         return self._wait(propty, value, comp=func, timeout=timeout)
@@ -400,12 +403,13 @@ class Devices:
 
     def _wait_devices_propty(
             self, devices, propty, values, comp='eq',
-            timeout=_DEF_TIMEOUT, return_prob=False):
+            timeout=None, return_prob=False):
         """Wait for devices property to reach value(s)."""
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
         tini = _time.time()
         for _ in range(int(timeout/_TINY_INTERVAL)):
             okdevs = set()

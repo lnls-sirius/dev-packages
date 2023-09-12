@@ -10,13 +10,13 @@ from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
 from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
     Devices as _Devices
-from .bpm import BPMLogicalTrigger
+from .afc_acq_core import AFCACQLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
 
 
-class _FOFBCtrlBase:
+class FOFBCtrlBase:
     """FOFB Ctrl base."""
 
     _devices = {
@@ -24,7 +24,9 @@ class _FOFBCtrlBase:
     DEVICES = _get_namedtuple('DEVICES', *zip(*_devices.items()))
 
 
-class FOFBCtrlRef(_Device, _FOFBCtrlBase):
+# ---------------- ref device  ----------------
+
+class FOFBCtrlRef(_Device, FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
     _properties = (
@@ -41,10 +43,6 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
 
     def __init__(self, devname):
         """Init."""
-        # check if device exists
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
-
         # call base class constructor
         super().__init__(
             devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
@@ -144,6 +142,8 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         return True
 
 
+# ---------------- DCC devices ----------------
+
 class _DCCDevice(_ProptyDevice):
     """FOFB Diamond communication controller device."""
 
@@ -215,7 +215,7 @@ class _DCCDevice(_ProptyDevice):
         return self['BPMCnt-Mon'] == cnt
 
 
-class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
+class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
     """FOFBCtrl DCC device."""
 
     class PROPDEVICES:
@@ -227,8 +227,6 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
 
     def __init__(self, devname, dccname):
         """Init."""
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
         if dccname not in self.PROPDEVICES.ALL:
             raise NotImplementedError(dccname)
         super().__init__(devname, dccname)
@@ -247,11 +245,10 @@ class BPMDCC(_DCCDevice):
 
     def __init__(self, devname):
         """Init."""
-        # Temporarily remove this check to control new 10SB BPMs
-        # if not _BPMSearch.is_valid_devname(devname):
-        #     raise NotImplementedError(devname)
         super().__init__(devname, 'DCCP2P')
 
+
+# ---------------- Fam devices ----------------
 
 class FamFOFBControllers(_Devices):
     """Family of FOFBCtrl and related BPM devices."""
@@ -279,7 +276,7 @@ class FamFOFBControllers(_Devices):
         lpaw = _np.roll(bpmids, -1)
         self._ctl_ids, self._ctl_part = dict(), dict()
         self._ctl_refs, self._ctl_dccs = dict(), dict()
-        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+        for idx, ctl in enumerate(FOFBCtrlBase.DEVICES):
             self._ctl_ids[ctl] = bpmids[idx]
             self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
@@ -294,7 +291,7 @@ class FamFOFBControllers(_Devices):
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             for trig in self.BPM_TRIGS_IDS:
                 trigname = bpm + ':TRIGGER' + str(trig)
-                self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
+                self._bpm_trgs[trigname] = AFCACQLogicalTrigger(bpm, trig)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
             for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
@@ -332,7 +329,7 @@ class FamFOFBControllers(_Devices):
 
     @property
     def bpmtrigdevs(self):
-        """BPMLogicalTrigger device list."""
+        """AFCACQLogicalTrigger device list."""
         return self._bpm_trgs
 
     @property
@@ -946,6 +943,8 @@ class FamFastCorrs(_Devices):
             raise ValueError('Values and indices must have the same size.')
         for i, dev in enumerate(devs):
             impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if len(values[i]) != len(impltd):
+                return False
             if not _np.allclose(values[i], impltd, atol=atol):
                 return False
         return True
@@ -1083,6 +1082,8 @@ class FamFastCorrs(_Devices):
             indices = [i for i in range(len(self._psnames))]
         return [self._psdevs[i] for i in indices]
 
+
+# ----------------  HL device  ----------------
 
 class HLFOFB(_Device):
     """Control high level FOFB IOC."""

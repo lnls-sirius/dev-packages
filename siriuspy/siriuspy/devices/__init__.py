@@ -1,7 +1,8 @@
 """Devices subpackage."""
 
+from .afc_acq_core import AFCPhysicalTrigger, AFCACQLogicalTrigger
 from .bbb import BunchbyBunch
-from .bpm import BPM, FamBPMs, BPMLogicalTrigger
+from .bpm import BPM, FamBPMs
 from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
     CurrInfoBO, CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
@@ -10,6 +11,8 @@ from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun
 from .energy import Energy
 from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
     FamFastCorrs, HLFOFB
+from .fofb_acq import FOFBCtrlSysId, FOFBPSSysId, FamFOFBSysId, \
+    FOFBCtrlLamp, FOFBPSLamp, FamFOFBLamp
 from .ict import ICT, TranspEff
 from .ids import APU, WIG, PAPU, EPU
 from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF
@@ -35,10 +38,11 @@ from .timing import EVG, Event, Trigger, HLTiming
 from .tune import TuneFrac, TuneProc, Tune, TuneCorr
 from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
-from .blctrl import BLPPSCtrl
+from .intlkctrl import ASPPSCtrl, ASMPSCtrl, BLInterlockCtrl
+from .scraper import ScraperH, ScraperV
 
 
 del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
-del ids, currinfo, bbb, machshift, dvf, lienergy, blctrl
+del ids, currinfo, bbb, machshift, dvf, lienergy, intlkctrl, scraper

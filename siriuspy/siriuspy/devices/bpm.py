@@ -4,8 +4,7 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices, \
-    ProptyDevice as _ProptyDevice
+from .device import Device as _Device, Devices as _Devices
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -67,10 +66,10 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
-        'TbTTagEn-Sel', 'TbTTagEn-Sts',
-        'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
-        'MonitTagEn-Sel', 'MonitTagEn-Sts',
+        'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
+        'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
+        'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
+        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
         'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
@@ -84,9 +83,6 @@ class BPM(_Device):
     def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
         """."""
         # call base class constructor
-        if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
-
         self._ispost_mortem = ispost_mortem
         properties = {self.get_propname(p) for p in BPM._properties}
 
@@ -219,12 +215,12 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbTTagEn-Sts']
+        return self['TbTPhaseSyncEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbTTagEn-Sel'] = val
+        self['TbTPhaseSyncEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
@@ -259,12 +255,12 @@ class BPM(_Device):
     @property
     def fofb_sync_enbl(self):
         """."""
-        return self['SwTagEn-Sts']
+        return self['FOFBPhaseSyncEn-Sts']
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        self['SwTagEn-Sel'] = val
+        self['FOFBPhaseSyncEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -289,12 +285,12 @@ class BPM(_Device):
     @property
     def facq_sync_enbl(self):
         """."""
-        return self['FAcqTagEn']
+        return self['FAcqPhaseSyncEn-Sts']
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        self['FAcqTagEn-Sel'] = val
+        self['FAcqPhaseSyncEn-Sel'] = val
 
     @property
     def monit_rate(self):
@@ -309,12 +305,12 @@ class BPM(_Device):
     @property
     def monit_sync_enbl(self):
         """."""
-        return self['MonitTagEn-Sts']
+        return self['MonitPhaseSyncEn-Sts']
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        self['MonitTagEn-Sel'] = val
+        self['MonitPhaseSyncEn-Sel'] = val
 
     @property
     def posx_gain(self):
@@ -818,28 +814,28 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTTagEn-Sts', 0)
+        return self._wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('SwTagEn-Sts', 0)
+        return self._wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
@@ -888,7 +884,19 @@ class BPM(_Device):
 
 
 class FamBPMs(_Devices):
-    """Family of BPMs."""
+    """Family of BPMs.
+
+    Parameters
+    ----------
+        devname (str, optional)
+            Device name. If not provided, defaults to DEVICES.SI.
+            Determine the list of BPM names.
+        bpmnames ((list, tuple), optional)
+            BPM names list. If provided, it takes priority over 'devname'
+            parameter. Defaults to None.
+        ispost_mortem (bool, optional)
+            Whether to control PM acquisition core. Defaults to False.
+    """
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -900,7 +908,7 @@ class FamBPMs(_Devices):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, ispost_mortem=False):
+    def __init__(self, devname=None, bpmnames=None, ispost_mortem=False):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -908,7 +916,7 @@ class FamBPMs(_Devices):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        bpm_names = _BPMSearch.get_names(
+        bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
         devs = [
@@ -1095,8 +1103,9 @@ class FamBPMs(_Devices):
             nr_points_after (int): number of points after trigger.
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
-            acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
-                'FAcq'). Defaults to 'FAcq'.
+            acq_rate (str, optional): Acquisition rate ('TbT', 'TbTPha',
+                'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp').
+                Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
@@ -1111,10 +1120,18 @@ class FamBPMs(_Devices):
         """
         if acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
+        elif acq_rate.lower().startswith('fofbpha'):
+            acq_rate = self._csbpm.AcqChan.FOFBPha
         elif acq_rate.lower().startswith('fofb'):
             acq_rate = self._csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbtpha'):
+            acq_rate = self._csbpm.AcqChan.TbTPha
         elif acq_rate.lower().startswith('tbt'):
             acq_rate = self._csbpm.AcqChan.TbT
+        elif acq_rate.lower().startswith('adcswp'):
+            acq_rate = self._csbpm.AcqChan.ADCSwp
+        elif acq_rate.lower().startswith('adc'):
+            acq_rate = self._csbpm.AcqChan.ADC
         else:
             raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
@@ -1336,60 +1353,3 @@ class FamBPMs(_Devices):
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
-
-
-class BPMLogicalTrigger(_ProptyDevice):
-    """BPM Logical Trigger device."""
-
-    _properties = (
-        'RcvSrc-Sel', 'RcvSrc-Sts',
-        'RcvInSel-SP', 'RcvInSel-RB',
-        'TrnSrc-Sel', 'TrnSrc-Sts',
-        'TrnOutSel-SP', 'TrnOutSel-RB',
-    )
-
-    def __init__(self, bpmname, index):
-        """Init."""
-        if not _BPMSearch.is_valid_devname(bpmname):
-            raise NotImplementedError(bpmname)
-        if not 0 <= int(index) <= 23:
-            raise NotImplementedError(index)
-        super().__init__(
-            bpmname, 'TRIGGER'+str(index),
-            properties=BPMLogicalTrigger._properties)
-
-    @property
-    def receiver_source(self):
-        """Receiver source."""
-        return self['RcvSrc-Sts']
-
-    @receiver_source.setter
-    def receiver_source(self, value):
-        self['RcvSrc-Sel'] = value
-
-    @property
-    def receiver_in_sel(self):
-        """Receiver in selection."""
-        return self['RcvInSel-RB']
-
-    @receiver_in_sel.setter
-    def receiver_in_sel(self, value):
-        self['RcvInSel-SP'] = value
-
-    @property
-    def transmitter_source(self):
-        """Transmitter source."""
-        return self['TrnSrc-Sts']
-
-    @transmitter_source.setter
-    def transmitter_source(self, value):
-        self['TrnSrc-Sel'] = value
-
-    @property
-    def transmitter_out_sel(self):
-        """Transmitter out selection."""
-        return self['TrnOutSel-RB']
-
-    @transmitter_out_sel.setter
-    def transmitter_out_sel(self, value):
-        self['TrnOutSel-SP'] = value

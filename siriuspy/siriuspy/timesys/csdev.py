@@ -596,7 +596,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         dbase['RFDelayType-Sel'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.DIRECTION}
-    dic_.update(trig_db.get('Direction'), dict())
+    dic_.update(trig_db.get('Direction', dict()))
     if _HLTimeSearch.has_direction(hl_trigger):
         dbase['Direction-Sel'] = _dcopy(dic_)
         dbase['Direction-Sts'] = dic_
@@ -605,15 +605,17 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['InInjTable-Mon'] = {
         'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
 
+    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
+    # behavior of pcaspy
+    labs = '\n'.join(Const.HLTrigStatusLabels)
     dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': 1000,
-        'value': '\n'.join(Const.HLTrigStatusLabels)
-        }
+        'type': 'char', 'count': len(labs)+1, 'value': labs}
+
     ll_trigs = '\n'.join(ll_trig_names)
     dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': 5000, 'value': ll_trigs}
+        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
     dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': 5000, 'value': channels}
+        'type': 'char', 'count': len(channels)+1, 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}

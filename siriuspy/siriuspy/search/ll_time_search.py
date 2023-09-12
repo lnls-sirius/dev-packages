@@ -112,6 +112,7 @@ class LLTimeSearch:
 
     _conn_from_evg = dict()
     _conn_twds_evg = dict()
+    _crates_mapping = dict()
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
@@ -351,6 +352,12 @@ class LLTimeSearch:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
 
+    @classmethod
+    def get_crates_mapping(cls):
+        """Return crates to devices mapping."""
+        cls._get_timedata()
+        return cls._crates_mapping
+
     # --- private methods ---
 
     @classmethod
@@ -448,6 +455,7 @@ class LLTimeSearch:
                 mapping[crates[crate]] = list()
             else:
                 mapping[crates[crate]].append(dev)
+        cls._crates_mapping = mapping
         return mapping
 
     @classmethod
