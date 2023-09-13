@@ -12,23 +12,20 @@ class _ScraperDev(_Device):
 
         H = 'SI-01SA:DI-ScrapH'
         V = 'SI-01SA:DI-ScrapV'
-        ALL = (H, V, )
+        ALL = (H, V)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Home-Cmd', 'ForceComplete-Mon', 'CoordConvErr-Mon',
         'EnblBacklashComp-Sel', 'EnblBacklashComp-Sts'
-    )
+        )
 
-    def __init__(self, devname, properties=None):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in _ScraperDev.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        if properties is None:
-            properties = _ScraperDev._properties
-
-        super().__init__(devname, properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def is_force_cmd_complete(self):
@@ -78,7 +75,7 @@ class _ScraperDev(_Device):
 class ScraperH(_ScraperDev):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
         'LeftSlitPos-SP', 'LeftSlitPos-RB',
         'RightSlitPos-SP', 'RightSlitPos-RB',
         'RightDoneMov-Mon', 'LeftDoneMov-Mon',
@@ -92,12 +89,11 @@ class ScraperH(_ScraperDev):
         'RightMotionCtrl-Cte', 'ForceRightSlitPos-Cmd',
         )
 
-    def __init__(self):
+    def __init__(self, devname=None, props2init='all'):
         """."""
-        # call base class constructor
-        _all_properties = _ScraperDev._properties + ScraperH._properties
-        super().__init__(
-            devname=_ScraperDev.DEVICES.H, properties=_all_properties)
+        if devname is None:
+            devname = _ScraperDev.DEVICES.H
+        super().__init__(devname, props2init=props2init)
 
     @property
     def left_slit_pos(self):
@@ -180,24 +176,23 @@ class ScraperH(_ScraperDev):
 class ScraperV(_ScraperDev):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
         'TopSlitPos-SP', 'TopSlitPos-RB',
         'BottomSlitPos-SP', 'BottomSlitPos-RB',
         'BottomDoneMov-Mon', 'TopDoneMov-Mon',
         'TopSlitInnerLim-SP', 'TopSlitInnerLim-RB',
         'TopSlitOuterLim-SP', 'TopSlitOuterLim-RB',
-        'TopMotionCtrl-Cte', 'ForceTopSlitPos-Cmd'
+        'TopMotionCtrl-Cte', 'ForceTopSlitPos-Cmd',
         'BottomSlitInnerLim-SP', 'BottomSlitInnerLim-RB',
         'BottomSlitOuterLim-SP', 'BottomSlitOuterLim-RB',
         'BottomMotionCtrl-Cte', 'ForceBottomSlitPos-Cmd',
         )
 
-    def __init__(self):
+    def __init__(self, devname=None, props2init='all'):
         """."""
-        # call base class constructor
-        _all_properties = _ScraperDev._properties + ScraperV._properties
-        super().__init__(
-            devname=_ScraperDev.DEVICES.V, properties=_all_properties)
+        if devname is None:
+            devname = _ScraperDev.DEVICES.V
+        super().__init__(devname, props2init=props2init)
 
     @property
     def top_slit_pos(self):

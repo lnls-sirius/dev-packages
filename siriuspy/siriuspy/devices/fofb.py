@@ -8,8 +8,7 @@ from ..namesys import SiriusPVName as _PVName
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
 from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .afc_acq_core import AFCACQLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
@@ -29,7 +28,7 @@ class FOFBCtrlBase:
 class FOFBCtrlRef(_Device, FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'RefOrbX-SP', 'RefOrbX-RB',
         'RefOrbY-SP', 'RefOrbY-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
@@ -39,13 +38,13 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
         'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
         'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
-    )
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
         # call base class constructor
-        super().__init__(
-            devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
+        _Device.__init__(
+            self, devname, props2init=props2init, auto_monitor_mon=True)
 
     @property
     def refx(self):
@@ -144,33 +143,34 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
 
 # ---------------- DCC devices ----------------
 
-class _DCCDevice(_ProptyDevice):
+class _DCCDevice(_Device):
     """FOFB Diamond communication controller device."""
 
     DEF_TIMEOUT = 1
     DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
         'CCEnable-Sel', 'CCEnable-Sts',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
-    )
+        )
     _properties_fmc = (
         'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
         'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon',
-    )
+        )
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
         self.dccname = dccname
 
-        properties = _DCCDevice._properties
-        if 'FMC' in self.dccname:
-            properties += _DCCDevice._properties_fmc
+        if props2init == 'all':
+            props2init = list(_DCCDevice.PROPERTIES_DEFAULT)
+            if 'FMC' in self.dccname:
+                props2init += _DCCDevice._properties_fmc
 
         super().__init__(
-            devname, dccname, properties=properties,
+            devname + ':' + dccname, props2init=props2init,
             auto_monitor_mon=True)
 
     @property
@@ -225,11 +225,11 @@ class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
         P2P = 'DCCP2P'
         ALL = (FMC, P2P)
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
         if dccname not in self.PROPDEVICES.ALL:
             raise NotImplementedError(dccname)
-        super().__init__(devname, dccname)
+        _DCCDevice.__init__(self, devname, dccname, props2init=props2init)
 
     @property
     def linkpartners(self):
@@ -243,14 +243,14 @@ class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
 class BPMDCC(_DCCDevice):
     """BPM DCC device."""
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        super().__init__(devname, 'DCCP2P')
+        super().__init__(devname, 'DCCP2P', props2init=props2init)
 
 
 # ---------------- Fam devices ----------------
 
-class FamFOFBControllers(_Devices):
+class FamFOFBControllers(_DeviceSet):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -310,7 +310,7 @@ class FamFOFBControllers(_Devices):
         devices.extend(self._bpm_trgs.values())
         devices.append(self._evt_fofb)
 
-        super().__init__('SI-Glob:BS-FOFB', devices)
+        super().__init__(devices, devname='SI-Glob:BS-FOFB')
 
     @property
     def ctrlrefdevs(self):
@@ -692,7 +692,7 @@ class FamFOFBControllers(_Devices):
         return True
 
 
-class FamFastCorrs(_Devices):
+class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -712,9 +712,11 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
-                        for psn in self._psnames]
-        super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
+        self._psconv = [
+            StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
+            for psn in self._psnames]
+        super().__init__(
+            self._psdevs + self._psconv, devname='SI-Glob:PS-FCHV')
 
     @property
     def psnames(self):
@@ -1094,7 +1096,7 @@ class HLFOFB(_Device):
         SI = 'SI-Glob:AP-FOFB'
         ALL = (SI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
@@ -1139,7 +1141,7 @@ class HLFOFB(_Device):
 
     _default_timeout_respm = 2 * 60 * 60  # [s]
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         # check if device exists
         if devname is None:
@@ -1150,7 +1152,7 @@ class HLFOFB(_Device):
         self._data = _Const()
 
         # call base class constructor
-        super().__init__(devname, properties=self._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def data(self):

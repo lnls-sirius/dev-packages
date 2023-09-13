@@ -5,7 +5,7 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread, Event as _Flag
 import logging as _log
 
-from .device import Devices as _Devices, DeviceNC as _DeviceNC
+from .device import DeviceSet as _DeviceSet, Device as _Device
 from .lillrf import DevLILLRF
 from .modltr import LIModltr
 from .pwrsupply import PowerSupply, PowerSupplyPU
@@ -21,14 +21,14 @@ from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
 
-class _BaseHandler(_Devices):
+class _BaseHandler(_DeviceSet):
     """Base standby mode handler for injection procedure."""
 
-    def __init__(self, devname, devices, hltiming=None):
+    def __init__(self, devices, hltiming=None):
         """."""
         self._hltiming = hltiming or HLTiming()
         devices = tuple(devices) + (self._hltiming, )
-        super().__init__(devname, devices)
+        super().__init__(devices)
 
     @property
     def hltiming(self):
@@ -74,7 +74,7 @@ class PUMagsStandbyHandler(_BaseHandler):
         self._pudevs = [PowerSupplyPU(pun) for pun in self._punames]
 
         # call base class constructor
-        super().__init__('', self._pudevs, hltiming=hltiming)
+        super().__init__(self._pudevs, hltiming=hltiming)
 
         # trigger devices
         self._trigdevs = [self._hltiming.triggers[t] for t in self._trignames]
@@ -190,7 +190,7 @@ class BOPSRampStandbyHandler(_BaseHandler):
         self._psdevs = [PowerSupply(psn) for psn in self._psnames]
 
         # call base class constructor
-        super().__init__('', self._psdevs, hltiming=hltiming)
+        super().__init__(self._psdevs, hltiming=hltiming)
 
         # trigger devices
         self._trigdevs = [self._hltiming.triggers[t] for t in self._trignames]
@@ -350,7 +350,7 @@ class BORFRampStandbyHandler(_BaseHandler):
         self.llrf = ASLLRF(ASLLRF.DEVICES.BO)
 
         # call base class constructor
-        super().__init__('', (self.llrf, ), hltiming=hltiming)
+        super().__init__((self.llrf, ), hltiming=hltiming)
 
         self.rmptrg = self._hltiming.triggers['BO-Glob:TI-LLRF-Rmp']
 
@@ -453,16 +453,15 @@ class LinacStandbyHandler(_BaseHandler):
 
         # modulator devices
         self._moddevs = [LIModltr(mod) for mod in self._modnames]
-        self._limps = _DeviceNC(
-            'LA-CN:H1MPS-1',
-            ('Mod1State_I', 'Mod1State_L', 'Mod1State_R',
-             'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
+        self._limps = _Device('LA-CN:H1MPS-1', props2init=(
+            'Mod1State_I', 'Mod1State_L', 'Mod1State_R',
+            'Mod2State_I', 'Mod2State_L', 'Mod2State_R'))
 
         devices = self._llrf_devs + self._moddevs
         devices.append(self._limps)
 
         # call base class constructor
-        super().__init__('', tuple(devices), hltiming=hltiming)
+        super().__init__(tuple(devices), hltiming=hltiming)
 
         # NOTE: Triggers ordering is important so that LINAC LLRF does
         # not have any transient during source migration between events
@@ -678,7 +677,7 @@ class LinacStandbyHandler(_BaseHandler):
         return [False, text, problems]
 
 
-class InjSysStandbyHandler(_Devices):
+class InjSysStandbyHandler(_DeviceSet):
     """Injection system standy mode handler."""
 
     DEF_ON_ORDER = _InjConst.INJSYS_DEF_ON_ORDER
@@ -688,7 +687,7 @@ class InjSysStandbyHandler(_Devices):
         'bo_ps': 'BO PS Ramp',
         'bo_rf': 'BO RF Ramp',
         'li_rf': 'LINAC (SHB, Klystrons and Modulators)',
-    }
+        }
 
     def __init__(self, hltiming=None):
         """Init."""
@@ -698,7 +697,7 @@ class InjSysStandbyHandler(_Devices):
             'bo_ps': BOPSRampStandbyHandler(hltiming=self._hltiming),
             'bo_rf': BORFRampStandbyHandler(hltiming=self._hltiming),
             'li_rf': LinacStandbyHandler(hltiming=self._hltiming),
-        }
+            }
         self._dev_refs = devs
         self._on_order = InjSysStandbyHandler.DEF_ON_ORDER
         self._off_order = InjSysStandbyHandler.DEF_OFF_ORDER
@@ -713,7 +712,7 @@ class InjSysStandbyHandler(_Devices):
             self._on_values.update(dev.on_values)
 
         # call super init
-        super().__init__('', tuple(devs.values()))
+        super().__init__(tuple(devs.values()))
 
     @property
     def hltiming(self):
@@ -863,7 +862,7 @@ class InjSysStandbyHandler(_Devices):
         self._is_running = ''
 
 
-class InjSysPUModeHandler(_Devices, _Callback):
+class InjSysPUModeHandler(_DeviceSet, _Callback):
     """Device to control pulsed magnets configuration for injection."""
 
     _DEF_TIMEOUT = 10  # [s]
@@ -888,7 +887,7 @@ class InjSysPUModeHandler(_Devices, _Callback):
         self._abort = _Flag()
 
         # call super init
-        _Devices.__init__(self, '', devices)
+        _DeviceSet.__init__(self, devices)
         _Callback.__init__(self, callback=callback)
 
     @property

@@ -98,7 +98,7 @@ class _BaseLL(_Callback):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
         for evt in self._events.values():
-            pvs += [evt.pv_object(p) for p in evt.properties]
+            pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -111,7 +111,7 @@ class _BaseLL(_Callback):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
         for evt in self._events.values():
-            pvs += [evt.pv_object(p) for p in evt.properties]
+            pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         for pv in pvs:
             if not pv.wait_for_connection(timeout=timeout):
                 _log.info(pv.pvname + ' not connected.')
