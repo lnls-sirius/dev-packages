@@ -1174,17 +1174,17 @@ class SILLRFPreAmp(_Device):
         SIA01 = 'RA-RaSIA01:RF-LLRFPreAmp-1'
         ALL = (SIA01, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PINSw1Enbl-Cmd', 'PINSw1Dsbl-Cmd', 'PINSw1-Mon',
         'PINSw2Enbl-Cmd', 'PINSw2Dsbl-Cmd', 'PINSw2-Mon',
     )
 
-    def __init__(self, devname=''):
+    def __init__(self, devname='', props2init='all'):
         if not devname:
             devname = SILLRFPreAmp.DEVICES.SIA01
         if devname not in SILLRFPreAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=SILLRFPreAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable_pinsw_1(self, timeout=None, wait_mon=True):
         """Enable PINSw 1."""
@@ -1232,16 +1232,16 @@ class BOLLRFPreAmp(_Device):
         BO01 = 'RA-RaBO01:RF-LLRFPreAmp'
         ALL = (BO01, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PinSwEnbl-Cmd', 'PinSwDsbl-Cmd', 'PinSw-Mon',
     )
 
-    def __init__(self, devname=''):
+    def __init__(self, devname='', props2init='all'):
         if not devname:
             devname = BOLLRFPreAmp.DEVICES.BO01
         if devname not in BOLLRFPreAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=BOLLRFPreAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable_pinsw(self, timeout=None, wait_mon=True):
         """Enable PINSw."""
@@ -1272,14 +1272,14 @@ class SIRFDCAmp(_Device):
         SSA2 = 'RA-ToSIA02:RF-TDKSource'
         ALL = (SSA1, SSA2)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PwrDCEnbl-Sel', 'PwrDCDsbl-Sel', 'PwrDC-Sts',
     )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         if devname not in SIRFDCAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=SIRFDCAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
@@ -1309,16 +1309,16 @@ class BORFDCAmp(_Device):
         SSA = 'RA-ToBO:RF-SSAmpTower'
         ALL = (SSA, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PwrCnvEnbl-Sel', 'PwrCnvDsbl-Sel', 'PwrCnv-Sts',
     )
 
-    def __init__(self, devname=''):
+    def __init__(self, devname='', props2init='all'):
         if not devname:
             devname = BORFDCAmp.DEVICES.SSA
         if devname not in BORFDCAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=BORFDCAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
@@ -1349,14 +1349,14 @@ class SIRFACAmp(_Device):
         SSA2 = 'RA-ToSIA02:RF-ACPanel'
         ALL = (SSA1, SSA2)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PwrACEnbl-Sel', 'PwrACDsbl-Sel', 'PwrAC-Sts',
     )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         if devname not in SIRFACAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=SIRFACAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
@@ -1386,16 +1386,16 @@ class BORF300VDCAmp(_Device):
         SSA = 'RA-ToBO:RF-ACDCPanel'
         ALL = (SSA, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         '300VdcEnbl-Sel', '300VdcDsbl-Sel', '300Vdc-Sts',
     )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         if not devname:
             devname = BORF300VDCAmp.DEVICES.SSA
         if devname not in BORF300VDCAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
-        super().__init__(devname, properties=BORF300VDCAmp._properties)
+        super().__init__(devname, props2init=props2init)
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
