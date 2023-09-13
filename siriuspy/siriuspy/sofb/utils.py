@@ -35,8 +35,8 @@ BUMP_MATRICES = {
         [0, 0, -0.68264, 6.16011]]),
     # The B1 matrix was calculated using the storage ring model.
     'C1': _np.array([  # NOTE: first B1 (3.2 mrad) in sector (in subsec C1).
-        [ 0.94139, -1.26921, 0, 0],
-        [ 2.58532,  2.83033, 0, 0,],
+        [0.94139, -1.26921, 0, 0],
+        [2.58532, 2.83033, 0, 0],
         [0, 0, 0.97724, -1.92058],
         [0, 0, 0.09027, 1.89970]]),
     }

@@ -5,16 +5,17 @@ import os as _os
 import time as _time
 from multiprocessing import Pipe
 from copy import deepcopy as _dcopy
+from importlib.util import find_spec as _find_spec
 
 import numpy as _np
 import matplotlib.pyplot as _plt
 import matplotlib.gridspec as _mgs
 from matplotlib import rcParams
-
 import epics as _epics
 from epics import CAProcess
 
-from PRUserial485 import EthBridgeClient
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient
 
 from siriuspy.pwrsupply.pssofb import PSSOFB, PSConnSOFB
 

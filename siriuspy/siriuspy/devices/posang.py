@@ -13,7 +13,7 @@ class PosAng(_Device):
         TS = 'TS-Glob:AP-PosAng'
         ALL = (TB, TS)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'DeltaPosX-SP', 'DeltaPosX-RB',
         'DeltaAngX-SP', 'DeltaAngX-RB',
         'DeltaPosY-SP', 'DeltaPosY-RB',
@@ -21,16 +21,16 @@ class PosAng(_Device):
         'SetNewRefKick-Cmd', 'NeedRefUpdate-Mon',
         'ConfigName-SP', 'ConfigName-RB',
         'RespMatX-Mon', 'RespMatY-Mon',
-    )
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
         # check if device exists
         if devname not in PosAng.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=PosAng._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def delta_posx(self):

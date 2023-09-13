@@ -4,7 +4,7 @@ import numpy as _np
 
 from ..search import BPMSearch as _BPMSearch
 from ..util import ClassProperty as _classproperty
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
 class BaseOrbitIntlk:
@@ -129,7 +129,7 @@ class BaseOrbitIntlk:
 class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
     """This device group the orbit interlock  PVs from one BPM."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         # ==============================================================
         # Basic properties
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon',
@@ -224,13 +224,13 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         # ============================================================
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
         # call base class constructor
         BaseOrbitIntlk.__init__(self)
         if devname not in self.BPM_NAMES:
             raise ValueError(devname + ' is no a valid BPM name.')
-        _Device.__init__(self, devname, properties=BPMOrbitIntlk._properties)
+        _Device.__init__(self, devname, props2init=props2init)
 
     @property
     def posx(self):
@@ -600,7 +600,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngUpperLtcY-Mon']
 
 
-class OrbitInterlock(BaseOrbitIntlk, _Devices):
+class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
     """Orbit Interlock device."""
 
     TIMEOUT = 10
@@ -610,15 +610,17 @@ class OrbitInterlock(BaseOrbitIntlk, _Devices):
         SI = 'SI-Fam:DI-BPM'
         ALL = (SI, )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         if devname is None:
             devname = self.DEVICES.SI
         if devname not in self.DEVICES.ALL:
             raise ValueError('Wrong value for devname')
         BaseOrbitIntlk.__init__(self)
-        devs = [BPMOrbitIntlk(dev) for dev in self.BPM_NAMES]
-        _Devices.__init__(self, devname, devs)
+        devs = [
+            BPMOrbitIntlk(dev, props2init=props2init)
+            for dev in self.BPM_NAMES]
+        _DeviceSet.__init__(self, devs, devname=devname)
 
     # --- general interlock ---
 

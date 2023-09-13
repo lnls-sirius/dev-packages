@@ -1,12 +1,12 @@
 """."""
 import time as _time
+from copy import deepcopy as _dcopy
 
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
     get_hl_trigger_database as _get_hl_trigger_database
 from ..search import HLTimeSearch as _HLTimeSearch
@@ -22,7 +22,7 @@ class EVG(_Device):
         'Preparing_Continuous', 'Preparing_Injection',
         'Restarting_Continuous'))
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'InjectionEvt-Sel', 'InjectionEvt-Sts', 'UpdateEvt-Cmd',
         'ContinuousEvt-Sel', 'ContinuousEvt-Sts', 'STATEMACHINE',
         'RepeatBucketList-SP', 'RepeatBucketList-RB',
@@ -30,9 +30,9 @@ class EVG(_Device):
         'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
         'BucketListSyncStatus-Mon')
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
-        super().__init__(EVG.DEVNAME, properties=EVG._properties)
+        super().__init__(EVG.DEVNAME, props2init=props2init)
 
     @property
     def nrpulses(self):
@@ -169,10 +169,10 @@ class EVG(_Device):
         return self._wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
-class Event(_ProptyDevice):
+class Event(_Device):
     """Device Timing Event."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
         'DelayType-Sel', 'DelayType-Sts', 'Mode-Sel', 'Mode-Sts',
         'Code-Mon', 'ExtTrig-Cmd',
@@ -181,10 +181,10 @@ class Event(_ProptyDevice):
     MODES = _ETypes.EVT_MODES
     DELAYTYPES = ('Incr', 'Fixed')
 
-    def __init__(self, evtname):
+    def __init__(self, evtname, props2init='all'):
         """."""
         super().__init__(
-            EVG.DEVNAME, evtname, properties=Event._properties)
+            EVG.DEVNAME + ':' + evtname, props2init=props2init)
 
     @property
     def mode(self):
@@ -261,12 +261,28 @@ class Trigger(_Device):
     LOCKLL = ('Unlocked', 'Locked')
     POLARITIES = ('Normal', 'Inverse')
 
-    def __init__(self, trigname):
+    PROPERTIES_DEFAULT = (
+        'CtrldChannels-Cte', 'Delay-RB', 'Delay-SP', 'DelayRaw-RB',
+        'DelayRaw-SP', 'DeltaDelay-RB', 'DeltaDelay-SP', 'DeltaDelayRaw-RB',
+        'DeltaDelayRaw-SP', 'Duration-RB', 'Duration-SP', 'InInjTable-Mon',
+        'LowLvlLock-Sel', 'LowLvlLock-Sts', 'LowLvlTriggers-Cte',
+        'NrPulses-RB', 'NrPulses-SP', 'Polarity-Sel', 'Polarity-Sts',
+        'Src-Sel', 'Src-Sts', 'State-Sel', 'State-Sts', 'Status-Mon',
+        'StatusLabels-Cte', 'TotalDelay-Mon', 'TotalDelayRaw-Mon',
+        'WidthRaw-RB', 'WidthRaw-SP')
+
+    def __init__(self, trigname, props2init='all'):
         """Init."""
-        self._database = _get_hl_trigger_database(trigname)
-        self._properties = tuple(self._database)
-        self._source_options = self._database['Src-Sel']['enums']
-        super().__init__(trigname, properties=self._properties)
+        _database = _get_hl_trigger_database(trigname)
+        all_props = tuple(_database)
+        if props2init == 'all':
+            props2init = all_props
+        elif props2init is None:
+            pass
+        else:
+            props2init = list(set(all_props) & set(props2init))
+        self._source_options = _database['Src-Sel']['enums']
+        super().__init__(trigname, props2init=props2init)
 
     @property
     def status(self):
@@ -500,21 +516,64 @@ class Trigger(_Device):
         return self._wait('LowLvlLock-Sts', 0, timeout)
 
 
-class HLTiming(_Devices):
+class HLTiming(_DeviceSet):
     """."""
 
     SEARCH = _HLTimeSearch
 
-    def __init__(self):
+    def __init__(
+            self, controlled_trigs='all', trigs_props2init='all',
+            evts_props2init='all'):
         """."""
         self.evg = EVG()
         evs = self.SEARCH.get_configurable_hl_events()
-        self.events = {ev: Event(ev) for ev in evs.keys()}
-        self.triggers = {t: Trigger(t) for t in self.SEARCH.get_hl_triggers()}
+        self.events = {
+            ev: Event(ev, props2init=evts_props2init) for ev in evs.keys()}
+
+        self._triggernames_all = self.SEARCH.get_hl_triggers()
+        trigs = self._triggernames_all
+        if isinstance(controlled_trigs, (list, tuple)):
+            trigs = sorted(set(controlled_trigs) & set(self.triggernames_all))
+        self.triggers = {
+            t: Trigger(t, props2init=trigs_props2init) for t in trigs}
+        self._trigs_props2init = trigs_props2init
+
         devs = [self.evg, ]
         devs += list(self.events.values())
         devs += list(self.triggers.values())
-        super().__init__('AS-Glob:TI-HLTiming', devs)
+        super().__init__(devs, devname='AS-Glob:TI-HLTiming')
+
+    @property
+    def triggernames_controlled(self):
+        """Names of the triggers controlled by this class."""
+        return list(self.triggers)
+
+    @property
+    def triggernames_all(self):
+        """Names of all the possible high level triggers."""
+        return _dcopy(self._triggernames_all)
+
+    @property
+    def is_full(self):
+        """Return True if this class controls all triggers."""
+        return not bool(set(self._triggernames_all) - set(self.triggers))
+
+    def add_trigger(self, trigname):
+        """Add trigger to the list of controlled triggers.
+
+        Args:
+            trigname (str): Trigger name to add
+
+        Returns:
+            bool: whether addition was sucessful.
+
+        """
+        if trigname not in set(self._triggernames_all):
+            return False
+        if trigname not in self.triggers:
+            self.triggers[trigname] = Trigger(
+                trigname, props2init=self._trigs_props2init)
+        return True
 
     def get_mapping_events2triggers(self) -> dict:
         """."""
@@ -537,14 +596,19 @@ class HLTiming(_Devices):
         """."""
         notchanged = list()
         for tn in trigs:
-            tr = self.triggers[tn]
+            tr = self.triggers.get(tn)
+            if tr is None:
+                notchanged.append(tn)
+                if not printlog:
+                    continue
+                print(f'{tn:25s} -> No Change: {tn:s} is not controlled.')
+                continue
 
             if new_src not in tr.source_options:
-                if printlog:
-                    print(
-                        f'{tn:25s} -> No Change: {new_src:s}'
-                        ' is not an option.')
                 notchanged.append(tn)
+                if not printlog:
+                    continue
+                print(f'{tn:25s} -> No Change: {new_src:s} is not an option.')
                 continue
 
             dly_newsrc = 0
@@ -574,6 +638,11 @@ class HLTiming(_Devices):
 
     def change_event_delay(self, new_dly, event='Linac', printlog=True):
         """."""
+        if not self.is_full:
+            if printlog:
+                print('Aborted: class does not control all triggers.')
+            return False
+
         if event not in self.events:
             if printlog:
                 print(f'{event} is not a valid event!')

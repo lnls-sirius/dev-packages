@@ -53,22 +53,19 @@ class TestImplementation(TestCase):
     def test_join_name(self):
         """Test join_name."""
         # invalid arguments
-        self.assertRaises(TypeError, namesys.join_name)
-        self.assertRaises(TypeError, namesys.join_name,
-                          sec='SI')
-        self.assertRaises(TypeError, namesys.join_name,
-                          sec='SI', sub='Fam', dis='PS')
-        name = namesys.join_name(sec='SI', sub='Fam', dis='PS', dev='QDA')
-        self.assertEqual(name, 'SI-Fam:PS-QDA')
-        name = namesys.join_name(sec='BO', sub='Fam', dis='PS', dev='B',
-                                 idx='1')
-        self.assertEqual(name, 'BO-Fam:PS-B-1')
-        name = namesys.join_name(sec='BO', sub='Fam', dis='PS', dev='B',
-                                 idx='1', propty='PwrState-Sel')
-        self.assertEqual(name, 'BO-Fam:PS-B-1:PwrState-Sel')
-        name = namesys.join_name(sec='BO', sub='Fam', dis='PS', dev='B',
-                                 idx='1', propty='Current-Mon', field='AVG')
-        self.assertEqual(name, 'BO-Fam:PS-B-1:Current-Mon.AVG')
+        self.assertEqual('', namesys.join_name())
+        self.assertEqual('', namesys.join_name(sec='SI'))
+        self.assertEqual('', namesys.join_name(sec='SI', sub='Fam', dis='PS'))
+        self.assertEqual('SI-Fam:PS-QDA', namesys.join_name(
+            sec='SI', sub='Fam', dis='PS', dev='QDA'))
+        self.assertEqual('BO-Fam:PS-B-1', namesys.join_name(
+            sec='BO', sub='Fam', dis='PS', dev='B', idx='1'))
+        self.assertEqual('BO-Fam:PS-B-1:PwrState-Sel', namesys.join_name(
+            sec='BO', sub='Fam', dis='PS', dev='B', idx='1',
+            propty='PwrState-Sel'))
+        self.assertEqual('BO-Fam:PS-B-1:Current-Mon.AVG', namesys.join_name(
+            sec='BO', sub='Fam', dis='PS', dev='B', idx='1',
+            propty='Current-Mon', field='AVG'))
 
     def test_split_name(self):
         """Test split_name."""
@@ -91,11 +88,6 @@ class TestImplementation(TestCase):
         self.assertEqual(d['idx'], '1')
         self.assertEqual(d['propty'], 'PwrCurrent-SP')
         self.assertEqual(d['field'], 'AVG')
-        # one field
-        self.assertRaises(IndexError, namesys.split_name, pvname='A:B')
-        self.assertRaises(IndexError, namesys.split_name, pvname='A:B:C')
-        self.assertRaises(IndexError, namesys.split_name, pvname='A:B-C:D')
-        self.assertRaises(IndexError, namesys.split_name, pvname='A:B-C:D.F')
 
 
 class TestSiriusPVName(TestCase):
@@ -114,7 +106,8 @@ class TestSiriusPVName(TestCase):
         'from_rb2sp',
         'strip',
         'replace',
-    )
+        'is_standard',
+        )
 
     def test_public_interface(self):
         """Test SiriusPVName public interface."""

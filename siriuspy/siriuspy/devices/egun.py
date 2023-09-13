@@ -10,8 +10,7 @@ from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 from ..injctrl.csdev import Const as _InjConst
 from ..callbacks import Callback as _Callback
 
-from .device import Device as _Device, Devices as _Devices, \
-    DeviceNC as _DeviceNC
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .timing import Trigger
 
 
@@ -27,10 +26,10 @@ class EGBias(_Device):
         LI = 'LI-01:EG-BiasPS'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'voltoutsoft', 'voltinsoft', 'currentinsoft', 'switch', 'swstatus')
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         if devname is None:
             devname = EGBias.DEVICES.LI
@@ -38,9 +37,7 @@ class EGBias(_Device):
         # check if device exists
         if devname not in EGBias.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=EGBias._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def voltage_mon(self):
@@ -100,10 +97,10 @@ class EGFilament(_Device):
         LI = 'LI-01:EG-FilaPS'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'voltinsoft', 'currentinsoft', 'currentoutsoft', 'switch', 'swstatus')
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         if devname is None:
             devname = EGFilament.DEVICES.LI
@@ -111,9 +108,7 @@ class EGFilament(_Device):
         # check if device exists
         if devname not in EGFilament.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=EGFilament._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def voltage_mon(self):
@@ -171,13 +166,13 @@ class EGHVPS(_Device):
         LI = 'LI-01:EG-HVPS'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'currentinsoft', 'currentoutsoft',
         'voltinsoft', 'voltoutsoft',
         'enable', 'enstatus',
         'switch', 'swstatus')
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         if devname is None:
             devname = EGHVPS.DEVICES.LI
@@ -185,9 +180,7 @@ class EGHVPS(_Device):
         # check if device exists
         if devname not in EGHVPS.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=EGHVPS._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def current_mon(self):
@@ -281,17 +274,15 @@ class EGTriggerPS(_Device):
         LI = 'LI-01:EG-TriggerPS'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'status', 'allow', 'enable', 'enablereal')
 
-    def __init__(self, devname=DEVICES.LI):
+    def __init__(self, devname=DEVICES.LI, props2init='all'):
         """."""
         # check if device exists
         if devname not in EGTriggerPS.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=EGTriggerPS._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def status(self):
@@ -338,19 +329,17 @@ class EGPulsePS(_Device):
         LI = 'LI-01:EG-PulsePS'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'singleselect', 'singleselstatus', 'singleswitch', 'singleswstatus',
         'multiselect', 'multiselstatus', 'multiswitch', 'multiswstatus',
         'poweroutsoft', 'powerinsoft')
 
-    def __init__(self, devname=DEVICES.LI):
+    def __init__(self, devname=DEVICES.LI, props2init='all'):
         """Init."""
         # check if device exists
         if devname not in EGPulsePS.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=EGPulsePS._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def single_bunch_mode(self):
@@ -467,7 +456,7 @@ class EGPulsePS(_Device):
         return self.cmd_turn_on_multi_bunch_switch()
 
 
-class EGun(_Devices, _Callback):
+class EGun(_DeviceSet, _Callback):
     """EGun device."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -498,13 +487,13 @@ class EGun(_Devices, _Callback):
         self.trigmulti = Trigger('LI-01:TI-EGun-MultBun')
         self.trigmultipre = Trigger('LI-01:TI-EGun-MultBunPre')
 
-        self.sys_ext = _DeviceNC('LI-01:EG-External', ('status', ))
-        self.sys_vlv = _DeviceNC('LI-01:EG-Valve', ('status', ))
-        self.sys_gat = _DeviceNC('LI-01:EG-Gate', ('status', ))
-        self.sys_vac = _DeviceNC('LI-01:EG-Vacuum', ('status', ))
-        self.mps_ccg = _DeviceNC(
-            'LA-CN:H1MPS-1', ('CCG1Warn_L', 'CCG2Warn_L'))
-        self.mps_gun = _DeviceNC('LA-CN:H1MPS-1', ('GunPermit', ))
+        self.sys_ext = _Device('LI-01:EG-External', props2init=('status', ))
+        self.sys_vlv = _Device('LI-01:EG-Valve', props2init=('status', ))
+        self.sys_gat = _Device('LI-01:EG-Gate', props2init=('status', ))
+        self.sys_vac = _Device('LI-01:EG-Vacuum', props2init=('status', ))
+        self.mps_ccg = _Device(
+            'LA-CN:H1MPS-1', props2init=('CCG1Warn_L', 'CCG2Warn_L'))
+        self.mps_gun = _Device('LA-CN:H1MPS-1', props2init=('GunPermit', ))
 
         devices = (
             self.bias, self.fila, self.hvps, self.trigps, self.pulse,
@@ -525,7 +514,7 @@ class EGun(_Devices, _Callback):
         self._abort_rmp_hvps = _Flag()
         self._abort_rmp_fila = _Flag()
 
-        _Devices.__init__(self, '', devices)
+        _DeviceSet.__init__(self, devices)
         _Callback.__init__(self, callback=callback)
 
     @property
@@ -928,7 +917,9 @@ class EGun(_Devices, _Callback):
         """Check if interlock signals are ok."""
         if not self.wait_for_connection(1):
             return False
-        isok = [self.mps_ccg[ppty] == 0 for ppty in self.mps_ccg.properties]
+        isok = [
+            self.mps_ccg[ppty] == 0
+            for ppty in self.mps_ccg.properties_in_use]
         allok = all(isok)
         allok &= self.mps_gun['GunPermit'] == 1
         allok &= self.sys_ext['status'] == 1

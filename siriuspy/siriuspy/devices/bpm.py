@@ -4,7 +4,7 @@ import time as _time
 from threading import Event as _Flag
 import numpy as _np
 
-from .device import Device as _Device, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -24,7 +24,7 @@ class BPM(_Device):
     ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
         'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
@@ -66,10 +66,10 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
-        'TbTTagEn-Sel', 'TbTTagEn-Sts',
-        'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
-        'MonitTagEn-Sel', 'MonitTagEn-Sts',
+        'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
+        'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
+        'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
+        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
         'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
@@ -80,18 +80,20 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
+    def __init__(
+            self, devname, props2init='all', auto_monitor_mon=True,
+            ispost_mortem=False):
         """."""
         # call base class constructor
         self._ispost_mortem = ispost_mortem
-        properties = {self.get_propname(p) for p in BPM._properties}
 
-        if _BPMSearch.is_photon_bpm(devname):
-            properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
-        properties = list(properties)
+        if props2init == 'all' and _BPMSearch.is_photon_bpm(devname):
+            props2init = set(BPM.PROPERTIES_DEFAULT)
+            props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
+            props2init = list(props2init)
 
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -215,12 +217,12 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbTTagEn-Sts']
+        return self['TbTPhaseSyncEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbTTagEn-Sel'] = val
+        self['TbTPhaseSyncEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
@@ -255,12 +257,12 @@ class BPM(_Device):
     @property
     def fofb_sync_enbl(self):
         """."""
-        return self['SwTagEn-Sts']
+        return self['FOFBPhaseSyncEn-Sts']
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        self['SwTagEn-Sel'] = val
+        self['FOFBPhaseSyncEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -285,12 +287,12 @@ class BPM(_Device):
     @property
     def facq_sync_enbl(self):
         """."""
-        return self['FAcqTagEn']
+        return self['FAcqPhaseSyncEn-Sts']
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        self['FAcqTagEn-Sel'] = val
+        self['FAcqPhaseSyncEn-Sel'] = val
 
     @property
     def monit_rate(self):
@@ -305,12 +307,12 @@ class BPM(_Device):
     @property
     def monit_sync_enbl(self):
         """."""
-        return self['MonitTagEn-Sts']
+        return self['MonitPhaseSyncEn-Sts']
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        self['MonitTagEn-Sel'] = val
+        self['MonitPhaseSyncEn-Sel'] = val
 
     @property
     def posx_gain(self):
@@ -814,28 +816,28 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTTagEn-Sts', 0)
+        return self._wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('SwTagEn-Sts', 0)
+        return self._wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
@@ -874,6 +876,7 @@ class BPM(_Device):
         return fadc / self.switching_rate
 
     def get_propname(self, prop):
+        """Get appropriate property name in case of triggered acquisitions."""
         if not self._ispost_mortem:
             return prop
         if prop.startswith('GEN'):
@@ -882,8 +885,12 @@ class BPM(_Device):
             return prop.replace('ACQ', 'ACQ_PM')
         return prop
 
+    def _get_pvname(self, propty):
+        propty = self.get_propname(propty)
+        return super()._get_pvname(propty)
 
-class FamBPMs(_Devices):
+
+class FamBPMs(_DeviceSet):
     """Family of BPMs.
 
     Parameters
@@ -900,6 +907,7 @@ class FamBPMs(_Devices):
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
+    PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
 
     class DEVICES:
         """."""
@@ -908,7 +916,9 @@ class FamBPMs(_Devices):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, bpmnames=None, ispost_mortem=False):
+    def __init__(
+            self, devname=None, bpmnames=None, ispost_mortem=False,
+            props2init='all'):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -916,14 +926,15 @@ class FamBPMs(_Devices):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
+        self._devname = devname
         bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
-        devs = [
-            BPM(dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem)
-            for dev in bpm_names]
+        devs = [BPM(
+            dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
+            props2init=props2init) for dev in bpm_names]
 
-        super().__init__(devname, devs)
+        super().__init__(devs)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
         self._initial_timestamps = None
@@ -935,6 +946,11 @@ class FamBPMs(_Devices):
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._mturn_set_flag)
+
+    @property
+    def devname(self):
+        """."""
+        return self._devname
 
     @property
     def bpm_names(self):

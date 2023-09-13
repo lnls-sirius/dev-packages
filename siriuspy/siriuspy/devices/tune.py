@@ -2,7 +2,7 @@
 
 
 from .device import Device as _Device
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 
 
 class TuneFrac(_Device):
@@ -17,19 +17,13 @@ class TuneFrac(_Device):
         SI_V = 'SI-Glob:DI-Tune-V'
         ALL = (SI_H, SI_V)
 
-    _properties = (
-        'TuneFrac-Mon',
-        'Enbl-Sel', 'Enbl-Sts'
-        )
+    PROPERTIES_DEFAULT = ('TuneFrac-Mon', 'Enbl-Sel', 'Enbl-Sts')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        # check if device exists
         if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=TuneFrac._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def tune(self):
@@ -62,16 +56,16 @@ class TuneProc(_Device):
         SI_V = 'SI-Glob:DI-TuneProc-V'
         ALL = (SI_H, SI_V)
 
-    _properties = ('Trace-Mon', )
+    PROPERTIES_DEFAULT = ('Trace-Mon', )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
         # check if device exists
         if devname not in TuneProc.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=TuneProc._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def tune_wfm(self):
@@ -79,7 +73,7 @@ class TuneProc(_Device):
         return self['Trace-Mon']
 
 
-class Tune(_Devices):
+class Tune(_DeviceSet):
     """Tune device."""
 
     class DEVICES:
@@ -88,9 +82,11 @@ class Tune(_Devices):
         SI = 'SI-Glob:DI-Tune'
         ALL = (SI, )
 
-    def __init__(self, devname):
+    def __init__(self, devname=None):
         """Init."""
         # check if device exists
+        if devname is None:
+            devname = Tune.DEVICES.SI
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
 
@@ -102,7 +98,7 @@ class Tune(_Devices):
         devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
 
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices, devname=devname)
 
     @property
     def tunex(self):
@@ -160,20 +156,21 @@ class TuneCorr(_Device):
         SI = 'SI-Glob:AP-TuneCorr'
         ALL = (SI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'DeltaTuneX-SP', 'DeltaTuneX-RB',
         'DeltaTuneY-SP', 'DeltaTuneY-RB',
         'SetNewRefKL-Cmd', 'ApplyDelta-Cmd',
-    )
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
-        # check if device exists
+        if devname is None:
+            devname = TuneCorr.DEVICES.SI
         if devname not in TuneCorr.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=TuneCorr._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def delta_tunex(self):

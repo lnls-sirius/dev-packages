@@ -84,13 +84,8 @@ class EpicsMatrix(BaseMatrix):
             dbase['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
         return dbase
 
-    def set_respmat_mode(self, mode, is_thread=False):
+    def set_respmat_mode(self, mode):
         """Set the response matrix mode."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_respmat_mode, (mode, ), {'is_thread': True}))
-            return True
-
         msg = 'Setting New RespMatMode.'
         self._update_log(msg)
         _log.info(msg)
@@ -104,37 +99,29 @@ class EpicsMatrix(BaseMatrix):
             self.run_callbacks('RespMatMode-Sel', self._respmat_mode)
             return
         self.run_callbacks('RespMatMode-Sts', self._respmat_mode)
+        return True
 
-    def set_respmat(self, mat, is_thread=False):
+    def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_respmat, (mat, ), {'is_thread': True}))
-            return True
-
         msg = 'Setting New RespMat.'
         self._update_log(msg)
         _log.info(msg)
         if mat is None:
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         mat = _np.reshape(mat, [-1, self._csorb.nr_corrs])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
             self.respmat = old_
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         self._save_respmat(mat)
         self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
+        return True
 
-    def set_enbllist(self, key, val, is_thread=False):
+    def set_enbllist(self, key, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_enbllist, (key, val), {'is_thread': True}))
-            return True
-
         msg = 'Setting {0:s} EnblList'.format(key.upper())
         self._update_log(msg)
         _log.info(msg)
@@ -159,6 +146,7 @@ class EpicsMatrix(BaseMatrix):
 
         new_ = bool(new_) if new_.size == 1 else new_
         self.run_callbacks(pvn, new_)
+        return True
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
@@ -199,35 +187,27 @@ class EpicsMatrix(BaseMatrix):
         if self.isring:
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
 
-    def set_min_sing_value(self, num, is_thread=False):
+    def set_min_sing_value(self, num):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_min_sing_value, (num, ), {'is_thread': True}))
-            return True
-
         bkup = self.min_sing_val
         self.min_sing_val = float(num)
         if not self._calc_matrices():
             self.min_sing_val = bkup
             self.run_callbacks('MinSingValue-SP', self.min_sing_val)
-            return
+            return False
         self.run_callbacks('MinSingValue-RB', self.min_sing_val)
+        return True
 
-    def set_tikhonov_reg_const(self, num, is_thread=False):
+    def set_tikhonov_reg_const(self, num):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_tikhonov_reg_const, (num, ), {'is_thread': True}))
-            return True
-
         bkup = self.tikhonov_reg_const
         self.tikhonov_reg_const = float(num)
         if not self._calc_matrices():
             self.tikhonov_reg_const = bkup
             self.run_callbacks('TikhonovRegConst-SP', self.tikhonov_reg_const)
-            return
+            return False
         self.run_callbacks('TikhonovRegConst-RB', self.tikhonov_reg_const)
+        return True
 
     def _calc_matrices(self):
         msg = 'Calculating Inverse Matrix.'
@@ -319,7 +299,7 @@ class EpicsMatrix(BaseMatrix):
         filename = self._csorb.respmat_fname
         boo = False
         if _os.path.isfile(filename):
-            boo = self.set_respmat(_np.loadtxt(filename), is_thread=True)
+            boo = self.set_respmat(_np.loadtxt(filename))
             if boo:
                 msg = 'Loading RespMat from file.'
             else:

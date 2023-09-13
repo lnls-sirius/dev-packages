@@ -35,8 +35,12 @@ class PSDiagApp(_App):
             computer = _PSStatusPV()
             if devname.sec != 'LI':
                 intlks = _get_ps_interlocks(psname=psname)
-                intlk_list = [':' + ppt for ppt in intlks if 'Intlk' in ppt]
-                alarm_list = [':' + ppt for ppt in intlks if 'Alarm' in ppt]
+                if psname.dev in ['FCH', 'FCV']:
+                    intlk_list = [':' + p for p in intlks if 'Ltc' not in p]
+                    alarm_list = [':' + p for p in intlks if 'Ltc' in p]
+                else:
+                    intlk_list = [':' + p for p in intlks if 'Intlk' in p]
+                    alarm_list = [':' + p for p in intlks if 'Alarm' in p]
 
                 if psname in ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']:
                     for aux in ['a', 'b', 'c']:

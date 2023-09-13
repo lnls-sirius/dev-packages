@@ -3,9 +3,9 @@
 import time as _time
 import logging as _log
 import traceback as _traceback
+from importlib.util import find_spec as _find_spec
 
 import numpy as _np
-from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
@@ -20,6 +20,9 @@ from ..pwrsupply.pssofb import PSSOFB as _PSSOFB
 
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
+
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient
 
 TIMEOUT = 0.05
 
@@ -675,13 +678,8 @@ class EpicsCorrectors(BaseCorrectors):
             self._update_log('ERR: ' + str(err))
             _log.error(_traceback.format_exc())
 
-    def set_corrs_mode(self, value, is_thread=False):
+    def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_corrs_mode, (value, ), {'is_thread': True}))
-            return True
-
         if value not in self._csorb.CorrSync:
             return False
         self.sync_kicks = value
@@ -760,13 +758,8 @@ class EpicsCorrectors(BaseCorrectors):
         self.run_callbacks('CorrPSSOFBEnbl-Mon', val)
         return True
 
-    def configure_correctors(self, val, is_thread=False):
+    def configure_correctors(self, val):
         """Configure correctors method."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.configure_correctors, (val, ), {'is_thread': True}))
-            return True
-
         corrs = self._get_used_corrs(include_rf=True)
         for corr in corrs:
             if not corr.connected:
@@ -781,12 +774,13 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.configure()
         if not self.isring:
-            return
+            return True
         if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
                 _log.error(msg[5:])
+        return True
 
     def _update_status(self):
         status = 0b0000111
