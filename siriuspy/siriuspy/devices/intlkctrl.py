@@ -3,20 +3,18 @@
 import time as _time
 
 from .device import Device as _Device
-from .device import DeviceNC as _DeviceNC
 
 
 class ASPPSCtrl(_Device):
     """Accelerator PPS Control."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'TunAccessRemainingWaitTime-Mon',
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, props2init='all', **kwargs):
         """Init."""
-        devname = 'AS-Glob:PP-Summary'
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        super().__init__('AS-Glob:PP-Summary', props2init=props2init, **kwargs)
 
     @property
     def remaining_time_for_tunnel_access(self):
@@ -27,16 +25,15 @@ class ASPPSCtrl(_Device):
 class ASMPSCtrl(_Device):
     """Accelerator MPS Control."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'AlarmGammaShutter-Mon',
         'DsblGamma-Cmd', 'EnblGamma-Cmd',
         # 'DsblGamma-Mon', 'EnblGamma-Mon',
-    )
+        )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, props2init='all', **kwargs):
         """Init."""
-        devname = 'AS-Glob:MP-Summary'
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        super().__init__('AS-Glob:MP-Summary', props2init=props2init, **kwargs)
 
     @property
     def gamma_enabled(self):
@@ -59,7 +56,7 @@ class ASMPSCtrl(_Device):
         return self._wait('AlarmGammaShutter-Mon', 0, timeout)
 
 
-class BLInterlockCtrl(_DeviceNC):
+class BLInterlockCtrl(_Device):
     """Beamline Interlock Control."""
 
     TIMEOUT_GATEVALVE = 20  # [s]
@@ -72,7 +69,7 @@ class BLInterlockCtrl(_DeviceNC):
         CAX = 'CAX'
         ALL = (CAX, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         # Status da liberação do gamma pela máquina – 1 indica liberado
         'M:PPS01:HABILITACAO_MAQUINA',
 
@@ -128,15 +125,15 @@ class BLInterlockCtrl(_DeviceNC):
         'B:EPS01:openGates',
         'B:EPS01:GV7open', 'B:EPS01:GV7closed',  # open/close gate status
         'A:EPS01:GV6open', 'A:EPS01:GV6closed',  # open/close gate status
-    )
+        )
 
-    def __init__(self, devname, *args, **kwargs):
+    def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
-        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.CAX
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
-        # call base class constructor
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
     def is_hutchA_intlk_search_done(self):

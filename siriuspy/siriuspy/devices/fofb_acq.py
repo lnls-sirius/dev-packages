@@ -7,8 +7,7 @@ from ..search import PSSearch as _PSSearch, BPMSearch as _BPMSearch
 from ..csdev import Const as _Const
 from ..fofb.csdev import NR_BPM
 
-from .device import ProptyDevice as _ProptyDevice, Devices as _Devices, \
-    Device as _Device
+from .device import DeviceSet as _DeviceSet, Device as _Device
 from .fofb import FOFBCtrlBase as _FOFBCtrlBase
 from .timing import Event
 from .psconv import StrengthConv
@@ -45,10 +44,10 @@ class _FOFBCtrlAcqConst(_Const):
     STATES_FINISHED |= STATES_NOTOK
 
 
-class _FOFBCtrlAcqBase(_ProptyDevice, _FOFBCtrlBase, _FOFBCtrlAcqConst):
+class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     """FOFB acquisition base device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Channel-Sel', 'Channel-Sts',
         'Shots-SP', 'Shots-RB',
         'UpdateTime-SP', 'UpdateTime-RB',
@@ -62,7 +61,7 @@ class _FOFBCtrlAcqBase(_ProptyDevice, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     def __init__(self, devname, **kws):
         """Init."""
         # call base class constructor
-        super().__init__(devname, **kws)
+        _Device.__init__(self, devname, **kws)
 
     @property
     def channel(self):
@@ -159,7 +158,7 @@ class _FOFBCtrlAcqBase(_ProptyDevice, _FOFBCtrlBase, _FOFBCtrlAcqConst):
             timeout=timeout, comp=lambda x, y: x in y)
 
 
-class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
+class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
 
     DEF_TIMEOUT = 10  # [s]
     FOFBCTRL_CLASS = _FOFBCtrlAcqBase
@@ -180,10 +179,11 @@ class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
             cvn = _PSSearch.get_psnames(dict(sec='SI', sub=sub, dev='FCV'))
             psnames = chn + cvn
         self._psnames = psnames
-        self._psdevs = {psn: self.FOFBPS_CLASS(psn, auto_monitor_mon=False)
-                        for psn in self._psnames}
-        self._psconv = {psn: StrengthConv(psn, 'Ref-Mon')
-                        for psn in self._psnames}
+        self._psdevs = {
+            psn: self.FOFBPS_CLASS(psn, auto_monitor_mon=False)
+            for psn in self._psnames}
+        self._psconv = {
+            psn: StrengthConv(psn, 'Ref-Mon') for psn in self._psnames}
 
         # BPM names
         self._bpm_names = bpmnames or _BPMSearch.get_names(
@@ -198,7 +198,7 @@ class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
         devices.extend(self._ctlrs.values())
         devices.extend(self._psdevs.values())
         devices.extend(self._psconv.values())
-        super().__init__('SI-Glob:BS-FOFBAcq', devices)
+        _DeviceSet.__init__(self, devices, devname='SI-Glob:BS-FOFBAcq')
 
     @property
     def ctrldevs(self):
@@ -329,11 +329,11 @@ class _FamFOFBAcqBase(_Devices, _FOFBCtrlAcqConst):
 class FOFBCtrlSysId(_FOFBCtrlAcqBase):
     """FOFB controller system identification device."""
 
-    _properties = _FOFBCtrlAcqBase._properties
-    _properties += ('TimeFrameData', 'DataType')
-    _properties += tuple([f'BPM{i}PosXData' for i in range(8)])
-    _properties += tuple([f'BPM{i}PosYData' for i in range(8)])
-    _properties += (
+    PROPERTIES_DEFAULT = _FOFBCtrlAcqBase.PROPERTIES_DEFAULT
+    PROPERTIES_DEFAULT += ('TimeFrameData', 'DataType')
+    PROPERTIES_DEFAULT += tuple([f'BPM{i}PosXData' for i in range(8)])
+    PROPERTIES_DEFAULT += tuple([f'BPM{i}PosYData' for i in range(8)])
+    PROPERTIES_DEFAULT += (
         'PRBSSyncEn-Sel', 'PRBSSyncEn-Sts',
         'PRBSStepDuration-SP', 'PRBSStepDuration-RB',
         'PRBSLFSRLength-SP', 'PRBSLFSRLength-RB',
@@ -347,12 +347,11 @@ class FOFBCtrlSysId(_FOFBCtrlAcqBase):
         'PRBSData',
     )
 
-    def __init__(self, devname, auto_monitor_mon=True):
+    def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
         """Init."""
         # call base class constructor
         super().__init__(
-            devname, propty_prefix='SYSID',
-            properties=FOFBCtrlSysId._properties,
+            devname + ':SYSID', props2init=props2init,
             auto_monitor_mon=auto_monitor_mon)
 
     @property
@@ -476,7 +475,7 @@ class FOFBCtrlSysId(_FOFBCtrlAcqBase):
 class FOFBPSSysId(_Device):
     """FOFB power supply system identification device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'SYSIDFOFBAccRawData', 'SYSIDFOFBAccData',
         'SYSIDPRBSFOFBAccLvl0-SP', 'SYSIDPRBSFOFBAccLvl0-RB',
         'SYSIDPRBSFOFBAccLvl1-SP', 'SYSIDPRBSFOFBAccLvl1-RB',
@@ -484,11 +483,11 @@ class FOFBPSSysId(_Device):
         'CurrLoopTi-SP', 'CurrLoopTi-RB',
     )
 
-    def __init__(self, devname, auto_monitor_mon=True):
+    def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
         """Init."""
         # call base class constructor
         super().__init__(
-            devname, properties=FOFBPSSysId._properties,
+            devname, props2init=props2init,
             auto_monitor_mon=auto_monitor_mon)
 
     @property
@@ -546,6 +545,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
     DEF_ATOL_FOFBACC = 1e-6
 
     def __init__(self, **kws):
+        """."""
         super().__init__(**kws)
         self._initial_timestamps = None
 
@@ -1359,31 +1359,27 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 class FOFBCtrlLamp(_FOFBCtrlAcqBase):
     """FOFB controller RTMLAMP acquisition device."""
 
-    _properties = _FOFBCtrlAcqBase._properties
-
-    def __init__(self, devname, auto_monitor_mon=True):
+    def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
         """Init."""
         # call base class constructor
         super().__init__(
-            devname, propty_prefix='LAMP',
-            properties=FOFBCtrlLamp._properties,
+            devname+':LAMP', props2init=props2init,
             auto_monitor_mon=auto_monitor_mon)
 
 
 class FOFBPSLamp(_Device):
     """FOFB power supply RTMLAMP acquisition device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'LAMPCurrentRawData', 'LAMPCurrentData',
         'LAMPVoltageRawData', 'LAMPVoltageData',
-    )
+        )
 
-    def __init__(self, devname, auto_monitor_mon=True):
+    def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
         """Init."""
         # call base class constructor
         super().__init__(
-            devname, properties=FOFBPSLamp._properties,
-            auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
 class FamFOFBLamp(_FamFOFBAcqBase):

@@ -9,13 +9,12 @@ class MachShift(_Device):
 
     MODES = _ETypes.MACHSHIFT
 
-    _properties = ('Mode-Sel', 'Mode-Sts')
+    PROPERTIES_DEFAULT = ('Mode-Sel', 'Mode-Sts')
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """Init."""
         # call base class constructor
-        super().__init__(
-            'AS-Glob:AP-MachShift', properties=MachShift._properties)
+        super().__init__('AS-Glob:AP-MachShift', props2init=props2init)
 
     @property
     def mode(self):

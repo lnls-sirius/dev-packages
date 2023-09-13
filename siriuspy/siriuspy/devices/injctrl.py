@@ -21,7 +21,7 @@ class InjCtrl(_Device):
     BiasFBModelTypes = _Const.BiasFBModelTypes
     IdleRun = _Const.IdleRunning
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Mode-Sel', 'Mode-Sts',
         'Type-Sel', 'Type-Sts', 'Type-Mon', 'TypeCmdSts-Mon',
         'SglBunBiasVolt-SP', 'SglBunBiasVolt-RB',
@@ -78,7 +78,7 @@ class InjCtrl(_Device):
         'BiasFBGPModInferenceInjCurr-Mon', 'BiasFBGPModInferenceBias-Mon',
         'BiasFBGPModPredBias-Mon', 'BiasFBGPModPredInjCurrAvg-Mon',
         'BiasFBGPModPredInjCurrStd-Mon',
-    )
+        )
 
     class DEVICES:
         """Devices names."""
@@ -86,7 +86,7 @@ class InjCtrl(_Device):
         AS = 'AS-Glob:AP-InjCtrl'
         ALL = (AS, )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         if devname is None:
             devname = InjCtrl.DEVICES.AS
@@ -94,7 +94,7 @@ class InjCtrl(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=InjCtrl._properties)
+        super().__init__(devname, props2init=props2init)
 
     # ----- general injection properties -----
 

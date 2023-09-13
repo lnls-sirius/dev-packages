@@ -46,39 +46,56 @@ def join_name(**kwargs):
     """
     dic = {k: v for k, v in kwargs.items() if v}  # get valid args
     name = ''
-    if len(dic.keys()) == 1:
-        if 'propty' in dic.keys():
-            name = dic['propty']
-        elif 'propty_name' in dic.keys():
-            name = dic['propty_name']
-    elif len(dic.keys()) == 2:
-        if 'sec' in dic.keys() and 'sub' in dic.keys():
-            name = dic['sec'].upper() + '-' + dic['sub']
-        elif 'dis' in dic.keys() and 'dev' in dic.keys():
-            name = dic['dis'].upper() + '-' + dic['dev']
-        elif 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
-            name = dic['propty_name'].upper() + '-' + dic['propty_suffix']
-    elif len(dic.keys()) == 3:
-        if 'dis' in dic.keys() and 'dev' in dic.keys() and 'idx' in dic.keys():
+    elements = None
+    if len(dic) == 1:
+        if 'propty' in dic:
+            name += dic['propty']
+        elif 'propty_name' in dic:
+            name += dic['propty_name']
+        return SiriusPVName(name)
+    if len(dic) == 2:
+        if 'sec' in dic and 'sub' in dic:
+            name += dic['sec'].upper() + '-' + dic['sub']
+            elements = 'sec-sub'
+        elif 'dis' in dic and 'dev' in dic:
+            name += dic['dis'].upper() + '-' + dic['dev']
+            elements = 'dis-dev'
+        elif 'propty_name' in dic and 'propty_suffix' in dic:
+            name += dic['propty_name'] + '-' + dic['propty_suffix']
+            elements = 'propty'
+        return SiriusPVName(name)
+    if len(dic) == 3:
+        if 'dis' in dic and 'dev' in dic and 'idx' in dic:
             name = dic['dis'].upper() + '-' + dic['dev'] + '-' + dic['idx']
-    elif len(dic.keys()) > 3:
-        name = dic['channel_type'] + '://' if 'channel_type' in dic.keys() else ''
-        name = dic['prefix'] + '-' if 'prefix' in dic.keys() else ''
-        name += (dic['sec'].upper() + '-' + dic['sub'] + ':' +
-                 dic['dis'].upper() + '-' + dic['dev'])
-        name += ('-' + dic['idx']) if 'idx' in dic.keys() else ''
-        if 'propty_name' in dic.keys() and 'propty_suffix' in dic.keys():
-            name += ':' + dic['propty_name'] + '-' + dic['propty_suffix']
-            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
-        elif 'propty' in dic.keys():
-            name += ':' + dic['propty']
-            name += ('.' + dic['field']) if 'field' in dic.keys() else ''
-        elif 'propty_name' in dic.keys():
-            name += ':' + dic['propty_name']
+        elif 'dis' in dic and 'dev' in dic and 'propty' in dic:
+            name = dic['dis'].upper() + '-' + dic['dev'] + ':' + dic['propty']
+        elif 'propty_name' in dic and 'propty_suffix' in dic:
+            name += dic['propty_name'] + '-' + dic['propty_suffix']
+        return SiriusPVName(name)
 
-    if not name:
-        raise TypeError('Not a valid SiriusPVName elements set!')
-    return SiriusPVName(name)
+    if 'channel_type' in dic:
+        name += dic['channel_type'] + '://'
+    if 'prefix' in dic:
+        name += dic['prefix'] + '-'
+    if 'sec' in dic and 'sub' in dic:
+        name += dic['sec'].upper() + '-' + dic['sub']
+    if name:
+        name += ':'
+    if 'dis' in dic and 'dev' in dic:
+        name += dic['dis'].upper() + '-' + dic['dev']
+    if 'idx' in dic:
+        name += '-' + dic['idx']
+    if name and {'propty_name', 'propty', 'field'} & set(dic):
+        name += ':'
+    if 'propty_name' in dic and 'propty_suffix' in dic:
+        name += dic['propty_name'] + '-' + dic['propty_suffix']
+    elif 'propty' in dic:
+        name += dic['propty']
+    elif 'propty_name' in dic:
+        name += dic['propty_name']
+    if 'field' in dic:
+        name += '.' + dic['field']
+    return SiriusPVName(name, elements=elements)
 
 
 def split_name(pvname, elements=None):
@@ -137,13 +154,12 @@ def split_name(pvname, elements=None):
         dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
         dic_['area_name'] = '-'.join([s for s in slist_[-2:]])
         dic_['device_name'] = dic_['area_name'] + ':' + list_[1]
-
-        dic_['sec'] = slist_[-2]
-        dic_['sub'] = slist_[-1]
+        dic_['sec'] = slist_[-2] if len(slist_) >= 2 else ''
+        dic_['sub'] = slist_[-1] if len(slist_) >= 1 else ''
 
         slist_ = list_[1].split('-')
         dic_['dis'] = slist_[0]
-        dic_['dev'] = slist_[1]
+        dic_['dev'] = slist_[1] if len(slist_) >= 2 else ''
         dic_['idx'] = slist_[2] if len(slist_) >= 3 else ''
 
         if len(list_) > 2:
@@ -239,6 +255,33 @@ class SiriusPVName(str):
             nickname += ':' + self.dev
         nickname += '-' + self.idx if self.idx else ''
         return nickname
+
+    def is_standard(self, name_type='devname'):
+        """Return whether pvname is in conformation to Namesys standard.
+
+        Args:
+            name_type (str, optional): Type of check you want to perform.
+                Please select one of the options below to check:
+                    'devname' -> whether this is a standard Device Name;
+                    'pvname' -> if this is a standard PVname;
+                    'area_name' -> if it is a standard Area Name;
+                    'propty' -> if this is a standard Property Name.
+                Defaults to 'devname'.
+
+        Returns:
+            bool: Whether or not it is in accordance with SIRIUS naming
+                conventions.
+
+        """
+        name_type = name_type.lower()
+        props = {self.sec, self.sub}  # area_name
+        if name_type.startswith('devname'):
+            props |= {self.dev, self.dis}
+        if name_type.startswith('pvname'):
+            props.add(self.propty)
+        if name_type.startswith('propty'):
+            props = {self.propty_name, self.propty_suffix}
+        return '' not in props and self == self.substitute()
 
     def __lt__(self, other):
         """Less-than operator."""

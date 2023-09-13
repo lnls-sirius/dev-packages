@@ -12,23 +12,20 @@ class _ScraperDev(_Device):
 
         H = 'SI-01SA:DI-ScrapH'
         V = 'SI-01SA:DI-ScrapV'
-        ALL = (H, V, )
+        ALL = (H, V)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Home-Cmd', 'ForceComplete-Mon', 'CoordConvErr-Mon',
         'EnblBacklashComp-Sel', 'EnblBacklashComp-Sts'
-    )
+        )
 
-    def __init__(self, devname, properties=None):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in _ScraperDev.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        if properties is None:
-            properties = _ScraperDev._properties
-
-        super().__init__(devname, properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def is_force_cmd_complete(self):
@@ -78,126 +75,124 @@ class _ScraperDev(_Device):
 class ScraperH(_ScraperDev):
     """."""
 
-    _properties = (
-        'OuterSlitPos-SP', 'OuterSlitPos-RB',
-        'InnerSlitPos-SP', 'InnerSlitPos-RB',
-        'InnerDoneMov-Mon', 'OuterDoneMov-Mon',
-        'OuterSlitInnerLim-SP', 'OuterSlitInnerLim-RB',
-        'OuterSlitOuterLim-SP', 'OuterSlitOuterLim-RB',
-        'OuterSlitBacklashDist-SP', 'OuterSlitBacklashDist-RB',
-        'OuterMotionCtrl-Cte', 'ForceOuterSlitPos-Cmd',
-        'InnerSlitInnerLim-SP', 'InnerSlitInnerLim-RB',
-        'InnerSlitOuterLim-SP', 'InnerSlitOuterLim-RB',
-        'InnerSlitBacklashDist-SP', 'InnerSlitBacklashDist-RB',
-        'InnerMotionCtrl-Cte', 'ForceInnerSlitPos-Cmd',
+    PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
+        'LeftSlitPos-SP', 'LeftSlitPos-RB',
+        'RightSlitPos-SP', 'RightSlitPos-RB',
+        'RightDoneMov-Mon', 'LeftDoneMov-Mon',
+        'LeftSlitInnerLim-SP', 'LeftSlitInnerLim-RB',
+        'LeftSlitOuterLim-SP', 'LeftSlitOuterLim-RB',
+        'LeftSlitBacklashDist-SP', 'LeftSlitBacklashDist-RB',
+        'LeftMotionCtrl-Cte', 'ForceLeftSlitPos-Cmd',
+        'RightSlitInnerLim-SP', 'RightSlitInnerLim-RB',
+        'RightSlitOuterLim-SP', 'RightSlitOuterLim-RB',
+        'RightSlitBacklashDist-SP', 'RightSlitBacklashDist-RB',
+        'RightMotionCtrl-Cte', 'ForceRightSlitPos-Cmd',
         )
 
-    def __init__(self):
+    def __init__(self, devname=None, props2init='all'):
         """."""
-        # call base class constructor
-        _all_properties = _ScraperDev._properties + ScraperH._properties
-        super().__init__(
-            devname=_ScraperDev.DEVICES.H, properties=_all_properties)
+        if devname is None:
+            devname = _ScraperDev.DEVICES.H
+        super().__init__(devname, props2init=props2init)
 
     @property
     def left_slit_pos(self):
         """Left slit position [mm]."""
-        return self['OuterSlitPos-RB']
+        return self['LeftSlitPos-RB']
 
     @property
     def right_slit_pos(self):
         """Right slit position [mm]."""
-        return self['InnerSlitPos-RB']
+        return self['RightSlitPos-RB']
 
     @property
     def is_left_slit_moving(self):
         """."""
-        return not self['OuterDoneMov-Mon']
+        return not self['LeftDoneMov-Mon']
 
     @property
     def is_right_slit_moving(self):
         """."""
-        return not self['InnerDoneMov-Mon']
+        return not self['RightDoneMov-Mon']
 
     @property
     def left_slit_limits(self):
         """Limits for left slit."""
-        return [self['OuterSlitInnerLim-RB'], self['OuterSlitOuterLim-RB']]
+        return [self['LeftSlitInnerLim-RB'], self['LeftSlitOuterLim-RB']]
 
     @left_slit_limits.setter
     def left_slit_limits(self, lims):
         """Set left slit limits."""
         _ScraperDev._check_limits(lims, is_negative=False)
-        self['OuterSlitInnerLim-SP'] = lims[0]
-        self['OuterSlitOuterLim-SP'] = lims[1]
+        self['LeftSlitInnerLim-SP'] = lims[0]
+        self['LeftSlitOuterLim-SP'] = lims[1]
 
     @property
     def right_slit_limits(self):
         """Limits for right slit."""
-        return [self['InnerSlitInnerLim-RB'], self['InnerSlitOuterLim-RB']]
+        return [self['RightSlitInnerLim-RB'], self['RightSlitOuterLim-RB']]
 
     @right_slit_limits.setter
     def right_slit_limits(self, lims):
         """Set right slit limits."""
         _ScraperDev._check_limits(lims, is_negative=True)
-        self['InnerSlitInnerLim-SP'] = lims[0]
-        self['InnerSlitOuterLim-SP'] = lims[1]
+        self['RightSlitInnerLim-SP'] = lims[0]
+        self['RightSlitOuterLim-SP'] = lims[1]
 
     @property
     def left_slit_control_prefix(self):
         """."""
-        return self['OuterMotionCtrl-Cte']
+        return self['LeftMotionCtrl-Cte']
 
     @property
     def right_slit_control_prefix(self):
         """."""
-        return self['InnerMotionCtrl-Cte']
+        return self['RightMotionCtrl-Cte']
 
     def wait_slits_finish_moving(self, timeout=10):
         """."""
-        names = [slit + 'DoneMov-Mon' for slit in ('Outer', 'Inner')]
+        names = [slit + 'DoneMov-Mon' for slit in ('Left', 'Right')]
         return self._wait_finish_moving(pv_names=names, timeout=timeout)
 
     def move_left_slit(self, value):
-        """Move outer slit to given position [mm]."""
-        self['OuterSlitPos-SP'] = value
+        """Move left slit to given position [mm]."""
+        self['LeftSlitPos-SP'] = value
 
     def move_right_slit(self, value):
-        """Move inner slit to given position [mm]."""
-        self['InnerSlitPos-SP'] = value
+        """Move right slit to given position [mm]."""
+        self['RightSlitPos-SP'] = value
 
     def cmd_force_left_slit(self):
         """Force left slit position."""
-        self['ForceOuterSlitPos-Cmd'] = 1
+        self['ForceLeftSlitPos-Cmd'] = 1
         return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_right_slit(self):
         """Force right slit position."""
-        self['ForceInnerSlitPos-Cmd'] = 1
+        self['ForceRightSlitPos-Cmd'] = 1
         return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
 
 class ScraperV(_ScraperDev):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
         'TopSlitPos-SP', 'TopSlitPos-RB',
         'BottomSlitPos-SP', 'BottomSlitPos-RB',
         'BottomDoneMov-Mon', 'TopDoneMov-Mon',
         'TopSlitInnerLim-SP', 'TopSlitInnerLim-RB',
         'TopSlitOuterLim-SP', 'TopSlitOuterLim-RB',
-        'TopMotionCtrl-Cte', 'ForceTopSlitPos-Cmd'
+        'TopMotionCtrl-Cte', 'ForceTopSlitPos-Cmd',
         'BottomSlitInnerLim-SP', 'BottomSlitInnerLim-RB',
         'BottomSlitOuterLim-SP', 'BottomSlitOuterLim-RB',
         'BottomMotionCtrl-Cte', 'ForceBottomSlitPos-Cmd',
         )
 
-    def __init__(self):
+    def __init__(self, devname=None, props2init='all'):
         """."""
-        # call base class constructor
-        _all_properties = _ScraperDev._properties + ScraperV._properties
-        super().__init__(
-            devname=_ScraperDev.DEVICES.V, properties=_all_properties)
+        if devname is None:
+            devname = _ScraperDev.DEVICES.V
+        super().__init__(devname, props2init=props2init)
 
     @property
     def top_slit_pos(self):
