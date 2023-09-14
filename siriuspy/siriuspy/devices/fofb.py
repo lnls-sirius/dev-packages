@@ -1,5 +1,6 @@
 """FOFB devices."""
 
+import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -1108,6 +1109,7 @@ class HLFOFB(_Device):
         'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
+        'CorrSetCurrZeroDuration-SP', 'CorrSetCurrZeroDuration-RB',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
@@ -1139,6 +1141,7 @@ class HLFOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
     )
 
+    _default_timeout = 10
     _default_timeout_respm = 2 * 60 * 60  # [s]
 
     def __init__(self, devname=None, props2init='all'):
@@ -1282,7 +1285,18 @@ class HLFOFB(_Device):
     def cmd_corr_set_current_zero(self):
         """Command to set correctors current to zero."""
         self['CorrSetCurrZero-Cmd'] = 1
+        duration = self['CorrSetCurrZeroDuration-RB'] or self._default_timeout
+        _time.sleep(duration)
         return True
+
+    @property
+    def corr_set_current_zero_duration(self):
+        """Duration of command to set correctors current to zero."""
+        return self['CorrSetCurrZeroDuration-RB']
+
+    @corr_set_current_zero_duration.setter
+    def corr_set_current_zero_duration(self, value):
+        self['CorrSetCurrZeroDuration-SP'] = value
 
     @property
     def ch_accsatmax(self):
