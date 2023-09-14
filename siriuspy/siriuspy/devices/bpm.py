@@ -953,7 +953,7 @@ class FamBPMs(_DeviceSet):
         self._mturn_flags = dict()
         # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
         # for bpm in devs:
-        #     pvo = bpm.pv_object(bpm.get_propname('ACQCount-Mon'))
+        #     pvo = bpm.pv_object('ACQCount-Mon')
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._mturn_set_flag)
