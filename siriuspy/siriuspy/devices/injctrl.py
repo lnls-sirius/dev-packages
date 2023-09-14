@@ -116,7 +116,7 @@ class InjCtrl(_Device):
         """Wait Mode-Sts to reach `injmode` value."""
         if isinstance(injmode, str):
             injmode = self.InjMode._fields.index(injmode)
-        return self._wait('Mode-Sel', injmode, timeout=timeout)
+        return self._wait('Mode-Sts', injmode, timeout=timeout)
 
     @property
     def injtype(self):
