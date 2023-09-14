@@ -3,6 +3,7 @@
 import time as _time
 from threading import Event as _Flag
 import numpy as _np
+from copy import deepcopy as _dcopy
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..diagbeam.bpm.csdev import Const as _csbpm
@@ -915,6 +916,7 @@ class FamBPMs(_DeviceSet):
     TIMEOUT = 10
     RFFEATT_MAX = 30
     PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
+    ALL_MTURN_SIGNALS2ACQ = ('A', 'B', 'C', 'D', 'X', 'Y', 'Q', 'S')
 
     class DEVICES:
         """."""
@@ -937,6 +939,8 @@ class FamBPMs(_DeviceSet):
         bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
+
+        self._mturn_signals2acq = ['X', 'Y']
         devs = [BPM(
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
@@ -968,6 +972,19 @@ class FamBPMs(_DeviceSet):
     def csbpm(self):
         """Return control system BPM constants class."""
         return self._csbpm
+
+    @property
+    def mturn_signals2acq(self):
+        """Return which signals will be acquired by get_mturn_signals."""
+        return _dcopy(self._mturn_signals2acq)
+
+    @mturn_signals2acq.setter
+    def mturn_signals2acq(self, sigs):
+        sigs = [s.upper() for s in sigs]
+        diff = set(sigs) - set(self.ALL_MTURN_SIGNALS2ACQ)
+        if diff:
+            raise ValueError('The following signals do not exist: '+str(diff))
+        self._mturn_signals2acq = sigs
 
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
@@ -1005,77 +1022,46 @@ class FamBPMs(_DeviceSet):
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_orbit(self, return_sum=False):
-        """Get Multiturn orbit matrices.
-
-        Args:
-            return_sum (bool, optional): Whether or not to return BPMs sum.
-                Defaults to False.
+    def get_mturn_signals(self):
+        """Get Multiturn signals matrices.
 
         Returns:
-            orbx (numpy.ndarray, Nx160): Horizontal Orbit.
-            orby (numpy.ndarray, Nx160): Vertical Orbit.
-            possum (numpy.ndarray, Nx160): BPMs Sum signal.
+            tuple: Each component of the tuple is an numpy.ndarray with shape
+                (N, 160), containing the values for the signals acquired.
 
         """
-        orbx, orby = [], []
-        if return_sum:
-            possum = []
+        sigs = ([] for _ in self._mturn_signals2acq)
 
-        mini = None
+        mini = 1000000000000000  # a very large integer
         for bpm in self._devices:
-            mtx = bpm.mt_posx
-            mty = bpm.mt_posy
-            orbx.append(mtx)
-            orby.append(mty)
+            for i, sn in enumerate(self._mturn_signals2acq):
+                sn = 'sum' if sn == 'S' else sn.lower()
+                name = 'mt_' + ('ampl' if sn in 'abcd' else 'pos') + sn
+                sigs[i].append(getattr(bpm, name))
+            mini = min(mini, _np.min([s[-1].size for s in sigs]))
 
-            if mini is None:
-                mini = mtx.size
-            mini = _np.min([mini, mtx.size, mty.size])
+        for i, sig in enumerate(sigs):
+            for j, s in enumerate(sig):
+                sig[j] = s[:mini]
+            sigs[i] = _np.array(sig).T
+        return sigs
 
-            if return_sum:
-                mts = bpm.mt_possum
-                possum.append(mts)
-                mini = min(mini, mts.size)
-
-        for i, (obx, oby) in enumerate(zip(orbx, orby)):
-            orbx[i] = obx[:mini]
-            orby[i] = oby[:mini]
-            if return_sum:
-                possum[i] = possum[i][:mini]
-        orbx = _np.array(orbx).T
-        orby = _np.array(orby).T
-
-        if not return_sum:
-            return orbx, orby
-        return orbx, orby, _np.array(possum).T
-
-    def get_mturn_timestamps(self, return_sum=False):
+    def get_mturn_timestamps(self):
         """Get Multiturn data timestamps.
-
-        Args:
-            return_sum (bool, optional): Whether or not to return BPMs sum
-                timestamps. Defaults to False.
 
         Returns:
             tsmps (numpy.ndarray, (160, N)): The i-th row has the timestamp of
-                the i-th bpm for the [horizontal, vertical, sum] signals
-                respectively. If return_sum is False, then N=2 instead of 3.
+                the i-th bpm for the N aquired signals.
 
         """
-        tsmps = _np.zeros((len(self._devices), 2+return_sum), dtype=float)
+        tsmps = _np.zeros(
+            (len(self._devices), len(self._mturn_signals2acq)), dtype=float)
         for i, bpm in enumerate(self._devices):
-            pvx = bpm.pv_object('GEN_XArrayData')
-            pvy = bpm.pv_object('GEN_YArrayData')
-            vax = pvx.get_timevars(timeout=self.TIMEOUT)
-            vay = pvy.get_timevars()
-            tsmps[i, 0] = pvx.timestamp if vax is None else vax['timestamp']
-            tsmps[i, 1] = pvy.timestamp if vay is None else vay['timestamp']
-            if not return_sum:
-                continue
-            pvs = bpm.pv_object('GEN_SUMArrayData')
-            vas = pvs.get_timevars()
-            tsmps[i, 2] = pvs.timestamp if vas is None else vas['timestamp']
+            for j, s in enumerate(self._mturn_signals2acq):
+                s = 'SUM' if s == 'S' else s
+                pvo = bpm.pv_object(f'GEN_{s}ArrayData')
+                tv = pvo.get_timevars(timeout=self.TIMEOUT)
+                tsmps[i, j] = pvo.timestamp if tv is None else tv['timestamp']
         return tsmps
 
     def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
@@ -1277,21 +1263,19 @@ class FamBPMs(_DeviceSet):
         for bpm in self._devices:
             bpm.switching_mode = mode
 
-    def mturn_update_initial_timestamps(self, consider_sum=False):
+    def mturn_update_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
-        self._initial_timestamps = self.get_mturn_timestamps(
-            return_sum=consider_sum)
+        self._initial_timestamps = self.get_mturn_timestamps()
 
     def mturn_reset_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_timestamps(
-            self, consider_sum=False):
+    def mturn_reset_flags_and_update_initial_timestamps(self):
         """Set initial state to wait for orbit acquisition to start."""
         self.mturn_reset_flags()
-        self.mturn_update_initial_timestamps(consider_sum)
+        self.mturn_update_initial_timestamps()
 
     def mturn_wait_update_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
@@ -1313,8 +1297,7 @@ class FamBPMs(_DeviceSet):
             timeout = max(timeout, 0)
         return 0
 
-    def mturn_wait_update_timestamps(
-            self, timeout=10, consider_sum=False) -> int:
+    def mturn_wait_update_timestamps(self, timeout=10) -> int:
         """Call this method after acquisition to check if data was updated.
 
         For this method to work it is necessary to call
@@ -1324,11 +1307,10 @@ class FamBPMs(_DeviceSet):
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
 
         Returns:
             int: code describing what happened:
+                -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
@@ -1340,7 +1322,9 @@ class FamBPMs(_DeviceSet):
         tsmp0 = self._initial_timestamps
         while timeout > 0:
             t00 = _time.time()
-            tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
+            tsmp = self.get_mturn_timestamps()
+            if tsmp.size != tsmp0.size:
+                return -2
             errors = _np.any(_np.equal(tsmp, tsmp0), axis=1)
             if not _np.any(errors):
                 return 0
@@ -1349,16 +1333,15 @@ class FamBPMs(_DeviceSet):
 
         return int(_np.nonzero(errors)[0][0])+1
 
-    def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
+    def mturn_wait_update(self, timeout=10) -> int:
         """Combine all methods to wait update data.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
 
         Returns:
             int: code describing what happened:
+                -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
@@ -1370,8 +1353,7 @@ class FamBPMs(_DeviceSet):
             return ret
         timeout -= _time.time() - t00
 
-        return self.mturn_wait_update_timestamps(
-            timeout, consider_sum=consider_sum)
+        return self.mturn_wait_update_timestamps(timeout)
 
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
