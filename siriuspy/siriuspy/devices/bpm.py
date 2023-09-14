@@ -126,6 +126,16 @@ class BPM(_Device):
         stg += '\n'
         return stg
 
+    def __getitem__(self, propty):
+        """Return value of property."""
+        propty = self.get_propname(propty)
+        return super().__getitem__(propty)
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        propty = self.get_propname(propty)
+        super().__setitem__(propty, value)
+
     @property
     def is_ok(self):
         """."""
@@ -429,82 +439,82 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        return self[self.get_propname('GEN_XArrayData')] * self.CONV_NM2UM
+        return self['GEN_XArrayData'] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        return self[self.get_propname('GEN_YArrayData')] * self.CONV_NM2UM
+        return self['GEN_YArrayData'] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        return self[self.get_propname('GEN_SUMArrayData')]
+        return self['GEN_SUMArrayData']
 
     @property
     def mt_posq(self):
         """."""
-        return self[self.get_propname('GEN_QArrayData')]
+        return self['GEN_QArrayData']
 
     @property
     def mt_ampla(self):
         """."""
-        return self[self.get_propname('GEN_AArrayData')]
+        return self['GEN_AArrayData']
 
     @property
     def mt_amplb(self):
         """."""
-        return self[self.get_propname('GEN_BArrayData')]
+        return self['GEN_BArrayData']
 
     @property
     def mt_amplc(self):
         """."""
-        return self[self.get_propname('GEN_CArrayData')]
+        return self['GEN_CArrayData']
 
     @property
     def mt_ampld(self):
         """."""
-        return self[self.get_propname('GEN_DArrayData')]
+        return self['GEN_DArrayData']
 
     @property
     def mt_polyx(self):
         """."""
-        return self[self.get_propname('GEN_PolyXArrayCoeff-RB')]
+        return self['GEN_PolyXArrayCoeff-RB']
 
     @mt_polyx.setter
     def mt_polyx(self, value):
         """."""
-        self[self.get_propname('GEN_PolyXArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyXArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyy(self):
         """."""
-        return self[self.get_propname('GEN_PolyYArrayCoeff-RB')]
+        return self['GEN_PolyYArrayCoeff-RB']
 
     @mt_polyy.setter
     def mt_polyy(self, value):
         """."""
-        self[self.get_propname('GEN_PolyYArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyYArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polysum(self):
         """."""
-        return self[self.get_propname('GEN_PolySUMArrayCoeff-RB')]
+        return self['GEN_PolySUMArrayCoeff-RB']
 
     @mt_polysum.setter
     def mt_polysum(self, value):
         """."""
-        self[self.get_propname('GEN_PolySUMArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolySUMArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyq(self):
         """."""
-        return self[self.get_propname('GEN_PolyQArrayCoeff-RB')]
+        return self['GEN_PolyQArrayCoeff-RB']
 
     @mt_polyq.setter
     def mt_polyq(self, value):
         """."""
-        self[self.get_propname('GEN_PolyQArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyQArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyxy_enbl(self):
@@ -539,22 +549,22 @@ class BPM(_Device):
     @property
     def mtraw_posx(self):
         """Multi turn raw X array data."""
-        return self[self.get_propname('GEN_RawXArrayData')] * self.CONV_NM2UM
+        return self['GEN_RawXArrayData'] * self.CONV_NM2UM
 
     @property
     def mtraw_posy(self):
         """Multi turn raw Y array data."""
-        return self[self.get_propname('GEN_RawYArrayData')] * self.CONV_NM2UM
+        return self['GEN_RawYArrayData'] * self.CONV_NM2UM
 
     @property
     def mtraw_possum(self):
         """Multi turn raw sum array data."""
-        return self[self.get_propname('GEN_RawSUMArrayData')]
+        return self['GEN_RawSUMArrayData']
 
     @property
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
-        return self[self.get_propname('GEN_RawQArrayData')]
+        return self['GEN_RawQArrayData']
 
     @property
     def sp_posx(self):
@@ -619,42 +629,42 @@ class BPM(_Device):
     @property
     def acq_mode(self):
         """."""
-        return self[self.get_propname('ACQBPMMode-Sts')]
+        return self['ACQBPMMode-Sts']
 
     @acq_mode.setter
     def acq_mode(self, mode):
         """."""
-        self[self.get_propname('ACQBPMMode-Sel')] = mode
+        self['ACQBPMMode-Sel'] = mode
 
     @property
     def acq_ctrl(self):
         """."""
-        return self[self.get_propname('ACQTriggerEvent-Sts')]
+        return self['ACQTriggerEvent-Sts']
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self[self.get_propname('ACQTriggerEvent-Sel')] = val
+        self['ACQTriggerEvent-Sel'] = val
 
     @property
     def acq_status(self):
         """."""
-        return self[self.get_propname('ACQStatus-Sts')]
+        return self['ACQStatus-Sts']
 
     @property
     def acq_count(self):
         """Counter of number of acquisitions so far."""
-        return self[self.get_propname('ACQCount-Mon')]
+        return self['ACQCount-Mon']
 
     @property
     def acq_channel(self):
         """."""
-        return self[self.get_propname('ACQChannel-Sts')]
+        return self['ACQChannel-Sts']
 
     @acq_channel.setter
     def acq_channel(self, val):
         """."""
-        self[self.get_propname('ACQChannel-Sel')] = val
+        self['ACQChannel-Sel'] = val
 
     @property
     def acq_channel_str(self):
@@ -664,142 +674,139 @@ class BPM(_Device):
     @property
     def acq_trigger(self):
         """."""
-        return self[self.get_propname('ACQTrigger-Sts')]
+        return self['ACQTrigger-Sts']
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
-        self[self.get_propname('ACQTrigger-Sel')] = val
+        self['ACQTrigger-Sel'] = val
 
     @property
     def acq_repeat(self):
         """."""
-        return self[self.get_propname('ACQTriggerRep-Sts')]
+        return self['ACQTriggerRep-Sts']
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        self[self.get_propname('ACQTriggerRep-Sel')] = val
+        self['ACQTriggerRep-Sel'] = val
 
     @property
     def acq_update_time(self):
         """."""
-        return self[self.get_propname('ACQUpdateTime-RB')]  / 1e3
+        return self['ACQUpdateTime-RB'] / 1e3
 
     @acq_update_time.setter
     def acq_update_time(self, val):
         """."""
-        self[self.get_propname('ACQUpdateTime-SP')] = val * 1e3
+        self['ACQUpdateTime-SP'] = val * 1e3
 
     @property
     def acq_trig_datachan(self):
         """."""
-        return self[self.get_propname('ACQDataTrigChan-Sts')]
+        return self['ACQDataTrigChan-Sts']
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
         """."""
-        self[self.get_propname('ACQDataTrigChan-Sel')] = val
+        self['ACQDataTrigChan-Sel'] = val
 
     @property
     def acq_trig_datasel(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataSel-RB')]
+        return self['ACQTriggerDataSel-RB']
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataSel-SP')] = val
+        self['ACQTriggerDataSel-SP'] = val
 
     @property
     def acq_trig_datathres(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataThres-RB')]
+        return self['ACQTriggerDataThres-RB']
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataThres-SP')] = val
+        self['ACQTriggerDataThres-SP'] = val
 
     @property
     def acq_trig_datahyst(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataHyst-RB')]
+        return self['ACQTriggerDataHyst-RB']
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataHyst-SP')] = val
+        self['ACQTriggerDataHyst-SP'] = val
 
     @property
     def acq_trig_datapol(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataPol-RB')]
+        return self['ACQTriggerDataPol-RB']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataPol-SP')] = val
+        self['ACQTriggerDataPol-SP'] = val
 
     @property
     def acq_nrsamples_post(self):
         """."""
-        return self[self.get_propname('ACQSamplesPost-RB')]
+        return self['ACQSamplesPost-RB']
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
         """."""
-        self[self.get_propname('ACQSamplesPost-SP')] = val
+        self['ACQSamplesPost-SP'] = val
 
     @property
     def acq_nrsamples_pre(self):
         """."""
-        return self[self.get_propname('ACQSamplesPre-RB')]
+        return self['ACQSamplesPre-RB']
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
         """."""
-        self[self.get_propname('ACQSamplesPre-SP')] = val
+        self['ACQSamplesPre-SP'] = val
 
     @property
     def acq_nrshots(self):
         """."""
-        return self[self.get_propname('ACQShots-RB')]
+        return self['ACQShots-RB']
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
         """."""
-        self[self.get_propname('ACQShots-SP')] = val
+        self['ACQShots-SP'] = val
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            self.get_propname('ACQStatus-Sts'), self.ACQSTATES_FINISHED,
-            timeout=timeout, comp=lambda x, y: x in y)
+            'ACQStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            self.get_propname('ACQStatus-Sts'), self.ACQSTATES_STARTED,
-            timeout=timeout, comp=lambda x, y: x in y)
+            'ACQStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Start)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Stop)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
         """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Abort)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
@@ -1058,15 +1065,15 @@ class FamBPMs(_DeviceSet):
         """
         tsmps = _np.zeros((len(self._devices), 2+return_sum), dtype=float)
         for i, bpm in enumerate(self._devices):
-            pvx = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
-            pvy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
+            pvx = bpm.pv_object('GEN_XArrayData')
+            pvy = bpm.pv_object('GEN_YArrayData')
             vax = pvx.get_timevars(timeout=self.TIMEOUT)
             vay = pvy.get_timevars()
             tsmps[i, 0] = pvx.timestamp if vax is None else vax['timestamp']
             tsmps[i, 1] = pvy.timestamp if vay is None else vay['timestamp']
             if not return_sum:
                 continue
-            pvs = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
+            pvs = bpm.pv_object('GEN_SUMArrayData')
             vas = pvs.get_timevars()
             tsmps[i, 2] = pvs.timestamp if vas is None else vas['timestamp']
         return tsmps
