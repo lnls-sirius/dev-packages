@@ -1,7 +1,7 @@
 """BPM devices."""
 
 import time as _time
-from threading import Event as _Flag
+# from threading import Event as _Flag
 import numpy as _np
 from copy import deepcopy as _dcopy
 
@@ -25,33 +25,12 @@ class BPM(_Device):
     ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
-    PROPERTIES_DEFAULT = (
-        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
-        'RFFEAtt-SP', 'RFFEAtt-RB',
-        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
+    PROPERTIES_ACQ = (
+        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
+        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
-        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
-        'GEN_RawQArrayData',
-        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
-        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
-        'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
-        'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
-        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
-        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
-        'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
-        'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
-        'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
-        'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
-        'PosKx-SP', 'PosKx-RB',
-        'PosKy-RB', 'PosKy-SP',
-        'PosKsum-SP', 'PosKsum-RB',
-        'PosKq-SP', 'PosKq-RB',
-        'PosXOffset-SP', 'PosXOffset-RB',
-        'PosYOffset-SP', 'PosYOffset-RB',
-        'PosSumOffset-SP', 'PosSumOffset-RB',
-        'PosQOffset-SP', 'PosQOffset-RB',
         'ACQBPMMode-Sel', 'ACQBPMMode-Sts',
         'ACQChannel-Sel', 'ACQChannel-Sts',
         'ACQShots-SP', 'ACQShots-RB',
@@ -67,6 +46,30 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
+        )
+
+    PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
+        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'RFFEAtt-SP', 'RFFEAtt-RB',
+        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
+        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
+        'GEN_RawQArrayData',
+        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
+        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
+        'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
+        'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
+        'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
+        'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
+        'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
+        'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
+        'PosKx-SP', 'PosKx-RB',
+        'PosKy-RB', 'PosKy-SP',
+        'PosKsum-SP', 'PosKsum-RB',
+        'PosKq-SP', 'PosKq-RB',
+        'PosXOffset-SP', 'PosXOffset-RB',
+        'PosYOffset-SP', 'PosYOffset-RB',
+        'PosSumOffset-SP', 'PosSumOffset-RB',
+        'PosQOffset-SP', 'PosQOffset-RB',
         'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
         'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
         'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
@@ -92,6 +95,8 @@ class BPM(_Device):
             props2init = set(BPM.PROPERTIES_DEFAULT)
             props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
             props2init = list(props2init)
+        elif isinstance(props2init, str) and props2init.startswith('acq'):
+            props2init = list(self.PROPERTIES_ACQ)
 
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
@@ -941,6 +946,15 @@ class FamBPMs(_DeviceSet):
         self._ispost_mortem = ispost_mortem
 
         self._mturn_signals2acq = ['X', 'Y']
+        if not isinstance(props2init, str):
+            pass
+        elif props2init.startswith('acq_ant'):
+            self._mturn_signals2acq = ['A', 'B', 'C', 'D']
+        elif props2init.startswith('acq_possum'):
+            self._mturn_signals2acq = ['X', 'Y', 'S']
+        elif props2init.startswith('acq'):
+            self._mturn_signals2acq = ['A', 'B', 'C', 'D', 'X', 'Y', 'S']
+
         devs = [BPM(
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
