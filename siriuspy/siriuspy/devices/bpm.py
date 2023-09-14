@@ -920,6 +920,7 @@ class FamBPMs(_DeviceSet):
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
+    PROPERTIES_ACQ = BPM.PROPERTIES_ACQ
     PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
     ALL_MTURN_SIGNALS2ACQ = ('A', 'B', 'C', 'D', 'X', 'Y', 'Q', 'S')
 
@@ -1040,7 +1041,7 @@ class FamBPMs(_DeviceSet):
         """Get Multiturn signals matrices.
 
         Returns:
-            tuple: Each component of the tuple is an numpy.ndarray with shape
+            list: Each component of the list is an numpy.ndarray with shape
                 (N, 160), containing the values for the signals acquired.
 
         """
