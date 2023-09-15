@@ -62,15 +62,18 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
             # 'ACQTriggerDataChan': _csbpm.AcqChan.FAcq,
             'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'TbTTagEn': _csbpm.DsblEnbl.disabled,  # Enable TbT sync Timing
-            'SwTagEn': _csbpm.DsblEnbl.disabled,  # Enable FOFB sync Timing
-            'FAcqTagEn': _csbpm.DsblEnbl.disabled,
-            'MonitTagEn': _csbpm.DsblEnbl.disabled,
+            'TbTPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable TbT sync
+            'FOFBPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable FOFB sync
+            'FAcqPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable FAcq sync
+            'MonitPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable Monit sync
             'TbTDataMaskEn': _csbpm.DsblEnbl.disabled,  # Enable use of mask
             'TbTDataMaskSamplesBeg': 0,
             'TbTDataMaskSamplesEnd': 0,
             'XYPosCal': _csbpm.DsblEnbl.enabled,
-            'SUMPosCal': _csbpm.DsblEnbl.enabled}
+            'SUMPosCal': _csbpm.DsblEnbl.enabled,
+            'SwPhaseSyncEn': _csbpm.DsblEnbl.enabled,  # Enable Switching sync
+            'TestDataEn': _csbpm.DsblEnbl.disabled,
+            }
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'SwMode': 'SwMode-Sel',
@@ -91,16 +94,18 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sel',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
-            'TbTTagEn': 'TbTTagEn-Sel',  # Enable TbT sync with timing
-            'SwTagEn': 'SwTagEn-Sel',  # Enable FOFB sync with timing
-            'FAcqTagEn': 'FAcqTagEn-Sel',  # Enable FAcq sync with timing
-            'MonitTagEn': 'MonitTagEn-Sel',  # Enable Monit sync with timing
+            'TbTPhaseSyncEn': 'TbTPhaseSyncEn-Sel',  # Enable TbT sync
+            'FOFBPhaseSyncEn': 'FOFBPhaseSyncEn-Sel',  # Enable FOFB sync
+            'FAcqPhaseSyncEn': 'FAcqPhaseSyncEn-Sel',  # Enable FAcq sync
+            'MonitPhaseSyncEn': 'MonitPhaseSyncEn-Sel',  # Enable Monit sync
             'TbTDataMaskEn': 'TbTDataMaskEn-Sel',  # Enable use of mask
             'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-SP',
             'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-SP',
             'XYPosCal': 'XYPosCal-Sel',
-            'SUMPosCal': 'SUMPosCal-Sel'}
-
+            'SUMPosCal': 'SUMPosCal-Sel',
+            'SwPhaseSyncEn': 'SwPhaseSyncEn-Sel',  # Enable Switching sync
+            'TestDataEn': 'TestDataEn-Sel',
+            }
         self._config_pvs_sp = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
         pvs = {
@@ -132,15 +137,18 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
             'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
-            'TbTTagEn': 'TbTTagEn-Sts',
-            'SwTagEn': 'SwTagEn-Sts',
-            'FAcqTagEn': 'FAcqTagEn-Sts',
-            'MonitTagEn': 'MonitTagEn-Sts',
+            'TbTPhaseSyncEn': 'TbTPhaseSyncEn-Sts',
+            'FOFBPhaseSyncEn': 'FOFBPhaseSyncEn-Sts',
+            'FAcqPhaseSyncEn': 'FAcqPhaseSyncEn-Sts',
+            'MonitPhaseSyncEn': 'MonitPhaseSyncEn-Sts',
             'TbTDataMaskEn': 'TbTDataMaskEn-Sts',
             'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-RB',
             'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-RB',
             'XYPosCal': 'XYPosCal-Sts',
-            'SUMPosCal': 'SUMPosCal-Sts'}
+            'SUMPosCal': 'SUMPosCal-Sts',
+            'SwPhaseSyncEn': 'SwPhaseSyncEn-Sel',
+            'TestDataEn': 'TestDataEn-Sel',
+            }
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
         self._config_pvs_rb['ACQStatus'].auto_monitor = True
@@ -493,54 +501,84 @@ class BPM(_BaseTimingConfig):
     @property
     def tbt_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbTTagEn']
+        pvobj = self._config_pvs_rb['TbTPhaseSyncEn']
         return pvobj.value if pvobj.connected else None
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbTTagEn']
-        self._config_ok_vals['TbTTagEn'] = val
+        pvobj = self._config_pvs_sp['TbTPhaseSyncEn']
+        self._config_ok_vals['TbTPhaseSyncEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def fofb_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['SwTagEn']
+        pvobj = self._config_pvs_rb['FOFBPhaseSyncEn']
         return pvobj.value if pvobj.connected else None
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['SwTagEn']
-        self._config_ok_vals['SwTagEn'] = val
+        pvobj = self._config_pvs_sp['FOFBPhaseSyncEn']
+        self._config_ok_vals['FOFBPhaseSyncEn'] = val
+        if self.put_enable and pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def sw_sync_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['SwPhaseSyncEn']
+        return pvobj.value if pvobj.connected else None
+
+    @sw_sync_enbl.setter
+    def sw_sync_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['SwPhaseSyncEn']
+        self._config_ok_vals['SwPhaseSyncEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def facq_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['FAcqTagEn']
+        pvobj = self._config_pvs_rb['FAcqPhaseSyncEn']
         return pvobj.value if pvobj.connected else None
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['FAcqTagEn']
+        pvobj = self._config_pvs_sp['FAcqPhaseSyncEn']
+        self._config_ok_vals['FAcqPhaseSyncEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def monit_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['MonitTagEn']
+        pvobj = self._config_pvs_rb['MonitPhaseSyncEn']
         return pvobj.value if pvobj.connected else None
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['MonitTagEn']
+        pvobj = self._config_pvs_sp['MonitPhaseSyncEn']
+        self._config_ok_vals['MonitPhaseSyncEn'] = val
+        if self.put_enable and pvobj.connected:
+            pvobj.put(val, wait=False)
+
+    @property
+    def test_data_enbl(self):
+        """."""
+        pvobj = self._config_pvs_rb['TestDataEn']
+        return pvobj.value if pvobj.connected else None
+
+    @test_data_enbl.setter
+    def test_data_enbl(self, val):
+        """."""
+        pvobj = self._config_pvs_sp['TestDataEn']
+        self._config_ok_vals['TestDataEn'] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 

@@ -4,6 +4,7 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
+from copy import deepcopy as _dcopy
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
@@ -27,8 +28,14 @@ class Device:
     ----------
         devname: str
             Device name, to be used as PVs prefix.
-        properties: (tuple, list)
-            List of properties, to be used as last part of the PV names.
+        props2init: ('all', None or (tuple, list)), optional
+            Define which PVs will be connected in the class instantiation. If
+            equal to 'all', all properties listed in PROPERTIES_DEFAULT will
+            be initialized. If None or empty iterable, no property will be
+            initialized. If iterable of strings, only the properties listed
+            will be initialized. In this last option, it is possible to add
+            properties that are not in PROPERTIES_DEFAULT. The other properties
+            will be created whenever they are needed. Defaults to 'all'.
         auto_monitor: bool, optional
             Whether to automatically monitor PVs for changes. Used for PVs
             that do not end with '-Mon' or 'Data'. Defaults to True.
@@ -41,16 +48,26 @@ class Device:
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     GET_TIMEOUT = _GET_TIMEOUT
-    _properties = ()
+    DEVSEP = ':'
+    PROPERTIES_DEFAULT = ()
 
     def __init__(
-            self, devname, properties, auto_monitor=True,
+            self, devname, props2init='all', auto_monitor=True,
             auto_monitor_mon=False):
         """."""
-        self._properties = properties[:]
+        self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
-        self._devname, self._pvs = self._create_pvs(devname)
+
+        if isinstance(props2init, str) and props2init.lower() == 'all':
+            propties = self.PROPERTIES_DEFAULT
+        elif not props2init:
+            propties = []
+        elif isinstance(props2init, (list, tuple)):
+            propties = props2init
+        else:
+            raise ValueError('Wrong value for init_propties.')
+        self._pvs = {prpt: self._create_pv(prpt) for prpt in propties}
 
     @property
     def devname(self):
@@ -58,9 +75,21 @@ class Device:
         return self._devname
 
     @property
-    def properties(self):
-        """Return device properties."""
-        return self._properties
+    def properties_in_use(self):
+        """Return properties that were already added to the PV list."""
+        return sorted(self._pvs.keys())
+
+    @property
+    def properties_added(self):
+        """Return properties that were added to the PV list that are not in
+        PROPERTIES_DEFAULT."""
+        return sorted(
+            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+
+    @property
+    def properties_all(self):
+        """Return all properties of the device, connected or not."""
+        return sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
 
     @property
     def simulators(self):
@@ -120,6 +149,10 @@ class Device:
 
     def pv_object(self, propty):
         """Return PV object for a given device property."""
+        if propty not in self._pvs:
+            pvobj = self._create_pv(propty)
+            pvobj.wait_for_connection(Device.CONNECTION_TIMEOUT)
+            self._pvs[propty] = pvobj
         return self._pvs[propty]
 
     def pv_ctrlvars(self, propty):
@@ -127,10 +160,9 @@ class Device:
         return self._pvs[propty].get_ctrlvars()
 
     def pv_attribute_values(self, attribute):
-        """Return property-value dict of a given attribute for all PVs."""
+        """Return pvname-value dict of a given attribute for all PVs."""
         attributes = dict()
-        for propty in self._properties:
-            pvobj = self._pvs[propty]
+        for pvobj in self._pvs.values():
             attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
 
@@ -154,7 +186,7 @@ class Device:
 
     def __getitem__(self, propty):
         """Return value of property."""
-        pvobj = self._pvs[propty]
+        pvobj = self.pv_object(propty)
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
         except (_ChannelAccessGetFailure, _CASeverityException):
@@ -166,27 +198,20 @@ class Device:
 
     def __setitem__(self, propty, value):
         """Set value of property."""
-        pvobj = self._pvs[propty]
+        pvobj = self.pv_object(propty)
         pvobj.value = value
 
     # --- private methods ---
-
-    def _create_pvs(self, devname):
-        if devname:
-            devname = _SiriusPVName(devname)
-
-        pvs = dict()
-        for propty in self._properties:
-            pvname = self._get_pvname(devname, propty)
-            auto_monitor = self._auto_monitor
-            if pvname.endswith(('-Mon', 'Data')):
-                auto_monitor = self._auto_monitor_mon
-            in_sim = _Simulation.pv_check(pvname)
-            pvclass = _PVSim if in_sim else _PV
-            pvs[propty] = pvclass(
-                pvname, auto_monitor=auto_monitor,
-                connection_timeout=Device.CONNECTION_TIMEOUT)
-        return devname, pvs
+    def _create_pv(self, propty):
+        pvname = self._get_pvname(propty)
+        auto_monitor = self._auto_monitor
+        if pvname.endswith(('-Mon', 'Data')):
+            auto_monitor = self._auto_monitor_mon
+        in_sim = _Simulation.pv_check(pvname)
+        pvclass = _PVSim if in_sim else _PV
+        return pvclass(
+            pvname, auto_monitor=auto_monitor,
+            connection_timeout=Device.CONNECTION_TIMEOUT)
 
     def _wait(self, propty, value, timeout=None, comp='eq'):
         """."""
@@ -211,18 +236,22 @@ class Device:
         return False
 
     def _wait_float(
-            self, propty, value, rel_tol=0.0, abs_tol=0.1,
-            timeout=None):
+            self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
         """Wait until float value gets close enough of desired value."""
         func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
         return self._wait(propty, value, comp=func, timeout=timeout)
 
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
-            pvname = func(prefix=_VACA_PREFIX, propty=propty)
+    def _get_pvname(self, propty):
+        dev = self._devname
+        pref = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
+        if isinstance(dev, _SiriusPVName) and \
+                dev.is_standard(name_type='devname'):
+            ppt = dev.propty
+            pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
+        elif dev:
+            pvname = pref + dev + self.DEVSEP + propty
         else:
-            pvname = _VACA_PREFIX + ('-' if _VACA_PREFIX else '') + propty
+            pvname = pref + propty
         return pvname
 
     def _enum_setter(self, propty, value, enums):
@@ -236,85 +265,18 @@ class Device:
             self[propty] = value
 
 
-class ProptyDevice(Device):
-    """Device with a prefix property name."""
-
-    def __init__(self, devname, propty_prefix, properties, **kwargs):
-        """."""
-        self._propty_prefix = propty_prefix
-        # call base class constructor
-        super().__init__(devname, properties=properties, **kwargs)
-
-    def _get_pvname(self, devname, propty):
-        if devname:
-            func = devname.substitute
-            pvname = func(propty=self._propty_prefix + propty)
-        else:
-            pvname = self._propty_prefix + propty
-        return pvname
-
-
-# NOTE: This class is temporary. It should become deprecated once all
-# devices names are in accordance with Sirius naming system
-class DeviceNC(Device):
-    """Non-compliant Devices.
-
-    This device class is to be used for those devices whose
-    names and PVs are not compliant to the Sirius naming system.
-    """
-    DEVSEP = ':'
-
-    def _create_pvs(self, devname):
-        pvs = dict()
-        devname = devname or ''
-        for propty in self._properties:
-            pvname = devname + self.DEVSEP + propty
-            auto_monitor = not pvname.endswith('-Mon')
-            pvs[propty] = _PV(pvname, auto_monitor=auto_monitor)
-        return devname, pvs
-
-
-class DeviceApp(Device):
-    """Application Device.
-
-    This kind of device groups properties of other devices.
-    """
-
-    def __init__(self, properties, devname=None, **kwargs):
-        """."""
-        self._devname_app = devname
-
-        # call base class constructor
-        super().__init__(None, properties=properties, **kwargs)
-
-    @property
-    def devname(self):
-        """Return application device name."""
-        return self._devname_app
-
-
-class Devices:
+class DeviceSet:
     """."""
 
-    def __init__(self, devname, devices):
+    def __init__(self, devices, devname=''):
         """."""
-        self._devname = devname
         self._devices = devices
-
-        self._properties = []
-        for dev in self._devices:
-            if dev is not None:
-                self._properties += dev.properties
+        self._devname = _SiriusPVName(devname)
 
     @property
     def devname(self):
-        """Return device name."""
+        """Name of the Device set. May be empty in some cases."""
         return self._devname
-
-    @property
-    def properties(self):
-        """Return device properties."""
-        return self._properties
 
     @property
     def simulators(self):

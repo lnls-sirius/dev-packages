@@ -20,21 +20,19 @@ class DCCT(_Device):
         SI_14C4 = 'SI-14C4:DI-DCCT'
         ALL = (BO, SI_13C4, SI_14C4)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'RawReadings-Mon', 'Current-Mon',
         'FastMeasPeriod-SP', 'FastMeasPeriod-RB',
         'FastSampleCnt-SP', 'FastSampleCnt-RB',
         'MeasTrg-Sel', 'MeasTrg-Sts',
     )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in DCCT.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=DCCT._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def nrsamples(self):

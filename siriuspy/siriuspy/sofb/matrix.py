@@ -99,6 +99,7 @@ class EpicsMatrix(BaseMatrix):
             self.run_callbacks('RespMatMode-Sel', self._respmat_mode)
             return
         self.run_callbacks('RespMatMode-Sts', self._respmat_mode)
+        return True
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
@@ -107,16 +108,17 @@ class EpicsMatrix(BaseMatrix):
         _log.info(msg)
         if mat is None:
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         mat = _np.reshape(mat, [-1, self._csorb.nr_corrs])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
             self.respmat = old_
             self.run_callbacks('RespMat-SP', list(self.respmat.ravel()))
-            return
+            return False
         self._save_respmat(mat)
         self.run_callbacks('RespMat-RB', list(self.respmat.ravel()))
+        return True
 
     def set_enbllist(self, key, val):
         """."""
@@ -144,6 +146,7 @@ class EpicsMatrix(BaseMatrix):
 
         new_ = bool(new_) if new_.size == 1 else new_
         self.run_callbacks(pvn, new_)
+        return True
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
@@ -191,8 +194,9 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.min_sing_val = bkup
             self.run_callbacks('MinSingValue-SP', self.min_sing_val)
-            return
+            return False
         self.run_callbacks('MinSingValue-RB', self.min_sing_val)
+        return True
 
     def set_tikhonov_reg_const(self, num):
         """."""
@@ -201,8 +205,9 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.tikhonov_reg_const = bkup
             self.run_callbacks('TikhonovRegConst-SP', self.tikhonov_reg_const)
-            return
+            return False
         self.run_callbacks('TikhonovRegConst-RB', self.tikhonov_reg_const)
+        return True
 
     def _calc_matrices(self):
         msg = 'Calculating Inverse Matrix.'
@@ -294,7 +299,7 @@ class EpicsMatrix(BaseMatrix):
         filename = self._csorb.respmat_fname
         boo = False
         if _os.path.isfile(filename):
-            boo = self.set_respmat(_np.loadtxt(filename), is_thread=True)
+            boo = self.set_respmat(_np.loadtxt(filename))
             if boo:
                 msg = 'Loading RespMat from file.'
             else:

@@ -3,7 +3,7 @@
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..magnet.factory import NormalizerFactory as _NormalizerFactory
 
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 from .syncd import DevicesSync as _DevicesSync
 
 
@@ -76,7 +76,7 @@ class PSProperty(_DevicesSync):
         return (devname, )
 
 
-class StrengthConv(_Devices):
+class StrengthConv(_DeviceSet):
     """Strength Converter."""
 
     # TODO: Test changing default value of auto_monitor_mon
@@ -100,7 +100,7 @@ class StrengthConv(_Devices):
             devices = ()
 
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices, devname=devname)
 
     @property
     def dipole_strength(self):
@@ -207,7 +207,8 @@ class StrengthConv(_Devices):
             return dev_dip, None
 
         # is others
-        return StrengthConv._get_dev_others(devname, proptype, auto_monitor_mon), None
+        return StrengthConv._get_dev_others(
+            devname, proptype, auto_monitor_mon), None
 
     @staticmethod
     def _get_dev_if_dipole(devname):

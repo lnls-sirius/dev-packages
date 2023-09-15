@@ -5,7 +5,7 @@ from ..search import PSSearch as _PSSearch
 from ..namesys import SiriusPVName as _SiriusPVName
 
 from . import Device as _Device
-from . import Devices as _Devices
+from . import DeviceSet as _DeviceSet
 from . psconv import StrengthConv as _StrengthConv
 
 
@@ -48,13 +48,9 @@ class PSCorrSOFB(_Device):
     _curr_refmon = 'SOFBCurrentRef-Mon'
     _curr_mon = 'SOFBCurrent-Mon'
 
-    _properties = (
-        _curr_sp,
-        _curr_rb,
-        _curr_refmon,
-        _curr_mon)
+    PROPERTIES_DEFAULT = (_curr_sp, _curr_rb, _curr_refmon, _curr_mon)
 
-    def __init__(self, devname, auto_monitor_mon=False):
+    def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
         """."""
         self._devname_orig = _SiriusPVName(devname)
         self._sec = self._devname_orig.sec
@@ -71,8 +67,7 @@ class PSCorrSOFB(_Device):
         # call base class constructor
         devname = self._bsmpdevs[0][0]
         super().__init__(
-            devname, properties=PSCorrSOFB._properties,
-            auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
         # get sofb indices
         self._sofb_indices, self._idx_corr = self._get_sofb_indices()
@@ -180,7 +175,7 @@ class PSCorrSOFB(_Device):
         return indices, idx_corr
 
 
-class PSApplySOFB(_Devices):
+class PSApplySOFB(_DeviceSet):
     """SOFB corrector devices.
 
     Group SOFB setpoints of all corrector power supplies.
@@ -213,7 +208,7 @@ class PSApplySOFB(_Devices):
         devices += self._pstype_2_sconv.values()
 
         # call base class constructor
-        super().__init__(devname, devices=devices)
+        super().__init__(devices, devname=devname)
 
         # number of correctors
         self._nr_chs = len(self.psnames_ch)

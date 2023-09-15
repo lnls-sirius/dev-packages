@@ -1,10 +1,10 @@
 """Synchronized Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
-from .device import DeviceApp as _DeviceApp
+from .device import Device as _Device
 
 
-class DevicesSync(_DeviceApp):
+class DevicesSync(_Device):
     """Synchronized devices."""
 
     def __init__(
@@ -20,7 +20,7 @@ class DevicesSync(_DeviceApp):
 
         # call base class constructor
         super().__init__(
-            properties, devname, auto_monitor_mon=auto_monitor_mon)
+            devname, auto_monitor_mon=auto_monitor_mon, props2init=properties)
 
     @property
     def devnames(self):
