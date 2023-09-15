@@ -250,7 +250,8 @@ class BiasFeedback():
             self.gpmodel.likelihood.variance.unfix()
         else:
             self.gpmodel.likelihood.variance.fix()
-        self.run_callbacks('GPModNoiseStdFit-Sts')
+        self.run_callbacks('GPModNoiseStdFit-Sts', value)
+        return True
 
     def set_gp_kern_std_fit(self, value):
         """."""
@@ -258,7 +259,8 @@ class BiasFeedback():
             self.gpmodel.kern.variance.unfix()
         else:
             self.gpmodel.kern.variance.fix()
-        self.run_callbacks('GPModKernStdFit-Sts')
+        self.run_callbacks('GPModKernStdFit-Sts', value)
+        return True
 
     def set_gp_kern_leng_fit(self, value):
         """."""
@@ -266,7 +268,8 @@ class BiasFeedback():
             self.gpmodel.kern.lengthscale.unfix()
         else:
             self.gpmodel.kern.lengthscale.fix()
-        self.run_callbacks('GPModKernLenSclFit-Sts')
+        self.run_callbacks('GPModKernLenSclFit-Sts', value)
+        return True
 
     # ############ Auxiliary Methods ############
     def _callback_to_thread(self, **kwgs):
