@@ -12,20 +12,18 @@ class LIEnergy(_Device):
         LI = 'LI-Glob:AP-MeasEnergy'
         ALL = (LI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Dispersion-SP', 'Dispersion-RB',
         'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
         'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         # check if device exists
         devname = devname if devname else self.DEVICES.LI
         if devname not in LIEnergy.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=LIEnergy._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def dispersion(self):

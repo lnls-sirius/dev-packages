@@ -21,8 +21,8 @@ class APU(_Device):
         APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
         APU58_11SP = 'SI-11SP:ID-APU58'
-        ALL = (APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA,
-               APU58_11SP, )
+        ALL = (
+            APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA, APU58_11SP, )
 
     TOLERANCE_PHASE = 0.01  # [mm]
 
@@ -31,26 +31,28 @@ class APU(_Device):
     _MOVECHECK_SLEEP = 0.1  # [s]
     _default_timeout = 8  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
         'DevCtrl-Cmd', 'Moving-Mon',
         'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
         'PhaseSpeed-SP', 'PhaseSpeed-Mon',
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
-    )
+        )
 
-    def __init__(self, devname):
-        """Init."""
-        devname = _SiriusPVName(devname)
+    _DEF_TIMEOUT = 10  # [s]
+    _CMD_MOVE = 3
+    _MOVECHECK_SLEEP = 0.1  # [s]
 
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
         # check if device exists
         if devname not in APU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=APU._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def period_length(self):
@@ -263,19 +265,19 @@ class PAPU(_Device):
         'StopPhase-Cmd', 'ChangePhase-Cmd',
         'Log-Mon',
         )
+    PROPERTIES_DEFAULT = _properties + _properties_papu
 
-    def __init__(self, devname, properties=None, auto_monitor_mon=True):
-        """Init."""
-        devname = _SiriusPVName(devname)
-
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.PAPU50_17SA
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        properties = properties or self._properties + self._properties_papu
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def period_length(self):
@@ -583,7 +585,7 @@ class EPU(PAPU):
         EPU50_10SB = 'SI-10SB:ID-EPU50'
         ALL = (EPU50_10SB, )
 
-    _properties = PAPU._properties + (
+    PROPERTIES_DEFAULT = PAPU._properties + (
         'EnblPwrAll-Cmd',
         'PwrGap-Mon',
         'Status-Mon',
@@ -596,17 +598,17 @@ class EPU(PAPU):
         'ChangeGap-Cmd', 'Stop-Cmd',
         )
 
-    def __init__(self, devname):
-        """Init."""
-        devname = _SiriusPVName(devname)
-
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.EPU50_10SB
         if devname not in EPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=self._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def status(self):
@@ -845,18 +847,16 @@ class WIG(_Device):
         ALL = (WIG180_14SB, )
 
     # NOTE: IOC yet to be written!
-    _properties = (
-        'Gap-SP', 'Gap-RB', 'Gap-Mon',
-    )
+    PROPERTIES_DEFAULT = ('Gap-SP', 'Gap-RB', 'Gap-Mon')
 
-    def __init__(self, devname):
-        """Init."""
-        devname = _SiriusPVName(devname)
-
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.WIG180_14SB
         if devname not in WIG.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=WIG._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)

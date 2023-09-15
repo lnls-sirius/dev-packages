@@ -21,7 +21,7 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    def __new__(cls, devname):
+    def __new__(cls, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -31,16 +31,16 @@ class SOFB(_Device):
         data = SOFBFactory.create(devname[:2])
 
         if data.acc == 'SI':
-            return SISOFB(devname, data)
+            return SISOFB(devname, data, props2init=props2init)
         elif data.isring:
-            return BOSOFB(devname, data)
-        return TLSOFB(devname, data)
+            return BOSOFB(devname, data, props2init=props2init)
+        return TLSOFB(devname, data, props2init=props2init)
 
 
 class TLSOFB(_Device):
     """SOFB Device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
         'RespMat-SP', 'RespMat-RB', 'RespMat-Mon', 'InvRespMat-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -78,7 +78,7 @@ class TLSOFB(_Device):
     _default_timeout_respm = 2 * 60 * 60  # [s]
     _default_timeout_kick_apply = 2  # [s]
 
-    def __init__(self, devname, data=None):
+    def __init__(self, devname, data=None, props2init='all'):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -87,7 +87,7 @@ class TLSOFB(_Device):
         # SOFB object
         self._data = data or SOFBFactory.create(devname[:2])
         # call base class constructor
-        super().__init__(devname, properties=self._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def data(self):
@@ -534,7 +534,7 @@ class TLSOFB(_Device):
 class BOSOFB(TLSOFB):
     """SOFB Device."""
 
-    _properties = TLSOFB._properties + (
+    PROPERTIES_DEFAULT = TLSOFB.PROPERTIES_DEFAULT + (
         'MTurnAcquire-Cmd',
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
@@ -602,7 +602,7 @@ class BOSOFB(TLSOFB):
 class SISOFB(BOSOFB):
     """SOFB Device."""
 
-    _properties = BOSOFB._properties + (
+    PROPERTIES_DEFAULT = BOSOFB.PROPERTIES_DEFAULT + (
         'SOFBMode-Sel', 'SOFBMode-Sts',
         'KickRF-Mon',
         'DeltaKickRF-Mon', 'DeltaKickRF-SP',

@@ -6,10 +6,10 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
 from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
 
-from .device import DeviceNC as _DeviceNC
+from .device import Device as _Device
 
 
-class DVF(_DeviceNC):
+class DVF(_Device):
     """Beam Visualization Device ("Dispositivo de Visualização de Feixe")."""
 
     class DEVICES:
@@ -30,20 +30,18 @@ class DVF(_DeviceNC):
         'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
-    )
+        )
 
     _dev2params = {
-        DEVICES.CAX_DVF1:
-            _get_namedtuple(
-                'DVFParameters',
-                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
-        DEVICES.CAX_DVF2:
-            _get_namedtuple(
-                'DVFParameters',
-                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF1: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF2: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
         }
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Width', 'cam1:Width_RBV',
@@ -82,13 +80,11 @@ class DVF(_DeviceNC):
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
         )
 
-    def __init__(self, devname, *args, **kwargs):
+    def __init__(self, devname, props2init='all', **kwargs):
         """Init."""
-        # check if device exists
         if devname not in DVF.DEVICES.ALL:
             raise NotImplementedError(devname)
-        # call base class constructor
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
     def parameters(self):
@@ -454,7 +450,7 @@ class DVF(_DeviceNC):
 class DVFImgProc(DVF):
     """."""
 
-    _properties = DVF._properties + (
+    PROPERTIES_DEFAULT = DVF.PROPERTIES_DEFAULT + (
         'ImgIntensityMax-Mon', 'ImgIntensityMin-Mon',
         'ImgIntensitySum-Mon', 'ImgIsSaturated-Mon',
         'ImgIsWithBeam-Mon',
@@ -481,9 +477,9 @@ class DVFImgProc(DVF):
         'ImgDVFStatus-Mon', 'ImgDVFStatusLabels-Cte',
         )
 
-    def __init__(self, devname, *args, **kwargs):
+    def __init__(self, devname, props2init='all', **kwargs):
         """."""
-        super().__init__(devname=devname, *args, **kwargs)
+        super().__init__(devname=devname, props2init=props2init, **kwargs)
         self._fitgaussian = _FitGaussianScipy()
 
     @property

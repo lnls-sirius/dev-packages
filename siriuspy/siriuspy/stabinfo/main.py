@@ -50,7 +50,7 @@ class App(_Callback):
         bbbprops = ['SRAM_PEAK1', ]
         for plane in ['H', 'V', 'L']:
             devname = 'SI-Glob:DI-BbBProc-'+plane
-            self._dev_bbb[plane] = _Device(devname, properties=bbbprops)
+            self._dev_bbb[plane] = _Device(devname, props2init=bbbprops)
 
         sicurrent_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:Current-Mon').substitute(
