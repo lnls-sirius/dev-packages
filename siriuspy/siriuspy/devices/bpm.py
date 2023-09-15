@@ -941,7 +941,6 @@ class FamBPMs(_DeviceSet):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        self._devname = devname
         bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
@@ -960,7 +959,7 @@ class FamBPMs(_DeviceSet):
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
 
-        super().__init__(devs)
+        super().__init__(devs, devname=devname)
         self._bpm_names = bpm_names
         self._csbpm = devs[0].csdata
         self._initial_timestamps = None
@@ -972,11 +971,6 @@ class FamBPMs(_DeviceSet):
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._mturn_set_flag)
-
-    @property
-    def devname(self):
-        """."""
-        return self._devname
 
     @property
     def bpm_names(self):
