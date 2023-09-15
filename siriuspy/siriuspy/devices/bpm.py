@@ -933,7 +933,7 @@ class FamBPMs(_DeviceSet):
 
     def __init__(
             self, devname=None, bpmnames=None, ispost_mortem=False,
-            props2init='all'):
+            props2init='all', signals2acq=('X', 'Y')):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -945,16 +945,7 @@ class FamBPMs(_DeviceSet):
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
 
-        self._mturn_signals2acq = ['X', 'Y']
-        if not isinstance(props2init, str):
-            pass
-        elif props2init.startswith('acq_ant'):
-            self._mturn_signals2acq = ['A', 'B', 'C', 'D']
-        elif props2init.startswith('acq_possum'):
-            self._mturn_signals2acq = ['X', 'Y', 'S']
-        elif props2init.startswith('acq'):
-            self._mturn_signals2acq = ['A', 'B', 'C', 'D', 'X', 'Y', 'S']
-
+        self._mturn_signals2acq = list(signals2acq)
         devs = [BPM(
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
