@@ -1030,7 +1030,7 @@ class FamBPMs(_DeviceSet):
                 (N, 160), containing the values for the signals acquired.
 
         """
-        sigs = ([] for _ in self._mturn_signals2acq)
+        sigs = [[] for _ in self._mturn_signals2acq]
 
         mini = 1000000000000000  # a very large integer
         for bpm in self._devices:
