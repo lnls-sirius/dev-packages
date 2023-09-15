@@ -59,17 +59,3 @@ class BLMSearch:
             if devname_ == devname:
                 return blmname
         raise ValueError(f'Invalid devname {devname}')
-
-    @staticmethod
-    def conv_blmname_2_sensor_pvname(blmname):
-        """Return PV name of a BLM."""
-        devname = BLMSearch.conv_blmname_2_devname(blmname)
-        pvname = devname.substitute(propty='Count-Mon')
-        return pvname
-    
-    @staticmethod
-    def conv_blmname_2_timebase_pvname(blmname):
-        """Return time base PV name of a BLM."""
-        devname = BLMSearch.conv_blmname_2_devname(blmname)
-        pvname = devname.substitute(idx='', propty='TimeBase-SP')
-        return pvname
