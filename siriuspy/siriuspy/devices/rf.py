@@ -565,6 +565,7 @@ class RFGen(_Device):
 
 class ASLLRF(_Device):
     """AS LLRF."""
+
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
         'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
@@ -668,8 +669,7 @@ class ASLLRF(_Device):
 
     @phase_incrate.setter
     def phase_incrate(self, value):
-        if int(value) in self.PhsIncRates:
-            self['PHSREF:INCRATE:S'] = int(value)
+        self._enum_setter('PHSREF:INCRATE:S', value, self.PhsIncRates)
 
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
@@ -708,8 +708,7 @@ class ASLLRF(_Device):
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
-        if int(value) in self.VoltIncRates:
-            self['AMPREF:INCRATE:S'] = int(value)
+        self._enum_setter('AMPREF:INCRATE:S', value, self.VoltIncRates)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
