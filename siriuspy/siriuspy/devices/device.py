@@ -66,7 +66,7 @@ class Device:
         elif isinstance(props2init, (list, tuple)):
             propties = props2init
         else:
-            raise ValueError('Wrong value for init_propties.')
+            raise ValueError('Wrong value for props2init.')
         self._pvs = {prpt: self._create_pv(prpt) for prpt in propties}
 
     @property
