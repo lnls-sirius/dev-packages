@@ -3145,7 +3145,7 @@ def _insert_strengths(database, pstype):
             del database['KLRef-Mon']
         if 'SLRef-Mon' in database:
             del database['SLRef-Mon']
-    elif '-fc' in pstype:
+    elif '-fc' in pstype and 'ffc' not in pstype:
         database['KickAcc-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
 
