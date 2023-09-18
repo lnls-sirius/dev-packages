@@ -10,8 +10,8 @@ class BLM(_Device):
 
     class DEVICES:
         """Devices names."""
-        __SENSOR1, __SENSOR2, __SENSOR3, __SENSOR4 = 4 * (None, )
-        __SENSOR5, __SENSOR6, __SENSOR7, __SENSOR8 = 4 * (None, )
+        __SENSOR1 = __SENSOR2 = __SENSOR3 = __SENSOR4 = None
+        __SENSOR5 = __SENSOR6 = __SENSOR7 = __SENSOR8 = None
 
         @_classproperty
         def SENSOR1(cls):
