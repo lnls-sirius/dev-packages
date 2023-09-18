@@ -23,24 +23,30 @@ class BunchbyBunch(_DeviceSet):
         'L': 'SI-Glob:DI-BbBProc-L'}
     DEVICES = _get_namedtuple('Devices', *zip(*_devices.items()))
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
-        self.rfcav = RFCav(RFCav.DEVICES.SI)
-        self.info = SystemInfo(devname)
-        self.timing = Timing(devname)
-        self.sram = Acquisition(devname, acqtype='SRAM')
-        self.bram = Acquisition(devname, acqtype='BRAM')
-        self.single_bunch = SingleBunch(devname)
-        self.phase_track = PhaseTracking(devname)
-        self.coeffs = Coefficients(devname)
-        self.feedback = Feedback(devname)
-        self.drive0 = Drive(devname, drive_num=0)
-        self.drive1 = Drive(devname, drive_num=1)
-        self.drive2 = Drive(devname, drive_num=2)
-        self.bunch_clean = BunchClean(devname)
-        self.fbe = FrontBackEnd(devname)
+
+        _isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not _isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        self.dcct = DCCT(DCCT.DEVICES.SI_13C4, props2init=props2init)
+        self.rfcav = RFCav(RFCav.DEVICES.SI, props2init=props2init)
+        self.info = SystemInfo(devname, props2init=props2init)
+        self.timing = Timing(devname, props2init=props2init)
+        self.sram = Acquisition(devname, acqtype='SRAM', props2init=props2init)
+        self.bram = Acquisition(devname, acqtype='BRAM', props2init=props2init)
+        self.single_bunch = SingleBunch(devname, props2init=props2init)
+        self.phase_track = PhaseTracking(devname, props2init=props2init)
+        self.coeffs = Coefficients(devname, props2init=props2init)
+        self.feedback = Feedback(devname, props2init=props2init)
+        self.drive0 = Drive(devname, drive_num=0, props2init=props2init)
+        self.drive1 = Drive(devname, drive_num=1, props2init=props2init)
+        self.drive2 = Drive(devname, drive_num=2, props2init=props2init)
+        self.bunch_clean = BunchClean(devname, props2init=props2init)
+        self.fbe = FrontBackEnd(devname, props2init=props2init)
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive0, self.drive1, self.drive2,
@@ -48,12 +54,12 @@ class BunchbyBunch(_DeviceSet):
             self.rfcav, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
-            self.pwr_amp1 = PwrAmpL(devname, num=0)
-            self.pwr_amp2 = PwrAmpL(devname, num=1)
+            self.pwr_amp1 = PwrAmpL(devname, num=0, props2init=props2init)
+            self.pwr_amp2 = PwrAmpL(devname, num=1, props2init=props2init)
             devs.append(self.pwr_amp1)
             devs.append(self.pwr_amp2)
         else:
-            self.pwr_amp = PwrAmpT(devname)
+            self.pwr_amp = PwrAmpT(devname, props2init=props2init)
             devs.append(self.pwr_amp)
 
         super().__init__(devices=devs, devname=devname)

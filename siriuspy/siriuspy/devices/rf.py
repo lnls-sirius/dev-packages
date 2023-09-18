@@ -1044,19 +1044,24 @@ class RFCav(_DeviceSet):
         SI = 'SI-02SB:RF-P7Cav'
         ALL = (BO, SI)
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in RFCav.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self.dev_rfgen = RFGen()
+        _isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not _isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        self.dev_rfgen = RFGen(props2init=props2init)
         if devname == RFCav.DEVICES.SI:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI)
-            self.dev_cavmon = SIRFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(props2init=props2init)
         elif devname == RFCav.DEVICES.BO:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO)
-            self.dev_cavmon = BORFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO, props2init=props2init)
+            self.dev_cavmon = BORFCavMonitor(props2init=props2init)
         devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
         # call base class constructor
