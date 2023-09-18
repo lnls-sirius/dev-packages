@@ -50,7 +50,7 @@ class Device:
     GET_TIMEOUT = _GET_TIMEOUT
     PROPERTIES_DEFAULT = ()
 
-    _DEVSEP = ':'
+    PROPERTY_SEP = ':'
 
     def __init__(
             self, devname, props2init='all', auto_monitor=True,
@@ -250,7 +250,7 @@ class Device:
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
-            pvname = pref + dev + self._DEVSEP + propty
+            pvname = pref + dev + self.PROPERTY_SEP + propty
         else:
             pvname = pref + propty
         return pvname
