@@ -122,10 +122,11 @@ class RFGen(_Device):
             return
         npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
-        self._pvs['GeneralFreq-SP'].put(freq_span[0], wait=False)
+        pvo = self.pv_object('GeneralFreq-SP')
+        pvo.put(freq_span[0], wait=False)
         for freq in freq_span[1:]:
             _time.sleep(1.0)
-            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+            pvo.put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
     def set_frequency(self, value, tol=1, timeout=10):
