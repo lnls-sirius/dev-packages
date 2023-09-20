@@ -8,12 +8,12 @@ class BLMSearch:
     """Beam Loss Monitor Search Class."""
 
     _blmname2data = {
-        'SENSOR1': ('SI-09C3', 'LEFT', 'Ch7'),
-        'SENSOR2': ('SI-09C3', 'RIGHT', 'Ch8'),
+        'SENSOR1': ('SI-09C3', 'RIGHT', 'Ch7'),
+        'SENSOR2': ('SI-09C3', 'LEFT', 'Ch8'),
         'SENSOR3': ('SI-10M1', 'BOTTOM', 'Ch7'),
         'SENSOR4': ('SI-10M1', 'TOP', 'Ch8'),
-        'SENSOR5': ('SI-18C3', 'LEFT', 'Ch7'),
-        'SENSOR6': ('SI-18C3', 'RIGHT', 'Ch8'),
+        'SENSOR5': ('SI-18C3', 'RIGHT', 'Ch7'),
+        'SENSOR6': ('SI-18C3', 'LEFT', 'Ch8'),
         'SENSOR7': ('SI-19M1', 'BOTTOM', 'Ch7'),
         'SENSOR8': ('SI-19M1', 'TOP', 'Ch8'),
     }
@@ -30,13 +30,13 @@ class BLMSearch:
         """Return the sector-subsector where BLM is located."""
         sec = BLMSearch._blmname2data[blmname][0]
         return sec
-    
+
     @staticmethod
     def conv_blmname_2_position(blmname):
         """Return the position of the BLM with sector."""
         pos = BLMSearch._blmname2data[blmname][1]
         return pos
-    
+
     @staticmethod
     def conv_blmname_2_counter_channel(blmname):
         """Return the counter channel of a BLM."""
@@ -49,7 +49,7 @@ class BLMSearch:
         sec, _, chn = BLMSearch._blmname2data[blmname]
         devname = _SiriusPVName(sec + ':' + 'CO-Counter-' + chn)
         return devname
-    
+
     @staticmethod
     def conv_devname_2_blmname(devname):
         """Return BLM name from device name."""
