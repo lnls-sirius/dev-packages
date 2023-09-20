@@ -131,9 +131,6 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     PROPERTIES_DEFAULT = (
         # ==============================================================
-        # Basic properties
-        'PosX-Mon', 'PosY-Mon', 'Sum-Mon',
-        # ==============================================================
         # General
         # +++++++
         # General interlock enable:
@@ -186,6 +183,9 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkPosLowerLtc-Mon', 'IntlkPosUpperLtc-Mon',
         'IntlkPosLowerLtcX-Mon', 'IntlkPosUpperLtcX-Mon',
         'IntlkPosLowerLtcY-Mon', 'IntlkPosUpperLtcY-Mon',
+        # Position orbit interlock core measure
+        'IntlkPosX-Mon',
+        'IntlkPosY-Mon',
         # =============================================================
         # Angular (interlock de ângulo)
         # +++++++++++++++++++++++++++++
@@ -221,6 +221,9 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkAngLowerLtc-Mon', 'IntlkAngUpperLtc-Mon',
         'IntlkAngLowerLtcX-Mon', 'IntlkAngUpperLtcX-Mon',
         'IntlkAngLowerLtcY-Mon', 'IntlkAngUpperLtcY-Mon',
+        # Angulation orbit interlock core measure
+        'IntlkAngX-Mon',
+        'IntlkAngY-Mon',
         # ============================================================
         )
 
@@ -233,19 +236,24 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         _Device.__init__(self, devname, props2init=props2init)
 
     @property
-    def posx(self):
-        """Position X, Monit rate."""
-        return self['PosX-Mon'] * self.CONV_NM2UM
+    def intlkposx(self):
+        """Orbit interlock core Position X."""
+        return self['IntlkPosX-Mon'] * self.CONV_NM2UM
 
     @property
-    def posy(self):
-        """Position Y, Monit rate."""
-        return self['PosY-Mon'] * self.CONV_NM2UM
+    def intlkposy(self):
+        """Orbit interlock core Position Y."""
+        return self['IntlkPosY-Mon'] * self.CONV_NM2UM
 
     @property
-    def possum(self):
-        """Sum, Monit rate."""
-        return self['Sum-Mon']
+    def intlkangx(self):
+        """Orbit interlock core Angle X."""
+        return self['IntlkAngX-Mon'] * self.CONV_NM2UM
+
+    @property
+    def intlkangy(self):
+        """Orbit interlock core Angle Y."""
+        return self['IntlkAngY-Mon'] * self.CONV_NM2UM
 
     @property
     def pair_down_up_bpms(self):
@@ -624,6 +632,12 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     # --- general interlock ---
 
+    def set_gen_enable(self, value, timeout=TIMEOUT):
+        """Set enable state for BPM general interlock."""
+        self._set_devices_propty(self.devices, 'IntlkEn-Sel', value)
+        return self._wait_devices_propty(
+            self.devices, 'IntlkEn-Sts', value, timeout=timeout)
+
     def cmd_gen_enable(self, timeout=TIMEOUT):
         """Enable all BPM general interlock."""
         for dev in self.devices:
@@ -666,6 +680,12 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     # --- minimum sum threshold ---
 
+    def set_minsumthres_enable(self, value, timeout=TIMEOUT):
+        """Set enable state for BPM minimum sum interlock."""
+        self._set_devices_propty(self.devices, 'IntlkMinSumEn-Sel', value)
+        return self._wait_devices_propty(
+            self.devices, 'IntlkMinSumEn-Sts', value, timeout=timeout)
+
     def cmd_minsumthres_enable(self, timeout=TIMEOUT):
         """Enable all BPM minimum sum threshold."""
         for dev in self.devices:
@@ -696,6 +716,12 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
             dev.minsumthres = value[idx]
 
     # --- position interlock ---
+
+    def set_pos_enable(self, value, timeout=TIMEOUT):
+        """Set enable state for BPM position interlock."""
+        self._set_devices_propty(self.devices, 'IntlkPosEn-Sel', value)
+        return self._wait_devices_propty(
+            self.devices, 'IntlkPosEn-Sts', value, timeout=timeout)
 
     def cmd_pos_enable(self, timeout=TIMEOUT):
         """Enable all BPM position interlock."""
@@ -903,6 +929,12 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     #  --- angulation interlock ---
 
+    def set_ang_enable(self, value, timeout=TIMEOUT):
+        """Set enable state for BPM angulation interlock."""
+        self._set_devices_propty(self.devices, 'IntlkAngEn-Sel', value)
+        return self._wait_devices_propty(
+            self.devices, 'IntlkAngEn-Sts', value, timeout=timeout)
+
     def cmd_ang_enable(self, timeout=TIMEOUT):
         """Enable all BPM angulation interlock."""
         for dev in self.devices:
@@ -1108,32 +1140,6 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.ang_latch_upper_y for b in self._devices])
 
     @property
-    def slow_orbit(self):
-        """Slow orbit vectors.
-
-        Returns:
-            orbx (numpy.ndarray, 160): Horizontal Orbit.
-            orby (numpy.ndarray, 160): Vertical Orbit.
-
-        """
-        orbx, orby = [], []
-        for bpm in self._devices:
-            orbx.append(bpm.posx)
-            orby.append(bpm.posy)
-        orbx = _np.array(orbx)
-        orby = _np.array(orby)
-        return orbx, orby
-
-    @property
-    def possum(self):
-        """Sum vector, at Monit rate.
-
-        Returns:
-            possum (numpy.ndarray, 160): Sum vector, at Monit rate.
-        """
-        return _np.array([b.possum for b in self._devices])
-
-    @property
     def position(self):
         """Position vectors.
 
@@ -1144,9 +1150,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
             posx (numpy.ndarray, 160): Horizontal Position.
             posy (numpy.ndarray, 160): Vertical Position.
         """
-        orbx, orby = self.slow_orbit
-        posx = _np.array(self.calc_intlk_metric(orbx, metric='pos'))
-        posy = _np.array(self.calc_intlk_metric(orby, metric='pos'))
+        posx = _np.array([b.intlkposx for b in self._devices])
+        posy = _np.array([b.intlkposy for b in self._devices])
         return posx, posy
 
     @property
@@ -1160,9 +1165,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
             angx (numpy.ndarray, 160): Horizontal Angulation.
             angy (numpy.ndarray, 160): Vertical Angulation.
         """
-        orbx, orby = self.slow_orbit
-        angx = _np.array(self.calc_intlk_metric(orbx, metric='ang'))
-        angy = _np.array(self.calc_intlk_metric(orby, metric='ang'))
+        angx = _np.array([b.intlkangx for b in self._devices])
+        angy = _np.array([b.intlkangy for b in self._devices])
         return angx, angy
 
     def _handle_thres_input(self, value):
