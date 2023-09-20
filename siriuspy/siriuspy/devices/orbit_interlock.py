@@ -680,20 +680,20 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     # --- minimum sum threshold ---
 
-    def set_minsumthres_enable(self, value, timeout=TIMEOUT):
+    def set_minsum_enable(self, value, timeout=TIMEOUT):
         """Set enable state for BPM minimum sum interlock."""
         self._set_devices_propty(self.devices, 'IntlkMinSumEn-Sel', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkMinSumEn-Sts', value, timeout=timeout)
 
-    def cmd_minsumthres_enable(self, timeout=TIMEOUT):
+    def cmd_minsum_enable(self, timeout=TIMEOUT):
         """Enable all BPM minimum sum threshold."""
         for dev in self.devices:
             dev.minsumthres_enable = 1
         return self._wait_devices_propty(
             self.devices, 'IntlkMinSumEn-Sts', 1, timeout=timeout)
 
-    def cmd_minsumthres_disable(self, timeout=TIMEOUT):
+    def cmd_minsum_disable(self, timeout=TIMEOUT):
         """Disable all BPM minimum sum threshold."""
         for dev in self.devices:
             dev.minsumthres_enable = 0
