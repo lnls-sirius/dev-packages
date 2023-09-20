@@ -8,22 +8,38 @@ from .device import Device as _Device
 class ASPPSCtrl(_Device):
     """Accelerator PPS Control."""
 
+    DEVICE = 'AS-Glob:PP-Summary'
+
     _properties = (
+        'TunAccessWaitTime-Cte',
         'TunAccessWaitTimeLeft-Mon',
+        'TunAccessWaitTimeElapsed-Mon',
     )
 
     def __init__(self, props2init='all', **kwargs):
         """Init."""
-        super().__init__('AS-Glob:PP-Summary', props2init=props2init, **kwargs)
+        super().__init__(ASPPSCtrl.DEVICE, props2init=props2init, **kwargs)
 
     @property
-    def remaining_time_for_tunnel_access(self):
-        """Return remaining time for tunnel access [min]."""
+    def tunnel_access_wait_time(self):
+        """Return total wait time for tunnel access [s]."""
+        return self['TunAccessWaitTime-Cte']
+
+    @property
+    def tunnel_access_wait_time_left(self):
+        """Return wait time left for tunnel access [s]."""
         return self['TunAccessWaitTimeLeft-Mon']
+
+    @property
+    def tunnel_access_wait_time_elapsed(self):
+        """Return wait time elapsed for tunnel access [s]."""
+        return self['TunAccessWaitTimeElapsed-Mon']
 
 
 class ASMPSCtrl(_Device):
     """Accelerator MPS Control."""
+
+    DEVICE = 'AS-Glob:MP-Summary'
 
     PROPERTIES_DEFAULT = (
         'AlarmGammaShutter-Mon',
@@ -33,7 +49,7 @@ class ASMPSCtrl(_Device):
 
     def __init__(self, props2init='all', **kwargs):
         """Init."""
-        super().__init__('AS-Glob:MP-Summary', props2init=props2init, **kwargs)
+        super().__init__(ASMPSCtrl.DEVICE, props2init=props2init, **kwargs)
 
     @property
     def gamma_enabled(self):
