@@ -1046,7 +1046,15 @@ class RFCav(_DeviceSet):
         ALL = (BO, SI)
 
     def __init__(self, devname, props2init='all'):
-        """."""
+        """RFCav DeviceSet.
+
+        Args:
+            devname (str): choose the accelerator cavity in RFCav.DEVICES
+            props2init (str, optional): 'all' to connect with all PVs or
+                bool(props2init) == False to initialize without any
+                connection. Defaults to 'all'.
+
+        """
         # check if device exists
         if devname not in RFCav.DEVICES.ALL:
             raise NotImplementedError(devname)
@@ -1095,6 +1103,7 @@ class RFCav(_DeviceSet):
 
 class RFKillBeam(ASLLRF):
     """RF Kill Beam Button."""
+
     TIMEOUT_WAIT = 20.0  # [s]
     INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
     REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]

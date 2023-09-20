@@ -23,8 +23,16 @@ class BunchbyBunch(_DeviceSet):
         'L': 'SI-Glob:DI-BbBProc-L'}
     DEVICES = _get_namedtuple('Devices', *zip(*_devices.items()))
 
-    def __init__(self, devname, props2init):
-        """."""
+    def __init__(self, devname, props2init='all'):
+        """BunchbyBunch DeviceSet.
+
+        Args:
+            devname (str): choose one of the BbB planes in BunchbyBunch.DEVICES
+            props2init (str, optional): 'all' to connect with all PVs or
+                bool(props2init) == False to initialize without any
+                connection. Defaults to 'all'.
+
+        """
         devname = BunchbyBunch.process_device_name(devname)
 
         _isall = isinstance(props2init, str) and props2init.lower() == 'all'
