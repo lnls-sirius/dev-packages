@@ -15,6 +15,7 @@ public_interface = (
     'LLTimeSearch',
     'IDSearch',
     'IOCSearch',
+    'BLMSearch',
 )
 
 

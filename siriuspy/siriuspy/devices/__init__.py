@@ -40,9 +40,11 @@ from .dvf import DVF, DVFImgProc
 from .lienergy import LIEnergy
 from .intlkctrl import ASPPSCtrl, ASMPSCtrl, BLInterlockCtrl
 from .scraper import ScraperH, ScraperV
+from .blm import BLM
 
 
 del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, bbb, machshift, dvf, lienergy, intlkctrl, scraper
+del blm
