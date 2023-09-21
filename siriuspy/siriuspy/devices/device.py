@@ -48,8 +48,9 @@ class Device:
 
     CONNECTION_TIMEOUT = _CONN_TIMEOUT
     GET_TIMEOUT = _GET_TIMEOUT
-    DEVSEP = ':'
     PROPERTIES_DEFAULT = ()
+
+    PROPERTY_SEP = ':'
 
     def __init__(
             self, devname, props2init='all', auto_monitor=True,
@@ -66,7 +67,7 @@ class Device:
         elif isinstance(props2init, (list, tuple)):
             propties = props2init
         else:
-            raise ValueError('Wrong value for init_propties.')
+            raise ValueError('Wrong value for props2init.')
         self._pvs = {prpt: self._create_pv(prpt) for prpt in propties}
 
     @property
@@ -249,7 +250,7 @@ class Device:
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
-            pvname = pref + dev + self.DEVSEP + propty
+            pvname = pref + dev + self.PROPERTY_SEP + propty
         else:
             pvname = pref + propty
         return pvname

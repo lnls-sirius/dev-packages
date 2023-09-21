@@ -5,6 +5,7 @@ from .ma_search import MASearch
 from .bpms_search import BPMSearch
 from .id_search import IDSearch
 from .ioc_search import IOCSearch
+from .blm_search import BLMSearch
 
 del hl_time_search
 del ll_time_search
@@ -13,3 +14,4 @@ del ma_search
 del bpms_search
 del id_search
 del ioc_search
+del blm_search
