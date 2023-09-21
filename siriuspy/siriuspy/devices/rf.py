@@ -122,10 +122,11 @@ class RFGen(_Device):
             return
         npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
-        self._pvs['GeneralFreq-SP'].put(freq_span[0], wait=False)
+        pvo = self.pv_object('GeneralFreq-SP')
+        pvo.put(freq_span[0], wait=False)
         for freq in freq_span[1:]:
             _time.sleep(1.0)
-            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+            pvo.put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
     def set_frequency(self, value, tol=1, timeout=10):
@@ -565,6 +566,7 @@ class RFGen(_Device):
 
 class ASLLRF(_Device):
     """AS LLRF."""
+
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
         'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
@@ -668,8 +670,7 @@ class ASLLRF(_Device):
 
     @phase_incrate.setter
     def phase_incrate(self, value):
-        if int(value) in self.PhsIncRates:
-            self['PHSREF:INCRATE:S'] = int(value)
+        self._enum_setter('PHSREF:INCRATE:S', value, self.PhsIncRates)
 
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
@@ -708,8 +709,7 @@ class ASLLRF(_Device):
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
-        if int(value) in self.VoltIncRates:
-            self['AMPREF:INCRATE:S'] = int(value)
+        self._enum_setter('AMPREF:INCRATE:S', value, self.VoltIncRates)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
@@ -1045,19 +1045,32 @@ class RFCav(_DeviceSet):
         SI = 'SI-02SB:RF-P7Cav'
         ALL = (BO, SI)
 
-    def __init__(self, devname):
-        """."""
+    def __init__(self, devname, props2init='all'):
+        """RFCav DeviceSet.
+
+        Args:
+            devname (str): choose the accelerator cavity in RFCav.DEVICES
+            props2init (str, optional): 'all' to connect with all PVs or
+                bool(props2init) == False to initialize without any
+                connection. Defaults to 'all'.
+
+        """
         # check if device exists
         if devname not in RFCav.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self.dev_rfgen = RFGen()
+        _isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not _isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        self.dev_rfgen = RFGen(props2init=props2init)
         if devname == RFCav.DEVICES.SI:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI)
-            self.dev_cavmon = SIRFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(props2init=props2init)
         elif devname == RFCav.DEVICES.BO:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO)
-            self.dev_cavmon = BORFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO, props2init=props2init)
+            self.dev_cavmon = BORFCavMonitor(props2init=props2init)
         devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
         # call base class constructor
@@ -1090,6 +1103,7 @@ class RFCav(_DeviceSet):
 
 class RFKillBeam(ASLLRF):
     """RF Kill Beam Button."""
+
     TIMEOUT_WAIT = 20.0  # [s]
     INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
     REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]
