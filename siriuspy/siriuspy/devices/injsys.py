@@ -932,6 +932,12 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
             if not self._do_delta_posang(-self.delta_posang):
                 return False
 
+        # configure DpK trigger
+        if not self.is_trigdpk_onaxis:
+            delay = self.trigdpk.delay_raw + self.dpkckr_dlyref
+            if not self._config_dpk_trigger(delayraw=delay):
+                return False
+
         # set pulsed magnet pwrstate and pulse
         proced = (
             (self.pudpk.cmd_turn_off_pulse, 'turn DpK pulse off.'),

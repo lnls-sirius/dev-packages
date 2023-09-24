@@ -258,7 +258,7 @@ class FamFOFBControllers(_DeviceSet):
     DEF_DCC_TIMEFRAMELEN = 5000
     DEF_BPMTRIG_RCVSRC = 0
     DEF_BPMTRIG_RCVIN = 5
-    BPM_TRIGS_IDS = [1, 2, 20]
+    BPM_TRIGS_ID = 20
     FOFBCTRL_BPMID_OFFSET = 480
     BPM_DCC_PAIRS = {
         'M1': 'M2',
@@ -290,9 +290,7 @@ class FamFOFBControllers(_DeviceSet):
         for idx, bpm in enumerate(self._bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
-            for trig in self.BPM_TRIGS_IDS:
-                trigname = bpm + ':TRIGGER' + str(trig)
-                self._bpm_trgs[trigname] = AFCACQLogicalTrigger(bpm, trig)
+            self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
             for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
