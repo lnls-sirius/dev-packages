@@ -30,7 +30,8 @@ from .pssofb import PSCorrSOFB, PSApplySOFB
 from .pwrsupply import PowerSupply, PowerSupplyPU, PowerSupplyFC, \
     PowerSupplyFBP
 from .rf import RFGen, ASLLRF, BORFCavMonitor, SIRFCavMonitor, RFCav, \
-    RFKillBeam
+    RFKillBeam, SILLRFPreAmp, BOLLRFPreAmp, SIRFDCAmp, BORFDCAmp, \
+    SIRFACAmp, BORF300VDCAmp
 from .screen import Screen
 from .sofb import SOFB
 from .syncd import DevicesSync

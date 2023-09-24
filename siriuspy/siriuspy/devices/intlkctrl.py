@@ -8,7 +8,9 @@ from .device import Device as _Device
 class ASPPSCtrl(_Device):
     """Accelerator PPS Control."""
 
-    PROPERTIES_DEFAULT = ('TunAccessRemainingWaitTime-Mon')
+    PROPERTIES_DEFAULT = (
+        'TunAccessRemainingWaitTime-Mon',
+    )
 
     def __init__(self, props2init='all', **kwargs):
         """Init."""
