@@ -3,8 +3,10 @@
 import time as _time
 import logging as _log
 
-from siriuspy.devices import DVF as _DVF
 from mathphys import imgproc as _imgproc
+
+from ..epics import CAThread as _Thread
+from ..devices import DVF as _DVF
 
 
 class MeasDVF():
@@ -38,8 +40,10 @@ class MeasDVF():
         self.process_image()
 
         # add callback
+        self._thread = None
         self._imgpv = self._dvf.pv_object(MeasDVF.DVF_IMAGE_PROPTY)
-        self._imgpv.add_callback(self.process_image)
+        self._imgpv.add_callback(self._start_imgproc)
+        self._imgpv.auto_monitor = True
 
     @property
     def devname(self):
@@ -241,6 +245,13 @@ class MeasDVF():
         # run registered driver callback
         if self._callback:
             self._callback()
+
+    def _start_imgproc(self, *args, **kwargs):
+        """."""
+        if self._thread and self._thread.is_alive():
+            return
+        self._thread = _Thread(target=self.process_image, daemon=True)
+        self._thread.start()
 
     def _create_dvf(self):
         """Create DVF object and add process_image callback."""
