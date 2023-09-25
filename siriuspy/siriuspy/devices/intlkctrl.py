@@ -10,7 +10,7 @@ class ASPPSCtrl(_Device):
 
     DEVICE = 'AS-Glob:PP-Summary'
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'TunAccessWaitTime-Cte',
         'TunAccessWaitTimeLeft-Mon',
         'TunAccessWaitTimeElapsed-Mon',
