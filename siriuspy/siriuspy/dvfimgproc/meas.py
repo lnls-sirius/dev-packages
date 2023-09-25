@@ -250,7 +250,7 @@ class MeasDVF():
         """."""
         if self._thread and self._thread.is_alive():
             return
-        self._thread = _Thread(target=self.process_image, daemon=False)
+        self._thread = _Thread(target=self.process_image, daemon=True)
         self._thread.start()
 
     def _create_dvf(self):
