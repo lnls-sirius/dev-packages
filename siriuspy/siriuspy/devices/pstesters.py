@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 
 from ..util import get_bit as _get_bit
+from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSC, ETypes as _PSE, \
     PS_LI_INTLK_THRS as _PS_LI_INTLK, \
@@ -425,7 +426,8 @@ class TesterPSLinac(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else 10*self.test_tol
+        return abs(value - target) < tol
 
 
 class TesterPSFOFB(_TesterBase):
@@ -532,6 +534,10 @@ class _TesterPUBase(_TesterBase):
 
     def reset(self):
         """Reset."""
+        # if there is no interlock, do not send reset to avoid strange IOC
+        # behavior (Pulse-Sts is enabled when there are no interlock)
+        if self.check_intlk():
+            return
         self['Reset-Cmd'] = 1
 
     def check_intlk(self):
@@ -605,7 +611,8 @@ class _TesterPUBase(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else self.test_tol*2
+        return abs(value - target) < tol
 
 
 class TesterPUKckr(_TesterPUBase):
@@ -639,6 +646,37 @@ class TesterPUSept(_TesterPUBase):
         status &= (self['Intlk6-Mon'] == 1)
         status &= (self['Intlk7-Mon'] == 1)
         return status
+
+
+class PSTesterFactory:
+    """Factory class for PS and PU testers."""
+
+    @staticmethod
+    def create(devname):
+        """Return tester for PS/PU devname."""
+        devname = _PVName(devname)
+        if devname.sec == 'LI':
+            tester = TesterPSLinac(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FOFB_PS':
+            tester = TesterPSFOFB(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP_DCLink':
+            tester = TesterDCLinkFBP(devname)
+        elif 'bo-dclink' in _PSSearch.conv_psname_2_pstype(devname):
+            tester = TesterDCLink(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'REGATRON_DCLink':
+            tester = TesterDCLinkRegatron(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP':
+            tester = TesterPSFBP(devname)
+        elif devname.dis == 'PS':
+            tester = TesterPS(devname)
+        elif devname.dis == 'PU' and 'Kckr' in devname.dev:
+            tester = TesterPUKckr(devname)
+        elif devname.dis == 'PU' and 'Sept' in devname.dev:
+            tester = TesterPUSept(devname)
+        else:
+            raise NotImplementedError(
+                f'There is no Tester defined for {devname}.')
+        return tester
 
 
 class Triggers(_DeviceSet):
