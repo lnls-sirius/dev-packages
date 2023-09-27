@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of High Level FOFB."""
+"""Define PVs, constants and properties of High Level Orbit Interlock app."""
 
 import os as _os
 
@@ -17,8 +17,8 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_BPMS = (
         'Connected',
-        'PosEnblSynced', 'AngEnblSynced', 'MinSumSynced', 'GlobEnblSynced',
-        'PosLimsSynced', 'PosLimsSynced', 'MinSumLimsSynced')
+        'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
+        'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced')
     STS_LBLS_EVG = (
         'Connected', 'IntlkEnblSynced')
 
@@ -39,7 +39,9 @@ class Const(_csdev.Const):
 
     DEF_TIME2WAIT_DRYRUN = 10  # [s]
 
-    State = _csdev.Const.register('State', _et.OFF_ON)
+    AcqChan = _csbpm.AcqChan
+    AcqTrigTyp = _csbpm.AcqTrigTyp
+    AcqRepeat = _csbpm.AcqRepeat
 
     def __init__(self):
         """Class constructor."""
@@ -63,7 +65,15 @@ class Const(_csdev.Const):
         self.ang_enbl_fname = _os.path.join(path, 'ang_enbllist.enbl')
         self.minsum_enbl_fname = _os.path.join(path, 'minsum_enbllist.enbl')
 
-        self.limits = _os.path.join(path, 'limits.txt')
+        self.pos_x_min_lim_fname = _os.path.join(path, 'pos_x_min.lim')
+        self.pos_x_max_lim_fname = _os.path.join(path, 'pos_x_max.lim')
+        self.pos_y_min_lim_fname = _os.path.join(path, 'pos_y_min.lim')
+        self.pos_y_max_lim_fname = _os.path.join(path, 'pos_y_max.lim')
+        self.ang_x_min_lim_fname = _os.path.join(path, 'ang_x_min.lim')
+        self.ang_x_max_lim_fname = _os.path.join(path, 'ang_x_max.lim')
+        self.ang_y_min_lim_fname = _os.path.join(path, 'ang_y_min.lim')
+        self.ang_y_max_lim_fname = _os.path.join(path, 'ang_y_max.lim')
+        self.minsum_lim_fname = _os.path.join(path, 'minsum.lim')
 
     def get_database(self):
         """Return Soft IOC database."""
@@ -72,108 +82,108 @@ class Const(_csdev.Const):
             'Version-Cte': {'type': 'string', 'value': 'UNDEF'},
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
 
-            'State-Sel': {
-                'type': 'enum', 'enums': _et.OFF_ON,
-                'value': self.OffOn.Off},
-            'State-Sts': {
-                'type': 'enum', 'enums': _et.OFF_ON,
-                'value': self.OffOn.Off},
-            'BPMStatus-Mon': {'type': 'int', 'value': 0b1111111},
+            'Enable-Sel': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl},
+            'Enable-Sts': {
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
+                'value': self.DsblEnbl.Dsbl},
+            'BPMStatus-Mon': {'type': 'int', 'value': 0b11111111},
             'EVGStatus-Mon': {'type': 'int', 'value': 0b11},
 
             # Enable lists
-            'BPMPosEnblList-SP': {
+            'PosEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used in orbit position interlock'},
-            'BPMPosEnblList-RB': {
+            'PosEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used in orbit position interlock'},
 
-            'BPMAngEnblList-SP': {
+            'AngEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used in orbit angle interlock'},
-            'BPMAngEnblList-RB': {
+            'AngEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used in orbit angle interlock'},
 
-            'BPMMinSumEnblList-SP': {
+            'MinSumEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used with minimum sum threshold enabled'},
-            'BPMMinSumEnblList-RB': {
+            'MinSumEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1],
                 'unit': 'BPM used with minimum sum threshold enabled'},
 
             # Limits
-            'PosMinLimX-SP': {
+            'PosXMinLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for X'},
-            'PosMinLimX-RB': {
+            'PosXMinLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for X'},
-            'PosMaxLimX-SP': {
+            'PosXMaxLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for X'},
-            'PosMaxLimX-RB': {
+            'PosXMaxLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for X'},
 
-            'PosMinLimY-SP': {
+            'PosYMinLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for Y'},
-            'PosMinLimY-RB': {
+            'PosYMinLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for Y'},
-            'PosMaxLimY-SP': {
+            'PosYMaxLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for Y'},
-            'PosMaxLimY-RB': {
+            'PosYMaxLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for Y'},
 
-            'AngMinLimX-SP': {
+            'AngXMinLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for X'},
-            'AngMinLimX-RB': {
+            'AngXMinLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for X'},
-            'AngMaxLimX-SP': {
+            'AngXMaxLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for X'},
-            'AngMaxLimX-RB': {
+            'AngXMaxLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for X'},
 
-            'AngMinLimY-SP': {
+            'AngYMinLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for Y'},
-            'AngMinLimY-RB': {
+            'AngYMinLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for Y'},
-            'AngMaxLimY-SP': {
+            'AngYMaxLim-SP': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for Y'},
-            'AngMaxLimY-RB': {
+            'AngYMaxLim-RB': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for Y'},
@@ -194,11 +204,11 @@ class Const(_csdev.Const):
 
             # Acquisition
             'PsMtmAcqChannel-Sel': {
-                'type': 'enum', 'value': _csbpm.AcqChan.FAcq,
-                'enums': Const.AcqChan._fields},
+                'type': 'enum', 'value': self.AcqChan.FAcq,
+                'enums': self.AcqChan._fields},
             'PsMtmAcqChannel-Sts': {
-                'type': 'enum', 'value': _csbpm.AcqChan.FAcq,
-                'enums': Const.AcqChan._fields},
+                'type': 'enum', 'value': self.AcqChan.FAcq,
+                'enums': self.AcqChan._fields},
             'PsMtmAcqSamplesPre-SP': {
                 'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqSamplesPre-RB': {

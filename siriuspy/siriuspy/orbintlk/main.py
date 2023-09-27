@@ -1,4 +1,4 @@
-"""High Level FOFB main application."""
+"""High Level Orbit Interlock main application."""
 
 import os as _os
 import logging as _log
@@ -23,9 +23,10 @@ class App(_Callback):
 
     SCAN_FREQUENCY = 1  # [Hz]
 
-    def __init__(self, tests=False):
+    def __init__(self, tests=True):
         """Class constructor."""
         super().__init__()
+        self._is_dry_run = tests
         self._const = _Const()
         self._pvs_database = self._const.get_database()
         self._init = False
@@ -40,25 +41,30 @@ class App(_Callback):
             'minsum': _np.ones(self._const.nr_bpms, dtype=bool),
         }
         self._limits = {
-            'posx_min': _np.zeros(self._const.nr_bpms, dtype=float),
-            'posx_max': _np.zeros(self._const.nr_bpms, dtype=float),
-            'posy_min': _np.zeros(self._const.nr_bpms, dtype=float),
-            'posy_max': _np.zeros(self._const.nr_bpms, dtype=float),
-            'angx_min': _np.zeros(self._const.nr_bpms, dtype=float),
-            'angx_max': _np.zeros(self._const.nr_bpms, dtype=float),
-            'angy_min': _np.zeros(self._const.nr_bpms, dtype=float),
-            'angy_max': _np.zeros(self._const.nr_bpms, dtype=float),
-            'minsum': _np.zeros(self._const.nr_bpms, dtype=float),
+            'pos_x_min': _np.zeros(self._const.nr_bpms, dtype=int),
+            'pos_x_max': _np.zeros(self._const.nr_bpms, dtype=int),
+            'pos_y_min': _np.zeros(self._const.nr_bpms, dtype=int),
+            'pos_y_max': _np.zeros(self._const.nr_bpms, dtype=int),
+            'ang_x_min': _np.zeros(self._const.nr_bpms, dtype=int),
+            'ang_x_max': _np.zeros(self._const.nr_bpms, dtype=int),
+            'ang_y_min': _np.zeros(self._const.nr_bpms, dtype=int),
+            'ang_y_max': _np.zeros(self._const.nr_bpms, dtype=int),
+            'minsum': _np.zeros(self._const.nr_bpms, dtype=int),
         }
         self._acq_chan = self._pvs_database['PsMtmAcqChannel-Sel']['value']
         self._acq_spre = self._pvs_database['PsMtmAcqSamplesPre-SP']['value']
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
+        self._thread_acq = None
 
         # devices and connections
         self._evg_dev = _EVG(
             props2init=[
                 'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
-                'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts'])
+                'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
+                'IntlkEvtStatus-Mon'])
+        self._evg_intlk_pv = self._evg_dev.pv_object('IntlkEvtStatus-Mon')  # TODO> confirmar com maurício se é essa PV mesmo
+        self._evg_intlk_pv.auto_monitor = True
+        self._evg_intlk_pv.add_callback(self._callback_intlk)
 
         self._orbintlk_dev = _OrbitIntlk()
 
@@ -74,27 +80,20 @@ class App(_Callback):
                 'ACQStatus-Sts',
             ])
 
-        havebeam_pvname = _PVName(
-            'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
-                prefix=_vaca_prefix)
-        self._havebeam_pv = _PV(
-            havebeam_pvname, connection_timeout=0.05,
-            callback=self._callback_havebeam)
-
         # pvs to write methods
         self.map_pv2write = {
-            'State-Sel': self.set_state,
-            'BPMPosEnblList-SP': _part(self.set_enbllist, 'pos'),
-            'BPMAngEnblList-SP': _part(self.set_enbllist, 'ang'),
-            'BPMMinSumEnblList-SP': _part(self.set_enbllist, 'minsum'),
-            'PosMinLimX-SP': _part(self.set_intlk_lims, 'posx_min'),
-            'PosMaxLimX-SP': _part(self.set_intlk_lims, 'posx_max'),
-            'PosMinLimY-SP': _part(self.set_intlk_lims, 'posy_min'),
-            'PosMaxLimY-SP': _part(self.set_intlk_lims, 'posy_max'),
-            'AngMinLimX-SP': _part(self.set_intlk_lims, 'angx_min'),
-            'AngMaxLimX-SP': _part(self.set_intlk_lims, 'angx_max'),
-            'AngMinLimY-SP': _part(self.set_intlk_lims, 'angy_min'),
-            'AngMaxLimY-SP': _part(self.set_intlk_lims, 'angy_max'),
+            'Enable-Sel': self.set_enable,
+            'PosEnblList-SP': _part(self.set_enbllist, 'pos'),
+            'AngEnblList-SP': _part(self.set_enbllist, 'ang'),
+            'MinSumEnblList-SP': _part(self.set_enbllist, 'minsum'),
+            'PosXMinLim-SP': _part(self.set_intlk_lims, 'pos_x_min'),
+            'PosXMaxLim-SP': _part(self.set_intlk_lims, 'pos_x_max'),
+            'PosYMinLim-SP': _part(self.set_intlk_lims, 'pos_y_min'),
+            'PosYMaxLim-SP': _part(self.set_intlk_lims, 'pos_y_max'),
+            'AngXMinLim-SP': _part(self.set_intlk_lims, 'ang_x_min'),
+            'AngXMaxLim-SP': _part(self.set_intlk_lims, 'ang_x_max'),
+            'AngYMinLim-SP': _part(self.set_intlk_lims, 'ang_y_min'),
+            'AngYMaxLim-SP': _part(self.set_intlk_lims, 'ang_y_max'),
             'MinSumLim-SP': _part(self.set_intlk_lims, 'minsum'),
             'ResetBPMGen-Cmd': _part(self.cmd_reset, 'bpm_gen'),
             'ResetBPMPos-Cmd': _part(self.cmd_reset, 'bpm_pos'),
@@ -104,7 +103,7 @@ class App(_Callback):
             'PsMtmAcqChannel-Sel': self.set_acq_channel,
             'PsMtmAcqSamplesPre-SP': self.set_acq_nrspls_pre,
             'PsMtmAcqSamplesPost-SP': self.set_acq_nrspls_post,
-            'PsMtmAcqConfig-Cmd': self.cmd_config_acq,
+            'PsMtmAcqConfig-Cmd': self.cmd_acq_config,
         }
 
         # configuration scanning
@@ -117,28 +116,10 @@ class App(_Callback):
     def init_database(self):
         """Set initial PV values."""
         pvn2vals = {
-            'State-Sel': self._state,
-            'State-Sts': self._state,
+            'Enable-Sel': self._state,
+            'Enable-Sts': self._state,
             'BPMStatus-Mon': self._bpm_status,
             'EVGStatus-Mon': self._evg_status,
-            'PosMinLimX-SP': self._limits['posx_min'],
-            'PosMinLimX-RB': self._limits['posx_min'],
-            'PosMaxLimX-SP': self._limits['posx_max'],
-            'PosMaxLimX-RB': self._limits['posx_max'],
-            'PosMinLimY-SP': self._limits['posy_min'],
-            'PosMinLimY-RB': self._limits['posy_min'],
-            'PosMaxLimY-SP': self._limits['posy_max'],
-            'PosMaxLimY-RB': self._limits['posy_max'],
-            'AngMinLimX-SP': self._limits['angx_min'],
-            'AngMinLimX-RB': self._limits['angx_min'],
-            'AngMaxLimX-SP': self._limits['angx_max'],
-            'AngMaxLimX-RB': self._limits['angx_max'],
-            'AngMinLimY-SP': self._limits['angy_min'],
-            'AngMinLimY-RB': self._limits['angy_min'],
-            'AngMaxLimY-SP': self._limits['angy_max'],
-            'AngMaxLimY-RB': self._limits['angy_max'],
-            'MinSumLim-SP': self._limits['minsum'],
-            'MinSumLim-RB': self._limits['minsum'],
             'ResetBPMGen-Cmd': 0,
             'ResetBPMPos-Cmd': 0,
             'ResetBPMAng-Cmd': 0,
@@ -156,15 +137,34 @@ class App(_Callback):
             self.run_callbacks(pvn, val)
 
         # load autosave data
+        
         # enable lists
         for ilk in ['Pos', 'Ang', 'MinSum']:
             okl = self._load_enbllist(ilk)
-            pvn = f'BPM{ilk}EnblList-SP'
+            pvn = f'{ilk}EnblList'
             enb = self._enable_lists[ilk]
-            self.run_callbacks(pvn, enb)
+            self.run_callbacks(pvn+'-SP', enb)
             if not okl:
-                self.run_callbacks(
-                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), enb)
+                self.run_callbacks(pvn+'-RB', enb)
+
+        # limits
+        for ilk in ['Pos', 'Ang']:
+            for pln in ['X', 'Y']:
+                for lim in ['Min', 'Max']:
+                    atn = f'{ilk}_{pln}_{lim}'.lower()
+                    pvn = f'{ilk}{pln}{lim}Lim'
+                    okl = self._load_limits(atn)
+                    val = self._limits[atn]
+                    self.run_callbacks(pvn+'-SP', val)
+                    if not okl:
+                        self.run_callbacks(pvn+'-RB', val)
+        
+        okl = self._load_limits('minsum')
+        val = self._limits['minsum']
+        self.run_callbacks('MinSumLim-SP', val)
+        if not okl:
+            self.run_callbacks('MinSumLim-RB', val)
+
         self._update_log('Started.')
         self._init = True
 
@@ -208,22 +208,16 @@ class App(_Callback):
         """FamBPMs device."""
         return self._fambpm_dev
 
-    @property
-    def havebeam(self):
-        """Return if there is stored beam."""
-        return self._havebeam_pv.connected and self._havebeam_pv.value
-
     # --- interlock control ---
 
-    def set_state(self, value):
+    def set_enable(self, value):
         """Set orbit interlock state.
         Configure global BPM interlock enable and EVG interlock enable."""
-        if not 0 <= value < len(_ETypes.OFF_ON):
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
         if value:
-            pos, ang = self._enable_lists['pos'], self._enable_lists['ang']
-            glob_en = _np.logical_or(pos, ang)
+            glob_en = self._get_gen_bpm_intlk()
         else:
             glob_en = _np.zeros(self._const.nr_bpms)
         if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
@@ -240,38 +234,49 @@ class App(_Callback):
         self._update_log('Configured EVG interlock enable.')
 
         self._state = value
-        self.run_callbacks('LoopState-Sts', self._state)
+        self.run_callbacks('Enable-Sts', self._state)
         return True
 
     # --- enable lists ---
 
     def set_enbllist(self, intlk, value):
         """Set enable list for interlock type."""
-        self._update_log('Setting {0:s} EnblList'.format(intlk.upper()))
+        intlkname = intlk.capitalize().replace('sum', 'Sum')
+        self._update_log(f'Setting {intlkname} EnblList...')
 
         # check size
         bkup = self._enable_lists[intlk]
         new = _np.array(value, dtype=bool)
         if bkup.size != new.size:
-            self._update_log(
-                'ERR: Wrong {0:s} EnblList size.'.format(intlk.upper()))
+            self._update_log(f'ERR: Wrong {intlkname} EnblList size.')
             return False
 
         self._enable_lists[intlk] = new
 
         # do not set enable lists and save to file in initialization
         if self._init:
-            # handle devices enable configuration
-            fun = getattr(self._orbintlk_dev, f'set_{intlk}_enable')
-            fun(list(value))
-            # set_gen_enable
+            # handle device enable configuration
 
+            # set BPM interlock specific enable state
+            fun = getattr(self._orbintlk_dev, f'set_{intlk}_enable')
+            if not fun(list(value)):
+                self._update_log(f'ERR:Could not set BPM {intlkname}')
+                self._update_log('ERR:interlock enable.')
+                return False
+            
+            # if interlock is already enabled, update BPM general enable state
+            if self._state and intlk in ['pos', 'ang']:
+                glob_en = self._get_gen_bpm_intlk()
+                if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
+                    self._update_log('ERR:Could not set BPM general')
+                    self._update_log('ERR:interlock enable.')
+                    return False
 
             # save to autosave files
             self._save_enbllist(intlk, _np.array([value], dtype=bool))
 
         # update readback pv
-        self.run_callbacks(intlk.upper()+'EnblList-RB', new)
+        self.run_callbacks(f'{intlkname}EnblList-RB', new)
         return True
 
     def _load_enbllist(self, intlk):
@@ -288,7 +293,7 @@ class App(_Callback):
 
     def _save_enbllist(self, intlk, value):
         try:
-            filename = getattr(self._const, intlk+'enbl_fname')
+            filename = getattr(self._const, intlk+'_enbl_fname')
             path = _os.path.split(filename)[0]
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, value)
@@ -299,43 +304,154 @@ class App(_Callback):
     # --- limits ---
 
     def set_intlk_lims(self, intlk_lim, value):
+        """Set limits for interlock type."""
+        parts = intlk_lim.split('_')
+        if len(parts) > 1:
+            ilk, pln, lim = parts
+            limname = f'{ilk.capitalize()}{pln.capitalize()}{lim.capitalize()}'
+        else:
+            limname = intlk_lim.capitalize().replace('sum', 'Sum')
+        self._update_log(f'Setting {limname} limits...')
 
+        # check size
+        bkup = self._limits[intlk_lim]
+        new = _np.array(value, dtype=int)
+        if bkup.size != new.size:
+            self._update_log(f'ERR: Wrong {limname} limits size.')
+            return False
+
+        self._limits[intlk_lim] = new
+
+        # do not set limits and save to file in initialization
+        if self._init:
+            # handle device limits configuration
+
+            # set BPM interlock limits
+            fun = getattr(self._orbintlk_dev, f'set_{intlk_lim}_thres')
+            if not fun(list(value)):
+                self._update_log(f'ERR:Could not set BPM {limname}')
+                self._update_log('ERR:interlock limits.')
+                return False
+
+            # save to autosave files
+            self._save_limits(intlk_lim, _np.array([value]))
+
+        # update readback pv
+        self.run_callbacks(f'{limname}Lim-RB', new)
+        return True
+
+    def _load_limits(self, intlk_lim):
+        filename = getattr(self._const, intlk_lim+'_lim_fname')
+        if not _os.path.isfile(filename):
+            return
+        okl = self.set_intlk_lims(intlk_lim, _np.loadtxt(filename))
+        if okl:
+            msg = f'Loaded {intlk_lim} limits!'
+        else:
+            msg = f'ERR:Problem loading {intlk_lim} limits from file.'
+        self._update_log(msg)
+        return okl
+    
+    def _save_limits(self, intlk_lim, value):
+        try:
+            filename = getattr(self._const, intlk_lim+'_lim_fname')
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, value)
+        except FileNotFoundError:
+            self._update_log(
+                f'WARN:Could not save {intlk_lim} limits to file.')
+
+    # --- reset ---
+
+    def cmd_reset(self, state):
+        """Reset interlock states."""
+        # if it is a BPM position, BPM general or a global reset
+        if 'pos' in state or 'all' in state:
+            self._orbintlk_dev.cmd_reset_pos()
+            self._update_log('Sent reset BPM position flags.')
+        # if it is a BPM angle, BPM general or a global reset
+        if 'ang' in state or 'all' in state:
+            self._orbintlk_dev.cmd_reset_ang()
+            self._update_log('Sent reset BPM angle flags.')
+        # if it is a BPM general or a global reset
+        if 'gen' in state or 'all' in state:
+            self._orbintlk_dev.cmd_reset_gen()
+            self._update_log('Sent reset BPM general flags.')
+        
+        # if it is a global reset, reset EVG
+        if state == 'all':
+            self._evg_dev['IntlkCtrlRst-Sel'] = 1
+            self._update_log('Sent reset EVG interlock flag.')
+
+        return True
+
+    # --- configure acquisition --- 
+
+    def set_acq_channel(self, value):
+        """Set BPM PsMtm acquisition channel."""
+        self._acq_chan = value
+        self.run_callbacks('PsMtmAcqChannel-Sts', value)
+        return True
+
+    def set_acq_nrspls_pre(self, value):
+        """Set BPM PsMtm acquisition number of samples pre."""
+        self._acq_spre = value
+        self.run_callbacks('PsMtmAcqSamplesPre-RB', value)
+        return True
+
+    def set_acq_nrspls_post(self, value):
+        """Set BPM PsMtm acquisition number of samples post."""
+        self._acq_spost = value
+        self.run_callbacks('PsMtmAcqSamplesPost-RB', value)
+        return True
+
+    def cmd_acq_config(self, value=None):
+        """Configure BPM PsMtm acquisition."""
+        if self._thread_acq is None or not self._thread_acq.is_alive():
+            self._thread_acq = _epics.ca.CAThread(
+                target=self._acq_config, daemon=True)
+            self._thread_acq.start()
+            return True
+        else:
+            self._update_log('WARN:BPM configuration already in progress.')
+            return False
+
+    def _acq_config(self):
+        self._update_log('Aborting BPM acquisition...')
+        ret = self._fambpm_dev.cmd_mturn_acq_abort()
+        if ret > 0:
+            self._update_log('ERR:Failed to abort BPM acquisition.')
+            return
+        self._update_log('...done. Configuring BPM acquisition...')
+        for bpm in self._fambpm_dev.devices:
+            bpm.acq_repeat = self._const.AcqRepeat.Normal
+            bpm.acq_channel = self._acq_chan
+            bpm.acq_trigger = self._const.AcqTrigTyp.External
+            bpm.acq_nrsamples_pre = self._acq_spre
+            bpm.acq_nrsamples_post = self._acq_spost
+        self._update_log('...done. Starting BPM acquisition...')
+        ret = self.cmd_mturn_acq_start()
+        if ret > 0:
+            self._update_log('ERR:Failed to start BPM acquisition.')
+            return
+        self._update_log('...done!')
 
     # --- callbacks ---
 
-    def _callback_havebeam(self, value, **kws):
-        if not value and self._loop_state == self._const.LoopState.Closed:
-            self._update_log('FATAL:We do not have stored beam!')
-            self._update_log('FATAL:Opening FOFB loop...')
-            self.set_loop_state(self._const.LoopState.Open, abort=True)
-
     def _callback_intlk(self, pvname, value, **kws):
-        sub = _PVName(pvname).sub[:2]
-        old = self._intlk_values[pvname]
-        orbdis = _get_bit(value, 0) and not _get_bit(old, 0)
-        paclos = _get_bit(value, 1) and not _get_bit(old, 1)
-        self._intlk_values[pvname] = value
-        if value != 0:
-            pref = ('FATAL' if self._loop_state else 'WARN') + \
-                ':Ctrlr.' + sub + ' detected '
-            if orbdis:
-                self._update_log(pref + 'large orb.dist.!')
-            if paclos:
-                self._update_log(pref + 'packet loss!')
+        if value != 0:  # TODO> confirmar o valor que a PV assume em caso de interlock
+            self._update_log('FATAL:Orbit interlock raised by EVG.')
 
-            if self._loop_state != self._const.LoopState.Closed:
-                return
+        if self._is_dry_run:
+            self._update_log('Waiting a little before rearming (dry run)...')
+            _time.sleep(self._const.DEF_TIME2WAIT_DRYRUN)
+        
+        # reset latch flags for BPM interlock core and EVG 
+        self.cmd_reset('all')
 
-            if self._thread_loopstate is None or \
-                    (self._thread_loopstate is not None and
-                     not self._thread_loopstate.is_alive()) or \
-                    (self._thread_loopstate is not None and
-                     self._thread_loopstate.is_alive() and
-                     self._loop_state_lastsp != self._const.LoopState.Open):
-                self._update_log('FATAL:Opening FOFB loop...')
-                self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
-                self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
-                self.set_loop_state(self._const.LoopState.Open, abort=True)
+        # reconfigure BPM configuration
+        self.cmd_acq_config()
 
     # --- auxiliary log methods ---
 
@@ -352,6 +468,10 @@ class App(_Callback):
 
     # --- auxiliary status methods ---
 
+    def _get_gen_bpm_intlk(self):
+        pos, ang = self._enable_lists['pos'], self._enable_lists['ang']
+        return _np.logical_or(pos, ang)
+
     def _check_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
@@ -362,56 +482,61 @@ class App(_Callback):
             _t0 = _time.time()
 
             # bpm status
+            dev = self._orbintlk_dev
             value = 0
-            if self._orbintlk_dev.connected:
-                idcs = _np.where(self.corr_enbllist[:-1] == 1)[0]
-                # PwrStateOn
-                state = self._const.OffOn.On
-                if not self._corrs_dev.check_pwrstate(
-                        state, psindices=idcs, timeout=0.2):
-                    value = _updt_bit(value, 1, 1)
-                # OpModeConfigured
-                opmode = self._corrs_dev.OPMODE_STS.manual \
-                    if self._loop_state == self._const.LoopState.Open \
-                    else self._corrs_dev.OPMODE_STS.fofb
-                if not self._corrs_dev.check_opmode(
-                        opmode, psindices=idcs, timeout=0.2):
-                    value = _updt_bit(value, 2, 1)
-                # AccFreezeConfigured
-                freeze = self._get_corrs_fofbacc_freeze_desired()
-                if not self._corrs_dev.check_fofbacc_freeze(
-                        freeze, timeout=0.2):
-                    value = _updt_bit(value, 3, 1)
-                # InvRespMatRowSynced
-                if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
-                    value = _updt_bit(value, 4, 1)
-                # AccGainSynced
-                if not self._corrs_dev.check_fofbacc_gain(self._psgains):
-                    value = _updt_bit(value, 5, 1)
-                # AccSatLimsSynced
-                chn, chl = self._const.ch_names, self._ch_maxacccurr
-                cvn, cvl = self._const.cv_names, self._cv_maxacccurr
-                isok = self._corrs_dev.check_fofbacc_satmax(chl, psnames=chn)
-                isok &= self._corrs_dev.check_fofbacc_satmin(-chl, psnames=chn)
-                isok &= self._corrs_dev.check_fofbacc_satmax(cvl, psnames=cvn)
-                isok &= self._corrs_dev.check_fofbacc_satmin(-cvl, psnames=cvn)
-                if not isok:
-                    value = _updt_bit(value, 6, 1)
-                # AccDecimationSynced
-                dec = self._corr_accdec_val
-                if not self._corrs_dev.check_fofbacc_decimation(dec):
-                    value = _updt_bit(value, 7, 1)
+            if dev.connected:
+                # PosEnblSynced
+                val = dev.pos_enable == self._enable_lists['pos']
+                value = _updt_bit(value, 1, val)
+                # AngEnblSynced
+                val = dev.ang_enable == self._enable_lists['ang']
+                value = _updt_bit(value, 2, val)
+                # MinSumEnblSynced
+                val = dev.minsum_enable == self._enable_lists['minsum']
+                value = _updt_bit(value, 3, val)
+                # GlobEnblSynced
+                val = dev.gen_enable == self._get_gen_bpm_intlk()
+                value = _updt_bit(value, 4, val)
+                # PosLimsSynced           
+                okp = dev.pos_x_min_thres == self._limits['pos_x_min']
+                okp = dev.pos_x_max_thres == self._limits['pos_x_max']
+                okp = dev.pos_y_min_thres == self._limits['pos_y_min']
+                okp = dev.pos_y_max_thres == self._limits['pos_y_max']
+                value = _updt_bit(value, 5, okp)
+                # AngLimsSynced
+                oka = dev.ang_x_min_thres == self._limits['ang_x_min']
+                oka = dev.ang_x_max_thres == self._limits['ang_x_max']
+                oka = dev.ang_y_min_thres == self._limits['ang_y_min']
+                oka = dev.ang_y_max_thres == self._limits['ang_y_max']
+                value = _updt_bit(value, 6, oka)
+                # MinSumLimsSynced
+                oks = dev.minsum_thres == self._limits['minsum']
+                value = _updt_bit(value, 7, oks)
             else:
                 value = 0b11111111
 
-            self._corr_status = value
-            self.run_callbacks('BPMStatus-Mon', self._corr_status)
+            self._bpm_status = value
+            self.run_callbacks('BPMStatus-Mon', self._bpm_status)
 
+            # evg status
+            dev = self._evg_dev
+            value = 0
+            if dev.connected:
+                # IntlkEnblSynced
+                val = dev['IntlkCtrlEnbl-Sts'] == self._state
+                value = _updt_bit(value, 1, val)
+            else:
+                value = 0b11
+
+            self._evg_status = value
+            self.run_callbacks('EVGStatus-Mon', self._evg_status)
+
+            # check time elapsed
             ttook = _time.time() - _t0
             tsleep = tplanned - ttook
             if tsleep > 0:
                 _time.sleep(tsleep)
             else:
                 _log.warning(
-                    'Corrector configuration check took more than planned... '
+                    'Configuration check took more than planned... '
                     '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
