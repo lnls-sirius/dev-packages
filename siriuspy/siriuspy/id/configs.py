@@ -15,7 +15,7 @@ class _IDConfig:
             cls.__POL_STATE_SEL_STR = \
                 [pol_phases[idx][0] for idx in range(len(pol_phases))]
         return cls.__POL_STATE_SEL_STR
-    
+
     @classmethod
     def get_polarization_state_mon_str(cls):
         if cls.__POL_STATE_MON_STR is None:
@@ -23,7 +23,7 @@ class _IDConfig:
                 cls.get_polarization_state_sel_str() + \
                 [cls.POL_NONE_PHASE[0], cls.POL_UNDEF_PHASE[0]]
         return cls.__POL_STATE_MON_STR
-    
+
     @classmethod
     def get_polarization_phase(cls, pol_idx):
         """Return phase corresponding to a particular polarization index."""
