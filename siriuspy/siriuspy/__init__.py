@@ -12,5 +12,5 @@ __all__ = [
     'cycle', 'devices', 'diagbeam', 'diagsys', 'epics', 'machshift',
     'magnet', 'meas', 'namesys', 'optics', 'opticscorr', 'oscilloscope',
     'posang', 'pwrsupply', 'ramp', 'search', 'simul', 'sofb', 'timesys',
-    'dvfimgproc',
+    'dvfimgproc', 'id',
     ]
