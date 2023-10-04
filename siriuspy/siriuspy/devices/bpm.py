@@ -1,7 +1,9 @@
 """BPM devices."""
 
+import sys
 import time as _time
 # from threading import Event as _Flag
+
 import numpy as _np
 from copy import deepcopy as _dcopy
 
@@ -699,13 +701,13 @@ class BPM(_Device):
 
     @property
     def acq_update_time(self):
-        """."""
-        return self['ACQUpdateTime-RB'] / 1e3
+        """BPMs update time in [s]."""
+        return self['ACQUpdateTime-RB']
 
     @acq_update_time.setter
     def acq_update_time(self, val):
-        """."""
-        self['ACQUpdateTime-SP'] = val * 1e3
+        """BPMs update time in [s]."""
+        self['ACQUpdateTime-SP'] = val
 
     @property
     def acq_trig_datachan(self):
@@ -1032,7 +1034,7 @@ class FamBPMs(_DeviceSet):
         """
         sigs = [[] for _ in self._mturn_signals2acq]
 
-        mini = 1000000000000000  # a very large integer
+        mini = int(sys.maxsize)  # a very large integer
         for bpm in self._devices:
             for i, sn in enumerate(self._mturn_signals2acq):
                 sn = 'sum' if sn == 'S' else sn.lower()
