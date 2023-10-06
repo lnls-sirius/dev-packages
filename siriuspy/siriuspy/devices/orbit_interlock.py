@@ -142,7 +142,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
         # Minimum sum threshold (sum counts in FAcq rate):
         'IntlkLmtMinSum-SP', 'IntlkLmtMinSum-RB',
-        # Instantaneous interlock, dificult to be checked in the current 
+        # Instantaneous interlock, dificult to be checked in the current
         # gateware implementation
         'Intlk-Mon',
         # Latch interlock, clean only when respective "Clr" PV is triggered
@@ -683,8 +683,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         return _np.array([b.gen_latch for b in self._devices])
 
-    # --- minimum sum threshold --- 
-    
+    # --- minimum sum threshold ---
+
     @property
     def minsum_enable(self):
         """Minimum sum threshold enable.
@@ -725,6 +725,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.minsum_thres for b in self._devices])
 
     def set_minsum_thres(self, value, timeout=TIMEOUT):
+        """Set minimum sum thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtMinSum-SP', value)
         return self._wait_devices_propty(
@@ -779,6 +789,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.pos_x_min_thres for b in self._devices])
 
     def set_pos_x_min_thres(self, value, timeout=TIMEOUT):
+        """Set minimum x position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtPosMinX-SP', value)
         return self._wait_devices_propty(
@@ -795,6 +815,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.pos_x_max_thres for b in self._devices])
 
     def set_pos_x_max_thres(self, value, timeout=TIMEOUT):
+        """Set maximum x position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtPosMaxX-SP', value)
         return self._wait_devices_propty(
@@ -811,6 +841,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.pos_y_min_thres for b in self._devices])
 
     def set_pos_y_min_thres(self, value, timeout=TIMEOUT):
+        """Set minimum y position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtPosMinY-SP', value)
         return self._wait_devices_propty(
@@ -827,6 +867,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.pos_y_max_thres for b in self._devices])
 
     def set_pos_y_max_thres(self, value, timeout=TIMEOUT):
+        """Set maximum y position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtPosMaxY-SP', value)
         return self._wait_devices_propty(
@@ -1001,6 +1051,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.ang_x_min_thres for b in self._devices])
 
     def set_ang_x_min_thres(self, value, timeout=TIMEOUT):
+        """Set minimum x angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtAngMinX-SP', value)
         return self._wait_devices_propty(
@@ -1017,6 +1077,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.ang_x_max_thres for b in self._devices])
 
     def set_ang_x_max_thres(self, value, timeout=TIMEOUT):
+        """Set maximum x angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtAngMaxX-SP', value)
         return self._wait_devices_propty(
@@ -1033,6 +1103,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.ang_y_min_thres for b in self._devices])
 
     def set_ang_y_min_thres(self, value, timeout=TIMEOUT):
+        """Set minimum y angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtAngMinY-SP', value)
         return self._wait_devices_propty(
@@ -1049,6 +1129,16 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return _np.array([b.ang_y_max_thres for b in self._devices])
 
     def set_ang_y_max_thres(self, value, timeout=TIMEOUT):
+        """Set maximum y angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum sum.
+            timeout (float, optional): timeout to wait. Defaults to TIMEOUT.
+
+        Returns:
+            bool: True if set was successful.
+
+        """
         value = self._handle_thres_input(value)
         self._set_devices_propty(self.devices, 'IntlkLmtAngMaxY-SP', value)
         return self._wait_devices_propty(
