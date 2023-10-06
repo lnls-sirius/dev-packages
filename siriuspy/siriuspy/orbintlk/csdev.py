@@ -19,8 +19,12 @@ class ETypes(_csdev.ETypes):
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced')
-    STS_LBLS_EVG = (
-        'Connected', 'IntlkEnblSynced')
+    STS_LBLS_TIMING = (
+        'EVGConn', 'IntlkEnblSynced', 'EVGConfig',
+        'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
+        'LLRFTrigConn', 'LLRFTrigStatusOK', 'LLRFTrigConfig',
+        )
+    STS_LBLS_LLRF = ('Connected', 'Configured')
 
 
 _et = ETypes  # syntactic sugar
@@ -38,6 +42,28 @@ class Const(_csdev.Const):
     DEF_TIMEWAIT = 3  # [s]
 
     DEF_TIME2WAIT_DRYRUN = 10  # [s]
+
+    EVG_CONFIGS = (
+        ('IntlkTbl0to15-Sel', 1),
+        ('IntlkTbl16to27-Sel', 0),
+        ('IntlkCtrlRepeat-Sel', 0),
+        ('IntlkCtrlRepeatTime-SP', 0),
+        ('IntlkEvtIn0-SP', 117),
+        ('IntlkEvtOut-SP', 124),
+        )
+    ORBINTLKTRIG_CONFIG = (
+        ('Src-Sel', 4),
+        ('DelayRaw-SP', 0),
+        ('State-Sel', 1),
+        ('WidthRaw-SP', 0),
+        ('Direction-Sel', 1),
+        )
+    LLRFTRIG_CONFIG = (
+        ('Src-Sel', 5),
+        ('DelayRaw-SP', 0),
+        ('State-Sel', 1),
+        ('WidthRaw-SP', 0),
+        )
 
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp
@@ -89,7 +115,17 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'BPMStatus-Mon': {'type': 'int', 'value': 0b11111111},
-            'EVGStatus-Mon': {'type': 'int', 'value': 0b11},
+            'TimingStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'LLRFStatus-Mon': {'type': 'int', 'value': 0b11},
+            'BPMStatusLabels-Cte': {
+                'type': 'string', 'count': len(_et.STS_LBLS_BPMS),
+                'value': _et.STS_LBLS_BPMS},
+            'TimingStatusLabels-Cte': {
+                'type': 'string', 'count': len(_et.STS_LBLS_TIMING),
+                'value': _et.STS_LBLS_TIMING},
+            'LLRFStatusLabels-Cte': {
+                'type': 'string', 'count': len(_et.STS_LBLS_LLRF),
+                'value': _et.STS_LBLS_LLRF},
 
             # Enable lists
             'PosEnblList-SP': {
@@ -221,6 +257,7 @@ class Const(_csdev.Const):
 
             # TODO:
             # add commands to sync enable status and limits
+            'IntlkStateConfig-Cmd': {'type': 'int', 'value': 0}
         }
         pvs_database = _csdev.add_pvslist_cte(pvs_database)
         return pvs_database
