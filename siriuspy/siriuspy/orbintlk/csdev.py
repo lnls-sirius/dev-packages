@@ -4,6 +4,7 @@ import os as _os
 
 from .. import csdev as _csdev
 from ..search import BPMSearch as _BPMSearch
+from ..namesys import SiriusPVName as _PVName
 from ..diagbeam.bpm.csdev import Const as _csbpm
 
 
@@ -37,6 +38,7 @@ class Const(_csdev.Const):
 
     CONV_UM_2_NM = 1e3
 
+    IOC_PREFIX = _PVName('SI-Glob:AP-OrbIntlk')
     DEF_TIMEOUT = 10  # [s]
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
