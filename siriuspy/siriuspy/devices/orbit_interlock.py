@@ -115,7 +115,7 @@ class BaseOrbitIntlk:
             func = self._oper[operation]
             val = func(dval, uval)
             data_values.append(val)
-        return data_values
+        return _np.array(data_values)
 
     @staticmethod
     def _mean(var1, var2):
