@@ -171,11 +171,11 @@ class DVF(_Device):
         # this to take effect on ROI and image1 modules
 
         # check roi parameters consistency
-        status, _, _, n_width, _ = self._check_roi(
+        status, *roi = self._check_roi(
             self.cam_offsetx, self.cam_offsety, value, self.cam_height)
         if not status:
             raise ValueError('Invalid offsetx and width combination!')
-        self['cam1:Width'] = n_width
+        self['cam1:Width'] = roi[2]
 
     @property
     def cam_height(self):
@@ -190,11 +190,11 @@ class DVF(_Device):
         # this to take effect on ROI and image1 modules
 
         # check roi parameters consistency
-        status, _, _, _, n_height = self._check_roi(
+        status, *roi = self._check_roi(
             self.cam_offsetx, self.cam_offsety, self.cam_width, value)
         if not status:
             raise ValueError('Invalid offsety and height combination!')
-        self['cam1:Height'] = n_height
+        self['cam1:Height'] = roi[3]
 
     @property
     def cam_offsetx(self):
@@ -205,12 +205,11 @@ class DVF(_Device):
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
         # check roi parameters consistency
-        status, n_offsetx, *_ = self._check_roi(
+        status, *roi = self._check_roi(
             value, self.cam_offsety, self.cam_width, self.cam_height)
         if not status:
             raise ValueError('Invalid offsetx and width combination!')
-        self['cam1:OffsetX'] = n_offsetx
-
+        self['cam1:OffsetX'] = roi[0]
 
     @property
     def cam_offsety(self):
@@ -221,11 +220,11 @@ class DVF(_Device):
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
         # check roi parameters consistency
-        status, _, n_offsety, *_ = self._check_roi(
+        status, *roi = self._check_roi(
             self.cam_offsetx, value, self.cam_width, self.cam_height)
         if not status:
             raise ValueError('Invalid offsety and height combination!')
-        self['cam1:OffsetY'] = n_offsety
+        self['cam1:OffsetY'] = roi[1]
 
     @property
     def cam_roi(self):
@@ -421,10 +420,11 @@ class DVF(_Device):
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image ROI and reset aquisition."""
         # check roi parameters consistency
-        status, n_offsetx, n_offsety, n_width, n_height = \
+        status, *roi = \
             self._check_roi(offsetx, offsety, width, height)
         if not status:
             return False
+        n_offsetx, n_offsety, n_width, n_height = roi
 
         if not self.cmd_acquire_off(timeout=timeout):
             return False
