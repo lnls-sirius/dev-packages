@@ -42,6 +42,7 @@ class DVF(_Device):
         }
 
     PROPERTIES_DEFAULT = (
+        'cam1:DeviceReset',
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Width', 'cam1:Width_RBV',
@@ -360,6 +361,10 @@ class DVF(_Device):
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
+        # camera device reset
+        self['cam1:DeviceReset'] = 1
+
+        # properties to be reset
         props_values = {
             'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
@@ -408,7 +413,7 @@ class DVF(_Device):
         """Set cam image ROI and reset aquisition."""
         c_width, c_height = self.cam_width, self.cam_height
         n_width, n_height = int(width), int(height)
-        
+
         if not self.cmd_acquire_off(timeout=timeout):
             return False
         if n_width < c_width:
