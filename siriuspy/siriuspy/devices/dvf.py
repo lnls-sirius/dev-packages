@@ -21,6 +21,8 @@ class DVF(_Device):
 
     _default_timeout = 10  # [s]
 
+    _MULTP = 4  # roi params must be multiples of certain nr of pixels
+
     _dvfparam_fields = (
         'MAX_INTENSITY_NR_BITS',
         'ACQUISITION_TIME_MIN',  # [s]
@@ -167,11 +169,13 @@ class DVF(_Device):
         """Set camera image X width [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
-        value = int(value)
-        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
-            self['cam1:Width'] = value
-        else:
+
+        # check roi parameters consistency
+        status, _, _, n_width, _ = self._check_roi(
+            self.cam_offsetx, self.cam_offsety, value, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsetx and width combination!')
+        self['cam1:Width'] = n_width
 
     @property
     def cam_height(self):
@@ -184,11 +188,13 @@ class DVF(_Device):
         """Set camera image Y height [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
-        value = int(value)
-        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
-            self['cam1:Height'] = value
-        else:
+
+        # check roi parameters consistency
+        status, _, _, _, n_height = self._check_roi(
+            self.cam_offsetx, self.cam_offsety, self.cam_width, value)
+        if not status:
             raise ValueError('Invalid offsety and height combination!')
+        self['cam1:Height'] = n_height
 
     @property
     def cam_offsetx(self):
@@ -198,11 +204,13 @@ class DVF(_Device):
     @cam_offsetx.setter
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
-        value = int(value)
-        if 0 < value + self.cam_width <= self.cam_max_sizex:
-            self['cam1:OffsetX'] = value
-        else:
+        # check roi parameters consistency
+        status, n_offsetx, *_ = self._check_roi(
+            value, self.cam_offsety, self.cam_width, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsetx and width combination!')
+        self['cam1:OffsetX'] = n_offsetx
+
 
     @property
     def cam_offsety(self):
@@ -212,11 +220,12 @@ class DVF(_Device):
     @cam_offsety.setter
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
-        value = int(value)
-        if 0 <= value + self.cam_height <= self.cam_max_sizey:
-            self['cam1:OffsetY'] = value
-        else:
+        # check roi parameters consistency
+        status, _, n_offsety, *_ = self._check_roi(
+            self.cam_offsetx, value, self.cam_width, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsety and height combination!')
+        self['cam1:OffsetY'] = n_offsety
 
     @property
     def cam_roi(self):
@@ -411,23 +420,22 @@ class DVF(_Device):
 
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image ROI and reset aquisition."""
-        c_width, c_height = self.cam_width, self.cam_height
-        n_width, n_height = int(width), int(height)
+        # check roi parameters consistency
+        status, n_offsetx, n_offsety, n_width, n_height = \
+            self._check_roi(offsetx, offsety, width, height)
+        if not status:
+            return False
 
         if not self.cmd_acquire_off(timeout=timeout):
             return False
-        if n_width < c_width:
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-        if n_height < c_height:
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
+        if not self._set_and_wait('cam1:OffsetX', n_offsetx, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:OffsetY', n_offsety, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:Width', n_width, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:Height', n_height, timeout=timeout):
+            return False
         if not self.cmd_acquire_on(timeout=timeout):
             return False
 
@@ -450,6 +458,24 @@ class DVF(_Device):
         timeout = timeout or self._default_timeout
         self[propty] = value
         return self._wait(propty + '_RBV', value, timeout=timeout)
+
+    def _check_roi(self, offsetx, offsety, width, height):
+        n_offsetx, n_offsety = int(offsetx), int(offsety)
+        n_width, n_height = int(width), int(height)
+        # check roi parameters consistency
+        if n_offsetx < 0 or n_offsety < 0:
+            return False, None
+        if n_offsetx % self._MULTP or n_offsety % self._MULTP:
+            return False, None
+        if n_width <= 0 or n_height <= 0:
+            return False, None
+        if n_offsetx + n_width > self.cam_max_sizex:
+            return False, None
+        if n_offsety + n_height > self.cam_max_sizey:
+            return False, None
+        if n_width % self._MULTP or n_height % self._MULTP:
+            return False, None
+        return True, n_offsetx, n_offsety, n_width, n_height
 
 
 class DVFImgProc(DVF):
