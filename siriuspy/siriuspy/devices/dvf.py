@@ -84,52 +84,17 @@ class DVF(_Device):
         'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
         )
 
-    PROPERTIES_DEFAULT_BO = (
-        # 'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
-        # 'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
-        # 'cam1:Width', 'cam1:Width_RBV',
-        # 'cam1:Height', 'cam1:Height_RBV',
-        # 'cam1:OffsetX', 'cam1:OffsetX_RBV',
-        # 'cam1:OffsetY', 'cam1:OffsetY_RBV',
-        # 'cam1:CenterX', 'cam1:CenterX_RBV',
-        # 'cam1:CenterY', 'cam1:CenterY_RBV',
-        # 'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
-        'ExposureTime-SP', 'ExposureTime-RB',
-        # 'AcquirePeriod', 'AcquirePeriod_RBV',
-        # 'Acquire', 'Acquire_RBV',
-        # 'cam1:ImageMode', 'cam1:ImageMode_RBV',
-        # 'cam1:Gain', 'cam1:Gain_RBV',
-        # 'cam1:GainAuto', 'cam1:GainAuto_RBV',
-        # 'cam1:DataType', 'cam1:DataType_RBV',
-        # 'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
-        # 'cam1:PixelSize', 'cam1:PixelSize_RBV',
-        # 'cam1:Temperature',
-        # 'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
-        # 'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
-        # 'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
-        # 'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
-        # 'image1:ArrayData',
-        'Data-Mon',
-        # 'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
-        # 'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
-        # 'ROI1:MinX', 'ROI1:MinX_RBV',
-        # 'ROI1:MinY', 'ROI1:MinY_RBV',
-        # 'ROI1:SizeX', 'ROI1:SizeX_RBV',
-        # 'ROI1:SizeY', 'ROI1:SizeY_RBV',
-        # 'ROI1:EnableX', 'ROI1:EnableX_RBV',
-        # 'ROI1:EnableY', 'ROI1:EnableY_RBV',
-        # 'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
-        # 'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
-        # 'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
-        # 'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
-        )
+    _PROPTY_NAME_MAP = dict()
 
     def __init__(self, devname, props2init='all', **kwargs):
         """Init."""
         if devname not in DVF.DEVICES.ALL:
             raise NotImplementedError(devname)
         if devname == DVF.DEVICES.BO_DVF:
-            self.PROPERTIES_DEFAULT = DVF.PROPERTIES_DEFAULT_BO
+            self._devname = devname
+            props = DVF.PROPERTIES_DEFAULT
+            self.PROPERTIES_DEFAULT = \
+                [self._get_propty(prop) for prop in props]
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
@@ -312,12 +277,14 @@ class DVF(_Device):
     @property
     def image_auto_monitor(self):
         """Image PV auto monitor."""
-        return self.pv_object('image1:ArrayData').auto_monitor
+        propty = self._get_propty('image1:ArrayData')
+        return self.pv_object(propty).auto_monitor
 
     @image_auto_monitor.setter
     def image_auto_monitor(self, value):
         """Set image PV auto monitor."""
-        self.pv_object('image1:ArrayData').auto_monitor = bool(value)
+        propty = self._get_propty('image1:ArrayData')
+        self.pv_object(propty).auto_monitor = bool(value)
 
     @property
     def image_pixel_size(self):
@@ -433,6 +400,7 @@ class DVF(_Device):
 
         # check readback values
         for propty, value in props_values.items():
+            propty = self._get_propty(propty)
             if not self._wait(propty + '_RBV', value, timeout=timeout):
                 return False
 
@@ -481,6 +449,32 @@ class DVF(_Device):
             width=self.cam_max_sizex, height=self.cam_max_sizey,
             timeout=timeout)
 
+    def _get_propty(self, propty):
+        if self.devname == DVF.DEVICES.BO_DVF:
+            if DVF.DEVICES.BO_DVF not in DVF._PROPTY_NAME_MAP:
+                DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
+            propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
+            if propty not in propty_name_map:
+                plug, prop = propty.split(':')
+                plug = plug.replace('cam', 'Cam')
+                plug = plug.replace('image', 'Image')
+                plug = plug.replace('Trans', 'Transf')
+                prop_name = plug + prop
+                propty_name_map[propty] = prop_name
+            return propty_name_map[propty]
+        else:
+            return propty
+
+    def __getitem__(self, propty):
+        """Return value of property."""
+        propty = self._get_propty(propty)
+        return super().__getitem__(propty)
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        propty = self._get_propty(propty)
+        return super().__setitem__(propty, value)
+
     @staticmethod
     def conv_devname2parameters(devname):
         """."""
@@ -490,6 +484,7 @@ class DVF(_Device):
         """."""
         timeout = timeout or self._default_timeout
         self[propty] = value
+        propty = self._get_propty(propty)
         return self._wait(propty + '_RBV', value, timeout=timeout)
 
 
