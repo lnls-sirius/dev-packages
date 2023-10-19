@@ -450,21 +450,21 @@ class DVF(_Device):
             timeout=timeout)
 
     def _get_propty(self, propty):
-        if self.devname == DVF.DEVICES.BO_DVF:
-            if DVF.DEVICES.BO_DVF not in DVF._PROPTY_NAME_MAP:
-                DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
-            propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
-            if propty not in propty_name_map:
-                if ':' in propty:
-                    plug, prop = propty.split(':')
-                    plug = plug.replace('cam', 'Cam')
-                    plug = plug.replace('image', 'Image')
-                    plug = plug.replace('Trans', 'Transf')
-                    propty = plug + prop
-                propty_name_map[propty] = propty
-            return propty_name_map[propty]
-        else:
+        if self.devname != DVF.DEVICES.BO_DVF:
             return propty
+
+        if DVF.DEVICES.BO_DVF not in DVF._PROPTY_NAME_MAP:
+            DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
+        propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
+        if propty not in propty_name_map:
+            if ':' in propty:
+                plug, prop = propty.split(':')
+                plug = plug.replace('cam', 'Cam')
+                plug = plug.replace('image', 'Image')
+                plug = plug.replace('Trans', 'Transf')
+                propty = plug + prop
+            propty_name_map[propty] = propty
+        return propty_name_map[propty]
 
     def __getitem__(self, propty):
         """Return value of property."""
