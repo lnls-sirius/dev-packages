@@ -92,7 +92,7 @@ class DVF(_Device):
             raise NotImplementedError(devname)
         if devname == DVF.DEVICES.BO_DVF:
             self._devname = devname
-            props = DVF.PROPERTIES_DEFAULT
+            props = self.PROPERTIES_DEFAULT
             self.PROPERTIES_DEFAULT = \
                 [self._get_propty(prop) for prop in props]
         super().__init__(devname, props2init=props2init, **kwargs)
@@ -455,12 +455,13 @@ class DVF(_Device):
                 DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
             propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
             if propty not in propty_name_map:
-                plug, prop = propty.split(':')
-                plug = plug.replace('cam', 'Cam')
-                plug = plug.replace('image', 'Image')
-                plug = plug.replace('Trans', 'Transf')
-                prop_name = plug + prop
-                propty_name_map[propty] = prop_name
+                if ':' in propty:
+                    plug, prop = propty.split(':')
+                    plug = plug.replace('cam', 'Cam')
+                    plug = plug.replace('image', 'Image')
+                    plug = plug.replace('Trans', 'Transf')
+                    propty = plug + prop
+                propty_name_map[propty] = propty
             return propty_name_map[propty]
         else:
             return propty
