@@ -230,7 +230,7 @@ class DVF(_Device):
 
     @property
     def cam_roi(self):
-        """Return current ROI."""
+        """Return current ROI (offsetx, offsety, width, height)."""
         roi = (
             self.cam_offsetx, self.cam_offsety,
             self.cam_width, self.cam_height)
