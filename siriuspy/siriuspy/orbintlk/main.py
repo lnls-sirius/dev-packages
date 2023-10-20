@@ -55,6 +55,7 @@ class App(_Callback):
         self._acq_spre = self._pvs_database['PsMtmAcqSamplesPre-SP']['value']
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
         self._thread_acq = None
+        self._thread_cb = None
 
         # devices and connections
         self._evg_dev = _EVG(props2init=[
@@ -72,7 +73,7 @@ class App(_Callback):
         pvo.add_callback(self._callback_intlk)
 
         self._llrf_trig = _Trigger(
-            devname='SI-Glob:TI-LLRF-PsMtn', props2init=[
+            trigname='SI-Glob:TI-LLRF-PsMtn', props2init=[
                 'Src-Sel', 'Src-Sts',
                 'DelayRaw-SP', 'DelayRaw-RB',
                 'State-Sel', 'State-Sts',
@@ -81,7 +82,7 @@ class App(_Callback):
             ])
 
         self._orbintlk_trig = _Trigger(
-            devname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
+            trigname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
                 'Src-Sel', 'Src-Sts',
                 'DelayRaw-SP', 'DelayRaw-RB',
                 'State-Sel', 'State-Sts',
@@ -167,9 +168,10 @@ class App(_Callback):
 
         # enable lists
         for ilk in ['Pos', 'Ang', 'MinSum']:
-            okl = self._load_file(ilk, 'enbl')
+            ilkname = ilk.lower()
+            okl = self._load_file(ilkname, 'enbl')
             pvn = f'{ilk}EnblList'
-            enb = self._enable_lists[ilk]
+            enb = self._enable_lists[ilkname]
             self.run_callbacks(pvn+'-SP', enb)
             if not okl:
                 self.run_callbacks(pvn+'-RB', enb)
@@ -356,7 +358,7 @@ class App(_Callback):
 
     # --- reset ---
 
-    def cmd_reset(self, state):
+    def cmd_reset(self, state, value=None):
         """Reset interlock states."""
         # if it is a BPM position, BPM general or a global reset
         if 'pos' in state or 'all' in state:
@@ -400,13 +402,12 @@ class App(_Callback):
 
     def cmd_acq_config(self, value=None):
         """Configure BPM PsMtm acquisition."""
-        if self._thread_acq is None or not self._thread_acq.is_alive():
-            self._thread_acq = _CAThread(target=self._acq_config, daemon=True)
-            self._thread_acq.start()
-            return True
-        else:
+        if self._thread_acq and self._thread_acq.is_alive():
             self._update_log('WARN:BPM configuration already in progress.')
             return False
+        self._thread_acq = _CAThread(target=self._acq_config, daemon=True)
+        self._thread_acq.start()
+        return True
 
     def _acq_config(self):
         self._update_log('Aborting BPM acquisition...')
@@ -510,36 +511,37 @@ class App(_Callback):
         dev = self._orbintlk_dev
         value = 0b11111111
         if dev.connected:
+            value = _updt_bit(value, 0, 0)
             # PosEnblSynced
             val = _np.array_equal(
                 dev.pos_enable, self._enable_lists['pos'])
-            value = _updt_bit(value, 1, val)
+            value = _updt_bit(value, 1, not val)
             # AngEnblSynced
             val = _np.array_equal(
                 dev.ang_enable, self._enable_lists['ang'])
-            value = _updt_bit(value, 2, val)
+            value = _updt_bit(value, 2, not val)
             # MinSumEnblSynced
             val = _np.array_equal(
                 dev.minsum_enable, self._enable_lists['minsum'])
-            value = _updt_bit(value, 3, val)
+            value = _updt_bit(value, 3, not val)
             # GlobEnblSynced
             val = _np.array_equal(dev.gen_enable, self._get_gen_bpm_intlk())
-            value = _updt_bit(value, 4, val)
+            value = _updt_bit(value, 4, not val)
             # PosLimsSynced
             okp = True
             for prp in ['pos_x_min', 'pos_x_max', 'pos_y_min', 'pos_y_max']:
                 okp &= _np.array_equal(
                     getattr(dev, prp+'_thres'), self._limits[prp])
-            value = _updt_bit(value, 5, okp)
+            value = _updt_bit(value, 5, not okp)
             # AngLimsSynced
             oka = True
             for prp in ['ang_x_min', 'ang_x_max', 'ang_y_min', 'ang_y_max']:
                 oka &= _np.array_equal(
                     getattr(dev, prp+'_thres'), self._limits[prp])
-            value = _updt_bit(value, 6, oka)
+            value = _updt_bit(value, 6, not oka)
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
-            value = _updt_bit(value, 7, oks)
+            value = _updt_bit(value, 7, not oks)
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)
@@ -549,38 +551,38 @@ class App(_Callback):
         # EVG
         dev = self._evg_dev
         if dev.connected:
-            val = dev['IntlkCtrlEnbl-Sts'] == self._state
+            val = dev['IntlkCtrlEnbl-Sts'] != self._state
             value = _updt_bit(value, 1, val)
             okg = True
             for prp, val in self._const.EVG_CONFIGS:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 okg &= dev[prp_rb] == val
-            value = _updt_bit(value, 2, okg)
+            value = _updt_bit(value, 2, not okg)
         else:
             value = 0b111
         # Orbit Interlock trigger
         dev = self._orbintlk_trig
         if dev.connected:
-            value = _updt_bit(value, 3, True)
-            value = _updt_bit(value, 4, not bool(dev['Status-Mon']))
+            value = _updt_bit(value, 3, 0)
+            value = _updt_bit(value, 4, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.ORBINTLKTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 5, oko)
+            value = _updt_bit(value, 5, not oko)
         else:
             value += 0b111 << 3
         # LLRF trigger
         dev = self._llrf_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 6, True)
-            value = _updt_bit(value, 7, not bool(dev['Status-Mon']))
+            value = _updt_bit(value, 6, 0)
+            value = _updt_bit(value, 7, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.LLRFTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 8, oko)
+            value = _updt_bit(value, 8, not oko)
         else:
             value += 0b111 << 6
 
@@ -591,9 +593,9 @@ class App(_Callback):
         value = 0b11
         dev = self._llrf
         if dev.connected:
-            value = _updt_bit(value, 0, True)
+            value = _updt_bit(value, 0, 0)
             value = _updt_bit(
-                value, 1, dev['ILK:BEAM:TRIP'] == self._llrf_intlk_state)
+                value, 1, dev['ILK:BEAM:TRIP'] != self._llrf_intlk_state)
         self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
@@ -607,10 +609,15 @@ class App(_Callback):
 
     # --- callbacks ---
 
-    def _callback_intlk(self, pvname, value, **kws):
-        trh = _CAThread(
+    def _callback_intlk(self, value, **kws):
+        _ = kws
+        if not self._init:
+            return
+        if self._thread_cb and self._thread_cb.is_alive():
+            return
+        self._thread_cb = _CAThread(
             target=self._do_callback_intlk, args=(value, ), daemon=True)
-        trh.start()
+        self._thread_cb.start()
 
     def _do_callback_intlk(self, value):
         if value == 0:
