@@ -542,6 +542,16 @@ class App(_Callback):
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
             value = _updt_bit(value, 7, not oks)
+            # AcqConfigured
+            bpms = self._fambpm_dev.devices
+            okb = all(d.acq_channel == self._acq_chan for d in bpms)
+            okb &= all([d.acq_nrsamples_post == self._acq_spost for d in bpms])
+            okb &= all([d.acq_nrsamples_pre == self._acq_spre for d in bpms])
+            okb &= all(
+                d.acq_repeat == self._const.AcqRepeat.Normal for d in bpms)
+            okb &= all(
+                d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
+            value = _updt_bit(value, 8, not okb)
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)

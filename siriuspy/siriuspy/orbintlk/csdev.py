@@ -19,7 +19,8 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_BPM = (
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
-        'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced')
+        'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced',
+        'AcqConfigured')
     STS_LBLS_TIMING = (
         'EVGConn', 'IntlkEnblSynced', 'EVGConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
