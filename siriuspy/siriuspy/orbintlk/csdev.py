@@ -57,14 +57,14 @@ class Const(_csdev.Const):
         ('Src-Sel', 4),
         ('DelayRaw-SP', 0),
         ('State-Sel', 1),
-        ('WidthRaw-SP', 0),
+        ('WidthRaw-SP', 1),
         ('Direction-Sel', 1),
         )
     LLRFTRIG_CONFIG = (
         ('Src-Sel', 5),
         ('DelayRaw-SP', 0),
         ('State-Sel', 1),
-        ('WidthRaw-SP', 0),
+        ('WidthRaw-SP', 9369),
         )
 
     AcqChan = _csbpm.AcqChan
