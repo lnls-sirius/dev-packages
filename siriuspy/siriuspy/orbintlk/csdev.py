@@ -16,7 +16,7 @@ NR_BPM = 160
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
-    STS_LBLS_BPMS = (
+    STS_LBLS_BPM = (
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced')
@@ -120,8 +120,8 @@ class Const(_csdev.Const):
             'TimingStatus-Mon': {'type': 'int', 'value': 0b111111111},
             'LLRFStatus-Mon': {'type': 'int', 'value': 0b11},
             'BPMStatusLabels-Cte': {
-                'type': 'string', 'count': len(_et.STS_LBLS_BPMS),
-                'value': _et.STS_LBLS_BPMS},
+                'type': 'string', 'count': len(_et.STS_LBLS_BPM),
+                'value': _et.STS_LBLS_BPM},
             'TimingStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_TIMING),
                 'value': _et.STS_LBLS_TIMING},
@@ -257,8 +257,7 @@ class Const(_csdev.Const):
                 'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqConfig-Cmd': {'type': 'int', 'value': 0},
 
-            # TODO:
-            # add commands to sync enable status and limits
+            # Config devices
             'IntlkStateConfig-Cmd': {'type': 'int', 'value': 0}
         }
         pvs_database = _csdev.add_pvslist_cte(pvs_database)

@@ -9,11 +9,8 @@ import numpy as _np
 
 from ..util import update_bit as _updt_bit
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV
-from ..epics.threading import CAThread as _CAThread
+from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
-from ..envars import VACA_PREFIX as _vaca_prefix
-from ..namesys import SiriusPVName as _PVName
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
     EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger
 
@@ -70,7 +67,6 @@ class App(_Callback):
             'IntlkEvtIn0-SP', 'IntlkEvtIn0-RB',
             'IntlkEvtOut-SP', 'IntlkEvtOut-SP',
             'IntlkEvtStatus-Mon'])
-        # TODO: confirmar com maurício se é essa PV mesmo
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
         pvo.add_callback(self._callback_intlk)
@@ -279,7 +275,7 @@ class App(_Callback):
         # check size
         new = _np.array(value, dtype=bool)
         if self._const.nr_bpms != new.size:
-            self._update_log(f'ERR: Wrong {intlkname} EnblList size.')
+            self._update_log(f'ERR:Wrong {intlkname} EnblList size.')
             return False
 
         self._enable_lists[intlk] = new
@@ -309,6 +305,8 @@ class App(_Callback):
 
         # save to autosave files
         self._save_file(intlk, _np.array([value], dtype=bool), 'enbl')
+
+        self._update_log('...done.')
 
         # update readback pv
         self.run_callbacks(f'{intlkname}EnblList-RB', new)
@@ -428,7 +426,7 @@ class App(_Callback):
                 'ERR:Failed to abort acquisition for ' +
                 f'{self._const.bpm_names[-ret-1]:s}.')
             return
-        elif ret > 0:
+        if ret > 0:
             self._update_log(
                 'ERR:Failed to start acquisition for ' +
                 f'{self._const.bpm_names[ret-1]:s}.')
@@ -449,7 +447,7 @@ class App(_Callback):
         for name, enbl in self._enable_lists.items():
             if not self.set_enbllist(name, enbl):
                 self._update_log(
-                    f'ERR: could not configure {name:s} enable list')
+                    f'ERR:Could not configure {name:s} enable list')
                 return False
 
         for name, lim in self._limits.items():
@@ -615,9 +613,10 @@ class App(_Callback):
         trh.start()
 
     def _do_callback_intlk(self, value):
-        # TODO: confirmar o valor que a PV assume em caso de interlock
-        if value != 0:
-            self._update_log('FATAL:Orbit interlock raised by EVG.')
+        if value == 0:
+            return
+
+        self._update_log('FATAL:Orbit interlock raised by EVG.')
 
         if self._is_dry_run:
             self._update_log('Waiting a little before rearming (dry run)...')
