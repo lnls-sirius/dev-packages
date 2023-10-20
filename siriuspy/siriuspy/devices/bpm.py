@@ -4,8 +4,8 @@ import sys
 import time as _time
 # from threading import Event as _Flag
 
-import numpy as _np
 from copy import deepcopy as _dcopy
+import numpy as _np
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..diagbeam.bpm.csdev import Const as _csbpm
@@ -133,16 +133,6 @@ class BPM(_Device):
             stg += f'        - Hysteresis: {self.acq_trig_datahyst:d}\n'
         stg += '\n'
         return stg
-
-    def __getitem__(self, propty):
-        """Return value of property."""
-        propty = self.get_propname(propty)
-        return super().__getitem__(propty)
-
-    def __setitem__(self, propty, value):
-        """Set value of property."""
-        propty = self.get_propname(propty)
-        super().__setitem__(propty, value)
 
     @property
     def is_ok(self):
