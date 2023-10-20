@@ -593,6 +593,8 @@ class ASLLRF(_Device):
         'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
         'AMPREF:INCRATE', 'AMPREF:INCRATE:S',
         'PHSREF:INCRATE', 'PHSREF:INCRATE:S',
+        'mV:AMPREF:MIN', 'mV:AMPREF:MIN:S', 'PHSREF:MIN', 'PHSREF:MIN:S',
+        'PULSE', 'PULSE:S', 'COND:DC', 'COND:DC:S', 'DUTYCYCLE',
         )
 
     def __init__(self, devname, props2init='all'):
@@ -673,6 +675,11 @@ class ASLLRF(_Device):
         return self['SL:REF:PHS']
 
     @property
+    def phase_sp(self):
+        """."""
+        return self['PL:REF:S']
+
+    @property
     def phase(self):
         """."""
         return self['PL:REF']
@@ -712,6 +719,11 @@ class ASLLRF(_Device):
         return self['SL:REF:AMP']
 
     @property
+    def voltage_sp(self):
+        """."""
+        return self['mV:AL:REF-SP']
+
+    @property
     def voltage(self):
         """."""
         return self['mV:AL:REF-RB']
@@ -740,9 +752,76 @@ class ASLLRF(_Device):
         return self._wait('AMPREF:INCRATE', value, timeout=timeout)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
-        """Set RF phase and wait until it gets there."""
+        """Set RF voltage and wait until it gets there."""
         self.voltage = value
         pv2wait = 'SL:INP:AMP' if wait_mon else 'SL:REF:AMP'
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
+    @property
+    def voltage_refmin_sp(self):
+        """."""
+        return self['mV:AMPREF:MIN:S']
+
+    @property
+    def voltage_refmin(self):
+        """."""
+        return self['mV:AMPREF:MIN']
+
+    @voltage_refmin.setter
+    def voltage_refmin(self, value):
+        self['mV:AMPREF:MIN:S'] = value
+
+    @property
+    def phase_refmin_sp(self):
+        """."""
+        return self['PHSREF:MIN:S']
+
+    @property
+    def phase_refmin(self):
+        """."""
+        return self['PHSREF:MIN']
+
+    @phase_refmin.setter
+    def phase_refmin(self, value):
+        self['PHSREF:MIN:S'] = value
+
+    @property
+    def conditioning_state(self):
+        """."""
+        return self['PULSE']
+
+    @conditioning_state.setter
+    def conditioning_state(self, value):
+        self['PULSE:S'] = bool(value)
+
+    def cmd_turn_on_conditioning(self, timeout=10):
+        """Turn on conditioning mode."""
+        self.conditioning_state = 1
+        return self._wait('PULSE', 1, timeout=timeout)
+
+    def cmd_turn_off_conditioning(self, timeout=10):
+        """Turn off conditioning mode."""
+        self.conditioning_state = 0
+        return self._wait('PULSE', 0, timeout=timeout)
+
+    @property
+    def conditioning_duty_cycle_mon(self):
+        """Duty cycle in %."""
+        return self['DUTYCYCLE']
+
+    @property
+    def conditioning_duty_cycle(self):
+        """Duty cycle in %."""
+        return self['COND:DC']
+
+    @conditioning_duty_cycle.setter
+    def conditioning_duty_cycle(self, value):
+        self['COND:DC:S'] = value
+
+    def set_duty_cycle(self, value, tol=1, timeout=10, wait_mon=True):
+        """Set RF phase and wait until it gets there."""
+        self.conditioning_duty_cycle = value
+        pv2wait = 'COND:DC' if wait_mon else 'DUTYCYCLE'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
