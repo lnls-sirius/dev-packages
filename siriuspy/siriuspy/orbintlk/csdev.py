@@ -48,7 +48,7 @@ class Const(_csdev.Const):
     DEF_TIME2WAIT_DRYRUN = 10  # [s]
 
     EVG_CONFIGS = (
-        ('IntlkTbl0to15-Sel', 1),
+        ('IntlkTbl0to15-Sel', 0b010000010000001),
         ('IntlkTbl16to27-Sel', 0),
         ('IntlkCtrlRepeat-Sel', 0),
         ('IntlkCtrlRepeatTime-SP', 0),
