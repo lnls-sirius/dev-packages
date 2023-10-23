@@ -653,6 +653,8 @@ class App(_Callback):
 
     def _callback_intlk(self, value, **kws):
         _ = kws
+        if not self._state:
+            return
         if not self._init:
             return
         if self._thread_cb and self._thread_cb.is_alive():
