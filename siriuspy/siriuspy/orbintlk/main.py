@@ -92,6 +92,15 @@ class App(_Callback):
                 'Status-Mon',
             ])
 
+        self._bpmpstmn_trig = _Trigger(
+            trigname='SI-Fam:TI-BPM-PsMtn', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'DelayRaw-SP', 'DelayRaw-RB',
+                'State-Sel', 'State-Sts',
+                'WidthRaw-SP', 'WidthRaw-RB',
+                'Status-Mon',
+            ])
+
         self._orbintlk_trig = _Trigger(
             trigname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
                 'Src-Sel', 'Src-Sts',
@@ -504,14 +513,23 @@ class App(_Callback):
                 self._update_log(
                     f'ERR:Failed to configure OrbIntlk Trigger PV {prp:s}')
                 return False
-        # Orbit Interlock Trigger
+        # LLRF PsMtn Trigger
         dev = self._llrf_trig
         for prp, val in self._const.LLRFTRIG_CONFIG:
             dev[prp] = val
             prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             if not dev._wait(prp_rb, val):
                 self._update_log(
-                    f'ERR:Failed to configure LLRF Trigger PV {prp:s}')
+                    f'ERR:Failed to configure LLRF PsMtn Trigger PV {prp:s}')
+                return False
+        # BPM PsMtn Trigger
+        dev = self._bpmpstmn_trig
+        for prp, val in self._const.BPMPSMTNTRIG_CONFIG:
+            dev[prp] = val
+            prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            if not dev._wait(prp_rb, val):
+                self._update_log(
+                    f'ERR:Failed to configure BPM PsMtn Trigger PV {prp:s}')
                 return False
         return True
 
@@ -615,7 +633,7 @@ class App(_Callback):
             value = _updt_bit(value, 7, not oko)
         else:
             value += 0b111 << 5
-        # LLRF trigger
+        # LLRF PsMtn trigger
         dev = self._llrf_trig
         oko = False
         if dev.connected:
@@ -627,6 +645,18 @@ class App(_Callback):
             value = _updt_bit(value, 10, not oko)
         else:
             value += 0b111 << 8
+        # BPM PsMtn trigger
+        dev = self._bpmpstmn_trig
+        oko = False
+        if dev.connected:
+            value = _updt_bit(value, 12, bool(dev['Status-Mon']))
+            oko = True
+            for prp, val in self._const.BPMPSMTNTRIG_CONFIG:
+                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                oko &= dev[prp_rb] == val
+            value = _updt_bit(value, 13, not oko)
+        else:
+            value += 0b111 << 11
 
         self._timing_status = value
         self.run_callbacks('TimingStatus-Mon', self._timing_status)

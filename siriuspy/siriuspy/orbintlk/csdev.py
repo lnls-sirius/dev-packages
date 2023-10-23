@@ -25,7 +25,8 @@ class ETypes(_csdev.ETypes):
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsConn', 'FoutsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
-        'LLRFTrigConn', 'LLRFTrigStatusOK', 'LLRFTrigConfig',
+        'LLRFPsMtnTrigConn', 'LLRFPsMtnTrigStatusOK', 'LLRFPsMtnTrigConfig',
+        'BPMPsMtnTrigConn', 'BPMPsMtnTrigStatusOK', 'BPMPsMtnTrigConfig',
         )
     STS_LBLS_LLRF = ('Connected', 'Configured')
 
@@ -86,6 +87,12 @@ class Const(_csdev.Const):
         ('State-Sel', 1),
         ('WidthRaw-SP', 9369),
         )
+    BPMPSMTNTRIG_CONFIG = (
+        ('Src-Sel', 5),
+        ('DelayRaw-SP', 0),
+        ('State-Sel', 1),
+        ('WidthRaw-SP', 1),
+    )
 
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp
