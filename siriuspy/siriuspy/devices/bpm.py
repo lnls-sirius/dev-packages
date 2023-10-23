@@ -1121,7 +1121,7 @@ class FamBPMs(_DeviceSet):
         """
         if acq_rate in self._csbpm.AcqChan:
             pass
-        if acq_rate.lower().startswith('facq'):
+        elif acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
         elif acq_rate.lower().startswith('fofbpha'):
             acq_rate = self._csbpm.AcqChan.FOFBPha
