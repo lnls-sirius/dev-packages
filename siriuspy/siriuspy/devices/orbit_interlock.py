@@ -693,7 +693,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
             enbl (numpy.ndarray, 160):
                 enable state for each BPM.
         """
-        return _np.array([b.gen_enable for b in self._devices])
+        return _np.array([b.minsum_enable for b in self._devices])
 
     def set_minsum_enable(self, value, timeout=TIMEOUT):
         """Set enable state for BPM minimum sum interlock."""
