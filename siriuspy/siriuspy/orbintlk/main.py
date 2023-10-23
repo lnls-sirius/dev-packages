@@ -694,17 +694,21 @@ class App(_Callback):
 
     # ---------------- File handlers ---------------------
 
-    def _load_file(self, intlk_lim, dtype='en'):
+    def _load_file(self, intlk, dtype='en'):
         suff = '_enbl_fname' if dtype.startswith('en') else '_lim_fname'
         msg = 'enable list' if dtype.startswith('en') else 'limits'
-        filename = getattr(self._const, intlk_lim + suff)
+        filename = getattr(self._const, intlk + suff)
         if not _os.path.isfile(filename):
             return
-        okl = self.set_intlk_lims(intlk_lim, _np.loadtxt(filename))
-        if okl:
-            msg = f'Loaded {intlk_lim} {msg}!'
+        value = _np.loadtxt(filename)
+        if dtype.startswith('en'):
+            okl = self.set_enbllist(intlk, value)
         else:
-            msg = f'ERR:Problem loading {intlk_lim} {msg} from file.'
+            okl = self.set_intlk_lims(intlk, value)
+        if okl:
+            msg = f'Loaded {intlk} {msg}!'
+        else:
+            msg = f'ERR:Problem loading {intlk} {msg} from file.'
         self._update_log(msg)
         return okl
 
