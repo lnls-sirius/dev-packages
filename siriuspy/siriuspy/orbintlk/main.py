@@ -12,7 +12,7 @@ from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
-    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger
+    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device
 
 from .csdev import Const as _Const, ETypes as _ETypes
 
@@ -58,6 +58,15 @@ class App(_Callback):
         self._thread_cb = None
 
         # devices and connections
+        self._fout_devs = {
+            idx: _Device(
+                f'CA-RaTim:TI-Fout-{idx}',
+                props2init=[
+                    'RxEnbl-SP', 'RxEnbl-RB',
+                ])
+            for idx in self._const.FOUTS_CONFIGS
+        }
+
         self._evg_dev = _EVG(props2init=[
             'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
             'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
@@ -67,7 +76,9 @@ class App(_Callback):
             'IntlkTbl16to27-Sel', 'IntlkTbl16to27-Sts',
             'IntlkEvtIn0-SP', 'IntlkEvtIn0-RB',
             'IntlkEvtOut-SP', 'IntlkEvtOut-SP',
-            'IntlkEvtStatus-Mon'])
+            'IntlkEvtStatus-Mon',
+            'RxEnbl-SP', 'RxEnbl-RB',
+            ])
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
         pvo.add_callback(self._callback_intlk)
@@ -466,6 +477,7 @@ class App(_Callback):
         return True
 
     def _config_timing(self):
+        # EVG
         dev = self._evg_dev
         for prp, val in self._const.EVG_CONFIGS:
             dev[prp] = val
@@ -473,6 +485,16 @@ class App(_Callback):
             if not dev._wait(prp_rb, val):
                 self._update_log(f'ERR:Failed to configure EVG PV {prp:s}')
                 return False
+        # Fouts
+        for idx, configs in self._const.FOUTS_CONFIGS.items():
+            dev = self._fout_devs[idx]
+            for prp, val in configs:
+                dev[prp] = val
+                prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+                if not dev._wait(prp_rb, val):
+                    self._update_log(
+                        f'ERR:Failed to configure Fout {idx} PV {prp:s}')
+                    return False
         # Orbit Interlock Trigger
         dev = self._orbintlk_trig
         for prp, val in self._const.ORBINTLKTRIG_CONFIG:
@@ -570,31 +592,41 @@ class App(_Callback):
             value = _updt_bit(value, 2, not okg)
         else:
             value = 0b111
+        # Fouts
+        devs = self._fout_devs
+        if all(devs[idx].connected for idx in self._const.FOUTS_CONFIGS):
+            okg = True
+            for idx, configs in self._const.FOUTS_CONFIGS.items():
+                dev = self._fout_devs[idx]
+                for prp, val in configs:
+                    prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+                    okg &= dev[prp_rb] == val
+            value = _updt_bit(value, 4, not okg)
+        else:
+            value += 0b11 << 3
         # Orbit Interlock trigger
         dev = self._orbintlk_trig
         if dev.connected:
-            value = _updt_bit(value, 3, 0)
-            value = _updt_bit(value, 4, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 6, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.ORBINTLKTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 5, not oko)
+            value = _updt_bit(value, 7, not oko)
         else:
-            value += 0b111 << 3
+            value += 0b111 << 5
         # LLRF trigger
         dev = self._llrf_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 6, 0)
-            value = _updt_bit(value, 7, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 9, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.LLRFTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 8, not oko)
+            value = _updt_bit(value, 10, not oko)
         else:
-            value += 0b111 << 6
+            value += 0b111 << 8
 
         self._timing_status = value
         self.run_callbacks('TimingStatus-Mon', self._timing_status)

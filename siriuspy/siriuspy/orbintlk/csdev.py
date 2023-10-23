@@ -22,7 +22,8 @@ class ETypes(_csdev.ETypes):
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced',
         'AcqConfigured')
     STS_LBLS_TIMING = (
-        'EVGConn', 'IntlkEnblSynced', 'EVGConfig',
+        'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
+        'FoutsConn', 'FoutsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
         'LLRFTrigConn', 'LLRFTrigStatusOK', 'LLRFTrigConfig',
         )
@@ -53,7 +54,25 @@ class Const(_csdev.Const):
         ('IntlkCtrlRepeatTime-SP', 0),
         ('IntlkEvtIn0-SP', 117),
         ('IntlkEvtOut-SP', 124),
+        ('RxEnbl-SP', 0b00011110),
         )
+    FOUTS_CONFIGS = {
+        2: (
+            ('RxEnbl-SP', 0b01000000),
+        ),
+        3: (
+            ('RxEnbl-SP', 0b01001011),
+            # ('RxEnbl-SP', 0b01111111),
+        ),
+        4: (
+            ('RxEnbl-SP', 0b00001111),
+            # ('RxEnbl-SP', 0b01111111),
+        ),
+        5: (
+            ('RxEnbl-SP', 0b00001111),
+            # ('RxEnbl-SP', 0b00111111),
+        ),
+    }
     ORBINTLKTRIG_CONFIG = (
         ('Src-Sel', 4),
         ('DelayRaw-SP', 0),
