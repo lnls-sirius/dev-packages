@@ -254,7 +254,7 @@ class App(_Callback):
     def set_enable(self, value):
         """Set orbit interlock state.
         Configure global BPM interlock enable and EVG interlock enable."""
-        if value not in _ETypes.DSBL_ENBL:
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
         if value:
