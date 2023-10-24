@@ -186,78 +186,78 @@ class Const(_csdev.Const):
 
             # Limits
             'PosXMinLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for X'},
             'PosXMinLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for X'},
             'PosXMaxLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for X'},
             'PosXMaxLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for X'},
 
             'PosYMinLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for Y'},
             'PosYMinLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position minimum limits for Y'},
             'PosYMaxLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for Y'},
             'PosYMaxLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'position maximum limits for Y'},
 
             'AngXMinLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for X'},
             'AngXMinLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for X'},
             'AngXMaxLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for X'},
             'AngXMaxLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for X'},
 
             'AngYMinLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for Y'},
             'AngYMinLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle minimum limits for Y'},
             'AngYMaxLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for Y'},
             'AngYMaxLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
                 'unit': 'angle maximum limits for Y'},
 
             'MinSumLim-SP': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0], 'unit': 'minimum sum limits'},
             'MinSumLim-RB': {
-                'type': 'int', 'count': self.nr_bpms,
+                'type': 'float', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0], 'unit': 'minimum sum limits'},
 
             # Reset
