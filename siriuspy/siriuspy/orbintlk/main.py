@@ -576,7 +576,9 @@ class App(_Callback):
                 dev.minsum_enable, self._enable_lists['minsum'])
             value = _updt_bit(value, 3, not val)
             # GlobEnblSynced
-            val = _np.array_equal(dev.gen_enable, self._get_gen_bpm_intlk())
+            genval = self._get_gen_bpm_intlk() if self._state else \
+                _np.zeros(self._const.nr_bpms, dtype=bool)
+            val = _np.array_equal(dev.gen_enable, genval)
             value = _updt_bit(value, 4, not val)
             # PosLimsSynced
             okp = True
