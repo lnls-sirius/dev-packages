@@ -300,6 +300,12 @@ class App(_Callback):
             self._update_log(f'ERR:Wrong {intlkname} EnblList size.')
             return False
 
+        # check coerence, down/up pair should have same enable state
+        if not self._check_valid_enablelist(new):
+            self._update_log('ERR:BPM should be enabled in pairs')
+            self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
+            return False
+
         self._enable_lists[intlk] = new
 
         # do not set enable lists and save to file in initialization
@@ -543,6 +549,11 @@ class App(_Callback):
     def _get_gen_bpm_intlk(self):
         pos, ang = self._enable_lists['pos'], self._enable_lists['ang']
         return _np.logical_or(pos, ang)
+
+    def _check_valid_enablelist(self, enbllist):
+        aux = _np.roll(enbllist, 1)
+        # check if pairs have the same enable state
+        return not any(_np.sum(aux.reshape(-1, 2), axis=1) == 1)
 
     def _check_configs(self):
         _t0 = _time.time()
