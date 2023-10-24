@@ -318,17 +318,24 @@ class App(_Callback):
 
         # set BPM interlock specific enable state
         fun = getattr(self._orbintlk_dev, f'set_{intlk}_enable')
-        if not fun(list(value)):
+        ret = fun(list(value), return_prob=True)
+        if not ret[0]:
             self._update_log(f'ERR:Could not set BPM {intlkname}')
             self._update_log('ERR:interlock enable.')
+            for item in ret[1]:
+                self._update_log(f'ERR:Verify:{item}')
             return False
 
         # if interlock is already enabled, update BPM general enable state
         if self._state and intlk in ['pos', 'ang']:
             glob_en = self._get_gen_bpm_intlk()
-            if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
+            ret = self._orbintlk_dev.set_gen_enable(
+                list(glob_en), return_prob=True)
+            if not ret[0]:
                 self._update_log('ERR:Could not set BPM general')
                 self._update_log('ERR:interlock enable.')
+                for item in ret[1]:
+                    self._update_log(f'ERR:Verify:{item}')
                 return False
 
         # save to autosave files
@@ -376,9 +383,12 @@ class App(_Callback):
 
         # set BPM interlock limits
         fun = getattr(self._orbintlk_dev, f'set_{intlk_lim}_thres')
-        if not fun(list(value)):
+        ret = fun(list(value), return_prob=True)
+        if not ret[0]:
             self._update_log(f'ERR:Could not set BPM {limname}')
             self._update_log('ERR:interlock limits.')
+            for item in ret[1]:
+                self._update_log(f'ERR:Verify:{item}')
             return False
 
         # save to autosave files
