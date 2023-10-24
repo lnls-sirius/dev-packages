@@ -358,6 +358,12 @@ class App(_Callback):
             self._update_log(f'ERR: Wrong {limname} limits size.')
             return False
 
+        # check coerence, down/up pair should have same limits
+        if not self._check_valid_limits(new):
+            self._update_log('ERR:BPM pairs should have equal limits')
+            self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
+            return False
+
         self._limits[intlk_lim] = new
 
         # do not set limits and save to file in initialization
@@ -554,6 +560,11 @@ class App(_Callback):
         aux = _np.roll(enbllist, 1)
         # check if pairs have the same enable state
         return not any(_np.sum(aux.reshape(-1, 2), axis=1) == 1)
+
+    def _check_valid_limits(self, limits):
+        aux = _np.roll(limits, 1)
+        # check if pairs have the same limit
+        return not any(_np.diff(aux.reshape(-1, 2), axis=1) != 0)
 
     def _check_configs(self):
         _t0 = _time.time()
