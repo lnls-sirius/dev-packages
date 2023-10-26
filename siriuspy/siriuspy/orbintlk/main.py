@@ -8,6 +8,7 @@ from functools import partial as _part
 import numpy as _np
 
 from ..util import update_bit as _updt_bit
+from ..namesys import SiriusPVName as _SiriusPVName
 from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
@@ -110,6 +111,18 @@ class App(_Callback):
                 'Direction-Sel', 'Direction-Sts',
                 'Status-Mon',
             ])
+
+        self._afcti_devs = {
+            idx+1: _Device(
+                f'IA-{idx+1:02}RaBPM:TI-AMCFPGAEVR',
+                props2init=[
+                    'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
+                ], auto_monitor_mon=True)
+            for idx in range(20)
+        }
+        for dev in self._afcti_devs.values():
+            pvo = dev.pv_object('RTMClkLockedLtc-Mon')
+            pvo.add_callback(self._callback_rtmlock)
 
         self._orbintlk_dev = _OrbitIntlk()
 
@@ -742,6 +755,16 @@ class App(_Callback):
 
         # reconfigure BPM configuration
         self.cmd_acq_config()
+
+    def _callback_rtmlock(self, pvname, value, **kws):
+        if value == 1:
+            return
+        devidx = int(_SiriusPVName(pvname).sub.split('Ra')[0])
+        dev = self._afcti_devs[devidx]
+        self._update_log(f'WARN:AFC Timing {devidx} raised RTM clock loss')
+        _time.sleep(1)  # sleep a little before reseting
+        self._update_log(f'WARN:reseting AFC Timing {devidx} lock latchs.')
+        dev['ClkLockedLtcRst-Cmd'] = 1
 
     # --- auxiliary log methods ---
 
