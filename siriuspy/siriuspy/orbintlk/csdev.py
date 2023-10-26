@@ -58,6 +58,8 @@ class Const(_csdev.Const):
         ('RxEnbl-SP', 0b00011110),
         )
     FOUTS_CONFIGS = {
+        # NOTE: change RxEnbl when unnecessary
+        # protection in gateware is removed
         2: (
             ('RxEnbl-SP', 0b01000000),
         ),
