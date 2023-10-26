@@ -91,7 +91,7 @@ class Const(_csdev.Const):
         ('Src-Sel', 5),
         ('DelayRaw-SP', 0),
         ('State-Sel', 1),
-        ('WidthRaw-SP', 1),
+        ('WidthRaw-SP', 6),
     )
 
     AcqChan = _csbpm.AcqChan
