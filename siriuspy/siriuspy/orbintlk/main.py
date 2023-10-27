@@ -124,6 +124,7 @@ class App(_Callback):
         for dev in self._afcti_devs.values():
             pvo = dev.pv_object('RTMClkLockedLtc-Mon')
             pvo.add_callback(self._callback_rtmlock)
+            pvo.connection_callbacks.append(self._conn_callback_rtmlock)
 
         self._everf_dev = _Device(
             'RA-RaSIA01:TI-EVE', props2init=['OTP01EvtCnt-Mon', ],
@@ -776,6 +777,13 @@ class App(_Callback):
         _time.sleep(1)  # sleep a little before reseting
         self._update_log(f'WARN:reseting AFC Timing {devidx} lock latchs.')
         dev['ClkLockedLtcRst-Cmd'] = 1
+
+    def _conn_callback_rtmlock(self, pvname, conn, **kws):
+        if conn:
+            return
+        devname = _SiriusPVName(pvname).device_name
+        self._update_log(f'WARN:{devname} disconnected')
+        # TODO: should kill the beam in this case?
 
     def _callback_bpmintlk(self, pvname, value, **kws):
         _ = kws
