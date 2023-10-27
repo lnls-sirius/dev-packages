@@ -747,9 +747,8 @@ class App(_Callback):
 
         self._update_log('FATAL:Orbit interlock raised by EVG.')
 
-        if self._is_dry_run:
-            self._update_log('Waiting a little before rearming (dry run)...')
-            _time.sleep(self._const.DEF_TIME2WAIT_DRYRUN)
+        self._update_log('Waiting a little before rearming...')
+        _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
 
         # reset latch flags for BPM interlock core and EVG
         self.cmd_reset('all')
@@ -791,17 +790,22 @@ class App(_Callback):
 
     def _do_callback_bpmintlk(self, bpmname):
         self._update_log(f'FATAL:{bpmname} raised orbit interlock.')
-        _time.sleep(1)
+        # wait minimum period for RF EVE event count to be updated
+        _time.sleep(.1)
         # verify if RF EVE propagated the event PsMtn
         new_evtcnt = self._everf_dev['OTP01EvtCnt-Mon']
         if new_evtcnt == self._everf_evtcnt:
             self._update_log('ERR:RF EVE did not propagate event PsMtn')
             # TODO: should kill the beam in this case?
         self._everf_evtcnt = new_evtcnt
+        # wait minimum period for BPM to update interlock PVs
+        _time.sleep(2)
         # verify if EVG propagated the event Intlk
         evgintlksts = self._evg_dev['IntlkEvtStatus-Mon']
-        if evgintlksts & 0b1:
+        if not evgintlksts & 0b1:
             self._update_log('WARN:EVG did not propagate event Intlk')
+            # reset BPM orbit interlock, once EVG callback was not triggered
+            self.cmd_reset('bpm_all')
 
     # --- auxiliary log methods ---
 

@@ -46,7 +46,7 @@ class Const(_csdev.Const):
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
 
-    DEF_TIME2WAIT_DRYRUN = 10  # [s]
+    DEF_TIME2WAIT_INTLKREARM = 10  # [s]
 
     EVG_CONFIGS = (
         ('IntlkTbl0to15-Sel', 0b010000010000001),
