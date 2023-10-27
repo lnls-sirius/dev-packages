@@ -94,7 +94,7 @@ class App(_Callback):
                 'Status-Mon',
             ])
 
-        self._bpmpstmn_trig = _Trigger(
+        self._bpmpsmtn_trig = _Trigger(
             trigname='SI-Fam:TI-BPM-PsMtn', props2init=[
                 'Src-Sel', 'Src-Sts',
                 'DelayRaw-SP', 'DelayRaw-RB',
@@ -419,6 +419,8 @@ class App(_Callback):
         # save to autosave files
         self._save_file(intlk_lim, _np.array([value]), 'lim')
 
+        self._update_log('...done.')
+
         # update readback pv
         self.run_callbacks(f'{limname}Lim-RB', new)
         return True
@@ -551,33 +553,20 @@ class App(_Callback):
                     self._update_log(
                         f'ERR:Failed to configure Fout {idx} PV {prp:s}')
                     return False
-        # Orbit Interlock Trigger
-        dev = self._orbintlk_trig
-        for prp, val in self._const.ORBINTLKTRIG_CONFIG:
-            dev[prp] = val
-            prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            if not dev._wait(prp_rb, val):
-                self._update_log(
-                    f'ERR:Failed to configure OrbIntlk Trigger PV {prp:s}')
-                return False
-        # LLRF PsMtn Trigger
-        dev = self._llrf_trig
-        for prp, val in self._const.LLRFTRIG_CONFIG:
-            dev[prp] = val
-            prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            if not dev._wait(prp_rb, val):
-                self._update_log(
-                    f'ERR:Failed to configure LLRF PsMtn Trigger PV {prp:s}')
-                return False
-        # BPM PsMtn Trigger
-        dev = self._bpmpstmn_trig
-        for prp, val in self._const.BPMPSMTNTRIG_CONFIG:
-            dev[prp] = val
-            prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            if not dev._wait(prp_rb, val):
-                self._update_log(
-                    f'ERR:Failed to configure BPM PsMtn Trigger PV {prp:s}')
-                return False
+        trig2config = {
+            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
+            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
+            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
+        }
+        for trig, configs in trig2config.items():
+            for prp, val in configs:
+                name = trig.dev + trig.idx
+                trig[prp] = val
+                prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+                if not trig._wait(prp_rb, val):
+                    self._update_log(
+                        f'ERR:Failed to configure {name} PV {prp:s}')
+                    return False
         return True
 
     def _config_llrf(self):
@@ -705,7 +694,7 @@ class App(_Callback):
         else:
             value += 0b111 << 8
         # BPM PsMtn trigger
-        dev = self._bpmpstmn_trig
+        dev = self._bpmpsmtn_trig
         oko = False
         if dev.connected:
             value = _updt_bit(value, 12, bool(dev['Status-Mon']))
