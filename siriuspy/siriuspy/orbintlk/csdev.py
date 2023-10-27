@@ -271,19 +271,19 @@ class Const(_csdev.Const):
 
             # Acquisition
             'PsMtmAcqChannel-Sel': {
-                'type': 'enum', 'value': self.AcqChan.FAcq,
+                'type': 'enum', 'value': self.AcqChan.TbT,
                 'enums': self.AcqChan._fields},
             'PsMtmAcqChannel-Sts': {
-                'type': 'enum', 'value': self.AcqChan.FAcq,
+                'type': 'enum', 'value': self.AcqChan.TbT,
                 'enums': self.AcqChan._fields},
             'PsMtmAcqSamplesPre-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
+                'type': 'int', 'value': 20000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqSamplesPre-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
+                'type': 'int', 'value': 20000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqSamplesPost-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
+                'type': 'int', 'value': 20000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqSamplesPost-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 0, 'hilim': 1_000_000},
+                'type': 'int', 'value': 20000, 'lolim': 0, 'hilim': 1_000_000},
             'PsMtmAcqConfig-Cmd': {'type': 'int', 'value': 0},
 
             # Config devices
