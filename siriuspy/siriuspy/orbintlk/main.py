@@ -56,7 +56,8 @@ class App(_Callback):
         self._acq_spre = self._pvs_database['PsMtmAcqSamplesPre-SP']['value']
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
         self._thread_acq = None
-        self._thread_cb = None
+        self._thread_cbevg = None
+        self._thread_cbbpm = None
 
         # devices and connections
         self._fout_devs = {
@@ -82,7 +83,7 @@ class App(_Callback):
             ])
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
-        pvo.add_callback(self._callback_intlk)
+        pvo.add_callback(self._callback_evgintlk)
 
         self._llrf_trig = _Trigger(
             trigname='SI-Glob:TI-LLRF-PsMtn', props2init=[
@@ -124,7 +125,17 @@ class App(_Callback):
             pvo = dev.pv_object('RTMClkLockedLtc-Mon')
             pvo.add_callback(self._callback_rtmlock)
 
+        self._everf_dev = _Device(
+            'RA-RaSIA01:TI-EVE', props2init=['OTP01EvtCnt-Mon', ],
+            auto_monitor_mon=True)
+        self._everf_dev.pv_object('OTP01EvtCnt-Mon').wait_for_connection()
+        self._everf_evtcnt = self._everf_dev['OTP01EvtCnt-Mon'] or 0
+
         self._orbintlk_dev = _OrbitIntlk()
+        for dev in self._orbintlk_dev.devices:
+            pvo = dev.pv_object('IntlkLtc-Mon')
+            pvo.auto_monitor = True
+            pvo.add_callback(self._callback_bpmintlk)
 
         self._llrf = _ASLLRF(devname=_ASLLRF.DEVICES.SI, props2init=[
             'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
@@ -728,19 +739,19 @@ class App(_Callback):
 
     # --- callbacks ---
 
-    def _callback_intlk(self, value, **kws):
+    def _callback_evgintlk(self, value, **kws):
         _ = kws
         if not self._state:
             return
         if not self._init:
             return
-        if self._thread_cb and self._thread_cb.is_alive():
+        if self._thread_cbevg and self._thread_cbevg.is_alive():
             return
-        self._thread_cb = _CAThread(
-            target=self._do_callback_intlk, args=(value, ), daemon=True)
-        self._thread_cb.start()
+        self._thread_cbevg = _CAThread(
+            target=self._do_callback_evgintlk, args=(value, ), daemon=True)
+        self._thread_cbevg.start()
 
-    def _do_callback_intlk(self, value):
+    def _do_callback_evgintlk(self, value):
         if value == 0:
             return
 
@@ -765,6 +776,35 @@ class App(_Callback):
         _time.sleep(1)  # sleep a little before reseting
         self._update_log(f'WARN:reseting AFC Timing {devidx} lock latchs.')
         dev['ClkLockedLtcRst-Cmd'] = 1
+
+    def _callback_bpmintlk(self, pvname, value, **kws):
+        _ = kws
+        if not value:
+            return
+        if not self._state:
+            return
+        if not self._init:
+            return
+        if self._thread_cbbpm and self._thread_cbbpm.is_alive():
+            return
+        bpmname = _SiriusPVName(pvname).device_name
+        self._thread_cbbpm = _CAThread(
+            target=self._do_callback_bpmintlk, args=(bpmname, ), daemon=True)
+        self._thread_cbbpm.start()
+
+    def _do_callback_bpmintlk(self, bpmname):
+        self._update_log(f'FATAL:{bpmname} raised orbit interlock.')
+        _time.sleep(1)
+        # verify if RF EVE propagated the event PsMtn
+        new_evtcnt = self._everf_dev['OTP01EvtCnt-Mon']
+        if new_evtcnt == self._everf_evtcnt:
+            self._update_log('ERR:RF EVE did not propagate event PsMtn')
+            # TODO: should kill the beam in this case?
+        self._everf_evtcnt = new_evtcnt
+        # verify if EVG propagated the event Intlk
+        evgintlksts = self._evg_dev['IntlkEvtStatus-Mon']
+        if evgintlksts & 0b1:
+            self._update_log('WARN:EVG did not propagate event Intlk')
 
     # --- auxiliary log methods ---
 
