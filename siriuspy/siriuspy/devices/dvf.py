@@ -1,5 +1,6 @@
 """DVF devices."""
 
+import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -20,6 +21,7 @@ class DVF(_Device):
         ALL = (CAX_DVF1, CAX_DVF2)
 
     _default_timeout = 10  # [s]
+    _reset_wait = 10  # [s]
 
     _MULTP = 4  # roi params must be multiples of certain nr of pixels
 
@@ -44,7 +46,7 @@ class DVF(_Device):
         }
 
     PROPERTIES_DEFAULT = (
-        'cam1:DeviceReset',
+        'cam1:DeviceReset', 'cam1:RESET',
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Width', 'cam1:Width_RBV',
@@ -371,6 +373,8 @@ class DVF(_Device):
         """Reset DVF to a standard configuration."""
         # camera device reset
         self['cam1:DeviceReset'] = 1
+        self['cam1:RESET'] = 1
+        _time.sleep(self._reset_wait)
 
         # properties to be reset
         props_values = {
