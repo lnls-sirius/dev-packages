@@ -64,6 +64,10 @@ class BPM(_Device):
         'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
         'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
         'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
+        'SwDirGainA-SP', 'SwDirGainB-SP', 'SwDirGainC-SP', 'SwDirGainD-SP',
+        'SwDirGainA-RB', 'SwDirGainB-RB', 'SwDirGainC-RB', 'SwDirGainD-RB',
+        'SwInvGainA-SP', 'SwInvGainB-SP', 'SwInvGainC-SP', 'SwInvGainD-SP',
+        'SwInvGainA-RB', 'SwInvGainB-RB', 'SwInvGainC-RB', 'SwInvGainD-RB',
         'PosKx-SP', 'PosKx-RB',
         'PosKy-RB', 'PosKy-SP',
         'PosKsum-SP', 'PosKsum-RB',
@@ -211,6 +215,78 @@ class BPM(_Device):
     def switching_period(self):
         """Switching period manifested at BPM readings."""
         return self.switching_rate / self.adcfreq
+
+    @property
+    def gain_direct_a(self):
+        """."""
+        return self['SwDirGainA-RB']
+
+    @gain_direct_a.setter
+    def gain_direct_a(self, val):
+        self['SwDirGainA-SP'] = val
+
+    @property
+    def gain_direct_b(self):
+        """."""
+        return self['SwDirGainB-RB']
+
+    @gain_direct_b.setter
+    def gain_direct_b(self, val):
+        self['SwDirGainB-SP'] = val
+
+    @property
+    def gain_direct_c(self):
+        """."""
+        return self['SwDirGainC-RB']
+
+    @gain_direct_c.setter
+    def gain_direct_c(self, val):
+        self['SwDirGainC-SP'] = val
+
+    @property
+    def gain_direct_d(self):
+        """."""
+        return self['SwDirGainD-RB']
+
+    @gain_direct_d.setter
+    def gain_direct_d(self, val):
+        self['SwDirGainD-SP'] = val
+
+    @property
+    def gain_inverse_a(self):
+        """."""
+        return self['SwInvGainA-RB']
+
+    @gain_inverse_a.setter
+    def gain_inverse_a(self, val):
+        self['SwInvGainA-SP'] = val
+
+    @property
+    def gain_inverse_b(self):
+        """."""
+        return self['SwInvGainB-RB']
+
+    @gain_inverse_b.setter
+    def gain_inverse_b(self, val):
+        self['SwInvGainB-SP'] = val
+
+    @property
+    def gain_inverse_c(self):
+        """."""
+        return self['SwInvGainC-RB']
+
+    @gain_inverse_c.setter
+    def gain_inverse_c(self, val):
+        self['SwInvGainC-SP'] = val
+
+    @property
+    def gain_inverse_d(self):
+        """."""
+        return self['SwInvGainD-RB']
+
+    @gain_inverse_d.setter
+    def gain_inverse_d(self, val):
+        self['SwInvGainD-SP'] = val
 
     @property
     def harmonic_number(self):
