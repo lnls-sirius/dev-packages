@@ -50,7 +50,6 @@ class DVF(_Device):
         }
 
     PROPERTIES_DEFAULT = (
-        'cam1:DeviceReset', 'cam1:RESET',
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
         'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Width', 'cam1:Width_RBV',
@@ -59,7 +58,6 @@ class DVF(_Device):
         'cam1:OffsetY', 'cam1:OffsetY_RBV',
         'cam1:CenterX', 'cam1:CenterX_RBV',
         'cam1:CenterY', 'cam1:CenterY_RBV',
-        'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
         'cam1:Acquire', 'cam1:Acquire_RBV',
@@ -71,6 +69,10 @@ class DVF(_Device):
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:Temperature',
         'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'cam1:NumImages', 'cam1:NumImages_RBV',
+        'cam1:ExposureMode', 'cam1:ExposureMode_RBV',
+        'cam1:TriggerMode', 'cam1:TriggerMode_RBV',
+        'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
@@ -383,17 +385,19 @@ class DVF(_Device):
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
-        # camera device reset
-        self['cam1:DeviceReset'] = 1
-        self['cam1:RESET'] = 1
-        _time.sleep(self._reset_wait)
+        # reset BASLER roi
+        if not self.cmd_cam_roi_reset():
+            return False
 
         # properties to be reset
         props_values = {
-            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
             'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
+            'cam1:NumImages': 1,  # number of sequential acquired images
+            'cam1:ExposureMode': 0,  # TIMED
+            'cam1:TriggerMode': 0,  # Off
+            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
