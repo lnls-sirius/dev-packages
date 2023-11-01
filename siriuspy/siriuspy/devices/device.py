@@ -256,14 +256,20 @@ class Device:
         return pvname
 
     def _enum_setter(self, propty, value, enums):
+        value = self._enum_selector(value, enums)
+        if value is not None:
+            self[propty] = value
+
+    @staticmethod
+    def _enum_selector(value, enums):
+        if value is None:
+            return
         if hasattr(enums, '_fields'):
             enums = enums._fields
-        if value is None:
-            return None
         elif isinstance(value, str) and value in enums:
-            self[propty] = enums.index(value)
+            return enums.index(value)
         elif 0 <= int(value) < len(enums):
-            self[propty] = value
+            return value
 
 
 class DeviceSet:
@@ -273,6 +279,8 @@ class DeviceSet:
         """."""
         self._devices = devices
         self._devname = _SiriusPVName(devname)
+
+    _enum_selector = staticmethod(Device._enum_selector)
 
     @property
     def devname(self):
