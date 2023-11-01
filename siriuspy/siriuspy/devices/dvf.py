@@ -24,15 +24,15 @@ class DVF(_Device):
     _default_timeout = 10  # [s]
     _reset_wait = 10  # [s]
 
-    _MULTP = 4  # roi params must be multiples of certain nr of pixels
-
+    # should these parameters be moved to csconsts or a DVFSearch?
     _dvfparam_fields = (
-        'MAX_INTENSITY_NR_BITS',
+        'IMAGE_SIZE_Y',  # [pixel]
+        'IMAGE_SIZE_X',  # [pixel]
+        'IMAGE_NR_PIXEL_MULTP',  # roi params must be multip. of nr of pixels
+        'MAX_INTENSITY_NR_BITS',  # [nrbits]
         'ACQUISITION_TIME_MIN',  # [s]
         'ACQUISITION_TIME_DEFAULT',  # [s]
         'EXPOSURE_TIME_DEFAULT',  # [s]
-        'IMAGE_SIZE_Y',  # [pixel]
-        'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
         )
@@ -40,13 +40,13 @@ class DVF(_Device):
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (2064, 3088, 4, 16, 0.5, 0.5, 0.005, 2.4, 5.0)),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (2064, 3088, 4, 16, 0.5, 0.5, 0.005, 2.4, 5.0)),
         DEVICES.BO_DVF: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
+            _dvfparam_fields, (1024, 1280, 4, 8, 0.5, 0.5, 0.005, 4.8, 5.0)),
         }
 
     PROPERTIES_DEFAULT = (
@@ -509,7 +509,8 @@ class DVF(_Device):
         # check roi parameters consistency
         if n_offsetx < 0 or n_offsety < 0:
             return False, None
-        if n_offsetx % self._MULTP or n_offsety % self._MULTP:
+        MULTP = self.parameters.IMAGE_NR_PIXEL_MULTP
+        if n_offsetx % MULTP or n_offsety % MULTP:
             return False, None
         if n_width <= 0 or n_height <= 0:
             return False, None
@@ -517,7 +518,7 @@ class DVF(_Device):
             return False, None
         if n_offsety + n_height > self.cam_max_sizey:
             return False, None
-        if n_width % self._MULTP or n_height % self._MULTP:
+        if n_width % MULTP or n_height % MULTP:
             return False, None
         return True, n_offsetx, n_offsety, n_width, n_height
 
