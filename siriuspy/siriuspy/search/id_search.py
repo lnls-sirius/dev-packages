@@ -43,7 +43,7 @@ class IDSearch:
     _idname2params = {
         'SI-10SB:ID-EPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (50, 22, 300, 300, 300, 0.1, -25, 25, 0.5)),
+            _idparam_fields, (50, 22, 300, 300, 300, 0.1, -25, 25, 0, 0.5)),
     }
 
     POL_NONE_STR = 'none'
