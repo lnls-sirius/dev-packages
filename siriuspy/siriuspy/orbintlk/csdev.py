@@ -145,7 +145,7 @@ class Const(_csdev.Const):
             'Enable-Sts': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
-            'BPMStatus-Mon': {'type': 'int', 'value': 0b11111111},
+            'BPMStatus-Mon': {'type': 'int', 'value': 0b111111111},
             'TimingStatus-Mon': {'type': 'int', 'value': 0b111111111},
             'LLRFStatus-Mon': {'type': 'int', 'value': 0b11},
             'BPMStatusLabels-Cte': {

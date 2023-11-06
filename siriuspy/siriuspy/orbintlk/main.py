@@ -595,7 +595,7 @@ class App(_Callback):
 
         # bpm status
         dev = self._orbintlk_dev
-        value = 0b11111111
+        value = 0b111111111
         if dev.connected:
             value = _updt_bit(value, 0, 0)
             # PosEnblSynced
