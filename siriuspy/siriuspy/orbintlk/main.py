@@ -9,11 +9,13 @@ import numpy as _np
 
 from ..util import update_bit as _updt_bit
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..search import LLTimeSearch as _LLTimeSearch
 from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
-    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device
+    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device, \
+    RFKillBeam as _RFKillBeam
 
 from .csdev import Const as _Const, ETypes as _ETypes
 
@@ -58,17 +60,10 @@ class App(_Callback):
         self._thread_acq = None
         self._thread_cbevg = None
         self._thread_cbbpm = None
+        self._ti_mon_devs = set()
 
         # devices and connections
-        self._fout_devs = {
-            idx: _Device(
-                f'CA-RaTim:TI-Fout-{idx}',
-                props2init=[
-                    'RxEnbl-SP', 'RxEnbl-RB',
-                ])
-            for idx in self._const.FOUTS_CONFIGS
-        }
-
+        # # EVG
         self._evg_dev = _EVG(props2init=[
             'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
             'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
@@ -83,36 +78,30 @@ class App(_Callback):
             ])
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
-        pvo.add_callback(self._callback_evgintlk)
+        pvo.add_callback(self._callback_evg_intlk)
+        pvo.connection_callbacks.append(self._conn_callback_timing)
 
-        self._llrf_trig = _Trigger(
-            trigname='SI-Glob:TI-LLRF-PsMtn', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Status-Mon',
-            ])
+        # # Fouts
+        self._fout_devs = {
+            idx: _Device(
+                f'CA-RaTim:TI-Fout-{idx}',
+                props2init=[
+                    'RxEnbl-SP', 'RxEnbl-RB',
+                    'OUT0RxLocked-Mon', 'OUT1RxLocked-Mon',
+                    'OUT2RxLocked-Mon', 'OUT3RxLocked-Mon',
+                    'OUT4RxLocked-Mon', 'OUT5RxLocked-Mon',
+                    'OUT6RxLocked-Mon', 'OUT7RxLocked-Mon',
+                ], auto_monitor_mon=True)
+            for idx in self._const.FOUTS_CONFIGS
+        }
+        for dev in self._fout_devs.values():
+            for idx in range(8):
+                pvo = dev.pv_object(f'OUT{idx}RxLocked-Mon')
+                pvo.add_callback(self._callback_fout_rxlock)
+                if idx == 0:
+                    pvo.connection_callbacks.append(self._conn_callback_timing)
 
-        self._bpmpsmtn_trig = _Trigger(
-            trigname='SI-Fam:TI-BPM-PsMtn', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Status-Mon',
-            ])
-
-        self._orbintlk_trig = _Trigger(
-            trigname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Direction-Sel', 'Direction-Sts',
-                'Status-Mon',
-            ])
-
+        # # AFC timing
         self._afcti_devs = {
             idx+1: _Device(
                 f'IA-{idx+1:02}RaBPM:TI-AMCFPGAEVR',
@@ -123,24 +112,53 @@ class App(_Callback):
         }
         for dev in self._afcti_devs.values():
             pvo = dev.pv_object('RTMClkLockedLtc-Mon')
-            pvo.add_callback(self._callback_rtmlock)
-            pvo.connection_callbacks.append(self._conn_callback_rtmlock)
+            pvo.add_callback(self._callback_afcti_rtmlock)
+            pvo.connection_callbacks.append(self._conn_callback_timing)
 
+        # # RF EVE
         self._everf_dev = _Device(
             'RA-RaSIA01:TI-EVE', props2init=['OTP01EvtCnt-Mon', ],
             auto_monitor_mon=True)
-        self._everf_dev.pv_object('OTP01EvtCnt-Mon').wait_for_connection()
-        self._everf_evtcnt = self._everf_dev['OTP01EvtCnt-Mon'] or 0
+        pvo = self._everf_dev.pv_object('OTP01EvtCnt-Mon')
+        pvo.wait_for_connection()
+        pvo.connection_callbacks.append(self._conn_callback_timing)
+        self._everf_evtcnt = pvo.get() or 0
 
+        # # HL triggers
+        self._llrf_trig = _Trigger(
+            trigname='SI-Glob:TI-LLRF-PsMtn', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'DelayRaw-SP', 'DelayRaw-RB',
+                'State-Sel', 'State-Sts',
+                'WidthRaw-SP', 'WidthRaw-RB',
+                'Status-Mon',
+            ], auto_monitor_mon=True)
+
+        self._bpmpsmtn_trig = _Trigger(
+            trigname='SI-Fam:TI-BPM-PsMtn', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'DelayRaw-SP', 'DelayRaw-RB',
+                'State-Sel', 'State-Sts',
+                'WidthRaw-SP', 'WidthRaw-RB',
+                'Status-Mon',
+            ], auto_monitor_mon=True)
+
+        self._orbintlk_trig = _Trigger(
+            trigname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'DelayRaw-SP', 'DelayRaw-RB',
+                'State-Sel', 'State-Sts',
+                'WidthRaw-SP', 'WidthRaw-RB',
+                'Direction-Sel', 'Direction-Sts',
+                'Status-Mon',
+            ], auto_monitor_mon=True)
+
+        # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
         for dev in self._orbintlk_dev.devices:
             pvo = dev.pv_object('IntlkLtc-Mon')
             pvo.auto_monitor = True
-            pvo.add_callback(self._callback_bpmintlk)
-
-        self._llrf = _ASLLRF(devname=_ASLLRF.DEVICES.SI, props2init=[
-            'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
-            ])
+            pvo.add_callback(self._callback_bpm_intlk)
 
         self._fambpm_dev = _FamBPMs(
             devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
@@ -152,6 +170,14 @@ class App(_Callback):
                 'ACQTrigger-Sel', 'ACQTrigger-Sts',
                 'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
                 'ACQStatus-Sts'])
+
+        # # RF devices
+        self._llrf = _ASLLRF(
+            devname=_ASLLRF.DEVICES.SI,
+            props2init=[
+                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP'])
+
+        self._killbeam = _RFKillBeam()
 
         # pvs to write methods
         self.map_pv2write = {
@@ -310,6 +336,9 @@ class App(_Callback):
 
         self._state = value
         self.run_callbacks('Enable-Sts', self._state)
+
+        self._update_ti_monitored_devices()
+
         return True
 
     # --- enable lists ---
@@ -367,6 +396,8 @@ class App(_Callback):
         self._save_file(intlk, _np.array([value], dtype=bool), 'enbl')
 
         self._update_log('...done.')
+
+        self._update_ti_monitored_devices()
 
         # update readback pv
         self.run_callbacks(f'{intlkname}EnblList-RB', new)
@@ -576,6 +607,13 @@ class App(_Callback):
             return False
         return True
 
+    def _get_enabled_sections(self):
+        enbllist = self._get_gen_bpm_intlk()
+        aux = _np.roll(enbllist, 1)
+        subs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
+        subs += 1
+        return subs
+
     def _get_gen_bpm_intlk(self):
         pos, ang = self._enable_lists['pos'], self._enable_lists['ang']
         return _np.logical_or(pos, ang)
@@ -729,7 +767,7 @@ class App(_Callback):
 
     # --- callbacks ---
 
-    def _callback_evgintlk(self, value, **kws):
+    def _callback_evg_intlk(self, value, **kws):
         _ = kws
         if not self._state:
             return
@@ -738,10 +776,10 @@ class App(_Callback):
         if self._thread_cbevg and self._thread_cbevg.is_alive():
             return
         self._thread_cbevg = _CAThread(
-            target=self._do_callback_evgintlk, args=(value, ), daemon=True)
+            target=self._do_callback_evg_intlk, args=(value, ), daemon=True)
         self._thread_cbevg.start()
 
-    def _do_callback_evgintlk(self, value):
+    def _do_callback_evg_intlk(self, value):
         if value == 0:
             return
 
@@ -756,24 +794,44 @@ class App(_Callback):
         # reconfigure BPM configuration
         self.cmd_acq_config()
 
-    def _callback_rtmlock(self, pvname, value, **kws):
-        if value == 1:
+    def _callback_fout_rxlock(self, pvname, value, **kws):
+        if value == 1:  # it is ok
+            return
+        pvname = _SiriusPVName(pvname)
+        devidx = int(pvname.idx)
+        outnam = pvname.propty.split('Rx')[0]
+        self._update_log(f'FATAL:{outnam} of Fout {devidx} lost lock')
+        devout = pvname.device_name.substitute(propty_name=outnam)
+        # verify if this is an orbit interlock reliability failure
+        shouldkill = devout in self._ti_mon_devs
+        if shouldkill:
+            self._update_log('FATAL:Orbit interlock reliability failure')
+            self._do_killbeam()
+
+    def _callback_afcti_rtmlock(self, pvname, value, **kws):
+        if value == 1:  # it is ok
             return
         devidx = int(_SiriusPVName(pvname).sub.split('Ra')[0])
         dev = self._afcti_devs[devidx]
-        self._update_log(f'WARN:AFC Timing {devidx} raised RTM clock loss')
+        self._update_log(f'WARN:AFC Timing {devidx} raised RTM clock loss,')
         _time.sleep(1)  # sleep a little before reseting
         self._update_log(f'WARN:reseting AFC Timing {devidx} lock latchs.')
         dev['ClkLockedLtcRst-Cmd'] = 1
 
-    def _conn_callback_rtmlock(self, pvname, conn, **kws):
+    def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:
             return
-        devname = _SiriusPVName(pvname).device_name
-        self._update_log(f'WARN:{devname} disconnected')
-        # TODO: should kill the beam in this case?
+        pvname = _SiriusPVName(pvname)
+        self._update_log(f'FATAL:{pvname.device_name} disconnected')
+        if not self._state:
+            return
+        # verify if this is an orbit interlock reliability failure
+        shouldkill = pvname.device_name in self._ti_mon_devs
+        if shouldkill:
+            self._update_log('FATAL:Orbit interlock reliability failure')
+            self._do_killbeam()
 
-    def _callback_bpmintlk(self, pvname, value, **kws):
+    def _callback_bpm_intlk(self, pvname, value, **kws):
         _ = kws
         if not value:
             return
@@ -785,18 +843,19 @@ class App(_Callback):
             return
         bpmname = _SiriusPVName(pvname).device_name
         self._thread_cbbpm = _CAThread(
-            target=self._do_callback_bpmintlk, args=(bpmname, ), daemon=True)
+            target=self._do_callback_bpm_intlk, args=(bpmname, ), daemon=True)
         self._thread_cbbpm.start()
 
-    def _do_callback_bpmintlk(self, bpmname):
+    def _do_callback_bpm_intlk(self, bpmname):
         self._update_log(f'FATAL:{bpmname} raised orbit interlock.')
+        # send kill beam as fast as possible
+        self._do_killbeam()
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE propagated the event PsMtn
         new_evtcnt = self._everf_dev['OTP01EvtCnt-Mon']
         if new_evtcnt == self._everf_evtcnt:
-            self._update_log('ERR:RF EVE did not propagate event PsMtn')
-            # TODO: should kill the beam in this case?
+            self._update_log('WARN:RF EVE did not propagate event PsMtn')
         self._everf_evtcnt = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)
@@ -806,6 +865,28 @@ class App(_Callback):
             self._update_log('WARN:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
+
+    def _do_killbeam(self):
+        # if not in dry run, send kill beam
+        if not self._is_dry_run:
+            self._update_log('FATAL:Sending kill beam.')
+            self._killbeam.cmd_kill_beam()
+
+    def _update_ti_monitored_devices(self):
+        value = set()
+        if self._state:
+            value.add(self._evg_dev.devname)
+            value.add(self._everf_dev.devname)
+        for sec in self._get_enabled_sections():
+            afcti = f'IA-{sec:02}RaBPM:TI-AMCFPGAEVR'
+            value.add(afcti)
+            foutout = _LLTimeSearch.get_trigsrc2fout_mapping()[afcti]
+            value.add(foutout)
+            foutdev = _SiriusPVName(foutout).device_name
+            value.add(foutdev)
+
+        self._ti_mon_devs = value
+        self.run_callbacks('TimingMonitoredDevices-Mon', '\n'.join(value))
 
     # --- auxiliary log methods ---
 
