@@ -7,7 +7,7 @@ from functools import partial as _part
 
 import numpy as _np
 
-from ..util import update_bit as _updt_bit
+from ..util import update_bit as _updt_bit, get_bit as _get_bit
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import LLTimeSearch as _LLTimeSearch
 from ..thread import RepeaterThread as _Repeat
@@ -59,6 +59,7 @@ class App(_Callback):
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
         self._thread_acq = None
         self._thread_cbevg = None
+        self._thread_cbfout = None
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
 
@@ -87,19 +88,14 @@ class App(_Callback):
                 f'CA-RaTim:TI-Fout-{idx}',
                 props2init=[
                     'RxEnbl-SP', 'RxEnbl-RB',
-                    'OUT0RxLocked-Mon', 'OUT1RxLocked-Mon',
-                    'OUT2RxLocked-Mon', 'OUT3RxLocked-Mon',
-                    'OUT4RxLocked-Mon', 'OUT5RxLocked-Mon',
-                    'OUT6RxLocked-Mon', 'OUT7RxLocked-Mon',
+                    'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
             for idx in self._const.FOUTS_CONFIGS
         }
         for dev in self._fout_devs.values():
-            for idx in range(8):
-                pvo = dev.pv_object(f'OUT{idx}RxLocked-Mon')
-                pvo.add_callback(self._callback_fout_rxlock)
-                if idx == 0:
-                    pvo.connection_callbacks.append(self._conn_callback_timing)
+            pvo = dev.pv_object('RxLockedLtc-Mon')
+            pvo.add_callback(self._callback_fout_rxlock)
+            pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # AFC timing
         self._afcti_devs = {
@@ -795,18 +791,35 @@ class App(_Callback):
         self.cmd_acq_config()
 
     def _callback_fout_rxlock(self, pvname, value, **kws):
-        if value == 1:  # it is ok
+        if not self._state:
             return
+        if not self._init:
+            return
+        if value == 0b11111111:  # it is ok
+            return
+        if self._thread_cbfout and self._thread_cbfout.is_alive():
+            return
+        self._thread_cbfout = _CAThread(
+            target=self._do_callback_fout_rxlock, args=(value, ), daemon=True)
+        self._thread_cbfout.start()
+
+    def _do_callback_fout_rxlock(self, pvname, value):
         pvname = _SiriusPVName(pvname)
         devidx = int(pvname.idx)
-        outnam = pvname.propty.split('Rx')[0]
-        self._update_log(f'FATAL:{outnam} of Fout {devidx} lost lock')
-        devout = pvname.device_name.substitute(propty_name=outnam)
-        # verify if this is an orbit interlock reliability failure
-        shouldkill = devout in self._ti_mon_devs
+        dev = self._fout_devs[devidx]
+        shouldkill = False
+        for bit in range(8):
+            if _get_bit(value, bit):
+                continue
+            outnam = f'OUT{bit}'
+            self._update_log(f'FATAL:{outnam} of Fout {devidx} lost lock')
+            devout = pvname.device_name.substitute(propty_name=outnam)
+            # verify if this is an orbit interlock reliability failure
+            shouldkill |= devout in self._ti_mon_devs
         if shouldkill:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._do_killbeam()
+        dev['RxLockedLtcRst-Cmd'] = 1
 
     def _callback_afcti_rtmlock(self, pvname, value, **kws):
         if value == 1:  # it is ok
