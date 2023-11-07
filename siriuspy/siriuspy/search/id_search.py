@@ -22,7 +22,8 @@ class IDSearch:
         'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU19
         'EMA':      'SI-08SB:ID-APU22',  # titular: IVU18
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
-        'SABIA':    'SI-10SB:ID-EPU50',  # titular: 2 x DELTA52
+        # 'SABIA':    'SI-10SB:ID-EPU50',  # titular: 2 x DELTA52
+        'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52
         'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-WIG180',  # titular: IVU18
         'SAPUCAIA': 'SI-17SA:ID-PAPU50',  # titular: 2 x APU22
@@ -48,7 +49,16 @@ class IDSearch:
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (50, 22, 300, 300, 300, 0.1, -25, 25, 0, 0.5)),
+            _idparam_fields, (
+                50,
+                22, 300, 300, 300, 0.1,
+                -25, 25, 0, 0.5)),
+        'SI-10SB:ID-DELTA52': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                52.5,
+                -52.5/2, +52.5/2, 0, 0, 0.1,
+                -52.5/2, +52.5/2, 0, 0.1)),
     }
 
     POL_NONE_STR = 'none'
@@ -65,6 +75,8 @@ class IDSearch:
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
     _idname2pol_sts['SI-10SB:ID-EPU50'].update(
             {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
+    _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
+            {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
@@ -73,10 +85,23 @@ class IDSearch:
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations':
-                tuple(item[0] for item in 
+                tuple(item[0] for item in
                     _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
+            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
+            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
+            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
+            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+        },
+        'SI-10SB:ID-DELTA52': {
+            'polarizations':
+                tuple(item[0] for item in
+                    _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
+            'pparameter': 'SI-10SB:ID-DELTA52:PolShift-Mon',
+            'kparameter': 'SI-10SB:ID-DELTA52:GainShift-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-10SB:PS-CV-1:Current-SP',
