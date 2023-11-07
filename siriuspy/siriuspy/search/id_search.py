@@ -4,6 +4,7 @@ import copy as _copy
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from ..namesys import SiriusPVName as _SiriusPVName
 from ..namesys import Filter as _Filter
 
 
@@ -43,6 +44,8 @@ class IDSearch:
         )
 
     _idname2params = {
+        # NOTE: for EPU50 there is a large discrepancy
+        # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (50, 22, 300, 300, 300, 0.1, -25, 25, 0, 0.5)),
@@ -146,7 +149,11 @@ class IDSearch:
     @staticmethod
     def conv_idname_2_idff(idname):
         """Return the IDFF dictionary for a given ID name."""
-        return dict(IDSearch._idname_2_idff[idname])
+        idff = IDSearch._idname_2_idff[idname]
+        if idff is None:
+            return None
+        else:
+            return _copy.deepcopy(idff)
 
     @staticmethod
     def conv_idname_2_pparameter_propty(idname):
