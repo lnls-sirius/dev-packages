@@ -158,6 +158,8 @@ class IDSearch:
     def conv_idname_2_pparameter_propty(idname):
         """."""
         idff = IDSearch.conv_idname_2_idff(idname)
+        if idff is None:
+            return None
         pparameter = idff['pparameter']
         if pparameter:
             pvname = _SiriusPVName(pparameter)
@@ -171,8 +173,12 @@ class IDSearch:
         idff = IDSearch.conv_idname_2_idff(idname)
         if idff is None:
             return None
-        pvname = _SiriusPVName(idff['kparameter'])
-        return pvname.propty
+        kparameter = idff['kparameter']
+        if kparameter:
+            pvname = _SiriusPVName(kparameter)
+            return pvname.propty
+        else:
+            return None
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
