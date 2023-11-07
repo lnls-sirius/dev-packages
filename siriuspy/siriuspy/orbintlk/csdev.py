@@ -3,7 +3,8 @@
 import os as _os
 
 from .. import csdev as _csdev
-from ..search import BPMSearch as _BPMSearch
+from ..util import ClassProperty as _classproperty
+from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _LLTimeSearch
 from ..namesys import SiriusPVName as _PVName
 from ..diagbeam.bpm.csdev import Const as _csbpm
 
@@ -46,25 +47,8 @@ class Const(_csdev.Const):
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
 
-    DEF_TIME2WAIT_INTLKREARM = 10  # [s]
+    DEF_TIME2WAIT_INTLKREARM = 2*60  # [s]
 
-    EVG_CONFIGS = (
-        ('IntlkTbl0to15-Sel', 0b010000010000001),
-        ('IntlkTbl16to27-Sel', 0),
-        ('IntlkCtrlRepeat-Sel', 0),
-        ('IntlkCtrlRepeatTime-SP', 0),
-        ('IntlkEvtIn0-SP', 117),
-        ('IntlkEvtOut-SP', 124),
-        ('RxEnbl-SP', 0b00011110),
-        )
-    FOUTS_CONFIGS = {
-        # NOTE: change RxEnbl when unnecessary
-        # protection in gateware is removed
-        2: (('RxEnbl-SP', 0b01000000), ),
-        3: (('RxEnbl-SP', 0b01001011), ),  # 0b01111111
-        4: (('RxEnbl-SP', 0b00001111), ),  # 0b01111111
-        5: (('RxEnbl-SP', 0b00001111), ),  # 0b00111111
-    }
     ORBINTLKTRIG_CONFIG = (
         ('Src-Sel', 4),
         ('DelayRaw-SP', 0),
@@ -84,6 +68,58 @@ class Const(_csdev.Const):
         ('State-Sel', 1),
         ('WidthRaw-SP', 6),
         )
+
+    __EVG_CONFIGS = None
+    __FOUTS_CONFIGS = None
+
+    @_classproperty
+    def EVG_CONFIGS(cls):
+        """EVG configurations"""
+        if cls.__EVG_CONFIGS is not None:
+            return cls.__EVG_CONFIGS
+
+        # fouts
+        fout2configs = dict()
+        for fout, trigsrc in _LLTimeSearch.get_fout2trigsrc_mapping().items():
+            outs = {
+                int(k.strip('OUT')) for k, v in trigsrc.items() if
+                v.endswith('RaBPM:TI-AMCFPGAEVR') or  # SI BPM paths
+                v.endswith('IA-14RaDiag03:TI-EVE')}  # DCCTs path
+            if not outs:
+                continue
+            rxenbl = 0
+            for i in outs:
+                rxenbl += (1 << i)
+            fout2configs[fout] = (('RxEnbl-SP', rxenbl), )
+        cls.__FOUTS_CONFIGS = fout2configs
+
+        # evg
+        evgouts = set()
+        for out, fout in _LLTimeSearch.get_evg2fout_mapping().items():
+            if fout in fout2configs:
+                evgouts.add(int(out.strip('OUT')))
+        evgrxenbl = 0
+        for i in evgouts:
+            evgrxenbl += (1 << i)
+
+        evgconfigs = (
+            ('IntlkTbl0to15-Sel', 0b010000010000001),
+            ('IntlkTbl16to27-Sel', 0),
+            ('IntlkCtrlRepeat-Sel', 0),
+            ('IntlkCtrlRepeatTime-SP', 0),
+            ('IntlkEvtIn0-SP', 117),
+            ('IntlkEvtOut-SP', 124),
+            ('RxEnbl-SP', evgrxenbl),
+            )
+        cls.__EVG_CONFIGS = evgconfigs
+
+        return cls.__EVG_CONFIGS
+
+    @_classproperty
+    def FOUTS_CONFIGS(cls):
+        """Fouts configurations."""
+        cls.EVG_CONFIGS
+        return cls.__FOUTS_CONFIGS
 
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp

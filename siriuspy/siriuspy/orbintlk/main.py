@@ -1,5 +1,6 @@
 """High Level Orbit Interlock main application."""
 
+import re as _re
 import os as _os
 import logging as _log
 import time as _time
@@ -9,7 +10,8 @@ import numpy as _np
 
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..search import LLTimeSearch as _LLTimeSearch
+from ..search import LLTimeSearch as _LLTimeSearch, \
+    HLTimeSearch as _HLTimeSearch
 from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
@@ -84,13 +86,13 @@ class App(_Callback):
 
         # # Fouts
         self._fout_devs = {
-            idx: _Device(
-                f'CA-RaTim:TI-Fout-{idx}',
+            devname: _Device(
+                devname,
                 props2init=[
                     'RxEnbl-SP', 'RxEnbl-RB',
                     'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
-            for idx in self._const.FOUTS_CONFIGS
+            for devname in self._const.FOUTS_CONFIGS
         }
         for dev in self._fout_devs.values():
             pvo = dev.pv_object('RxLockedLtc-Mon')
@@ -112,10 +114,16 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
+        llrftrig = _SiriusPVName(_HLTimeSearch.get_ll_trigger_names(
+            'SI-Glob:TI-LLRF-PsMtn')[0])
+        llrftrig_nam = _re.sub(r'[0-9]', '', llrftrig.propty)
+        llrftrig_idx = int(llrftrig.propty.split(llrftrig_nam)[1])
+        self._llrf_evtcnt_pvname = f'{llrftrig_nam}{llrftrig_idx:02}EvtCnt-Mon'
         self._everf_dev = _Device(
-            'RA-RaSIA01:TI-EVE', props2init=['OTP01EvtCnt-Mon', ],
+            llrftrig.device_name,
+            props2init=[self._llrf_evtcnt_pvname, ],
             auto_monitor_mon=True)
-        pvo = self._everf_dev.pv_object('OTP01EvtCnt-Mon')
+        pvo = self._everf_dev.pv_object(self._llrf_evtcnt_pvname)
         pvo.wait_for_connection()
         pvo.connection_callbacks.append(self._conn_callback_timing)
         self._everf_evtcnt = pvo.get() or 0
@@ -572,14 +580,14 @@ class App(_Callback):
                 self._update_log(f'ERR:Failed to configure EVG PV {prp:s}')
                 return False
         # Fouts
-        for idx, configs in self._const.FOUTS_CONFIGS.items():
-            dev = self._fout_devs[idx]
+        for devname, configs in self._const.FOUTS_CONFIGS.items():
+            dev = self._fout_devs[devname]
             for prp, val in configs:
                 dev[prp] = val
                 prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
                 if not dev._wait(prp_rb, val):
                     self._update_log(
-                        f'ERR:Failed to configure Fout {idx} PV {prp:s}')
+                        f'ERR:Failed to configure {devname} PV {prp:s}')
                     return False
         trig2config = {
             self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
@@ -690,7 +698,7 @@ class App(_Callback):
             value = 0b111
         # Fouts
         devs = self._fout_devs
-        if all(devs[idx].connected for idx in self._const.FOUTS_CONFIGS):
+        if all(devs[devn].connected for devn in self._const.FOUTS_CONFIGS):
             okg = True
             for idx, configs in self._const.FOUTS_CONFIGS.items():
                 dev = self._fout_devs[idx]
@@ -801,21 +809,20 @@ class App(_Callback):
 
     def _do_callback_fout_rxlock(self, pvname, value):
         pvname = _SiriusPVName(pvname)
-        devidx = int(pvname.idx)
-        dev = self._fout_devs[devidx]
+        devname = pvname.device_name
         shouldkill = False
         for bit in range(8):
             if _get_bit(value, bit):
                 continue
             outnam = f'OUT{bit}'
-            self._update_log(f'FATAL:{outnam} of Fout {devidx} lost lock')
+            self._update_log(f'FATAL:{outnam} of {devname} lost lock')
             devout = pvname.device_name.substitute(propty_name=outnam)
             # verify if this is an orbit interlock reliability failure
             shouldkill |= devout in self._ti_mon_devs
         if shouldkill:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._do_killbeam()
-        dev['RxLockedLtcRst-Cmd'] = 1
+        self._fout_devs[devname]['RxLockedLtcRst-Cmd'] = 1
 
     def _callback_afcti_rtmlock(self, pvname, value, **kws):
         if value == 1:  # it is ok
@@ -862,7 +869,7 @@ class App(_Callback):
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE propagated the event PsMtn
-        new_evtcnt = self._everf_dev['OTP01EvtCnt-Mon']
+        new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
         if new_evtcnt == self._everf_evtcnt:
             self._update_log('WARN:RF EVE did not propagate event PsMtn')
         self._everf_evtcnt = new_evtcnt
