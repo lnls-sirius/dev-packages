@@ -71,12 +71,18 @@ class IDSearch:
             2: ('circularp', +16.36),  # [mm]
             3: ('vertical', 25.00),  # [mm]
         },
+        'SI-10SB:ID-DELTA52': {  # TODO: check if values are correct
+            0: ('circularn', -16.36),  # [mm]
+            1: ('horizontal', 0.00),  # [mm]
+            2: ('circularp', +16.36),  # [mm]
+            3: ('vertical', 25.00),  # [mm]
+        },
     }
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
     _idname2pol_sts['SI-10SB:ID-EPU50'].update(
-            {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
+        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
     _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
-            {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
+        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
@@ -84,9 +90,9 @@ class IDSearch:
         'SI-08SB:ID-APU22': None,
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
-            'polarizations':
-                tuple(item[0] for item in
-                    _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
+            'polarizations': tuple(
+                item[0] for item in
+                _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
@@ -97,9 +103,9 @@ class IDSearch:
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-10SB:ID-DELTA52': {
-            'polarizations':
-                tuple(item[0] for item in
-                    _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
+            'polarizations': tuple(
+                item[0] for item in
+                _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
             'pparameter': 'SI-10SB:ID-DELTA52:PolShift-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:GainShift-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
