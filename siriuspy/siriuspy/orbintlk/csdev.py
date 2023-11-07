@@ -60,21 +60,10 @@ class Const(_csdev.Const):
     FOUTS_CONFIGS = {
         # NOTE: change RxEnbl when unnecessary
         # protection in gateware is removed
-        2: (
-            ('RxEnbl-SP', 0b01000000),
-        ),
-        3: (
-            ('RxEnbl-SP', 0b01001011),
-            # ('RxEnbl-SP', 0b01111111),
-        ),
-        4: (
-            ('RxEnbl-SP', 0b00001111),
-            # ('RxEnbl-SP', 0b01111111),
-        ),
-        5: (
-            ('RxEnbl-SP', 0b00001111),
-            # ('RxEnbl-SP', 0b00111111),
-        ),
+        2: (('RxEnbl-SP', 0b01000000), ),
+        3: (('RxEnbl-SP', 0b01001011), ),  # 0b01111111
+        4: (('RxEnbl-SP', 0b00001111), ),  # 0b01111111
+        5: (('RxEnbl-SP', 0b00001111), ),  # 0b00111111
     }
     ORBINTLKTRIG_CONFIG = (
         ('Src-Sel', 4),
@@ -94,7 +83,7 @@ class Const(_csdev.Const):
         ('DelayRaw-SP', 0),
         ('State-Sel', 1),
         ('WidthRaw-SP', 6),
-    )
+        )
 
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp

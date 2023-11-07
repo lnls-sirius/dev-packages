@@ -127,7 +127,7 @@ class BaseOrbitIntlk:
 
 
 class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
-    """This device group the orbit interlock  PVs from one BPM."""
+    """This device group the orbit interlock PVs from one BPM."""
 
     PROPERTIES_DEFAULT = (
         # ==============================================================
@@ -142,7 +142,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         'IntlkMinSumEn-Sel', 'IntlkMinSumEn-Sts',
         # Minimum sum threshold (sum counts in FAcq rate):
         'IntlkLmtMinSum-SP', 'IntlkLmtMinSum-RB',
-        # Instantaneous interlock, dificult to be checked in the current
+        # Instantaneous interlock, difficult to be checked in the current
         # gateware implementation
         'Intlk-Mon',
         # Latch interlock, clean only when respective "Clr" PV is triggered
