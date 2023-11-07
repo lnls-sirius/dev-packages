@@ -22,6 +22,7 @@ class BunchbyBunch(_DeviceSet):
         'V': 'SI-Glob:DI-BbBProc-V',
         'L': 'SI-Glob:DI-BbBProc-L'}
     DEVICES = _get_namedtuple('Devices', *zip(*_devices.items()))
+    FBEDEV_PLANE = 'V'
 
     def __init__(self, devname, props2init='all'):
         """BunchbyBunch DeviceSet.
@@ -54,7 +55,8 @@ class BunchbyBunch(_DeviceSet):
         self.drive1 = Drive(devname, drive_num=1, props2init=props2init)
         self.drive2 = Drive(devname, drive_num=2, props2init=props2init)
         self.bunch_clean = BunchClean(devname, props2init=props2init)
-        self.fbe = FrontBackEnd(devname, props2init=props2init)
+        fbe_dev = devname.substitute(idx=self.FBEDEV_PLANE)
+        self.fbe = FrontBackEnd(fbe_dev, props2init=props2init)
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive0, self.drive1, self.drive2,

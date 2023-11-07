@@ -17,7 +17,8 @@ class DVF(_Device):
 
         CAX_DVF1 = 'CAX:A:BASLER01'
         CAX_DVF2 = 'CAX:B:BASLER01'
-        ALL = (CAX_DVF1, CAX_DVF2)
+        BO_DVF = 'BO-50U:DI-VLightCam'
+        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF)
 
     _default_timeout = 10  # [s]
 
@@ -39,6 +40,9 @@ class DVF(_Device):
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
             _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.BO_DVF: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
         }
 
     PROPERTIES_DEFAULT = (
@@ -77,13 +81,19 @@ class DVF(_Device):
         'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
-        'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
         )
+
+    _PROPTY_NAME_MAP = dict()
 
     def __init__(self, devname, props2init='all', **kwargs):
         """Init."""
         if devname not in DVF.DEVICES.ALL:
             raise NotImplementedError(devname)
+        if devname == DVF.DEVICES.BO_DVF:
+            self._devname = devname
+            props = self.PROPERTIES_DEFAULT
+            self.PROPERTIES_DEFAULT = \
+                [self._get_propty(prop) for prop in props]
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
@@ -219,7 +229,7 @@ class DVF(_Device):
 
     @property
     def cam_roi(self):
-        """Return current ROI."""
+        """Return current ROI (offsetx, offsety, width, height)."""
         roi = (
             self.cam_offsetx, self.cam_offsety,
             self.cam_width, self.cam_height)
@@ -266,12 +276,14 @@ class DVF(_Device):
     @property
     def image_auto_monitor(self):
         """Image PV auto monitor."""
-        return self.pv_object('image1:ArrayData').auto_monitor
+        propty = self._get_propty('image1:ArrayData')
+        return self.pv_object(propty).auto_monitor
 
     @image_auto_monitor.setter
     def image_auto_monitor(self, value):
         """Set image PV auto monitor."""
-        self.pv_object('image1:ArrayData').auto_monitor = bool(value)
+        propty = self._get_propty('image1:ArrayData')
+        self.pv_object(propty).auto_monitor = bool(value)
 
     @property
     def image_pixel_size(self):
@@ -377,7 +389,6 @@ class DVF(_Device):
             'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 0,  # Disable
-            'HDF1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
         }
 
@@ -387,6 +398,7 @@ class DVF(_Device):
 
         # check readback values
         for propty, value in props_values.items():
+            propty = self._get_propty(propty)
             if not self._wait(propty + '_RBV', value, timeout=timeout):
                 return False
 
@@ -435,6 +447,33 @@ class DVF(_Device):
             width=self.cam_max_sizex, height=self.cam_max_sizey,
             timeout=timeout)
 
+    def _get_propty(self, propty):
+        if self.devname != DVF.DEVICES.BO_DVF:
+            return propty
+
+        if DVF.DEVICES.BO_DVF not in DVF._PROPTY_NAME_MAP:
+            DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
+        propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
+        if propty not in propty_name_map:
+            if ':' in propty:
+                plug, prop = propty.split(':')
+                plug = plug.replace('cam', 'Cam')
+                plug = plug.replace('image', 'Image')
+                plug = plug.replace('Trans', 'Transf')
+                propty = plug + prop
+            propty_name_map[propty] = propty
+        return propty_name_map[propty]
+
+    def __getitem__(self, propty):
+        """Return value of property."""
+        propty = self._get_propty(propty)
+        return super().__getitem__(propty)
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        propty = self._get_propty(propty)
+        return super().__setitem__(propty, value)
+
     @staticmethod
     def conv_devname2parameters(devname):
         """."""
@@ -444,6 +483,7 @@ class DVF(_Device):
         """."""
         timeout = timeout or self._default_timeout
         self[propty] = value
+        propty = self._get_propty(propty)
         return self._wait(propty + '_RBV', value, timeout=timeout)
 
 
