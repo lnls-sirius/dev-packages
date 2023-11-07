@@ -152,8 +152,7 @@ class IDSearch:
         idff = IDSearch._idname_2_idff[idname]
         if idff is None:
             return None
-        else:
-            return _copy.deepcopy(idff)
+        return _copy.deepcopy(idff)
 
     @staticmethod
     def conv_idname_2_pparameter_propty(idname):
@@ -170,6 +169,8 @@ class IDSearch:
     def conv_idname_2_kparameter_propty(idname):
         """."""
         idff = IDSearch.conv_idname_2_idff(idname)
+        if idff is None:
+            return None
         pvname = _SiriusPVName(idff['kparameter'])
         return pvname.propty
 
