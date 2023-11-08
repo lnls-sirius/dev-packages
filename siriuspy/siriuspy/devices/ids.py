@@ -3,8 +3,79 @@
 import time as _time
 
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..search import IDSearch as _IDSearch
 
 from .device import Device as _Device
+
+
+class _ID(_Device):
+    """Generic Insertion Device."""
+
+    PROPERTIES_DEFAULT = (
+        'Moving-Mon',
+        'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
+    )
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    @property
+    def period_length(self):
+        """Return ID period length [mm]."""
+        params = _IDSearch.conv_idname_2_parameters(self.devname)
+        return params.PERIOD_LENGTH
+
+    # --- movement checks ---
+
+    @property
+    def is_moving(self):
+        """Return True if phase is changing."""
+        return round(self['Moving-Mon']) == 1
+
+    # --- cmd_beamline and cmd_drive
+
+    def cmd_beamline_ctrl_enable(self, timeout=None):
+        """Command enable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
+
+    def cmd_beamline_ctrl_disable(self, timeout=None):
+        """Command disable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
+
+    # --- cmd_wait
+
+    def cmd_wait_move(self, timeout=None):
+        """Wait for phase movement to complete."""
+        _time.sleep(APU._MOVECHECK_SLEEP)
+        t0_ = _time.time()
+        while self.is_moving:
+            _time.sleep(APU._MOVECHECK_SLEEP)
+            if timeout and _time.time() - t0_ > timeout:
+                return False
+        return True
+
+    # --- private methods ---
+
+    def _write_sp(self, propties_sp, values, sp_rb_pvs=None, timeout=None):
+        timeout = timeout or self._default_timeout
+        if isinstance(propties_sp, str):
+            propties_sp = (propties_sp, )
+            values = (values, )
+        success = True
+        for propty_sp, value in zip(propties_sp, values):
+            if sp_rb_pvs is not None and propty_sp in sp_rb_pvs:
+                propty_rb = propty_sp
+            else:
+                propty_rb = \
+                    propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            self[propty_sp] = value
+            success &= super()._wait(
+                propty_rb, value, timeout=timeout, comp='eq')
+        return success
 
 
 class APU(_Device):
@@ -832,6 +903,34 @@ class EPU(PAPU):
     def cmd_clear_error(self):
         """Command to clear errors."""
         pass
+
+
+class DELTA(_ID):
+    """DELTA Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        DELTA52_10SB = 'SI-10SB:ID-DELTA52'
+        ALL = (DELTA52_10SB, )
+
+    PROPERTIES_DEFAULT = _ID.PROPERTIES_DEFAULT + (
+        'PolShift-Mon', 'GainShift-Mon',
+        'Pol-Mon',
+        'ChangePol-Cmd',
+        )
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.DELTA52_10SB
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
 class WIG(_Device):
