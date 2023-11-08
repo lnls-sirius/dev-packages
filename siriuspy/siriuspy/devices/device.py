@@ -266,7 +266,7 @@ class Device:
             return
         if hasattr(enums, '_fields'):
             enums = enums._fields
-        elif isinstance(value, str) and value in enums:
+        if isinstance(value, str) and value in enums:
             return enums.index(value)
         elif 0 <= int(value) < len(enums):
             return value
