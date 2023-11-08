@@ -11,6 +11,9 @@ from .device import Device as _Device
 class _ID(_Device):
     """Generic Insertion Device."""
 
+    _MOVECHECK_SLEEP = 0.1  # [s]
+    _DEF_TIMEOUT = 8  # [s]
+
     PROPERTIES_DEFAULT = (
         'Moving-Mon',
         'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
@@ -60,14 +63,15 @@ class _ID(_Device):
 
     # --- private methods ---
 
-    def _write_sp(self, propties_sp, values, sp_rb_pvs=None, timeout=None):
-        timeout = timeout or self._default_timeout
+    def _write_sp(self, propties_sp, values, timeout=None, pvs_sp_rb=None):
+        timeout = timeout or self._DEF_TIMEOUT
         if isinstance(propties_sp, str):
             propties_sp = (propties_sp, )
             values = (values, )
         success = True
         for propty_sp, value in zip(propties_sp, values):
-            if sp_rb_pvs is not None and propty_sp in sp_rb_pvs:
+            if pvs_sp_rb is not None and propty_sp in pvs_sp_rb:
+                # pv is unique for SP and RB variables.
                 propty_rb = propty_sp
             else:
                 propty_rb = \
@@ -78,7 +82,7 @@ class _ID(_Device):
         return success
 
 
-class APU(_Device):
+class APU(_ID):
     """APU Insertion Device."""
 
     class DEVICES:
@@ -96,21 +100,15 @@ class APU(_Device):
 
     _SHORT_SHUT_EYE = 0.1  # [s]
     _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
-    _MOVECHECK_SLEEP = 0.1  # [s]
-    _default_timeout = 8  # [s]
+    _CMD_MOVE = 3
 
-    PROPERTIES_DEFAULT = (
-        'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
-        'DevCtrl-Cmd', 'Moving-Mon',
+    PROPERTIES_DEFAULT = _ID.PROPERTIES_DEFAULT + (
+        'DevCtrl-Cmd',
         'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
         'PhaseSpeed-SP', 'PhaseSpeed-Mon',
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
         )
-
-    _DEF_TIMEOUT = 10  # [s]
-    _CMD_MOVE = 3
-    _MOVECHECK_SLEEP = 0.1  # [s]
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
@@ -121,12 +119,6 @@ class APU(_Device):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
-
-    @property
-    def period_length(self):
-        """Return ID period length [mm]."""
-        _, length = self.devname.split('APU')
-        return float(length)
 
     # --- phase speeds ----
 
@@ -193,23 +185,6 @@ class APU(_Device):
         """Set APU Kx."""
         self['Kx-SP'] = value
 
-    # --- movement checks ---
-
-    @property
-    def is_moving(self):
-        """Return True if phase is changing."""
-        return round(self['Moving-Mon']) == 1
-
-    # --- cmd_beamline and cmd_drive
-
-    def cmd_beamline_ctrl_enable(self, timeout=None):
-        """Command enable bealine ID control."""
-        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
-
-    def cmd_beamline_ctrl_disable(self, timeout=None):
-        """Command disable bealine ID control."""
-        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
-
     # --- set methods ---
 
     def set_phase(self, phase, timeout=None):
@@ -224,22 +199,14 @@ class APU(_Device):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
-    # --- cmd_wait
-
-    def wait_move(self):
-        """Wait for phase movement to complete."""
-        _time.sleep(APU._MOVECHECK_SLEEP)
-        while self.is_moving:
-            _time.sleep(APU._MOVECHECK_SLEEP)
-
     # -- cmd_move
 
-    def cmd_move_stop(self, timeout=_default_timeout):
+    def cmd_move_stop(self, timeout=None):
         """Send command to stop ID movement."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_STOP
         return True
 
-    def cmd_move_start(self, timeout=_default_timeout):
+    def cmd_move_start(self, timeout=None):
         """Send command to start ID movement."""
         self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
         return True
@@ -284,24 +251,12 @@ class APU(_Device):
     # --- private methods ---
 
     def _write_sp(self, propties_sp, values, timeout=None):
-        timeout = timeout or self._default_timeout
-        if isinstance(propties_sp, str):
-            propties_sp = (propties_sp, )
-            values = (values, )
-        success = True
-        for propty_sp, value in zip(propties_sp, values):
-            if propty_sp in ('Phase-SP', 'PhaseSpeed-SP'):
-                propty_rb = propty_sp
-            else:
-                propty_rb = \
-                    propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            self[propty_sp] = value
-            success &= super()._wait(
-                propty_rb, value, timeout=timeout, comp='eq')
-        return success
+        pvs_sp_rb = ('Phase-SP', 'PhaseSpeed-SP')
+        return super()._write_sp(
+            propties_sp, values, timeout=timeout, pvs_sp_rb=pvs_sp_rb)
 
 
-class PAPU(_Device):
+class PAPU(_ID):
     """PAPU Insertion Device."""
 
     class DEVICES:
@@ -315,14 +270,8 @@ class PAPU(_Device):
     _SHORT_SHUT_EYE = 0.1  # [s]
     _default_timeout = 8  # [s]
 
-    _properties_papu = (
-        'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
-        'BeamLineCtrl-Mon',  # 'Home-Mon',
-        )
     _properties = (
         'PeriodLength-Cte',
-        'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
-        'Moving-Mon',
         'PwrPhase-Mon',
         'EnblAndReleasePhase-Sel', 'EnblAndReleasePhase-Sts',
         'AllowedToChangePhase-Mon',
@@ -333,7 +282,13 @@ class PAPU(_Device):
         'StopPhase-Cmd', 'ChangePhase-Cmd',
         'Log-Mon',
         )
-    PROPERTIES_DEFAULT = _properties + _properties_papu
+    _properties_papu = (
+        'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
+        'BeamLineCtrl-Mon',
+        )
+
+    PROPERTIES_DEFAULT = \
+        _ID.PROPERTIES_DEFAULT + _properties + _properties_papu
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -439,7 +394,7 @@ class PAPU(_Device):
         """Return beamline control enabled state (True|False)."""
         return self['BeamLineCtrlEnbl-Sts'] != 0
 
-    # --- cmd_beamline and cmd_drive
+    # --- cmd_drive
 
     def cmd_drive_turn_power_on(self, timeout=None):
         """Command turn phase drive on."""
@@ -448,14 +403,6 @@ class PAPU(_Device):
         self['EnblPwrPhase-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1}
         return self._wait_propty_values(props_values, timeout=timeout)
-
-    def cmd_beamline_ctrl_enable(self, timeout=None):
-        """Command enable bealine ID control."""
-        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
-
-    def cmd_beamline_ctrl_disable(self, timeout=None):
-        """Command disable bealine ID control."""
-        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
     # --- set methods ---
 
@@ -622,8 +569,6 @@ class PAPU(_Device):
         success = True
         for propty_sp, value in zip(propties_sp, values):
             propty_rb = propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            # if self[propty_rb] == value:
-            #     continue
             if not self.wait_while_busy(timeout=timeout):
                 return False
             self[propty_sp] = value
