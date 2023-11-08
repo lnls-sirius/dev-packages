@@ -4,7 +4,8 @@ import os as _os
 
 from .. import csdev as _csdev
 from ..util import ClassProperty as _classproperty
-from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _LLTimeSearch
+from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _LLTimeSearch, \
+    HLTimeSearch as _HLTimeSearch
 from ..namesys import SiriusPVName as _PVName
 from ..diagbeam.bpm.csdev import Const as _csbpm
 
@@ -78,39 +79,48 @@ class Const(_csdev.Const):
         if cls.__EVG_CONFIGS is not None:
             return cls.__EVG_CONFIGS
 
-        # fouts
         fout2configs = dict()
-        for fout, trigsrc in _LLTimeSearch.get_fout2trigsrc_mapping().items():
-            outs = {
-                int(k.strip('OUT')) for k, v in trigsrc.items() if
-                v.endswith('RaBPM:TI-AMCFPGAEVR') or  # SI BPM paths
-                v.endswith('IA-14RaDiag03:TI-EVE')}  # DCCTs path
-            if not outs:
-                continue
-            rxenbl = 0
-            for i in outs:
-                rxenbl += (1 << i)
-            fout2configs[fout] = (('RxEnbl-SP', rxenbl), )
-        cls.__FOUTS_CONFIGS = fout2configs
-
-        # evg
-        evgouts = set()
-        for out, fout in _LLTimeSearch.get_evg2fout_mapping().items():
-            if fout in fout2configs:
-                evgouts.add(int(out.strip('OUT')))
+        foutchans = set()
+        evgchans = set()
         evgrxenbl = 0
-        for i in evgouts:
-            evgrxenbl += (1 << i)
+        for ch in _LLTimeSearch.get_connections_twds_evg():
+            if ch.dev not in {'BPM', 'DCCTDig'}:
+                continue
+            if ch.sec != 'SI':
+                continue
+            if ch.dev == 'BPM' and ch.sub.endswith(('SA', 'SB', 'SP')):
+                continue
+            fch = _LLTimeSearch.get_fout_channel(ch)
+            if fch in foutchans:
+                continue
+            foutchans.add(fch)
+            devname = fch.device_name
+            rxe = fout2configs.get(devname, 0)
+            rxe += 1 << int(fch.propty[3:])
+            fout2configs[devname] = rxe
+            evgch = _LLTimeSearch.get_evg_channel(fch)
+            if evgch in evgchans:
+                continue
+            evgchans.add(evgch)
+            evgrxenbl += 1 << int(evgch.propty[3:])
 
+        fout2configs = {
+            k: (('RxEnbl-SP', v),) for k, v in fout2configs.items()}
+
+        hlevts = _HLTimeSearch.get_hl_events()
+        evtin = int(hlevts['Intlk'].strip('Evt'))
+        evtout = int(hlevts['PsMtn'].strip('Evt'))
         evgconfigs = (
             ('IntlkTbl0to15-Sel', 0b010000010000001),
             ('IntlkTbl16to27-Sel', 0),
             ('IntlkCtrlRepeat-Sel', 0),
             ('IntlkCtrlRepeatTime-SP', 0),
-            ('IntlkEvtIn0-SP', 117),
-            ('IntlkEvtOut-SP', 124),
+            ('IntlkEvtIn0-SP', evtin),
+            ('IntlkEvtOut-SP', evtout),
             ('RxEnbl-SP', evgrxenbl),
             )
+
+        cls.__FOUTS_CONFIGS = fout2configs
         cls.__EVG_CONFIGS = evgconfigs
 
         return cls.__EVG_CONFIGS
