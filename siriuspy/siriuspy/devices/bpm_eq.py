@@ -398,8 +398,8 @@ class EqualizeBPMs(_FamBPMs):
             return None, None
 
         fig, ax = _mplt.subplots(1, 1, figsize=(5, 3))
-        ax.plot(dorbx/1e3, label=r'Horizontal')
-        ax.plot(dorby/1e3, label=r'Vertical')
+        ax.plot(dorbx, label=r'Horizontal')
+        ax.plot(dorby, label=r'Vertical')
         ax.set_ylabel(r'$\Delta$ Orbit [$\mu$m]')
         ax.set_xlabel('BPM Index')
         ax.grid(True, alpha=0.5, ls='--', lw=1)
