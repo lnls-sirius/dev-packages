@@ -114,13 +114,11 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
-        llrftrig = _SiriusPVName(_HLTimeSearch.get_ll_trigger_names(
-            'SI-Glob:TI-LLRF-PsMtn')[0])
-        llrftrig_nam = _re.sub(r'[0-9]', '', llrftrig.propty)
-        llrftrig_idx = int(llrftrig.propty.split(llrftrig_nam)[1])
-        self._llrf_evtcnt_pvname = f'{llrftrig_nam}{llrftrig_idx:02}EvtCnt-Mon'
+        trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtn')
+        pvname = _LLTimeSearch.get_channel_output_port_pvname(trgsrc[0])
+        self._llrf_evtcnt_pvname = f'{pvname}EvtCnt-Mon'
         self._everf_dev = _Device(
-            llrftrig.device_name,
+            pvname.device_name,
             props2init=[self._llrf_evtcnt_pvname, ],
             auto_monitor_mon=True)
         pvo = self._everf_dev.pv_object(self._llrf_evtcnt_pvname)
