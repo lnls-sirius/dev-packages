@@ -51,7 +51,7 @@ class IDSearch:
             'IDParameters',
             _idparam_fields, (
                 50,
-                22, 300, 300, 300, 0.1,
+                +22, +300, +300, +300, 0.1,
                 -25, 25, 0, 0.5)),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
@@ -71,11 +71,11 @@ class IDSearch:
             2: ('circularp', +16.36),  # [mm]
             3: ('vertical', 25.00),  # [mm]
         },
-        'SI-10SB:ID-DELTA52': {  # TODO: check if values are correct
-            0: ('circularn', -16.36),  # [mm]
+        'SI-10SB:ID-DELTA52': {
+            0: ('vertical', -52.5/2),  # [mm]
+            0: ('circularn', -52.5/4),  # [mm]
             1: ('horizontal', 0.00),  # [mm]
-            2: ('circularp', +16.36),  # [mm]
-            3: ('vertical', 25.00),  # [mm]
+            2: ('circularp', +52.5/4),  # [mm]
         },
     }
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
