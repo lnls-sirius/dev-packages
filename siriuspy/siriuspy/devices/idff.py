@@ -12,9 +12,11 @@ from .ids import WIG as _WIG, APU as _APU, PAPU as _PAPU, EPU as _EPU
 class IDFF(_DeviceSet):
     """Insertion Device Feedforward Device."""
 
-    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES):
+    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES, _DELTA.DEVICES):
         """."""
-        ALL = _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + _EPU.DEVICES.ALL
+        ALL = \
+            _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + \
+            _EPU.DEVICES.ALL + _DELTA.DEVICES.ALL
 
     def __init__(self, devname):
         """."""
