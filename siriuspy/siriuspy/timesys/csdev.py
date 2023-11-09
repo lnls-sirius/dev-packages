@@ -147,8 +147,14 @@ def get_clock_database(clock_num=0, prefix=None):
 def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     dbase = dict()
-    trig_db = _HLTimeSearch.get_hl_trigger_predef_db(hl_trigger)
+    is_digital_input = _HLTimeSearch.is_digital_input(hl_trigger)
+    trig_db = _HLTimeSearch.get_hl_trigger_predef_db(
+        hl_trigger, has_commom_evts=not is_digital_input)
     ll_trig_names = _HLTimeSearch.get_ll_trigger_names(hl_trigger)
+
+    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
+    dbase['LowLvlLock-Sts'] = _dcopy(dic_)
+    dbase['LowLvlLock-Sel'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
     dic_.update(trig_db['State'])
@@ -163,6 +169,31 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_['enums'] += ('Invalid', )  # for completeness
     dbase['Src-Sts'] = _dcopy(dic_)
     dbase['Src-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.NORM_INV}
+    dic_.update(trig_db['Polarity'])
+    dbase['Polarity-Sts'] = _dcopy(dic_)
+    dbase['Polarity-Sel'] = dic_
+
+    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
+    # behavior of pcaspy
+    labs = '\n'.join(Const.HLTrigStatusLabels)
+    dbase['StatusLabels-Cte'] = {
+        'type': 'char', 'count': len(labs)+1, 'value': labs}
+
+    ll_trigs = '\n'.join(ll_trig_names)
+    dbase['LowLvlTriggers-Cte'] = {
+        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
+    channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
+    dbase['CtrldChannels-Cte'] = {
+        'type': 'char', 'count': len(channels)+1, 'value': channels}
+
+    dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
+    dbase['InInjTable-Mon'] = {
+        'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
+
+    if is_digital_input:
+        return {prefix + pv: dt for pv, dt in dbase.items()}
 
     max_dur = 17e6
     max_wid_raw = 2**31 - 1
@@ -180,11 +211,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db.get('WidthRaw', dict()))
     dbase['WidthRaw-RB'] = _dcopy(dic_)
     dbase['WidthRaw-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.NORM_INV}
-    dic_.update(trig_db['Polarity'])
-    dbase['Polarity-Sts'] = _dcopy(dic_)
-    dbase['Polarity-Sel'] = dic_
 
     dic_ = {
         'type': 'int', 'unit': 'pulses', 'lolim': 1, 'hilim': 100000}
@@ -236,10 +262,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
     dbase['DeltaDelayRaw-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
-    dbase['LowLvlLock-Sts'] = _dcopy(dic_)
-    dbase['LowLvlLock-Sel'] = dic_
-
     dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
     dic_.update(trig_db['RFDelayType'])
     if _HLTimeSearch.has_delay_type(hl_trigger):
@@ -251,22 +273,5 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     if _HLTimeSearch.has_direction(hl_trigger):
         dbase['Direction-Sel'] = _dcopy(dic_)
         dbase['Direction-Sts'] = dic_
-
-    dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
-    dbase['InInjTable-Mon'] = {
-        'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
-
-    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
-    # behavior of pcaspy
-    labs = '\n'.join(Const.HLTrigStatusLabels)
-    dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': len(labs)+1, 'value': labs}
-
-    ll_trigs = '\n'.join(ll_trig_names)
-    dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
-    channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
-    dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': len(channels)+1, 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}

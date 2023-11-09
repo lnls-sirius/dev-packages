@@ -33,6 +33,7 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
+                'DIN0', 'DIN1', 'DIN2',
                 ),
             },
         'EVE': {
@@ -43,7 +44,7 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                'RFOUT',
+                'RFOUT', 'DIN0', 'DIN1', 'DIN2',
                 ),
             },
         'AMCFPGAEVR': {
@@ -299,6 +300,20 @@ class LLTimeSearch:
             return name.propty.startswith('OUT')
         else:
             raise Exception('Error: ' + name)
+
+    @classmethod
+    def is_digital_input(self, ll_trigger):
+        """Check whether a low level trigger if of type digital input.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('DIN')
 
     @classmethod
     def has_delay_type(cls, ll_trigger):

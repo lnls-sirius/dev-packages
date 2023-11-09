@@ -801,6 +801,16 @@ class _EVEOUT(_BASETRIG):
     _REMOVE_PROPS = {'Los', 'Dir'}
 
 
+class _EVRDIN(_EVROTP):
+    _REMOVE_PROPS = {
+        'Width', 'NrPulses', 'Delay', 'Dir', 'Src', 'SrcTrig', 'RFDelay',
+        'FineDelay', 'RFDelayType', 'Los'}
+
+
+class _EVEDIN(_EVRDIN):
+    pass
+
+
 class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
@@ -839,8 +849,10 @@ def get_ll_trigger(channel, source_enums):
     LL_TRIGGER_CLASSES = {
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
+        ('EVR', 'DIN'): _EVRDIN,
         ('EVE', 'OTP'): _EVEOTP,
         ('EVE', 'OUT'): _EVEOUT,
+        ('EVE', 'DIN'): _EVEDIN,
         ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRAMC,
         ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
         }
