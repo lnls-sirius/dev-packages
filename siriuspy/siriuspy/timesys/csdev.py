@@ -68,7 +68,7 @@ class Const(_csdev.Const):
     __EvtHL2LLMap = None
     __EvtLL2HLMap = None
 
-    evt_ll_codes = list(range(64)) + [117, 124]
+    evt_ll_codes = list(range(64)) + [117, 124, 125, 126, 132]
     evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
     EvtLL = _csdev.Const.register(
         'EventsLL', evt_ll_names, values=evt_ll_codes)
