@@ -27,11 +27,25 @@ class _ID(_Device):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
+    def parameters(self):
+        """Return ID parameters."""
+        return _IDSearch.conv_idname_2_parameters(self.devname)
+
+    @property
     def period_length(self):
         """Return ID period length [mm]."""
-        params = _IDSearch.conv_idname_2_parameters(self.devname)
-        return params.PERIOD_LENGTH
+        return self.parameters.PERIOD_LENGTH
 
+    @property
+    def pparameter_parked(self):
+        """Return ID parked pparameter value [mm]."""
+        return self.parameters.PPARAM_PARKED
+    
+    @property
+    def kparameter_parked(self):
+        """Return ID parked kparameter value [mm]."""
+        return self.parameters.KPARAM_PARKED
+    
     # --- movement checks ---
 
     @property
@@ -860,9 +874,15 @@ class DELTA(_ID):
         ALL = (DELTA52_10SB, )
 
     PROPERTIES_DEFAULT = _ID.PROPERTIES_DEFAULT + (
-        'PolShift-Mon', 'GainShift-Mon',
+        'PolShift-Mon', 
         'Pol-Mon',
         'ChangePol-Cmd',
+        'GainShift-SP', 'GainShift-RB', 'GainShift-Mon',
+        'MaxVelo-SP', 'MaxVelo-RB',
+        'PolModeVelo-SP', 'PolModeVelo-RB',
+        'PolModeAcc-SP', 'PolModeAcc-RB',
+        'GainModeVelo-SP', 'GainModeVelo-RB',
+        'GainModeAcc-SP', 'GainModeAcc-RB',
         )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
@@ -876,6 +896,88 @@ class DELTA(_ID):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- pparameter ---
+
+    @property
+    def pparameter_speed_max(self):
+        """Return max pparameter speed readback [mm/s]."""
+        return self['MaxVelo-RB']
+
+    @property
+    def pparameter_speed_max_lims(self):
+        """Return max pparameter speed limits."""
+        ctrl = self.pv_ctrlvars('MaxVelo-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    @property
+    def pparameter_speed(self):
+        """Return pparameter speed readback [mm/s]."""
+        return self['PolModeVelo-RB']
+
+    @property
+    def pparameter_min(self):
+        """Return ID pparameter lower control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('PolShift-Mon')
+        return ctrlvars['lower_ctrl_limit']
+
+    @property
+    def pparameter_max(self):
+        """Return ID pparameter upper control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('PolShift-Mon')
+        return ctrlvars['upper_ctrl_limit']
+
+    @property
+    def pparameter_mon(self):
+        """Return ID pparameter monitor [mm]."""
+        return self['PolShift-Mon']
+    
+    # --- kparameter ---
+
+    @property
+    def kparameter_speed_max(self):
+        """Return max kparameter speed readback [mm/s]."""
+        return self['MaxVelo-RB']
+
+    @property
+    def kparameter_speed_max_lims(self):
+        """Return max kparameter speed limits."""
+        ctrl = self.pv_ctrlvars('MaxVelo-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    @property
+    def kparameter_speed(self):
+        """Return kparameter speed readback [mm/s]."""
+        return self['GainModeVelo-RB']
+
+    @property
+    def kparameter(self):
+        """Return ID kparameter readback [mm]."""
+        return self['Shift-RB']
+    
+    @kparameter.setter
+    def kparameter(self, value):
+        """Set ID kparameter [mm]."""
+        self['Shift-SP'] = value
+
+    @property
+    def kparameter_min(self):
+        """Return ID kparameter lower control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Shift-SP')
+        return ctrlvars['lower_ctrl_limit']
+
+    @property
+    def kparameter_max(self):
+        """Return ID kparameter upper control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Shift-SP')
+        return ctrlvars['upper_ctrl_limit']
+
+    @property
+    def kparameter_mon(self):
+        """Return ID kparameter monitor [mm]."""
+        return self['GainShift-Mon']
 
 
 class WIG(_Device):
