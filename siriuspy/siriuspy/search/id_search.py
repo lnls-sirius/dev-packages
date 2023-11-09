@@ -22,8 +22,7 @@ class IDSearch:
         'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU19
         'EMA':      'SI-08SB:ID-APU22',  # titular: IVU18
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
-        # 'SABIA':    'SI-10SB:ID-EPU50',  # titular: 2 x DELTA52
-        'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52
+        'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
         'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-WIG180',  # titular: IVU18
         'SAPUCAIA': 'SI-17SA:ID-PAPU50',  # titular: 2 x APU22
