@@ -905,7 +905,11 @@ class App(_Callback):
         if shouldkill:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._do_killbeam()
-        self._fout_devs[devname]['RxLockedLtcRst-Cmd'] = 1
+        else:
+            # reset rxlock latch
+            dev = self._evg_dev if 'EVG' in devname \
+                else self._fout_devs[devname]
+            dev['RxLockedLtcRst-Cmd'] = 1
 
     def _callback_afcti_rtmlock(self, pvname, value, **kws):
         if value == 1:  # it is ok
