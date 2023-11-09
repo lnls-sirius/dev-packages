@@ -40,9 +40,9 @@ class App(_Callback):
         self._bpm_status = self._pvs_database['BPMStatus-Mon']['value']
         self._timing_status = self._pvs_database['TimingStatus-Mon']['value']
         self._enable_lists = {
-            'pos': _np.ones(self._const.nr_bpms, dtype=bool),
-            'ang': _np.ones(self._const.nr_bpms, dtype=bool),
-            'minsum': _np.ones(self._const.nr_bpms, dtype=bool),
+            'pos': _np.zeros(self._const.nr_bpms, dtype=bool),
+            'ang': _np.zeros(self._const.nr_bpms, dtype=bool),
+            'minsum': _np.zeros(self._const.nr_bpms, dtype=bool),
             }
         self._limits = {
             'pos_x_min': _np.zeros(self._const.nr_bpms, dtype=int),

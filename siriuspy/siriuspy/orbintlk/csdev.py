@@ -198,29 +198,29 @@ class Const(_csdev.Const):
             # Enable lists
             'PosEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used in orbit position interlock'},
             'PosEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used in orbit position interlock'},
 
             'AngEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used in orbit angle interlock'},
             'AngEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used in orbit angle interlock'},
 
             'MinSumEnblList-SP': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used with minimum sum threshold enabled'},
             'MinSumEnblList-RB': {
                 'type': 'int', 'count': self.nr_bpms,
-                'value': self.nr_bpms*[1],
+                'value': self.nr_bpms*[0],
                 'unit': 'BPM used with minimum sum threshold enabled'},
 
             # Limits
