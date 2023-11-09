@@ -11,18 +11,20 @@ from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 class IDFFConfig(_ConfigDBDocument):
     """Insertion Device Feedforward Configuration."""
 
-    # NOTE: for EPU50 there is a large discrepancy
-    # between RB/SP/Mon phase values
-    PPARAM_TOL = 0.5  # [mm]
-    KPARAM_TOL = 0.1  # [mm]
     CONFIGDB_TYPE = 'si_idff'
 
     def __init__(self, name=None, url=None):
         """."""
         name_ = name or 'idff_' + self.generate_config_name()
+        self._idname = None
         self._polarization_definitions = None
         super().__init__(
             config_type=IDFFConfig.CONFIGDB_TYPE, name=name_, url=url)
+
+    @property
+    def idname(self):
+        """Return idname corresponding to IDFFConfig."""
+        return self._idname
 
     @property
     def pparameter_pvname(self):
@@ -126,7 +128,7 @@ class IDFFConfig(_ConfigDBDocument):
 
         polarizations = dict()
         for polarization in idff['polarizations']:
-            if polarization == 'none':
+            if polarization == _IDSearch.POL_NONE_STR:
                 polarizations[polarization] = dict(ptable)
             else:
                 polarizations[polarization] = dict(ktable)
@@ -164,28 +166,23 @@ class IDFFConfig(_ConfigDBDocument):
     def load(self, discarded=False):
         """."""
         super().load(discarded=discarded)
+        self._find_idname()
         self._calc_polariz_defs()
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
-        poldefs = self._polarization_definitions
-        if poldefs is None:
-            raise ValueError('No IDFF configuration defined.')
-        for pol, val in poldefs.items():
-            if pol == 'none':
-                continue
-            if val is None or abs(pparameter - val) < IDFFConfig.PPARAM_TOL:
-                return pol
-        if abs(kparameter - poldefs['none']) < IDFFConfig.KPARAM_TOL:
-            return 'none'
-        return 'not_defined'
+        idname = self._idname
+        pol_idx = _IDSearch.conv_idname_2_polarization_state(
+            idname, pparameter, kparameter)
+        pol_str = _IDSearch.conv_idname_2_polarizations_sts(idname)[pol_idx]
+        return pol_str
 
     def check_valid_value(self, value):
         """."""
         if not super().check_valid_value(value):
             return False
         for pol, table in value['polarizations'].items():
-            if pol == 'none':
+            if pol == _IDSearch.POL_NONE_STR:
                 nrpts = len(table['pparameter'])
             else:
                 nrpts = len(table['kparameter'])
@@ -207,15 +204,39 @@ class IDFFConfig(_ConfigDBDocument):
 
     def _set_value(self, value):
         super()._set_value(value)
+        self._find_idname()
         self._calc_polariz_defs()
 
     def _calc_polariz_defs(self):
         """."""
+        # fill polarization data struct
         data = self._value['polarizations']
         poldefs = dict()
         for pol, tab in data.items():
-            if pol != 'none':
+            if pol != _IDSearch.POL_NONE_STR:
                 poldefs[pol] = tab['pparameter']
             else:
                 poldefs[pol] = tab['kparameter']
         self._polarization_definitions = poldefs
+
+    def _find_idname(self):
+        """."""
+        # find associated idname
+        self._idname = None
+        pvnames = self._value['pvnames']
+        kparameter, pparameter = pvnames['kparameter'], pvnames['pparameter']
+        for idname in _IDSearch.get_idnames():
+            kparam_propty = _IDSearch.conv_idname_2_kparameter_propty(idname)
+            pparam_propty = _IDSearch.conv_idname_2_pparameter_propty(idname)
+            if None in (kparam_propty, pparam_propty):
+                continue
+            kparam = idname + ':' + kparam_propty
+            pparam = idname + ':' + pparam_propty
+            if kparam == kparameter and pparam == pparameter:
+                self._idname = idname
+                break
+        if self._idname is None:
+            # could not find idname
+            raise ValueError(
+                'kparameter and pparameter in config are not '
+                'associated with an idname!')
