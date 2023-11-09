@@ -15,7 +15,8 @@ from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
-    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device
+    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device, \
+    SOFB as _SOFB, HLFOFB as _FOFB
 
 from .csdev import Const as _Const, ETypes as _ETypes
 
@@ -121,12 +122,12 @@ class App(_Callback):
                 f'IA-{idx+1:02}RaBPM:TI-AMCFPGAEVR',
                 props2init=[
                     'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
+                    'RTMClkRst-Cmd',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
         for dev in self._afcti_devs.values():
             pvo = dev.pv_object('RTMClkLockedLtc-Mon')
-            pvo.add_callback(self._callback_afcti_rtmlock)
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
@@ -197,6 +198,12 @@ class App(_Callback):
                 'IntlkSet-Cmd',
             ])
 
+        # # auxiliary devices
+        self._fofb = _FOFB(
+            props2init=['LoopState-Sts', ])
+        self._sofb = _SOFB(
+            _SOFB.DEVICES.SI, props2init=['LoopState-Sts', ])
+
         # pvs to write methods
         self.map_pv2write = {
             'Enable-Sel': self.set_enable,
@@ -221,7 +228,10 @@ class App(_Callback):
             'PsMtmAcqSamplesPre-SP': self.set_acq_nrspls_pre,
             'PsMtmAcqSamplesPost-SP': self.set_acq_nrspls_post,
             'PsMtmAcqConfig-Cmd': self.cmd_acq_config,
-            'IntlkStateConfig-Cmd': self.cmd_state_config}
+            'IntlkStateConfig-Cmd': self.cmd_state_config,
+            'ResetTimingLockLatches-Cmd': self.cmd_reset_ti_lock_latch,
+            'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
+            }
 
         # configuration scanning
         self.thread_check_configs = _Repeat(
@@ -509,6 +519,59 @@ class App(_Callback):
         if state == 'all':
             self._evg_dev['IntlkCtrlRst-Sel'] = 1
             self._update_log('Sent reset EVG interlock flag.')
+
+        return True
+
+    def cmd_reset_ti_lock_latch(self, value=None):
+        """Command to reset AFC timing and Fout clock lock latches."""
+        _ = value
+        # try to reset AFC timing clock lock latches, act only in necessary
+        # devices, return false if fail
+        for idx, afcti in self._afcti_devs.items():
+            if afcti['RTMClkLockedLtc-Mon']:
+                continue
+            afcti['ClkLockedLtcRst-Cmd'] = 1
+            msg = 'Reset' if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3) \
+                else 'Could not reset'
+            self._update_log(f'{msg} AFC Timing {idx} lock latchs.')
+            if 'not' in msg:
+                return False
+        # try to reset Fout rx lock latches, act only in necessary
+        # devices, return false if fail
+        for devname, fout in self._fout_devs.items():
+            if fout['RxLockedLtc-Mon']:
+                continue
+            fout['RxLockedLtcRst-Cmd'] = 1
+            msg = 'Reset' if fout._wait('RxLockedLtc-Mon', 1, timeout=3) \
+                else 'Could not reset'
+            self._update_log(f'{msg} {devname} lock latchs.')
+            if 'not' in msg:
+                return False
+        return True
+
+    def cmd_reset_afcti_rtmclk(self, value=None):
+        """Command to reset AFC timing clocks."""
+        _ = value
+        #  do not allow user to reset in case of correction loops closed
+        if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
+                not self._sofb.connected or self._sofb['LoopState-Sts']:
+            self._update_log('ERR:Open correction loops before ')
+            self._update_log('ERR:reseting AFC Timing clocks.')
+            return False
+
+        # try to reset AFC timing clock, act only in necessary
+        # devices, return false if fail
+        for idx, afcti in self._afcti_devs.items():
+            if afcti['RTMClkLockedLtc-Mon']:
+                continue
+            afcti['ClkLockedLtcRst-Cmd'] = 1
+            if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3):
+                continue
+            afcti['RTMClkRst-Cmd'] = 1
+            self._update_log(f'Sent reset clock to AFC Timing {idx}.')
+
+        # try to reset latches
+        self.cmd_reset_ti_lock_latch()
 
         return True
 
@@ -909,16 +972,6 @@ class App(_Callback):
             dev = self._evg_dev if 'EVG' in devname \
                 else self._fout_devs[devname]
             dev['RxLockedLtcRst-Cmd'] = 1
-
-    def _callback_afcti_rtmlock(self, pvname, value, **kws):
-        if value == 1:  # it is ok
-            return
-        devidx = int(_SiriusPVName(pvname).sub.split('Ra')[0])
-        dev = self._afcti_devs[devidx]
-        self._update_log(f'WARN:AFC Timing {devidx} raised RTM clock loss,')
-        _time.sleep(1)  # sleep a little before reseting
-        self._update_log(f'WARN:reseting AFC Timing {devidx} lock latchs.')
-        dev['ClkLockedLtcRst-Cmd'] = 1
 
     def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:

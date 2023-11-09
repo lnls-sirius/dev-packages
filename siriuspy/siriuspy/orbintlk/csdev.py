@@ -306,6 +306,8 @@ class Const(_csdev.Const):
             'ResetBPMAng-Cmd': {'type': 'int', 'value': 0},
             'ResetBPM-Cmd': {'type': 'int', 'value': 0},
             'Reset-Cmd': {'type': 'int', 'value': 0},
+            'ResetTimingLockLatches-Cmd': {'type': 'int', 'value': 0},
+            'ResetAFCTimingRTMClk-Cmd': {'type': 'int', 'value': 0},
 
             # Acquisition
             'PsMtmAcqChannel-Sel': {
