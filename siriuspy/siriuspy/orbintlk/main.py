@@ -287,6 +287,9 @@ class App(_Callback):
             self.run_callbacks(pvn+'-SP', enb)
             if not okl:
                 self.run_callbacks(pvn+'-RB', enb)
+        self._ti_mon_devs = self._get_ti_monitored_devices()
+        self.run_callbacks(
+            'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
 
         # limits
         for ilk in ['Pos', 'Ang']:
