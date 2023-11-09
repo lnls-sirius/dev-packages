@@ -76,7 +76,14 @@ class App(_Callback):
             'IntlkEvtIn0-SP', 'IntlkEvtIn0-RB',
             'IntlkEvtOut-SP', 'IntlkEvtOut-SP',
             'IntlkEvtStatus-Mon',
-            'RxEnbl-SP', 'RxEnbl-RB',
+            'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
+            'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
+            'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
+            'RxEnbl-SP.B3', 'RxEnbl-RB.B3',
+            'RxEnbl-SP.B4', 'RxEnbl-RB.B4',
+            'RxEnbl-SP.B5', 'RxEnbl-RB.B5',
+            'RxEnbl-SP.B6', 'RxEnbl-RB.B6',
+            'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
             ])
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
@@ -88,7 +95,14 @@ class App(_Callback):
             devname: _Device(
                 devname,
                 props2init=[
-                    'RxEnbl-SP', 'RxEnbl-RB',
+                    'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
+                    'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
+                    'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
+                    'RxEnbl-SP.B3', 'RxEnbl-RB.B3',
+                    'RxEnbl-SP.B4', 'RxEnbl-RB.B4',
+                    'RxEnbl-SP.B5', 'RxEnbl-RB.B5',
+                    'RxEnbl-SP.B6', 'RxEnbl-RB.B6',
+                    'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
                     'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
             for devname in self._const.FOUTS_CONFIGS

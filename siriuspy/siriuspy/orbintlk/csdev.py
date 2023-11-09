@@ -82,7 +82,7 @@ class Const(_csdev.Const):
         fout2configs = dict()
         foutchans = set()
         evgchans = set()
-        evgrxenbl = 0
+        evgrxenbl = list()
         for ch in _LLTimeSearch.get_connections_twds_evg():
             if ch.dev not in {'BPM', 'DCCTDig'}:
                 continue
@@ -95,30 +95,31 @@ class Const(_csdev.Const):
                 continue
             foutchans.add(fch)
             devname = fch.device_name
-            rxe = fout2configs.get(devname, 0)
-            rxe += 1 << int(fch.propty[3:])
+            rxe = fout2configs.get(devname, list())
+            rxe.append(int(fch.propty[3:]))
             fout2configs[devname] = rxe
             evgch = _LLTimeSearch.get_evg_channel(fch)
             if evgch in evgchans:
                 continue
             evgchans.add(evgch)
-            evgrxenbl += 1 << int(evgch.propty[3:])
+            evgrxenbl.append(int(evgch.propty[3:]))
 
         fout2configs = {
-            k: (('RxEnbl-SP', v),) for k, v in fout2configs.items()}
+            k: [(f'RxEnbl-SP.B{b}', 1) for b in v]
+            for k, v in fout2configs.items()}
 
         hlevts = _HLTimeSearch.get_hl_events()
         evtin = int(hlevts['Intlk'].strip('Evt'))
         evtout = int(hlevts['PsMtn'].strip('Evt'))
-        evgconfigs = (
+        evgconfigs = [
             ('IntlkTbl0to15-Sel', 0b010000010000001),
             ('IntlkTbl16to27-Sel', 0),
             ('IntlkCtrlRepeat-Sel', 0),
             ('IntlkCtrlRepeatTime-SP', 0),
             ('IntlkEvtIn0-SP', evtin),
             ('IntlkEvtOut-SP', evtout),
-            ('RxEnbl-SP', evgrxenbl),
-            )
+            ]
+        evgconfigs.extend([(f'RxEnbl-SP.B{b}', 1) for b in evgrxenbl])
 
         cls.__FOUTS_CONFIGS = fout2configs
         cls.__EVG_CONFIGS = evgconfigs
