@@ -810,7 +810,10 @@ class App(_Callback):
             return
         if not self._init:
             return
-        if value == 0b11111111:  # it is ok
+        pvname = _SiriusPVName(pvname)
+        configs = self._const.FOUTS_CONFIGS[pvname.device_name]
+        bits = [int(c[0][-1]) for c in configs if 'RxEnbl' in c[0]]
+        if all([_get_bit(value, b) for b in bits]):  # all ok
             return
         if self._thread_cbfout and self._thread_cbfout.is_alive():
             return
