@@ -280,28 +280,6 @@ class LLTimeSearch:
         return _dcopy(cls._devs_twds_evg)
 
     @classmethod
-    def has_clock(cls, ll_trigger):
-        """Check whether a low level trigger has access to EVG clocks.
-
-        Args:
-            ll_trigger (SiriusPVName): Trigger name.
-
-        Raises:
-            Exception: When trigger receiver is not recognized.
-
-        Returns:
-            bool: True or False.
-
-        """
-        name = _PVName(ll_trigger)
-        if name.dev == 'AMCFPGAEVR':
-            return True
-        elif name.dev in {'EVR', 'EVE'}:
-            return name.propty.startswith('OUT')
-        else:
-            raise Exception('Error: ' + name)
-
-    @classmethod
     def is_digital_input(self, ll_trigger):
         """Check whether a low level trigger if of type digital input.
 
@@ -342,6 +320,28 @@ class LLTimeSearch:
         """
         name = _PVName(ll_trigger)
         return 'AMCFPGAEVR' == name.dev
+
+    @classmethod
+    def has_clock(cls, ll_trigger):
+        """Check whether a low level trigger has access to EVG clocks.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Raises:
+            Exception: When trigger receiver is not recognized.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        if name.dev == 'AMCFPGAEVR':
+            return True
+        elif name.dev in {'EVR', 'EVE'}:
+            return name.propty.startswith('OUT')
+        else:
+            raise Exception('Error: ' + name)
 
     @classmethod
     def get_trigger_name(cls, channel):
