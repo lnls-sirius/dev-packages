@@ -59,7 +59,8 @@ class App(_Callback):
         self._acq_spre = self._pvs_database['PsMtmAcqSamplesPre-SP']['value']
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
         self._thread_acq = None
-        self._thread_cbevg = None
+        self._thread_cbevgilk = None
+        self._thread_cbevgrx = None
         self._thread_cbfout = None
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
@@ -84,11 +85,14 @@ class App(_Callback):
             'RxEnbl-SP.B5', 'RxEnbl-RB.B5',
             'RxEnbl-SP.B6', 'RxEnbl-RB.B6',
             'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
+            'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
             ])
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
         pvo.add_callback(self._callback_evg_intlk)
         pvo.connection_callbacks.append(self._conn_callback_timing)
+        pvo = self._evg_dev.pv_object('RxLockedLtc-Mon')
+        pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
         self._fout_devs = {
@@ -784,11 +788,11 @@ class App(_Callback):
             return
         if not self._init:
             return
-        if self._thread_cbevg and self._thread_cbevg.is_alive():
+        if self._thread_cbevgilk and self._thread_cbevgilk.is_alive():
             return
-        self._thread_cbevg = _CAThread(
+        self._thread_cbevgilk = _CAThread(
             target=self._do_callback_evg_intlk, args=(value, ), daemon=True)
-        self._thread_cbevg.start()
+        self._thread_cbevgilk.start()
 
     def _do_callback_evg_intlk(self, value):
         if value == 0:
@@ -818,11 +822,28 @@ class App(_Callback):
         if self._thread_cbfout and self._thread_cbfout.is_alive():
             return
         self._thread_cbfout = _CAThread(
-            target=self._do_callback_fout_rxlock,
+            target=self._do_callback_rxlock,
             args=(pvname, value, ), daemon=True)
         self._thread_cbfout.start()
 
-    def _do_callback_fout_rxlock(self, pvname, value):
+    def _callback_evg_rxlock(self, pvname, value, **kws):
+        if not self._state:
+            return
+        if not self._init:
+            return
+        pvname = _SiriusPVName(pvname)
+        configs = self._const.EVG_CONFIGS
+        bits = [int(c[0][-1]) for c in configs if 'RxEnbl' in c[0]]
+        if all([_get_bit(value, b) for b in bits]):  # all ok
+            return
+        if self._thread_cbevgrx and self._thread_cbevgrx.is_alive():
+            return
+        self._thread_cbevgrx = _CAThread(
+            target=self._do_callback_rxlock,
+            args=(pvname, value, ), daemon=True)
+        self._thread_cbevgrx.start()
+
+    def _do_callback_rxlock(self, pvname, value):
         pvname = _SiriusPVName(pvname)
         devname = pvname.device_name
         shouldkill = False
