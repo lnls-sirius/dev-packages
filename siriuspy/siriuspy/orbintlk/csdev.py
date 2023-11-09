@@ -29,6 +29,9 @@ class ETypes(_csdev.ETypes):
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
         'LLRFPsMtnTrigConn', 'LLRFPsMtnTrigStatusOK', 'LLRFPsMtnTrigConfig',
         'BPMPsMtnTrigConn', 'BPMPsMtnTrigStatusOK', 'BPMPsMtnTrigConfig',
+        'DCCT13C4PsMtnTrigConn', 'DCCT13C4PsMtnTrigStatusOK',
+        'DCCT13C4PsMtnTrigConfig', 'DCCT14C4PsMtnTrigConn',
+        'DCCT14C4PsMtnTrigStatusOK', 'DCCT14C4PsMtnTrigConfig',
         )
     STS_LBLS_LLRF = ('Connected', 'Configured')
 
@@ -69,6 +72,14 @@ class Const(_csdev.Const):
         ('State-Sel', 1),
         ('WidthRaw-SP', 6),
         )
+    DCCT13C4TRIG_CONFIG = (
+        ('Src-Sel', 0),
+        ('State-Sel', 1),
+    )
+    DCCT14C4TRIG_CONFIG = (
+        ('Src-Sel', 0),
+        ('State-Sel', 1),
+    )
 
     __EVG_CONFIGS = None
     __FOUTS_CONFIGS = None
@@ -182,7 +193,7 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'BPMStatus-Mon': {'type': 'int', 'value': 0b111111111},
-            'TimingStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'TimingStatus-Mon': {'type': 'int', 'value': (1 << 19) - 1},
             'LLRFStatus-Mon': {'type': 'int', 'value': 0b11},
             'BPMStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_BPM),

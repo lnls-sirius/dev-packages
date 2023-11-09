@@ -172,6 +172,19 @@ class App(_Callback):
                 'Status-Mon',
             ], auto_monitor_mon=True)
 
+        self._dcct13c4_trig = _Trigger(
+            trigname='SI-13C4:TI-DCCT-PsMtm', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'State-Sel', 'State-Sts',
+                'Status-Mon',
+            ], auto_monitor_mon=True)
+        self._dcct14c4_trig = _Trigger(
+            trigname='SI-14C4:TI-DCCT-PsMtm', props2init=[
+                'Src-Sel', 'Src-Sts',
+                'State-Sel', 'State-Sts',
+                'Status-Mon',
+            ], auto_monitor_mon=True)
+
         # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
         for dev in self._orbintlk_dev.devices:
@@ -683,6 +696,8 @@ class App(_Callback):
             self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
             self._llrf_trig: self._const.LLRFTRIG_CONFIG,
             self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
+            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
+            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
         }
         for trig, configs in trig2config.items():
             for prp, val in configs:
@@ -867,6 +882,30 @@ class App(_Callback):
             value = _updt_bit(value, 13, not oko)
         else:
             value += 0b111 << 11
+        # DCCT 13C4 trigger
+        dev = self._dcct13c4_trig
+        oko = False
+        if dev.connected:
+            value = _updt_bit(value, 15, bool(dev['Status-Mon']))
+            oko = True
+            for prp, val in self._const.DCCT13C4TRIG_CONFIG:
+                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                oko &= dev[prp_rb] == val
+            value = _updt_bit(value, 16, not oko)
+        else:
+            value += 0b111 << 14
+        # DCCT 14C4 trigger
+        dev = self._dcct14c4_trig
+        oko = False
+        if dev.connected:
+            value = _updt_bit(value, 18, bool(dev['Status-Mon']))
+            oko = True
+            for prp, val in self._const.DCCT14C4TRIG_CONFIG:
+                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                oko &= dev[prp_rb] == val
+            value = _updt_bit(value, 19, not oko)
+        else:
+            value += 0b111 << 17
 
         self._timing_status = value
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
