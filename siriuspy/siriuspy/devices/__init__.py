@@ -15,11 +15,7 @@ from .fofb_acq import FOFBCtrlSysId, FOFBPSSysId, FamFOFBSysId, \
     FOFBCtrlLamp, FOFBPSLamp, FamFOFBLamp
 from .ict import ICT, TranspEff
 from .ids import APU, WIG, PAPU, EPU, DELTA
-<<<<<<< HEAD
 from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF, DELTAIDFF
-=======
-from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF
->>>>>>> add-device-delta
 from .injctrl import InjCtrl
 from .injsys import PUMagsStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjSysStandbyHandler, LinacStandbyHandler, \
