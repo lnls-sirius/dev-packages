@@ -15,8 +15,7 @@ from ..thread import RepeaterThread as _Repeat
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
-    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device, \
-    RFKillBeam as _RFKillBeam
+    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device
 
 from .csdev import Const as _Const, ETypes as _ETypes
 
@@ -194,9 +193,9 @@ class App(_Callback):
         self._llrf = _ASLLRF(
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
-                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP'])
-
-        self._killbeam = _RFKillBeam()
+                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
+                'IntlkSet-Cmd',
+            ])
 
         # pvs to write methods
         self.map_pv2write = {
@@ -972,8 +971,10 @@ class App(_Callback):
     def _do_killbeam(self):
         # if not in dry run, send kill beam
         if not self._is_dry_run:
-            self._update_log('FATAL:Sending kill beam.')
-            self._killbeam.cmd_kill_beam()
+            self._update_log('FATAL:sending soft interlock to LLRF.')
+            self._llrf['IntlkSet-Cmd'] = 1
+            _time.sleep(1)
+            self._llrf['IntlkSet-Cmd'] = 0
 
     # --- auxiliary log methods ---
 
