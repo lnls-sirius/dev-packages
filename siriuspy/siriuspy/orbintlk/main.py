@@ -337,6 +337,14 @@ class App(_Callback):
             return False
 
         if value:
+            mondevs = self._get_ti_monitored_devices()
+            if not self._check_devices_status(mondevs):
+                self._update_log('ERR:Could not enable orbit interlock.')
+                return False
+            self._ti_mon_devs = mondevs
+            self.run_callbacks(
+                'TimingMonitoredDevices-Mon', '\n'.join(mondevs))
+
             glob_en = self._get_gen_bpm_intlk()
         else:
             glob_en = _np.zeros(self._const.nr_bpms, dtype=bool)
@@ -355,8 +363,6 @@ class App(_Callback):
 
         self._state = value
         self.run_callbacks('Enable-Sts', self._state)
-
-        self._update_ti_monitored_devices()
 
         return True
 
@@ -379,7 +385,16 @@ class App(_Callback):
             self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
             return False
 
+        # check if new enable list do not imply in orbit interlock failure
+        bkup = self._enable_lists[intlk]
         self._enable_lists[intlk] = new
+        mondevs = self._get_ti_monitored_devices()
+        if not self._check_devices_status(mondevs):
+            self._update_log('ERR:Could not set enable list.')
+            self._enable_lists[intlk] = bkup
+            return False
+        self._ti_mon_devs = mondevs
+        self.run_callbacks('TimingMonitoredDevices-Mon', '\n'.join(mondevs))
 
         # do not set enable lists and save to file in initialization
         if not self._init:
@@ -415,8 +430,6 @@ class App(_Callback):
         self._save_file(intlk, _np.array([value], dtype=bool), 'enbl')
 
         self._update_log('...done.')
-
-        self._update_ti_monitored_devices()
 
         # update readback pv
         self.run_callbacks(f'{intlkname}EnblList-RB', new)
@@ -633,6 +646,40 @@ class App(_Callback):
         subs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
         subs += 1
         return subs
+
+    def _get_ti_monitored_devices(self):
+        value = set()
+        if self._state:
+            value.add(self._everf_dev.devname)
+        for sec in self._get_enabled_sections():
+            afcti = f'IA-{sec:02}RaBPM:TI-AMCFPGAEVR'
+            value.add(afcti)
+            foutout = _LLTimeSearch.get_trigsrc2fout_mapping()[afcti]
+            value.add(foutout)
+            evgout = _LLTimeSearch.get_evg_channel(foutout)
+            value.add(evgout)
+        return value
+
+    def _check_devices_status(self, devices):
+        for devname in devices:
+            devname = _SiriusPVName(devname)
+            out = int(devname.propty[-1]) if devname.propty else None
+
+            dev = self._evg_dev if 'EVG' in devname else \
+                self._fout_devs[devname.device_name] if 'Fout' in devname \
+                else self._afcti_devs[int(devname.sub[:2])]
+
+            if not dev.connected:
+                self._update_log(f'ERR:{dev.devname} not connected')
+                return False
+            if out and not _get_bit(dev['RxLockedLtc-Mon'], out):
+                self._update_log(f'ERR:{dev.devname} OUT{out} not locked')
+                return False
+            if 'RTMClkLockedLtc-Mon' in dev.properties_in_use and \
+                    not dev['RTMClkLockedLtc-Mon']:
+                self._update_log(f'ERR:{dev.devname} RTM Clk not locked')
+                return False
+        return True
 
     def _get_gen_bpm_intlk(self):
         pos, ang = self._enable_lists['pos'], self._enable_lists['ang']
@@ -923,22 +970,6 @@ class App(_Callback):
         if not self._is_dry_run:
             self._update_log('FATAL:Sending kill beam.')
             self._killbeam.cmd_kill_beam()
-
-    def _update_ti_monitored_devices(self):
-        value = set()
-        if self._state:
-            value.add(self._evg_dev.devname)
-            value.add(self._everf_dev.devname)
-        for sec in self._get_enabled_sections():
-            afcti = f'IA-{sec:02}RaBPM:TI-AMCFPGAEVR'
-            value.add(afcti)
-            foutout = _LLTimeSearch.get_trigsrc2fout_mapping()[afcti]
-            value.add(foutout)
-            foutdev = _SiriusPVName(foutout).device_name
-            value.add(foutdev)
-
-        self._ti_mon_devs = value
-        self.run_callbacks('TimingMonitoredDevices-Mon', '\n'.join(value))
 
     # --- auxiliary log methods ---
 
