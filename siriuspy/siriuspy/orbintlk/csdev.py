@@ -27,11 +27,11 @@ class ETypes(_csdev.ETypes):
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsConn', 'FoutsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
-        'LLRFPsMtnTrigConn', 'LLRFPsMtnTrigStatusOK', 'LLRFPsMtnTrigConfig',
-        'BPMPsMtnTrigConn', 'BPMPsMtnTrigStatusOK', 'BPMPsMtnTrigConfig',
-        'DCCT13C4PsMtnTrigConn', 'DCCT13C4PsMtnTrigStatusOK',
-        'DCCT13C4PsMtnTrigConfig', 'DCCT14C4PsMtnTrigConn',
-        'DCCT14C4PsMtnTrigStatusOK', 'DCCT14C4PsMtnTrigConfig',
+        'LLRFPsMtmTrigConn', 'LLRFPsMtmTrigStatusOK', 'LLRFPsMtmTrigConfig',
+        'BPMPsMtmTrigConn', 'BPMPsMtmTrigStatusOK', 'BPMPsMtmTrigConfig',
+        'DCCT13C4PsMtmTrigConn', 'DCCT13C4PsMtmTrigStatusOK',
+        'DCCT13C4PsMtmTrigConfig', 'DCCT14C4PsMtmTrigConn',
+        'DCCT14C4PsMtmTrigStatusOK', 'DCCT14C4PsMtmTrigConfig',
         )
     STS_LBLS_LLRF = ('Connected', 'Configured')
 
@@ -121,7 +121,7 @@ class Const(_csdev.Const):
 
         hlevts = _HLTimeSearch.get_hl_events()
         evtin = int(hlevts['Intlk'].strip('Evt'))
-        evtout = int(hlevts['PsMtn'].strip('Evt'))
+        evtout = int(hlevts['RFKll'].strip('Evt'))
         evgconfigs = [
             ('IntlkTbl0to15-Sel', 0b010000010000001),
             ('IntlkTbl16to27-Sel', 0),
