@@ -1,6 +1,5 @@
 """High Level Orbit Interlock main application."""
 
-import re as _re
 import os as _os
 import logging as _log
 import time as _time
