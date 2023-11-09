@@ -815,7 +815,8 @@ class App(_Callback):
         if self._thread_cbfout and self._thread_cbfout.is_alive():
             return
         self._thread_cbfout = _CAThread(
-            target=self._do_callback_fout_rxlock, args=(value, ), daemon=True)
+            target=self._do_callback_fout_rxlock,
+            args=(pvname, value, ), daemon=True)
         self._thread_cbfout.start()
 
     def _do_callback_fout_rxlock(self, pvname, value):
