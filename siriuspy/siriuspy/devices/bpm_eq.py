@@ -326,10 +326,10 @@ class EqualizeBPMs(_FamBPMs):
         """
         _ = kwargs
         ants = antennas
-        lcyc = int(fsamp // (2*fswtc))
+        lsemicyc = int(fsamp // (2*fswtc))
         nbpm = len(self.bpms)
         nant = 4
-        trunc = (ants.shape[-1] // (lcyc*2)) * (lcyc*2)
+        trunc = (ants.shape[-1] // (lsemicyc*2)) * (lsemicyc*2)
         if trunc < 5:
             self._log(
                 f'ERR:Data not large enough. Acquire data with more points.')
@@ -337,16 +337,16 @@ class EqualizeBPMs(_FamBPMs):
         elif ants.shape[-1] != trunc:
             ants = ants[:, :, :trunc]
             self._log(f'WARN:Truncating data at {trunc} points')
-        ants = ants.reshape(nbpm, nant, -1, lcyc*2)
+        ants = ants.reshape(nbpm, nant, -1, lsemicyc*2)
         ants = ants.mean(axis=2)
         self._log('Calculating switching levels.')
         self._log(
             f'AcqStrategy is {self.AcqStrategies._fields[acq_strategy]}.')
         if acq_strategy == self.AcqStrategies.AssumeOrder:
-            ants = ants.reshape(nbpm, nant, 2, lcyc)
+            ants = ants.reshape(nbpm, nant, 2, lsemicyc)
             mean = ants.mean(axis=-1)
-            idp = _np.tile(_np.arange(lcyc), (nbpm, 1))
-            idn = idp + lcyc
+            idp = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
+            idn = idp + lsemicyc
         else:
             # Try to find out the two states by looking at different levels in
             # the sum of the four antennas of each BPM.
@@ -354,15 +354,15 @@ class EqualizeBPMs(_FamBPMs):
             idcs = dts - dts.mean(axis=-1)[..., None] > 0
             idp = idcs.nonzero()  # direct
             idn = (~idcs).nonzero()  # inverse
-            cond = idp[0].size == nbpm*lcyc
+            cond = idp[0].size == nbpm*lsemicyc
             cond &= _np.unique(idp[0]).size == nbpm
             if not cond:
                 self._log(
                     'ERR: Could not identify switching states appropriately.')
                 return
             mean = _np.zeros((nbpm, nant, 2))
-            dtp = ants[idp[0], :, idp[1]].reshape(nbpm, lcyc, nant)
-            dtn = ants[idn[0], :, idn[1]].reshape(nbpm, lcyc, nant)
+            dtp = ants[idp[0], :, idp[1]].reshape(nbpm, lsemicyc, nant)
+            dtn = ants[idn[0], :, idn[1]].reshape(nbpm, lsemicyc, nant)
             mean[:, :, 0] = dtp.mean(axis=1)
             mean[:, :, 1] = dtn.mean(axis=1)
             # Re-scale the inverse state data to match the direct state:
