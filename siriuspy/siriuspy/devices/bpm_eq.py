@@ -270,7 +270,7 @@ class EqualizeBPMs(_FamBPMs):
         if None in {fsamp, fswtc}:
             self._log('ERR: Not all BPMs are configured equally.')
             return
-        elif fsamp % fswtc:
+        elif fsamp % (2*fswtc):
             self._log('ERR: Sampling freq is not multiple of switching freq.')
             return
 
@@ -303,14 +303,14 @@ class EqualizeBPMs(_FamBPMs):
         self.estimate_orbit_variation()
 
     def calc_switching_levels(
-            self, antennas, fsamp=4, fswtc=2, acq_strategy=0,
+            self, antennas, fsamp=4, fswtc=1, acq_strategy=0,
             acq_inverse_reduced_gain=0.95, **kwargs):
         """Calculate average signal for each antenna in both switching states.
 
         Args:
             antennas (numpy.ndarray, (nrbpms, 4, N)): Antennas data.
             fsamp (float, optional): Sampling frequency. Defaults to 4.
-            fswtc (float, optional): Switching frequency. Defaults to 2.
+            fswtc (float, optional): Switching frequency. Defaults to 1.
             acq_strategy (int, optional): Whether we should assume states
                 order in data, starting with the direct state, or if we should
                 look for the higher levels (direct) and lower levels
@@ -326,7 +326,7 @@ class EqualizeBPMs(_FamBPMs):
         """
         _ = kwargs
         ants = antennas
-        lcyc = int(fsamp // fswtc)
+        lcyc = int(fsamp // (2*fswtc))
         nbpm = len(self.bpms)
         nant = 4
         trunc = (ants.shape[-1] // (lcyc*2)) * (lcyc*2)
