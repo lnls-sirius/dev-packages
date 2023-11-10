@@ -1055,7 +1055,9 @@ class App(_Callback):
         if not self._state:
             return
         # verify if this is an orbit interlock reliability failure
-        shouldkill = pvname.device_name in self._ti_mon_devs
+        shouldkill = False
+        for dev in self._ti_mon_devs:
+            shouldkill |= _SiriusPVName(dev).device_name == pvname.device_name
         if shouldkill:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._do_killbeam()
