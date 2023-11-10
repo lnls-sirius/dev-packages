@@ -40,12 +40,13 @@ class HLTimeSearch:
             all_devs, filters=filters, sorting=sorting)
 
     @classmethod
-    def get_hl_trigger_predef_db(cls, hl_trigger):
+    def get_hl_trigger_predef_db(cls, hl_trigger, has_commom_evts=True):
         """Return the default database of the high level trigger."""
         cls._init()
         dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
         src = dic_['Src']
-        src['enums'] = cls.COMMOM_EVTS + src['enums']
+        if has_commom_evts:
+            src['enums'] = cls.COMMOM_EVTS + src['enums']
         return dic_
 
     @classmethod
@@ -98,6 +99,13 @@ class HLTimeSearch:
         ret = cls._hl_triggers.get(hl_trigger)
         chans = ret['channels'] if ret else list()
         return sorted(chans)
+
+    @classmethod
+    def is_digital_input(cls, hl_trigger):
+        """Return True if hl_trigger is of type Digital Input."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return any([_LLSearch.is_digital_input(name) for name in ll_chans])
 
     @classmethod
     def has_delay_type(cls, hl_trigger):

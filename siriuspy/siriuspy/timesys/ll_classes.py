@@ -402,6 +402,7 @@ class _BASETRIG(_BaseLL):
             'Evt': self.prefix + intlb + 'Evt-RB',
             'Width': self.prefix + intlb + 'WidthRaw-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
+            'Log': self.prefix + intlb + 'Log-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'DelayRaw-RB',
             'Dir': self.prefix + intlb + 'Dir-Sts',
@@ -435,6 +436,7 @@ class _BASETRIG(_BaseLL):
             'Duration': _partial(self._set_duration, raw=False),
             'WidthRaw': _partial(self._set_duration, raw=True),
             'Polarity': _partial(self._set_simple, 'Polarity'),
+            'Log': _partial(self._set_simple, 'Log'),
             'NrPulses': self._set_nrpulses,
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
@@ -451,6 +453,7 @@ class _BASETRIG(_BaseLL):
             'Evt': _partial(self._process_source, 'Evt'),
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
+            'Log': _partial(self._get_simple, 'Log'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Dir': _partial(self._get_simple, 'Dir', hl_prop='Direction'),
@@ -479,6 +482,7 @@ class _BASETRIG(_BaseLL):
             'Duration': _partial(self._get_duration_pulses, ''),
             'WidthRaw': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
+            'Log': _partial(self._get_simple, 'Log'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
             'DelayRaw': _partial(self._get_delay, 'Delay'),
@@ -801,6 +805,16 @@ class _EVEOUT(_BASETRIG):
     _REMOVE_PROPS = {'Los', 'Dir'}
 
 
+class _EVRDIN(_EVROTP):
+    _REMOVE_PROPS = {
+        'Width', 'NrPulses', 'Delay', 'Dir', 'Src', 'SrcTrig', 'RFDelay',
+        'FineDelay', 'RFDelayType', 'Los'}
+
+
+class _EVEDIN(_EVRDIN):
+    pass
+
+
 class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
@@ -839,8 +853,10 @@ def get_ll_trigger(channel, source_enums):
     LL_TRIGGER_CLASSES = {
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
+        ('EVR', 'DIN'): _EVRDIN,
         ('EVE', 'OTP'): _EVEOTP,
         ('EVE', 'OUT'): _EVEOUT,
+        ('EVE', 'DIN'): _EVEDIN,
         ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRAMC,
         ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
         }

@@ -68,7 +68,7 @@ class Const(_csdev.Const):
     __EvtHL2LLMap = None
     __EvtLL2HLMap = None
 
-    evt_ll_codes = list(range(64)) + [117, 124]
+    evt_ll_codes = list(range(64)) + [117, 124, 125, 126, 132]
     evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
     EvtLL = _csdev.Const.register(
         'EventsLL', evt_ll_names, values=evt_ll_codes)
@@ -84,7 +84,7 @@ class Const(_csdev.Const):
     clk_ll_codes = list(range(8))
     clk_ll_names = ['Clk{0:d}'.format(i) for i in clk_ll_codes]
     ClkLL = _csdev.Const.register(
-                    'ClocksLL', clk_ll_names, values=clk_ll_codes)
+        'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
 
     @_classproperty
@@ -101,275 +101,6 @@ class Const(_csdev.Const):
         """."""
         cls.EvtHL2LLMap
         return cls.__EvtLL2HLMap
-
-
-def get_otp_database(otp_num=0, prefix=None):
-    """Return otp_database."""
-    def_prefix = 'OTP{0:02d}'.format(otp_num)
-    prefix = def_prefix if prefix is None else prefix
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'State-Sts'] = dic_
-    dbase[prefix+'State-Sel'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 1, 'unit': '',
-        'lolo': 1, 'low': 1, 'lolim': 1,
-        'hilim': 63, 'high': 63, 'hihi': 63}
-    dbase[prefix+'Evt-SP'] = dic_
-    dbase[prefix+'Evt-RB'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 1, 'unit': '',
-        'lolo': 1, 'low': 1, 'lolim': 1,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    dbase[prefix+'Width-SP'] = dic_
-    dbase[prefix+'Width-RB'] = _dcopy(dic_)
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.NORM_INV}
-    dbase[prefix+'Polarity-Sts'] = dic_
-    dbase[prefix+'Polarity-Sel'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 1, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    dbase[prefix+'NrPulses-SP'] = dic_
-    dbase[prefix+'NrPulses-RB'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 1, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    dbase[prefix+'Delay-SP'] = dic_
-    dbase[prefix+'Delay-RB'] = _dcopy(dic_)
-
-    return dbase
-
-
-def get_out_database(out_num=0, equip='EVR', prefix=None):
-    """Return out_database."""
-    def_prefix = 'OUT{0:d}'.format(out_num)
-    prefix = def_prefix if prefix is None else prefix
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.TRIG_SRC_LL}
-    dbase[prefix+'Src-Sts'] = dic_
-    dbase[prefix+'Src-Sel'] = _dcopy(dic_)
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DLYTYP}
-    dbase[prefix+'RFDelayType-Sts'] = dic_
-    dbase[prefix+'RFDelayType-Sel'] = _dcopy(dic_)
-
-    max_trig = 23 if equip == 'EVR' else 15
-    num_trig = out_num + 12 if equip == 'EVR' else out_num
-    dic_ = {
-        'type': 'int', 'value': num_trig, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': max_trig, 'high': max_trig, 'hihi': max_trig}
-    dbase[prefix+'SrcTrig-SP'] = dic_
-    dbase[prefix+'SrcTrig-RB'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 30, 'high': 30, 'hihi': 30}
-    dbase[prefix+'RFDelay-SP'] = dic_
-    dbase[prefix+'RFDelay-RB'] = _dcopy(dic_)
-
-    dic_ = {
-        'type': 'int', 'value': 1, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 200, 'high': 200, 'hihi': 200}
-    dbase[prefix+'FineDelay-SP'] = dic_
-    dbase[prefix+'FineDelay-RB'] = _dcopy(dic_)
-
-    return dbase
-
-
-def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
-    """Return afc_database."""
-    def_prefix = (out_tp + '{0:d}'.format(out_num))
-    if out_tp == 'FMC':
-        fmc = (out_num // 5) + 1
-        ch = (out_num % 5) + 1
-        def_prefix = (out_tp + '{0:d}CH{1:d}'.format(fmc, ch))
-
-    prefix = def_prefix if prefix is None else prefix
-    dbase = get_otp_database(prefix=prefix)
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.TRIG_SRC_LL}
-    dbase[prefix+'Src-Sts'] = dic_
-    dbase[prefix+'Src-Sel'] = _dcopy(dic_)
-
-    return dbase
-
-
-def get_evr_database(prefix=None):
-    """Return evr_database."""
-    prefix = prefix or ''
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'DevEnbl-Sts'] = dic_
-    dbase[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
-
-    dbase[prefix+'Los-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 255, 'high': 255, 'hihi': 255}
-
-    dbase[prefix+'Alive-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-
-    dbase[prefix+'Network-Mon'] = {
-        'type': 'enum', 'value': 1,
-        'enums': _et.DISCONN_CONN}
-
-    dbase[prefix+'LinkStatus-Mon'] = {
-        'type': 'enum', 'value': 1,
-        'enums': _et.UNLINK_LINK}
-
-    dbase[prefix+'IntlkStatus-Mon'] = {
-        'type': 'enum', 'value': 0,
-        'enums': _et.DSBL_ENBL}
-
-    dbase[prefix+'IntlkEnbl-Mon'] = {
-        'type': 'enum', 'value': 0,
-        'enums': _et.DSBL_ENBL}
-
-    for i in range(24):
-        db2 = get_otp_database(otp_num=i)
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-
-    for i in range(8):
-        db2 = get_out_database(out_num=i, equip='EVR')
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-    return dbase
-
-
-def get_eve_database(eve_num=1, prefix=None):
-    """Return eve_database."""
-    prefix = prefix or ''
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'DevEnbl-Sts'] = dic_
-    dbase[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.RFOUT}
-    dbase[prefix+'RFOut-Sts'] = dic_
-    dbase[prefix+'RFOut-Sel'] = _dcopy(dic_)
-
-    dbase[prefix+'Alive-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-
-    dbase[prefix+'Network-Mon'] = {
-        'type': 'enum', 'value': 1,
-        'enums': _et.DISCONN_CONN}
-
-    dbase[prefix+'LinkStatus-Mon'] = {
-        'type': 'enum', 'value': 1,
-        'enums': _et.UNLINK_LINK}
-
-    dbase[prefix+'IntlkStatus-Mon'] = {
-        'type': 'enum', 'value': 0,
-        'enums': _et.DSBL_ENBL}
-
-    dbase[prefix+'IntlkEnbl-Mon'] = {
-        'type': 'enum', 'value': 0,
-        'enums': _et.DSBL_ENBL}
-
-    for i in range(24):
-        db2 = get_otp_database(otp_num=i)
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-
-    for i in range(8):
-        db2 = get_out_database(out_num=i, equip='EVE')
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-
-    return dbase
-
-
-def get_afc_database(prefix=None):
-    """Return adc_database."""
-    prefix = prefix or ''
-    dbase = dict()
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'DevEnbl-Sts'] = dic_
-    dbase[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
-
-    dbase[prefix+'Los-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 255, 'high': 255, 'hihi': 255}
-
-    dbase[prefix+'Alive-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-
-    dbase[prefix+'Network-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.DISCONN_CONN}
-
-    dbase[prefix+'LinkStatus-Mon'] = {
-            'type': 'enum', 'value': 1,
-            'enums': _et.UNLINK_LINK}
-
-    dbase[prefix+'IntlkStatus-Mon'] = {
-            'type': 'enum', 'value': 0,
-            'enums': _et.DSBL_ENBL}
-
-    for i in range(8):
-        db2 = get_afc_out_database(out_num=i, out_tp='AMC')
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-
-    for i in range(10):
-        db2 = get_afc_out_database(out_num=i, out_tp='FMC')
-        for k, v in db2.items():
-            dbase[prefix + k] = v
-
-    return dbase
-
-
-def get_fout_database(prefix=None):
-    """Return fout_database."""
-    prefix = prefix or ''
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'DevEnbl-Sts'] = dic_
-    dbase[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
-
-    dbase[prefix+'Los-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 255, 'high': 255, 'hihi': 255}
-
-    dbase[prefix+'Alive-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-
-    dbase[prefix+'Network-Mon'] = {
-        'type': 'enum', 'value': 1, 'enums': _et.DISCONN_CONN}
-
-    dbase[prefix+'Link-Mon'] = {
-        'type': 'enum', 'value': 1, 'enums': _et.UNLINK_LINK}
-
-    dbase[prefix+'Intlk-Mon'] = {
-        'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    return dbase
 
 
 def get_event_database(evt_num=0, prefix=None):
@@ -413,91 +144,17 @@ def get_clock_database(clock_num=0, prefix=None):
     return dbase
 
 
-def get_evg_database(prefix=None, only_evg=False):
-    """Return evg_database."""
-    prefix = prefix or ''
-    dbase = dict()
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
-    dbase[prefix+'DevEnbl-Sts'] = dic_
-    dbase[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
-
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
-    dbase[prefix + 'ContinuousEvt-Sel'] = _dcopy(dic_)
-    dbase[prefix + 'ContinuousEvt-Sts'] = dic_
-
-    dic_ = {
-        'type': 'int', 'count': 864, 'value': 864*[1],
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 864, 'high': 864, 'hihi': 864}
-    dbase[prefix + 'BucketList-SP'] = _dcopy(dic_)
-    dbase[prefix + 'BucketList-RB'] = dic_
-    dbase[prefix + 'BucketListLen-Mon'] = {
-        'type': 'int', 'value': 864,
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 864, 'high': 864, 'hihi': 864}
-
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
-    dbase[prefix + 'InjectionEvt-Sel'] = _dcopy(dic_)
-    dbase[prefix + 'InjectionEvt-Sts'] = dic_
-
-    dic_ = {
-        'type': 'int', 'value': 0, 'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 100, 'high': 100, 'hihi': 100}
-    dbase[prefix + 'RepeatBucketList-SP'] = _dcopy(dic_)
-    dbase[prefix + 'RepeatBucketList-RB'] = dic_
-
-    dic_ = {
-        'type': 'int', 'value': 30, 'lolo': 1, 'low': 1, 'lolim': 1,
-        'hilim': 60, 'high': 60, 'hihi': 60}
-    dbase[prefix + 'ACDiv-SP'] = _dcopy(dic_)
-    dbase[prefix + 'ACDiv-RB'] = dic_
-
-    dic_ = {
-        'type': 'int', 'value': 4, 'lolo': 1, 'low': 1, 'lolim': 1,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    dbase[prefix + 'RFDiv-SP'] = _dcopy(dic_)
-    dbase[prefix + 'RFDiv-RB'] = dic_
-
-    dbase[prefix+'Los-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 255, 'high': 255, 'hihi': 255}
-
-    dbase[prefix+'Alive-Mon'] = {
-        'type': 'int', 'value': 0, 'unit': '',
-        'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-
-    dbase[prefix+'Network-Mon'] = {
-        'type': 'enum', 'value': 1, 'enums': _et.DISCONN_CONN}
-
-    dbase[prefix+'RFStatus-Mon'] = {
-        'type': 'enum', 'value': 1,
-        'enums': ('Loss or Out of Range', 'Normal')}
-
-    dbase[prefix+'StateMachine-Mon'] = {
-        'type': 'enum', 'value': 4,
-        'enums': (
-            'Initializing', 'Stopped', 'Continuous', 'Injection',
-            'Preparing Continuous', 'Preparing Injection')
-        }
-
-    if only_evg:
-        return dbase
-
-    for clc in Const.ClkLL2HLMap:
-        dbase.update(get_clock_database(prefix=prefix+clc))
-    for ev in Const.EvtLL._fields:
-        dbase.update(get_event_database(prefix=prefix+ev))
-    return dbase
-
-
 def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     dbase = dict()
-    trig_db = _HLTimeSearch.get_hl_trigger_predef_db(hl_trigger)
+    is_digital_input = _HLTimeSearch.is_digital_input(hl_trigger)
+    trig_db = _HLTimeSearch.get_hl_trigger_predef_db(
+        hl_trigger, has_commom_evts=not is_digital_input)
     ll_trig_names = _HLTimeSearch.get_ll_trigger_names(hl_trigger)
+
+    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
+    dbase['LowLvlLock-Sts'] = _dcopy(dic_)
+    dbase['LowLvlLock-Sel'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
     dic_.update(trig_db['State'])
@@ -512,6 +169,36 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_['enums'] += ('Invalid', )  # for completeness
     dbase['Src-Sts'] = _dcopy(dic_)
     dbase['Src-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.NORM_INV}
+    dic_.update(trig_db['Polarity'])
+    dbase['Polarity-Sts'] = _dcopy(dic_)
+    dbase['Polarity-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
+    dic_.update(trig_db.get('Log', dict()))
+    dbase['Log-Sts'] = _dcopy(dic_)
+    dbase['Log-Sel'] = dic_
+
+    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
+    # behavior of pcaspy
+    labs = '\n'.join(Const.HLTrigStatusLabels)
+    dbase['StatusLabels-Cte'] = {
+        'type': 'char', 'count': len(labs)+1, 'value': labs}
+
+    ll_trigs = '\n'.join(ll_trig_names)
+    dbase['LowLvlTriggers-Cte'] = {
+        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
+    channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
+    dbase['CtrldChannels-Cte'] = {
+        'type': 'char', 'count': len(channels)+1, 'value': channels}
+
+    dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
+    dbase['InInjTable-Mon'] = {
+        'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
+
+    if is_digital_input:
+        return {prefix + pv: dt for pv, dt in dbase.items()}
 
     max_dur = 17e6
     max_wid_raw = 2**31 - 1
@@ -529,11 +216,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db.get('WidthRaw', dict()))
     dbase['WidthRaw-RB'] = _dcopy(dic_)
     dbase['WidthRaw-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.NORM_INV}
-    dic_.update(trig_db['Polarity'])
-    dbase['Polarity-Sts'] = _dcopy(dic_)
-    dbase['Polarity-Sel'] = dic_
 
     dic_ = {
         'type': 'int', 'unit': 'pulses', 'lolim': 1, 'hilim': 100000}
@@ -585,10 +267,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['DeltaDelayRaw-RB'] = _dcopy(dic_)
     dbase['DeltaDelayRaw-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
-    dbase['LowLvlLock-Sts'] = _dcopy(dic_)
-    dbase['LowLvlLock-Sel'] = dic_
-
     dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
     dic_.update(trig_db['RFDelayType'])
     if _HLTimeSearch.has_delay_type(hl_trigger):
@@ -600,22 +278,5 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     if _HLTimeSearch.has_direction(hl_trigger):
         dbase['Direction-Sel'] = _dcopy(dic_)
         dbase['Direction-Sts'] = dic_
-
-    dbase['Status-Mon'] = {'type': 'int', 'value': 0b1111111111}
-    dbase['InInjTable-Mon'] = {
-        'type': 'enum', 'enums': _et.ININJTAB, 'value': 0}
-
-    # NOTE: we need to add plus 1 to the PVs count due to some unexpected
-    # behavior of pcaspy
-    labs = '\n'.join(Const.HLTrigStatusLabels)
-    dbase['StatusLabels-Cte'] = {
-        'type': 'char', 'count': len(labs)+1, 'value': labs}
-
-    ll_trigs = '\n'.join(ll_trig_names)
-    dbase['LowLvlTriggers-Cte'] = {
-        'type': 'char', 'count': len(ll_trigs)+1, 'value': ll_trigs}
-    channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
-    dbase['CtrldChannels-Cte'] = {
-        'type': 'char', 'count': len(channels)+1, 'value': channels}
 
     return {prefix + pv: dt for pv, dt in dbase.items()}
