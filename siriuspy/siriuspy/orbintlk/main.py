@@ -61,7 +61,7 @@ class App(_Callback):
         self._thread_acq = None
         self._thread_cbevgilk = None
         self._thread_cbevgrx = None
-        self._thread_cbfout = None
+        self._thread_cbfout = {fout: None for fout in self._const.FOUTS_2_MON}
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
 
@@ -77,6 +77,7 @@ class App(_Callback):
             'IntlkEvtIn0-SP', 'IntlkEvtIn0-RB',
             'IntlkEvtOut-SP', 'IntlkEvtOut-SP',
             'IntlkEvtStatus-Mon',
+            'RxEnbl-SP', 'RxEnbl-RB',
             'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
             'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
             'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
@@ -99,6 +100,7 @@ class App(_Callback):
             devname: _Device(
                 devname,
                 props2init=[
+                    'RxEnbl-SP', 'RxEnbl-RB',
                     'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
                     'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
                     'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
@@ -109,7 +111,7 @@ class App(_Callback):
                     'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
                     'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
-            for devname in self._const.FOUTS_CONFIGS
+            for devname in self._const.FOUTS_2_MON
         }
         for dev in self._fout_devs.values():
             pvo = dev.pv_object('RxLockedLtc-Mon')
@@ -411,15 +413,19 @@ class App(_Callback):
             return False
 
         # check if new enable list do not imply in orbit interlock failure
-        bkup = self._enable_lists[intlk]
+        bkup_enbllist = self._enable_lists[intlk]
+        bkup_timondev = self._ti_mon_devs
         self._enable_lists[intlk] = new
-        mondevs = self._get_ti_monitored_devices()
-        if not self._check_devices_status(mondevs):
+        self._ti_mon_devs = self._get_ti_monitored_devices()
+        self._config_fout_rxenbl()
+        if not self._check_devices_status(self._ti_mon_devs):
             self._update_log('ERR:Could not set enable list.')
-            self._enable_lists[intlk] = bkup
+            self._enable_lists[intlk] = bkup_enbllist
+            self._ti_mon_devs = bkup_timondev
+            self._config_fout_rxenbl()
             return False
-        self._ti_mon_devs = mondevs
-        self.run_callbacks('TimingMonitoredDevices-Mon', '\n'.join(mondevs))
+        self.run_callbacks(
+            'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
 
         # do not set enable lists and save to file in initialization
         if not self._init:
@@ -685,16 +691,10 @@ class App(_Callback):
             if not dev._wait(prp_rb, val):
                 self._update_log(f'ERR:Failed to configure EVG PV {prp:s}')
                 return False
-        # Fouts
-        for devname, configs in self._const.FOUTS_CONFIGS.items():
-            dev = self._fout_devs[devname]
-            for prp, val in configs:
-                dev[prp] = val
-                prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-                if not dev._wait(prp_rb, val):
-                    self._update_log(
-                        f'ERR:Failed to configure {devname} PV {prp:s}')
-                    return False
+        # Fout
+        if not self._config_fout_rxenbl():
+            return False
+        # triggers
         trig2config = {
             self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
             self._llrf_trig: self._const.LLRFTRIG_CONFIG,
@@ -711,6 +711,31 @@ class App(_Callback):
                     self._update_log(
                         f'ERR:Failed to configure {name} PV {prp:s}')
                     return False
+        return True
+
+    def _config_fout_rxenbl(self):
+        # disable all rxenbl
+        for fout in self._fout_devs.values():
+            fout['RxEnbl-SP'] = 0
+            if not fout._wait('RxEnbl-RB', 0):
+                self._update_log(
+                    f'ERR:Failed to disable {fout.devname} RxEnbl')
+                return False
+
+        # enable only necessary rxenbl
+        for dev in self._ti_mon_devs:
+            if 'Fout' not in dev:
+                continue
+            devname = _SiriusPVName(dev)
+            bit = int(dev[-1])
+            fout = self._fout_devs[devname.device_name]
+            fout[f'RxEnbl-SP.B{bit}'] = 1
+            fout['RxLockedLtcRst-Cmd'] = 1
+            if not fout._wait(f'RxEnbl-SP.B{bit}', 1):
+                self._update_log(
+                    f'ERR:Failed to configure {devname} RxEnbl.B{bit}')
+                return False
+
         return True
 
     def _config_llrf(self):
@@ -840,13 +865,13 @@ class App(_Callback):
             value = 0b111
         # Fouts
         devs = self._fout_devs
-        if all(devs[devn].connected for devn in self._const.FOUTS_CONFIGS):
+        if all(devs[devn].connected for devn in self._const.FOUTS_2_MON):
             okg = True
-            for idx, configs in self._const.FOUTS_CONFIGS.items():
-                dev = self._fout_devs[idx]
-                for prp, val in configs:
-                    prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-                    okg &= dev[prp_rb] == val
+            for devname in self._ti_mon_devs:
+                if 'Fout' not in devname:
+                    continue
+                dev = self._fout_devs[_SiriusPVName(devname).device_name]
+                okg &= dev[f'RxEnbl-RB.B{int(devname[-1])}']
             value = _updt_bit(value, 4, not okg)
         else:
             value += 0b11 << 3
@@ -965,17 +990,13 @@ class App(_Callback):
             return
         if not self._init:
             return
-        pvname = _SiriusPVName(pvname)
-        configs = self._const.FOUTS_CONFIGS[pvname.device_name]
-        bits = [int(c[0][-1]) for c in configs if 'RxEnbl' in c[0]]
-        if all([_get_bit(value, b) for b in bits]):  # all ok
+        nam = _SiriusPVName(pvname).device_name
+        if self._thread_cbfout[nam] and self._thread_cbfout[nam].is_alive():
             return
-        if self._thread_cbfout and self._thread_cbfout.is_alive():
-            return
-        self._thread_cbfout = _CAThread(
+        self._thread_cbfout[nam] = _CAThread(
             target=self._do_callback_rxlock,
             args=(pvname, value, ), daemon=True)
-        self._thread_cbfout.start()
+        self._thread_cbfout[nam].start()
 
     def _callback_evg_rxlock(self, pvname, value, **kws):
         if not self._state:
@@ -997,15 +1018,26 @@ class App(_Callback):
     def _do_callback_rxlock(self, pvname, value):
         pvname = _SiriusPVName(pvname)
         devname = pvname.device_name
-        shouldkill = False
-        for bit in range(8):
-            if _get_bit(value, bit):
-                continue
-            outnam = f'OUT{bit}'
-            self._update_log(f'FATAL:{outnam} of {devname} lost lock')
-            devout = pvname.device_name.substitute(propty_name=outnam)
-            # verify if this is an orbit interlock reliability failure
-            shouldkill |= devout in self._ti_mon_devs
+        if pvname.dev == 'EVG':
+            shouldkill = False
+            for bit in range(8):
+                if _get_bit(value, bit):
+                    continue
+                outnam = f'OUT{bit}'
+                self._update_log(f'FATAL:{outnam} of {devname} lost lock')
+                devout = devname.substitute(propty_name=outnam)
+                # verify if this is an orbit interlock reliability failure
+                shouldkill |= devout in self._ti_mon_devs
+        else:
+            out = None
+            for dev in self._ti_mon_devs:
+                if 'Fout' not in dev:
+                    continue
+                dev = _SiriusPVName(dev)
+                if dev.device_name == devname:
+                    out = int(dev.propty_name[-1])
+                    break
+            shouldkill = out is not None and not _get_bit(value, out)
         if shouldkill:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._do_killbeam()

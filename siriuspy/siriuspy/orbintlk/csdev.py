@@ -84,7 +84,7 @@ class Const(_csdev.Const):
     )
 
     __EVG_CONFIGS = None
-    __FOUTS_CONFIGS = None
+    __FOUTS_2_MON = None
 
     @_classproperty
     def EVG_CONFIGS(cls):
@@ -92,8 +92,7 @@ class Const(_csdev.Const):
         if cls.__EVG_CONFIGS is not None:
             return cls.__EVG_CONFIGS
 
-        fout2configs = dict()
-        foutchans = set()
+        fouts = set()
         evgchans = set()
         evgrxenbl = list()
         for ch in _LLTimeSearch.get_connections_twds_evg():
@@ -104,22 +103,12 @@ class Const(_csdev.Const):
             if ch.dev == 'BPM' and ch.sub.endswith(('SA', 'SB', 'SP')):
                 continue
             fch = _LLTimeSearch.get_fout_channel(ch)
-            if fch in foutchans:
-                continue
-            foutchans.add(fch)
-            devname = fch.device_name
-            rxe = fout2configs.get(devname, list())
-            rxe.append(int(fch.propty[3:]))
-            fout2configs[devname] = rxe
+            fouts.add(fch.device_name)
             evgch = _LLTimeSearch.get_evg_channel(fch)
             if evgch in evgchans:
                 continue
             evgchans.add(evgch)
             evgrxenbl.append(int(evgch.propty[3:]))
-
-        fout2configs = {
-            k: [(f'RxEnbl-SP.B{b}', 1) for b in v]
-            for k, v in fout2configs.items()}
 
         hlevts = _HLTimeSearch.get_hl_events()
         evtin0 = int(hlevts['Intlk'].strip('Evt'))
@@ -140,16 +129,16 @@ class Const(_csdev.Const):
             ]
         evgconfigs.extend([(f'RxEnbl-SP.B{b}', 1) for b in evgrxenbl])
 
-        cls.__FOUTS_CONFIGS = fout2configs
+        cls.__FOUTS_2_MON = fouts
         cls.__EVG_CONFIGS = evgconfigs
 
         return cls.__EVG_CONFIGS
 
     @_classproperty
-    def FOUTS_CONFIGS(cls):
-        """Fouts configurations."""
+    def FOUTS_2_MON(cls):
+        """Fouts to be monitored."""
         cls.EVG_CONFIGS
-        return cls.__FOUTS_CONFIGS
+        return cls.__FOUTS_2_MON
 
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp
