@@ -554,7 +554,7 @@ class App(_Callback):
                 continue
             afcti['ClkLockedLtcRst-Cmd'] = 1
             msg = 'Reset' if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3) \
-                else 'Could not reset'
+                else 'ERR:Could not reset'
             self._update_log(f'{msg} AFC Timing {idx} lock latchs.')
             if 'not' in msg:
                 return False
@@ -565,7 +565,7 @@ class App(_Callback):
                 continue
             fout['RxLockedLtcRst-Cmd'] = 1
             msg = 'Reset' if fout._wait('RxLockedLtc-Mon', 1, timeout=3) \
-                else 'Could not reset'
+                else 'ERR:Could not reset'
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
                 return False
