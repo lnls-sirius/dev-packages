@@ -5,7 +5,7 @@ import logging as _logging
 import numpy as _np
 import matplotlib.pyplot as _mplt
 
-from mathphys.functions import save_pickle as _savep, load_pickle as _loadp, \
+from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple
 from .bpm import FamBPMs as _FamBPMs
 from .timing import Trigger
@@ -17,6 +17,11 @@ class EqualizeBPMs(_FamBPMs):
 
     NR_POINTS = 2000
     MAX_MULTIPLIER = 0xffffff / (1 << 24)
+    PROCMETHODSMEANING = {
+        'AABS': 'All Antennas will be equalized in Both Semicycles',
+        'EABS': 'Each Antenna will be equalized in Both Semicycles',
+        'AAES': 'All Antennas will be equalized in Each Semicycle'
+        }
     ProcMethods = _namedtuple('ProcMethods', ('AABS', 'EABS', 'AAES'))
     AcqStrategies = _namedtuple(
         'AcqStrategies', ('AssumeOrder', 'AcqInvRedGain'))
@@ -56,7 +61,7 @@ class EqualizeBPMs(_FamBPMs):
     @property
     def acq_strategy_str(self):
         """."""
-        return self.AcqStrategies._fields._acq_strategy
+        return self.AcqStrategies._fields[self._acq_strategy]
 
     @property
     def acq_strategy(self):
@@ -113,6 +118,41 @@ class EqualizeBPMs(_FamBPMs):
         meth = self._enum_selector(meth, self.ProcMethods)
         if meth is not None:
             self._proc_method = meth
+
+    def load_data(self, filename):
+        """Load self.data from file.
+
+        Args:
+            fname (str): name of the file. If extension is not provided,
+                '.pickle' will be added and a pickle file will be assumed. If
+                provided, must be {'.pickle', '.pkl'} for pickle files or
+                {'.h5', '.hdf5', '.hdf', '.hd5'} for HDF5 files.
+
+        """
+        self.data = _load(filename, )
+
+    def save_data(self, fname, overwrite=False, makedirs=True, compress=False):
+        """Save self.data to pickle or HDF5 file.
+
+        Args:
+            fname (str): name of the file. If extension is not provided,
+                '.pickle' will be added and a pickle file will be assumed. If
+                provided, must be {'.pickle', .pkl} for pickle files or
+                {'.h5', '.hdf5', '.hdf', '.hd5'} for HDF5 files.
+            overwrite (bool, optional): Whether to overwrite existing file.
+                Defaults to False.
+            makedirs (bool, optional): create dir, if it does not exist.
+                Defaults to False.
+            compress (bool, optional): If True, the file will be saved in
+                compressed format, using gzip library. Defaults to False.
+
+        Raises:
+            FileExistsError: in case overwrite is False and file exists.
+
+        """
+        _save(
+            self.data, fname=fname, overwrite=overwrite, makedirs=makedirs,
+            compress=compress)
 
     def get_current_gains(self):
         """Return Current BPM gains as 3D numpy array.
@@ -472,7 +512,7 @@ class EqualizeBPMs(_FamBPMs):
             return None, None
 
         gains = (1, gacq, gini, gnew)
-        tits = ('Unit Gain', 'Acquisition Gain', 'Old Gain', 'New Gain')
+        titles = ('Unit Gain', 'Acquisition Gain', 'Old Gain', 'New Gain')
         labs = list('ABCDXYS')
         labs[-1] = 'Sum'
         labs = [lab + ' [a.u.]' for lab in labs]
@@ -505,7 +545,7 @@ class EqualizeBPMs(_FamBPMs):
                 if not j:
                     ax.set_ylabel(lab)
                 ax.grid(True, alpha=0.5, ls='--', lw=1)
-            axs[0, j].set_title(tits[j])
+            axs[0, j].set_title(titles[j])
             axs[-1, j].set_xlabel('BPM Index')
 
         axs[0, 0].legend(loc='best', fontsize='x-small', ncol=2)
